@@ -82,7 +82,7 @@ export interface Evaluation {
   value_explanation: string | null;
   manager_score: number | null;
   manager_feedback: string | null;
-  manager_recommendations: string | null;
+  manager_recommendations: string[] | null;
   is_quality_analyzable: boolean | null;
   not_analyzable_reason: string | null;
   manager_breakdown: string | null;
@@ -488,9 +488,9 @@ export const storage = {
         (data.report_detailed ?? d.report_detailed ?? false) ? 1 : 0,
         (data.report_include_avg_value ?? d.report_include_avg_value ?? false) ? 1 : 0,
         (data.report_include_avg_rating ?? d.report_include_avg_rating ?? false) ? 1 : 0,
-        data.kpi_base_salary ?? d.kpi_base_salary ?? 0,
-        data.kpi_target_bonus ?? d.kpi_target_bonus ?? 0,
-        data.kpi_target_talk_time_minutes ?? d.kpi_target_talk_time_minutes ?? 0,
+        Number(data.kpi_base_salary ?? d.kpi_base_salary ?? 0),
+        Number(data.kpi_target_bonus ?? d.kpi_target_bonus ?? 0),
+        Number(data.kpi_target_talk_time_minutes ?? d.kpi_target_talk_time_minutes ?? 0),
         (data.telegram_skip_weekends ?? d.telegram_skip_weekends ?? false) ? 1 : 0,
         data.report_managed_user_ids ?? d.report_managed_user_ids ?? null,
         userId
@@ -671,7 +671,9 @@ export const storage = {
       if (!stats[key]) continue;
       if (!stats[key].score_distribution) stats[key].score_distribution = {};
       const score = row.value_score as number;
-      stats[key].score_distribution![score] = { count: row.count as number, duration: row.duration as number };
+      const dist = stats[key].score_distribution ?? {};
+      dist[score] = { count: row.count as number, duration: row.duration as number };
+      stats[key].score_distribution = dist;
     }
     return stats;
   },
@@ -686,9 +688,9 @@ function verifyWerkzeugHash(password: string, fullHash: string): boolean {
 
   const salt = Buffer.from(saltB64, "base64");
   const iterMatch = fullHash.match(/\$(\d+)\$/);
-  const iterations = iterMatch ? parseInt(iterMatch[1], 10) : 260000;
+  const iterations = iterMatch && iterMatch[1] ? parseInt(iterMatch[1], 10) : 260000;
   const keylen = 32;
-  const derived = pbkdf2Sync(password, salt, "sha256", keylen, iterations);
+  const derived = pbkdf2Sync(password, salt, iterations, keylen, "sha256");
   const derivedB64 = derived.toString("base64").replace(/=/g, "");
   return derivedB64 === hashB64;
 }

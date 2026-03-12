@@ -1,7 +1,9 @@
 /**
- * Backend API - oRPC router for calls/transcription app.
- * Replaces Python FastAPI backend with type-safe oRPC + Hono.
+ * Backend API - main API layer for the project.
+ * oRPC router with typed client. Use createBackendClient for frontend/HTTP consumers.
  */
 
-export { createBackendContext } from "./orpc";
+export { createBackendContext, type AuthLike, type BackendContext } from "./orpc";
 export { backendRouter, type BackendRouter } from "./orpc-root";
+export { createBackendClient, type BackendApiClient } from "./client";
+export { createBackendApiWithContext } from "./server";

@@ -97,47 +97,35 @@ export default function DashboardPage() {
       }
       setUser(currentUser);
 
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        per_page: pagination.per_page.toString(),
+      const result = await api.calls.list({
+        page: pagination.page,
+        per_page: pagination.per_page,
+        q: filters.q || undefined,
+        date_from: filters.date_from || undefined,
+        date_to: filters.date_to || undefined,
+        direction: filters.direction !== "all" ? filters.direction : undefined,
+        manager: filters.manager || undefined,
+        status: filters.status !== "all" ? filters.status : undefined,
+        value: filters.value?.length ? filters.value : undefined,
+        operator: filters.operator?.length ? filters.operator : undefined,
       });
 
-      if (filters.q) params.append('q', filters.q);
-      if (filters.date_from) params.append('date_from', filters.date_from);
-      if (filters.date_to) params.append('date_to', filters.date_to);
-      if (filters.direction && filters.direction !== 'all') params.append('direction', filters.direction);
-      if (filters.manager) params.append('manager', filters.manager);
-      if (filters.status && filters.status !== 'all') params.append('status', filters.status);
-      if (filters.value && filters.value.length > 0) {
-        filters.value.forEach(v => params.append('value', v.toString()));
-      }
-      if (filters.operator && filters.operator.length > 0) {
-        filters.operator.forEach(op => params.append('operator', op));
-      }
-
-      const response = await api.get(`/calls?${params.toString()}`);
-
-      console.log('API Response:', response.data);
-      console.log('Calls:', response.data.calls);
-      console.log('Pagination:', response.data.pagination);
-      console.log('Metrics:', response.data.metrics);
-
-      setCalls(response.data.calls || []);
-      setMetrics(response.data.metrics || {
+      setCalls(result.calls || []);
+      setMetrics(result.metrics || {
         total_calls: 0,
         transcribed: 0,
         avg_duration: 0,
         last_sync: null
       });
       setPagination({
-        total: response.data.pagination?.total || 0,
-        page: response.data.pagination?.page || 1,
-        per_page: response.data.pagination?.per_page || 15,
-        total_pages: response.data.pagination?.total_pages || 0
+        total: result.pagination?.total ?? 0,
+        page: result.pagination?.page ?? 1,
+        per_page: result.pagination?.per_page ?? 15,
+        total_pages: result.pagination?.total_pages ?? 0
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load dashboard data:', error);
-      if (error.response?.status === 401) {
+      if (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'UNAUTHORIZED') {
         router.push('/');
       }
     } finally {

@@ -90,7 +90,7 @@ export const usersRouter = {
     if (!user) throw new Error("User not found");
     const d = input.data;
     const u = user as Record<string, unknown>;
-    const firstName = (d.first_name ?? u.first_name ?? "").toString().trim() || (u.first_name as string) ?? "";
+    const firstName = (d.first_name ?? u.first_name ?? "").toString().trim() || ((u.first_name as string) ?? "");
     const lastName = d.last_name !== undefined ? (d.last_name ?? "").toString() : (u.last_name ?? "").toString();
     if (!firstName) throw new Error("First name is required");
     storage.updateUserName(input.user_id, firstName, lastName);

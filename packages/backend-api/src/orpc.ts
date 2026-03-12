@@ -1,33 +1,47 @@
 /**
  * Backend oRPC context and procedures.
- * Uses cookie-based session (session=username) compatible with Python backend.
+ * Uses Better Auth for session; enriches with backend user profile (internal_numbers, etc.).
  */
 
 import { storage } from "@acme/backend-storage";
 import { ORPCError, os } from "@orpc/server";
 
-function getSessionFromCookie(headers: Headers): string | null {
-  const cookie = headers.get("cookie");
-  if (!cookie) return null;
-  const match = cookie.match(/\bsession=([^;]+)/);
-  return match ? decodeURIComponent(match[1].trim()) : null;
-}
+export type AuthLike = {
+  api: { getSession: (opts: { headers: Headers }) => Promise<{ user?: Record<string, unknown>; session?: unknown } | null> };
+};
 
-export async function createBackendContext(opts: { headers: Headers }) {
-  const sessionUsername = getSessionFromCookie(opts.headers);
-  let user: Awaited<ReturnType<typeof storage.getUserByUsername>> = null;
-  if (sessionUsername) {
-    user = storage.getUserByUsername(sessionUsername);
+export async function createBackendContext(opts: { headers: Headers; auth?: AuthLike }) {
+  let user: Awaited<ReturnType<typeof storage.getUserByUsername>> | null = null;
+
+  if (opts.auth) {
+    const session = await opts.auth.api.getSession({ headers: opts.headers });
+    if (session?.user) {
+      const baUser = session.user as Record<string, unknown>;
+      const username = (baUser.username ?? baUser.email ?? baUser.name) as string | undefined;
+      if (username) {
+        const profile = storage.getUserByUsername(username);
+        user = profile ? ({ ...profile, ...baUser } as Awaited<ReturnType<typeof storage.getUserByUsername>>) : (baUser as Awaited<ReturnType<typeof storage.getUserByUsername>>);
+      }
+    }
+  }
+
+  if (!user) {
+    const cookie = opts.headers.get("cookie");
+    const match = cookie?.match(/\bsession=([^;]+)/);
+    const sessionUsername = match?.[1] ? decodeURIComponent(match[1].trim()) : null;
+    if (sessionUsername) {
+      user = storage.getUserByUsername(sessionUsername);
+    }
   }
 
   return {
     storage,
-    sessionUsername,
+    sessionUsername: user?.username ?? null,
     user,
   };
 }
 
-type BackendContext = Awaited<ReturnType<typeof createBackendContext>>;
+export type BackendContext = Awaited<ReturnType<typeof createBackendContext>>;
 
 const o = os.$context<BackendContext>();
 

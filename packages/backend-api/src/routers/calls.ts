@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure } from "../orpc";
+import { protectedProcedure, adminProcedure } from "../orpc";
 
 const listCallsSchema = z.object({
   page: z.number().min(1).default(1),
@@ -50,12 +50,15 @@ export const callsRouter = {
     });
 
     const totalPages = Math.ceil(totalItems / input.per_page) || 1;
+    const metrics = storage.calculateMetrics();
+    const managers = storage.getAllUsers().filter((u) => (u as Record<string, unknown>).internal_numbers);
 
-    // TODO: metrics, managers, enrich_call_data - match Python response shape
     return {
       calls: callsWithTranscripts,
       pagination: {
         page: input.page,
+        total: totalItems,
+        per_page: input.per_page,
         total_pages: totalPages,
         has_next: input.page < totalPages,
         has_prev: input.page > 1,
@@ -70,8 +73,8 @@ export const callsRouter = {
         value: input.value ?? [],
         operator: input.operator ?? [],
       },
-      metrics: { total_calls: totalItems, transcribed: 0, avg_duration: 0, last_sync: null },
-      managers: [],
+      metrics: { total_calls: totalItems, transcribed: metrics.transcribed, avg_duration: metrics.avg_duration, last_sync: metrics.last_sync },
+      managers,
     };
   }),
 
@@ -92,6 +95,14 @@ export const callsRouter = {
       // TODO: Integrate DeepSeek service for recommendations
       throw new Error("generateRecommendations not yet implemented - integrate DeepSeek");
     }),
+
+  delete: adminProcedure.input(z.object({ call_id: z.number() })).handler(async ({ input, context }) => {
+    const call = context.storage.getCall(input.call_id);
+    if (!call) throw new Error("Call not found");
+    if (!context.storage.deleteCall(input.call_id)) throw new Error("Failed to delete call");
+    context.storage.addActivityLog("info", `Deleted call #${input.call_id}`, (context.user as Record<string, unknown>).username as string);
+    return { success: true, message: `Call #${input.call_id} deleted` };
+  }),
 };
 
 function getInternalNumbersForUser(

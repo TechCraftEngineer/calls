@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import api, { API_BASE_URL } from '@/lib/api';
+import api, { API_BASE_URL, restPost } from '@/lib/api';
 import AudioPlayer from './AudioPlayer';
 import { User } from '@/lib/auth';
 
@@ -71,23 +71,21 @@ export default function CallDetailModal({ callId, onClose, user, onCallDeleted }
     if (!callId) return;
     try {
       setIsGeneratingRecommendations(true);
-      const response = await api.post(`/calls/${callId}/recommendations`);
+      const result = await api.calls.generateRecommendations({ call_id: callId });
+      const recs = (result as { recommendations?: string[] })?.recommendations ?? [];
 
       setEvaluation(prev => {
         if (!prev) {
           return {
-            id: 0, // ID might not be known if it was just created, but it's not critical for display usually
+            id: 0,
             value_score: 0,
             value_explanation: '',
             manager_score: 0,
             manager_feedback: '',
-            manager_recommendations: response.data.recommendations
+            manager_recommendations: recs
           } as EvaluationDetail;
         }
-        return {
-          ...prev,
-          manager_recommendations: response.data.recommendations
-        };
+        return { ...prev, manager_recommendations: recs };
       });
     } catch (error) {
       console.error('Failed to generate recommendations:', error);
@@ -100,14 +98,11 @@ export default function CallDetailModal({ callId, onClose, user, onCallDeleted }
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/calls/${callId}`);
-      setCall(response.data.call);
-      setTranscript(response.data.transcript);
-      setEvaluation(response.data.evaluation);
-      // Если сырого текста нет, принудительно переключаем на обработанный
-      if (!response.data.transcript?.raw_text) {
-        setShowRaw(false);
-      }
+      const result = await api.calls.get({ call_id: callId });
+      setCall(result.call);
+      setTranscript(result.transcript ?? null);
+      setEvaluation(result.evaluation ?? null);
+      if (!result.transcript?.raw_text) setShowRaw(false);
     } catch (error) {
       console.error('Failed to load call detail:', error);
     } finally {
@@ -187,25 +182,22 @@ export default function CallDetailModal({ callId, onClose, user, onCallDeleted }
     try {
       setRestarting(true);
 
-      const transcribeResponse = await api.post(
+      const transcribeResponse = await restPost<{ success?: boolean }>(
         `/calls/${callId}/transcribe?model=${selectedModel}`
       );
-
-      if (!transcribeResponse.data.success) {
-        throw new Error('Transcription failed');
-      }
+      if (!transcribeResponse?.success) throw new Error('Transcription failed');
 
       try {
-        await api.post(`/calls/${callId}/evaluate`);
+        await restPost(`/calls/${callId}/evaluate`);
       } catch (evalError) {
         console.warn('Evaluation failed, but transcription succeeded:', evalError);
       }
 
       await loadData();
       alert('Анализ успешно перезапущен!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to restart analysis:', error);
-      const errorMessage = error.response?.data?.detail || error.message || 'Ошибка при перезапуске анализа';
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка при перезапуске анализа';
       alert(`Ошибка: ${errorMessage}`);
     } finally {
       setRestarting(false);
@@ -226,7 +218,7 @@ export default function CallDetailModal({ callId, onClose, user, onCallDeleted }
 
     try {
       setDeleting(true);
-      await api.delete(`/calls/${callId}`);
+      await api.calls.delete({ call_id: callId });
 
       // Успешно удалено
       setShowDeleteConfirm(false);
@@ -234,9 +226,9 @@ export default function CallDetailModal({ callId, onClose, user, onCallDeleted }
         onCallDeleted(callId);
       }
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to delete call:', error);
-      const errorMessage = error.response?.data?.detail || error.message || 'Ошибка при удалении звонка';
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка при удалении звонка';
       alert(`Ошибка: ${errorMessage}`);
     } finally {
       setDeleting(false);

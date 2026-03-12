@@ -147,11 +147,11 @@ export default function UsersPage() {
       }
       setCurrentUser(user);
 
-      const response = await api.get('/users');
-      setUsers(response.data || []);
-    } catch (error: any) {
+      const list = await api.users.list();
+      setUsers(Array.isArray(list) ? list : []);
+    } catch (error: unknown) {
       console.error('Failed to load users:', error);
-      if (error.response?.status === 403) {
+      if (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'FORBIDDEN') {
         alert('Доступ запрещен.');
         router.push('/dashboard');
       }
@@ -167,7 +167,7 @@ export default function UsersPage() {
   const handleDelete = async (userId: number, username: string) => {
     if (!confirm(`Вы уверены, что хотите удалить пользователя ${username}?`)) return;
     try {
-      await api.delete(`/users/${userId}`);
+      await api.users.delete({ user_id: userId });
       loadUsers();
     } catch (error) {
       alert('Ошибка при удалении пользователя');
@@ -218,40 +218,18 @@ export default function UsersPage() {
     }
     setAddSubmitting(true);
     try {
-      await api.post('/users', {
+      await api.users.create({
         username: addForm.username.trim(),
         password: addForm.password,
         first_name: addForm.first_name.trim(),
         last_name: addForm.last_name.trim() || undefined,
         internal_numbers: addForm.internal_numbers.trim() || undefined,
         mobile_numbers: addForm.mobile_numbers.trim() || undefined,
-        telegram_chat_id: addForm.telegram_chat_id.trim() || undefined,
-        telegram_daily_report: addForm.telegram_daily_report,
-        telegram_manager_report: addForm.telegram_manager_report,
-        max_chat_id: addForm.max_chat_id.trim() || undefined,
-        max_daily_report: addForm.max_daily_report,
-        max_manager_report: addForm.max_manager_report,
-        filter_exclude_answering_machine: addForm.filter_exclude_answering_machine,
-        filter_min_duration: addForm.filter_min_duration || 0,
-        filter_min_replicas: addForm.filter_min_replicas || 0,
-        email: addForm.email.trim() || undefined,
-        email_daily_report: addForm.email_daily_report,
-        email_weekly_report: addForm.email_weekly_report,
-        email_monthly_report: addForm.email_monthly_report,
-        telegram_weekly_report: addForm.telegram_weekly_report,
-        telegram_monthly_report: addForm.telegram_monthly_report,
-        report_include_call_summaries: addForm.report_include_call_summaries,
-        report_detailed: addForm.report_detailed,
-        report_include_avg_value: addForm.report_include_avg_value,
-        report_include_avg_rating: addForm.report_include_avg_rating,
-        kpi_base_salary: addForm.kpi_base_salary || 0,
-        kpi_target_bonus: addForm.kpi_target_bonus || 0,
-        kpi_target_talk_time_minutes: addForm.kpi_target_talk_time_minutes || 0
       });
       setShowAddModal(false);
       loadUsers();
-    } catch (err: any) {
-      setAddError(err.response?.data?.detail || 'Ошибка при создании пользователя');
+    } catch (err: unknown) {
+      setAddError(err instanceof Error ? err.message : 'Ошибка при создании пользователя');
     } finally {
       setAddSubmitting(false);
     }
@@ -301,7 +279,9 @@ export default function UsersPage() {
     }
     setEditSubmitting(true);
     try {
-      await api.put(`/users/${editUser.id}`, {
+      await api.users.update({
+        user_id: editUser.id,
+        data: {
         first_name: editForm.first_name.trim(),
         last_name: editForm.last_name.trim() || undefined,
         internal_numbers: editForm.internal_numbers.trim() || undefined,
@@ -328,12 +308,13 @@ export default function UsersPage() {
         kpi_base_salary: editForm.kpi_base_salary || 0,
         kpi_target_bonus: editForm.kpi_target_bonus || 0,
         kpi_target_talk_time_minutes: editForm.kpi_target_talk_time_minutes || 0
+        },
       });
       setShowEditModal(false);
       setEditUser(null);
       loadUsers();
-    } catch (err: any) {
-      setEditError(err.response?.data?.detail || 'Ошибка при сохранении');
+    } catch (err: unknown) {
+      setEditError(err instanceof Error ? err.message : 'Ошибка при сохранении');
     } finally {
       setEditSubmitting(false);
     }
@@ -360,14 +341,15 @@ export default function UsersPage() {
     }
     setPasswordSubmitting(true);
     try {
-      await api.post(`/users/${passwordUser.id}/change-password`, {
+      await api.users.changePassword({
+        user_id: passwordUser.id,
         new_password: passwordForm.new_password,
         confirm_password: passwordForm.confirm_password
       });
       setShowPasswordModal(false);
       setPasswordUser(null);
-    } catch (err: any) {
-      setPasswordError(err.response?.data?.detail || 'Ошибка при смене пароля');
+    } catch (err: unknown) {
+      setPasswordError(err instanceof Error ? err.message : 'Ошибка при смене пароля');
     } finally {
       setPasswordSubmitting(false);
     }
@@ -730,7 +712,7 @@ export default function UsersPage() {
                       onClick={async () => {
                         if (!confirm('Отвязать Telegram аккаунт?')) return;
                         try {
-                          await api.delete(`/users/${editUser.id}/telegram`);
+                          await api.users.disconnectTelegram({ user_id: editUser.id });
                           setEditForm(f => ({ ...f, telegram_chat_id: '' }));
                           setEditUser(u => u ? ({ ...u, telegram_chat_id: '' }) : null);
                           loadUsers();
@@ -750,9 +732,9 @@ export default function UsersPage() {
                         type="button"
                         onClick={async () => {
                           try {
-                            const res = await api.post(`/users/${editUser.id}/telegram-auth-url`);
-                            if (res.data.url) {
-                              window.open(res.data.url, '_blank');
+                            const res = await api.users.telegramAuthUrl({ user_id: editUser.id });
+                            if (res.url) {
+                              window.open(res.url, '_blank');
                             }
                           } catch (e) {
                             alert('Ошибка при создании ссылки для Telegram');
@@ -772,8 +754,8 @@ export default function UsersPage() {
                         onClick={async () => {
                           if (!editUser) return;
                           try {
-                            const res = await api.get('/users');
-                            const updated = (res.data || []).find((u: ManagedUser) => u.id === editUser.id);
+                            const list = await api.users.list();
+                            const updated = (Array.isArray(list) ? list : []).find((u: ManagedUser) => u.id === editUser.id);
                             if (updated) {
                               setEditUser(updated);
                               setEditForm(f => ({
@@ -820,7 +802,7 @@ export default function UsersPage() {
                       onClick={async () => {
                         if (!confirm('Отвязать MAX аккаунт?')) return;
                         try {
-                          await api.delete(`/users/${editUser.id}/max`);
+                          await api.users.disconnectMax({ user_id: editUser.id });
                           setEditForm(f => ({ ...f, max_chat_id: '' }));
                           setEditUser(u => u ? ({ ...u, max_chat_id: '' }) : null);
                           loadUsers();
@@ -839,11 +821,11 @@ export default function UsersPage() {
                       type="button"
                       onClick={async () => {
                         try {
-                          const res = await api.post(`/users/${editUser.id}/max-auth-url`);
-                          if (res.data.url) {
-                            window.open(res.data.url, '_blank');
-                          } else if (res.data.manual_instruction) {
-                            alert(`Для подключения отправьте боту команду:\n${res.data.manual_instruction.split(': ')[1]}`);
+                          const res = await api.users.maxAuthUrl({ user_id: editUser.id });
+                          if (res.url) {
+                            window.open(res.url, '_blank');
+                          } else if (res.manual_instruction) {
+                            alert(`Для подключения отправьте боту команду:\n${res.manual_instruction.split(': ')[1]}`);
                           }
                         } catch (e) {
                           alert('Ошибка при создании ссылки для MAX');

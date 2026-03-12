@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import api from '@/lib/api';
+import api, { restPost } from '@/lib/api';
 import { getCurrentUser, User } from '@/lib/auth';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
@@ -72,10 +72,10 @@ export default function CallDetailPage() {
       }
       setUser(currentUser);
 
-      const response = await api.get(`/calls/${id}`);
-      setCall(response.data.call);
-      setTranscript(response.data.transcript);
-      setEvaluation(response.data.evaluation);
+      const result = await api.calls.get({ call_id: Number(id) });
+      setCall(result.call);
+      setTranscript(result.transcript ?? null);
+      setEvaluation(result.evaluation ?? null);
     } catch (error) {
       console.error('Failed to load call detail:', error);
     } finally {
@@ -133,7 +133,8 @@ export default function CallDetailPage() {
     if (!id || isGeneratingRecommendations) return;
     try {
       setIsGeneratingRecommendations(true);
-      const response = await api.post(`/calls/${id}/recommendations`);
+      const result = await api.calls.generateRecommendations({ call_id: Number(id) });
+      const recs = (result as { recommendations?: string[] })?.recommendations;
       setEvaluation(prev => {
         if (!prev) {
           return {
@@ -142,10 +143,10 @@ export default function CallDetailPage() {
             value_explanation: '',
             manager_score: 0,
             manager_feedback: '',
-            manager_recommendations: response.data.recommendations
+            manager_recommendations: recs ?? []
           } as EvaluationDetail;
         }
-        return { ...prev, manager_recommendations: response.data.recommendations };
+        return { ...prev, manager_recommendations: recs ?? prev.manager_recommendations };
       });
     } catch (error) {
       console.error('Failed to generate recommendations:', error);
@@ -162,20 +163,17 @@ export default function CallDetailPage() {
       setRestarting(true);
 
       // Шаг 1: Транскрипция с выбранной моделью
-      console.log(`Starting transcription with model: ${selectedModel}`);
-      const transcribeResponse = await api.post(
+      const transcribeResponse = await restPost<{ success?: boolean }>(
         `/calls/${id}/transcribe?model=${selectedModel}`
       );
 
-      if (!transcribeResponse.data.success) {
+      if (!transcribeResponse?.success) {
         throw new Error('Transcription failed');
       }
 
-      console.log('Transcription completed, starting evaluation...');
-
       // Шаг 2: Переоценка звонка
       try {
-        await api.post(`/calls/${id}/evaluate`);
+        await restPost(`/calls/${id}/evaluate`);
         console.log('Evaluation completed');
       } catch (evalError) {
         console.warn('Evaluation failed, but transcription succeeded:', evalError);
@@ -186,9 +184,9 @@ export default function CallDetailPage() {
       await loadData();
 
       alert('Анализ успешно перезапущен!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to restart analysis:', error);
-      const errorMessage = error.response?.data?.detail || error.message || 'Ошибка при перезапуске анализа';
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка при перезапуске анализа';
       alert(`Ошибка: ${errorMessage}`);
     } finally {
       setRestarting(false);

@@ -11,7 +11,22 @@
         "typescript": "5.9.3",
       },
     },
-    "apps/app": {
+    "apps/backend-server": {
+      "name": "@acme/backend-server",
+      "dependencies": {
+        "@acme/backend-api": "workspace:*",
+        "@acme/backend-storage": "workspace:*",
+        "@orpc/server": "^1.13.6",
+        "better-auth": "1.5.5",
+        "better-sqlite3": "^12.6.0",
+        "hono": "4.12.7",
+      },
+      "devDependencies": {
+        "@acme/tsconfig": "workspace:*",
+        "typescript": "5.9.3",
+      },
+    },
+    "apps/demo": {
       "name": "@acme/app",
       "dependencies": {
         "@acme/api": "workspace:*",
@@ -54,7 +69,7 @@
         "typescript": "5.9.3",
       },
     },
-    "apps/app-server": {
+    "apps/demo-server": {
       "name": "@acme/app-server",
       "dependencies": {
         "@acme/api": "workspace:*",
@@ -72,19 +87,6 @@
         "@acme/tsconfig": "workspace:*",
         "@types/bun": "1.3.10",
         "tsdown": "0.21.2",
-        "typescript": "5.9.3",
-      },
-    },
-    "apps/backend-server": {
-      "name": "@acme/backend-server",
-      "dependencies": {
-        "@acme/backend-api": "workspace:*",
-        "@acme/backend-storage": "workspace:*",
-        "@orpc/server": "^1.13.6",
-        "hono": "4.12.7",
-      },
-      "devDependencies": {
-        "@acme/tsconfig": "workspace:*",
         "typescript": "5.9.3",
       },
     },
@@ -106,23 +108,6 @@
         "typescript": "^5.0.0",
       },
     },
-    "packages/api": {
-      "name": "@acme/api",
-      "dependencies": {
-        "@acme/auth": "workspace:*",
-        "@acme/db": "workspace:*",
-        "@acme/validators": "workspace:*",
-        "@orpc/contract": "^1.13.6",
-        "@orpc/server": "^1.13.6",
-        "better-auth": "1.5.5",
-        "superjson": "2.2.6",
-        "zod": "4.3.6",
-      },
-      "devDependencies": {
-        "@acme/tsconfig": "workspace:*",
-        "typescript": "5.9.3",
-      },
-    },
     "packages/auth": {
       "name": "@acme/auth",
       "dependencies": {
@@ -141,6 +126,7 @@
       "name": "@acme/backend-api",
       "dependencies": {
         "@acme/backend-storage": "workspace:*",
+        "@orpc/client": "^1.13.6",
         "@orpc/server": "^1.13.6",
         "zod": "4.3.6",
       },
@@ -190,6 +176,23 @@
         "@types/pg": "^8.18.0",
         "@types/ws": "^8.18.1",
         "drizzle-kit": "^0.31.9",
+        "typescript": "5.9.3",
+      },
+    },
+    "packages/demo-api": {
+      "name": "@acme/api",
+      "dependencies": {
+        "@acme/auth": "workspace:*",
+        "@acme/db": "workspace:*",
+        "@acme/validators": "workspace:*",
+        "@orpc/contract": "^1.13.6",
+        "@orpc/server": "^1.13.6",
+        "better-auth": "1.5.5",
+        "superjson": "2.2.6",
+        "zod": "4.3.6",
+      },
+      "devDependencies": {
+        "@acme/tsconfig": "workspace:*",
         "typescript": "5.9.3",
       },
     },
@@ -304,11 +307,11 @@
     },
   },
   "packages": {
-    "@acme/api": ["@acme/api@workspace:packages/api"],
+    "@acme/api": ["@acme/api@workspace:packages/demo-api"],
 
-    "@acme/app": ["@acme/app@workspace:apps/app"],
+    "@acme/app": ["@acme/app@workspace:apps/demo"],
 
-    "@acme/app-server": ["@acme/app-server@workspace:apps/app-server"],
+    "@acme/app-server": ["@acme/app-server@workspace:apps/demo-server"],
 
     "@acme/auth": ["@acme/auth@workspace:packages/auth"],
 

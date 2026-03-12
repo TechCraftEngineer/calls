@@ -42,15 +42,14 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const [userRes, promptsRes] = await Promise.all([
-                    api.get(`/users/${user.id}`),
-                    api.get('/settings/prompts').catch(() => ({ data: [] }))
+                const [u, promptsList] = await Promise.all([
+                    api.users.get({ user_id: user.id }),
+                    api.settings.getPrompts().catch(() => [])
                 ]);
-                const u = userRes.data;
                 setIsAdmin(u?.username === 'admin@mango' || u?.username === 'admin@gmail.com' || u?.internal_numbers === 'all');
-                const promptsList = Array.isArray(promptsRes.data) ? promptsRes.data : [];
+                const promptsArr = Array.isArray(promptsList) ? promptsList : [];
                 const promptsMap: Record<string, string> = {};
-                promptsList.forEach((p: { key: string; value?: string }) => { promptsMap[p.key] = p.value ?? ''; });
+                promptsArr.forEach((p: { key: string; value?: string }) => { promptsMap[p.key] = p.value ?? ''; });
                 setLoadedUser({
                     first_name: u.first_name,
                     last_name: u.last_name,
@@ -103,9 +102,9 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
 
     useEffect(() => {
         if (!isAdmin || !user?.id) return;
-        api.get('/users').then((res) => {
-            const list = Array.isArray(res.data) ? res.data : [];
-            setAllUsers(list.map((u: { id: number; username: string; first_name?: string; last_name?: string }) => ({
+        api.users.list().then((list) => {
+            const arr = Array.isArray(list) ? list : [];
+            setAllUsers(arr.map((u: { id: number; username: string; first_name?: string; last_name?: string }) => ({
                 id: u.id,
                 username: u.username,
                 first_name: u.first_name,
@@ -144,9 +143,9 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
                 kpi_target_talk_time_minutes: form.kpi_target_talk_time_minutes,
                 report_managed_user_ids: form.report_managed_user_ids ?? []
             };
-            await api.put(`/users/${user.id}`, payload);
+            await api.users.update({ user_id: user.id, data: payload });
             if (isAdmin) {
-                await api.put('/settings/prompts', {
+                await api.settings.updatePrompts({
                     prompts: {
                         report_daily_time: { value: form.report_daily_time || '18:00', description: 'Время ежедневного отчёта (ЧЧ:ММ)' },
                         report_weekly_day: { value: form.report_weekly_day || 'fri', description: 'День недели еженедельного' },
@@ -159,8 +158,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
             setMessage('Настройки успешно сохранены!');
             setTimeout(() => setMessage(''), 3000);
             // Перезагружаем данные с сервера, чтобы форма отображала сохранённые значения
-            const userRes = await api.get(`/users/${user.id}`);
-            const u = userRes.data;
+            const u = await api.users.get({ user_id: user.id });
             const bool = (v: unknown) => v === true || v === 1 || v === '1';
             setLoadedUser({ first_name: u.first_name, last_name: u.last_name, internal_numbers: u.internal_numbers });
             setForm(prev => ({

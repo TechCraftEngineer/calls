@@ -6,6 +6,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "default": "./src/client.ts"
     }
   },
   "scripts": {
@@ -13,6 +17,7 @@
   },
   "dependencies": {
     "@acme/backend-storage": "workspace:*",
+    "@orpc/client": "^1.13.6",
     "@orpc/server": "^1.13.6",
     "zod": "4.3.6"
   },

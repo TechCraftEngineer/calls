@@ -23,7 +23,7 @@ const settingsUpdateSchema = z.object({
   enable_manager_recommendations: z.boolean().optional(),
   telegram_bot_token: z.string().optional().nullable(),
   max_bot_token: z.string().optional().nullable(),
-  prompts: z.record(promptItemSchema).optional(),
+  prompts: z.record(z.string(), promptItemSchema).optional(),
 });
 
 export const settingsRouter = {
@@ -55,18 +55,16 @@ export const settingsRouter = {
         "report_daily_time", "report_weekly_day", "report_weekly_time", "report_monthly_day", "report_monthly_time",
       ];
       for (const key of promptKeys) {
-        const p = input.prompts[key];
+        const p = input.prompts[key] as { value?: string; description?: string } | undefined;
         if (p) {
           storage.updatePrompt(key, p.value ?? "", p.description ?? "");
           storage.addActivityLog("info", `Prompt updated: ${key}`, (context.user as Record<string, unknown>).username as string);
         }
       }
-      if (input.prompts.telegram_bot_token) {
-        storage.updatePrompt("telegram_bot_token", input.prompts.telegram_bot_token.value ?? "", "Telegram Bot Token");
-      }
-      if (input.prompts.max_bot_token) {
-        storage.updatePrompt("max_bot_token", input.prompts.max_bot_token.value ?? "", "MAX Bot Token");
-      }
+      const tb = input.prompts.telegram_bot_token as { value?: string } | undefined;
+      if (tb) storage.updatePrompt("telegram_bot_token", tb.value ?? "", "Telegram Bot Token");
+      const mb = input.prompts.max_bot_token as { value?: string } | undefined;
+      if (mb) storage.updatePrompt("max_bot_token", mb.value ?? "", "MAX Bot Token");
     }
     return { success: true, message: "Settings updated successfully" };
   }),

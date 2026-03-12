@@ -48,18 +48,16 @@ function StatisticsPageContent() {
       }
       setUser(currentUser);
 
-      const params = new URLSearchParams({
+      const result = await api.statistics.getStatistics({
         sort: filters.sort,
-        order: filters.order
+        order: filters.order,
+        date_from: filters.date_from || undefined,
+        date_to: filters.date_to || undefined,
       });
-      if (filters.date_from) params.append('date_from', filters.date_from);
-      if (filters.date_to) params.append('date_to', filters.date_to);
-
-      const response = await api.get(`/statistics?${params.toString()}`);
-      setStats(response.data.statistics || []);
-    } catch (error: any) {
+      setStats(result.statistics || []);
+    } catch (error: unknown) {
       console.error('Failed to load stats:', error);
-      if (error.response?.status === 403) {
+      if (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'FORBIDDEN') {
         alert('Доступ запрещен. Только администратору.');
         router.push('/dashboard');
       }

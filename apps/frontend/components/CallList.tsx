@@ -318,44 +318,13 @@ export default function CallList({ calls, onPlay, user, onCallDeleted, onRecomme
             setRecommendationsCallId(callId);
             setRecommendations([]);
 
-            const response = await api.post(`/calls/${callId}/recommendations`, {}, { timeout: 120000 });
-            const recs = response.data.recommendations || [];
+            const result = await api.calls.generateRecommendations({ call_id: callId });
+            const recs = (result as { recommendations?: string[] })?.recommendations ?? [];
             setRecommendations(recs);
             onRecommendationsGenerated?.(callId, recs);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to generate recommendations:', error);
-
-            // Более информативное сообщение об ошибке
-            let errorMessage = 'Не удалось сформировать рекомендации';
-
-            if (error.response) {
-                const status = error.response.status;
-                const detail = error.response.data?.detail || error.response.data?.message;
-
-                if (status === 400) {
-                    errorMessage = detail || 'Транскрипт не найден для этого звонка';
-                } else if (status === 404) {
-                    errorMessage = 'Звонок не найден';
-                } else if (status === 401) {
-                    errorMessage = 'Требуется авторизация. Пожалуйста, войдите в систему заново';
-                } else if (status === 500) {
-                    if (detail && detail.includes('Authentication')) {
-                        errorMessage = 'Ошибка аутентификации с сервисом генерации рекомендаций. Проверьте настройки API ключей';
-                    } else {
-                        errorMessage = detail || 'Ошибка сервера при формировании рекомендаций';
-                    }
-                } else {
-                    errorMessage = detail || `Ошибка ${status}: Не удалось сформировать рекомендации`;
-                }
-            } else if (error.request) {
-                if (error.code === 'ECONNABORTED' || (error.message && (error.message.includes('timeout') || error.message.toLowerCase().includes('timeout')))) {
-                    errorMessage = 'Превышено время ожидания ответа от сервера. Попробуйте ещё раз.';
-                } else {
-                    errorMessage = 'Не удалось подключиться к серверу. Проверьте подключение к интернету и доступность сервиса.';
-                }
-            } else {
-                errorMessage = error.message || 'Неизвестная ошибка при формировании рекомендаций';
-            }
+            const errorMessage = error instanceof Error ? error.message : 'Не удалось сформировать рекомендации';
 
             alert(errorMessage);
             setRecommendationsCallId(null);

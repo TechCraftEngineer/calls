@@ -66,11 +66,11 @@ export default function ReportSettingsFormBody({
                                     setSendTestMessage('');
                                     setSendTestLoading(true);
                                     try {
-                                        await api.post('/reports/send-test-telegram');
+                                        await api.reports.sendTestTelegram();
                                         setSendTestMessage('Отчёт отправлен в Telegram');
                                         setTimeout(() => setSendTestMessage(''), 4000);
-                                    } catch (err: any) {
-                                        const d = err.response?.data?.detail;
+                                    } catch (err: unknown) {
+                                        const d = err instanceof Error ? err.message : null;
                                         setSendTestMessage(typeof d === 'string' ? d : 'Не удалось отправить. Укажите Telegram Chat ID.');
                                     } finally {
                                         setSendTestLoading(false);

@@ -1,6 +1,6 @@
 /** Authentication utilities. */
 
-import api from './api';
+import { restPost, restGet } from "./api";
 
 export interface User {
   id: number;
@@ -9,6 +9,9 @@ export interface User {
   first_name?: string;
   last_name?: string;
   role?: string;
+  internal_numbers?: string | null;
+  mobile_numbers?: string | null;
+  [key: string]: unknown;
 }
 
 export interface LoginResponse {
@@ -18,55 +21,24 @@ export interface LoginResponse {
 }
 
 export async function login(username: string, password: string): Promise<LoginResponse> {
-  console.group('[Auth Login] Starting login request');
-  console.log('Endpoint: /auth/login');
-  console.log('Username:', username);
-  console.log('API Base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
-  
-  try {
-    const response = await api.post<LoginResponse>('/auth/login', {
-      username,
-      password,
-    });
-    
-    console.log('[Auth Login] Success');
-    console.log('Response:', response.data);
-    console.log('Status:', response.status);
-    console.log('Headers:', response.headers);
-    console.log('Cookies set:', document.cookie);
-    console.groupEnd();
-    
-    return response.data;
-  } catch (error: any) {
-    console.error('[Auth Login] Error');
-    console.error('Error object:', error);
-    console.error('Response:', error.response);
-    console.error('Status:', error.response?.status);
-    console.error('Data:', error.response?.data);
-    console.error('Message:', error.message);
-    console.groupEnd();
-    throw error;
-  }
+  return restPost<LoginResponse>("/auth/login", { username, password });
 }
 
 export async function logout(): Promise<void> {
-  await api.post('/auth/logout');
+  await restPost("/auth/logout");
 }
 
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    const response = await api.get<User>('/auth/me');
-    return response.data;
-  } catch (error) {
+    return await restGet<User>("/auth/me");
+  } catch {
     return null;
   }
 }
 
 export function isAuthenticated(): boolean {
-  // Simple check - in production, verify with server
-  if (typeof document !== 'undefined') {
-    return document.cookie.includes('session=');
+  if (typeof document !== "undefined") {
+    return document.cookie.includes("session=");
   }
   return false;
 }
-

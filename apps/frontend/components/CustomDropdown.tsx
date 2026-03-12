@@ -31,7 +31,13 @@ export default function CustomDropdown({ label, value, onChange, type }: Dropdow
 
     useEffect(() => {
         if (type === 'manager') {
-            api.get('/users').then(res => setManagers(res.data));
+            api.users.list().then(list => {
+                const arr = Array.isArray(list) ? list : [];
+                setManagers(arr.map((u: { id: number; username?: string; name?: string }) => ({
+                    id: String(u.id),
+                    name: u.name || u.username || String(u.id)
+                })));
+            });
         }
     }, [type]);
 

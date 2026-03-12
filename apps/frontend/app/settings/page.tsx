@@ -59,40 +59,31 @@ export default function SettingsPage() {
       }
       setCurrentUser(user);
 
-      const [promptsRes, modelsRes] = await Promise.all([
-        api.get('/settings/prompts'),
-        api.get('/settings/models')
+      const [promptsList, modelsRes] = await Promise.all([
+        api.settings.getPrompts(),
+        api.settings.getModels()
       ]);
 
-      console.log('Prompts response:', promptsRes.data);
-      console.log('Models response:', modelsRes.data);
-
-      const promptsList: Prompt[] = promptsRes.data || [];
+      const promptsArr: Prompt[] = Array.isArray(promptsList) ? promptsList : [];
       const promptsMap: Record<string, Prompt> = {};
-
-      // Сначала добавляем все промпты из ответа
-      promptsList.forEach((p: Prompt) => {
+      promptsArr.forEach((p: Prompt) => {
         promptsMap[p.key] = p;
       });
-
-      // Затем убеждаемся, что все нужные промпты есть (создаем пустые, если их нет)
       Object.keys(promptKeys).forEach(key => {
         if (!promptsMap[key]) {
           promptsMap[key] = { key, value: '', description: '', updated_at: undefined };
         }
       });
-
       setPrompts(promptsMap);
-      console.log('Prompts map:', promptsMap);
 
-      if (modelsRes.data) {
-        const modelsData = modelsRes.data.models || {};
-        const modelsArray = Object.values(modelsData) as Model[];
+      if (modelsRes?.models) {
+        const modelsData = modelsRes.models;
+        const modelsArray = Object.entries(modelsData).map(([id, m]) => ({
+          id,
+          name: (m as { name?: string }).name ?? id
+        }));
         setModels(modelsArray);
-        console.log('Models array:', modelsArray);
-        const currentModelValue = modelsRes.data.current_model || 'deepseek-chat';
-        setCurrentModel(currentModelValue);
-        console.log('Current model:', currentModelValue);
+        setCurrentModel(modelsRes.current_model || 'deepseek-chat');
       } else {
         // Fallback если API не вернул модели
         setModels([
@@ -104,9 +95,9 @@ export default function SettingsPage() {
 
       setQualityThreshold(promptsMap['quality_min_value_threshold']?.value || '1');
       setEnableRecommendations(promptsMap['enable_manager_recommendations']?.value === 'true');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load settings:', error);
-      if (error.response?.status === 403) {
+      if (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'FORBIDDEN') {
         alert('Доступ запрещен.');
         router.push('/dashboard');
       }
@@ -139,11 +130,10 @@ export default function SettingsPage() {
         }
       });
 
-      console.log('Saving updates:', updates);
-      await api.put('/settings/prompts', updates);
+      await api.settings.updatePrompts(updates);
       alert('Настройки успешно сохранены');
       await loadSettings();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to save settings:', error);
       alert('Ошибка при сохранении настроек');
     } finally {
@@ -155,11 +145,11 @@ export default function SettingsPage() {
     if (backupLoading) return;
     try {
       setBackupLoading(true);
-      const res = await api.post('/settings/backup');
-      const path = res.data?.path ?? '';
+      const res = await api.settings.backup();
+      const path = res?.path ?? '';
       alert(`Резервная копия создана.\n\nПуть на сервере: ${path}`);
-    } catch (error: any) {
-      const msg = error.response?.data?.detail ?? error.message ?? 'Ошибка при создании копии';
+    } catch (error: unknown) {
+      const msg = (error instanceof Error ? error.message : String(error)) || 'Ошибка при создании копии';
       alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
     } finally {
       setBackupLoading(false);
@@ -226,7 +216,7 @@ export default function SettingsPage() {
                 setSendTestMessage('');
                 setSendTestLoading(true);
                 try {
-                  await api.post('/reports/send-test-telegram');
+                  await api.reports.sendTestTelegram();
                   setSendTestMessage('Отчёт отправлен в Telegram');
                   setTimeout(() => setSendTestMessage(''), 4000);
                 } catch (err: unknown) {

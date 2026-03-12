@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '@/lib/api';
+import { restGet } from '@/lib/api';
 
 interface KpiRow {
     user_id: number;
@@ -29,8 +29,8 @@ export default function KpiTable({ dateFrom, dateTo }: { dateFrom: string, dateT
             try {
                 const d_from = dateFrom || new Date().toISOString().split('T')[0];
                 const d_to = dateTo || new Date().toISOString().split('T')[0];
-                const res = await api.get(`/v1/kpi/?start_date=${d_from}&end_date=${d_to}`);
-                setData(res.data);
+                const res = await restGet<KpiRow[]>(`/v1/kpi/?start_date=${d_from}&end_date=${d_to}`);
+                setData(Array.isArray(res) ? res : []);
             } catch (err) {
                 console.error("Failed to load KPI data", err);
             } finally {

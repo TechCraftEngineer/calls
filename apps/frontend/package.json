@@ -1,14 +1,17 @@
 {
-  "name": "mango-react-frontend",
+  "name": "@acme/calls-app",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@acme/backend-api": "workspace:*",
+    "@orpc/client": "^1.13.6",
     "axios": "^1.6.0",
     "next": "^14.0.0",
     "react": "^18.2.0",
