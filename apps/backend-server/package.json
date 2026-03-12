@@ -1,0 +1,20 @@
+{
+  "name": "@acme/backend-server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@acme/backend-api": "workspace:*",
+    "@acme/backend-storage": "workspace:*",
+    "@orpc/server": "^1.13.6",
+    "hono": "4.12.7"
+  },
+  "devDependencies": {
+    "@acme/tsconfig": "workspace:*",
+    "typescript": "5.9.3"
+  }
+}
