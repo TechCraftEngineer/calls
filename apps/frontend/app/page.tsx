@@ -1,31 +1,42 @@
-'use client';
+"use client";
 
-import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { login } from '@/lib/auth';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { login } from "@/lib/auth";
+import { type LoginFormData, loginSchema } from "@/lib/validations";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+    setValue,
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    mode: "onBlur",
+  });
 
   // Load and display saved logs on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
-        const savedLogs = localStorage.getItem('api_logs');
+        const savedLogs = localStorage.getItem("api_logs");
         if (savedLogs) {
           const logs = JSON.parse(savedLogs);
-          console.group('[Saved API Logs]');
+          console.group("[Saved API Logs]");
           logs.forEach((log: any) => {
             console.log(`[${log.timestamp}] ${log.type}:`, log.data);
           });
           console.groupEnd();
-          console.log('💡 Tip: Use localStorage.getItem("api_logs") to see all saved logs');
+          console.log(
+            '💡 Tip: Use localStorage.getItem("api_logs") to see all saved logs',
+          );
         }
       } catch (e) {
         // Ignore errors
@@ -35,158 +46,161 @@ function LoginForm() {
 
   // Read username and password from URL query params
   useEffect(() => {
-    if (autoLoginAttempted) return; // Prevent multiple auto-login attempts
-    
-    const urlUsername = searchParams.get('username');
-    const urlPassword = searchParams.get('password');
-    
+    const urlUsername = searchParams.get("username");
+    const urlPassword = searchParams.get("password");
+
     if (urlUsername) {
-      setUsername(decodeURIComponent(urlUsername));
+      setValue("username", decodeURIComponent(urlUsername));
     }
     if (urlPassword) {
-      setPassword(decodeURIComponent(urlPassword));
+      setValue("password", decodeURIComponent(urlPassword));
     }
-    
+
     // Auto-submit if both username and password are provided
-    if (urlUsername && urlPassword && !autoLoginAttempted) {
-      setAutoLoginAttempted(true);
-      handleAutoLogin(decodeURIComponent(urlUsername), decodeURIComponent(urlPassword));
-    }
-  }, [searchParams, autoLoginAttempted]);
-
-  const handleAutoLogin = async (user: string, pass: string) => {
-    setError('');
-    setLoading(true);
-    
-    console.group('[Auto Login] Attempting auto login');
-    console.log('Username:', user);
-    console.log('Password length:', pass.length);
-    console.groupEnd();
-    
-    try {
-      const result = await login(user, pass);
-      console.group('[Auto Login] Result');
-      console.log('Success:', result.success);
-      console.log('User:', result.user);
-      console.groupEnd();
-      
-      if (result.success) {
+    if (urlUsername && urlPassword) {
+      const form = document.querySelector("form");
+      if (form) {
         setTimeout(() => {
-          router.push('/dashboard');
+          form.dispatchEvent(new Event("submit", { cancelable: true }));
         }, 100);
-      } else {
-        setError(result.message || 'Login failed');
       }
-    } catch (err: any) {
-      console.group('[Auto Login] Error');
-      console.error('Error:', err);
-      console.error('Response:', err.response);
-      console.groupEnd();
-      
-      setError(err.response?.data?.detail || 'Invalid credentials');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [searchParams, setValue]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    // Log login attempt
-    console.group('[Login] Attempting login');
-    console.log('Username:', username);
-    console.log('Password length:', password.length);
-    console.log('API URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
-    console.log('Cookies before:', document.cookie);
-    console.groupEnd();
-
+  const onSubmit = async (data: LoginFormData) => {
     try {
-      const result = await login(username, password);
-      console.group('[Login] Login result');
-      console.log('Success:', result.success);
-      console.log('User:', result.user);
-      console.log('Message:', result.message);
-      console.log('Cookies after:', document.cookie);
+      console.group("[Login] Attempting login");
+      console.log("Username:", data.username);
+      console.log("Password length:", data.password.length);
+      console.log(
+        "API URL:",
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+      );
+      console.log("Cookies before:", document.cookie);
       console.groupEnd();
-      
+
+      const result = await login(data.username, data.password);
+
+      console.group("[Login] Login result");
+      console.log("Success:", result.success);
+      console.log("User:", result.user);
+      console.log("Message:", result.message);
+      console.log("Cookies after:", document.cookie);
+      console.groupEnd();
+
       if (result.success) {
         // Wait a bit before redirect to ensure logs are saved
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push("/dashboard");
         }, 100);
       } else {
-        setError(result.message || 'Login failed');
+        setError("root", { message: result.message || "Login failed" });
       }
     } catch (err: any) {
-      console.group('[Login] Login error');
-      console.error('Error object:', err);
-      console.error('Response:', err.response);
-      console.error('Response data:', err.response?.data);
-      console.error('Response status:', err.response?.status);
-      console.error('Message:', err.message);
-      console.error('Cookies:', document.cookie);
+      console.group("[Login] Login error");
+      console.error("Error object:", err);
+      console.error("Response:", err.response);
+      console.error("Response data:", err.response?.data);
+      console.error("Response status:", err.response?.status);
+      console.error("Message:", err.message);
+      console.error("Cookies:", document.cookie);
       console.groupEnd();
-      
-      const errorMessage = err.response?.data?.detail || err.message || 'Invalid credentials';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
+
+      const errorMessage =
+        err.response?.data?.detail || err.message || "Invalid credentials";
+      setError("root", { message: errorMessage });
     }
   };
 
   return (
-    <div className="auth-page">
-      <div className="auth-card">
-        <div className="auth-header">
-          <div className="auth-logo">M</div>
-          <h1 className="auth-title">С возвращением!</h1>
-          <p className="auth-subtitle">Войдите в личный кабинет Mango Office</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 w-full font-sans">
+      <div className="bg-white p-12 rounded-2xl shadow-soft border border-gray-200 w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-mango-yellow text-black font-black text-2xl rounded-lg mb-6">
+            M
+          </div>
+          <h1 className="text-2xl font-bold text-primary-900 mb-2">
+            С возвращением!
+          </h1>
+          <p className="text-sm text-gray-600 m-0">
+            Войдите в личный кабинет Mango Office
+          </p>
         </div>
 
-        {error && (
-          <div className="auth-flash">
+        {errors.root && (
+          <div className="mb-6 p-3 rounded-lg text-sm font-medium flex items-center gap-2.5 bg-error-50 text-error-600 border border-error-200">
             <span>⚠️</span>
-            {error}
+            {errors.root.message}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label className="form-label">Электронная почта</label>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          noValidate
+          className="space-y-5"
+        >
+          <div>
+            <label
+              htmlFor="username"
+              className="block text-sm font-semibold text-primary-800 mb-2"
+            >
+              Электронная почта
+            </label>
             <input
+              id="username"
               type="email"
-              name="username"
-              className="form-control"
+              className={`w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 box-border ${
+                errors.username
+                  ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
+                  : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
+              }`}
               placeholder="example@mail.com"
-              required
               autoComplete="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              {...register("username")}
             />
+            {errors.username && (
+              <div className="text-error-600 text-xs mt-1 leading-tight">
+                {errors.username.message}
+              </div>
+            )}
           </div>
 
-          <div className="form-group">
-            <label className="form-label">Пароль</label>
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-semibold text-primary-800 mb-2"
+            >
+              Пароль
+            </label>
             <input
+              id="password"
               type="password"
-              name="password"
-              className="form-control"
+              className={`w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 box-border ${
+                errors.password
+                  ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
+                  : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
+              }`}
               placeholder="••••••••"
-              required
               autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              {...register("password")}
             />
+            {errors.password && (
+              <div className="text-error-600 text-xs mt-1 leading-tight">
+                {errors.password.message}
+              </div>
+            )}
           </div>
 
-          <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? 'Вход...' : 'Войти в систему'}
+          <button
+            type="submit"
+            className="w-full py-3 bg-primary-900 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 mt-2 disabled:opacity-60 disabled:cursor-not-allowed hover:bg-primary-800 hover:-translate-y-px"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Вход..." : "Войти в систему"}
           </button>
         </form>
 
-        <div className="auth-footer">
+        <div className="mt-8 text-center text-xs text-gray-400">
           &copy; 2025 Mango Office Call AI. Все права защищены.
         </div>
       </div>
@@ -196,13 +210,15 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="auth-page">
-        <div className="auth-card">
-          <div style={{ textAlign: 'center', padding: '40px' }}>Загрузка...</div>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 w-full font-sans">
+          <div className="bg-white p-12 rounded-2xl shadow-soft border border-gray-200 w-full max-w-md">
+            <div className="text-center py-10">Загрузка...</div>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

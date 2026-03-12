@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/* Custom CSS variables for Mango Office branding */
+:root {
+  --sidebar-width: 64px;
+  --accent-yellow: #FFD600;
+  --bg-gray: #F5F5F7;
+  --text-dark: #333;
+  --border-color: #E5E5E5;
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg-gray);
+  min-height: 100vh;
+  color: var(--text-dark);
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* App layout for dashboard pages */
+body:has(.app-container) {
+  display: flex;
+}
+
+.app-container {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: calc(100% - var(--sidebar-width));
+  min-width: 0;
+}
+
+/* Sidebar styles */
+.sidebar {
+  width: var(--sidebar-width);
+  background-color: #FFFFFF;
+  color: #333;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  z-index: 1000;
+  border-right: 1px solid var(--border-color);
+}
+
+/* Main content area */
+.main-content {
+  flex: 1;
+  padding: 24px;
+  background-color: var(--bg-gray);
+  min-height: calc(100vh - 60px);
+}
+
+/* Header */
+.header {
+  background: white;
+  border-bottom: 1px solid var(--border-color);
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .app-container {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Utility classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

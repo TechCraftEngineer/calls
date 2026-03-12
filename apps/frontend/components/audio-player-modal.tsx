@@ -1,33 +1,39 @@
-'use client';
+"use client";
 
-import { API_BASE_URL } from '@/lib/api';
-import AudioPlayer from './AudioPlayer';
+import { API_BASE_URL } from "@/lib/api";
+import AudioPlayer from "./audio-player";
 
 interface AudioPlayerModalProps {
-    filename: string;
-    number: string;
-    onClose: () => void;
+  filename: string;
+  number: string;
+  onClose: () => void;
 }
 
-export default function AudioPlayerModal({ filename, number, onClose }: AudioPlayerModalProps) {
-    const audioUrl = `${API_BASE_URL}/api/records/${filename}`;
+export default function AudioPlayerModal({
+  filename,
+  number,
+  onClose,
+}: AudioPlayerModalProps) {
+  const audioUrl = `${API_BASE_URL}/api/records/${filename}`;
 
-    return (
-        <div className="audio-modal-overlay" onClick={onClose}>
-            <div className="audio-modal-content" onClick={e => e.stopPropagation()}>
-                <div className="audio-modal-header">
-                    <div className="audio-modal-title">
-                        Запись звонка: <strong>{number}</strong>
-                    </div>
-                    <button className="audio-modal-close" onClick={onClose}>&times;</button>
-                </div>
+  return (
+    <div className="audio-modal-overlay" onClick={onClose}>
+      <div className="audio-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="audio-modal-header">
+          <div className="audio-modal-title">
+            Запись звонка: <strong>{number}</strong>
+          </div>
+          <button className="audio-modal-close" onClick={onClose}>
+            &times;
+          </button>
+        </div>
 
-                <div className="audio-modal-body">
-                    <AudioPlayer src={audioUrl} autoPlay={true} />
-                </div>
-            </div>
+        <div className="audio-modal-body">
+          <AudioPlayer src={audioUrl} autoPlay={true} />
+        </div>
+      </div>
 
-            <style jsx>{`
+      <style jsx>{`
                 .audio-modal-overlay {
                     position: fixed;
                     top: 0;
@@ -85,6 +91,6 @@ export default function AudioPlayerModal({ filename, number, onClose }: AudioPla
                     padding-bottom: 8px;
                 }
             `}</style>
-        </div>
-    );
+    </div>
+  );
 }

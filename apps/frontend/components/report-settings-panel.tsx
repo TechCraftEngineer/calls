@@ -2,7 +2,7 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import type { User } from "@/lib/auth";
-import ReportSettingsFormBody from "./ReportSettingsFormBody";
+import ReportSettingsFormBody from "./report-settings-form-body";
 
 type UserSettings = {
   username?: string;

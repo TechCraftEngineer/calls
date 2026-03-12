@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
-import { getCurrentUser, User } from '@/lib/auth';
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
-import Metrics from '@/components/Metrics';
-import CallList from '@/components/CallList';
-import CustomDropdown from '@/components/CustomDropdown';
-import AudioPlayerModal from '@/components/AudioPlayerModal';
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import AudioPlayerModal from "@/components/audio-player-modal";
+import CallList from "@/components/call-list";
+import CustomDropdown from "@/components/custom-dropdown";
+import Header from "@/components/header";
+import Metrics from "@/components/metrics";
+import Sidebar from "@/components/sidebar";
+import api from "@/lib/api";
+import { getCurrentUser, type User } from "@/lib/auth";
 
 interface Call {
   id: number;
@@ -66,33 +66,36 @@ export default function DashboardPage() {
     total_calls: 0,
     transcribed: 0,
     avg_duration: 0,
-    last_sync: null
+    last_sync: null,
   });
   const [pagination, setPagination] = useState<Pagination>({
     total: 0,
     page: 1,
     per_page: 15,
-    total_pages: 0
+    total_pages: 0,
   });
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    q: '',
-    date_from: '',
-    date_to: '',
-    direction: 'all',
-    manager: '',
-    status: 'all',
+    q: "",
+    date_from: "",
+    date_to: "",
+    direction: "all",
+    manager: "",
+    status: "all",
     value: [] as number[],
     operator: [] as string[],
   });
-  const [activeAudio, setActiveAudio] = useState<{ filename: string; number: string } | null>(null);
+  const [activeAudio, setActiveAudio] = useState<{
+    filename: string;
+    number: string;
+  } | null>(null);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const currentUser = await getCurrentUser();
       if (!currentUser) {
-        router.push('/');
+        router.push("/");
         return;
       }
       setUser(currentUser);
@@ -111,22 +114,29 @@ export default function DashboardPage() {
       });
 
       setCalls((result.calls || []) as CallWithDetails[]);
-      setMetrics((result.metrics ?? {
-        total_calls: 0,
-        transcribed: 0,
-        avg_duration: 0,
-        last_sync: null
-      }) as unknown as MetricsData);
+      setMetrics(
+        (result.metrics ?? {
+          total_calls: 0,
+          transcribed: 0,
+          avg_duration: 0,
+          last_sync: null,
+        }) as unknown as MetricsData,
+      );
       setPagination({
         total: (result.pagination?.total ?? 0) as number,
         page: (result.pagination?.page ?? 1) as number,
         per_page: (result.pagination?.per_page ?? 15) as number,
-        total_pages: (result.pagination?.total_pages ?? 0) as number
+        total_pages: (result.pagination?.total_pages ?? 0) as number,
       });
     } catch (error: unknown) {
-      console.error('Failed to load dashboard data:', error);
-      if (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'UNAUTHORIZED') {
-        router.push('/');
+      console.error("Failed to load dashboard data:", error);
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        (error as { code?: string }).code === "UNAUTHORIZED"
+      ) {
+        router.push("/");
       }
     } finally {
       setLoading(false);
@@ -138,7 +148,7 @@ export default function DashboardPage() {
   }, [loadData]);
 
   const handlePageChange = (newPage: number) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
+    setPagination((prev) => ({ ...prev, page: newPage }));
   };
 
   return (
@@ -148,10 +158,19 @@ export default function DashboardPage() {
 
       <main className="main-content">
         <div className="dashboard-page">
-
           <section className="card">
-            <div className="section-title" style={{ marginBottom: '24px' }}>
-              Последние звонки <span style={{ fontSize: '12px', color: '#ff4d4f', cursor: 'pointer', marginLeft: '4px' }}>?</span>
+            <div className="section-title" style={{ marginBottom: "24px" }}>
+              Последние звонки{" "}
+              <span
+                style={{
+                  fontSize: "12px",
+                  color: "#ff4d4f",
+                  cursor: "pointer",
+                  marginLeft: "4px",
+                }}
+              >
+                ?
+              </span>
             </div>
 
             <div className="filters-grid">
@@ -160,7 +179,9 @@ export default function DashboardPage() {
                 <select
                   className="select-input"
                   value={filters.direction}
-                  onChange={e => setFilters({ ...filters, direction: e.target.value })}
+                  onChange={(e) =>
+                    setFilters({ ...filters, direction: e.target.value })
+                  }
                 >
                   <option value="all">Все</option>
                   <option value="incoming">Входящие</option>
@@ -173,7 +194,9 @@ export default function DashboardPage() {
                 <select
                   className="select-input"
                   value={filters.status}
-                  onChange={e => setFilters({ ...filters, status: e.target.value })}
+                  onChange={(e) =>
+                    setFilters({ ...filters, status: e.target.value })
+                  }
                 >
                   <option value="all">Все</option>
                   <option value="missed">Не принятые</option>
@@ -187,70 +210,93 @@ export default function DashboardPage() {
                   type="manager"
                   label="Выбрать"
                   value={filters.manager}
-                  onChange={val => setFilters({ ...filters, manager: val as string })}
+                  onChange={(val) =>
+                    setFilters({ ...filters, manager: val as string })
+                  }
                 />
               </div>
 
               <div className="filter-item">
                 <span className="filter-label">Ценность</span>
-                <CustomDropdown 
-                  type="value" 
-                  label="Ценность (Любая)" 
-                  value={filters.value} 
-                  onChange={(val) => setFilters({ ...filters, value: val as number[] })} 
+                <CustomDropdown
+                  type="value"
+                  label="Ценность (Любая)"
+                  value={filters.value}
+                  onChange={(val) =>
+                    setFilters({ ...filters, value: val as number[] })
+                  }
                 />
               </div>
 
               <div className="filter-item">
                 <span className="filter-label">Оператор</span>
-                <CustomDropdown 
-                  type="operator" 
-                  label="Оператор (Все)" 
-                  value={filters.operator} 
-                  onChange={(val) => setFilters({ ...filters, operator: val as string[] })} 
+                <CustomDropdown
+                  type="operator"
+                  label="Оператор (Все)"
+                  value={filters.operator}
+                  onChange={(val) =>
+                    setFilters({ ...filters, operator: val as string[] })
+                  }
                 />
               </div>
 
-              <div className="filter-item" style={{ minWidth: '150px' }}>
+              <div className="filter-item" style={{ minWidth: "150px" }}>
                 <label className="filter-label">ДАТА ОТ</label>
                 <input
                   type="date"
                   className="date-input"
                   value={filters.date_from}
-                  onChange={e => setFilters({ ...filters, date_from: e.target.value })}
+                  onChange={(e) =>
+                    setFilters({ ...filters, date_from: e.target.value })
+                  }
                   onClick={(e) => (e.currentTarget as any).showPicker?.()}
                 />
               </div>
 
-              <div className="filter-item" style={{ minWidth: '150px' }}>
+              <div className="filter-item" style={{ minWidth: "150px" }}>
                 <label className="filter-label">ДАТА ДО</label>
                 <input
                   type="date"
                   className="date-input"
                   value={filters.date_to}
-                  onChange={e => setFilters({ ...filters, date_to: e.target.value })}
+                  onChange={(e) =>
+                    setFilters({ ...filters, date_to: e.target.value })
+                  }
                   onClick={(e) => (e.currentTarget as any).showPicker?.()}
                 />
               </div>
 
               <div className="filter-item-btn">
-                <button className="apply-btn" onClick={() => setPagination(p => ({ ...p, page: 1 }))} style={{ width: '100%' }}>Найти</button>
+                <button
+                  className="apply-btn"
+                  onClick={() => setPagination((p) => ({ ...p, page: 1 }))}
+                  style={{ width: "100%" }}
+                >
+                  Найти
+                </button>
               </div>
             </div>
 
-            <div style={{ marginTop: '64px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', gap: '8px' }}>
+            <div
+              style={{
+                marginTop: "64px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ display: "flex", gap: "8px" }}>
                 <button
                   className="page-btn"
                   style={{
-                    borderRadius: '20px',
-                    padding: '0 16px',
-                    height: '32px',
-                    background: 'transparent',
-                    border: '1px solid #eee',
-                    color: pagination.page <= 1 ? '#CCC' : '#888',
-                    fontSize: '13px',
-                    fontWeight: 600
+                    borderRadius: "20px",
+                    padding: "0 16px",
+                    height: "32px",
+                    background: "transparent",
+                    border: "1px solid #eee",
+                    color: pagination.page <= 1 ? "#CCC" : "#888",
+                    fontSize: "13px",
+                    fontWeight: 600,
                   }}
                   disabled={pagination.page <= 1}
                   onClick={() => handlePageChange(pagination.page - 1)}
@@ -258,22 +304,25 @@ export default function DashboardPage() {
                   Назад
                 </button>
 
-                {Array.from({ length: Math.min(pagination.total_pages, 5) }, (_, i) => i + 1).map(p => (
+                {Array.from(
+                  { length: Math.min(pagination.total_pages, 5) },
+                  (_, i) => i + 1,
+                ).map((p) => (
                   <button
                     key={p}
                     style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      border: 'none',
-                      background: pagination.page === p ? '#FFD600' : '#333',
-                      color: pagination.page === p ? '#000' : '#fff',
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                      border: "none",
+                      background: pagination.page === p ? "#FFD600" : "#333",
+                      color: pagination.page === p ? "#000" : "#fff",
                       fontWeight: 700,
-                      fontSize: '13px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                     onClick={() => handlePageChange(p)}
                   >
@@ -283,21 +332,27 @@ export default function DashboardPage() {
 
                 {pagination.total_pages > 5 && (
                   <>
-                    <span style={{ color: '#999', fontSize: '13px' }}>...</span>
+                    <span style={{ color: "#999", fontSize: "13px" }}>...</span>
                     <button
                       style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        border: 'none',
-                        background: pagination.page === pagination.total_pages ? '#FFD600' : '#333',
-                        color: pagination.page === pagination.total_pages ? '#000' : '#fff',
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "50%",
+                        border: "none",
+                        background:
+                          pagination.page === pagination.total_pages
+                            ? "#FFD600"
+                            : "#333",
+                        color:
+                          pagination.page === pagination.total_pages
+                            ? "#000"
+                            : "#fff",
                         fontWeight: 700,
-                        fontSize: '13px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
+                        fontSize: "13px",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                       onClick={() => handlePageChange(pagination.total_pages)}
                     >
@@ -309,14 +364,17 @@ export default function DashboardPage() {
                 <button
                   className="page-btn"
                   style={{
-                    borderRadius: '20px',
-                    padding: '0 16px',
-                    height: '32px',
-                    background: 'transparent',
-                    border: '1px solid #eee',
-                    color: pagination.page >= pagination.total_pages ? '#CCC' : '#888',
-                    fontSize: '13px',
-                    fontWeight: 600
+                    borderRadius: "20px",
+                    padding: "0 16px",
+                    height: "32px",
+                    background: "transparent",
+                    border: "1px solid #eee",
+                    color:
+                      pagination.page >= pagination.total_pages
+                        ? "#CCC"
+                        : "#888",
+                    fontSize: "13px",
+                    fontWeight: 600,
                   }}
                   disabled={pagination.page >= pagination.total_pages}
                   onClick={() => handlePageChange(pagination.page + 1)}
@@ -325,45 +383,83 @@ export default function DashboardPage() {
                 </button>
               </div>
 
-              <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#999', fontSize: '14px' }}>🔍</span>
+              <div
+                style={{ display: "flex", gap: "32px", alignItems: "center" }}
+              >
+                <div style={{ position: "relative" }}>
+                  <span
+                    style={{
+                      position: "absolute",
+                      left: "10px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#999",
+                      fontSize: "14px",
+                    }}
+                  >
+                    🔍
+                  </span>
                   <input
                     type="text"
                     className="text-input"
                     placeholder="Поиск..."
-                    style={{ paddingLeft: '32px', width: '240px', background: '#fff', border: '1px solid #eee' }}
+                    style={{
+                      paddingLeft: "32px",
+                      width: "240px",
+                      background: "#fff",
+                      border: "1px solid #eee",
+                    }}
                     value={filters.q}
-                    onChange={e => setFilters({ ...filters, q: e.target.value })}
+                    onChange={(e) =>
+                      setFilters({ ...filters, q: e.target.value })
+                    }
                   />
                 </div>
                 <button className="xls-download-btn">
-                  <span style={{ fontSize: '18px', opacity: 0.4 }}>📄</span> Скачать в xls за сегодня
+                  <span style={{ fontSize: "18px", opacity: 0.4 }}>📄</span>{" "}
+                  Скачать в xls за сегодня
                 </button>
               </div>
             </div>
           </section>
 
-          <div className="card" style={{ padding: 0, minHeight: '200px', marginTop: '54px' }}>
+          <div
+            className="card"
+            style={{ padding: 0, minHeight: "200px", marginTop: "54px" }}
+          >
             {calls.length === 0 && !loading ? (
-              <div style={{ textAlign: 'center', color: '#999', fontSize: '14px' }}>
+              <div
+                style={{ textAlign: "center", color: "#999", fontSize: "14px" }}
+              >
                 Нет данных для отображения
               </div>
             ) : (
-              <CallList 
-                calls={calls} 
-                onPlay={(filename, number) => setActiveAudio({ filename, number })} 
+              <CallList
+                calls={calls}
+                onPlay={(filename, number) =>
+                  setActiveAudio({ filename, number })
+                }
                 user={user}
                 onCallDeleted={(callId) => {
-                  setCalls(prev => prev.filter(item => item.call.id !== callId));
+                  setCalls((prev) =>
+                    prev.filter((item) => item.call.id !== callId),
+                  );
                   loadData();
                 }}
                 onRecommendationsGenerated={(callId, recommendations) => {
-                  setCalls(prev => prev.map(item =>
-                    item.call.id === callId
-                      ? { ...item, evaluation: { ...(item.evaluation || {}), manager_recommendations: recommendations } }
-                      : item
-                  ));
+                  setCalls((prev) =>
+                    prev.map((item) =>
+                      item.call.id === callId
+                        ? {
+                            ...item,
+                            evaluation: {
+                              ...(item.evaluation || {}),
+                              manager_recommendations: recommendations,
+                            },
+                          }
+                        : item,
+                    ),
+                  );
                 }}
               />
             )}
