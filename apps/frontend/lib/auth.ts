@@ -1,6 +1,11 @@
 /** Authentication utilities. */
 
-import { restPost, restGet } from "./api";
+import {
+  getCurrentUser as betterAuthGetCurrentUser,
+  isAuthenticated as betterAuthIsAuthenticated,
+  login as betterAuthLogin,
+  logout as betterAuthLogout,
+} from "./better-auth";
 
 export interface User {
   id: number;
@@ -20,25 +25,8 @@ export interface LoginResponse {
   user?: User;
 }
 
-export async function login(username: string, password: string): Promise<LoginResponse> {
-  return restPost<LoginResponse>("/auth/login", { username, password });
-}
-
-export async function logout(): Promise<void> {
-  await restPost("/auth/logout");
-}
-
-export async function getCurrentUser(): Promise<User | null> {
-  try {
-    return await restGet<User>("/auth/me");
-  } catch {
-    return null;
-  }
-}
-
-export function isAuthenticated(): boolean {
-  if (typeof document !== "undefined") {
-    return document.cookie.includes("session=");
-  }
-  return false;
-}
+// Экспортируем Better Auth функции с сохранением совместимости
+export const login = betterAuthLogin;
+export const logout = betterAuthLogout;
+export const getCurrentUser = betterAuthGetCurrentUser;
+export const isAuthenticated = betterAuthIsAuthenticated;

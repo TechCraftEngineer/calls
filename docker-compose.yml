@@ -50,7 +50,50 @@ services:
       - 5432:5432
     volumes:
       - postgres:/var/lib/postgresql/data
+      - ./packages/db/drizzle:/app/migrations
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: acme
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Run database migrations
+  migrate:
+    build:
+      context: .
+      dockerfile: packages/db/Dockerfile
+    container_name: migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_URL: postgres://postgres:password@postgres:5432/acme
+    command: ["bun", "run", "db:migrate"]
+    profiles: ["migration"]
+
+  # New backend server (TypeScript + Hono + oRPC)
+  backend-server:
+    build:
+      context: .
+      dockerfile: apps/backend-server/Dockerfile
+    container_name: backend-server
+    restart: always
+    ports:
+      - 8000:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_URL: postgres://postgres:password@postgres:5432/acme
+      BACKEND_PORT: 8000
+      CORS_ORIGINS: http://localhost:3000
+      DEPLOYMENT_ENV: docker
+    volumes:
+      - ./apps/backend/data:/app/data
+      - ./records:/app/records
+      - ./logs:/app/logs
+    profiles: ["backend"]
