@@ -1,0 +1,195 @@
+def transcribe_audio(
+    audio_path: Path,
+    operator_internal_number: Optional[str] = None,
+    direction: Optional[str] = None,
+    enable_diarization: bool = True,
+    speakers_count: int = 2
+) -> Optional[str]:
+    """
+    Транскрибирует аудио файл через SaluteSpeech API.
+    
+    Диаризация всегда включена. Если файл MP3 и не 16kHz, он будет автоматически
+    конвертирован в WAV 16kHz моно для поддержки диаризации.
+    
+    Args:
+        audio_path: Путь к аудио файлу (MP3 или WAV)
+        operator_internal_number: Внутренний номер оператора (не используется, для совместимости)
+        direction: Направление звонка (не используется, для совместимости)
+        enable_diarization: Включить диаризацию (разделение спикеров) - всегда True
+        speakers_count: Ожидаемое количество спикеров
+        
+    Returns:
+        Текст транскрипции с разделением по спикерам в формате [A]: текст или None в случае ошибки
+    """
+    # Trace logging with absolute path to records folder for reliability
+    trace_log = Path(app_config.settings.RECORDS_DIR) / "salute_trace.log"
+    try:
+        with open(trace_log, "a", encoding="utf-8") as trace_f:
+            trace_f.write(f"\n[{time.ctime()}] START transcription for: {audio_path.name}\n")
+            trace_f.write(f"[{time.ctime()}] Config: verify_ssl={app_config.settings.SALUTE_SPEECH_VERIFY_SSL}\n")
+            trace_f.write(f"[{time.ctime()}] Project Root: {app_config.PROJECT_ROOT if hasattr(app_config, 'PROJECT_ROOT') else 'N/A'}\n")
+    except Exception as e:
+        logger.warning(f"Could not write to trace log initial: {e}")
+    
+    logger.info(f"[SALUTESPEECH] Starting transcription for: {audio_path.name}")
+    logger.info(f"[SALUTESPEECH] Full path: {audio_path.absolute()}")
+    logger.info(f"[SALUTESPEECH] File exists: {audio_path.exists()}")
+    
+    if not audio_path.exists():
+        error_msg = f"Audio file not found: {audio_path.absolute()}"
+        logger.error(f"[SALUTESPEECH] {error_msg}")
+        return None
+    
+    try:
+        cfg = SaluteSpeechConfig.from_env()
+        if not cfg.client_id or not cfg.authorization_key:
+            error_msg = "SaluteSpeech credentials not configured"
+            logger.error(f"[SALUTESPEECH] {error_msg}")
+            return None
+        
+        client = SaluteSpeechClient(cfg)
+        try:
+            token = client.get_access_token()
+            
+            # Определяем параметры аудио
+            sample_rate, channels = _detect_audio_params(audio_path)
+            
+            try:
+                with open(trace_log, "a", encoding="utf-8") as trace_f:
+                    trace_f.write(f"[{time.ctime()}] Params: sr={sample_rate}, ch={channels}\n")
+            except Exception: pass
+            
+            audio_encoding = "MP3" if audio_path.suffix.lower() == ".mp3" else "PCM_S16LE"
+            
+            if not sample_rate:
+                sample_rate = 16000
+            
+            # Force general model with diarization
+            model = "general"
+            enable_diarization = True
+            
+            # Convert to WAV 16kHz mono if needed
+            upload_path = audio_path
+            need_conversion = (sample_rate != 16000 or channels != 1 or audio_path.suffix.lower() != ".wav")
+            
+            try:
+                with open(trace_log, "a", encoding="utf-8") as trace_f:
+                    trace_f.write(f"[{time.ctime()}] Need conversion: {need_conversion}\n")
+            except Exception: pass
+
+            if need_conversion:
+                converted = audio_path.parent / f"{audio_path.stem}.salutespeech_16k.wav"
+                if _convert_mp3_to_wav_16k_mono(audio_path, converted, logger=logger):
+                    upload_path = converted
+                    sample_rate = 16000
+                    channels = 1
+                    audio_encoding = "PCM_S16LE"
+                else:
+                    logger.warning(f"[SALUTESPEECH] Conversion failed, using original file")
+            
+            logger.info(f"[SALUTESPEECH] Uploading audio file: {upload_path.name}")
+            request_file_id = client.upload_audio(path=str(upload_path))
+            
+            extra = {
+                "speaker_separation_options": {
+                    "enable": True,
+                    "count": max(1, int(speakers_count)),
+                    "enable_only_main_speaker": False,
+                }
+            }
+            
+            task_id = client.create_recognition_task(
+                request_file_id=request_file_id,
+                model=model,
+                audio_encoding=audio_encoding,
+                sample_rate=sample_rate,
+                channels_count=channels or 1,
+                extra=extra,
+            )
+            
+            # Poll status
+            t0 = time.time()
+            response_file_id = None
+            while True:
+                payload = client.get_task(task_id=task_id)
+                result = payload.get("result") or {}
+                status = result.get("status") or payload.get("status")
+                response_file_id = result.get("response_file_id") or response_file_id
+                
+                if status == "DONE":
+                    break
+                if status in {"FAILED", "CANCELLED"}:
+                    raise SaluteSpeechError(f"Task {task_id} failed with status {status}")
+                if time.time() - t0 > 180:
+                    raise SaluteSpeechError(f"Timeout waiting for task {task_id}")
+                time.sleep(3.0)
+            
+            content = client.download_result(response_file_id=response_file_id)
+            result_obj = json.loads(content.decode("utf-8"))
+            
+            try:
+                with open(trace_log, "a", encoding="utf-8") as trace_f:
+                    trace_f.write(f"[{time.ctime()}] Result downloaded, size: {len(content)}\n")
+                    trace_f.write(f"[{time.ctime()}] Result keys: {list(result_obj.keys()) if isinstance(result_obj, dict) else 'list'}\n")
+            except Exception: pass
+
+            chunks = []
+            if isinstance(result_obj, list):
+                chunks = result_obj
+            elif isinstance(result_obj, dict):
+                chunks = result_obj.get("chunks", [result_obj])
+            
+            formatted_lines = []
+            speaker_map = {}
+            next_letter = ord('A')
+            
+            for chunk in chunks:
+                if not isinstance(chunk, dict): continue
+                results = chunk.get("results", [])
+                if not isinstance(results, list): continue
+                
+                speaker_id = None
+                speaker_info = chunk.get("speaker_info")
+                if isinstance(speaker_info, dict):
+                    speaker_id = speaker_info.get("speaker_id")
+                
+                for item in results:
+                    text = (item.get("normalized_text") or item.get("text") or "").strip()
+                    if not text: continue
+                    
+                    prefix = "[A]: "
+                    if speaker_id is not None and speaker_id != -1:
+                        if speaker_id not in speaker_map:
+                            speaker_map[speaker_id] = chr(next_letter)
+                            next_letter += 1
+                        prefix = f"[{speaker_map[speaker_id]}]: "
+                    
+                    formatted_lines.append(f"{prefix}{text}")
+
+            # Deduplicate
+            deduped = []
+            for line in formatted_lines:
+                if not deduped or deduped[-1] != line:
+                    deduped.append(line)
+            
+            final_text = "\n".join(deduped)
+            
+            try:
+                with open(trace_log, "a", encoding="utf-8") as trace_f:
+                    trace_f.write(f"[{time.ctime()}] Final lines: {len(deduped)}\n")
+            except Exception: pass
+
+            if not final_text:
+                return None
+            return final_text
+            
+        finally:
+            client.close()
+            
+    except Exception as e:
+        logger.error(f"[SALUTESPEECH] Error in transcribe_audio: {e}", exc_info=True)
+        try:
+            with open(trace_log, "a", encoding="utf-8") as trace_f:
+                trace_f.write(f"[{time.ctime()}] EXCEPTION: {e}\n")
+        except Exception: pass
+        return None

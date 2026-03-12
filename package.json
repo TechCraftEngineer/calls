@@ -1,0 +1,40 @@
+{
+  "name": "@acme/root",
+  "private": true,
+  "engines": {
+    "node": "^22.21.0",
+    "bun": "^1.3.5"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "clean": "git clean -xdf node_modules",
+    "clean:workspaces": "turbo run clean",
+    "auth:generate": "bun --filter @acme/auth generate",
+    "db:push": "turbo -F @acme/db push",
+    "db:studio": "turbo -F @acme/db studio",
+    "dev": "turbo watch dev --continue",
+    "dev:next": "turbo watch dev -F @acme/app...",
+    "format": "biome format . --skip-parse-errors",
+    "format:fix": "biome format --write . --skip-parse-errors",
+    "lint": "biome lint . --skip-parse-errors",
+    "lint:fix": "biome lint --write . --skip-parse-errors",
+    "check": "biome check . --skip-parse-errors",
+    "check:fix": "biome check --write . --skip-parse-errors",
+    "lint:ws": "bunx sherif@latest",
+    "postinstall": "bun lint:ws",
+    "typecheck": "turbo run typecheck",
+    "ui-add": "turbo run ui-add"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.6",
+    "@turbo/gen": "^2.8.16",
+    "turbo": "^2.8.16",
+    "typescript": "5.9.3"
+  },
+  "packageManager": "bun@1.3.6",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "tooling/*"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "name": "@acme/emails",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    ".react-email"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**"
+  ],
+  "scripts": {
+    "dev": "bun --env-file=../../.env run email dev -p 3002",
+    "build": "tsup",
+    "export": "email export"
+  },
+  "dependencies": {
+    "@acme/config": "workspace:*",
+    "@acme/tsconfig": "workspace:*",
+    "@radix-ui/colors": "3.0.0",
+    "@react-email/components": "1.0.9",
+    "@tailwindcss/typography": "0.5.19",
+    "nodemailer": "^8.0.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-email": "5.2.9",
+    "resend": "^6.9.3",
+    "sharp": "^0.34.5",
+    "tailwindcss": "4.2.1",
+    "tailwindcss-animate": "1.0.7",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@react-email/preview-server": "5.2.9",
+    "@types/node": "25.4.0",
+    "@types/nodemailer": "^7.0.11",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3"
+  }
+}
