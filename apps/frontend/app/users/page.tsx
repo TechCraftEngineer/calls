@@ -148,7 +148,7 @@ export default function UsersPage() {
       setCurrentUser(user);
 
       const list = await api.users.list();
-      setUsers(Array.isArray(list) ? list : []);
+      setUsers((Array.isArray(list) ? list : []) as ManagedUser[]);
     } catch (error: unknown) {
       console.error('Failed to load users:', error);
       if (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'FORBIDDEN') {
@@ -755,7 +755,8 @@ export default function UsersPage() {
                           if (!editUser) return;
                           try {
                             const list = await api.users.list();
-                            const updated = (Array.isArray(list) ? list : []).find((u: ManagedUser) => u.id === editUser.id);
+                            const arr = (Array.isArray(list) ? list : []) as ManagedUser[];
+                            const updated = arr.find(u => u.id === editUser.id);
                             if (updated) {
                               setEditUser(updated);
                               setEditForm(f => ({

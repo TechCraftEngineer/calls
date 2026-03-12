@@ -110,18 +110,18 @@ export default function DashboardPage() {
         operator: filters.operator?.length ? filters.operator : undefined,
       });
 
-      setCalls(result.calls || []);
-      setMetrics(result.metrics || {
+      setCalls((result.calls || []) as CallWithDetails[]);
+      setMetrics((result.metrics ?? {
         total_calls: 0,
         transcribed: 0,
         avg_duration: 0,
         last_sync: null
-      });
+      }) as unknown as MetricsData);
       setPagination({
-        total: result.pagination?.total ?? 0,
-        page: result.pagination?.page ?? 1,
-        per_page: result.pagination?.per_page ?? 15,
-        total_pages: result.pagination?.total_pages ?? 0
+        total: (result.pagination?.total ?? 0) as number,
+        page: (result.pagination?.page ?? 1) as number,
+        per_page: (result.pagination?.per_page ?? 15) as number,
+        total_pages: (result.pagination?.total_pages ?? 0) as number
       });
     } catch (error: unknown) {
       console.error('Failed to load dashboard data:', error);

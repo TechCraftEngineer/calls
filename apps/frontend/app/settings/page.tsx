@@ -64,7 +64,7 @@ export default function SettingsPage() {
         api.settings.getModels()
       ]);
 
-      const promptsArr: Prompt[] = Array.isArray(promptsList) ? promptsList : [];
+      const promptsArr: Prompt[] = (Array.isArray(promptsList) ? promptsList : []) as Prompt[];
       const promptsMap: Record<string, Prompt> = {};
       promptsArr.forEach((p: Prompt) => {
         promptsMap[p.key] = p;

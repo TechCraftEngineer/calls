@@ -54,7 +54,7 @@ function StatisticsPageContent() {
         date_from: filters.date_from || undefined,
         date_to: filters.date_to || undefined,
       });
-      setStats(result.statistics || []);
+      setStats((result.statistics || []) as StatsRow[]);
     } catch (error: unknown) {
       console.error('Failed to load stats:', error);
       if (error && typeof error === 'object' && 'code' in error && (error as { code?: string }).code === 'FORBIDDEN') {

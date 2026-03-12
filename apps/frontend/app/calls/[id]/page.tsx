@@ -73,9 +73,9 @@ export default function CallDetailPage() {
       setUser(currentUser);
 
       const result = await api.calls.get({ call_id: Number(id) });
-      setCall(result.call);
-      setTranscript(result.transcript ?? null);
-      setEvaluation(result.evaluation ?? null);
+      setCall(result.call as CallDetail);
+      setTranscript((result.transcript ?? null) as TranscriptDetail | null);
+      setEvaluation((result.evaluation ?? null) as EvaluationDetail | null);
     } catch (error) {
       console.error('Failed to load call detail:', error);
     } finally {

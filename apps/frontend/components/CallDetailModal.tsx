@@ -99,9 +99,9 @@ export default function CallDetailModal({ callId, onClose, user, onCallDeleted }
     try {
       setLoading(true);
       const result = await api.calls.get({ call_id: callId });
-      setCall(result.call);
-      setTranscript(result.transcript ?? null);
-      setEvaluation(result.evaluation ?? null);
+      setCall(result.call as CallDetail);
+      setTranscript((result.transcript ?? null) as TranscriptDetail | null);
+      setEvaluation((result.evaluation ?? null) as EvaluationDetail | null);
       if (!result.transcript?.raw_text) setShowRaw(false);
     } catch (error) {
       console.error('Failed to load call detail:', error);
