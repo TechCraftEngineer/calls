@@ -152,19 +152,13 @@ export default function CustomDropdown({
             {valueOptions.map((val) => (
               <label
                 key={val}
-                className="dropdown-option"
-                style={{
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
+                className="dropdown-option cursor-pointer flex items-center gap-2"
               >
                 <input
                   type="checkbox"
                   checked={selectedValues.includes(val)}
                   onChange={(e) => handleValueChange(val, e.target.checked)}
-                  style={{ cursor: "pointer" }}
+                  className="cursor-pointer"
                 />
                 <span>{val}</span>
               </label>
@@ -215,13 +209,7 @@ export default function CustomDropdown({
             {operatorOptions.map((op) => (
               <label
                 key={op.value}
-                className="dropdown-option"
-                style={{
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
+                className="dropdown-option cursor-pointer flex items-center gap-2"
               >
                 <input
                   type="checkbox"
@@ -229,7 +217,7 @@ export default function CustomDropdown({
                   onChange={(e) =>
                     handleOperatorChange(op.value, e.target.checked)
                   }
-                  style={{ cursor: "pointer" }}
+                  className="cursor-pointer"
                 />
                 <span>{op.label}</span>
               </label>

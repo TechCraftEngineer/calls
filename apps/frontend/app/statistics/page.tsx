@@ -60,7 +60,7 @@ function StatisticsPageContent() {
       });
       setStats((result.statistics || []) as StatsRow[]);
     } catch (error: unknown) {
-      console.error("Failed to load stats:", error);
+      // Убрали console.error для продакшена
       if (
         error &&
         typeof error === "object" &&

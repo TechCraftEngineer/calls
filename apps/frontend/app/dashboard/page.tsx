@@ -129,7 +129,7 @@ export default function DashboardPage() {
         total_pages: (result.pagination?.total_pages ?? 0) as number,
       });
     } catch (error: unknown) {
-      console.error("Failed to load dashboard data:", error);
+      // Убрали console.error для продакшена
       if (
         error &&
         typeof error === "object" &&

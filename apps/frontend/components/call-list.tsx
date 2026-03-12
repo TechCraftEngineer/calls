@@ -157,7 +157,7 @@ const loadColumnOrder = (): string[] => {
 
     return [...validOrder, ...missingKeys];
   } catch (error) {
-    console.error("Failed to load column order from localStorage:", error);
+    // Убрали console.error для продакшена
     return DEFAULT_COLUMN_ORDER;
   }
 };
@@ -400,15 +400,9 @@ export default function CallList({
         (result as { recommendations?: string[] })?.recommendations ?? [];
       setRecommendations(recs);
       onRecommendationsGenerated?.(callId, recs);
-    } catch (error: unknown) {
-      console.error("Failed to generate recommendations:", error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Не удалось сформировать рекомендации";
-
-      alert(errorMessage);
-      setRecommendationsCallId(null);
+    } catch (error) {
+      // Убрали console.error для продакшена
+      alert("Не удалось сформировать рекомендации");
     } finally {
       setIsLoadingRecommendations(false);
     }

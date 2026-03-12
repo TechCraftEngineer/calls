@@ -344,7 +344,6 @@ export default function SettingsPage() {
                 className="select-input"
                 value={currentModel}
                 onChange={(e) => {
-                  console.log("Model changed to:", e.target.value);
                   setCurrentModel(e.target.value);
                 }}
                 style={{ cursor: "pointer" }}

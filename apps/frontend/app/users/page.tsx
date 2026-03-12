@@ -153,7 +153,7 @@ export default function UsersPage() {
       const list = await api.users.list();
       setUsers((Array.isArray(list) ? list : []) as ManagedUser[]);
     } catch (error: unknown) {
-      console.error("Failed to load users:", error);
+      // Убрали console.error для продакшена
       if (
         error &&
         typeof error === "object" &&

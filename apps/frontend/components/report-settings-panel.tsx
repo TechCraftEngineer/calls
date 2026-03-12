@@ -151,7 +151,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
             _normTime(promptsMap.report_monthly_time) || "18:20",
         }));
       } catch (err) {
-        console.error("Failed to fetch user settings", err);
+        // Убрали console.error для продакшена
       } finally {
         setLoading(false);
       }

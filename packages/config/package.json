@@ -1,14 +1,12 @@
 {
-  "name": "@acme/config",
+  "name": "@calls/config",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
+    ".": "./src/index.ts"
   },
+  "license": "MIT",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
@@ -18,16 +16,15 @@
   "scripts": {
     "build": "tsup",
     "build:watch": "tsup --watch",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "clean": "rm -rf *.tsbuildinfo .turbo dist",
+    "dev": "bun -b watch",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@t3-oss/env-core": "0.13.10",
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@acme/tsconfig": "workspace:*",
+    "@calls/tsconfig": "workspace:*",
     "tsup": "8.5.1",
     "typescript": "5.9.3"
   }

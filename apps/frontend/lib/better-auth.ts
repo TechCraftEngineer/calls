@@ -61,7 +61,7 @@ export async function logout() {
   try {
     await signOut();
   } catch (error) {
-    console.error("Logout error:", error);
+    // Убрали console.error для продакшена
   }
 }
 

@@ -1,5 +1,5 @@
 {
-  "name": "@acme/calls-app",
+  "name": "@calls/calls-app",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@acme/backend-api-client": "workspace:*",
+    "@calls/backend-api-client": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
     "@orpc/client": "^1.13.6",
     "axios": "^1.13.6",

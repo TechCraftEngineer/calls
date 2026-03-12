@@ -1,5 +1,5 @@
 {
-  "name": "@acme/db",
+  "name": "@calls/db",
   "private": true,
   "type": "module",
   "exports": {
@@ -13,32 +13,26 @@
       "default": "./src/client.ws.ts"
     },
     "./schema": {
-      "default": "./src/schema/index.ts"
-    }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
-    "format": "biome format .",
-    "lint": "biome lint .",
-    "check": "biome check .",
-    "push": "bun --env-file=../../.env run drizzle-kit push",
-    "studio": "bun --env-file=../../.env run drizzle-kit studio",
-    "drop": "bun --env-file=../../.env run src/scripts/drop-schema.ts",
+    "clean": "rm -rf *.tsbuildinfo .turbo",
+    "db:generate": "bunx drizzle-kit generate",
+    "db:migrate": "bunx drizzle-kit migrate",
+    "db:push": "bunx drizzle-kit push",
+    "db:studio": "bunx drizzle-kit studio",
+    "dev": "bun -b watch",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@acme/config": "workspace:*",
+    "@calls/config": "workspace:*",
     "@neondatabase/serverless": "^1.0.2",
     "@vercel/postgres": "0.10.0",
     "drizzle-orm": "0.45.1",
-    "drizzle-zod": "0.8.3",
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@acme/tsconfig": "workspace:*",
+    "@calls/tsconfig": "workspace:*",
     "@types/pg": "^8.18.0",
     "@types/ws": "^8.18.1",
     "drizzle-kit": "^0.31.9",

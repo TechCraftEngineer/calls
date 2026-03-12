@@ -28,15 +28,7 @@ function LoginForm() {
       try {
         const savedLogs = localStorage.getItem("api_logs");
         if (savedLogs) {
-          const logs = JSON.parse(savedLogs);
-          console.group("[Saved API Logs]");
-          logs.forEach((log: any) => {
-            console.log(`[${log.timestamp}] ${log.type}:`, log.data);
-          });
-          console.groupEnd();
-          console.log(
-            '💡 Tip: Use localStorage.getItem("api_logs") to see all saved logs',
-          );
+          // Removed console.log for production
         }
       } catch (e) {
         // Ignore errors
@@ -69,24 +61,7 @@ function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      console.group("[Login] Attempting login");
-      console.log("Username:", data.username);
-      console.log("Password length:", data.password.length);
-      console.log(
-        "API URL:",
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
-      );
-      console.log("Cookies before:", document.cookie);
-      console.groupEnd();
-
       const result = await login(data.username, data.password);
-
-      console.group("[Login] Login result");
-      console.log("Success:", result.success);
-      console.log("User:", result.user);
-      console.log("Message:", result.message);
-      console.log("Cookies after:", document.cookie);
-      console.groupEnd();
 
       if (result.success) {
         // Wait a bit before redirect to ensure logs are saved
@@ -97,15 +72,6 @@ function LoginForm() {
         setError("root", { message: result.message || "Login failed" });
       }
     } catch (err: any) {
-      console.group("[Login] Login error");
-      console.error("Error object:", err);
-      console.error("Response:", err.response);
-      console.error("Response data:", err.response?.data);
-      console.error("Response status:", err.response?.status);
-      console.error("Message:", err.message);
-      console.error("Cookies:", document.cookie);
-      console.groupEnd();
-
       const errorMessage =
         err.response?.data?.detail || err.message || "Invalid credentials";
       setError("root", { message: errorMessage });
