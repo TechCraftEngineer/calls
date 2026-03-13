@@ -75,6 +75,7 @@ export const transcripts = pgTable(
     callerName: text("caller_name"),
     callType: text("call_type"),
     callTopic: text("call_topic"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
   },
   (table) => ({
     callIdIdx: index("transcripts_call_id_idx").on(table.callId),

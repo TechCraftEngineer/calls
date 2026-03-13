@@ -43,6 +43,10 @@ export const env = createEnv({
     MEGAFON_FTP_USER: z.string().optional(),
     MEGAFON_FTP_PASSWORD: z.string().optional(),
 
+    // ASR (Speech-to-Text)
+    ASSEMBLYAI_API_KEY: z.string().optional(),
+    YANDEX_SPEECHKIT_API_KEY: z.string().optional(),
+
     // Inngest
     INNGEST_SIGNING_KEY: z.string().optional(),
     INNGEST_EVENT_KEY: z.string().optional(),
@@ -78,6 +82,8 @@ export const env = createEnv({
     MEGAFON_FTP_HOST: process.env.MEGAFON_FTP_HOST,
     MEGAFON_FTP_USER: process.env.MEGAFON_FTP_USER,
     MEGAFON_FTP_PASSWORD: process.env.MEGAFON_FTP_PASSWORD,
+    ASSEMBLYAI_API_KEY: process.env.ASSEMBLYAI_API_KEY,
+    YANDEX_SPEECHKIT_API_KEY: process.env.YANDEX_SPEECHKIT_API_KEY,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
     INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
     AWS_S3_ENDPOINT: process.env.AWS_S3_ENDPOINT,

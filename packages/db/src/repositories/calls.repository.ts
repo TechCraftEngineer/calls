@@ -188,6 +188,50 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     return result[0] ?? null;
   }
 
+  async upsertTranscript(data: {
+    callId: string;
+    text?: string | null;
+    rawText?: string | null;
+    title?: string | null;
+    sentiment?: string | null;
+    confidence?: number | null;
+    summary?: string | null;
+    metadata?: Record<string, unknown> | null;
+  }): Promise<string> {
+    const existing = await db
+      .select({ id: schema.transcripts.id })
+      .from(schema.transcripts)
+      .where(eq(schema.transcripts.callId, data.callId))
+      .limit(1);
+
+    const values = {
+      text: data.text ?? null,
+      rawText: data.rawText ?? null,
+      title: data.title ?? null,
+      sentiment: data.sentiment ?? null,
+      confidence: data.confidence ?? null,
+      summary: data.summary ?? null,
+      metadata: data.metadata ?? null,
+    };
+
+    if (existing[0]) {
+      await db
+        .update(schema.transcripts)
+        .set(values)
+        .where(eq(schema.transcripts.id, existing[0].id));
+      return existing[0].id;
+    }
+
+    const result = await db
+      .insert(schema.transcripts)
+      .values({
+        callId: data.callId,
+        ...values,
+      })
+      .returning({ id: schema.transcripts.id });
+    return result[0]?.id ?? "";
+  }
+
   async getEvaluation(callId: string): Promise<any | null> {
     const result = await db
       .select()

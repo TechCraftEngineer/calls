@@ -58,6 +58,19 @@ export class CallsService {
     return this.callsRepository.getTranscriptByCallId(callId);
   }
 
+  async upsertTranscript(data: {
+    callId: string;
+    text?: string | null;
+    rawText?: string | null;
+    title?: string | null;
+    sentiment?: string | null;
+    confidence?: number | null;
+    summary?: string | null;
+    metadata?: Record<string, unknown> | null;
+  }): Promise<string> {
+    return this.callsRepository.upsertTranscript(data);
+  }
+
   async getEvaluation(callId: string): Promise<any | null> {
     return this.callsRepository.getEvaluation(callId);
   }
