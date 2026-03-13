@@ -31,7 +31,7 @@ export default function Navbar({ user }: NavbarProps) {
 
       <div className="nav-links flex gap-6 ml-12 flex-1">
         <Link href={paths.dashboard.root} className="nav-link font-medium">
-          Дашборд
+          Панель
         </Link>
         <Link
           href={paths.statistics.root}
