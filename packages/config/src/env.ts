@@ -12,7 +12,7 @@ export const env = createEnv({
     AI_PROVIDER: z.enum(["openai", "openrouter"]).default("openai"),
     LANGFUSE_SECRET_KEY: z.string().optional(),
     LANGFUSE_PUBLIC_KEY: z.string().optional(),
-    LANGFUSE_HOST: z.string().optional(),
+    LANGFUSE_BASEURL: z.string().optional(),
 
     // Node environment
     NODE_ENV: z.enum(["development", "production", "test"]).optional(),
@@ -76,10 +76,9 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
     NEXT_PUBLIC_APP_SHORT_NAME: process.env.NEXT_PUBLIC_APP_SHORT_NAME,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
     LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY,
     LANGFUSE_PUBLIC_KEY: process.env.LANGFUSE_PUBLIC_KEY,
-    LANGFUSE_HOST: process.env.LANGFUSE_HOST,
+    LANGFUSE_BASEURL: process.env.LANGFUSE_BASEURL,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",

@@ -54,7 +54,7 @@ export default function SettingsPage() {
       setLoading(true);
       const user = await getCurrentUser();
       if (!user) {
-        router.push("/");
+        router.push("/auth/signin");
         return;
       }
       setCurrentUser(user);

@@ -25,8 +25,8 @@ export interface LoginResponse {
   user?: User;
 }
 
-// Экспортируем Better Auth функции с сохранением совместимости
 export const login = betterAuthLogin;
 export const logout = betterAuthLogout;
 export const getCurrentUser = betterAuthGetCurrentUser;
+/** @deprecated В React используйте useAuth().isAuthenticated. Для async — getCurrentUser() !== null. */
 export const isAuthenticated = betterAuthIsAuthenticated;

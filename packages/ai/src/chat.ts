@@ -2,7 +2,6 @@ import { openai } from "@ai-sdk/openai";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import { generateText, streamText } from "ai";
 import { z } from "zod";
-import { createTrace, logChatEvent } from "./tracing";
 import type { ChatBotConfig, ChatBotResponse, ChatMessage } from "./types";
 
 export function createChatBot(config: ChatBotConfig) {
@@ -23,16 +22,14 @@ export function createChatBot(config: ChatBotConfig) {
       : openai(validatedConfig.model);
 
   return {
-    async sendMessage(messages: ChatMessage[]): Promise<ChatBotResponse> {
-      const trace = createTrace("chat-message");
-      const traceId = trace?.id || "no-trace";
-
-      logChatEvent(traceId, "chat-start", {
-        messageCount: messages.length,
-        model: validatedConfig.model,
-        provider: validatedConfig.provider,
-      });
-
+    async sendMessage(
+      messages: ChatMessage[],
+      options?: {
+        userId?: string;
+        sessionId?: string;
+        tags?: string[];
+      },
+    ): Promise<ChatBotResponse> {
       const formattedMessages = messages.map((msg) => ({
         role: msg.role as "user" | "assistant" | "system",
         content: msg.content,
@@ -50,6 +47,17 @@ export function createChatBot(config: ChatBotConfig) {
           model,
           messages: formattedMessages,
           temperature: validatedConfig.temperature,
+          experimental_telemetry: {
+            isEnabled: true,
+            functionId: "chat-message",
+            metadata: {
+              ...(options?.userId && { userId: options.userId }),
+              ...(options?.sessionId && { sessionId: options.sessionId }),
+              ...(options?.tags && { tags: options.tags }),
+              provider: validatedConfig.provider,
+              model: validatedConfig.model,
+            },
+          },
         });
 
         const result = {
@@ -68,23 +76,9 @@ export function createChatBot(config: ChatBotConfig) {
             : undefined,
         };
 
-        logChatEvent(traceId, "chat-success", {
-          responseLength: response.text.length,
-          usage: result.usage,
-        });
-
-        trace?.update({
-          output: result,
-        });
-
         return result;
       } catch (error) {
         console.error("Chat bot error:", error);
-
-        logChatEvent(traceId, "chat-error", {
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
-
         throw new Error("Failed to generate response");
       }
     },

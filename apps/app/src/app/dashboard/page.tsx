@@ -95,7 +95,7 @@ export default function DashboardPage() {
       setLoading(true);
       const currentUser = await getCurrentUser();
       if (!currentUser) {
-        router.push("/");
+        router.push("/auth/signin");
         return;
       }
       setUser(currentUser);
@@ -136,7 +136,7 @@ export default function DashboardPage() {
         "code" in error &&
         (error as { code?: string }).code === "UNAUTHORIZED"
       ) {
-        router.push("/");
+        router.push("/auth/signin");
       }
     } finally {
       setLoading(false);

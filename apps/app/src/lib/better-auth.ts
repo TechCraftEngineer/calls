@@ -50,10 +50,10 @@ export async function login(username: string, password: string) {
       message: "Login successful",
       user: result.data?.user,
     };
-  } catch (error) {
+  } catch (err) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Login failed",
+      message: err instanceof Error ? err.message : "Login failed",
       user: undefined,
     };
   }
@@ -74,10 +74,12 @@ export async function getCurrentUser() {
 
     if (!user) return null;
 
-    // Convert Better Auth user to expected User interface
+    // Convert Better Auth user to expected User interface (username plugin adds username/displayUsername)
+    const u = user as { username?: string; displayUsername?: string };
     return {
       id: Number(user.id), // Convert string id to number
-      username: user.email || user.name || "unknown",
+      username:
+        u.username ?? u.displayUsername ?? user.email ?? user.name ?? "unknown",
       name: user.name || "Unknown",
       first_name: user.name?.split(" ")[0] || "",
       last_name: user.name?.split(" ")[1] || "",
@@ -95,14 +97,8 @@ export async function getCurrentUser() {
   }
 }
 
-/**
- * Быстрая проверка наличия cookie сессии (синхронная).
- * Для React-компонентов рекомендуется useAuth().isAuthenticated (опирается на сессию).
- * Для проверки вне React — getSession() или getCurrentUser().
- */
-export function isAuthenticated(): boolean {
-  if (typeof window !== "undefined") {
-    return document.cookie.includes("better-auth.session_token");
-  }
-  return false;
+/** Нативная проверка: React — useAuth().isAuthenticated, иначе — getSession() или getCurrentUser(). */
+export async function isAuthenticated(): Promise<boolean> {
+  const session = await authClient.getSession();
+  return !!session.data?.user;
 }

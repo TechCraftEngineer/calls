@@ -24,7 +24,10 @@
   "dependencies": {
     "@ai-sdk/openai": "3.0.41",
     "@calls/config": "workspace:*",
+    "@langfuse/otel": "^3.2.1",
+    "@langfuse/tracing": "^3.2.1",
     "@openrouter/ai-sdk-provider": "^1.5.4",
+    "@opentelemetry/sdk-trace-node": "^1.25.1",
     "ai": "6.0.116",
     "langfuse": "^3.2.1",
     "zod": "4.3.6"

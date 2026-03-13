@@ -47,7 +47,7 @@ function StatisticsPageContent() {
       setLoading(true);
       const currentUser = await getCurrentUser();
       if (!currentUser) {
-        router.push("/");
+        router.push("/auth/signin");
         return;
       }
       setUser(currentUser);

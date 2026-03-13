@@ -68,7 +68,7 @@ export default function CallDetailPage() {
       setLoading(true);
       const currentUser = await getCurrentUser();
       if (!currentUser) {
-        router.push("/");
+        router.push("/auth/signin");
         return;
       }
       setUser(currentUser);

@@ -1,3 +1,3 @@
 export { createChatBot, streamChatResponse } from "./chat";
-export { createTrace, getLangfuse, logChatEvent } from "./tracing";
+export { initializeLangfuseTracing, shutdownTracing } from "./otel";
 export type { ChatBotConfig, ChatMessage } from "./types";

@@ -16,7 +16,7 @@ export default function Sidebar({ user }: SidebarProps) {
 
   const handleLogout = async () => {
     await logout();
-    router.push("/");
+    router.push("/auth/signin");
   };
 
   const icons = {
