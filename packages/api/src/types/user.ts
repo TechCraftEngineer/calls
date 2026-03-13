@@ -49,7 +49,7 @@ export interface UserLike {
 }
 
 export interface ApiUser {
-  id: number;
+  id: string;
   username: string;
   name: string;
   givenName: string;
@@ -151,7 +151,7 @@ export function formatUserForApi(user: UserLike): ApiUser {
   const isAdmin = isAdminUser(user);
 
   return {
-    id: Number(user.id),
+    id: String(user.id),
     username: fields.username,
     name: user.name || "—",
     givenName: fields.givenName,

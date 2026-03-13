@@ -13,16 +13,21 @@ export class SystemRepository {
     actor: string,
     workspaceId?: number | null,
   ): Promise<void> {
-    await db.insert(schema.activityLog).values({
-      timestamp: new Date().toISOString(),
+    const values: any = {
+      timestamp: new Date(),
       level,
       message,
       actor,
-      workspaceId: workspaceId ?? null,
-    });
+    };
+
+    if (workspaceId) {
+      values.workspaceId = workspaceId;
+    }
+
+    await db.insert(schema.activityLog).values(values);
   }
 
-  async getLastActivity(): Promise<{ timestamp: string | null }> {
+  async getLastActivity(): Promise<{ timestamp: Date | null }> {
     const result = await db
       .select({ timestamp: schema.activityLog.timestamp })
       .from(schema.activityLog)

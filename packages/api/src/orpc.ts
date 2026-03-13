@@ -8,7 +8,7 @@ import {
   callsService,
   promptsService,
   systemRepository,
-  type usersService,
+  usersService,
   workspacesService,
 } from "@calls/db";
 import { ORPCError, os } from "@orpc/server";
@@ -33,7 +33,7 @@ function getWorkspaceIdFromHeaders(headers: Headers): number | null {
   }
   const cookie = headers.get("cookie");
   const match = cookie?.match(/\bactive_workspace_id=(\d+)/);
-  if (match) {
+  if (match && match[1]) {
     const n = parseInt(match[1], 10);
     if (!Number.isNaN(n) && n > 0) return n;
   }
@@ -43,9 +43,20 @@ function getWorkspaceIdFromHeaders(headers: Headers): number | null {
 export async function createBackendContext(opts: {
   headers: Headers;
   auth?: AuthLike;
-}) {
-  let user: Awaited<ReturnType<typeof usersService.getUserByUsername>> | null =
-    null;
+}): Promise<{
+  authService: any;
+  callsService: any;
+  promptsService: any;
+  systemRepository: any;
+  usersService: any;
+  workspacesService: any;
+  sessionUsername: string | null;
+  user: any;
+  authUserId: string | null;
+  workspaceId: number | null;
+  workspaceRole: WorkspaceRole | null;
+}> {
+  let user: any = null;
   let authUserId: string | null = null;
 
   if (opts.auth) {
@@ -59,12 +70,8 @@ export async function createBackendContext(opts: {
       if (username) {
         const profile = await usersService.getUserByUsername(username);
         user = profile
-          ? ({ ...profile, ...baUser } as Awaited<
-              ReturnType<typeof usersService.getUserByUsername>
-            >)
-          : (baUser as Awaited<
-              ReturnType<typeof usersService.getUserByUsername>
-            >);
+          ? ({ ...profile, ...baUser })
+          : baUser;
       }
     }
   }

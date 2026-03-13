@@ -153,6 +153,7 @@
         "@vercel/postgres": "0.10.0",
         "bcryptjs": "^2.4.3",
         "drizzle-orm": "0.45.1",
+        "pg": "^8.13.1",
         "zod": "4.3.6",
       },
       "devDependencies": {
@@ -197,9 +198,9 @@
       "name": "@calls/jobs",
       "dependencies": {
         "@calls/db": "workspace:*",
-        "basic-ftp": "^5.0.5",
+        "basic-ftp": "^5.2.0",
         "hono": "4.12.7",
-        "inngest": "^3.24.0",
+        "inngest": "^3.52.6",
       },
       "devDependencies": {
         "@calls/tsconfig": "workspace:*",

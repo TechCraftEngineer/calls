@@ -20,7 +20,7 @@ export class PromptsService {
       key: string;
       value: string;
       description: string | null;
-      updated_at: string | null;
+      updatedAt: Date | null;
     }[]
   > {
     return this.promptsRepository.findAll();

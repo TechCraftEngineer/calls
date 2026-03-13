@@ -5,9 +5,9 @@
 
 import { existsSync, mkdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { createLogger } from "@calls/api/logger";
 import { callsService, workspacesService } from "@calls/db";
 import { Client } from "basic-ftp";
+import { createLogger } from "../logger";
 import { parseMegafonFilename } from "./parse-filename";
 
 const logger = createLogger("megafon-ftp-sync");

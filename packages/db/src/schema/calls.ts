@@ -19,7 +19,7 @@ export const calls = pgTable(
   "calls",
   {
     id: serial("id").primaryKey(),
-    workspace_id: integer("workspace_id")
+    workspaceId: integer("workspaceId")
       .references(() => workspaces.id, { onDelete: "cascade" })
       .notNull(),
     filename: text("filename").unique(),
@@ -29,22 +29,22 @@ export const calls = pgTable(
     duration: integer("duration"), // в секундах
     direction: text("direction"), // 'incoming'/'outgoing'/'входящий'/'исходящий'
     status: text("status"),
-    size_bytes: integer("size_bytes"),
-    internal_number: text("internal_number"),
+    sizeBytes: integer("sizeBytes"),
+    internalNumber: text("internalNumber"),
     source: text("source"), // менеджер/оператор
-    customer_name: text("customer_name"),
-    created_at: timestamp("created_at").defaultNow().notNull(),
-    updated_at: timestamp("updated_at").defaultNow().notNull(),
+    customerName: text("customerName"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   },
   (table) => ({
     timestampIdx: index("calls_timestamp_idx").on(table.timestamp),
     internalNumberIdx: index("calls_internal_number_idx").on(
-      table.internal_number,
+      table.internalNumber,
     ),
-    workspaceIdIdx: index("calls_workspace_id_idx").on(table.workspace_id),
+    workspaceIdIdx: index("calls_workspace_id_idx").on(table.workspaceId),
     workspaceTimestampIdx: index("calls_workspace_timestamp_idx").on(
-      table.workspace_id,
-      table.timestamp
+      table.workspaceId,
+      table.timestamp,
     ),
     numberIdx: index("calls_number_idx").on(table.number),
   }),
@@ -55,23 +55,23 @@ export const transcripts = pgTable(
   "transcripts",
   {
     id: serial("id").primaryKey(),
-    call_id: integer("call_id")
+    callId: integer("callId")
       .notNull()
       .references(() => calls.id, { onDelete: "cascade" }),
     text: text("text"),
-    raw_text: text("raw_text"),
+    rawText: text("rawText"),
     title: text("title"),
     sentiment: text("sentiment"),
     confidence: real("confidence"),
     summary: text("summary"),
-    size_kb: integer("size_kb"),
-    caller_name: text("caller_name"),
-    call_type: text("call_type"),
-    call_topic: text("call_topic"),
+    sizeKb: integer("sizeKb"),
+    callerName: text("callerName"),
+    callType: text("callType"),
+    callTopic: text("callTopic"),
   },
   (table) => ({
-    callIdIdx: index("transcripts_call_id_idx").on(table.call_id),
-    callTypeIdx: index("transcripts_call_type_idx").on(table.call_type),
+    callIdIdx: index("transcripts_call_id_idx").on(table.callId),
+    callTypeIdx: index("transcripts_call_type_idx").on(table.callType),
     sentimentIdx: index("transcripts_sentiment_idx").on(table.sentiment),
   }),
 );
@@ -81,28 +81,28 @@ export const callEvaluations = pgTable(
   "call_evaluations",
   {
     id: serial("id").primaryKey(),
-    call_id: integer("call_id")
+    callId: integer("callId")
       .notNull()
       .unique()
       .references(() => calls.id, { onDelete: "cascade" }),
-    is_quality_analyzable: boolean("is_quality_analyzable").default(true),
-    not_analyzable_reason: text("not_analyzable_reason"),
-    value_score: integer("value_score"), // 1-5
-    value_explanation: text("value_explanation"),
-    manager_score: integer("manager_score"), // 1-5
-    manager_feedback: text("manager_feedback"),
-    manager_breakdown: text("manager_breakdown"), // JSON
-    manager_recommendations: text("manager_recommendations"), // JSON array
-    created_at: timestamp("created_at").defaultNow().notNull(),
-    updated_at: timestamp("updated_at").defaultNow().notNull(),
+    isQualityAnalyzable: boolean("isQualityAnalyzable").default(true),
+    notAnalyzableReason: text("notAnalyzableReason"),
+    valueScore: integer("valueScore"), // 1-5
+    valueExplanation: text("valueExplanation"),
+    managerScore: integer("managerScore"), // 1-5
+    managerFeedback: text("managerFeedback"),
+    managerBreakdown: text("managerBreakdown"), // JSON
+    managerRecommendations: text("managerRecommendations"), // JSON array
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   },
   (table) => ({
-    callIdIdx: index("call_evaluations_call_id_idx").on(table.call_id),
+    callIdIdx: index("call_evaluations_call_id_idx").on(table.callId),
     valueScoreIdx: index("call_evaluations_value_score_idx").on(
-      table.value_score,
+      table.valueScore,
     ),
     managerScoreIdx: index("call_evaluations_manager_score_idx").on(
-      table.manager_score,
+      table.managerScore,
     ),
   }),
 );

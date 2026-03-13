@@ -40,7 +40,7 @@ export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
       key: string;
       value: string;
       description: string | null;
-      updated_at: string | null;
+      updatedAt: Date | null;
     }[]
   > {
     return await db
@@ -48,7 +48,7 @@ export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
         key: schema.prompts.key,
         value: schema.prompts.value,
         description: schema.prompts.description,
-        updated_at: schema.prompts.updated_at,
+        updatedAt: schema.prompts.updatedAt,
       })
       .from(schema.prompts)
       .orderBy(schema.prompts.key);
@@ -58,8 +58,9 @@ export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
     key: string,
     value: string,
     description?: string | null,
+    workspaceId?: number,
   ): Promise<boolean> {
-    const now = new Date().toISOString();
+    const now = new Date();
 
     const existing = await db
       .select()
@@ -73,7 +74,7 @@ export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
         .set({
           value,
           description: description ?? existing[0].description,
-          updated_at: now,
+          updatedAt: now,
         })
         .where(eq(schema.prompts.key, key));
 
@@ -84,7 +85,8 @@ export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
       key,
       value,
       description: description ?? "",
-      updated_at: now,
+      updatedAt: now,
+      workspaceId: workspaceId ?? 1, // Default workspace if not provided
     });
     return true;
   }

@@ -48,7 +48,7 @@ export const workspacesRouter = {
       });
     }
     const rows = await context.workspacesService.getUserWorkspaces(authUserId);
-    return rows.map((r) => ({
+    return rows.map((r: any) => ({
       ...r.workspace,
       role: r.role,
       memberSince: r.createdAt,
@@ -180,7 +180,7 @@ export const workspacesRouter = {
       const rows = await context.workspacesService.getMembers(
         input.workspaceId,
       );
-      return rows.map((r) => ({
+      return rows.map((r: any) => ({
         id: r.id,
         userId: r.userId,
         role: r.role,

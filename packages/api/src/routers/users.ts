@@ -6,8 +6,8 @@ import { adminProcedure, protectedProcedure } from "../orpc";
 import { isAdminUser } from "../user-profile";
 
 async function canAccessUser(
-  currentUserId: number,
-  targetUserId: number,
+  currentUserId: string,
+  targetUserId: string,
 ): Promise<boolean> {
   if (currentUserId === targetUserId) return true;
   const user = await usersService.getUser(currentUserId);
@@ -69,9 +69,9 @@ export const usersRouter = {
   }),
 
   get: protectedProcedure
-    .input(z.object({ user_id: z.number() }))
+    .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
-      const userId = (context.user as Record<string, unknown>).id as number;
+      const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
       const user = await usersService.getUser(input.user_id);
@@ -103,9 +103,9 @@ export const usersRouter = {
     }),
 
   update: protectedProcedure
-    .input(z.object({ user_id: z.number(), data: userUpdateSchema }))
+    .input(z.object({ user_id: z.string(), data: userUpdateSchema }))
     .handler(async ({ input, context }) => {
-      const userId = (context.user as Record<string, unknown>).id as number;
+      const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
 
@@ -194,11 +194,11 @@ export const usersRouter = {
     }),
 
   delete: adminProcedure
-    .input(z.object({ user_id: z.number() }))
+    .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
       const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
-      const adminId = (context.user as Record<string, unknown>).id as number;
+      const adminId = (context.user as Record<string, unknown>).id as string;
       if (adminId === input.user_id)
         throw new Error("Cannot delete your own account");
       if (!(await usersService.deleteUser(input.user_id)))
@@ -214,7 +214,7 @@ export const usersRouter = {
   changePassword: adminProcedure
     .input(
       z.object({
-        user_id: z.number(),
+        user_id: z.string(),
         new_password: z.string().min(1),
         confirm_password: z.string().min(1),
       }),
@@ -240,9 +240,9 @@ export const usersRouter = {
     }),
 
   telegramAuthUrl: protectedProcedure
-    .input(z.object({ user_id: z.number() }))
+    .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
-      const userId = (context.user as Record<string, unknown>).id as number;
+      const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
       const user = await usersService.getUser(input.user_id);
@@ -258,9 +258,9 @@ export const usersRouter = {
     }),
 
   disconnectTelegram: protectedProcedure
-    .input(z.object({ user_id: z.number() }))
+    .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
-      const userId = (context.user as Record<string, unknown>).id as number;
+      const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
       if (!(await usersService.disconnectTelegram(input.user_id)))
@@ -269,9 +269,9 @@ export const usersRouter = {
     }),
 
   maxAuthUrl: protectedProcedure
-    .input(z.object({ user_id: z.number() }))
+    .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
-      const userId = (context.user as Record<string, unknown>).id as number;
+      const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
       const user = await usersService.getUser(input.user_id);
@@ -286,9 +286,9 @@ export const usersRouter = {
     }),
 
   disconnectMax: protectedProcedure
-    .input(z.object({ user_id: z.number() }))
+    .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
-      const userId = (context.user as Record<string, unknown>).id as number;
+      const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
       if (!(await usersService.disconnectMax(input.user_id)))

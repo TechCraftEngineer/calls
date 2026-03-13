@@ -39,7 +39,7 @@ export class WorkspacesService {
 
       // Добавляем владельца
       await tx.insert(this.workspacesRepository.workspaceMembersTable).values({
-        workspaceId,
+        workspaceId: workspaceId,
         userId: ownerUserId,
         role: "owner",
       });

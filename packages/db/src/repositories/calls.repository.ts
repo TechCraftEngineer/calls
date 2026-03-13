@@ -52,15 +52,15 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
         workspaceId: data.workspaceId,
         filename: data.filename,
         number: data.number ?? null,
-        timestamp: data.timestamp,
+        timestamp: new Date(data.timestamp),
         name: data.name ?? null,
         duration: data.duration ?? null,
         direction: data.direction ?? null,
         status: data.status ?? null,
-        size_bytes: data.size_bytes ?? null,
-        internal_number: data.internal_number ?? null,
+        sizeBytes: data.size_bytes ?? null,
+        internalNumber: data.internal_number ?? null,
         source: data.source ?? null,
-        customer_name: data.customer_name ?? null,
+        customerName: data.customer_name ?? null,
       })
       .returning({ id: schema.calls.id });
     return result[0]?.id ?? 0;
@@ -108,11 +108,11 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       .from(schema.calls)
       .leftJoin(
         schema.transcripts,
-        eq(schema.calls.id, schema.transcripts.call_id),
+        eq(schema.calls.id, schema.transcripts.callId),
       )
       .leftJoin(
         schema.callEvaluations,
-        eq(schema.calls.id, schema.callEvaluations.call_id),
+        eq(schema.calls.id, schema.callEvaluations.callId),
       )
       .orderBy(desc(schema.calls.timestamp), desc(schema.calls.id))
       .limit(limit)
@@ -168,7 +168,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
           .from(schema.calls)
           .innerJoin(
             schema.callEvaluations,
-            eq(schema.calls.id, schema.callEvaluations.call_id),
+            eq(schema.calls.id, schema.callEvaluations.callId),
           )
       : db.select({ count: count() }).from(schema.calls);
 
@@ -183,7 +183,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     const result = await db
       .select()
       .from(schema.transcripts)
-      .where(eq(schema.transcripts.call_id, callId))
+      .where(eq(schema.transcripts.callId, callId))
       .limit(1);
     return result[0] ?? null;
   }
@@ -192,7 +192,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     const result = await db
       .select()
       .from(schema.callEvaluations)
-      .where(eq(schema.callEvaluations.call_id, callId))
+      .where(eq(schema.callEvaluations.callId, callId))
       .limit(1);
     return result[0] ?? null;
   }
@@ -209,29 +209,29 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     const result = await db
       .insert(schema.callEvaluations)
       .values({
-        call_id: data.call_id,
-        is_quality_analyzable: data.is_quality_analyzable !== false,
-        not_analyzable_reason: data.not_analyzable_reason ?? null,
-        value_score: data.value_score ?? null,
-        value_explanation: data.value_explanation ?? null,
-        manager_score: data.manager_score ?? null,
-        manager_feedback: data.manager_feedback ?? null,
-        manager_breakdown: breakdown,
-        manager_recommendations: recommendations,
-        created_at: new Date().toISOString(),
+        callId: data.call_id,
+        isQualityAnalyzable: data.is_quality_analyzable !== false,
+        notAnalyzableReason: data.not_analyzable_reason ?? null,
+        valueScore: data.value_score ?? null,
+        valueExplanation: data.value_explanation ?? null,
+        managerScore: data.manager_score ?? null,
+        managerFeedback: data.manager_feedback ?? null,
+        managerBreakdown: breakdown,
+        managerRecommendations: recommendations,
+        createdAt: new Date(),
       })
       .onConflictDoUpdate({
-        target: schema.callEvaluations.call_id,
+        target: schema.callEvaluations.callId,
         set: {
-          is_quality_analyzable: data.is_quality_analyzable !== false,
-          not_analyzable_reason: data.not_analyzable_reason ?? null,
-          value_score: data.value_score ?? null,
-          value_explanation: data.value_explanation ?? null,
-          manager_score: data.manager_score ?? null,
-          manager_feedback: data.manager_feedback ?? null,
-          manager_breakdown: breakdown,
-          manager_recommendations: recommendations,
-          created_at: new Date().toISOString(),
+          isQualityAnalyzable: data.is_quality_analyzable !== false,
+          notAnalyzableReason: data.not_analyzable_reason ?? null,
+          valueScore: data.value_score ?? null,
+          valueExplanation: data.value_explanation ?? null,
+          managerScore: data.manager_score ?? null,
+          managerFeedback: data.manager_feedback ?? null,
+          managerBreakdown: breakdown,
+          managerRecommendations: recommendations,
+          createdAt: new Date(),
         },
       })
       .returning({ id: schema.callEvaluations.id });
@@ -267,7 +267,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
             .from(schema.transcripts)
             .innerJoin(
               schema.calls,
-              eq(schema.transcripts.call_id, schema.calls.id),
+              eq(schema.transcripts.callId, schema.calls.id),
             )
             .where(and(...callConditions))
         : db.select({ count: count() }).from(schema.transcripts),
@@ -300,7 +300,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       total_calls: totalCalls,
       transcribed,
       avg_duration: avgDuration,
-      last_sync: lastSync,
+      last_sync: lastSync ? lastSync.toISOString() : null,
     };
   }
 
@@ -314,7 +314,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       string,
       {
         name: string;
-        internal_number: string | null;
+        internalNumber: string | null;
         incoming: { count: number; duration: number };
         outgoing: { count: number; duration: number };
         score_distribution?: Record<
@@ -329,15 +329,16 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     const conditions = [];
     if (workspaceId != null)
       conditions.push(eq(schema.calls.workspaceId, workspaceId));
-    if (dateFrom) conditions.push(gte(schema.calls.timestamp, dateFrom));
-    if (dateTo) conditions.push(lte(schema.calls.timestamp, dateTo));
+    if (dateFrom)
+      conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
+    if (dateTo) conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
     if (internalNumbers?.length) {
-      conditions.push(inArray(schema.calls.internal_number, internalNumbers));
+      conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
     }
 
     let query = db
       .select({
-        internal_number: schema.calls.internal_number,
+        internalNumber: schema.calls.internalNumber,
         manager_name: schema.calls.name,
         direction: schema.calls.direction,
         total_calls: count(),
@@ -346,10 +347,10 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       .from(schema.calls)
       .leftJoin(
         schema.callEvaluations,
-        eq(schema.calls.id, schema.callEvaluations.call_id),
+        eq(schema.calls.id, schema.callEvaluations.callId),
       )
       .groupBy(
-        schema.calls.internal_number,
+        schema.calls.internalNumber,
         schema.calls.name,
         schema.calls.direction,
       );
@@ -363,18 +364,18 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       string,
       {
         name: string;
-        internal_number: string | null;
+        internalNumber: string | null;
         incoming: { count: number; duration: number };
         outgoing: { count: number; duration: number };
       }
     > = {};
 
     for (const row of results) {
-      const key = row.manager_name ?? row.internal_number ?? "Unknown";
+      const key = row.manager_name ?? row.internalNumber ?? "Unknown";
       if (!stats[key]) {
         stats[key] = {
           name: key,
-          internal_number: row.internal_number,
+          internalNumber: row.internalNumber,
           incoming: { count: 0, duration: 0 },
           outgoing: { count: 0, duration: 0 },
         };
@@ -425,13 +426,13 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       conditions.push(eq(schema.calls.workspaceId, workspaceId));
     }
     if (dateFrom) {
-      conditions.push(gte(schema.calls.timestamp, dateFrom));
+      conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
     }
     if (dateTo) {
-      conditions.push(lte(schema.calls.timestamp, dateTo));
+      conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
     }
     if (internalNumbers?.length) {
-      conditions.push(inArray(schema.calls.internal_number, internalNumbers));
+      conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
     }
     if (mobileNumbers?.length) {
       conditions.push(inArray(schema.calls.number, mobileNumbers));
@@ -449,13 +450,13 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       conditions.push(eq(schema.calls.name, manager));
     }
     if (valueScores?.length) {
-      conditions.push(inArray(schema.callEvaluations.value_score, valueScores));
+      conditions.push(inArray(schema.callEvaluations.valueScore, valueScores));
     }
     if (q) {
       const qCond = or(
         like(schema.calls.number, `%${q}%`),
         like(schema.calls.name, `%${q}%`),
-        like(schema.calls.customer_name, `%${q}%`),
+        like(schema.calls.customerName, `%${q}%`),
       );
       if (qCond) conditions.push(qCond);
     }

@@ -29,11 +29,11 @@ export class UsersService {
     return this.usersRepository.findAllActive();
   }
 
-  async getUser(id: number): Promise<any | null> {
+  async getUser(id: string): Promise<any | null> {
     return this.usersRepository.findById(id);
   }
 
-  async createUser(data: CreateUserData): Promise<number> {
+  async createUser(data: CreateUserData): Promise<string> {
     // Валидация входных данных
     validateCreateUserData(data);
 
@@ -54,7 +54,7 @@ export class UsersService {
     return userId;
   }
 
-  async updateUserName(userId: number, data: UpdateUserData): Promise<boolean> {
+  async updateUserName(userId: string, data: UpdateUserData): Promise<boolean> {
     // Валидация входных данных
     validateUpdateUserData(data);
 
@@ -78,7 +78,7 @@ export class UsersService {
   }
 
   async updateUserInternalExtensions(
-    userId: number,
+    userId: string,
     internalExtensions: string | null,
   ): Promise<boolean> {
     return this.usersRepository.updateInternalExtensions(
@@ -88,14 +88,14 @@ export class UsersService {
   }
 
   async updateUserMobilePhones(
-    userId: number,
+    userId: string,
     mobilePhones: string | null,
   ): Promise<boolean> {
     return this.usersRepository.updateMobilePhones(userId, mobilePhones);
   }
 
   async updateUserFilters(
-    userId: number,
+    userId: string,
     filterExcludeAnsweringMachine: boolean,
     filterMinDuration: number,
     filterMinReplicas: number,
@@ -109,7 +109,7 @@ export class UsersService {
   }
 
   async updateUserReportKpiSettings(
-    userId: number,
+    userId: string,
     data: UserUpdateData,
   ): Promise<boolean> {
     const result = await this.usersRepository.updateReportAndKpiSettings(
@@ -129,7 +129,7 @@ export class UsersService {
   }
 
   async updateUserTelegramSettings(
-    userId: number,
+    userId: string,
     telegramDailyReport: boolean,
     telegramManagerReport: boolean,
   ): Promise<boolean> {
@@ -141,7 +141,7 @@ export class UsersService {
   }
 
   async updateUserPassword(
-    userId: number,
+    userId: string,
     newPassword: string,
   ): Promise<boolean> {
     const result = await this.usersRepository.updatePassword(
@@ -160,7 +160,7 @@ export class UsersService {
     return result;
   }
 
-  async deleteUser(userId: number): Promise<boolean> {
+  async deleteUser(userId: string): Promise<boolean> {
     const result = await this.usersRepository.softDelete(userId);
 
     if (result) {
@@ -175,7 +175,7 @@ export class UsersService {
   }
 
   async saveTelegramConnectToken(
-    userId: number,
+    userId: string,
     token: string,
   ): Promise<boolean> {
     return this.usersRepository.saveTelegramConnectToken(userId, token);
@@ -185,7 +185,7 @@ export class UsersService {
     return this.usersRepository.findByTelegramConnectToken(token);
   }
 
-  async saveTelegramChatId(userId: number, chatId: string): Promise<boolean> {
+  async saveTelegramChatId(userId: string, chatId: string): Promise<boolean> {
     const result = await this.usersRepository.saveTelegramChatId(
       userId,
       chatId,
@@ -202,11 +202,11 @@ export class UsersService {
     return result;
   }
 
-  async saveMaxConnectToken(userId: number, token: string): Promise<boolean> {
+  async saveMaxConnectToken(userId: string, token: string): Promise<boolean> {
     return this.usersRepository.saveMaxConnectToken(userId, token);
   }
 
-  async disconnectTelegram(userId: number): Promise<boolean> {
+  async disconnectTelegram(userId: string): Promise<boolean> {
     const result = await this.usersRepository.disconnectTelegram(userId);
 
     if (result) {
@@ -220,7 +220,7 @@ export class UsersService {
     return result;
   }
 
-  async disconnectMax(userId: number): Promise<boolean> {
+  async disconnectMax(userId: string): Promise<boolean> {
     const result = await this.usersRepository.disconnectMax(userId);
 
     if (result) {

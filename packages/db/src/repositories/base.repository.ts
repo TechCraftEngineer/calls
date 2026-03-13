@@ -9,13 +9,9 @@ import { db } from "../client";
 export abstract class BaseRepository<T extends Table> {
   constructor(protected table: T) {}
 
-  protected async findById(id: number): Promise<any | null> {
-    const result = await db
-      .select()
-      .from(this.table)
-      .where(eq((this.table as any).id, id))
-      .limit(1);
-    return result[0] ?? null;
+  async findById(id: string | number): Promise<any | null> {
+    // This method should be overridden in child classes due to type differences
+    throw new Error("findById must be implemented in child repository");
   }
 
   protected async create(data: Partial<any>): Promise<number> {
@@ -34,14 +30,14 @@ export abstract class BaseRepository<T extends Table> {
     return (result.rowCount ?? 0) > 0;
   }
 
-  protected async delete(id: number): Promise<boolean> {
+  async delete(id: string | number): Promise<boolean> {
     const result = await db
       .delete(this.table)
       .where(eq((this.table as any).id, id));
     return (result.rowCount ?? 0) > 0;
   }
 
-  protected async softDelete(id: number): Promise<boolean> {
+  async softDelete(id: string | number): Promise<boolean> {
     const result = await db
       .update(this.table)
       .set({ is_active: false } as any)

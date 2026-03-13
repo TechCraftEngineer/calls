@@ -5,21 +5,25 @@ import { z } from "zod";
 import { protectedProcedure } from "../orpc";
 
 async function canAccessUser(
-  currentUserId: number,
-  targetUserId: number,
+  currentUserId: string,
+  targetUserId: string,
 ): Promise<boolean> {
   if (currentUserId === targetUserId) return true;
   const user = await usersService.getUser(currentUserId);
   if (!user) return false;
+  return isAdminUser(user as Record<string, unknown>);
+}
+
+function isAdminUser(user: Record<string, unknown>): boolean {
   const adminUsernames = ["admin@mango", "admin@gmail.com"];
   return adminUsernames.includes((user.username as string) ?? "");
 }
 
 export const integrationsRouter = {
   telegramAuthUrl: protectedProcedure
-    .input(z.object({ user_id: z.number() }))
+    .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
-      const userId = (context.user as Record<string, unknown>).id as number;
+      const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
       const user = await usersService.getUser(input.user_id);
@@ -35,9 +39,9 @@ export const integrationsRouter = {
     }),
 
   disconnectTelegram: protectedProcedure
-    .input(z.object({ user_id: z.number() }))
+    .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
-      const userId = (context.user as Record<string, unknown>).id as number;
+      const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
       if (!(await usersService.disconnectTelegram(input.user_id)))
@@ -46,9 +50,9 @@ export const integrationsRouter = {
     }),
 
   maxAuthUrl: protectedProcedure
-    .input(z.object({ user_id: z.number() }))
+    .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
-      const userId = (context.user as Record<string, unknown>).id as number;
+      const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
       const user = await usersService.getUser(input.user_id);
@@ -63,9 +67,9 @@ export const integrationsRouter = {
     }),
 
   disconnectMax: protectedProcedure
-    .input(z.object({ user_id: z.number() }))
+    .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
-      const userId = (context.user as Record<string, unknown>).id as number;
+      const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
       if (!(await usersService.disconnectMax(input.user_id)))

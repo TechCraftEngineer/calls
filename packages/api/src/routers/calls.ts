@@ -235,7 +235,7 @@ export const callsRouter = {
       const totalPages = Math.ceil(totalItems / input.per_page) || 1;
       const metrics = await callsService.calculateMetrics(workspaceId!);
       const managers = (await context.usersService.getAllUsers()).filter(
-        (u) => (u as Record<string, unknown>).internalExtensions,
+        (u: any) => (u as Record<string, unknown>).internalExtensions,
       );
 
       return {
@@ -275,7 +275,7 @@ export const callsRouter = {
       if (!call) {
         throw new Error("Call not found");
       }
-      if (call.workspaceId !== context.workspaceId) {
+      if (call.workspace_id !== context.workspaceId) {
         throw new Error("Call not found");
       }
       const transcript = await context.callsService.getTranscriptByCallId(
@@ -299,7 +299,7 @@ export const callsRouter = {
     .input(z.object({ call_id: z.number() }))
     .handler(async ({ input, context }) => {
       const call = await context.callsService.getCall(input.call_id);
-      if (call && call.workspaceId !== context.workspaceId) {
+      if (call && call.workspace_id !== context.workspaceId) {
         throw new Error("Call not found");
       }
       return generateRecommendations(

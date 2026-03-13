@@ -97,3 +97,26 @@ services:
       - ./records:/app/records
       - ./logs:/app/logs
     profiles: ["backend"]
+
+  # Inngest jobs worker (Megafon FTP sync и др.)
+  jobs:
+    build:
+      context: .
+      dockerfile: packages/jobs/Dockerfile
+    container_name: jobs
+    restart: always
+    ports:
+      - 3100:3100
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_URL: postgres://postgres:password@postgres:5432/acme
+      JOBS_PORT: 3100
+      DEPLOYMENT_ENV: docker
+      MEGAFON_FTP_HOST: ${MEGAFON_FTP_HOST:-}
+      MEGAFON_FTP_USER: ${MEGAFON_FTP_USER:-}
+      MEGAFON_FTP_PASSWORD: ${MEGAFON_FTP_PASSWORD:-}
+    volumes:
+      - ./records:/app/records
+    profiles: ["jobs"]

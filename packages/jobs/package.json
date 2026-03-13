@@ -7,7 +7,10 @@
     "./hono": "./src/hono.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "start": "bun with-env src/server.ts",
+    "dev": "bun with-env --watch src/server.ts",
+    "with-env": "bun run --env-file ../../.env"
   },
   "dependencies": {
     "@calls/db": "workspace:*",

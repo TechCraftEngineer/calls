@@ -2,12 +2,12 @@
  * TypeScript type definitions for all database tables
  */
 
+// Import Better Auth types
+import type { account, session, user, verification } from "./auth";
 // Import all table definitions as types
 import type { callEvaluations, calls, transcripts } from "./calls";
 import type { activityLog, prompts } from "./system";
 import type { workspaceMembers, workspaces } from "./workspaces";
-// Import Better Auth types
-import type { user, session, account, verification } from "./auth";
 
 // Calls domain types
 export type Call = typeof calls.$inferSelect;
