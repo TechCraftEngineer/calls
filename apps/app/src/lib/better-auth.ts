@@ -40,20 +40,20 @@ export async function login(username: string, password: string) {
     if (result.error) {
       return {
         success: false,
-        message: result.error.message || "Login failed",
+        message: result.error.message || "Ошибка входа",
         user: undefined,
       };
     }
 
     return {
       success: true,
-      message: "Login successful",
+      message: "Вход выполнен",
       user: result.data?.user,
     };
   } catch (err) {
     return {
       success: false,
-      message: err instanceof Error ? err.message : "Login failed",
+      message: err instanceof Error ? err.message : "Ошибка входа",
       user: undefined,
     };
   }

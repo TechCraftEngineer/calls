@@ -1,4 +1,4 @@
-import { APP_CONFIG, env } from "@calls/config";
+import { APP_CONFIG, env, paths } from "@calls/config";
 import {
   Body,
   Button,
@@ -17,7 +17,7 @@ import {
 import { emailTailwindConfig } from "../tailwind";
 
 export default function ResetPasswordEmail({
-  resetLink = `${env.APP_URL}/auth/reset-password?token=abc123`,
+  resetLink = `${env.APP_URL}${paths.auth.resetPassword}?token=abc123`,
 }: {
   resetLink?: string;
 }) {

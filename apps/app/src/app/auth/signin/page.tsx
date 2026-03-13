@@ -61,7 +61,7 @@ function LoginForm() {
           router.push(paths.dashboard.root);
         }, 100);
       } else {
-        setError("root", { message: result.message || "Login failed" });
+        setError("root", { message: result.message || "Ошибка входа" });
       }
     } catch (err: unknown) {
       const errorMessage =
@@ -70,9 +70,9 @@ function LoginForm() {
               ?.data?.detail
           : err instanceof Error
             ? err.message
-            : "Invalid credentials";
+            : "Неверный логин или пароль";
       setError("root", {
-        message: String(errorMessage || "Invalid credentials"),
+        message: String(errorMessage || "Неверный логин или пароль"),
       });
     }
   };
@@ -96,6 +96,13 @@ function LoginForm() {
           <div className="mb-6 flex items-center gap-[10px] rounded-lg border-[#FFDADA] bg-[#FFF0F0] p-3 text-[13px] font-medium text-[#D32F2F]">
             <span>⚠️</span>
             {errors.root.message}
+          </div>
+        )}
+
+        {searchParams.get("message") === "registration_success" && (
+          <div className="mb-6 flex items-center gap-[10px] rounded-lg border-[#4CAF50] bg-[#E8F5E8] p-3 text-[13px] font-medium text-[#2E7D32]">
+            <span>✅</span>
+            Регистрация прошла успешно! Теперь вы можете войти в систему.
           </div>
         )}
 

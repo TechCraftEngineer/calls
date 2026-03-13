@@ -31,11 +31,10 @@ function RegisterForm() {
 
   const onSubmit = async (data: CreateUserData) => {
     try {
-      const name = `${data.first_name} ${data.last_name || ""}`.trim();
       const result = await signUp.email({
         email: data.username,
         password: data.password,
-        name: name || data.first_name,
+        name: `${data.first_name} ${data.last_name || ""}`.trim(),
         username: data.username,
       });
 

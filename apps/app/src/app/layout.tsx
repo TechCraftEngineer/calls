@@ -9,9 +9,54 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  (process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "https://zvonki.qbs.ru");
+
 export const metadata: Metadata = {
-  title: "QBS Звонки - Сервис ИИ аналитики телефонных разговоров",
-  description: "Call transcription and analysis dashboard",
+  metadataBase: new URL(
+    typeof siteUrl === "string" && siteUrl.startsWith("http")
+      ? siteUrl
+      : "https://zvonki.qbs.ru",
+  ),
+  title: {
+    default: "QBS Звонки — Аналитика телефонных разговоров с помощью ИИ",
+    template: "%s | QBS Звонки",
+  },
+  description:
+    "Сервис транскрибации и анализа телефонных звонков. Автоматическая расшифровка, оценка качества общения и отчёты для менеджеров. Mango Office Call AI.",
+  keywords: [
+    "аналитика звонков",
+    "транскрибация звонков",
+    "ИИ анализ разговоров",
+    "качество обслуживания",
+    "колл-центр",
+    "Mango Office",
+    "QBS",
+  ],
+  authors: [{ name: "QBS", url: "https://qbs.ru" }],
+  creator: "QBS",
+  openGraph: {
+    type: "website",
+    locale: "ru_RU",
+    url: "/",
+    siteName: "QBS Звонки",
+    title: "QBS Звонки — Аналитика телефонных разговоров с помощью ИИ",
+    description:
+      "Сервис транскрибации и анализа телефонных звонков. Автоматическая расшифровка, оценка качества общения и отчёты.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "QBS Звонки — Аналитика телефонных разговоров с помощью ИИ",
+    description:
+      "Сервис транскрибации и анализа телефонных звонков. Автоматическая расшифровка и оценка качества.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
