@@ -1,0 +1,36 @@
+{
+  "name": "@calls/ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./chat": "./src/chat.ts"
+  },
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
+    "clean": "rm -rf *.tsbuildinfo .turbo dist",
+    "dev": "bun -b watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "3.0.41",
+    "@calls/config": "workspace:*",
+    "ai": "6.0.116",
+    "langfuse": "^3.2.1",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@calls/tsconfig": "workspace:*",
+    "tsdown": "^0.21.2",
+    "typescript": "5.9.3"
+  }
+}

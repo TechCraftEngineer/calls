@@ -10,6 +10,7 @@
   "types": "./dist/index.d.ts",
   "license": "MIT",
   "scripts": {
+    "build": "tsdown",
     "clean": "rm -rf *.tsbuildinfo .turbo dist",
     "dev": "bun -b watch",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
@@ -21,7 +22,7 @@
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
-    "tsup": "8.5.1",
+    "tsdown": "^0.21.2",
     "typescript": "5.9.3"
   }
 }

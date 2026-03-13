@@ -3,6 +3,15 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
+    DATABASE_URL: z.string().url(),
+    OPENAI_API_KEY: z.string().optional(),
+    AI_MODEL: z.string().default("gpt-3.5-turbo"),
+    AI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.7),
+    AI_MAX_TOKENS: z.coerce.number().min(1).max(4000).default(1000),
+    LANGFUSE_SECRET_KEY: z.string().optional(),
+    LANGFUSE_PUBLIC_KEY: z.string().optional(),
+    LANGFUSE_HOST: z.string().optional(),
+
     // Node environment
     NODE_ENV: z.enum(["development", "production", "test"]).optional(),
 
@@ -65,6 +74,9 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
     NEXT_PUBLIC_APP_SHORT_NAME: process.env.NEXT_PUBLIC_APP_SHORT_NAME,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY,
+    LANGFUSE_PUBLIC_KEY: process.env.LANGFUSE_PUBLIC_KEY,
+    LANGFUSE_HOST: process.env.LANGFUSE_HOST,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",

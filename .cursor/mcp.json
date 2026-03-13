@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "@reapi/mcp-openapi": {
+      "command": "bunx",
+      "args": ["-y", "@reapi/mcp-openapi@latest", "--dir", "./specs"],
+      "env": {}
+    },
+      "Context7": {
+      "command": "bunx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp",
+        "--api-key",
+        "ctx7sk-3300007b-e2ac-4596-9695-c9b304ab17d8"
+      ],
+      "env": {},
+      "disabled": false,
+      "autoApprove": ["resolve-library-id", "get-library-docs", "query-docs"]
+    },
+     "shadcn": {
+      "command": "npx",
+      "args": ["-y", "shadcn@latest", "mcp"]
+    },
+    "next-devtools": {
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
+    },
+    "better-auth": {
+      "url": "https://mcp.inkeep.com/better-auth/mcp"
+    }
+  }
+}

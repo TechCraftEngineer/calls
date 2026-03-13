@@ -1,0 +1,77 @@
+---
+description: Документация по пакету shared и обработке ошибок в API
+alwaysApply: false
+---
+
+# Shared и обработка ошибок
+
+## Пакет @qbs-autonaim/shared
+
+### Структура
+
+| Подпуть | Описание | Клиент |
+|---------|----------|--------|
+| `shared` (main) | Константы, типы, схемы Zod, утилиты — client-safe | ✓ |
+| `shared/utils` | Утилиты (getInitials, pluralize, experience-helpers и др.) | ✓ |
+| `shared/schemas` | Zod-схемы (Draft, Message, VacancyData) | ✓ |
+| `shared/server` | RankingService, InterviewLinkGenerator, GigShortlistGenerator — БД, только сервер | ✗ |
+
+### Использование на клиенте
+
+```ts
+// ✅ Допустимо
+import { getInitials, getResponseEventTitle } from "@qbs-autonaim/shared";
+import type { BaseVacancyData } from "@qbs-autonaim/shared";
+import { CreateDraftInputSchema } from "@qbs-autonaim/shared";
+```
+
+### Использование на сервере
+
+```ts
+// Серверный код — только в API, Inngest и т.п.
+import { GigShortlistGenerator, RankingService } from "@qbs-autonaim/shared/server";
+```
+
+---
+
+## Обработка ошибок в tRPC API
+
+### Принципы
+
+1. **TRPCError** — основной способ сигнализировать об ошибках; клиент получает код и message.
+2. **Сообщения на русском** — user-facing сообщения пишем на русском.
+3. **ErrorHandler** — централизованная обработка с логированием и уведомлениями (см. `packages/api/src/utils/error-handler.ts`).
+
+### Коды tRPC
+
+| Код | Когда использовать |
+|-----|-------------------|
+| `BAD_REQUEST` | Валидация входных данных |
+| `UNAUTHORIZED` | Не залогинен |
+| `FORBIDDEN` | Нет прав доступа |
+| `NOT_FOUND` | Сущность не найдена |
+| `CONFLICT` | Конфликт (дубликат, несовместимое состояние) |
+| `INTERNAL_SERVER_ERROR` | Ошибки БД, AI, внешних API |
+
+### Паттерны
+
+**Простые случаи — throw TRPCError напрямую:**
+
+```ts
+if (!vacancy) throw new TRPCError({ code: "NOT_FOUND", message: "Вакансия не найдена" });
+if (!hasAccess) throw new TRPCError({ code: "FORBIDDEN", message: "Нет доступа" });
+```
+
+**Использование ErrorHandler (если нужен audit log / уведомления):**
+
+```ts
+await errorHandler.handleNotFoundError("Вакансия", { vacancyId });
+await errorHandler.handleAuthorizationError("вакансии", { vacancyId });
+await errorHandler.handleDatabaseError(err, { operation: "updateVacancy" });
+```
+
+**Zod-ошибки** — перехватываются middleware и форматируются в BAD_REQUEST.
+
+### На клиенте
+
+Ошибки tRPC приходят как `error.data?.code` и `error.message`. TanStack Query и tRPC-клиент позволяют обрабатывать их в `onError`, `isError`, `error` из хуков.

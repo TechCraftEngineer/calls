@@ -1,0 +1,580 @@
+---
+description: Стандарты и правила для oRPC API
+alwaysApply: false
+---
+# Стандарты и правила для oRPC API
+
+## Принципы организации
+
+- **Один файл = один роут** - каждая процедура (query/mutation) в отдельном файле
+- **Группировка по доменам** - роуты организованы по бизнес-доменам (workspace, vacancy, user и т.д.)
+- **Вложенные роутеры** - для связанной функциональности (workspace.members, workspace.invites)
+- **Понятные имена** - файлы именуются по действию, а не по технической реализации
+
+## Структура директорий
+
+```
+packages/api/src/
+├── routers/
+│   ├── {domain}/              # Домен (workspace, vacancy, user и т.д.)
+│   │   ├── index.ts           # Экспорт роутера домена
+│   │   ├── {action}.ts        # Отдельный файл для каждого действия
+│   │   └── {subdomain}/       # Вложенный роутер (опционально)
+│   │       ├── index.ts       # Экспорт вложенного роутера
+│   │       └── {action}.ts    # Действия вложенного роутера
+│   └── ...
+├── utils/                     # Утилиты (middleware, helpers)
+├── root-orpc.ts               # Главный роутер (объединяет все домены)
+├── orpc.ts                    # Конфигурация oRPC
+└── index.ts                   # Экспорт API
+```
+
+## Именование файлов
+
+### Стандартные CRUD действия
+- `list.ts` - получение списка (query)
+- `get.ts` - получение одной записи (query)
+- `create.ts` - создание (mutation)
+- `update.ts` - обновление (mutation)
+- `delete.ts` - удаление (mutation)
+
+### Специфичные действия
+Используйте kebab-case для описательных имен:
+- `get-by-slug.ts` - альтернативный способ получения
+- `list-active.ts` - фильтрованный список
+- `send-welcome.ts` - специфичное действие
+- `update-role.ts` - частичное обновление
+- `dashboard-stats.ts` - агрегированные данные
+
+### Примеры плохих имен
+❌ `getUserById.ts` - camelCase
+❌ `user_list.ts` - snake_case
+❌ `fetch.ts` - неясное действие
+❌ `handler.ts` - технический термин
+
+## Структура файла роута
+
+### Базовый шаблон
+
+```typescript
+import { z } from "zod";
+import { ORPCError } from "@orpc/server";
+import { protectedProcedure } from "../../orpc";
+
+export const actionName = protectedProcedure
+  .input(z.object({
+    // Валидация входных данных
+  }))
+  .handler(async ({ input, context }) => {
+    // Логика роута
+    return result;
+  });
+```
+
+### Query vs Mutation
+
+```typescript
+// Query - для чтения данных (GET)
+export const list = protectedProcedure
+  .input(z.object({ workspaceId: z.string() }))
+  .handler(async ({ input, context }) => {
+    return await context.db.workspace.findMany();
+  });
+
+// Mutation - для изменения данных (POST/PUT/DELETE)
+export const create = protectedProcedure
+  .input(z.object({ name: z.string() }))
+  .handler(async ({ input, context }) => {
+    return await context.db.workspace.create({ data: input });
+  });
+```
+
+### Использование publicProcedure vs protectedProcedure
+
+```typescript
+// publicProcedure - доступен без авторизации
+export const getPublicInfo = publicProcedure
+  .input(z.object({ slug: z.string() }))
+  .handler(async ({ input, context }) => {
+    // context.session может быть null
+    return data;
+  });
+
+// protectedProcedure - требует авторизации
+export const getPrivateData = protectedProcedure
+  .input(z.object({ id: z.string() }))
+  .handler(async ({ input, context }) => {
+    // context.session.user гарантированно существует
+    const userId = context.session.user.id;
+    return data;
+  });
+```
+
+## Структура index.ts
+
+### Простой роутер (без вложенности)
+
+```typescript
+
+import { create } from "./create";
+import { deleteItem } from "./delete";
+import { get } from "./get";
+import { list } from "./list";
+import { update } from "./update";
+
+export const domainRouter = {
+  list,
+  get,
+  create,
+  update,
+  delete: deleteItem, // Переименование для избежания конфликта с ключевым словом
+};
+```
+
+### Роутер с вложенными роутерами
+
+```typescript
+
+import { create } from "./create";
+import { get } from "./get";
+import { list } from "./list";
+import { membersRouter } from "./members";
+import { invitesRouter } from "./invites";
+
+export const workspaceRouter = {
+  // Основные действия
+  list,
+  get,
+  create,
+  
+  // Вложенные роутеры
+  members: membersRouter,
+  invites: invitesRouter,
+};
+```
+
+### Вложенный роутер (subdomain/index.ts)
+
+```typescript
+
+import { add } from "./add";
+import { list } from "./list";
+import { remove } from "./remove";
+import { updateRole } from "./update-role";
+
+export const membersRouter = {
+  list,
+  add,
+  remove,
+  updateRole,
+};
+```
+
+## Регистрация в root.ts
+
+```typescript
+import { router } from "./orpc";
+import { userRouter } from "./routers/user";
+import { workspaceRouter } from "./routers/workspace";
+import { vacancyRouter } from "./routers/vacancy";
+
+export const appRouter = {
+  user: userRouter,
+  workspace: workspaceRouter,
+  vacancy: vacancyRouter,
+  // Условное подключение для dev-окружения
+  ...(process.env.NODE_ENV !== "production" && { 
+    test: testRouter 
+  }),
+};
+
+export type AppRouter = typeof appRouter;
+```
+
+## Валидация и схемы
+
+### Использование Zod v4
+
+```typescript
+import { z } from "zod";
+import { workspaceIdSchema } from "@qbs-autonaim/validators";
+
+// Переиспользование схем из пакета validators
+export const get = protectedProcedure
+  .input(z.object({ 
+    id: workspaceIdSchema 
+  }))
+  .handler(async ({ input, context }) => {
+    // ...
+  });
+
+// Inline схемы для простых случаев
+export const update = protectedProcedure
+  .input(z.object({
+    id: z.string(),
+    name: z.string().min(1).max(100),
+    description: z.string().optional(),
+  }))
+  .handler(async ({ input, context }) => {
+    // ...
+  });
+```
+
+### Переиспользование схем
+
+Храните общие схемы в `@qbs-autonaim/validators`:
+
+```typescript
+// packages/validators/src/workspace.ts
+export const workspaceIdSchema = z.string().regex(/^ws_[0-9a-fA-F]{32}$/, "Invalid workspace ID format");
+export const workspaceSlugSchema = z.string().min(3).max(50);
+
+// packages/api/src/routers/workspace/get.ts
+import { workspaceIdSchema } from "@qbs-autonaim/validators";
+```
+
+## Обработка ошибок
+
+### Стандартные коды ошибок
+
+```typescript
+import { ORPCError } from "@orpc/server";
+
+// NOT_FOUND - ресурс не найден
+if (!workspace) {
+  throw new ORPCError("NOT_FOUND", {
+    message: "Workspace не найден",
+  });
+}
+
+// FORBIDDEN - нет доступа
+if (!hasAccess) {
+  throw new ORPCError("FORBIDDEN", {
+    message: "Нет доступа к workspace",
+  });
+}
+
+// BAD_REQUEST - некорректные данные
+if (invalidData) {
+  throw new ORPCError("BAD_REQUEST", {
+    message: "Некорректные данные",
+  });
+}
+
+// UNAUTHORIZED - не авторизован (обрабатывается автоматически в protectedProcedure)
+// INTERNAL_SERVER_ERROR - внутренняя ошибка (по умолчанию)
+```
+
+### Type-safe ошибки и ORPCError.data
+
+В orpc.ts настроены типизированные ошибки через `.errors()` — клиент получает автокомплит для `error.data`.
+
+**TOO_MANY_REQUESTS** — передавайте `retryAfter` в data (секунды):
+
+```typescript
+throw new ORPCError("TOO_MANY_REQUESTS", {
+  message: "Превышен лимит запросов",
+  data: { retryAfter: 60 },
+});
+```
+
+**ВАЖНО:** `ORPCError.data` передаётся клиенту. Не включайте чувствительные данные (userId, tokens, stack traces).
+
+См. https://orpc.dev/docs/error-handling
+
+### Проверка доступа
+
+```typescript
+export const get = protectedProcedure
+  .input(z.object({ id: workspaceIdSchema }))
+  .handler(async ({ input, context }) => {
+    // 1. Проверка существования
+    const workspace = await context.workspaceRepository.findById(input.id);
+    if (!workspace) {
+      throw new ORPCError(
+        code: "NOT_FOUND",
+        message: "Workspace не найден",
+      });
+    }
+
+    // 2. Проверка доступа
+    const hasAccess = await context.workspaceRepository.checkAccess(
+      input.id,
+      context.session.user.id,
+    );
+    if (!hasAccess) {
+      throw new ORPCError(
+        code: "FORBIDDEN",
+        message: "Нет доступа к workspace",
+      });
+    }
+
+    return workspace;
+  });
+```
+
+## Работа с контекстом
+
+### Доступ к сессии
+
+```typescript
+// В protectedProcedure
+export const me = protectedProcedure
+  .query(async ({ ctx }) => {
+    const userId = context.session.user.id; // Гарантированно существует
+    return await context.db.user.findUnique({ where: { id: userId } });
+  });
+
+// В publicProcedure
+export const getPublic = publicProcedure
+  .query(async ({ ctx }) => {
+    if (context.session?.user) {
+      // Пользователь авторизован
+    } else {
+      // Анонимный пользователь
+    }
+  });
+```
+
+### Использование репозиториев
+
+```typescript
+export const list = protectedProcedure
+  .input(z.object({ workspaceId: z.string() }))
+  .handler(async ({ input, context }) => {
+    // Используем репозиторий из контекста
+    return await context.workspaceRepository.findMany(input.workspaceId);
+  });
+```
+
+### Прямой доступ к БД
+
+```typescript
+export const create = protectedProcedure
+  .input(z.object({ name: z.string() }))
+  .handler(async ({ input, context }) => {
+    // Прямой доступ к Prisma клиенту
+    return await context.db.workspace.create({
+      data: {
+        name: input.name,
+        ownerId: context.session.user.id,
+      },
+    });
+  });
+```
+
+## Рекомендации по устранению дублирования
+
+Принцип: **DRY в рамках функционального стиля** — выносить повторяющуюся логику в утилиты и middleware, а не в классы.
+
+### 1. Workspace Access — использовать verifyWorkspaceAccess
+
+**Не дублируйте** проверку доступа к workspace в каждом хендлере:
+
+```typescript
+// ❌ Дублирование
+const access = await context.workspaceRepository.checkAccess(
+  input.workspaceId,
+  context.session.user.id,
+);
+if (!access) throw new ORPCError("FORBIDDEN", { message: "Нет доступа к этому workspace" });
+```
+
+**Используйте** утилиту из `utils/verify-workspace-access.ts`:
+
+```typescript
+// ✅ Правильно (базовая проверка)
+import { verifyWorkspaceAccess } from "../../../utils/verify-workspace-access";
+
+await verifyWorkspaceAccess(
+  context.workspaceRepository,
+  input.workspaceId,
+  context.session.user.id,
+);
+
+// Для проверки ролей (owner/admin) — сохраните результат
+const access = await verifyWorkspaceAccess(
+  context.workspaceRepository,
+  input.workspaceId,
+  context.session.user.id,
+);
+requireWorkspaceRole(access, ["owner", "admin"]);
+```
+
+Для процедур, требующих определённую роль (owner/admin), добавьте проверку после `verifyWorkspaceAccess`:
+
+```typescript
+// utils/verify-workspace-access.ts
+export function requireWorkspaceRole(
+  access: { role: string },
+  allowedRoles: readonly string[],
+): void {
+  if (!allowedRoles.includes(access.role)) {
+    throw new ORPCError("FORBIDDEN", {
+      message: "Недостаточно прав для этого действия",
+    });
+  }
+}
+```
+
+### 2. workspaceProcedure — процедура с проверкой доступа
+
+Для роутов с `workspaceId` в input используйте `workspaceProcedure` (реализована в orpc.ts):
+
+```typescript
+// orpc.ts — workspaceProcedure, workspaceInputSchema, workspaceAccessMiddleware
+// Только workspaceId — используйте .handler() напрямую
+export const list = workspaceProcedure.handler(async ({ input, context }) => {
+  return await context.db.query.integration.findMany({ ... });
+});
+
+// Дополнительные поля — protectedProcedure + workspaceInputSchema.merge() + workspaceAccessMiddleware
+export const update = protectedProcedure
+  .input(workspaceInputSchema.merge(z.object({ type: z.string(), name: z.string() })))
+  .use(workspaceAccessMiddleware)
+  .handler(async ({ input, context }) => {
+    requireWorkspaceRole(context.workspaceAccess!, ["owner", "admin"]);
+    // ...
+  });
+```
+
+`workspaceAccessMiddleware` добавляет `workspaceAccess` в context — используйте `requireWorkspaceRole()` для проверки роли.
+
+### 3. Схемы vacancyId + workspaceId — переиспользовать
+
+Для операций с вакансией/гигом используйте общие схемы из `@qbs-autonaim/validators`:
+
+```typescript
+// packages/validators — vacancyWorkspaceInputSchema, gigWorkspaceInputSchema
+import {
+  vacancyWorkspaceInputSchema,
+  gigWorkspaceInputSchema,
+} from "@qbs-autonaim/validators";
+```
+
+Используйте `.merge()` для расширения:
+
+```typescript
+.input(vacancyWorkspaceInputSchema.merge(z.object({ limit: z.number().optional() })))
+```
+
+### 4. ensureFound — хелпер для NOT_FOUND
+
+Вместо повторяющегося паттерна «найти → если null, throw»:
+
+```typescript
+// ❌ Дублирование
+const vacancy = await context.db.query.vacancy.findFirst({ ... });
+if (!vacancy) throw new ORPCError("NOT_FOUND", { message: "Вакансия не найдена" });
+```
+
+Используйте утилиту `ensureFound`:
+
+```typescript
+// packages/api/src/utils/ensure-found.ts
+import { ORPCError } from "@orpc/server";
+
+export function ensureFound<T>(
+  value: T | null | undefined,
+  message: string,
+): T {
+  if (value == null) {
+    throw new ORPCError("NOT_FOUND", { message });
+  }
+  return value;
+}
+
+// В хендлере
+const vacancy = ensureFound(
+  await context.db.query.vacancy.findFirst({ ... }),
+  "Вакансия не найдена",
+);
+```
+
+### 5. Единый источник для verifyWorkspaceAccess
+
+Не дублируйте `verifyWorkspaceAccess` в доменных utils (например, `telegram/utils.ts`). Импортируйте из `packages/api/src/utils/verify-workspace-access.ts`.
+
+### 6. Приоритет внедрения
+
+| Рекомендация | Эффект | Сложность |
+|--------------|--------|-----------|
+| workspaceProcedure / middleware | Высокий | Средняя |
+| verifyWorkspaceAccess везде | Средний | Низкая |
+| ensureFound хелпер | Средний | Низкая |
+| vacancyWorkspaceInputSchema, gigWorkspaceInputSchema | Средний | Низкая |
+| requireWorkspaceRole | Низкий | Низкая |
+
+## Примеры структур
+
+### Простой домен (CRUD)
+
+```
+user/
+├── index.ts          # Экспорт { me, update, delete }
+├── me.ts             # query - получить текущего пользователя
+├── update.ts         # mutation - обновить профиль
+└── delete.ts         # mutation - удалить аккаунт
+```
+
+
+
+
+## Правила и best practices
+
+### MUST (обязательно)
+
+1. **Один файл = одна процедура** - никогда не объединяйте несколько процедур в один файл
+2. **Используйте `satisfies TRPCRouterRecord`** - для type-safety в index.ts
+3. **Валидация через Zod** - всегда валидируйте input с помощью `.input()`
+4. **Проверка доступа** - всегда проверяйте права доступа перед операциями
+5. **Понятные сообщения об ошибках** - на русском языке, описывающие проблему
+6. **Используйте правильные коды ошибок** - NOT_FOUND, FORBIDDEN, BAD_REQUEST и т.д.
+7. **Query для чтения, Mutation для изменения** - следуйте семантике HTTP
+8. **Экспортируйте именованные функции** - не используйте default export
+
+### SHOULD (рекомендуется)
+
+1. **Группируйте связанную функциональность** - используйте вложенные роутеры
+2. **Переиспользуйте схемы** - храните общие схемы в `@qbs-autonaim/validators`
+3. **Используйте репозитории** - для сложной бизнес-логики
+4. **Документируйте сложные роуты** - добавляйте комментарии для неочевидной логики
+5. **Проверяйте существование перед доступом** - сначала NOT_FOUND, потом FORBIDDEN
+6. **Используйте транзакции** - для связанных операций с БД
+7. **Используйте verifyWorkspaceAccess и ensureFound** - см. раздел «Рекомендации по устранению дублирования»
+
+### NEVER (никогда)
+
+1. **Не смешивайте домены** - каждый домен в своей папке
+2. **Не дублируйте логику** - выносите в utils или репозитории; не копируйте verifyWorkspaceAccess в доменные utils
+3. **Не игнорируйте ошибки** - всегда обрабатывайте исключения
+4. **Не используйте any** - всегда типизируйте данные
+5. **Не создавайте миграции в роутах** - только в отдельных миграциях
+6. **Не используйте npm** - только bun для установки зависимостей
+7. **Не отправляйте невальдированные данные в AI** - всегда используйте Zod схемы
+8. **Не игнорируйте стриминг для AI ответов** - используйте для лучшего UX
+
+## Чеклист для нового роута
+
+- [ ] Создан файл с kebab-case именем в правильной папке
+- [ ] Используется правильная процедура (publicProcedure/protectedProcedure)
+- [ ] Используется правильный метод (.query()/.mutation())
+- [ ] Добавлена валидация input через Zod
+- [ ] Проверены права доступа (если требуется)
+- [ ] Обработаны ошибки с правильными кодами
+- [ ] Добавлен экспорт в index.ts с `satisfies TRPCRouterRecord`
+- [ ] Типы корректны (нет any, unknown без проверок)
+- [ ] Сообщения об ошибках на русском языке
+- [ ] Код следует существующим паттернам проекта
+
+### Чеклист для AI роута
+
+- [ ] Валидация входных данных с ограничениями длины
+- [ ] Проверка на вредоносный контент
+- [ ] Обработка таймаутов и сетевых ошибок
+- [ ] Логирование всех взаимодействий с AI
+- [ ] Использование стриминга для длинных ответов
+- [ ] Правильная обработка прерываний стрима
+- [ ] Валидация ответов AI перед возвратом
+- [ ] Rate limiting для предотвращения спама
+- [ ] Graceful degradation при ошибках AI

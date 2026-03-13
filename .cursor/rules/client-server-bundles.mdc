@@ -1,0 +1,89 @@
+---
+description: Рекомендации по разделению client/server — не допускать серверные библиотеки в клиентский бандл
+alwaysApply: false
+---
+
+# Рекомендации: Client/Server разделение бандлов
+
+## Принцип
+
+Клиентские компоненты (Next.js `"use client"`, Server Actions вызывают сервер) не должны импортировать пакеты с Node.js/серверными зависимостями (cheerio, puppeteer, sharp, drizzle db client и т.д.). Это раздувает бандл и может вызывать ошибки в браузере.
+
+---
+
+## ✅ Рекомендуемые импорты для клиента
+
+| Задача | Пакет | Пример |
+|--------|-------|--------|
+| Утилиты дат (возраст, форматирование) | `@qbs-autonaim/lib/utils` | `import { calculateAge, formatBirthDate } from "@qbs-autonaim/lib/utils"` |
+| Inngest каналы и схемы | `@qbs-autonaim/jobs/channels` | `import { analyzeResponseProgressSchema } from "@qbs-autonaim/jobs/channels"` |
+| Типы API | `@qbs-autonaim/api` | `import type { RouterOutputs } from "@qbs-autonaim/api"` |
+| Утилиты (инициалы, форматирование) | `@qbs-autonaim/shared` | `import { getInitials, getResponseEventTitle } from "@qbs-autonaim/shared"` |
+| Схемы и константы БД | `@qbs-autonaim/db/schema` | `import { RESPONSE_STATUS_LABELS } from "@qbs-autonaim/db/schema"` |
+| Пути, конфиг | `@qbs-autonaim/config` | `import { paths, APP_CONFIG } from "@qbs-autonaim/config"` |
+| UI компоненты | `@qbs-autonaim/ui` | — |
+| Валидация (Zod схемы) | `@qbs-autonaim/validators` | — |
+
+---
+
+## ❌ Запрещённые импорты в клиентских компонентах
+
+| Пакет | Причина |
+|-------|---------|
+| `@qbs-autonaim/lib` (main) | Barrel с rate-limiter, logger, может тянуть server-код |
+| `@qbs-autonaim/lib/ai` | AI SDK, Langfuse, sharp |
+| `@qbs-autonaim/lib/s3` | AWS SDK |
+| `@qbs-autonaim/lib/image` | sharp |
+| `@qbs-autonaim/lib/server` | Pin validation, server-only логика |
+| `@qbs-autonaim/integration-clients/server` | cheerio, парсинг HTML |
+| `@qbs-autonaim/jobs-parsers` | puppeteer, crawlee, cheerio |
+| `@qbs-autonaim/db` или `db/client` | Drizzle client, pg — только schema для типов/констант |
+| `@qbs-autonaim/server-utils` | rate limit, db — только для middleware/API |
+
+---
+
+## Структура пакетов с server-only кодом
+
+### integration-clients
+- `integration-clients` — HTTP API (axios), допустим на клиенте при необходимости
+- `integration-clients/server` — web-offers (cheerio), только сервер. Защищён `server-only`
+
+### lib
+- `lib/utils` — date-utils, sanitize — client-safe
+- `lib` (main) — смешанный barrel, предпочитать `lib/utils` для клиента
+- `lib/ai`, `lib/s3`, `lib/image`, `lib/server` — только сервер
+
+### jobs
+- `jobs/channels` — zod-схемы, inngest-realtime — client-safe
+- `jobs/client` — Inngest client, использовать в Server Actions
+- `jobs/services/kwork` — только executeWithKworkTokenRefresh (API-safe, без cheerio)
+- `jobs/services/kwork/get-kwork-project-offers` — getProjectOffersFromWebWithCache (cheerio, jobs-parsers) — только Inngest
+
+### shared
+- `shared` — client-safe (utils, schemas, constants)
+- `shared/server` — ranking, interview — только сервер
+
+---
+
+## Чеклист для новых клиентских компонентов
+
+1. [ ] Импорт из `lib` → использовать `lib/utils` для date/sanitize
+2. [ ] Импорт типов API → только `import type`, не значения
+3. [ ] Импорт из db → только `db/schema` (типы, константы), не `db`/`db/client`
+4. [ ] Нет импорта jobs-parsers, integration-clients/server
+5. [ ] Нет импорта lib/ai, lib/s3, lib/image
+
+---
+
+## Пакет api (Next.js сервер)
+
+### Рекомендуемые импорты
+- `@qbs-autonaim/db`, `db/client`, `db/schema` — Drizzle, репозитории
+- `@qbs-autonaim/lib/ai`, `lib/s3`, `lib/image` — серверные утилиты
+- `@qbs-autonaim/integration-clients` — HTTP API (не /server, если не нужен cheerio)
+- `@qbs-autonaim/jobs/client` — Inngest для фоновых задач
+- `@qbs-autonaim/shared/server` — RankingService, InterviewLinkGenerator и т.д.
+- `@qbs-autonaim/config`, `@qbs-autonaim/emails` — конфиг, отправка писем
+
+### serverExternalPackages (next.config)
+Для корректной сборки добавить: `@qbs-autonaim/lib`, `@qbs-autonaim/document-processor`.

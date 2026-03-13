@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@calls/api-client": "workspace:*",
+    "@calls/ai": "workspace:*",
+    "@calls/config": "workspace:*",
     "@hookform/resolvers": "^5.2.2",
     "@orpc/client": "^1.13.6",
     "axios": "^1.13.6",

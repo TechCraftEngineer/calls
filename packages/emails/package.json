@@ -20,7 +20,7 @@
     "clean": "rm -rf *.tsbuildinfo .turbo dist",
     "dev": "bun --env-file=../../.env run email dev -p 3002",
     "typecheck": "tsc --noEmit",
-    "build": "tsup",
+    "build": "tsdown",
     "export": "email export"
   },
   "dependencies": {
@@ -45,7 +45,7 @@
     "@types/nodemailer": "^7.0.11",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "tsup": "8.5.1",
+    "tsdown": "^0.21.2",
     "typescript": "5.9.3"
   }
 }

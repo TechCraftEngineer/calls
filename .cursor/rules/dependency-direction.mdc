@@ -1,0 +1,41 @@
+---
+description: Направление зависимостей в монорепозитории — предотвращение циклов
+alwaysApply: false
+---
+
+# Dependency Direction
+
+## Принцип
+
+Зависимости направлены **сверху вниз**: приложения зависят от packages, packages низкого уровня не зависят от высокого.
+
+```
+apps (app, interview, web, ...)
+    ↓
+packages/api
+    ↓
+packages/jobs, packages/lib, packages/shared, packages/emails, ...
+    ↓
+packages/db, packages/auth, packages/ai, packages/validators, ...
+    ↓
+packages/config, packages/types, packages/ui
+```
+
+## Правила
+
+### MUST (обязательно)
+
+1. **Нет циклов** — пакет A не должен импортировать пакет B, если B (напрямую или транзитивно) импортирует A
+2. **shared — потребитель** — `@qbs-autonaim/shared` может зависеть от db, ai, config, types, validators. Обратное запрещено: db, ai НЕ должны импортировать shared
+3. **api — вершина packages** — api агрегирует всё; приложения зависят от api, не от внутренних packages напрямую (кроме ui, auth, validators для типов)
+
+### SHOULD (рекомендуется)
+
+1. Новый пакет — определить слой (leaf, layer 1, 2...) и не тянуть зависимости из верхних слоёв
+2. Проверять граф: `bun run cycle` в app, Knip для entry points
+
+### NEVER (никогда)
+
+1. `db` → `shared` — создаст цикл
+2. `ai` → `shared` — создаст цикл
+3. `validators` → `db` — validators должен оставаться leaf-пакетом (только types)

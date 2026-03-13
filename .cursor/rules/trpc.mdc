@@ -1,0 +1,282 @@
+---
+description: Ты работаешь с UI-кодом, использующим oRPC + TanStack Query.
+alwaysApply: false
+---
+# oRPC + TanStack Query Standards
+
+## Core Rules
+
+- MUST: Получать клиент через `useORPC()` для типобезопасности
+- MUST: Использовать фабрики `.queryOptions()` и `.mutationOptions()` вместо прямых хуков
+- MUST: Передавать результаты фабрик в нативные хуки TanStack Query (`useQuery`, `useMutation`, `useSuspenseQuery`)
+- NEVER: Вызывать `orpc.procedure.useQuery()` напрямую
+- MUST: Использовать `.queryKey()` для инвалидации и работы с кэшем
+- NEVER: Строить query keys вручную
+
+## Queries
+
+### Базовый паттерн
+
+```tsx
+import { useORPC } from "~/orpc/react";
+import { useQuery } from "@tanstack/react-query";
+
+const orpc = useORPC();
+const { data, isPending } = useQuery(
+  orpc.brands.getById.queryOptions({ id: brandId })
+);
+```
+
+### Условные запросы
+
+- MUST: Использовать `skipToken` для условного отключения
+- NEVER: Использовать `enabled: false`
+
+```tsx
+import { skipToken } from "@tanstack/react-query";
+
+const { data } = useQuery(
+  orpc.user.details.queryOptions(
+    userId ? { userId } : skipToken
+  )
+);
+```
+
+### Suspense
+
+- SHOULD: Использовать `useSuspenseQuery` в компонентах с Suspense границами
+
+```tsx
+import { useSuspenseQuery } from "@tanstack/react-query";
+
+const { data } = useSuspenseQuery(
+  orpc.brands.getById.queryOptions({ id: brandId })
+);
+```
+
+### Server-side prefetch
+
+- SHOULD: Prefetch критичные данные на сервере
+
+```tsx
+import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
+import { createServerHelpers } from "~/orpc/server";
+
+const helpers = await createServerHelpers();
+await helpers.brands.getById.prefetch({ id: params.id });
+
+return (
+  <HydrationBoundary state={dehydrate(helpers.queryClient)}>
+    <BrandDetails brandId={params.id} />
+  </HydrationBoundary>
+);
+```
+
+### Infinite queries
+
+```tsx
+import { useInfiniteQuery } from "@tanstack/react-query";
+
+const { data, fetchNextPage, hasNextPage } = useInfiniteQuery(
+  orpc.brands.list.infiniteOptions({
+    input: (page: number) => ({ limit: 10, cursor: page }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+  })
+);
+```
+
+## Mutations
+
+### Базовый паттерн
+
+- MUST: Инвалидировать связанные запросы в `onSuccess`
+- MUST: Обрабатывать ошибки в `onError`
+
+```tsx
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
+const orpc = useORPC();
+const queryClient = useQueryClient();
+
+const { mutate, isPending } = useMutation(
+  orpc.brands.create.mutationOptions({
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: orpc.brands.list.queryKey(),
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  })
+);
+```
+
+### Оптимистичные обновления
+
+- SHOULD: Использовать для лучшего UX
+- MUST: Откатывать изменения в `onError`
+- MUST: Синхронизировать с сервером в `onSettled`
+
+```tsx
+const { mutate } = useMutation(
+  orpc.brands.update.mutationOptions({
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries({
+        queryKey: orpc.brands.getById.queryKey({ id: brand.id }),
+      });
+      
+      const previousBrand = queryClient.getQueryData(
+        orpc.brands.getById.queryKey({ id: brand.id })
+      );
+      
+      queryClient.setQueryData(
+        orpc.brands.getById.queryKey({ id: brand.id }),
+        { ...brand, ...newData }
+      );
+      
+      return { previousBrand };
+    },
+    onError: (err, newData, context) => {
+      if (context?.previousBrand) {
+        queryClient.setQueryData(
+          orpc.brands.getById.queryKey({ id: brand.id }),
+          context.previousBrand
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: orpc.brands.getById.queryKey({ id: brand.id }),
+      });
+    },
+  })
+);
+```
+
+## Query Client Operations
+
+### Инвалидация
+
+```tsx
+// Конкретный запрос
+queryClient.invalidateQueries({
+  queryKey: orpc.brands.getById.queryKey({ id: "123" }),
+});
+
+// Весь роутер
+queryClient.invalidateQueries({
+  queryKey: orpc.brands.queryKey(),
+});
+
+// Все oRPC запросы
+queryClient.invalidateQueries({
+  queryKey: orpc.queryKey(),
+});
+```
+
+### Prefetch и Fetch
+
+```tsx
+// Prefetch (фоновая загрузка)
+await queryClient.prefetchQuery(
+  orpc.brands.getById.queryOptions({ id: "123" })
+);
+
+// Fetch (получить данные)
+const brand = await queryClient.fetchQuery(
+  orpc.brands.getById.queryOptions({ id: "123" })
+);
+```
+
+### Работа с кэшем
+
+```tsx
+// Получить
+const brand = queryClient.getQueryData(
+  orpc.brands.getById.queryKey({ id: "123" })
+);
+
+// Установить
+queryClient.setQueryData(
+  orpc.brands.getById.queryKey({ id: "123" }),
+  { id: "123", name: "New Brand" }
+);
+```
+
+### Query Filters
+
+```tsx
+// Точная фильтрация
+queryClient.invalidateQueries(
+  orpc.brands.getById.queryFilter({ id: "123" })
+);
+
+// Весь роутер
+queryClient.invalidateQueries(
+  orpc.brands.pathFilter()
+);
+
+// Infinite queries
+queryClient.invalidateQueries(
+  orpc.brands.list.infiniteQueryFilter({ status: "active" })
+);
+```
+
+## Subscriptions
+
+```tsx
+import { useSubscription } from "@orpc/tanstack-query";
+
+const subscription = useSubscription(
+  orpc.notifications.onNew.subscriptionOptions(
+    { userId: "123" },
+    {
+      onData: (notification) => toast.info(notification.message),
+      onError: (error) => console.error(error),
+    }
+  )
+);
+
+// subscription.status: 'idle' | 'connecting' | 'pending' | 'error'
+// subscription.data, subscription.error, subscription.reset()
+```
+
+## AI Streaming
+
+```tsx
+// Для стриминга AI ответов
+const { data, isLoading } = useQuery(
+  orpc.ai.generateStream.queryOptions({
+    prompt: userInput,
+    onData: (chunk) => {
+      // Обработка каждого чанка стрима
+      setStreamingContent(prev => prev + chunk);
+    }
+  })
+);
+
+// Или с mutation для чатов
+const { mutate, isPending } = useMutation(
+  orpc.chat.sendMessage.mutationOptions({
+    onSuccess: (response) => {
+      if (response.stream) {
+        // Обработка стриминга ответа
+        response.stream.onData((chunk) => {
+          setMessages(prev => [...prev, { content: chunk, streaming: true }]);
+        });
+      }
+    }
+  })
+);
+```
+
+## Type Inference
+
+```tsx
+import type { RouterInputs, RouterOutputs } from "@qbs-autonaim/api";
+
+type BrandCreateInput = RouterInputs["brands"]["create"];
+type Brand = RouterOutputs["brands"]["getById"];
+```
