@@ -13,7 +13,12 @@ import {
   createBackendContext,
   createLogger,
 } from "@calls/api";
-import { storage } from "@calls/db";
+import {
+  authService,
+  callsService,
+  promptsService,
+  usersService,
+} from "@calls/db";
 import { inngestHandler } from "@calls/jobs/hono";
 import { createWebhookHandler } from "@calls/telegram-bot";
 import { ORPCError, onError } from "@orpc/server";
@@ -365,11 +370,11 @@ app.post("/api/auth/login", async (c) => {
     );
   }
   // Fallback: legacy storage (during migration from Python backend)
-  const ok = await storage.verifyPassword(username, password);
+  const ok = await authService.verifyPassword(username, password);
   if (!ok) {
     return c.json({ success: false, detail: "Invalid credentials" }, 401);
   }
-  const user = await storage.getUserByUsername(username);
+  const user = await usersService.getUserByUsername(username);
   if (!user)
     return c.json({ success: false, detail: "Invalid credentials" }, 401);
   setCookie(c, "session", username, {
@@ -564,9 +569,9 @@ app.post("/api/calls/:id/recommendations", async (c) => {
   if (!ctx.user) return c.json({ detail: "Unauthorized" }, 401);
   const id = Number(c.req.param("id"));
   if (Number.isNaN(id)) return c.json({ detail: "Invalid id" }, 400);
-  const call = await storage.getCall(id);
+  const call = await callsService.getCall(id);
   if (!call) return c.json({ detail: "Call not found" }, 404);
-  const transcript = await storage.getTranscriptByCallId(id);
+  const transcript = await callsService.getTranscriptByCallId(id);
   if (!transcript?.text)
     return c.json({ detail: "Transcript not found for this call" }, 400);
   return c.json({ detail: "DeepSeek recommendations not yet integrated" }, 501);
@@ -577,9 +582,9 @@ app.post("/api/calls/:id/evaluate", async (c) => {
   if (!ctx.user) return c.json({ detail: "Unauthorized" }, 401);
   const id = Number(c.req.param("id"));
   if (Number.isNaN(id)) return c.json({ detail: "Invalid id" }, 400);
-  const call = await storage.getCall(id);
+  const call = await callsService.getCall(id);
   if (!call) return c.json({ detail: "Call not found" }, 404);
-  const transcript = await storage.getTranscriptByCallId(id);
+  const transcript = await callsService.getTranscriptByCallId(id);
   if (!transcript?.text)
     return c.json(
       { detail: "Transcript not found. Please transcribe the call first." },
@@ -904,7 +909,7 @@ app.post("/api/reports/send-test-telegram", async (c) => {
 
 // Telegram webhook - for /start linking and incoming updates
 const telegramWebhookHandler = createWebhookHandler(() =>
-  storage.getPrompt("telegram_bot_token"),
+  promptsService.getPrompt("telegram_bot_token"),
 );
 app.post("/api/telegram-webhook", telegramWebhookHandler);
 
@@ -935,7 +940,7 @@ async function setupTelegramWebhook(): Promise<boolean> {
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const token = await storage.getPrompt("telegram_bot_token");
+      const token = await promptsService.getPrompt("telegram_bot_token");
       if (!token?.trim()) {
         backendLogger.warn(
           "Telegram bot token not configured, skipping webhook setup",

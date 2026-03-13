@@ -6,7 +6,7 @@
 import { existsSync, mkdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createLogger } from "@calls/api/logger";
-import { storage, workspacesService } from "@calls/db";
+import { callsService, workspacesService } from "@calls/db";
 import { Client } from "basic-ftp";
 import { parseMegafonFilename } from "./parse-filename";
 
@@ -141,7 +141,7 @@ export async function syncMegafonFtp(
         const relativePath = `${dateDir}/${file.name}`;
         const localPath = join(recordsDir, dateDir, file.name);
 
-        const existing = await storage.getCallByFilename(
+        const existing = await callsService.getCallByFilename(
           relativePath,
           workspaceId,
         );
@@ -203,7 +203,7 @@ export async function syncMegafonFtp(
             continue;
           }
 
-          await storage.createCall({
+          await callsService.createCall({
             workspaceId,
             filename: relativePath,
             number: parsed.externalNumber,

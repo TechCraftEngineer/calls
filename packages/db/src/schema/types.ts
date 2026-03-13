@@ -5,14 +5,9 @@
 // Import all table definitions as types
 import type { callEvaluations, calls, transcripts } from "./calls";
 import type { activityLog, prompts } from "./system";
-import type {
-  userFilters,
-  userIntegrations,
-  userKpiSettings,
-  userReportSettings,
-  users,
-} from "./users";
 import type { workspaceMembers, workspaces } from "./workspaces";
+// Import Better Auth types
+import type { user, session, account, verification } from "./auth";
 
 // Calls domain types
 export type Call = typeof calls.$inferSelect;
@@ -24,13 +19,11 @@ export type NewTranscript = typeof transcripts.$inferInsert;
 export type CallEvaluation = typeof callEvaluations.$inferSelect;
 export type NewCallEvaluation = typeof callEvaluations.$inferInsert;
 
-// Users domain types
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-export type UserIntegrations = typeof userIntegrations.$inferSelect;
-export type UserFilters = typeof userFilters.$inferSelect;
-export type UserReportSettings = typeof userReportSettings.$inferSelect;
-export type UserKpiSettings = typeof userKpiSettings.$inferSelect;
+// Better Auth domain types
+export type User = typeof user.$inferSelect;
+export type Session = typeof session.$inferSelect;
+export type Account = typeof account.$inferSelect;
+export type Verification = typeof verification.$inferSelect;
 
 // System domain types
 export type Prompt = typeof prompts.$inferSelect;

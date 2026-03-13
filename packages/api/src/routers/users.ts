@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { storage } from "@calls/db";
+import { promptsService, systemRepository, usersService } from "@calls/db";
 import { getBotUsername } from "@calls/telegram-bot";
 import { z } from "zod";
 import { adminProcedure, protectedProcedure } from "../orpc";
@@ -10,7 +10,7 @@ async function canAccessUser(
   targetUserId: number,
 ): Promise<boolean> {
   if (currentUserId === targetUserId) return true;
-  const user = await storage.getUser(currentUserId);
+  const user = await usersService.getUser(currentUserId);
   if (!user) return false;
   return isAdminUser(user as Record<string, unknown>);
 }
@@ -58,7 +58,7 @@ const _changePasswordSchema = z.object({
 export const usersRouter = {
   list: adminProcedure.handler(async () => {
     try {
-      return await storage.getAllUsers();
+      return await usersService.getAllUsers();
     } catch (error) {
       console.error("[Users] Error in getAllUsers:", {
         error: error instanceof Error ? error.message : String(error),
@@ -74,7 +74,7 @@ export const usersRouter = {
       const userId = (context.user as Record<string, unknown>).id as number;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      const user = await storage.getUser(input.user_id);
+      const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       return user;
     }),
@@ -82,22 +82,22 @@ export const usersRouter = {
   create: adminProcedure
     .input(userCreateSchema)
     .handler(async ({ input, context }) => {
-      const existing = await storage.getUserByUsername(input.username);
+      const existing = await usersService.getUserByUsername(input.username);
       if (existing) throw new Error("User with this username already exists");
-      const id = await storage.createUser(
-        input.username,
-        input.password,
-        input.givenName,
-        input.familyName ?? "",
-        input.internalExtensions ?? null,
-        input.mobilePhones ?? null,
-      );
-      await storage.addActivityLog(
+      const id = await usersService.createUser({
+        username: input.username,
+        password: input.password,
+        givenName: input.givenName,
+        familyName: input.familyName ?? "",
+        internalExtensions: input.internalExtensions ?? null,
+        mobilePhones: input.mobilePhones ?? null,
+      });
+      await systemRepository.addActivityLog(
         "info",
         `User created: ${input.username}`,
         (context.user as Record<string, unknown>).username as string,
       );
-      const user = await storage.getUser(id);
+      const user = await usersService.getUser(id);
       if (!user) throw new Error("Failed to create user");
       return user;
     }),
@@ -110,7 +110,7 @@ export const usersRouter = {
         throw new Error("Not authorized");
 
       // Получаем пользователя до обновления для логирования
-      const user = await storage.getUser(input.user_id);
+      const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
 
       const d = input.data;
@@ -125,22 +125,28 @@ export const usersRouter = {
           .trim();
         if (!givenName) throw new Error("Given name is required");
 
-        await storage.updateUserName(input.user_id, givenName, familyName);
+        await usersService.updateUserName(input.user_id, {
+          givenName,
+          familyName,
+        });
 
         // Обновляем дополнительные поля если они изменились
         if (d.internalExtensions !== undefined) {
-          await storage.updateUserInternalExtensions(
+          await usersService.updateUserInternalExtensions(
             input.user_id,
             d.internalExtensions,
           );
         }
 
         if (d.mobilePhones !== undefined) {
-          await storage.updateUserMobilePhones(input.user_id, d.mobilePhones);
+          await usersService.updateUserMobilePhones(
+            input.user_id,
+            d.mobilePhones,
+          );
         }
 
         // Обновляем фильтры
-        await storage.updateUserFilters(
+        await usersService.updateUserFilters(
           input.user_id,
           d.filter_exclude_answering_machine ??
             (u.filter_exclude_answering_machine as boolean) ??
@@ -150,12 +156,11 @@ export const usersRouter = {
         );
 
         // Обновляем настройки отчетов и KPI
-        await storage.updateUserReportKpiSettings(input.user_id, d);
+        await usersService.updateUserReportKpiSettings(input.user_id, d);
 
         // Обновляем настройки Telegram
-        await storage.updateUserTelegramSettings(
+        await usersService.updateUserTelegramSettings(
           input.user_id,
-          (u.telegramChatId as string) ?? null,
           d.telegram_daily_report ??
             (u.telegram_daily_report as boolean) ??
             false,
@@ -165,20 +170,20 @@ export const usersRouter = {
         );
 
         // Логируем успешное обновление
-        await storage.addActivityLog(
+        await systemRepository.addActivityLog(
           "info",
           `User updated: ${user.username}`,
           (context.user as Record<string, unknown>).username as string,
         );
 
         // Получаем обновленные данные
-        const updated = await storage.getUser(input.user_id);
+        const updated = await usersService.getUser(input.user_id);
         if (!updated) throw new Error("Failed to retrieve updated user");
 
         return updated;
       } catch (error) {
         // Логируем ошибку обновления
-        await storage.addActivityLog(
+        await systemRepository.addActivityLog(
           "error",
           `Failed to update user ${user.username}: ${error instanceof Error ? error.message : String(error)}`,
           (context.user as Record<string, unknown>).username as string,
@@ -191,14 +196,14 @@ export const usersRouter = {
   delete: adminProcedure
     .input(z.object({ user_id: z.number() }))
     .handler(async ({ input, context }) => {
-      const user = await storage.getUser(input.user_id);
+      const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       const adminId = (context.user as Record<string, unknown>).id as number;
       if (adminId === input.user_id)
         throw new Error("Cannot delete your own account");
-      if (!(await storage.deleteUser(input.user_id)))
+      if (!(await usersService.deleteUser(input.user_id)))
         throw new Error("Failed to delete user");
-      await storage.addActivityLog(
+      await systemRepository.addActivityLog(
         "info",
         `User deleted: ${user.username}`,
         (context.user as Record<string, unknown>).username as string,
@@ -215,15 +220,18 @@ export const usersRouter = {
       }),
     )
     .handler(async ({ input, context }) => {
-      const user = await storage.getUser(input.user_id);
+      const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       if (input.new_password !== input.confirm_password)
         throw new Error("Passwords do not match");
       if (
-        !(await storage.updateUserPassword(input.user_id, input.new_password))
+        !(await usersService.updateUserPassword(
+          input.user_id,
+          input.new_password,
+        ))
       )
         throw new Error("Failed to change password");
-      await storage.addActivityLog(
+      await systemRepository.addActivityLog(
         "info",
         `Password changed for user: ${user.username}`,
         (context.user as Record<string, unknown>).username as string,
@@ -237,12 +245,12 @@ export const usersRouter = {
       const userId = (context.user as Record<string, unknown>).id as number;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      const user = await storage.getUser(input.user_id);
+      const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       const token = randomBytes(16).toString("base64url");
-      if (!(await storage.saveTelegramConnectToken(input.user_id, token)))
+      if (!(await usersService.saveTelegramConnectToken(input.user_id, token)))
         throw new Error("Failed to save token");
-      const botToken = await storage.getPrompt("telegram_bot_token");
+      const botToken = await promptsService.getPrompt("telegram_bot_token");
       const botUsername = botToken?.trim()
         ? await getBotUsername(botToken)
         : "mango_react_bot";
@@ -255,7 +263,7 @@ export const usersRouter = {
       const userId = (context.user as Record<string, unknown>).id as number;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      if (!(await storage.disconnectTelegram(input.user_id)))
+      if (!(await usersService.disconnectTelegram(input.user_id)))
         throw new Error("Failed to disconnect Telegram");
       return { success: true };
     }),
@@ -266,10 +274,10 @@ export const usersRouter = {
       const userId = (context.user as Record<string, unknown>).id as number;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      const user = await storage.getUser(input.user_id);
+      const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       const token = randomBytes(16).toString("base64url");
-      if (!(await storage.saveMaxConnectToken(input.user_id, token)))
+      if (!(await usersService.saveMaxConnectToken(input.user_id, token)))
         throw new Error("Failed to save token");
       return {
         manual_instruction: `Отправьте боту команду: /start ${token}`,
@@ -283,7 +291,7 @@ export const usersRouter = {
       const userId = (context.user as Record<string, unknown>).id as number;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      if (!(await storage.disconnectMax(input.user_id)))
+      if (!(await usersService.disconnectMax(input.user_id)))
         throw new Error("Failed to disconnect MAX");
       return { success: true };
     }),

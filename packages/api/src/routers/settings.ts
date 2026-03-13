@@ -1,4 +1,4 @@
-import { storage } from "@calls/db";
+import { promptsService, systemRepository } from "@calls/db";
 import { z } from "zod";
 import { adminProcedure, protectedProcedure } from "../orpc";
 
@@ -23,42 +23,42 @@ const settingsUpdateSchema = z.object({
 
 export const settingsRouter = {
   getPrompts: protectedProcedure.handler(async () => {
-    return await storage.getAllPrompts();
+    return await promptsService.getAllPrompts();
   }),
 
   updatePrompts: adminProcedure
     .input(settingsUpdateSchema)
     .handler(async ({ input, context }) => {
       if (input.deepseek_model && input.deepseek_model in DEEPSEEK_MODELS) {
-        await storage.updatePrompt(
+        await promptsService.updatePrompt(
           "deepseek_model",
           input.deepseek_model,
           "Selected DeepSeek model",
         );
       }
       if (input.quality_min_value_threshold !== undefined) {
-        await storage.updatePrompt(
+        await promptsService.updatePrompt(
           "quality_min_value_threshold",
           String(input.quality_min_value_threshold),
           "Minimum call value for quality evaluation (0-5)",
         );
       }
       if (input.enable_manager_recommendations !== undefined) {
-        await storage.updatePrompt(
+        await promptsService.updatePrompt(
           "enable_manager_recommendations",
           input.enable_manager_recommendations ? "true" : "false",
           "Включить генерацию рекомендаций для менеджера (true/false)",
         );
       }
       if (input.telegram_bot_token !== undefined) {
-        await storage.updatePrompt(
+        await promptsService.updatePrompt(
           "telegram_bot_token",
           input.telegram_bot_token ?? "",
           "Telegram Bot Token",
         );
       }
       if (input.max_bot_token !== undefined) {
-        await storage.updatePrompt(
+        await promptsService.updatePrompt(
           "max_bot_token",
           input.max_bot_token ?? "",
           "MAX Bot Token",
@@ -87,8 +87,12 @@ export const settingsRouter = {
             | { value?: string; description?: string }
             | undefined;
           if (p) {
-            await storage.updatePrompt(key, p.value ?? "", p.description ?? "");
-            await storage.addActivityLog(
+            await promptsService.updatePrompt(
+              key,
+              p.value ?? "",
+              p.description ?? "",
+            );
+            await systemRepository.addActivityLog(
               "info",
               `Prompt updated: ${key}`,
               (context.user as Record<string, unknown>).username as string,
@@ -99,7 +103,7 @@ export const settingsRouter = {
           | { value?: string }
           | undefined;
         if (tb)
-          await storage.updatePrompt(
+          await promptsService.updatePrompt(
             "telegram_bot_token",
             tb.value ?? "",
             "Telegram Bot Token",
@@ -108,7 +112,7 @@ export const settingsRouter = {
           | { value?: string }
           | undefined;
         if (mb)
-          await storage.updatePrompt(
+          await promptsService.updatePrompt(
             "max_bot_token",
             mb.value ?? "",
             "MAX Bot Token",
@@ -118,7 +122,10 @@ export const settingsRouter = {
     }),
 
   getModels: protectedProcedure.handler(async () => {
-    const current = await storage.getPrompt("deepseek_model", "deepseek-chat");
+    const current = await promptsService.getPrompt(
+      "deepseek_model",
+      "deepseek-chat",
+    );
     return { models: DEEPSEEK_MODELS, current_model: current };
   }),
 
@@ -130,7 +137,7 @@ export const settingsRouter = {
       .replace(/[-:T.]/g, "")
       .slice(0, 15);
     const backupFilename = `pg_backup_${timestamp}.sql`;
-    await storage.addActivityLog(
+    await systemRepository.addActivityLog(
       "info",
       `Запрошена резервная копия PostgreSQL: ${backupFilename} (выполните pg_dump вручную)`,
       (context.user as Record<string, unknown>).username as string,

@@ -5,13 +5,13 @@
  */
 
 import { createLogger } from "@calls/api/logger";
-import { storage } from "@calls/db";
+import { usersService } from "@calls/db";
 
 const logger = createLogger("health-check");
 
 async function checkDatabase() {
   try {
-    await storage.getUser(1);
+    await usersService.getUser(1);
     logger.info("✅ Database connection: OK");
     return true;
   } catch (error) {
@@ -24,7 +24,7 @@ async function checkDatabase() {
 
 async function checkUsersTable() {
   try {
-    const users = await storage.getAllUsers();
+    const users = await usersService.getAllUsers();
     logger.info(`✅ Users table: OK (${users.length} users found)`);
     return true;
   } catch (error) {

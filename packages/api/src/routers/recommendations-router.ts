@@ -6,6 +6,10 @@ export const recommendationsRouter = {
   generate: protectedProcedure
     .input(z.object({ call_id: z.number() }))
     .handler(async ({ input, context }) => {
-      return generateRecommendations(input.call_id, context.storage);
+      return generateRecommendations(
+        input.call_id,
+        context.callsService,
+        context.promptsService,
+      );
     }),
 };

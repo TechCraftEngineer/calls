@@ -1,5 +1,5 @@
 import { createChatBot } from "@calls/ai";
-import type { storage as StorageType } from "@calls/db";
+import type { callsService, promptsService } from "@calls/db";
 import { z } from "zod";
 import {
   adminProcedure,
@@ -9,16 +9,17 @@ import {
 
 async function generateRecommendations(
   callId: number,
-  storage: typeof StorageType,
+  calls: typeof callsService,
+  prompts: typeof promptsService,
 ): Promise<{ recommendations: string[] }> {
   try {
-    const call = await storage.getCall(callId);
+    const call = await calls.getCall(callId);
     if (!call) {
       throw new Error(`Звонок с ID ${callId} не найден`);
     }
 
-    const transcript = await storage.getTranscriptByCallId(callId);
-    const evaluation = await storage.getEvaluation(callId);
+    const transcript = await calls.getTranscriptByCallId(callId);
+    const evaluation = await calls.getEvaluation(callId);
 
     let transcriptText = transcript?.text ?? transcript?.raw_text ?? "";
     if (!transcriptText.trim()) {
@@ -36,7 +37,7 @@ async function generateRecommendations(
     }
 
     const systemPrompt =
-      (await storage.getPrompt("manager_recommendations")) ??
+      (await prompts.getPrompt("manager_recommendations")) ??
       `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
 
     const apiKey = process.env.OPENROUTER_API_KEY;
@@ -180,7 +181,7 @@ export const callsRouter = {
   list: workspaceProcedure
     .input(listCallsSchema)
     .handler(async ({ input, context }) => {
-      const { storage, user, workspaceId } = context;
+      const { callsService, user, workspaceId } = context;
       const offset = (input.page - 1) * input.per_page;
 
       const dateFrom = input.date_from
@@ -188,10 +189,10 @@ export const callsRouter = {
         : undefined;
       const dateTo = input.date_to ? `${input.date_to}T23:59:59` : undefined;
 
-      const internalNumbers = getInternalNumbersForUser(user!, storage);
-      const mobileNumbers = getMobileNumbersForUser(user!, storage);
+      const internalNumbers = getInternalNumbersForUser(user!);
+      const mobileNumbers = getMobileNumbersForUser(user!);
 
-      const callsWithTranscripts = await storage.getCallsWithTranscripts({
+      const callsWithTranscripts = await callsService.getCallsWithTranscripts({
         workspaceId: workspaceId!,
         limit: input.per_page,
         offset,
@@ -212,7 +213,7 @@ export const callsRouter = {
         q: input.q?.trim() || undefined,
       });
 
-      const totalItems = await storage.countCalls({
+      const totalItems = await callsService.countCalls({
         workspaceId: workspaceId!,
         dateFrom,
         dateTo,
@@ -232,8 +233,8 @@ export const callsRouter = {
       });
 
       const totalPages = Math.ceil(totalItems / input.per_page) || 1;
-      const metrics = await storage.calculateMetrics(workspaceId!);
-      const managers = (await storage.getAllUsers()).filter(
+      const metrics = await callsService.calculateMetrics(workspaceId!);
+      const managers = (await context.usersService.getAllUsers()).filter(
         (u) => (u as Record<string, unknown>).internalExtensions,
       );
 
@@ -270,17 +271,19 @@ export const callsRouter = {
   get: workspaceProcedure
     .input(z.object({ call_id: z.number() }))
     .handler(async ({ input, context }) => {
-      const call = await context.storage.getCall(input.call_id);
+      const call = await context.callsService.getCall(input.call_id);
       if (!call) {
         throw new Error("Call not found");
       }
       if (call.workspaceId !== context.workspaceId) {
         throw new Error("Call not found");
       }
-      const transcript = await context.storage.getTranscriptByCallId(
+      const transcript = await context.callsService.getTranscriptByCallId(
         input.call_id,
       );
-      const evaluation = await context.storage.getEvaluation(input.call_id);
+      const evaluation = await context.callsService.getEvaluation(
+        input.call_id,
+      );
       const durationSeconds = call.duration ?? 0;
       return {
         call,
@@ -295,21 +298,25 @@ export const callsRouter = {
   generateRecommendations: workspaceProcedure
     .input(z.object({ call_id: z.number() }))
     .handler(async ({ input, context }) => {
-      const call = await context.storage.getCall(input.call_id);
+      const call = await context.callsService.getCall(input.call_id);
       if (call && call.workspaceId !== context.workspaceId) {
         throw new Error("Call not found");
       }
-      return generateRecommendations(input.call_id, context.storage);
+      return generateRecommendations(
+        input.call_id,
+        context.callsService,
+        context.promptsService,
+      );
     }),
 
   delete: adminProcedure
     .input(z.object({ call_id: z.number() }))
     .handler(async ({ input, context }) => {
-      const call = await context.storage.getCall(input.call_id);
+      const call = await context.callsService.getCall(input.call_id);
       if (!call) throw new Error("Call not found");
-      if (!(await context.storage.deleteCall(input.call_id)))
+      if (!(await context.callsService.deleteCall(input.call_id)))
         throw new Error("Failed to delete call");
-      await context.storage.addActivityLog(
+      await context.systemRepository.addActivityLog(
         "info",
         `Deleted call #${input.call_id}`,
         (context.user as Record<string, unknown>).username as string,
@@ -320,7 +327,6 @@ export const callsRouter = {
 
 function getInternalNumbersForUser(
   user: Record<string, unknown>,
-  _storage: typeof import("@calls/db").storage,
 ): string[] | undefined {
   const nums = user.internalExtensions as string | undefined;
   if (!nums || String(nums).trim().toLowerCase() === "all") return undefined;
@@ -337,7 +343,6 @@ function getInternalNumbersForUser(
 
 function getMobileNumbersForUser(
   user: Record<string, unknown>,
-  _storage: typeof import("@calls/db").storage,
 ): string[] | undefined {
   const nums = user.mobilePhones as string | undefined;
   if (!nums?.trim()) return undefined;

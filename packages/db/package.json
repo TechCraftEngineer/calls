@@ -14,9 +14,6 @@
     },
     "./schema": {
       "default": "./src/schema/index.ts"
-    },
-    "./storage": {
-      "default": "./src/storage.ts"
     }
   },
   "license": "MIT",

@@ -1,4 +1,4 @@
-import { storage } from "@calls/db";
+import { promptsService, usersService } from "@calls/db";
 import { sendMessage } from "@calls/telegram-bot";
 import { protectedProcedure } from "../orpc";
 
@@ -6,13 +6,13 @@ export const reportsRouter = {
   sendTestTelegram: protectedProcedure.handler(async ({ context }) => {
     const username = (context.user as Record<string, unknown>)
       .username as string;
-    const user = await storage.getUserByUsername(username);
+    const user = await usersService.getUserByUsername(username);
     if (!user) throw new Error("User not found");
     const chatId = (user as Record<string, unknown>).telegramChatId as
       | string
       | undefined;
     if (!chatId) throw new Error("Telegram Chat ID is not set for this user");
-    const token = await storage.getPrompt("telegram_bot_token");
+    const token = await promptsService.getPrompt("telegram_bot_token");
     if (!token?.trim())
       throw new Error(
         "Telegram Bot Token не настроен. Укажите токен в Настройках.",

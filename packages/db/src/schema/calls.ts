@@ -10,6 +10,7 @@ import {
   real,
   serial,
   text,
+  timestamp,
 } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
 
@@ -18,12 +19,12 @@ export const calls = pgTable(
   "calls",
   {
     id: serial("id").primaryKey(),
-    workspaceId: integer("workspace_id")
+    workspace_id: integer("workspace_id")
       .references(() => workspaces.id, { onDelete: "cascade" })
       .notNull(),
     filename: text("filename").unique(),
     number: text("number"),
-    timestamp: text("timestamp").notNull(), // ISO string
+    timestamp: timestamp("timestamp").notNull(), // ISO timestamp
     name: text("name"),
     duration: integer("duration"), // в секундах
     direction: text("direction"), // 'incoming'/'outgoing'/'входящий'/'исходящий'
@@ -32,13 +33,20 @@ export const calls = pgTable(
     internal_number: text("internal_number"),
     source: text("source"), // менеджер/оператор
     customer_name: text("customer_name"),
+    created_at: timestamp("created_at").defaultNow().notNull(),
+    updated_at: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
     timestampIdx: index("calls_timestamp_idx").on(table.timestamp),
     internalNumberIdx: index("calls_internal_number_idx").on(
       table.internal_number,
     ),
-    workspaceIdIdx: index("calls_workspace_id_idx").on(table.workspaceId),
+    workspaceIdIdx: index("calls_workspace_id_idx").on(table.workspace_id),
+    workspaceTimestampIdx: index("calls_workspace_timestamp_idx").on(
+      table.workspace_id,
+      table.timestamp
+    ),
+    numberIdx: index("calls_number_idx").on(table.number),
   }),
 );
 
@@ -63,6 +71,8 @@ export const transcripts = pgTable(
   },
   (table) => ({
     callIdIdx: index("transcripts_call_id_idx").on(table.call_id),
+    callTypeIdx: index("transcripts_call_type_idx").on(table.call_type),
+    sentimentIdx: index("transcripts_sentiment_idx").on(table.sentiment),
   }),
 );
 
@@ -83,12 +93,16 @@ export const callEvaluations = pgTable(
     manager_feedback: text("manager_feedback"),
     manager_breakdown: text("manager_breakdown"), // JSON
     manager_recommendations: text("manager_recommendations"), // JSON array
-    created_at: text("created_at").notNull(), // ISO string
+    created_at: timestamp("created_at").defaultNow().notNull(),
+    updated_at: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
     callIdIdx: index("call_evaluations_call_id_idx").on(table.call_id),
     valueScoreIdx: index("call_evaluations_value_score_idx").on(
       table.value_score,
+    ),
+    managerScoreIdx: index("call_evaluations_manager_score_idx").on(
+      table.manager_score,
     ),
   }),
 );

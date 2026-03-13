@@ -1,6 +1,5 @@
 import { createChatBot } from "@calls/ai";
-import type { storage as StorageType } from "@calls/db";
-import { storage } from "@calls/db";
+import type { callsService, promptsService } from "@calls/db";
 
 function parseRecommendationsJson(text: string): string[] {
   if (!text || typeof text !== "string") {
@@ -44,16 +43,17 @@ function parseRecommendationsJson(text: string): string[] {
 
 export async function generateRecommendations(
   callId: number,
-  storage: typeof StorageType,
+  calls: typeof callsService,
+  prompts: typeof promptsService,
 ): Promise<{ recommendations: string[] }> {
   try {
-    const call = await storage.getCall(callId);
+    const call = await calls.getCall(callId);
     if (!call) {
       throw new Error(`Звонок с ID ${callId} не найден`);
     }
 
-    const transcript = await storage.getTranscriptByCallId(callId);
-    const evaluation = await storage.getEvaluation(callId);
+    const transcript = await calls.getTranscriptByCallId(callId);
+    const evaluation = await calls.getEvaluation(callId);
 
     let transcriptText = transcript?.text ?? transcript?.raw_text ?? "";
     if (!transcriptText.trim()) {
@@ -70,7 +70,7 @@ export async function generateRecommendations(
     }
 
     const systemPrompt =
-      (await storage.getPrompt("manager_recommendations")) ??
+      (await prompts.getPrompt("manager_recommendations")) ??
       `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
 
     const apiKey = process.env.OPENROUTER_API_KEY;

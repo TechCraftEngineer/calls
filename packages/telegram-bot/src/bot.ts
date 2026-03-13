@@ -1,4 +1,4 @@
-import { storage } from "@calls/db";
+import { usersService } from "@calls/db";
 import { Bot, webhookCallback } from "grammy";
 import type { Context } from "hono";
 
@@ -63,7 +63,7 @@ export function createWebhookHandler(getToken: GetTokenFn) {
           return;
         }
 
-        const user = await storage.getUserByTelegramConnectToken(payload);
+        const user = await usersService.getUserByTelegramConnectToken(payload);
         if (!user) {
           console.warn(
             `[telegram-webhook] User not found for token: ${payload}`,
@@ -72,7 +72,7 @@ export function createWebhookHandler(getToken: GetTokenFn) {
           return;
         }
 
-        const saved = await storage.saveTelegramChatId(
+        const saved = await usersService.saveTelegramChatId(
           user.id,
           String(ctx.chat.id),
         );

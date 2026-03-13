@@ -18,14 +18,14 @@ export const authRouter = {
   login: publicProcedure
     .input(loginSchema)
     .handler(async ({ input, context }) => {
-      const ok = await context.storage.verifyPassword(
+      const ok = await context.authService.verifyPassword(
         input.username.trim(),
         input.password.trim(),
       );
       if (!ok) {
         throw new Error("Invalid credentials");
       }
-      const user = await context.storage.getUserByUsername(
+      const user = await context.usersService.getUserByUsername(
         input.username.trim(),
       );
       if (!user) {
@@ -53,7 +53,9 @@ export const authRouter = {
   checkEmail: publicProcedure
     .input(checkEmailSchema)
     .handler(async ({ input, context }) => {
-      const user = await context.storage.getUserByUsername(input.email.trim());
+      const user = await context.usersService.getUserByUsername(
+        input.email.trim(),
+      );
       return {
         exists: !!user,
       };

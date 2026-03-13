@@ -3,7 +3,14 @@
  * Uses Better Auth for session; enriches with backend user profile.
  */
 
-import { storage, workspacesService } from "@calls/db";
+import {
+  authService,
+  callsService,
+  promptsService,
+  systemRepository,
+  type usersService,
+  workspacesService,
+} from "@calls/db";
 import { ORPCError, os } from "@orpc/server";
 import { isAdminUser } from "./user-profile";
 
@@ -37,7 +44,8 @@ export async function createBackendContext(opts: {
   headers: Headers;
   auth?: AuthLike;
 }) {
-  let user: Awaited<ReturnType<typeof storage.getUserByUsername>> | null = null;
+  let user: Awaited<ReturnType<typeof usersService.getUserByUsername>> | null =
+    null;
   let authUserId: string | null = null;
 
   if (opts.auth) {
@@ -49,12 +57,14 @@ export async function createBackendContext(opts: {
         | string
         | undefined;
       if (username) {
-        const profile = await storage.getUserByUsername(username);
+        const profile = await usersService.getUserByUsername(username);
         user = profile
           ? ({ ...profile, ...baUser } as Awaited<
-              ReturnType<typeof storage.getUserByUsername>
+              ReturnType<typeof usersService.getUserByUsername>
             >)
-          : (baUser as Awaited<ReturnType<typeof storage.getUserByUsername>>);
+          : (baUser as Awaited<
+              ReturnType<typeof usersService.getUserByUsername>
+            >);
       }
     }
   }
@@ -66,7 +76,7 @@ export async function createBackendContext(opts: {
       ? decodeURIComponent(match[1].trim())
       : null;
     if (sessionUsername) {
-      user = await storage.getUserByUsername(sessionUsername);
+      user = await usersService.getUserByUsername(sessionUsername);
     }
   }
 
@@ -84,7 +94,11 @@ export async function createBackendContext(opts: {
   }
 
   return {
-    storage,
+    authService,
+    callsService,
+    promptsService,
+    systemRepository,
+    usersService,
     workspacesService,
     sessionUsername: user?.username ?? null,
     user,

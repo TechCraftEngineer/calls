@@ -5,11 +5,17 @@
  * making it easy to import tables and types from a single location.
  */
 
-// Legacy exports for backward compatibility
-export * from "./auth";
 // Export all table definitions
 export { callEvaluations, calls, transcripts } from "./calls";
 export { activityLog, prompts } from "./system";
+// Export Better Auth tables
+export { user, session, account, verification } from "./auth";
+export {
+  workspaceMemberRole,
+  workspaceMembers,
+  workspaces,
+} from "./workspaces";
+
 // Export all TypeScript types
 export type {
   ActivityLog,
@@ -20,28 +26,18 @@ export type {
   NewCallEvaluation,
   NewPrompt,
   NewTranscript,
-  NewUser,
   NewWorkspace,
   NewWorkspaceMember,
   Prompt,
   Transcript,
-  User,
-  UserFilters,
-  UserIntegrations,
-  UserKpiSettings,
-  UserReportSettings,
   Workspace,
   WorkspaceMember,
 } from "./types";
-export {
-  userFilters,
-  userIntegrations,
-  userKpiSettings,
-  userReportSettings,
-  users,
-} from "./users";
-export {
-  workspaceMemberRole,
-  workspaceMembers,
-  workspaces,
-} from "./workspaces";
+
+// Export Better Auth types
+export type {
+  User,
+  Session,
+  Account,
+  Verification,
+} from "./auth";

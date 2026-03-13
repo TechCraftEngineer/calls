@@ -1,4 +1,4 @@
-import { storage } from "@calls/db";
+import { callsService } from "@calls/db";
 import { z } from "zod";
 import { adminProcedure, protectedProcedure } from "../orpc";
 
@@ -27,7 +27,7 @@ export const statisticsRouter = {
       }
       const dateFromDb = dateFrom ? `${dateFrom} 00:00:00` : undefined;
       const dateToDb = dateTo ? `${dateTo} 23:59:59` : undefined;
-      const stats = await storage.getEvaluationsStats({
+      const stats = await callsService.getEvaluationsStats({
         dateFrom: dateFromDb,
         dateTo: dateToDb,
       });
@@ -58,6 +58,6 @@ export const statisticsRouter = {
     }),
 
   getMetrics: protectedProcedure.handler(async () => {
-    return await storage.calculateMetrics();
+    return await callsService.calculateMetrics();
   }),
 };

@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { storage } from "@calls/db";
+import { promptsService, usersService } from "@calls/db";
 import { getBotUsername } from "@calls/telegram-bot";
 import { z } from "zod";
 import { protectedProcedure } from "../orpc";
@@ -9,7 +9,7 @@ async function canAccessUser(
   targetUserId: number,
 ): Promise<boolean> {
   if (currentUserId === targetUserId) return true;
-  const user = await storage.getUser(currentUserId);
+  const user = await usersService.getUser(currentUserId);
   if (!user) return false;
   const adminUsernames = ["admin@mango", "admin@gmail.com"];
   return adminUsernames.includes((user.username as string) ?? "");
@@ -22,12 +22,12 @@ export const integrationsRouter = {
       const userId = (context.user as Record<string, unknown>).id as number;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      const user = await storage.getUser(input.user_id);
+      const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       const token = randomBytes(16).toString("base64url");
-      if (!(await storage.saveTelegramConnectToken(input.user_id, token)))
+      if (!(await usersService.saveTelegramConnectToken(input.user_id, token)))
         throw new Error("Failed to save token");
-      const botToken = await storage.getPrompt("telegram_bot_token");
+      const botToken = await promptsService.getPrompt("telegram_bot_token");
       const botUsername = botToken?.trim()
         ? await getBotUsername(botToken)
         : "mango_react_bot";
@@ -40,7 +40,7 @@ export const integrationsRouter = {
       const userId = (context.user as Record<string, unknown>).id as number;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      if (!(await storage.disconnectTelegram(input.user_id)))
+      if (!(await usersService.disconnectTelegram(input.user_id)))
         throw new Error("Failed to disconnect Telegram");
       return { success: true };
     }),
@@ -51,10 +51,10 @@ export const integrationsRouter = {
       const userId = (context.user as Record<string, unknown>).id as number;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      const user = await storage.getUser(input.user_id);
+      const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       const token = randomBytes(16).toString("base64url");
-      if (!(await storage.saveMaxConnectToken(input.user_id, token)))
+      if (!(await usersService.saveMaxConnectToken(input.user_id, token)))
         throw new Error("Failed to save token");
       return {
         manual_instruction: `Отправьте боту команду: /start ${token}`,
@@ -68,7 +68,7 @@ export const integrationsRouter = {
       const userId = (context.user as Record<string, unknown>).id as number;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      if (!(await storage.disconnectMax(input.user_id)))
+      if (!(await usersService.disconnectMax(input.user_id)))
         throw new Error("Failed to disconnect MAX");
       return { success: true };
     }),
