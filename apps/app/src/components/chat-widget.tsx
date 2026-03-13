@@ -85,7 +85,7 @@ export default function ChatWidget() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? "Закрыть чат" : "Открыть чат"}
-        className={`fixed top-1/2 -translate-y-1/2 w-12 h-[120px] rounded-l-2xl rounded-r-none bg-[#FFD600] shadow-[_-4px_0_12px_rgba(0,0,0,0.15)] border-none z-[9998] flex flex-col items-center justify-center py-4 px-1.5 gap-2 transition-[right,transform] duration-300 ease-out ${
+        className={`fixed top-1/2 -translate-y-1/2 w-12 h-[120px] rounded-l-2xl rounded-r-none bg-[#FFD600] shadow-[-4px_0_12px_rgba(0,0,0,0.15)] border-none z-9998 flex flex-col items-center justify-center py-4 px-1.5 gap-2 transition-[right,transform] duration-300 ease-out ${
           open ? "right-[-60px]" : "right-0"
         }`}
         onMouseEnter={(e) => {
@@ -104,13 +104,13 @@ export default function ChatWidget() {
       </button>
 
       {open && (
-        <div className="fixed top-1/2 right-6 -translate-y-1/2 w-[min(420px,calc(100vw-48px))] max-h-[min(80vh,600px)] bg-white rounded-xl shadow-xl z-[9999] flex flex-col overflow-visible">
+        <div className="fixed top-1/2 right-6 -translate-y-1/2 w-[min(420px,calc(100vw-48px))] max-h-[min(80vh,600px)] bg-white rounded-xl shadow-xl z-9999 flex flex-col overflow-visible">
           {/* Крестик закрытия — сверху справа */}
           <button
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Закрыть"
-            className="absolute top-3 right-3 w-9 h-9 rounded-full bg-[#FFD600] flex items-center justify-center text-xl font-bold text-[#333] shadow-md hover:bg-gray-200 hover:text-black transition-colors z-[10000]"
+            className="absolute top-3 right-3 w-9 h-9 rounded-full bg-[#FFD600] flex items-center justify-center text-xl font-bold text-[#333] shadow-md hover:bg-gray-200 hover:text-black transition-colors z-10000"
           >
             ×
           </button>
@@ -177,7 +177,7 @@ export default function ChatWidget() {
             {messages.map((m, i) => (
               <div
                 key={i}
-                className={`mb-2.5 p-2.5 rounded-lg whitespace-pre-wrap break-words text-sm ${
+                className={`mb-2.5 p-2.5 rounded-lg whitespace-pre-wrap wrap-break-word text-sm ${
                   m.role === "user"
                     ? "bg-[#f0f0f0] ml-6 mr-0"
                     : "bg-[#f9f9f9] ml-0 mr-6"

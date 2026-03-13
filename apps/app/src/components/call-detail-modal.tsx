@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import sanitizeHtml from "sanitize-html";
 import api, { API_BASE_URL, restPost } from "@/lib/api";
 import type { User } from "@/lib/auth";
 import AudioPlayer from "./audio-player";
@@ -435,7 +436,20 @@ export default function CallDetailModal({
                         <div className="speaker-name-sm">{m.speaker}</div>
                         <div
                           className="speech-bubble"
-                          dangerouslySetInnerHTML={{ __html: m.text }}
+                          dangerouslySetInnerHTML={{
+                            __html: sanitizeHtml(m.text, {
+                              allowedTags: [
+                                "b",
+                                "i",
+                                "em",
+                                "strong",
+                                "br",
+                                "p",
+                              ],
+                              allowedAttributes: {},
+                              disallowedTagsMode: "discard",
+                            }),
+                          }}
                         ></div>
                       </div>
                     </div>
@@ -616,7 +630,7 @@ export default function CallDetailModal({
                   </select>
                 </div>
                 <button
-                  className={`ghost-btn w-full text-xs h-9 flex items-center justify-center gap-2 ${
+                  className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-3000 gap-2 ${
                     restarting
                       ? "opacity-60 cursor-not-allowed"
                       : "cursor-pointer"
@@ -636,7 +650,7 @@ export default function CallDetailModal({
       {/* Модальное окно подтверждения удаления */}
       {showDeleteConfirm && (
         <div
-          className="modal-overlay z-[3000]"
+          className="modal-overlay z-3000"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowDeleteConfirm(false);

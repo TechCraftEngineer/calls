@@ -1,8 +1,29 @@
 "use client";
 
 import { paths } from "@calls/config";
+import {
+  Avatar,
+  AvatarFallback,
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  cn,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Separator,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@calls/ui";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import sanitizeHtml from "sanitize-html";
 import AudioPlayer from "@/components/audio-player";
 import Header from "@/components/header";
 import Sidebar from "@/components/sidebar";
@@ -218,12 +239,22 @@ export default function CallDetailPage() {
 
   if (loading)
     return (
-      <div style={{ padding: "40px", textAlign: "center" }}>Загрузка…</div>
+      <div className="app-container">
+        <Sidebar user={user} />
+        <Header user={user} />
+        <main className="main-content flex items-center justify-center min-h-[200px]">
+          <div className="text-[#666]">Загрузка…</div>
+        </main>
+      </div>
     );
   if (!call)
     return (
-      <div style={{ padding: "40px", textAlign: "center" }}>
-        Звонок не найден
+      <div className="app-container">
+        <Sidebar user={user} />
+        <Header user={user} />
+        <main className="main-content flex items-center justify-center min-h-[200px]">
+          <div className="text-[#666]">Звонок не найден</div>
+        </main>
       </div>
     );
 
@@ -249,15 +280,21 @@ export default function CallDetailPage() {
         <div className="call-meta-header">
           <div className="call-title-row">
             <span className="call-main-number">{call.number}</span>
-            <span
-              className="call-direction-tag"
-              style={{ background: "#F5F5F7", color: "#888" }}
+            <Badge
+              variant="secondary"
+              className="bg-[#F5F5F7] text-[#888] border-0 font-bold text-[11px] uppercase tracking-wider px-3 py-1 rounded"
             >
               {call.direction === "incoming" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ"}
-            </span>
-            <span className="call-status-tag">
+            </Badge>
+            <Badge
+              variant={isCompleted ? "default" : "destructive"}
+              className={cn(
+                "font-bold text-[11px] uppercase tracking-wider px-3 py-1 rounded",
+                isCompleted && "status-success",
+              )}
+            >
               {isCompleted ? "ЗАВЕРШЁН" : "ПРОПУЩЕН"}
-            </span>
+            </Badge>
           </div>
           <div className="call-sub-meta">
             <div className="meta-item-inline">
@@ -280,288 +317,224 @@ export default function CallDetailPage() {
         </div>
 
         <div className="detail-grid">
-          <div className="transcript-card">
-            <div
-              className="transcript-header"
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "16px",
-              }}
-            >
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "12px" }}
-              >
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                  }}
-                >
-                  <span style={{ fontSize: "18px" }}>💬</span> Расшифровка
-                </h3>
+          <Card className="transcript-card p-0! gap-0! py-0!">
+            <CardHeader className="transcript-header flex flex-row justify-between items-center mb-4 pb-4 border-b border-[#EEE] px-6 pt-5">
+              <div className="flex items-center gap-3">
+                <CardTitle className="m-0 text-base font-bold flex items-center gap-2">
+                  <span className="text-lg">💬</span> Расшифровка
+                </CardTitle>
 
                 {transcript?.raw_text && (
-                  <div
-                    style={{
-                      display: "flex",
-                      background: "#F0F0F0",
-                      padding: "2px",
-                      borderRadius: "6px",
-                      marginLeft: "8px",
-                    }}
+                  <Tabs
+                    value={showRaw ? "raw" : "processed"}
+                    onValueChange={(v) => setShowRaw(v === "raw")}
                   >
-                    <button
-                      onClick={() => setShowRaw(false)}
-                      style={{
-                        padding: "4px 10px",
-                        fontSize: "11px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        background: !showRaw ? "white" : "transparent",
-                        color: !showRaw ? "#111" : "#666",
-                        fontWeight: !showRaw ? 600 : 400,
-                        boxShadow: !showRaw
-                          ? "0 1px 3px rgba(0,0,0,0.1)"
-                          : "none",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      Обработка
-                    </button>
-                    <button
-                      onClick={() => setShowRaw(true)}
-                      style={{
-                        padding: "4px 10px",
-                        fontSize: "11px",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        background: showRaw ? "white" : "transparent",
-                        color: showRaw ? "#111" : "#666",
-                        fontWeight: showRaw ? 600 : 400,
-                        boxShadow: showRaw
-                          ? "0 1px 3px rgba(0,0,0,0.1)"
-                          : "none",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      Оригинал
-                    </button>
-                  </div>
+                    <TabsList className="bg-[#F0F0F0] p-0.5 rounded-md ml-2 h-auto">
+                      <TabsTrigger
+                        value="processed"
+                        className="data-[state=active]:bg-white data-[state=active]:text-[#111] data-[state=active]:font-semibold data-[state=active]:shadow-sm text-[#666] px-2.5 py-1 text-[11px] rounded"
+                      >
+                        Обработка
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="raw"
+                        className="data-[state=active]:bg-white data-[state=active]:text-[#111] data-[state=active]:font-semibold data-[state=active]:shadow-sm text-[#666] px-2.5 py-1 text-[11px] rounded"
+                      >
+                        Оригинал
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 )}
               </div>
 
-              <button
-                className="ghost-btn"
-                style={{
-                  height: "32px",
-                  fontSize: "12px",
-                  padding: "0 12px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
+              <Button
+                variant="ghost"
+                className="ghost-btn h-8 text-xs px-3"
                 onClick={handleDownloadTxt}
               >
                 <span>📥</span> Скачать .txt
-              </button>
-            </div>
+              </Button>
+            </CardHeader>
 
-            <div className="message-list">
+            <CardContent className="message-list p-6 overflow-y-auto flex-1 flex flex-col gap-4 bg-[#FAFAFA]">
               {messages.length > 0 ? (
                 messages.map((m, i) => (
                   <div
                     key={i}
-                    className={`message-item ${m.isOperator ? "is-operator" : ""}`}
+                    className={cn(
+                      "message-item flex gap-3 max-w-[85%]",
+                      m.isOperator && "self-start",
+                    )}
                   >
-                    <div className="avatar-circle-sm">
-                      {m.speaker.includes("АВТООТВЕТЧИК")
-                        ? "🤖"
-                        : m.speaker[0]?.toUpperCase() || "👤"}
-                    </div>
-                    <div className="message-content">
+                    <Avatar className="size-8 shrink-0 rounded-full bg-[#EEE]">
+                      <AvatarFallback className="bg-[#EEE] text-[#999] text-xs font-bold">
+                        {m.speaker.includes("АВТООТВЕТЧИК")
+                          ? "🤖"
+                          : m.speaker[0]?.toUpperCase() || "👤"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="message-content flex flex-col gap-1">
                       <div className="speaker-name-sm">{m.speaker}</div>
                       <div
                         className="speech-bubble"
-                        dangerouslySetInnerHTML={{ __html: m.text }}
-                      ></div>
+                        dangerouslySetInnerHTML={{
+                          __html: sanitizeHtml(m.text, {
+                            allowedTags: ["b", "i", "em", "strong", "br", "p"],
+                            allowedAttributes: {},
+                            disallowedTagsMode: "discard",
+                          }),
+                        }}
+                      />
                     </div>
                   </div>
                 ))
               ) : (
-                <div
-                  style={{
-                    textAlign: "center",
-                    padding: "40px",
-                    color: "#999",
-                  }}
-                >
+                <div className="text-center py-10 text-[#999]">
                   Текст отсутствует
                 </div>
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           <div className="info-sidebar">
-            <div className="sidebar-card">
-              <h4 className="sidebar-card-title">🎵 ЗАПИСЬ ЗВОНКА</h4>
-              <div className="audio-player-container">
-                {call.filename ? (
-                  <AudioPlayer
-                    src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"}/api/records/${call.filename}`}
-                  />
-                ) : (
-                  <div style={{ fontSize: "13px", color: "#999" }}>
-                    Файл записи не найден
-                  </div>
-                )}
-              </div>
-              <div
-                style={{ marginTop: "12px", fontSize: "12px", color: "#999" }}
-              >
-                Размер файла: {formatFileSize(call.size_bytes)}
-              </div>
-            </div>
-
-            <div
-              className="sidebar-card"
-              style={{ padding: "16px", borderRadius: "8px" }}
-            >
-              <div
-                style={{
-                  fontSize: "18px",
-                  fontWeight: 700,
-                  color: call.customer_name ? "#111" : "#999",
-                }}
-              >
-                {call.customer_name
-                  ? `Абонент: ${call.customer_name}`
-                  : "Имя: не определено"}
-              </div>
-            </div>
-
-            <div className="sidebar-card">
-              <h4 className="sidebar-card-title">📈 ОЦЕНКА</h4>
-              <div className="score-item">
-                <div className="score-header">
-                  <span>Ценность звонка</span>
-                  <span>{evaluation?.value_score || 0}/5</span>
+            <Card className="sidebar-card">
+              <CardHeader className="px-6 pt-6 pb-0">
+                <CardTitle className="sidebar-card-title">
+                  🎵 ЗАПИСЬ ЗВОНКА
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-6 pb-6 pt-4">
+                <div className="audio-player-container">
+                  {call.filename ? (
+                    <AudioPlayer
+                      src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"}/api/records/${call.filename}`}
+                    />
+                  ) : (
+                    <div className="text-[13px] text-[#999]">
+                      Файл записи не найден
+                    </div>
+                  )}
                 </div>
-                <div className="score-bar-bg">
-                  <div
-                    className="score-bar-fill"
-                    style={{ width: `${(evaluation?.value_score || 0) * 20}%` }}
-                  ></div>
+                <div className="mt-3 text-xs text-[#999]">
+                  Размер файла: {formatFileSize(call.size_bytes)}
                 </div>
-                <p
-                  style={{
-                    fontSize: "13px",
-                    color: "#666",
-                    lineHeight: 1.6,
-                    marginBottom: "20px",
-                  }}
-                >
-                  {evaluation?.value_explanation || "Оценка отсутствует"}
-                </p>
-              </div>
+              </CardContent>
+            </Card>
 
-              {showQualityUnavailable ? (
+            <Card className="sidebar-card">
+              <CardContent className="p-4">
                 <div
-                  style={{
-                    padding: "16px",
-                    background: "#FFF5F5",
-                    border: "1px solid #FFDADA",
-                    borderRadius: "8px",
-                  }}
+                  className={cn(
+                    "text-lg font-bold",
+                    call.customer_name ? "text-[#111]" : "text-[#999]",
+                  )}
                 >
-                  <div
-                    style={{
-                      color: "#E53E3E",
-                      fontSize: "13px",
-                      fontWeight: 700,
-                      marginBottom: "4px",
-                    }}
-                  >
-                    Качество не оценивалось
-                  </div>
-                  <div style={{ color: "#C53030", fontSize: "12px" }}>
-                    {qualityNotAnalyzableReason ||
-                      call.operator_name ||
-                      call.manager_name ||
-                      "Автоответчик"}
-                  </div>
+                  {call.customer_name
+                    ? `Абонент: ${call.customer_name}`
+                    : "Имя: не определено"}
                 </div>
-              ) : (
+              </CardContent>
+            </Card>
+
+            <Card className="sidebar-card">
+              <CardHeader className="px-6 pt-6 pb-0">
+                <CardTitle className="sidebar-card-title">📈 ОЦЕНКА</CardTitle>
+              </CardHeader>
+              <CardContent className="px-6 pb-6 pt-4">
                 <div className="score-item">
                   <div className="score-header">
-                    <span>Качество работы</span>
-                    <span>{qualityScore}/5</span>
+                    <span>Ценность звонка</span>
+                    <span>{evaluation?.value_score || 0}/5</span>
                   </div>
                   <div className="score-bar-bg">
                     <div
                       className="score-bar-fill"
                       style={{
-                        width: `${Number(qualityScore) * 20}%`,
-                        background: "#4CAF50",
+                        width: `${(evaluation?.value_score || 0) * 20}%`,
                       }}
                     ></div>
                   </div>
                   <p
-                    style={{ fontSize: "13px", color: "#666", lineHeight: 1.6 }}
+                    style={{
+                      fontSize: "13px",
+                      color: "#666",
+                      lineHeight: 1.6,
+                      marginBottom: "20px",
+                    }}
                   >
-                    {qualityFeedback}
+                    {evaluation?.value_explanation || "Оценка отсутствует"}
                   </p>
                 </div>
-              )}
-            </div>
 
-            <div
+                {showQualityUnavailable ? (
+                  <div
+                    style={{
+                      padding: "16px",
+                      background: "#FFF5F5",
+                      border: "1px solid #FFDADA",
+                      borderRadius: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        color: "#E53E3E",
+                        fontSize: "13px",
+                        fontWeight: 700,
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Качество не оценивалось
+                    </div>
+                    <div style={{ color: "#C53030", fontSize: "12px" }}>
+                      {qualityNotAnalyzableReason ||
+                        call.operator_name ||
+                        call.manager_name ||
+                        "Автоответчик"}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="score-item">
+                    <div className="score-header">
+                      <span>Качество работы</span>
+                      <span>{qualityScore}/5</span>
+                    </div>
+                    <div className="score-bar-bg">
+                      <div
+                        className="score-bar-fill"
+                        style={{
+                          width: `${Number(qualityScore) * 20}%`,
+                          background: "#4CAF50",
+                        }}
+                      ></div>
+                    </div>
+                    <p
+                      style={{
+                        fontSize: "13px",
+                        color: "#666",
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      {qualityFeedback}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card
               className="sidebar-card"
               style={{ background: "#FFFDF0", borderColor: "#FFECB3" }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "12px",
-                }}
-              >
-                <h4
-                  className="sidebar-card-title"
-                  style={{
-                    color: "#975A16",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    margin: 0,
-                  }}
-                >
+              <CardHeader className="flex flex-row justify-between items-center pb-3 px-6 pt-6">
+                <CardTitle className="sidebar-card-title text-[#975A16] flex items-center gap-2 m-0">
                   💡 РЕКОМЕНДАЦИИ
-                </h4>
-                <button
+                </CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={handleGenerateRecommendations}
                   disabled={isGeneratingRecommendations}
-                  style={{
-                    background: "transparent",
-                    border: "1px solid #975A16",
-                    color: "#975A16",
-                    borderRadius: "4px",
-                    padding: "4px 8px",
-                    fontSize: "11px",
-                    cursor: isGeneratingRecommendations
-                      ? "not-allowed"
-                      : "pointer",
-                    opacity: isGeneratingRecommendations ? 0.6 : 1,
-                    transition: "all 0.2s",
-                  }}
+                  className="border-[#975A16] text-[#975A16] rounded px-2 py-1 text-[11px] h-auto bg-transparent hover:bg-[#975A16]/10"
                 >
                   {isGeneratingRecommendations
                     ? "Загрузка…"
@@ -569,150 +542,112 @@ export default function CallDetailPage() {
                         evaluation.manager_recommendations.length > 0
                       ? "Обновить"
                       : "Сформировать"}
-                </button>
-              </div>
-              {evaluation?.manager_recommendations &&
-              evaluation.manager_recommendations.length > 0 ? (
-                <>
-                  <p
-                    style={{
-                      margin: "0 0 12px 0",
-                      fontSize: "13px",
-                      color: "#856404",
-                    }}
-                  >
-                    Вопросы, которые можно было задать (с учётом истории):
-                  </p>
-                  <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                    {evaluation.manager_recommendations.map((rec, i) => (
-                      <li
-                        key={i}
-                        style={{
-                          marginBottom: "10px",
-                          fontSize: "13px",
-                          lineHeight: "1.5",
-                          position: "relative",
-                          paddingLeft: "20px",
-                          color: "#533F03",
-                        }}
-                      >
-                        <span
+                </Button>
+              </CardHeader>
+              <CardContent className="px-6 pb-6 pt-0">
+                {evaluation?.manager_recommendations &&
+                evaluation.manager_recommendations.length > 0 ? (
+                  <>
+                    <p
+                      style={{
+                        margin: "0 0 12px 0",
+                        fontSize: "13px",
+                        color: "#856404",
+                      }}
+                    >
+                      Вопросы, которые можно было задать (с учётом истории):
+                    </p>
+                    <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                      {evaluation.manager_recommendations.map((rec, i) => (
+                        <li
+                          key={i}
                           style={{
-                            position: "absolute",
-                            left: 0,
-                            color: "#F7931E",
+                            marginBottom: "10px",
+                            fontSize: "13px",
+                            lineHeight: "1.5",
+                            position: "relative",
+                            paddingLeft: "20px",
+                            color: "#533F03",
                           }}
                         >
-                          •
-                        </span>
-                        {rec}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <p
-                  style={{
-                    fontSize: "13px",
-                    color: "#856404",
-                    fontStyle: "italic",
-                    margin: 0,
-                  }}
-                >
-                  Нажмите «Сформировать», чтобы получить рекомендации с учётом
-                  истории звонков.
-                </p>
-              )}
-            </div>
+                          <span
+                            style={{
+                              position: "absolute",
+                              left: 0,
+                              color: "#F7931E",
+                            }}
+                          >
+                            •
+                          </span>
+                          {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <p className="text-[13px] text-[#856404] italic m-0">
+                    Нажмите «Сформировать», чтобы получить рекомендации с учётом
+                    истории звонков.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
 
-            <div className="sidebar-card">
-              <h4 className="sidebar-card-title">📋 РЕЗЮМЕ</h4>
-              <ul className="meta-list">
-                <li className="meta-row">
-                  <span className="meta-label">Тип:</span>
-                  <span className="meta-value">
-                    {transcript?.call_type || "—"}
-                  </span>
-                </li>
-                <li className="meta-row">
-                  <span className="meta-label">Настрой:</span>
-                  <span className="meta-value" style={{ color: "#F7931E" }}>
-                    {transcript?.sentiment || "Нейтральный"}
-                  </span>
-                </li>
-              </ul>
-              <hr
-                style={{
-                  border: "none",
-                  borderTop: "1px solid #eee",
-                  margin: "16px 0",
-                }}
-              />
-              <p
-                style={{
-                  fontSize: "13px",
-                  color: "#666",
-                  lineHeight: 1.6,
-                  marginBottom: "20px",
-                }}
-              >
-                {transcript?.summary || "Резюме отсутствует"}
-              </p>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "8px",
-                  alignItems: "center",
-                  marginBottom: "12px",
-                }}
-              >
-                <label
-                  style={{
-                    fontSize: "12px",
-                    color: "#666",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Модель:
-                </label>
-                <select
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
+            <Card className="sidebar-card">
+              <CardHeader className="px-6 pt-6 pb-0">
+                <CardTitle className="sidebar-card-title">📋 РЕЗЮМЕ</CardTitle>
+              </CardHeader>
+              <CardContent className="px-6 pb-6 pt-4">
+                <ul className="meta-list">
+                  <li className="meta-row">
+                    <span className="meta-label">Тип:</span>
+                    <span className="meta-value">
+                      {transcript?.call_type || "—"}
+                    </span>
+                  </li>
+                  <li className="meta-row">
+                    <span className="meta-label">Настрой:</span>
+                    <span className="meta-value text-[#F7931E]">
+                      {transcript?.sentiment || "Нейтральный"}
+                    </span>
+                  </li>
+                </ul>
+                <Separator className="my-4 bg-[#eee]" />
+                <p className="text-[13px] text-[#666] leading-relaxed mb-5">
+                  {transcript?.summary || "Резюме отсутствует"}
+                </p>
+                <div className="flex gap-2 items-center mb-3">
+                  <label className="text-xs text-[#666] whitespace-nowrap">
+                    Модель:
+                  </label>
+                  <Select
+                    value={selectedModel}
+                    onValueChange={setSelectedModel}
+                    disabled={restarting}
+                  >
+                    <SelectTrigger
+                      className="flex-1 h-8 text-xs border-[#ddd] bg-white disabled:bg-[#f5f5f5]"
+                      size="sm"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="assemblyai">AssemblyAI</SelectItem>
+                      <SelectItem value="salutespeech">SaluteSpeech</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  variant="ghost"
+                  className="ghost-btn w-full text-xs h-9 gap-2 disabled:opacity-60"
+                  onClick={handleRestartAnalysis}
                   disabled={restarting}
-                  style={{
-                    flex: 1,
-                    padding: "6px 10px",
-                    fontSize: "12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "4px",
-                    background: restarting ? "#f5f5f5" : "white",
-                    cursor: restarting ? "not-allowed" : "pointer",
-                  }}
                 >
-                  <option value="assemblyai">AssemblyAI</option>
-                  <option value="salutespeech">SaluteSpeech</option>
-                </select>
-              </div>
-              <button
-                className="ghost-btn"
-                style={{
-                  width: "100%",
-                  fontSize: "12px",
-                  height: "36px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  opacity: restarting ? 0.6 : 1,
-                  cursor: restarting ? "not-allowed" : "pointer",
-                }}
-                onClick={handleRestartAnalysis}
-                disabled={restarting}
-              >
-                <span style={{ fontSize: "14px" }}>🔄</span>
-                {restarting ? "Перезапуск…" : "Перезапустить анализ"}
-              </button>
-            </div>
+                  <span className="text-sm">🔄</span>
+                  {restarting ? "Перезапуск…" : "Перезапустить анализ"}
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>

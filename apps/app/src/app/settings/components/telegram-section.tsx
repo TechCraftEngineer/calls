@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { Button, Card, CardContent, CardHeader } from "@calls/ui";
 import Link from "next/link";
 import type { TelegramSectionProps } from "../types/settings";
 
@@ -9,88 +10,61 @@ export default function TelegramSection({
   sendTestMessage,
   onSendTest,
 }: TelegramSectionProps) {
+  const isSuccess =
+    sendTestMessage?.includes("успешно") ||
+    sendTestMessage?.includes("Отправка завершена");
+
   return (
-    <section className="card" style={{ marginBottom: "24px" }}>
-      <div
-        className="section-title"
-        style={{
-          marginBottom: "12px",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-        }}
-      >
-        <span style={{ fontSize: "18px" }}>📊</span> Отчёты в Telegram
-      </div>
-      <p style={{ marginBottom: "16px", fontSize: "14px", color: "#555" }}>
-        Подписки на ежедневный/еженедельный/ежемесячный отчёт и опция «не
-        отправлять в выходные» настраиваются на странице{" "}
-        <Link
-          href={paths.statistics.settings}
-          style={{ color: "#FF6B35", fontWeight: 600 }}
-        >
-          Статистика
-        </Link>{" "}
-        → вкладка «Настройки отчетов».
-      </p>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          flexWrap: "wrap",
-        }}
-      >
-        <button
-          type="button"
-          disabled={sendTestLoading}
-          onClick={onSendTest}
-          style={{
-            padding: "10px 20px",
-            border: "none",
-            borderRadius: "8px",
-            background: sendTestLoading
-              ? "#ccc"
-              : "linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)",
-            color: "white",
-            fontWeight: 600,
-            cursor: sendTestLoading ? "not-allowed" : "pointer",
-            fontSize: "14px",
-          }}
-        >
-          {sendTestLoading
-            ? "Отправка…"
-            : "Отправить тестовый отчёт в Telegram"}
-        </button>
-        <Link
-          href={paths.statistics.settings}
-          style={{
-            padding: "10px 16px",
-            borderRadius: "8px",
-            border: "1px solid #FF6B35",
-            color: "#FF6B35",
-            fontWeight: 600,
-            textDecoration: "none",
-            fontSize: "14px",
-          }}
-        >
-          Перейти к настройкам отчётов
-        </Link>
-        {sendTestMessage && (
-          <span
-            style={{
-              color:
-                sendTestMessage.includes("успешно") ||
-                sendTestMessage.includes("Отправка завершена")
-                  ? "#4CAF50"
-                  : "#FF5252",
-              fontSize: "14px",
-            }}
+    <Card className="card mb-6">
+      <CardHeader className="p-0 pb-0">
+        <div className="section-title mb-3 flex items-center gap-2">
+          <span className="text-lg">📊</span> Отчёты в Telegram
+        </div>
+      </CardHeader>
+      <CardContent className="p-0 pt-0">
+        <p className="mb-4 text-sm text-[#555]">
+          Подписки на ежедневный/еженедельный/ежемесячный отчёт и опция «не
+          отправлять в выходные» настраиваются на странице{" "}
+          <Link
+            href={paths.statistics.settings}
+            className="text-[#FF6B35] font-semibold"
           >
-            {sendTestMessage}
-          </span>
-        )}
-      </div>
-    </section>
+            Статистика
+          </Link>{" "}
+          → вкладка «Настройки отчетов».
+        </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Button
+            type="button"
+            disabled={sendTestLoading}
+            onClick={onSendTest}
+            className={
+              sendTestLoading
+                ? "py-2.5 px-5 border-none rounded-lg bg-[#ccc] text-white font-semibold cursor-not-allowed text-sm"
+                : "py-2.5 px-5 border-none rounded-lg bg-gradient-to-br from-[#4CAF50] to-[#388E3C] text-white font-semibold text-sm"
+            }
+          >
+            {sendTestLoading
+              ? "Отправка…"
+              : "Отправить тестовый отчёт в Telegram"}
+          </Button>
+          <Link
+            href={paths.statistics.settings}
+            className="py-2.5 px-4 rounded-lg border border-[#FF6B35] text-[#FF6B35] font-semibold no-underline text-sm"
+          >
+            Перейти к настройкам отчётов
+          </Link>
+          {sendTestMessage && (
+            <span
+              className={`text-sm ${
+                isSuccess ? "text-[#4CAF50]" : "text-[#FF5252]"
+              }`}
+            >
+              {sendTestMessage}
+            </span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

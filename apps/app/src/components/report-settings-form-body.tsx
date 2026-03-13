@@ -1,3 +1,4 @@
+import { Button, Card, CardContent, CardHeader } from "@calls/ui";
 import type React from "react";
 import { useState } from "react";
 import api from "@/lib/api";
@@ -28,790 +29,499 @@ export default function ReportSettingsFormBody({
   const [sendTestLoading, setSendTestLoading] = useState(false);
   const [sendTestMessage, setSendTestMessage] = useState("");
 
+  const canSendTest = form.telegram_chat_id?.trim() && !sendTestLoading;
+
   return (
-    <div className="card" style={{ marginTop: "24px" }}>
-      <h3 className="section-title" style={{ marginBottom: "20px" }}>
-        Мои настройки отчетов
-      </h3>
-      <form onSubmit={handleSubmit}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: "24px",
-          }}
-        >
-          <div
-            style={{
-              padding: "16px",
-              background: "#f5f7fa",
-              borderRadius: "8px",
-            }}
-          >
-            <h4
-              style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}
-            >
-              Telegram Отчеты
-            </h4>
-            <div style={{ marginBottom: "12px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "4px",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                }}
-              >
-                Telegram Chat ID
-              </label>
-              <input
-                type="text"
-                value={form.telegram_chat_id}
-                onChange={(e) =>
-                  setForm((f: any) => ({
-                    ...f,
-                    telegram_chat_id: e.target.value,
-                  }))
-                }
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #ddd",
-                  borderRadius: "6px",
-                }}
-                placeholder="Напишите боту /start чтобы узнать ID"
-              />
-            </div>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-            >
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "13px",
-                }}
-              >
+    <Card className="card mt-6">
+      <CardHeader className="p-0 pb-0">
+        <h3 className="section-title mb-5">Мои настройки отчетов</h3>
+      </CardHeader>
+      <CardContent className="p-0 pt-0">
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
+            <div className="p-4 bg-[#f5f7fa] rounded-lg">
+              <h4 className="m-0 mb-3 text-sm font-bold">Telegram Отчеты</h4>
+              <div className="mb-3">
+                <label className="block mb-1 text-[13px] font-semibold">
+                  Telegram Chat ID
+                </label>
                 <input
-                  type="checkbox"
-                  checked={form.telegram_daily_report}
+                  type="text"
+                  value={form.telegram_chat_id}
                   onChange={(e) =>
                     setForm((f: any) => ({
                       ...f,
-                      telegram_daily_report: e.target.checked,
+                      telegram_chat_id: e.target.value,
                     }))
                   }
-                />{" "}
-                Ежедневный отчет
-              </label>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "13px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.telegram_weekly_report}
-                  onChange={(e) =>
-                    setForm((f: any) => ({
-                      ...f,
-                      telegram_weekly_report: e.target.checked,
-                    }))
-                  }
-                />{" "}
-                Еженедельный отчет
-              </label>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "13px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.telegram_monthly_report}
-                  onChange={(e) =>
-                    setForm((f: any) => ({
-                      ...f,
-                      telegram_monthly_report: e.target.checked,
-                    }))
-                  }
-                />{" "}
-                Ежемесячный отчет
-              </label>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "13px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.telegram_skip_weekends}
-                  onChange={(e) =>
-                    setForm((f: any) => ({
-                      ...f,
-                      telegram_skip_weekends: e.target.checked,
-                    }))
-                  }
-                />{" "}
-                Не отправлять отчёты в Telegram в выходные
-              </label>
-            </div>
-            <div style={{ marginTop: "12px" }}>
-              <button
-                type="button"
-                disabled={!form.telegram_chat_id?.trim() || sendTestLoading}
-                onClick={async () => {
-                  setSendTestMessage("");
-                  setSendTestLoading(true);
-                  try {
-                    await api.reports.sendTestTelegram();
-                    setSendTestMessage("Отчёт отправлен в Telegram");
-                    setTimeout(() => setSendTestMessage(""), 4000);
-                  } catch (err: unknown) {
-                    const d = err instanceof Error ? err.message : null;
-                    setSendTestMessage(
-                      typeof d === "string"
-                        ? d
-                        : "Не удалось отправить. Укажите Telegram Chat ID.",
-                    );
-                  } finally {
-                    setSendTestLoading(false);
-                  }
-                }}
-                style={{
-                  padding: "8px 16px",
-                  border: "none",
-                  borderRadius: "6px",
-                  background:
-                    form.telegram_chat_id?.trim() && !sendTestLoading
-                      ? "linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)"
-                      : "#ccc",
-                  color: "white",
-                  fontWeight: 600,
-                  cursor:
-                    form.telegram_chat_id?.trim() && !sendTestLoading
-                      ? "pointer"
-                      : "not-allowed",
-                  fontSize: "13px",
-                }}
-              >
-                {sendTestLoading ? "Отправка…" : "Отправить отчёт в Telegram"}
-              </button>
-              {sendTestMessage && (
-                <span
-                  style={{
-                    marginLeft: "12px",
-                    color: sendTestMessage.includes("отправлен")
-                      ? "#4CAF50"
-                      : "#FF5252",
-                    fontSize: "13px",
+                  className="w-full py-2 px-3 border border-[#ddd] rounded-md"
+                  placeholder="Напишите боту /start чтобы узнать ID"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={form.telegram_daily_report}
+                    onChange={(e) =>
+                      setForm((f: any) => ({
+                        ...f,
+                        telegram_daily_report: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Ежедневный отчет
+                </label>
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={form.telegram_weekly_report}
+                    onChange={(e) =>
+                      setForm((f: any) => ({
+                        ...f,
+                        telegram_weekly_report: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Еженедельный отчет
+                </label>
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={form.telegram_monthly_report}
+                    onChange={(e) =>
+                      setForm((f: any) => ({
+                        ...f,
+                        telegram_monthly_report: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Ежемесячный отчет
+                </label>
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={form.telegram_skip_weekends}
+                    onChange={(e) =>
+                      setForm((f: any) => ({
+                        ...f,
+                        telegram_skip_weekends: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Не отправлять отчёты в Telegram в выходные
+                </label>
+              </div>
+              <div className="mt-3">
+                <button
+                  type="button"
+                  disabled={!form.telegram_chat_id?.trim() || sendTestLoading}
+                  onClick={async () => {
+                    setSendTestMessage("");
+                    setSendTestLoading(true);
+                    try {
+                      await api.reports.sendTestTelegram();
+                      setSendTestMessage("Отчёт отправлен в Telegram");
+                      setTimeout(() => setSendTestMessage(""), 4000);
+                    } catch (err: unknown) {
+                      const d = err instanceof Error ? err.message : null;
+                      setSendTestMessage(
+                        typeof d === "string"
+                          ? d
+                          : "Не удалось отправить. Укажите Telegram Chat ID.",
+                      );
+                    } finally {
+                      setSendTestLoading(false);
+                    }
                   }}
+                  className={
+                    canSendTest
+                      ? "py-2 px-4 border-none rounded-md bg-gradient-to-br from-[#4CAF50] to-[#388E3C] text-white font-semibold cursor-pointer text-[13px]"
+                      : "py-2 px-4 border-none rounded-md bg-[#ccc] text-white font-semibold cursor-not-allowed text-[13px]"
+                  }
                 >
-                  {sendTestMessage}
-                </span>
+                  {sendTestLoading ? "Отправка…" : "Отправить отчёт в Telegram"}
+                </button>
+                {sendTestMessage && (
+                  <span
+                    className={`ml-3 text-[13px] ${
+                      sendTestMessage.includes("отправлен")
+                        ? "text-[#4CAF50]"
+                        : "text-[#FF5252]"
+                    }`}
+                  >
+                    {sendTestMessage}
+                  </span>
+                )}
+              </div>
+              {isAdmin && (
+                <div className="mt-4 border-t border-[#ddd] pt-3">
+                  <h4 className="m-0 mb-2 text-[13px] font-bold">
+                    Время отправки (для всех)
+                  </h4>
+                  <div className="flex flex-wrap gap-3 items-center">
+                    <label className="text-xs">
+                      Ежедневно:{" "}
+                      <input
+                        type="time"
+                        value={form.report_daily_time}
+                        onChange={(e) =>
+                          setForm((f: any) => ({
+                            ...f,
+                            report_daily_time: e.target.value,
+                          }))
+                        }
+                        className="py-1 rounded border border-[#ddd]"
+                      />
+                    </label>
+                    <label className="text-xs">
+                      Еженедельно:{" "}
+                      <select
+                        value={form.report_weekly_day}
+                        onChange={(e) =>
+                          setForm((f: any) => ({
+                            ...f,
+                            report_weekly_day: e.target.value,
+                          }))
+                        }
+                        className="py-1 rounded border border-[#ddd]"
+                      >
+                        {["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map(
+                          (d) => (
+                            <option key={d} value={d}>
+                              {d}
+                            </option>
+                          ),
+                        )}
+                      </select>{" "}
+                      <input
+                        type="time"
+                        value={form.report_weekly_time}
+                        onChange={(e) =>
+                          setForm((f: any) => ({
+                            ...f,
+                            report_weekly_time: e.target.value,
+                          }))
+                        }
+                        className="py-1 rounded border border-[#ddd]"
+                      />
+                    </label>
+                    <label className="text-xs">
+                      Ежемесячно:{" "}
+                      <select
+                        value={form.report_monthly_day}
+                        onChange={(e) =>
+                          setForm((f: any) => ({
+                            ...f,
+                            report_monthly_day: e.target.value,
+                          }))
+                        }
+                        className="py-1 rounded border border-[#ddd]"
+                      >
+                        <option value="last">Последний день</option>
+                        {Array.from({ length: 28 }, (_, i) => i + 1).map(
+                          (n) => (
+                            <option key={n} value={String(n)}>
+                              {n}
+                            </option>
+                          ),
+                        )}
+                      </select>{" "}
+                      <input
+                        type="time"
+                        value={form.report_monthly_time}
+                        onChange={(e) =>
+                          setForm((f: any) => ({
+                            ...f,
+                            report_monthly_time: e.target.value,
+                          }))
+                        }
+                        className="py-1 rounded border border-[#ddd]"
+                      />
+                    </label>
+                  </div>
+                </div>
               )}
             </div>
+
             {isAdmin && (
-              <div
-                style={{
-                  marginTop: "16px",
-                  borderTop: "1px solid #ddd",
-                  paddingTop: "12px",
-                }}
-              >
-                <h4
-                  style={{
-                    margin: "0 0 8px",
-                    fontSize: "13px",
-                    fontWeight: 700,
-                  }}
-                >
-                  Время отправки (для всех)
+              <div className="p-4 bg-[#f5f7fa] rounded-lg">
+                <h4 className="m-0 mb-3 text-sm font-bold">
+                  Сводный отчёт по выбранным менеджерам
                 </h4>
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "12px",
-                    alignItems: "center",
-                  }}
-                >
-                  <label style={{ fontSize: "12px" }}>
-                    Ежедневно:{" "}
+                <p className="m-0 mb-3 text-xs text-[#666]">
+                  Выберите, по каким менеджерам включать данные в сводный отчёт
+                  в Telegram (опция «Получать отчеты по всем менеджерам»
+                  настраивается в Управлении пользователями). Если никого не
+                  выбрано — в сводку попадают все.
+                </p>
+                <div className="flex flex-col gap-1.5 max-h-[200px] overflow-y-auto">
+                  {allUsers
+                    .filter((u) => u.id !== user.id)
+                    .map((u) => {
+                      const name = getDisplayName(u) || u.username;
+                      const checked =
+                        form.report_managed_user_ids?.includes(u.id) ?? false;
+                      return (
+                        <label
+                          key={u.id}
+                          className="flex items-center gap-2 text-[13px]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => {
+                              const ids: number[] =
+                                form.report_managed_user_ids ?? [];
+                              setForm((f: any) => ({
+                                ...f,
+                                report_managed_user_ids: e.target.checked
+                                  ? [...ids, u.id]
+                                  : ids.filter((id) => id !== u.id),
+                              }));
+                            }}
+                          />
+                          {name} ({u.username})
+                        </label>
+                      );
+                    })}
+                  {allUsers.length <= 1 && (
+                    <span className="text-xs text-[#999]">
+                      Нет других пользователей
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="p-4 bg-[#f5f7fa] rounded-lg">
+              <h4 className="m-0 mb-3 text-sm font-bold">Email Отчеты</h4>
+              <div className="mb-3">
+                <label className="block mb-1 text-[13px] font-semibold">
+                  Email адрес
+                </label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) =>
+                    setForm((f: any) => ({ ...f, email: e.target.value }))
+                  }
+                  className="w-full py-2 px-3 border border-[#ddd] rounded-md"
+                  placeholder="Ваш Email"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={form.email_daily_report}
+                    onChange={(e) =>
+                      setForm((f: any) => ({
+                        ...f,
+                        email_daily_report: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Ежедневный отчет
+                </label>
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={form.email_weekly_report}
+                    onChange={(e) =>
+                      setForm((f: any) => ({
+                        ...f,
+                        email_weekly_report: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Еженедельный отчет
+                </label>
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={form.email_monthly_report}
+                    onChange={(e) =>
+                      setForm((f: any) => ({
+                        ...f,
+                        email_monthly_report: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Ежемесячный отчет
+                </label>
+              </div>
+            </div>
+
+            <div className="p-4 bg-[#f5f7fa] rounded-lg">
+              <h4 className="m-0 mb-3 text-sm font-bold">Параметры отчетов</h4>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={form.report_detailed}
+                    onChange={(e) =>
+                      setForm((f: any) => ({
+                        ...f,
+                        report_detailed: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Подробный формат
+                </label>
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={form.report_include_call_summaries}
+                    onChange={(e) =>
+                      setForm((f: any) => ({
+                        ...f,
+                        report_include_call_summaries: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  ИИ-саммари вызовов (Email)
+                </label>
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={form.report_include_avg_value}
+                    onChange={(e) =>
+                      setForm((f: any) => ({
+                        ...f,
+                        report_include_avg_value: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Средняя сумма сделки
+                </label>
+                <label className="flex items-center gap-2 text-[13px]">
+                  <input
+                    type="checkbox"
+                    checked={form.report_include_avg_rating}
+                    onChange={(e) =>
+                      setForm((f: any) => ({
+                        ...f,
+                        report_include_avg_rating: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Средняя оценка качества
+                </label>
+              </div>
+
+              <div className="mt-4 border-t border-[#ddd] pt-4">
+                <h4 className="m-0 mb-3 text-sm font-bold">Настройки KPI</h4>
+                <div className="flex flex-wrap gap-3 items-center mb-3">
+                  <label className="text-[13px]">
+                    Базовый оклад (₽):{" "}
                     <input
-                      type="time"
-                      value={form.report_daily_time}
+                      type="number"
+                      min={0}
+                      value={form.kpi_base_salary}
                       onChange={(e) =>
                         setForm((f: any) => ({
                           ...f,
-                          report_daily_time: e.target.value,
+                          kpi_base_salary: parseInt(e.target.value, 10) || 0,
                         }))
                       }
-                      style={{
-                        padding: "4px",
-                        borderRadius: "4px",
-                        border: "1px solid #ddd",
-                      }}
+                      className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
                     />
                   </label>
-                  <label style={{ fontSize: "12px" }}>
-                    Еженедельно:{" "}
-                    <select
-                      value={form.report_weekly_day}
-                      onChange={(e) =>
-                        setForm((f: any) => ({
-                          ...f,
-                          report_weekly_day: e.target.value,
-                        }))
-                      }
-                      style={{
-                        padding: "4px",
-                        borderRadius: "4px",
-                        border: "1px solid #ddd",
-                      }}
-                    >
-                      {["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map(
-                        (d) => (
-                          <option key={d} value={d}>
-                            {d}
-                          </option>
-                        ),
-                      )}
-                    </select>{" "}
+                  <label className="text-[13px]">
+                    Целевой бонус (₽):{" "}
                     <input
-                      type="time"
-                      value={form.report_weekly_time}
+                      type="number"
+                      min={0}
+                      value={form.kpi_target_bonus}
                       onChange={(e) =>
                         setForm((f: any) => ({
                           ...f,
-                          report_weekly_time: e.target.value,
+                          kpi_target_bonus: parseInt(e.target.value, 10) || 0,
                         }))
                       }
-                      style={{
-                        padding: "4px",
-                        borderRadius: "4px",
-                        border: "1px solid #ddd",
-                      }}
+                      className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
                     />
                   </label>
-                  <label style={{ fontSize: "12px" }}>
-                    Ежемесячно:{" "}
-                    <select
-                      value={form.report_monthly_day}
-                      onChange={(e) =>
-                        setForm((f: any) => ({
-                          ...f,
-                          report_monthly_day: e.target.value,
-                        }))
-                      }
-                      style={{
-                        padding: "4px",
-                        borderRadius: "4px",
-                        border: "1px solid #ddd",
-                      }}
-                    >
-                      <option value="last">Последний день</option>
-                      {Array.from({ length: 28 }, (_, i) => i + 1).map((n) => (
-                        <option key={n} value={String(n)}>
-                          {n}
-                        </option>
-                      ))}
-                    </select>{" "}
+                  <label className="text-[13px]">
+                    Целевое время разговоров (мин):{" "}
                     <input
-                      type="time"
-                      value={form.report_monthly_time}
+                      type="number"
+                      min={0}
+                      value={form.kpi_target_talk_time_minutes}
                       onChange={(e) =>
                         setForm((f: any) => ({
                           ...f,
-                          report_monthly_time: e.target.value,
+                          kpi_target_talk_time_minutes:
+                            parseInt(e.target.value, 10) || 0,
                         }))
                       }
-                      style={{
-                        padding: "4px",
-                        borderRadius: "4px",
-                        border: "1px solid #ddd",
-                      }}
+                      className="w-[80px] py-1.5 px-2 border border-[#ddd] rounded"
                     />
                   </label>
                 </div>
               </div>
+              <div className="mt-4 border-t border-[#ddd] pt-4">
+                <h4 className="m-0 mb-3 text-sm font-bold">
+                  Исключения (фильтры)
+                </h4>
+                <label className="flex items-center gap-2 text-[13px] mb-2">
+                  <input
+                    type="checkbox"
+                    checked={form.filter_exclude_answering_machine}
+                    onChange={(e) =>
+                      setForm((f: any) => ({
+                        ...f,
+                        filter_exclude_answering_machine: e.target.checked,
+                      }))
+                    }
+                  />{" "}
+                  Без автоответчиков
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px]">Короче (сек):</span>
+                  <input
+                    type="number"
+                    value={form.filter_min_duration}
+                    onChange={(e) =>
+                      setForm((f: any) => ({
+                        ...f,
+                        filter_min_duration: parseInt(e.target.value, 10) || 0,
+                      }))
+                    }
+                    className="w-[60px] py-1 px-2 border border-[#ddd] rounded"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 flex items-center gap-4">
+            <button
+              type="submit"
+              disabled={saving}
+              className={
+                saving
+                  ? "py-2.5 px-6 border-none rounded-md bg-[#ccc] text-white font-semibold cursor-not-allowed"
+                  : "py-2.5 px-6 border-none rounded-md bg-gradient-to-br from-[#FF6B35] to-[#F7931E] text-white font-semibold cursor-pointer"
+              }
+            >
+              {saving ? "Сохранение…" : "Сохранить настройки"}
+            </button>
+            {message && (
+              <span
+                className={`text-sm font-medium ${
+                  message.includes("Ошибка")
+                    ? "text-[#FF5252]"
+                    : "text-[#4CAF50]"
+                }`}
+              >
+                {message}
+              </span>
             )}
           </div>
-
-          {isAdmin && (
-            <div
-              style={{
-                padding: "16px",
-                background: "#f5f7fa",
-                borderRadius: "8px",
-              }}
-            >
-              <h4
-                style={{
-                  margin: "0 0 12px",
-                  fontSize: "14px",
-                  fontWeight: 700,
-                }}
-              >
-                Сводный отчёт по выбранным менеджерам
-              </h4>
-              <p
-                style={{ margin: "0 0 12px", fontSize: "12px", color: "#666" }}
-              >
-                Выберите, по каким менеджерам включать данные в сводный отчёт в
-                Telegram (опция «Получать отчеты по всем менеджерам»
-                настраивается в Управлении пользователями). Если никого не
-                выбрано — в сводку попадают все.
-              </p>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                  maxHeight: "200px",
-                  overflowY: "auto",
-                }}
-              >
-                {allUsers
-                  .filter((u) => u.id !== user.id)
-                  .map((u) => {
-                    const name = getDisplayName(u) || u.username;
-                    const checked =
-                      form.report_managed_user_ids?.includes(u.id) ?? false;
-                    return (
-                      <label
-                        key={u.id}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          fontSize: "13px",
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={(e) => {
-                            const ids: number[] =
-                              form.report_managed_user_ids ?? [];
-                            setForm((f: any) => ({
-                              ...f,
-                              report_managed_user_ids: e.target.checked
-                                ? [...ids, u.id]
-                                : ids.filter((id) => id !== u.id),
-                            }));
-                          }}
-                        />
-                        {name} ({u.username})
-                      </label>
-                    );
-                  })}
-                {allUsers.length <= 1 && (
-                  <span style={{ fontSize: "12px", color: "#999" }}>
-                    Нет других пользователей
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          <div
-            style={{
-              padding: "16px",
-              background: "#f5f7fa",
-              borderRadius: "8px",
-            }}
-          >
-            <h4
-              style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}
-            >
-              Email Отчеты
-            </h4>
-            <div style={{ marginBottom: "12px" }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "4px",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                }}
-              >
-                Email адрес
-              </label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) =>
-                  setForm((f: any) => ({ ...f, email: e.target.value }))
-                }
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #ddd",
-                  borderRadius: "6px",
-                }}
-                placeholder="Ваш Email"
-              />
-            </div>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-            >
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "13px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.email_daily_report}
-                  onChange={(e) =>
-                    setForm((f: any) => ({
-                      ...f,
-                      email_daily_report: e.target.checked,
-                    }))
-                  }
-                />{" "}
-                Ежедневный отчет
-              </label>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "13px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.email_weekly_report}
-                  onChange={(e) =>
-                    setForm((f: any) => ({
-                      ...f,
-                      email_weekly_report: e.target.checked,
-                    }))
-                  }
-                />{" "}
-                Еженедельный отчет
-              </label>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "13px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.email_monthly_report}
-                  onChange={(e) =>
-                    setForm((f: any) => ({
-                      ...f,
-                      email_monthly_report: e.target.checked,
-                    }))
-                  }
-                />{" "}
-                Ежемесячный отчет
-              </label>
-            </div>
-          </div>
-
-          <div
-            style={{
-              padding: "16px",
-              background: "#f5f7fa",
-              borderRadius: "8px",
-            }}
-          >
-            <h4
-              style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}
-            >
-              Параметры отчетов
-            </h4>
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-            >
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "13px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.report_detailed}
-                  onChange={(e) =>
-                    setForm((f: any) => ({
-                      ...f,
-                      report_detailed: e.target.checked,
-                    }))
-                  }
-                />{" "}
-                Подробный формат
-              </label>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "13px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.report_include_call_summaries}
-                  onChange={(e) =>
-                    setForm((f: any) => ({
-                      ...f,
-                      report_include_call_summaries: e.target.checked,
-                    }))
-                  }
-                />{" "}
-                ИИ-саммари вызовов (Email)
-              </label>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "13px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.report_include_avg_value}
-                  onChange={(e) =>
-                    setForm((f: any) => ({
-                      ...f,
-                      report_include_avg_value: e.target.checked,
-                    }))
-                  }
-                />{" "}
-                Средняя сумма сделки
-              </label>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "13px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.report_include_avg_rating}
-                  onChange={(e) =>
-                    setForm((f: any) => ({
-                      ...f,
-                      report_include_avg_rating: e.target.checked,
-                    }))
-                  }
-                />{" "}
-                Средняя оценка качества
-              </label>
-            </div>
-
-            <div
-              style={{
-                marginTop: "16px",
-                borderTop: "1px solid #ddd",
-                paddingTop: "16px",
-              }}
-            >
-              <h4
-                style={{
-                  margin: "0 0 12px",
-                  fontSize: "14px",
-                  fontWeight: 700,
-                }}
-              >
-                Настройки KPI
-              </h4>
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "12px",
-                  alignItems: "center",
-                  marginBottom: "12px",
-                }}
-              >
-                <label style={{ fontSize: "13px" }}>
-                  Базовый оклад (₽):{" "}
-                  <input
-                    type="number"
-                    min={0}
-                    value={form.kpi_base_salary}
-                    onChange={(e) =>
-                      setForm((f: any) => ({
-                        ...f,
-                        kpi_base_salary: parseInt(e.target.value, 10) || 0,
-                      }))
-                    }
-                    style={{
-                      width: "100px",
-                      padding: "6px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                    }}
-                  />
-                </label>
-                <label style={{ fontSize: "13px" }}>
-                  Целевой бонус (₽):{" "}
-                  <input
-                    type="number"
-                    min={0}
-                    value={form.kpi_target_bonus}
-                    onChange={(e) =>
-                      setForm((f: any) => ({
-                        ...f,
-                        kpi_target_bonus: parseInt(e.target.value, 10) || 0,
-                      }))
-                    }
-                    style={{
-                      width: "100px",
-                      padding: "6px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                    }}
-                  />
-                </label>
-                <label style={{ fontSize: "13px" }}>
-                  Целевое время разговоров (мин):{" "}
-                  <input
-                    type="number"
-                    min={0}
-                    value={form.kpi_target_talk_time_minutes}
-                    onChange={(e) =>
-                      setForm((f: any) => ({
-                        ...f,
-                        kpi_target_talk_time_minutes:
-                          parseInt(e.target.value, 10) || 0,
-                      }))
-                    }
-                    style={{
-                      width: "80px",
-                      padding: "6px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                    }}
-                  />
-                </label>
-              </div>
-            </div>
-            <div
-              style={{
-                marginTop: "16px",
-                borderTop: "1px solid #ddd",
-                paddingTop: "16px",
-              }}
-            >
-              <h4
-                style={{
-                  margin: "0 0 12px",
-                  fontSize: "14px",
-                  fontWeight: 700,
-                }}
-              >
-                Исключения (фильтры)
-              </h4>
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  fontSize: "13px",
-                  marginBottom: "8px",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={form.filter_exclude_answering_machine}
-                  onChange={(e) =>
-                    setForm((f: any) => ({
-                      ...f,
-                      filter_exclude_answering_machine: e.target.checked,
-                    }))
-                  }
-                />{" "}
-                Без автоответчиков
-              </label>
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "8px" }}
-              >
-                <span style={{ fontSize: "13px" }}>Короче (сек):</span>
-                <input
-                  type="number"
-                  value={form.filter_min_duration}
-                  onChange={(e) =>
-                    setForm((f: any) => ({
-                      ...f,
-                      filter_min_duration: parseInt(e.target.value, 10) || 0,
-                    }))
-                  }
-                  style={{
-                    width: "60px",
-                    padding: "4px",
-                    border: "1px solid #ddd",
-                    borderRadius: "4px",
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          style={{
-            marginTop: "24px",
-            display: "flex",
-            alignItems: "center",
-            gap: "16px",
-          }}
-        >
-          <button
-            type="submit"
-            disabled={saving}
-            style={{
-              padding: "10px 24px",
-              border: "none",
-              borderRadius: "6px",
-              background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-              color: "white",
-              fontWeight: 600,
-              cursor: saving ? "not-allowed" : "pointer",
-            }}
-          >
-            {saving ? "Сохранение…" : "Сохранить настройки"}
-          </button>
-          {message && (
-            <span
-              style={{
-                color: message.includes("Ошибка") ? "#FF5252" : "#4CAF50",
-                fontSize: "14px",
-                fontWeight: 500,
-              }}
-            >
-              {message}
-            </span>
-          )}
-        </div>
-      </form>
-    </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

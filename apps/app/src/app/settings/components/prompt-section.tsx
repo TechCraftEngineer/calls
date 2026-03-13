@@ -1,5 +1,6 @@
 "use client";
 
+import { Card, CardContent, CardHeader, Input, Textarea } from "@calls/ui";
 import type { PromptSectionProps } from "../types/settings";
 
 export default function PromptSection({
@@ -32,109 +33,75 @@ export default function PromptSection({
   const isTokenOnly = false;
 
   return (
-    <section className="card" style={{ marginBottom: "24px" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px",
-        }}
-      >
-        <div>
-          <h3 className="section-title" style={{ margin: 0 }}>
-            {title}
-          </h3>
-          {prompt.updated_at && (
-            <div
-              style={{
-                fontSize: "12px",
-                color: "#999",
-                marginTop: "4px",
-              }}
-            >
-              Обновлено: {formatDate(prompt.updated_at)}
-            </div>
-          )}
-        </div>
-        <span style={{ fontSize: "18px", cursor: "pointer" }}>✏️</span>
-      </div>
-
-      {isTokenOnly ? (
-        <div className="filter-item">
-          <label className="filter-label">Токен</label>
-          <input
-            type="password"
-            className="text-input"
-            value={prompt.value || ""}
-            onChange={onPromptChange(promptKey, "value")}
-            placeholder="Введите токен бота"
-            autoComplete="off"
-          />
-        </div>
-      ) : (
-        <>
-          {variables.length > 0 && (
-            <div style={{ marginBottom: "16px" }}>
-              <div className="filter-label" style={{ marginBottom: "8px" }}>
-                Доступные переменные:
+    <Card className="card mb-6">
+      <CardHeader className="p-0 pb-0">
+        <div className="flex justify-between items-center mb-5">
+          <div>
+            <h3 className="section-title m-0">{title}</h3>
+            {prompt.updated_at && (
+              <div className="text-xs text-[#999] mt-1">
+                Обновлено: {formatDate(prompt.updated_at)}
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "8px",
-                  flexWrap: "wrap",
-                }}
-              >
-                {variables.map((varName, idx) => (
-                  <span
-                    key={idx}
-                    style={{
-                      padding: "4px 12px",
-                      background: "#F5F5F7",
-                      borderRadius: "16px",
-                      fontSize: "12px",
-                      fontFamily: "monospace",
-                      color: "#333",
-                      border: "1px solid #E0E0E0",
-                    }}
-                  >
-                    {varName}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="filter-item" style={{ marginBottom: "16px" }}>
-            <label className="filter-label">ОПИСАНИЕ</label>
-            <input
-              type="text"
-              className="text-input"
-              value={prompt.description || ""}
-              onChange={onPromptChange(promptKey, "description")}
-              placeholder="Описание промпта"
-            />
+            )}
           </div>
+          <span className="text-lg cursor-pointer">✏️</span>
+        </div>
+      </CardHeader>
 
+      <CardContent className="p-0 pt-0">
+        {isTokenOnly ? (
           <div className="filter-item">
-            <label className="filter-label">ТЕКСТ ПРОМПТА</label>
-            <textarea
+            <label className="filter-label">Токен</label>
+            <Input
+              type="password"
               className="text-input"
               value={prompt.value || ""}
               onChange={onPromptChange(promptKey, "value")}
-              placeholder="Введите текст промпта"
-              style={{
-                minHeight: "300px",
-                resize: "vertical",
-                fontFamily: "monospace",
-                fontSize: "13px",
-                lineHeight: "1.6",
-              }}
+              placeholder="Введите токен бота"
+              autoComplete="off"
             />
           </div>
-        </>
-      )}
-    </section>
+        ) : (
+          <>
+            {variables.length > 0 && (
+              <div className="mb-4">
+                <div className="filter-label mb-2">Доступные переменные:</div>
+                <div className="flex gap-2 flex-wrap">
+                  {variables.map((varName, idx) => (
+                    <span
+                      key={idx}
+                      className="py-1 px-3 bg-[#F5F5F7] rounded-2xl text-xs font-mono text-[#333] border border-[#E0E0E0]"
+                    >
+                      {varName}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="filter-item mb-4">
+              <label className="filter-label">ОПИСАНИЕ</label>
+              <Input
+                type="text"
+                className="text-input"
+                value={prompt.description || ""}
+                onChange={onPromptChange(promptKey, "description")}
+                placeholder="Описание промпта"
+              />
+            </div>
+
+            <div className="filter-item">
+              <label className="filter-label">ТЕКСТ ПРОМПТА</label>
+              <Textarea
+                className="text-input min-h-[300px] resize-y font-mono text-[13px] leading-relaxed"
+                value={prompt.value || ""}
+                onChange={onPromptChange(promptKey, "value")}
+                placeholder="Введите текст промпта"
+              />
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

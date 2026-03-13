@@ -13,11 +13,21 @@ export const rateLimitMap = new Map<
   { count: number; resetTime: number }
 >();
 
+// Periodic cleanup to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of rateLimitMap.entries()) {
+    if (now > record.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
+}, 60000); // Clean every minute
+
 export function createRateLimit(options: {
   windowMs: number;
   maxRequests: number;
 }) {
-  return async (c: Context, next: Next): Promise<Response | void> => {
+  return async (c: Context, next: Next) => {
     const clientIp =
       c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "unknown";
     const now = Date.now();

@@ -1,5 +1,31 @@
 @import "tailwindcss";
 
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
 :root {
   --sidebar-width: 64px;
   --sidebar-bg: #FFFFFF;
@@ -7,6 +33,28 @@
   --bg-gray: #F5F5F7;
   --text-dark: #333;
   --border-color: #E5E5E5;
+
+  /* shadcn/ui theme — привязано к текущей цветовой схеме */
+  --background: #FFFFFF;
+  --foreground: #333;
+  --card: #FFFFFF;
+  --card-foreground: #333;
+  --primary: var(--accent-yellow);
+  --primary-foreground: #000;
+  --secondary: #F5F5F7;
+  --secondary-foreground: #333;
+  --muted: #F5F5F7;
+  --muted-foreground: #666;
+  --accent: #F5F5F7;
+  --accent-foreground: #333;
+  --border: var(--border-color);
+  --input: var(--border-color);
+  --ring: #888;
+  --destructive: #FF5252;
+  --destructive-foreground: #fff;
+  --popover: #FFFFFF;
+  --popover-foreground: #333;
+  --radius: 0.5rem;
 }
 
 * {

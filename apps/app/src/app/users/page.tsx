@@ -1,6 +1,17 @@
 "use client";
 
 import { paths } from "@calls/config";
+import {
+  Button,
+  Card,
+  CardContent,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@calls/ui";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/header";
@@ -38,26 +49,13 @@ interface ManagedUser extends User {
   kpi_target_talk_time_minutes?: number;
 }
 
-const modalOverlayStyle: React.CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.5)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
-};
-
-const modalBoxStyle: React.CSSProperties = {
-  background: "white",
-  borderRadius: "12px",
-  padding: "24px",
-  maxWidth: "440px",
-  width: "100%",
-  maxHeight: "90vh",
-  overflowY: "auto",
-  boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
-};
+const modalOverlayClasses =
+  "fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]";
+const modalBoxClasses =
+  "bg-white rounded-xl p-6 max-w-[440px] w-full max-h-[90vh] overflow-y-auto shadow-[0_8px_32px_rgba(0,0,0,0.2)]";
+const formFieldWrap = "mb-3";
+const formLabel = "block mb-1 text-[13px] font-semibold";
+const formInput = "w-full py-2 px-3 border border-[#ddd] rounded-md box-border";
 
 export default function UsersPage() {
   const router = useRouter();
@@ -399,339 +397,180 @@ export default function UsersPage() {
       <Header user={currentUser} />
 
       <main className="main-content">
-        <header
-          className="page-header"
-          style={{
-            marginBottom: "24px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-          }}
-        >
+        <header className="page-header mb-6 flex justify-between items-start">
           <div>
             <h1 className="page-title">Управление пользователями</h1>
-            <p
-              className="page-subtitle"
-              style={{ marginTop: "8px", fontSize: "14px", color: "#999" }}
-            >
+            <p className="page-subtitle mt-2 text-sm text-[#999]">
               Всего активных аккаунтов: {activeUsersCount}
             </p>
           </div>
-          <button
+          <Button
             onClick={openAddModal}
-            style={{
-              background: "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              padding: "12px 24px",
-              fontSize: "14px",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              boxShadow: "0 2px 8px rgba(255, 107, 53, 0.3)",
-              transition: "transform 0.2s",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.transform = "translateY(-1px)")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.transform = "translateY(0)")
-            }
+            className="bg-gradient-to-br from-[#FF6B35] to-[#F7931E] text-white border-none rounded-lg py-3 px-6 text-sm font-bold flex items-center gap-2 shadow-[0_2px_8px_rgba(255,107,53,0.3)]"
           >
-            <span style={{ fontSize: "18px" }}>+</span> Добавить пользователя
-          </button>
+            <span className="text-lg">+</span> Добавить пользователя
+          </Button>
         </header>
 
-        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-          <table className="op-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>ИМЯ ПОЛЬЗОВАТЕЛЯ</th>
-                <th>ИМЯ</th>
-                <th>ФАМИЛИЯ</th>
-                <th>ВНУТР. НОМЕРА</th>
-                <th>МОБИЛЬНЫЕ НОМЕРА</th>
-                <th>ДАТА СОЗДАНИЯ</th>
-                <th style={{ textAlign: "right" }}>ДЕЙСТВИЯ</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td
-                    colSpan={9}
-                    style={{ textAlign: "center", padding: "40px" }}
-                  >
-                    Загрузка…
-                  </td>
-                </tr>
-              ) : users.length > 0 ? (
-                users.map((u) => (
-                  <tr key={u.id}>
-                    <td style={{ color: "#999", fontWeight: 500 }}>{u.id}</td>
-                    <td style={{ fontWeight: 600, color: "#333" }}>
-                      {u.username}
-                    </td>
-                    <td style={{ color: "#555" }}>{u.givenName || "—"}</td>
-                    <td style={{ color: "#555" }}>{u.familyName || "—"}</td>
-                    <td style={{ color: "#555", fontWeight: 500 }}>
-                      {u.internalExtensions || "—"}
-                    </td>
-                    <td style={{ color: "#555", fontWeight: 500 }}>
-                      {u.mobilePhones || "—"}
-                    </td>
-                    <td style={{ color: "#555" }}>
-                      {formatDate(u.created_at)}
-                    </td>
-                    <td>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "12px",
-                          justifyContent: "flex-end",
-                          alignItems: "center",
-                        }}
-                      >
-                        <button
-                          className="ghost-btn"
-                          style={{
-                            height: "32px",
-                            fontSize: "12px",
-                            padding: "0 16px",
-                            background: "white",
-                            border: "1px solid #DDD",
-                            color: "#333",
-                            fontWeight: 600,
-                          }}
-                          onClick={() => openEditModal(u)}
-                        >
-                          Редактировать
-                        </button>
-                        <button
-                          className="ghost-btn"
-                          style={{
-                            height: "32px",
-                            fontSize: "12px",
-                            padding: "0 16px",
-                            background: "white",
-                            border: "1px solid #DDD",
-                            color: "#333",
-                            fontWeight: 600,
-                          }}
-                          onClick={() => openPasswordModal(u)}
-                        >
-                          Пароль
-                        </button>
-                        <div
-                          style={{
-                            width: "80px",
-                            display: "flex",
-                            justifyContent: "flex-end",
-                            alignItems: "center",
-                          }}
-                        >
-                          {currentUser?.id === u.id ? (
-                            <span
-                              style={{
-                                fontSize: "11px",
-                                color: "#999",
-                                fontWeight: 600,
-                                textTransform: "uppercase",
-                                letterSpacing: "0.5px",
-                              }}
-                            >
-                              ЭТО ВЫ
-                            </span>
-                          ) : (
-                            <button
-                              style={{
-                                height: "32px",
-                                fontSize: "12px",
-                                padding: "0",
-                                background: "none",
-                                border: "none",
-                                color: "#FF5252",
-                                fontWeight: 600,
-                                cursor: "pointer",
-                                transition: "opacity 0.2s",
-                              }}
-                              onClick={() => handleDelete(u.id, u.username)}
-                              onMouseEnter={(e) =>
-                                (e.currentTarget.style.opacity = "0.7")
-                              }
-                              onMouseLeave={(e) =>
-                                (e.currentTarget.style.opacity = "1")
-                              }
-                            >
-                              Удалить
-                            </button>
-                          )}
+        <Card className="card p-0! overflow-hidden">
+          <CardContent className="p-0!">
+            <Table className="op-table">
+              <TableHeader>
+                <TableRow className="border-none">
+                  <TableHead>ID</TableHead>
+                  <TableHead>ИМЯ ПОЛЬЗОВАТЕЛЯ</TableHead>
+                  <TableHead>ИМЯ</TableHead>
+                  <TableHead>ФАМИЛИЯ</TableHead>
+                  <TableHead>ВНУТР. НОМЕРА</TableHead>
+                  <TableHead>МОБИЛЬНЫЕ НОМЕРА</TableHead>
+                  <TableHead>ДАТА СОЗДАНИЯ</TableHead>
+                  <TableHead className="text-right">ДЕЙСТВИЯ</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-10">
+                      Загрузка…
+                    </TableCell>
+                  </TableRow>
+                ) : users.length > 0 ? (
+                  users.map((u) => (
+                    <TableRow key={u.id}>
+                      <TableCell className="text-[#999] font-medium">
+                        {u.id}
+                      </TableCell>
+                      <TableCell className="font-semibold text-[#333]">
+                        {u.username}
+                      </TableCell>
+                      <TableCell className="text-[#555]">
+                        {u.givenName || "—"}
+                      </TableCell>
+                      <TableCell className="text-[#555]">
+                        {u.familyName || "—"}
+                      </TableCell>
+                      <TableCell className="text-[#555] font-medium">
+                        {u.internalExtensions || "—"}
+                      </TableCell>
+                      <TableCell className="text-[#555] font-medium">
+                        {u.mobilePhones || "—"}
+                      </TableCell>
+                      <TableCell className="text-[#555]">
+                        {formatDate(u.created_at)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-3 justify-end items-center">
+                          <Button
+                            variant="outline"
+                            className="ghost-btn h-8 text-xs px-4 bg-white border-[#DDD] text-[#333] font-semibold"
+                            onClick={() => openEditModal(u)}
+                          >
+                            Редактировать
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="ghost-btn h-8 text-xs px-4 bg-white border-[#DDD] text-[#333] font-semibold"
+                            onClick={() => openPasswordModal(u)}
+                          >
+                            Пароль
+                          </Button>
+                          <div className="w-20 flex justify-end items-center">
+                            {currentUser?.id === u.id ? (
+                              <span className="text-[11px] text-[#999] font-semibold uppercase tracking-wide">
+                                ЭТО ВЫ
+                              </span>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                className="h-8 text-xs p-0 bg-transparent border-none text-[#FF5252] font-semibold hover:opacity-70"
+                                onClick={() => handleDelete(u.id, u.username)}
+                              >
+                                Удалить
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={9}
-                    style={{
-                      textAlign: "center",
-                      padding: "40px",
-                      color: "#999",
-                    }}
-                  >
-                    Нет данных
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={9}
+                      className="text-center py-10 text-[#999]"
+                    >
+                      Нет данных
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </main>
 
       {showAddModal && (
-        <div style={modalOverlayStyle} onClick={() => setShowAddModal(false)}>
-          <div style={modalBoxStyle} onClick={(e) => e.stopPropagation()}>
-            <h2
-              style={{ margin: "0 0 20px", fontSize: "18px", fontWeight: 700 }}
-            >
+        <div
+          className={modalOverlayClasses}
+          onClick={() => setShowAddModal(false)}
+        >
+          <div className={modalBoxClasses} onClick={(e) => e.stopPropagation()}>
+            <h2 className="m-0 mb-5 text-lg font-bold">
               Добавить пользователя
             </h2>
             <form onSubmit={handleAddSubmit}>
               {addError && (
-                <p
-                  style={{
-                    color: "#c00",
-                    marginBottom: "12px",
-                    fontSize: "14px",
-                  }}
-                >
-                  {addError}
-                </p>
+                <p className="text-[#c00] mb-3 text-sm">{addError}</p>
               )}
-              <div style={{ marginBottom: "12px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Логин *
-                </label>
+              <div className={formFieldWrap}>
+                <label className={formLabel}>Логин *</label>
                 <input
                   type="text"
                   value={addForm.username}
                   onChange={(e) =>
                     setAddForm((f) => ({ ...f, username: e.target.value }))
                   }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    boxSizing: "border-box",
-                  }}
+                  className={formInput}
                   placeholder="example@mail.com"
                   autoComplete="username"
                 />
               </div>
-              <div style={{ marginBottom: "12px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Пароль *
-                </label>
+              <div className={formFieldWrap}>
+                <label className={formLabel}>Пароль *</label>
                 <input
                   type="password"
                   value={addForm.password}
                   onChange={(e) =>
                     setAddForm((f) => ({ ...f, password: e.target.value }))
                   }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    boxSizing: "border-box",
-                  }}
+                  className={formInput}
                   autoComplete="new-password"
                 />
               </div>
-              <div style={{ marginBottom: "12px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Имя *
-                </label>
+              <div className={formFieldWrap}>
+                <label className={formLabel}>Имя *</label>
                 <input
                   type="text"
                   value={addForm.givenName}
                   onChange={(e) =>
                     setAddForm((f) => ({ ...f, givenName: e.target.value }))
                   }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    boxSizing: "border-box",
-                  }}
+                  className={formInput}
                 />
               </div>
-              <div style={{ marginBottom: "12px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Фамилия
-                </label>
+              <div className={formFieldWrap}>
+                <label className={formLabel}>Фамилия</label>
                 <input
                   type="text"
                   value={addForm.familyName}
                   onChange={(e) =>
                     setAddForm((f) => ({ ...f, familyName: e.target.value }))
                   }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    boxSizing: "border-box",
-                  }}
+                  className={formInput}
                 />
               </div>
-              <div style={{ marginBottom: "12px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Внутренние номера
-                </label>
+              <div className={formFieldWrap}>
+                <label className={formLabel}>Внутренние номера</label>
                 <input
                   type="text"
                   value={addForm.internalExtensions}
@@ -741,27 +580,12 @@ export default function UsersPage() {
                       internalExtensions: e.target.value,
                     }))
                   }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    boxSizing: "border-box",
-                  }}
+                  className={formInput}
                   placeholder="101, 102 или admin, ovchinnikov_nikita (МегаФон)"
                 />
               </div>
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Мобильные номера
-                </label>
+              <div className="mb-4">
+                <label className={formLabel}>Мобильные номера</label>
                 <input
                   type="text"
                   value={addForm.mobilePhones}
@@ -771,45 +595,15 @@ export default function UsersPage() {
                       mobilePhones: e.target.value,
                     }))
                   }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    boxSizing: "border-box",
-                  }}
+                  className={formInput}
                   placeholder="79XXXXXXXXX, можно несколько через запятую"
                 />
               </div>
 
-              <div
-                style={{
-                  marginBottom: "16px",
-                  padding: "16px",
-                  background: "#f5f7fa",
-                  borderRadius: "8px",
-                }}
-              >
-                <h3
-                  style={{
-                    margin: "0 0 12px",
-                    fontSize: "14px",
-                    fontWeight: 700,
-                  }}
-                >
-                  Telegram Отчеты
-                </h3>
-                <div style={{ marginBottom: "12px" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "4px",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Telegram Chat ID
-                  </label>
+              <div className="mb-4 p-4 bg-[#f5f7fa] rounded-lg">
+                <h3 className="m-0 mb-3 text-sm font-bold">Telegram Отчеты</h3>
+                <div className={formFieldWrap}>
+                  <label className={formLabel}>Telegram Chat ID</label>
                   <input
                     type="text"
                     value={addForm.telegramChatId}
@@ -819,41 +613,15 @@ export default function UsersPage() {
                         telegramChatId: e.target.value,
                       }))
                     }
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      border: "1px solid #ddd",
-                      borderRadius: "6px",
-                      boxSizing: "border-box",
-                    }}
+                    className={formInput}
                     placeholder="ID чата пользователя"
                   />
-                  <p
-                    style={{
-                      margin: "4px 0 0",
-                      fontSize: "11px",
-                      color: "#666",
-                    }}
-                  >
+                  <p className="mt-1 text-[11px] text-[#666]">
                     Чтобы узнать ID, напишите боту.
                   </p>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "8px",
-                  }}
-                >
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      fontSize: "13px",
-                      cursor: "pointer",
-                    }}
-                  >
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 text-[13px] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={addForm.telegram_daily_report}
@@ -866,15 +634,7 @@ export default function UsersPage() {
                     />
                     Получать свои ежедневные отчеты
                   </label>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      fontSize: "13px",
-                      cursor: "pointer",
-                    }}
-                  >
+                  <label className="flex items-center gap-2 text-[13px] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={addForm.telegram_manager_report}
@@ -890,75 +650,25 @@ export default function UsersPage() {
                 </div>
               </div>
 
-              <div
-                style={{
-                  marginBottom: "16px",
-                  padding: "16px",
-                  background: "#f5f7fa",
-                  borderRadius: "8px",
-                }}
-              >
-                <h3
-                  style={{
-                    margin: "0 0 12px",
-                    fontSize: "14px",
-                    fontWeight: 700,
-                  }}
-                >
-                  MAX Отчеты
-                </h3>
-                <div style={{ marginBottom: "12px" }}>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "4px",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    MAX Chat ID
-                  </label>
+              <div className="mb-4 p-4 bg-[#f5f7fa] rounded-lg">
+                <h3 className="m-0 mb-3 text-sm font-bold">MAX Отчеты</h3>
+                <div className={formFieldWrap}>
+                  <label className={formLabel}>MAX Chat ID</label>
                   <input
                     type="text"
                     value={addForm.max_chat_id}
                     onChange={(e) =>
                       setAddForm((f) => ({ ...f, max_chat_id: e.target.value }))
                     }
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      border: "1px solid #ddd",
-                      borderRadius: "6px",
-                      boxSizing: "border-box",
-                    }}
+                    className={formInput}
                     placeholder="ID чата MAX"
                   />
-                  <p
-                    style={{
-                      margin: "4px 0 0",
-                      fontSize: "11px",
-                      color: "#666",
-                    }}
-                  >
+                  <p className="mt-1 text-[11px] text-[#666]">
                     Заполняется автоматически при подключении
                   </p>
                 </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "8px",
-                  }}
-                >
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      fontSize: "13px",
-                      cursor: "pointer",
-                    }}
-                  >
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 text-[13px] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={addForm.max_daily_report}
@@ -971,15 +681,7 @@ export default function UsersPage() {
                     />
                     Получать свои ежедневные отчеты (MAX)
                   </label>
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      fontSize: "13px",
-                      cursor: "pointer",
-                    }}
-                  >
+                  <label className="flex items-center gap-2 text-[13px] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={addForm.max_manager_report}
@@ -1017,16 +719,11 @@ export default function UsersPage() {
                 <button
                   type="submit"
                   disabled={addSubmitting}
-                  style={{
-                    padding: "8px 16px",
-                    border: "none",
-                    borderRadius: "6px",
-                    background:
-                      "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-                    color: "white",
-                    fontWeight: 600,
-                    cursor: addSubmitting ? "not-allowed" : "pointer",
-                  }}
+                  className={
+                    addSubmitting
+                      ? "py-2 px-4 border-none rounded-md bg-[#ccc] text-white font-semibold cursor-not-allowed"
+                      : "py-2 px-4 border-none rounded-md bg-gradient-to-br from-[#FF6B35] to-[#F7931E] text-white font-semibold cursor-pointer"
+                  }
                 >
                   {addSubmitting ? "Сохранение…" : "Добавить"}
                 </button>
@@ -1037,91 +734,45 @@ export default function UsersPage() {
       )}
 
       {showEditModal && editUser && (
-        <div style={modalOverlayStyle} onClick={() => setShowEditModal(false)}>
-          <div style={modalBoxStyle} onClick={(e) => e.stopPropagation()}>
-            <h2
-              style={{ margin: "0 0 20px", fontSize: "18px", fontWeight: 700 }}
-            >
+        <div
+          className={modalOverlayClasses}
+          onClick={() => setShowEditModal(false)}
+        >
+          <div className={modalBoxClasses} onClick={(e) => e.stopPropagation()}>
+            <h2 className="m-0 mb-5 text-lg font-bold">
               Редактировать пользователя
             </h2>
-            <p style={{ margin: "0 0 16px", fontSize: "13px", color: "#666" }}>
+            <p className="m-0 mb-4 text-[13px] text-[#666]">
               Логин: {editUser.username}
             </p>
             <form onSubmit={handleEditSubmit}>
               {editError && (
-                <p
-                  style={{
-                    color: "#c00",
-                    marginBottom: "12px",
-                    fontSize: "14px",
-                  }}
-                >
-                  {editError}
-                </p>
+                <p className="text-[#c00] mb-3 text-sm">{editError}</p>
               )}
-              <div style={{ marginBottom: "12px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Имя *
-                </label>
+              <div className={formFieldWrap}>
+                <label className={formLabel}>Имя *</label>
                 <input
                   type="text"
                   value={editForm.givenName}
                   onChange={(e) =>
                     setEditForm((f) => ({ ...f, givenName: e.target.value }))
                   }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    boxSizing: "border-box",
-                  }}
+                  className={formInput}
                 />
               </div>
-              <div style={{ marginBottom: "12px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Фамилия
-                </label>
+              <div className={formFieldWrap}>
+                <label className={formLabel}>Фамилия</label>
                 <input
                   type="text"
                   value={editForm.familyName}
                   onChange={(e) =>
                     setEditForm((f) => ({ ...f, familyName: e.target.value }))
                   }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    boxSizing: "border-box",
-                  }}
+                  className={formInput}
                 />
               </div>
-              <div style={{ marginBottom: "12px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Внутренние номера
-                </label>
+              <div className={formFieldWrap}>
+                <label className={formLabel}>Внутренние номера</label>
                 <input
                   type="text"
                   value={editForm.internalExtensions}
@@ -1131,27 +782,12 @@ export default function UsersPage() {
                       internalExtensions: e.target.value,
                     }))
                   }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    boxSizing: "border-box",
-                  }}
+                  className={formInput}
                   placeholder="101, 102 или admin, ovchinnikov_nikita (МегаФон)"
                 />
               </div>
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Мобильные номера
-                </label>
+              <div className="mb-4">
+                <label className={formLabel}>Мобильные номера</label>
                 <input
                   type="text"
                   value={editForm.mobilePhones}
@@ -1161,28 +797,13 @@ export default function UsersPage() {
                       mobilePhones: e.target.value,
                     }))
                   }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    boxSizing: "border-box",
-                  }}
+                  className={formInput}
                   placeholder="79XXXXXXXXX, можно несколько через запятую"
                 />
               </div>
 
-              <div style={{ marginBottom: "12px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Telegram Chat ID
-                </label>
+              <div className={formFieldWrap}>
+                <label className={formLabel}>Telegram Chat ID</label>
                 <div style={{ display: "flex", gap: "8px" }}>
                   <input
                     type="text"
@@ -1193,13 +814,7 @@ export default function UsersPage() {
                         telegramChatId: e.target.value,
                       }))
                     }
-                    style={{
-                      flex: 1,
-                      padding: "8px 12px",
-                      border: "1px solid #ddd",
-                      borderRadius: "6px",
-                      boxSizing: "border-box",
-                    }}
+                    className="flex-1 py-2 px-3 border border-[#ddd] rounded-md box-border"
                     placeholder="ID чата пользователя"
                   />
                 </div>
@@ -2064,10 +1679,10 @@ export default function UsersPage() {
 
       {showPasswordModal && passwordUser && (
         <div
-          style={modalOverlayStyle}
+          className={modalOverlayClasses}
           onClick={() => setShowPasswordModal(false)}
         >
-          <div style={modalBoxStyle} onClick={(e) => e.stopPropagation()}>
+          <div className={modalBoxClasses} onClick={(e) => e.stopPropagation()}>
             <h2
               style={{ margin: "0 0 20px", fontSize: "18px", fontWeight: 700 }}
             >
@@ -2088,17 +1703,8 @@ export default function UsersPage() {
                   {passwordError}
                 </p>
               )}
-              <div style={{ marginBottom: "12px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Новый пароль *
-                </label>
+              <div className={formFieldWrap}>
+                <label className={formLabel}>Новый пароль *</label>
                 <input
                   type="password"
                   value={passwordForm.new_password}
@@ -2108,27 +1714,12 @@ export default function UsersPage() {
                       new_password: e.target.value,
                     }))
                   }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    boxSizing: "border-box",
-                  }}
+                  className={formInput}
                   autoComplete="new-password"
                 />
               </div>
-              <div style={{ marginBottom: "16px" }}>
-                <label
-                  style={{
-                    display: "block",
-                    marginBottom: "4px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                >
-                  Подтверждение пароля *
-                </label>
+              <div className="mb-4">
+                <label className={formLabel}>Подтверждение пароля *</label>
                 <input
                   type="password"
                   value={passwordForm.confirm_password}
@@ -2138,13 +1729,7 @@ export default function UsersPage() {
                       confirm_password: e.target.value,
                     }))
                   }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    boxSizing: "border-box",
-                  }}
+                  className={formInput}
                   autoComplete="new-password"
                 />
               </div>

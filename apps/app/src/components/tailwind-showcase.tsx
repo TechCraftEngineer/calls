@@ -85,10 +85,7 @@ export default function TailwindShowcase() {
             </div>
 
             {/* Card 2 - Кнопки */}
-            <div
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-medium border border-gray-200 dark:border-gray-700 p-6 animate-slide-up"
-              style={{ animationDelay: "0.1s" }}
-            >
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-medium border border-gray-200 dark:border-gray-700 p-6 animate-slide-up [animation-delay:0.1s]">
               <h2 className="text-xl font-bold text-primary-900 dark:text-white mb-4">
                 Кнопки
               </h2>
@@ -112,10 +109,7 @@ export default function TailwindShowcase() {
             </div>
 
             {/* Card 3 - Формы */}
-            <div
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-medium border border-gray-200 dark:border-gray-700 p-6 animate-slide-up"
-              style={{ animationDelay: "0.2s" }}
-            >
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-medium border border-gray-200 dark:border-gray-700 p-6 animate-slide-up [animation-delay:0.2s]">
               <h2 className="text-xl font-bold text-primary-900 dark:text-white mb-4">
                 Формы
               </h2>
@@ -154,10 +148,7 @@ export default function TailwindShowcase() {
             </div>
 
             {/* Card 4 - Статусы */}
-            <div
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-medium border border-gray-200 dark:border-gray-700 p-6 animate-slide-up"
-              style={{ animationDelay: "0.3s" }}
-            >
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-medium border border-gray-200 dark:border-gray-700 p-6 animate-slide-up [animation-delay:0.3s]">
               <h2 className="text-xl font-bold text-primary-900 dark:text-white mb-4">
                 Статусы и уведомления
               </h2>
@@ -178,10 +169,7 @@ export default function TailwindShowcase() {
             </div>
 
             {/* Card 5 - Текст и типографика */}
-            <div
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-medium border border-gray-200 dark:border-gray-700 p-6 animate-slide-up"
-              style={{ animationDelay: "0.4s" }}
-            >
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-medium border border-gray-200 dark:border-gray-700 p-6 animate-slide-up [animation-delay:0.4s]">
               <h2 className="text-xl font-bold text-primary-900 dark:text-white mb-4">
                 Типографика
               </h2>
@@ -225,10 +213,7 @@ export default function TailwindShowcase() {
             </div>
 
             {/* Card 6 - Анимации */}
-            <div
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-medium border border-gray-200 dark:border-gray-700 p-6 animate-slide-up"
-              style={{ animationDelay: "0.5s" }}
-            >
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-medium border border-gray-200 dark:border-gray-700 p-6 animate-slide-up [animation-delay:0.5s]">
               <h2 className="text-xl font-bold text-primary-900 dark:text-white mb-4">
                 Анимации и эффекты
               </h2>
@@ -245,14 +230,8 @@ export default function TailwindShowcase() {
                 </button>
                 <div className="flex space-x-2">
                   <div className="w-8 h-8 bg-mango-yellow rounded-full animate-bounce"></div>
-                  <div
-                    className="w-8 h-8 bg-primary-900 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  ></div>
-                  <div
-                    className="w-8 h-8 bg-success-500 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  ></div>
+                  <div className="w-8 h-8 bg-primary-900 rounded-full animate-bounce [animation-delay:0.1s]"></div>
+                  <div className="w-8 h-8 bg-success-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
                 </div>
               </div>
             </div>

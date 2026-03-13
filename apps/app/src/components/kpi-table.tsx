@@ -1,3 +1,13 @@
+import {
+  Card,
+  CardContent,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@calls/ui";
 import { useEffect, useState } from "react";
 import { restGet } from "@/lib/api";
 
@@ -51,112 +61,83 @@ export default function KpiTable({
   if (loading) return <div>Загрузка таблиц KPI…</div>;
 
   return (
-    <div
-      className="card"
-      style={{ padding: 0, overflow: "hidden", marginTop: "24px" }}
-    >
-      <div style={{ padding: "20px 24px", borderBottom: "1px solid #EEE" }}>
-        <h3 className="section-title" style={{ margin: 0 }}>
-          Расчет KPI сотрудников
-        </h3>
+    <Card className="card p-0! overflow-hidden mt-6">
+      <div className="py-5 px-6 border-b border-[#EEE]">
+        <h3 className="section-title m-0">Расчет KPI сотрудников</h3>
       </div>
-      <div style={{ overflowX: "auto" }}>
-        <table className="op-table">
-          <thead>
-            <tr>
-              <th>Сотрудник</th>
-              <th>Оклад (руб)</th>
-              <th>Бонус (руб)</th>
-              <th>Цель (мин) / Мес.</th>
-              <th>План (мин) / Пер.</th>
-              <th>Факт (мин)</th>
-              <th>Выполнение (%)</th>
-              <th>Бонус за период</th>
-              <th>ИТОГО Выплата</th>
-            </tr>
-          </thead>
-          <tbody>
+      <CardContent className="p-0! overflow-x-auto">
+        <Table className="op-table">
+          <TableHeader>
+            <TableRow className="border-none">
+              <TableHead>Сотрудник</TableHead>
+              <TableHead>Оклад (руб)</TableHead>
+              <TableHead>Бонус (руб)</TableHead>
+              <TableHead>Цель (мин) / Мес.</TableHead>
+              <TableHead>План (мин) / Пер.</TableHead>
+              <TableHead>Факт (мин)</TableHead>
+              <TableHead>Выполнение (%)</TableHead>
+              <TableHead>Бонус за период</TableHead>
+              <TableHead>ИТОГО Выплата</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {data.map((row) => (
-              <tr key={row.user_id}>
-                <td style={{ fontWeight: 600 }}>
+              <TableRow key={row.user_id}>
+                <TableCell className="font-semibold">
                   {row.name} <br />
-                  <small style={{ color: "#999" }}>{row.username}</small>
-                </td>
-                <td>{row.base_salary.toLocaleString()} ₽</td>
-                <td>{row.target_bonus.toLocaleString()} ₽</td>
-                <td>{row.target_talk_time_minutes}</td>
-                <td>{row.period_target_talk_time_minutes}</td>
-                <td
-                  style={{
-                    color:
-                      row.actual_talk_time_minutes >=
-                      row.period_target_talk_time_minutes
-                        ? "var(--status-success)"
-                        : "var(--status-warning)",
-                  }}
+                  <small className="text-[#999]">{row.username}</small>
+                </TableCell>
+                <TableCell>{row.base_salary.toLocaleString()} ₽</TableCell>
+                <TableCell>{row.target_bonus.toLocaleString()} ₽</TableCell>
+                <TableCell>{row.target_talk_time_minutes}</TableCell>
+                <TableCell>{row.period_target_talk_time_minutes}</TableCell>
+                <TableCell
+                  className={
+                    row.actual_talk_time_minutes >=
+                    row.period_target_talk_time_minutes
+                      ? "text-[var(--status-success)]"
+                      : "text-[var(--status-warning)]"
+                  }
                 >
                   {row.actual_talk_time_minutes}
-                </td>
-                <td>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        flex: 1,
-                        background: "#EEE",
-                        height: "6px",
-                        borderRadius: "3px",
-                        overflow: "hidden",
-                      }}
-                    >
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-[#EEE] h-1.5 rounded overflow-hidden">
                       <div
+                        className="h-full"
                         style={{
                           width: `${row.kpi_completion_percentage}%`,
                           background:
                             row.kpi_completion_percentage >= 100
                               ? "var(--status-success)"
                               : "var(--status-warning)",
-                          height: "100%",
                         }}
                       />
                     </div>
-                    <span style={{ fontSize: "12px", fontWeight: 600 }}>
+                    <span className="text-xs font-semibold">
                       {row.kpi_completion_percentage}%
                     </span>
                   </div>
-                </td>
-                <td style={{ fontWeight: 600 }}>
+                </TableCell>
+                <TableCell className="font-semibold">
                   {row.calculated_bonus.toLocaleString()} ₽
-                </td>
-                <td
-                  style={{ fontWeight: "bold", color: "var(--brand-primary)" }}
-                >
+                </TableCell>
+                <TableCell className="font-bold text-[var(--brand-primary)]">
                   {row.total_calculated_salary.toLocaleString()} ₽
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
             {data.length === 0 && (
-              <tr>
-                <td
-                  colSpan={9}
-                  style={{
-                    textAlign: "center",
-                    padding: "32px",
-                    color: "#888",
-                  }}
-                >
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-8 text-[#888]">
                   Нет данных для отображения
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }

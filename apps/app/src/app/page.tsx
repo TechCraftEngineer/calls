@@ -1,6 +1,18 @@
 "use client";
 
 import { paths } from "@calls/config";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@calls/ui";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import AudioPlayerModal from "@/components/audio-player-modal";
@@ -160,316 +172,271 @@ export default function HomePage() {
 
       <main className="main-content">
         <div className="dashboard-page">
-          <section className="card">
-            <div className="section-title" style={{ marginBottom: "24px" }}>
-              Последние звонки{" "}
-              <span
-                style={{
-                  fontSize: "12px",
-                  color: "#ff4d4f",
-                  cursor: "pointer",
-                  marginLeft: "4px",
-                }}
-              >
-                ?
-              </span>
-            </div>
-
-            <div className="filters-grid">
-              <div className="filter-item">
-                <span className="filter-label">Направление</span>
-                <select
-                  className="select-input"
-                  value={filters.direction}
-                  onChange={(e) =>
-                    setFilters({ ...filters, direction: e.target.value })
-                  }
-                >
-                  <option value="all">Все</option>
-                  <option value="incoming">Входящие</option>
-                  <option value="outgoing">Исходящие</option>
-                </select>
+          <Card className="card">
+            <CardHeader className="p-0 pb-6">
+              <div className="section-title mb-6">
+                Последние звонки{" "}
+                <span className="text-xs text-[#ff4d4f] cursor-pointer ml-1">
+                  ?
+                </span>
               </div>
-
-              <div className="filter-item">
-                <span className="filter-label">Отвечен/неотвечен</span>
-                <select
-                  className="select-input"
-                  value={filters.status}
-                  onChange={(e) =>
-                    setFilters({ ...filters, status: e.target.value })
-                  }
-                >
-                  <option value="all">Все</option>
-                  <option value="missed">Не принятые</option>
-                  <option value="answered">Принятые</option>
-                </select>
-              </div>
-
-              <div className="filter-item">
-                <span className="filter-label">Сотрудники</span>
-                <CustomDropdown
-                  type="manager"
-                  label="Выбрать"
-                  value={filters.manager}
-                  onChange={(val) =>
-                    setFilters({ ...filters, manager: val as string })
-                  }
-                />
-              </div>
-
-              <div className="filter-item">
-                <span className="filter-label">Ценность</span>
-                <CustomDropdown
-                  type="value"
-                  label="Ценность (Любая)"
-                  value={filters.value}
-                  onChange={(val) =>
-                    setFilters({ ...filters, value: val as number[] })
-                  }
-                />
-              </div>
-
-              <div className="filter-item">
-                <span className="filter-label">Оператор</span>
-                <CustomDropdown
-                  type="operator"
-                  label="Оператор (Все)"
-                  value={filters.operator}
-                  onChange={(val) =>
-                    setFilters({ ...filters, operator: val as string[] })
-                  }
-                />
-              </div>
-
-              <div className="filter-item" style={{ minWidth: "150px" }}>
-                <label className="filter-label">ДАТА ОТ</label>
-                <input
-                  type="date"
-                  className="date-input"
-                  value={filters.date_from}
-                  onChange={(e) =>
-                    setFilters({ ...filters, date_from: e.target.value })
-                  }
-                  onClick={(e) =>
-                    (e.currentTarget as HTMLInputElement).showPicker?.()
-                  }
-                />
-              </div>
-
-              <div className="filter-item" style={{ minWidth: "150px" }}>
-                <label className="filter-label">ДАТА ДО</label>
-                <input
-                  type="date"
-                  className="date-input"
-                  value={filters.date_to}
-                  onChange={(e) =>
-                    setFilters({ ...filters, date_to: e.target.value })
-                  }
-                  onClick={(e) =>
-                    (e.currentTarget as HTMLInputElement).showPicker?.()
-                  }
-                />
-              </div>
-
-              <div className="filter-item-btn">
-                <button
-                  className="apply-btn"
-                  onClick={() => setPagination((p) => ({ ...p, page: 1 }))}
-                  style={{ width: "100%" }}
-                >
-                  Найти
-                </button>
-              </div>
-            </div>
-
-            <div
-              style={{
-                marginTop: "64px",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button
-                  className="page-btn"
-                  style={{
-                    borderRadius: "20px",
-                    padding: "0 16px",
-                    height: "32px",
-                    background: "transparent",
-                    border: "1px solid #eee",
-                    color: pagination.page <= 1 ? "#CCC" : "#888",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                  disabled={pagination.page <= 1}
-                  onClick={() => handlePageChange(pagination.page - 1)}
-                >
-                  Назад
-                </button>
-
-                {Array.from(
-                  { length: Math.min(pagination.total_pages, 5) },
-                  (_, i) => i + 1,
-                ).map((p) => (
-                  <button
-                    key={p}
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "50%",
-                      border: "none",
-                      background: pagination.page === p ? "#FFD600" : "#333",
-                      color: pagination.page === p ? "#000" : "#fff",
-                      fontWeight: 700,
-                      fontSize: "13px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                    onClick={() => handlePageChange(p)}
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="filters-grid">
+                <div className="filter-item">
+                  <span className="filter-label">Направление</span>
+                  <Select
+                    value={filters.direction}
+                    onValueChange={(v) =>
+                      setFilters({ ...filters, direction: v })
+                    }
                   >
-                    {p}
-                  </button>
-                ))}
+                    <SelectTrigger className="select-input h-9 border-[#ddd] bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все</SelectItem>
+                      <SelectItem value="incoming">Входящие</SelectItem>
+                      <SelectItem value="outgoing">Исходящие</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                {pagination.total_pages > 5 && (
-                  <>
-                    <span style={{ color: "#999", fontSize: "13px" }}>...</span>
-                    <button
-                      style={{
-                        width: "32px",
-                        height: "32px",
-                        borderRadius: "50%",
-                        border: "none",
-                        background:
-                          pagination.page === pagination.total_pages
-                            ? "#FFD600"
-                            : "#333",
-                        color:
-                          pagination.page === pagination.total_pages
-                            ? "#000"
-                            : "#fff",
-                        fontWeight: 700,
-                        fontSize: "13px",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                      onClick={() => handlePageChange(pagination.total_pages)}
-                    >
-                      {pagination.total_pages}
-                    </button>
-                  </>
-                )}
-
-                <button
-                  className="page-btn"
-                  style={{
-                    borderRadius: "20px",
-                    padding: "0 16px",
-                    height: "32px",
-                    background: "transparent",
-                    border: "1px solid #eee",
-                    color:
-                      pagination.page >= pagination.total_pages
-                        ? "#CCC"
-                        : "#888",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
-                  disabled={pagination.page >= pagination.total_pages}
-                  onClick={() => handlePageChange(pagination.page + 1)}
-                >
-                  Вперед
-                </button>
-              </div>
-
-              <div
-                style={{ display: "flex", gap: "32px", alignItems: "center" }}
-              >
-                <div style={{ position: "relative" }}>
-                  <span
-                    style={{
-                      position: "absolute",
-                      left: "10px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      color: "#999",
-                      fontSize: "14px",
-                    }}
+                <div className="filter-item">
+                  <span className="filter-label">Отвечен/неотвечен</span>
+                  <Select
+                    value={filters.status}
+                    onValueChange={(v) => setFilters({ ...filters, status: v })}
                   >
-                    🔍
-                  </span>
-                  <input
-                    type="text"
-                    className="text-input"
-                    placeholder="Поиск..."
-                    style={{
-                      paddingLeft: "32px",
-                      width: "240px",
-                      background: "#fff",
-                      border: "1px solid #eee",
-                    }}
-                    value={filters.q}
-                    onChange={(e) =>
-                      setFilters({ ...filters, q: e.target.value })
+                    <SelectTrigger className="select-input h-9 border-[#ddd] bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все</SelectItem>
+                      <SelectItem value="missed">Не принятые</SelectItem>
+                      <SelectItem value="answered">Принятые</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="filter-item">
+                  <span className="filter-label">Сотрудники</span>
+                  <CustomDropdown
+                    type="manager"
+                    label="Выбрать"
+                    value={filters.manager}
+                    onChange={(val) =>
+                      setFilters({ ...filters, manager: val as string })
                     }
                   />
                 </div>
-                <button className="xls-download-btn">
-                  <span style={{ fontSize: "18px", opacity: 0.4 }}>📄</span>{" "}
-                  Скачать в xls за сегодня
-                </button>
-              </div>
-            </div>
-          </section>
 
-          <div
-            className="card"
-            style={{ padding: 0, minHeight: "200px", marginTop: "54px" }}
-          >
-            {calls.length === 0 && !loading ? (
-              <div
-                style={{ textAlign: "center", color: "#999", fontSize: "14px" }}
-              >
-                Нет данных для отображения
+                <div className="filter-item">
+                  <span className="filter-label">Ценность</span>
+                  <CustomDropdown
+                    type="value"
+                    label="Ценность (Любая)"
+                    value={filters.value}
+                    onChange={(val) =>
+                      setFilters({ ...filters, value: val as number[] })
+                    }
+                  />
+                </div>
+
+                <div className="filter-item">
+                  <span className="filter-label">Оператор</span>
+                  <CustomDropdown
+                    type="operator"
+                    label="Оператор (Все)"
+                    value={filters.operator}
+                    onChange={(val) =>
+                      setFilters({ ...filters, operator: val as string[] })
+                    }
+                  />
+                </div>
+
+                <div className="filter-item min-w-[150px]">
+                  <label className="filter-label">ДАТА ОТ</label>
+                  <Input
+                    type="date"
+                    className="date-input"
+                    value={filters.date_from}
+                    onChange={(e) =>
+                      setFilters({ ...filters, date_from: e.target.value })
+                    }
+                    onClick={(e) =>
+                      (e.currentTarget as HTMLInputElement).showPicker?.()
+                    }
+                  />
+                </div>
+
+                <div className="filter-item min-w-[150px]">
+                  <label className="filter-label">ДАТА ДО</label>
+                  <Input
+                    type="date"
+                    className="date-input"
+                    value={filters.date_to}
+                    onChange={(e) =>
+                      setFilters({ ...filters, date_to: e.target.value })
+                    }
+                    onClick={(e) =>
+                      (e.currentTarget as HTMLInputElement).showPicker?.()
+                    }
+                  />
+                </div>
+
+                <div className="filter-item-btn">
+                  <Button
+                    className="apply-btn w-full"
+                    onClick={() => setPagination((p) => ({ ...p, page: 1 }))}
+                  >
+                    Найти
+                  </Button>
+                </div>
               </div>
-            ) : (
-              <CallList
-                calls={calls}
-                onPlay={(filename, number) =>
-                  setActiveAudio({ filename, number })
-                }
-                user={user}
-                onCallDeleted={(callId) => {
-                  setCalls((prev) =>
-                    prev.filter((item) => item.call.id !== callId),
-                  );
-                  loadData();
-                }}
-                onRecommendationsGenerated={(callId, recommendations) => {
-                  setCalls((prev) =>
-                    prev.map((item) =>
-                      item.call.id === callId
-                        ? {
-                            ...item,
-                            evaluation: {
-                              ...(item.evaluation || {}),
-                              manager_recommendations: recommendations,
-                            },
-                          }
-                        : item,
-                    ),
-                  );
-                }}
-              />
-            )}
-          </div>
+
+              <div className="mt-16 flex justify-between items-center">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="page-btn rounded-[20px] px-4 h-8 bg-transparent border-[#eee] text-[13px] font-semibold disabled:text-[#CCC] disabled:cursor-not-allowed"
+                    style={{
+                      color: pagination.page <= 1 ? "#CCC" : "#888",
+                    }}
+                    disabled={pagination.page <= 1}
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                  >
+                    Назад
+                  </Button>
+
+                  {Array.from(
+                    { length: Math.min(pagination.total_pages, 5) },
+                    (_, i) => i + 1,
+                  ).map((p) => (
+                    <Button
+                      key={p}
+                      variant={pagination.page === p ? "default" : "secondary"}
+                      className="size-8 rounded-full p-0 text-[13px] font-bold min-w-8"
+                      style={{
+                        background: pagination.page === p ? "#FFD600" : "#333",
+                        color: pagination.page === p ? "#000" : "#fff",
+                      }}
+                      onClick={() => handlePageChange(p)}
+                    >
+                      {p}
+                    </Button>
+                  ))}
+
+                  {pagination.total_pages > 5 && (
+                    <>
+                      <span className="text-[#999] text-[13px]">...</span>
+                      <Button
+                        variant="secondary"
+                        className="size-8 rounded-full p-0 text-[13px] font-bold min-w-8"
+                        style={{
+                          background:
+                            pagination.page === pagination.total_pages
+                              ? "#FFD600"
+                              : "#333",
+                          color:
+                            pagination.page === pagination.total_pages
+                              ? "#000"
+                              : "#fff",
+                        }}
+                        onClick={() => handlePageChange(pagination.total_pages)}
+                      >
+                        {pagination.total_pages}
+                      </Button>
+                    </>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    className="page-btn rounded-[20px] px-4 h-8 bg-transparent border-[#eee] text-[13px] font-semibold disabled:text-[#CCC] disabled:cursor-not-allowed"
+                    style={{
+                      color:
+                        pagination.page >= pagination.total_pages
+                          ? "#CCC"
+                          : "#888",
+                    }}
+                    disabled={pagination.page >= pagination.total_pages}
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                  >
+                    Вперед
+                  </Button>
+                </div>
+
+                <div className="flex gap-8 items-center">
+                  <div className="relative">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#999] text-sm">
+                      🔍
+                    </span>
+                    <Input
+                      type="text"
+                      className="text-input pl-8 w-60 bg-white border-[#eee]"
+                      placeholder="Поиск..."
+                      value={filters.q}
+                      onChange={(e) =>
+                        setFilters({ ...filters, q: e.target.value })
+                      }
+                    />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="xls-download-btn font-normal text-sm gap-2 p-0 h-auto"
+                  >
+                    <span className="text-lg opacity-40">📄</span>
+                    Скачать в xls за сегодня
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="card p-0! min-h-[200px] mt-[54px]">
+            <CardContent className="p-0!">
+              {calls.length === 0 && !loading ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    color: "#999",
+                    fontSize: "14px",
+                  }}
+                >
+                  Нет данных для отображения
+                </div>
+              ) : (
+                <CallList
+                  calls={calls}
+                  onPlay={(filename, number) =>
+                    setActiveAudio({ filename, number })
+                  }
+                  user={user}
+                  onCallDeleted={(callId) => {
+                    setCalls((prev) =>
+                      prev.filter((item) => item.call.id !== callId),
+                    );
+                    loadData();
+                  }}
+                  onRecommendationsGenerated={(callId, recommendations) => {
+                    setCalls((prev) =>
+                      prev.map((item) =>
+                        item.call.id === callId
+                          ? {
+                              ...item,
+                              evaluation: {
+                                ...(item.evaluation || {}),
+                                manager_recommendations: recommendations,
+                              },
+                            }
+                          : item,
+                      ),
+                    );
+                  }}
+                />
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {activeAudio && (

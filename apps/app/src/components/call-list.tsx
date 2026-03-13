@@ -463,7 +463,7 @@ export default function CallList({
         </button>
 
         {showColumnToggle && (
-          <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg p-3 shadow-lg w-[200px] z-[100]">
+          <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg p-3 shadow-lg w-[200px] z-100">
             <div className="text-xs font-bold mb-2 text-gray-400 uppercase">
               Видимость колонок
             </div>

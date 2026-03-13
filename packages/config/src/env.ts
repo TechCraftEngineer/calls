@@ -115,8 +115,14 @@ export const env = createEnv({
 const hasAnyAsrProvider = !!(
   env.ASSEMBLYAI_API_KEY || env.YANDEX_SPEECHKIT_API_KEY
 );
-if (!hasAnyAsrProvider && process.env.NODE_ENV !== "test") {
-  throw new Error(
-    "Настройте хотя бы один ASR провайдер: ASSEMBLYAI_API_KEY или YANDEX_SPEECHKIT_API_KEY",
+const skipValidation =
+  !!process.env.CI ||
+  process.env.npm_lifecycle_event === "lint" ||
+  process.env.npm_lifecycle_event === "build" ||
+  process.env.NEXT_PHASE === "phase-production-build";
+
+if (!hasAnyAsrProvider && process.env.NODE_ENV !== "test" && !skipValidation) {
+  console.warn(
+    "Внимание: Настройте хотя бы один ASR провайдер: ASSEMBLYAI_API_KEY или YANDEX_SPEECHKIT_API_KEY",
   );
 }

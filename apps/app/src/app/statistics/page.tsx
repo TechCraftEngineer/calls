@@ -1,6 +1,23 @@
 "use client";
 
 import { paths } from "@calls/config";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Input,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@calls/ui";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Header from "@/components/header";
@@ -9,6 +26,23 @@ import ReportSettingsPanel from "@/components/report-settings-panel";
 import Sidebar from "@/components/sidebar";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
+
+function getScoreBadgeClasses(scoreNum: number): string {
+  const base = "py-0.5 px-2 rounded-xl text-[11px] font-bold";
+  const bg =
+    scoreNum === 1
+      ? "bg-[#FF5252]"
+      : scoreNum === 2
+        ? "bg-[#FF9800]"
+        : scoreNum === 3
+          ? "bg-[#2196F3]"
+          : scoreNum === 4
+            ? "bg-[#4CAF50]"
+            : "bg-[#FFD600]";
+  const text =
+    scoreNum <= 2 ? "text-white" : scoreNum === 5 ? "text-black" : "text-white";
+  return `${base} ${bg} ${text}`;
+}
 
 interface StatsRow {
   name: string;
@@ -119,286 +153,186 @@ function StatisticsPageContent() {
       <Header user={user} />
 
       <main className="main-content">
-        <header className="page-header" style={{ marginBottom: "32px" }}>
+        <header className="page-header mb-8">
           <h1 className="page-title">Статистика звонков</h1>
           <p className="page-subtitle">Эффективность работы менеджеров</p>
         </header>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            marginBottom: "24px",
-            borderBottom: "2px solid #EEE",
-          }}
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) =>
+            setActiveTab(v as "statistics" | "kpi" | "settings")
+          }
+          className="mb-6"
         >
-          <button
-            onClick={() => setActiveTab("statistics")}
-            style={{
-              padding: "12px 24px",
-              background: "none",
-              border: "none",
-              borderBottom:
-                activeTab === "statistics"
-                  ? "2px solid #FF6B35"
-                  : "2px solid transparent",
-              color: activeTab === "statistics" ? "#FF6B35" : "#666",
-              fontWeight: 600,
-              cursor: "pointer",
-              marginBottom: "-2px",
-            }}
-          >
-            Сводная статистика
-          </button>
-          <button
-            onClick={() => setActiveTab("kpi")}
-            style={{
-              padding: "12px 24px",
-              background: "none",
-              border: "none",
-              borderBottom:
-                activeTab === "kpi"
-                  ? "2px solid #FF6B35"
-                  : "2px solid transparent",
-              color: activeTab === "kpi" ? "#FF6B35" : "#666",
-              fontWeight: 600,
-              cursor: "pointer",
-              marginBottom: "-2px",
-            }}
-          >
-            Расчет KPI
-          </button>
-          <button
-            onClick={() => setActiveTab("settings")}
-            style={{
-              padding: "12px 24px",
-              background: "none",
-              border: "none",
-              borderBottom:
-                activeTab === "settings"
-                  ? "2px solid #FF6B35"
-                  : "2px solid transparent",
-              color: activeTab === "settings" ? "#FF6B35" : "#666",
-              fontWeight: 600,
-              cursor: "pointer",
-              marginBottom: "-2px",
-            }}
-          >
-            Настройки отчетов
-          </button>
-        </div>
+          <TabsList className="flex gap-0 p-0 h-auto bg-transparent border-b-2 border-[#EEE] rounded-none w-auto">
+            <TabsTrigger
+              value="statistics"
+              className="rounded-none border-b-2 border-transparent -mb-0.5 data-[state=active]:border-[#FF6B35] data-[state=active]:text-[#FF6B35] text-[#666] bg-transparent shadow-none py-3 px-6"
+            >
+              Сводная статистика
+            </TabsTrigger>
+            <TabsTrigger
+              value="kpi"
+              className="rounded-none border-b-2 border-transparent -mb-0.5 data-[state=active]:border-[#FF6B35] data-[state=active]:text-[#FF6B35] text-[#666] bg-transparent shadow-none py-3 px-6"
+            >
+              Расчет KPI
+            </TabsTrigger>
+            <TabsTrigger
+              value="settings"
+              className="rounded-none border-b-2 border-transparent -mb-0.5 data-[state=active]:border-[#FF6B35] data-[state=active]:text-[#FF6B35] text-[#666] bg-transparent shadow-none py-3 px-6"
+            >
+              Настройки отчетов
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {activeTab !== "settings" && (
-          <section className="card" style={{ marginBottom: "24px" }}>
-            <div
-              className="section-title"
-              style={{
-                marginBottom: "20px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              Фильтрация статистики <span style={{ fontSize: "14px" }}>📅</span>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                gap: "24px",
-                alignItems: "flex-end",
-                flexWrap: "wrap",
-              }}
-            >
-              <div className="filter-item" style={{ minWidth: "150px" }}>
-                <label className="filter-label">ДАТА ОТ</label>
-                <input
-                  type="date"
-                  className="date-input"
-                  value={filters.date_from}
-                  onChange={(e) =>
-                    setFilters({ ...filters, date_from: e.target.value })
-                  }
-                  onClick={(e) => (e.currentTarget as any).showPicker?.()}
-                />
+          <Card className="card mb-6">
+            <CardHeader className="p-0 pb-0">
+              <div className="section-title mb-5 flex items-center gap-2">
+                Фильтрация статистики <span className="text-sm">📅</span>
               </div>
-              <div className="filter-item" style={{ minWidth: "150px" }}>
-                <label className="filter-label">ДАТА ДО</label>
-                <input
-                  type="date"
-                  className="date-input"
-                  value={filters.date_to}
-                  onChange={(e) =>
-                    setFilters({ ...filters, date_to: e.target.value })
-                  }
-                  onClick={(e) => (e.currentTarget as any).showPicker?.()}
-                />
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="flex gap-6 items-end flex-wrap">
+                <div className="filter-item min-w-[150px]">
+                  <label className="filter-label">ДАТА ОТ</label>
+                  <Input
+                    type="date"
+                    className="date-input"
+                    value={filters.date_from}
+                    onChange={(e) =>
+                      setFilters({ ...filters, date_from: e.target.value })
+                    }
+                    onClick={(e) =>
+                      (e.currentTarget as HTMLInputElement).showPicker?.()
+                    }
+                  />
+                </div>
+                <div className="filter-item min-w-[150px]">
+                  <label className="filter-label">ДАТА ДО</label>
+                  <Input
+                    type="date"
+                    className="date-input"
+                    value={filters.date_to}
+                    onChange={(e) =>
+                      setFilters({ ...filters, date_to: e.target.value })
+                    }
+                    onClick={(e) =>
+                      (e.currentTarget as HTMLInputElement).showPicker?.()
+                    }
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    className="apply-btn bg-gradient-to-br from-[#FF6B35] to-[#F7931E] text-white border-none"
+                    onClick={loadStats}
+                  >
+                    Применить
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="ghost-btn bg-white border-[#DDD] text-[#333]"
+                    onClick={() => {
+                      setFilters({ ...filters, date_from: "", date_to: "" });
+                      setTimeout(loadStats, 100);
+                    }}
+                  >
+                    Сбросить
+                  </Button>
+                </div>
               </div>
-              <div style={{ display: "flex", gap: "12px" }}>
-                <button
-                  className="apply-btn"
-                  onClick={loadStats}
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #FF6B35 0%, #F7931E 100%)",
-                    color: "white",
-                    border: "none",
-                  }}
-                >
-                  Применить
-                </button>
-                <button
-                  className="ghost-btn"
-                  onClick={() => {
-                    setFilters({ ...filters, date_from: "", date_to: "" });
-                    setTimeout(loadStats, 100);
-                  }}
-                  style={{
-                    background: "white",
-                    border: "1px solid #DDD",
-                    color: "#333",
-                  }}
-                >
-                  Сбросить
-                </button>
-              </div>
-            </div>
-          </section>
+            </CardContent>
+          </Card>
         )}
 
         {activeTab === "statistics" && (
-          <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-            <div
-              style={{
-                padding: "20px 24px",
-                borderBottom: "1px solid #EEE",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <h3 className="section-title" style={{ margin: 0 }}>
+          <Card className="card p-0! overflow-hidden">
+            <div className="py-5 px-6 border-b border-[#EEE] flex justify-between items-center">
+              <h3 className="section-title m-0">
                 Статистика по внутренним номерам
               </h3>
-              <div
-                style={{ display: "flex", gap: "8px", alignItems: "center" }}
-              >
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: 600,
-                    color: "#999",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                  }}
-                >
+              <div className="flex gap-2 items-center">
+                <span className="text-[11px] font-semibold text-[#999] uppercase tracking-wide">
                   СОРТИРОВКА:
                 </span>
-                <button
-                  className="ghost-btn"
+                <Button
+                  variant="outline"
+                  className={`ghost-btn border-[#DDD] py-1.5 px-4 text-[13px] font-semibold ${
+                    filters.sort === "incoming_count"
+                      ? "bg-[#F5F5F7]"
+                      : "bg-white"
+                  }`}
                   onClick={() => handleSort("incoming_count")}
-                  style={{
-                    background:
-                      filters.sort === "incoming_count" ? "#F5F5F7" : "white",
-                    border: "1px solid #DDD",
-                    padding: "6px 16px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
                 >
                   Входящие
-                </button>
-                <button
-                  className="ghost-btn"
+                </Button>
+                <Button
+                  variant="outline"
+                  className={`ghost-btn border-[#DDD] py-1.5 px-4 text-[13px] font-semibold ${
+                    filters.sort === "outgoing_count"
+                      ? "bg-[#F5F5F7]"
+                      : "bg-white"
+                  }`}
                   onClick={() => handleSort("outgoing_count")}
-                  style={{
-                    background:
-                      filters.sort === "outgoing_count" ? "#F5F5F7" : "white",
-                    border: "1px solid #DDD",
-                    padding: "6px 16px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                  }}
                 >
                   Исходящие
-                </button>
+                </Button>
               </div>
             </div>
 
-            <table className="op-table">
-              <thead>
-                <tr>
-                  <th>Сотрудник</th>
-                  <th>Внутренний номер</th>
-                  <th
+            <Table className="op-table">
+              <TableHeader>
+                <TableRow className="border-none">
+                  <TableHead>Сотрудник</TableHead>
+                  <TableHead>Внутренний номер</TableHead>
+                  <TableHead
                     colSpan={2}
-                    style={{
-                      textAlign: "center",
-                      borderBottom: "1px solid #EEE",
-                    }}
+                    className="text-center border-b border-[#EEE]"
                   >
                     Количество звонков
-                  </th>
-                  <th
+                  </TableHead>
+                  <TableHead
                     colSpan={2}
-                    style={{
-                      textAlign: "center",
-                      borderBottom: "1px solid #EEE",
-                    }}
+                    className="text-center border-b border-[#EEE]"
                   >
                     Время разговора
-                  </th>
-                  <th>Распределение оценок</th>
-                </tr>
-                <tr>
-                  <th></th>
-                  <th></th>
-                  <th
-                    style={{ fontSize: "10px", color: "#999", fontWeight: 600 }}
-                  >
+                  </TableHead>
+                  <TableHead>Распределение оценок</TableHead>
+                </TableRow>
+                <TableRow className="border-none">
+                  <TableHead></TableHead>
+                  <TableHead></TableHead>
+                  <TableHead className="text-[10px] text-[#999] font-semibold">
                     Исходящие
-                  </th>
-                  <th
-                    style={{ fontSize: "10px", color: "#999", fontWeight: 600 }}
-                  >
+                  </TableHead>
+                  <TableHead className="text-[10px] text-[#999] font-semibold">
                     Входящие
-                  </th>
-                  <th
-                    style={{ fontSize: "10px", color: "#999", fontWeight: 600 }}
-                  >
+                  </TableHead>
+                  <TableHead className="text-[10px] text-[#999] font-semibold">
                     Исх (мин)
-                  </th>
-                  <th
-                    style={{ fontSize: "10px", color: "#999", fontWeight: 600 }}
-                  >
+                  </TableHead>
+                  <TableHead className="text-[10px] text-[#999] font-semibold">
                     Вх (мин)
-                  </th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {loading ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      style={{ textAlign: "center", padding: "40px" }}
-                    >
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-10">
                       Загрузка…
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : stats.length > 0 ? (
                   <>
-                    <tr style={{ background: "#F9F9F9", fontWeight: 700 }}>
-                      <td>
+                    <TableRow className="bg-[#F9F9F9] font-bold">
+                      <TableCell>
                         Всего
                         {stats.length > 0 && (
-                          <div
-                            style={{
-                              fontSize: "11px",
-                              color: "#999",
-                              fontWeight: 400,
-                              marginTop: "2px",
-                            }}
-                          >
+                          <div className="text-[11px] text-[#999] font-normal mt-0.5">
                             {stats.length}{" "}
                             {stats.length === 1
                               ? "менеджер"
@@ -407,110 +341,86 @@ function StatisticsPageContent() {
                                 : "менеджеров"}
                           </div>
                         )}
-                      </td>
-                      <td>—</td>
-                      <td style={{ textAlign: "center", fontWeight: 700 }}>
+                      </TableCell>
+                      <TableCell>—</TableCell>
+                      <TableCell className="text-center font-bold">
                         {totals.outgoing_count}
-                      </td>
-                      <td style={{ textAlign: "center", fontWeight: 700 }}>
+                      </TableCell>
+                      <TableCell className="text-center font-bold">
                         {totals.incoming_count}
-                      </td>
-                      <td style={{ textAlign: "center", fontWeight: 700 }}>
+                      </TableCell>
+                      <TableCell className="text-center font-bold">
                         {Math.floor(totals.outgoing_duration / 60)}
-                      </td>
-                      <td style={{ textAlign: "center", fontWeight: 700 }}>
+                      </TableCell>
+                      <TableCell className="text-center font-bold">
                         {Math.floor(totals.incoming_duration / 60)}
-                      </td>
-                      <td>—</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell>—</TableCell>
+                    </TableRow>
                     {stats.map((row) => (
-                      <tr key={row.internal_number || row.name}>
-                        <td style={{ fontWeight: 600 }}>{row.name || "—"}</td>
-                        <td>{row.internal_number || "—"}</td>
-                        <td style={{ textAlign: "center" }}>
+                      <TableRow key={row.internal_number || row.name}>
+                        <TableCell className="font-semibold">
+                          {row.name || "—"}
+                        </TableCell>
+                        <TableCell>{row.internal_number || "—"}</TableCell>
+                        <TableCell className="text-center">
                           {row.outgoing.count}
-                        </td>
-                        <td style={{ textAlign: "center" }}>
+                        </TableCell>
+                        <TableCell className="text-center">
                           {row.incoming.count}
-                        </td>
-                        <td style={{ textAlign: "center" }}>
+                        </TableCell>
+                        <TableCell className="text-center">
                           {Math.floor(row.outgoing.duration / 60)}
-                        </td>
-                        <td style={{ textAlign: "center" }}>
+                        </TableCell>
+                        <TableCell className="text-center">
                           {Math.floor(row.incoming.duration / 60)}
-                        </td>
-                        <td>
-                          <div
-                            style={{
-                              display: "flex",
-                              gap: "6px",
-                              flexWrap: "wrap",
-                            }}
-                          >
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1.5 flex-wrap">
                             {Object.entries(row.score_distribution || {})
                               .toSorted(
                                 ([a], [b]) => parseInt(a, 10) - parseInt(b, 10),
                               )
-                              .map(([score, data]: [string, any]) => {
-                                const count = data?.count || 0;
-                                if (count === 0) return null;
-                                const scoreNum = parseInt(score, 10);
-                                return (
-                                  <span
-                                    key={score}
-                                    style={{
-                                      padding: "3px 8px",
-                                      borderRadius: "12px",
-                                      fontSize: "11px",
-                                      fontWeight: 700,
-                                      background:
-                                        scoreNum === 1
-                                          ? "#FF5252"
-                                          : scoreNum === 2
-                                            ? "#FF9800"
-                                            : scoreNum === 3
-                                              ? "#2196F3"
-                                              : scoreNum === 4
-                                                ? "#4CAF50"
-                                                : "#FFD600",
-                                      color:
-                                        scoreNum <= 2
-                                          ? "white"
-                                          : scoreNum === 5
-                                            ? "black"
-                                            : "white",
-                                    }}
-                                  >
-                                    {score}:{count}
-                                  </span>
-                                );
-                              })}
+                              .map(
+                                ([score, data]: [
+                                  string,
+                                  { count?: number },
+                                ]) => {
+                                  const count = data?.count || 0;
+                                  if (count === 0) return null;
+                                  const scoreNum = parseInt(score, 10);
+                                  return (
+                                    <Badge
+                                      key={score}
+                                      className={getScoreBadgeClasses(scoreNum)}
+                                    >
+                                      {score}:{count}
+                                    </Badge>
+                                  );
+                                },
+                              )}
                             {Object.keys(row.score_distribution || {})
                               .length === 0 && (
-                              <span style={{ color: "#ccc" }}>—</span>
+                              <span className="text-[#ccc]">—</span>
                             )}
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
                   </>
                 ) : (
-                  <tr>
-                    <td
+                  <TableRow>
+                    <TableCell
                       colSpan={7}
-                      style={{
-                        textAlign: "center",
-                        padding: "40px",
-                        color: "#999",
-                      }}
+                      className="text-center py-10 text-[#999]"
                     >
                       Нет данных
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 )}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </Card>
         )}
 
         {activeTab === "kpi" && (
@@ -530,12 +440,7 @@ export default function StatisticsPage() {
     <Suspense
       fallback={
         <div className="app-container">
-          <main
-            className="main-content"
-            style={{ padding: "48px", textAlign: "center" }}
-          >
-            Загрузка…
-          </main>
+          <main className="main-content py-12 text-center">Загрузка…</main>
         </div>
       }
     >

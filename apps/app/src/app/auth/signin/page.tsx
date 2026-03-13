@@ -4,7 +4,7 @@ import { paths } from "@calls/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { authClient, login } from "@/lib/better-auth";
 import { type LoginFormData, loginSchema } from "@/lib/validations";
@@ -18,26 +18,10 @@ function LoginForm() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-    setValue,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     mode: "onBlur",
   });
-
-  useEffect(() => {
-    const urlUsername = searchParams.get("username");
-
-    if (urlUsername) {
-      // Безопасное заполнение только username без пароля
-      const sanitizedUsername = decodeURIComponent(urlUsername)
-        .replace(/[<>"'&]/g, "") // Удаляем опасные HTML символы
-        .replace(/[\x00-\x1F\x7F]/g, "") // Удаляем control characters
-        .replace(/\s+/g, " ") // Заменяем множественные пробелы на один
-        .trim()
-        .substring(0, 50); // Ограничиваем длину
-      setValue("username", sanitizedUsername);
-    }
-  }, [searchParams, setValue]);
 
   const onSubmit = async (data: LoginFormData) => {
     try {

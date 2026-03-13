@@ -18,67 +18,27 @@ export default function GlobalError({
 
   return (
     <html lang="ru">
-      <body style={{ margin: 0, fontFamily: "Inter, sans-serif" }}>
-        <div
-          style={{
-            minHeight: "100vh",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: "#F5F5F7",
-            padding: "24px",
-          }}
-        >
-          <div style={{ textAlign: "center", maxWidth: "400px" }}>
-            <h1
-              style={{
-                marginBottom: "16px",
-                fontSize: "24px",
-                fontWeight: 700,
-                color: "#111",
-              }}
-            >
+      <body className="m-0 font-['Inter',sans-serif]">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#F5F5F7] p-6">
+          <div className="text-center max-w-[400px]">
+            <h1 className="mb-4 text-2xl font-bold text-[#111]">
               Критическая ошибка
             </h1>
-            <p
-              style={{
-                marginBottom: "32px",
-                color: "#666",
-                lineHeight: 1.5,
-              }}
-            >
+            <p className="mb-8 text-[#666] leading-relaxed">
               Приложение столкнулось с серьёзной ошибкой. Пожалуйста, обновите
               страницу или вернитесь на главную.
             </p>
-            <div
-              style={{ display: "flex", gap: "16px", justifyContent: "center" }}
-            >
+            <div className="flex gap-4 justify-center">
               <button
                 type="button"
                 onClick={reset}
-                style={{
-                  padding: "12px 24px",
-                  borderRadius: "8px",
-                  border: "none",
-                  backgroundColor: "#FFD600",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
+                className="py-3 px-6 rounded-lg border-none bg-[#FFD600] font-semibold cursor-pointer"
               >
                 Попробовать снова
               </button>
               <a
                 href={paths.root}
-                style={{
-                  padding: "12px 24px",
-                  borderRadius: "8px",
-                  border: "1px solid #ddd",
-                  backgroundColor: "white",
-                  fontWeight: 600,
-                  color: "#333",
-                  textDecoration: "none",
-                }}
+                className="py-3 px-6 rounded-lg border border-[#ddd] bg-white font-semibold text-[#333] no-underline"
               >
                 На главную
               </a>

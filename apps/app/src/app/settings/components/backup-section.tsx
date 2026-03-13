@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, Card, CardContent, CardHeader } from "@calls/ui";
 import type { BackupSectionProps } from "../types/settings";
 
 export default function BackupSection({
@@ -7,40 +8,29 @@ export default function BackupSection({
   onBackup,
 }: BackupSectionProps) {
   return (
-    <section className="card" style={{ marginBottom: "24px" }}>
-      <div
-        className="section-title"
-        style={{
-          marginBottom: "16px",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-        }}
-      >
-        <span style={{ fontSize: "16px" }}>💾</span> Резервная копия базы
-      </div>
-      <p style={{ fontSize: "13px", color: "#666", marginBottom: "16px" }}>
-        Создать копию базы данных и сохранить её на сервере.
-      </p>
-      <button
-        type="button"
-        onClick={onBackup}
-        disabled={backupLoading}
-        style={{
-          background: backupLoading
-            ? "#CCC"
-            : "linear-gradient(135deg, #2d7d46 0%, #1e5c34 100%)",
-          color: "white",
-          border: "none",
-          borderRadius: "8px",
-          padding: "12px 24px",
-          fontSize: "14px",
-          fontWeight: 600,
-          cursor: backupLoading ? "not-allowed" : "pointer",
-        }}
-      >
-        {backupLoading ? "Создание копии…" : "Копия базы"}
-      </button>
-    </section>
+    <Card className="card mb-6">
+      <CardHeader className="p-0 pb-0">
+        <div className="section-title mb-4 flex items-center gap-2">
+          <span className="text-base">💾</span> Резервная копия базы
+        </div>
+      </CardHeader>
+      <CardContent className="p-0 pt-0">
+        <p className="text-[13px] text-[#666] mb-4">
+          Создать копию базы данных и сохранить её на сервере.
+        </p>
+        <Button
+          type="button"
+          onClick={onBackup}
+          disabled={backupLoading}
+          className={
+            backupLoading
+              ? "bg-[#CCC] text-white border-none rounded-lg py-3 px-6 text-sm font-semibold cursor-not-allowed"
+              : "bg-gradient-to-br from-[#2d7d46] to-[#1e5c34] text-white border-none rounded-lg py-3 px-6 text-sm font-semibold"
+          }
+        >
+          {backupLoading ? "Создание копии…" : "Копия базы"}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
