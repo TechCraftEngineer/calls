@@ -3,7 +3,7 @@
  * Uses Better Auth for session; enriches with backend user profile (internal_numbers, etc.).
  */
 
-import { storage } from "@calls/backend-storage";
+import { storage } from "@calls/db";
 import { ORPCError, os } from "@orpc/server";
 
 export type AuthLike = {
@@ -28,7 +28,7 @@ export async function createBackendContext(opts: {
         | string
         | undefined;
       if (username) {
-        const profile = storage.getUserByUsername(username);
+        const profile = await storage.getUserByUsername(username);
         user = profile
           ? ({ ...profile, ...baUser } as Awaited<
               ReturnType<typeof storage.getUserByUsername>
@@ -45,7 +45,7 @@ export async function createBackendContext(opts: {
       ? decodeURIComponent(match[1].trim())
       : null;
     if (sessionUsername) {
-      user = storage.getUserByUsername(sessionUsername);
+      user = await storage.getUserByUsername(sessionUsername);
     }
   }
 

@@ -14,6 +14,9 @@
     },
     "./schema": {
       "default": "./src/schema/index.ts"
+    },
+    "./storage": {
+      "default": "./src/storage.ts"
     }
   },
   "license": "MIT",
@@ -28,6 +31,7 @@
   },
   "dependencies": {
     "@calls/config": "workspace:*",
+    "bcryptjs": "^2.4.3",
     "@neondatabase/serverless": "^1.0.2",
     "@vercel/postgres": "0.10.0",
     "drizzle-orm": "0.45.1",
@@ -35,6 +39,7 @@
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
+    "@types/bcryptjs": "^2.4.6",
     "@types/pg": "^8.18.0",
     "@types/ws": "^8.18.1",
     "drizzle-kit": "^0.31.9",

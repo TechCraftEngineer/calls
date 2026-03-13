@@ -3,3 +3,9 @@ export * from "drizzle-orm/sql";
 export { db } from "./client";
 export { db as dbEdge } from "./client.edge";
 export * from "./schema";
+export type {
+  CallWithTranscript,
+  GetCallsParams,
+  UserUpdateData,
+} from "./storage";
+export { storage } from "./storage";

@@ -1,4 +1,4 @@
-import { storage } from "@calls/backend-storage";
+import { storage } from "@calls/db";
 import { z } from "zod";
 import { adminProcedure, protectedProcedure } from "../orpc";
 

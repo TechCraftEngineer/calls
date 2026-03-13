@@ -10,10 +10,9 @@
   },
   "dependencies": {
     "@calls/api": "workspace:*",
-    "@calls/backend-storage": "workspace:*",
+    "@calls/db": "workspace:*",
     "@orpc/server": "^1.13.6",
     "better-auth": "1.5.5",
-    "better-sqlite3": "^12.6.0",
     "hono": "4.12.7"
   },
   "devDependencies": {

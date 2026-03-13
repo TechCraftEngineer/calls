@@ -31,7 +31,7 @@ export const callsRouter = {
       const internalNumbers = getInternalNumbersForUser(user!, storage);
       const mobileNumbers = getMobileNumbersForUser(user!, storage);
 
-      const callsWithTranscripts = storage.getCallsWithTranscripts({
+      const callsWithTranscripts = await storage.getCallsWithTranscripts({
         limit: input.per_page,
         offset,
         dateFrom,
@@ -48,7 +48,7 @@ export const callsRouter = {
         operators: input.operator?.length ? input.operator : undefined,
       });
 
-      const totalItems = storage.countCalls({
+      const totalItems = await storage.countCalls({
         dateFrom,
         dateTo,
         internalNumbers,
@@ -64,10 +64,10 @@ export const callsRouter = {
       });
 
       const totalPages = Math.ceil(totalItems / input.per_page) || 1;
-      const metrics = storage.calculateMetrics();
-      const managers = storage
-        .getAllUsers()
-        .filter((u) => (u as Record<string, unknown>).internal_numbers);
+      const metrics = await storage.calculateMetrics();
+      const managers = (await storage.getAllUsers()).filter(
+        (u) => (u as Record<string, unknown>).internal_numbers,
+      );
 
       return {
         calls: callsWithTranscripts,
@@ -102,12 +102,14 @@ export const callsRouter = {
   get: protectedProcedure
     .input(z.object({ call_id: z.number() }))
     .handler(async ({ input, context }) => {
-      const call = context.storage.getCall(input.call_id);
+      const call = await context.storage.getCall(input.call_id);
       if (!call) {
         throw new Error("Call not found");
       }
-      const transcript = context.storage.getTranscriptByCallId(input.call_id);
-      const evaluation = context.storage.getEvaluation(input.call_id);
+      const transcript = await context.storage.getTranscriptByCallId(
+        input.call_id,
+      );
+      const evaluation = await context.storage.getEvaluation(input.call_id);
       // TODO: Add operator_name, duration_seconds, duration_formatted
       return { call, transcript, evaluation };
     }),
@@ -124,11 +126,11 @@ export const callsRouter = {
   delete: adminProcedure
     .input(z.object({ call_id: z.number() }))
     .handler(async ({ input, context }) => {
-      const call = context.storage.getCall(input.call_id);
+      const call = await context.storage.getCall(input.call_id);
       if (!call) throw new Error("Call not found");
-      if (!context.storage.deleteCall(input.call_id))
+      if (!(await context.storage.deleteCall(input.call_id)))
         throw new Error("Failed to delete call");
-      context.storage.addActivityLog(
+      await context.storage.addActivityLog(
         "info",
         `Deleted call #${input.call_id}`,
         (context.user as Record<string, unknown>).username as string,
@@ -139,7 +141,7 @@ export const callsRouter = {
 
 function getInternalNumbersForUser(
   user: Record<string, unknown>,
-  _storage: typeof import("@calls/backend-storage").storage,
+  _storage: typeof import("@calls/db").storage,
 ): string[] | undefined {
   const nums = user.internal_numbers as string | undefined;
   if (!nums || String(nums).trim().toLowerCase() === "all") return undefined;
@@ -156,7 +158,7 @@ function getInternalNumbersForUser(
 
 function getMobileNumbersForUser(
   user: Record<string, unknown>,
-  _storage: typeof import("@calls/backend-storage").storage,
+  _storage: typeof import("@calls/db").storage,
 ): string[] | undefined {
   const nums = user.mobile_numbers as string | undefined;
   if (!nums?.trim()) return undefined;

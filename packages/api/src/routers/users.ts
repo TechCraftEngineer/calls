@@ -1,11 +1,14 @@
 import { randomBytes } from "node:crypto";
-import { storage } from "@calls/backend-storage";
+import { storage } from "@calls/db";
 import { z } from "zod";
 import { adminProcedure, protectedProcedure } from "../orpc";
 
-function canAccessUser(currentUserId: number, targetUserId: number): boolean {
+async function canAccessUser(
+  currentUserId: number,
+  targetUserId: number,
+): Promise<boolean> {
   if (currentUserId === targetUserId) return true;
-  const user = storage.getUser(currentUserId);
+  const user = await storage.getUser(currentUserId);
   if (!user) return false;
   const u = user as Record<string, unknown>;
   const un = u.username as string;
@@ -61,16 +64,16 @@ const _changePasswordSchema = z.object({
 
 export const usersRouter = {
   list: adminProcedure.handler(async () => {
-    return storage.getAllUsers();
+    return await storage.getAllUsers();
   }),
 
   get: protectedProcedure
     .input(z.object({ user_id: z.number() }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as number;
-      if (!canAccessUser(userId, input.user_id))
+      if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      const user = storage.getUser(input.user_id);
+      const user = await storage.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       return user;
     }),
@@ -78,9 +81,9 @@ export const usersRouter = {
   create: adminProcedure
     .input(userCreateSchema)
     .handler(async ({ input, context }) => {
-      const existing = storage.getUserByUsername(input.username);
+      const existing = await storage.getUserByUsername(input.username);
       if (existing) throw new Error("User with this username already exists");
-      const id = storage.createUser(
+      const id = await storage.createUser(
         input.username,
         input.password,
         input.first_name,
@@ -88,12 +91,12 @@ export const usersRouter = {
         input.internal_numbers ?? null,
         input.mobile_numbers ?? null,
       );
-      storage.addActivityLog(
+      await storage.addActivityLog(
         "info",
         `User created: ${input.username}`,
         (context.user as Record<string, unknown>).username as string,
       );
-      const user = storage.getUser(id);
+      const user = await storage.getUser(id);
       if (!user) throw new Error("Failed to create user");
       return user;
     }),
@@ -102,9 +105,9 @@ export const usersRouter = {
     .input(z.object({ user_id: z.number(), data: userUpdateSchema }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as number;
-      if (!canAccessUser(userId, input.user_id))
+      if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      const user = storage.getUser(input.user_id);
+      const user = await storage.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       const d = input.data;
       const u = user as Record<string, unknown>;
@@ -116,12 +119,15 @@ export const usersRouter = {
           ? (d.last_name ?? "").toString()
           : (u.last_name ?? "").toString();
       if (!firstName) throw new Error("First name is required");
-      storage.updateUserName(input.user_id, firstName, lastName);
+      await storage.updateUserName(input.user_id, firstName, lastName);
       if (d.internal_numbers !== undefined)
-        storage.updateUserInternalNumbers(input.user_id, d.internal_numbers);
+        await storage.updateUserInternalNumbers(
+          input.user_id,
+          d.internal_numbers,
+        );
       if (d.mobile_numbers !== undefined)
-        storage.updateUserMobileNumbers(input.user_id, d.mobile_numbers);
-      storage.updateUserFilters(
+        await storage.updateUserMobileNumbers(input.user_id, d.mobile_numbers);
+      await storage.updateUserFilters(
         input.user_id,
         d.filter_exclude_answering_machine ??
           (u.filter_exclude_answering_machine as boolean) ??
@@ -129,8 +135,8 @@ export const usersRouter = {
         d.filter_min_duration ?? (u.filter_min_duration as number) ?? 0,
         d.filter_min_replicas ?? (u.filter_min_replicas as number) ?? 0,
       );
-      storage.updateUserReportKpiSettings(input.user_id, d);
-      storage.updateUserTelegramSettings(
+      await storage.updateUserReportKpiSettings(input.user_id, d);
+      await storage.updateUserTelegramSettings(
         input.user_id,
         (u.telegram_chat_id as string) ?? null,
         d.telegram_daily_report ??
@@ -140,12 +146,12 @@ export const usersRouter = {
           (u.telegram_manager_report as boolean) ??
           false,
       );
-      storage.addActivityLog(
+      await storage.addActivityLog(
         "info",
         `User updated: ${user.username}`,
         (context.user as Record<string, unknown>).username as string,
       );
-      const updated = storage.getUser(input.user_id);
+      const updated = await storage.getUser(input.user_id);
       if (!updated) throw new Error("Failed to update user");
       return updated;
     }),
@@ -153,14 +159,14 @@ export const usersRouter = {
   delete: adminProcedure
     .input(z.object({ user_id: z.number() }))
     .handler(async ({ input, context }) => {
-      const user = storage.getUser(input.user_id);
+      const user = await storage.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       const adminId = (context.user as Record<string, unknown>).id as number;
       if (adminId === input.user_id)
         throw new Error("Cannot delete your own account");
-      if (!storage.deleteUser(input.user_id))
+      if (!(await storage.deleteUser(input.user_id)))
         throw new Error("Failed to delete user");
-      storage.addActivityLog(
+      await storage.addActivityLog(
         "info",
         `User deleted: ${user.username}`,
         (context.user as Record<string, unknown>).username as string,
@@ -177,13 +183,15 @@ export const usersRouter = {
       }),
     )
     .handler(async ({ input, context }) => {
-      const user = storage.getUser(input.user_id);
+      const user = await storage.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       if (input.new_password !== input.confirm_password)
         throw new Error("Passwords do not match");
-      if (!storage.updateUserPassword(input.user_id, input.new_password))
+      if (
+        !(await storage.updateUserPassword(input.user_id, input.new_password))
+      )
         throw new Error("Failed to change password");
-      storage.addActivityLog(
+      await storage.addActivityLog(
         "info",
         `Password changed for user: ${user.username}`,
         (context.user as Record<string, unknown>).username as string,
@@ -195,12 +203,12 @@ export const usersRouter = {
     .input(z.object({ user_id: z.number() }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as number;
-      if (!canAccessUser(userId, input.user_id))
+      if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      const user = storage.getUser(input.user_id);
+      const user = await storage.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       const token = randomBytes(16).toString("base64url");
-      if (!storage.saveTelegramConnectToken(input.user_id, token))
+      if (!(await storage.saveTelegramConnectToken(input.user_id, token)))
         throw new Error("Failed to save token");
       // TODO: integrate TelegramService.getBotUsername() - for now return placeholder
       const botUsername = "mango_react_bot";
@@ -211,9 +219,9 @@ export const usersRouter = {
     .input(z.object({ user_id: z.number() }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as number;
-      if (!canAccessUser(userId, input.user_id))
+      if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      if (!storage.disconnectTelegram(input.user_id))
+      if (!(await storage.disconnectTelegram(input.user_id)))
         throw new Error("Failed to disconnect Telegram");
       return { success: true };
     }),
@@ -222,12 +230,12 @@ export const usersRouter = {
     .input(z.object({ user_id: z.number() }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as number;
-      if (!canAccessUser(userId, input.user_id))
+      if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      const user = storage.getUser(input.user_id);
+      const user = await storage.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       const token = randomBytes(16).toString("base64url");
-      if (!storage.saveMaxConnectToken(input.user_id, token))
+      if (!(await storage.saveMaxConnectToken(input.user_id, token)))
         throw new Error("Failed to save token");
       return {
         manual_instruction: `Отправьте боту команду: /start ${token}`,
@@ -239,9 +247,9 @@ export const usersRouter = {
     .input(z.object({ user_id: z.number() }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as number;
-      if (!canAccessUser(userId, input.user_id))
+      if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
-      if (!storage.disconnectMax(input.user_id))
+      if (!(await storage.disconnectMax(input.user_id)))
         throw new Error("Failed to disconnect MAX");
       return { success: true };
     }),
