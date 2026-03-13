@@ -20,8 +20,8 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@calls/tsconfig": "workspace:*",
     "@better-auth/cli": "1.4.21",
+    "@calls/tsconfig": "workspace:*",
     "typescript": "5.9.3"
   }
 }
