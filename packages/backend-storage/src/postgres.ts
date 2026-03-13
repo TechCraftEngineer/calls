@@ -4,20 +4,7 @@
  */
 
 import { db } from "@calls/db";
-import type {
-  ActivityLog,
-  Call,
-  CallEvaluation,
-  NewActivityLog,
-  NewCall,
-  NewCallEvaluation,
-  NewPrompt,
-  NewTranscript,
-  NewUser,
-  Prompt,
-  Transcript,
-  User,
-} from "@calls/db/schema";
+import type { Call, CallEvaluation, Transcript, User } from "@calls/db/schema";
 import * as schema from "@calls/db/schema";
 import { compareSync, hashSync } from "bcryptjs";
 import { and, avg, count, desc, eq, inArray, like, or } from "drizzle-orm";
@@ -272,8 +259,7 @@ export const storage = {
 
     const salt = Buffer.from(saltB64, "base64");
     const iterMatch = fullHash.match(/\$(\d+)\$/);
-    const iterations =
-      iterMatch && iterMatch[1] ? parseInt(iterMatch[1], 10) : 260000;
+    const iterations = iterMatch?.[1] ? parseInt(iterMatch[1], 10) : 260000;
     const keylen = 32;
     const derived = pbkdf2Sync(password, salt, iterations, keylen, "sha256");
     const derivedB64 = derived.toString("base64").replace(/=/g, "");

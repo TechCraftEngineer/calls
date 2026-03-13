@@ -1,12 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import AudioPlayerModal from "@/components/audio-player-modal";
 import CallList from "@/components/call-list";
 import CustomDropdown from "@/components/custom-dropdown";
 import Header from "@/components/header";
-import Metrics from "@/components/metrics";
 import Sidebar from "@/components/sidebar";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
@@ -62,7 +61,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [calls, setCalls] = useState<CallWithDetails[]>([]);
-  const [metrics, setMetrics] = useState<MetricsData>({
+  const [_metrics, setMetrics] = useState<MetricsData>({
     total_calls: 0,
     transcribed: 0,
     avg_duration: 0,

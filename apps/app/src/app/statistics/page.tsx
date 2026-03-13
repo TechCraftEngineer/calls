@@ -447,11 +447,13 @@ function StatisticsPageContent() {
                             }}
                           >
                             {Object.entries(row.score_distribution || {})
-                              .sort(([a], [b]) => parseInt(a) - parseInt(b))
+                              .sort(
+                                ([a], [b]) => parseInt(a, 10) - parseInt(b, 10),
+                              )
                               .map(([score, data]: [string, any]) => {
                                 const count = data?.count || 0;
                                 if (count === 0) return null;
-                                const scoreNum = parseInt(score);
+                                const scoreNum = parseInt(score, 10);
                                 return (
                                   <span
                                     key={score}

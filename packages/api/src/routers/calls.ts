@@ -114,7 +114,7 @@ export const callsRouter = {
 
   generateRecommendations: protectedProcedure
     .input(z.object({ call_id: z.number() }))
-    .handler(async ({ input }) => {
+    .handler(async () => {
       // TODO: Integrate DeepSeek service for recommendations
       throw new Error(
         "generateRecommendations not yet implemented - integrate DeepSeek",
@@ -139,7 +139,7 @@ export const callsRouter = {
 
 function getInternalNumbersForUser(
   user: Record<string, unknown>,
-  storage: typeof import("@calls/backend-storage").storage,
+  _storage: typeof import("@calls/backend-storage").storage,
 ): string[] | undefined {
   const nums = user.internal_numbers as string | undefined;
   if (!nums || String(nums).trim().toLowerCase() === "all") return undefined;

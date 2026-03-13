@@ -156,7 +156,7 @@ const loadColumnOrder = (): string[] => {
     const missingKeys = Array.from(allKeys).filter((k) => !savedKeys.has(k));
 
     return [...validOrder, ...missingKeys];
-  } catch (error) {
+  } catch (_error) {
     // Убрали console.error для продакшена
     return DEFAULT_COLUMN_ORDER;
   }
@@ -400,7 +400,7 @@ export default function CallList({
         (result as { recommendations?: string[] })?.recommendations ?? [];
       setRecommendations(recs);
       onRecommendationsGenerated?.(callId, recs);
-    } catch (error) {
+    } catch (_error) {
       // Убрали console.error для продакшена
       alert("Не удалось сформировать рекомендации");
     } finally {

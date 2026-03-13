@@ -661,7 +661,7 @@ export default function ReportSettingsFormBody({
                     onChange={(e) =>
                       setForm((f: any) => ({
                         ...f,
-                        kpi_base_salary: parseInt(e.target.value) || 0,
+                        kpi_base_salary: parseInt(e.target.value, 10) || 0,
                       }))
                     }
                     style={{
@@ -681,7 +681,7 @@ export default function ReportSettingsFormBody({
                     onChange={(e) =>
                       setForm((f: any) => ({
                         ...f,
-                        kpi_target_bonus: parseInt(e.target.value) || 0,
+                        kpi_target_bonus: parseInt(e.target.value, 10) || 0,
                       }))
                     }
                     style={{
@@ -702,7 +702,7 @@ export default function ReportSettingsFormBody({
                       setForm((f: any) => ({
                         ...f,
                         kpi_target_talk_time_minutes:
-                          parseInt(e.target.value) || 0,
+                          parseInt(e.target.value, 10) || 0,
                       }))
                     }
                     style={{
@@ -762,7 +762,7 @@ export default function ReportSettingsFormBody({
                   onChange={(e) =>
                     setForm((f: any) => ({
                       ...f,
-                      filter_min_duration: parseInt(e.target.value) || 0,
+                      filter_min_duration: parseInt(e.target.value, 10) || 0,
                     }))
                   }
                   style={{

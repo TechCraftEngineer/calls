@@ -8,12 +8,6 @@ import Sidebar from "@/components/sidebar";
 import api, { restPost } from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
 
-interface Message {
-  speaker: string;
-  text: string;
-  isOperator: boolean;
-}
-
 interface CallDetail {
   id: number;
   number: string;
@@ -136,7 +130,7 @@ export default function CallDetailPage() {
 
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return "0.00 MB";
-    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
   const handleGenerateRecommendations = async () => {

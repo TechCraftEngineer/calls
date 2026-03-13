@@ -5,12 +5,12 @@
  * Migrates data from apps/backend/data/db.sqlite to PostgreSQL
  */
 
+import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { db } from "@calls/db";
 import * as schema from "@calls/db/schema";
 import Database from "better-sqlite3";
-import { existsSync } from "fs";
-import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -204,7 +204,7 @@ async function migrateCalls() {
   console.log("📞 Migrating calls...");
 
   const sqlite = new Database(getSqlitePath());
-  const calls = sqlite.prepare("SELECT * FROM calls").all();
+  const calls = sqlite.prepare("SELECT * FROM calls").all() as SQLiteCall[];
 
   for (const call of calls) {
     const callData = {
@@ -233,7 +233,9 @@ async function migrateTranscripts() {
   console.log("📝 Migrating transcripts...");
 
   const sqlite = new Database(getSqlitePath());
-  const transcripts = sqlite.prepare("SELECT * FROM transcripts").all();
+  const transcripts = sqlite
+    .prepare("SELECT * FROM transcripts")
+    .all() as SQLiteTranscript[];
 
   for (const transcript of transcripts) {
     const transcriptData = {
@@ -265,7 +267,9 @@ async function migrateEvaluations() {
   console.log("⭐ Migrating evaluations...");
 
   const sqlite = new Database(getSqlitePath());
-  const evaluations = sqlite.prepare("SELECT * FROM call_evaluations").all();
+  const evaluations = sqlite
+    .prepare("SELECT * FROM call_evaluations")
+    .all() as SQLiteEvaluation[];
 
   for (const evaluation of evaluations) {
     const evalData = {
@@ -296,7 +300,9 @@ async function migratePrompts() {
   console.log("🔧 Migrating prompts...");
 
   const sqlite = new Database(getSqlitePath());
-  const prompts = sqlite.prepare("SELECT * FROM prompts").all();
+  const prompts = sqlite
+    .prepare("SELECT * FROM prompts")
+    .all() as SQLitePrompt[];
 
   for (const prompt of prompts) {
     const promptData = {
@@ -320,7 +326,7 @@ async function migrateActivityLog() {
   const sqlite = new Database(getSqlitePath());
   const logs = sqlite
     .prepare("SELECT * FROM activity_log ORDER BY timestamp DESC LIMIT 100")
-    .all();
+    .all() as SQLiteLog[];
 
   for (const log of logs) {
     const logData = {

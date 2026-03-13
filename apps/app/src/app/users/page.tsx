@@ -178,7 +178,7 @@ export default function UsersPage() {
     try {
       await api.users.delete({ user_id: userId });
       loadUsers();
-    } catch (error) {
+    } catch (_error) {
       alert("Ошибка при удалении пользователя");
     }
   };
@@ -1217,7 +1217,7 @@ export default function UsersPage() {
                             u ? { ...u, telegram_chat_id: "" } : null,
                           );
                           loadUsers();
-                        } catch (e) {
+                        } catch (_e) {
                           alert("Ошибка при отвязке Telegram");
                         }
                       }}
@@ -1247,7 +1247,7 @@ export default function UsersPage() {
                             if (res.url) {
                               window.open(res.url, "_blank");
                             }
-                          } catch (e) {
+                          } catch (_e) {
                             alert("Ошибка при создании ссылки для Telegram");
                           }
                         }}
@@ -1302,7 +1302,7 @@ export default function UsersPage() {
                               }));
                               loadUsers();
                             }
-                          } catch (e) {
+                          } catch (_e) {
                             alert("Ошибка при проверке подключения");
                           }
                         }}
@@ -1386,7 +1386,7 @@ export default function UsersPage() {
                             u ? { ...u, max_chat_id: "" } : null,
                           );
                           loadUsers();
-                        } catch (e) {
+                        } catch (_e) {
                           alert("Ошибка при отвязке MAX");
                         }
                       }}
@@ -1417,7 +1417,7 @@ export default function UsersPage() {
                               `Для подключения отправьте боту команду:\n${res.manual_instruction.split(": ")[1]}`,
                             );
                           }
-                        } catch (e) {
+                        } catch (_e) {
                           alert("Ошибка при создании ссылки для MAX");
                         }
                       }}

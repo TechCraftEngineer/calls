@@ -62,7 +62,7 @@ export async function login(username: string, password: string) {
 export async function logout() {
   try {
     await signOut();
-  } catch (error) {
+  } catch (_error) {
     // Убрали console.error для продакшена
   }
 }

@@ -11,8 +11,6 @@ import {
   real,
   serial,
   text,
-  timestamp,
-  unique,
 } from "drizzle-orm/pg-core";
 
 // Calls table - основные данные о звонках

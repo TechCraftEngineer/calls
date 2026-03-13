@@ -6,7 +6,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { authClient } from "@/lib/better-auth";
 
 interface AuthProviderProps {
   children: ReactNode;

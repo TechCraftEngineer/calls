@@ -54,7 +54,7 @@ const userUpdateSchema = z.object({
   report_managed_user_ids: z.string().optional().nullable(),
 });
 
-const changePasswordSchema = z.object({
+const _changePasswordSchema = z.object({
   new_password: z.string().min(1),
   confirm_password: z.string().min(1),
 });

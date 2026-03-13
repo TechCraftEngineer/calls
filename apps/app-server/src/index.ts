@@ -3,6 +3,9 @@
  * Uses Better Auth for authentication.
  */
 
+import { existsSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   backendRouter,
   createBackendApiWithContext,
@@ -11,14 +14,11 @@ import {
 import { storage } from "@calls/backend-storage";
 import { ORPCError, onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
-import { existsSync } from "fs";
 import { Hono } from "hono";
 import { setCookie } from "hono/cookie";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { serveStatic } from "hono/serve-static";
-import { dirname, resolve } from "path";
-import { fileURLToPath } from "url";
 import { auth } from "./auth";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

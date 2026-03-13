@@ -16,7 +16,7 @@ interface DropdownProps {
 }
 
 // Type guards для правильной типизации
-function isString(value: string | number[] | string[]): value is string {
+function _isString(value: string | number[] | string[]): value is string {
   return typeof value === "string";
 }
 
@@ -27,7 +27,7 @@ function isNumberArray(value: string | number[] | string[]): value is number[] {
 }
 
 export default function CustomDropdown({
-  label,
+  label: _label,
   value,
   onChange,
   type,

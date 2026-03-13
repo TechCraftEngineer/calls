@@ -39,7 +39,7 @@ export default function KpiTable({
           `/v1/kpi/?start_date=${d_from}&end_date=${d_to}`,
         );
         setData(Array.isArray(res) ? res : []);
-      } catch (err) {
+      } catch (_err) {
         // Убрали console.error для продакшена
       } finally {
         setLoading(false);

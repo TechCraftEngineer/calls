@@ -11,7 +11,7 @@ import { RPCLink } from "@orpc/client/fetch";
  * Use in frontend / browser only.
  */
 export function createBackendClient(baseUrl: string) {
-  const url = baseUrl.replace(/\/?$/, "") + "/api/orpc";
+  const url = `${baseUrl.replace(/\/?$/, "")}/api/orpc`;
   const link = new RPCLink({ url });
   return createORPCClient(link);
 }

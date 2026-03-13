@@ -64,7 +64,7 @@ export default function AudioPlayer({
       audio.removeEventListener("waiting", onWaiting);
       audio.removeEventListener("playing", onPlaying);
     };
-  }, [src, autoPlay, isDragging]);
+  }, [autoPlay, isDragging]);
 
   const togglePlay = () => {
     if (audioRef.current) {
@@ -90,7 +90,7 @@ export default function AudioPlayer({
   };
 
   const applySeek = (value: number) => {
-    if (audioRef.current && !isNaN(value)) {
+    if (audioRef.current && !Number.isNaN(value)) {
       audioRef.current.currentTime = value;
     }
     setIsDragging(false);
@@ -128,10 +128,10 @@ export default function AudioPlayer({
       document.removeEventListener("mouseup", onDocumentPointerEnd);
       document.removeEventListener("touchend", onDocumentPointerEnd);
     };
-  }, [isDragging]);
+  }, [isDragging, applySeek]);
 
   const formatTime = (time: number) => {
-    if (isNaN(time)) return "00:00";
+    if (Number.isNaN(time)) return "00:00";
     const mins = Math.floor(time / 60);
     const secs = Math.floor(time % 60);
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;

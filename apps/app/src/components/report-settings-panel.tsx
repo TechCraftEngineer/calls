@@ -150,7 +150,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
           report_monthly_time:
             _normTime(promptsMap.report_monthly_time) || "18:20",
         }));
-      } catch (err) {
+      } catch (_err) {
         // Убрали console.error для продакшена
       } finally {
         setLoading(false);

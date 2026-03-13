@@ -96,9 +96,9 @@ const initManagerDropdowns = () => {
         if (label) {
           label.textContent = option.textContent.trim();
         }
-        options.forEach((btn) =>
-          btn.classList.toggle("is-active", btn === option),
-        );
+        options.forEach((btn) => {
+          btn.classList.toggle("is-active", btn === option);
+        });
         close();
         if (form) {
           form.submit();
@@ -131,7 +131,7 @@ const initValueDropdowns = () => {
     const menu = dropdown.querySelector("[data-dropdown-menu]");
     const label = dropdown.querySelector(".value-dropdown__label");
     // Ищем чекбоксы только внутри меню dropdown, чтобы не захватить скрытые поля формы
-    const checkboxes = menu
+    const _checkboxes = menu
       ? menu.querySelectorAll("input[type='checkbox'][data-value-checkbox]")
       : [];
     const form = dropdown.closest("form");
@@ -240,7 +240,7 @@ const initValueDropdowns = () => {
 
     // При отправке формы обновляем страницу
     if (form) {
-      form.addEventListener("submit", (event) => {
+      form.addEventListener("submit", (_event) => {
         // Форма отправится с выбранными значениями
       });
     }
@@ -339,7 +339,7 @@ const initTranscribeForms = () => {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const callId = form.dataset.callId;
+      const _callId = form.dataset.callId;
       const transcribeModal = document.getElementById("transcribeModal");
       const transcribeModalTitle = document.getElementById(
         "transcribeModalTitle",
@@ -378,7 +378,7 @@ const initTranscribeForms = () => {
         if (response.ok) {
           // Проверяем, был ли это AJAX запрос
           const contentType = response.headers.get("content-type");
-          if (contentType && contentType.includes("application/json")) {
+          if (contentType?.includes("application/json")) {
             const data = await response.json();
             if (data.success) {
               // Успешное завершение
@@ -456,7 +456,7 @@ const initTranscriptDialogModal = () => {
   document.querySelectorAll(".js-show-transcript-btn").forEach((button) => {
     button.addEventListener("click", async function () {
       const callId = this.dataset.callId;
-      const callFilename = this.dataset.callFilename;
+      const _callFilename = this.dataset.callFilename;
 
       if (!callId) {
         alert("Ошибка: не указан ID звонка");

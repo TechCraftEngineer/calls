@@ -5,12 +5,6 @@ import api, { API_BASE_URL, restPost } from "@/lib/api";
 import type { User } from "@/lib/auth";
 import AudioPlayer from "./audio-player";
 
-interface Message {
-  speaker: string;
-  text: string;
-  isOperator: boolean;
-}
-
 interface CallDetail {
   id: number;
   number: string;
@@ -192,7 +186,7 @@ export default function CallDetailModal({
 
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return "0.00 MB";
-    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
   const handleRestartAnalysis = async () => {
@@ -209,7 +203,7 @@ export default function CallDetailModal({
       // Шаг 2: Переоценка звонка
       try {
         await restPost(`/calls/${callId}/evaluate`);
-      } catch (evalError) {}
+      } catch (_evalError) {}
 
       await loadData();
       alert("Анализ успешно перезапущен!");

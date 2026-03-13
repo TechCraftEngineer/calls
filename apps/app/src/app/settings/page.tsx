@@ -100,11 +100,9 @@ export default function SettingsPage() {
         setCurrentModel("deepseek-chat");
       }
 
-      setQualityThreshold(
-        promptsMap["quality_min_value_threshold"]?.value || "1",
-      );
+      setQualityThreshold(promptsMap.quality_min_value_threshold?.value || "1");
       setEnableRecommendations(
-        promptsMap["enable_manager_recommendations"]?.value === "true",
+        promptsMap.enable_manager_recommendations?.value === "true",
       );
     } catch (error: unknown) {
       console.error("Failed to load settings:", error);
@@ -120,7 +118,7 @@ export default function SettingsPage() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, promptKeys]);
 
   useEffect(() => {
     loadSettings();
@@ -131,7 +129,7 @@ export default function SettingsPage() {
       setSaving(true);
       const updates: any = {
         deepseek_model: currentModel,
-        quality_min_value_threshold: parseInt(qualityThreshold),
+        quality_min_value_threshold: parseInt(qualityThreshold, 10),
         enable_manager_recommendations: enableRecommendations,
         prompts: {},
       };
