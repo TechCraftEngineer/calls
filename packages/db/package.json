@@ -24,6 +24,7 @@
     "migrate": "bun with-env drizzle-kit migrate",
     "db:push": "bunx drizzle-kit push",
     "db:studio": "bunx drizzle-kit studio",
+    "db:setup": "bun with-env src/scripts/setup-db.ts",
     "dev": "bun with-env src/index.ts",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false",
     "with-env": "bun run --env-file ../../.env"
