@@ -38,13 +38,11 @@ export class WorkspacesService {
       }
 
       // Добавляем владельца
-      await tx
-        .insert(this.workspacesRepository.workspaceMembersTable)
-        .values({
-          workspaceId,
-          userId: ownerUserId,
-          role: "owner",
-        });
+      await tx.insert(this.workspacesRepository.workspaceMembersTable).values({
+        workspaceId,
+        userId: ownerUserId,
+        role: "owner",
+      });
 
       return workspaceId;
     });

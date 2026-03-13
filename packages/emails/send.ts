@@ -1,10 +1,9 @@
+import { env } from "@calls/config";
 import { render } from "@react-email/components";
 import nodemailer from "nodemailer";
 import type Mail from "nodemailer/lib/mailer";
 import type { ReactNode } from "react";
 import { Resend } from "resend";
-
-import { env } from "./env";
 
 export const resend = env.RESEND_API_KEY
   ? new Resend(env.RESEND_API_KEY)

@@ -320,7 +320,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     }
   };
 
-  if (loading) return <div>Загрузка настроек...</div>;
+  if (loading) return <div>Загрузка настроек…</div>;
 
   return (
     <ReportSettingsFormBody

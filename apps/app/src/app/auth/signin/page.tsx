@@ -163,7 +163,7 @@ function LoginForm() {
             className="mt-2 w-full cursor-pointer rounded-lg border-none bg-[#111] py-3 text-[15px] font-semibold text-white transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 hover:bg-[#333] hover:-translate-y-px"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Вход..." : "Войти в систему"}
+            {isSubmitting ? "Вход…" : "Войти в систему"}
           </button>
 
           {process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED !== "false" && (
@@ -236,7 +236,7 @@ export default function SignInPage() {
       fallback={
         <div className="flex min-h-screen w-full items-center justify-center bg-[#F8F9FB] font-[Inter]">
           <div className="w-full max-w-[420px] rounded-[16px] border-[#EEE] bg-white p-12 shadow-[0_10px_40px_rgba(0,0,0,0.04)]">
-            <div className="py-10 text-center">Загрузка...</div>
+            <div className="py-10 text-center">Загрузка…</div>
           </div>
         </div>
       }

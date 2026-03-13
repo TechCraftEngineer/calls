@@ -101,7 +101,7 @@ function ResetPasswordForm() {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-[#F8F9FB] font-[Inter]">
         <div className="max-w-[420px] rounded-[16px] border-[#EEE] bg-white p-12 shadow-[0_10px_40px_rgba(0,0,0,0.04)]">
-          <div className="py-10 text-center">Загрузка...</div>
+          <div className="py-10 text-center">Загрузка…</div>
         </div>
       </div>
     );
@@ -125,7 +125,7 @@ function ResetPasswordForm() {
         {isSubmitSuccessful ? (
           <div className="flex items-center gap-[10px] rounded-lg border-[#4CAF50] bg-[#E8F5E8] p-3 text-[13px] font-medium text-[#2E7D32]">
             <span>✅</span>
-            Пароль изменён! Перенаправляем на страницу входа...
+            Пароль изменён! Перенаправляем на страницу входа…
           </div>
         ) : (
           <>
@@ -194,7 +194,7 @@ function ResetPasswordForm() {
                 className="mt-2 w-full cursor-pointer rounded-lg border-none bg-[#111] py-3 text-[15px] font-semibold text-white transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 hover:bg-[#333] hover:-translate-y-px"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Сохранение..." : "Сохранить пароль"}
+                {isSubmitting ? "Сохранение…" : "Сохранить пароль"}
               </button>
             </form>
           </>
@@ -223,7 +223,7 @@ export default function ResetPasswordPage() {
       fallback={
         <div className="flex min-h-screen w-full items-center justify-center bg-[#F8F9FB] font-[Inter]">
           <div className="max-w-[420px] rounded-[16px] border-[#EEE] bg-white p-12 shadow-[0_10px_40px_rgba(0,0,0,0.04)]">
-            <div className="py-10 text-center">Загрузка...</div>
+            <div className="py-10 text-center">Загрузка…</div>
           </div>
         </div>
       }

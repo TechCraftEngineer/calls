@@ -205,7 +205,7 @@ export default function ReportSettingsFormBody({
                   fontSize: "13px",
                 }}
               >
-                {sendTestLoading ? "Отправка..." : "Отправить отчёт в Telegram"}
+                {sendTestLoading ? "Отправка…" : "Отправить отчёт в Telegram"}
               </button>
               {sendTestMessage && (
                 <span
@@ -797,7 +797,7 @@ export default function ReportSettingsFormBody({
               cursor: saving ? "not-allowed" : "pointer",
             }}
           >
-            {saving ? "Сохранение..." : "Сохранить настройки"}
+            {saving ? "Сохранение…" : "Сохранить настройки"}
           </button>
           {message && (
             <span

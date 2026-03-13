@@ -105,7 +105,7 @@ function CreateWorkspaceForm() {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-[#F8F9FB] font-[Inter]">
         <div className="w-full max-w-[420px] rounded-[16px] border-[#EEE] bg-white p-12 shadow-[0_10px_40px_rgba(0,0,0,0.04)]">
-          <div className="py-10 text-center text-[#888]">Загрузка...</div>
+          <div className="py-10 text-center text-[#888]">Загрузка…</div>
         </div>
       </div>
     );
@@ -195,7 +195,7 @@ function CreateWorkspaceForm() {
             className="mt-2 w-full cursor-pointer rounded-lg border-none bg-[#111] py-3 text-[15px] font-semibold text-white transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 hover:bg-[#333] hover:-translate-y-px"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Создание..." : "Создать workspace"}
+            {isSubmitting ? "Создание…" : "Создать workspace"}
           </button>
         </form>
 
@@ -222,7 +222,7 @@ export default function CreateWorkspacePage() {
       fallback={
         <div className="flex min-h-screen w-full items-center justify-center bg-[#F8F9FB] font-[Inter]">
           <div className="w-full max-w-[420px] rounded-[16px] border-[#EEE] bg-white p-12 shadow-[0_10px_40px_rgba(0,0,0,0.04)]">
-            <div className="py-10 text-center">Загрузка...</div>
+            <div className="py-10 text-center">Загрузка…</div>
           </div>
         </div>
       }

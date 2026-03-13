@@ -466,7 +466,7 @@ export default function UsersPage() {
                     colSpan={9}
                     style={{ textAlign: "center", padding: "40px" }}
                   >
-                    Загрузка...
+                    Загрузка…
                   </td>
                 </tr>
               ) : users.length > 0 ? (

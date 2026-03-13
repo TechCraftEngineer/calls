@@ -128,7 +128,8 @@ const COLUMNS: ColumnConfig[] = [
   },
 ];
 
-const COLUMN_ORDER_STORAGE_KEY = "callList_columnOrder";
+const COLUMN_ORDER_STORAGE_KEY = "callList_columnOrder:v1";
+const COLUMN_ORDER_STORAGE_KEY_LEGACY = "callList_columnOrder";
 const DEFAULT_COLUMN_ORDER = COLUMNS.map((c) => c.key);
 
 // Загрузка порядка колонок из localStorage
@@ -136,7 +137,15 @@ const loadColumnOrder = (): string[] => {
   if (typeof window === "undefined") return DEFAULT_COLUMN_ORDER;
 
   try {
-    const saved = localStorage.getItem(COLUMN_ORDER_STORAGE_KEY);
+    let saved = localStorage.getItem(COLUMN_ORDER_STORAGE_KEY);
+    if (!saved) {
+      const legacy = localStorage.getItem(COLUMN_ORDER_STORAGE_KEY_LEGACY);
+      if (legacy) {
+        localStorage.setItem(COLUMN_ORDER_STORAGE_KEY, legacy);
+        localStorage.removeItem(COLUMN_ORDER_STORAGE_KEY_LEGACY);
+        saved = legacy;
+      }
+    }
     if (!saved) return DEFAULT_COLUMN_ORDER;
 
     const parsed = JSON.parse(saved) as string[];
@@ -229,7 +238,7 @@ export default function CallList({
   const sortedCalls = useMemo(() => {
     if (!sortConfig) return calls;
 
-    return [...calls].sort((a, b) => {
+    return calls.toSorted((a, b) => {
       let valA: any, valB: any;
 
       switch (sortConfig.key) {
@@ -369,7 +378,12 @@ export default function CallList({
   // Сброс порядка колонок к дефолтному
   const handleResetOrder = () => {
     setColumnOrder(DEFAULT_COLUMN_ORDER);
-    localStorage.removeItem(COLUMN_ORDER_STORAGE_KEY);
+    try {
+      localStorage.removeItem(COLUMN_ORDER_STORAGE_KEY);
+      localStorage.removeItem(COLUMN_ORDER_STORAGE_KEY_LEGACY);
+    } catch {
+      // ignore
+    }
   };
 
   const toggleColumn = (key: string) => {
@@ -427,9 +441,11 @@ export default function CallList({
       {/* Column Toggle Button */}
       <div className="absolute right-4 -top-[45px] z-10">
         <button
+          type="button"
           onClick={() => setShowColumnToggle(!showColumnToggle)}
           className="bg-transparent border-none cursor-pointer p-2 flex items-center text-gray-400 hover:text-gray-800 transition-colors"
           title="Настройка колонок"
+          aria-label="Настройка колонок"
         >
           <svg
             width="20"
@@ -512,6 +528,7 @@ export default function CallList({
                           // Предотвращаем клик при перетаскивании
                           e.stopPropagation();
                         }}
+                        aria-hidden
                       >
                         <svg
                           width="12"
@@ -519,6 +536,7 @@ export default function CallList({
                           viewBox="0 0 12 12"
                           fill="none"
                           xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden="true"
                         >
                           <circle cx="2" cy="2" r="1" fill="currentColor" />
                           <circle cx="6" cy="2" r="1" fill="currentColor" />
@@ -773,6 +791,7 @@ export default function CallList({
                         {call.filename && (
                           <>
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -786,6 +805,7 @@ export default function CallList({
                                 recommendationsCallId === call.id
                               }
                               title="Сформировать рекомендации"
+                              aria-label="Сформировать рекомендации по звонку"
                               style={{
                                 background: "none",
                                 border: "none",
@@ -853,6 +873,7 @@ export default function CallList({
                               )}
                             </button>
                             <button
+                              type="button"
                               className="record-btn"
                               onClick={(e) => {
                                 e.preventDefault();
@@ -867,6 +888,7 @@ export default function CallList({
                                 }
                               }}
                               title="Прослушать запись"
+                              aria-label="Прослушать запись звонка"
                             >
                               <svg
                                 width="16"

@@ -50,12 +50,12 @@ export default function SignOutPage() {
             <div className="space-y-4">
               <p className="text-[15px] text-red-600">{error}</p>
               <p className="text-[13px] text-[#888]">
-                Перенаправление на страницу входа...
+                Перенаправление на страницу входа…
               </p>
             </div>
           ) : (
             <p className="text-[15px] text-[#888]">
-              {isLoggingOut ? "Выход из системы..." : "Перенаправление..."}
+              {isLoggingOut ? "Выход из системы…" : "Перенаправление…"}
             </p>
           )}
         </div>

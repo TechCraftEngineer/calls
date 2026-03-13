@@ -290,7 +290,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           disabled={isSubmitting}
         >
           {isSubmitting
-            ? "Сохранение..."
+            ? "Сохранение…"
             : isEditing
               ? "Сохранить изменения"
               : "Создать пользователя"}

@@ -218,7 +218,7 @@ export default function CallDetailPage() {
 
   if (loading)
     return (
-      <div style={{ padding: "40px", textAlign: "center" }}>Загрузка...</div>
+      <div style={{ padding: "40px", textAlign: "center" }}>Загрузка…</div>
     );
   if (!call)
     return (
@@ -564,7 +564,7 @@ export default function CallDetailPage() {
                   }}
                 >
                   {isGeneratingRecommendations
-                    ? "Загрузка..."
+                    ? "Загрузка…"
                     : evaluation?.manager_recommendations &&
                         evaluation.manager_recommendations.length > 0
                       ? "Обновить"
@@ -710,7 +710,7 @@ export default function CallDetailPage() {
                 disabled={restarting}
               >
                 <span style={{ fontSize: "14px" }}>🔄</span>
-                {restarting ? "Перезапуск..." : "Перезапустить анализ"}
+                {restarting ? "Перезапуск…" : "Перезапустить анализ"}
               </button>
             </div>
           </div>

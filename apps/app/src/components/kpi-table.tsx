@@ -48,7 +48,7 @@ export default function KpiTable({
     fetchData();
   }, [dateFrom, dateTo]);
 
-  if (loading) return <div>Загрузка таблиц KPI...</div>;
+  if (loading) return <div>Загрузка таблиц KPI…</div>;
 
   return (
     <div

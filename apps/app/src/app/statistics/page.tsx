@@ -382,7 +382,7 @@ function StatisticsPageContent() {
                       colSpan={7}
                       style={{ textAlign: "center", padding: "40px" }}
                     >
-                      Загрузка...
+                      Загрузка…
                     </td>
                   </tr>
                 ) : stats.length > 0 ? (
@@ -448,7 +448,7 @@ function StatisticsPageContent() {
                             }}
                           >
                             {Object.entries(row.score_distribution || {})
-                              .sort(
+                              .toSorted(
                                 ([a], [b]) => parseInt(a, 10) - parseInt(b, 10),
                               )
                               .map(([score, data]: [string, any]) => {
@@ -534,7 +534,7 @@ export default function StatisticsPage() {
             className="main-content"
             style={{ padding: "48px", textAlign: "center" }}
           >
-            Загрузка...
+            Загрузка…
           </main>
         </div>
       }

@@ -186,7 +186,7 @@ export default function ChatWidget() {
                 {m.role === "user" ? "Вы" : "ИИ"}: {m.content}
               </div>
             ))}
-            {loading && <div className="text-[#888] text-sm p-2">Ответ...</div>}
+            {loading && <div className="text-[#888] text-sm p-2">Ответ…</div>}
             <div ref={messagesEndRef} />
           </div>
 
@@ -203,7 +203,7 @@ export default function ChatWidget() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Введите сообщение..."
+                placeholder="Введите сообщение…"
                 rows={2}
                 disabled={loading}
                 className="flex-1 p-2.5 rounded-lg border border-[#ddd] resize-none text-sm focus:outline-none focus:ring-2 focus:ring-[#FFD600]/50"

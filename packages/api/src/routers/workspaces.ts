@@ -127,7 +127,7 @@ export const workspacesRouter = {
             message: "Некорректный формат slug: только буквы, цифры и дефис",
           });
         }
-        
+
         const existing = await context.workspacesService.getBySlug(data.slug);
         if (existing && existing.id !== workspaceId) {
           throw new ORPCError("BAD_REQUEST", {
@@ -247,9 +247,9 @@ export const workspacesRouter = {
       const canRemove =
         member &&
         (member.role === "owner" ||
-          (member.role === "admin" && 
-           input.userId !== context.authUserId && 
-           targetMember?.role !== "owner"));
+          (member.role === "admin" &&
+            input.userId !== context.authUserId &&
+            targetMember?.role !== "owner"));
       if (!canRemove) {
         throw new ORPCError("FORBIDDEN", {
           message: "Нет прав на удаление участника",

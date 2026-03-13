@@ -1,13 +1,14 @@
-/**
- * Canonical user profile shape. TypeScript: camelCase; DB: snake_case.
- */
-export type UserProfileFields = {
-  givenName: string;
-  familyName: string;
-  internalExtensions: string | null;
-  mobilePhones: string | null;
-  telegramChatId: string | null;
-};
-
-// Переэкспортируем все типы и функции из types/user.ts для удобства
-export * from "./types/user";
+export {
+  type ApiUser,
+  extractUserFields,
+  formatUserForApi,
+  getDisplayName,
+  getFamilyName,
+  getGivenName,
+  getInternalExtensions,
+  getMobilePhones,
+  getTelegramChatId,
+  isAdminUser,
+  type UserLike,
+  type UserProfileFields,
+} from "./types/user";

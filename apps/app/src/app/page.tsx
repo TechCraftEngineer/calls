@@ -94,14 +94,7 @@ export default function HomePage() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        router.push(paths.auth.signin);
-        return;
-      }
-      setUser(currentUser);
-
-      const result = await api.calls.list({
+      const callsParams = {
         page: pagination.page,
         per_page: pagination.per_page,
         q: filters.q || undefined,
@@ -112,7 +105,16 @@ export default function HomePage() {
         status: filters.status !== "all" ? filters.status : undefined,
         value: filters.value?.length ? filters.value : undefined,
         operator: filters.operator?.length ? filters.operator : undefined,
-      });
+      };
+      const [currentUser, result] = await Promise.all([
+        getCurrentUser(),
+        api.calls.list(callsParams),
+      ]);
+      if (!currentUser) {
+        router.push(paths.auth.signin);
+        return;
+      }
+      setUser(currentUser);
 
       setCalls((result.calls || []) as CallWithDetails[]);
       setMetrics(

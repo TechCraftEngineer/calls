@@ -145,7 +145,7 @@ export default function TailwindShowcase() {
                     Message
                   </label>
                   <textarea
-                    placeholder="Введите сообщение..."
+                    placeholder="Введите сообщение…"
                     rows={3}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-primary-900 dark:text-white focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20 transition-all duration-200 resize-none"
                   />

@@ -199,9 +199,7 @@ export default function SettingsPage() {
         <Sidebar user={currentUser} />
         <Header user={currentUser} />
         <main className="main-content">
-          <div style={{ textAlign: "center", padding: "100px" }}>
-            Загрузка...
-          </div>
+          <div style={{ textAlign: "center", padding: "100px" }}>Загрузка…</div>
         </main>
       </div>
     );
@@ -288,7 +286,7 @@ export default function SettingsPage() {
               }}
             >
               {sendTestLoading
-                ? "Отправка..."
+                ? "Отправка…"
                 : "Отправить тестовый отчёт в Telegram"}
             </button>
             <Link
@@ -598,7 +596,7 @@ export default function SettingsPage() {
                 cursor: backupLoading ? "not-allowed" : "pointer",
               }}
             >
-              {backupLoading ? "Создание копии..." : "Копия базы"}
+              {backupLoading ? "Создание копии…" : "Копия базы"}
             </button>
           </section>
         )}
@@ -653,7 +651,7 @@ export default function SettingsPage() {
                 transition: "all 0.2s",
               }}
             >
-              {saving ? "Сохранение..." : "Сохранить все настройки"}
+              {saving ? "Сохранение…" : "Сохранить все настройки"}
             </button>
           </div>
         </div>

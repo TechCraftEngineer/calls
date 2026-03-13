@@ -76,7 +76,7 @@ export default function RecommendationsModal({
               <div className="py-[60px] px-5 text-center flex flex-col items-center gap-4">
                 <div className="w-12 h-12 border-4 border-gray-100 border-t-[#F7931E] rounded-full animate-spin" />
                 <div className="text-sm text-gray-500">
-                  Формирование рекомендаций...
+                  Формирование рекомендаций…
                 </div>
               </div>
             ) : recommendations.length > 0 ? (
