@@ -26,7 +26,7 @@ export interface UserAdditionalFields {
 
 // Полный интерфейс пользователя
 export interface User extends BaseUserFields, UserAdditionalFields {
-  role?: 'admin' | 'user';
+  role?: "admin" | "user";
   is_active?: boolean;
 }
 
@@ -92,9 +92,9 @@ export interface UserReportSettings {
   kpi_target_bonus: number;
   kpi_target_talk_time_minutes: number;
   report_daily_time: string; // HH:MM format
-  report_weekly_day: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+  report_weekly_day: "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
   report_weekly_time: string; // HH:MM format
-  report_monthly_day: '1' | '15' | 'last';
+  report_monthly_day: "1" | "15" | "last";
   report_monthly_time: string; // HH:MM format
   report_managed_user_ids: number[];
 }

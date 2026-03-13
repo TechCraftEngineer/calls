@@ -11,3 +11,5 @@ export {
 } from "./orpc";
 export { type BackendRouter, backendRouter } from "./orpc-root";
 export { createBackendApiWithContext } from "./server";
+export { createLogger } from "./logger";
+export { extractUserFields } from "./user-profile";

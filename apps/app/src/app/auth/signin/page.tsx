@@ -26,69 +26,11 @@ function LoginForm() {
 
   useEffect(() => {
     const urlUsername = searchParams.get("username");
-    const urlPassword = searchParams.get("password");
 
-    if (urlUsername && urlPassword) {
-      // Проверка безопасности реферера для CSRF защиты
-      const referrer = document.referrer;
-      const allowedOrigins = [
-        window.location.origin,
-        "https://zvonki.qbs.ru",
-        // Добавить другие доверенные домены при необходимости
-      ];
-      
-      const isAllowedReferrer = !referrer || allowedOrigins.some(origin => 
-        referrer.startsWith(origin)
-      );
-      
-      if (!isAllowedReferrer) {
-        console.warn("Blocked auto-login from unauthorized referrer:", referrer);
-        return;
-      }
-
-      // Декодирование с очисткой опасных символов
-      const sanitizeInput = (input: string) => {
-        return input
-          .replace(/[\x00-\x1F\x7F]/g, '') // Удаляем управляющие символы
-          .replace(/[<>\"'&]/g, '') // Удаляем потенциально опасные HTML символы
-          .trim();
-      };
-
-      const decodedUsername = sanitizeInput(decodeURIComponent(urlUsername));
-      const decodedPassword = sanitizeInput(decodeURIComponent(urlPassword));
-
-      // Усиленная валидация
-      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(decodedUsername);
-      const isReasonableLength = 
-        decodedPassword.length >= 8 && 
-        decodedPassword.length <= 72; // Стандартная длина паролей
-      const hasNoDangerousPatterns = 
-        !/(.)\1{2,}/.test(decodedPassword) && // Нет повторяющихся символов
-        !/(password|123456|qwerty)/i.test(decodedPassword); // Нет распространенных паролей
-
-      if (isEmail && isReasonableLength && hasNoDangerousPatterns) {
-        setValue("username", decodedUsername);
-        setValue("password", decodedPassword);
-
-        // Показываем пользователю что происходит авто-вход
-        const form = document.querySelector("form");
-        if (form) {
-          // Добавляем визуальную индикацию авто-входа
-          const submitButton = form.querySelector('button[type="submit"]') as HTMLButtonElement;
-          if (submitButton) {
-            submitButton.textContent = "Автовход...";
-            submitButton.disabled = true;
-          }
-          
-          setTimeout(() => {
-            form.dispatchEvent(new Event("submit", { cancelable: true }));
-          }, 1500); // Увеличиваем задержку для визуальной обратной связи
-        }
-      }
-    } else if (urlUsername) {
-      // Только username без пароля - безопасно заполняем после очистки
+    if (urlUsername) {
+      // Безопасное заполнение только username без пароля
       const sanitizedUsername = decodeURIComponent(urlUsername)
-        .replace(/[\x00-\x1F\x7F<>\"'&]/g, '')
+        .replace(/[\x00-\x1F\x7F<>"'&]/g, "")
         .trim();
       setValue("username", sanitizedUsername);
     }

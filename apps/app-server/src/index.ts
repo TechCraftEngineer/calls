@@ -11,7 +11,10 @@ import {
   createBackendApiWithContext,
   createBackendContext,
 } from "@calls/api";
+import { extractUserFields } from "@calls/api/user-profile";
+import { createLogger } from "@calls/api/logger";
 import { storage } from "@calls/db";
+import { inngestHandler } from "@calls/jobs/hono";
 import { createWebhookHandler } from "@calls/telegram-bot";
 import { ORPCError, onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
@@ -20,25 +23,10 @@ import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { setCookie } from "hono/cookie";
 import { cors } from "hono/cors";
-import { logger } from "hono/logger";
+import { logger as honoLogger } from "hono/logger";
 import { auth } from "./auth";
-import { extractUserFields } from "@calls/api/user-profile";
 
-// Создаем безопасный логгер для backend-server
-const safeLogger = {
-  info: (message: string, data?: unknown) => {
-    const sanitized = data ? JSON.stringify(data).replace(/"(password|token|secret|key|authorization|cookie|session|telegramChatId|max_chat_id)"\s*:\s*"[^"]*"/g, '"$1":"[REDACTED]"') : undefined;
-    console.log(`[Backend] ${message}`, sanitized);
-  },
-  warn: (message: string, data?: unknown) => {
-    const sanitized = data ? JSON.stringify(data).replace(/"(password|token|secret|key|authorization|cookie|session|telegramChatId|max_chat_id)"\s*:\s*"[^"]*"/g, '"$1":"[REDACTED]"') : undefined;
-    console.warn(`[Backend] ${message}`, sanitized);
-  },
-  error: (message: string, data?: unknown) => {
-    const sanitized = data ? JSON.stringify(data).replace(/"(password|token|secret|key|authorization|cookie|session|telegramChatId|max_chat_id)"\s*:\s*"[^"]*"/g, '"$1":"[REDACTED]"') : undefined;
-    console.error(`[Backend] ${message}`, sanitized);
-  },
-};
+const backendLogger = createLogger("backend-server");
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -47,7 +35,119 @@ const app = new Hono();
 const corsOrigin =
   process.env.CORS_ORIGINS?.split(",")[0] ?? "http://localhost:3000";
 
-app.use(logger());
+// Унифицированная обработка ошибок API
+function handleApiError(e: unknown, c: import("hono").Context) {
+  if (e instanceof ORPCError) {
+    switch (e.code) {
+      case "UNAUTHORIZED":
+        backendLogger.warn("Unauthorized access", { path: c.req.path, code: e.code });
+        return c.json({ detail: "Unauthorized" }, 401);
+      case "FORBIDDEN":
+        backendLogger.warn("Forbidden access", { path: c.req.path, code: e.code });
+        return c.json({ detail: "Forbidden" }, 403);
+      case "NOT_FOUND":
+        backendLogger.warn("Resource not found", { path: c.req.path, code: e.code });
+        return c.json({ detail: "Not found" }, 404);
+      default:
+        backendLogger.error("ORPC error", { 
+          path: c.req.path, 
+          code: e.code, 
+          message: e.message 
+        });
+        return c.json({ detail: "Internal server error" }, 500);
+    }
+  }
+  
+  if (e instanceof Error) {
+    const knownErrors = [
+      "User not found",
+      "Call not found", 
+      "Not authorized",
+      "Failed to delete call"
+    ];
+    
+    if (knownErrors.includes(e.message)) {
+      const statusCode = e.message.includes("not found") ? 404 : 
+                      e.message.includes("Not authorized") ? 403 : 400;
+      backendLogger.warn("Known error", { 
+        path: c.req.path, 
+        message: e.message,
+        statusCode 
+      });
+      return c.json({ detail: e.message }, statusCode);
+    }
+    
+    backendLogger.error("Unexpected error", { 
+      path: c.req.path, 
+      message: e.message,
+      stack: e.stack 
+    });
+    return c.json({ detail: "Internal server error" }, 500);
+  }
+  
+  backendLogger.error("Unknown error", { path: c.req.path, error: String(e) });
+  return c.json({ detail: "Internal server error" }, 500);
+}
+
+// Rate limiting middleware
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+function rateLimit(options: { windowMs: number; maxRequests: number }) {
+  return async (c: import("hono").Context, next: () => Promise<void>) => {
+    const clientIp = c.req.header("x-forwarded-for") || 
+                     c.req.header("x-real-ip") || 
+                     "unknown";
+    
+    const now = Date.now();
+    const windowMs = options.windowMs;
+    const key = `${clientIp}:${Math.floor(now / windowMs)}`;
+    
+    const record = rateLimitMap.get(key);
+    
+    if (!record) {
+      rateLimitMap.set(key, { count: 1, resetTime: now + windowMs });
+      return next();
+    }
+    
+    if (now > record.resetTime) {
+      rateLimitMap.set(key, { count: 1, resetTime: now + windowMs });
+      return next();
+    }
+    
+    if (record.count >= options.maxRequests) {
+      backendLogger.warn("Rate limit exceeded", { 
+        ip: clientIp, 
+        count: record.count,
+        limit: options.maxRequests 
+      });
+      return c.json({ 
+        detail: "Too many requests", 
+        retryAfter: Math.ceil(record.resetTime / 1000) 
+      }, 429);
+    }
+    
+    record.count++;
+    rateLimitMap.set(key, record);
+    return next();
+  };
+}
+
+// Очистка старых записей каждые 5 минут
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of rateLimitMap.entries()) {
+    if (now > record.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
+app.use(honoLogger());
+// Apply rate limiting to critical endpoints
+app.use("/api/auth/*", rateLimit({ windowMs: 60 * 1000, maxRequests: 10 })); // 10 requests per minute
+app.use("/api/orpc/*", rateLimit({ windowMs: 60 * 1000, maxRequests: 100 })); // 100 requests per minute
+app.use("/api/users/*", rateLimit({ windowMs: 60 * 1000, maxRequests: 50 })); // 50 requests per minute
+
 app.use(
   "/*",
   cors({
@@ -82,7 +182,7 @@ if (existsSync(recordsDir)) {
 const rpcHandler = new RPCHandler(backendRouter, {
   interceptors: [
     onError((error) => {
-      safeLogger.error("oRPC Error", {
+      backendLogger.error("oRPC Error", {
         message: error instanceof Error ? error.message : String(error),
         code: (error as any)?.code,
         path: (error as any)?.path,
@@ -108,7 +208,7 @@ app.on(["GET", "POST"], "/api/orpc/*", async (c) => {
 
     return result.response;
   } catch (error) {
-    safeLogger.error("oRPC Handler error", error);
+    backendLogger.error("oRPC Handler error", error);
     return c.json({ error: "Internal Server Error" }, 500);
   }
 });
@@ -141,9 +241,9 @@ app.post("/api/auth/login", async (c) => {
         familyName?: string;
       };
     };
-    const headers = new Headers();
+    const headersObj: Record<string, string> = {};
     authResponse.headers.forEach((v, k) => {
-      if (k.toLowerCase() === "set-cookie") headers.append(k, v);
+      if (k.toLowerCase() === "set-cookie") headersObj[k] = v;
     });
     const u = data.user;
     const fields = u ? extractUserFields(u) : { givenName: "", familyName: "" };
@@ -160,7 +260,7 @@ app.post("/api/auth/login", async (c) => {
         },
       },
       200,
-      Object.fromEntries(headers.entries()) as Record<string, string>,
+      headersObj,
     );
   }
   // Fallback: legacy storage (during migration from Python backend)
@@ -201,14 +301,14 @@ app.post("/api/auth/logout", async (c) => {
     headers: { Cookie: c.req.header("Cookie") ?? "" },
   });
   const authResponse = await auth.handler(authRequest);
-  const headers = new Headers();
+  const headersObj: Record<string, string> = {};
   authResponse.headers.forEach((v, k) => {
-    if (k.toLowerCase() === "set-cookie") headers.append(k, v);
+    if (k.toLowerCase() === "set-cookie") headersObj[k] = v;
   });
   return c.json(
     { success: true, message: "Logged out" },
     200,
-    Object.fromEntries(headers.entries()) as Record<string, string>,
+    headersObj,
   );
 });
 
@@ -343,21 +443,6 @@ app.delete("/api/calls/:id", async (c) => {
 });
 
 // REST: /api/users - delegates to backend-api
-function handleApiError(e: unknown, c: import("hono").Context) {
-  if (e instanceof ORPCError) {
-    if (e.code === "UNAUTHORIZED")
-      return c.json({ detail: "Unauthorized" }, 401);
-    if (e.code === "FORBIDDEN") return c.json({ detail: "Forbidden" }, 403);
-  }
-  if (e instanceof Error) {
-    if (e.message === "User not found" || e.message === "Call not found")
-      return c.json({ detail: e.message }, 404);
-    if (e.message === "Not authorized")
-      return c.json({ detail: e.message }, 403);
-  }
-  return null;
-}
-
 app.get("/api/users", async (c) => {
   const ctx = await createBackendContext({ headers: c.req.raw.headers, auth });
   try {
@@ -653,6 +738,9 @@ const telegramWebhookHandler = createWebhookHandler(() =>
 );
 app.post("/api/telegram-webhook", telegramWebhookHandler);
 
+// Inngest - cron и фоновые задачи (Megafon FTP sync и др.)
+app.on(["GET", "PUT", "POST"], "/api/inngest", inngestHandler);
+
 // Health
 app.get("/", (c) => c.json({ message: "QBS Звонки API", version: "2.0.0" }));
 app.get("/health", (c) => c.json({ status: "ok" }));
@@ -664,44 +752,75 @@ const port = Number(process.env.BACKEND_PORT ?? process.env.PORT ?? 7000);
 
 // Set Telegram webhook on startup when configured
 const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
-async function setupTelegramWebhook() {
+async function setupTelegramWebhook(): Promise<boolean> {
   if (!webhookUrl) {
-    safeLogger.info(
+    backendLogger.info(
       "TELEGRAM_WEBHOOK_URL not configured, skipping webhook setup",
     );
-    return;
+    return true; // Не ошибка, просто не настроено
   }
 
-  try {
-    const token = await storage.getPrompt("telegram_bot_token");
-    if (!token?.trim()) {
-      safeLogger.warn(
-        "Telegram bot token not configured, skipping webhook setup",
-      );
-      return;
-    }
+  const maxRetries = 3;
+  const retryDelay = 5000; // 5 секунд
 
-    const bot = new Bot(token);
-    const webhookInfo = await bot.api.getWebhookInfo();
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const token = await storage.getPrompt("telegram_bot_token");
+      if (!token?.trim()) {
+        backendLogger.warn(
+          "Telegram bot token not configured, skipping webhook setup",
+        );
+        return true; // Не ошибка, просто не настроено
+      }
 
-    // Устанавливаем webhook только если он отличается от текущего
-    if (webhookInfo.url !== webhookUrl) {
-      await bot.api.setWebhook(webhookUrl);
-      safeLogger.info("Telegram webhook set successfully");
-    } else {
-      safeLogger.info("Telegram webhook already configured");
+      const bot = new Bot(token);
+      const webhookInfo = await bot.api.getWebhookInfo();
+
+      // Устанавливаем webhook только если он отличается от текущего
+      if (webhookInfo.url !== webhookUrl) {
+        await bot.api.setWebhook(webhookUrl);
+        backendLogger.info("Telegram webhook set successfully", { 
+          url: webhookUrl,
+          attempt 
+        });
+      } else {
+        backendLogger.info("Telegram webhook already configured");
+      }
+      
+      return true; // Успешно
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      backendLogger.error(`Failed to set Telegram webhook (attempt ${attempt}/${maxRetries})`, {
+        error: errorMsg,
+        url: webhookUrl,
+        attempt
+      });
+      
+      if (attempt < maxRetries) {
+        backendLogger.info(`Retrying webhook setup in ${retryDelay/1000} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      }
     }
-  } catch (error) {
-    safeLogger.error("Failed to set Telegram webhook", error);
-    // В случае критической ошибки webhook setup не должно прерывать запуск сервера
-    // Но логируем проблему для диагностики
   }
+  
+  // Если все попытки неудачны
+  backendLogger.error("Failed to set Telegram webhook after all retries", {
+    url: webhookUrl,
+    maxRetries
+  });
+  
+  return false; // Критическая ошибка
 }
 
-// Запускаем setup webhook асинхронно, но не блокируем запуск сервера
-setupTelegramWebhook();
+// Запускаем setup webhook асинхронно с обработкой результата
+(async () => {
+  const webhookSetupSuccess = await setupTelegramWebhook();
+  if (!webhookSetupSuccess) {
+    backendLogger.warn("Telegram webhook setup failed, but server will continue running");
+  }
+})();
 
-safeLogger.info(`Backend server running on http://localhost:${port}`);
+backendLogger.info(`Backend server running on http://localhost:${port}`);
 
 export default {
   port,

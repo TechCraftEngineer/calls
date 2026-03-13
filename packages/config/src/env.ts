@@ -38,6 +38,15 @@ export const env = createEnv({
     AUTH_GOOGLE_ID: z.string().optional(),
     AUTH_GOOGLE_SECRET: z.string().optional(),
 
+    // Megafon PBX FTP
+    MEGAFON_FTP_HOST: z.string().optional(),
+    MEGAFON_FTP_USER: z.string().optional(),
+    MEGAFON_FTP_PASSWORD: z.string().optional(),
+
+    // Inngest
+    INNGEST_SIGNING_KEY: z.string().optional(),
+    INNGEST_EVENT_KEY: z.string().optional(),
+
     // AWS S3
     AWS_S3_ENDPOINT: z.string().optional(),
     AWS_S3_FORCE_PATH_STYLE: z.string().optional(),
@@ -66,6 +75,11 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     AUTH_GOOGLE_ID: process.env.AUTH_GOOGLE_ID,
     AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
+    MEGAFON_FTP_HOST: process.env.MEGAFON_FTP_HOST,
+    MEGAFON_FTP_USER: process.env.MEGAFON_FTP_USER,
+    MEGAFON_FTP_PASSWORD: process.env.MEGAFON_FTP_PASSWORD,
+    INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
+    INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
     AWS_S3_ENDPOINT: process.env.AWS_S3_ENDPOINT,
     AWS_S3_FORCE_PATH_STYLE: process.env.AWS_S3_FORCE_PATH_STYLE,
     AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,

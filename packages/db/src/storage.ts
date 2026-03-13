@@ -80,6 +80,47 @@ export const storage = {
     return (result.rowCount ?? 0) > 0;
   },
 
+  async getCallByFilename(filename: string): Promise<Call | null> {
+    const result = await db
+      .select()
+      .from(schema.calls)
+      .where(eq(schema.calls.filename, filename))
+      .limit(1);
+    return result[0] ?? null;
+  },
+
+  async createCall(data: {
+    filename: string;
+    number?: string | null;
+    timestamp: string;
+    name?: string | null;
+    duration?: number | null;
+    direction?: string | null;
+    status?: string | null;
+    size_bytes?: number | null;
+    internal_number?: string | null;
+    source?: string | null;
+    customer_name?: string | null;
+  }): Promise<number> {
+    const result = await db
+      .insert(schema.calls)
+      .values({
+        filename: data.filename,
+        number: data.number ?? null,
+        timestamp: data.timestamp,
+        name: data.name ?? null,
+        duration: data.duration ?? null,
+        direction: data.direction ?? null,
+        status: data.status ?? null,
+        size_bytes: data.size_bytes ?? null,
+        internal_number: data.internal_number ?? null,
+        source: data.source ?? null,
+        customer_name: data.customer_name ?? null,
+      })
+      .returning({ id: schema.calls.id });
+    return result[0]?.id ?? 0;
+  },
+
   async getTranscriptByCallId(callId: number): Promise<Transcript | null> {
     const result = await db
       .select()

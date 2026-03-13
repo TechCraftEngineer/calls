@@ -1,0 +1,22 @@
+{
+  "name": "@calls/jobs",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./hono": "./src/hono.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@calls/db": "workspace:*",
+    "basic-ftp": "^5.0.5",
+    "hono": "4.12.7",
+    "inngest": "^3.24.0"
+  },
+  "devDependencies": {
+    "@calls/tsconfig": "workspace:*",
+    "typescript": "5.9.3"
+  }
+}

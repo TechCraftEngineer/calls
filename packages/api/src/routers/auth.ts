@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../orpc";
-import {
-  extractUserFields,
-  formatUserForApi,
-} from "../user-profile";
+import { extractUserFields, formatUserForApi } from "../user-profile";
 
 /**
  * oRPC auth router. Для входа/выхода: POST /api/auth/sign-in/username, authClient.signOut.
@@ -65,7 +62,7 @@ export const authRouter = {
   me: protectedProcedure.handler(async ({ context }) => {
     const u = context.user! as Record<string, unknown>;
     const fields = extractUserFields(u);
-    
+
     return {
       id: u.id,
       username: fields.username,

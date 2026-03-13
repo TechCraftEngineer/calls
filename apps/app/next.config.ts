@@ -94,6 +94,10 @@ export default async function createNextConfig(): Promise<NextConfig> {
           source: "/api/orpc/:path*",
           destination: `${appServerUrl}/api/orpc/:path*`,
         },
+        {
+          source: "/api/inngest",
+          destination: `${appServerUrl}/api/inngest`,
+        },
       ];
     },
   };
