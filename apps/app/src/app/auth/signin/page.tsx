@@ -2,6 +2,7 @@
 
 import { paths } from "@calls/config";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -171,12 +172,12 @@ function LoginForm() {
         <div className="mt-6 text-center">
           <p className="text-[13px] text-[#888]">
             Нет аккаунта?{" "}
-            <a
-              href="/auth/signup"
+            <Link
+              href={paths.auth.signup}
               className="font-semibold text-[#111] hover:text-[#333] transition-colors"
             >
               Зарегистрируйтесь
-            </a>
+            </Link>
           </p>
         </div>
 

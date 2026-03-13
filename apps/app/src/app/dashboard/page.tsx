@@ -249,7 +249,9 @@ export default function DashboardPage() {
                   onChange={(e) =>
                     setFilters({ ...filters, date_from: e.target.value })
                   }
-                  onClick={(e) => (e.currentTarget as any).showPicker?.()}
+                  onClick={(e) =>
+                    (e.currentTarget as HTMLInputElement).showPicker?.()
+                  }
                 />
               </div>
 
@@ -262,7 +264,9 @@ export default function DashboardPage() {
                   onChange={(e) =>
                     setFilters({ ...filters, date_to: e.target.value })
                   }
-                  onClick={(e) => (e.currentTarget as any).showPicker?.()}
+                  onClick={(e) =>
+                    (e.currentTarget as HTMLInputElement).showPicker?.()
+                  }
                 />
               </div>
 

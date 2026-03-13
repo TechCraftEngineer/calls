@@ -72,8 +72,15 @@ export default function CallDetailPage() {
       setCall(result.call as CallDetail);
       setTranscript((result.transcript ?? null) as TranscriptDetail | null);
       setEvaluation((result.evaluation ?? null) as EvaluationDetail | null);
-    } catch (error) {
-      console.error("Failed to load call detail:", error);
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        (error as { code?: string }).code === "UNAUTHORIZED"
+      ) {
+        router.push(paths.auth.signin);
+      }
     } finally {
       setLoading(false);
     }

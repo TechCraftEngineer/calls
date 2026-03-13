@@ -14,7 +14,7 @@ export default function NotFound() {
         </p>
         <Link
           href={paths.root}
-          className="rounded-lg bg-blue-600 px-6 py-3 text-white transition-colors hover:bg-blue-700"
+          className="rounded-lg bg-[#FFD600] px-6 py-3 font-semibold text-black transition-colors hover:bg-[#F0CC00]"
         >
           Вернуться на главную
         </Link>
