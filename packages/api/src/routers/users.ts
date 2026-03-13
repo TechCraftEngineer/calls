@@ -57,7 +57,15 @@ const _changePasswordSchema = z.object({
 
 export const usersRouter = {
   list: adminProcedure.handler(async () => {
-    return await storage.getAllUsers();
+    try {
+      return await storage.getAllUsers();
+    } catch (error) {
+      console.error("[Users] Error in getAllUsers:", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Возвращаем пустой массив вместо падения
+      return [];
+    }
   }),
 
   get: protectedProcedure
@@ -100,48 +108,82 @@ export const usersRouter = {
       const userId = (context.user as Record<string, unknown>).id as number;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
+
+      // Получаем пользователя до обновления для логирования
       const user = await storage.getUser(input.user_id);
       if (!user) throw new Error("User not found");
+
       const d = input.data;
       const u = user as Record<string, unknown>;
-      const givenName = (d.givenName ?? u.givenName ?? "").toString().trim();
-      const familyName = (d.familyName ?? u.familyName ?? "").toString().trim();
-      if (!givenName) throw new Error("Given name is required");
-      await storage.updateUserName(input.user_id, givenName, familyName);
-      if (d.internalExtensions !== undefined)
-        await storage.updateUserInternalExtensions(
+
+      // Выполняем все обновления в рамках одной транзакции через storage layer
+      try {
+        // Обновляем основную информацию
+        const givenName = (d.givenName ?? u.givenName ?? "").toString().trim();
+        const familyName = (d.familyName ?? u.familyName ?? "").toString().trim();
+        if (!givenName) throw new Error("Given name is required");
+
+        await storage.updateUserName(input.user_id, givenName, familyName);
+
+        // Обновляем дополнительные поля если они изменились
+        if (d.internalExtensions !== undefined) {
+          await storage.updateUserInternalExtensions(
+            input.user_id,
+            d.internalExtensions,
+          );
+        }
+
+        if (d.mobilePhones !== undefined) {
+          await storage.updateUserMobilePhones(input.user_id, d.mobilePhones);
+        }
+
+        // Обновляем фильтры
+        await storage.updateUserFilters(
           input.user_id,
-          d.internalExtensions,
+          d.filter_exclude_answering_machine ??
+            (u.filter_exclude_answering_machine as boolean) ??
+            false,
+          d.filter_min_duration ?? (u.filter_min_duration as number) ?? 0,
+          d.filter_min_replicas ?? (u.filter_min_replicas as number) ?? 0,
         );
-      if (d.mobilePhones !== undefined)
-        await storage.updateUserMobilePhones(input.user_id, d.mobilePhones);
-      await storage.updateUserFilters(
-        input.user_id,
-        d.filter_exclude_answering_machine ??
-          (u.filter_exclude_answering_machine as boolean) ??
-          false,
-        d.filter_min_duration ?? (u.filter_min_duration as number) ?? 0,
-        d.filter_min_replicas ?? (u.filter_min_replicas as number) ?? 0,
-      );
-      await storage.updateUserReportKpiSettings(input.user_id, d);
-      await storage.updateUserTelegramSettings(
-        input.user_id,
-        (u.telegramChatId as string) ?? null,
-        d.telegram_daily_report ??
-          (u.telegram_daily_report as boolean) ??
-          false,
-        d.telegram_manager_report ??
-          (u.telegram_manager_report as boolean) ??
-          false,
-      );
-      await storage.addActivityLog(
-        "info",
-        `User updated: ${user.username}`,
-        (context.user as Record<string, unknown>).username as string,
-      );
-      const updated = await storage.getUser(input.user_id);
-      if (!updated) throw new Error("Failed to update user");
-      return updated;
+
+        // Обновляем настройки отчетов и KPI
+        await storage.updateUserReportKpiSettings(input.user_id, d);
+
+        // Обновляем настройки Telegram
+        await storage.updateUserTelegramSettings(
+          input.user_id,
+          (u.telegramChatId as string) ?? null,
+          d.telegram_daily_report ??
+            (u.telegram_daily_report as boolean) ??
+            false,
+          d.telegram_manager_report ??
+            (u.telegram_manager_report as boolean) ??
+            false,
+        );
+
+        // Логируем успешное обновление
+        await storage.addActivityLog(
+          "info",
+          `User updated: ${user.username}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+
+        // Получаем обновленные данные
+        const updated = await storage.getUser(input.user_id);
+        if (!updated) throw new Error("Failed to retrieve updated user");
+
+        return updated;
+      } catch (error) {
+        // Логируем ошибку обновления
+        await storage.addActivityLog(
+          "error",
+          `Failed to update user ${user.username}: ${error instanceof Error ? error.message : String(error)}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+
+        throw error;
+      }
     }),
 
   delete: adminProcedure

@@ -1,0 +1,97 @@
+/**
+ * Calls service - handles business logic for call operations
+ */
+
+import { CallsRepository } from "../repositories/calls.repository";
+import { SystemRepository } from "../repositories/system.repository";
+import type { GetCallsParams, CallWithTranscript, CreateCallData, EvaluationData } from "../types/calls.types";
+
+export class CallsService {
+  constructor(
+    private callsRepository: CallsRepository,
+    private systemRepository: SystemRepository
+  ) {}
+
+  async getCall(id: number): Promise<any | null> {
+    return this.callsRepository.findById(id);
+  }
+
+  async deleteCall(callId: number): Promise<boolean> {
+    const result = await this.callsRepository.delete(callId);
+    
+    if (result) {
+      await this.systemRepository.addActivityLog(
+        "INFO",
+        `Call ${callId} deleted`,
+        "system"
+      );
+    }
+    
+    return result;
+  }
+
+  async getCallByFilename(filename: string): Promise<any | null> {
+    return this.callsRepository.findByFilename(filename);
+  }
+
+  async createCall(data: CreateCallData): Promise<number> {
+    const callId = await this.callsRepository.create(data);
+    
+    await this.systemRepository.addActivityLog(
+      "INFO",
+      `Call ${callId} created from file: ${data.filename}`,
+      "system"
+    );
+    
+    return callId;
+  }
+
+  async getTranscriptByCallId(callId: number): Promise<any | null> {
+    return this.callsRepository.getTranscriptByCallId(callId);
+  }
+
+  async getEvaluation(callId: number): Promise<any | null> {
+    return this.callsRepository.getEvaluation(callId);
+  }
+
+  async getCallsWithTranscripts(
+    params: GetCallsParams = {}
+  ): Promise<CallWithTranscript[]> {
+    return this.callsRepository.findWithTranscriptsAndEvaluations(params);
+  }
+
+  async countCalls(
+    params: Omit<GetCallsParams, "limit" | "offset"> = {}
+  ): Promise<number> {
+    return this.callsRepository.countCalls(params);
+  }
+
+  async addEvaluation(data: EvaluationData): Promise<number> {
+    const evaluationId = await this.callsRepository.addEvaluation(data);
+    
+    await this.systemRepository.addActivityLog(
+      "INFO",
+      `Evaluation added for call ${data.call_id}`,
+      "system"
+    );
+    
+    return evaluationId;
+  }
+
+  async calculateMetrics(): Promise<{
+    total_calls: number;
+    transcribed: number;
+    avg_duration: number;
+    last_sync: string | null;
+  }> {
+    return this.callsRepository.getMetrics();
+  }
+
+  async getEvaluationsStats(params: {
+    dateFrom?: string;
+    dateTo?: string;
+    internalNumbers?: string[];
+  }): Promise<Record<string, any>> {
+    return this.callsRepository.getEvaluationsStats(params);
+  }
+}

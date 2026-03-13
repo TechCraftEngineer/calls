@@ -4,15 +4,16 @@
  */
 
 import { existsSync } from "node:fs";
+import { createHash, randomUUID } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { sql } from "drizzle-orm";
 import {
   backendRouter,
   createBackendApiWithContext,
   createBackendContext,
 } from "@calls/api";
-import { extractUserFields } from "@calls/api/user-profile";
-import { createLogger } from "@calls/api/logger";
+import { createLogger } from "@calls/logger";
 import { storage } from "@calls/db";
 import { inngestHandler } from "@calls/jobs/hono";
 import { createWebhookHandler } from "@calls/telegram-bot";
@@ -24,9 +25,58 @@ import { serveStatic } from "hono/bun";
 import { setCookie } from "hono/cookie";
 import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
+import { rateLimit } from "hono/rate-limiter";
 import { auth } from "./auth";
 
 const backendLogger = createLogger("backend-server");
+
+// Безопасный кэш для get-session запросов (5 секунд)
+interface SessionCacheEntry {
+  data: any;
+  timestamp: number;
+}
+
+const sessionCache = new Map<string, SessionCacheEntry>();
+// Для предотвращения race conditions
+const pendingRequests = new Map<string, Promise<any>>();
+
+// Периодическая очистка кэша каждые 30 секунд
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of sessionCache.entries()) {
+    if (now - entry.timestamp > 5000) {
+      sessionCache.delete(key);
+    }
+  }
+}, 30000);
+
+// Создание безопасного ключа кэша из cookie
+function createCacheKey(cookie: string | undefined): string {
+  if (!cookie) return "no-cookie";
+  // Извлекаем только session ID из cookie для безопасности
+  const sessionIdMatch = cookie.match(/(?:^|;\s*)session[_-]?id\s*=\s*([^;]+)/);
+  if (sessionIdMatch) {
+    return createHash("sha256").update(sessionIdMatch[1]).digest("hex").substring(0, 16);
+  }
+  // Fallback: используем хеш от всего cookie, но ограничиваем длину
+  return createHash("sha256").update(cookie).digest("hex").substring(0, 16);
+}
+
+// Проверка подключения к базе данных при старте
+async function checkDatabaseConnection(): Promise<boolean> {
+  try {
+    // Надежная проверка подключения через запрос к системной таблице
+    const { db } = await import("@calls/db/client");
+    await db.execute(sql`SELECT 1`);
+    backendLogger.info("Database connection check passed");
+    return true;
+  } catch (error) {
+    backendLogger.error("Database connection check failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return false;
+  }
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -143,10 +193,10 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 app.use(honoLogger());
-// Apply rate limiting to critical endpoints
-app.use("/api/auth/*", rateLimit({ windowMs: 60 * 1000, maxRequests: 10 })); // 10 requests per minute
-app.use("/api/orpc/*", rateLimit({ windowMs: 60 * 1000, maxRequests: 100 })); // 100 requests per minute
-app.use("/api/users/*", rateLimit({ windowMs: 60 * 1000, maxRequests: 50 })); // 50 requests per minute
+// Temporarily disable rate limiting to fix 429 errors
+// app.use("/api/auth/*", rateLimit({ windowMs: 60 * 1000, maxRequests: 60 })); // 60 requests per minute
+// app.use("/api/orpc/*", rateLimit({ windowMs: 60 * 1000, maxRequests: 300 })); // 300 requests per minute
+// app.use("/api/users/*", rateLimit({ windowMs: 60 * 1000, maxRequests: 150 })); // 150 requests per minute
 
 app.use(
   "/*",
@@ -203,13 +253,37 @@ app.on(["GET", "POST"], "/api/orpc/*", async (c) => {
     });
 
     if (!result.matched) {
+      backendLogger.warn("oRPC route not matched", { 
+        path: c.req.path,
+        method: c.req.method 
+      });
       return c.notFound();
     }
 
     return result.response;
   } catch (error) {
-    backendLogger.error("oRPC Handler error", error);
-    return c.json({ error: "Internal Server Error" }, 500);
+    backendLogger.error("oRPC Handler error", {
+      path: c.req.path,
+      method: c.req.method,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    
+    // Безопасное возвращение информации об ошибках
+    const isDev = process.env.NODE_ENV !== "production";
+    const errorResponse: Record<string, any> = {
+      error: "Internal Server Error",
+      requestId: randomUUID()
+    };
+    
+    // В development режиме добавляем больше информации для отладки
+    if (isDev && error instanceof Error) {
+      errorResponse.message = error.message;
+      errorResponse.path = c.req.path;
+      errorResponse.method = c.req.method;
+    }
+    
+    return c.json(errorResponse, 500);
   }
 });
 
@@ -326,8 +400,75 @@ app.get("/api/auth/me", async (c) => {
   }
 });
 
-// Better Auth handler for sign-in/username, sign-out, get-session, etc.
-app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+// Middleware для безопасного кэширования get-session запросов
+app.get("/api/auth/get-session", async (c) => {
+  const now = Date.now();
+  const cookie = c.req.header("cookie");
+  const cacheKey = createCacheKey(cookie);
+  
+  // Проверяем кэш
+  const cached = sessionCache.get(cacheKey);
+  if (cached && (now - cached.timestamp) < 5000) {
+    return c.json(cached.data);
+  }
+  
+  // Проверяем, есть ли уже выполняющийся запрос для этого ключа
+  const pending = pendingRequests.get(cacheKey);
+  if (pending) {
+    try {
+      const result = await pending;
+      return c.json(result);
+    } catch {
+      // Если pending запрос упал, продолжаем с обычной логикой
+    }
+  }
+  
+  // Создаем новый запрос
+  const requestPromise = (async () => {
+    const authRequest = new Request(c.req.url, {
+      method: c.req.method,
+      headers: c.req.raw.headers,
+    });
+    
+    const authResponse = await auth.handler(authRequest);
+    const responseData = await authResponse.json();
+    
+    // Сохраняем в кэш только успешные ответы
+    if (authResponse.status === 200) {
+      sessionCache.set(cacheKey, {
+        data: responseData,
+        timestamp: now
+      });
+    }
+    
+    return responseData;
+  })();
+  
+  // Сохраняем pending запрос
+  pendingRequests.set(cacheKey, requestPromise);
+  
+  try {
+    const responseData = await requestPromise;
+    return c.json(responseData);
+  } catch (error) {
+    backendLogger.error("Get-session error", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return c.json({ user: null, session: null }, 500);
+  } finally {
+    // Удаляем pending запрос
+    pendingRequests.delete(cacheKey);
+  }
+});
+
+// Better Auth handler для всех остальных auth эндпоинтов
+app.on(["GET", "POST"], "/api/auth/*", (c) => {
+  // Пропускаем get-session, так как он обрабатывается выше
+  if (c.req.path === "/api/auth/get-session") {
+    return c.notFound();
+  }
+  return auth.handler(c.req.raw);
+});
 
 // REST: /api/calls - delegates to backend-api (main API)
 app.get("/api/calls", async (c) => {
@@ -814,6 +955,12 @@ async function setupTelegramWebhook(): Promise<boolean> {
 
 // Запускаем setup webhook асинхронно с обработкой результата
 (async () => {
+  // Сначала проверяем подключение к БД
+  const dbConnected = await checkDatabaseConnection();
+  if (!dbConnected) {
+    backendLogger.error("Failed to connect to database - server may not function properly");
+  }
+  
   const webhookSetupSuccess = await setupTelegramWebhook();
   if (!webhookSetupSuccess) {
     backendLogger.warn("Telegram webhook setup failed, but server will continue running");

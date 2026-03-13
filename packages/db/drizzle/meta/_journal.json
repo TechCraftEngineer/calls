@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1773390609722,
-      "tag": "0000_parched_iron_lad",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1762953600000,
-      "tag": "0001_add_better_auth_additional_fields",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1762953601000,
-      "tag": "0002_rename_user_columns_to_standard",
+      "when": 1773396827319,
+      "tag": "0000_silky_sebastian_shaw",
       "breakpoints": true
     }
   ]

@@ -72,6 +72,11 @@ CREATE TABLE "users" (
 	"language" text DEFAULT 'en',
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"given_name" text,
+	"family_name" text,
+	"internal_extensions" text,
+	"mobile_phones" text,
+	"telegram_chat_id" text,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint

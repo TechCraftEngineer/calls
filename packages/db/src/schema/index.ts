@@ -10,6 +10,13 @@ export * from "./auth";
 // Export all table definitions
 export { callEvaluations, calls, transcripts } from "./calls";
 export { activityLog, prompts } from "./system";
+export { 
+  users, 
+  userIntegrations, 
+  userFilters, 
+  userReportSettings, 
+  userKpiSettings 
+} from "./users";
 
 // Export all TypeScript types
 export type {
@@ -25,5 +32,8 @@ export type {
   Prompt,
   Transcript,
   User,
+  UserIntegrations,
+  UserFilters,
+  UserReportSettings,
+  UserKpiSettings,
 } from "./types";
-export { users } from "./users";

@@ -1,5 +1,5 @@
 {
-  "id": "7f9232e4-428e-452d-b456-333a2fd245e6",
+  "id": "f1a80395-7278-44dd-82dc-679209c73eda",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -172,8 +172,12 @@
           "name": "call_evaluations_call_id_calls_id_fk",
           "tableFrom": "call_evaluations",
           "tableTo": "calls",
-          "columnsFrom": ["call_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "call_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -183,7 +187,9 @@
         "call_evaluations_call_id_unique": {
           "name": "call_evaluations_call_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["call_id"]
+          "columns": [
+            "call_id"
+          ]
         }
       },
       "policies": {},
@@ -305,7 +311,9 @@
         "calls_filename_unique": {
           "name": "calls_filename_unique",
           "nullsNotDistinct": false,
-          "columns": ["filename"]
+          "columns": [
+            "filename"
+          ]
         }
       },
       "policies": {},
@@ -370,7 +378,9 @@
         "prompts_key_unique": {
           "name": "prompts_key_unique",
           "nullsNotDistinct": false,
-          "columns": ["key"]
+          "columns": [
+            "key"
+          ]
         }
       },
       "policies": {},
@@ -476,8 +486,12 @@
           "name": "transcripts_call_id_calls_id_fk",
           "tableFrom": "transcripts",
           "tableTo": "calls",
-          "columnsFrom": ["call_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "call_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -555,6 +569,36 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "given_name": {
+          "name": "given_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "family_name": {
+          "name": "family_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "internal_extensions": {
+          "name": "internal_extensions",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "mobile_phones": {
+          "name": "mobile_phones",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "telegram_chat_id": {
+          "name": "telegram_chat_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -564,7 +608,9 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         }
       },
       "policies": {},
@@ -661,8 +707,12 @@
           "name": "accounts_user_id_users_id_fk",
           "tableFrom": "accounts",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -733,8 +783,12 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -744,7 +798,9 @@
         "sessions_token_unique": {
           "name": "sessions_token_unique",
           "nullsNotDistinct": false,
-          "columns": ["token"]
+          "columns": [
+            "token"
+          ]
         }
       },
       "policies": {},

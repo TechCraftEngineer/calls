@@ -15,8 +15,37 @@ export interface UserLike {
   internalExtensions?: string | null | undefined;
   mobilePhones?: string | null | undefined;
   telegramChatId?: string | null | undefined;
-  created_at?: string | null | undefined;
+  created_at?: string | Date | null | undefined;
   is_active?: boolean | null | undefined;
+  // Integration fields
+  telegram_chat_id?: string | null | undefined;
+  telegram_connect_token?: string | null | undefined;
+  telegram_daily_report?: boolean | undefined;
+  telegram_manager_report?: boolean | undefined;
+  telegram_weekly_report?: boolean | undefined;
+  telegram_monthly_report?: boolean | undefined;
+  telegram_skip_weekends?: boolean | undefined;
+  max_chat_id?: string | null | undefined;
+  max_connect_token?: string | null | undefined;
+  max_daily_report?: boolean | undefined;
+  max_manager_report?: boolean | undefined;
+  email_daily_report?: boolean | undefined;
+  email_weekly_report?: boolean | undefined;
+  email_monthly_report?: boolean | undefined;
+  // Filter fields
+  filter_exclude_answering_machine?: boolean | undefined;
+  filter_min_duration?: number | undefined;
+  filter_min_replicas?: number | undefined;
+  // Report settings
+  report_include_call_summaries?: boolean | undefined;
+  report_detailed?: boolean | undefined;
+  report_include_avg_value?: boolean | undefined;
+  report_include_avg_rating?: boolean | undefined;
+  report_managed_user_ids?: unknown;
+  // KPI settings
+  kpi_base_salary?: number | undefined;
+  kpi_target_bonus?: number | undefined;
+  kpi_target_talk_time_minutes?: number | undefined;
 }
 
 export interface ApiUser {
