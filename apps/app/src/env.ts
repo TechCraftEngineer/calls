@@ -12,7 +12,7 @@ export const env = createEnv({
     PORT: z.coerce.number().default(3000),
     VERCEL_URL: z.string().optional(),
     POSTGRES_URL: z.string(),
-    AUTH_SECRET: z.string(),
+    BETTER_AUTH_SECRET: z.string(),
     AUTH_GOOGLE_ID: z.string().optional(),
     AUTH_GOOGLE_SECRET: z.string().optional(),
     EMAIL_SANDBOX_ENABLED: z.boolean().default(true),

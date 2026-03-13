@@ -12,8 +12,10 @@ import {
   createBackendContext,
 } from "@calls/api";
 import { storage } from "@calls/db";
+import { createWebhookHandler } from "@calls/telegram-bot";
 import { ORPCError, onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
+import { Bot } from "grammy";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { setCookie } from "hono/cookie";
@@ -614,6 +616,12 @@ app.post("/api/reports/send-test-telegram", async (c) => {
   }
 });
 
+// Telegram webhook - for /start linking and incoming updates
+const telegramWebhookHandler = createWebhookHandler(() =>
+  storage.getPrompt("telegram_bot_token"),
+);
+app.post("/api/telegram-webhook", telegramWebhookHandler);
+
 // Health
 app.get("/", (c) => c.json({ message: "QBS Звонки API", version: "2.0.0" }));
 app.get("/health", (c) => c.json({ status: "ok" }));
@@ -622,6 +630,26 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 app.notFound((c) => c.json({ error: "Not Found", path: c.req.path }, 404));
 
 const port = Number(process.env.BACKEND_PORT ?? process.env.PORT ?? 8000);
+
+// Set Telegram webhook on startup when configured
+const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
+if (webhookUrl) {
+  storage
+    .getPrompt("telegram_bot_token")
+    .then((token) => {
+      if (token?.trim()) {
+        const bot = new Bot(token);
+        return bot.api.setWebhook(webhookUrl);
+      }
+    })
+    .then((ok) => {
+      if (ok !== undefined)
+        console.log("[backend-server] Telegram webhook set");
+    })
+    .catch((err) =>
+      console.error("[backend-server] Telegram setWebhook:", err),
+    );
+}
 
 console.log(`[backend-server] Running on http://localhost:${port}`);
 

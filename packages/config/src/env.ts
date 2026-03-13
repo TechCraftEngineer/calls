@@ -35,7 +35,7 @@ export const env = createEnv({
     EMAIL_FROM: z.string().default("Acme <onboarding@resend.dev>"),
 
     // Auth
-    AUTH_SECRET: z.string().optional(),
+    BETTER_AUTH_SECRET: z.string().optional(),
     AUTH_GOOGLE_ID: z.string().optional(),
     AUTH_GOOGLE_SECRET: z.string().optional(),
 
@@ -64,7 +64,7 @@ export const env = createEnv({
     EMAIL_SANDBOX_ENABLED: process.env.EMAIL_SANDBOX_ENABLED === "true",
     EMAIL_SANDBOX_HOST: process.env.EMAIL_SANDBOX_HOST,
     EMAIL_FROM: process.env.EMAIL_FROM,
-    AUTH_SECRET: process.env.AUTH_SECRET,
+    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     AUTH_GOOGLE_ID: process.env.AUTH_GOOGLE_ID,
     AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
     AWS_S3_ENDPOINT: process.env.AWS_S3_ENDPOINT,

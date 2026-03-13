@@ -528,6 +528,39 @@ export const storage = {
     return (result.rowCount ?? 0) > 0;
   },
 
+  async getUserByTelegramConnectToken(token: string): Promise<User | null> {
+    const result = await db
+      .select()
+      .from(schema.users)
+      .where(
+        and(
+          eq(schema.users.telegram_connect_token, token),
+          eq(schema.users.is_active, true),
+        ),
+      )
+      .limit(1);
+
+    const user = result[0] ?? null;
+    if (user && !user.first_name && user.name) {
+      const parts = user.name.split(/\s+/, 2);
+      (user as User).first_name = parts[0] ?? "";
+      (user as User).last_name = parts[1] ?? "";
+    }
+    return user;
+  },
+
+  async saveTelegramChatId(userId: number, chatId: string): Promise<boolean> {
+    const result = await db
+      .update(schema.users)
+      .set({
+        telegram_chat_id: chatId,
+        telegram_connect_token: null,
+      })
+      .where(eq(schema.users.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
+  },
+
   async saveMaxConnectToken(userId: number, token: string): Promise<boolean> {
     const result = await db
       .update(schema.users)

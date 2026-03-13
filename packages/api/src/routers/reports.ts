@@ -1,4 +1,5 @@
 import { storage } from "@calls/db";
+import { sendMessage } from "@calls/telegram-bot";
 import { protectedProcedure } from "../orpc";
 
 export const reportsRouter = {
@@ -11,9 +12,12 @@ export const reportsRouter = {
       | string
       | undefined;
     if (!chatId) throw new Error("Telegram Chat ID is not set for this user");
-    // TODO: integrate TelegramService.send_message - for now stub
-    throw new Error(
-      "Telegram service not yet integrated - add TelegramService.send_message",
-    );
+    const token = await storage.getPrompt("telegram_bot_token");
+    if (!token?.trim())
+      throw new Error(
+        "Telegram Bot Token не настроен. Укажите токен в Настройках.",
+      );
+    await sendMessage(token, chatId, "Тестовый отчёт");
+    return { success: true };
   }),
 };

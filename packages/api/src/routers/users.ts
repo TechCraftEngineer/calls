@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { storage } from "@calls/db";
+import { getBotUsername } from "@calls/telegram-bot";
 import { z } from "zod";
 import { adminProcedure, protectedProcedure } from "../orpc";
 
@@ -210,8 +211,10 @@ export const usersRouter = {
       const token = randomBytes(16).toString("base64url");
       if (!(await storage.saveTelegramConnectToken(input.user_id, token)))
         throw new Error("Failed to save token");
-      // TODO: integrate TelegramService.getBotUsername() - for now return placeholder
-      const botUsername = "mango_react_bot";
+      const botToken = await storage.getPrompt("telegram_bot_token");
+      const botUsername = botToken?.trim()
+        ? await getBotUsername(botToken)
+        : "mango_react_bot";
       return { url: `https://t.me/${botUsername}?start=${token}` };
     }),
 

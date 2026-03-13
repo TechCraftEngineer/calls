@@ -1,5 +1,5 @@
 {
-  "name": "@calls/api",
+  "name": "@calls/telegram-bot",
   "private": true,
   "type": "module",
   "exports": {
@@ -8,15 +8,12 @@
   "license": "MIT",
   "scripts": {
     "clean": "rm -rf *.tsbuildinfo .turbo dist",
-    "dev": "bun -b watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
     "@calls/db": "workspace:*",
-    "@calls/telegram-bot": "workspace:*",
-    "@orpc/client": "^1.13.7",
-    "@orpc/server": "^1.13.7",
-    "zod": "4.3.6"
+    "grammy": "^1.38.0",
+    "hono": "4.12.7"
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
