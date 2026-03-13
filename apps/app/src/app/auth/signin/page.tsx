@@ -77,79 +77,75 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 w-full font-sans">
-      <div className="bg-white p-12 rounded-2xl shadow-soft border border-gray-200 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-mango-yellow text-black font-black text-2xl rounded-lg mb-6">
+    <div className="flex min-h-screen w-full items-center justify-center bg-[#F8F9FB] font-[Inter]">
+      <div className="w-full max-w-[420px] rounded-[16px] border-[#EEE] bg-white p-12 shadow-[0_10px_40px_rgba(0,0,0,0.04)]">
+        <div className="mb-8 text-center">
+          <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-[10px] bg-[#FFD600] text-black font-black text-[24px]">
             M
           </div>
-          <h1 className="text-2xl font-bold text-primary-900 mb-2">
+          <h1 className="mb-2 text-[24px] font-bold text-[#111]">
             С возвращением!
           </h1>
-          <p className="text-sm text-gray-600 m-0">
+          <p className="m-0 text-[14px] text-[#888]">
             Войдите в личный кабинет Mango Office
           </p>
         </div>
 
         {errors.root && (
-          <div className="mb-6 p-3 rounded-lg text-sm font-medium flex items-center gap-2.5 bg-error-50 text-error-600 border border-error-200">
+          <div className="mb-6 flex items-center gap-[10px] rounded-lg border-[#FFDADA] bg-[#FFF0F0] p-3 text-[13px] font-medium text-[#D32F2F]">
             <span>⚠️</span>
             {errors.root.message}
           </div>
         )}
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          noValidate
-          className="space-y-5"
-        >
-          <div>
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <div className="mb-5">
             <label
               htmlFor="username"
-              className="block text-sm font-semibold text-primary-800 mb-2"
+              className="mb-2 block text-[13px] font-semibold text-[#333]"
             >
-              Имя пользователя
+              Электронная почта
             </label>
             <input
               id="username"
-              type="text"
-              className={`w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 box-border ${
+              type="email"
+              className={`w-full rounded-lg border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                 errors.username
-                  ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
-                  : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
+                  ? "border-red-500 bg-red-50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(220,53,69,0.1)]"
+                  : ""
               }`}
-              placeholder="username"
+              placeholder="example@mail.com"
               autoComplete="username"
               {...register("username")}
             />
             {errors.username && (
-              <div className="text-error-600 text-xs mt-1 leading-tight">
+              <div className="mt-1 text-xs leading-tight text-red-600">
                 {errors.username.message}
               </div>
             )}
           </div>
 
-          <div>
+          <div className="mb-5">
             <label
               htmlFor="password"
-              className="block text-sm font-semibold text-primary-800 mb-2"
+              className="mb-2 block text-[13px] font-semibold text-[#333]"
             >
               Пароль
             </label>
             <input
               id="password"
               type="password"
-              className={`w-full px-4 py-3 border rounded-lg text-sm transition-all duration-200 box-border ${
+              className={`w-full rounded-lg border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                 errors.password
-                  ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
-                  : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
+                  ? "border-red-500 bg-red-50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(220,53,69,0.1)]"
+                  : ""
               }`}
               placeholder="••••••••"
               autoComplete="current-password"
               {...register("password")}
             />
             {errors.password && (
-              <div className="text-error-600 text-xs mt-1 leading-tight">
+              <div className="mt-1 text-xs leading-tight text-red-600">
                 {errors.password.message}
               </div>
             )}
@@ -157,14 +153,14 @@ function LoginForm() {
 
           <button
             type="submit"
-            className="w-full py-3 bg-primary-900 text-white border-none rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 mt-2 disabled:opacity-60 disabled:cursor-not-allowed hover:bg-primary-800 hover:-translate-y-px"
+            className="mt-2 w-full cursor-pointer rounded-lg border-none bg-[#111] py-3 text-[15px] font-semibold text-white transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 hover:bg-[#333] hover:-translate-y-px"
             disabled={isSubmitting}
           >
             {isSubmitting ? "Вход..." : "Войти в систему"}
           </button>
         </form>
 
-        <div className="mt-8 text-center text-xs text-gray-400">
+        <div className="mt-8 text-center text-[12px] text-[#AAA]">
           &copy; 2025 Mango Office Call AI. Все права защищены.
         </div>
       </div>
@@ -176,9 +172,9 @@ export default function SignInPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 w-full font-sans">
-          <div className="bg-white p-12 rounded-2xl shadow-soft border border-gray-200 w-full max-w-md">
-            <div className="text-center py-10">Загрузка...</div>
+        <div className="flex min-h-screen w-full items-center justify-center bg-[#F8F9FB] font-[Inter]">
+          <div className="w-full max-w-[420px] rounded-[16px] border-[#EEE] bg-white p-12 shadow-[0_10px_40px_rgba(0,0,0,0.04)]">
+            <div className="py-10 text-center">Загрузка...</div>
           </div>
         </div>
       }

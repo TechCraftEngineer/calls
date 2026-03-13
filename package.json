@@ -39,5 +39,8 @@
     "apps/*",
     "packages/*",
     "tooling/*"
-  ]
+  ],
+  "dependencies": {
+    "@better-auth/drizzle-adapter": "^1.5.5"
+  }
 }
