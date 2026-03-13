@@ -24,9 +24,9 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import sanitizeHtml from "sanitize-html";
-import AudioPlayer from "@/components/audio-player";
-import Header from "@/components/header";
-import Sidebar from "@/components/sidebar";
+import AudioPlayer from "@/components/ui/audio-player";
+import Header from "@/components/layout/header";
+import Sidebar from "@/components/layout/sidebar";
 import api, { restPost } from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
 

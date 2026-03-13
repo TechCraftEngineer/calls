@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
-import { INTEGRATION_KEYS, PROMPT_KEYS } from "../constants/prompts";
-import type { Prompt, SettingsState } from "../types/settings";
-import { validateFtpCredentials } from "../utils/prompt-updater";
+import { INTEGRATION_KEYS, PROMPT_KEYS } from "./constants";
+import type { Prompt, SettingsState } from "./types";
+import { validateFtpCredentials } from "./utils";
 
 export function useSettings() {
   const router = useRouter();

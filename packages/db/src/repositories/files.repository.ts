@@ -7,11 +7,11 @@ import { db } from "../client";
 import { files } from "../schema";
 import type { CreateFileData, GetFilesParams } from "../types";
 
-export class FilesRepository {
+export const filesRepository = {
   async create(data: CreateFileData) {
     const result = await db.insert(files).values(data).returning();
     return result[0];
-  }
+  },
 
   async findById(id: string) {
     const result = await db
@@ -20,7 +20,7 @@ export class FilesRepository {
       .where(eq(files.id, id))
       .limit(1);
     return result[0] || null;
-  }
+  },
 
   async findByStorageKey(storageKey: string) {
     const result = await db
@@ -29,7 +29,7 @@ export class FilesRepository {
       .where(eq(files.storageKey, storageKey))
       .limit(1);
     return result[0] || null;
-  }
+  },
 
   async findByWorkspaceId(params: GetFilesParams) {
     const conditions = [];
@@ -48,7 +48,7 @@ export class FilesRepository {
       .orderBy(desc(files.createdAt))
       .limit(params.limit ?? 1000)
       .offset(params.offset ?? 0);
-  }
+  },
 
   async update(id: string, data: Partial<CreateFileData>) {
     const result = await db
@@ -57,12 +57,12 @@ export class FilesRepository {
       .where(eq(files.id, id))
       .returning();
     return result[0] || null;
-  }
+  },
 
   async delete(id: string) {
     const result = await db.delete(files).where(eq(files.id, id)).returning();
     return result[0] || null;
-  }
+  },
 
   async deleteByStorageKey(storageKey: string) {
     const result = await db
@@ -70,5 +70,7 @@ export class FilesRepository {
       .where(eq(files.storageKey, storageKey))
       .returning();
     return result[0] || null;
-  }
-}
+  },
+};
+
+export type FilesRepository = typeof filesRepository;

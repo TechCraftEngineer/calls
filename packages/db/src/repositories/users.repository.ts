@@ -12,13 +12,8 @@ import type {
   UpdateUserData,
   UserUpdateData,
 } from "../types/users.types";
-import { BaseRepository } from "./base.repository";
 
-export class UsersRepository {
-  constructor() {
-    // Not extending BaseRepository for now due to ID type differences
-  }
-
+export const usersRepository = {
   async findById(id: string): Promise<any | null> {
     const result = await db
       .select()
@@ -26,7 +21,7 @@ export class UsersRepository {
       .where(eq(schema.user.id, id as string))
       .limit(1);
     return result[0] ?? null;
-  }
+  },
 
   async softDelete(id: string): Promise<boolean> {
     // Better Auth doesn't have is_active field, so we just return true
@@ -34,7 +29,7 @@ export class UsersRepository {
       "[UsersRepository] softDelete called but Better Auth doesn't support soft delete",
     );
     return true;
-  }
+  },
 
   async findByUsername(username: string): Promise<any | null> {
     const result = await db
@@ -50,7 +45,7 @@ export class UsersRepository {
       user.familyName = parts[1] ?? "";
     }
     return user;
-  }
+  },
 
   async findWithAllData(username: string): Promise<any | null> {
     const result = await db
@@ -66,7 +61,7 @@ export class UsersRepository {
       user.familyName = parts[1] ?? "";
     }
     return user;
-  }
+  },
 
   async findAllActive(): Promise<any[]> {
     try {
@@ -89,7 +84,7 @@ export class UsersRepository {
       });
       return [];
     }
-  }
+  },
 
   async create(data: CreateUserData): Promise<string> {
     const { hashSync } = await import("bcryptjs");
@@ -111,7 +106,7 @@ export class UsersRepository {
     });
 
     return userId;
-  }
+  },
 
   async updateName(userId: string, data: UpdateUserData): Promise<boolean> {
     if (!data.givenName) return false;
@@ -130,7 +125,7 @@ export class UsersRepository {
       .where(eq(schema.user.id, userId));
 
     return (result.rowCount ?? 0) > 0;
-  }
+  },
 
   async updateInternalExtensions(
     userId: string,
@@ -141,7 +136,7 @@ export class UsersRepository {
       .set({ internalExtensions })
       .where(eq(schema.user.id, userId));
     return (result.rowCount ?? 0) > 0;
-  }
+  },
 
   async updateMobilePhones(
     userId: string,
@@ -152,7 +147,7 @@ export class UsersRepository {
       .set({ mobilePhones })
       .where(eq(schema.user.id, userId));
     return (result.rowCount ?? 0) > 0;
-  }
+  },
 
   // Legacy methods for removed user settings tables - now handled by Better Auth
   async updateFilters(
@@ -166,7 +161,7 @@ export class UsersRepository {
       "[UsersRepository] updateFilters called but user filters table removed",
     );
     return true;
-  }
+  },
 
   async updateReportAndKpiSettings(
     userId: string,
@@ -177,7 +172,7 @@ export class UsersRepository {
       "[UsersRepository] updateReportAndKpiSettings called but settings tables removed",
     );
     return true;
-  }
+  },
 
   async updateTelegramSettings(
     userId: string,
@@ -189,7 +184,7 @@ export class UsersRepository {
       "[UsersRepository] updateTelegramSettings called but telegram settings moved to metadata",
     );
     return true;
-  }
+  },
 
   async updatePassword(userId: string, newPassword: string): Promise<boolean> {
     // Password handling now done by Better Auth
@@ -197,7 +192,7 @@ export class UsersRepository {
       "[UsersRepository] updatePassword called but password handling moved to Better Auth",
     );
     return true;
-  }
+  },
 
   async findByTelegramConnectToken(token: string): Promise<any | null> {
     // Telegram integration now handled by Better Auth metadata
@@ -205,7 +200,7 @@ export class UsersRepository {
       "[UsersRepository] findByTelegramConnectToken called but telegram integration moved to metadata",
     );
     return null;
-  }
+  },
 
   async saveTelegramConnectToken(
     userId: string,
@@ -216,7 +211,7 @@ export class UsersRepository {
       "[UsersRepository] saveTelegramConnectToken called but telegram integration moved to metadata",
     );
     return true;
-  }
+  },
 
   async saveTelegramChatId(userId: string, chatId: string): Promise<boolean> {
     const result = await db
@@ -227,7 +222,7 @@ export class UsersRepository {
       .where(eq(schema.user.id, userId));
 
     return (result.rowCount ?? 0) > 0;
-  }
+  },
 
   async disconnectTelegram(userId: string): Promise<boolean> {
     const result = await db
@@ -238,7 +233,7 @@ export class UsersRepository {
       .where(eq(schema.user.id, userId));
 
     return (result.rowCount ?? 0) > 0;
-  }
+  },
 
   async saveMaxConnectToken(userId: string, token: string): Promise<boolean> {
     // MAX integration now handled by Better Auth metadata
@@ -246,7 +241,7 @@ export class UsersRepository {
       "[UsersRepository] saveMaxConnectToken called but MAX integration moved to metadata",
     );
     return true;
-  }
+  },
 
   async disconnectMax(userId: string): Promise<boolean> {
     // MAX integration now handled by Better Auth metadata
@@ -254,5 +249,7 @@ export class UsersRepository {
       "[UsersRepository] disconnectMax called but MAX integration moved to metadata",
     );
     return true;
-  }
-}
+  },
+};
+
+export type UsersRepository = typeof usersRepository;

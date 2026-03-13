@@ -5,13 +5,8 @@
 import { eq } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
-import { BaseRepository } from "./base.repository";
 
-export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
-  constructor() {
-    super(schema.prompts);
-  }
-
+export const promptsRepository = {
   async findByKey(key: string): Promise<string | null> {
     const result = await db
       .select()
@@ -20,7 +15,7 @@ export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
       .limit(1);
 
     return result[0]?.value ?? null;
-  }
+  },
 
   async findByKeyWithDefault(
     key: string,
@@ -33,7 +28,7 @@ export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
       .limit(1);
 
     return result[0]?.value ?? defaultValue ?? null;
-  }
+  },
 
   async findAll(): Promise<
     {
@@ -52,7 +47,7 @@ export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
       })
       .from(schema.prompts)
       .orderBy(schema.prompts.key);
-  }
+  },
 
   async upsert(
     key: string,
@@ -89,5 +84,7 @@ export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
       workspaceId: workspaceId ?? "default",
     });
     return true;
-  }
-}
+  },
+};
+
+export type PromptsRepository = typeof promptsRepository;

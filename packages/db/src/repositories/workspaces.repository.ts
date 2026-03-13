@@ -20,15 +20,14 @@ export interface AddMemberData {
   role: WorkspaceMemberRole;
 }
 
-export class WorkspacesRepository {
-  // Доступ к таблицам для транзакций
+export const workspacesRepository = {
   get table() {
     return schema.workspaces;
-  }
+  },
 
   get workspaceMembersTable() {
     return schema.workspaceMembers;
-  }
+  },
 
   async create(data: CreateWorkspaceData): Promise<string> {
     const result = await db
@@ -40,7 +39,7 @@ export class WorkspacesRepository {
       })
       .returning({ id: schema.workspaces.id });
     return result[0]?.id ?? "";
-  }
+  },
 
   async getById(
     id: string,
@@ -51,7 +50,7 @@ export class WorkspacesRepository {
       .where(eq(schema.workspaces.id, id))
       .limit(1);
     return result[0] ?? null;
-  }
+  },
 
   async getBySlug(
     slug: string,
@@ -62,7 +61,7 @@ export class WorkspacesRepository {
       .where(eq(schema.workspaces.slug, slug))
       .limit(1);
     return result[0] ?? null;
-  }
+  },
 
   async update(
     id: string,
@@ -77,14 +76,14 @@ export class WorkspacesRepository {
       .set(data)
       .where(eq(schema.workspaces.id, id));
     return (result.rowCount ?? 0) > 0;
-  }
+  },
 
   async delete(id: string): Promise<boolean> {
     const result = await db
       .delete(schema.workspaces)
       .where(eq(schema.workspaces.id, id));
     return (result.rowCount ?? 0) > 0;
-  }
+  },
 
   async getMembers(workspaceId: string) {
     return db
@@ -103,7 +102,7 @@ export class WorkspacesRepository {
       )
       .where(eq(schema.workspaceMembers.workspaceId, workspaceId))
       .orderBy(desc(schema.workspaceMembers.createdAt));
-  }
+  },
 
   async addMember(data: AddMemberData): Promise<string> {
     const result = await db
@@ -115,7 +114,7 @@ export class WorkspacesRepository {
       })
       .returning({ id: schema.workspaceMembers.id });
     return result[0]?.id ?? "";
-  }
+  },
 
   async removeMember(workspaceId: string, userId: string): Promise<boolean> {
     const result = await db
@@ -127,7 +126,7 @@ export class WorkspacesRepository {
         ),
       );
     return (result.rowCount ?? 0) > 0;
-  }
+  },
 
   async updateMemberRole(
     workspaceId: string,
@@ -144,7 +143,7 @@ export class WorkspacesRepository {
         ),
       );
     return (result.rowCount ?? 0) > 0;
-  }
+  },
 
   async getMember(
     workspaceId: string,
@@ -161,7 +160,7 @@ export class WorkspacesRepository {
       )
       .limit(1);
     return result[0] ?? null;
-  }
+  },
 
   async getUserWorkspaces(userId: string) {
     return db
@@ -177,5 +176,7 @@ export class WorkspacesRepository {
       )
       .where(eq(schema.workspaceMembers.userId, userId))
       .orderBy(desc(schema.workspaceMembers.createdAt));
-  }
-}
+  },
+};
+
+export type WorkspacesRepository = typeof workspacesRepository;

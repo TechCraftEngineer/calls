@@ -22,12 +22,93 @@ import type {
   EvaluationData,
   GetCallsParams,
 } from "../types/calls.types";
-import { BaseRepository } from "./base.repository";
 
-export class CallsRepository extends BaseRepository<typeof schema.calls> {
-  constructor() {
-    super(schema.calls);
+function buildCallConditions(params: {
+  workspaceId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  internalNumbers?: string[];
+  mobileNumbers?: string[];
+  direction?: string;
+  valueScores?: number[];
+  operators?: string[];
+  manager?: string;
+  status?: string;
+  q?: string;
+}) {
+  const conditions = [];
+  const {
+    workspaceId,
+    dateFrom,
+    dateTo,
+    internalNumbers,
+    mobileNumbers,
+    direction,
+    valueScores,
+    operators,
+    manager,
+    status,
+    q,
+  } = params;
+
+  if (workspaceId != null) {
+    conditions.push(eq(schema.calls.workspaceId, workspaceId));
   }
+  if (dateFrom) {
+    conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
+  }
+  if (dateTo) {
+    conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
+  }
+  if (internalNumbers?.length) {
+    conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
+  }
+  if (mobileNumbers?.length) {
+    conditions.push(inArray(schema.calls.number, mobileNumbers));
+  }
+  if (direction) {
+    conditions.push(eq(schema.calls.direction, direction));
+  }
+  if (status) {
+    conditions.push(eq(schema.calls.status, status));
+  }
+  if (operators?.length) {
+    conditions.push(inArray(schema.calls.source, operators));
+  }
+  if (manager) {
+    conditions.push(eq(schema.calls.name, manager));
+  }
+  if (valueScores?.length) {
+    conditions.push(inArray(schema.callEvaluations.valueScore, valueScores));
+  }
+  if (q) {
+    const qCond = or(
+      like(schema.calls.number, `%${q}%`),
+      like(schema.calls.name, `%${q}%`),
+      like(schema.calls.customerName, `%${q}%`),
+    );
+    if (qCond) conditions.push(qCond);
+  }
+
+  return conditions;
+}
+
+export const callsRepository = {
+  async findById(id: string): Promise<any | null> {
+    const result = await db
+      .select()
+      .from(schema.calls)
+      .where(eq(schema.calls.id, id))
+      .limit(1);
+    return result[0] ?? null;
+  },
+
+  async delete(id: string): Promise<boolean> {
+    const result = await db
+      .delete(schema.calls)
+      .where(eq(schema.calls.id, id));
+    return (result.rowCount ?? 0) > 0;
+  },
 
   async findByFilename(
     filename: string,
@@ -43,7 +124,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       .where(and(...conditions))
       .limit(1);
     return result[0] ?? null;
-  }
+  },
 
   async create(data: CreateCallData): Promise<string> {
     const result = await db
@@ -65,7 +146,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       })
       .returning({ id: schema.calls.id });
     return result[0]?.id ?? "";
-  }
+  },
 
   async findWithTranscriptsAndEvaluations(
     params: GetCallsParams = {},
@@ -86,7 +167,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       q,
     } = params;
 
-    const conditions = this.buildCallConditions({
+    const conditions = buildCallConditions({
       workspaceId,
       dateFrom,
       dateTo,
@@ -130,7 +211,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       transcript: row.transcript,
       evaluation: row.evaluation,
     }));
-  }
+  },
 
   async countCalls(
     params: Omit<GetCallsParams, "limit" | "offset"> = {},
@@ -149,7 +230,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       q,
     } = params;
 
-    const conditions = this.buildCallConditions({
+    const conditions = buildCallConditions({
       workspaceId,
       dateFrom,
       dateTo,
@@ -178,7 +259,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
         ? await baseQuery.where(and(...conditions))
         : await baseQuery;
     return result[0]?.count ?? 0;
-  }
+  },
 
   async getTranscriptByCallId(callId: string): Promise<any | null> {
     const result = await db
@@ -187,7 +268,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       .where(eq(schema.transcripts.callId, callId))
       .limit(1);
     return result[0] ?? null;
-  }
+  },
 
   async upsertTranscript(data: {
     callId: string;
@@ -222,7 +303,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       .returning({ id: schema.transcripts.id });
 
     return result[0]?.id ?? "";
-  }
+  },
 
   async getEvaluation(callId: string): Promise<any | null> {
     const result = await db
@@ -231,7 +312,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       .where(eq(schema.callEvaluations.callId, callId))
       .limit(1);
     return result[0] ?? null;
-  }
+  },
 
   async addEvaluation(data: EvaluationData): Promise<string> {
     // Проверяем существование звонка
@@ -282,7 +363,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       .returning({ id: schema.callEvaluations.id });
 
     return result[0]?.id ?? "";
-  }
+  },
 
   async getMetrics(workspaceId?: string): Promise<{
     totalCalls: number;
@@ -347,7 +428,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       avgDuration: avgDuration,
       lastSync: lastSync ? lastSync.toISOString() : null,
     };
-  }
+  },
 
   async getEvaluationsStats(params: {
     workspaceId?: string;
@@ -437,75 +518,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     }
 
     return stats;
-  }
+  },
+};
 
-  private buildCallConditions(params: {
-    workspaceId?: string;
-    dateFrom?: string;
-    dateTo?: string;
-    internalNumbers?: string[];
-    mobileNumbers?: string[];
-    direction?: string;
-    valueScores?: number[];
-    operators?: string[];
-    manager?: string;
-    status?: string;
-    q?: string;
-  }) {
-    const conditions = [];
-    const {
-      workspaceId,
-      dateFrom,
-      dateTo,
-      internalNumbers,
-      mobileNumbers,
-      direction,
-      valueScores,
-      operators,
-      manager,
-      status,
-      q,
-    } = params;
-
-    if (workspaceId != null) {
-      conditions.push(eq(schema.calls.workspaceId, workspaceId));
-    }
-    if (dateFrom) {
-      conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
-    }
-    if (dateTo) {
-      conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
-    }
-    if (internalNumbers?.length) {
-      conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
-    }
-    if (mobileNumbers?.length) {
-      conditions.push(inArray(schema.calls.number, mobileNumbers));
-    }
-    if (direction) {
-      conditions.push(eq(schema.calls.direction, direction));
-    }
-    if (status) {
-      conditions.push(eq(schema.calls.status, status));
-    }
-    if (operators?.length) {
-      conditions.push(inArray(schema.calls.source, operators));
-    }
-    if (manager) {
-      conditions.push(eq(schema.calls.name, manager));
-    }
-    if (valueScores?.length) {
-      conditions.push(inArray(schema.callEvaluations.valueScore, valueScores));
-    }
-    if (q) {
-      const qCond = or(
-        like(schema.calls.number, `%${q}%`),
-        like(schema.calls.name, `%${q}%`),
-        like(schema.calls.customerName, `%${q}%`),
-      );
-      if (qCond) conditions.push(qCond);
-    }
-
-    return conditions;
-  }
-}
+export type CallsRepository = typeof callsRepository;

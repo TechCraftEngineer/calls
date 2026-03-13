@@ -14,8 +14,8 @@ import {
 } from "@calls/ui";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import Header from "@/components/header";
-import Sidebar from "@/components/sidebar";
+import Header from "@/components/layout/header";
+import Sidebar from "@/components/layout/sidebar";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
 

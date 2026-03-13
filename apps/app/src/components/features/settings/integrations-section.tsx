@@ -1,9 +1,9 @@
 "use client";
 
 import { Card, CardContent, CardHeader, Input } from "@calls/ui";
-import { INTEGRATION_KEYS } from "../constants/prompts";
-import type { IntegrationsSectionProps } from "../types/settings";
-import { createPromptChangeHandler } from "../utils/prompt-updater";
+import { INTEGRATION_KEYS } from "./constants";
+import type { IntegrationsSectionProps } from "./types";
+import { createPromptChangeHandler } from "./utils";
 
 export default function IntegrationsSection({
   prompts,

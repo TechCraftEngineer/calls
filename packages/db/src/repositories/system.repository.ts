@@ -6,7 +6,7 @@ import { desc } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 
-export class SystemRepository {
+export const systemRepository = {
   async addActivityLog(
     level: string,
     message: string,
@@ -20,7 +20,7 @@ export class SystemRepository {
       actor,
       workspaceId,
     });
-  }
+  },
 
   async getLastActivity(): Promise<{ timestamp: Date | null }> {
     const result = await db
@@ -30,5 +30,7 @@ export class SystemRepository {
       .limit(1);
 
     return { timestamp: result[0]?.timestamp ?? null };
-  }
-}
+  },
+};
+
+export type SystemRepository = typeof systemRepository;

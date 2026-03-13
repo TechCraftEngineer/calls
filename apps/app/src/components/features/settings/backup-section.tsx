@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Card, CardContent, CardHeader } from "@calls/ui";
-import type { BackupSectionProps } from "../types/settings";
+import type { BackupSectionProps } from "./types";
 
 export default function BackupSection({
   backupLoading,

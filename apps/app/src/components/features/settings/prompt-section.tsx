@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, Input, Textarea } from "@calls/ui";
-import type { PromptSectionProps } from "../types/settings";
+import type { PromptSectionProps } from "./types";
 
 export default function PromptSection({
   key: promptKey,

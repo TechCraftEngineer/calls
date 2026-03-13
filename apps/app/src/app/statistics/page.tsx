@@ -20,10 +20,10 @@ import {
 } from "@calls/ui";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import Header from "@/components/header";
-import KpiTable from "@/components/kpi-table";
-import ReportSettingsPanel from "@/components/report-settings-panel";
-import Sidebar from "@/components/sidebar";
+import Header from "@/components/layout/header";
+import KpiTable from "@/components/features/calls/kpi-table";
+import ReportSettingsPanel from "@/components/features/settings/report-settings-panel";
+import Sidebar from "@/components/layout/sidebar";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
 

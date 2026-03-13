@@ -3,7 +3,7 @@
 import { paths } from "@calls/config";
 import { Button, Card, CardContent, CardHeader } from "@calls/ui";
 import Link from "next/link";
-import type { TelegramSectionProps } from "../types/settings";
+import type { TelegramSectionProps } from "./types";
 
 export default function TelegramSection({
   sendTestLoading,
