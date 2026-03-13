@@ -6,8 +6,8 @@
  */
 
 import { dirname, resolve } from "node:path";
-import { db } from "@acme/db";
-import * as schema from "@acme/db/schema";
+import { db } from "@calls/db";
+import * as schema from "@calls/db/schema";
 import Database from "better-sqlite3";
 import { existsSync } from "fs";
 import { fileURLToPath } from "url";

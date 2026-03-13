@@ -3,24 +3,37 @@
  * Uses Better Auth for session; enriches with backend user profile (internal_numbers, etc.).
  */
 
-import { storage } from "@acme/backend-storage";
+import { storage } from "@calls/backend-storage";
 import { ORPCError, os } from "@orpc/server";
 
 export type AuthLike = {
-  api: { getSession: (opts: { headers: Headers }) => Promise<{ user?: Record<string, unknown>; session?: unknown } | null> };
+  api: {
+    getSession: (opts: {
+      headers: Headers;
+    }) => Promise<{ user?: Record<string, unknown>; session?: unknown } | null>;
+  };
 };
 
-export async function createBackendContext(opts: { headers: Headers; auth?: AuthLike }) {
+export async function createBackendContext(opts: {
+  headers: Headers;
+  auth?: AuthLike;
+}) {
   let user: Awaited<ReturnType<typeof storage.getUserByUsername>> | null = null;
 
   if (opts.auth) {
     const session = await opts.auth.api.getSession({ headers: opts.headers });
     if (session?.user) {
       const baUser = session.user as Record<string, unknown>;
-      const username = (baUser.username ?? baUser.email ?? baUser.name) as string | undefined;
+      const username = (baUser.username ?? baUser.email ?? baUser.name) as
+        | string
+        | undefined;
       if (username) {
         const profile = storage.getUserByUsername(username);
-        user = profile ? ({ ...profile, ...baUser } as Awaited<ReturnType<typeof storage.getUserByUsername>>) : (baUser as Awaited<ReturnType<typeof storage.getUserByUsername>>);
+        user = profile
+          ? ({ ...profile, ...baUser } as Awaited<
+              ReturnType<typeof storage.getUserByUsername>
+            >)
+          : (baUser as Awaited<ReturnType<typeof storage.getUserByUsername>>);
       }
     }
   }
@@ -28,7 +41,9 @@ export async function createBackendContext(opts: { headers: Headers; auth?: Auth
   if (!user) {
     const cookie = opts.headers.get("cookie");
     const match = cookie?.match(/\bsession=([^;]+)/);
-    const sessionUsername = match?.[1] ? decodeURIComponent(match[1].trim()) : null;
+    const sessionUsername = match?.[1]
+      ? decodeURIComponent(match[1].trim())
+      : null;
     if (sessionUsername) {
       user = storage.getUserByUsername(sessionUsername);
     }
@@ -68,7 +83,13 @@ export const protectedProcedure = publicProcedure.use(({ context, next }) => {
 function isAdmin(user: Record<string, unknown>): boolean {
   const un = user.username as string;
   const inn = user.internal_numbers as string;
-  return un === "admin@mango" || un === "admin@gmail.com" || String(inn ?? "").trim().toLowerCase() === "all";
+  return (
+    un === "admin@mango" ||
+    un === "admin@gmail.com" ||
+    String(inn ?? "")
+      .trim()
+      .toLowerCase() === "all"
+  );
 }
 
 export const adminProcedure = protectedProcedure.use(({ context, next }) => {

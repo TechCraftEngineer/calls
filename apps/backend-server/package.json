@@ -1,22 +1,23 @@
 {
-  "name": "@acme/backend-server",
+  "name": "@calls/backend-server",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun run --watch src/index.ts",
-    "start": "bun run src/index.ts",
+    "dev": "bun -b watch",
+    "build": "bun -b build",
+    "start": "bun -b start",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@acme/backend-api": "workspace:*",
-    "@acme/backend-storage": "workspace:*",
+    "@calls/backend-api": "workspace:*",
+    "@calls/backend-storage": "workspace:*",
     "@orpc/server": "^1.13.6",
     "better-auth": "1.5.5",
     "better-sqlite3": "^12.6.0",
     "hono": "4.12.7"
   },
   "devDependencies": {
-    "@acme/tsconfig": "workspace:*",
+    "@calls/tsconfig": "workspace:*",
     "typescript": "5.9.3"
   }
 }

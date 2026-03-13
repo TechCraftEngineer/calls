@@ -11,8 +11,8 @@
  * @see https://orpc.dev/docs/server/context
  */
 
-import type { Auth } from "@acme/auth";
-import { dbEdge as db } from "@acme/db";
+import type { Auth } from "@calls/auth";
+import { dbEdge as db } from "@calls/db";
 import { ORPCError, os } from "@orpc/server";
 
 export async function createORPCContext(opts: {

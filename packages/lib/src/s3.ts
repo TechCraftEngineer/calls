@@ -1,4 +1,4 @@
-import { env } from "@acme/config";
+import { env } from "@calls/config";
 import {
   GetObjectCommand,
   PutObjectCommand,

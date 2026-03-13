@@ -6,8 +6,8 @@
  * All routers added in /api/routers should be manually added here.
  */
 
-import { eq, user } from "@acme/db";
-import { accountFormSchema, profileFormSchema } from "@acme/validators";
+import { eq, user } from "@calls/db";
+import { accountFormSchema, profileFormSchema } from "@calls/validators";
 import { protectedProcedure } from "./orpc";
 
 /**

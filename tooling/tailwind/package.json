@@ -1,26 +1,22 @@
 {
-  "name": "@acme/tailwind-config",
+  "name": "@calls/tailwind-config",
   "private": true,
   "type": "module",
   "exports": {
-    "./theme": "./theme.css",
-    "./postcss-config": "./postcss-config.js"
+    ".": "./theme.css",
+    "./config": "./tailwind.config.js"
   },
   "license": "MIT",
   "scripts": {
-    "clean": "git clean -xdf .cache .turbo node_modules",
-    "format": "biome format .",
-    "lint": "biome lint .",
-    "check": "biome check .",
+    "clean": "rm -rf .turbo dist",
+    "dev": "bun -b watch",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tailwindcss/postcss": "4.2.1",
-    "postcss": "^8.5.8",
     "tailwindcss": "4.2.1"
   },
   "devDependencies": {
-    "@acme/tsconfig": "*",
+    "@calls/tsconfig": "*",
     "@types/node": "25.5.0",
     "typescript": "5.9.3"
   }

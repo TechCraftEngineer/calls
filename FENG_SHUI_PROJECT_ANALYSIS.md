@@ -250,7 +250,7 @@ mv packages/backend-api packages/api-types
 mv packages/backend-storage packages/storage
 
 # 2. Обновить все импорты
-find . -name "*.ts" -o -name "*.tsx" | xargs grep -l "from.*db" | xargs sed -i 's|@acme/db|@acme/database|g'
+find . -name "*.ts" -o -name "*.tsx" | xargs grep -l "from.*db" | xargs sed -i 's|@calls/db|@calls/database|g'
 ```
 
 ### **Этап 2: Добавить конфигурацию (Высший приоритет)**

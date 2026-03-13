@@ -10,7 +10,7 @@
 ### 2. Настройка oRPC client
 - ✅ Обновлён `lib/orpc.ts` с правильными типами
 - ✅ Настроен автоматический baseURL detection
-- ✅ Интегрирован с `@acme/backend-api-client`
+- ✅ Интегрирован с `@calls/backend-api-client`
 
 ### 3. Настройка Better Auth client
 - ✅ Создан `lib/better-auth.ts` с full конфигурацией

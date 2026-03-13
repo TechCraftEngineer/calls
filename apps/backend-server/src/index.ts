@@ -3,7 +3,11 @@
  * Uses Better Auth for authentication.
  */
 
-import { backendRouter, createBackendApiWithContext, createBackendContext } from "@acme/backend-api";
+import {
+  backendRouter,
+  createBackendApiWithContext,
+  createBackendContext,
+} from "@calls/backend-api";
 import { ORPCError } from "@orpc/server";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
@@ -17,13 +21,14 @@ import { existsSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { auth } from "./auth";
-import { storage } from "@acme/backend-storage";
+import { storage } from "@calls/backend-storage";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = new Hono();
 
-const corsOrigin = process.env.CORS_ORIGINS?.split(",")[0] ?? "http://localhost:3000";
+const corsOrigin =
+  process.env.CORS_ORIGINS?.split(",")[0] ?? "http://localhost:3000";
 
 app.use(logger());
 app.use(
@@ -38,7 +43,8 @@ app.use(
 
 // Static files: /api/records/:filename -> records folder
 function getRecordsDir(): string {
-  const isDocker = process.env.DEPLOYMENT_ENV === "docker" || existsSync("/.dockerenv");
+  const isDocker =
+    process.env.DEPLOYMENT_ENV === "docker" || existsSync("/.dockerenv");
   if (isDocker) return "/app/records";
   const projectRoot = resolve(__dirname, "../../..");
   return resolve(projectRoot, "records");
@@ -46,7 +52,13 @@ function getRecordsDir(): string {
 
 const recordsDir = getRecordsDir();
 if (existsSync(recordsDir)) {
-  app.use("/api/records/*", serveStatic({ root: recordsDir, rewriteRequestPath: (p) => p.replace(/^\/api\/records\/?/, "") }));
+  app.use(
+    "/api/records/*",
+    serveStatic({
+      root: recordsDir,
+      rewriteRequestPath: (p) => p.replace(/^\/api\/records\/?/, ""),
+    }),
+  );
 }
 
 // oRPC handler
@@ -60,7 +72,10 @@ const rpcHandler = new RPCHandler(backendRouter, {
 
 app.on(["GET", "POST"], "/api/orpc/*", async (c) => {
   try {
-    const context = await createBackendContext({ headers: c.req.raw.headers, auth });
+    const context = await createBackendContext({
+      headers: c.req.raw.headers,
+      auth,
+    });
     const result = await rpcHandler.handle(c.req.raw, {
       prefix: "/api/orpc",
       context,
@@ -88,12 +103,17 @@ app.post("/api/auth/login", async (c) => {
   const authUrl = new URL(c.req.url).origin;
   const authRequest = new Request(`${authUrl}/api/auth/sign-in/username`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Cookie: c.req.header("Cookie") ?? "" },
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: c.req.header("Cookie") ?? "",
+    },
     body: JSON.stringify({ username, password }),
   });
   const authResponse = await auth.handler(authRequest);
   if (authResponse.status === 200) {
-    const data = (await authResponse.json()) as { user?: { id: string; name?: string; username?: string } };
+    const data = (await authResponse.json()) as {
+      user?: { id: string; name?: string; username?: string };
+    };
     const headers = new Headers();
     authResponse.headers.forEach((v, k) => {
       if (k.toLowerCase() === "set-cookie") headers.append(k, v);
@@ -111,7 +131,7 @@ app.post("/api/auth/login", async (c) => {
         },
       },
       200,
-      Object.fromEntries(headers.entries()) as Record<string, string>
+      Object.fromEntries(headers.entries()) as Record<string, string>,
     );
   }
   // Fallback: legacy storage (during migration from Python backend)
@@ -120,7 +140,8 @@ app.post("/api/auth/login", async (c) => {
     return c.json({ success: false, detail: "Invalid credentials" }, 401);
   }
   const user = storage.getUserByUsername(username);
-  if (!user) return c.json({ success: false, detail: "Invalid credentials" }, 401);
+  if (!user)
+    return c.json({ success: false, detail: "Invalid credentials" }, 401);
   setCookie(c, "session", username, {
     httpOnly: true,
     secure: c.req.url.startsWith("https"),
@@ -153,7 +174,11 @@ app.post("/api/auth/logout", async (c) => {
   authResponse.headers.forEach((v, k) => {
     if (k.toLowerCase() === "set-cookie") headers.append(k, v);
   });
-  return c.json({ success: true, message: "Logged out" }, 200, Object.fromEntries(headers.entries()) as Record<string, string>);
+  return c.json(
+    { success: true, message: "Logged out" },
+    200,
+    Object.fromEntries(headers.entries()) as Record<string, string>,
+  );
 });
 
 // REST compatibility: /api/auth/me - delegates to backend-api
@@ -164,7 +189,8 @@ app.get("/api/auth/me", async (c) => {
     const u = await api.auth.me();
     return c.json(u);
   } catch (e) {
-    if (e instanceof ORPCError && e.code === "UNAUTHORIZED") return c.json({ detail: "Unauthorized" }, 401);
+    if (e instanceof ORPCError && e.code === "UNAUTHORIZED")
+      return c.json({ detail: "Unauthorized" }, 401);
     throw e;
   }
 });
@@ -180,9 +206,16 @@ app.get("/api/calls", async (c) => {
     const page = Number(c.req.query("page")) || 1;
     const perPage = Number(c.req.query("per_page")) || 15;
     const valueRaw = c.req.query("value");
-    const value = valueRaw ? valueRaw.split(",").map(Number).filter((n) => !Number.isNaN(n)) : undefined;
+    const value = valueRaw
+      ? valueRaw
+          .split(",")
+          .map(Number)
+          .filter((n) => !Number.isNaN(n))
+      : undefined;
     const operatorRaw = c.req.query("operator");
-    const operator = operatorRaw ? operatorRaw.split(",").filter(Boolean) : undefined;
+    const operator = operatorRaw
+      ? operatorRaw.split(",").filter(Boolean)
+      : undefined;
     const result = await api.calls.list({
       page,
       per_page: perPage,
@@ -198,7 +231,8 @@ app.get("/api/calls", async (c) => {
     return c.json(result);
   } catch (e) {
     if (e instanceof ORPCError) {
-      if (e.code === "UNAUTHORIZED") return c.json({ detail: "Unauthorized" }, 401);
+      if (e.code === "UNAUTHORIZED")
+        return c.json({ detail: "Unauthorized" }, 401);
       if (e.code === "FORBIDDEN") return c.json({ detail: "Forbidden" }, 403);
     }
     throw e;
@@ -215,9 +249,11 @@ app.get("/api/calls/:id", async (c) => {
     return c.json(result);
   } catch (e) {
     if (e instanceof ORPCError) {
-      if (e.code === "UNAUTHORIZED") return c.json({ detail: "Unauthorized" }, 401);
+      if (e.code === "UNAUTHORIZED")
+        return c.json({ detail: "Unauthorized" }, 401);
     }
-    if (e instanceof Error && e.message === "Call not found") return c.json({ detail: "Call not found" }, 404);
+    if (e instanceof Error && e.message === "Call not found")
+      return c.json({ detail: "Call not found" }, 404);
     throw e;
   }
 });
@@ -230,7 +266,8 @@ app.post("/api/calls/:id/recommendations", async (c) => {
   const call = storage.getCall(id);
   if (!call) return c.json({ detail: "Call not found" }, 404);
   const transcript = storage.getTranscriptByCallId(id);
-  if (!transcript?.text) return c.json({ detail: "Transcript not found for this call" }, 400);
+  if (!transcript?.text)
+    return c.json({ detail: "Transcript not found for this call" }, 400);
   return c.json({ detail: "DeepSeek recommendations not yet integrated" }, 501);
 });
 
@@ -242,7 +279,11 @@ app.post("/api/calls/:id/evaluate", async (c) => {
   const call = storage.getCall(id);
   if (!call) return c.json({ detail: "Call not found" }, 404);
   const transcript = storage.getTranscriptByCallId(id);
-  if (!transcript?.text) return c.json({ detail: "Transcript not found. Please transcribe the call first." }, 400);
+  if (!transcript?.text)
+    return c.json(
+      { detail: "Transcript not found. Please transcribe the call first." },
+      400,
+    );
   return c.json({ detail: "DeepSeek evaluation not yet integrated" }, 501);
 });
 
@@ -256,12 +297,15 @@ app.delete("/api/calls/:id", async (c) => {
     return c.json(result);
   } catch (e) {
     if (e instanceof ORPCError) {
-      if (e.code === "UNAUTHORIZED") return c.json({ detail: "Unauthorized" }, 401);
+      if (e.code === "UNAUTHORIZED")
+        return c.json({ detail: "Unauthorized" }, 401);
       if (e.code === "FORBIDDEN") return c.json({ detail: "Forbidden" }, 403);
     }
     if (e instanceof Error) {
-      if (e.message === "Call not found") return c.json({ detail: "Call not found" }, 404);
-      if (e.message === "Failed to delete call") return c.json({ detail: "Failed to delete call" }, 500);
+      if (e.message === "Call not found")
+        return c.json({ detail: "Call not found" }, 404);
+      if (e.message === "Failed to delete call")
+        return c.json({ detail: "Failed to delete call" }, 500);
     }
     throw e;
   }
@@ -270,12 +314,15 @@ app.delete("/api/calls/:id", async (c) => {
 // REST: /api/users - delegates to backend-api
 function handleApiError(e: unknown, c: import("hono").Context) {
   if (e instanceof ORPCError) {
-    if (e.code === "UNAUTHORIZED") return c.json({ detail: "Unauthorized" }, 401);
+    if (e.code === "UNAUTHORIZED")
+      return c.json({ detail: "Unauthorized" }, 401);
     if (e.code === "FORBIDDEN") return c.json({ detail: "Forbidden" }, 403);
   }
   if (e instanceof Error) {
-    if (e.message === "User not found" || e.message === "Call not found") return c.json({ detail: e.message }, 404);
-    if (e.message === "Not authorized") return c.json({ detail: e.message }, 403);
+    if (e.message === "User not found" || e.message === "Call not found")
+      return c.json({ detail: e.message }, 404);
+    if (e.message === "Not authorized")
+      return c.json({ detail: e.message }, 403);
   }
   return null;
 }
@@ -295,8 +342,19 @@ app.get("/api/users", async (c) => {
 
 app.post("/api/users", async (c) => {
   const ctx = await createBackendContext({ headers: c.req.raw.headers, auth });
-  const body = await c.req.json<{ username: string; password: string; first_name: string; last_name?: string; internal_numbers?: string; mobile_numbers?: string }>();
-  if (!body.username || !body.password || !body.first_name) return c.json({ detail: "Username, password, and first name are required" }, 400);
+  const body = await c.req.json<{
+    username: string;
+    password: string;
+    first_name: string;
+    last_name?: string;
+    internal_numbers?: string;
+    mobile_numbers?: string;
+  }>();
+  if (!body.username || !body.password || !body.first_name)
+    return c.json(
+      { detail: "Username, password, and first name are required" },
+      400,
+    );
   try {
     const api = createBackendApiWithContext(ctx);
     const user = await api.users.create({
@@ -357,15 +415,25 @@ app.delete("/api/users/:id", async (c) => {
   } catch (e) {
     const err = handleApiError(e, c);
     if (err) return err;
-    return c.json({ detail: e instanceof Error ? e.message : "Cannot delete your own account" }, 400);
+    return c.json(
+      {
+        detail:
+          e instanceof Error ? e.message : "Cannot delete your own account",
+      },
+      400,
+    );
   }
 });
 
 app.post("/api/users/:id/change-password", async (c) => {
   const ctx = await createBackendContext({ headers: c.req.raw.headers, auth });
   const id = Number(c.req.param("id"));
-  const body = await c.req.json<{ new_password: string; confirm_password: string }>();
-  if (!body.new_password) return c.json({ detail: "Password cannot be empty" }, 400);
+  const body = await c.req.json<{
+    new_password: string;
+    confirm_password: string;
+  }>();
+  if (!body.new_password)
+    return c.json({ detail: "Password cannot be empty" }, 400);
   try {
     const api = createBackendApiWithContext(ctx);
     const result = await api.users.changePassword({
@@ -457,10 +525,15 @@ app.get("/api/settings/prompts", async (c) => {
 
 app.put("/api/settings/prompts", async (c) => {
   const ctx = await createBackendContext({ headers: c.req.raw.headers, auth });
-  const body = await c.req.json<{ prompts?: Record<string, { value?: string; description?: string }> }>();
+  const body = await c.req.json<{
+    prompts?: Record<string, { value?: string; description?: string }>;
+  }>();
   try {
     const api = createBackendApiWithContext(ctx);
-    await api.settings.updatePrompts({ prompts: body.prompts } as Record<string, unknown>);
+    await api.settings.updatePrompts({ prompts: body.prompts } as Record<
+      string,
+      unknown
+    >);
     return c.json({ success: true, message: "Settings updated successfully" });
   } catch (e) {
     const err = handleApiError(e, c);
@@ -535,7 +608,8 @@ app.post("/api/reports/send-test-telegram", async (c) => {
     await api.reports.sendTestTelegram();
     return c.json({ success: true });
   } catch (e) {
-    if (e instanceof Error && e.message.includes("Telegram")) return c.json({ detail: e.message }, 501);
+    if (e instanceof Error && e.message.includes("Telegram"))
+      return c.json({ detail: e.message }, 501);
     const err = handleApiError(e, c);
     if (err) return err;
     throw e;
@@ -543,7 +617,9 @@ app.post("/api/reports/send-test-telegram", async (c) => {
 });
 
 // Health
-app.get("/", (c) => c.json({ message: "Mango Office Transcription API", version: "2.0.0" }));
+app.get("/", (c) =>
+  c.json({ message: "Mango Office Transcription API", version: "2.0.0" }),
+);
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 // 404

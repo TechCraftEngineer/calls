@@ -1,28 +1,24 @@
 {
-  "name": "@acme/backend-api",
+  "name": "@calls/backend-api",
   "private": true,
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
-    },
-    "./client": {
-      "types": "./src/client.ts",
-      "default": "./src/client.ts"
-    }
+    ".": "./src/index.ts"
   },
+  "license": "MIT",
   "scripts": {
+    "clean": "rm -rf *.tsbuildinfo .turbo dist",
+    "dev": "bun -b watch",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@acme/backend-storage": "workspace:*",
+    "@calls/backend-storage": "workspace:*",
     "@orpc/client": "^1.13.6",
     "@orpc/server": "^1.13.6",
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@acme/tsconfig": "workspace:*",
+    "@calls/tsconfig": "workspace:*",
     "typescript": "5.9.3"
   }
 }

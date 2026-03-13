@@ -1,8 +1,12 @@
 {
-  "name": "@acme/emails",
+  "name": "@calls/emails",
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "license": "MIT",
   "workspaces": [
     ".react-email"
   ],
@@ -13,13 +17,15 @@
     "dist/**"
   ],
   "scripts": {
+    "clean": "rm -rf *.tsbuildinfo .turbo dist",
     "dev": "bun --env-file=../../.env run email dev -p 3002",
+    "typecheck": "tsc --noEmit",
     "build": "tsup",
     "export": "email export"
   },
   "dependencies": {
-    "@acme/config": "workspace:*",
-    "@acme/tsconfig": "workspace:*",
+    "@calls/config": "workspace:*",
+    "@calls/tsconfig": "workspace:*",
     "@radix-ui/colors": "3.0.0",
     "@react-email/components": "1.0.9",
     "@tailwindcss/typography": "0.5.19",

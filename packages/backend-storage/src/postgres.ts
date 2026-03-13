@@ -3,7 +3,7 @@
  * Uses Drizzle ORM with PostgreSQL database
  */
 
-import { db } from "@acme/db";
+import { db } from "@calls/db";
 import type {
   ActivityLog,
   Call,
@@ -17,8 +17,8 @@ import type {
   Prompt,
   Transcript,
   User,
-} from "@acme/db/schema";
-import * as schema from "@acme/db/schema";
+} from "@calls/db/schema";
+import * as schema from "@calls/db/schema";
 import { compareSync, hashSync } from "bcryptjs";
 import { and, avg, count, desc, eq, inArray, like, or } from "drizzle-orm";
 

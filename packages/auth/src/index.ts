@@ -1,4 +1,4 @@
-import { dbEdge as db } from "@acme/db";
+import { dbEdge as db } from "@calls/db";
 import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";

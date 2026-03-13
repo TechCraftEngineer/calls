@@ -1,10 +1,17 @@
 import { z } from "zod";
 import { protectedProcedure, adminProcedure } from "../orpc";
-import { storage } from "@acme/backend-storage";
+import { storage } from "@calls/backend-storage";
 
 export const statisticsRouter = {
   getStatistics: adminProcedure
-    .input(z.object({ date_from: z.string().optional(), date_to: z.string().optional(), sort: z.string().optional(), order: z.string().optional() }))
+    .input(
+      z.object({
+        date_from: z.string().optional(),
+        date_to: z.string().optional(),
+        sort: z.string().optional(),
+        order: z.string().optional(),
+      }),
+    )
     .handler(async ({ input }) => {
       let dateFrom = input.date_from;
       let dateTo = input.date_to;
@@ -20,7 +27,10 @@ export const statisticsRouter = {
       }
       const dateFromDb = dateFrom ? `${dateFrom} 00:00:00` : undefined;
       const dateToDb = dateTo ? `${dateTo} 23:59:59` : undefined;
-      const stats = storage.getEvaluationsStats({ dateFrom: dateFromDb, dateTo: dateToDb });
+      const stats = storage.getEvaluationsStats({
+        dateFrom: dateFromDb,
+        dateTo: dateToDb,
+      });
       const statsList = Object.values(stats);
       const reverse = input.order === "desc";
       const sortKey = input.sort ?? "name";
@@ -34,10 +44,17 @@ export const statisticsRouter = {
           va = a.outgoing.count;
           vb = b.outgoing.count;
         }
-        if (typeof va === "string") return reverse ? (vb as string).localeCompare(va) : (va as string).localeCompare(vb as string);
+        if (typeof va === "string")
+          return reverse
+            ? (vb as string).localeCompare(va)
+            : (va as string).localeCompare(vb as string);
         return reverse ? (vb as number) - va : va - (vb as number);
       });
-      return { statistics: statsList, date_from: dateFrom ?? "", date_to: dateTo ?? "" };
+      return {
+        statistics: statsList,
+        date_from: dateFrom ?? "",
+        date_to: dateTo ?? "",
+      };
     }),
 
   getMetrics: protectedProcedure.handler(async () => {
