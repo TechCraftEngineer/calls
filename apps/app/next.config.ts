@@ -1,5 +1,5 @@
 import { createJiti } from "jiti";
-import { NextConfig } from "next";
+import type { NextConfig } from "next";
 
 export default async function createNextConfig(): Promise<NextConfig> {
   const jiti = createJiti(import.meta.url);
@@ -87,7 +87,7 @@ export default async function createNextConfig(): Promise<NextConfig> {
     /** Proxy API routes to app-server */
     async rewrites() {
       const appServerUrl =
-        process.env.APP_SERVER_URL || "http://localhost:7000";
+        process.env.APP_SERVER_URL || "http://localhost:8000";
 
       return [
         {

@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "@calls/root",
+      "dependencies": {
+        "@better-auth/drizzle-adapter": "^1.5.5",
+      },
       "devDependencies": {
         "@ai-sdk/openai": "^3.0.41",
         "@biomejs/biome": "2.4.6",
@@ -46,7 +49,7 @@
         "@calls/api": "workspace:*",
         "@calls/db": "workspace:*",
         "@orpc/server": "^1.13.7",
-        "better-auth": "1.5.5",
+        "better-auth": "^1.5.5",
         "hono": "4.12.7",
       },
       "devDependencies": {
