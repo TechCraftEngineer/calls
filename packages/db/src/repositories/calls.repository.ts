@@ -31,7 +31,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
 
   async findByFilename(
     filename: string,
-    workspaceId?: number,
+    workspaceId?: string,
   ): Promise<any | null> {
     const conditions = [eq(schema.calls.filename, filename)];
     if (workspaceId != null) {
@@ -45,7 +45,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     return result[0] ?? null;
   }
 
-  async create(data: CreateCallData): Promise<number> {
+  async create(data: CreateCallData): Promise<string> {
     const result = await db
       .insert(schema.calls)
       .values({
@@ -57,13 +57,13 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
         duration: data.duration ?? null,
         direction: data.direction ?? null,
         status: data.status ?? null,
-        sizeBytes: data.size_bytes ?? null,
-        internalNumber: data.internal_number ?? null,
+        sizeBytes: data.sizeBytes ?? null,
+        internalNumber: data.internalNumber ?? null,
         source: data.source ?? null,
-        customerName: data.customer_name ?? null,
+        customerName: data.customerName ?? null,
       })
       .returning({ id: schema.calls.id });
-    return result[0]?.id ?? 0;
+    return result[0]?.id ?? "";
   }
 
   async findWithTranscriptsAndEvaluations(
@@ -85,7 +85,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       q,
     } = params;
 
-    const conditions = this._buildCallConditions({
+    const conditions = this.buildCallConditions({
       workspaceId,
       dateFrom,
       dateTo,
@@ -148,7 +148,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       q,
     } = params;
 
-    const conditions = this._buildCallConditions({
+    const conditions = this.buildCallConditions({
       workspaceId,
       dateFrom,
       dateTo,
@@ -179,7 +179,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     return result[0]?.count ?? 0;
   }
 
-  async getTranscriptByCallId(callId: number): Promise<any | null> {
+  async getTranscriptByCallId(callId: string): Promise<any | null> {
     const result = await db
       .select()
       .from(schema.transcripts)
@@ -188,7 +188,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     return result[0] ?? null;
   }
 
-  async getEvaluation(callId: number): Promise<any | null> {
+  async getEvaluation(callId: string): Promise<any | null> {
     const result = await db
       .select()
       .from(schema.callEvaluations)
@@ -197,25 +197,36 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     return result[0] ?? null;
   }
 
-  async addEvaluation(data: EvaluationData): Promise<number> {
+  async addEvaluation(data: EvaluationData): Promise<string> {
+    // Проверяем существование звонка
+    const existingCall = await db
+      .select({ id: schema.calls.id })
+      .from(schema.calls)
+      .where(eq(schema.calls.id, data.callId))
+      .limit(1);
+
+    if (!existingCall[0]) {
+      throw new Error(`Call with ID ${data.callId} not found`);
+    }
+
     const breakdown =
-      typeof data.manager_breakdown === "object"
-        ? JSON.stringify(data.manager_breakdown)
-        : (data.manager_breakdown ?? null);
-    const recommendations = Array.isArray(data.manager_recommendations)
-      ? JSON.stringify(data.manager_recommendations)
+      typeof data.managerBreakdown === "object"
+        ? JSON.stringify(data.managerBreakdown)
+        : (data.managerBreakdown ?? null);
+    const recommendations = Array.isArray(data.managerRecommendations)
+      ? JSON.stringify(data.managerRecommendations)
       : null;
 
     const result = await db
       .insert(schema.callEvaluations)
       .values({
-        callId: data.call_id,
-        isQualityAnalyzable: data.is_quality_analyzable !== false,
-        notAnalyzableReason: data.not_analyzable_reason ?? null,
-        valueScore: data.value_score ?? null,
-        valueExplanation: data.value_explanation ?? null,
-        managerScore: data.manager_score ?? null,
-        managerFeedback: data.manager_feedback ?? null,
+        callId: data.callId,
+        isQualityAnalyzable: data.isQualityAnalyzable !== false,
+        notAnalyzableReason: data.notAnalyzableReason ?? null,
+        valueScore: data.valueScore ?? null,
+        valueExplanation: data.valueExplanation ?? null,
+        managerScore: data.managerScore ?? null,
+        managerFeedback: data.managerFeedback ?? null,
         managerBreakdown: breakdown,
         managerRecommendations: recommendations,
         createdAt: new Date(),
@@ -223,27 +234,27 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       .onConflictDoUpdate({
         target: schema.callEvaluations.callId,
         set: {
-          isQualityAnalyzable: data.is_quality_analyzable !== false,
-          notAnalyzableReason: data.not_analyzable_reason ?? null,
-          valueScore: data.value_score ?? null,
-          valueExplanation: data.value_explanation ?? null,
-          managerScore: data.manager_score ?? null,
-          managerFeedback: data.manager_feedback ?? null,
+          isQualityAnalyzable: data.isQualityAnalyzable !== false,
+          notAnalyzableReason: data.notAnalyzableReason ?? null,
+          valueScore: data.valueScore ?? null,
+          valueExplanation: data.valueExplanation ?? null,
+          managerScore: data.managerScore ?? null,
+          managerFeedback: data.managerFeedback ?? null,
           managerBreakdown: breakdown,
           managerRecommendations: recommendations,
-          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       })
       .returning({ id: schema.callEvaluations.id });
 
-    return result[0]?.id ?? 0;
+    return result[0]?.id ?? "";
   }
 
-  async getMetrics(workspaceId?: number): Promise<{
-    total_calls: number;
+  async getMetrics(workspaceId?: string): Promise<{
+    totalCalls: number;
     transcribed: number;
-    avg_duration: number;
-    last_sync: string | null;
+    avgDuration: number;
+    lastSync: string | null;
   }> {
     const callConditions =
       workspaceId != null
@@ -297,15 +308,15 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     const lastSync = lastSyncResult[0]?.timestamp ?? null;
 
     return {
-      total_calls: totalCalls,
+      totalCalls: totalCalls,
       transcribed,
-      avg_duration: avgDuration,
-      last_sync: lastSync ? lastSync.toISOString() : null,
+      avgDuration: avgDuration,
+      lastSync: lastSync ? lastSync.toISOString() : null,
     };
   }
 
   async getEvaluationsStats(params: {
-    workspaceId?: number;
+    workspaceId?: string;
     dateFrom?: string;
     dateTo?: string;
     internalNumbers?: string[];
@@ -339,10 +350,10 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     let query = db
       .select({
         internalNumber: schema.calls.internalNumber,
-        manager_name: schema.calls.name,
+        managerName: schema.calls.name,
         direction: schema.calls.direction,
-        total_calls: count(),
-        total_duration: avg(schema.calls.duration),
+        totalCalls: count(),
+        totalDuration: avg(schema.calls.duration),
       })
       .from(schema.calls)
       .leftJoin(
@@ -371,7 +382,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     > = {};
 
     for (const row of results) {
-      const key = row.manager_name ?? row.internalNumber ?? "Unknown";
+      const key = row.managerName ?? row.internalNumber ?? "Unknown";
       if (!stats[key]) {
         stats[key] = {
           name: key,
@@ -387,15 +398,15 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
           ? stats[key].incoming
           : stats[key].outgoing;
 
-      target.count += Number(row.total_calls ?? 0);
-      target.duration += Number(row.total_duration ?? 0);
+      target.count += Number(row.totalCalls ?? 0);
+      target.duration += Number(row.totalDuration ?? 0);
     }
 
     return stats;
   }
 
-  private _buildCallConditions(params: {
-    workspaceId?: number;
+  private buildCallConditions(params: {
+    workspaceId?: string;
     dateFrom?: string;
     dateTo?: string;
     internalNumbers?: string[];

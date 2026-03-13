@@ -9,6 +9,7 @@ import type {
   UpdateUserData,
   UserUpdateData,
 } from "../types/users.types";
+import type { User } from "../schema/types";
 import {
   ValidationError,
   validateCreateUserData,
@@ -21,15 +22,15 @@ export class UsersService {
     private systemRepository: SystemRepository,
   ) {}
 
-  async getUserByUsername(username: string): Promise<any | null> {
+  async getUserByUsername(username: string): Promise<User | null> {
     return this.usersRepository.findWithAllData(username);
   }
 
-  async getAllUsers(): Promise<any[]> {
+  async getAllUsers(): Promise<User[]> {
     return this.usersRepository.findAllActive();
   }
 
-  async getUser(id: string): Promise<any | null> {
+  async getUser(id: string): Promise<User | null> {
     return this.usersRepository.findById(id);
   }
 
@@ -181,7 +182,7 @@ export class UsersService {
     return this.usersRepository.saveTelegramConnectToken(userId, token);
   }
 
-  async getUserByTelegramConnectToken(token: string): Promise<any | null> {
+  async getUserByTelegramConnectToken(token: string): Promise<User | null> {
     return this.usersRepository.findByTelegramConnectToken(token);
   }
 

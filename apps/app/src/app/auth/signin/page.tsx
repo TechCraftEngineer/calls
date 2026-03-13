@@ -30,8 +30,11 @@ function LoginForm() {
     if (urlUsername) {
       // Безопасное заполнение только username без пароля
       const sanitizedUsername = decodeURIComponent(urlUsername)
-        .replace(/[\x00-\x1F\x7F<>"'&]/g, "")
-        .trim();
+        .replace(/[<>\"'&]/g, "") // Удаляем опасные HTML символы
+        .replace(/[\x00-\x1F\x7F]/g, "") // Удаляем control characters
+        .replace(/\s+/g, " ") // Заменяем множественные пробелы на один
+        .trim()
+        .substring(0, 50); // Ограничиваем длину
       setValue("username", sanitizedUsername);
     }
   }, [searchParams, setValue]);

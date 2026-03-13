@@ -4,13 +4,13 @@
 
 import {
   index,
-  integer,
   pgEnum,
   pgTable,
-  serial,
+  sql,
   text,
   timestamp,
   unique,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth/user";
 
@@ -23,12 +23,12 @@ export const workspaceMemberRole = pgEnum("workspace_member_role", [
 export const workspaces = pgTable(
   "workspaces",
   {
-    id: serial("id").primaryKey(),
+    id: text("id").primaryKey().default(sql`workspace_id_generate()`),
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
     metadata: text("metadata"), // JSON string for flexible data
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt")
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
@@ -41,15 +41,15 @@ export const workspaces = pgTable(
 export const workspaceMembers = pgTable(
   "workspace_members",
   {
-    id: serial("id").primaryKey(),
-    workspaceId: integer("workspaceId")
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    workspaceId: text("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    userId: text("userId")
+    userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     role: workspaceMemberRole("role").notNull().default("member"),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => ({
     workspaceIdIdx: index("workspace_members_workspace_id_idx").on(

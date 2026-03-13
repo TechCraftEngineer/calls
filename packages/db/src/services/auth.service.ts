@@ -10,12 +10,12 @@ export class AuthService {
 
   async verifyPassword(username: string, password: string): Promise<boolean> {
     const user = await this.usersRepository.findByUsername(username);
-    if (!user || !user.password_hash) return false;
+    if (!user || !user.passwordHash) return false;
 
-    if (user.password_hash.startsWith("pbkdf2:sha256")) {
-      return this.verifyWerkzeugHash(password, user.password_hash);
+    if (user.passwordHash.startsWith("pbkdf2:sha256")) {
+      return this.verifyWerkzeugHash(password, user.passwordHash);
     }
-    return compareSync(password, user.password_hash);
+    return compareSync(password, user.passwordHash);
   }
 
   async verifyWerkzeugHash(

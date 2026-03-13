@@ -4,11 +4,11 @@
 
 import {
   index,
-  integer,
   pgTable,
-  serial,
+  sql,
   text,
   timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
 
@@ -16,14 +16,14 @@ import { workspaces } from "./workspaces";
 export const prompts = pgTable(
   "prompts",
   {
-    id: serial("id").primaryKey(),
-    workspaceId: integer("workspaceId")
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    workspaceId: text("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
     key: text("key").notNull().unique(),
     value: text("value").notNull(),
     description: text("description"),
-    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
     keyIdx: index("prompts_key_idx").on(table.key),
@@ -39,8 +39,8 @@ export const prompts = pgTable(
 export const activityLog = pgTable(
   "activity_log",
   {
-    id: serial("id").primaryKey(),
-    workspaceId: integer("workspaceId")
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    workspaceId: text("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
     timestamp: timestamp("timestamp").notNull(), // ISO timestamp

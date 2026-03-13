@@ -17,11 +17,11 @@ export class CallsService {
     private systemRepository: SystemRepository,
   ) {}
 
-  async getCall(id: number): Promise<any | null> {
+  async getCall(id: string): Promise<any | null> {
     return this.callsRepository.findById(id);
   }
 
-  async deleteCall(callId: number): Promise<boolean> {
+  async deleteCall(callId: string): Promise<boolean> {
     const result = await this.callsRepository.delete(callId);
 
     if (result) {
@@ -37,12 +37,12 @@ export class CallsService {
 
   async getCallByFilename(
     filename: string,
-    workspaceId?: number,
+    workspaceId?: string,
   ): Promise<any | null> {
     return this.callsRepository.findByFilename(filename, workspaceId);
   }
 
-  async createCall(data: CreateCallData): Promise<number> {
+  async createCall(data: CreateCallData): Promise<string> {
     const callId = await this.callsRepository.create(data);
 
     await this.systemRepository.addActivityLog(
@@ -54,11 +54,11 @@ export class CallsService {
     return callId;
   }
 
-  async getTranscriptByCallId(callId: number): Promise<any | null> {
+  async getTranscriptByCallId(callId: string): Promise<any | null> {
     return this.callsRepository.getTranscriptByCallId(callId);
   }
 
-  async getEvaluation(callId: number): Promise<any | null> {
+  async getEvaluation(callId: string): Promise<any | null> {
     return this.callsRepository.getEvaluation(callId);
   }
 
@@ -74,19 +74,19 @@ export class CallsService {
     return this.callsRepository.countCalls(params);
   }
 
-  async addEvaluation(data: EvaluationData): Promise<number> {
+  async addEvaluation(data: EvaluationData): Promise<string> {
     const evaluationId = await this.callsRepository.addEvaluation(data);
 
     await this.systemRepository.addActivityLog(
       "INFO",
-      `Evaluation added for call ${data.call_id}`,
+      `Evaluation added for call ${data.callId}`,
       "system",
     );
 
     return evaluationId;
   }
 
-  async calculateMetrics(workspaceId?: number): Promise<{
+  async calculateMetrics(workspaceId?: string): Promise<{
     total_calls: number;
     transcribed: number;
     avg_duration: number;
@@ -96,7 +96,7 @@ export class CallsService {
   }
 
   async getEvaluationsStats(params: {
-    workspaceId?: number;
+    workspaceId?: string;
     dateFrom?: string;
     dateTo?: string;
     internalNumbers?: string[];

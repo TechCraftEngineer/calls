@@ -11,9 +11,9 @@ export class SystemRepository {
     level: string,
     message: string,
     actor: string,
-    workspaceId?: number | null,
+    workspaceId?: string | null,
   ): Promise<void> {
-    const values: any = {
+    const values: typeof schema.activityLog.$inferInsert = {
       timestamp: new Date(),
       level,
       message,

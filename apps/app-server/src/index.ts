@@ -162,7 +162,7 @@ function handleApiError(e: unknown, c: import("hono").Context) {
 // Rate limiting middleware
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
-function rateLimit(options: { windowMs: number; maxRequests: number }) {
+function _rateLimit(options: { windowMs: number; maxRequests: number }) {
   return async (c: import("hono").Context, next: () => Promise<void>) => {
     const clientIp =
       c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "unknown";

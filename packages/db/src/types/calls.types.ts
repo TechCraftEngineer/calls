@@ -2,8 +2,10 @@
  * Types related to calls operations
  */
 
+import type { Call, CallEvaluation, Transcript } from "../schema/types";
+
 export interface GetCallsParams {
-  workspaceId?: number;
+  workspaceId?: string;
   limit?: number;
   offset?: number;
   dateFrom?: string;
@@ -19,13 +21,13 @@ export interface GetCallsParams {
 }
 
 export interface CallWithTranscript {
-  call: any;
-  transcript: any;
-  evaluation: any;
+  call: Call;
+  transcript: Transcript;
+  evaluation: CallEvaluation;
 }
 
 export interface CreateCallData {
-  workspaceId: number;
+  workspaceId: string;
   filename: string;
   number?: string | null;
   timestamp: string;
@@ -33,20 +35,20 @@ export interface CreateCallData {
   duration?: number | null;
   direction?: string | null;
   status?: string | null;
-  size_bytes?: number | null;
-  internal_number?: string | null;
+  sizeBytes?: number | null;
+  internalNumber?: string | null;
   source?: string | null;
-  customer_name?: string | null;
+  customerName?: string | null;
 }
 
 export interface EvaluationData {
-  call_id: number;
-  value_score?: number | null;
-  value_explanation?: string | null;
-  manager_score?: number | null;
-  manager_feedback?: string | null;
-  manager_breakdown?: Record<string, unknown> | string | null;
-  manager_recommendations?: string[] | null;
-  is_quality_analyzable?: boolean;
-  not_analyzable_reason?: string | null;
+  callId: string;
+  valueScore?: number | null;
+  valueExplanation?: string | null;
+  managerScore?: number | null;
+  managerFeedback?: string | null;
+  managerBreakdown?: Record<string, unknown> | string | null;
+  managerRecommendations?: string[] | null;
+  isQualityAnalyzable?: boolean;
+  notAnalyzableReason?: string | null;
 }

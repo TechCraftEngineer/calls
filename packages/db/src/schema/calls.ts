@@ -8,9 +8,10 @@ import {
   integer,
   pgTable,
   real,
-  serial,
+  sql,
   text,
   timestamp,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
 
@@ -18,8 +19,8 @@ import { workspaces } from "./workspaces";
 export const calls = pgTable(
   "calls",
   {
-    id: serial("id").primaryKey(),
-    workspaceId: integer("workspaceId")
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    workspaceId: text("workspace_id")
       .references(() => workspaces.id, { onDelete: "cascade" })
       .notNull(),
     filename: text("filename").unique(),
@@ -29,12 +30,12 @@ export const calls = pgTable(
     duration: integer("duration"), // в секундах
     direction: text("direction"), // 'incoming'/'outgoing'/'входящий'/'исходящий'
     status: text("status"),
-    sizeBytes: integer("sizeBytes"),
-    internalNumber: text("internalNumber"),
+    sizeBytes: integer("size_bytes"),
+    internalNumber: text("internal_number"),
     source: text("source"), // менеджер/оператор
-    customerName: text("customerName"),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+    customerName: text("customer_name"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
     timestampIdx: index("calls_timestamp_idx").on(table.timestamp),
@@ -47,6 +48,7 @@ export const calls = pgTable(
       table.timestamp,
     ),
     numberIdx: index("calls_number_idx").on(table.number),
+    statusIdx: index("calls_status_idx").on(table.status),
   }),
 );
 
@@ -54,20 +56,20 @@ export const calls = pgTable(
 export const transcripts = pgTable(
   "transcripts",
   {
-    id: serial("id").primaryKey(),
-    callId: integer("callId")
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    callId: text("call_id")
       .notNull()
       .references(() => calls.id, { onDelete: "cascade" }),
     text: text("text"),
-    rawText: text("rawText"),
+    rawText: text("raw_text"),
     title: text("title"),
     sentiment: text("sentiment"),
     confidence: real("confidence"),
     summary: text("summary"),
-    sizeKb: integer("sizeKb"),
-    callerName: text("callerName"),
-    callType: text("callType"),
-    callTopic: text("callTopic"),
+    sizeKb: integer("size_kb"),
+    callerName: text("caller_name"),
+    callType: text("call_type"),
+    callTopic: text("call_topic"),
   },
   (table) => ({
     callIdIdx: index("transcripts_call_id_idx").on(table.callId),
@@ -80,21 +82,21 @@ export const transcripts = pgTable(
 export const callEvaluations = pgTable(
   "call_evaluations",
   {
-    id: serial("id").primaryKey(),
-    callId: integer("callId")
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    callId: text("call_id")
       .notNull()
       .unique()
       .references(() => calls.id, { onDelete: "cascade" }),
-    isQualityAnalyzable: boolean("isQualityAnalyzable").default(true),
-    notAnalyzableReason: text("notAnalyzableReason"),
-    valueScore: integer("valueScore"), // 1-5
-    valueExplanation: text("valueExplanation"),
-    managerScore: integer("managerScore"), // 1-5
-    managerFeedback: text("managerFeedback"),
-    managerBreakdown: text("managerBreakdown"), // JSON
-    managerRecommendations: text("managerRecommendations"), // JSON array
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+    isQualityAnalyzable: boolean("is_quality_analyzable").default(true),
+    notAnalyzableReason: text("not_analyzable_reason"),
+    valueScore: integer("value_score"), // 1-5
+    valueExplanation: text("value_explanation"),
+    managerScore: integer("manager_score"), // 1-5
+    managerFeedback: text("manager_feedback"),
+    managerBreakdown: text("manager_breakdown"), // JSON
+    managerRecommendations: text("manager_recommendations"), // JSON array
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
     callIdIdx: index("call_evaluations_call_id_idx").on(table.callId),

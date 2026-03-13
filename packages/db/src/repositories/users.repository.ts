@@ -93,7 +93,7 @@ export class UsersRepository {
 
   async create(data: CreateUserData): Promise<string> {
     const { hashSync } = await import("bcryptjs");
-    const passwordHash = hashSync(data.password, 10);
+    const _passwordHash = hashSync(data.password, 10);
     const fullName = data.familyName
       ? `${data.givenName} ${data.familyName}`.trim()
       : data.givenName;

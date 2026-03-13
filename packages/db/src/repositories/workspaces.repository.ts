@@ -15,7 +15,7 @@ export interface CreateWorkspaceData {
 }
 
 export interface AddMemberData {
-  workspaceId: number;
+  workspaceId: string;
   userId: string;
   role: WorkspaceMemberRole;
 }
@@ -30,7 +30,7 @@ export class WorkspacesRepository {
     return schema.workspaceMembers;
   }
 
-  async create(data: CreateWorkspaceData): Promise<number> {
+  async create(data: CreateWorkspaceData): Promise<string> {
     const result = await db
       .insert(schema.workspaces)
       .values({
@@ -39,11 +39,11 @@ export class WorkspacesRepository {
         metadata: data.metadata ?? null,
       })
       .returning({ id: schema.workspaces.id });
-    return result[0]?.id ?? 0;
+    return result[0]?.id ?? "";
   }
 
   async getById(
-    id: number,
+    id: string,
   ): Promise<typeof schema.workspaces.$inferSelect | null> {
     const result = await db
       .select()
@@ -65,7 +65,7 @@ export class WorkspacesRepository {
   }
 
   async update(
-    id: number,
+    id: string,
     data: { name?: string; slug?: string; metadata?: string | null },
   ): Promise<boolean> {
     const result = await db
@@ -75,14 +75,14 @@ export class WorkspacesRepository {
     return (result.rowCount ?? 0) > 0;
   }
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: string): Promise<boolean> {
     const result = await db
       .delete(schema.workspaces)
       .where(eq(schema.workspaces.id, id));
     return (result.rowCount ?? 0) > 0;
   }
 
-  async getMembers(workspaceId: number) {
+  async getMembers(workspaceId: string) {
     return db
       .select({
         id: schema.workspaceMembers.id,
@@ -101,7 +101,7 @@ export class WorkspacesRepository {
       .orderBy(desc(schema.workspaceMembers.createdAt));
   }
 
-  async addMember(data: AddMemberData): Promise<number> {
+  async addMember(data: AddMemberData): Promise<string> {
     const result = await db
       .insert(schema.workspaceMembers)
       .values({
@@ -110,10 +110,10 @@ export class WorkspacesRepository {
         role: data.role,
       })
       .returning({ id: schema.workspaceMembers.id });
-    return result[0]?.id ?? 0;
+    return result[0]?.id ?? "";
   }
 
-  async removeMember(workspaceId: number, userId: string): Promise<boolean> {
+  async removeMember(workspaceId: string, userId: string): Promise<boolean> {
     const result = await db
       .delete(schema.workspaceMembers)
       .where(
@@ -126,7 +126,7 @@ export class WorkspacesRepository {
   }
 
   async updateMemberRole(
-    workspaceId: number,
+    workspaceId: string,
     userId: string,
     role: WorkspaceMemberRole,
   ): Promise<boolean> {
@@ -143,7 +143,7 @@ export class WorkspacesRepository {
   }
 
   async getMember(
-    workspaceId: number,
+    workspaceId: string,
     userId: string,
   ): Promise<typeof schema.workspaceMembers.$inferSelect | null> {
     const result = await db
