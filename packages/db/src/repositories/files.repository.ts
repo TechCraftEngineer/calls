@@ -3,25 +3,17 @@
  */
 
 import { and, desc, eq } from "drizzle-orm";
-import { getDb } from "../client";
+import { db } from "../client";
 import { files } from "../schema";
 import type { CreateFileData, GetFilesParams } from "../types";
 
 export class FilesRepository {
   async create(data: CreateFileData) {
-    const db = getDb();
-    const result = await db
-      .insert(files)
-      .values({
-        ...data,
-        isPublic: data.isPublic ?? false,
-      })
-      .returning();
+    const result = await db.insert(files).values(data).returning();
     return result[0];
   }
 
   async findById(id: string) {
-    const db = getDb();
     const result = await db
       .select()
       .from(files)
@@ -30,18 +22,16 @@ export class FilesRepository {
     return result[0] || null;
   }
 
-  async findByS3Key(s3Key: string) {
-    const db = getDb();
+  async findByStorageKey(storageKey: string) {
     const result = await db
       .select()
       .from(files)
-      .where(eq(files.s3Key, s3Key))
+      .where(eq(files.storageKey, storageKey))
       .limit(1);
     return result[0] || null;
   }
 
   async findByWorkspaceId(params: GetFilesParams) {
-    const db = getDb();
     const conditions = [];
 
     if (params.workspaceId) {
@@ -50,28 +40,17 @@ export class FilesRepository {
     if (params.fileType) {
       conditions.push(eq(files.fileType, params.fileType));
     }
-    if (params.isPublic !== undefined) {
-      conditions.push(eq(files.isPublic, params.isPublic));
-    }
 
-    let query = db
+    return db
       .select()
       .from(files)
-      .where(and(...conditions))
-      .orderBy(desc(files.createdAt));
-
-    if (params.limit) {
-      query = query.limit(params.limit);
-    }
-    if (params.offset) {
-      query = query.offset(params.offset);
-    }
-
-    return await query;
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(files.createdAt))
+      .limit(params.limit ?? 1000)
+      .offset(params.offset ?? 0);
   }
 
   async update(id: string, data: Partial<CreateFileData>) {
-    const db = getDb();
     const result = await db
       .update(files)
       .set({ ...data, updatedAt: new Date() })
@@ -81,16 +60,14 @@ export class FilesRepository {
   }
 
   async delete(id: string) {
-    const db = getDb();
     const result = await db.delete(files).where(eq(files.id, id)).returning();
     return result[0] || null;
   }
 
-  async deleteByS3Key(s3Key: string) {
-    const db = getDb();
+  async deleteByStorageKey(storageKey: string) {
     const result = await db
       .delete(files)
-      .where(eq(files.s3Key, s3Key))
+      .where(eq(files.storageKey, storageKey))
       .returning();
     return result[0] || null;
   }

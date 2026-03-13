@@ -87,10 +87,10 @@ export class CallsService {
   }
 
   async calculateMetrics(workspaceId?: string): Promise<{
-    total_calls: number;
+    totalCalls: number;
     transcribed: number;
-    avg_duration: number;
-    last_sync: string | null;
+    avgDuration: number;
+    lastSync: string | null;
   }> {
     return this.callsRepository.getMetrics(workspaceId);
   }

@@ -3,10 +3,9 @@
  * Структура на FTP: recordings/{YYYY-MM-DD}/{filename}.mp3
  */
 
-import { PassThrough } from "node:stream";
+import { Writable } from "node:stream";
 import { callsService, filesService, workspacesService } from "@calls/db";
-import { generateS3Key, uploadStreamToS3 } from "@calls/lib";
-import { validateFtpCredentials } from "@calls/shared/validation";
+import { validateFtpCredentials } from "@calls/shared";
 import { Client } from "basic-ftp";
 import { createLogger } from "../logger";
 import { parseMegafonFilename } from "./parse-filename";
@@ -27,7 +26,11 @@ export interface SyncResult {
 }
 
 function validateFtpConfig(config: MegafonFtpConfig): string[] {
-  const validation = validateFtpCredentials(config.host, config.user, config.password);
+  const validation = validateFtpCredentials(
+    config.host,
+    config.user,
+    config.password,
+  );
   return validation.errors;
 }
 
@@ -145,8 +148,18 @@ export async function syncMegafonFtp(
 
         try {
           // Скачиваем файл напрямую в буфер
+          const chunks: Buffer[] = [];
+          const writable = new Writable({
+            write(chunk, _encoding, callback) {
+              chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+              callback();
+            },
+          });
           const downloadBuffer = await Promise.race([
-            client.downloadToBuffer(file.name),
+            (async () => {
+              await client.downloadTo(writable, file.name);
+              return Buffer.concat(chunks);
+            })(),
             new Promise<never>((_, reject) =>
               setTimeout(
                 () => reject(new Error("Timeout downloading file")),
@@ -183,7 +196,7 @@ export async function syncMegafonFtp(
 
           // Загрузка файла в S3 через FilesService
           let fileId: string | null = null;
-          let s3Key: string | null = null;
+          let storageKey: string | null = null;
           try {
             const uploadResult = await filesService.uploadCallRecording(
               workspaceId,
@@ -191,11 +204,11 @@ export async function syncMegafonFtp(
               downloadBuffer,
             );
             fileId = uploadResult.id;
-            s3Key = uploadResult.s3Key;
+            storageKey = uploadResult.storageKey;
             result.s3Uploaded++;
             logger.info("Файл успешно загружен в S3", {
               filename: relativePath,
-              s3Key,
+              storageKey,
               fileId,
               size: downloadBuffer.length,
             });
@@ -214,14 +227,14 @@ export async function syncMegafonFtp(
             workspaceId,
             filename: relativePath,
             number: parsed.externalNumber,
-            internal_number: parsed.internalNumber,
+            internalNumber: parsed.internalNumber,
             timestamp: parsed.timestamp,
             direction:
               parsed.direction === "incoming" ? "Входящий" : "Исходящий",
             source: parsed.internalNumber,
             name: parsed.internalNumber,
-            size_bytes: downloadBuffer.length,
-            file_id: fileId,
+            sizeBytes: downloadBuffer.length,
+            fileId: fileId ?? null,
           });
 
           result.downloaded++;
@@ -229,8 +242,8 @@ export async function syncMegafonFtp(
             filename: relativePath,
             size: downloadBuffer.length,
             direction: parsed.direction,
-            s3Key,
-            s3Uploaded: !!s3Key,
+            storageKey,
+            s3Uploaded: !!storageKey,
           });
         } catch (e) {
           const errorMsg = `${relativePath}: ${e instanceof Error ? e.message : String(e)}`;

@@ -9,6 +9,8 @@ import type { callEvaluations, calls, transcripts } from "./calls";
 import type { activityLog, prompts } from "./system";
 import type { workspaceMembers, workspaces } from "./workspaces";
 
+export type { File, NewFile } from "./files";
+
 // Calls domain types
 export type Call = typeof calls.$inferSelect;
 export type NewCall = typeof calls.$inferInsert;

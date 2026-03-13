@@ -4,7 +4,7 @@ import { generateRecommendations } from "./recommendations";
 
 export const recommendationsRouter = {
   generate: protectedProcedure
-    .input(z.object({ call_id: z.number() }))
+    .input(z.object({ call_id: z.string() }))
     .handler(async ({ input, context }) => {
       return generateRecommendations(
         input.call_id,

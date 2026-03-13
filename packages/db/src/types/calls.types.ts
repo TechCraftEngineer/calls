@@ -22,8 +22,8 @@ export interface GetCallsParams {
 
 export interface CallWithTranscript {
   call: Call;
-  transcript: Transcript;
-  evaluation: CallEvaluation;
+  transcript: Transcript | null;
+  evaluation: CallEvaluation | null;
 }
 
 export interface CreateCallData {

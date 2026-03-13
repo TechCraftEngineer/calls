@@ -2,14 +2,8 @@
  * System domain schema - PostgreSQL tables for system configuration and logging
  */
 
-import {
-  index,
-  pgTable,
-  sql,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
 
 // Prompts table - промпты для AI

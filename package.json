@@ -11,6 +11,7 @@
     "clean:workspaces": "turbo run clean",
     "auth:generate": "bun --filter @calls/auth generate",
     "db:push": "turbo -F @calls/db push",
+    "db:reset": "turbo -F @calls/db db:reset",
     "db:studio": "turbo -F @calls/db studio",
     "dev": "turbo watch dev --continue --concurrency 20",
     "dev:next": "turbo watch dev -F @calls/app...",

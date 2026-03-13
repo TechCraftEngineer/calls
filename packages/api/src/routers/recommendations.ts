@@ -42,7 +42,7 @@ function parseRecommendationsJson(text: string): string[] {
 }
 
 export async function generateRecommendations(
-  callId: number,
+  callId: string,
   calls: typeof callsService,
   prompts: typeof promptsService,
 ): Promise<{ recommendations: string[] }> {

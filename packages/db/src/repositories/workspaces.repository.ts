@@ -11,7 +11,7 @@ export type WorkspaceMemberRole = "owner" | "admin" | "member";
 export interface CreateWorkspaceData {
   name: string;
   slug: string;
-  metadata?: string | null;
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface AddMemberData {
@@ -66,7 +66,11 @@ export class WorkspacesRepository {
 
   async update(
     id: string,
-    data: { name?: string; slug?: string; metadata?: string | null },
+    data: {
+      name?: string;
+      slug?: string;
+      metadata?: Record<string, unknown> | null;
+    },
   ): Promise<boolean> {
     const result = await db
       .update(schema.workspaces)

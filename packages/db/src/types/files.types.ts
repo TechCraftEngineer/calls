@@ -4,6 +4,8 @@
 
 import type { File, FileType } from "../schema/files";
 
+export type { FileType };
+
 export interface CreateFileData {
   workspaceId: string;
   filename: string;
@@ -11,11 +13,8 @@ export interface CreateFileData {
   mimeType: string;
   sizeBytes: number;
   fileType: FileType;
-  s3Key: string;
-  s3Bucket: string;
-  s3Url?: string | null;
-  isPublic?: boolean;
-  metadata?: string | null; // JSON string
+  storageKey: string;
+  metadata?: Record<string, unknown> | null;
 }
 
 export interface GetFilesParams {
@@ -25,13 +24,11 @@ export interface GetFilesParams {
   offset?: number;
   dateFrom?: string;
   dateTo?: string;
-  isPublic?: boolean;
 }
 
 export interface FileUploadResult {
   id: string;
-  s3Key: string;
-  s3Url?: string;
+  storageKey: string;
   filename: string;
   sizeBytes: number;
   mimeType: string;

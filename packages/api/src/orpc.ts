@@ -24,18 +24,18 @@ export type AuthLike = {
   };
 };
 
-function getWorkspaceIdFromHeaders(headers: Headers): number | null {
+function getWorkspaceIdFromHeaders(headers: Headers): string | null {
   const fromHeader =
     headers.get("x-workspace-id") ?? headers.get("X-Workspace-Id");
   if (fromHeader) {
-    const n = parseInt(fromHeader.trim(), 10);
-    if (!Number.isNaN(n) && n > 0) return n;
+    const trimmed = fromHeader.trim();
+    if (trimmed.length > 0) return trimmed;
   }
   const cookie = headers.get("cookie");
-  const match = cookie?.match(/\bactive_workspace_id=(\d+)/);
+  const match = cookie?.match(/\bactive_workspace_id=([^;]+)/);
   if (match && match[1]) {
-    const n = parseInt(match[1], 10);
-    if (!Number.isNaN(n) && n > 0) return n;
+    const trimmed = match[1].trim();
+    if (trimmed.length > 0) return trimmed;
   }
   return null;
 }
@@ -53,7 +53,7 @@ export async function createBackendContext(opts: {
   sessionUsername: string | null;
   user: any;
   authUserId: string | null;
-  workspaceId: number | null;
+  workspaceId: string | null;
   workspaceRole: WorkspaceRole | null;
 }> {
   let user: any = null;

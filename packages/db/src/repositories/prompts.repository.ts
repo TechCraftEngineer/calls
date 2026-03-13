@@ -58,7 +58,7 @@ export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
     key: string,
     value: string,
     description?: string | null,
-    workspaceId?: number,
+    workspaceId?: string,
   ): Promise<boolean> {
     const now = new Date();
 
@@ -86,7 +86,7 @@ export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
       value,
       description: description ?? "",
       updatedAt: now,
-      workspaceId: workspaceId ?? 1, // Default workspace if not provided
+      workspaceId: workspaceId ?? "default",
     });
     return true;
   }

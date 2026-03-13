@@ -11,20 +11,15 @@ export class SystemRepository {
     level: string,
     message: string,
     actor: string,
-    workspaceId?: string | null,
+    workspaceId = "system",
   ): Promise<void> {
-    const values: typeof schema.activityLog.$inferInsert = {
+    await db.insert(schema.activityLog).values({
       timestamp: new Date(),
       level,
       message,
       actor,
-    };
-
-    if (workspaceId) {
-      values.workspaceId = workspaceId;
-    }
-
-    await db.insert(schema.activityLog).values(values);
+      workspaceId,
+    });
   }
 
   async getLastActivity(): Promise<{ timestamp: Date | null }> {

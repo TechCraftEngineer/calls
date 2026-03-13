@@ -14,14 +14,6 @@ export abstract class BaseRepository<T extends Table> {
     throw new Error("findById must be implemented in child repository");
   }
 
-  protected async create(data: Partial<T["$inferInsert"]>): Promise<number> {
-    const result = await db
-      .insert(this.table)
-      .values(data)
-      .returning({ id: (this.table as any).id });
-    return result[0]?.id ?? 0;
-  }
-
   protected async update(
     id: number,
     data: Partial<T["$inferInsert"]>,

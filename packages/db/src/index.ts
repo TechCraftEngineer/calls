@@ -6,7 +6,9 @@ export * from "./schema";
 export {
   authService,
   callsService,
+  filesService,
   promptsService,
+  settingsService,
   systemRepository,
   usersService,
   workspacesService,

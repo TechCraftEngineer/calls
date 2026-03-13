@@ -21,41 +21,34 @@ export class FilesService {
       buffer: Buffer | Uint8Array;
       mimeType: string;
       fileType: FileType;
-      isPublic?: boolean;
       metadata?: Record<string, unknown>;
     },
   ): Promise<{
     id: string;
-    s3Key: string;
-    s3Url?: string;
+    storageKey: string;
     filename: string;
     sizeBytes: number;
   }> {
-    // Генерируем уникальный S3 ключ
-    const s3Key = generateS3Key(
+    const storageKey = generateS3Key(
       `${fileData.fileType}/${fileData.originalName}`,
     );
 
-    // Загружаем в S3
-    const uploadResult = await uploadBufferToS3(
-      s3Key,
-      fileData.buffer,
-      fileData.mimeType,
-    );
+    await uploadBufferToS3(storageKey, fileData.buffer, fileData.mimeType);
 
-    // Создаем запись в БД
     const fileRecord = await this.filesRepository.create({
       workspaceId,
-      filename: uploadResult.key,
+      filename: storageKey,
       originalName: fileData.originalName,
       mimeType: fileData.mimeType,
       sizeBytes: fileData.buffer.length,
       fileType: fileData.fileType,
-      s3Key: uploadResult.key,
-      s3Bucket: uploadResult.bucket,
-      isPublic: fileData.isPublic ?? false,
-      metadata: fileData.metadata ? JSON.stringify(fileData.metadata) : null,
+      storageKey,
+      metadata: fileData.metadata ?? null,
     });
+
+    if (!fileRecord) {
+      throw new Error("Failed to create file record");
+    }
 
     // Логируем создание файла
     await this.systemRepository.addActivityLog(
@@ -66,7 +59,7 @@ export class FilesService {
 
     return {
       id: fileRecord.id,
-      s3Key: fileRecord.s3Key,
+      storageKey: fileRecord.storageKey,
       filename: fileRecord.filename,
       sizeBytes: fileRecord.sizeBytes,
     };
@@ -78,7 +71,7 @@ export class FilesService {
     buffer: Buffer | Uint8Array,
   ): Promise<{
     id: string;
-    s3Key: string;
+    storageKey: string;
     filename: string;
     sizeBytes: number;
   }> {
@@ -87,23 +80,16 @@ export class FilesService {
       buffer,
       mimeType: "audio/mpeg",
       fileType: "call_recording",
-      isPublic: false,
     });
   }
 
-  async getFileDownloadUrl(s3Key: string): Promise<string> {
-    const file = await this.filesRepository.findByS3Key(s3Key);
+  async getFileDownloadUrl(storageKey: string): Promise<string> {
+    const file = await this.filesRepository.findByStorageKey(storageKey);
     if (!file) {
-      throw new Error(`File not found: ${s3Key}`);
+      throw new Error(`File not found: ${storageKey}`);
     }
 
-    // Если файл публичный, можно вернуть прямой URL
-    if (file.isPublic && file.s3Url) {
-      return file.s3Url;
-    }
-
-    // Иначе генерируем presigned URL
-    return getDownloadUrl(s3Key);
+    return getDownloadUrl(storageKey);
   }
 
   async getFilesByWorkspace(workspaceId: string, fileType?: FileType) {
@@ -113,8 +99,8 @@ export class FilesService {
     });
   }
 
-  async deleteFile(s3Key: string): Promise<boolean> {
-    const file = await this.filesRepository.deleteByS3Key(s3Key);
+  async deleteFile(storageKey: string): Promise<boolean> {
+    const file = await this.filesRepository.deleteByStorageKey(storageKey);
 
     if (file) {
       await this.systemRepository.addActivityLog(
@@ -132,7 +118,7 @@ export class FilesService {
     return this.filesRepository.findById(id);
   }
 
-  async getFileByS3Key(s3Key: string) {
-    return this.filesRepository.findByS3Key(s3Key);
+  async getFileByStorageKey(storageKey: string) {
+    return this.filesRepository.findByStorageKey(storageKey);
   }
 }

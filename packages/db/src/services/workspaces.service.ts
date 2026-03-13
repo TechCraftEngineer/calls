@@ -19,7 +19,7 @@ export class WorkspacesService {
   async create(
     data: CreateWorkspaceData,
     ownerUserId: string,
-  ): Promise<number> {
+  ): Promise<string> {
     // Используем транзакцию для атомарного создания workspace и владельца
     return await db.transaction(async (tx) => {
       // Создаем workspace
@@ -48,7 +48,7 @@ export class WorkspacesService {
     });
   }
 
-  async getById(id: number) {
+  async getById(id: string) {
     return this.workspacesRepository.getById(id);
   }
 
@@ -57,17 +57,21 @@ export class WorkspacesService {
   }
 
   async update(
-    id: number,
-    data: { name?: string; slug?: string; metadata?: string | null },
+    id: string,
+    data: {
+      name?: string;
+      slug?: string;
+      metadata?: Record<string, unknown> | null;
+    },
   ) {
     return this.workspacesRepository.update(id, data);
   }
 
-  async delete(id: number) {
+  async delete(id: string) {
     return this.workspacesRepository.delete(id);
   }
 
-  async getMembers(workspaceId: number) {
+  async getMembers(workspaceId: string) {
     return this.workspacesRepository.getMembers(workspaceId);
   }
 
@@ -75,12 +79,12 @@ export class WorkspacesService {
     return this.workspacesRepository.addMember(data);
   }
 
-  async removeMember(workspaceId: number, userId: string) {
+  async removeMember(workspaceId: string, userId: string) {
     return this.workspacesRepository.removeMember(workspaceId, userId);
   }
 
   async updateMemberRole(
-    workspaceId: number,
+    workspaceId: string,
     userId: string,
     role: WorkspaceMemberRole,
   ) {
@@ -96,7 +100,7 @@ export class WorkspacesService {
   }
 
   async getMemberWithRole(
-    workspaceId: number,
+    workspaceId: string,
     userId: string,
   ): Promise<{ role: WorkspaceMemberRole } | null> {
     const member = await this.workspacesRepository.getMember(
@@ -107,7 +111,7 @@ export class WorkspacesService {
   }
 
   async ensureUserInWorkspace(
-    workspaceId: number,
+    workspaceId: string,
     userId: string,
   ): Promise<WorkspaceMemberRole | null> {
     const member = await this.workspacesRepository.getMember(

@@ -45,6 +45,12 @@
       "cache": false,
       "persistent": true
     },
+    "db:reset": {
+      "cache": false
+    },
+    "db:drop": {
+      "cache": false
+    },
     "ui-add": {
       "cache": false,
       "interactive": true

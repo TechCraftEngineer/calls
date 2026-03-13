@@ -1,21 +1,26 @@
-import { sql } from "@vercel/postgres";
+import { Pool } from "pg";
 
 async function dropSchema() {
-  try {
-    console.log("🗑️  Dropping database schema...");
+  const url = process.env.POSTGRES_URL;
+  if (!url) throw new Error("POSTGRES_URL is not set");
 
-    // Drop all tables in the public schema
-    await sql`DROP SCHEMA public CASCADE`;
-    await sql`CREATE SCHEMA public`;
-    await sql`GRANT ALL ON SCHEMA public TO public`;
+  const pool = new Pool({
+    connectionString: url.replace(":6543", ":5432"),
+  });
 
-    console.log("✅ Database schema dropped successfully!");
-  } catch (error) {
-    console.error("❌ Error dropping schema:", error);
-    process.exit(1);
-  } finally {
-    process.exit(0);
-  }
+  console.log("🗑️  Dropping database schema...");
+
+  await pool.query("DROP SCHEMA IF EXISTS public CASCADE");
+  await pool.query("CREATE SCHEMA public");
+  await pool.query("GRANT ALL ON SCHEMA public TO public");
+
+  await pool.end();
+  console.log("✅ Database schema dropped successfully!");
 }
 
-dropSchema();
+dropSchema()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error("❌ Error dropping schema:", error);
+    process.exit(1);
+  });

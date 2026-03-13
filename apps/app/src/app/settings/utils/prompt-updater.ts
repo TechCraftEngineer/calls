@@ -2,8 +2,12 @@
  * Утилиты для безопасного обновления промптов в UI
  */
 
-import { validateFtpCredentials } from "@calls/shared/validation";
-import type { Prompt } from "../page";
+export interface Prompt {
+  key: string;
+  value: string;
+  description: string;
+  updated_at?: string;
+}
 
 /**
  * Безопасно обновляет промпт в состоянии
@@ -83,18 +87,4 @@ export function createPromptChangeHandler(
   };
 }
 
-/**
- * Валидирует FTP credentials (делегирование в общую утилиту)
- * @param host - FTP хост
- * @param user - FTP пользователь
- * @param password - FTP пароль
- * @returns объект с результатом валидации
- */
-export function validateFtpCredentials(
-  host?: string,
-  user?: string,
-  password?: string,
-): { isValid: boolean; errors: string[] } {
-  const validation = validateFtpCredentials(host, user, password);
-  return validation;
-}
+export { validateFtpCredentials } from "@calls/shared";

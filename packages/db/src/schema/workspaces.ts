@@ -2,11 +2,12 @@
  * Workspace domain schema - multi-tenant SaaS
  */
 
+import { sql } from "drizzle-orm";
 import {
   index,
+  jsonb,
   pgEnum,
   pgTable,
-  sql,
   text,
   timestamp,
   unique,
@@ -26,7 +27,7 @@ export const workspaces = pgTable(
     id: text("id").primaryKey().default(sql`workspace_id_generate()`),
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
-    metadata: text("metadata"), // JSON string for flexible data
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

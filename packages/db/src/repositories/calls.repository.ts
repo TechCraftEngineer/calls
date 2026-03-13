@@ -210,11 +210,9 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     }
 
     const breakdown =
-      typeof data.managerBreakdown === "object"
-        ? JSON.stringify(data.managerBreakdown)
-        : (data.managerBreakdown ?? null);
+      typeof data.managerBreakdown === "object" ? data.managerBreakdown : null;
     const recommendations = Array.isArray(data.managerRecommendations)
-      ? JSON.stringify(data.managerRecommendations)
+      ? data.managerRecommendations
       : null;
 
     const result = await db

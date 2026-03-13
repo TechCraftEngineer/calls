@@ -2,12 +2,12 @@
  * Files domain schema - PostgreSQL table for storing file metadata and S3 references
  */
 
+import { sql } from "drizzle-orm";
 import {
-  boolean,
   index,
   integer,
+  jsonb,
   pgTable,
-  sql,
   text,
   timestamp,
   uuid,
@@ -38,18 +38,15 @@ export const files = pgTable(
     mimeType: text("mime_type").notNull(),
     sizeBytes: integer("size_bytes").notNull(),
     fileType: text("file_type").notNull(), // из FILE_TYPES
-    s3Key: text("s3_key").notNull().unique(), // ключ в S3
-    s3Bucket: text("s3_bucket").notNull(), // имя S3 бакета
-    s3Url: text("s3_url"), // полный URL к файлу (опционально)
-    isPublic: boolean("is_public").default(false), // доступен ли файл публично
-    metadata: text("metadata"), // JSON с дополнительными метаданными
+    storageKey: text("storage_key").notNull().unique(), // ключ в object storage
+    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
     workspaceIdIdx: index("files_workspace_id_idx").on(table.workspaceId),
     fileTypeIdx: index("files_file_type_idx").on(table.fileType),
-    s3KeyIdx: index("files_s3_key_idx").on(table.s3Key),
+    storageKeyIdx: index("files_storage_key_idx").on(table.storageKey),
     workspaceFileTypeIdx: index("files_workspace_file_type_idx").on(
       table.workspaceId,
       table.fileType,
@@ -57,3 +54,6 @@ export const files = pgTable(
     createdAtIdx: index("files_created_at_idx").on(table.createdAt),
   }),
 );
+
+export type File = typeof files.$inferSelect;
+export type NewFile = typeof files.$inferInsert;

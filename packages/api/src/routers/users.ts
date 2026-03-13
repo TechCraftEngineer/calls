@@ -156,7 +156,27 @@ export const usersRouter = {
         );
 
         // Обновляем настройки отчетов и KPI
-        await usersService.updateUserReportKpiSettings(input.user_id, d);
+        await usersService.updateUserReportKpiSettings(input.user_id, {
+          filterExcludeAnsweringMachine: d.filter_exclude_answering_machine,
+          filterMinDuration: d.filter_min_duration,
+          filterMinReplicas: d.filter_min_replicas,
+          telegramDailyReport: d.telegram_daily_report,
+          telegramManagerReport: d.telegram_manager_report,
+          telegramWeeklyReport: d.telegram_weekly_report,
+          telegramMonthlyReport: d.telegram_monthly_report,
+          telegramSkipWeekends: d.telegram_skip_weekends,
+          emailDailyReport: d.email_daily_report,
+          emailWeeklyReport: d.email_weekly_report,
+          emailMonthlyReport: d.email_monthly_report,
+          reportIncludeCallSummaries: d.report_include_call_summaries,
+          reportDetailed: d.report_detailed,
+          reportIncludeAvgValue: d.report_include_avg_value,
+          reportIncludeAvgRating: d.report_include_avg_rating,
+          reportManagedUserIds: d.report_managed_user_ids,
+          kpiBaseSalary: d.kpi_base_salary,
+          kpiTargetBonus: d.kpi_target_bonus,
+          kpiTargetTalkTimeMinutes: d.kpi_target_talk_time_minutes,
+        });
 
         // Обновляем настройки Telegram
         await usersService.updateUserTelegramSettings(

@@ -12,7 +12,7 @@ export function getLangfuse(): Langfuse | null {
     langfuseInstance = new Langfuse({
       secretKey: env.LANGFUSE_SECRET_KEY,
       publicKey: env.LANGFUSE_PUBLIC_KEY,
-      baseUrl: env.LANGFUSE_HOST,
+      baseUrl: env.LANGFUSE_BASEURL,
     });
   }
 

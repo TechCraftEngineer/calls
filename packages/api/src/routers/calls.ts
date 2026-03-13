@@ -8,7 +8,7 @@ import {
 } from "../orpc";
 
 async function generateRecommendations(
-  callId: number,
+  callId: string,
   calls: typeof callsService,
   prompts: typeof promptsService,
 ): Promise<{ recommendations: string[] }> {
@@ -269,7 +269,7 @@ export const callsRouter = {
     }),
 
   get: workspaceProcedure
-    .input(z.object({ call_id: z.number() }))
+    .input(z.object({ call_id: z.string() }))
     .handler(async ({ input, context }) => {
       const call = await context.callsService.getCall(input.call_id);
       if (!call) {
@@ -296,7 +296,7 @@ export const callsRouter = {
     }),
 
   generateRecommendations: workspaceProcedure
-    .input(z.object({ call_id: z.number() }))
+    .input(z.object({ call_id: z.string() }))
     .handler(async ({ input, context }) => {
       const call = await context.callsService.getCall(input.call_id);
       if (call && call.workspace_id !== context.workspaceId) {
@@ -310,7 +310,7 @@ export const callsRouter = {
     }),
 
   delete: adminProcedure
-    .input(z.object({ call_id: z.number() }))
+    .input(z.object({ call_id: z.string() }))
     .handler(async ({ input, context }) => {
       const call = await context.callsService.getCall(input.call_id);
       if (!call) throw new Error("Call not found");

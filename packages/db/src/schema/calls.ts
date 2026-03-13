@@ -2,13 +2,14 @@
  * Calls domain schema - PostgreSQL tables for calls and related data
  */
 
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
   integer,
+  jsonb,
   pgTable,
   real,
-  sql,
   text,
   timestamp,
   uuid,
@@ -97,8 +98,9 @@ export const callEvaluations = pgTable(
     valueExplanation: text("value_explanation"),
     managerScore: integer("manager_score"), // 1-5
     managerFeedback: text("manager_feedback"),
-    managerBreakdown: text("manager_breakdown"), // JSON
-    managerRecommendations: text("manager_recommendations"), // JSON array
+    managerBreakdown:
+      jsonb("manager_breakdown").$type<Record<string, unknown>>(),
+    managerRecommendations: jsonb("manager_recommendations").$type<string[]>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },

@@ -16,7 +16,9 @@ export const pendingRequests = new Map<string, Promise<unknown>>();
 /** Create a safe cache key from cookie (hashed session ID only). */
 export function createCacheKey(cookie: string | undefined): string {
   if (!cookie) return "no-cookie";
-  const sessionIdMatch = cookie.match(/(?:^|;\s*)session[_-]?id\s*=\s*([a-zA-Z0-9_-]+)/);
+  const sessionIdMatch = cookie.match(
+    /(?:^|;\s*)session[_-]?id\s*=\s*([a-zA-Z0-9_-]+)/,
+  );
   const sessionId = sessionIdMatch?.[1];
   if (sessionId) {
     return createHash("sha256")

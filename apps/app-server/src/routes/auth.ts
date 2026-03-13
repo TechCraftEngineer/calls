@@ -147,7 +147,7 @@ export function createAuthRoutes(auth: Auth) {
       return c.json(cached.data);
     }
 
-    let pending = pendingRequests.get(cacheKey);
+    const pending = pendingRequests.get(cacheKey);
     if (pending) {
       try {
         const result = await pending;
