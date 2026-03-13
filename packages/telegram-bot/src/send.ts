@@ -34,18 +34,22 @@ export async function sendMessage(
     return true;
   } catch (error) {
     console.error("[telegram-send] Failed to send message:", error);
-    
+
     // Логируем конкретные типы ошибок для лучшей диагностики
     if (error instanceof Error) {
       if (error.message.includes("chat not found")) {
-        console.error(`[telegram-send] Chat ${chatId} not found or user hasn't started the bot`);
+        console.error(
+          `[telegram-send] Chat ${chatId} not found or user hasn't started the bot`,
+        );
       } else if (error.message.includes("bot was blocked")) {
-        console.error(`[telegram-send] Bot was blocked by user in chat ${chatId}`);
+        console.error(
+          `[telegram-send] Bot was blocked by user in chat ${chatId}`,
+        );
       } else if (error.message.includes("token")) {
         console.error("[telegram-send] Invalid bot token");
       }
     }
-    
+
     return false;
   }
 }

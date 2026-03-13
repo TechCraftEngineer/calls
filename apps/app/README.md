@@ -16,6 +16,6 @@ The application will run on http://localhost:3000
 Create a `.env.local` file:
 
 ```
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=http://localhost:7000
 ```
 

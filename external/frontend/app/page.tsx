@@ -105,7 +105,7 @@ function LoginForm() {
     console.log("Password length:", password.length);
     console.log(
       "API URL:",
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000",
     );
     console.log("Cookies before:", document.cookie);
     console.groupEnd();
@@ -196,7 +196,8 @@ function LoginForm() {
         </form>
 
         <div className="auth-footer">
-          &copy; 2025 Mango Office Call AI. Все права защищены.
+          &copy; {new Date().getFullYear()} Mango Office Call AI. Все права
+          защищены.
         </div>
       </div>
     </div>

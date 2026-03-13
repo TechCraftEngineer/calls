@@ -196,6 +196,13 @@ body:has(.app-container) {
   letter-spacing: 0.5px;
 }
 
+/* Base border for form controls — Preflight sets border-width:0, so we ensure visibility */
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="image"]),
+select,
+textarea {
+  border: 1px solid #DDD;
+}
+
 .select-input,
 .date-input,
 .text-input,

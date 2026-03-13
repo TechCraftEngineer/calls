@@ -861,7 +861,7 @@ export default function CallList({
                                   onPlay(call.filename, call.number || "");
                                 } else if (call.filename) {
                                   window.open(
-                                    `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/records/${call.filename}`,
+                                    `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"}/api/records/${call.filename}`,
                                     "_blank",
                                   );
                                 }

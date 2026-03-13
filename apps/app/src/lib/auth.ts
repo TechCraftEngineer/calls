@@ -5,6 +5,7 @@ import {
   isAuthenticated as betterAuthIsAuthenticated,
   login as betterAuthLogin,
   logout as betterAuthLogout,
+  signUp as betterAuthSignUp,
 } from "./better-auth";
 
 export interface User {
@@ -28,5 +29,6 @@ export interface LoginResponse {
 export const login = betterAuthLogin;
 export const logout = betterAuthLogout;
 export const getCurrentUser = betterAuthGetCurrentUser;
+export const signUp = betterAuthSignUp;
 /** @deprecated В React используйте useAuth().isAuthenticated. Для async — getCurrentUser() !== null. */
 export const isAuthenticated = betterAuthIsAuthenticated;

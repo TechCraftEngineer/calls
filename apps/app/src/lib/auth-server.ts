@@ -6,7 +6,7 @@
 import { initAuth } from "@calls/auth";
 import { username } from "better-auth/plugins";
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000";
 const productionUrl = process.env.PRODUCTION_URL || "https://zvonki.qbs.ru";
 
 export const auth = initAuth({

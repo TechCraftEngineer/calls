@@ -2,10 +2,11 @@
 
 import { paths } from "@calls/config";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { getCurrentUser, signUp } from "@/lib/better-auth";
+import { getCurrentUser, signUp } from "@/lib/auth";
 import { type CreateUserData, createUserSchema } from "@/lib/validations";
 
 function RegisterForm() {
@@ -14,7 +15,7 @@ function RegisterForm() {
   useEffect(() => {
     getCurrentUser().then((user) => {
       if (user) {
-        router.replace(paths.dashboard.root);
+        router.replace(paths.root);
       }
     });
   }, [router]);
@@ -35,7 +36,6 @@ function RegisterForm() {
         email: data.username,
         password: data.password,
         name: `${data.first_name} ${data.last_name || ""}`.trim(),
-        username: data.username,
       });
 
       if (result.error) {
@@ -94,7 +94,7 @@ function RegisterForm() {
             <input
               id="username"
               type="email"
-              className={`w-full rounded-lg border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
+              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                 errors.username
                   ? "border-red-500 bg-red-50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(220,53,69,0.1)]"
                   : ""
@@ -120,7 +120,7 @@ function RegisterForm() {
             <input
               id="first_name"
               type="text"
-              className={`w-full rounded-lg border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
+              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                 errors.first_name
                   ? "border-red-500 bg-red-50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(220,53,69,0.1)]"
                   : ""
@@ -146,7 +146,7 @@ function RegisterForm() {
             <input
               id="last_name"
               type="text"
-              className={`w-full rounded-lg border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
+              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                 errors.last_name
                   ? "border-red-500 bg-red-50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(220,53,69,0.1)]"
                   : ""
@@ -172,7 +172,7 @@ function RegisterForm() {
             <input
               id="password"
               type="password"
-              className={`w-full rounded-lg border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
+              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                 errors.password
                   ? "border-red-500 bg-red-50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(220,53,69,0.1)]"
                   : ""
@@ -198,7 +198,7 @@ function RegisterForm() {
             <input
               id="confirmPassword"
               type="password"
-              className={`w-full rounded-lg border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
+              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                 errors.confirmPassword
                   ? "border-red-500 bg-red-50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(220,53,69,0.1)]"
                   : ""
@@ -226,17 +226,17 @@ function RegisterForm() {
         <div className="mt-6 text-center">
           <p className="text-[13px] text-[#888]">
             Уже есть аккаунт?{" "}
-            <a
+            <Link
               href={paths.auth.signin}
               className="font-semibold text-[#111] hover:text-[#333] transition-colors"
             >
               Войдите
-            </a>
+            </Link>
           </p>
         </div>
 
         <div className="mt-8 text-center text-[12px] text-[#AAA]">
-          &copy; 2025 QBS Звонки. Все права защищены.
+          &copy; {new Date().getFullYear()} QBS Звонки. Все права защищены.
         </div>
       </div>
     </div>

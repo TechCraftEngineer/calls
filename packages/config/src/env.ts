@@ -3,7 +3,6 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    DATABASE_URL: z.string().url(),
     OPENAI_API_KEY: z.string().optional(),
     OPENROUTER_API_KEY: z.string().optional(),
     AI_MODEL: z.string().default("gpt-3.5-turbo"),
@@ -23,7 +22,7 @@ export const env = createEnv({
     VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
 
     // Database
-    POSTGRES_URL: z.url().optional(),
+    POSTGRES_URL: z.url(),
 
     // App
     APP_URL: z.string().default("http://localhost:3000"),

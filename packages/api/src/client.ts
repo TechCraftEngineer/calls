@@ -13,7 +13,7 @@ export type BackendApiClient = ReturnType<typeof createBackendClient>;
  * Creates a typed oRPC client for the backend API.
  * Use for frontend and other HTTP consumers.
  *
- * @param baseUrl - API base URL (e.g. http://localhost:8000)
+ * @param baseUrl - API base URL (e.g. http://localhost:7000)
  */
 export function createBackendClient(baseUrl: string) {
   const url = `${baseUrl.replace(/\/?$/, "")}/api/orpc`;

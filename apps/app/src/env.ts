@@ -15,7 +15,7 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: z.string(),
     AUTH_GOOGLE_ID: z.string().optional(),
     AUTH_GOOGLE_SECRET: z.string().optional(),
-    EMAIL_SANDBOX_ENABLED: z.boolean().default(true),
+    EMAIL_SANDBOX_ENABLED: z.coerce.boolean().default(true),
     EMAIL_SANDBOX_HOST: z.string().default("localhost"),
   },
   client: {

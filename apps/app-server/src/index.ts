@@ -629,7 +629,7 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 // 404
 app.notFound((c) => c.json({ error: "Not Found", path: c.req.path }, 404));
 
-const port = Number(process.env.BACKEND_PORT ?? process.env.PORT ?? 8000);
+const port = Number(process.env.BACKEND_PORT ?? process.env.PORT ?? 7000);
 
 // Set Telegram webhook on startup when configured
 const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;

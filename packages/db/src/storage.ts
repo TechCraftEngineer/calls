@@ -563,8 +563,11 @@ export const storage = {
     // Безопасно создаем обновленный объект пользователя с заполненными полями
     const updatedUser: User = {
       ...user,
-      first_name: user.first_name || (user.name ? user.name.split(/\s+/, 2)[0] || "" : ""),
-      last_name: user.last_name || (user.name ? user.name.split(/\s+/, 2)[1] || "" : ""),
+      first_name:
+        user.first_name ||
+        (user.name ? user.name.split(/\s+/, 2)[0] || "" : ""),
+      last_name:
+        user.last_name || (user.name ? user.name.split(/\s+/, 2)[1] || "" : ""),
     };
 
     return updatedUser;

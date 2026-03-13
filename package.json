@@ -12,7 +12,7 @@
     "auth:generate": "bun --filter @calls/auth generate",
     "db:push": "turbo -F @calls/db push",
     "db:studio": "turbo -F @calls/db studio",
-    "dev": "turbo watch dev --continue",
+    "dev": "turbo watch dev --continue --concurrency 20",
     "dev:next": "turbo watch dev -F @calls/app...",
     "dev:backend": "bun --filter @calls/backend-server dev",
     "format": "biome format . --skip-parse-errors",

@@ -3,10 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --env-file ../../.env run src/index.ts",
-    "start": "bun --env-file ../../.env run dist/index.js",
+    "dev": "bun with-env src/index.ts",
+    "start": "bun with-env dist/index.js",
     "build": "bun build ./src/index.ts --outdir ./dist --target bun",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "with-env": "bun run --env-file ../../.env"
   },
   "dependencies": {
     "@calls/api": "workspace:*",

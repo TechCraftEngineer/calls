@@ -413,7 +413,7 @@ export default function CallDetailPage() {
               <div className="audio-player-container">
                 {call.filename ? (
                   <AudioPlayer
-                    src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/records/${call.filename}`}
+                    src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"}/api/records/${call.filename}`}
                   />
                 ) : (
                   <div style={{ fontSize: "13px", color: "#999" }}>

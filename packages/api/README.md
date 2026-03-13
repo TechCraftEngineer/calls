@@ -9,7 +9,7 @@
 ```ts
 import { createBackendClient } from "@calls/backend-api";
 
-const api = createBackendClient("http://localhost:8000");
+const api = createBackendClient("http://localhost:7000");
 
 const calls = await api.calls.list({ page: 1, per_page: 15 });
 const user = await api.auth.me();

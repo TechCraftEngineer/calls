@@ -26,7 +26,7 @@ export async function login(
   console.log("Username:", username);
   console.log(
     "API Base URL:",
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000",
   );
 
   try {

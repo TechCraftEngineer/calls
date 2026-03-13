@@ -17,8 +17,9 @@
     "build": "tsdown",
     "build:watch": "tsdown --watch",
     "clean": "rm -rf *.tsbuildinfo .turbo dist",
-    "dev": "bun --env-file ../../.env run src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "dev": "bun with-env src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "with-env": "bun run --env-file ../../.env"
   },
   "dependencies": {
     "zod": "4.3.6"

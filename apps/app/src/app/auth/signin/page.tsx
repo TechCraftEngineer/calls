@@ -6,20 +6,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { getCurrentUser, login } from "@/lib/auth";
+import { login } from "@/lib/auth";
 import { type LoginFormData, loginSchema } from "@/lib/validations";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  useEffect(() => {
-    getCurrentUser().then((user) => {
-      if (user) {
-        router.replace(paths.dashboard.root);
-      }
-    });
-  }, [router]);
 
   const {
     register,
@@ -36,20 +28,30 @@ function LoginForm() {
     const urlUsername = searchParams.get("username");
     const urlPassword = searchParams.get("password");
 
-    if (urlUsername) {
-      setValue("username", decodeURIComponent(urlUsername));
-    }
-    if (urlPassword) {
-      setValue("password", decodeURIComponent(urlPassword));
-    }
-
     if (urlUsername && urlPassword) {
-      const form = document.querySelector("form");
-      if (form) {
-        setTimeout(() => {
-          form.dispatchEvent(new Event("submit", { cancelable: true }));
-        }, 100);
+      // Базовая безопасность: проверяем, что данные не слишком длинные и не содержат подозрительных символов
+      const decodedUsername = decodeURIComponent(urlUsername);
+      const decodedPassword = decodeURIComponent(urlPassword);
+      
+      // Простая валидация - проверяем, что это похоже на email и парольreasonable длины
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(decodedUsername);
+      const isReasonableLength = decodedPassword.length >= 6 && decodedPassword.length <= 100;
+      
+      if (isEmail && isReasonableLength) {
+        setValue("username", decodedUsername);
+        setValue("password", decodedPassword);
+        
+        // Автоматический сабмит только для валидных данных
+        const form = document.querySelector("form");
+        if (form) {
+          setTimeout(() => {
+            form.dispatchEvent(new Event("submit", { cancelable: true }));
+          }, 100);
+        }
       }
+    } else if (urlUsername) {
+      // Только username без пароля - безопасно заполняем
+      setValue("username", decodeURIComponent(urlUsername));
     }
   }, [searchParams, setValue]);
 
@@ -59,7 +61,7 @@ function LoginForm() {
 
       if (result.success) {
         setTimeout(() => {
-          router.push(paths.dashboard.root);
+          router.push(paths.root);
         }, 100);
       } else {
         setError("root", { message: result.message || "Ошибка входа" });
@@ -118,7 +120,7 @@ function LoginForm() {
             <input
               id="username"
               type="email"
-              className={`w-full rounded-lg border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
+              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                 errors.username
                   ? "border-red-500 bg-red-50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(220,53,69,0.1)]"
                   : ""
@@ -144,7 +146,7 @@ function LoginForm() {
             <input
               id="password"
               type="password"
-              className={`w-full rounded-lg border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
+              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                 errors.password
                   ? "border-red-500 bg-red-50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(220,53,69,0.1)]"
                   : ""
@@ -182,7 +184,7 @@ function LoginForm() {
         </div>
 
         <div className="mt-8 text-center text-[12px] text-[#AAA]">
-          &copy; 2025 QBS Звонки. Все права защищены.
+          &copy; {new Date().getFullYear()} QBS Звонки. Все права защищены.
         </div>
       </div>
     </div>

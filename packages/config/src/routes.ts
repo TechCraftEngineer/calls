@@ -1,6 +1,6 @@
 const ROOTS = {
   ROOT: "/",
-  DASHBOARD: "/dashboard",
+  DASHBOARD: "/", // главная после авторизации
   AUTH: "/auth",
   STATISTICS: "/statistics",
   USERS: "/users",
@@ -17,6 +17,7 @@ export const paths = {
     root: ROOTS.AUTH,
     login: `${ROOTS.AUTH}/login`,
     signin: `${ROOTS.AUTH}/signin`,
+    signout: `${ROOTS.AUTH}/signout`,
     signup: `${ROOTS.AUTH}/signup`,
     otp: `${ROOTS.AUTH}/otp`,
     forgotPassword: `${ROOTS.AUTH}/forgot-password`,

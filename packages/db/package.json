@@ -23,11 +23,13 @@
   "scripts": {
     "clean": "rm -rf *.tsbuildinfo .turbo",
     "db:generate": "bunx drizzle-kit generate",
-    "db:migrate": "bunx drizzle-kit migrate",
+    "migrate:create": "bun with-env drizzle-kit generate",
+    "migrate": "bun with-env drizzle-kit migrate",
     "db:push": "bunx drizzle-kit push",
     "db:studio": "bunx drizzle-kit studio",
-    "dev": "bun --env-file ../../.env run src/index.ts",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "dev": "bun with-env src/index.ts",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "with-env": "bun run --env-file ../../.env"
   },
   "dependencies": {
     "@calls/config": "workspace:*",

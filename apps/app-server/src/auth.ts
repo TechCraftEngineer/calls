@@ -10,7 +10,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { username } from "better-auth/plugins";
 
 const baseUrl =
-  process.env.BACKEND_URL ?? process.env.APP_URL ?? "http://localhost:8000";
+  process.env.BACKEND_URL ?? process.env.APP_URL ?? "http://localhost:7000";
 
 const trustedOrigins = [
   "http://localhost:3000",

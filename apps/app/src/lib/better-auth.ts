@@ -16,7 +16,7 @@ function getAuthBaseUrl(): string {
   }
   return (
     process.env.NEXT_PUBLIC_API_URL?.replace(/\/?$/, "") ||
-    "http://localhost:8000"
+    "http://localhost:7000"
   );
 }
 
@@ -29,11 +29,11 @@ export const authClient = createAuthClient({
 // Хуки для работы с аутентификацией
 export const { useSession, signIn, signUp, signOut } = authClient;
 
-// Утилиты для совместимости со старым кодом
-export async function login(username: string, password: string) {
+// Утилиты для совместимости со старым кодом (вход по email)
+export async function login(email: string, password: string) {
   try {
-    const result = await signIn.username({
-      username,
+    const result = await signIn.email({
+      email,
       password,
     });
 
@@ -75,16 +75,31 @@ export async function getCurrentUser() {
     if (!user) return null;
 
     // Convert Better Auth user to expected User interface (username plugin adds username/displayUsername)
-    const u = user as { username?: string; displayUsername?: string };
+    const u = user as {
+      username?: string;
+      displayUsername?: string;
+      internal_numbers?: string | null;
+    };
+    const username =
+      u.username ?? u.displayUsername ?? user.email ?? user.name ?? "—";
+    const internalNumbers = u.internal_numbers ?? null;
+
+    // Совпадаем с логикой API (orpc.ts isAdmin): admin по username или internal_numbers
+    const isAdmin =
+      username === "admin@mango" ||
+      username === "admin@gmail.com" ||
+      String(internalNumbers ?? "")
+        .trim()
+        .toLowerCase() === "all";
+
     return {
       id: Number(user.id), // Convert string id to number
-      username:
-        u.username ?? u.displayUsername ?? user.email ?? user.name ?? "—",
+      username,
       name: user.name || "—",
       first_name: user.name?.split(" ")[0] || "",
       last_name: user.name?.split(" ")[1] || "",
-      role: "user",
-      internal_numbers: null,
+      role: isAdmin ? "admin" : "user",
+      internal_numbers: internalNumbers,
       mobile_numbers: null,
       email: user.email,
       emailVerified: user.emailVerified,

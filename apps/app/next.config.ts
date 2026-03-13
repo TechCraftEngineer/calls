@@ -81,7 +81,7 @@ export default async function createNextConfig(): Promise<NextConfig> {
     /** Proxy API routes to app-server */
     async rewrites() {
       const appServerUrl =
-        process.env.APP_SERVER_URL || "http://localhost:8000";
+        process.env.APP_SERVER_URL || "http://localhost:7000";
 
       return [
         {
@@ -90,29 +90,9 @@ export default async function createNextConfig(): Promise<NextConfig> {
         },
         // /api/orpc — через Route Handler (app/api/orpc/[...path]/route.ts)
         // с таймаутом 120 сек для локальной разработки (parseResume)
-        // {
-        //   source: "/api/orpc/:path*",
-        //   destination: `${appServerUrl}/api/orpc/:path*`,
-        // },
         {
-          source: "/api/chat/stream",
-          destination: `${appServerUrl}/api/chat/stream`,
-        },
-        {
-          source: "/api/vacancy/chat-generate",
-          destination: `${appServerUrl}/api/vacancy/chat-generate`,
-        },
-        {
-          source: "/api/gig/chat-generate",
-          destination: `${appServerUrl}/api/gig/chat-generate`,
-        },
-        {
-          source: "/api/resume/:path*",
-          destination: `${appServerUrl}/api/resume/:path*`,
-        },
-        {
-          source: "/api/test/:path*",
-          destination: `${appServerUrl}/api/test/:path*`,
+          source: "/api/orpc/:path*",
+          destination: `${appServerUrl}/api/orpc/:path*`,
         },
       ];
     },

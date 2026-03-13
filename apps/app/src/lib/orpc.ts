@@ -15,7 +15,7 @@ function getApiBaseUrl(): string {
   }
   return (
     process.env.NEXT_PUBLIC_API_URL?.replace(/\/(api|\/api\/)?$/, "") ||
-    "http://localhost:8000"
+    "http://localhost:7000"
   );
 }
 

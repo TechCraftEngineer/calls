@@ -11,8 +11,9 @@
   "license": "MIT",
   "scripts": {
     "build": "tsdown",
+    "build:watch": "tsdown --watch",
     "clean": "rm -rf *.tsbuildinfo .turbo dist",
-    "dev": "bun -b watch",
+    "dev": "bun run build:watch",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
