@@ -13,6 +13,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import { files } from "./files";
 import { workspaces } from "./workspaces";
 
 // Calls table - основные данные о звонках
@@ -31,6 +32,9 @@ export const calls = pgTable(
     direction: text("direction"), // 'incoming'/'outgoing'/'входящий'/'исходящий'
     status: text("status"),
     sizeBytes: integer("size_bytes"),
+    fileId: text("file_id").references(() => files.id, {
+      onDelete: "set null",
+    }),
     internalNumber: text("internal_number"),
     source: text("source"), // менеджер/оператор
     customerName: text("customer_name"),

@@ -36,6 +36,7 @@ export interface CreateCallData {
   direction?: string | null;
   status?: string | null;
   sizeBytes?: number | null;
+  fileId?: string | null;
   internalNumber?: string | null;
   source?: string | null;
   customerName?: string | null;

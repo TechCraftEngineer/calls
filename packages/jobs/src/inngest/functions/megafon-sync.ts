@@ -1,3 +1,4 @@
+import { settingsService } from "@calls/db";
 import { syncMegafonFtp } from "../../megafon/ftp-sync";
 import { inngest } from "../client";
 
@@ -9,9 +10,8 @@ export const megafonSyncFn = inngest.createFunction(
   },
   { cron: "TZ=Europe/Moscow */15 * * * *" },
   async ({ step }) => {
-    const host = process.env.MEGAFON_FTP_HOST;
-    const user = process.env.MEGAFON_FTP_USER;
-    const password = process.env.MEGAFON_FTP_PASSWORD;
+    const { host, user, password } =
+      await settingsService.getMegafonFtpSettings();
 
     if (!host || !user || !password) {
       return {
@@ -27,6 +27,7 @@ export const megafonSyncFn = inngest.createFunction(
     return {
       downloaded: result.downloaded,
       skipped: result.skipped,
+      s3Uploaded: result.s3Uploaded,
       errors: result.errors,
       errorsCount: result.errors.length,
     };

@@ -12,7 +12,7 @@ function getAuthBaseUrl(): string {
     const envUrl = process.env.NEXT_PUBLIC_API_URL;
     if (envUrl) return envUrl.replace(/\/?$/, "");
     if (window.location.origin.includes("zvonki.qbs.ru"))
-      return "https://zvonki.qbs.ru";
+      return "https://zvonki.qbsoft.ru";
     return window.location.origin;
   }
   return (

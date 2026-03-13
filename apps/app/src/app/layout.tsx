@@ -13,13 +13,13 @@ const siteUrl =
   process.env.NEXT_PUBLIC_APP_URL ||
   (process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
-    : "https://zvonki.qbs.ru");
+    : "https://zvonki.qbsoft.ru");
 
 export const metadata: Metadata = {
   metadataBase: new URL(
     typeof siteUrl === "string" && siteUrl.startsWith("http")
       ? siteUrl
-      : "https://zvonki.qbs.ru",
+      : "https://zvonki.qbsoft.ru",
   ),
   title: {
     default: "QBS Звонки — Аналитика телефонных разговоров с помощью ИИ",

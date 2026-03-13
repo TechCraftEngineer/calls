@@ -4,12 +4,12 @@
 
 import type { SystemRepository } from "../repositories/system.repository";
 import type { UsersRepository } from "../repositories/users.repository";
+import type { User } from "../schema/types";
 import type {
   CreateUserData,
   UpdateUserData,
   UserUpdateData,
 } from "../types/users.types";
-import type { User } from "../schema/types";
 import {
   ValidationError,
   validateCreateUserData,

@@ -3,9 +3,10 @@
  * Структура на FTP: recordings/{YYYY-MM-DD}/{filename}.mp3
  */
 
-import { existsSync, mkdirSync, statSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { callsService, workspacesService } from "@calls/db";
+import { PassThrough } from "node:stream";
+import { callsService, filesService, workspacesService } from "@calls/db";
+import { generateS3Key, uploadStreamToS3 } from "@calls/lib";
+import { validateFtpCredentials } from "@calls/shared/validation";
 import { Client } from "basic-ftp";
 import { createLogger } from "../logger";
 import { parseMegafonFilename } from "./parse-filename";
@@ -22,44 +23,24 @@ export interface SyncResult {
   downloaded: number;
   skipped: number;
   errors: string[];
-}
-
-function getRecordsDir(): string {
-  const isDocker =
-    process.env.DEPLOYMENT_ENV === "docker" || existsSync("/.dockerenv");
-  if (isDocker) return "/app/records";
-  return join(process.cwd(), "records");
+  s3Uploaded: number;
 }
 
 function validateFtpConfig(config: MegafonFtpConfig): string[] {
-  const errors: string[] = [];
-
-  if (!config.host || config.host.trim().length === 0) {
-    errors.push("FTP host не может быть пустым");
-  }
-
-  if (!config.user || config.user.trim().length === 0) {
-    errors.push("FTP user не может быть пустым");
-  }
-
-  if (!config.password || config.password.length === 0) {
-    errors.push("FTP password не может быть пустым");
-  }
-
-  // Проверка формата хоста
-  if (config.host && !/^[\w.-]+\.[\w.-]+$/.test(config.host)) {
-    errors.push("Некорректный формат FTP хоста");
-  }
-
-  return errors;
+  const validation = validateFtpCredentials(config.host, config.user, config.password);
+  return validation.errors;
 }
 
 export async function syncMegafonFtp(
   config: MegafonFtpConfig,
   dateStr?: string,
 ): Promise<SyncResult> {
-  const result: SyncResult = { downloaded: 0, skipped: 0, errors: [] };
-  const recordsDir = getRecordsDir();
+  const result: SyncResult = {
+    downloaded: 0,
+    skipped: 0,
+    errors: [],
+    s3Uploaded: 0,
+  };
 
   // Валидация конфигурации
   const validationErrors = validateFtpConfig(config);
@@ -90,7 +71,10 @@ export async function syncMegafonFtp(
     logger.info("Успешное подключение к FTP");
 
     const defaultWs = await workspacesService.getBySlug("default");
-    const workspaceId = defaultWs?.id ?? 1;
+    if (!defaultWs) {
+      throw new Error("Default workspace not found");
+    }
+    const workspaceId = defaultWs.id;
 
     const baseRemoteDir = "recordings";
     const remoteDirs: string[] = dateStr
@@ -139,7 +123,6 @@ export async function syncMegafonFtp(
 
       for (const file of files) {
         const relativePath = `${dateDir}/${file.name}`;
-        const localPath = join(recordsDir, dateDir, file.name);
 
         const existing = await callsService.getCallByFilename(
           relativePath,
@@ -161,46 +144,70 @@ export async function syncMegafonFtp(
         }
 
         try {
-          const localDir = dirname(localPath);
-          if (!existsSync(localDir)) {
-            mkdirSync(localDir, { recursive: true });
-          }
-
-          await Promise.race([
-            client.downloadTo(localPath, file.name),
-            new Promise((_, reject) =>
+          // Скачиваем файл напрямую в буфер
+          const downloadBuffer = await Promise.race([
+            client.downloadToBuffer(file.name),
+            new Promise<never>((_, reject) =>
               setTimeout(
                 () => reject(new Error("Timeout downloading file")),
                 OPERATION_TIMEOUT,
               ),
             ),
           ]);
-          const stat = statSync(localPath);
 
           // Валидация размера файла
           const MIN_FILE_SIZE = 1024; // 1KB
           const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
-          if (stat.size < MIN_FILE_SIZE) {
+          if (downloadBuffer.length < MIN_FILE_SIZE) {
             result.errors.push(
-              `${relativePath}: Файл слишком маленький (${stat.size} bytes)`,
+              `${relativePath}: Файл слишком маленький (${downloadBuffer.length} bytes)`,
             );
             logger.warn("Файл слишком маленький", {
               filename: relativePath,
-              size: stat.size,
+              size: downloadBuffer.length,
             });
             continue;
           }
 
-          if (stat.size > MAX_FILE_SIZE) {
+          if (downloadBuffer.length > MAX_FILE_SIZE) {
             result.errors.push(
-              `${relativePath}: Файл слишком большой (${stat.size} bytes)`,
+              `${relativePath}: Файл слишком большой (${downloadBuffer.length} bytes)`,
             );
             logger.warn("Файл слишком большой", {
               filename: relativePath,
-              size: stat.size,
+              size: downloadBuffer.length,
             });
             continue;
+          }
+
+          // Загрузка файла в S3 через FilesService
+          let fileId: string | null = null;
+          let s3Key: string | null = null;
+          try {
+            const uploadResult = await filesService.uploadCallRecording(
+              workspaceId,
+              relativePath,
+              downloadBuffer,
+            );
+            fileId = uploadResult.id;
+            s3Key = uploadResult.s3Key;
+            result.s3Uploaded++;
+            logger.info("Файл успешно загружен в S3", {
+              filename: relativePath,
+              s3Key,
+              fileId,
+              size: downloadBuffer.length,
+            });
+          } catch (s3Error) {
+            const errorMsg = `${relativePath}: Ошибка загрузки в S3: ${s3Error instanceof Error ? s3Error.message : String(s3Error)}`;
+            result.errors.push(errorMsg);
+            logger.error("Ошибка загрузки в S3", {
+              filename: relativePath,
+              error:
+                s3Error instanceof Error ? s3Error.message : String(s3Error),
+            });
+            // Продолжаем создание записи в БД даже если S3 не загрузился
           }
 
           await callsService.createCall({
@@ -213,14 +220,17 @@ export async function syncMegafonFtp(
               parsed.direction === "incoming" ? "Входящий" : "Исходящий",
             source: parsed.internalNumber,
             name: parsed.internalNumber,
-            size_bytes: stat.size,
+            size_bytes: downloadBuffer.length,
+            file_id: fileId,
           });
 
           result.downloaded++;
-          logger.info("Файл успешно загружен", {
+          logger.info("Файл успешно обработан", {
             filename: relativePath,
-            size: stat.size,
+            size: downloadBuffer.length,
             direction: parsed.direction,
+            s3Key,
+            s3Uploaded: !!s3Key,
           });
         } catch (e) {
           const errorMsg = `${relativePath}: ${e instanceof Error ? e.message : String(e)}`;
@@ -240,6 +250,7 @@ export async function syncMegafonFtp(
   logger.info("Синхронизация завершена", {
     downloaded: result.downloaded,
     skipped: result.skipped,
+    s3Uploaded: result.s3Uploaded,
     errors: result.errors.length,
   });
 

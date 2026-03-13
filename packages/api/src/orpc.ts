@@ -69,9 +69,7 @@ export async function createBackendContext(opts: {
         | undefined;
       if (username) {
         const profile = await usersService.getUserByUsername(username);
-        user = profile
-          ? ({ ...profile, ...baUser })
-          : baUser;
+        user = profile ? { ...profile, ...baUser } : baUser;
       }
     }
   }

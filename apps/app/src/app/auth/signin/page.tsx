@@ -30,7 +30,7 @@ function LoginForm() {
     if (urlUsername) {
       // Безопасное заполнение только username без пароля
       const sanitizedUsername = decodeURIComponent(urlUsername)
-        .replace(/[<>\"'&]/g, "") // Удаляем опасные HTML символы
+        .replace(/[<>"'&]/g, "") // Удаляем опасные HTML символы
         .replace(/[\x00-\x1F\x7F]/g, "") // Удаляем control characters
         .replace(/\s+/g, " ") // Заменяем множественные пробелы на один
         .trim()

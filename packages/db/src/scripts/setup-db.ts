@@ -1,11 +1,12 @@
-import { db } from "../client";
 import { sql } from "drizzle-orm";
+import { db } from "../client";
 
 async function setupDb() {
   await db.execute(sql`CREATE EXTENSION IF NOT EXISTS pgcrypto;`);
-  
+
+  // Создаем UUIDv7 функцию для сортируемости по времени
   await db.execute(sql`
-    CREATE OR REPLACE FUNCTION uuid_generate_v7()
+    CREATE OR REPLACE FUNCTION uuidv7()
     RETURNS uuid AS $$
     DECLARE
       unix_ts_ms bytea;
@@ -24,7 +25,7 @@ async function setupDb() {
     CREATE OR REPLACE FUNCTION workspace_id_generate()
     RETURNS text AS $$
     BEGIN
-      RETURN 'ws_' || replace(uuid_generate_v7()::text, '-', '');
+      RETURN 'ws_' || replace(uuidv7()::text, '-', '');
     END
     $$ LANGUAGE plpgsql VOLATILE;
   `);

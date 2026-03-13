@@ -16,6 +16,8 @@ export type {
 export { account, session, user, verification } from "./auth";
 // Export all table definitions
 export { callEvaluations, calls, transcripts } from "./calls";
+export type { FileType } from "./files";
+export { FILE_TYPES, files } from "./files";
 export { activityLog, prompts } from "./system";
 
 // Export all TypeScript types
@@ -23,9 +25,11 @@ export type {
   ActivityLog,
   Call,
   CallEvaluation,
+  File,
   NewActivityLog,
   NewCall,
   NewCallEvaluation,
+  NewFile,
   NewPrompt,
   NewTranscript,
   NewWorkspace,

@@ -1,25 +1,97 @@
-import { promptsService, systemRepository } from "@calls/db";
+import { promptsService, settingsService, systemRepository } from "@calls/db";
 import { z } from "zod";
 import { adminProcedure, protectedProcedure } from "../orpc";
+
+// Список чувствительных ключей для маскирования в логах
+const SENSITIVE_KEYS = [
+  "telegram_bot_token",
+  "max_bot_token",
+  "megafon_ftp_password",
+  "password",
+  "token",
+  "secret",
+  "key",
+];
+
+// Функция для маскирования чувствительных данных в логах
+function maskSensitiveData(key: string, value: string): string {
+  return SENSITIVE_KEYS.some((sensitive) =>
+    key.toLowerCase().includes(sensitive),
+  )
+    ? `${value.substring(0, 3)}***`
+    : value;
+}
 
 const DEEPSEEK_MODELS: Record<string, { name: string; max_tokens: number }> = {
   "deepseek-chat": { name: "DeepSeek Chat", max_tokens: 8192 },
   "deepseek-coder": { name: "DeepSeek Coder", max_tokens: 8192 },
 };
 
+// Валидация для FTP credentials
+const ftpCredentialsSchema = z.object({
+  host: z
+    .string()
+    .min(1)
+    .refine(
+      (val) => {
+        // Проверяем URL или IP формат
+        try {
+          new URL(val.includes("://") ? val : `ftp://${val}`);
+          return true;
+        } catch {
+          // Проверяем IP формат
+          const ipRegex =
+            /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+          return ipRegex.test(val);
+        }
+      },
+      { message: "Некорректный формат хоста (URL или IP)" },
+    ),
+  user: z
+    .string()
+    .min(1)
+    .max(50)
+    .regex(/^[a-zA-Z0-9_.-]+$/, {
+      message: "Имя пользователя может содержать только буквы, цифры, _, -, .",
+    }),
+  password: z.string().min(1, "Пароль обязателен"),
+});
+
 const promptItemSchema = z.object({
   value: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
 });
 
-const settingsUpdateSchema = z.object({
-  deepseek_model: z.string().optional(),
-  quality_min_value_threshold: z.number().min(0).max(5).optional(),
-  enable_manager_recommendations: z.boolean().optional(),
-  telegram_bot_token: z.string().optional().nullable(),
-  max_bot_token: z.string().optional().nullable(),
-  prompts: z.record(z.string(), promptItemSchema).optional(),
-});
+const settingsUpdateSchema = z
+  .object({
+    deepseek_model: z.string().optional(),
+    quality_min_value_threshold: z.number().min(0).max(5).optional(),
+    enable_manager_recommendations: z.boolean().optional(),
+    telegram_bot_token: z.string().optional().nullable(),
+    max_bot_token: z.string().optional().nullable(),
+    megafon_ftp_host: z.string().optional().nullable(),
+    megafon_ftp_user: z.string().optional().nullable(),
+    megafon_ftp_password: z.string().optional().nullable(),
+    prompts: z.record(z.string(), promptItemSchema).optional(),
+  })
+  .refine((data) => {
+    // Если хотя бы одно FTP поле заполнено, все должны быть заполнены
+    const ftpFields = [
+      data.megafon_ftp_host,
+      data.megafon_ftp_user,
+      data.megafon_ftp_password,
+    ];
+    const hasAnyValue = ftpFields.some((field) => field && field.trim() !== "");
+    const hasAllValues = ftpFields.every(
+      (field) => field && field.trim() !== "",
+    );
+
+    if (hasAnyValue && !hasAllValues) {
+      throw new Error("Все поля FTP должны быть заполнены");
+    }
+
+    return true;
+  });
 
 export const settingsRouter = {
   getPrompts: protectedProcedure.handler(async () => {
@@ -64,6 +136,37 @@ export const settingsRouter = {
           "MAX Bot Token",
         );
       }
+      if (
+        input.megafon_ftp_host !== undefined ||
+        input.megafon_ftp_user !== undefined ||
+        input.megafon_ftp_password !== undefined
+      ) {
+        // Валидируем FTP credentials если они предоставлены
+        if (
+          input.megafon_ftp_host &&
+          input.megafon_ftp_user &&
+          input.megafon_ftp_password
+        ) {
+          try {
+            ftpCredentialsSchema.parse({
+              host: input.megafon_ftp_host,
+              user: input.megafon_ftp_user,
+              password: input.megafon_ftp_password,
+            });
+          } catch (error) {
+            throw new Error(
+              `Ошибка валидации FTP: ${(error as Error).message}`,
+            );
+          }
+
+          // Используем новый сервис для обновления FTP настроек
+          await settingsService.updateMegafonFtpSettings(
+            input.megafon_ftp_host,
+            input.megafon_ftp_user,
+            input.megafon_ftp_password,
+          );
+        }
+      }
       if (input.prompts) {
         const promptKeys = [
           "summary",
@@ -92,9 +195,11 @@ export const settingsRouter = {
               p.value ?? "",
               p.description ?? "",
             );
+            // Маскируем чувствительные данные в логах
+            const maskedValue = maskSensitiveData(key, p.value ?? "");
             await systemRepository.addActivityLog(
               "info",
-              `Prompt updated: ${key}`,
+              `Prompt updated: ${key} = ${maskedValue}`,
               (context.user as Record<string, unknown>).username as string,
             );
           }

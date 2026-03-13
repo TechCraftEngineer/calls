@@ -16,7 +16,8 @@
     "@calls/db": "workspace:*",
     "basic-ftp": "^5.2.0",
     "hono": "4.12.7",
-    "inngest": "^3.52.6"
+    "inngest": "^3.52.6",
+    "ssh2-sftp-client": "^12.1.0"
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",

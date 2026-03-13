@@ -17,7 +17,7 @@ const trustedOrigins = [
   "http://localhost:3000",
   process.env.NEXT_PUBLIC_APP_URL,
   ...(process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()) ?? []),
-  "https://zvonki.qbs.ru",
+  "https://zvonki.qbsoft.ru",
 ].filter(Boolean) as string[];
 
 export const auth = betterAuth({
