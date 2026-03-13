@@ -13,18 +13,12 @@ export default async function createNextConfig(): Promise<NextConfig> {
     ...(process.env.CI === "true" && { output: "standalone" }),
 
     /** Exclude packages using Node.js APIs or dynamic require from bundling */
-    serverExternalPackages: [
-      "@qbs-autonaim/lib",
-      "@qbs-autonaim/document-processor",
-      "@qbs-autonaim/integration-clients",
-      "@qbs-autonaim/jobs-parsers",
-      "cheerio",
-    ],
+    serverExternalPackages: ["@calls/lib", "cheerio"],
 
     /** Build optimizations */
     experimental: {
       optimizePackageImports: [
-        "@qbs-autonaim/ui",
+        "@calls/ui",
         "@radix-ui/react-icons",
         "lucide-react",
         "@tabler/icons-react",
@@ -36,11 +30,11 @@ export default async function createNextConfig(): Promise<NextConfig> {
     productionBrowserSourceMaps: false,
 
     transpilePackages: [
-      "@qbs-autonaim/auth",
-      "@qbs-autonaim/api",
-      "@qbs-autonaim/db",
-      "@qbs-autonaim/ui",
-      "@qbs-autonaim/validators",
+      "@calls/auth",
+      "@calls/api",
+      "@calls/db",
+      "@calls/ui",
+      "@calls/validators",
     ],
 
     /** We already do linting and typechecking as separate tasks in CI */
