@@ -12,7 +12,7 @@ const productionUrl = process.env.PRODUCTION_URL || "https://zvonki.qbs.ru";
 export const auth = initAuth({
   baseUrl,
   productionUrl,
-  secret: process.env.AUTH_SECRET || process.env.BETTER_AUTH_SECRET,
+  secret: process.env.BETTER_AUTH_SECRET,
   extraPlugins: [username()],
 });
 

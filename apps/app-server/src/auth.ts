@@ -30,7 +30,7 @@ export const auth = betterAuth({
     },
   }),
   baseURL: baseUrl,
-  secret: process.env.AUTH_SECRET ?? process.env.BETTER_AUTH_SECRET,
+  secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins,
   emailAndPassword: {
     enabled: true,

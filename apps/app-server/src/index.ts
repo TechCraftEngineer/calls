@@ -633,23 +633,42 @@ const port = Number(process.env.BACKEND_PORT ?? process.env.PORT ?? 8000);
 
 // Set Telegram webhook on startup when configured
 const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
-if (webhookUrl) {
-  storage
-    .getPrompt("telegram_bot_token")
-    .then((token) => {
-      if (token?.trim()) {
-        const bot = new Bot(token);
-        return bot.api.setWebhook(webhookUrl);
-      }
-    })
-    .then((ok) => {
-      if (ok !== undefined)
-        console.log("[backend-server] Telegram webhook set");
-    })
-    .catch((err) =>
-      console.error("[backend-server] Telegram setWebhook:", err),
+async function setupTelegramWebhook() {
+  if (!webhookUrl) {
+    console.log(
+      "[backend-server] TELEGRAM_WEBHOOK_URL not configured, skipping webhook setup",
     );
+    return;
+  }
+
+  try {
+    const token = await storage.getPrompt("telegram_bot_token");
+    if (!token?.trim()) {
+      console.warn(
+        "[backend-server] Telegram bot token not configured, skipping webhook setup",
+      );
+      return;
+    }
+
+    const bot = new Bot(token);
+    const webhookInfo = await bot.api.getWebhookInfo();
+
+    // Устанавливаем webhook только если он отличается от текущего
+    if (webhookInfo.url !== webhookUrl) {
+      await bot.api.setWebhook(webhookUrl);
+      console.log("[backend-server] Telegram webhook set successfully");
+    } else {
+      console.log("[backend-server] Telegram webhook already configured");
+    }
+  } catch (error) {
+    console.error("[backend-server] Failed to set Telegram webhook:", error);
+    // В случае критической ошибки webhook setup не должно прерывать запуск сервера
+    // Но логируем проблему для диагностики
+  }
 }
+
+// Запускаем setup webhook асинхронно, но не блокируем запуск сервера
+setupTelegramWebhook();
 
 console.log(`[backend-server] Running on http://localhost:${port}`);
 

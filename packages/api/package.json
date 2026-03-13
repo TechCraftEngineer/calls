@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@calls/ai": "workspace:*",
     "@calls/db": "workspace:*",
     "@calls/telegram-bot": "workspace:*",
     "@orpc/client": "^1.13.7",

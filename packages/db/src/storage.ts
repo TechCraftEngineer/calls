@@ -109,6 +109,7 @@ export const storage = {
       internalNumbers,
       mobileNumbers,
       direction,
+      valueScores,
       operators,
       manager,
       status,
@@ -140,6 +141,9 @@ export const storage = {
     }
     if (manager) {
       conditions.push(eq(schema.calls.name, manager));
+    }
+    if (valueScores?.length) {
+      conditions.push(inArray(schema.callEvaluations.value_score, valueScores));
     }
     if (q) {
       const qCond = or(
@@ -191,6 +195,7 @@ export const storage = {
       internalNumbers,
       mobileNumbers,
       direction,
+      valueScores,
       operators,
       manager,
       status,
@@ -223,6 +228,9 @@ export const storage = {
     if (manager) {
       conditions.push(eq(schema.calls.name, manager));
     }
+    if (valueScores?.length) {
+      conditions.push(inArray(schema.callEvaluations.value_score, valueScores));
+    }
     if (q) {
       const qCond = or(
         like(schema.calls.number, `%${q}%`),
@@ -232,11 +240,20 @@ export const storage = {
       if (qCond) conditions.push(qCond);
     }
 
-    let query = db.select({ count: count() }).from(schema.calls);
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as typeof query;
-    }
-    const result = await query;
+    const baseQuery = valueScores?.length
+      ? db
+          .select({ count: count() })
+          .from(schema.calls)
+          .innerJoin(
+            schema.callEvaluations,
+            eq(schema.calls.id, schema.callEvaluations.call_id),
+          )
+      : db.select({ count: count() }).from(schema.calls);
+
+    const result =
+      conditions.length > 0
+        ? await baseQuery.where(and(...conditions))
+        : await baseQuery;
     return result[0]?.count ?? 0;
   },
 
@@ -541,12 +558,16 @@ export const storage = {
       .limit(1);
 
     const user = result[0] ?? null;
-    if (user && !user.first_name && user.name) {
-      const parts = user.name.split(/\s+/, 2);
-      (user as User).first_name = parts[0] ?? "";
-      (user as User).last_name = parts[1] ?? "";
-    }
-    return user;
+    if (!user) return null;
+
+    // Безопасно создаем обновленный объект пользователя с заполненными полями
+    const updatedUser: User = {
+      ...user,
+      first_name: user.first_name || (user.name ? user.name.split(/\s+/, 2)[0] || "" : ""),
+      last_name: user.last_name || (user.name ? user.name.split(/\s+/, 2)[1] || "" : ""),
+    };
+
+    return updatedUser;
   },
 
   async saveTelegramChatId(userId: number, chatId: string): Promise<boolean> {

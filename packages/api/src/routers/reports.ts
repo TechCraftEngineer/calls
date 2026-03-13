@@ -17,7 +17,10 @@ export const reportsRouter = {
       throw new Error(
         "Telegram Bot Token не настроен. Укажите токен в Настройках.",
       );
-    await sendMessage(token, chatId, "Тестовый отчёт");
+    const success = await sendMessage(token, chatId, "Тестовый отчёт");
+    if (!success) {
+      throw new Error("Не удалось отправить сообщение в Telegram. Проверьте настройки и подключение.");
+    }
     return { success: true };
   }),
 };
