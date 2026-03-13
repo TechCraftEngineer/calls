@@ -27,7 +27,7 @@ export const statisticsRouter = {
       }
       const dateFromDb = dateFrom ? `${dateFrom} 00:00:00` : undefined;
       const dateToDb = dateTo ? `${dateTo} 23:59:59` : undefined;
-      const stats = storage.getEvaluationsStats({
+      const stats = await storage.getEvaluationsStats({
         dateFrom: dateFromDb,
         dateTo: dateToDb,
       });
@@ -58,6 +58,6 @@ export const statisticsRouter = {
     }),
 
   getMetrics: protectedProcedure.handler(async () => {
-    return storage.calculateMetrics();
+    return await storage.calculateMetrics();
   }),
 };

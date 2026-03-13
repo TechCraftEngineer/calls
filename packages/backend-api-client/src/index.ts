@@ -1,6 +1,6 @@
 /**
  * Browser-safe oRPC client for backend-api.
- * No server dependencies (no backend-storage, better-sqlite3).
+ * No server dependencies (no db storage, pg).
  */
 
 import { createORPCClient } from "@orpc/client";

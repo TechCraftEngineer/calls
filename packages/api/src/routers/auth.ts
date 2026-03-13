@@ -10,14 +10,16 @@ export const authRouter = {
   login: publicProcedure
     .input(loginSchema)
     .handler(async ({ input, context }) => {
-      const ok = context.storage.verifyPassword(
+      const ok = await context.storage.verifyPassword(
         input.username.trim(),
         input.password.trim(),
       );
       if (!ok) {
         throw new Error("Invalid credentials");
       }
-      const user = context.storage.getUserByUsername(input.username.trim());
+      const user = await context.storage.getUserByUsername(
+        input.username.trim(),
+      );
       if (!user) {
         throw new Error("Invalid credentials");
       }

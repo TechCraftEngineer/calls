@@ -15,10 +15,10 @@ import { storage } from "@calls/db";
 import { ORPCError, onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { Hono } from "hono";
+import { serveStatic } from "hono/bun";
 import { setCookie } from "hono/cookie";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { serveStatic } from "hono/serve-static";
 import { auth } from "./auth";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -133,11 +133,11 @@ app.post("/api/auth/login", async (c) => {
     );
   }
   // Fallback: legacy storage (during migration from Python backend)
-  const ok = storage.verifyPassword(username, password);
+  const ok = await storage.verifyPassword(username, password);
   if (!ok) {
     return c.json({ success: false, detail: "Invalid credentials" }, 401);
   }
-  const user = storage.getUserByUsername(username);
+  const user = await storage.getUserByUsername(username);
   if (!user)
     return c.json({ success: false, detail: "Invalid credentials" }, 401);
   setCookie(c, "session", username, {
@@ -261,9 +261,9 @@ app.post("/api/calls/:id/recommendations", async (c) => {
   if (!ctx.user) return c.json({ detail: "Unauthorized" }, 401);
   const id = Number(c.req.param("id"));
   if (Number.isNaN(id)) return c.json({ detail: "Invalid id" }, 400);
-  const call = storage.getCall(id);
+  const call = await storage.getCall(id);
   if (!call) return c.json({ detail: "Call not found" }, 404);
-  const transcript = storage.getTranscriptByCallId(id);
+  const transcript = await storage.getTranscriptByCallId(id);
   if (!transcript?.text)
     return c.json({ detail: "Transcript not found for this call" }, 400);
   return c.json({ detail: "DeepSeek recommendations not yet integrated" }, 501);
@@ -274,9 +274,9 @@ app.post("/api/calls/:id/evaluate", async (c) => {
   if (!ctx.user) return c.json({ detail: "Unauthorized" }, 401);
   const id = Number(c.req.param("id"));
   if (Number.isNaN(id)) return c.json({ detail: "Invalid id" }, 400);
-  const call = storage.getCall(id);
+  const call = await storage.getCall(id);
   if (!call) return c.json({ detail: "Call not found" }, 404);
-  const transcript = storage.getTranscriptByCallId(id);
+  const transcript = await storage.getTranscriptByCallId(id);
   if (!transcript?.text)
     return c.json(
       { detail: "Transcript not found. Please transcribe the call first." },

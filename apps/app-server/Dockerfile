@@ -4,9 +4,8 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json bun.lockb ./
-COPY apps/backend-server/package.json ./apps/backend-server/
-COPY packages/backend-api/package.json ./packages/backend-api/
-COPY packages/backend-storage/package.json ./packages/backend-storage/
+COPY apps/app-server/package.json ./apps/app-server/
+COPY packages/api/package.json ./packages/api/
 COPY packages/db/package.json ./packages/db/
 COPY packages/config/package.json ./packages/config/
 
@@ -14,9 +13,8 @@ COPY packages/config/package.json ./packages/config/
 RUN bun install --frozen-lockfile
 
 # Copy source code
-COPY apps/backend-server/src ./apps/backend-server/src
-COPY packages/backend-api/src ./packages/backend-api/src
-COPY packages/backend-storage/src ./packages/backend-storage/src
+COPY apps/app-server/src ./apps/app-server/src
+COPY packages/api/src ./packages/api/src
 COPY packages/db/src ./packages/db/src
 COPY packages/config/src ./packages/config/src
 COPY tsconfig.json ./

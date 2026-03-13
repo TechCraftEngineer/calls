@@ -1,11 +1,6 @@
-import { copyFileSync, existsSync, mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { storage } from "@calls/db";
 import { z } from "zod";
 import { adminProcedure, protectedProcedure } from "../orpc";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const DEEPSEEK_MODELS: Record<string, { name: string; max_tokens: number }> = {
   "deepseek-chat": { name: "DeepSeek Chat", max_tokens: 8192 },
@@ -128,8 +123,8 @@ export const settingsRouter = {
   }),
 
   backup: adminProcedure.handler(async ({ context }) => {
-    // PostgreSQL: use pg_dump for backup. This is a stub - run pg_dump manually
-    // or integrate with your deployment (e.g. managed backup).
+    // PostgreSQL: run pg_dump externally for backup:
+    // pg_dump $POSTGRES_URL > backup_$(date +%Y%m%d_%H%M%S).sql
     const timestamp = new Date()
       .toISOString()
       .replace(/[-:T.]/g, "")
@@ -137,13 +132,13 @@ export const settingsRouter = {
     const backupFilename = `pg_backup_${timestamp}.sql`;
     await storage.addActivityLog(
       "info",
-      `Резервная копия базы: ${backupFilename} → ${backupPath}`,
+      `Запрошена резервная копия PostgreSQL: ${backupFilename} (выполните pg_dump вручную)`,
       (context.user as Record<string, unknown>).username as string,
     );
     return {
       success: true,
-      message: "Резервная копия создана.",
-      path: backupPath,
+      message: "Резервная копия: выполните pg_dump $POSTGRES_URL > backup.sql",
+      path: backupFilename,
     };
   }),
 };

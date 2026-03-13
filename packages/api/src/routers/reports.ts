@@ -5,7 +5,7 @@ export const reportsRouter = {
   sendTestTelegram: protectedProcedure.handler(async ({ context }) => {
     const username = (context.user as Record<string, unknown>)
       .username as string;
-    const user = storage.getUserByUsername(username);
+    const user = await storage.getUserByUsername(username);
     if (!user) throw new Error("User not found");
     const chatId = (user as Record<string, unknown>).telegram_chat_id as
       | string

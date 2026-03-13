@@ -142,13 +142,12 @@ export const storage = {
       conditions.push(eq(schema.calls.name, manager));
     }
     if (q) {
-      conditions.push(
-        or(
-          like(schema.calls.number, `%${q}%`),
-          like(schema.calls.name, `%${q}%`),
-          like(schema.calls.customer_name, `%${q}%`),
-        )!,
+      const qCond = or(
+        like(schema.calls.number, `%${q}%`),
+        like(schema.calls.name, `%${q}%`),
+        like(schema.calls.customer_name, `%${q}%`),
       );
+      if (qCond) conditions.push(qCond);
     }
 
     let query = db
@@ -225,13 +224,12 @@ export const storage = {
       conditions.push(eq(schema.calls.name, manager));
     }
     if (q) {
-      conditions.push(
-        or(
-          like(schema.calls.number, `%${q}%`),
-          like(schema.calls.name, `%${q}%`),
-          like(schema.calls.customer_name, `%${q}%`),
-        )!,
+      const qCond = or(
+        like(schema.calls.number, `%${q}%`),
+        like(schema.calls.name, `%${q}%`),
+        like(schema.calls.customer_name, `%${q}%`),
       );
+      if (qCond) conditions.push(qCond);
     }
 
     let query = db.select({ count: count() }).from(schema.calls);
@@ -718,7 +716,7 @@ export const storage = {
 
     const totalCalls = totalCallsResult[0]?.count ?? 0;
     const transcribed = transcribedResult[0]?.count ?? 0;
-    const avgDuration = Math.round(avgDurationResult[0]?.avg ?? 0);
+    const avgDuration = Math.round(Number(avgDurationResult[0]?.avg ?? 0));
     const lastSync = lastSyncResult[0]?.timestamp ?? null;
 
     return {
