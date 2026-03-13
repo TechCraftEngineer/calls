@@ -4,6 +4,7 @@
  */
 
 import { Writable } from "node:stream";
+import { env } from "@calls/config";
 import { callsService, filesService, workspacesService } from "@calls/db";
 import { validateFtpCredentials } from "@calls/shared";
 import { Client } from "basic-ftp";
@@ -23,6 +24,8 @@ export interface SyncResult {
   skipped: number;
   errors: string[];
   s3Uploaded: number;
+  /** ID звонков, созданных в этой сессии (для последующей транскрибации) */
+  createdCallIds: string[];
 }
 
 function validateFtpConfig(config: MegafonFtpConfig): string[] {
@@ -43,6 +46,7 @@ export async function syncMegafonFtp(
     skipped: 0,
     errors: [],
     s3Uploaded: 0,
+    createdCallIds: [],
   };
 
   // Валидация конфигурации
@@ -75,7 +79,7 @@ export async function syncMegafonFtp(
 
     const defaultWs = await workspacesService.getBySlug("default");
     if (!defaultWs) {
-      throw new Error("Default workspace not found");
+      throw new Error("Рабочее пространство 'default' не найдено");
     }
     const workspaceId = defaultWs.id;
 
@@ -213,17 +217,18 @@ export async function syncMegafonFtp(
               size: downloadBuffer.length,
             });
           } catch (s3Error) {
-            const errorMsg = `${relativePath}: Ошибка загрузки в S3: ${s3Error instanceof Error ? s3Error.message : String(s3Error)}`;
+            const errorMsg = `${relativePath}: Критическая ошибка загрузки в S3: ${s3Error instanceof Error ? s3Error.message : String(s3Error)}`;
             result.errors.push(errorMsg);
-            logger.error("Ошибка загрузки в S3", {
+            logger.error("Критическая ошибка загрузки в S3", {
               filename: relativePath,
               error:
                 s3Error instanceof Error ? s3Error.message : String(s3Error),
             });
-            // Продолжаем создание записи в БД даже если S3 не загрузился
+            // Прерываем обработку файла, так как без S3 транскрибация невозможна
+            continue;
           }
 
-          await callsService.createCall({
+          const callId = await callsService.createCall({
             workspaceId,
             filename: relativePath,
             number: parsed.externalNumber,
@@ -238,6 +243,9 @@ export async function syncMegafonFtp(
           });
 
           result.downloaded++;
+          if (callId) {
+            result.createdCallIds.push(callId);
+          }
           logger.info("Файл успешно обработан", {
             filename: relativePath,
             size: downloadBuffer.length,

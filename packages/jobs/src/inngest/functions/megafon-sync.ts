@@ -24,10 +24,22 @@ export const megafonSyncFn = inngest.createFunction(
       return syncMegafonFtp({ host, user, password });
     });
 
+    // Запускаем транскрибацию для каждого нового звонка с аудио
+    if (result.createdCallIds.length > 0) {
+      await step.sendEvent(
+        "trigger-transcriptions",
+        result.createdCallIds.map((callId) => ({
+          name: "call/transcribe.requested",
+          data: { callId },
+        })),
+      );
+    }
+
     return {
       downloaded: result.downloaded,
       skipped: result.skipped,
       s3Uploaded: result.s3Uploaded,
+      transcriptionQueued: result.createdCallIds.length,
       errors: result.errors,
       errorsCount: result.errors.length,
     };

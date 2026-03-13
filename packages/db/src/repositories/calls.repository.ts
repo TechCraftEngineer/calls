@@ -58,6 +58,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
         direction: data.direction ?? null,
         status: data.status ?? null,
         sizeBytes: data.sizeBytes ?? null,
+        fileId: data.fileId ?? null,
         internalNumber: data.internalNumber ?? null,
         source: data.source ?? null,
         customerName: data.customerName ?? null,
@@ -198,12 +199,6 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     summary?: string | null;
     metadata?: Record<string, unknown> | null;
   }): Promise<string> {
-    const existing = await db
-      .select({ id: schema.transcripts.id })
-      .from(schema.transcripts)
-      .where(eq(schema.transcripts.callId, data.callId))
-      .limit(1);
-
     const values = {
       text: data.text ?? null,
       rawText: data.rawText ?? null,
@@ -214,21 +209,18 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       metadata: data.metadata ?? null,
     };
 
-    if (existing[0]) {
-      await db
-        .update(schema.transcripts)
-        .set(values)
-        .where(eq(schema.transcripts.id, existing[0].id));
-      return existing[0].id;
-    }
-
     const result = await db
       .insert(schema.transcripts)
       .values({
         callId: data.callId,
         ...values,
       })
+      .onConflictDoUpdate({
+        target: schema.transcripts.callId,
+        set: values,
+      })
       .returning({ id: schema.transcripts.id });
+
     return result[0]?.id ?? "";
   }
 

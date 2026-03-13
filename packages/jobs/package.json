@@ -13,8 +13,14 @@
     "with-env": "bun run --env-file ../../.env"
   },
   "dependencies": {
+    "@ai-sdk/assemblyai": "^2.0.0",
+    "@ai-sdk/openai": "^3.0.41",
+    "@calls/ai": "workspace:*",
+    "@calls/config": "workspace:*",
     "@calls/db": "workspace:*",
+    "@calls/lib": "workspace:*",
     "@calls/shared": "workspace:*",
+    "ai": "^6.0.116",
     "basic-ftp": "^5.2.0",
     "hono": "4.12.7",
     "inngest": "^3.52.6",

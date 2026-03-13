@@ -43,9 +43,13 @@ export const env = createEnv({
     MEGAFON_FTP_USER: z.string().optional(),
     MEGAFON_FTP_PASSWORD: z.string().optional(),
 
-    // ASR (Speech-to-Text)
+    // ASR (Speech-to-Text) - at least one required
     ASSEMBLYAI_API_KEY: z.string().optional(),
     YANDEX_SPEECHKIT_API_KEY: z.string().optional(),
+
+    // File processing limits
+    MIN_FILE_SIZE_BYTES: z.coerce.number().default(1024), // 1KB
+    MAX_FILE_SIZE_BYTES: z.coerce.number().default(100 * 1024 * 1024), // 100MB
 
     // Inngest
     INNGEST_SIGNING_KEY: z.string().optional(),
@@ -66,7 +70,9 @@ export const env = createEnv({
   },
   clientPrefix: "NEXT_PUBLIC_",
   runtimeEnv: {
+    AI_MODEL: process.env.AI_MODEL,
     NODE_ENV: process.env.NODE_ENV,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     VERCEL_ENV: process.env.VERCEL_ENV,
     VERCEL_URL: process.env.VERCEL_URL,
     VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
@@ -84,6 +90,8 @@ export const env = createEnv({
     MEGAFON_FTP_PASSWORD: process.env.MEGAFON_FTP_PASSWORD,
     ASSEMBLYAI_API_KEY: process.env.ASSEMBLYAI_API_KEY,
     YANDEX_SPEECHKIT_API_KEY: process.env.YANDEX_SPEECHKIT_API_KEY,
+    MIN_FILE_SIZE_BYTES: process.env.MIN_FILE_SIZE_BYTES,
+    MAX_FILE_SIZE_BYTES: process.env.MAX_FILE_SIZE_BYTES,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
     INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
     AWS_S3_ENDPOINT: process.env.AWS_S3_ENDPOINT,
@@ -102,3 +110,13 @@ export const env = createEnv({
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });
+
+// Валидация: хотя бы один ASR провайдер должен быть настроен
+const hasAnyAsrProvider = !!(
+  env.ASSEMBLYAI_API_KEY || env.YANDEX_SPEECHKIT_API_KEY
+);
+if (!hasAnyAsrProvider && process.env.NODE_ENV !== "test") {
+  throw new Error(
+    "Настройте хотя бы один ASR провайдер: ASSEMBLYAI_API_KEY или YANDEX_SPEECHKIT_API_KEY",
+  );
+}

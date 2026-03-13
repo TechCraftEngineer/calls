@@ -175,8 +175,14 @@
     "packages/jobs": {
       "name": "@calls/jobs",
       "dependencies": {
+        "@ai-sdk/assemblyai": "^2.0.0",
+        "@ai-sdk/openai": "^3.0.41",
+        "@calls/ai": "workspace:*",
+        "@calls/config": "workspace:*",
         "@calls/db": "workspace:*",
+        "@calls/lib": "workspace:*",
         "@calls/shared": "workspace:*",
+        "ai": "^6.0.116",
         "basic-ftp": "^5.2.0",
         "hono": "4.12.7",
         "inngest": "^3.52.6",
@@ -288,6 +294,8 @@
     },
   },
   "packages": {
+    "@ai-sdk/assemblyai": ["@ai-sdk/assemblyai@2.0.24", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.19" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-/Ps4e/32l0pwAbJjIHHBk77YH9WxEt7ZWf2rcGWAiuPa15YVZFqGL/iCtHixjHtE7Mq4y1QV9xe8+1LTfztZlA=="],
+
     "@ai-sdk/gateway": ["@ai-sdk/gateway@3.0.66", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.19", "@vercel/oidc": "3.1.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-SIQ0YY0iMuv+07HLsZ+bB990zUJ6S4ujORAh+Jv1V2KGNn73qQKnGO0JBk+w+Res8YqOFSycwDoWcFlQrVxS4A=="],
 
     "@ai-sdk/openai": ["@ai-sdk/openai@3.0.41", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.19" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-IZ42A+FO+vuEQCVNqlnAPYQnnUpUfdJIwn1BEDOBywiEHa23fw7PahxVtlX9zm3/zMvTW4JKPzWyvAgDu+SQ2A=="],
