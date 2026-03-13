@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSession } from "@/lib/better-auth";
 import { type ChatMessage, sendChatMessage } from "@/lib/chat";
 
 const CONTEXT_GENERAL = "general" as const;
@@ -12,6 +13,7 @@ function formatDate(d: Date): string {
 }
 
 export default function ChatWidget() {
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [contextMode, setContextMode] = useState<ContextMode>(CONTEXT_GENERAL);
@@ -71,6 +73,10 @@ export default function ChatWidget() {
       handleSend();
     }
   };
+
+  if (!session?.user) {
+    return null;
+  }
 
   return (
     <>
