@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { sendChatMessage, type ChatMessage } from '@/lib/chat';
+import { useEffect, useRef, useState } from "react";
+import { type ChatMessage, sendChatMessage } from "@/lib/chat";
 
-const CONTEXT_GENERAL = 'general' as const;
-const CONTEXT_CALLS = 'calls' as const;
+const CONTEXT_GENERAL = "general" as const;
+const CONTEXT_CALLS = "calls" as const;
 type ContextMode = typeof CONTEXT_GENERAL | typeof CONTEXT_CALLS;
 
 function formatDate(d: Date): string {
@@ -15,24 +15,26 @@ export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [contextMode, setContextMode] = useState<ContextMode>(CONTEXT_GENERAL);
-  const [startDate, setStartDate] = useState(() => formatDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)));
+  const [startDate, setStartDate] = useState(() =>
+    formatDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)),
+  );
   const [endDate, setEndDate] = useState(() => formatDate(new Date()));
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const handleSend = async () => {
     const text = inputValue.trim();
     if (!text || loading) return;
-    setInputValue('');
+    setInputValue("");
     setError(null);
-    const userMsg: ChatMessage = { role: 'user', content: text };
+    const userMsg: ChatMessage = { role: "user", content: text };
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
     try {
@@ -41,15 +43,22 @@ export default function ChatWidget() {
         history,
         contextMode,
         contextMode === CONTEXT_CALLS ? startDate : undefined,
-        contextMode === CONTEXT_CALLS ? endDate : undefined
+        contextMode === CONTEXT_CALLS ? endDate : undefined,
       );
-      setMessages((prev) => [...prev, { role: 'assistant', content }]);
+      setMessages((prev) => [...prev, { role: "assistant", content }]);
     } catch (e: unknown) {
-      const errMsg = e && typeof e === 'object' && 'response' in e
-        ? (e as { response?: { data?: { detail?: string } } }).response?.data?.detail
-        : (e instanceof Error ? e.message : 'Ошибка сети');
+      const errMsg =
+        e && typeof e === "object" && "response" in e
+          ? (e as { response?: { data?: { detail?: string } } }).response?.data
+              ?.detail
+          : e instanceof Error
+            ? e.message
+            : "Ошибка сети";
       setError(String(errMsg));
-      setMessages((prev) => [...prev, { role: 'assistant', content: `Ошибка: ${errMsg}` }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: `Ошибка: ${errMsg}` },
+      ]);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -57,7 +66,7 @@ export default function ChatWidget() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
@@ -69,15 +78,17 @@ export default function ChatWidget() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label={open ? 'Закрыть чат' : 'Открыть чат'}
+        aria-label={open ? "Закрыть чат" : "Открыть чат"}
         className={`fixed top-1/2 -translate-y-1/2 w-12 h-[120px] rounded-l-2xl rounded-r-none bg-[#FFD600] shadow-[_-4px_0_12px_rgba(0,0,0,0.15)] border-none z-[9998] flex flex-col items-center justify-center py-4 px-1.5 gap-2 transition-[right,transform] duration-300 ease-out ${
-          open ? 'right-[-60px]' : 'right-0'
+          open ? "right-[-60px]" : "right-0"
         }`}
         onMouseEnter={(e) => {
-          if (!open) e.currentTarget.style.transform = 'translateY(-50%) translateX(-4px)';
+          if (!open)
+            e.currentTarget.style.transform =
+              "translateY(-50%) translateX(-4px)";
         }}
         onMouseLeave={(e) => {
-          if (!open) e.currentTarget.style.transform = 'translateY(-50%)';
+          if (!open) e.currentTarget.style.transform = "translateY(-50%)";
         }}
       >
         <span className="text-xl">💬</span>
@@ -107,8 +118,8 @@ export default function ChatWidget() {
                 onClick={() => setContextMode(CONTEXT_GENERAL)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   contextMode === CONTEXT_GENERAL
-                    ? 'border-2 border-[#FFD600] bg-[#fffde7]'
-                    : 'border border-[#ddd] bg-white'
+                    ? "border-2 border-[#FFD600] bg-[#fffde7]"
+                    : "border border-[#ddd] bg-white"
                 }`}
               >
                 Общий ИИ
@@ -118,8 +129,8 @@ export default function ChatWidget() {
                 onClick={() => setContextMode(CONTEXT_CALLS)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   contextMode === CONTEXT_CALLS
-                    ? 'border-2 border-[#FFD600] bg-[#fffde7]'
-                    : 'border border-[#ddd] bg-white'
+                    ? "border-2 border-[#FFD600] bg-[#fffde7]"
+                    : "border border-[#ddd] bg-white"
                 }`}
               >
                 База звонков
@@ -153,25 +164,23 @@ export default function ChatWidget() {
             {messages.length === 0 && (
               <div className="text-[#888] text-sm text-center py-6">
                 {contextMode === CONTEXT_GENERAL
-                  ? 'Задайте любой вопрос.'
-                  : 'Задайте вопрос по расшифровкам звонков за выбранный период.'}
+                  ? "Задайте любой вопрос."
+                  : "Задайте вопрос по расшифровкам звонков за выбранный период."}
               </div>
             )}
             {messages.map((m, i) => (
               <div
                 key={i}
                 className={`mb-2.5 p-2.5 rounded-lg whitespace-pre-wrap break-words text-sm ${
-                  m.role === 'user'
-                    ? 'bg-[#f0f0f0] ml-6 mr-0'
-                    : 'bg-[#f9f9f9] ml-0 mr-6'
+                  m.role === "user"
+                    ? "bg-[#f0f0f0] ml-6 mr-0"
+                    : "bg-[#f9f9f9] ml-0 mr-6"
                 }`}
               >
-                {m.role === 'user' ? 'Вы' : 'ИИ'}: {m.content}
+                {m.role === "user" ? "Вы" : "ИИ"}: {m.content}
               </div>
             ))}
-            {loading && (
-              <div className="text-[#888] text-sm p-2">Ответ...</div>
-            )}
+            {loading && <div className="text-[#888] text-sm p-2">Ответ...</div>}
             <div ref={messagesEndRef} />
           </div>
 

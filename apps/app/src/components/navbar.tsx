@@ -1,5 +1,6 @@
 "use client";
 
+import { paths } from "@calls/config";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { logout, type User } from "@/lib/auth";
@@ -13,13 +14,13 @@ export default function Navbar({ user }: NavbarProps) {
 
   const handleLogout = async () => {
     await logout();
-    router.push("/auth/signin");
+    router.push(paths.auth.signin);
   };
 
   return (
     <nav className="top-bar">
       <div className="brand">
-        <Link href="/dashboard" className="brand-link">
+        <Link href={paths.dashboard.root} className="brand-link">
           <div className="logo">M</div>
         </Link>
         <div className="brand-info">
@@ -29,16 +30,25 @@ export default function Navbar({ user }: NavbarProps) {
       </div>
 
       <div className="nav-links flex gap-6 ml-12 flex-1">
-        <Link href="/dashboard" className="nav-link font-medium">
+        <Link href={paths.dashboard.root} className="nav-link font-medium">
           Дашборд
         </Link>
-        <Link href="/statistics" className="nav-link font-medium opacity-60">
+        <Link
+          href={paths.statistics.root}
+          className="nav-link font-medium opacity-60"
+        >
           Статистика
         </Link>
-        <Link href="/users" className="nav-link font-medium opacity-60">
+        <Link
+          href={paths.users.root}
+          className="nav-link font-medium opacity-60"
+        >
           Пользователи
         </Link>
-        <Link href="/settings" className="nav-link font-medium opacity-60">
+        <Link
+          href={paths.settings.root}
+          className="nav-link font-medium opacity-60"
+        >
           Настройки
         </Link>
       </div>

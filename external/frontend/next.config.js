@@ -1,14 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  basePath: '/app',
+  basePath: "/app",
   reactStrictMode: true,
-  output: 'standalone',
+  output: "standalone",
   async rewrites() {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL ||
-      (process.env.NODE_ENV === 'production' ? 'http://backend:8000' : 'http://localhost:8000');
+    const backendUrl =
+      process.env.NEXT_PUBLIC_API_URL ||
+      (process.env.NODE_ENV === "production"
+        ? "http://backend:8000"
+        : "http://localhost:8000");
     return [
       {
-        source: '/api/:path*',
+        source: "/api/:path*",
         destination: `${backendUrl}/api/:path*`,
       },
     ];
@@ -16,4 +19,3 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
-

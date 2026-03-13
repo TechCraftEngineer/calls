@@ -1,5 +1,6 @@
 "use client";
 
+import { paths } from "@calls/config";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import AudioPlayerModal from "@/components/audio-player-modal";
@@ -94,7 +95,7 @@ export default function DashboardPage() {
       setLoading(true);
       const currentUser = await getCurrentUser();
       if (!currentUser) {
-        router.push("/auth/signin");
+        router.push(paths.auth.signin);
         return;
       }
       setUser(currentUser);
@@ -135,7 +136,7 @@ export default function DashboardPage() {
         "code" in error &&
         (error as { code?: string }).code === "UNAUTHORIZED"
       ) {
-        router.push("/auth/signin");
+        router.push(paths.auth.signin);
       }
     } finally {
       setLoading(false);

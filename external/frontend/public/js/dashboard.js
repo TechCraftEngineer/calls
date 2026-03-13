@@ -23,7 +23,10 @@ const initTranscriptModal = () => {
   };
 
   modal.addEventListener("click", (event) => {
-    if (event.target === modal || event.target.hasAttribute("data-close-modal")) {
+    if (
+      event.target === modal ||
+      event.target.hasAttribute("data-close-modal")
+    ) {
       closeModal();
     }
   });
@@ -93,7 +96,9 @@ const initManagerDropdowns = () => {
         if (label) {
           label.textContent = option.textContent.trim();
         }
-        options.forEach((btn) => btn.classList.toggle("is-active", btn === option));
+        options.forEach((btn) =>
+          btn.classList.toggle("is-active", btn === option),
+        );
         close();
         if (form) {
           form.submit();
@@ -126,7 +131,9 @@ const initValueDropdowns = () => {
     const menu = dropdown.querySelector("[data-dropdown-menu]");
     const label = dropdown.querySelector(".value-dropdown__label");
     // Ищем чекбоксы только внутри меню dropdown, чтобы не захватить скрытые поля формы
-    const checkboxes = menu ? menu.querySelectorAll("input[type='checkbox'][data-value-checkbox]") : [];
+    const checkboxes = menu
+      ? menu.querySelectorAll("input[type='checkbox'][data-value-checkbox]")
+      : [];
     const form = dropdown.closest("form");
 
     if (!toggle || !menu || !label) {
@@ -152,32 +159,35 @@ const initValueDropdowns = () => {
 
     const updateLabel = () => {
       // Получаем свежий список чекбоксов каждый раз, чтобы учесть возможные изменения
-      const currentCheckboxes = menu.querySelectorAll("input[type='checkbox'][data-value-checkbox]");
+      const currentCheckboxes = menu.querySelectorAll(
+        "input[type='checkbox'][data-value-checkbox]",
+      );
       // Фильтруем только отмеченные чекбоксы, которые видимы и находятся в меню
-      const checked = Array.from(currentCheckboxes).filter(cb => {
-        const isValid = cb.checked && 
-               cb.type === 'checkbox' && 
-               cb.hasAttribute('data-value-checkbox') &&
-               menu.contains(cb);
+      const checked = Array.from(currentCheckboxes).filter((cb) => {
+        const isValid =
+          cb.checked &&
+          cb.type === "checkbox" &&
+          cb.hasAttribute("data-value-checkbox") &&
+          menu.contains(cb);
         return isValid;
       });
-      
+
       const count = checked.length;
       // Отладочная информация (можно убрать после проверки)
       if (count !== currentCheckboxes.length) {
-        console.log('Value filter:', {
+        console.log("Value filter:", {
           total: currentCheckboxes.length,
           checked: count,
-          values: checked.map(cb => cb.value)
+          values: checked.map((cb) => cb.value),
         });
       }
-      
+
       if (count === 0) {
         label.textContent = "Ценность (Любая)";
       } else if (count === 1) {
         label.textContent = `Ценность (${checked[0].value})`;
       } else if (count <= 2) {
-        label.textContent = `Ценность (${checked.map(cb => cb.value).join(', ')})`;
+        label.textContent = `Ценность (${checked.map((cb) => cb.value).join(", ")})`;
       } else {
         label.textContent = `Ценность (${count} выбрано)`;
       }
@@ -203,10 +213,12 @@ const initValueDropdowns = () => {
     // Это гарантирует, что мы всегда работаем с актуальными элементами
     menu.addEventListener("change", (event) => {
       const target = event.target;
-      if (target && 
-          target.type === 'checkbox' && 
-          target.hasAttribute('data-value-checkbox') &&
-          menu.contains(target)) {
+      if (
+        target &&
+        target.type === "checkbox" &&
+        target.hasAttribute("data-value-checkbox") &&
+        menu.contains(target)
+      ) {
         // Небольшая задержка, чтобы состояние чекбокса успело обновиться
         setTimeout(() => {
           updateLabel();
@@ -275,12 +287,12 @@ const initOperatorDropdowns = () => {
     };
 
     const updateLabel = () => {
-      const checked = Array.from(checkboxes).filter(cb => cb.checked);
+      const checked = Array.from(checkboxes).filter((cb) => cb.checked);
       const operatorNames = {
-        'megafon': 'Мегафон',
-        'mango': 'Манго'
+        megafon: "Мегафон",
+        mango: "Манго",
       };
-      
+
       if (checked.length === 0) {
         label.textContent = "Оператор (Все)";
       } else if (checked.length === 1) {
@@ -329,19 +341,25 @@ const initOperatorDropdowns = () => {
 
 const initTranscribeForms = () => {
   const forms = document.querySelectorAll(".transcribe-form");
-  
+
   forms.forEach((form) => {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      
+
       const callId = form.dataset.callId;
       const transcribeModal = document.getElementById("transcribeModal");
-      const transcribeModalTitle = document.getElementById("transcribeModalTitle");
-      const transcribeModalBody = document.getElementById("transcribeModalBody");
-      const transcribeStatusText = document.getElementById("transcribeStatusText");
-      
+      const transcribeModalTitle = document.getElementById(
+        "transcribeModalTitle",
+      );
+      const transcribeModalBody = document.getElementById(
+        "transcribeModalBody",
+      );
+      const transcribeStatusText = document.getElementById(
+        "transcribeStatusText",
+      );
+
       if (!transcribeModal) return;
-      
+
       // Показываем popup "Идет транскрибация"
       transcribeModalTitle.textContent = "Транскрибация";
       transcribeStatusText.textContent = "Идет транскрибация...";
@@ -353,17 +371,17 @@ const initTranscribeForms = () => {
       `;
       transcribeModal.classList.add("is-open");
       transcribeModal.setAttribute("aria-hidden", "false");
-      
+
       try {
         const formData = new FormData(form);
         const response = await fetch(form.action, {
           method: "POST",
           body: formData,
           headers: {
-            "X-Requested-With": "XMLHttpRequest"
-          }
+            "X-Requested-With": "XMLHttpRequest",
+          },
         });
-        
+
         if (response.ok) {
           // Проверяем, был ли это AJAX запрос
           const contentType = response.headers.get("content-type");
@@ -377,7 +395,7 @@ const initTranscribeForms = () => {
                   <p id="transcribeStatusText">Существующий транскрипт будет обновлен.<br>Расшифровка завершена!</p>
                 </div>
               `;
-              
+
               // Закрываем popup через 2 секунды и перезагружаем страницу
               setTimeout(() => {
                 transcribeModal.classList.remove("is-open");
@@ -395,7 +413,7 @@ const initTranscribeForms = () => {
                 <p id="transcribeStatusText">Существующий транскрипт будет обновлен.<br>Расшифровка завершена!</p>
               </div>
             `;
-            
+
             setTimeout(() => {
               transcribeModal.classList.remove("is-open");
               transcribeModal.setAttribute("aria-hidden", "true");
@@ -433,7 +451,10 @@ const initTranscriptDialogModal = () => {
 
   // Обработчик закрытия модального окна
   modal.addEventListener("click", (event) => {
-    if (event.target === modal || event.target.hasAttribute("data-close-modal")) {
+    if (
+      event.target === modal ||
+      event.target.hasAttribute("data-close-modal")
+    ) {
       closeModal();
     }
   });
@@ -479,7 +500,7 @@ const initTranscriptDialogModal = () => {
             .replace(/>/g, "&gt;")
             .replace(/\n\n/g, "<br><br>")
             .replace(/\n/g, "<br>");
-          
+
           bodyEl.innerHTML = `<div style="white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; line-height: 1.8;">${dialogHtml}</div>`;
         } else {
           bodyEl.innerHTML = `
@@ -515,7 +536,9 @@ const initRowClicks = () => {
     if (!row) return;
 
     // Игнорируем клики, если нажали на ссылку, кнопку или другой интерактивный элемент
-    const interactive = event.target.closest("a, button, input, .record-icon, .js-transcript-view");
+    const interactive = event.target.closest(
+      "a, button, input, .record-icon, .js-transcript-view",
+    );
     if (interactive) return;
 
     const callId = row.dataset.callId;
@@ -534,4 +557,3 @@ document.addEventListener("DOMContentLoaded", () => {
   initTranscriptDialogModal();
   initRowClicks();
 });
-

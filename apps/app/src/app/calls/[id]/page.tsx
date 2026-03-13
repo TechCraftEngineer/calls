@@ -1,5 +1,6 @@
 "use client";
 
+import { paths } from "@calls/config";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import AudioPlayer from "@/components/audio-player";
@@ -62,7 +63,7 @@ export default function CallDetailPage() {
       setLoading(true);
       const currentUser = await getCurrentUser();
       if (!currentUser) {
-        router.push("/auth/signin");
+        router.push(paths.auth.signin);
         return;
       }
       setUser(currentUser);
@@ -710,4 +711,3 @@ export default function CallDetailPage() {
       </main>
     </div>
   );
-}

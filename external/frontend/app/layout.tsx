@@ -1,13 +1,16 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
-import ChatWidget from '@/components/ChatWidget';
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import ChatWidget from "@/components/ChatWidget";
 
-const inter = Inter({ subsets: ['latin', 'cyrillic'], variable: '--font-inter' });
+const inter = Inter({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-inter",
+});
 
 export const metadata: Metadata = {
-  title: 'QBS Звонки - Сервис ИИ аналитики телефонных разговоров',
-  description: 'Call transcription and analysis dashboard',
+  title: "QBS Звонки - Сервис ИИ аналитики телефонных разговоров",
+  description: "Call transcription and analysis dashboard",
 };
 
 export default function RootLayout({
@@ -24,4 +27,3 @@ export default function RootLayout({
     </html>
   );
 }
-

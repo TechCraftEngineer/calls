@@ -1,5 +1,6 @@
 "use client";
 
+import { paths } from "@calls/config";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/header";
@@ -145,7 +146,7 @@ export default function UsersPage() {
       setLoading(true);
       const user = await getCurrentUser();
       if (!user) {
-        router.push("/auth/signin");
+        router.push(paths.auth.signin);
         return;
       }
       setCurrentUser(user);
@@ -161,7 +162,7 @@ export default function UsersPage() {
         (error as { code?: string }).code === "FORBIDDEN"
       ) {
         alert("Доступ запрещен.");
-        router.push("/dashboard");
+        router.push(paths.dashboard.root);
       }
     } finally {
       setLoading(false);

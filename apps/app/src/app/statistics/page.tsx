@@ -1,5 +1,6 @@
 "use client";
 
+import { paths } from "@calls/config";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Header from "@/components/header";
@@ -47,7 +48,7 @@ function StatisticsPageContent() {
       setLoading(true);
       const currentUser = await getCurrentUser();
       if (!currentUser) {
-        router.push("/auth/signin");
+        router.push(paths.auth.signin);
         return;
       }
       setUser(currentUser);
@@ -68,7 +69,7 @@ function StatisticsPageContent() {
         (error as { code?: string }).code === "FORBIDDEN"
       ) {
         alert("Доступ запрещен. Только администратору.");
-        router.push("/dashboard");
+        router.push(paths.dashboard.root);
       }
     } finally {
       setLoading(false);

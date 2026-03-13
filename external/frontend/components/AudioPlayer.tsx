@@ -1,180 +1,206 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 interface AudioPlayerProps {
-    src: string;
-    autoPlay?: boolean;
-    className?: string;
+  src: string;
+  autoPlay?: boolean;
+  className?: string;
 }
 
-export default function AudioPlayer({ src, autoPlay = false, className }: AudioPlayerProps) {
-    const audioRef = useRef<HTMLAudioElement>(null);
-    const seekSliderRef = useRef<HTMLInputElement>(null);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [currentTime, setCurrentTime] = useState(0);
-    const [duration, setDuration] = useState(0);
-    const [isMuted, setIsMuted] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isDragging, setIsDragging] = useState(false);
+export default function AudioPlayer({
+  src,
+  autoPlay = false,
+  className,
+}: AudioPlayerProps) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const seekSliderRef = useRef<HTMLInputElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
 
-    useEffect(() => {
-        const audio = audioRef.current;
-        if (!audio) return;
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
 
-        const updateTime = () => {
-            if (!isDragging) {
-                setCurrentTime(audio.currentTime);
-            }
-        };
-        const updateDuration = () => setDuration(audio.duration);
-        const onEnded = () => setIsPlaying(false);
-        const onCanPlay = () => setIsLoading(false);
-        const onWaiting = () => setIsLoading(true);
-        const onPlaying = () => setIsLoading(false);
-
-        audio.addEventListener('timeupdate', updateTime);
-        audio.addEventListener('loadedmetadata', updateDuration);
-        audio.addEventListener('ended', onEnded);
-        audio.addEventListener('canplay', onCanPlay);
-        audio.addEventListener('waiting', onWaiting);
-        audio.addEventListener('playing', onPlaying);
-
-        if (autoPlay) {
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(err => {
-                    console.error("Auto-play failed:", err);
-                    setIsLoading(false);
-                    setIsPlaying(false);
-                });
-            }
-            setIsPlaying(true);
-        }
-
-        return () => {
-            audio.removeEventListener('timeupdate', updateTime);
-            audio.removeEventListener('loadedmetadata', updateDuration);
-            audio.removeEventListener('ended', onEnded);
-            audio.removeEventListener('canplay', onCanPlay);
-            audio.removeEventListener('waiting', onWaiting);
-            audio.removeEventListener('playing', onPlaying);
-        };
-    }, [src, autoPlay, isDragging]);
-
-    const togglePlay = () => {
-        if (audioRef.current) {
-            if (isPlaying) {
-                audioRef.current.pause();
-            } else {
-                audioRef.current.play();
-            }
-            setIsPlaying(!isPlaying);
-        }
+    const updateTime = () => {
+      if (!isDragging) {
+        setCurrentTime(audio.currentTime);
+      }
     };
+    const updateDuration = () => setDuration(audio.duration);
+    const onEnded = () => setIsPlaying(false);
+    const onCanPlay = () => setIsLoading(false);
+    const onWaiting = () => setIsLoading(true);
+    const onPlaying = () => setIsLoading(false);
 
-    const toggleMute = () => {
-        if (audioRef.current) {
-            audioRef.current.muted = !isMuted;
-            setIsMuted(!isMuted);
-        }
+    audio.addEventListener("timeupdate", updateTime);
+    audio.addEventListener("loadedmetadata", updateDuration);
+    audio.addEventListener("ended", onEnded);
+    audio.addEventListener("canplay", onCanPlay);
+    audio.addEventListener("waiting", onWaiting);
+    audio.addEventListener("playing", onPlaying);
+
+    if (autoPlay) {
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.error("Auto-play failed:", err);
+          setIsLoading(false);
+          setIsPlaying(false);
+        });
+      }
+      setIsPlaying(true);
+    }
+
+    return () => {
+      audio.removeEventListener("timeupdate", updateTime);
+      audio.removeEventListener("loadedmetadata", updateDuration);
+      audio.removeEventListener("ended", onEnded);
+      audio.removeEventListener("canplay", onCanPlay);
+      audio.removeEventListener("waiting", onWaiting);
+      audio.removeEventListener("playing", onPlaying);
     };
+  }, [src, autoPlay, isDragging]);
 
-    const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const time = parseFloat(e.target.value);
-        setCurrentTime(time);
-    };
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
 
-    const applySeek = (value: number) => {
-        if (audioRef.current && !isNaN(value)) {
-            audioRef.current.currentTime = value;
-        }
-        setIsDragging(false);
-    };
+  const toggleMute = () => {
+    if (audioRef.current) {
+      audioRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
 
-    const handleSeekStart = () => {
-        setIsDragging(true);
-    };
+  const handleSeekChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = parseFloat(e.target.value);
+    setCurrentTime(time);
+  };
 
-    const handleSeekEnd = (e: React.MouseEvent<HTMLInputElement> | React.TouchEvent<HTMLInputElement>) => {
-        const time = parseFloat((e.currentTarget as HTMLInputElement).value);
+  const applySeek = (value: number) => {
+    if (audioRef.current && !isNaN(value)) {
+      audioRef.current.currentTime = value;
+    }
+    setIsDragging(false);
+  };
+
+  const handleSeekStart = () => {
+    setIsDragging(true);
+  };
+
+  const handleSeekEnd = (
+    e: React.MouseEvent<HTMLInputElement> | React.TouchEvent<HTMLInputElement>,
+  ) => {
+    const time = parseFloat((e.currentTarget as HTMLInputElement).value);
+    applySeek(time);
+  };
+
+  // В попапе при отпускании мыши над overlay событие приходит не на слайдер — перемотка не применялась.
+  // Слушаем mouseup/touchend на document и применяем значение слайдера.
+  useEffect(() => {
+    if (!isDragging) return;
+    const onDocumentPointerEnd = () => {
+      const input = seekSliderRef.current;
+      if (input) {
+        const time = parseFloat(input.value);
         applySeek(time);
+      } else {
+        setIsDragging(false);
+      }
     };
-
-    // В попапе при отпускании мыши над overlay событие приходит не на слайдер — перемотка не применялась.
-    // Слушаем mouseup/touchend на document и применяем значение слайдера.
-    useEffect(() => {
-        if (!isDragging) return;
-        const onDocumentPointerEnd = () => {
-            const input = seekSliderRef.current;
-            if (input) {
-                const time = parseFloat(input.value);
-                applySeek(time);
-            } else {
-                setIsDragging(false);
-            }
-        };
-        document.addEventListener('mouseup', onDocumentPointerEnd);
-        document.addEventListener('touchend', onDocumentPointerEnd, { passive: true });
-        return () => {
-            document.removeEventListener('mouseup', onDocumentPointerEnd);
-            document.removeEventListener('touchend', onDocumentPointerEnd);
-        };
-    }, [isDragging]);
-
-    const formatTime = (time: number) => {
-        if (isNaN(time)) return '00:00';
-        const mins = Math.floor(time / 60);
-        const secs = Math.floor(time % 60);
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    document.addEventListener("mouseup", onDocumentPointerEnd);
+    document.addEventListener("touchend", onDocumentPointerEnd, {
+      passive: true,
+    });
+    return () => {
+      document.removeEventListener("mouseup", onDocumentPointerEnd);
+      document.removeEventListener("touchend", onDocumentPointerEnd);
     };
+  }, [isDragging]);
 
-    return (
-        <div className={`audio-player ${className || ''}`}>
-            <audio ref={audioRef} src={src} />
+  const formatTime = (time: number) => {
+    if (isNaN(time)) return "00:00";
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
-            <div className="audio-controls">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
-                    <button className="player-btn volume-btn" onClick={toggleMute} title={isMuted ? "Включить звук" : "Выключить звук"}>
-                        {isMuted ? '🔇' : '🔊'}
-                    </button>
-                    <button className="play-pause-btn" onClick={togglePlay} disabled={isLoading} title={isPlaying ? "Пауза" : "Воспроизвести"}>
-                        {isLoading ? (
-                            <span className="spinner"></span>
-                        ) : (
-                            isPlaying ? '⏸' : '▶'
-                        )}
-                    </button>
-                    <div style={{ width: '32px' }} /> {/* Spacer to balance volume btn */}
-                </div>
+  return (
+    <div className={`audio-player ${className || ""}`}>
+      <audio ref={audioRef} src={src} />
 
-                <div className="seek-container">
-                    <span className="time-label">{formatTime(currentTime)}</span>
-                    <div className="slider-wrapper">
-                        <input
-                            ref={seekSliderRef}
-                            type="range"
-                            min="0"
-                            max={duration || 0}
-                            step="0.1"
-                            value={currentTime}
-                            onChange={handleSeekChange}
-                            onMouseDown={handleSeekStart}
-                            onTouchStart={handleSeekStart}
-                            onMouseUp={handleSeekEnd}
-                            onTouchEnd={handleSeekEnd}
-                            className="seek-slider"
-                        />
-                        <div
-                            className="slider-progress"
-                            style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
-                        />
-                    </div>
-                    <span className="time-label">{formatTime(duration)}</span>
-                </div>
-            </div>
+      <div className="audio-controls">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            justifyContent: "center",
+          }}
+        >
+          <button
+            className="player-btn volume-btn"
+            onClick={toggleMute}
+            title={isMuted ? "Включить звук" : "Выключить звук"}
+          >
+            {isMuted ? "🔇" : "🔊"}
+          </button>
+          <button
+            className="play-pause-btn"
+            onClick={togglePlay}
+            disabled={isLoading}
+            title={isPlaying ? "Пауза" : "Воспроизвести"}
+          >
+            {isLoading ? (
+              <span className="spinner"></span>
+            ) : isPlaying ? (
+              "⏸"
+            ) : (
+              "▶"
+            )}
+          </button>
+          <div style={{ width: "32px" }} /> {/* Spacer to balance volume btn */}
+        </div>
 
-            <style jsx>{`
+        <div className="seek-container">
+          <span className="time-label">{formatTime(currentTime)}</span>
+          <div className="slider-wrapper">
+            <input
+              ref={seekSliderRef}
+              type="range"
+              min="0"
+              max={duration || 0}
+              step="0.1"
+              value={currentTime}
+              onChange={handleSeekChange}
+              onMouseDown={handleSeekStart}
+              onTouchStart={handleSeekStart}
+              onMouseUp={handleSeekEnd}
+              onTouchEnd={handleSeekEnd}
+              className="seek-slider"
+            />
+            <div
+              className="slider-progress"
+              style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
+            />
+          </div>
+          <span className="time-label">{formatTime(duration)}</span>
+        </div>
+      </div>
+
+      <style jsx>{`
                 .audio-controls {
                     display: flex;
                     flex-direction: column;
@@ -296,6 +322,6 @@ export default function AudioPlayer({ src, autoPlay = false, className }: AudioP
                     100% { transform: rotate(360deg); }
                 }
             `}</style>
-        </div>
-    );
+    </div>
+  );
 }

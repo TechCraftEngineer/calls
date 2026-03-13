@@ -1,5 +1,6 @@
 "use client";
 
+import { paths } from "@calls/config";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { getCurrentUser } from "@/lib/auth";
@@ -10,9 +11,9 @@ export default function HomePage() {
   useEffect(() => {
     getCurrentUser().then((user) => {
       if (user) {
-        router.replace("/dashboard");
+        router.replace(paths.dashboard.root);
       } else {
-        router.replace("/auth/signin");
+        router.replace(paths.auth.signin);
       }
     });
   }, [router]);

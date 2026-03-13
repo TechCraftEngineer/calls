@@ -1,3 +1,4 @@
+import { paths } from "@calls/config";
 import Link from "next/link";
 
 export default function NotFound() {
@@ -12,7 +13,7 @@ export default function NotFound() {
           Извините, но страница, которую вы ищете, не существует.
         </p>
         <Link
-          href="/"
+          href={paths.root}
           className="rounded-lg bg-blue-600 px-6 py-3 text-white transition-colors hover:bg-blue-700"
         >
           Вернуться на главную

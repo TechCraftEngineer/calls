@@ -1,31 +1,33 @@
-'use client';
+"use client";
 
-import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { login } from '@/lib/auth';
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { login } from "@/lib/auth";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
 
   // Load and display saved logs on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
-        const savedLogs = localStorage.getItem('api_logs');
+        const savedLogs = localStorage.getItem("api_logs");
         if (savedLogs) {
           const logs = JSON.parse(savedLogs);
-          console.group('[Saved API Logs]');
+          console.group("[Saved API Logs]");
           logs.forEach((log: any) => {
             console.log(`[${log.timestamp}] ${log.type}:`, log.data);
           });
           console.groupEnd();
-          console.log('💡 Tip: Use localStorage.getItem("api_logs") to see all saved logs');
+          console.log(
+            '💡 Tip: Use localStorage.getItem("api_logs") to see all saved logs',
+          );
         }
       } catch (e) {
         // Ignore errors
@@ -36,54 +38,57 @@ function LoginForm() {
   // Read username and password from URL query params
   useEffect(() => {
     if (autoLoginAttempted) return; // Prevent multiple auto-login attempts
-    
-    const urlUsername = searchParams.get('username');
-    const urlPassword = searchParams.get('password');
-    
+
+    const urlUsername = searchParams.get("username");
+    const urlPassword = searchParams.get("password");
+
     if (urlUsername) {
       setUsername(decodeURIComponent(urlUsername));
     }
     if (urlPassword) {
       setPassword(decodeURIComponent(urlPassword));
     }
-    
+
     // Auto-submit if both username and password are provided
     if (urlUsername && urlPassword && !autoLoginAttempted) {
       setAutoLoginAttempted(true);
-      handleAutoLogin(decodeURIComponent(urlUsername), decodeURIComponent(urlPassword));
+      handleAutoLogin(
+        decodeURIComponent(urlUsername),
+        decodeURIComponent(urlPassword),
+      );
     }
   }, [searchParams, autoLoginAttempted]);
 
   const handleAutoLogin = async (user: string, pass: string) => {
-    setError('');
+    setError("");
     setLoading(true);
-    
-    console.group('[Auto Login] Attempting auto login');
-    console.log('Username:', user);
-    console.log('Password length:', pass.length);
+
+    console.group("[Auto Login] Attempting auto login");
+    console.log("Username:", user);
+    console.log("Password length:", pass.length);
     console.groupEnd();
-    
+
     try {
       const result = await login(user, pass);
-      console.group('[Auto Login] Result');
-      console.log('Success:', result.success);
-      console.log('User:', result.user);
+      console.group("[Auto Login] Result");
+      console.log("Success:", result.success);
+      console.log("User:", result.user);
       console.groupEnd();
-      
+
       if (result.success) {
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push("/dashboard");
         }, 100);
       } else {
-        setError(result.message || 'Login failed');
+        setError(result.message || "Login failed");
       }
     } catch (err: any) {
-      console.group('[Auto Login] Error');
-      console.error('Error:', err);
-      console.error('Response:', err.response);
+      console.group("[Auto Login] Error");
+      console.error("Error:", err);
+      console.error("Response:", err.response);
       console.groupEnd();
-      
-      setError(err.response?.data?.detail || 'Invalid credentials');
+
+      setError(err.response?.data?.detail || "Invalid credentials");
     } finally {
       setLoading(false);
     }
@@ -91,45 +96,49 @@ function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     // Log login attempt
-    console.group('[Login] Attempting login');
-    console.log('Username:', username);
-    console.log('Password length:', password.length);
-    console.log('API URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000');
-    console.log('Cookies before:', document.cookie);
+    console.group("[Login] Attempting login");
+    console.log("Username:", username);
+    console.log("Password length:", password.length);
+    console.log(
+      "API URL:",
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
+    );
+    console.log("Cookies before:", document.cookie);
     console.groupEnd();
 
     try {
       const result = await login(username, password);
-      console.group('[Login] Login result');
-      console.log('Success:', result.success);
-      console.log('User:', result.user);
-      console.log('Message:', result.message);
-      console.log('Cookies after:', document.cookie);
+      console.group("[Login] Login result");
+      console.log("Success:", result.success);
+      console.log("User:", result.user);
+      console.log("Message:", result.message);
+      console.log("Cookies after:", document.cookie);
       console.groupEnd();
-      
+
       if (result.success) {
         // Wait a bit before redirect to ensure logs are saved
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push("/dashboard");
         }, 100);
       } else {
-        setError(result.message || 'Login failed');
+        setError(result.message || "Login failed");
       }
     } catch (err: any) {
-      console.group('[Login] Login error');
-      console.error('Error object:', err);
-      console.error('Response:', err.response);
-      console.error('Response data:', err.response?.data);
-      console.error('Response status:', err.response?.status);
-      console.error('Message:', err.message);
-      console.error('Cookies:', document.cookie);
+      console.group("[Login] Login error");
+      console.error("Error object:", err);
+      console.error("Response:", err.response);
+      console.error("Response data:", err.response?.data);
+      console.error("Response status:", err.response?.status);
+      console.error("Message:", err.message);
+      console.error("Cookies:", document.cookie);
       console.groupEnd();
-      
-      const errorMessage = err.response?.data?.detail || err.message || 'Invalid credentials';
+
+      const errorMessage =
+        err.response?.data?.detail || err.message || "Invalid credentials";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -182,7 +191,7 @@ function LoginForm() {
           </div>
 
           <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? 'Вход...' : 'Войти в систему'}
+            {loading ? "Вход..." : "Войти в систему"}
           </button>
         </form>
 
@@ -196,13 +205,17 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="auth-page">
-        <div className="auth-card">
-          <div style={{ textAlign: 'center', padding: '40px' }}>Загрузка...</div>
+    <Suspense
+      fallback={
+        <div className="auth-page">
+          <div className="auth-card">
+            <div style={{ textAlign: "center", padding: "40px" }}>
+              Загрузка...
+            </div>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <LoginForm />
     </Suspense>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { paths } from "@calls/config";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -16,7 +17,7 @@ export default function Sidebar({ user }: SidebarProps) {
 
   const handleLogout = async () => {
     await logout();
-    router.push("/auth/signin");
+    router.push(paths.auth.signin);
   };
 
   const icons = {
@@ -118,20 +119,24 @@ export default function Sidebar({ user }: SidebarProps) {
 
   return (
     <aside className="sidebar">
-      <Link href="/dashboard" className="sidebar-logo" title="Mango Office">
+      <Link
+        href={paths.dashboard.root}
+        className="sidebar-logo"
+        title="Mango Office"
+      >
         M
       </Link>
       <nav className="w-full flex flex-col gap-2">
         <Link
-          href="/dashboard"
-          className={`nav-item ${pathname === "/dashboard" ? "is-active" : ""}`}
+          href={paths.dashboard.root}
+          className={`nav-item ${pathname === paths.dashboard.root ? "is-active" : ""}`}
           title="Звонки"
         >
           <div className="icon-bubble bg-orange-50">{icons.dashboard}</div>
         </Link>
         <Link
-          href="/statistics"
-          className={`nav-item ${pathname === "/statistics" ? "is-active" : ""}`}
+          href={paths.statistics.root}
+          className={`nav-item ${pathname === paths.statistics.root ? "is-active" : ""}`}
           title="Статистика"
         >
           <div className="icon-bubble bg-blue-50">{icons.statistics}</div>
@@ -141,15 +146,15 @@ export default function Sidebar({ user }: SidebarProps) {
           user?.username === "admin@gmail.com") && (
           <>
             <Link
-              href="/users"
-              className={`nav-item ${pathname === "/users" ? "is-active" : ""}`}
+              href={paths.users.root}
+              className={`nav-item ${pathname === paths.users.root ? "is-active" : ""}`}
               title="Пользователи"
             >
               <div className="icon-bubble bg-purple-50">{icons.users}</div>
             </Link>
             <Link
-              href="/settings"
-              className={`nav-item ${pathname === "/settings" ? "is-active" : ""}`}
+              href={paths.settings.root}
+              className={`nav-item ${pathname === paths.settings.root ? "is-active" : ""}`}
               title="Настройки"
             >
               <div className="icon-bubble bg-gray-50">{icons.settings}</div>
