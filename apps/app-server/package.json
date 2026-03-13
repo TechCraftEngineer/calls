@@ -3,15 +3,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun watch",
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run dist/index.mjs",
+    "with-env": "bun run --env-file ../../.env",
     "build": "bun build ./src/index.ts --outdir ./dist --target bun",
-    "start": "bun ./dist/index.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@calls/api": "workspace:*",
     "@calls/db": "workspace:*",
-    "@orpc/server": "^1.13.6",
+    "@orpc/server": "^1.13.7",
     "better-auth": "1.5.5",
     "hono": "4.12.7"
   },

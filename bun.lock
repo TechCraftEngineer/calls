@@ -4,13 +4,11 @@
   "workspaces": {
     "": {
       "name": "@calls/root",
-      "dependencies": {
-        "@ai-sdk/openai": "^3.0.41",
-        "ai": "^6.0.116",
-      },
       "devDependencies": {
+        "@ai-sdk/openai": "^3.0.41",
         "@biomejs/biome": "2.4.6",
         "@turbo/gen": "^2.8.16",
+        "ai": "^6.0.116",
         "turbo": "^2.8.16",
         "typescript": "5.9.3",
       },
@@ -23,8 +21,8 @@
         "@calls/api-client": "workspace:*",
         "@calls/config": "workspace:*",
         "@hookform/resolvers": "^5.2.2",
-        "@orpc/client": "^1.13.6",
-        "@t3-oss/env-nextjs": "^0.13.10",
+        "@orpc/client": "^1.13.7",
+        "@t3-oss/env-nextjs": "0.13.10",
         "axios": "^1.13.6",
         "better-auth": "1.5.5",
         "next": "^16.1.6",
@@ -47,7 +45,7 @@
       "dependencies": {
         "@calls/api": "workspace:*",
         "@calls/db": "workspace:*",
-        "@orpc/server": "^1.13.6",
+        "@orpc/server": "^1.13.7",
         "better-auth": "1.5.5",
         "hono": "4.12.7",
       },
@@ -60,13 +58,13 @@
       "name": "@calls/ai",
       "version": "0.1.0",
       "dependencies": {
-        "@ai-sdk/openai": "3.0.41",
+        "@ai-sdk/openai": "^3.0.41",
         "@calls/config": "workspace:*",
         "@langfuse/otel": "^5.0.0",
         "@langfuse/tracing": "^5.0.0",
         "@openrouter/ai-sdk-provider": "^2.3.0",
         "@opentelemetry/sdk-trace-node": "^2.6.0",
-        "ai": "6.0.116",
+        "ai": "^6.0.116",
         "langfuse": "^3.38.6",
         "zod": "4.3.6",
       },
@@ -80,8 +78,8 @@
       "name": "@calls/api",
       "dependencies": {
         "@calls/db": "workspace:*",
-        "@orpc/client": "^1.13.6",
-        "@orpc/server": "^1.13.6",
+        "@orpc/client": "^1.13.7",
+        "@orpc/server": "^1.13.7",
         "zod": "4.3.6",
       },
       "devDependencies": {
@@ -106,7 +104,19 @@
     "packages/backend-api-client": {
       "name": "@calls/api-client",
       "dependencies": {
-        "@orpc/client": "^1.13.6",
+        "@orpc/client": "^1.13.7",
+      },
+      "devDependencies": {
+        "@calls/tsconfig": "workspace:*",
+        "typescript": "5.9.3",
+      },
+    },
+    "packages/backend-storage": {
+      "name": "@calls/backend-storage",
+      "version": "0.1.0",
+      "dependencies": {
+        "@calls/config": "workspace:*",
+        "zod": "4.3.6",
       },
       "devDependencies": {
         "@calls/tsconfig": "workspace:*",
@@ -464,6 +474,8 @@
     "@calls/app-server": ["@calls/app-server@workspace:apps/app-server"],
 
     "@calls/auth": ["@calls/auth@workspace:packages/auth"],
+
+    "@calls/backend-storage": ["@calls/backend-storage@workspace:packages/backend-storage"],
 
     "@calls/config": ["@calls/config@workspace:packages/config"],
 

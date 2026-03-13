@@ -22,13 +22,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ai-sdk/openai": "3.0.41",
+    "@ai-sdk/openai": "^3.0.41",
     "@calls/config": "workspace:*",
     "@langfuse/otel": "^5.0.0",
     "@langfuse/tracing": "^5.0.0",
     "@openrouter/ai-sdk-provider": "^2.3.0",
     "@opentelemetry/sdk-trace-node": "^2.6.0",
-    "ai": "6.0.116",
+    "ai": "^6.0.116",
     "langfuse": "^3.38.6",
     "zod": "4.3.6"
   },
