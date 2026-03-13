@@ -3,6 +3,7 @@ import { storage } from "@calls/db";
 import { getBotUsername } from "@calls/telegram-bot";
 import { z } from "zod";
 import { adminProcedure, protectedProcedure } from "../orpc";
+import { isAdminUser } from "../user-profile";
 
 async function canAccessUser(
   currentUserId: number,
@@ -11,32 +12,23 @@ async function canAccessUser(
   if (currentUserId === targetUserId) return true;
   const user = await storage.getUser(currentUserId);
   if (!user) return false;
-  const u = user as Record<string, unknown>;
-  const un = u.username as string;
-  const inn = u.internal_numbers as string;
-  return (
-    un === "admin@mango" ||
-    un === "admin@gmail.com" ||
-    String(inn ?? "")
-      .trim()
-      .toLowerCase() === "all"
-  );
+  return isAdminUser(user as Record<string, unknown>);
 }
 
 const userCreateSchema = z.object({
   username: z.string().min(1),
   password: z.string().min(1),
-  first_name: z.string().min(1),
-  last_name: z.string().optional().default(""),
-  internal_numbers: z.string().optional().nullable(),
-  mobile_numbers: z.string().optional().nullable(),
+  givenName: z.string().min(1),
+  familyName: z.string().optional().default(""),
+  internalExtensions: z.string().optional().nullable(),
+  mobilePhones: z.string().optional().nullable(),
 });
 
 const userUpdateSchema = z.object({
-  first_name: z.string().optional(),
-  last_name: z.string().optional().nullable(),
-  internal_numbers: z.string().optional().nullable(),
-  mobile_numbers: z.string().optional().nullable(),
+  givenName: z.string().optional(),
+  familyName: z.string().optional().nullable(),
+  internalExtensions: z.string().optional().nullable(),
+  mobilePhones: z.string().optional().nullable(),
   filter_exclude_answering_machine: z.boolean().optional(),
   filter_min_duration: z.number().optional(),
   filter_min_replicas: z.number().optional(),
@@ -87,10 +79,10 @@ export const usersRouter = {
       const id = await storage.createUser(
         input.username,
         input.password,
-        input.first_name,
-        input.last_name ?? "",
-        input.internal_numbers ?? null,
-        input.mobile_numbers ?? null,
+        input.givenName,
+        input.familyName ?? "",
+        input.internalExtensions ?? null,
+        input.mobilePhones ?? null,
       );
       await storage.addActivityLog(
         "info",
@@ -112,22 +104,17 @@ export const usersRouter = {
       if (!user) throw new Error("User not found");
       const d = input.data;
       const u = user as Record<string, unknown>;
-      const firstName =
-        (d.first_name ?? u.first_name ?? "").toString().trim() ||
-        ((u.first_name as string) ?? "");
-      const lastName =
-        d.last_name !== undefined
-          ? (d.last_name ?? "").toString()
-          : (u.last_name ?? "").toString();
-      if (!firstName) throw new Error("First name is required");
-      await storage.updateUserName(input.user_id, firstName, lastName);
-      if (d.internal_numbers !== undefined)
-        await storage.updateUserInternalNumbers(
+      const givenName = (d.givenName ?? u.givenName ?? "").toString().trim();
+      const familyName = (d.familyName ?? u.familyName ?? "").toString().trim();
+      if (!givenName) throw new Error("Given name is required");
+      await storage.updateUserName(input.user_id, givenName, familyName);
+      if (d.internalExtensions !== undefined)
+        await storage.updateUserInternalExtensions(
           input.user_id,
-          d.internal_numbers,
+          d.internalExtensions,
         );
-      if (d.mobile_numbers !== undefined)
-        await storage.updateUserMobileNumbers(input.user_id, d.mobile_numbers);
+      if (d.mobilePhones !== undefined)
+        await storage.updateUserMobilePhones(input.user_id, d.mobilePhones);
       await storage.updateUserFilters(
         input.user_id,
         d.filter_exclude_answering_machine ??
@@ -139,7 +126,7 @@ export const usersRouter = {
       await storage.updateUserReportKpiSettings(input.user_id, d);
       await storage.updateUserTelegramSettings(
         input.user_id,
-        (u.telegram_chat_id as string) ?? null,
+        (u.telegramChatId as string) ?? null,
         d.telegram_daily_report ??
           (u.telegram_daily_report as boolean) ??
           false,

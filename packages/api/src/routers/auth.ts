@@ -1,9 +1,20 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../orpc";
+import {
+  extractUserFields,
+  formatUserForApi,
+} from "../user-profile";
 
+/**
+ * oRPC auth router. Для входа/выхода: POST /api/auth/sign-in/username, authClient.signOut.
+ */
 const loginSchema = z.object({
   username: z.string().min(1),
   password: z.string().min(1),
+});
+
+const checkEmailSchema = z.object({
+  email: z.string().email(),
 });
 
 export const authRouter = {
@@ -24,15 +35,16 @@ export const authRouter = {
         throw new Error("Invalid credentials");
       }
       // Session is set via Set-Cookie in the handler - we return the user and caller sets cookie
+      const fields = extractUserFields(user);
       return {
         success: true,
         message: "Login successful",
         user: {
           id: user.id,
-          username: user.username,
+          username: fields.username,
           name: user.name,
-          first_name: user.first_name ?? "",
-          last_name: user.last_name ?? "",
+          givenName: fields.givenName,
+          familyName: fields.familyName,
         },
       };
     }),
@@ -41,18 +53,29 @@ export const authRouter = {
     return { success: true, message: "Logged out" };
   }),
 
+  checkEmail: publicProcedure
+    .input(checkEmailSchema)
+    .handler(async ({ input, context }) => {
+      const user = await context.storage.getUserByUsername(input.email.trim());
+      return {
+        exists: !!user,
+      };
+    }),
+
   me: protectedProcedure.handler(async ({ context }) => {
-    const u = context.user!;
+    const u = context.user! as Record<string, unknown>;
+    const fields = extractUserFields(u);
+    
     return {
       id: u.id,
-      username: u.username,
+      username: fields.username,
       name: u.name,
-      first_name: (u as Record<string, unknown>).first_name ?? "",
-      last_name: (u as Record<string, unknown>).last_name ?? "",
-      internal_numbers: (u as Record<string, unknown>).internal_numbers ?? null,
-      mobile_numbers: (u as Record<string, unknown>).mobile_numbers ?? null,
-      created_at: (u as Record<string, unknown>).created_at ?? null,
-      telegram_chat_id: (u as Record<string, unknown>).telegram_chat_id ?? null,
+      givenName: fields.givenName,
+      familyName: fields.familyName,
+      internalExtensions: fields.internalExtensions,
+      mobilePhones: fields.mobilePhones,
+      created_at: u.created_at ?? null,
+      telegramChatId: fields.telegramChatId,
       telegram_daily_report:
         (u as Record<string, unknown>).telegram_daily_report ?? false,
       telegram_manager_report:

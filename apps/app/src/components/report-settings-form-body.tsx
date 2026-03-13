@@ -2,6 +2,7 @@ import type React from "react";
 import { useState } from "react";
 import api from "@/lib/api";
 import type { User } from "@/lib/auth";
+import { getDisplayName } from "@/lib/user-profile";
 
 interface ReportSettingsFormBodyProps {
   form: any;
@@ -384,9 +385,7 @@ export default function ReportSettingsFormBody({
                 {allUsers
                   .filter((u) => u.id !== user.id)
                   .map((u) => {
-                    const name =
-                      [u.first_name, u.last_name].filter(Boolean).join(" ") ||
-                      u.username;
+                    const name = getDisplayName(u) || u.username;
                     const checked =
                       form.report_managed_user_ids?.includes(u.id) ?? false;
                     return (

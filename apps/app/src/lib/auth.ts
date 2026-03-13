@@ -12,11 +12,11 @@ export interface User {
   id: number;
   username: string;
   name: string;
-  first_name?: string;
-  last_name?: string;
+  givenName?: string;
+  familyName?: string;
+  internalExtensions?: string | null;
+  mobilePhones?: string | null;
   role?: string;
-  internal_numbers?: string | null;
-  mobile_numbers?: string | null;
   [key: string]: unknown;
 }
 
@@ -30,5 +30,4 @@ export const login = betterAuthLogin;
 export const logout = betterAuthLogout;
 export const getCurrentUser = betterAuthGetCurrentUser;
 export const signUp = betterAuthSignUp;
-/** @deprecated В React используйте useAuth().isAuthenticated. Для async — getCurrentUser() !== null. */
 export const isAuthenticated = betterAuthIsAuthenticated;

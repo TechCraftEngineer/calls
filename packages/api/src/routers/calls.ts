@@ -229,7 +229,7 @@ export const callsRouter = {
       const totalPages = Math.ceil(totalItems / input.per_page) || 1;
       const metrics = await storage.calculateMetrics();
       const managers = (await storage.getAllUsers()).filter(
-        (u) => (u as Record<string, unknown>).internal_numbers,
+        (u) => (u as Record<string, unknown>).internalExtensions,
       );
 
       return {
@@ -310,7 +310,7 @@ function getInternalNumbersForUser(
   user: Record<string, unknown>,
   _storage: typeof import("@calls/db").storage,
 ): string[] | undefined {
-  const nums = user.internal_numbers as string | undefined;
+  const nums = user.internalExtensions as string | undefined;
   if (!nums || String(nums).trim().toLowerCase() === "all") return undefined;
   const adminUsernames = ["admin@mango", "admin@gmail.com"];
   if (adminUsernames.includes((user.username as string) ?? ""))
@@ -327,7 +327,7 @@ function getMobileNumbersForUser(
   user: Record<string, unknown>,
   _storage: typeof import("@calls/db").storage,
 ): string[] | undefined {
-  const nums = user.mobile_numbers as string | undefined;
+  const nums = user.mobilePhones as string | undefined;
   if (!nums?.trim()) return undefined;
   return (
     nums

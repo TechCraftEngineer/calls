@@ -5,6 +5,7 @@
 
 import { usernameClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
+import { extractUserFields, isAdminUser } from "./user-profile";
 
 function getAuthBaseUrl(): string {
   if (typeof window !== "undefined") {
@@ -74,33 +75,18 @@ export async function getCurrentUser() {
 
     if (!user) return null;
 
-    // Convert Better Auth user to expected User interface (username plugin adds username/displayUsername)
-    const u = user as {
-      username?: string;
-      displayUsername?: string;
-      internal_numbers?: string | null;
-    };
-    const username =
-      u.username ?? u.displayUsername ?? user.email ?? user.name ?? "—";
-    const internalNumbers = u.internal_numbers ?? null;
-
-    // Совпадаем с логикой API (orpc.ts isAdmin): admin по username или internal_numbers
-    const isAdmin =
-      username === "admin@mango" ||
-      username === "admin@gmail.com" ||
-      String(internalNumbers ?? "")
-        .trim()
-        .toLowerCase() === "all";
+    const fields = extractUserFields(user as Record<string, unknown>);
+    const isAdmin = isAdminUser(user as Record<string, unknown>);
 
     return {
-      id: Number(user.id), // Convert string id to number
-      username,
+      id: Number(user.id),
+      username: fields.username,
       name: user.name || "—",
-      first_name: user.name?.split(" ")[0] || "",
-      last_name: user.name?.split(" ")[1] || "",
+      givenName: fields.givenName,
+      familyName: fields.familyName,
       role: isAdmin ? "admin" : "user",
-      internal_numbers: internalNumbers,
-      mobile_numbers: null,
+      internalExtensions: fields.internalExtensions,
+      mobilePhones: fields.mobilePhones,
       email: user.email,
       emailVerified: user.emailVerified,
       image: user.image,

@@ -53,10 +53,10 @@ export function createBackendApiWithContext(ctx: BackendContext) {
       create: (input: {
         username: string;
         password: string;
-        first_name: string;
-        last_name?: string;
-        internal_numbers?: string | null;
-        mobile_numbers?: string | null;
+        givenName: string;
+        familyName?: string;
+        internalExtensions?: string | null;
+        mobilePhones?: string | null;
       }) =>
         callProc(
           backendRouter.users.create as ProcedureWithCallable,

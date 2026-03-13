@@ -1,10 +1,11 @@
 /**
  * Backend oRPC context and procedures.
- * Uses Better Auth for session; enriches with backend user profile (internal_numbers, etc.).
+ * Uses Better Auth for session; enriches with backend user profile.
  */
 
 import { storage } from "@calls/db";
 import { ORPCError, os } from "@orpc/server";
+import { isAdminUser } from "./user-profile";
 
 export type AuthLike = {
   api: {
@@ -80,20 +81,8 @@ export const protectedProcedure = publicProcedure.use(({ context, next }) => {
   });
 });
 
-function isAdmin(user: Record<string, unknown>): boolean {
-  const un = user.username as string;
-  const inn = user.internal_numbers as string;
-  return (
-    un === "admin@mango" ||
-    un === "admin@gmail.com" ||
-    String(inn ?? "")
-      .trim()
-      .toLowerCase() === "all"
-  );
-}
-
 export const adminProcedure = protectedProcedure.use(({ context, next }) => {
-  if (!isAdmin(context.user as Record<string, unknown>)) {
+  if (!isAdminUser(context.user as Record<string, unknown>)) {
     throw new ORPCError("FORBIDDEN");
   }
   return next({ context });

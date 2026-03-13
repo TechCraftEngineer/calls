@@ -37,13 +37,18 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [loadedUser, setLoadedUser] = useState<{
-    first_name?: string;
-    last_name?: string;
-    internal_numbers?: string;
+    given_name?: string;
+    family_name?: string;
+    internal_extensions?: string;
   } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [allUsers, setAllUsers] = useState<
-    { id: number; username: string; first_name?: string; last_name?: string }[]
+    {
+      id: number;
+      username: string;
+      given_name?: string;
+      family_name?: string;
+    }[]
   >([]);
 
   useEffect(() => {
@@ -57,7 +62,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         setIsAdmin(
           u?.username === "admin@mango" ||
             u?.username === "admin@gmail.com" ||
-            u?.internal_numbers === "all",
+            u?.internal_extensions === "all",
         );
         const promptsList = Array.isArray(promptsRes.data)
           ? promptsRes.data
@@ -67,9 +72,9 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
           promptsMap[p.key] = p.value ?? "";
         });
         setLoadedUser({
-          first_name: u.first_name,
-          last_name: u.last_name,
-          internal_numbers: u.internal_numbers,
+          given_name: u.given_name,
+          family_name: u.family_name,
+          internal_extensions: u.internal_extensions,
         });
         const bool = (v: unknown) => v === true || v === 1 || v === "1";
         const _normTime = (s: string) => {
@@ -141,13 +146,13 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
             (u: {
               id: number;
               username: string;
-              first_name?: string;
-              last_name?: string;
+              given_name?: string;
+              family_name?: string;
             }) => ({
               id: u.id,
               username: u.username,
-              first_name: u.first_name,
-              last_name: u.last_name,
+              given_name: u.given_name,
+              family_name: u.family_name,
             }),
           ),
         );
@@ -161,9 +166,9 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     setMessage("");
     try {
       const payload = {
-        first_name: loadedUser?.first_name ?? user.first_name ?? "",
-        last_name: loadedUser?.last_name ?? user.last_name ?? "",
-        internal_numbers: loadedUser?.internal_numbers ?? undefined,
+        given_name: loadedUser?.given_name ?? user.given_name ?? "",
+        family_name: loadedUser?.family_name ?? user.family_name ?? "",
+        internal_extensions: loadedUser?.internal_extensions ?? undefined,
         email: form.email.trim() || undefined,
         email_daily_report: form.email_daily_report,
         email_weekly_report: form.email_weekly_report,
@@ -221,9 +226,9 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       const u = userRes.data;
       const bool = (v: unknown) => v === true || v === 1 || v === "1";
       setLoadedUser({
-        first_name: u.first_name,
-        last_name: u.last_name,
-        internal_numbers: u.internal_numbers,
+        given_name: u.given_name,
+        family_name: u.family_name,
+        internal_extensions: u.internal_extensions,
       });
       setForm((prev) => ({
         ...prev,

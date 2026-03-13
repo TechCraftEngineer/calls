@@ -32,15 +32,29 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
     reset,
   } = useForm<CreateUserData | UpdateUserData>({
     resolver: zodResolver(schema),
-    defaultValues: user || {
-      username: "",
-      password: "",
-      confirmPassword: "",
-      first_name: "",
-      last_name: "",
-      internal_numbers: "",
-      mobile_numbers: "",
-    },
+    defaultValues: user
+      ? {
+          username: String((user as { username?: string }).username ?? ""),
+          givenName: String((user as Record<string, unknown>).givenName ?? ""),
+          familyName: String(
+            (user as Record<string, unknown>).familyName ?? "",
+          ),
+          internalExtensions: String(
+            (user as Record<string, unknown>).internalExtensions ?? "",
+          ),
+          mobilePhones: String(
+            (user as Record<string, unknown>).mobilePhones ?? "",
+          ),
+        }
+      : {
+          username: "",
+          password: "",
+          confirmPassword: "",
+          givenName: "",
+          familyName: "",
+          internalExtensions: "",
+          mobilePhones: "",
+        },
   });
 
   const onSubmit = async (data: CreateUserData | UpdateUserData) => {
@@ -162,100 +176,100 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
 
         <div>
           <label
-            htmlFor="first_name"
+            htmlFor="givenName"
             className="block text-sm font-semibold text-primary-800 mb-2"
           >
             Имя *
           </label>
           <input
-            id="first_name"
+            id="givenName"
             type="text"
             className={`w-full px-3 py-2.5 border rounded-lg text-sm transition-all duration-200 box-border ${
-              errors.first_name
+              errors.givenName
                 ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
                 : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
             }`}
             placeholder="Иван"
-            {...register("first_name")}
+            {...register("givenName")}
           />
-          {errors.first_name && (
+          {errors.givenName && (
             <div className="text-error-600 text-xs mt-1 leading-tight">
-              {errors.first_name.message}
+              {errors.givenName.message}
             </div>
           )}
         </div>
 
         <div>
           <label
-            htmlFor="last_name"
+            htmlFor="familyName"
             className="block text-sm font-semibold text-primary-800 mb-2"
           >
             Фамилия
           </label>
           <input
-            id="last_name"
+            id="familyName"
             type="text"
             className={`w-full px-3 py-2.5 border rounded-lg text-sm transition-all duration-200 box-border ${
-              errors.last_name
+              errors.familyName
                 ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
                 : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
             }`}
             placeholder="Иванов"
-            {...register("last_name")}
+            {...register("familyName")}
           />
-          {errors.last_name && (
+          {errors.familyName && (
             <div className="text-error-600 text-xs mt-1 leading-tight">
-              {errors.last_name.message}
+              {errors.familyName.message}
             </div>
           )}
         </div>
 
         <div>
           <label
-            htmlFor="internal_numbers"
+            htmlFor="internalExtensions"
             className="block text-sm font-semibold text-primary-800 mb-2"
           >
             Внутренние номера
           </label>
           <input
-            id="internal_numbers"
+            id="internalExtensions"
             type="text"
             className={`w-full px-3 py-2.5 border rounded-lg text-sm transition-all duration-200 box-border ${
-              errors.internal_numbers
+              errors.internalExtensions
                 ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
                 : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
             }`}
             placeholder="100,101,102"
-            {...register("internal_numbers")}
+            {...register("internalExtensions")}
           />
-          {errors.internal_numbers && (
+          {errors.internalExtensions && (
             <div className="text-error-600 text-xs mt-1 leading-tight">
-              {errors.internal_numbers.message}
+              {errors.internalExtensions.message}
             </div>
           )}
         </div>
 
         <div>
           <label
-            htmlFor="mobile_numbers"
+            htmlFor="mobilePhones"
             className="block text-sm font-semibold text-primary-800 mb-2"
           >
             Мобильные номера
           </label>
           <input
-            id="mobile_numbers"
+            id="mobilePhones"
             type="text"
             className={`w-full px-3 py-2.5 border rounded-lg text-sm transition-all duration-200 box-border ${
-              errors.mobile_numbers
+              errors.mobilePhones
                 ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
                 : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
             }`}
             placeholder="+79001234567,+79001234568"
-            {...register("mobile_numbers")}
+            {...register("mobilePhones")}
           />
-          {errors.mobile_numbers && (
+          {errors.mobilePhones && (
             <div className="text-error-600 text-xs mt-1 leading-tight">
-              {errors.mobile_numbers.message}
+              {errors.mobilePhones.message}
             </div>
           )}
         </div>

@@ -2,19 +2,25 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import type { User } from "@/lib/auth";
+import {
+  getDisplayName,
+  getFamilyName,
+  getGivenName,
+  getInternalExtensions,
+} from "@/lib/user-profile";
 import ReportSettingsFormBody from "./report-settings-form-body";
 
 type UserSettings = {
   username?: string;
-  internal_numbers?: string;
-  first_name?: string;
-  last_name?: string;
+  internalExtensions?: string;
+  givenName?: string;
+  familyName?: string;
   email?: string;
   report_managed_user_ids?: unknown;
   email_daily_report?: unknown;
   email_weekly_report?: unknown;
   email_monthly_report?: unknown;
-  telegram_chat_id?: string;
+  telegramChatId?: string;
   telegram_daily_report?: unknown;
   telegram_weekly_report?: unknown;
   telegram_monthly_report?: unknown;
@@ -37,7 +43,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     email_daily_report: false,
     email_weekly_report: false,
     email_monthly_report: false,
-    telegram_chat_id: "",
+    telegramChatId: "",
     telegram_daily_report: false,
     telegram_weekly_report: false,
     telegram_monthly_report: false,
@@ -64,13 +70,18 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [loadedUser, setLoadedUser] = useState<{
-    first_name?: string;
-    last_name?: string;
-    internal_numbers?: string;
+    givenName?: string;
+    familyName?: string;
+    internalExtensions?: string;
   } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [allUsers, setAllUsers] = useState<
-    { id: number; username: string; first_name?: string; last_name?: string }[]
+    {
+      id: number;
+      username: string;
+      givenName?: string;
+      familyName?: string;
+    }[]
   >([]);
 
   useEffect(() => {
@@ -82,10 +93,13 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         ]);
         const u = rawU as UserSettings | undefined;
         if (!u) return;
+        const ext = getInternalExtensions(u);
         setIsAdmin(
           u.username === "admin@mango" ||
             u.username === "admin@gmail.com" ||
-            u.internal_numbers === "all",
+            String(ext ?? "")
+              .trim()
+              .toLowerCase() === "all",
         );
         const promptsArr = (Array.isArray(promptsList) ? promptsList : []) as {
           key: string;
@@ -96,9 +110,9 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
           promptsMap[p.key] = p.value ?? "";
         });
         setLoadedUser({
-          first_name: u.first_name,
-          last_name: u.last_name,
-          internal_numbers: u.internal_numbers,
+          givenName: getGivenName(u),
+          familyName: getFamilyName(u),
+          internalExtensions: getInternalExtensions(u) ?? undefined,
         });
         const bool = (v: unknown) => v === true || v === 1 || v === "1";
         const _normTime = (s: string) => {
@@ -122,7 +136,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
           email_daily_report: bool(u.email_daily_report),
           email_weekly_report: bool(u.email_weekly_report),
           email_monthly_report: bool(u.email_monthly_report),
-          telegram_chat_id: u.telegram_chat_id || "",
+          telegramChatId: u.telegramChatId || "",
           telegram_daily_report: bool(u.telegram_daily_report),
           telegram_weekly_report: bool(u.telegram_weekly_report),
           telegram_monthly_report: bool(u.telegram_monthly_report),
@@ -167,15 +181,15 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         const arr = (Array.isArray(list) ? list : []) as {
           id: number;
           username: string;
-          first_name?: string;
-          last_name?: string;
+          givenName?: string;
+          familyName?: string;
         }[];
         setAllUsers(
           arr.map((u) => ({
             id: u.id,
             username: u.username,
-            first_name: u.first_name,
-            last_name: u.last_name,
+            givenName: getGivenName(u),
+            familyName: getFamilyName(u),
           })),
         );
       })
@@ -188,14 +202,17 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     setMessage("");
     try {
       const payload = {
-        first_name: loadedUser?.first_name ?? user.first_name ?? "",
-        last_name: loadedUser?.last_name ?? user.last_name ?? "",
-        internal_numbers: loadedUser?.internal_numbers ?? undefined,
+        givenName: loadedUser?.givenName ?? getGivenName(user) ?? "",
+        familyName: loadedUser?.familyName ?? getFamilyName(user) ?? "",
+        internalExtensions:
+          loadedUser?.internalExtensions ??
+          getInternalExtensions(user) ??
+          undefined,
         email: form.email.trim() || undefined,
         email_daily_report: form.email_daily_report,
         email_weekly_report: form.email_weekly_report,
         email_monthly_report: form.email_monthly_report,
-        telegram_chat_id: form.telegram_chat_id.trim() || undefined,
+        telegramChatId: form.telegramChatId.trim() || undefined,
         telegram_daily_report: form.telegram_daily_report,
         telegram_weekly_report: form.telegram_weekly_report,
         telegram_monthly_report: form.telegram_monthly_report,
@@ -248,9 +265,9 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       const u = rawU as UserSettings;
       const bool = (v: unknown) => v === true || v === 1 || v === "1";
       setLoadedUser({
-        first_name: u.first_name,
-        last_name: u.last_name,
-        internal_numbers: u.internal_numbers,
+        givenName: getGivenName(u),
+        familyName: getFamilyName(u),
+        internalExtensions: getInternalExtensions(u) ?? undefined,
       });
       setForm((prev) => ({
         ...prev,
@@ -258,7 +275,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         email_daily_report: bool(u.email_daily_report),
         email_weekly_report: bool(u.email_weekly_report),
         email_monthly_report: bool(u.email_monthly_report),
-        telegram_chat_id: u.telegram_chat_id || "",
+        telegramChatId: u.telegramChatId || "",
         telegram_daily_report: bool(u.telegram_daily_report),
         telegram_weekly_report: bool(u.telegram_weekly_report),
         telegram_monthly_report: bool(u.telegram_monthly_report),

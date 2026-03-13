@@ -5,6 +5,7 @@
 
 import { db } from "@calls/db";
 import * as schema from "@calls/db/schema";
+import { ResetPasswordEmail, sendEmail } from "@calls/emails";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { username } from "better-auth/plugins";
@@ -35,15 +36,54 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
+    sendResetPassword: async ({ user, url }) => {
+      try {
+        await sendEmail({
+          to: [user.email],
+          subject: "Сброс пароля — QBS Звонки",
+          react: ResetPasswordEmail({ resetLink: url }),
+        });
+        console.log(`[Auth] Password reset email sent to: ${user.email}`);
+      } catch (error) {
+        console.error("[Auth] Failed to send password reset email:", {
+          email: user.email,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // Не прерываем процесс, но логируем ошибку
+        // Better Auth продолжит процесс даже если email не отправлен
+      }
+    },
   },
+  socialProviders:
+    process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
+      ? {
+          google: {
+            clientId: process.env.AUTH_GOOGLE_ID,
+            clientSecret: process.env.AUTH_GOOGLE_SECRET,
+            redirectURI: `${baseUrl}/api/auth/callback/google`,
+          },
+        }
+      : undefined,
   plugins: [username()],
   user: {
     additionalFields: {
-      internal_numbers: { type: "string", required: false },
-      mobile_numbers: { type: "string", required: false },
-      telegram_chat_id: { type: "string", required: false },
-      first_name: { type: "string", required: false },
-      last_name: { type: "string", required: false },
+      givenName: { type: "string", required: false, fieldName: "given_name" },
+      familyName: { type: "string", required: false, fieldName: "family_name" },
+      internalExtensions: {
+        type: "string",
+        required: false,
+        fieldName: "internal_extensions",
+      },
+      mobilePhones: {
+        type: "string",
+        required: false,
+        fieldName: "mobile_phones",
+      },
+      telegramChatId: {
+        type: "string",
+        required: false,
+        fieldName: "telegram_chat_id",
+      },
     },
   },
 });

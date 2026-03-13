@@ -5,7 +5,17 @@ import { settingsRouter } from "./routers/settings";
 import { statisticsRouter } from "./routers/statistics";
 import { usersRouter } from "./routers/users";
 
-export const backendRouter = {
+/** Explicit type to avoid TS7056 (inferred type exceeds max length) */
+type BackendRouterType = {
+  auth: typeof authRouter;
+  calls: typeof callsRouter;
+  users: typeof usersRouter;
+  settings: typeof settingsRouter;
+  statistics: typeof statisticsRouter;
+  reports: typeof reportsRouter;
+};
+
+export const backendRouter: BackendRouterType = {
   auth: authRouter,
   calls: callsRouter,
   users: usersRouter,
@@ -14,4 +24,4 @@ export const backendRouter = {
   reports: reportsRouter,
 };
 
-export type BackendRouter = typeof backendRouter;
+export type BackendRouter = BackendRouterType;

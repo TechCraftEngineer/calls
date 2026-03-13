@@ -270,10 +270,10 @@ export const storage = {
       .limit(1);
 
     const user = result[0] ?? null;
-    if (user && !user.first_name && user.name) {
+    if (user && !user.givenName && user.name) {
       const parts = user.name.split(/\s+/, 2);
-      (user as User).first_name = parts[0] ?? "";
-      (user as User).last_name = parts[1] ?? "";
+      (user as User).givenName = parts[0] ?? "";
+      (user as User).familyName = parts[1] ?? "";
     }
     return user;
   },
@@ -316,10 +316,10 @@ export const storage = {
       .orderBy(desc(schema.users.created_at));
 
     return results.map((user) => {
-      if (!user.first_name && user.name) {
+      if (!user.givenName && user.name) {
         const parts = user.name.split(/\s+/, 2);
-        (user as User).first_name = parts[0] ?? "";
-        (user as User).last_name = parts[1] ?? "";
+        (user as User).givenName = parts[0] ?? "";
+        (user as User).familyName = parts[1] ?? "";
       }
       return user;
     });
@@ -333,10 +333,10 @@ export const storage = {
       .limit(1);
 
     const user = result[0] ?? null;
-    if (user && !user.first_name && user.name) {
+    if (user && !user.givenName && user.name) {
       const parts = user.name.split(/\s+/, 2);
-      (user as User).first_name = parts[0] ?? "";
-      (user as User).last_name = parts[1] ?? "";
+      (user as User).givenName = parts[0] ?? "";
+      (user as User).familyName = parts[1] ?? "";
     }
     return user;
   },
@@ -344,14 +344,16 @@ export const storage = {
   async createUser(
     username: string,
     password: string,
-    firstName: string,
-    lastName = "",
-    internalNumbers?: string | null,
-    mobileNumbers?: string | null,
+    givenName: string,
+    familyName = "",
+    internalExtensions?: string | null,
+    mobilePhones?: string | null,
   ): Promise<number> {
     const passwordHash = hashSync(password, 10);
     const createdAt = new Date().toISOString();
-    const fullName = lastName ? `${firstName} ${lastName}`.trim() : firstName;
+    const fullName = familyName
+      ? `${givenName} ${familyName}`.trim()
+      : givenName;
 
     const result = await db
       .insert(schema.users)
@@ -359,12 +361,12 @@ export const storage = {
         username,
         password_hash: passwordHash,
         name: fullName,
-        first_name: firstName,
-        last_name: lastName,
+        givenName,
+        familyName,
         created_at: createdAt,
         is_active: true,
-        internal_numbers: internalNumbers ?? null,
-        mobile_numbers: mobileNumbers ?? null,
+        internalExtensions: internalExtensions ?? null,
+        mobilePhones: mobilePhones ?? null,
       })
       .returning({ id: schema.users.id });
 
@@ -373,15 +375,17 @@ export const storage = {
 
   async updateUserName(
     userId: number,
-    firstName: string,
-    lastName = "",
+    givenName: string,
+    familyName = "",
   ): Promise<boolean> {
-    const fullName = lastName ? `${firstName} ${lastName}`.trim() : firstName;
+    const fullName = familyName
+      ? `${givenName} ${familyName}`.trim()
+      : givenName;
     const result = await db
       .update(schema.users)
       .set({
-        first_name: firstName,
-        last_name: lastName,
+        givenName,
+        familyName,
         name: fullName,
       })
       .where(
@@ -391,13 +395,13 @@ export const storage = {
     return (result.rowCount ?? 0) > 0;
   },
 
-  async updateUserInternalNumbers(
+  async updateUserInternalExtensions(
     userId: number,
-    internalNumbers: string | null,
+    internalExtensions: string | null,
   ): Promise<boolean> {
     const result = await db
       .update(schema.users)
-      .set({ internal_numbers: internalNumbers })
+      .set({ internalExtensions })
       .where(
         and(eq(schema.users.id, userId), eq(schema.users.is_active, true)),
       );
@@ -405,13 +409,13 @@ export const storage = {
     return (result.rowCount ?? 0) > 0;
   },
 
-  async updateUserMobileNumbers(
+  async updateUserMobilePhones(
     userId: number,
-    mobileNumbers: string | null,
+    mobilePhones: string | null,
   ): Promise<boolean> {
     const result = await db
       .update(schema.users)
-      .set({ mobile_numbers: mobileNumbers })
+      .set({ mobilePhones })
       .where(
         and(eq(schema.users.id, userId), eq(schema.users.is_active, true)),
       );
@@ -560,14 +564,13 @@ export const storage = {
     const user = result[0] ?? null;
     if (!user) return null;
 
-    // Безопасно создаем обновленный объект пользователя с заполненными полями
     const updatedUser: User = {
       ...user,
-      first_name:
-        user.first_name ||
-        (user.name ? user.name.split(/\s+/, 2)[0] || "" : ""),
-      last_name:
-        user.last_name || (user.name ? user.name.split(/\s+/, 2)[1] || "" : ""),
+      givenName:
+        user.givenName || (user.name ? user.name.split(/\s+/, 2)[0] || "" : ""),
+      familyName:
+        user.familyName ||
+        (user.name ? user.name.split(/\s+/, 2)[1] || "" : ""),
     };
 
     return updatedUser;
@@ -577,7 +580,7 @@ export const storage = {
     const result = await db
       .update(schema.users)
       .set({
-        telegram_chat_id: chatId,
+        telegramChatId: chatId,
         telegram_connect_token: null,
       })
       .where(eq(schema.users.id, userId));
@@ -598,7 +601,7 @@ export const storage = {
     const result = await db
       .update(schema.users)
       .set({
-        telegram_chat_id: null,
+        telegramChatId: null,
         telegram_daily_report: false,
         telegram_manager_report: false,
       })

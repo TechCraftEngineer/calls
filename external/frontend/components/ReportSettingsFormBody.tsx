@@ -385,7 +385,7 @@ export default function ReportSettingsFormBody({
                   .filter((u) => u.id !== user.id)
                   .map((u) => {
                     const name =
-                      [u.first_name, u.last_name].filter(Boolean).join(" ") ||
+                      [u.given_name, u.family_name].filter(Boolean).join(" ") ||
                       u.username;
                     const checked =
                       form.report_managed_user_ids?.includes(u.id) ?? false;

@@ -9,12 +9,12 @@ import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
 
 interface ManagedUser extends User {
-  internal_numbers?: string;
-  mobile_numbers?: string;
+  internalExtensions?: string;
+  mobilePhones?: string;
   created_at?: string;
-  first_name?: string;
-  last_name?: string;
-  telegram_chat_id?: string;
+  givenName?: string;
+  familyName?: string;
+  telegramChatId?: string;
   telegram_daily_report?: boolean;
   telegram_manager_report?: boolean;
   max_chat_id?: string;
@@ -69,11 +69,11 @@ export default function UsersPage() {
   const [addForm, setAddForm] = useState({
     username: "",
     password: "",
-    first_name: "",
-    last_name: "",
-    internal_numbers: "",
-    mobile_numbers: "",
-    telegram_chat_id: "",
+    givenName: "",
+    familyName: "",
+    internalExtensions: "",
+    mobilePhones: "",
+    telegramChatId: "",
     telegram_daily_report: false,
     telegram_manager_report: false,
     max_chat_id: "",
@@ -102,11 +102,11 @@ export default function UsersPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editUser, setEditUser] = useState<ManagedUser | null>(null);
   const [editForm, setEditForm] = useState({
-    first_name: "",
-    last_name: "",
-    internal_numbers: "",
-    mobile_numbers: "",
-    telegram_chat_id: "",
+    givenName: "",
+    familyName: "",
+    internalExtensions: "",
+    mobilePhones: "",
+    telegramChatId: "",
     telegram_daily_report: false,
     telegram_manager_report: false,
     max_chat_id: "",
@@ -188,11 +188,11 @@ export default function UsersPage() {
     setAddForm({
       username: "",
       password: "",
-      first_name: "",
-      last_name: "",
-      internal_numbers: "",
-      mobile_numbers: "",
-      telegram_chat_id: "",
+      givenName: "",
+      familyName: "",
+      internalExtensions: "",
+      mobilePhones: "",
+      telegramChatId: "",
       telegram_daily_report: false,
       telegram_manager_report: false,
       max_chat_id: "",
@@ -225,7 +225,7 @@ export default function UsersPage() {
     if (
       !addForm.username.trim() ||
       !addForm.password.trim() ||
-      !addForm.first_name.trim()
+      !addForm.givenName.trim()
     ) {
       setAddError("Заполните логин, пароль и имя.");
       return;
@@ -235,10 +235,10 @@ export default function UsersPage() {
       await api.users.create({
         username: addForm.username.trim(),
         password: addForm.password,
-        first_name: addForm.first_name.trim(),
-        last_name: addForm.last_name.trim() || undefined,
-        internal_numbers: addForm.internal_numbers.trim() || undefined,
-        mobile_numbers: addForm.mobile_numbers.trim() || undefined,
+        givenName: addForm.givenName.trim(),
+        familyName: addForm.familyName.trim() || undefined,
+        internalExtensions: addForm.internalExtensions.trim() || undefined,
+        mobilePhones: addForm.mobilePhones.trim() || undefined,
       });
       setShowAddModal(false);
       loadUsers();
@@ -254,11 +254,11 @@ export default function UsersPage() {
   const openEditModal = (u: ManagedUser) => {
     setEditUser(u);
     setEditForm({
-      first_name: u.first_name || "",
-      last_name: u.last_name || "",
-      internal_numbers: u.internal_numbers || "",
-      mobile_numbers: u.mobile_numbers || "",
-      telegram_chat_id: u.telegram_chat_id || "",
+      givenName: u.givenName || "",
+      familyName: u.familyName || "",
+      internalExtensions: u.internalExtensions || "",
+      mobilePhones: u.mobilePhones || "",
+      telegramChatId: u.telegramChatId || "",
       telegram_daily_report: u.telegram_daily_report || false,
       telegram_manager_report: u.telegram_manager_report || false,
       max_chat_id: u.max_chat_id || "",
@@ -290,7 +290,7 @@ export default function UsersPage() {
     e.preventDefault();
     if (!editUser) return;
     setEditError("");
-    if (!editForm.first_name.trim()) {
+    if (!editForm.givenName.trim()) {
       setEditError("Укажите имя.");
       return;
     }
@@ -299,11 +299,11 @@ export default function UsersPage() {
       await api.users.update({
         user_id: editUser.id,
         data: {
-          first_name: editForm.first_name.trim(),
-          last_name: editForm.last_name.trim() || undefined,
-          internal_numbers: editForm.internal_numbers.trim() || undefined,
-          mobile_numbers: editForm.mobile_numbers.trim() || undefined,
-          telegram_chat_id: editForm.telegram_chat_id.trim() || undefined,
+          givenName: editForm.givenName.trim(),
+          familyName: editForm.familyName.trim() || undefined,
+          internalExtensions: editForm.internalExtensions.trim() || undefined,
+          mobilePhones: editForm.mobilePhones.trim() || undefined,
+          telegramChatId: editForm.telegramChatId.trim() || undefined,
           telegram_daily_report: editForm.telegram_daily_report,
           telegram_manager_report: editForm.telegram_manager_report,
           max_chat_id: editForm.max_chat_id.trim() || undefined,
@@ -476,13 +476,13 @@ export default function UsersPage() {
                     <td style={{ fontWeight: 600, color: "#333" }}>
                       {u.username}
                     </td>
-                    <td style={{ color: "#555" }}>{u.first_name || "—"}</td>
-                    <td style={{ color: "#555" }}>{u.last_name || "—"}</td>
+                    <td style={{ color: "#555" }}>{u.givenName || "—"}</td>
+                    <td style={{ color: "#555" }}>{u.familyName || "—"}</td>
                     <td style={{ color: "#555", fontWeight: 500 }}>
-                      {u.internal_numbers || "—"}
+                      {u.internalExtensions || "—"}
                     </td>
                     <td style={{ color: "#555", fontWeight: 500 }}>
-                      {u.mobile_numbers || "—"}
+                      {u.mobilePhones || "—"}
                     </td>
                     <td style={{ color: "#555" }}>
                       {formatDate(u.created_at)}
@@ -682,9 +682,9 @@ export default function UsersPage() {
                 </label>
                 <input
                   type="text"
-                  value={addForm.first_name}
+                  value={addForm.givenName}
                   onChange={(e) =>
-                    setAddForm((f) => ({ ...f, first_name: e.target.value }))
+                    setAddForm((f) => ({ ...f, givenName: e.target.value }))
                   }
                   style={{
                     width: "100%",
@@ -708,9 +708,9 @@ export default function UsersPage() {
                 </label>
                 <input
                   type="text"
-                  value={addForm.last_name}
+                  value={addForm.familyName}
                   onChange={(e) =>
-                    setAddForm((f) => ({ ...f, last_name: e.target.value }))
+                    setAddForm((f) => ({ ...f, familyName: e.target.value }))
                   }
                   style={{
                     width: "100%",
@@ -734,11 +734,11 @@ export default function UsersPage() {
                 </label>
                 <input
                   type="text"
-                  value={addForm.internal_numbers}
+                  value={addForm.internalExtensions}
                   onChange={(e) =>
                     setAddForm((f) => ({
                       ...f,
-                      internal_numbers: e.target.value,
+                      internalExtensions: e.target.value,
                     }))
                   }
                   style={{
@@ -764,11 +764,11 @@ export default function UsersPage() {
                 </label>
                 <input
                   type="text"
-                  value={addForm.mobile_numbers}
+                  value={addForm.mobilePhones}
                   onChange={(e) =>
                     setAddForm((f) => ({
                       ...f,
-                      mobile_numbers: e.target.value,
+                      mobilePhones: e.target.value,
                     }))
                   }
                   style={{
@@ -812,11 +812,11 @@ export default function UsersPage() {
                   </label>
                   <input
                     type="text"
-                    value={addForm.telegram_chat_id}
+                    value={addForm.telegramChatId}
                     onChange={(e) =>
                       setAddForm((f) => ({
                         ...f,
-                        telegram_chat_id: e.target.value,
+                        telegramChatId: e.target.value,
                       }))
                     }
                     style={{
@@ -1072,9 +1072,9 @@ export default function UsersPage() {
                 </label>
                 <input
                   type="text"
-                  value={editForm.first_name}
+                  value={editForm.givenName}
                   onChange={(e) =>
-                    setEditForm((f) => ({ ...f, first_name: e.target.value }))
+                    setEditForm((f) => ({ ...f, givenName: e.target.value }))
                   }
                   style={{
                     width: "100%",
@@ -1098,9 +1098,9 @@ export default function UsersPage() {
                 </label>
                 <input
                   type="text"
-                  value={editForm.last_name}
+                  value={editForm.familyName}
                   onChange={(e) =>
-                    setEditForm((f) => ({ ...f, last_name: e.target.value }))
+                    setEditForm((f) => ({ ...f, familyName: e.target.value }))
                   }
                   style={{
                     width: "100%",
@@ -1124,11 +1124,11 @@ export default function UsersPage() {
                 </label>
                 <input
                   type="text"
-                  value={editForm.internal_numbers}
+                  value={editForm.internalExtensions}
                   onChange={(e) =>
                     setEditForm((f) => ({
                       ...f,
-                      internal_numbers: e.target.value,
+                      internalExtensions: e.target.value,
                     }))
                   }
                   style={{
@@ -1154,11 +1154,11 @@ export default function UsersPage() {
                 </label>
                 <input
                   type="text"
-                  value={editForm.mobile_numbers}
+                  value={editForm.mobilePhones}
                   onChange={(e) =>
                     setEditForm((f) => ({
                       ...f,
-                      mobile_numbers: e.target.value,
+                      mobilePhones: e.target.value,
                     }))
                   }
                   style={{
@@ -1186,11 +1186,11 @@ export default function UsersPage() {
                 <div style={{ display: "flex", gap: "8px" }}>
                   <input
                     type="text"
-                    value={editForm.telegram_chat_id}
+                    value={editForm.telegramChatId}
                     onChange={(e) =>
                       setEditForm((f) => ({
                         ...f,
-                        telegram_chat_id: e.target.value,
+                        telegramChatId: e.target.value,
                       }))
                     }
                     style={{
@@ -1204,7 +1204,7 @@ export default function UsersPage() {
                   />
                 </div>
                 <div style={{ marginTop: "8px" }}>
-                  {editUser.telegram_chat_id ? (
+                  {editUser.telegramChatId ? (
                     <button
                       type="button"
                       onClick={async () => {
@@ -1213,9 +1213,9 @@ export default function UsersPage() {
                           await api.users.disconnectTelegram({
                             user_id: editUser.id,
                           });
-                          setEditForm((f) => ({ ...f, telegram_chat_id: "" }));
+                          setEditForm((f) => ({ ...f, telegramChatId: "" }));
                           setEditUser((u) =>
-                            u ? { ...u, telegram_chat_id: "" } : null,
+                            u ? { ...u, telegramChatId: "" } : null,
                           );
                           loadUsers();
                         } catch (_e) {
@@ -1291,8 +1291,7 @@ export default function UsersPage() {
                               setEditUser(updated);
                               setEditForm((f) => ({
                                 ...f,
-                                telegram_chat_id:
-                                  updated.telegram_chat_id || "",
+                                telegramChatId: updated.telegramChatId || "",
                                 filter_exclude_answering_machine:
                                   updated.filter_exclude_answering_machine ||
                                   false,

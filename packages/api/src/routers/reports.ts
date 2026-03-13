@@ -8,7 +8,7 @@ export const reportsRouter = {
       .username as string;
     const user = await storage.getUserByUsername(username);
     if (!user) throw new Error("User not found");
-    const chatId = (user as Record<string, unknown>).telegram_chat_id as
+    const chatId = (user as Record<string, unknown>).telegramChatId as
       | string
       | undefined;
     if (!chatId) throw new Error("Telegram Chat ID is not set for this user");

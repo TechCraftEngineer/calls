@@ -53,13 +53,13 @@ export interface User {
   id: number;
   username: string;
   name: string;
-  first_name?: string;
-  last_name?: string;
-  internal_numbers?: string;
-  mobile_numbers?: string;
+  givenName?: string;
+  familyName?: string;
+  internalExtensions?: string;
+  mobilePhones?: string;
   created_at: string;
   is_active: boolean;
-  telegram_chat_id?: string;
+  telegramChatId?: string;
   email?: string;
 }
 
@@ -131,10 +131,10 @@ export const usersApi = {
   async create(data: {
     username: string;
     password: string;
-    first_name: string;
-    last_name?: string;
-    internal_numbers?: string;
-    mobile_numbers?: string;
+    givenName: string;
+    familyName?: string;
+    internalExtensions?: string;
+    mobilePhones?: string;
   }): Promise<User> {
     return await api.users.create(data);
   },
@@ -238,6 +238,13 @@ export const statisticsApi = {
 
   async getMetrics(): Promise<any> {
     return await api.statistics.getMetrics();
+  },
+};
+
+// Auth API
+export const authApi = {
+  async checkEmail(email: string): Promise<{ exists: boolean }> {
+    return await api.auth.checkEmail({ email });
   },
 };
 

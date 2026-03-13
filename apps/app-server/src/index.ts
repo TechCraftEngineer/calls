@@ -22,6 +22,23 @@ import { setCookie } from "hono/cookie";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { auth } from "./auth";
+import { extractUserFields } from "@calls/api/user-profile";
+
+// Создаем безопасный логгер для backend-server
+const safeLogger = {
+  info: (message: string, data?: unknown) => {
+    const sanitized = data ? JSON.stringify(data).replace(/"(password|token|secret|key|authorization|cookie|session|telegramChatId|max_chat_id)"\s*:\s*"[^"]*"/g, '"$1":"[REDACTED]"') : undefined;
+    console.log(`[Backend] ${message}`, sanitized);
+  },
+  warn: (message: string, data?: unknown) => {
+    const sanitized = data ? JSON.stringify(data).replace(/"(password|token|secret|key|authorization|cookie|session|telegramChatId|max_chat_id)"\s*:\s*"[^"]*"/g, '"$1":"[REDACTED]"') : undefined;
+    console.warn(`[Backend] ${message}`, sanitized);
+  },
+  error: (message: string, data?: unknown) => {
+    const sanitized = data ? JSON.stringify(data).replace(/"(password|token|secret|key|authorization|cookie|session|telegramChatId|max_chat_id)"\s*:\s*"[^"]*"/g, '"$1":"[REDACTED]"') : undefined;
+    console.error(`[Backend] ${message}`, sanitized);
+  },
+};
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -65,7 +82,11 @@ if (existsSync(recordsDir)) {
 const rpcHandler = new RPCHandler(backendRouter, {
   interceptors: [
     onError((error) => {
-      console.error("[Backend oRPC] Error:", error);
+      safeLogger.error("oRPC Error", {
+        message: error instanceof Error ? error.message : String(error),
+        code: (error as any)?.code,
+        path: (error as any)?.path,
+      });
     }),
   ],
 });
@@ -87,7 +108,7 @@ app.on(["GET", "POST"], "/api/orpc/*", async (c) => {
 
     return result.response;
   } catch (error) {
-    console.error("[Backend oRPC] Handler error:", error);
+    safeLogger.error("oRPC Handler error", error);
     return c.json({ error: "Internal Server Error" }, 500);
   }
 });
@@ -112,22 +133,30 @@ app.post("/api/auth/login", async (c) => {
   const authResponse = await auth.handler(authRequest);
   if (authResponse.status === 200) {
     const data = (await authResponse.json()) as {
-      user?: { id: string; name?: string; username?: string };
+      user?: {
+        id: string;
+        name?: string;
+        username?: string;
+        givenName?: string;
+        familyName?: string;
+      };
     };
     const headers = new Headers();
     authResponse.headers.forEach((v, k) => {
       if (k.toLowerCase() === "set-cookie") headers.append(k, v);
     });
+    const u = data.user;
+    const fields = u ? extractUserFields(u) : { givenName: "", familyName: "" };
     return c.json(
       {
         success: true,
         message: "Login successful",
         user: {
-          id: data.user?.id,
-          username: data.user?.username ?? username,
-          name: data.user?.name ?? username,
-          first_name: "",
-          last_name: "",
+          id: u?.id,
+          username: u?.username ?? username,
+          name: u?.name ?? username,
+          givenName: fields.givenName,
+          familyName: fields.familyName,
         },
       },
       200,
@@ -149,15 +178,17 @@ app.post("/api/auth/login", async (c) => {
     path: "/",
     maxAge: 86400 * 7,
   });
+  const u = user as Record<string, unknown>;
+  const fields = extractUserFields(u);
   return c.json({
     success: true,
     message: "Login successful",
     user: {
       id: user.id,
-      username: user.username,
+      username: fields.username,
       name: user.name,
-      first_name: (user as Record<string, unknown>).first_name ?? "",
-      last_name: (user as Record<string, unknown>).last_name ?? "",
+      givenName: fields.givenName,
+      familyName: fields.familyName,
     },
   });
 });
@@ -345,14 +376,14 @@ app.post("/api/users", async (c) => {
   const body = await c.req.json<{
     username: string;
     password: string;
-    first_name: string;
-    last_name?: string;
-    internal_numbers?: string;
-    mobile_numbers?: string;
+    givenName: string;
+    familyName?: string;
+    internalExtensions?: string;
+    mobilePhones?: string;
   }>();
-  if (!body.username || !body.password || !body.first_name)
+  if (!body.username || !body.password || !body.givenName)
     return c.json(
-      { detail: "Username, password, and first name are required" },
+      { detail: "Username, password, and given name are required" },
       400,
     );
   try {
@@ -360,10 +391,10 @@ app.post("/api/users", async (c) => {
     const user = await api.users.create({
       username: body.username,
       password: body.password,
-      first_name: body.first_name,
-      last_name: body.last_name ?? "",
-      internal_numbers: body.internal_numbers ?? null,
-      mobile_numbers: body.mobile_numbers ?? null,
+      givenName: body.givenName,
+      familyName: body.familyName ?? "",
+      internalExtensions: body.internalExtensions ?? null,
+      mobilePhones: body.mobilePhones ?? null,
     });
     return c.json(user);
   } catch (e) {
@@ -635,8 +666,8 @@ const port = Number(process.env.BACKEND_PORT ?? process.env.PORT ?? 7000);
 const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL;
 async function setupTelegramWebhook() {
   if (!webhookUrl) {
-    console.log(
-      "[backend-server] TELEGRAM_WEBHOOK_URL not configured, skipping webhook setup",
+    safeLogger.info(
+      "TELEGRAM_WEBHOOK_URL not configured, skipping webhook setup",
     );
     return;
   }
@@ -644,8 +675,8 @@ async function setupTelegramWebhook() {
   try {
     const token = await storage.getPrompt("telegram_bot_token");
     if (!token?.trim()) {
-      console.warn(
-        "[backend-server] Telegram bot token not configured, skipping webhook setup",
+      safeLogger.warn(
+        "Telegram bot token not configured, skipping webhook setup",
       );
       return;
     }
@@ -656,12 +687,12 @@ async function setupTelegramWebhook() {
     // Устанавливаем webhook только если он отличается от текущего
     if (webhookInfo.url !== webhookUrl) {
       await bot.api.setWebhook(webhookUrl);
-      console.log("[backend-server] Telegram webhook set successfully");
+      safeLogger.info("Telegram webhook set successfully");
     } else {
-      console.log("[backend-server] Telegram webhook already configured");
+      safeLogger.info("Telegram webhook already configured");
     }
   } catch (error) {
-    console.error("[backend-server] Failed to set Telegram webhook:", error);
+    safeLogger.error("Failed to set Telegram webhook", error);
     // В случае критической ошибки webhook setup не должно прерывать запуск сервера
     // Но логируем проблему для диагностики
   }
@@ -670,7 +701,7 @@ async function setupTelegramWebhook() {
 // Запускаем setup webhook асинхронно, но не блокируем запуск сервера
 setupTelegramWebhook();
 
-console.log(`[backend-server] Running on http://localhost:${port}`);
+safeLogger.info(`Backend server running on http://localhost:${port}`);
 
 export default {
   port,

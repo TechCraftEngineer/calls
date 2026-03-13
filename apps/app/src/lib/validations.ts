@@ -15,6 +15,47 @@ export const loginSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
+// Схема для «Забыли пароль» с асинхронной валидацией существования email
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Введите email")
+    .email("Введите корректный email")
+    .refine(
+      async (email) => {
+        try {
+          const { authApi } = await import("./api-orpc");
+          const result = await authApi.checkEmail(email);
+          return result.exists;
+        } catch {
+          // Если API недоступно, пропускаем валидацию
+          return true;
+        }
+      },
+      {
+        message: "Пользователь с таким email не найден",
+      },
+    ),
+});
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+
+// Схема для сброса пароля
+export const resetPasswordSchema = z
+  .object({
+    newPassword: z
+      .string()
+      .min(6, "Пароль должен содержать минимум 6 символов")
+      .regex(/[A-Z]/, "Пароль должен содержать хотя бы одну заглавную букву")
+      .regex(/[a-z]/, "Пароль должен содержать хотя бы одну строчную букву")
+      .regex(/[0-9]/, "Пароль должен содержать хотя бы одну цифру"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Пароли не совпадают",
+    path: ["confirmPassword"],
+  });
+export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+
 // Схема для создания пользователя
 export const createUserSchema = z
   .object({
@@ -29,10 +70,10 @@ export const createUserSchema = z
       .regex(/[a-z]/, "Пароль должен содержать хотя бы одну строчную букву")
       .regex(/[0-9]/, "Пароль должен содержать хотя бы одну цифру"),
     confirmPassword: z.string(),
-    first_name: z.string().min(1, "Имя обязательно"),
-    last_name: z.string().optional(),
-    internal_numbers: z.string().optional(),
-    mobile_numbers: z.string().optional(),
+    givenName: z.string().min(1, "Имя обязательно"),
+    familyName: z.string().optional(),
+    internalExtensions: z.string().optional(),
+    mobilePhones: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Пароли не совпадают",
@@ -43,10 +84,10 @@ export type CreateUserData = z.infer<typeof createUserSchema>;
 
 // Схема для обновления пользователя
 export const updateUserSchema = z.object({
-  first_name: z.string().min(1, "Имя обязательно").optional(),
-  last_name: z.string().optional(),
-  internal_numbers: z.string().optional(),
-  mobile_numbers: z.string().optional(),
+  givenName: z.string().min(1, "Имя обязательно").optional(),
+  familyName: z.string().optional(),
+  internalExtensions: z.string().optional(),
+  mobilePhones: z.string().optional(),
   email: z.string().email("Введите корректный email").optional(),
   is_active: z.boolean().optional(),
 });
@@ -77,7 +118,7 @@ export const reportSettingsSchema = z.object({
   email_daily_report: z.boolean(),
   email_weekly_report: z.boolean(),
   email_monthly_report: z.boolean(),
-  telegram_chat_id: z.string().optional(),
+  telegramChatId: z.string().optional(),
   telegram_daily_report: z.boolean(),
   telegram_weekly_report: z.boolean(),
   telegram_monthly_report: z.boolean(),

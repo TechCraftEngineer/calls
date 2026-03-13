@@ -12,7 +12,10 @@ export async function proxy(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
   const isAuthPage =
-    pathname === paths.auth.signin || pathname === paths.auth.signup;
+    pathname === paths.auth.signin ||
+    pathname === paths.auth.signup ||
+    pathname === paths.auth.forgotPassword ||
+    pathname === paths.auth.resetPassword;
 
   // Авторизованный пользователь на странице входа → главная /
   if (isAuthPage && sessionCookie) {

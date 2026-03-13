@@ -20,15 +20,15 @@ export const users = pgTable(
     username: text("username").notNull().unique(),
     password_hash: text("password_hash").notNull(),
     name: text("name").notNull(),
-    first_name: text("first_name"),
-    last_name: text("last_name"),
-    internal_numbers: text("internal_numbers"), // JSON array или строка
-    mobile_numbers: text("mobile_numbers"), // JSON array или строка
+    givenName: text("given_name"),
+    familyName: text("family_name"),
+    internalExtensions: text("internal_extensions"),
+    mobilePhones: text("mobile_phones"),
     created_at: text("created_at").notNull(), // ISO string
     is_active: boolean("is_active").default(true),
 
     // Telegram integration
-    telegram_chat_id: text("telegram_chat_id"),
+    telegramChatId: text("telegram_chat_id"),
     telegram_connect_token: text("telegram_connect_token"),
     telegram_daily_report: boolean("telegram_daily_report").default(false),
     telegram_manager_report: boolean("telegram_manager_report").default(false),
