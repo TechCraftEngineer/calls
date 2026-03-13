@@ -2,33 +2,45 @@
  * Calls repository - handles all database operations for calls
  */
 
-import { 
-  and, 
-  count, 
-  desc, 
-  eq, 
-  gte, 
-  inArray, 
-  like, 
-  lte, 
+import {
+  and,
+  avg,
+  count,
+  desc,
+  eq,
+  gte,
+  inArray,
+  like,
+  lte,
   or,
-  avg
 } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
+import type {
+  CallWithTranscript,
+  CreateCallData,
+  EvaluationData,
+  GetCallsParams,
+} from "../types/calls.types";
 import { BaseRepository } from "./base.repository";
-import type { GetCallsParams, CallWithTranscript, CreateCallData, EvaluationData } from "../types/calls.types";
 
 export class CallsRepository extends BaseRepository<typeof schema.calls> {
   constructor() {
     super(schema.calls);
   }
 
-  async findByFilename(filename: string): Promise<any | null> {
+  async findByFilename(
+    filename: string,
+    workspaceId?: number,
+  ): Promise<any | null> {
+    const conditions = [eq(schema.calls.filename, filename)];
+    if (workspaceId != null) {
+      conditions.push(eq(schema.calls.workspaceId, workspaceId));
+    }
     const result = await db
       .select()
       .from(schema.calls)
-      .where(eq(schema.calls.filename, filename))
+      .where(and(...conditions))
       .limit(1);
     return result[0] ?? null;
   }
@@ -37,6 +49,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     const result = await db
       .insert(schema.calls)
       .values({
+        workspaceId: data.workspaceId,
         filename: data.filename,
         number: data.number ?? null,
         timestamp: data.timestamp,
@@ -54,9 +67,10 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
   }
 
   async findWithTranscriptsAndEvaluations(
-    params: GetCallsParams = {}
+    params: GetCallsParams = {},
   ): Promise<CallWithTranscript[]> {
     const {
+      workspaceId,
       limit = 100,
       offset = 0,
       dateFrom,
@@ -72,6 +86,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     } = params;
 
     const conditions = this._buildCallConditions({
+      workspaceId,
       dateFrom,
       dateTo,
       internalNumbers,
@@ -116,8 +131,11 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     }));
   }
 
-  async countCalls(params: Omit<GetCallsParams, "limit" | "offset"> = {}): Promise<number> {
+  async countCalls(
+    params: Omit<GetCallsParams, "limit" | "offset"> = {},
+  ): Promise<number> {
     const {
+      workspaceId,
       dateFrom,
       dateTo,
       internalNumbers,
@@ -131,6 +149,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     } = params;
 
     const conditions = this._buildCallConditions({
+      workspaceId,
       dateFrom,
       dateTo,
       internalNumbers,
@@ -220,26 +239,56 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
     return result[0]?.id ?? 0;
   }
 
-  async getMetrics(): Promise<{
+  async getMetrics(workspaceId?: number): Promise<{
     total_calls: number;
     transcribed: number;
     avg_duration: number;
     last_sync: string | null;
   }> {
+    const callConditions =
+      workspaceId != null
+        ? [eq(schema.calls.workspaceId, workspaceId)]
+        : undefined;
     const [
       totalCallsResult,
       transcribedResult,
       avgDurationResult,
       lastSyncResult,
     ] = await Promise.all([
-      db.select({ count: count() }).from(schema.calls),
-      db.select({ count: count() }).from(schema.transcripts),
-      db.select({ avg: avg(schema.calls.duration) }).from(schema.calls),
-      db
-        .select({ timestamp: schema.activityLog.timestamp })
-        .from(schema.activityLog)
-        .orderBy(desc(schema.activityLog.timestamp))
-        .limit(1),
+      callConditions
+        ? db
+            .select({ count: count() })
+            .from(schema.calls)
+            .where(and(...callConditions))
+        : db.select({ count: count() }).from(schema.calls),
+      callConditions
+        ? db
+            .select({ count: count() })
+            .from(schema.transcripts)
+            .innerJoin(
+              schema.calls,
+              eq(schema.transcripts.call_id, schema.calls.id),
+            )
+            .where(and(...callConditions))
+        : db.select({ count: count() }).from(schema.transcripts),
+      callConditions
+        ? db
+            .select({ avg: avg(schema.calls.duration) })
+            .from(schema.calls)
+            .where(and(...callConditions))
+        : db.select({ avg: avg(schema.calls.duration) }).from(schema.calls),
+      workspaceId != null
+        ? db
+            .select({ timestamp: schema.activityLog.timestamp })
+            .from(schema.activityLog)
+            .where(eq(schema.activityLog.workspaceId, workspaceId))
+            .orderBy(desc(schema.activityLog.timestamp))
+            .limit(1)
+        : db
+            .select({ timestamp: schema.activityLog.timestamp })
+            .from(schema.activityLog)
+            .orderBy(desc(schema.activityLog.timestamp))
+            .limit(1),
     ]);
 
     const totalCalls = totalCallsResult[0]?.count ?? 0;
@@ -256,6 +305,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
   }
 
   async getEvaluationsStats(params: {
+    workspaceId?: number;
     dateFrom?: string;
     dateTo?: string;
     internalNumbers?: string[];
@@ -274,9 +324,11 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       }
     >
   > {
-    const { dateFrom, dateTo, internalNumbers } = params;
+    const { workspaceId, dateFrom, dateTo, internalNumbers } = params;
 
     const conditions = [];
+    if (workspaceId != null)
+      conditions.push(eq(schema.calls.workspaceId, workspaceId));
     if (dateFrom) conditions.push(gte(schema.calls.timestamp, dateFrom));
     if (dateTo) conditions.push(lte(schema.calls.timestamp, dateTo));
     if (internalNumbers?.length) {
@@ -342,6 +394,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
   }
 
   private _buildCallConditions(params: {
+    workspaceId?: number;
     dateFrom?: string;
     dateTo?: string;
     internalNumbers?: string[];
@@ -355,6 +408,7 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
   }) {
     const conditions = [];
     const {
+      workspaceId,
       dateFrom,
       dateTo,
       internalNumbers,
@@ -367,6 +421,9 @@ export class CallsRepository extends BaseRepository<typeof schema.calls> {
       q,
     } = params;
 
+    if (workspaceId != null) {
+      conditions.push(eq(schema.calls.workspaceId, workspaceId));
+    }
     if (dateFrom) {
       conditions.push(gte(schema.calls.timestamp, dateFrom));
     }

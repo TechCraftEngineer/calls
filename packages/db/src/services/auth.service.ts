@@ -3,7 +3,7 @@
  */
 
 import { compareSync } from "bcryptjs";
-import { UsersRepository } from "../repositories/users.repository";
+import type { UsersRepository } from "../repositories/users.repository";
 
 export class AuthService {
   constructor(private usersRepository: UsersRepository) {}

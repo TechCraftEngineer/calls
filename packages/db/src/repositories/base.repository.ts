@@ -2,9 +2,9 @@
  * Base repository with common database operations
  */
 
-import { db } from "../client";
-import { eq, and, desc, asc } from "drizzle-orm";
 import type { Table } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
+import { db } from "../client";
 
 export abstract class BaseRepository<T extends Table> {
   constructor(protected table: T) {}

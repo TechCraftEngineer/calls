@@ -158,5 +158,71 @@ export function createBackendApiWithContext(ctx: BackendContext) {
     auth: {
       me: () => callProc(backendRouter.auth.me as ProcedureWithCallable, ctx),
     },
+    workspaces: {
+      list: () =>
+        callProc(backendRouter.workspaces.list as ProcedureWithCallable, ctx),
+      get: (input: { workspaceId: number }) =>
+        callProc(
+          backendRouter.workspaces.get as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      create: (input: { name: string; slug: string }) =>
+        callProc(
+          backendRouter.workspaces.create as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      update: (input: { workspaceId: number; name?: string; slug?: string }) =>
+        callProc(
+          backendRouter.workspaces.update as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      delete: (input: { workspaceId: number }) =>
+        callProc(
+          backendRouter.workspaces.delete as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      listMembers: (input: { workspaceId: number }) =>
+        callProc(
+          backendRouter.workspaces.listMembers as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      addMember: (input: {
+        workspaceId: number;
+        userId: string;
+        role: "owner" | "admin" | "member";
+      }) =>
+        callProc(
+          backendRouter.workspaces.addMember as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      removeMember: (input: { workspaceId: number; userId: string }) =>
+        callProc(
+          backendRouter.workspaces.removeMember as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      updateMemberRole: (input: {
+        workspaceId: number;
+        userId: string;
+        role: "owner" | "admin" | "member";
+      }) =>
+        callProc(
+          backendRouter.workspaces.updateMemberRole as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      setActive: (input: { workspaceId: number }) =>
+        callProc(
+          backendRouter.workspaces.setActive as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+    },
   };
 }

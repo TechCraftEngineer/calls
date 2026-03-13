@@ -3,6 +3,7 @@
  */
 
 export interface GetCallsParams {
+  workspaceId?: number;
   limit?: number;
   offset?: number;
   dateFrom?: string;
@@ -24,6 +25,7 @@ export interface CallWithTranscript {
 }
 
 export interface CreateCallData {
+  workspaceId: number;
   filename: string;
   number?: string | null;
   timestamp: string;

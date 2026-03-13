@@ -120,7 +120,9 @@ export const usersRouter = {
       try {
         // Обновляем основную информацию
         const givenName = (d.givenName ?? u.givenName ?? "").toString().trim();
-        const familyName = (d.familyName ?? u.familyName ?? "").toString().trim();
+        const familyName = (d.familyName ?? u.familyName ?? "")
+          .toString()
+          .trim();
         if (!givenName) throw new Error("Given name is required");
 
         await storage.updateUserName(input.user_id, givenName, familyName);

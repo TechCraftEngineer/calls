@@ -248,6 +248,29 @@ export const authApi = {
   },
 };
 
+// Workspaces API
+export const workspacesApi = {
+  async list(): Promise<
+    Array<{
+      id: number;
+      name: string;
+      slug: string;
+      role: string;
+      memberSince?: string;
+    }>
+  > {
+    return await api.workspaces.list();
+  },
+
+  async create(data: { name: string; slug: string }): Promise<{
+    id: number;
+    name: string;
+    slug: string;
+  }> {
+    return await api.workspaces.create(data);
+  },
+};
+
 // Reports API
 export const reportsApi = {
   async sendTestTelegram(): Promise<{ success: boolean }> {

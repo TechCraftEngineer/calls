@@ -17,9 +17,23 @@ export async function proxy(request: NextRequest) {
     pathname === paths.auth.forgotPassword ||
     pathname === paths.auth.resetPassword;
 
-  // Авторизованный пользователь на странице входа → главная /
+  const isCreateWorkspacePage = pathname === paths.auth.createWorkspace;
+
+  // create-workspace: без сессии → signin
+  if (isCreateWorkspacePage && !sessionCookie) {
+    return NextResponse.redirect(new URL(paths.auth.signin, request.url));
+  }
+
+  // create-workspace с сессией → показать страницу (не редиректить на root)
+  if (isCreateWorkspacePage && sessionCookie) {
+    return NextResponse.next();
+  }
+
+  // Авторизованный пользователь на странице входа → create-workspace (проверка наличия workspace)
   if (isAuthPage && sessionCookie) {
-    return NextResponse.redirect(new URL(paths.root, request.url));
+    return NextResponse.redirect(
+      new URL(paths.auth.createWorkspace, request.url),
+    );
   }
 
   // Публичные пути — доступ без сессии

@@ -310,19 +310,19 @@ export const storage = {
       .from(schema.users)
       .leftJoin(
         schema.userIntegrations,
-        eq(schema.users.id, schema.userIntegrations.user_id)
+        eq(schema.users.id, schema.userIntegrations.user_id),
       )
       .leftJoin(
         schema.userFilters,
-        eq(schema.users.id, schema.userFilters.user_id)
+        eq(schema.users.id, schema.userFilters.user_id),
       )
       .leftJoin(
         schema.userReportSettings,
-        eq(schema.users.id, schema.userReportSettings.user_id)
+        eq(schema.users.id, schema.userReportSettings.user_id),
       )
       .leftJoin(
         schema.userKpiSettings,
-        eq(schema.users.id, schema.userKpiSettings.user_id)
+        eq(schema.users.id, schema.userKpiSettings.user_id),
       )
       .where(
         and(
@@ -342,9 +342,11 @@ export const storage = {
       telegram_chat_id: row.integrations?.telegram_chat_id,
       telegram_connect_token: row.integrations?.telegram_connect_token,
       telegram_daily_report: row.integrations?.telegram_daily_report ?? false,
-      telegram_manager_report: row.integrations?.telegram_manager_report ?? false,
+      telegram_manager_report:
+        row.integrations?.telegram_manager_report ?? false,
       telegram_weekly_report: row.integrations?.telegram_weekly_report ?? false,
-      telegram_monthly_report: row.integrations?.telegram_monthly_report ?? false,
+      telegram_monthly_report:
+        row.integrations?.telegram_monthly_report ?? false,
       telegram_skip_weekends: row.integrations?.telegram_skip_weekends ?? false,
       max_chat_id: row.integrations?.max_chat_id,
       max_connect_token: row.integrations?.max_connect_token,
@@ -354,19 +356,24 @@ export const storage = {
       email_weekly_report: row.integrations?.email_weekly_report ?? false,
       email_monthly_report: row.integrations?.email_monthly_report ?? false,
       // Add filter fields
-      filter_exclude_answering_machine: row.filters?.filter_exclude_answering_machine ?? false,
+      filter_exclude_answering_machine:
+        row.filters?.filter_exclude_answering_machine ?? false,
       filter_min_duration: row.filters?.filter_min_duration ?? 0,
       filter_min_replicas: row.filters?.filter_min_replicas ?? 0,
       // Add report settings
-      report_include_call_summaries: row.reportSettings?.report_include_call_summaries ?? false,
+      report_include_call_summaries:
+        row.reportSettings?.report_include_call_summaries ?? false,
       report_detailed: row.reportSettings?.report_detailed ?? false,
-      report_include_avg_value: row.reportSettings?.report_include_avg_value ?? false,
-      report_include_avg_rating: row.reportSettings?.report_include_avg_rating ?? false,
+      report_include_avg_value:
+        row.reportSettings?.report_include_avg_value ?? false,
+      report_include_avg_rating:
+        row.reportSettings?.report_include_avg_rating ?? false,
       report_managed_user_ids: row.reportSettings?.report_managed_user_ids,
       // Add KPI settings
       kpi_base_salary: row.kpiSettings?.kpi_base_salary ?? 0,
       kpi_target_bonus: row.kpiSettings?.kpi_target_bonus ?? 0,
-      kpi_target_talk_time_minutes: row.kpiSettings?.kpi_target_talk_time_minutes ?? 0,
+      kpi_target_talk_time_minutes:
+        row.kpiSettings?.kpi_target_talk_time_minutes ?? 0,
     };
 
     if (!user.givenName && user.name) {
@@ -420,19 +427,19 @@ export const storage = {
         .from(schema.users)
         .leftJoin(
           schema.userIntegrations,
-          eq(schema.users.id, schema.userIntegrations.user_id)
+          eq(schema.users.id, schema.userIntegrations.user_id),
         )
         .leftJoin(
           schema.userFilters,
-          eq(schema.users.id, schema.userFilters.user_id)
+          eq(schema.users.id, schema.userFilters.user_id),
         )
         .leftJoin(
           schema.userReportSettings,
-          eq(schema.users.id, schema.userReportSettings.user_id)
+          eq(schema.users.id, schema.userReportSettings.user_id),
         )
         .leftJoin(
           schema.userKpiSettings,
-          eq(schema.users.id, schema.userKpiSettings.user_id)
+          eq(schema.users.id, schema.userKpiSettings.user_id),
         )
         .where(eq(schema.users.is_active, true))
         .orderBy(desc(schema.users.created_at));
@@ -443,11 +450,16 @@ export const storage = {
           // Add integration fields
           telegram_chat_id: row.integrations?.telegram_chat_id,
           telegram_connect_token: row.integrations?.telegram_connect_token,
-          telegram_daily_report: row.integrations?.telegram_daily_report ?? false,
-          telegram_manager_report: row.integrations?.telegram_manager_report ?? false,
-          telegram_weekly_report: row.integrations?.telegram_weekly_report ?? false,
-          telegram_monthly_report: row.integrations?.telegram_monthly_report ?? false,
-          telegram_skip_weekends: row.integrations?.telegram_skip_weekends ?? false,
+          telegram_daily_report:
+            row.integrations?.telegram_daily_report ?? false,
+          telegram_manager_report:
+            row.integrations?.telegram_manager_report ?? false,
+          telegram_weekly_report:
+            row.integrations?.telegram_weekly_report ?? false,
+          telegram_monthly_report:
+            row.integrations?.telegram_monthly_report ?? false,
+          telegram_skip_weekends:
+            row.integrations?.telegram_skip_weekends ?? false,
           max_chat_id: row.integrations?.max_chat_id,
           max_connect_token: row.integrations?.max_connect_token,
           max_daily_report: row.integrations?.max_daily_report ?? false,
@@ -456,19 +468,24 @@ export const storage = {
           email_weekly_report: row.integrations?.email_weekly_report ?? false,
           email_monthly_report: row.integrations?.email_monthly_report ?? false,
           // Add filter fields
-          filter_exclude_answering_machine: row.filters?.filter_exclude_answering_machine ?? false,
+          filter_exclude_answering_machine:
+            row.filters?.filter_exclude_answering_machine ?? false,
           filter_min_duration: row.filters?.filter_min_duration ?? 0,
           filter_min_replicas: row.filters?.filter_min_replicas ?? 0,
           // Add report settings
-          report_include_call_summaries: row.reportSettings?.report_include_call_summaries ?? false,
+          report_include_call_summaries:
+            row.reportSettings?.report_include_call_summaries ?? false,
           report_detailed: row.reportSettings?.report_detailed ?? false,
-          report_include_avg_value: row.reportSettings?.report_include_avg_value ?? false,
-          report_include_avg_rating: row.reportSettings?.report_include_avg_rating ?? false,
+          report_include_avg_value:
+            row.reportSettings?.report_include_avg_value ?? false,
+          report_include_avg_rating:
+            row.reportSettings?.report_include_avg_rating ?? false,
           report_managed_user_ids: row.reportSettings?.report_managed_user_ids,
           // Add KPI settings
           kpi_base_salary: row.kpiSettings?.kpi_base_salary ?? 0,
           kpi_target_bonus: row.kpiSettings?.kpi_target_bonus ?? 0,
-          kpi_target_talk_time_minutes: row.kpiSettings?.kpi_target_talk_time_minutes ?? 0,
+          kpi_target_talk_time_minutes:
+            row.kpiSettings?.kpi_target_talk_time_minutes ?? 0,
         };
 
         if (!user.givenName && user.name) {

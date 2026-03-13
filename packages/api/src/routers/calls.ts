@@ -1,8 +1,11 @@
 import { createChatBot } from "@calls/ai";
 import type { storage as StorageType } from "@calls/db";
-import { storage } from "@calls/db";
 import { z } from "zod";
-import { adminProcedure, protectedProcedure } from "../orpc";
+import {
+  adminProcedure,
+  protectedProcedure,
+  workspaceProcedure,
+} from "../orpc";
 
 async function generateRecommendations(
   callId: number,
@@ -174,10 +177,10 @@ const listCallsSchema = z.object({
 });
 
 export const callsRouter = {
-  list: protectedProcedure
+  list: workspaceProcedure
     .input(listCallsSchema)
     .handler(async ({ input, context }) => {
-      const { storage, user } = context;
+      const { storage, user, workspaceId } = context;
       const offset = (input.page - 1) * input.per_page;
 
       const dateFrom = input.date_from
@@ -189,6 +192,7 @@ export const callsRouter = {
       const mobileNumbers = getMobileNumbersForUser(user!, storage);
 
       const callsWithTranscripts = await storage.getCallsWithTranscripts({
+        workspaceId: workspaceId!,
         limit: input.per_page,
         offset,
         dateFrom,
@@ -209,6 +213,7 @@ export const callsRouter = {
       });
 
       const totalItems = await storage.countCalls({
+        workspaceId: workspaceId!,
         dateFrom,
         dateTo,
         internalNumbers,
@@ -227,7 +232,7 @@ export const callsRouter = {
       });
 
       const totalPages = Math.ceil(totalItems / input.per_page) || 1;
-      const metrics = await storage.calculateMetrics();
+      const metrics = await storage.calculateMetrics(workspaceId!);
       const managers = (await storage.getAllUsers()).filter(
         (u) => (u as Record<string, unknown>).internalExtensions,
       );
@@ -262,11 +267,14 @@ export const callsRouter = {
       };
     }),
 
-  get: protectedProcedure
+  get: workspaceProcedure
     .input(z.object({ call_id: z.number() }))
     .handler(async ({ input, context }) => {
       const call = await context.storage.getCall(input.call_id);
       if (!call) {
+        throw new Error("Call not found");
+      }
+      if (call.workspaceId !== context.workspaceId) {
         throw new Error("Call not found");
       }
       const transcript = await context.storage.getTranscriptByCallId(
@@ -284,9 +292,13 @@ export const callsRouter = {
       };
     }),
 
-  generateRecommendations: protectedProcedure
+  generateRecommendations: workspaceProcedure
     .input(z.object({ call_id: z.number() }))
     .handler(async ({ input, context }) => {
+      const call = await context.storage.getCall(input.call_id);
+      if (call && call.workspaceId !== context.workspaceId) {
+        throw new Error("Call not found");
+      }
       return generateRecommendations(input.call_id, context.storage);
     }),
 

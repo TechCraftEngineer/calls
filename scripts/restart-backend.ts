@@ -17,15 +17,14 @@ try {
   }
 
   // Ждем 2 секунды
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
   // Запускаем сервер заново
   console.log("🚀 Запускаем backend сервер...");
-  execSync("cd apps/app-server && npm run dev", { 
+  execSync("cd apps/app-server && npm run dev", {
     stdio: "inherit",
-    cwd: process.cwd()
+    cwd: process.cwd(),
   });
-
 } catch (error) {
   console.error("❌ Ошибка перезапуска:", error);
   process.exit(1);

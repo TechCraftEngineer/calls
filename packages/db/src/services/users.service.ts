@@ -2,15 +2,23 @@
  * Users service - handles business logic for user operations
  */
 
-import { UsersRepository } from "../repositories/users.repository";
-import { SystemRepository } from "../repositories/system.repository";
-import type { CreateUserData, UpdateUserData, UserUpdateData } from "../types/users.types";
-import { validateCreateUserData, validateUpdateUserData, ValidationError } from "../validators/user.validators";
+import type { SystemRepository } from "../repositories/system.repository";
+import type { UsersRepository } from "../repositories/users.repository";
+import type {
+  CreateUserData,
+  UpdateUserData,
+  UserUpdateData,
+} from "../types/users.types";
+import {
+  ValidationError,
+  validateCreateUserData,
+  validateUpdateUserData,
+} from "../validators/user.validators";
 
 export class UsersService {
   constructor(
     private usersRepository: UsersRepository,
-    private systemRepository: SystemRepository
+    private systemRepository: SystemRepository,
   ) {}
 
   async getUserByUsername(username: string): Promise<any | null> {
@@ -28,44 +36,44 @@ export class UsersService {
   async createUser(data: CreateUserData): Promise<number> {
     // Валидация входных данных
     validateCreateUserData(data);
-    
+
     // Проверка существования пользователя
     const existing = await this.usersRepository.findByUsername(data.username);
     if (existing) {
-      throw new ValidationError('User with this username already exists');
+      throw new ValidationError("User with this username already exists");
     }
-    
+
     const userId = await this.usersRepository.create(data);
-    
+
     await this.systemRepository.addActivityLog(
       "INFO",
       `User ${data.username} created`,
-      "admin"
+      "admin",
     );
-    
+
     return userId;
   }
 
   async updateUserName(userId: number, data: UpdateUserData): Promise<boolean> {
     // Валидация входных данных
     validateUpdateUserData(data);
-    
+
     // Проверка существования пользователя
     const user = await this.usersRepository.findById(userId);
     if (!user) {
-      throw new ValidationError('User not found');
+      throw new ValidationError("User not found");
     }
-    
+
     const result = await this.usersRepository.updateName(userId, data);
-    
+
     if (result) {
       await this.systemRepository.addActivityLog(
         "INFO",
         `User ${userId} name updated`,
-        "admin"
+        "admin",
       );
     }
-    
+
     return result;
   }
 
@@ -73,7 +81,10 @@ export class UsersService {
     userId: number,
     internalExtensions: string | null,
   ): Promise<boolean> {
-    return this.usersRepository.updateInternalExtensions(userId, internalExtensions);
+    return this.usersRepository.updateInternalExtensions(
+      userId,
+      internalExtensions,
+    );
   }
 
   async updateUserMobilePhones(
@@ -93,7 +104,7 @@ export class UsersService {
       userId,
       filterExcludeAnsweringMachine,
       filterMinDuration,
-      filterMinReplicas
+      filterMinReplicas,
     );
   }
 
@@ -101,16 +112,19 @@ export class UsersService {
     userId: number,
     data: UserUpdateData,
   ): Promise<boolean> {
-    const result = await this.usersRepository.updateReportAndKpiSettings(userId, data);
-    
+    const result = await this.usersRepository.updateReportAndKpiSettings(
+      userId,
+      data,
+    );
+
     if (result) {
       await this.systemRepository.addActivityLog(
         "INFO",
         `User ${userId} report/KPI settings updated`,
-        "admin"
+        "admin",
       );
     }
-    
+
     return result;
   }
 
@@ -122,7 +136,7 @@ export class UsersService {
     return this.usersRepository.updateTelegramSettings(
       userId,
       telegramDailyReport,
-      telegramManagerReport
+      telegramManagerReport,
     );
   }
 
@@ -130,30 +144,33 @@ export class UsersService {
     userId: number,
     newPassword: string,
   ): Promise<boolean> {
-    const result = await this.usersRepository.updatePassword(userId, newPassword);
-    
+    const result = await this.usersRepository.updatePassword(
+      userId,
+      newPassword,
+    );
+
     if (result) {
       await this.systemRepository.addActivityLog(
-      "INFO",
+        "INFO",
         `User ${userId} password updated`,
-        "admin"
+        "admin",
       );
     }
-    
+
     return result;
   }
 
   async deleteUser(userId: number): Promise<boolean> {
     const result = await this.usersRepository.softDelete(userId);
-    
+
     if (result) {
       await this.systemRepository.addActivityLog(
         "WARNING",
         `User ${userId} deactivated`,
-        "admin"
+        "admin",
       );
     }
-    
+
     return result;
   }
 
@@ -169,16 +186,19 @@ export class UsersService {
   }
 
   async saveTelegramChatId(userId: number, chatId: string): Promise<boolean> {
-    const result = await this.usersRepository.saveTelegramChatId(userId, chatId);
-    
+    const result = await this.usersRepository.saveTelegramChatId(
+      userId,
+      chatId,
+    );
+
     if (result) {
       await this.systemRepository.addActivityLog(
         "INFO",
         `User ${userId} Telegram connected`,
-        "system"
+        "system",
       );
     }
-    
+
     return result;
   }
 
@@ -188,29 +208,29 @@ export class UsersService {
 
   async disconnectTelegram(userId: number): Promise<boolean> {
     const result = await this.usersRepository.disconnectTelegram(userId);
-    
+
     if (result) {
       await this.systemRepository.addActivityLog(
         "INFO",
         `User ${userId} Telegram disconnected`,
-        "user"
+        "user",
       );
     }
-    
+
     return result;
   }
 
   async disconnectMax(userId: number): Promise<boolean> {
     const result = await this.usersRepository.disconnectMax(userId);
-    
+
     if (result) {
       await this.systemRepository.addActivityLog(
         "INFO",
         `User ${userId} Max disconnected`,
-        "user"
+        "user",
       );
     }
-    
+
     return result;
   }
 }

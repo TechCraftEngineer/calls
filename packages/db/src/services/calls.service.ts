@@ -2,14 +2,19 @@
  * Calls service - handles business logic for call operations
  */
 
-import { CallsRepository } from "../repositories/calls.repository";
-import { SystemRepository } from "../repositories/system.repository";
-import type { GetCallsParams, CallWithTranscript, CreateCallData, EvaluationData } from "../types/calls.types";
+import type { CallsRepository } from "../repositories/calls.repository";
+import type { SystemRepository } from "../repositories/system.repository";
+import type {
+  CallWithTranscript,
+  CreateCallData,
+  EvaluationData,
+  GetCallsParams,
+} from "../types/calls.types";
 
 export class CallsService {
   constructor(
     private callsRepository: CallsRepository,
-    private systemRepository: SystemRepository
+    private systemRepository: SystemRepository,
   ) {}
 
   async getCall(id: number): Promise<any | null> {
@@ -18,31 +23,34 @@ export class CallsService {
 
   async deleteCall(callId: number): Promise<boolean> {
     const result = await this.callsRepository.delete(callId);
-    
+
     if (result) {
       await this.systemRepository.addActivityLog(
         "INFO",
         `Call ${callId} deleted`,
-        "system"
+        "system",
       );
     }
-    
+
     return result;
   }
 
-  async getCallByFilename(filename: string): Promise<any | null> {
-    return this.callsRepository.findByFilename(filename);
+  async getCallByFilename(
+    filename: string,
+    workspaceId?: number,
+  ): Promise<any | null> {
+    return this.callsRepository.findByFilename(filename, workspaceId);
   }
 
   async createCall(data: CreateCallData): Promise<number> {
     const callId = await this.callsRepository.create(data);
-    
+
     await this.systemRepository.addActivityLog(
       "INFO",
       `Call ${callId} created from file: ${data.filename}`,
-      "system"
+      "system",
     );
-    
+
     return callId;
   }
 
@@ -55,39 +63,40 @@ export class CallsService {
   }
 
   async getCallsWithTranscripts(
-    params: GetCallsParams = {}
+    params: GetCallsParams = {},
   ): Promise<CallWithTranscript[]> {
     return this.callsRepository.findWithTranscriptsAndEvaluations(params);
   }
 
   async countCalls(
-    params: Omit<GetCallsParams, "limit" | "offset"> = {}
+    params: Omit<GetCallsParams, "limit" | "offset"> = {},
   ): Promise<number> {
     return this.callsRepository.countCalls(params);
   }
 
   async addEvaluation(data: EvaluationData): Promise<number> {
     const evaluationId = await this.callsRepository.addEvaluation(data);
-    
+
     await this.systemRepository.addActivityLog(
       "INFO",
       `Evaluation added for call ${data.call_id}`,
-      "system"
+      "system",
     );
-    
+
     return evaluationId;
   }
 
-  async calculateMetrics(): Promise<{
+  async calculateMetrics(workspaceId?: number): Promise<{
     total_calls: number;
     transcribed: number;
     avg_duration: number;
     last_sync: string | null;
   }> {
-    return this.callsRepository.getMetrics();
+    return this.callsRepository.getMetrics(workspaceId);
   }
 
   async getEvaluationsStats(params: {
+    workspaceId?: number;
     dateFrom?: string;
     dateTo?: string;
     internalNumbers?: string[];

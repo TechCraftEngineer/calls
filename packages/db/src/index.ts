@@ -8,4 +8,4 @@ export type {
   GetCallsParams,
   UserUpdateData,
 } from "./storage";
-export { storage } from "./storage";
+export { storage, workspacesService } from "./storage";

@@ -3,22 +3,22 @@
  * Uses Better Auth for authentication.
  */
 
-import { existsSync } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { sql } from "drizzle-orm";
 import {
   backendRouter,
   createBackendApiWithContext,
   createBackendContext,
 } from "@calls/api";
-import { createLogger } from "@calls/logger";
 import { storage } from "@calls/db";
 import { inngestHandler } from "@calls/jobs/hono";
+import { createLogger } from "@calls/logger";
 import { createWebhookHandler } from "@calls/telegram-bot";
 import { ORPCError, onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
+import { sql } from "drizzle-orm";
 import { Bot } from "grammy";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
@@ -56,7 +56,10 @@ function createCacheKey(cookie: string | undefined): string {
   // Извлекаем только session ID из cookie для безопасности
   const sessionIdMatch = cookie.match(/(?:^|;\s*)session[_-]?id\s*=\s*([^;]+)/);
   if (sessionIdMatch) {
-    return createHash("sha256").update(sessionIdMatch[1]).digest("hex").substring(0, 16);
+    return createHash("sha256")
+      .update(sessionIdMatch[1])
+      .digest("hex")
+      .substring(0, 16);
   }
   // Fallback: используем хеш от всего cookie, но ограничиваем длину
   return createHash("sha256").update(cookie).digest("hex").substring(0, 16);
@@ -90,51 +93,63 @@ function handleApiError(e: unknown, c: import("hono").Context) {
   if (e instanceof ORPCError) {
     switch (e.code) {
       case "UNAUTHORIZED":
-        backendLogger.warn("Unauthorized access", { path: c.req.path, code: e.code });
+        backendLogger.warn("Unauthorized access", {
+          path: c.req.path,
+          code: e.code,
+        });
         return c.json({ detail: "Unauthorized" }, 401);
       case "FORBIDDEN":
-        backendLogger.warn("Forbidden access", { path: c.req.path, code: e.code });
+        backendLogger.warn("Forbidden access", {
+          path: c.req.path,
+          code: e.code,
+        });
         return c.json({ detail: "Forbidden" }, 403);
       case "NOT_FOUND":
-        backendLogger.warn("Resource not found", { path: c.req.path, code: e.code });
+        backendLogger.warn("Resource not found", {
+          path: c.req.path,
+          code: e.code,
+        });
         return c.json({ detail: "Not found" }, 404);
       default:
-        backendLogger.error("ORPC error", { 
-          path: c.req.path, 
-          code: e.code, 
-          message: e.message 
+        backendLogger.error("ORPC error", {
+          path: c.req.path,
+          code: e.code,
+          message: e.message,
         });
         return c.json({ detail: "Internal server error" }, 500);
     }
   }
-  
+
   if (e instanceof Error) {
     const knownErrors = [
       "User not found",
-      "Call not found", 
+      "Call not found",
       "Not authorized",
-      "Failed to delete call"
+      "Failed to delete call",
     ];
-    
+
     if (knownErrors.includes(e.message)) {
-      const statusCode = e.message.includes("not found") ? 404 : 
-                      e.message.includes("Not authorized") ? 403 : 400;
-      backendLogger.warn("Known error", { 
-        path: c.req.path, 
+      const statusCode = e.message.includes("not found")
+        ? 404
+        : e.message.includes("Not authorized")
+          ? 403
+          : 400;
+      backendLogger.warn("Known error", {
+        path: c.req.path,
         message: e.message,
-        statusCode 
+        statusCode,
       });
       return c.json({ detail: e.message }, statusCode);
     }
-    
-    backendLogger.error("Unexpected error", { 
-      path: c.req.path, 
+
+    backendLogger.error("Unexpected error", {
+      path: c.req.path,
       message: e.message,
-      stack: e.stack 
+      stack: e.stack,
     });
     return c.json({ detail: "Internal server error" }, 500);
   }
-  
+
   backendLogger.error("Unknown error", { path: c.req.path, error: String(e) });
   return c.json({ detail: "Internal server error" }, 500);
 }
@@ -144,38 +159,40 @@ const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 function rateLimit(options: { windowMs: number; maxRequests: number }) {
   return async (c: import("hono").Context, next: () => Promise<void>) => {
-    const clientIp = c.req.header("x-forwarded-for") || 
-                     c.req.header("x-real-ip") || 
-                     "unknown";
-    
+    const clientIp =
+      c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "unknown";
+
     const now = Date.now();
     const windowMs = options.windowMs;
     const key = `${clientIp}:${Math.floor(now / windowMs)}`;
-    
+
     const record = rateLimitMap.get(key);
-    
+
     if (!record) {
       rateLimitMap.set(key, { count: 1, resetTime: now + windowMs });
       return next();
     }
-    
+
     if (now > record.resetTime) {
       rateLimitMap.set(key, { count: 1, resetTime: now + windowMs });
       return next();
     }
-    
+
     if (record.count >= options.maxRequests) {
-      backendLogger.warn("Rate limit exceeded", { 
-        ip: clientIp, 
+      backendLogger.warn("Rate limit exceeded", {
+        ip: clientIp,
         count: record.count,
-        limit: options.maxRequests 
+        limit: options.maxRequests,
       });
-      return c.json({ 
-        detail: "Too many requests", 
-        retryAfter: Math.ceil(record.resetTime / 1000) 
-      }, 429);
+      return c.json(
+        {
+          detail: "Too many requests",
+          retryAfter: Math.ceil(record.resetTime / 1000),
+        },
+        429,
+      );
     }
-    
+
     record.count++;
     rateLimitMap.set(key, record);
     return next();
@@ -183,14 +200,24 @@ function rateLimit(options: { windowMs: number; maxRequests: number }) {
 }
 
 // Очистка старых записей каждые 5 минут
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, record] of rateLimitMap.entries()) {
-    if (now > record.resetTime) {
-      rateLimitMap.delete(key);
+setInterval(
+  () => {
+    const now = Date.now();
+    // Очистка rate limit
+    for (const [key, record] of rateLimitMap.entries()) {
+      if (now > record.resetTime) {
+        rateLimitMap.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+    // Очистка кэша сессий (старше 5 минут)
+    for (const [key, value] of sessionCache.entries()) {
+      if (now - value.timestamp > 300000) {
+        sessionCache.delete(key);
+      }
+    }
+  },
+  5 * 60 * 1000,
+);
 
 app.use(honoLogger());
 // Temporarily disable rate limiting to fix 429 errors
@@ -253,9 +280,9 @@ app.on(["GET", "POST"], "/api/orpc/*", async (c) => {
     });
 
     if (!result.matched) {
-      backendLogger.warn("oRPC route not matched", { 
+      backendLogger.warn("oRPC route not matched", {
         path: c.req.path,
-        method: c.req.method 
+        method: c.req.method,
       });
       return c.notFound();
     }
@@ -268,21 +295,21 @@ app.on(["GET", "POST"], "/api/orpc/*", async (c) => {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
-    
+
     // Безопасное возвращение информации об ошибках
     const isDev = process.env.NODE_ENV !== "production";
     const errorResponse: Record<string, any> = {
       error: "Internal Server Error",
-      requestId: randomUUID()
+      requestId: randomUUID(),
     };
-    
+
     // В development режиме добавляем больше информации для отладки
     if (isDev && error instanceof Error) {
       errorResponse.message = error.message;
       errorResponse.path = c.req.path;
       errorResponse.method = c.req.method;
     }
-    
+
     return c.json(errorResponse, 500);
   }
 });
@@ -379,11 +406,7 @@ app.post("/api/auth/logout", async (c) => {
   authResponse.headers.forEach((v, k) => {
     if (k.toLowerCase() === "set-cookie") headersObj[k] = v;
   });
-  return c.json(
-    { success: true, message: "Logged out" },
-    200,
-    headersObj,
-  );
+  return c.json({ success: true, message: "Logged out" }, 200, headersObj);
 });
 
 // REST compatibility: /api/auth/me - delegates to backend-api
@@ -405,59 +428,65 @@ app.get("/api/auth/get-session", async (c) => {
   const now = Date.now();
   const cookie = c.req.header("cookie");
   const cacheKey = createCacheKey(cookie);
-  
+
   // Проверяем кэш
   const cached = sessionCache.get(cacheKey);
-  if (cached && (now - cached.timestamp) < 5000) {
+  if (cached && now - cached.timestamp < 5000) {
     return c.json(cached.data);
   }
-  
-  // Проверяем, есть ли уже выполняющийся запрос для этого ключа
-  const pending = pendingRequests.get(cacheKey);
+
+  // Double-checked locking для предотвращения race condition
+  let pending = pendingRequests.get(cacheKey);
   if (pending) {
     try {
       const result = await pending;
       return c.json(result);
     } catch {
       // Если pending запрос упал, продолжаем с обычной логикой
+      pendingRequests.delete(cacheKey);
     }
   }
-  
-  // Создаем новый запрос
+
+  // Создаем новый запрос с очисткой в случае ошибки
   const requestPromise = (async () => {
-    const authRequest = new Request(c.req.url, {
-      method: c.req.method,
-      headers: c.req.raw.headers,
-    });
-    
-    const authResponse = await auth.handler(authRequest);
-    const responseData = await authResponse.json();
-    
-    // Сохраняем в кэш только успешные ответы
-    if (authResponse.status === 200) {
-      sessionCache.set(cacheKey, {
-        data: responseData,
-        timestamp: now
+    try {
+      const authRequest = new Request(c.req.url, {
+        method: c.req.method,
+        headers: c.req.raw.headers,
       });
+
+      const authResponse = await auth.handler(authRequest);
+      const responseData = await authResponse.json();
+
+      // Сохраняем в кэш только успешные ответы
+      if (authResponse.status === 200) {
+        sessionCache.set(cacheKey, {
+          data: responseData,
+          timestamp: now,
+        });
+      }
+
+      return responseData;
+    } finally {
+      // Всегда очищаем pending запрос
+      pendingRequests.delete(cacheKey);
     }
-    
-    return responseData;
   })();
-  
-  // Сохраняем pending запрос
+
+  // Повторная проверка перед установкой
+  pending = pendingRequests.get(cacheKey);
+  if (pending) {
+    return await pending;
+  }
+
   pendingRequests.set(cacheKey, requestPromise);
-  
+
   try {
     const responseData = await requestPromise;
     return c.json(responseData);
   } catch (error) {
-    backendLogger.error("Get-session error", {
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return c.json({ user: null, session: null }, 500);
-  } finally {
-    // Удаляем pending запрос
     pendingRequests.delete(cacheKey);
+    throw error;
   }
 });
 
@@ -920,36 +949,41 @@ async function setupTelegramWebhook(): Promise<boolean> {
       // Устанавливаем webhook только если он отличается от текущего
       if (webhookInfo.url !== webhookUrl) {
         await bot.api.setWebhook(webhookUrl);
-        backendLogger.info("Telegram webhook set successfully", { 
+        backendLogger.info("Telegram webhook set successfully", {
           url: webhookUrl,
-          attempt 
+          attempt,
         });
       } else {
         backendLogger.info("Telegram webhook already configured");
       }
-      
+
       return true; // Успешно
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      backendLogger.error(`Failed to set Telegram webhook (attempt ${attempt}/${maxRetries})`, {
-        error: errorMsg,
-        url: webhookUrl,
-        attempt
-      });
-      
+      backendLogger.error(
+        `Failed to set Telegram webhook (attempt ${attempt}/${maxRetries})`,
+        {
+          error: errorMsg,
+          url: webhookUrl,
+          attempt,
+        },
+      );
+
       if (attempt < maxRetries) {
-        backendLogger.info(`Retrying webhook setup in ${retryDelay/1000} seconds...`);
-        await new Promise(resolve => setTimeout(resolve, retryDelay));
+        backendLogger.info(
+          `Retrying webhook setup in ${retryDelay / 1000} seconds...`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
       }
     }
   }
-  
+
   // Если все попытки неудачны
   backendLogger.error("Failed to set Telegram webhook after all retries", {
     url: webhookUrl,
-    maxRetries
+    maxRetries,
   });
-  
+
   return false; // Критическая ошибка
 }
 
@@ -958,12 +992,16 @@ async function setupTelegramWebhook(): Promise<boolean> {
   // Сначала проверяем подключение к БД
   const dbConnected = await checkDatabaseConnection();
   if (!dbConnected) {
-    backendLogger.error("Failed to connect to database - server may not function properly");
+    backendLogger.error(
+      "Failed to connect to database - server may not function properly",
+    );
   }
-  
+
   const webhookSetupSuccess = await setupTelegramWebhook();
   if (!webhookSetupSuccess) {
-    backendLogger.warn("Telegram webhook setup failed, but server will continue running");
+    backendLogger.warn(
+      "Telegram webhook setup failed, but server will continue running",
+    );
   }
 })();
 

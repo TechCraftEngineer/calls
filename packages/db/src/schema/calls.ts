@@ -11,12 +11,16 @@ import {
   serial,
   text,
 } from "drizzle-orm/pg-core";
+import { workspaces } from "./workspaces";
 
 // Calls table - основные данные о звонках
 export const calls = pgTable(
   "calls",
   {
     id: serial("id").primaryKey(),
+    workspaceId: integer("workspace_id")
+      .references(() => workspaces.id, { onDelete: "cascade" })
+      .notNull(),
     filename: text("filename").unique(),
     number: text("number"),
     timestamp: text("timestamp").notNull(), // ISO string
@@ -34,6 +38,7 @@ export const calls = pgTable(
     internalNumberIdx: index("calls_internal_number_idx").on(
       table.internal_number,
     ),
+    workspaceIdIdx: index("calls_workspace_id_idx").on(table.workspaceId),
   }),
 );
 

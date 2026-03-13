@@ -22,7 +22,10 @@ export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
     return result[0]?.value ?? null;
   }
 
-  async findByKeyWithDefault(key: string, defaultValue?: string): Promise<string | null> {
+  async findByKeyWithDefault(
+    key: string,
+    defaultValue?: string,
+  ): Promise<string | null> {
     const result = await db
       .select()
       .from(schema.prompts)
@@ -32,12 +35,14 @@ export class PromptsRepository extends BaseRepository<typeof schema.prompts> {
     return result[0]?.value ?? defaultValue ?? null;
   }
 
-  async findAll(): Promise<{
-    key: string;
-    value: string;
-    description: string | null;
-    updated_at: string | null;
-  }[]> {
+  async findAll(): Promise<
+    {
+      key: string;
+      value: string;
+      description: string | null;
+      updated_at: string | null;
+    }[]
+  > {
     return await db
       .select({
         key: schema.prompts.key,

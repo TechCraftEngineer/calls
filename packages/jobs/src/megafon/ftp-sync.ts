@@ -5,8 +5,8 @@
 
 import { existsSync, mkdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { storage } from "@calls/db";
 import { createLogger } from "@calls/api/logger";
+import { storage, workspacesService } from "@calls/db";
 import { Client } from "basic-ftp";
 import { parseMegafonFilename } from "./parse-filename";
 
@@ -33,24 +33,24 @@ function getRecordsDir(): string {
 
 function validateFtpConfig(config: MegafonFtpConfig): string[] {
   const errors: string[] = [];
-  
+
   if (!config.host || config.host.trim().length === 0) {
     errors.push("FTP host не может быть пустым");
   }
-  
+
   if (!config.user || config.user.trim().length === 0) {
     errors.push("FTP user не может быть пустым");
   }
-  
+
   if (!config.password || config.password.length === 0) {
     errors.push("FTP password не может быть пустым");
   }
-  
+
   // Проверка формата хоста
   if (config.host && !/^[\w.-]+\.[\w.-]+$/.test(config.host)) {
     errors.push("Некорректный формат FTP хоста");
   }
-  
+
   return errors;
 }
 
@@ -65,27 +65,32 @@ export async function syncMegafonFtp(
   const validationErrors = validateFtpConfig(config);
   if (validationErrors.length > 0) {
     result.errors.push(...validationErrors);
-    logger.error("Ошибка валидации FTP конфигурации", { errors: validationErrors });
+    logger.error("Ошибка валидации FTP конфигурации", {
+      errors: validationErrors,
+    });
     return result;
   }
 
   const client = new Client(60_000);
   client.ftp.verbose = false;
-  
+
   // Устанавливаем таймауты для отдельных операций
   const OPERATION_TIMEOUT = 30_000; // 30 секунд для отдельных операций
 
   try {
     logger.info("Подключение к FTP", { host: config.host, user: config.user });
-    
+
     await client.access({
       host: config.host,
       user: config.user,
       password: config.password,
       secure: false,
     });
-    
+
     logger.info("Успешное подключение к FTP");
+
+    const defaultWs = await workspacesService.getBySlug("default");
+    const workspaceId = defaultWs?.id ?? 1;
 
     const baseRemoteDir = "recordings";
     const remoteDirs: string[] = dateStr
@@ -103,25 +108,31 @@ export async function syncMegafonFtp(
       try {
         await Promise.race([
           client.cd(remotePath),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout changing directory')), OPERATION_TIMEOUT)
-          )
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error("Timeout changing directory")),
+              OPERATION_TIMEOUT,
+            ),
+          ),
         ]);
-        
-        const list = await Promise.race([
+
+        const list = (await Promise.race([
           client.list(),
-          new Promise<never>((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout listing directory')), OPERATION_TIMEOUT)
-          )
-        ]) as { name: string }[];
-        
+          new Promise<never>((_, reject) =>
+            setTimeout(
+              () => reject(new Error("Timeout listing directory")),
+              OPERATION_TIMEOUT,
+            ),
+          ),
+        ])) as { name: string }[];
+
         files = list.filter((f: { name: string }) => f.name.endsWith(".mp3"));
       } catch (e) {
         const errorMsg = `Не удалось прочитать ${remotePath}: ${e instanceof Error ? e.message : String(e)}`;
         result.errors.push(errorMsg);
-        logger.error("Ошибка чтения директории FTP", { 
-          path: remotePath, 
-          error: e instanceof Error ? e.message : String(e) 
+        logger.error("Ошибка чтения директории FTP", {
+          path: remotePath,
+          error: e instanceof Error ? e.message : String(e),
         });
         continue;
       }
@@ -130,7 +141,10 @@ export async function syncMegafonFtp(
         const relativePath = `${dateDir}/${file.name}`;
         const localPath = join(recordsDir, dateDir, file.name);
 
-        const existing = await storage.getCallByFilename(relativePath);
+        const existing = await storage.getCallByFilename(
+          relativePath,
+          workspaceId,
+        );
         if (existing) {
           result.skipped++;
           continue;
@@ -140,7 +154,9 @@ export async function syncMegafonFtp(
         if (!parsed) {
           const errorMsg = `Не удалось разобрать имя: ${relativePath}`;
           result.errors.push(errorMsg);
-          logger.warn("Ошибка парсинга имени файла", { filename: relativePath });
+          logger.warn("Ошибка парсинга имени файла", {
+            filename: relativePath,
+          });
           continue;
         }
 
@@ -151,36 +167,44 @@ export async function syncMegafonFtp(
           }
 
           await Promise.race([
-          client.downloadTo(localPath, file.name),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout downloading file')), OPERATION_TIMEOUT)
-          )
-        ]);
+            client.downloadTo(localPath, file.name),
+            new Promise((_, reject) =>
+              setTimeout(
+                () => reject(new Error("Timeout downloading file")),
+                OPERATION_TIMEOUT,
+              ),
+            ),
+          ]);
           const stat = statSync(localPath);
-          
+
           // Валидация размера файла
           const MIN_FILE_SIZE = 1024; // 1KB
           const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-          
+
           if (stat.size < MIN_FILE_SIZE) {
-            result.errors.push(`${relativePath}: Файл слишком маленький (${stat.size} bytes)`);
-            logger.warn("Файл слишком маленький", { 
-              filename: relativePath, 
-              size: stat.size 
+            result.errors.push(
+              `${relativePath}: Файл слишком маленький (${stat.size} bytes)`,
+            );
+            logger.warn("Файл слишком маленький", {
+              filename: relativePath,
+              size: stat.size,
             });
             continue;
           }
-          
+
           if (stat.size > MAX_FILE_SIZE) {
-            result.errors.push(`${relativePath}: Файл слишком большой (${stat.size} bytes)`);
-            logger.warn("Файл слишком большой", { 
-              filename: relativePath, 
-              size: stat.size 
+            result.errors.push(
+              `${relativePath}: Файл слишком большой (${stat.size} bytes)`,
+            );
+            logger.warn("Файл слишком большой", {
+              filename: relativePath,
+              size: stat.size,
             });
             continue;
           }
 
           await storage.createCall({
+            workspaceId,
             filename: relativePath,
             number: parsed.externalNumber,
             internal_number: parsed.internalNumber,
@@ -193,17 +217,17 @@ export async function syncMegafonFtp(
           });
 
           result.downloaded++;
-          logger.info("Файл успешно загружен", { 
-            filename: relativePath, 
+          logger.info("Файл успешно загружен", {
+            filename: relativePath,
             size: stat.size,
-            direction: parsed.direction 
+            direction: parsed.direction,
           });
         } catch (e) {
           const errorMsg = `${relativePath}: ${e instanceof Error ? e.message : String(e)}`;
           result.errors.push(errorMsg);
-          logger.error("Ошибка загрузки файла", { 
-            filename: relativePath, 
-            error: e instanceof Error ? e.message : String(e) 
+          logger.error("Ошибка загрузки файла", {
+            filename: relativePath,
+            error: e instanceof Error ? e.message : String(e),
           });
         }
       }
@@ -216,7 +240,7 @@ export async function syncMegafonFtp(
   logger.info("Синхронизация завершена", {
     downloaded: result.downloaded,
     skipped: result.skipped,
-    errors: result.errors.length
+    errors: result.errors.length,
   });
 
   return result;

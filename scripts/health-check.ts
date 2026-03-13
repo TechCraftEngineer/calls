@@ -4,8 +4,8 @@
  * Health check script - проверяет состояние всех компонентов системы
  */
 
-import { storage } from "@calls/db";
 import { createLogger } from "@calls/api/logger";
+import { storage } from "@calls/db";
 
 const logger = createLogger("health-check");
 
@@ -37,19 +37,19 @@ async function checkUsersTable() {
 
 async function main() {
   logger.info("🔍 Starting health check...");
-  
+
   const checks = [
     { name: "Database", fn: checkDatabase },
     { name: "Users Table", fn: checkUsersTable },
   ];
-  
+
   let allPassed = true;
-  
+
   for (const check of checks) {
     const passed = await check.fn();
     if (!passed) allPassed = false;
   }
-  
+
   if (allPassed) {
     logger.info("✅ All health checks passed!");
     process.exit(0);

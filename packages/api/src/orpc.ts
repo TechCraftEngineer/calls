@@ -3,9 +3,11 @@
  * Uses Better Auth for session; enriches with backend user profile.
  */
 
-import { storage } from "@calls/db";
+import { storage, workspacesService } from "@calls/db";
 import { ORPCError, os } from "@orpc/server";
 import { isAdminUser } from "./user-profile";
+
+export type WorkspaceRole = "owner" | "admin" | "member";
 
 export type AuthLike = {
   api: {
@@ -15,16 +17,34 @@ export type AuthLike = {
   };
 };
 
+function getWorkspaceIdFromHeaders(headers: Headers): number | null {
+  const fromHeader =
+    headers.get("x-workspace-id") ?? headers.get("X-Workspace-Id");
+  if (fromHeader) {
+    const n = parseInt(fromHeader.trim(), 10);
+    if (!Number.isNaN(n) && n > 0) return n;
+  }
+  const cookie = headers.get("cookie");
+  const match = cookie?.match(/\bactive_workspace_id=(\d+)/);
+  if (match) {
+    const n = parseInt(match[1], 10);
+    if (!Number.isNaN(n) && n > 0) return n;
+  }
+  return null;
+}
+
 export async function createBackendContext(opts: {
   headers: Headers;
   auth?: AuthLike;
 }) {
   let user: Awaited<ReturnType<typeof storage.getUserByUsername>> | null = null;
+  let authUserId: string | null = null;
 
   if (opts.auth) {
     const session = await opts.auth.api.getSession({ headers: opts.headers });
     if (session?.user) {
       const baUser = session.user as Record<string, unknown>;
+      authUserId = typeof baUser.id === "string" ? baUser.id : null;
       const username = (baUser.username ?? baUser.email ?? baUser.name) as
         | string
         | undefined;
@@ -50,10 +70,27 @@ export async function createBackendContext(opts: {
     }
   }
 
+  const workspaceId = getWorkspaceIdFromHeaders(opts.headers);
+  let workspaceRole: WorkspaceRole | null = null;
+
+  if (workspaceId != null && authUserId) {
+    const role = await workspacesService.ensureUserInWorkspace(
+      workspaceId,
+      authUserId,
+    );
+    workspaceRole = role;
+  } else if (workspaceId != null && !authUserId) {
+    workspaceRole = null;
+  }
+
   return {
     storage,
+    workspacesService,
     sessionUsername: user?.username ?? null,
     user,
+    authUserId,
+    workspaceId,
+    workspaceRole,
   };
 }
 
@@ -87,3 +124,21 @@ export const adminProcedure = protectedProcedure.use(({ context, next }) => {
   }
   return next({ context });
 });
+
+export const workspaceProcedure = protectedProcedure.use(
+  ({ context, next }) => {
+    if (context.workspaceId == null || context.workspaceRole == null) {
+      throw new ORPCError("BAD_REQUEST", {
+        message:
+          "Требуется активный workspace. Укажите X-Workspace-Id в заголовке или active_workspace_id в cookie.",
+      });
+    }
+    return next({
+      context: {
+        ...context,
+        workspaceId: context.workspaceId,
+        workspaceRole: context.workspaceRole,
+      },
+    });
+  },
+);

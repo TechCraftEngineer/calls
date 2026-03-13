@@ -11,12 +11,14 @@ export class SystemRepository {
     level: string,
     message: string,
     actor: string,
+    workspaceId?: number | null,
   ): Promise<void> {
     await db.insert(schema.activityLog).values({
       timestamp: new Date().toISOString(),
       level,
       message,
       actor,
+      workspaceId: workspaceId ?? null,
     });
   }
 
@@ -26,7 +28,7 @@ export class SystemRepository {
       .from(schema.activityLog)
       .orderBy(desc(schema.activityLog.timestamp))
       .limit(1);
-    
+
     return { timestamp: result[0]?.timestamp ?? null };
   }
 }

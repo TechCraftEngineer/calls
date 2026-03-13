@@ -10,14 +10,6 @@ export * from "./auth";
 // Export all table definitions
 export { callEvaluations, calls, transcripts } from "./calls";
 export { activityLog, prompts } from "./system";
-export { 
-  users, 
-  userIntegrations, 
-  userFilters, 
-  userReportSettings, 
-  userKpiSettings 
-} from "./users";
-
 // Export all TypeScript types
 export type {
   ActivityLog,
@@ -29,11 +21,27 @@ export type {
   NewPrompt,
   NewTranscript,
   NewUser,
+  NewWorkspace,
+  NewWorkspaceMember,
   Prompt,
   Transcript,
   User,
-  UserIntegrations,
   UserFilters,
-  UserReportSettings,
+  UserIntegrations,
   UserKpiSettings,
+  UserReportSettings,
+  Workspace,
+  WorkspaceMember,
 } from "./types";
+export {
+  userFilters,
+  userIntegrations,
+  userKpiSettings,
+  userReportSettings,
+  users,
+} from "./users";
+export {
+  workspaceMemberRole,
+  workspaceMembers,
+  workspaces,
+} from "./workspaces";
