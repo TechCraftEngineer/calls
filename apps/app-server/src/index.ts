@@ -615,9 +615,7 @@ app.post("/api/reports/send-test-telegram", async (c) => {
 });
 
 // Health
-app.get("/", (c) =>
-  c.json({ message: "Mango Office Transcription API", version: "2.0.0" }),
-);
+app.get("/", (c) => c.json({ message: "QBS Звонки API", version: "2.0.0" }));
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 // 404

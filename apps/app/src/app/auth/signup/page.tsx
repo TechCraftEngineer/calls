@@ -72,7 +72,7 @@ function RegisterForm() {
             Регистрация
           </h1>
           <p className="m-0 text-[14px] text-[#888]">
-            Создайте аккаунт Mango Office Call AI
+            Создайте аккаунт QBS Звонки
           </p>
         </div>
 
@@ -236,7 +236,7 @@ function RegisterForm() {
         </div>
 
         <div className="mt-8 text-center text-[12px] text-[#AAA]">
-          &copy; 2025 Mango Office Call AI. Все права защищены.
+          &copy; 2025 QBS Звонки. Все права защищены.
         </div>
       </div>
     </div>

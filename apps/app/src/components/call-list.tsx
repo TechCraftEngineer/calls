@@ -416,37 +416,19 @@ export default function CallList({
 
   if (calls.length === 0) {
     return (
-      <div style={{ padding: "60px 20px", textAlign: "center", color: "#999" }}>
-        <div style={{ fontSize: "14px" }}>Нет звонков для отображения</div>
+      <div className="py-[60px] px-5 text-center text-gray-400">
+        <div className="text-sm">Нет звонков для отображения</div>
       </div>
     );
   }
 
   return (
-    <div style={{ position: "relative" }}>
+    <div className="relative">
       {/* Column Toggle Button */}
-      <div
-        style={{
-          position: "absolute",
-          right: "16px",
-          top: "-45px",
-          zIndex: 10,
-        }}
-      >
+      <div className="absolute right-4 -top-[45px] z-10">
         <button
           onClick={() => setShowColumnToggle(!showColumnToggle)}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "8px",
-            display: "flex",
-            alignItems: "center",
-            color: "#999",
-            transition: "color 0.2s",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#333")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#999")}
+          className="bg-transparent border-none cursor-pointer p-2 flex items-center text-gray-400 hover:text-gray-800 transition-colors"
           title="Настройка колонок"
         >
           <svg
@@ -465,42 +447,14 @@ export default function CallList({
         </button>
 
         {showColumnToggle && (
-          <div
-            style={{
-              position: "absolute",
-              right: 0,
-              top: "40px",
-              background: "white",
-              border: "1px solid #eee",
-              borderRadius: "8px",
-              padding: "12px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              width: "200px",
-              zIndex: 100,
-            }}
-          >
-            <div
-              style={{
-                fontSize: "12px",
-                fontWeight: 700,
-                marginBottom: "8px",
-                color: "#999",
-                textTransform: "uppercase",
-              }}
-            >
+          <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg p-3 shadow-lg w-[200px] z-[100]">
+            <div className="text-xs font-bold mb-2 text-gray-400 uppercase">
               Видимость колонок
             </div>
             {orderedColumns.map((col) => (
               <label
                 key={col.key}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "4px 0",
-                  cursor: "pointer",
-                  fontSize: "13px",
-                }}
+                className="flex items-center gap-2 py-1 cursor-pointer text-[13px]"
               >
                 <input
                   type="checkbox"
@@ -510,34 +464,10 @@ export default function CallList({
                 {col.label}
               </label>
             ))}
-            <div
-              style={{
-                marginTop: "12px",
-                paddingTop: "12px",
-                borderTop: "1px solid #eee",
-              }}
-            >
+            <div className="mt-3 pt-3 border-t border-gray-200">
               <button
                 onClick={handleResetOrder}
-                style={{
-                  width: "100%",
-                  padding: "6px 12px",
-                  fontSize: "12px",
-                  background: "#f5f5f5",
-                  border: "1px solid #ddd",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  color: "#666",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#eee";
-                  e.currentTarget.style.color = "#333";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#f5f5f5";
-                  e.currentTarget.style.color = "#666";
-                }}
+                className="w-full py-1.5 px-3 text-xs bg-gray-100 border border-gray-300 rounded cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors"
               >
                 Сбросить порядок колонок
               </button>
@@ -560,38 +490,23 @@ export default function CallList({
                     onDragOver={(e) => handleDragOver(e, col.key)}
                     onDragLeave={handleDragLeave}
                     onDrop={(e) => handleDrop(e, col.key)}
+                    className="select-none relative transition-colors duration-200"
                     style={{
                       cursor: col.sortKey ? "pointer" : "move",
-                      userSelect: "none",
-                      position: "relative",
                       backgroundColor:
                         dragOverColumn === col.key
                           ? "#f0f8ff"
                           : draggedColumn === col.key
                             ? "#f5f5f5"
                             : "transparent",
-                      transition: "background-color 0.2s",
                       opacity: draggedColumn === col.key ? 0.5 : 1,
                     }}
                     onClick={() => col.sortKey && handleSort(col.sortKey)}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
+                    <div className="flex items-center gap-1">
                       {/* Иконка grip для перетаскивания */}
                       <span
-                        style={{
-                          cursor: "move",
-                          color: "#999",
-                          fontSize: "12px",
-                          marginRight: "2px",
-                          display: "inline-flex",
-                          alignItems: "center",
-                        }}
+                        className="cursor-move text-gray-400 text-xs mr-0.5 inline-flex items-center"
                         title="Перетащите для изменения порядка"
                         onMouseDown={(e) => {
                           // Предотвращаем клик при перетаскивании
@@ -619,27 +534,15 @@ export default function CallList({
 
                       {col.label}
 
-                      <div
-                        className="op-tooltip"
-                        style={{ display: "inline-flex" }}
-                      >
-                        <span className="info-icon" style={{ margin: 0 }}>
-                          i
-                        </span>
-                        <div
-                          className="tooltip-content"
-                          style={{
-                            fontWeight: 400,
-                            textTransform: "none",
-                            letterSpacing: 0,
-                          }}
-                        >
+                      <div className="op-tooltip inline-flex">
+                        <span className="info-icon m-0">i</span>
+                        <div className="tooltip-content font-normal normal-case tracking-normal">
                           {col.tooltip}
                         </div>
                       </div>
 
                       {col.sortKey && sortConfig?.key === col.sortKey && (
-                        <span style={{ fontSize: "10px", color: "#333" }}>
+                        <span className="text-[10px] text-gray-800">
                           {sortConfig.order === "asc" ? "▲" : "▼"}
                         </span>
                       )}

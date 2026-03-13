@@ -1,6 +1,6 @@
-# Mango Office Transcription Frontend
+# QBS Звонки — Frontend
 
-Next.js frontend for the Mango Office transcription application.
+Next.js frontend для сервиса аналитики телефонных звонков QBS Звонки.
 
 ## Setup
 

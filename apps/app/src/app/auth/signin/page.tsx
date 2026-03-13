@@ -88,7 +88,7 @@ function LoginForm() {
             С возвращением!
           </h1>
           <p className="m-0 text-[14px] text-[#888]">
-            Войдите в личный кабинет Mango Office
+            Войдите в личный кабинет QBS Звонки
           </p>
         </div>
 
@@ -181,7 +181,7 @@ function LoginForm() {
         </div>
 
         <div className="mt-8 text-center text-[12px] text-[#AAA]">
-          &copy; 2025 Mango Office Call AI. Все права защищены.
+          &copy; 2025 QBS Звонки. Все права защищены.
         </div>
       </div>
     </div>

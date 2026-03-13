@@ -18,7 +18,6 @@ export default function RecommendationsModal({
   const overlayRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Закрытие по Escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
@@ -29,7 +28,6 @@ export default function RecommendationsModal({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
 
-  // Блокировка скролла body при открытом модальном окне
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -54,148 +52,45 @@ export default function RecommendationsModal({
       className="modal-overlay"
       ref={overlayRef}
       onClick={handleOverlayClick}
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: "rgba(0, 0, 0, 0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 2000,
-        padding: "20px",
-      }}
     >
       <div
-        className="modal-container"
+        className="modal-container max-w-[600px] max-h-[80vh]"
         ref={modalRef}
         onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "white",
-          borderRadius: "12px",
-          maxWidth: "600px",
-          width: "100%",
-          maxHeight: "80vh",
-          overflow: "auto",
-          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
-          position: "relative",
-        }}
       >
-        <div style={{ padding: "24px" }}>
+        <div className="relative p-6">
           <button
             onClick={onClose}
             aria-label="Закрыть"
-            style={{
-              position: "absolute",
-              top: "16px",
-              right: "16px",
-              background: "none",
-              border: "none",
-              fontSize: "28px",
-              cursor: "pointer",
-              color: "#999",
-              width: "32px",
-              height: "32px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: "50%",
-              transition: "all 0.2s",
-              zIndex: 10,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#f5f5f5";
-              e.currentTarget.style.color = "#333";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "none";
-              e.currentTarget.style.color = "#999";
-            }}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full border-none bg-transparent text-[28px] cursor-pointer text-gray-400 hover:bg-gray-100 hover:text-gray-800 transition-all duration-200 z-10"
           >
             ×
           </button>
 
-          <div style={{ paddingRight: "40px" }}>
-            <h3
-              style={{
-                margin: "0 0 20px 0",
-                fontSize: "20px",
-                fontWeight: 700,
-                color: "#111",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              <span style={{ fontSize: "24px" }}>💡</span> РЕКОМЕНДАЦИИ
+          <div className="pr-10">
+            <h3 className="mb-5 text-xl font-bold text-[#111] flex items-center gap-2">
+              <span className="text-2xl">💡</span> РЕКОМЕНДАЦИИ
             </h3>
 
             {isLoading ? (
-              <div
-                style={{
-                  padding: "60px 20px",
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "16px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    border: "4px solid #f0f0f0",
-                    borderTop: "4px solid #F7931E",
-                    borderRadius: "50%",
-                    animation: "spin 0.8s linear infinite",
-                  }}
-                ></div>
-                <div style={{ fontSize: "14px", color: "#666" }}>
+              <div className="py-[60px] px-5 text-center flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-gray-100 border-t-[#F7931E] rounded-full animate-spin" />
+                <div className="text-sm text-gray-500">
                   Формирование рекомендаций...
                 </div>
               </div>
             ) : recommendations.length > 0 ? (
               <>
-                <p
-                  style={{
-                    margin: "0 0 16px 0",
-                    fontSize: "13px",
-                    color: "#856404",
-                    fontStyle: "italic",
-                  }}
-                >
+                <p className="mb-4 text-[13px] text-amber-800 italic">
                   Вопросы, которые можно было задать (с учётом истории):
                 </p>
-                <ul
-                  style={{
-                    margin: 0,
-                    padding: 0,
-                    listStyle: "none",
-                  }}
-                >
+                <ul className="m-0 p-0 list-none">
                   {recommendations.map((rec, i) => (
                     <li
                       key={i}
-                      style={{
-                        marginBottom: "12px",
-                        fontSize: "14px",
-                        lineHeight: "1.6",
-                        position: "relative",
-                        paddingLeft: "20px",
-                        color: "#533F03",
-                      }}
+                      className="mb-3 text-sm leading-relaxed relative pl-5 text-[#533F03]"
                     >
-                      <span
-                        style={{
-                          position: "absolute",
-                          left: 0,
-                          color: "#F7931E",
-                          fontSize: "18px",
-                        }}
-                      >
+                      <span className="absolute left-0 text-[#F7931E] text-lg">
                         •
                       </span>
                       {rec}
@@ -204,14 +99,7 @@ export default function RecommendationsModal({
                 </ul>
               </>
             ) : (
-              <div
-                style={{
-                  padding: "40px 20px",
-                  textAlign: "center",
-                  color: "#999",
-                  fontSize: "14px",
-                }}
-              >
+              <div className="py-10 px-5 text-center text-gray-400 text-sm">
                 Рекомендации не найдены
               </div>
             )}

@@ -24,7 +24,7 @@ export default function Navbar({ user }: NavbarProps) {
           <div className="logo">M</div>
         </Link>
         <div className="brand-info">
-          <div className="brand-title">Mango Office</div>
+          <div className="brand-title">QBS Звонки</div>
           <div className="brand-subtitle">Аналитика звонков</div>
         </div>
       </div>

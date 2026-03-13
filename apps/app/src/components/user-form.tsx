@@ -95,7 +95,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
                 ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
                 : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
             } ${isEditing ? "bg-gray-50 cursor-not-allowed" : ""}`}
-            placeholder="user@example.com"
+            placeholder="example@mail.com"
             disabled={isEditing}
             {...register("username")}
           />

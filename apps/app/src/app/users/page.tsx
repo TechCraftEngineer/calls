@@ -638,7 +638,7 @@ export default function UsersPage() {
                     borderRadius: "6px",
                     boxSizing: "border-box",
                   }}
-                  placeholder="username@example.com"
+                  placeholder="example@mail.com"
                   autoComplete="username"
                 />
               </div>
@@ -1624,7 +1624,7 @@ export default function UsersPage() {
                       borderRadius: "6px",
                       boxSizing: "border-box",
                     }}
-                    placeholder="report@example.com"
+                    placeholder="otchet@mail.com"
                   />
                 </div>
                 <div

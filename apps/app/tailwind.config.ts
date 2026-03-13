@@ -9,7 +9,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Mango Office брендовые цвета
+        // QBS Звонки брендовые цвета
         mango: {
           yellow: "#FFD600",
           dark: "#111111",

@@ -79,8 +79,8 @@ export async function getCurrentUser() {
     return {
       id: Number(user.id), // Convert string id to number
       username:
-        u.username ?? u.displayUsername ?? user.email ?? user.name ?? "unknown",
-      name: user.name || "Unknown",
+        u.username ?? u.displayUsername ?? user.email ?? user.name ?? "—",
+      name: user.name || "—",
       first_name: user.name?.split(" ")[0] || "",
       last_name: user.name?.split(" ")[1] || "",
       role: "user",

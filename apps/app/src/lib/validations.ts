@@ -4,9 +4,9 @@
 
 import { z } from "zod";
 
-// Схема для формы входа (username plugin — логин, не email)
+// Схема для формы входа (email или логин)
 export const loginSchema = z.object({
-  username: z.string().min(1, "Введите имя пользователя"),
+  username: z.string().min(1, "Введите email или логин"),
   password: z
     .string()
     .min(1, "Пароль обязателен")

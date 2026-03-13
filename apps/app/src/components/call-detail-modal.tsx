@@ -267,9 +267,7 @@ export default function CallDetailModal({
         onClick={handleOverlayClick}
       >
         <div className="modal-container" ref={modalRef}>
-          <div style={{ padding: "40px", textAlign: "center" }}>
-            Загрузка...
-          </div>
+          <div className="py-10 text-center">Загрузка...</div>
         </div>
       </div>
     );
@@ -283,9 +281,7 @@ export default function CallDetailModal({
         onClick={handleOverlayClick}
       >
         <div className="modal-container" ref={modalRef}>
-          <div style={{ padding: "40px", textAlign: "center" }}>
-            Звонок не найден
-          </div>
+          <div className="py-10 text-center">Звонок не найден</div>
         </div>
       </div>
     );
@@ -315,17 +311,11 @@ export default function CallDetailModal({
         ref={modalRef}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ position: "relative", padding: "24px 24px 0 24px" }}>
+        <div className="relative pt-6 px-6">
           <button
-            className="modal-close-btn"
+            className="modal-close-btn absolute top-6 right-6 z-10"
             onClick={onClose}
             aria-label="Закрыть"
-            style={{
-              position: "absolute",
-              top: "24px",
-              right: "24px",
-              zIndex: 10,
-            }}
           >
             ×
           </button>
@@ -333,29 +323,10 @@ export default function CallDetailModal({
 
         <div className="modal-content">
           <div className="call-meta-header">
-            <div
-              className="call-title-row"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                width: "100%",
-                paddingRight: "50px",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  flex: 1,
-                }}
-              >
+            <div className="call-title-row flex items-center justify-between w-full pr-[50px]">
+              <div className="flex items-center gap-3 flex-1">
                 <span className="call-main-number">{call.number}</span>
-                <span
-                  className="call-direction-tag"
-                  style={{ background: "#F5F5F7", color: "#888" }}
-                >
+                <span className="call-direction-tag bg-[#F5F5F7] text-gray-500">
                   {call.direction === "incoming" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ"}
                 </span>
                 <span className="call-status-tag">
@@ -365,28 +336,7 @@ export default function CallDetailModal({
               {isAdmin() && (
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
-                  style={{
-                    padding: "8px 16px",
-                    fontSize: "13px",
-                    background: "#FF3B30",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    transition: "background 0.2s",
-                    opacity: deleting ? 0.6 : 1,
-                    marginLeft: "auto",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!deleting) e.currentTarget.style.background = "#E02D21";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!deleting) e.currentTarget.style.background = "#FF3B30";
-                  }}
+                  className="py-2 px-4 text-[13px] bg-red-500 text-white border-none rounded-lg cursor-pointer font-semibold flex items-center gap-1.5 transition-colors ml-auto hover:bg-red-600 disabled:opacity-60 disabled:hover:bg-red-500"
                   disabled={deleting}
                   title="Удалить звонок"
                 >
@@ -429,76 +379,31 @@ export default function CallDetailModal({
 
           <div className="detail-grid">
             <div className="transcript-card">
-              <div
-                className="transcript-header"
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "16px",
-                }}
-              >
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "12px" }}
-                >
-                  <h3
-                    style={{
-                      margin: 0,
-                      fontSize: "16px",
-                      fontWeight: 700,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span style={{ fontSize: "18px" }}>💬</span> Расшифровка
+              <div className="transcript-header flex justify-between items-center mb-4">
+                <div className="flex items-center gap-3">
+                  <h3 className="m-0 text-base font-bold flex items-center gap-2">
+                    <span className="text-lg">💬</span> Расшифровка
                   </h3>
 
                   {transcript?.raw_text && (
-                    <div
-                      style={{
-                        display: "flex",
-                        background: "#F0F0F0",
-                        padding: "2px",
-                        borderRadius: "6px",
-                        marginLeft: "8px",
-                      }}
-                    >
+                    <div className="flex bg-gray-100 p-0.5 rounded-md ml-2">
                       <button
                         onClick={() => setShowRaw(false)}
-                        style={{
-                          padding: "4px 10px",
-                          fontSize: "11px",
-                          border: "none",
-                          borderRadius: "4px",
-                          cursor: "pointer",
-                          background: !showRaw ? "white" : "transparent",
-                          color: !showRaw ? "#111" : "#666",
-                          fontWeight: !showRaw ? 600 : 400,
-                          boxShadow: !showRaw
-                            ? "0 1px 3px rgba(0,0,0,0.1)"
-                            : "none",
-                          transition: "all 0.2s",
-                        }}
+                        className={`py-1 px-2.5 text-[11px] border-none rounded cursor-pointer transition-all ${
+                          !showRaw
+                            ? "bg-white text-[#111] font-semibold shadow-sm"
+                            : "bg-transparent text-gray-500"
+                        }`}
                       >
                         Обработка
                       </button>
                       <button
                         onClick={() => setShowRaw(true)}
-                        style={{
-                          padding: "4px 10px",
-                          fontSize: "11px",
-                          border: "none",
-                          borderRadius: "4px",
-                          cursor: "pointer",
-                          background: showRaw ? "white" : "transparent",
-                          color: showRaw ? "#111" : "#666",
-                          fontWeight: showRaw ? 600 : 400,
-                          boxShadow: showRaw
-                            ? "0 1px 3px rgba(0,0,0,0.1)"
-                            : "none",
-                          transition: "all 0.2s",
-                        }}
+                        className={`py-1 px-2.5 text-[11px] border-none rounded cursor-pointer transition-all ${
+                          showRaw
+                            ? "bg-white text-[#111] font-semibold shadow-sm"
+                            : "bg-transparent text-gray-500"
+                        }`}
                       >
                         Оригинал
                       </button>
@@ -507,15 +412,7 @@ export default function CallDetailModal({
                 </div>
 
                 <button
-                  className="ghost-btn"
-                  style={{
-                    height: "32px",
-                    fontSize: "12px",
-                    padding: "0 12px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
+                  className="ghost-btn h-8 text-xs py-0 px-3 flex items-center gap-1.5"
                   onClick={handleDownloadTxt}
                 >
                   <span>📥</span> Скачать .txt
@@ -544,13 +441,7 @@ export default function CallDetailModal({
                     </div>
                   ))
                 ) : (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: "40px",
-                      color: "#999",
-                    }}
-                  >
+                  <div className="text-center py-10 text-gray-400">
                     Текст отсутствует
                   </div>
                 )}
@@ -566,28 +457,21 @@ export default function CallDetailModal({
                       src={`${API_BASE_URL}/api/records/${call.filename}`}
                     />
                   ) : (
-                    <div style={{ fontSize: "13px", color: "#999" }}>
+                    <div className="text-[13px] text-gray-400">
                       Файл записи не найден
                     </div>
                   )}
                 </div>
-                <div
-                  style={{ marginTop: "12px", fontSize: "12px", color: "#999" }}
-                >
+                <div className="mt-3 text-xs text-gray-400">
                   Размер файла: {formatFileSize(call.size_bytes)}
                 </div>
               </div>
 
-              <div
-                className="sidebar-card"
-                style={{ padding: "16px", borderRadius: "8px" }}
-              >
+              <div className="sidebar-card p-4 rounded-lg">
                 <div
-                  style={{
-                    fontSize: "18px",
-                    fontWeight: 700,
-                    color: call.customer_name ? "#111" : "#999",
-                  }}
+                  className={`text-lg font-bold ${
+                    call.customer_name ? "text-[#111]" : "text-gray-400"
+                  }`}
                 >
                   {call.customer_name
                     ? `Абонент: ${call.customer_name}`
@@ -608,40 +492,19 @@ export default function CallDetailModal({
                       style={{
                         width: `${(evaluation?.value_score || 0) * 20}%`,
                       }}
-                    ></div>
+                    />
                   </div>
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      color: "#666",
-                      lineHeight: 1.6,
-                      marginBottom: "20px",
-                    }}
-                  >
+                  <p className="text-[13px] text-gray-500 leading-relaxed mb-5">
                     {evaluation?.value_explanation || "Оценка отсутствует"}
                   </p>
                 </div>
 
                 {showQualityUnavailable ? (
-                  <div
-                    style={{
-                      padding: "16px",
-                      background: "#FFF5F5",
-                      border: "1px solid #FFDADA",
-                      borderRadius: "8px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        color: "#E53E3E",
-                        fontSize: "13px",
-                        fontWeight: 700,
-                        marginBottom: "4px",
-                      }}
-                    >
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="text-red-600 text-[13px] font-bold mb-1">
                       Качество не оценивалось
                     </div>
-                    <div style={{ color: "#C53030", fontSize: "12px" }}>
+                    <div className="text-red-700 text-xs">
                       {qualityNotAnalyzableReason ||
                         call.operator_name ||
                         call.manager_name ||
@@ -656,66 +519,26 @@ export default function CallDetailModal({
                     </div>
                     <div className="score-bar-bg">
                       <div
-                        className="score-bar-fill"
-                        style={{
-                          width: `${Number(qualityScore) * 20}%`,
-                          background: "#4CAF50",
-                        }}
-                      ></div>
+                        className="score-bar-fill bg-green-500"
+                        style={{ width: `${Number(qualityScore) * 20}%` }}
+                      />
                     </div>
-                    <p
-                      style={{
-                        fontSize: "13px",
-                        color: "#666",
-                        lineHeight: 1.6,
-                      }}
-                    >
+                    <p className="text-[13px] text-gray-500 leading-relaxed">
                       {qualityFeedback}
                     </p>
                   </div>
                 )}
               </div>
 
-              <div
-                className="sidebar-card"
-                style={{ background: "#FFFDF0", borderColor: "#FFECB3" }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "12px",
-                  }}
-                >
-                  <h4
-                    className="sidebar-card-title"
-                    style={{
-                      color: "#975A16",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      margin: 0,
-                    }}
-                  >
+              <div className="sidebar-card bg-amber-50 border-amber-200">
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="sidebar-card-title text-amber-800 flex items-center gap-2 m-0">
                     💡 РЕКОМЕНДАЦИИ
                   </h4>
                   <button
                     onClick={handleGenerateRecommendations}
                     disabled={isGeneratingRecommendations}
-                    style={{
-                      background: "transparent",
-                      border: "1px solid #975A16",
-                      color: "#975A16",
-                      borderRadius: "4px",
-                      padding: "4px 8px",
-                      fontSize: "11px",
-                      cursor: isGeneratingRecommendations
-                        ? "not-allowed"
-                        : "pointer",
-                      opacity: isGeneratingRecommendations ? 0.6 : 1,
-                      transition: "all 0.2s",
-                    }}
+                    className="bg-transparent border border-amber-700 text-amber-700 rounded py-1 px-2 text-[11px] cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {isGeneratingRecommendations
                       ? "Загрузка..."
@@ -729,35 +552,16 @@ export default function CallDetailModal({
                 {evaluation?.manager_recommendations &&
                 evaluation.manager_recommendations.length > 0 ? (
                   <>
-                    <p
-                      style={{
-                        margin: "0 0 12px 0",
-                        fontSize: "13px",
-                        color: "#856404",
-                      }}
-                    >
+                    <p className="mb-3 text-[13px] text-amber-800">
                       Вопросы, которые можно было задать (с учетом истории):
                     </p>
-                    <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                    <ul className="m-0 p-0 list-none">
                       {evaluation.manager_recommendations.map((rec, i) => (
                         <li
                           key={i}
-                          style={{
-                            marginBottom: "10px",
-                            fontSize: "13px",
-                            lineHeight: "1.5",
-                            position: "relative",
-                            paddingLeft: "20px",
-                            color: "#533F03",
-                          }}
+                          className="mb-2.5 text-[13px] leading-snug relative pl-5 text-[#533F03]"
                         >
-                          <span
-                            style={{
-                              position: "absolute",
-                              left: 0,
-                              color: "#F7931E",
-                            }}
-                          >
+                          <span className="absolute left-0 text-[#F7931E]">
                             •
                           </span>
                           {rec}
@@ -766,14 +570,7 @@ export default function CallDetailModal({
                     </ul>
                   </>
                 ) : (
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      color: "#856404",
-                      fontStyle: "italic",
-                      margin: 0,
-                    }}
-                  >
+                  <p className="text-[13px] text-amber-800 italic m-0">
                     Нажмите "Сформировать", чтобы получить рекомендации с учетом
                     истории звонков.
                   </p>
@@ -791,80 +588,43 @@ export default function CallDetailModal({
                   </li>
                   <li className="meta-row">
                     <span className="meta-label">Настрой:</span>
-                    <span className="meta-value" style={{ color: "#F7931E" }}>
+                    <span className="meta-value text-[#F7931E]">
                       {transcript?.sentiment || "Нейтральный"}
                     </span>
                   </li>
                 </ul>
-                <hr
-                  style={{
-                    border: "none",
-                    borderTop: "1px solid #eee",
-                    margin: "16px 0",
-                  }}
-                />
-                <p
-                  style={{
-                    fontSize: "13px",
-                    color: "#666",
-                    lineHeight: 1.6,
-                    marginBottom: "20px",
-                  }}
-                >
+                <hr className="border-none border-t border-gray-200 my-4" />
+                <p className="text-[13px] text-gray-500 leading-relaxed mb-5">
                   {transcript?.summary || "Резюме отсутствует"}
                 </p>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "8px",
-                    alignItems: "center",
-                    marginBottom: "12px",
-                  }}
-                >
-                  <label
-                    style={{
-                      fontSize: "12px",
-                      color: "#666",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
+                <div className="flex gap-2 items-center mb-3">
+                  <label className="text-xs text-gray-500 whitespace-nowrap">
                     Модель:
                   </label>
                   <select
                     value={selectedModel}
                     onChange={(e) => setSelectedModel(e.target.value)}
                     disabled={restarting}
-                    style={{
-                      flex: 1,
-                      padding: "6px 10px",
-                      fontSize: "12px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      background: restarting ? "#f5f5f5" : "white",
-                      cursor: restarting ? "not-allowed" : "pointer",
-                    }}
+                    className={`flex-1 py-1.5 px-2.5 text-xs border border-gray-300 rounded ${
+                      restarting
+                        ? "bg-gray-100 cursor-not-allowed"
+                        : "bg-white cursor-pointer"
+                    }`}
                   >
                     <option value="assemblyai">AssemblyAI</option>
                     <option value="salutespeech">SaluteSpeech</option>
                   </select>
                 </div>
                 <button
-                  className="ghost-btn"
-                  style={{
-                    width: "100%",
-                    fontSize: "12px",
-                    height: "36px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px",
-                    opacity: restarting ? 0.6 : 1,
-                    cursor: restarting ? "not-allowed" : "pointer",
-                  }}
+                  className={`ghost-btn w-full text-xs h-9 flex items-center justify-center gap-2 ${
+                    restarting
+                      ? "opacity-60 cursor-not-allowed"
+                      : "cursor-pointer"
+                  }`}
                   onClick={handleRestartAnalysis}
                   disabled={restarting}
                 >
-                  <span style={{ fontSize: "14px" }}>🔄</span>
+                  <span className="text-sm">🔄</span>
                   {restarting ? "Перезапуск..." : "Перезапустить анализ"}
                 </button>
               </div>
@@ -876,8 +636,7 @@ export default function CallDetailModal({
       {/* Модальное окно подтверждения удаления */}
       {showDeleteConfirm && (
         <div
-          className="modal-overlay"
-          style={{ zIndex: 3000 }}
+          className="modal-overlay z-[3000]"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowDeleteConfirm(false);
@@ -885,41 +644,17 @@ export default function CallDetailModal({
           }}
         >
           <div
-            className="modal-container"
-            style={{ maxWidth: "480px", padding: "24px" }}
+            className="modal-container max-w-[480px] p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3
-              style={{
-                margin: "0 0 16px 0",
-                fontSize: "18px",
-                fontWeight: 700,
-                color: "#111",
-              }}
-            >
+            <h3 className="mb-4 text-lg font-bold text-[#111]">
               Подтверждение удаления
             </h3>
-            <p
-              style={{
-                margin: "0 0 24px 0",
-                fontSize: "14px",
-                color: "#666",
-                lineHeight: 1.6,
-              }}
-            >
+            <p className="mb-6 text-sm text-gray-500 leading-relaxed">
               Вы уверены, что хотите удалить этот звонок?
             </p>
             {call && (
-              <div
-                style={{
-                  marginBottom: "24px",
-                  padding: "12px",
-                  background: "#f5f5f5",
-                  borderRadius: "8px",
-                  fontSize: "13px",
-                  color: "#555",
-                }}
-              >
+              <div className="mb-6 p-3 bg-gray-100 rounded-lg text-[13px] text-gray-600">
                 <div>
                   <strong>Номер:</strong> {call.number}
                 </div>
@@ -933,75 +668,22 @@ export default function CallDetailModal({
                 </div>
               </div>
             )}
-            <div
-              style={{
-                display: "flex",
-                gap: "12px",
-                justifyContent: "flex-end",
-              }}
-            >
+            <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={deleting}
-                style={{
-                  padding: "10px 20px",
-                  fontSize: "14px",
-                  background: "#f5f5f5",
-                  color: "#333",
-                  border: "1px solid #ddd",
-                  borderRadius: "8px",
-                  cursor: deleting ? "not-allowed" : "pointer",
-                  fontWeight: 600,
-                  transition: "background 0.2s",
-                  opacity: deleting ? 0.6 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (!deleting) e.currentTarget.style.background = "#eee";
-                }}
-                onMouseLeave={(e) => {
-                  if (!deleting) e.currentTarget.style.background = "#f5f5f5";
-                }}
+                className="py-2.5 px-5 text-sm bg-gray-100 text-gray-800 border border-gray-300 rounded-lg font-semibold transition-colors hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-gray-100"
               >
                 Отмена
               </button>
               <button
                 onClick={handleDeleteCall}
                 disabled={deleting}
-                style={{
-                  padding: "10px 20px",
-                  fontSize: "14px",
-                  background: "#FF3B30",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  cursor: deleting ? "not-allowed" : "pointer",
-                  fontWeight: 600,
-                  transition: "background 0.2s",
-                  opacity: deleting ? 0.6 : 1,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-                onMouseEnter={(e) => {
-                  if (!deleting) e.currentTarget.style.background = "#E02D21";
-                }}
-                onMouseLeave={(e) => {
-                  if (!deleting) e.currentTarget.style.background = "#FF3B30";
-                }}
+                className="py-2.5 px-5 text-sm bg-red-500 text-white border-none rounded-lg font-semibold flex items-center gap-2 transition-colors hover:bg-red-600 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-red-500"
               >
                 {deleting ? (
                   <>
-                    <span
-                      style={{
-                        width: "14px",
-                        height: "14px",
-                        border: "2px solid rgba(255, 255, 255, 0.3)",
-                        borderTop: "2px solid white",
-                        borderRadius: "50%",
-                        display: "inline-block",
-                        animation: "spin 0.8s linear infinite",
-                      }}
-                    ></span>
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full inline-block animate-spin" />
                     Удаление...
                   </>
                 ) : (
@@ -1024,20 +706,6 @@ export default function CallDetailModal({
                 )}
               </button>
             </div>
-            <style jsx>{`
-              .spinner {
-                width: 14px;
-                height: 14px;
-                border: 2px solid rgba(255, 255, 255, 0.3);
-                border-top: 2px solid white;
-                border-radius: 50%;
-                animation: spin 0.8s linear infinite;
-              }
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}</style>
           </div>
         </div>
       )}

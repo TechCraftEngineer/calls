@@ -122,7 +122,7 @@ export default function Sidebar({ user }: SidebarProps) {
       <Link
         href={paths.dashboard.root}
         className="sidebar-logo"
-        title="Mango Office"
+        title="QBS Звонки"
       >
         M
       </Link>
@@ -169,7 +169,7 @@ export default function Sidebar({ user }: SidebarProps) {
           className="bg-gray-100 border-none rounded text-xs px-2 py-1 cursor-pointer opacity-60 hover:opacity-80 transition-opacity"
           title="Переключить стиль иконок"
         >
-          {useModernIcons ? "MODERN" : "CLASSIC"}
+          {useModernIcons ? "Современный" : "Классика"}
         </button>
         <button
           onClick={handleLogout}
