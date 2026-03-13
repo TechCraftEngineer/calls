@@ -5,7 +5,7 @@
       "args": ["-y", "@reapi/mcp-openapi@latest", "--dir", "./specs"],
       "env": {}
     },
-      "Context7": {
+    "Context7": {
       "command": "bunx",
       "args": [
         "-y",
@@ -17,7 +17,7 @@
       "disabled": false,
       "autoApprove": ["resolve-library-id", "get-library-docs", "query-docs"]
     },
-     "shadcn": {
+    "shadcn": {
       "command": "npx",
       "args": ["-y", "shadcn@latest", "mcp"]
     },

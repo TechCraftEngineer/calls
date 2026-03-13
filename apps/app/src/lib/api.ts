@@ -9,9 +9,14 @@ export { api };
 export const API_BASE_URL = getAPI_BASE_URL();
 
 /** REST fetch для auth и эндпоинтов без oRPC (credentials: include для cookies) */
-export async function restFetch(path: string, init?: RequestInit): Promise<Response> {
+export async function restFetch(
+  path: string,
+  init?: RequestInit,
+): Promise<Response> {
   const base = API_BASE_URL.replace(/\/?$/, "");
-  const url = path.startsWith("http") ? path : `${base}/api${path.startsWith("/") ? "" : "/"}${path}`;
+  const url = path.startsWith("http")
+    ? path
+    : `${base}/api${path.startsWith("/") ? "" : "/"}${path}`;
   return fetch(url, {
     ...init,
     credentials: "include",
@@ -23,7 +28,10 @@ export async function restFetch(path: string, init?: RequestInit): Promise<Respo
 }
 
 /** REST POST JSON */
-export async function restPost<T = unknown>(path: string, body?: unknown): Promise<T> {
+export async function restPost<T = unknown>(
+  path: string,
+  body?: unknown,
+): Promise<T> {
   const res = await restFetch(path, {
     method: "POST",
     body: body ? JSON.stringify(body) : undefined,

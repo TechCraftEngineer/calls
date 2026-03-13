@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, adminProcedure } from "../orpc";
+import { adminProcedure, protectedProcedure } from "../orpc";
 
 const listCallsSchema = z.object({
   page: z.number().min(1).default(1),

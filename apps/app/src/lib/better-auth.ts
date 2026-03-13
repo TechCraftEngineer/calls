@@ -3,6 +3,7 @@
  * Современная аутентификация для frontend
  */
 
+import { usernameClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 function getAuthBaseUrl(): string {
@@ -22,6 +23,7 @@ function getAuthBaseUrl(): string {
 export const authClient = createAuthClient({
   baseURL: getAuthBaseUrl(),
   basePath: "/api/auth",
+  plugins: [usernameClient()],
 });
 
 // Хуки для работы с аутентификацией
@@ -30,8 +32,8 @@ export const { useSession, signIn, signUp, signOut } = authClient;
 // Утилиты для совместимости со старым кодом
 export async function login(username: string, password: string) {
   try {
-    const result = await signIn.email({
-      email: username,
+    const result = await signIn.username({
+      username,
       password,
     });
 
@@ -93,8 +95,12 @@ export async function getCurrentUser() {
   }
 }
 
+/**
+ * Быстрая проверка наличия cookie сессии (синхронная).
+ * Для React-компонентов рекомендуется useAuth().isAuthenticated (опирается на сессию).
+ * Для проверки вне React — getSession() или getCurrentUser().
+ */
 export function isAuthenticated(): boolean {
-  // Better Auth работает с cookies, поэтому проверяем через хук или сессию
   if (typeof window !== "undefined") {
     return document.cookie.includes("better-auth.session_token");
   }

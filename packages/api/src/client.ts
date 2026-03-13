@@ -18,5 +18,6 @@ export type BackendApiClient = ReturnType<typeof createBackendClient>;
 export function createBackendClient(baseUrl: string) {
   const url = baseUrl.replace(/\/?$/, "") + "/api/orpc";
   const link = new RPCLink({ url });
-  return createORPCClient(link) as ReturnType<typeof createORPCClient> & BackendRouter;
+  return createORPCClient(link) as ReturnType<typeof createORPCClient> &
+    BackendRouter;
 }

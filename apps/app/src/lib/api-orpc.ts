@@ -64,7 +64,7 @@ export interface User {
 }
 
 export interface CallsResponse {
-  calls: (Call & { 
+  calls: (Call & {
     transcript?: Transcript;
     evaluation?: CallEvaluation;
   })[];
@@ -84,18 +84,20 @@ export interface CallsResponse {
 
 // Calls API
 export const callsApi = {
-  async list(params: {
-    page?: number;
-    per_page?: number;
-    date_from?: string;
-    date_to?: string;
-    direction?: string;
-    value?: number[];
-    operator?: string[];
-    q?: string;
-    status?: string;
-    manager?: string;
-  } = {}): Promise<CallsResponse> {
+  async list(
+    params: {
+      page?: number;
+      per_page?: number;
+      date_from?: string;
+      date_to?: string;
+      direction?: string;
+      value?: number[];
+      operator?: string[];
+      q?: string;
+      status?: string;
+      manager?: string;
+    } = {},
+  ): Promise<CallsResponse> {
     return await api.calls.list(params);
   },
 
@@ -113,7 +115,7 @@ export const callsApi = {
 
   async generateRecommendations(callId: number): Promise<any> {
     return await api.calls.generateRecommendations({ call_id: callId });
-  }
+  },
 };
 
 // Users API
@@ -145,11 +147,15 @@ export const usersApi = {
     return await api.users.delete({ user_id: userId });
   },
 
-  async changePassword(userId: number, newPassword: string, confirmPassword: string): Promise<{ success: boolean; message: string }> {
-    return await api.users.changePassword({ 
-      user_id: userId, 
-      new_password: newPassword, 
-      confirm_password: confirmPassword 
+  async changePassword(
+    userId: number,
+    newPassword: string,
+    confirmPassword: string,
+  ): Promise<{ success: boolean; message: string }> {
+    return await api.users.changePassword({
+      user_id: userId,
+      new_password: newPassword,
+      confirm_password: confirmPassword,
     });
   },
 
@@ -157,38 +163,49 @@ export const usersApi = {
     return await api.users.telegramAuthUrl({ user_id: userId });
   },
 
-  async disconnectTelegram(userId: number): Promise<{ success: boolean; message: string }> {
+  async disconnectTelegram(
+    userId: number,
+  ): Promise<{ success: boolean; message: string }> {
     return await api.users.disconnectTelegram({ user_id: userId });
   },
 
-  async maxAuthUrl(userId: number): Promise<{ 
-    url?: string; 
-    manual_instruction?: string; 
-    token?: string 
+  async maxAuthUrl(userId: number): Promise<{
+    url?: string;
+    manual_instruction?: string;
+    token?: string;
   }> {
     return await api.users.maxAuthUrl({ user_id: userId });
   },
 
-  async disconnectMax(userId: number): Promise<{ success: boolean; message: string }> {
+  async disconnectMax(
+    userId: number,
+  ): Promise<{ success: boolean; message: string }> {
     return await api.users.disconnectMax({ user_id: userId });
-  }
+  },
 };
 
 // Settings API
 export const settingsApi = {
-  async getPrompts(): Promise<Array<{
-    key: string;
-    value: string;
-    description?: string;
-    updated_at?: string;
-  }>> {
+  async getPrompts(): Promise<
+    Array<{
+      key: string;
+      value: string;
+      description?: string;
+      updated_at?: string;
+    }>
+  > {
     return await api.settings.getPrompts();
   },
 
-  async updatePrompts(prompts: Record<string, {
-    value?: string;
-    description?: string;
-  }>): Promise<{ success: boolean; message: string }> {
+  async updatePrompts(
+    prompts: Record<
+      string,
+      {
+        value?: string;
+        description?: string;
+      }
+    >,
+  ): Promise<{ success: boolean; message: string }> {
     return await api.settings.updatePrompts({ prompts });
   },
 
@@ -201,7 +218,7 @@ export const settingsApi = {
 
   async backup(): Promise<{ success: boolean; path?: string }> {
     return await api.settings.backup();
-  }
+  },
 };
 
 // Statistics API
@@ -221,12 +238,12 @@ export const statisticsApi = {
 
   async getMetrics(): Promise<any> {
     return await api.statistics.getMetrics();
-  }
+  },
 };
 
 // Reports API
 export const reportsApi = {
   async sendTestTelegram(): Promise<{ success: boolean }> {
     return await api.reports.sendTestTelegram();
-  }
+  },
 };

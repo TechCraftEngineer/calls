@@ -73,13 +73,14 @@ const config: Config = {
         },
       },
       boxShadow: {
-        "soft": "0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)",
-        "medium": "0 4px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-        "hard": "0 10px 40px rgba(0, 0, 0, 0.15)",
-        "mango": "0 4px 20px rgba(255, 214, 0, 0.3)",
+        soft: "0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)",
+        medium:
+          "0 4px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+        hard: "0 10px 40px rgba(0, 0, 0, 0.15)",
+        mango: "0 4px 20px rgba(255, 214, 0, 0.3)",
       },
       borderRadius: {
-        "xl": "0.75rem",
+        xl: "0.75rem",
         "2xl": "1rem",
         "3xl": "1.5rem",
       },

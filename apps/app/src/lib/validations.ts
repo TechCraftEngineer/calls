@@ -19,26 +19,28 @@ export const loginSchema = z.object({
 export type LoginFormData = z.infer<typeof loginSchema>;
 
 // Схема для создания пользователя
-export const createUserSchema = z.object({
-  username: z
-    .string()
-    .min(1, "Email обязателен")
-    .email("Введите корректный email адрес"),
-  password: z
-    .string()
-    .min(6, "Пароль должен содержать минимум 6 символов")
-    .regex(/[A-Z]/, "Пароль должен содержать хотя бы одну заглавную букву")
-    .regex(/[a-z]/, "Пароль должен содержать хотя бы одну строчную букву")
-    .regex(/[0-9]/, "Пароль должен содержать хотя бы одну цифру"),
-  confirmPassword: z.string(),
-  first_name: z.string().min(1, "Имя обязательно"),
-  last_name: z.string().optional(),
-  internal_numbers: z.string().optional(),
-  mobile_numbers: z.string().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Пароли не совпадают",
-  path: ["confirmPassword"],
-});
+export const createUserSchema = z
+  .object({
+    username: z
+      .string()
+      .min(1, "Email обязателен")
+      .email("Введите корректный email адрес"),
+    password: z
+      .string()
+      .min(6, "Пароль должен содержать минимум 6 символов")
+      .regex(/[A-Z]/, "Пароль должен содержать хотя бы одну заглавную букву")
+      .regex(/[a-z]/, "Пароль должен содержать хотя бы одну строчную букву")
+      .regex(/[0-9]/, "Пароль должен содержать хотя бы одну цифру"),
+    confirmPassword: z.string(),
+    first_name: z.string().min(1, "Имя обязательно"),
+    last_name: z.string().optional(),
+    internal_numbers: z.string().optional(),
+    mobile_numbers: z.string().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Пароли не совпадают",
+    path: ["confirmPassword"],
+  });
 
 export type CreateUserData = z.infer<typeof createUserSchema>;
 
@@ -55,18 +57,20 @@ export const updateUserSchema = z.object({
 export type UpdateUserData = z.infer<typeof updateUserSchema>;
 
 // Схема для смены пароля
-export const changePasswordSchema = z.object({
-  new_password: z
-    .string()
-    .min(6, "Пароль должен содержать минимум 6 символов")
-    .regex(/[A-Z]/, "Пароль должен содержать хотя бы одну заглавную букву")
-    .regex(/[a-z]/, "Пароль должен содержать хотя бы одну строчную букву")
-    .regex(/[0-9]/, "Пароль должен содержать хотя бы одну цифру"),
-  confirm_password: z.string(),
-}).refine((data) => data.new_password === data.confirm_password, {
-  message: "Пароли не совпадают",
-  path: ["confirm_password"],
-});
+export const changePasswordSchema = z
+  .object({
+    new_password: z
+      .string()
+      .min(6, "Пароль должен содержать минимум 6 символов")
+      .regex(/[A-Z]/, "Пароль должен содержать хотя бы одну заглавную букву")
+      .regex(/[a-z]/, "Пароль должен содержать хотя бы одну строчную букву")
+      .regex(/[0-9]/, "Пароль должен содержать хотя бы одну цифру"),
+    confirm_password: z.string(),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Пароли не совпадают",
+    path: ["confirm_password"],
+  });
 
 export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
 
@@ -91,11 +95,17 @@ export const reportSettingsSchema = z.object({
   kpi_base_salary: z.number().min(0),
   kpi_target_bonus: z.number().min(0),
   kpi_target_talk_time_minutes: z.number().min(0),
-  report_daily_time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
+  report_daily_time: z
+    .string()
+    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
   report_weekly_day: z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]),
-  report_weekly_time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
+  report_weekly_time: z
+    .string()
+    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
   report_monthly_day: z.enum(["1", "15", "last"]),
-  report_monthly_time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
+  report_monthly_time: z
+    .string()
+    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
   report_managed_user_ids: z.array(z.number()),
 });
 

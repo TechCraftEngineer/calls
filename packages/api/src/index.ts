@@ -3,7 +3,11 @@
  * oRPC router with typed client. Use createBackendClient for frontend/HTTP consumers.
  */
 
-export { createBackendContext, type AuthLike, type BackendContext } from "./orpc";
-export { backendRouter, type BackendRouter } from "./orpc-root";
-export { createBackendClient, type BackendApiClient } from "./client";
+export { type BackendApiClient, createBackendClient } from "./client";
+export {
+  type AuthLike,
+  type BackendContext,
+  createBackendContext,
+} from "./orpc";
+export { type BackendRouter, backendRouter } from "./orpc-root";
 export { createBackendApiWithContext } from "./server";

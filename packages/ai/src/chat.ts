@@ -1,4 +1,5 @@
 import { openai } from "@ai-sdk/openai";
+import { openrouter } from "@openrouter/ai-sdk-provider";
 import { generateText, streamText } from "ai";
 import { z } from "zod";
 import { createTrace, logChatEvent } from "./tracing";
@@ -7,6 +8,7 @@ import type { ChatBotConfig, ChatBotResponse, ChatMessage } from "./types";
 export function createChatBot(config: ChatBotConfig) {
   const validatedConfig = z
     .object({
+      provider: z.enum(["openai", "openrouter"]).default("openai"),
       model: z.string(),
       apiKey: z.string(),
       temperature: z.number().min(0).max(2),
@@ -15,7 +17,10 @@ export function createChatBot(config: ChatBotConfig) {
     })
     .parse(config);
 
-  const model = openai(validatedConfig.model);
+  const model =
+    validatedConfig.provider === "openrouter"
+      ? openrouter(validatedConfig.model)
+      : openai(validatedConfig.model);
 
   return {
     async sendMessage(messages: ChatMessage[]): Promise<ChatBotResponse> {
@@ -25,6 +30,7 @@ export function createChatBot(config: ChatBotConfig) {
       logChatEvent(traceId, "chat-start", {
         messageCount: messages.length,
         model: validatedConfig.model,
+        provider: validatedConfig.provider,
       });
 
       const formattedMessages = messages.map((msg) => ({
