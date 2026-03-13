@@ -1,4 +1,4 @@
-# @calls/api
+# @calls/backend-api
 
 **Основной API слой проекта.** Содержит oRPC роутеры и типизированный клиент.
 
@@ -7,7 +7,7 @@
 ### HTTP-клиент (frontend, внешние сервисы)
 
 ```ts
-import { createBackendClient } from "@calls/api";
+import { createBackendClient } from "@calls/backend-api";
 
 const api = createBackendClient("http://localhost:8000");
 
@@ -18,7 +18,7 @@ const user = await api.auth.me();
 ### Серверная сторона (REST handlers в backend-server)
 
 ```ts
-import { createBackendContext, createBackendApiWithContext } from "@calls/api";
+import { createBackendContext, createBackendApiWithContext } from "@calls/backend-api";
 
 const ctx = await createBackendContext({ headers: req.headers, auth });
 const api = createBackendApiWithContext(ctx);

@@ -3,7 +3,7 @@
  * Основной API клиент приложения.
  */
 
-import { createBackendClient } from "@calls/backend-api-client";
+import { createBackendClient } from "@calls/api-client";
 
 function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {

@@ -1,5 +1,5 @@
 {
-  "name": "@calls/backend-api-client",
+  "name": "@calls/api-client",
   "private": true,
   "type": "module",
   "exports": {

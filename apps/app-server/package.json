@@ -1,15 +1,15 @@
 {
-  "name": "@calls/backend-server",
+  "name": "@calls/app-server",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun -b watch",
-    "build": "bun -b build",
-    "start": "bun -b start",
+    "dev": "bun watch",
+    "build": "bun build ./src/index.ts --outdir ./dist --target bun",
+    "start": "bun ./dist/index.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@calls/backend-api": "workspace:*",
+    "@calls/api": "workspace:*",
     "@calls/backend-storage": "workspace:*",
     "@orpc/server": "^1.13.6",
     "better-auth": "1.5.5",
