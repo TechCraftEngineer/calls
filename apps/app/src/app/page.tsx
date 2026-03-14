@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@calls/ui";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import AudioPlayerModal from "@/components/features/calls/audio-player-modal";
 import CallList from "@/components/features/calls/call-list";
 import Header from "@/components/layout/header";
@@ -77,6 +77,7 @@ interface MetricsData {
 export default function HomePage() {
   const router = useRouter();
   const { data: session, isPending: sessionPending } = useSession();
+  const hasSessionFetchedRef = useRef(false);
   const [user, setUser] = useState<User | null>(null);
   const [calls, setCalls] = useState<CallWithDetails[]>([]);
   const [_metrics, setMetrics] = useState<MetricsData>({
@@ -183,11 +184,25 @@ export default function HomePage() {
     sessionPending,
   ]);
 
-  // Редирект на signin только когда сессия точно загружена и пользователя нет
+  // Редирект на signin только когда сессия точно загружена и пользователя нет.
+  // useSession может вернуть isPending: false до завершения первого fetch (Better Auth #960),
+  // поэтому ждём либо перехода sessionPending true→false, либо 300ms перед редиректом.
   useEffect(() => {
-    if (!sessionPending && !session?.user) {
-      router.push(paths.auth.signin);
+    if (sessionPending) {
+      hasSessionFetchedRef.current = true;
+      return;
     }
+    if (session?.user) return;
+
+    if (hasSessionFetchedRef.current) {
+      router.push(paths.auth.signin);
+      return;
+    }
+    const timer = setTimeout(() => {
+      hasSessionFetchedRef.current = true;
+      router.push(paths.auth.signin);
+    }, 300);
+    return () => clearTimeout(timer);
   }, [sessionPending, session?.user, router]);
 
   useEffect(() => {

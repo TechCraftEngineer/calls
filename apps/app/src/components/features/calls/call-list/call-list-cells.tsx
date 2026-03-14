@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { TableCell } from "@calls/ui";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { isMobileDevice } from "@/lib/utils";
@@ -124,13 +125,13 @@ export function renderCallListCell({
   switch (colKey) {
     case "type":
       return (
-        <td key={colKey} style={{ width: "120px" }}>
+        <TableCell key={colKey} style={{ width: "120px" }}>
           <span className={`op-badge ${directionClass}`}>{directionLabel}</span>
-        </td>
+        </TableCell>
       );
     case "number":
       return (
-        <td key={colKey}>
+        <TableCell key={colKey}>
           {call.customer_name ? (
             <>
               {renderLinkOrButton(call.customer_name, {
@@ -153,35 +154,35 @@ export function renderCallListCell({
               </div>
             </>
           )}
-        </td>
+        </TableCell>
       );
     case "manager":
       return (
-        <td key={colKey}>
+        <TableCell key={colKey}>
           <span style={{ color: "#555", fontWeight: 500 }}>
             {call.manager_name || call.operator_name || "—"}
           </span>
-        </td>
+        </TableCell>
       );
     case "status":
       return (
-        <td key={colKey}>
+        <TableCell key={colKey}>
           <span
             className={`op-badge ${isMissed ? "badge-red-op" : "badge-green-op"}`}
           >
             {isMissed ? "ПРОПУЩЕН" : "ПРИНЯТ"}
           </span>
-        </td>
+        </TableCell>
       );
     case "date":
       return (
-        <td key={colKey} style={{ whiteSpace: "nowrap", color: "#555" }}>
+        <TableCell key={colKey} style={{ whiteSpace: "nowrap", color: "#555" }}>
           {formatTimestamp(call.timestamp)}
-        </td>
+        </TableCell>
       );
     case "score":
       return (
-        <td key={colKey}>
+        <TableCell key={colKey}>
           {evaluation?.value_score ? (
             <div className="op-tooltip">
               <div
@@ -205,11 +206,11 @@ export function renderCallListCell({
           ) : (
             <span style={{ color: "#FFD600", opacity: 0.3 }}>☆☆☆☆☆</span>
           )}
-        </td>
+        </TableCell>
       );
     case "summary":
       return (
-        <td key={colKey}>
+        <TableCell key={colKey}>
           {transcript?.summary ? (
             <div
               className="op-tooltip"
@@ -240,11 +241,11 @@ export function renderCallListCell({
           ) : (
             <span style={{ color: "#ccc" }}>—</span>
           )}
-        </td>
+        </TableCell>
       );
     case "record":
       return (
-        <td key={colKey} style={{ textAlign: "center" }}>
+        <TableCell key={colKey} style={{ textAlign: "center" }}>
           <div
             style={{
               display: "flex",
@@ -371,13 +372,13 @@ export function renderCallListCell({
               </>
             )}
           </div>
-        </td>
+        </TableCell>
       );
     case "duration":
       return (
-        <td key={colKey} style={{ fontWeight: 600, color: "#444" }}>
+        <TableCell key={colKey} style={{ fontWeight: 600, color: "#444" }}>
           {formatDuration(call.duration_seconds)}
-        </td>
+        </TableCell>
       );
     default:
       return null;

@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import {
   createContext,
@@ -8,11 +9,12 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useState,
+  useMemo,
+  useRef,
 } from "react";
 import { useToast } from "@/components/ui/toast";
-import { workspacesApi } from "@/lib/api-orpc";
 import { useSession } from "@/lib/better-auth";
+import { useORPC } from "@/orpc/react";
 
 interface Workspace {
   id: string;
@@ -33,147 +35,141 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
   undefined,
 );
 
+function setActiveWorkspaceCookie(workspaceId: string) {
+  if (typeof document === "undefined") return;
+  const isSecure = window.location.protocol === "https:";
+  const cookieString = `active_workspace_id=${workspaceId}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${isSecure ? "; Secure" : ""}`;
+  // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
+  document.cookie = cookieString;
+}
+
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { data: session, isPending: sessionPending } = useSession();
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [activeWorkspace, setActiveWorkspaceState] = useState<Workspace | null>(
-    null,
-  );
-  const [loading, setLoading] = useState(true);
-  const [workspacesLoadedOk, setWorkspacesLoadedOk] = useState(false);
-  const [switchingWorkspace, setSwitchingWorkspace] = useState<string | null>(
-    null,
-  );
+  const orpc = useORPC();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const pathname = usePathname();
-  const isAuthenticated = !!session?.user;
   const { showToast } = useToast();
+  const lastRedirectToCreateRef = useRef(0);
 
+  const isAuthenticated = !!session?.user;
+  const shouldFetchWorkspaces = isAuthenticated && !sessionPending;
   const isAuthOrCreateWorkspace =
     pathname?.startsWith(paths.auth.root) ||
     pathname?.startsWith(paths.onboarding.root);
 
-  const loadWorkspaces = useCallback(async () => {
-    try {
-      setLoading(true);
-      setWorkspacesLoadedOk(false);
-      const { workspaces: list, activeWorkspaceId } =
-        await workspacesApi.list();
-      setWorkspaces(list);
-      setWorkspacesLoadedOk(true);
+  const {
+    data: workspacesData,
+    isPending: workspacesPending,
+    isSuccess: workspacesSuccess,
+  } = useQuery({
+    ...orpc.workspaces.list.queryOptions(),
+    enabled: shouldFetchWorkspaces,
+  });
 
-      // Активный воркспейс из БД (источник истины)
-      const current =
-        list.find((w) => w.id === activeWorkspaceId) || list[0] || null;
+  const setActiveMutation = useMutation(
+    orpc.workspaces.setActive.mutationOptions({
+      onSuccess: (_, variables) => {
+        setActiveWorkspaceCookie(variables.workspaceId);
+        queryClient.invalidateQueries({
+          queryKey: orpc.workspaces.list.queryKey(),
+        });
+        router.refresh();
+        showToast("Воркспейс успешно переключен", "success");
+      },
+      onError: () => {
+        showToast(
+          "Не удалось переключить воркспейс. Попробуйте снова.",
+          "error",
+        );
+      },
+    }),
+  );
 
-      if (current) {
-        setActiveWorkspaceState(current);
-        // Cookie нужна для серверных запросов (orpc context)
-        const isSecure = window.location.protocol === "https:";
-        const cookieString = `active_workspace_id=${current.id}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${isSecure ? "; Secure" : ""}`;
-        // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
-        document.cookie = cookieString;
-      }
-    } catch (error) {
-      console.error("Failed to load workspaces:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const workspaces = (workspacesData?.workspaces ?? []) as Workspace[];
+  const activeWorkspaceId = workspacesData?.activeWorkspaceId ?? null;
+  const activeWorkspace = useMemo(() => {
+    if (!activeWorkspaceId) return workspaces[0] ?? null;
+    return (
+      workspaces.find((w: Workspace) => w.id === activeWorkspaceId) ??
+      workspaces[0] ??
+      null
+    );
+  }, [workspaces, activeWorkspaceId]);
 
-  const setActiveWorkspace = async (workspaceId: string) => {
-    // Предотвращаем одновременные переключения
-    if (switchingWorkspace) {
-      return;
-    }
-
-    const ws = workspaces.find((w) => w.id === workspaceId);
-    if (!ws) {
-      showToast("Воркспейс не найден", "error");
-      return;
-    }
-
-    // Если уже активный - ничего не делаем
-    if (activeWorkspace?.id === workspaceId) {
-      return;
-    }
-
-    try {
-      setSwitchingWorkspace(workspaceId);
-
-      // API сохраняет в БД
-      await workspacesApi.setActive(workspaceId);
-
-      // Обновляем состояние только после успешного API вызова
-      setActiveWorkspaceState(ws);
-
-      // Cookie для серверных запросов
-      const isSecure = window.location.protocol === "https:";
-      const cookieString = `active_workspace_id=${workspaceId}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${isSecure ? "; Secure" : ""}`;
-      // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
-      document.cookie = cookieString;
-
-      // Refresh router state
-      router.refresh();
-
-      showToast("Воркспейс успешно переключен", "success");
-    } catch (error) {
-      console.error("Failed to set active workspace:", error);
-      showToast("Не удалось переключить воркспейс. Попробуйте снова.", "error");
-    } finally {
-      setSwitchingWorkspace(null);
-    }
-  };
+  const loading =
+    sessionPending || (shouldFetchWorkspaces && workspacesPending);
 
   useEffect(() => {
-    if (sessionPending) {
-      setLoading(true);
-      setWorkspacesLoadedOk(false);
-      return;
+    if (activeWorkspace) {
+      setActiveWorkspaceCookie(activeWorkspace.id);
     }
-    if (!isAuthenticated) {
-      setWorkspaces([]);
-      setActiveWorkspaceState(null);
-      setWorkspacesLoadedOk(false);
-      setLoading(false);
-      return;
-    }
-    loadWorkspaces();
-  }, [loadWorkspaces, isAuthenticated, sessionPending]);
+  }, [activeWorkspace]);
 
-  // Редирект на создание воркспейса только если API успешно вернул пустой список
-  // (не редиректим при ошибке API — иначе цикл с create-workspace)
+  const setActiveWorkspace = useCallback(
+    async (workspaceId: string) => {
+      const ws = workspaces.find((w: Workspace) => w.id === workspaceId);
+      if (!ws) {
+        showToast("Воркспейс не найден", "error");
+        return;
+      }
+      if (activeWorkspace?.id === workspaceId) return;
+      if (setActiveMutation.isPending) return;
+
+      setActiveMutation.mutate({ workspaceId });
+    },
+    [workspaces, activeWorkspace?.id, setActiveMutation, showToast],
+  );
+
+  const refreshWorkspaces = useCallback(async () => {
+    await queryClient.invalidateQueries({
+      queryKey: orpc.workspaces.list.queryKey(),
+    });
+  }, [queryClient, orpc.workspaces.list]);
+
   useEffect(() => {
     if (
       isAuthenticated &&
       !sessionPending &&
       !loading &&
-      workspacesLoadedOk &&
+      workspacesSuccess &&
       workspaces.length === 0 &&
       !isAuthOrCreateWorkspace
     ) {
+      const now = Date.now();
+      if (now - lastRedirectToCreateRef.current < 2000) return;
+      lastRedirectToCreateRef.current = now;
       router.replace(paths.onboarding.createWorkspace);
     }
   }, [
     isAuthenticated,
     sessionPending,
     loading,
-    workspacesLoadedOk,
+    workspacesSuccess,
     workspaces.length,
     isAuthOrCreateWorkspace,
     router,
   ]);
 
+  const value = useMemo<WorkspaceContextType>(
+    () => ({
+      workspaces,
+      activeWorkspace,
+      loading,
+      setActiveWorkspace,
+      refreshWorkspaces,
+    }),
+    [
+      workspaces,
+      activeWorkspace,
+      loading,
+      setActiveWorkspace,
+      refreshWorkspaces,
+    ],
+  );
+
   return (
-    <WorkspaceContext.Provider
-      value={{
-        workspaces,
-        activeWorkspace,
-        loading,
-        setActiveWorkspace,
-        refreshWorkspaces: loadWorkspaces,
-      }}
-    >
+    <WorkspaceContext.Provider value={value}>
       {children}
     </WorkspaceContext.Provider>
   );

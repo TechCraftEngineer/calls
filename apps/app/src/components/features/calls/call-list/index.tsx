@@ -1,5 +1,6 @@
 "use client";
 
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@calls/ui";
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import api from "@/lib/api";
@@ -273,13 +274,13 @@ export default function CallList({
         )}
       </div>
 
-      <table className="op-table">
-        <thead>
-          <tr>
+      <Table className="op-table">
+        <TableHeader>
+          <TableRow className="border-none">
             {orderedColumns.map(
               (col) =>
                 visibleColumns.includes(col.key) && (
-                  <th
+                  <TableHead
                     key={col.key}
                     draggable
                     onDragStart={(e) => handleDragStart(e, col.key)}
@@ -341,12 +342,12 @@ export default function CallList({
                         </span>
                       )}
                     </div>
-                  </th>
+                  </TableHead>
                 ),
             )}
-          </tr>
-        </thead>
-        <tbody>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {sortedCalls.map((item) => {
             const { call } = item;
             const dateKey = call.timestamp
@@ -355,7 +356,7 @@ export default function CallList({
             const rowBg = getRowBackground(dateKey, dayBackgroundIndex);
 
             return (
-              <tr key={call.id} style={{ backgroundColor: rowBg }}>
+              <TableRow key={call.id} style={{ backgroundColor: rowBg }}>
                 {columnOrder.map((colKey) =>
                   renderCallListCell({
                     item,
@@ -368,11 +369,11 @@ export default function CallList({
                     recommendationsCallId,
                   }),
                 )}
-              </tr>
+              </TableRow>
             );
           })}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
 
       {selectedCallId && (
         <CallDetailModal
