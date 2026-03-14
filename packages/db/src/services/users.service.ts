@@ -95,6 +95,13 @@ export class UsersService {
     return this.usersRepository.updateMobilePhones(userId, mobilePhones);
   }
 
+  async updateUserEmail(
+    userId: string,
+    email: string | null,
+  ): Promise<boolean> {
+    return this.usersRepository.updateEmail(userId, email);
+  }
+
   async updateUserFilters(
     userId: string,
     filterExcludeAnsweringMachine: boolean,

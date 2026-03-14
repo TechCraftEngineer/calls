@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, type ReactNode, useContext, useState, useCallback } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useState,
+} from "react";
 
 interface Toast {
   id: string;
@@ -20,25 +26,28 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = useCallback((
-    message: string, 
-    type: Toast["type"] = "info", 
-    duration: number = 5000
-  ) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const toast: Toast = { id, message, type, duration };
+  const showToast = useCallback(
+    (
+      message: string,
+      type: Toast["type"] = "info",
+      duration: number = 5000,
+    ) => {
+      const id = Math.random().toString(36).substr(2, 9);
+      const toast: Toast = { id, message, type, duration };
 
-    setToasts(prev => [...prev, toast]);
+      setToasts((prev) => [...prev, toast]);
 
-    if (duration > 0) {
-      setTimeout(() => {
-        removeToast(id);
-      }, duration);
-    }
-  }, []);
+      if (duration > 0) {
+        setTimeout(() => {
+          removeToast(id);
+        }, duration);
+      }
+    },
+    [],
+  );
 
   const removeToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
   return (
@@ -54,7 +63,7 @@ function ToastContainer() {
 
   return (
     <div className="fixed top-4 right-4 z-[9999] space-y-2">
-      {toasts.map(toast => (
+      {toasts.map((toast) => (
         <div
           key={toast.id}
           className={`

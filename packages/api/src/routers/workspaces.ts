@@ -1,7 +1,7 @@
+import { isValidUuid, isValidWorkspaceId } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../orpc";
-import { isValidWorkspaceId, isValidUuid } from "@calls/shared";
 
 const slugSchema = z
   .string()
@@ -16,13 +16,15 @@ const createWorkspaceSchema = z.object({
 
 const workspaceIdSchema = z.object({
   workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
-    message: "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
+    message:
+      "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
   }),
 });
 
 const updateWorkspaceSchema = z.object({
   workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
-    message: "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
+    message:
+      "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
   }),
   name: z.string().min(1).max(100).optional(),
   slug: slugSchema.optional(),
@@ -30,7 +32,8 @@ const updateWorkspaceSchema = z.object({
 
 const addMemberSchema = z.object({
   workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
-    message: "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
+    message:
+      "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
   }),
   userId: z.string().refine((id) => isValidUuid(id), {
     message: "Неверный формат userId. Ожидается UUIDv7",
@@ -40,7 +43,8 @@ const addMemberSchema = z.object({
 
 const updateMemberRoleSchema = z.object({
   workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
-    message: "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
+    message:
+      "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
   }),
   userId: z.string().refine((id) => isValidUuid(id), {
     message: "Неверный формат userId. Ожидается UUIDv7",
@@ -50,7 +54,8 @@ const updateMemberRoleSchema = z.object({
 
 const setActiveSchema = z.object({
   workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
-    message: "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
+    message:
+      "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
   }),
 });
 

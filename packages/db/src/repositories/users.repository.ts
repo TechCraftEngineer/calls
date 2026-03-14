@@ -149,6 +149,17 @@ export const usersRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
+  async updateEmail(
+    userId: string,
+    email: string | null,
+  ): Promise<boolean> {
+    const result = await db
+      .update(schema.user)
+      .set({ email: email || undefined })
+      .where(eq(schema.user.id, userId));
+    return (result.rowCount ?? 0) > 0;
+  },
+
   // Legacy methods for removed user settings tables - now handled by Better Auth
   async updateFilters(
     _userId: string,

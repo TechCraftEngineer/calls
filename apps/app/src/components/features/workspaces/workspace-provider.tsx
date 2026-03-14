@@ -10,9 +10,9 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useToast } from "@/components/ui/toast";
 import { workspacesApi } from "@/lib/api-orpc";
 import { useSession } from "@/lib/better-auth";
-import { useToast } from "@/components/ui/toast";
 
 interface Workspace {
   id: string;
@@ -41,7 +41,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   );
   const [loading, setLoading] = useState(true);
   const [workspacesLoadedOk, setWorkspacesLoadedOk] = useState(false);
-  const [switchingWorkspace, setSwitchingWorkspace] = useState<string | null>(null);
+  const [switchingWorkspace, setSwitchingWorkspace] = useState<string | null>(
+    null,
+  );
   const router = useRouter();
   const pathname = usePathname();
   const isAuthenticated = !!session?.user;
@@ -98,7 +100,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
     try {
       setSwitchingWorkspace(workspaceId);
-      
+
       // API сохраняет в БД
       await workspacesApi.setActive(workspaceId);
 
@@ -113,7 +115,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       // Refresh router state
       router.refresh();
-      
+
       showToast("Воркспейс успешно переключен", "success");
     } catch (error) {
       console.error("Failed to set active workspace:", error);

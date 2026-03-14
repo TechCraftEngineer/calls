@@ -11,16 +11,17 @@ import {
   TableHeader,
   TableRow,
 } from "@calls/ui";
+import { useRouter } from "next/navigation";
 import type { User } from "@/lib/auth";
 import type { ManagedUser } from "./types";
+import { compareIds, normalizeId } from "@calls/shared";
 
 interface UsersTableProps {
   users: ManagedUser[];
   currentUser: User | null;
   loading: boolean;
-  onEdit: (user: ManagedUser) => void;
   onChangePassword: (user: ManagedUser) => void;
-  onDelete: (userId: string | number, username: string) => void;
+  onDelete: (userId: string, username: string) => void;
 }
 
 function formatDate(dateStr?: string): string {
@@ -40,10 +41,10 @@ export default function UsersTable({
   users,
   currentUser,
   loading,
-  onEdit,
   onChangePassword,
   onDelete,
 }: UsersTableProps) {
+  const router = useRouter();
   return (
     <Card className="card p-0! overflow-hidden">
       <CardContent className="p-0!">
@@ -96,7 +97,7 @@ export default function UsersTable({
                       <Button
                         variant="outline"
                         className="ghost-btn h-8 text-xs px-4 bg-white border-[#DDD] text-[#333] font-semibold"
-                        onClick={() => onEdit(u)}
+                        onClick={() => router.push(`/users/${u.id}/edit`)}
                       >
                         Редактировать
                       </Button>
@@ -108,7 +109,7 @@ export default function UsersTable({
                         Пароль
                       </Button>
                       <div className="w-20 flex justify-end items-center">
-                        {String(currentUser?.id) === String(u.id) ? (
+                        {compareIds(currentUser?.id, u.id) ? (
                           <span className="text-[11px] text-[#999] font-semibold uppercase tracking-wide">
                             ЭТО ВЫ
                           </span>
@@ -116,9 +117,7 @@ export default function UsersTable({
                           <Button
                             variant="ghost"
                             className="h-8 text-xs p-0 bg-transparent border-none text-[#FF5252] font-semibold hover:opacity-70"
-                            onClick={() =>
-                              onDelete(u.id, String(u.username ?? ""))
-                            }
+                            onClick={() => onDelete(normalizeId(u.id), String(u.username ?? ""))}
                           >
                             Удалить
                           </Button>

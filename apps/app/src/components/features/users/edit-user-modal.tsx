@@ -3,8 +3,8 @@
 import { Input } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { useORPC } from "@/orpc/react";
 import { useToast } from "@/components/ui/toast";
+import { useORPC } from "@/orpc/react";
 import {
   type EditUserForm,
   formFieldWrap,
@@ -18,7 +18,7 @@ import {
 interface EditUserModalProps {
   user: ManagedUser;
   onClose: () => void;
-  onSubmit: (userId: string | number, form: EditUserForm) => Promise<void>;
+  onSubmit: (userId: string, form: EditUserForm) => Promise<void>;
   onRefresh: () => void;
 }
 
@@ -93,16 +93,40 @@ export default function EditUserModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    
+    // Валидация формы
     if (!form.givenName.trim()) {
       setError("Укажите имя.");
       return;
     }
+    
+    // Валидация email если указан
+    if (form.email && form.email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(form.email.trim())) {
+        setError("Укажите корректный email адрес.");
+        return;
+      }
+    }
+    
+    // Валидация числовых полей
+    if (form.filter_min_duration < 0) {
+      setError("Минимальная длительность звонка не может быть отрицательной.");
+      return;
+    }
+    
+    if (form.filter_min_replicas < 0) {
+      setError("Минимальное количество реплик не может быть отрицательным.");
+      return;
+    }
+    
     setSubmitting(true);
     try {
-      await onSubmit(editUser.id, form);
+      await onSubmit(String(editUser.id), form);
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Ошибка при сохранении");
+      const errorMessage = err instanceof Error ? err.message : "Ошибка при сохранении";
+      setError(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -115,7 +139,8 @@ export default function EditUserModal({
           window.open(res.url, "_blank");
         }
       },
-      onError: () => showToast("Ошибка при создании ссылки для Telegram", "error"),
+      onError: () =>
+        showToast("Ошибка при создании ссылки для Telegram", "error"),
     }),
   );
 
@@ -625,12 +650,13 @@ export default function EditUserModal({
                 <Input
                   type="number"
                   value={form[key]}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
                     setForm((f) => ({
                       ...f,
-                      [key]: parseFloat(e.target.value) || 0,
+                      [key]: isNaN(value) ? 0 : Math.max(0, value),
                     }))
-                  }
+                  }}
                   className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
                 />
               </div>
@@ -688,12 +714,13 @@ export default function EditUserModal({
                 type="number"
                 min={0}
                 value={form.filter_min_duration ?? ""}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const value = parseInt(e.target.value, 10);
                   setForm((f) => ({
                     ...f,
-                    filter_min_duration: parseInt(e.target.value, 10) || 0,
+                    filter_min_duration: isNaN(value) ? 0 : Math.max(0, value),
                   }))
-                }
+                }}
                 className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
                 placeholder="0 — не исключать"
               />
@@ -713,12 +740,13 @@ export default function EditUserModal({
                 type="number"
                 min={0}
                 value={form.filter_min_replicas ?? ""}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const value = parseInt(e.target.value, 10);
                   setForm((f) => ({
                     ...f,
-                    filter_min_replicas: parseInt(e.target.value, 10) || 0,
+                    filter_min_replicas: isNaN(value) ? 0 : Math.max(0, value),
                   }))
-                }
+                }}
                 className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
                 placeholder="0 — не исключать"
               />

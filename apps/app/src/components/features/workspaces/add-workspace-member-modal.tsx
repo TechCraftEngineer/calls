@@ -44,19 +44,21 @@ export default function AddWorkspaceMemberModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    
+
     if (!selectedUserId) {
       setError("Выберите пользователя");
       return;
     }
-    
+
     // Проверяем, что пользователь еще не является участником
-    const isAlreadyMember = existingMembers.some(member => member.id === selectedUserId);
+    const isAlreadyMember = existingMembers.some(
+      (member) => member.id === selectedUserId,
+    );
     if (isAlreadyMember) {
       setError("Этот пользователь уже является участником воркспейса");
       return;
     }
-    
+
     setSubmitting(true);
     try {
       await onSubmit(selectedUserId, selectedRole);

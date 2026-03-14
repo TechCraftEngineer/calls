@@ -191,8 +191,8 @@ export const workspacesRepository = {
         schema.workspaceMembers,
         and(
           eq(schema.workspaceMembers.userId, schema.user.id),
-          eq(schema.workspaceMembers.workspaceId, workspaceId)
-        )
+          eq(schema.workspaceMembers.workspaceId, workspaceId),
+        ),
       )
       .where(isNull(schema.workspaceMembers.userId))
       .orderBy(schema.user.name);

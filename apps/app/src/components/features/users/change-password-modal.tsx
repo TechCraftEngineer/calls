@@ -15,7 +15,7 @@ import {
 interface ChangePasswordModalProps {
   user: ManagedUser;
   onClose: () => void;
-  onSubmit: (userId: string | number, form: PasswordForm) => Promise<void>;
+  onSubmit: (userId: string, form: PasswordForm) => Promise<void>;
 }
 
 export default function ChangePasswordModal({
@@ -43,7 +43,7 @@ export default function ChangePasswordModal({
     }
     setSubmitting(true);
     try {
-      await onSubmit(user.id, form);
+      await onSubmit(String(user.id), form);
       onClose();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Ошибка при смене пароля");

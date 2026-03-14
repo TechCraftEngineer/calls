@@ -15,13 +15,13 @@ import {
 } from "@calls/ui";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { useDebounce } from "@/hooks/use-debounce";
-import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import AudioPlayerModal from "@/components/features/calls/audio-player-modal";
 import CallList from "@/components/features/calls/call-list";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import CustomDropdown from "@/components/ui/custom-dropdown";
+import { PAGINATION_CONSTANTS } from "@/constants/pagination";
+import { useDebounce } from "@/hooks/use-debounce";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { useSession } from "@/lib/better-auth";
@@ -102,7 +102,10 @@ export default function HomePage() {
     value: [] as number[],
     operator: [] as string[],
   });
-  const debouncedFilters = useDebounce(filters, PAGINATION_CONSTANTS.SEARCH_DEBOUNCE_MS);
+  const debouncedFilters = useDebounce(
+    filters,
+    PAGINATION_CONSTANTS.SEARCH_DEBOUNCE_MS,
+  );
   const [activeAudio, setActiveAudio] = useState<{
     filename: string;
     number: string;
@@ -120,11 +123,21 @@ export default function HomePage() {
         q: debouncedFilters.q || undefined,
         date_from: debouncedFilters.date_from || undefined,
         date_to: debouncedFilters.date_to || undefined,
-        direction: debouncedFilters.direction !== "all" ? debouncedFilters.direction : undefined,
+        direction:
+          debouncedFilters.direction !== "all"
+            ? debouncedFilters.direction
+            : undefined,
         manager: debouncedFilters.manager || undefined,
-        status: debouncedFilters.status !== "all" ? debouncedFilters.status : undefined,
-        value: debouncedFilters.value?.length ? debouncedFilters.value : undefined,
-        operator: debouncedFilters.operator?.length ? debouncedFilters.operator : undefined,
+        status:
+          debouncedFilters.status !== "all"
+            ? debouncedFilters.status
+            : undefined,
+        value: debouncedFilters.value?.length
+          ? debouncedFilters.value
+          : undefined,
+        operator: debouncedFilters.operator?.length
+          ? debouncedFilters.operator
+          : undefined,
       };
       const [currentUser, result] = await Promise.all([
         getCurrentUser(),
@@ -145,7 +158,8 @@ export default function HomePage() {
       setPagination({
         total: (result.pagination?.total ?? 0) as number,
         page: (result.pagination?.page ?? 1) as number,
-        per_page: (result.pagination?.per_page ?? PAGINATION_CONSTANTS.DEFAULT_PER_PAGE) as number,
+        per_page: (result.pagination?.per_page ??
+          PAGINATION_CONSTANTS.DEFAULT_PER_PAGE) as number,
         total_pages: (result.pagination?.total_pages ?? 0) as number,
       });
     } catch (error: unknown) {
@@ -329,7 +343,12 @@ export default function HomePage() {
                   </Button>
 
                   {Array.from(
-                    { length: Math.min(pagination.total_pages, PAGINATION_CONSTANTS.MAX_VISIBLE_PAGES) },
+                    {
+                      length: Math.min(
+                        pagination.total_pages,
+                        PAGINATION_CONSTANTS.MAX_VISIBLE_PAGES,
+                      ),
+                    },
                     (_, i) => i + 1,
                   ).map((p) => (
                     <Button
@@ -346,7 +365,8 @@ export default function HomePage() {
                     </Button>
                   ))}
 
-                  {pagination.total_pages > PAGINATION_CONSTANTS.MAX_VISIBLE_PAGES && (
+                  {pagination.total_pages >
+                    PAGINATION_CONSTANTS.MAX_VISIBLE_PAGES && (
                     <>
                       <span className="text-[#999] text-[13px]">...</span>
                       <Button

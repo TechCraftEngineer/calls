@@ -8,10 +8,10 @@ import CallSidebar from "@/components/features/calls/call-sidebar";
 import { TranscriptCard } from "@/components/features/calls/transcript-card";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
+import { useToast } from "@/components/ui/toast";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
-import { useToast } from "@/components/ui/toast";
 import type {
   CallDetail,
   EvaluationDetail,

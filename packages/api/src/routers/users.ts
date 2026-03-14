@@ -43,6 +43,7 @@ const userUpdateSchema = z.object({
   familyName: z.string().optional().nullable(),
   internalExtensions: z.string().optional().nullable(),
   mobilePhones: z.string().optional().nullable(),
+  email: z.string().optional().nullable(),
   filter_exclude_answering_machine: z.boolean().optional(),
   filter_min_duration: z.number().optional(),
   filter_min_replicas: z.number().optional(),
@@ -191,6 +192,13 @@ export const usersRouter = {
           await usersService.updateUserMobilePhones(
             input.user_id,
             d.mobilePhones,
+          );
+        }
+
+        if (d.email !== undefined) {
+          await usersService.updateUserEmail(
+            input.user_id,
+            d.email,
           );
         }
 
