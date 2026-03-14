@@ -2,6 +2,7 @@
  * Settings service - handles business logic for application settings
  */
 
+import { decrypt, encrypt } from "../lib/encryption";
 import { validateMegafonSettings } from "../lib/validation";
 import type { PromptsRepository } from "../repositories/prompts.repository";
 import type { SystemRepository } from "../repositories/system.repository";
@@ -24,7 +25,12 @@ export class SettingsService {
   async getActiveMegafonFtpIntegrations(): Promise<
     Array<{ workspaceId: string; host: string; user: string; password: string }>
   > {
-    return this.workspaceIntegrationsRepository.listActiveMegafonFtp();
+    const rows =
+      await this.workspaceIntegrationsRepository.listActiveMegafonFtp();
+    return rows.map((r) => ({
+      ...r,
+      password: decrypt(r.password),
+    }));
   }
 
   async getMegafonFtpSettings(workspaceId: string): Promise<{
@@ -50,7 +56,8 @@ export class SettingsService {
     };
     const host = config?.host ?? null;
     const user = config?.user ?? null;
-    const password = config?.password ?? null;
+    const encryptedPassword = config?.password ?? null;
+    const password = encryptedPassword ? decrypt(encryptedPassword) : null;
 
     if (host && user && password) {
       try {
@@ -113,11 +120,12 @@ export class SettingsService {
     workspaceId: string,
     username: string = "system",
   ): Promise<boolean> {
+    const encryptedPassword = password ? encrypt(password) : "";
     const result = await this.workspaceIntegrationsRepository.upsert(
       workspaceId,
       MEGAFON_FTP,
       enabled,
-      { host, user, password },
+      { host, user, password: encryptedPassword },
     );
 
     if (result) {

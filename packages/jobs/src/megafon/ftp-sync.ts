@@ -120,21 +120,60 @@ export async function syncMegafonFtp(
     logger.info("Успешное подключение к FTP");
 
     const baseRemoteDir = "recordings";
-    const remoteDirs: string[] = dateStr
-      ? [dateStr]
-      : [0, 1].map((i) => {
-          const d = new Date();
-          d.setDate(d.getDate() - i);
-          return d.toISOString().slice(0, 10);
-        });
+    const DATE_DIR_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-    for (const dateDir of remoteDirs) {
-      const remotePath = `${baseRemoteDir}/${dateDir}`;
+    // Сначала получаем список папок в recordings
+    let dateDirs: string[] = [];
+    try {
+      await Promise.race([
+        client.cd(baseRemoteDir),
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Timeout changing directory")),
+            OPERATION_TIMEOUT,
+          ),
+        ),
+      ]);
+
+      const dirList = (await Promise.race([
+        client.list(),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Timeout listing directory")),
+            OPERATION_TIMEOUT,
+          ),
+        ),
+      ])) as { name: string; isDirectory?: boolean }[];
+
+      dateDirs = dirList
+        .filter((f) => (f.isDirectory ?? true) && DATE_DIR_PATTERN.test(f.name))
+        .map((f) => f.name);
+
+      if (dateStr) {
+        dateDirs = dateDirs.filter((d) => d === dateStr);
+      } else {
+        // Без явной даты — только последние 2 дня
+        dateDirs.sort().reverse();
+        dateDirs = dateDirs.slice(0, 2);
+      }
+
+      logger.info("Найдены папки с записями", { dateDirs });
+    } catch (e) {
+      const errorMsg = `Не удалось прочитать ${baseRemoteDir}: ${e instanceof Error ? e.message : String(e)}`;
+      result.errors.push(errorMsg);
+      logger.error("Ошибка чтения директории FTP", {
+        path: baseRemoteDir,
+        error: e instanceof Error ? e.message : String(e),
+      });
+      return result;
+    }
+
+    for (const dateDir of dateDirs) {
       let files: { name: string }[] = [];
 
       try {
         await Promise.race([
-          client.cd(remotePath),
+          client.cd(dateDir),
           new Promise((_, reject) =>
             setTimeout(
               () => reject(new Error("Timeout changing directory")),
@@ -155,6 +194,7 @@ export async function syncMegafonFtp(
 
         files = list.filter((f: { name: string }) => f.name.endsWith(".mp3"));
       } catch (e) {
+        const remotePath = `${baseRemoteDir}/${dateDir}`;
         const errorMsg = `Не удалось прочитать ${remotePath}: ${e instanceof Error ? e.message : String(e)}`;
         result.errors.push(errorMsg);
         logger.error("Ошибка чтения директории FTP", {
@@ -298,6 +338,9 @@ export async function syncMegafonFtp(
           });
         }
       }
+
+      // Возврат в recordings для следующей итерации
+      await client.cd("..");
     }
   } finally {
     client.close();
