@@ -42,19 +42,17 @@ export const calls = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => ({
-    timestampIdx: index("calls_timestamp_idx").on(table.timestamp),
-    internalNumberIdx: index("calls_internal_number_idx").on(
-      table.internalNumber,
-    ),
-    workspaceIdIdx: index("calls_workspace_id_idx").on(table.workspaceId),
-    workspaceTimestampIdx: index("calls_workspace_timestamp_idx").on(
+  (table) => [
+    index("calls_timestamp_idx").on(table.timestamp),
+    index("calls_internal_number_idx").on(table.internalNumber),
+    index("calls_workspace_id_idx").on(table.workspaceId),
+    index("calls_workspace_timestamp_idx").on(
       table.workspaceId,
       table.timestamp,
     ),
-    numberIdx: index("calls_number_idx").on(table.number),
-    statusIdx: index("calls_status_idx").on(table.status),
-  }),
+    index("calls_number_idx").on(table.number),
+    index("calls_status_idx").on(table.status),
+  ],
 );
 
 // Transcripts table - транскрипты звонков
@@ -77,11 +75,11 @@ export const transcripts = pgTable(
     callTopic: text("call_topic"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
   },
-  (table) => ({
-    callIdIdx: index("transcripts_call_id_idx").on(table.callId),
-    callTypeIdx: index("transcripts_call_type_idx").on(table.callType),
-    sentimentIdx: index("transcripts_sentiment_idx").on(table.sentiment),
-  }),
+  (table) => [
+    index("transcripts_call_id_idx").on(table.callId),
+    index("transcripts_call_type_idx").on(table.callType),
+    index("transcripts_sentiment_idx").on(table.sentiment),
+  ],
 );
 
 // Call evaluations table - оценки качества звонков
@@ -105,13 +103,9 @@ export const callEvaluations = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => ({
-    callIdIdx: index("call_evaluations_call_id_idx").on(table.callId),
-    valueScoreIdx: index("call_evaluations_value_score_idx").on(
-      table.valueScore,
-    ),
-    managerScoreIdx: index("call_evaluations_manager_score_idx").on(
-      table.managerScore,
-    ),
-  }),
+  (table) => [
+    index("call_evaluations_call_id_idx").on(table.callId),
+    index("call_evaluations_value_score_idx").on(table.valueScore),
+    index("call_evaluations_manager_score_idx").on(table.managerScore),
+  ],
 );

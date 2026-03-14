@@ -1,22 +1,23 @@
 {
   "name": "@calls/shared",
   "version": "0.1.0",
-  "description": "Shared utilities and types",
-  "main": "dist/index.js",
-  "types": "dist/index.d.mts",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.js"
-    }
+    ".": "./src/index.ts"
   },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch"
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
+    "clean": "rm -rf *.tsbuildinfo .turbo dist",
+    "dev": "bun run build:watch"
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
-    "tsup": "^8.0.0",
-    "typescript": "^5.0.0"
+    "tsdown": "^0.21.2",
+    "typescript": "5.9.3"
   }
 }

@@ -19,14 +19,11 @@ export const prompts = pgTable(
     description: text("description"),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => ({
-    keyIdx: index("prompts_key_idx").on(table.key),
-    workspaceIdIdx: index("prompts_workspace_id_idx").on(table.workspaceId),
-    workspaceKeyIdx: index("prompts_workspace_key_idx").on(
-      table.workspaceId,
-      table.key,
-    ),
-  }),
+  (table) => [
+    index("prompts_key_idx").on(table.key),
+    index("prompts_workspace_id_idx").on(table.workspaceId),
+    index("prompts_workspace_key_idx").on(table.workspaceId, table.key),
+  ],
 );
 
 // Activity log table - журнал событий
@@ -42,15 +39,13 @@ export const activityLog = pgTable(
     message: text("message").notNull(),
     actor: text("actor").notNull(),
   },
-  (table) => ({
-    timestampIdx: index("activity_log_timestamp_idx").on(table.timestamp),
-    workspaceIdIdx: index("activity_log_workspace_id_idx").on(
-      table.workspaceId,
-    ),
-    workspaceTimestampIdx: index("activity_log_workspace_timestamp_idx").on(
+  (table) => [
+    index("activity_log_timestamp_idx").on(table.timestamp),
+    index("activity_log_workspace_id_idx").on(table.workspaceId),
+    index("activity_log_workspace_timestamp_idx").on(
       table.workspaceId,
       table.timestamp,
     ),
-    levelIdx: index("activity_log_level_idx").on(table.level),
-  }),
+    index("activity_log_level_idx").on(table.level),
+  ],
 );

@@ -19,7 +19,6 @@
     "@hookform/resolvers": "^5.2.2",
     "@orpc/client": "^1.13.7",
     "@t3-oss/env-nextjs": "0.13.10",
-    "@types/sanitize-html": "^2.16.1",
     "axios": "^1.13.6",
     "better-auth": "1.5.5",
     "next": "^16.1.6",
@@ -34,6 +33,8 @@
     "@types/node": "25.5.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "@types/sanitize-html": "^2.16.1",
+
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3"
   }

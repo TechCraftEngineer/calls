@@ -34,9 +34,7 @@ export const workspaces = pgTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => ({
-    slugIdx: index("workspaces_slug_idx").on(table.slug),
-  }),
+  (table) => [index("workspaces_slug_idx").on(table.slug)],
 );
 
 export const workspaceMembers = pgTable(
@@ -52,18 +50,16 @@ export const workspaceMembers = pgTable(
     role: workspaceMemberRole("role").notNull().default("member"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => ({
-    workspaceIdIdx: index("workspace_members_workspace_id_idx").on(
-      table.workspaceId,
-    ),
-    userIdIdx: index("workspace_members_user_id_idx").on(table.userId),
-    workspaceUserUnique: unique("workspace_members_workspace_user_unique").on(
+  (table) => [
+    index("workspace_members_workspace_id_idx").on(table.workspaceId),
+    index("workspace_members_user_id_idx").on(table.userId),
+    unique("workspace_members_workspace_user_unique").on(
       table.workspaceId,
       table.userId,
     ),
-    workspaceUserIdx: index("workspace_members_workspace_user_idx").on(
+    index("workspace_members_workspace_user_idx").on(
       table.workspaceId,
       table.userId,
     ),
-  }),
+  ],
 );

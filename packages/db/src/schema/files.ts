@@ -43,16 +43,13 @@ export const files = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => ({
-    workspaceIdIdx: index("files_workspace_id_idx").on(table.workspaceId),
-    fileTypeIdx: index("files_file_type_idx").on(table.fileType),
-    storageKeyIdx: index("files_storage_key_idx").on(table.storageKey),
-    workspaceFileTypeIdx: index("files_workspace_file_type_idx").on(
-      table.workspaceId,
-      table.fileType,
-    ),
-    createdAtIdx: index("files_created_at_idx").on(table.createdAt),
-  }),
+  (table) => [
+    index("files_workspace_id_idx").on(table.workspaceId),
+    index("files_file_type_idx").on(table.fileType),
+    index("files_storage_key_idx").on(table.storageKey),
+    index("files_workspace_file_type_idx").on(table.workspaceId, table.fileType),
+    index("files_created_at_idx").on(table.createdAt),
+  ],
 );
 
 export type File = typeof files.$inferSelect;
