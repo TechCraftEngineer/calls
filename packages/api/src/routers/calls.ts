@@ -1,5 +1,6 @@
 import { createChatBot } from "@calls/ai";
 import type { callsService, promptsService } from "@calls/db";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure, workspaceProcedure } from "../orpc";
 
@@ -271,10 +272,12 @@ export const callsRouter = {
     .handler(async ({ input, context }) => {
       const call = await context.callsService.getCall(input.call_id);
       if (!call) {
-        throw new Error("Call not found");
+        throw new ORPCError("NOT_FOUND", { message: "Звонок не найден" });
       }
-      if (call.workspace_id !== context.workspaceId) {
-        throw new Error("Call not found");
+      if (call.workspaceId !== context.workspaceId) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому звонку",
+        });
       }
       const transcript = await context.callsService.getTranscriptByCallId(
         input.call_id,
@@ -297,8 +300,10 @@ export const callsRouter = {
     .input(z.object({ call_id: z.string() }))
     .handler(async ({ input, context }) => {
       const call = await context.callsService.getCall(input.call_id);
-      if (call && call.workspace_id !== context.workspaceId) {
-        throw new Error("Call not found");
+      if (call && call.workspaceId !== context.workspaceId) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому звонку",
+        });
       }
       return generateRecommendations(
         input.call_id,
@@ -312,18 +317,25 @@ export const callsRouter = {
     .input(z.object({ call_id: z.string() }))
     .handler(async ({ input, context }) => {
       const call = await context.callsService.getCall(input.call_id);
-      if (!call) throw new Error("Call not found");
-      if (call.workspace_id !== context.workspaceId) {
-        throw new Error("Call not found");
+      if (!call) {
+        throw new ORPCError("NOT_FOUND", { message: "Звонок не найден" });
       }
-      if (!(await context.callsService.deleteCall(input.call_id)))
-        throw new Error("Failed to delete call");
+      if (call.workspaceId !== context.workspaceId) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому звонку",
+        });
+      }
+      if (!(await context.callsService.deleteCall(input.call_id))) {
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Не удалось удалить звонок",
+        });
+      }
       await context.systemRepository.addActivityLog(
         "info",
         `Deleted call #${input.call_id}`,
         (context.user as Record<string, unknown>).username as string,
       );
-      return { success: true, message: `Call #${input.call_id} deleted` };
+      return { success: true, message: `Звонок #${input.call_id} удалён` };
     }),
 };
 

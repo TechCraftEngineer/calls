@@ -21,6 +21,8 @@ interface EvaluationDetail {
   value_explanation: string;
   manager_score?: number | null;
   manager_feedback?: string | null;
+  manager_quality_score?: number | null;
+  manager_quality_explanation?: string | null;
   is_quality_analyzable?: boolean | null;
   not_analyzable_reason?: string | null;
   manager_recommendations?: string[];
@@ -69,12 +71,10 @@ export default function CallSidebar({
   onGenerateRecommendations,
 }: CallSidebarProps) {
   const qualityScore =
-    evaluation?.manager_score ??
-    (evaluation as any)?.manager_quality_score ??
-    0;
+    evaluation?.manager_score ?? evaluation?.manager_quality_score ?? 0;
   const qualityFeedback =
     evaluation?.manager_feedback ??
-    (evaluation as any)?.manager_quality_explanation ??
+    evaluation?.manager_quality_explanation ??
     "";
   const qualityNotAnalyzableReason = evaluation?.not_analyzable_reason;
   const isQualityAnalyzable = evaluation?.is_quality_analyzable;

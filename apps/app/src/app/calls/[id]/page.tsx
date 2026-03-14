@@ -39,7 +39,9 @@ export default function CallDetailPage() {
       }
       setUser(currentUser);
 
-      const result = await api.calls.get({ call_id: Number(id) });
+      const callId = Array.isArray(id) ? id[0] : id;
+      if (!callId) return;
+      const result = await api.calls.get({ call_id: callId });
       setCall(result.call as CallDetail);
       setTranscript((result.transcript ?? null) as TranscriptDetail | null);
       setEvaluation((result.evaluation ?? null) as EvaluationDetail | null);
@@ -62,11 +64,12 @@ export default function CallDetailPage() {
   }, [loadData]);
 
   const handleGenerateRecommendations = async () => {
-    if (!id || isGeneratingRecommendations) return;
+    const callId = Array.isArray(id) ? id[0] : id;
+    if (!callId || isGeneratingRecommendations) return;
     try {
       setIsGeneratingRecommendations(true);
       const result = await api.calls.generateRecommendations({
-        call_id: Number(id),
+        call_id: callId,
       });
       const recs = (result as { recommendations?: string[] })?.recommendations;
       setEvaluation((prev) => {
@@ -94,13 +97,14 @@ export default function CallDetailPage() {
   };
 
   const handleRestartAnalysis = async () => {
-    if (!call || restarting) return;
+    const callId = Array.isArray(id) ? id[0] : id;
+    if (!call || !callId || restarting) return;
     try {
       setRestarting(true);
 
       // Шаг 1: Транскрипция с выбранной моделью
       const transcribeResponse = await restPost<{ success?: boolean }>(
-        `/calls/${id}/transcribe?model=${selectedModel}`,
+        `/calls/${callId}/transcribe?model=${selectedModel}`,
       );
 
       if (!transcribeResponse?.success) {
@@ -109,7 +113,7 @@ export default function CallDetailPage() {
 
       // Шаг 2: Переоценка звонка
       try {
-        await restPost(`/calls/${id}/evaluate`);
+        await restPost(`/calls/${callId}/evaluate`);
       } catch (evalError) {
         console.warn(
           "Evaluation failed, but transcription succeeded:",

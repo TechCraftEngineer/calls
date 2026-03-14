@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, Input, Textarea } from "@calls/ui";
 import type { PromptSectionProps } from "./types";
 
 export default function PromptSection({
-  key: promptKey,
   title,
   prompt,
   onPromptChange,
 }: PromptSectionProps) {
+  const promptKey = prompt.key;
   const extractVariables = (text: string): string[] => {
     const matches = text.match(/\{[^}]+\}/g);
     return matches ? [...new Set(matches)] : [];

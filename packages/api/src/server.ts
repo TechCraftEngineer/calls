@@ -30,15 +30,15 @@ export function createBackendApiWithContext(ctx: BackendContext) {
     calls: {
       list: (input: Parameters<typeof callProc>[2]) =>
         callProc(backendRouter.calls.list as ProcedureWithCallable, ctx, input),
-      get: (input: { call_id: number }) =>
+      get: (input: { call_id: string }) =>
         callProc(backendRouter.calls.get as ProcedureWithCallable, ctx, input),
-      generateRecommendations: (input: { call_id: number }) =>
+      generateRecommendations: (input: { call_id: string }) =>
         callProc(
           backendRouter.calls.generateRecommendations as ProcedureWithCallable,
           ctx,
           input,
         ),
-      delete: (input: { call_id: number }) =>
+      delete: (input: { call_id: string }) =>
         callProc(
           backendRouter.calls.delete as ProcedureWithCallable,
           ctx,

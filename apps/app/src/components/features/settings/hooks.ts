@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { toast } from "@calls/ui";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import api from "@/lib/api";
@@ -81,7 +82,7 @@ export function useSettings() {
       );
 
       if (!ftpValidation.isValid) {
-        alert(`Ошибка валидации FTP:\n${ftpValidation.errors.join("\n")}`);
+        toast.error(`Ошибка валидации FTP: ${ftpValidation.errors.join(". ")}`);
         return;
       }
 
@@ -108,11 +109,15 @@ export function useSettings() {
       );
 
       await api.settings.updatePrompts(updates);
-      alert("Настройки успешно сохранены");
+      toast.success("Настройки успешно сохранены");
       await loadSettings();
     } catch (error: unknown) {
       console.error("Failed to save settings:", error);
-      alert("Ошибка при сохранении настроек");
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Ошибка при сохранении настроек";
+      toast.error(msg);
     } finally {
       setState((prev) => ({ ...prev, saving: false }));
     }
@@ -124,12 +129,12 @@ export function useSettings() {
       setState((prev) => ({ ...prev, backupLoading: true }));
       const res = await api.settings.backup();
       const path = res?.path ?? "";
-      alert(`Резервная копия создана.\n\nПуть на сервере: ${path}`);
+      toast.success(`Резервная копия создана. Путь на сервере: ${path}`);
     } catch (error: unknown) {
       const msg =
         (error instanceof Error ? error.message : String(error)) ||
         "Ошибка при создании копии";
-      alert(typeof msg === "string" ? msg : JSON.stringify(msg));
+      toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
     } finally {
       setState((prev) => ({ ...prev, backupLoading: false }));
     }

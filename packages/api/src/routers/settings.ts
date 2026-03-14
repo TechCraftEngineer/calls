@@ -1,4 +1,5 @@
 import { promptsService, settingsService, systemRepository } from "@calls/db";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure, workspaceProcedure } from "../orpc";
 
@@ -87,7 +88,9 @@ const settingsUpdateSchema = z
     );
 
     if (hasAnyValue && !hasAllValues) {
-      throw new Error("Все поля FTP должны быть заполнены");
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Все поля FTP должны быть заполнены",
+      });
     }
 
     return true;
@@ -160,9 +163,9 @@ export const settingsRouter = {
               password: input.megafon_ftp_password,
             });
           } catch (error) {
-            throw new Error(
-              `Ошибка валидации FTP: ${(error as Error).message}`,
-            );
+            throw new ORPCError("BAD_REQUEST", {
+              message: `Ошибка валидации FTP: ${(error as Error).message}`,
+            });
           }
 
           // Используем новый сервис для обновления FTP настроек

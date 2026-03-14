@@ -98,6 +98,10 @@ export default async function createNextConfig(): Promise<NextConfig> {
           source: "/api/inngest",
           destination: `${appServerUrl}/api/inngest`,
         },
+        {
+          source: "/api/calls/:path*",
+          destination: `${appServerUrl}/api/calls/:path*`,
+        },
       ];
     },
   };

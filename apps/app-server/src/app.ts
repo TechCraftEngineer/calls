@@ -23,6 +23,7 @@ import { corsOrigin, getRecordsDir } from "./config";
 import { rateLimitMap } from "./lib/rate-limit";
 import { cleanupAllCaches, cleanupSessionCache } from "./lib/session-cache";
 import { createAuthRoutes } from "./routes/auth";
+import { createCallsRoutes } from "./routes/calls";
 
 const backendLogger = createLogger("backend-server");
 
@@ -115,6 +116,7 @@ export function createApp() {
 
   // REST routes
   app.route("/api/auth", createAuthRoutes(auth));
+  app.route("", createCallsRoutes(auth));
 
   // Better Auth handler for remaining /api/auth/* endpoints
   app.on(["GET", "POST"], "/api/auth/*", (c) => {

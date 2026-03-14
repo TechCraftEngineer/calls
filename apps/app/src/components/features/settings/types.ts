@@ -29,7 +29,6 @@ export interface IntegrationsSectionProps {
 }
 
 export interface PromptSectionProps {
-  key: string;
   title: string;
   prompt: Prompt;
   onPromptChange: (

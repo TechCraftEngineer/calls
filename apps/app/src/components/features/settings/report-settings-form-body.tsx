@@ -29,7 +29,7 @@ export default function ReportSettingsFormBody({
   const [sendTestLoading, setSendTestLoading] = useState(false);
   const [sendTestMessage, setSendTestMessage] = useState("");
 
-  const canSendTest = form.telegram_chat_id?.trim() && !sendTestLoading;
+  const canSendTest = form.telegramChatId?.trim() && !sendTestLoading;
 
   return (
     <Card className="card mt-6">
@@ -47,11 +47,11 @@ export default function ReportSettingsFormBody({
                 </label>
                 <Input
                   type="text"
-                  value={form.telegram_chat_id}
+                  value={form.telegramChatId}
                   onChange={(e) =>
                     setForm((f: any) => ({
                       ...f,
-                      telegram_chat_id: e.target.value,
+                      telegramChatId: e.target.value,
                     }))
                   }
                   className="w-full py-2 px-3 border border-[#ddd] rounded-md"
@@ -115,7 +115,7 @@ export default function ReportSettingsFormBody({
               <div className="mt-3">
                 <button
                   type="button"
-                  disabled={!form.telegram_chat_id?.trim() || sendTestLoading}
+                  disabled={!form.telegramChatId?.trim() || sendTestLoading}
                   onClick={async () => {
                     setSendTestMessage("");
                     setSendTestLoading(true);
