@@ -87,7 +87,9 @@ function CreateWorkspaceForm() {
       router.push(paths.root);
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : "Не удалось создать workspace";
+        err instanceof Error
+          ? err.message
+          : "Не удалось создать рабочее пространство";
       const isSlugError =
         typeof msg === "string" &&
         (msg.includes("slug") || msg.includes("идентификатор"));
@@ -191,7 +193,7 @@ function CreateWorkspaceForm() {
             className="mt-2 w-full cursor-pointer rounded-lg border-none bg-[#111] py-3 text-[15px] font-semibold text-white transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 hover:bg-[#333] hover:-translate-y-px"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Создание…" : "Создать workspace"}
+            {isSubmitting ? "Создание…" : "Создать рабочее пространство"}
           </button>
         </form>
 

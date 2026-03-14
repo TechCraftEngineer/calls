@@ -16,16 +16,16 @@ export const ftpCredentialsSchema = z.object({
           return ipRegex.test(val);
         }
       },
-      { message: "Некорректный формат хоста (URL или IP)" },
+      { message: "Укажите корректный хост (URL или IP)" },
     ),
   user: z
     .string()
     .min(1)
-    .max(50)
-    .regex(/^[a-zA-Z0-9_.-]+$/, {
-      message: "Имя пользователя может содержать только буквы, цифры, _, -, .",
+    .max(128)
+    .regex(/^[a-zA-Z0-9_.@-]+$/, {
+      message: "Допустимые символы: латинские буквы, цифры, _, -, ., @",
     }),
-  password: z.string().min(1, "Пароль обязателен"),
+  password: z.string().min(1, "Укажите пароль"),
 });
 
 const promptItemSchema = z.object({
@@ -58,7 +58,7 @@ export const settingsUpdateSchema = z
 
     if (hasAnyValue && !hasAllValues) {
       throw new ORPCError("BAD_REQUEST", {
-        message: "Все поля FTP должны быть заполнены",
+        message: "Заполните все поля подключения",
       });
     }
 

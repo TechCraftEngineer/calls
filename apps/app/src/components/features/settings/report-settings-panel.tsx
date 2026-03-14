@@ -253,7 +253,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
           })
           .catch(() => {});
       }
-      setMessage("Настройки успешно сохранены!");
+      setMessage("Настройки сохранены");
       setTimeout(() => setMessage(""), 3000);
       // Перезагружаем данные с сервера, чтобы форма отображала сохранённые значения
       const rawU = await api.users.get({ user_id: user.id });
@@ -305,10 +305,10 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         ? (detail as { msg?: string }[])
             .map((e) => e.msg)
             .filter(Boolean)
-            .join(". ") || "Ошибка валидации"
+            .join(". ") || "Проверьте корректность введённых данных"
         : typeof detail === "string"
           ? detail
-          : "Ошибка при сохранении настроек.";
+          : "Не удалось сохранить настройки.";
       setMessage(msg);
     } finally {
       setSaving(false);

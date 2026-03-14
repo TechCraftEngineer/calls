@@ -80,13 +80,13 @@ export const workspacesRouter = {
       );
       if (!role) {
         throw new ORPCError("FORBIDDEN", {
-          message: "Нет доступа к этому workspace",
+          message: "Нет доступа к этому рабочему пространству",
         });
       }
       const ws = await context.workspacesService.getById(input.workspaceId);
       if (!ws) {
         throw new ORPCError("NOT_FOUND", {
-          message: "Workspace не найден",
+          message: "Рабочее пространство не найдено",
         });
       }
       return ws;
@@ -104,7 +104,8 @@ export const workspacesRouter = {
       const existing = await context.workspacesService.getBySlug(input.slug);
       if (existing) {
         throw new ORPCError("BAD_REQUEST", {
-          message: "Workspace с таким slug уже существует",
+          message:
+            "Рабочее пространство с таким идентификатором уже существует",
         });
       }
       const id = await context.workspacesService.create(input, authUserId);
@@ -127,7 +128,7 @@ export const workspacesRouter = {
       );
       if (!member || (member.role !== "owner" && member.role !== "admin")) {
         throw new ORPCError("FORBIDDEN", {
-          message: "Нет прав на изменение workspace",
+          message: "Недостаточно прав для изменения рабочего пространства",
         });
       }
       if (data.slug) {
@@ -135,14 +136,16 @@ export const workspacesRouter = {
         const slugValidation = slugSchema.safeParse(data.slug);
         if (!slugValidation.success) {
           throw new ORPCError("BAD_REQUEST", {
-            message: "Некорректный формат slug: только буквы, цифры и дефис",
+            message:
+              "Допустимые символы идентификатора: латинские буквы, цифры и дефис",
           });
         }
 
         const existing = await context.workspacesService.getBySlug(data.slug);
         if (existing && existing.id !== workspaceId) {
           throw new ORPCError("BAD_REQUEST", {
-            message: "Workspace с таким slug уже существует",
+            message:
+              "Рабочее пространство с таким идентификатором уже существует",
           });
         }
       }
@@ -164,7 +167,7 @@ export const workspacesRouter = {
       );
       if (!member || member.role !== "owner") {
         throw new ORPCError("FORBIDDEN", {
-          message: "Только владелец может удалить workspace",
+          message: "Удалить рабочее пространство может только владелец",
         });
       }
       await context.workspacesService.delete(input.workspaceId);
@@ -185,7 +188,7 @@ export const workspacesRouter = {
       );
       if (!role) {
         throw new ORPCError("FORBIDDEN", {
-          message: "Нет доступа к этому workspace",
+          message: "Нет доступа к этому рабочему пространству",
         });
       }
       const rows = await context.workspacesService.getMembers(
@@ -219,7 +222,7 @@ export const workspacesRouter = {
       );
       if (!member || (member.role !== "owner" && member.role !== "admin")) {
         throw new ORPCError("FORBIDDEN", {
-          message: "Нет прав на добавление участников",
+          message: "Недостаточно прав для добавления участников",
         });
       }
       const existing = await context.workspacesService.getMemberWithRole(
@@ -228,7 +231,7 @@ export const workspacesRouter = {
       );
       if (existing) {
         throw new ORPCError("BAD_REQUEST", {
-          message: "Пользователь уже в workspace",
+          message: "Пользователь уже является участником рабочего пространства",
         });
       }
       await context.workspacesService.addMember({
@@ -263,7 +266,7 @@ export const workspacesRouter = {
             targetMember?.role !== "owner"));
       if (!canRemove) {
         throw new ORPCError("FORBIDDEN", {
-          message: "Нет прав на удаление участника",
+          message: "Недостаточно прав для удаления участника",
         });
       }
       await context.workspacesService.removeMember(
@@ -287,7 +290,7 @@ export const workspacesRouter = {
       );
       if (!member || member.role !== "owner") {
         throw new ORPCError("FORBIDDEN", {
-          message: "Только владелец может менять роли",
+          message: "Изменять роли участников может только владелец",
         });
       }
       await context.workspacesService.updateMemberRole(
@@ -312,7 +315,7 @@ export const workspacesRouter = {
       );
       if (!member || (member.role !== "owner" && member.role !== "admin")) {
         throw new ORPCError("FORBIDDEN", {
-          message: "Нет прав на добавление участников",
+          message: "Недостаточно прав для добавления участников",
         });
       }
       const rows = await context.workspacesService.getUsersNotInWorkspace(
@@ -347,7 +350,7 @@ export const workspacesRouter = {
       );
       if (!role) {
         throw new ORPCError("FORBIDDEN", {
-          message: "Вы не являетесь участником этого workspace",
+          message: "Вы не являетесь участником этого рабочего пространства",
         });
       }
       await context.workspacesService.setActiveWorkspace(

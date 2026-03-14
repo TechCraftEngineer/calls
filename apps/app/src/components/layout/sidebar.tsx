@@ -158,17 +158,10 @@ export default function Sidebar({ user }: SidebarProps) {
             </Link>
             <Link
               href={paths.settings.root}
-              className={`nav-item ${pathname === paths.settings.root ? "is-active" : ""}`}
+              className={`nav-item ${pathname.startsWith(paths.settings.root) ? "is-active" : ""}`}
               title="Настройки"
             >
               <div className="icon-bubble bg-gray-50">{icons.settings}</div>
-            </Link>
-            <Link
-              href={paths.settings.workspace}
-              className={`nav-item ${pathname === paths.settings.workspace ? "is-active" : ""}`}
-              title="Настройки воркспейса"
-            >
-              <div className="icon-bubble bg-amber-50">{icons.workspace}</div>
             </Link>
           </>
         )}

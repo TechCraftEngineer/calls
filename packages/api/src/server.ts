@@ -129,6 +129,16 @@ export function createBackendApiWithContext(ctx: BackendContext) {
         ),
       backup: () =>
         callProc(backendRouter.settings.backup as ProcedureWithCallable, ctx),
+      testMegafonFtp: (input: {
+        host: string;
+        user: string;
+        password: string;
+      }) =>
+        callProc(
+          backendRouter.settings.testMegafonFtp as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
     },
     statistics: {
       getStatistics: (input?: {

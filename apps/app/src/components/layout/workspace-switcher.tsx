@@ -30,7 +30,7 @@ export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Показываем модалку если загрузка завершена, воркспейсов нет и мы не на странице входа
+    // Показываем модалку если загрузка завершена, рабочих пространств нет и мы не на странице входа
     if (
       !loading &&
       user &&
@@ -79,7 +79,7 @@ export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
           type="button"
           className="workspace-toggle"
           onClick={() => setIsOpen(!isOpen)}
-          title={activeWorkspace?.name || "Выберите воркспейс"}
+          title={activeWorkspace?.name || "Выберите рабочее пространство"}
         >
           <div className="workspace-icon">
             {activeWorkspace?.name?.charAt(0).toUpperCase() || "W"}
@@ -88,7 +88,7 @@ export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
 
         {isOpen && (
           <div className="workspace-menu">
-            <div className="workspace-menu-header">Воркспейсы</div>
+            <div className="workspace-menu-header">Рабочие пространства</div>
             <div className="workspace-list">
               {workspaces.map((ws) => (
                 <button
@@ -120,7 +120,7 @@ export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
                   setShowCreateModal(true);
                 }}
               >
-                + Создать воркспейс
+                + Создать рабочее пространство
               </button>
             </div>
           </div>

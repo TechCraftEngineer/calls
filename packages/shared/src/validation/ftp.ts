@@ -7,7 +7,7 @@ export function validateFtpHost(host?: string): {
   error?: string;
 } {
   if (!host || host.trim().length === 0) {
-    return { isValid: false, error: "FTP host не может быть пустым" };
+    return { isValid: false, error: "Укажите хост FTP-сервера" };
   }
 
   const trimmedHost = host.trim();
@@ -32,7 +32,7 @@ export function validateFtpHost(host?: string): {
 
   return {
     isValid: false,
-    error: "Некорректный формат хоста (URL, IP или домен)",
+    error: "Укажите корректный хост (URL, IP или домен)",
   };
 }
 
@@ -41,14 +41,14 @@ export function validateFtpUser(user?: string): {
   error?: string;
 } {
   if (!user || user.trim().length === 0) {
-    return { isValid: false, error: "FTP user не может быть пустым" };
+    return { isValid: false, error: "Укажите имя пользователя" };
   }
 
   const trimmedUser = user.trim();
-  if (!/^[a-zA-Z0-9_.-]+$/.test(trimmedUser)) {
+  if (!/^[a-zA-Z0-9_.@-]+$/.test(trimmedUser)) {
     return {
       isValid: false,
-      error: "Имя пользователя может содержать только буквы, цифры, _, -, .",
+      error: "Допустимые символы: латинские буквы, цифры, _, -, ., @",
     };
   }
 
@@ -60,7 +60,7 @@ export function validateFtpPassword(password?: string): {
   error?: string;
 } {
   if (!password || password.length === 0) {
-    return { isValid: false, error: "FTP password не может быть пустым" };
+    return { isValid: false, error: "Укажите пароль" };
   }
 
   return { isValid: true };
@@ -80,7 +80,7 @@ export function validateFtpCredentials(
   );
 
   if (hasAnyValue && !hasAllValues) {
-    errors.push("Все поля FTP должны быть заполнены");
+    errors.push("Заполните все поля подключения");
     return { isValid: false, errors };
   }
 

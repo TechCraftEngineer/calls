@@ -1,6 +1,14 @@
 "use client";
 
-import { Card, CardContent, CardHeader, Input, Textarea } from "@calls/ui";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Input,
+  Label,
+  Textarea,
+} from "@calls/ui";
 import type { PromptSectionProps } from "./types";
 
 export default function PromptSection({
@@ -33,48 +41,48 @@ export default function PromptSection({
   const isTokenOnly = false;
 
   return (
-    <Card className="card mb-6">
-      <CardHeader className="p-0 pb-0">
-        <div className="flex justify-between items-center mb-5">
-          <div>
-            <h3 className="section-title m-0">{title}</h3>
-            {prompt.updated_at && (
-              <div className="text-xs text-[#999] mt-1">
-                Обновлено: {formatDate(prompt.updated_at)}
-              </div>
-            )}
-          </div>
-          <span className="text-lg cursor-pointer">✏️</span>
+    <Card>
+      <CardHeader className="space-y-1">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">{title}</CardTitle>
+          {prompt.updated_at && (
+            <span className="text-xs text-muted-foreground">
+              Обновлено: {formatDate(prompt.updated_at)}
+            </span>
+          )}
         </div>
       </CardHeader>
-
-      <CardContent className="p-0 pt-0">
+      <CardContent className="space-y-4">
         {isTokenOnly ? (
-          <div className="filter-item">
-            <label className="filter-label" htmlFor={`prompt-${promptKey}`}>
+          <div className="space-y-2">
+            <Label
+              htmlFor={`prompt-${promptKey}`}
+              className="text-xs text-muted-foreground"
+            >
               Токен
-            </label>
+            </Label>
             <Input
               id={`prompt-${promptKey}`}
               type="password"
-              className="text-input"
               value={prompt.value || ""}
               onChange={onPromptChange(promptKey, "value")}
               placeholder="Введите токен бота"
               autoComplete="off"
-              aria-label={`Токен для ${promptKey}`}
+              className="h-9"
             />
           </div>
         ) : (
           <>
             {variables.length > 0 && (
-              <div className="mb-4">
-                <div className="filter-label mb-2">Доступные переменные:</div>
-                <div className="flex gap-2 flex-wrap">
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">
+                  Доступные переменные
+                </Label>
+                <div className="flex flex-wrap gap-2">
                   {variables.map((varName, idx) => (
                     <span
                       key={idx}
-                      className="py-1 px-3 bg-[#F5F5F7] rounded-2xl text-xs font-mono text-[#333] border border-[#E0E0E0]"
+                      className="inline-flex items-center rounded-full border border-border/60 bg-muted px-3 py-1 text-xs font-mono"
                     >
                       {varName}
                     </span>
@@ -83,38 +91,36 @@ export default function PromptSection({
               </div>
             )}
 
-            <div className="filter-item mb-4">
-              <label
-                className="filter-label"
+            <div className="space-y-2">
+              <Label
                 htmlFor={`prompt-${promptKey}-description`}
+                className="text-xs text-muted-foreground"
               >
-                ОПИСАНИЕ
-              </label>
+                Описание
+              </Label>
               <Input
                 id={`prompt-${promptKey}-description`}
                 type="text"
-                className="text-input"
                 value={prompt.description || ""}
                 onChange={onPromptChange(promptKey, "description")}
                 placeholder="Описание промпта"
-                aria-label={`Описание промпта ${title}`}
+                className="h-9"
               />
             </div>
 
-            <div className="filter-item">
-              <label
-                className="filter-label"
+            <div className="space-y-2">
+              <Label
                 htmlFor={`prompt-${promptKey}-value`}
+                className="text-xs text-muted-foreground"
               >
-                ТЕКСТ ПРОМПТА
-              </label>
+                Текст промпта
+              </Label>
               <Textarea
                 id={`prompt-${promptKey}-value`}
-                className="text-input min-h-[300px] resize-y font-mono text-[13px] leading-relaxed"
                 value={prompt.value || ""}
                 onChange={onPromptChange(promptKey, "value")}
                 placeholder="Введите текст промпта"
-                aria-label={`Текст промпта ${title}`}
+                className="min-h-[300px] resize-y font-mono text-[13px] leading-relaxed"
               />
             </div>
           </>

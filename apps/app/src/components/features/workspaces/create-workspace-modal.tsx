@@ -65,7 +65,9 @@ export default function CreateWorkspaceModal({
       onSuccess(workspace.id);
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : "Не удалось создать workspace";
+        err instanceof Error
+          ? err.message
+          : "Не удалось создать рабочее пространство";
       const isSlugError =
         typeof msg === "string" &&
         (msg.includes("slug") || msg.includes("идентификатор"));
@@ -88,7 +90,7 @@ export default function CreateWorkspaceModal({
               M
             </div>
             <h2 className="text-xl font-bold text-gray-900 m-0">
-              Создать воркспейс
+              Создать рабочее пространство
             </h2>
           </div>
           <button
@@ -101,7 +103,7 @@ export default function CreateWorkspaceModal({
         </div>
 
         <p className="text-sm text-gray-500 m-0 leading-relaxed">
-          Workspace — это пространство для вашей команды. Начните с названия
+          Рабочее пространство объединяет команду и данные. Укажите название
           компании или проекта.
         </p>
 
@@ -179,7 +181,7 @@ export default function CreateWorkspaceModal({
               className="flex-[2] h-11 rounded-lg border-none bg-[#111] text-sm font-semibold text-white hover:bg-gray-800 transition-all hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Создание..." : "Создать воркспейс"}
+              {isSubmitting ? "Создание..." : "Создать рабочее пространство"}
             </button>
           </div>
         </form>

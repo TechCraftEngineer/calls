@@ -20,6 +20,9 @@ export function useSettings() {
     backupLoading: false,
     sendTestLoading: false,
     sendTestMessage: "",
+    megafonFtpSaving: false,
+    megafonFtpTesting: false,
+    megafonFtpTestMessage: "",
   });
 
   const loadSettings = useCallback(async () => {
@@ -74,52 +77,127 @@ export function useSettings() {
     try {
       setState((prev) => ({ ...prev, saving: true }));
 
-      // Валидация FTP credentials
-      const ftpValidation = validateFtpCredentials(
-        state.prompts.megafon_ftp_host?.value,
-        state.prompts.megafon_ftp_user?.value,
-        state.prompts.megafon_ftp_password?.value,
-      );
-
-      if (!ftpValidation.isValid) {
-        toast.error(`Ошибка валидации FTP: ${ftpValidation.errors.join(". ")}`);
-        return;
-      }
-
       const updates: Record<string, unknown> = {
         prompts: {} as Record<string, { value: string; description: string }>,
       };
 
-      // Добавляем все промпты включая интеграционные
-      [...Object.keys(PROMPT_KEYS), ...Object.keys(INTEGRATION_KEYS)].forEach(
-        (key) => {
-          const prompt = state.prompts[key];
-          if (prompt) {
-            (
-              updates.prompts as Record<
-                string,
-                { value: string; description: string }
-              >
-            )[key] = {
-              value: prompt.value || "",
-              description: prompt.description || "",
-            };
-          }
-        },
-      );
+      // Добавляем промпты и интеграции, кроме Megafon FTP (у него своя кнопка)
+      const keysWithoutMegafon = [
+        ...Object.keys(PROMPT_KEYS),
+        "telegram_bot_token",
+        "max_bot_token",
+      ];
+      keysWithoutMegafon.forEach((key) => {
+        const prompt = state.prompts[key];
+        if (prompt) {
+          (
+            updates.prompts as Record<
+              string,
+              { value: string; description: string }
+            >
+          )[key] = {
+            value: prompt.value || "",
+            description: prompt.description || "",
+          };
+        }
+      });
 
       await api.settings.updatePrompts(updates);
-      toast.success("Настройки успешно сохранены");
+      toast.success("Настройки сохранены");
       await loadSettings();
     } catch (error: unknown) {
       console.error("Failed to save settings:", error);
       const msg =
         error instanceof Error
           ? error.message
-          : "Ошибка при сохранении настроек";
+          : "Не удалось сохранить настройки";
       toast.error(msg);
     } finally {
       setState((prev) => ({ ...prev, saving: false }));
+    }
+  };
+
+  const handleSaveMegafonFtp = async () => {
+    try {
+      setState((prev) => ({ ...prev, megafonFtpSaving: true }));
+      const host = state.prompts.megafon_ftp_host?.value ?? "";
+      const user = state.prompts.megafon_ftp_user?.value ?? "";
+      const password = state.prompts.megafon_ftp_password?.value ?? "";
+
+      const ftpValidation = validateFtpCredentials(host, user, password);
+      if (!ftpValidation.isValid) {
+        toast.error(ftpValidation.errors.join(". "));
+        return;
+      }
+
+      await api.settings.updatePrompts({
+        megafon_ftp_host: host,
+        megafon_ftp_user: user,
+        megafon_ftp_password: password,
+      });
+      toast.success("Параметры подключения Megafon FTP сохранены");
+      await loadSettings();
+    } catch (error: unknown) {
+      console.error("Failed to save Megafon FTP:", error);
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Не удалось сохранить параметры FTP";
+      toast.error(msg);
+    } finally {
+      setState((prev) => ({ ...prev, megafonFtpSaving: false }));
+    }
+  };
+
+  const handleTestMegafonFtp = async () => {
+    try {
+      setState((prev) => ({
+        ...prev,
+        megafonFtpTestMessage: "",
+        megafonFtpTesting: true,
+      }));
+      const host = state.prompts.megafon_ftp_host?.value ?? "";
+      const user = state.prompts.megafon_ftp_user?.value ?? "";
+      const password = state.prompts.megafon_ftp_password?.value ?? "";
+
+      const ftpValidation = validateFtpCredentials(host, user, password);
+      if (!ftpValidation.isValid) {
+        setState((prev) => ({
+          ...prev,
+          megafonFtpTestMessage: ftpValidation.errors.join(". "),
+        }));
+        return;
+      }
+
+      const result = await api.settings.testMegafonFtp({
+        host,
+        user,
+        password,
+      });
+
+      if (result.success) {
+        setState((prev) => ({
+          ...prev,
+          megafonFtpTestMessage:
+            "Подключение установлено. Учётные данные корректны.",
+        }));
+      } else {
+        setState((prev) => ({
+          ...prev,
+          megafonFtpTestMessage: result.message,
+        }));
+      }
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Не удалось проверить подключение";
+      setState((prev) => ({
+        ...prev,
+        megafonFtpTestMessage: msg,
+      }));
+    } finally {
+      setState((prev) => ({ ...prev, megafonFtpTesting: false }));
     }
   };
 
@@ -129,11 +207,11 @@ export function useSettings() {
       setState((prev) => ({ ...prev, backupLoading: true }));
       const res = await api.settings.backup();
       const path = res?.path ?? "";
-      toast.success(`Резервная копия создана. Путь на сервере: ${path}`);
+      toast.success(`Резервная копия создана: ${path}`);
     } catch (error: unknown) {
       const msg =
         (error instanceof Error ? error.message : String(error)) ||
-        "Ошибка при создании копии";
+        "Не удалось создать резервную копию";
       toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
     } finally {
       setState((prev) => ({ ...prev, backupLoading: false }));
@@ -150,7 +228,7 @@ export function useSettings() {
       await api.reports.sendTestTelegram();
       setState((prev) => ({
         ...prev,
-        sendTestMessage: "Отчёт успешно отправлен в Telegram",
+        sendTestMessage: "Тестовый отчёт отправлен в Telegram",
       }));
       setTimeout(() => {
         setState((prev) => ({ ...prev, sendTestMessage: "" }));
@@ -165,7 +243,7 @@ export function useSettings() {
         sendTestMessage:
           typeof d === "string"
             ? d
-            : "Не удалось отправить. Укажите Telegram Chat ID в Настройках отчётов.",
+            : "Не удалось отправить. Укажите Telegram Chat ID в настройках отчётов.",
       }));
     } finally {
       setState((prev) => ({ ...prev, sendTestLoading: false }));
@@ -192,6 +270,8 @@ export function useSettings() {
     state,
     loadSettings,
     handleSave,
+    handleSaveMegafonFtp,
+    handleTestMegafonFtp,
     handleBackup,
     handleSendTest,
     updatePrompt,

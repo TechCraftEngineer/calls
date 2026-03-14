@@ -36,6 +36,48 @@ function validateFtpConfig(config: MegafonFtpConfig): string[] {
   return validation.errors;
 }
 
+/** Проверка доступа к FTP в онлайн-режиме. Возвращает ошибку или null при успехе. */
+export async function testFtpConnection(
+  config: MegafonFtpConfig,
+): Promise<{ success: true } | { success: false; error: string }> {
+  const validationErrors = validateFtpConfig(config);
+  if (validationErrors.length > 0) {
+    return {
+      success: false,
+      error: validationErrors.join(". "),
+    };
+  }
+
+  const client = new Client(15_000);
+  client.ftp.verbose = false;
+
+  try {
+    await client.access({
+      host: config.host,
+      user: config.user,
+      password: config.password,
+      secure: false,
+    });
+    return { success: true };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return {
+      success: false,
+      error: msg.includes("ECONNREFUSED")
+        ? "Сервер недоступен. Проверьте корректность хоста и порта."
+        : msg.includes("ETIMEDOUT") || msg.includes("timeout")
+          ? "Таймаут подключения. Проверьте сетевое подключение и корректность хоста."
+          : msg.toLowerCase().includes("login") ||
+              msg.toLowerCase().includes("530") ||
+              msg.toLowerCase().includes("auth")
+            ? "Неверный логин или пароль"
+            : msg,
+    };
+  } finally {
+    client.close();
+  }
+}
+
 export async function syncMegafonFtp(
   config: MegafonFtpConfig,
   dateStr?: string,

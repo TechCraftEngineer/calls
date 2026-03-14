@@ -9,8 +9,6 @@ import AddWorkspaceMemberModal from "@/components/features/workspaces/add-worksp
 import WorkspaceGeneralForm from "@/components/features/workspaces/workspace-general-form";
 import WorkspaceMembersTable from "@/components/features/workspaces/workspace-members-table";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
 import type { UserAvailableToAdd, WorkspaceMember } from "@/lib/api-orpc";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
@@ -132,12 +130,8 @@ export default function WorkspaceSettingsPage() {
 
   if (!activeWorkspace) {
     return (
-      <div className="app-container">
-        <Sidebar user={currentUser} />
-        <Header user={currentUser} />
-        <main className="main-content">
-          <div className="text-center py-[100px]">Загрузка…</div>
-        </main>
+      <div className="flex items-center justify-center py-24">
+        <div className="text-muted-foreground">Загрузка…</div>
       </div>
     );
   }
@@ -167,7 +161,7 @@ export default function WorkspaceSettingsPage() {
 
   const handleRemoveMember = (userId: string) => {
     if (!workspaceId) return;
-    if (!confirm("Исключить участника из воркспейса?")) return;
+    if (!confirm("Исключить участника из рабочего пространства?")) return;
     removeMemberMutation.mutate({ workspaceId, userId });
   };
 
@@ -183,7 +177,7 @@ export default function WorkspaceSettingsPage() {
     if (!workspaceId) return;
     if (
       !confirm(
-        `Вы уверены, что хотите удалить воркспейс "${activeWorkspace.name}"? Это действие нельзя отменить.`,
+        `Вы уверены, что хотите удалить рабочее пространство "${activeWorkspace.name}"? Это действие нельзя отменить.`,
       )
     )
       return;
@@ -193,73 +187,67 @@ export default function WorkspaceSettingsPage() {
   const currentUserId = currentUser ? String(currentUser.id) : null;
 
   return (
-    <div className="app-container">
-      <Sidebar user={currentUser} />
-      <Header user={currentUser} />
-
-      <main className="main-content">
-        <header className="page-header mb-8 flex justify-between items-start">
-          <div>
-            <h1 className="page-title">Настройки воркспейса</h1>
-            <p className="page-subtitle mt-2 text-sm text-[#999]">
-              {activeWorkspace.name}
-            </p>
-          </div>
-          {isWorkspaceAdmin && (
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="bg-gradient-to-br from-[#FF6B35] to-[#F7931E] text-white border-none rounded-lg py-3 px-6 text-sm font-bold flex items-center gap-2 shadow-[0_2px_8px_rgba(255,107,53,0.3)]"
-            >
-              <span className="text-lg">+</span> Добавить участника
-            </Button>
-          )}
-        </header>
-
-        {workspace ? (
-          <WorkspaceGeneralForm
-            name={(workspace as { name: string }).name}
-            slug={(workspace as { slug: string }).slug}
-            onSave={handleSaveGeneral}
-            saving={updateMutation.isPending}
-          />
-        ) : null}
-
-        <div className="mb-6">
-          <h2 className="text-base font-bold mb-4">Участники</h2>
-          <WorkspaceMembersTable
-            members={
-              (Array.isArray(members) ? members : []) as WorkspaceMember[]
-            }
-            currentUserId={currentUserId}
-            currentUserRole={activeWorkspace.role}
-            loading={membersLoading}
-            onRemoveMember={handleRemoveMember}
-            onUpdateRole={handleUpdateRole}
-          />
+    <div className="space-y-8">
+      <header className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Настройки рабочего пространства
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {activeWorkspace.name}
+          </p>
         </div>
-
-        {isOwner && (
-          <Card className="card border-red-200 bg-red-50/50">
-            <CardContent className="p-6">
-              <h3 className="text-base font-bold text-red-800 mb-2">
-                Опасная зона
-              </h3>
-              <p className="text-sm text-red-700 mb-4">
-                Удаление воркспейса необратимо. Все данные (звонки, настройки,
-                участники) будут удалены.
-              </p>
-              <Button
-                variant="outline"
-                className="border-red-300 text-red-700 hover:bg-red-100"
-                onClick={handleDeleteWorkspace}
-                disabled={deleteMutation.isPending}
-              >
-                {deleteMutation.isPending ? "Удаление…" : "Удалить воркспейс"}
-              </Button>
-            </CardContent>
-          </Card>
+        {isWorkspaceAdmin && (
+          <Button onClick={() => setShowAddModal(true)}>
+            <span className="text-lg">+</span> Добавить участника
+          </Button>
         )}
-      </main>
+      </header>
+
+      {workspace ? (
+        <WorkspaceGeneralForm
+          name={(workspace as { name: string }).name}
+          slug={(workspace as { slug: string }).slug}
+          onSave={handleSaveGeneral}
+          saving={updateMutation.isPending}
+        />
+      ) : null}
+
+      <div className="mb-6">
+        <h2 className="text-base font-bold mb-4">Участники</h2>
+        <WorkspaceMembersTable
+          members={(Array.isArray(members) ? members : []) as WorkspaceMember[]}
+          currentUserId={currentUserId}
+          currentUserRole={activeWorkspace.role}
+          loading={membersLoading}
+          onRemoveMember={handleRemoveMember}
+          onUpdateRole={handleUpdateRole}
+        />
+      </div>
+
+      {isOwner && (
+        <Card className="border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20">
+          <CardContent className="p-6">
+            <h3 className="text-base font-bold text-red-800 dark:text-red-400 mb-2">
+              Опасная зона
+            </h3>
+            <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+              Удаление рабочего пространства необратимо. Все данные (звонки,
+              настройки, участники) будут удалены.
+            </p>
+            <Button
+              variant="outline"
+              className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30"
+              onClick={handleDeleteWorkspace}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending
+                ? "Удаление…"
+                : "Удалить рабочее пространство"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {showAddModal && (
         <AddWorkspaceMemberModal

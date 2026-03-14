@@ -152,7 +152,7 @@ export const workspaceProcedure = protectedProcedure.use(
     if (context.workspaceId == null || context.workspaceRole == null) {
       throw new ORPCError("BAD_REQUEST", {
         message:
-          "Требуется активный workspace. Укажите X-Workspace-Id в заголовке или active_workspace_id в cookie.",
+          "Требуется активное рабочее пространство. Укажите X-Workspace-Id в заголовке или active_workspace_id в cookie.",
       });
     }
     return next({
@@ -174,7 +174,7 @@ export const workspaceAdminProcedure = workspaceProcedure.use(
       context.workspaceRole !== "owner"
     ) {
       throw new ORPCError("FORBIDDEN", {
-        message: "Требуются права администратора workspace",
+        message: "Требуются права администратора рабочего пространства",
       });
     }
     return next({ context });
@@ -185,7 +185,7 @@ export const workspaceOwnerProcedure = workspaceProcedure.use(
   ({ context, next }) => {
     if (context.workspaceRole !== "owner") {
       throw new ORPCError("FORBIDDEN", {
-        message: "Требуются права владельца workspace",
+        message: "Требуются права владельца рабочего пространства",
       });
     }
     return next({ context });

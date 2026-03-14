@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
+import BackupSection from "@/components/features/settings/backup-section";
 import { useSettings } from "@/components/features/settings/hooks";
 import SettingsPageShell from "@/components/features/settings/settings-page-shell";
-import TelegramSection from "@/components/features/settings/telegram-section";
 
-export default function SettingsGeneralPage() {
-  const { state, loadSettings, handleSendTest } = useSettings();
+export default function SettingsBackupPage() {
+  const { state, loadSettings, handleBackup } = useSettings();
 
   useEffect(() => {
     loadSettings();
@@ -26,17 +26,16 @@ export default function SettingsGeneralPage() {
     <SettingsPageShell>
       <header className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight">
-          Общие настройки
+          Резервная копия
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Отчёты в Telegram и уведомления
+          Экспорт базы данных на сервер
         </p>
       </header>
 
-      <TelegramSection
-        sendTestLoading={state.sendTestLoading}
-        sendTestMessage={state.sendTestMessage}
-        onSendTest={handleSendTest}
+      <BackupSection
+        backupLoading={state.backupLoading}
+        onBackup={handleBackup}
       />
     </SettingsPageShell>
   );

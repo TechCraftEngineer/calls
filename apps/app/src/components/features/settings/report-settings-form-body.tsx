@@ -121,14 +121,14 @@ export default function ReportSettingsFormBody({
                     setSendTestLoading(true);
                     try {
                       await api.reports.sendTestTelegram();
-                      setSendTestMessage("Отчёт отправлен в Telegram");
+                      setSendTestMessage("Тестовый отчёт отправлен в Telegram");
                       setTimeout(() => setSendTestMessage(""), 4000);
                     } catch (err: unknown) {
                       const d = err instanceof Error ? err.message : null;
                       setSendTestMessage(
                         typeof d === "string"
                           ? d
-                          : "Не удалось отправить. Укажите Telegram Chat ID.",
+                          : "Не удалось отправить. Укажите Telegram Chat ID в настройках отчётов.",
                       );
                     } finally {
                       setSendTestLoading(false);

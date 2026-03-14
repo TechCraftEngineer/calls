@@ -55,7 +55,9 @@ export default function AddWorkspaceMemberModal({
       (member) => member.id === selectedUserId,
     );
     if (isAlreadyMember) {
-      setError("Этот пользователь уже является участником воркспейса");
+      setError(
+        "Этот пользователь уже является участником рабочего пространства",
+      );
       return;
     }
 
