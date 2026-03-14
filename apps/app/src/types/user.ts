@@ -47,7 +47,6 @@ export interface BetterAuthUser extends BaseUserFields, UserAdditionalFields {
 export interface CreateUserData {
   username: string;
   password: string;
-  confirmPassword: string;
   givenName: string;
   familyName?: string;
   internalExtensions?: string;

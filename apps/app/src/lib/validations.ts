@@ -57,28 +57,22 @@ export const resetPasswordSchema = z
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 // Схема для создания пользователя
-export const createUserSchema = z
-  .object({
-    username: z
-      .string()
-      .min(1, "Email обязателен")
-      .email("Введите корректный email адрес"),
-    password: z
-      .string()
-      .min(6, "Пароль должен содержать минимум 6 символов")
-      .regex(/[A-Z]/, "Пароль должен содержать хотя бы одну заглавную букву")
-      .regex(/[a-z]/, "Пароль должен содержать хотя бы одну строчную букву")
-      .regex(/[0-9]/, "Пароль должен содержать хотя бы одну цифру"),
-    confirmPassword: z.string(),
-    givenName: z.string().min(1, "Имя обязательно"),
-    familyName: z.string().optional(),
-    internalExtensions: z.string().optional(),
-    mobilePhones: z.string().optional(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Пароли не совпадают",
-    path: ["confirmPassword"],
-  });
+export const createUserSchema = z.object({
+  username: z
+    .string()
+    .min(1, "Email обязателен")
+    .email("Введите корректный email адрес"),
+  password: z
+    .string()
+    .min(6, "Пароль должен содержать минимум 6 символов")
+    .regex(/[A-Z]/, "Пароль должен содержать хотя бы одну заглавную букву")
+    .regex(/[a-z]/, "Пароль должен содержать хотя бы одну строчную букву")
+    .regex(/[0-9]/, "Пароль должен содержать хотя бы одну цифру"),
+  givenName: z.string().min(1, "Имя обязательно"),
+  familyName: z.string().optional(),
+  internalExtensions: z.string().optional(),
+  mobilePhones: z.string().optional(),
+});
 
 export type CreateUserData = z.infer<typeof createUserSchema>;
 

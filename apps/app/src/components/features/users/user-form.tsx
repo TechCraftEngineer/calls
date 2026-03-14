@@ -50,7 +50,6 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       : {
           username: "",
           password: "",
-          confirmPassword: "",
           givenName: "",
           familyName: "",
           internalExtensions: "",
@@ -145,31 +144,6 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
               {createErrors.password && (
                 <div className="text-error-600 text-xs mt-1 leading-tight">
                   {createErrors.password.message}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-semibold text-primary-800 mb-2"
-              >
-                Подтвердите пароль *
-              </label>
-              <PasswordInput
-                id="confirmPassword"
-                className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-sm transition-all duration-200 box-border ${
-                  createErrors.confirmPassword
-                    ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
-                    : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
-                }`}
-                placeholder="Повторите пароль"
-                aria-invalid={!!createErrors.confirmPassword}
-                {...register("confirmPassword")}
-              />
-              {createErrors.confirmPassword && (
-                <div className="text-error-600 text-xs mt-1 leading-tight">
-                  {createErrors.confirmPassword.message}
                 </div>
               )}
             </div>
