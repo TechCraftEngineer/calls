@@ -28,12 +28,12 @@ const getQueryClient = () => {
     // Browser: используем singleton паттерн для сохранения одного query client
     // В development режиме очищаем при hot-reload
     if (process.env.NODE_ENV === "development") {
-      // @ts-ignore - global variable for HMR
+      // @ts-expect-error - global variable for HMR
       if (!window.__tanstack_query_client__) {
-        // @ts-ignore
+        // @ts-expect-error
         window.__tanstack_query_client__ = createQueryClient();
       }
-      // @ts-ignore
+      // @ts-expect-error
       return window.__tanstack_query_client__;
     }
     return (clientQueryClientSingleton ??= createQueryClient());

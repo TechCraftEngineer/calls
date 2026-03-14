@@ -29,7 +29,7 @@ function captureApiErrorToPostHog(error: unknown) {
 
 // Очистка QueryClient в development режиме при hot-reload
 if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
-  // @ts-ignore - global variable for HMR
+  // @ts-expect-error - global variable for HMR
   window.__tanstack_query_client__ = undefined;
 }
 

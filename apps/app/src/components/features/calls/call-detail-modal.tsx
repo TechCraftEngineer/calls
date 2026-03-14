@@ -5,7 +5,6 @@ import sanitizeHtml from "sanitize-html";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import AudioPlayer from "@/components/ui/audio-player";
 import api, { API_BASE_URL } from "@/lib/api";
-import type { User } from "@/lib/auth";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
 
 interface CallDetail {
@@ -46,14 +45,12 @@ interface EvaluationDetail {
 interface CallDetailModalProps {
   callId: number;
   onClose: () => void;
-  user?: User | null;
   onCallDeleted?: (callId: number) => void;
 }
 
 export default function CallDetailModal({
   callId,
   onClose,
-  user,
   onCallDeleted,
 }: CallDetailModalProps) {
   const [call, setCall] = useState<CallDetail | null>(null);

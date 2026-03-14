@@ -4,7 +4,6 @@ import { paths } from "@calls/config";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import api from "@/lib/api";
-import type { User } from "@/lib/auth";
 import { isMobileDevice } from "@/lib/utils";
 import CallDetailModal from "./call-detail-modal";
 import RecommendationsModal from "./recommendations-modal";
@@ -46,7 +45,6 @@ interface CallWithDetails {
 interface CallListProps {
   calls: CallWithDetails[];
   onPlay?: (filename: string, number: string) => void;
-  user?: User | null;
   onCallDeleted?: (callId: number) => void;
   onRecommendationsGenerated?: (
     callId: number,
@@ -186,7 +184,6 @@ const saveColumnOrder = (order: string[]): void => {
 export default function CallList({
   calls,
   onPlay,
-  user,
   onCallDeleted,
   onRecommendationsGenerated,
 }: CallListProps) {
@@ -940,7 +937,6 @@ export default function CallList({
         <CallDetailModal
           callId={selectedCallId}
           onClose={() => setSelectedCallId(null)}
-          user={user}
           onCallDeleted={(callId) => {
             setSelectedCallId(null);
             if (onCallDeleted) {

@@ -411,7 +411,6 @@ export default function HomePage() {
                   onPlay={(filename, number) =>
                     setActiveAudio({ filename, number })
                   }
-                  user={user}
                   onCallDeleted={(callId) => {
                     setCalls((prev) =>
                       prev.filter((item) => item.call.id !== callId),
