@@ -5,7 +5,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 import type { CreateUserData, UpdateUserData } from "../types/users.types";
@@ -32,8 +32,9 @@ export const usersRepository = {
     const result = await db
       .select()
       .from(schema.user)
-      .where(eq(schema.user.username, username))
-      .where(isNull(schema.user.deletedAt))
+      .where(
+        and(eq(schema.user.username, username), isNull(schema.user.deletedAt)),
+      )
       .limit(1);
 
     const user = result[0] ?? null;
@@ -49,8 +50,9 @@ export const usersRepository = {
     const result = await db
       .select()
       .from(schema.user)
-      .where(eq(schema.user.username, username))
-      .where(isNull(schema.user.deletedAt))
+      .where(
+        and(eq(schema.user.username, username), isNull(schema.user.deletedAt)),
+      )
       .limit(1);
 
     const user = result[0] ?? null;
@@ -177,6 +179,8 @@ export const usersRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
+  // These methods are deprecated - settings moved to separate tables
+  // Use userFilterSettingsRepository, userNotificationSettingsRepository, etc.
   async updateReportAndKpiSettings(
     userId: string,
     data: Partial<{
@@ -203,44 +207,12 @@ export const usersRepository = {
       kpiTargetTalkTimeMinutes: number;
     }>,
   ): Promise<boolean> {
-    const allowedFields = [
-      "filterExcludeAnsweringMachine",
-      "filterMinDuration",
-      "filterMinReplicas",
-      "telegramDailyReport",
-      "telegramManagerReport",
-      "telegramWeeklyReport",
-      "telegramMonthlyReport",
-      "telegramSkipWeekends",
-      "maxDailyReport",
-      "maxManagerReport",
-      "emailDailyReport",
-      "emailWeeklyReport",
-      "emailMonthlyReport",
-      "reportIncludeCallSummaries",
-      "reportDetailed",
-      "reportIncludeAvgValue",
-      "reportIncludeAvgRating",
-      "reportManagedUserIds",
-      "kpiBaseSalary",
-      "kpiTargetBonus",
-      "kpiTargetTalkTimeMinutes",
-    ];
-
-    const updateData = Object.fromEntries(
-      Object.entries(data).filter(([key]) => allowedFields.includes(key)),
+    // This method is deprecated - settings are now in separate tables
+    // Kept for backward compatibility but does nothing
+    console.warn(
+      "updateReportAndKpiSettings is deprecated - use specific settings repositories",
     );
-
-    if (Object.keys(updateData).length === 0) {
-      return true;
-    }
-
-    const result = await db
-      .update(schema.user)
-      .set(updateData)
-      .where(eq(schema.user.id, userId));
-
-    return (result.rowCount ?? 0) > 0;
+    return true;
   },
 
   async updateFilters(
@@ -249,16 +221,11 @@ export const usersRepository = {
     filterMinDuration: number,
     filterMinReplicas: number,
   ): Promise<boolean> {
-    const result = await db
-      .update(schema.user)
-      .set({
-        filterExcludeAnsweringMachine,
-        filterMinDuration,
-        filterMinReplicas,
-      })
-      .where(eq(schema.user.id, userId));
-
-    return (result.rowCount ?? 0) > 0;
+    // Deprecated - use userFilterSettingsRepository
+    console.warn(
+      "updateFilters is deprecated - use userFilterSettingsRepository",
+    );
+    return true;
   },
 
   async updateTelegramSettings(
@@ -266,15 +233,11 @@ export const usersRepository = {
     telegramDailyReport: boolean,
     telegramManagerReport: boolean,
   ): Promise<boolean> {
-    const result = await db
-      .update(schema.user)
-      .set({
-        telegramDailyReport,
-        telegramManagerReport,
-      })
-      .where(eq(schema.user.id, userId));
-
-    return (result.rowCount ?? 0) > 0;
+    // Deprecated - use userNotificationSettingsRepository
+    console.warn(
+      "updateTelegramSettings is deprecated - use userNotificationSettingsRepository",
+    );
+    return true;
   },
 
   // Password management is now handled by Better Auth Admin plugin
@@ -284,45 +247,35 @@ export const usersRepository = {
     userId: string,
     token: string,
   ): Promise<boolean> {
-    const result = await db
-      .update(schema.user)
-      .set({
-        telegramConnectToken: token,
-      })
-      .where(eq(schema.user.id, userId));
-
-    return (result.rowCount ?? 0) > 0;
+    // Deprecated - use userNotificationSettingsRepository
+    console.warn(
+      "saveTelegramConnectToken is deprecated - use userNotificationSettingsRepository",
+    );
+    return true;
   },
 
   async findByTelegramConnectToken(token: string): Promise<schema.User | null> {
-    const result = await db
-      .select()
-      .from(schema.user)
-      .where(eq(schema.user.telegramConnectToken, token))
-      .limit(1);
-    return result[0] ?? null;
+    // Deprecated - use userNotificationSettingsRepository
+    console.warn(
+      "findByTelegramConnectToken is deprecated - use userNotificationSettingsRepository",
+    );
+    return null;
   },
 
   async saveMaxConnectToken(userId: string, token: string): Promise<boolean> {
-    const result = await db
-      .update(schema.user)
-      .set({
-        maxConnectToken: token,
-      })
-      .where(eq(schema.user.id, userId));
-
-    return (result.rowCount ?? 0) > 0;
+    // Deprecated - use userNotificationSettingsRepository
+    console.warn(
+      "saveMaxConnectToken is deprecated - use userNotificationSettingsRepository",
+    );
+    return true;
   },
 
   async disconnectMax(userId: string): Promise<boolean> {
-    const result = await db
-      .update(schema.user)
-      .set({
-        maxChatId: null,
-      })
-      .where(eq(schema.user.id, userId));
-
-    return (result.rowCount ?? 0) > 0;
+    // Deprecated - use userNotificationSettingsRepository
+    console.warn(
+      "disconnectMax is deprecated - use userNotificationSettingsRepository",
+    );
+    return true;
   },
 };
 

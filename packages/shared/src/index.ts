@@ -2,7 +2,22 @@
  * Shared utilities and types
  */
 
-export * from "./slug";
-export * from "./validation";
-export * from "./validation/ftp";
-export * from "./utils/id-utils";
+export { generateWorkspaceSlug } from "./slug";
+export {
+  compareIds,
+  isValidId,
+  normalizeId,
+  type SafeId,
+  safeId,
+} from "./utils/id-utils";
+export {
+  isValidEmail,
+  isValidUuid,
+  isValidWorkspaceId,
+} from "./validation";
+export {
+  validateFtpCredentials,
+  validateFtpHost,
+  validateFtpPassword,
+  validateFtpUser,
+} from "./validation/ftp";

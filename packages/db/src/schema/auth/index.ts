@@ -1,7 +1,7 @@
-export * from "./account";
-export * from "./session";
-export * from "./user";
-export * from "./verification";
+export { account } from "./account";
+export { session } from "./session";
+export { user } from "./user";
+export { verification } from "./verification";
 
 // Export types - use inferred types from table definitions
 export type User = typeof import("./user").user.$inferSelect;

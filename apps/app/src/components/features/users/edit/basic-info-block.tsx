@@ -8,7 +8,7 @@ interface BasicInfoBlockProps {
   setForm: (form: EditUserForm) => void;
   hasChanges: boolean;
   isSaving: boolean;
-  state: 'idle' | 'saving' | 'success' | 'error';
+  state: "idle" | "saving" | "success" | "error";
   onSave: () => void;
   disabled: boolean;
 }
@@ -20,70 +20,98 @@ export function BasicInfoBlock({
   isSaving,
   state,
   onSave,
-  disabled
+  disabled,
 }: BasicInfoBlockProps) {
   const getBlockAnimationClass = () => {
     switch (state) {
-      case 'success':
-        return 'animate-pulse border-green-200 bg-green-50';
-      case 'error':
-        return 'animate-pulse border-red-200 bg-red-50';
-      case 'saving':
-        return 'opacity-75';
+      case "success":
+        return "animate-pulse border-green-200 bg-green-50";
+      case "error":
+        return "animate-pulse border-red-200 bg-red-50";
+      case "saving":
+        return "opacity-75";
       default:
-        return '';
+        return "";
     }
   };
 
   return (
-    <div className={`bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6 transition-all duration-300 ${getBlockAnimationClass()}`}>
+    <div
+      className={`bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6 transition-all duration-300 ${getBlockAnimationClass()}`}
+    >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">
-            Основная информация
-          </h2>
+          <h2 className="text-lg font-semibold">Основная информация</h2>
           {hasChanges && (
             <div className="flex items-center gap-1 text-amber-600">
               <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-              <span className="text-xs font-medium hidden sm:inline">Есть изменения</span>
+              <span className="text-xs font-medium hidden sm:inline">
+                Есть изменения
+              </span>
               <span className="text-xs font-medium sm:hidden">*</span>
             </div>
           )}
-          {state === 'saving' && (
+          {state === "saving" && (
             <div className="flex items-center gap-1 text-blue-600">
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-spin"></div>
-              <span className="text-xs font-medium hidden sm:inline">Сохранение...</span>
+              <span className="text-xs font-medium hidden sm:inline">
+                Сохранение...
+              </span>
             </div>
           )}
-          {state === 'success' && (
+          {state === "success" && (
             <div className="flex items-center gap-1 text-green-600">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
               </svg>
-              <span className="text-xs font-medium hidden sm:inline">Сохранено</span>
+              <span className="text-xs font-medium hidden sm:inline">
+                Сохранено
+              </span>
             </div>
           )}
-          {state === 'error' && (
+          {state === "error" && (
             <div className="flex items-center gap-1 text-red-600">
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                <path
+                  fillRule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
               </svg>
-              <span className="text-xs font-medium hidden sm:inline">Ошибка</span>
+              <span className="text-xs font-medium hidden sm:inline">
+                Ошибка
+              </span>
             </div>
           )}
         </div>
         <Button
           type="button"
           onClick={onSave}
-          disabled={disabled || state === 'saving'}
+          disabled={disabled || state === "saving"}
           variant="default"
           size="sm"
           className="gap-2 w-full sm:w-auto"
         >
           {isSaving && (
             <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
             </svg>
           )}
           {isSaving ? "Сохранение..." : "Сохранить"}
@@ -92,25 +120,25 @@ export function BasicInfoBlock({
 
       {/* Основные поля */}
       <div className="mb-4">
-        <label className="block mb-1 text-[13px] font-semibold">
-          Имя *
-        </label>
+        <label className="block mb-1 text-[13px] font-semibold">Имя *</label>
         <Input
           type="text"
           value={form.givenName}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, givenName: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setForm({ ...form, givenName: e.target.value })
+          }
           className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
         />
       </div>
 
       <div className="mb-4">
-        <label className="block mb-1 text-[13px] font-semibold">
-          Фамилия
-        </label>
+        <label className="block mb-1 text-[13px] font-semibold">Фамилия</label>
         <Input
           type="text"
           value={form.familyName}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, familyName: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setForm({ ...form, familyName: e.target.value })
+          }
           className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
         />
       </div>
@@ -122,7 +150,9 @@ export function BasicInfoBlock({
         <Input
           type="text"
           value={form.internalExtensions}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, internalExtensions: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setForm({ ...form, internalExtensions: e.target.value })
+          }
           className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
           placeholder="100, 101, можно несколько через запятую"
         />
@@ -135,7 +165,9 @@ export function BasicInfoBlock({
         <Input
           type="text"
           value={form.mobilePhones}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, mobilePhones: e.target.value })}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setForm({ ...form, mobilePhones: e.target.value })
+          }
           className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
           placeholder="79XXXXXXXXX, можно несколько через запятую"
         />

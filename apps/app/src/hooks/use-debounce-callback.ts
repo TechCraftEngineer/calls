@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -20,9 +20,11 @@ export function useDebounce<T>(value: T, delay: number): T {
 
 export function useDebouncedCallback<T extends (...args: any[]) => any>(
   callback: T,
-  delay: number
+  delay: number,
 ): T {
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(
+    null,
+  );
 
   const debouncedCallback = useCallback(
     (...args: Parameters<T>) => {
@@ -36,7 +38,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
 
       setDebounceTimer(newTimer);
     },
-    [callback, delay, debounceTimer]
+    [callback, delay, debounceTimer],
   ) as T;
 
   useEffect(() => {

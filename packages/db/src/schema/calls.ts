@@ -30,10 +30,10 @@ export const calls = pgTable(
     number: text("number"),
     timestamp: timestamp("timestamp").notNull(), // ISO timestamp
     name: text("name"),
-    duration: integer("duration").$check(sql`duration >= 0`), // в секундах
+    duration: integer("duration"), // в секундах
     direction: text("direction"), // 'incoming'/'outgoing'/'входящий'/'исходящий'
     status: text("status"),
-    sizeBytes: integer("size_bytes").$check(sql`size_bytes >= 0`),
+    sizeBytes: integer("size_bytes"),
     fileId: uuid("file_id").references(() => files.id, {
       onDelete: "set null",
     }),
@@ -110,13 +110,9 @@ export const callEvaluations = pgTable(
       .references(() => calls.id, { onDelete: "cascade" }),
     isQualityAnalyzable: boolean("is_quality_analyzable").default(true),
     notAnalyzableReason: text("not_analyzable_reason"),
-    valueScore: integer("value_score").$check(
-      sql`value_score >= 1 AND value_score <= 5`,
-    ), // 1-5
+    valueScore: integer("value_score"), // 1-5
     valueExplanation: text("value_explanation"),
-    managerScore: integer("manager_score").$check(
-      sql`manager_score >= 1 AND manager_score <= 5`,
-    ), // 1-5
+    managerScore: integer("manager_score"), // 1-5
     managerFeedback: text("manager_feedback"),
     managerBreakdown:
       jsonb("manager_breakdown").$type<Record<string, unknown>>(),

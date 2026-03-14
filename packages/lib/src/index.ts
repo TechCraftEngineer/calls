@@ -1,5 +1,13 @@
 // S3 utilities
-export * from "./s3";
-export * from "./s3-stream";
+export {
+  createPresignedUrl,
+  generateS3Key,
+  getDownloadUrl,
+  uploadBufferToS3,
+} from "./s3";
+export {
+  generateS3KeyForFileType,
+  uploadStreamToS3,
+} from "./s3-stream";
 
 // Other utilities can be added here

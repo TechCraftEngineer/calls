@@ -27,10 +27,7 @@ export const featureFlags = pgTable(
     // Targeting
     workspaceIds: jsonb("workspace_ids").$type<string[]>(), // null = all workspaces
     userIds: jsonb("user_ids").$type<string[]>(), // specific users
-    rolloutPercentage: integer("rollout_percentage")
-      .default(0)
-      .notNull()
-      .$check(sql`rollout_percentage >= 0 AND rollout_percentage <= 100`),
+    rolloutPercentage: integer("rollout_percentage").default(0).notNull(),
 
     // Conditions
     conditions: jsonb("conditions").$type<{

@@ -94,12 +94,8 @@
           "name": "accounts_user_id_users_id_fk",
           "tableFrom": "accounts",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -225,12 +221,8 @@
           "name": "activity_log_workspace_id_workspaces_id_fk",
           "tableFrom": "activity_log",
           "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -374,12 +366,8 @@
           "name": "call_evaluations_call_id_calls_id_fk",
           "tableFrom": "call_evaluations",
           "tableTo": "calls",
-          "columnsFrom": [
-            "call_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["call_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -389,9 +377,7 @@
         "call_evaluations_call_id_unique": {
           "name": "call_evaluations_call_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "call_id"
-          ]
+          "columns": ["call_id"]
         }
       },
       "policies": {},
@@ -605,12 +591,8 @@
           "name": "calls_workspace_id_workspaces_id_fk",
           "tableFrom": "calls",
           "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -618,12 +600,8 @@
           "name": "calls_file_id_files_id_fk",
           "tableFrom": "calls",
           "tableTo": "files",
-          "columnsFrom": [
-            "file_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["file_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -633,9 +611,7 @@
         "calls_filename_unique": {
           "name": "calls_filename_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "filename"
-          ]
+          "columns": ["filename"]
         }
       },
       "policies": {},
@@ -804,12 +780,8 @@
           "name": "files_workspace_id_workspaces_id_fk",
           "tableFrom": "files",
           "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -819,9 +791,7 @@
         "files_storage_key_unique": {
           "name": "files_storage_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "storage_key"
-          ]
+          "columns": ["storage_key"]
         }
       },
       "policies": {},
@@ -929,12 +899,8 @@
           "name": "prompts_workspace_id_workspaces_id_fk",
           "tableFrom": "prompts",
           "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -944,9 +910,7 @@
         "prompts_key_unique": {
           "name": "prompts_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "key"
-          ]
+          "columns": ["key"]
         }
       },
       "policies": {},
@@ -1013,12 +977,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1028,9 +988,7 @@
         "sessions_token_unique": {
           "name": "sessions_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -1173,12 +1131,8 @@
           "name": "transcripts_call_id_calls_id_fk",
           "tableFrom": "transcripts",
           "tableTo": "calls",
-          "columnsFrom": [
-            "call_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["call_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1465,9 +1419,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -1504,12 +1456,8 @@
           "name": "user_preferences_user_id_users_id_fk",
           "tableFrom": "user_preferences",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1517,12 +1465,8 @@
           "name": "user_preferences_active_workspace_id_workspaces_id_fk",
           "tableFrom": "user_preferences",
           "tableTo": "workspaces",
-          "columnsFrom": [
-            "active_workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["active_workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1681,12 +1625,8 @@
           "name": "workspace_members_workspace_id_workspaces_id_fk",
           "tableFrom": "workspace_members",
           "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1694,12 +1634,8 @@
           "name": "workspace_members_user_id_users_id_fk",
           "tableFrom": "workspace_members",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1709,10 +1645,7 @@
         "workspace_members_workspace_user_unique": {
           "name": "workspace_members_workspace_user_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "workspace_id",
-            "user_id"
-          ]
+          "columns": ["workspace_id", "user_id"]
         }
       },
       "policies": {},
@@ -1786,9 +1719,7 @@
         "workspaces_slug_unique": {
           "name": "workspaces_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -1800,11 +1731,7 @@
     "public.workspace_member_role": {
       "name": "workspace_member_role",
       "schema": "public",
-      "values": [
-        "owner",
-        "admin",
-        "member"
-      ]
+      "values": ["owner", "admin", "member"]
     }
   },
   "schemas": {},
