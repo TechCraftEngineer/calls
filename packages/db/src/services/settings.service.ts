@@ -2,6 +2,7 @@
  * Settings service - handles business logic for application settings
  */
 
+import { validateMegafonSettings } from "../lib/validation";
 import type { PromptsRepository } from "../repositories/prompts.repository";
 import type { SystemRepository } from "../repositories/system.repository";
 
@@ -25,6 +26,17 @@ export class SettingsService {
       this.getSetting("megafon_ftp_user", workspaceId),
       this.getSetting("megafon_ftp_password", workspaceId),
     ]);
+
+    // Validate settings if all are present
+    if (host && user && password) {
+      try {
+        const validated = validateMegafonSettings({ host, user, password });
+        return validated;
+      } catch {
+        // If validation fails, return null values to indicate misconfiguration
+        return { host: null, user: null, password: null };
+      }
+    }
 
     return { host, user, password };
   }

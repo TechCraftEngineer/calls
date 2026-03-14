@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader } from "@calls/ui";
+import { Card, CardContent, CardHeader, Input } from "@calls/ui";
 import type React from "react";
 import { useState } from "react";
 import api from "@/lib/api";
@@ -45,7 +45,7 @@ export default function ReportSettingsFormBody({
                 <label className="block mb-1 text-[13px] font-semibold">
                   Telegram Chat ID
                 </label>
-                <input
+                <Input
                   type="text"
                   value={form.telegram_chat_id}
                   onChange={(e) =>
@@ -162,7 +162,7 @@ export default function ReportSettingsFormBody({
                   <div className="flex flex-wrap gap-3 items-center">
                     <label className="text-xs">
                       Ежедневно:{" "}
-                      <input
+                      <Input
                         type="time"
                         value={form.report_daily_time}
                         onChange={(e) =>
@@ -194,7 +194,7 @@ export default function ReportSettingsFormBody({
                           ),
                         )}
                       </select>{" "}
-                      <input
+                      <Input
                         type="time"
                         value={form.report_weekly_time}
                         onChange={(e) =>
@@ -227,7 +227,7 @@ export default function ReportSettingsFormBody({
                           ),
                         )}
                       </select>{" "}
-                      <input
+                      <Input
                         type="time"
                         value={form.report_monthly_time}
                         onChange={(e) =>
@@ -300,7 +300,7 @@ export default function ReportSettingsFormBody({
                 <label className="block mb-1 text-[13px] font-semibold">
                   Email адрес
                 </label>
-                <input
+                <Input
                   type="email"
                   value={form.email}
                   onChange={(e) =>
@@ -415,7 +415,7 @@ export default function ReportSettingsFormBody({
                 <div className="flex flex-wrap gap-3 items-center mb-3">
                   <label className="text-[13px]">
                     Базовый оклад (₽):{" "}
-                    <input
+                    <Input
                       type="number"
                       min={0}
                       value={form.kpi_base_salary}
@@ -430,7 +430,7 @@ export default function ReportSettingsFormBody({
                   </label>
                   <label className="text-[13px]">
                     Целевой бонус (₽):{" "}
-                    <input
+                    <Input
                       type="number"
                       min={0}
                       value={form.kpi_target_bonus}
@@ -445,7 +445,7 @@ export default function ReportSettingsFormBody({
                   </label>
                   <label className="text-[13px]">
                     Целевое время разговоров (мин):{" "}
-                    <input
+                    <Input
                       type="number"
                       min={0}
                       value={form.kpi_target_talk_time_minutes}
@@ -480,7 +480,7 @@ export default function ReportSettingsFormBody({
                 </label>
                 <div className="flex items-center gap-2">
                   <span className="text-[13px]">Короче (сек):</span>
-                  <input
+                  <Input
                     type="number"
                     value={form.filter_min_duration}
                     onChange={(e) =>

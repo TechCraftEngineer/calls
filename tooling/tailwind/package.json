@@ -3,16 +3,19 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./theme.css",
-    "./config": "./tailwind.config.js"
+    "./theme": "./theme.css",
+    "./postcss-config": "./postcss-config.js"
   },
   "license": "MIT",
   "scripts": {
-    "clean": "rm -rf .turbo dist",
-    "dev": "bun -e \"0\"",
-    "typecheck": "tsc --noEmit"
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "format": "biome format .",
+    "lint": "biome lint .",
+    "check": "biome check ."
   },
   "dependencies": {
+    "@tailwindcss/postcss": "4.2.1",
+    "postcss": "^8.5.8",
     "tailwindcss": "4.2.1"
   },
   "devDependencies": {

@@ -5,7 +5,11 @@
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { backendRouter, createBackendContext, createLogger } from "@calls/api";
-import { promptsService } from "@calls/db";
+import {
+  getDefaultWorkspace,
+  promptsService,
+  workspacesService,
+} from "@calls/db";
 import { inngestHandler } from "@calls/jobs/hono";
 import { createWebhookHandler } from "@calls/telegram-bot";
 import { onError } from "@orpc/server";
@@ -121,9 +125,21 @@ export function createApp() {
   });
 
   // Telegram webhook
-  const telegramWebhookHandler = createWebhookHandler(() =>
-    promptsService.getPrompt("telegram_bot_token"),
-  );
+  const telegramWebhookHandler = createWebhookHandler(async () => {
+    try {
+      const defaultWs = await getDefaultWorkspace(workspacesService);
+      if (!defaultWs) {
+        backendLogger.warn("Default workspace not found for telegram webhook");
+        return null;
+      }
+      return promptsService.getPrompt("telegram_bot_token", defaultWs.id);
+    } catch (error) {
+      backendLogger.error("Failed to get workspace for telegram webhook", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    }
+  });
   app.post("/api/telegram-webhook", telegramWebhookHandler);
 
   // Inngest

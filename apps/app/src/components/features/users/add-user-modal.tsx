@@ -1,5 +1,6 @@
 "use client";
 
+import { Input, PasswordInput } from "@calls/ui";
 import { useState } from "react";
 import {
   type AddUserForm,
@@ -85,7 +86,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
 
           <div className={formFieldWrap}>
             <label className={formLabel}>Логин *</label>
-            <input
+            <Input
               type="text"
               value={form.username}
               onChange={(e) =>
@@ -98,8 +99,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           </div>
           <div className={formFieldWrap}>
             <label className={formLabel}>Пароль *</label>
-            <input
-              type="password"
+            <PasswordInput
               value={form.password}
               onChange={(e) =>
                 setForm((f) => ({ ...f, password: e.target.value }))
@@ -110,7 +110,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           </div>
           <div className={formFieldWrap}>
             <label className={formLabel}>Имя *</label>
-            <input
+            <Input
               type="text"
               value={form.givenName}
               onChange={(e) =>
@@ -121,7 +121,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           </div>
           <div className={formFieldWrap}>
             <label className={formLabel}>Фамилия</label>
-            <input
+            <Input
               type="text"
               value={form.familyName}
               onChange={(e) =>
@@ -132,7 +132,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           </div>
           <div className={formFieldWrap}>
             <label className={formLabel}>Внутренние номера</label>
-            <input
+            <Input
               type="text"
               value={form.internalExtensions}
               onChange={(e) =>
@@ -144,7 +144,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           </div>
           <div className="mb-4">
             <label className={formLabel}>Мобильные номера</label>
-            <input
+            <Input
               type="text"
               value={form.mobilePhones}
               onChange={(e) =>
@@ -160,7 +160,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
             <h3 className="m-0 mb-3 text-sm font-bold">Telegram Отчеты</h3>
             <div className={formFieldWrap}>
               <label className={formLabel}>Telegram Chat ID</label>
-              <input
+              <Input
                 type="text"
                 value={form.telegramChatId}
                 onChange={(e) =>
@@ -208,7 +208,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
             <h3 className="m-0 mb-3 text-sm font-bold">MAX Отчеты</h3>
             <div className={formFieldWrap}>
               <label className={formLabel}>MAX Chat ID</label>
-              <input
+              <Input
                 type="text"
                 value={form.max_chat_id}
                 onChange={(e) =>

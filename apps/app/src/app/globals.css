@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "@calls/tailwind-config/theme";
+
+@source "../../../../packages/ui/src/**/*.{ts,tsx}";
 
 :root {
   --sidebar-width: 64px;

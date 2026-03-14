@@ -3,7 +3,11 @@
  */
 
 import { createLogger } from "@calls/api";
-import { promptsService } from "@calls/db";
+import {
+  getDefaultWorkspace,
+  promptsService,
+  workspacesService,
+} from "@calls/db";
 import { Bot } from "grammy";
 
 const logger = createLogger("backend-server");
@@ -18,9 +22,26 @@ export async function setupTelegramWebhook(): Promise<boolean> {
   const maxRetries = 3;
   const retryDelay = 5000;
 
+  let defaultWs: Awaited<ReturnType<typeof workspacesService.getBySlug>>;
+  try {
+    defaultWs = await getDefaultWorkspace(workspacesService);
+    if (!defaultWs) {
+      logger.warn("Default workspace not found, skipping webhook setup");
+      return true;
+    }
+  } catch (error) {
+    logger.error("Failed to get default workspace for telegram webhook", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return false;
+  }
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const token = await promptsService.getPrompt("telegram_bot_token");
+      const token = await promptsService.getPrompt(
+        "telegram_bot_token",
+        defaultWs.id,
+      );
       if (!token?.trim()) {
         logger.warn(
           "Telegram bot token not configured, skipping webhook setup",

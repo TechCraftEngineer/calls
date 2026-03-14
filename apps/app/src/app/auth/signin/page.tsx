@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { Input, PasswordInput } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -92,7 +93,7 @@ function LoginForm() {
             >
               Электронная почта
             </label>
-            <input
+            <Input
               id="username"
               type="email"
               className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
@@ -102,6 +103,7 @@ function LoginForm() {
               }`}
               placeholder="example@mail.com"
               autoComplete="username"
+              aria-invalid={!!errors.username}
               {...register("username")}
             />
             {errors.username && (
@@ -118,16 +120,16 @@ function LoginForm() {
             >
               Пароль
             </label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
-              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
+              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 pr-10 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                 errors.password
                   ? "border-red-500 bg-red-50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(220,53,69,0.1)]"
                   : ""
               }`}
               placeholder="••••••••"
               autoComplete="current-password"
+              aria-invalid={!!errors.password}
               {...register("password")}
             />
             {errors.password && (

@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@calls/ui";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/lib/better-auth";
 import { type ChatMessage, sendChatMessage } from "@/lib/chat";
@@ -146,7 +147,7 @@ export default function ChatWidget() {
               <div className="flex gap-2 items-center flex-wrap">
                 <label className="text-xs">
                   С:
-                  <input
+                  <Input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
@@ -155,7 +156,7 @@ export default function ChatWidget() {
                 </label>
                 <label className="text-xs">
                   По:
-                  <input
+                  <Input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}

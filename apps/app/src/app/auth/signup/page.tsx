@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { Input, PasswordInput } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -92,7 +93,7 @@ function RegisterForm() {
             >
               Электронная почта
             </label>
-            <input
+            <Input
               id="username"
               type="email"
               className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
@@ -102,6 +103,7 @@ function RegisterForm() {
               }`}
               placeholder="example@mail.com"
               autoComplete="email"
+              aria-invalid={!!errors.username}
               {...register("username")}
             />
             {errors.username && (
@@ -118,7 +120,7 @@ function RegisterForm() {
             >
               Имя
             </label>
-            <input
+            <Input
               id="givenName"
               type="text"
               className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
@@ -128,6 +130,7 @@ function RegisterForm() {
               }`}
               placeholder="Иван"
               autoComplete="given-name"
+              aria-invalid={!!errors.givenName}
               {...register("givenName")}
             />
             {errors.givenName && (
@@ -144,7 +147,7 @@ function RegisterForm() {
             >
               Фамилия
             </label>
-            <input
+            <Input
               id="familyName"
               type="text"
               className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
@@ -154,6 +157,7 @@ function RegisterForm() {
               }`}
               placeholder="Иванов"
               autoComplete="family-name"
+              aria-invalid={!!errors.familyName}
               {...register("familyName")}
             />
             {errors.familyName && (
@@ -170,16 +174,16 @@ function RegisterForm() {
             >
               Пароль
             </label>
-            <input
+            <PasswordInput
               id="password"
-              type="password"
-              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
+              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 pr-10 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                 errors.password
                   ? "border-red-500 bg-red-50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(220,53,69,0.1)]"
                   : ""
               }`}
               placeholder="••••••••"
               autoComplete="new-password"
+              aria-invalid={!!errors.password}
               {...register("password")}
             />
             {errors.password && (
@@ -196,16 +200,16 @@ function RegisterForm() {
             >
               Подтвердите пароль
             </label>
-            <input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
-              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
+              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 pr-10 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                 errors.confirmPassword
                   ? "border-red-500 bg-red-50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(220,53,69,0.1)]"
                   : ""
               }`}
               placeholder="••••••••"
               autoComplete="new-password"
+              aria-invalid={!!errors.confirmPassword}
               {...register("confirmPassword")}
             />
             {errors.confirmPassword && (

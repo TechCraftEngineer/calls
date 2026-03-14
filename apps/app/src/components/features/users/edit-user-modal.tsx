@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@calls/ui";
 import { useCallback, useState } from "react";
 import api from "@/lib/api";
 import {
@@ -168,7 +169,7 @@ export default function EditUserModal({
           {/* Основные поля */}
           <div className={formFieldWrap}>
             <label className={formLabel}>Имя *</label>
-            <input
+            <Input
               type="text"
               value={form.givenName}
               onChange={(e) =>
@@ -179,7 +180,7 @@ export default function EditUserModal({
           </div>
           <div className={formFieldWrap}>
             <label className={formLabel}>Фамилия</label>
-            <input
+            <Input
               type="text"
               value={form.familyName}
               onChange={(e) =>
@@ -190,7 +191,7 @@ export default function EditUserModal({
           </div>
           <div className={formFieldWrap}>
             <label className={formLabel}>Внутренние номера</label>
-            <input
+            <Input
               type="text"
               value={form.internalExtensions}
               onChange={(e) =>
@@ -202,7 +203,7 @@ export default function EditUserModal({
           </div>
           <div className="mb-4">
             <label className={formLabel}>Мобильные номера</label>
-            <input
+            <Input
               type="text"
               value={form.mobilePhones}
               onChange={(e) =>
@@ -217,7 +218,7 @@ export default function EditUserModal({
           <div className={formFieldWrap}>
             <label className={formLabel}>Telegram Chat ID</label>
             <div style={{ display: "flex", gap: "8px" }}>
-              <input
+              <Input
                 type="text"
                 value={form.telegramChatId}
                 onChange={(e) =>
@@ -317,19 +318,13 @@ export default function EditUserModal({
               >
                 MAX Chat ID
               </label>
-              <input
+              <Input
                 type="text"
                 value={form.max_chat_id}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, max_chat_id: e.target.value }))
                 }
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #ddd",
-                  borderRadius: "6px",
-                  boxSizing: "border-box",
-                }}
+                className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
                 placeholder="ID чата MAX"
               />
             </div>
@@ -474,19 +469,13 @@ export default function EditUserModal({
               >
                 Email адрес
               </label>
-              <input
+              <Input
                 type="email"
                 value={form.email}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, email: e.target.value }))
                 }
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #ddd",
-                  borderRadius: "6px",
-                  boxSizing: "border-box",
-                }}
+                className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
                 placeholder="otchet@mail.com"
               />
             </div>
@@ -609,7 +598,7 @@ export default function EditUserModal({
                 >
                   {label}
                 </label>
-                <input
+                <Input
                   type="number"
                   value={form[key]}
                   onChange={(e) =>
@@ -618,13 +607,7 @@ export default function EditUserModal({
                       [key]: parseFloat(e.target.value) || 0,
                     }))
                   }
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    boxSizing: "border-box",
-                  }}
+                  className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
                 />
               </div>
             ))}
@@ -677,7 +660,7 @@ export default function EditUserModal({
               >
                 Звонки короче (сек)
               </label>
-              <input
+              <Input
                 type="number"
                 min={0}
                 value={form.filter_min_duration ?? ""}
@@ -687,13 +670,7 @@ export default function EditUserModal({
                     filter_min_duration: parseInt(e.target.value, 10) || 0,
                   }))
                 }
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #ddd",
-                  borderRadius: "6px",
-                  boxSizing: "border-box",
-                }}
+                className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
                 placeholder="0 — не исключать"
               />
             </div>
@@ -708,7 +685,7 @@ export default function EditUserModal({
               >
                 Меньше реплик
               </label>
-              <input
+              <Input
                 type="number"
                 min={0}
                 value={form.filter_min_replicas ?? ""}
@@ -718,13 +695,7 @@ export default function EditUserModal({
                     filter_min_replicas: parseInt(e.target.value, 10) || 0,
                   }))
                 }
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  border: "1px solid #ddd",
-                  borderRadius: "6px",
-                  boxSizing: "border-box",
-                }}
+                className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
                 placeholder="0 — не исключать"
               />
             </div>

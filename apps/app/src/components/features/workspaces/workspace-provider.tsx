@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { workspacesApi } from "@/lib/api-orpc";
+import { useSession } from "@/lib/better-auth";
 
 interface Workspace {
   id: number;
@@ -31,12 +32,14 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
 );
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
+  const { data: session, isPending: sessionPending } = useSession();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeWorkspace, setActiveWorkspaceState] = useState<Workspace | null>(
     null,
   );
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const isAuthenticated = !!session?.user;
 
   const getActiveIdFromCookie = useCallback(() => {
     if (typeof document === "undefined") return null;
@@ -107,8 +110,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    if (sessionPending) {
+      setLoading(true);
+      return;
+    }
+    if (!isAuthenticated) {
+      setWorkspaces([]);
+      setActiveWorkspaceState(null);
+      setLoading(false);
+      return;
+    }
     loadWorkspaces();
-  }, [loadWorkspaces]);
+  }, [loadWorkspaces, isAuthenticated, sessionPending]);
 
   return (
     <WorkspaceContext.Provider

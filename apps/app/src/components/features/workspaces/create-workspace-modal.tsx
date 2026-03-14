@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -171,13 +172,14 @@ export default function CreateWorkspaceModal({
             >
               Название
             </label>
-            <input
+            <Input
               id="name"
               type="text"
               className={`w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:border-[#FFD600] focus:ring-4 focus:ring-[#FFD600]/10 focus:outline-none transition-all ${
                 errors.name ? "border-red-500 bg-red-50" : ""
               }`}
               placeholder="Моя компания"
+              aria-invalid={!!errors.name}
               {...register("name")}
             />
             {errors.name && (
@@ -194,13 +196,14 @@ export default function CreateWorkspaceModal({
             >
               Идентификатор
             </label>
-            <input
+            <Input
               id="slug"
               type="text"
               className={`w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:border-[#FFD600] focus:ring-4 focus:ring-[#FFD600]/10 focus:outline-none transition-all ${
                 errors.slug ? "border-red-500 bg-red-50" : ""
               }`}
               placeholder="my-company"
+              aria-invalid={!!errors.slug}
               {...register("slug")}
             />
             <div className="flex flex-col gap-1">

@@ -3,6 +3,7 @@
 import { paths } from "@calls/config";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import type { User } from "@/lib/auth";
 import WorkspaceSwitcher from "./workspace-switcher";
 
@@ -12,6 +13,9 @@ interface SidebarProps {
 
 export default function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
+  const { activeWorkspace } = useWorkspace();
+  const isWorkspaceAdmin =
+    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
   const icons = {
     dashboard: (
@@ -127,9 +131,7 @@ export default function Sidebar({ user }: SidebarProps) {
         >
           <div className="icon-bubble bg-blue-50">{icons.statistics}</div>
         </Link>
-        {(user?.role === "admin" ||
-          user?.username === "admin@mango" ||
-          user?.username === "admin@gmail.com") && (
+        {isWorkspaceAdmin && (
           <>
             <Link
               href={paths.users.root}

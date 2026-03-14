@@ -1,5 +1,6 @@
 "use client";
 
+import { PasswordInput } from "@calls/ui";
 import { useState } from "react";
 import type { ManagedUser } from "./types";
 import {
@@ -70,8 +71,7 @@ export default function ChangePasswordModal({
           )}
           <div className={formFieldWrap}>
             <label className={formLabel}>Новый пароль *</label>
-            <input
-              type="password"
+            <PasswordInput
               value={form.new_password}
               onChange={(e) =>
                 setForm((f) => ({ ...f, new_password: e.target.value }))
@@ -82,8 +82,7 @@ export default function ChangePasswordModal({
           </div>
           <div className="mb-4">
             <label className={formLabel}>Подтверждение пароля *</label>
-            <input
-              type="password"
+            <PasswordInput
               value={form.confirm_password}
               onChange={(e) =>
                 setForm((f) => ({ ...f, confirm_password: e.target.value }))

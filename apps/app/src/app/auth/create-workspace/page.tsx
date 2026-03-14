@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { Input } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -143,7 +144,7 @@ function CreateWorkspaceForm() {
             >
               Название
             </label>
-            <input
+            <Input
               id="name"
               type="text"
               className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
@@ -153,6 +154,7 @@ function CreateWorkspaceForm() {
               }`}
               placeholder="Моя компания"
               autoComplete="organization"
+              aria-invalid={!!errors.name}
               {...register("name")}
             />
             {errors.name && (
@@ -169,7 +171,7 @@ function CreateWorkspaceForm() {
             >
               Идентификатор
             </label>
-            <input
+            <Input
               id="slug"
               type="text"
               className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
@@ -179,6 +181,7 @@ function CreateWorkspaceForm() {
               }`}
               placeholder="my-company"
               autoComplete="off"
+              aria-invalid={!!errors.slug}
               {...register("slug")}
             />
             <p className="mt-1 text-[11px] text-[#888]">

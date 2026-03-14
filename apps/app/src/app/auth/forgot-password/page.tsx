@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { Input } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -94,7 +95,7 @@ function ForgotPasswordForm() {
                 >
                   Электронная почта
                 </label>
-                <input
+                <Input
                   id="email"
                   type="email"
                   className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
@@ -104,6 +105,7 @@ function ForgotPasswordForm() {
                   }`}
                   placeholder="example@mail.com"
                   autoComplete="email"
+                  aria-invalid={!!errors.email}
                   {...register("email")}
                 />
                 {errors.email && (

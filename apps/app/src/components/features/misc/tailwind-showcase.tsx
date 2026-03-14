@@ -4,6 +4,7 @@
 
 "use client";
 
+import { Input } from "@calls/ui";
 import { useState } from "react";
 
 export default function TailwindShowcase() {
@@ -118,7 +119,7 @@ export default function TailwindShowcase() {
                   <label className="block text-sm font-semibold text-primary-800 dark:text-gray-200 mb-2">
                     Email
                   </label>
-                  <input
+                  <Input
                     type="email"
                     placeholder="example@mail.com"
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-primary-900 dark:text-white focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20 transition-all duration-200"
@@ -128,7 +129,7 @@ export default function TailwindShowcase() {
                   <label className="block text-sm font-semibold text-primary-800 dark:text-gray-200 mb-2">
                     Password
                   </label>
-                  <input
+                  <Input
                     type="password"
                     placeholder="••••••••"
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-primary-900 dark:text-white focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20 transition-all duration-200"

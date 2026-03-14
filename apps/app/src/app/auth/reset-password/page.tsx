@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { PasswordInput } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -144,16 +145,16 @@ function ResetPasswordForm() {
                 >
                   Новый пароль
                 </label>
-                <input
+                <PasswordInput
                   id="newPassword"
-                  type="password"
-                  className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
+                  className={`w-full rounded-lg border border-[#DDD] px-4 py-3 pr-10 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                     errors.newPassword
                       ? "border-red-500 bg-red-50 focus:border-red-500"
                       : ""
                   }`}
                   placeholder="••••••••"
                   autoComplete="new-password"
+                  aria-invalid={!!errors.newPassword}
                   {...register("newPassword")}
                 />
                 {errors.newPassword && (
@@ -170,16 +171,16 @@ function ResetPasswordForm() {
                 >
                   Подтвердите пароль
                 </label>
-                <input
+                <PasswordInput
                   id="confirmPassword"
-                  type="password"
-                  className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
+                  className={`w-full rounded-lg border border-[#DDD] px-4 py-3 pr-10 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
                     errors.confirmPassword
                       ? "border-red-500 bg-red-50 focus:border-red-500"
                       : ""
                   }`}
                   placeholder="••••••••"
                   autoComplete="new-password"
+                  aria-invalid={!!errors.confirmPassword}
                   {...register("confirmPassword")}
                 />
                 {errors.confirmPassword && (

@@ -12,7 +12,7 @@ export const corsOrigin =
   process.env.CORS_ORIGINS?.split(",")[0] ?? "http://localhost:3000";
 
 export const port = Number(
-  process.env.BACKEND_PORT ?? process.env.PORT ?? 8000,
+  process.env.BACKEND_PORT ?? process.env.PORT ?? 7000,
 );
 
 export function getRecordsDir(): string {

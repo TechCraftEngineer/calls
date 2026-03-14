@@ -1,4 +1,9 @@
-import { settingsService } from "@calls/db";
+import {
+  createWorkspaceErrorResponse,
+  getDefaultWorkspace,
+  settingsService,
+  workspacesService,
+} from "@calls/db";
 import { syncMegafonFtp } from "../../megafon/ftp-sync";
 import { inngest } from "../client";
 
@@ -10,38 +15,51 @@ export const megafonSyncFn = inngest.createFunction(
   },
   { cron: "TZ=Europe/Moscow */15 * * * *" },
   async ({ step }) => {
-    const { host, user, password } =
-      await settingsService.getMegafonFtpSettings();
+    try {
+      const defaultWs = await getDefaultWorkspace(workspacesService);
+      if (!defaultWs) {
+        return createWorkspaceErrorResponse(
+          "Рабочее пространство 'default' не найдено",
+        );
+      }
 
-    if (!host || !user || !password) {
+      const { host, user, password } =
+        await settingsService.getMegafonFtpSettings(defaultWs.id);
+
+      if (!host || !user || !password) {
+        return {
+          skipped: true,
+          reason: "MEGAFON_FTP_* не настроены",
+        };
+      }
+
+      const result = await step.run("sync-ftp", async () => {
+        return syncMegafonFtp({ host, user, password });
+      });
+
+      // Запускаем транскрибацию для каждого нового звонка с аудио
+      if (result.createdCallIds.length > 0) {
+        await step.sendEvent(
+          "trigger-transcriptions",
+          result.createdCallIds.map((callId) => ({
+            name: "call/transcribe.requested",
+            data: { callId },
+          })),
+        );
+      }
+
       return {
-        skipped: true,
-        reason: "MEGAFON_FTP_* не настроены",
+        downloaded: result.downloaded,
+        skipped: result.skipped,
+        s3Uploaded: result.s3Uploaded,
+        transcriptionQueued: result.createdCallIds.length,
+        errors: result.errors,
+        errorsCount: result.errors.length,
       };
-    }
-
-    const result = await step.run("sync-ftp", async () => {
-      return syncMegafonFtp({ host, user, password });
-    });
-
-    // Запускаем транскрибацию для каждого нового звонка с аудио
-    if (result.createdCallIds.length > 0) {
-      await step.sendEvent(
-        "trigger-transcriptions",
-        result.createdCallIds.map((callId) => ({
-          name: "call/transcribe.requested",
-          data: { callId },
-        })),
+    } catch (error) {
+      throw new Error(
+        `Megafon sync failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
-
-    return {
-      downloaded: result.downloaded,
-      skipped: result.skipped,
-      s3Uploaded: result.s3Uploaded,
-      transcriptionQueued: result.createdCallIds.length,
-      errors: result.errors,
-      errorsCount: result.errors.length,
-    };
   },
 );

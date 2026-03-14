@@ -8,15 +8,29 @@ import {
   workspaceProcedure,
 } from "../orpc";
 import { isAdminUser } from "../user-profile";
+import type { WorkspaceRole } from "../orpc";
+import { workspaceAdminProcedure } from "../orpc";
 
 async function canAccessUser(
   currentUserId: string,
   targetUserId: string,
+  workspaceRole: WorkspaceRole | null,
 ): Promise<boolean> {
   if (currentUserId === targetUserId) return true;
-  const user = await usersService.getUser(currentUserId);
-  if (!user) return false;
-  return isAdminUser(user as Record<string, unknown>);
+  
+  // Check workspace role first (fast path)
+  if (workspaceRole === "admin" || workspaceRole === "owner") {
+    return true;
+  }
+  
+  // Fallback to database check for additional security
+  try {
+    const user = await usersService.getUser(currentUserId);
+    if (!user) return false;
+    return isAdminUser(user as Record<string, unknown>);
+  } catch {
+    return false;
+  }
 }
 
 const userCreateSchema = z.object({
@@ -60,7 +74,7 @@ const _changePasswordSchema = z.object({
 });
 
 export const usersRouter = {
-  list: adminProcedure.handler(async () => {
+  list: workspaceAdminProcedure.handler(async () => {
     try {
       return await usersService.getAllUsers();
     } catch (error) {
@@ -72,18 +86,18 @@ export const usersRouter = {
     }
   }),
 
-  get: protectedProcedure
+  get: workspaceProcedure
     .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;
-      if (!(await canAccessUser(userId, input.user_id)))
+      if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
         throw new Error("Not authorized");
       const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       return user;
     }),
 
-  create: adminProcedure
+  create: workspaceAdminProcedure
     .input(userCreateSchema)
     .handler(async ({ input, context }) => {
       const existing = await usersService.getUserByUsername(input.username);
@@ -106,11 +120,11 @@ export const usersRouter = {
       return user;
     }),
 
-  update: protectedProcedure
+  update: workspaceProcedure
     .input(z.object({ user_id: z.string(), data: userUpdateSchema }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;
-      if (!(await canAccessUser(userId, input.user_id)))
+      if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
         throw new Error("Not authorized");
 
       // Получаем пользователя до обновления для логирования
@@ -217,7 +231,7 @@ export const usersRouter = {
       }
     }),
 
-  delete: adminProcedure
+  delete: workspaceAdminProcedure
     .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
       const user = await usersService.getUser(input.user_id);
@@ -235,7 +249,7 @@ export const usersRouter = {
       return { success: true, message: `User ${user.username} deleted` };
     }),
 
-  changePassword: adminProcedure
+  changePassword: workspaceAdminProcedure
     .input(
       z.object({
         user_id: z.string(),
@@ -268,7 +282,7 @@ export const usersRouter = {
     .handler(async ({ input, context }) => {
       const { workspaceId } = context;
       const userId = (context.user as Record<string, unknown>).id as string;
-      if (!(await canAccessUser(userId, input.user_id)))
+      if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
         throw new Error("Not authorized");
       const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
@@ -285,22 +299,22 @@ export const usersRouter = {
       return { url: `https://t.me/${botUsername}?start=${token}` };
     }),
 
-  disconnectTelegram: protectedProcedure
+  disconnectTelegram: workspaceProcedure
     .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;
-      if (!(await canAccessUser(userId, input.user_id)))
+      if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
         throw new Error("Not authorized");
       if (!(await usersService.disconnectTelegram(input.user_id)))
         throw new Error("Failed to disconnect Telegram");
       return { success: true };
     }),
 
-  maxAuthUrl: protectedProcedure
+  maxAuthUrl: workspaceProcedure
     .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;
-      if (!(await canAccessUser(userId, input.user_id)))
+      if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
         throw new Error("Not authorized");
       const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
@@ -313,11 +327,11 @@ export const usersRouter = {
       };
     }),
 
-  disconnectMax: protectedProcedure
+  disconnectMax: workspaceProcedure
     .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;
-      if (!(await canAccessUser(userId, input.user_id)))
+      if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
         throw new Error("Not authorized");
       if (!(await usersService.disconnectMax(input.user_id)))
         throw new Error("Failed to disconnect MAX");

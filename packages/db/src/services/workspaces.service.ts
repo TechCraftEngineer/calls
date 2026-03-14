@@ -3,6 +3,7 @@
  */
 
 import { db } from "../client";
+import { workspaceCache } from "../lib/workspace-cache";
 import type {
   AddMemberData,
   CreateWorkspaceData,
@@ -53,7 +54,18 @@ export class WorkspacesService {
   }
 
   async getBySlug(slug: string) {
-    return this.workspacesRepository.getBySlug(slug);
+    const cacheKey = workspaceCache.createBySlugKey(slug);
+    const cached =
+      workspaceCache.get<
+        Awaited<ReturnType<typeof this.workspacesRepository.getBySlug>>
+      >(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.workspacesRepository.getBySlug(slug);
+    if (result) {
+      workspaceCache.set(cacheKey, result);
+    }
+    return result;
   }
 
   async update(
@@ -64,11 +76,29 @@ export class WorkspacesService {
       metadata?: Record<string, unknown> | null;
     },
   ) {
-    return this.workspacesRepository.update(id, data);
+    // Get current workspace to check if slug is changing
+    const currentWs = await this.workspacesRepository.getById(id);
+    const oldSlug = currentWs?.slug;
+    
+    const result = await this.workspacesRepository.update(id, data);
+    
+    // Invalidate cache for this workspace
+    workspaceCache.invalidateWorkspace(id);
+    
+    // If slug changed, invalidate old slug cache
+    if (oldSlug && data.slug && oldSlug !== data.slug) {
+      const oldSlugKey = workspaceCache.createBySlugKey(oldSlug);
+      workspaceCache.delete(oldSlugKey);
+    }
+    
+    return result;
   }
 
   async delete(id: string) {
-    return this.workspacesRepository.delete(id);
+    const result = await this.workspacesRepository.delete(id);
+    // Invalidate cache for this workspace
+    workspaceCache.invalidateWorkspace(id);
+    return result;
   }
 
   async getMembers(workspaceId: string) {

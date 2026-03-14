@@ -4,6 +4,7 @@
 
 "use client";
 
+import { Input, PasswordInput } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { usersApi } from "@/lib/api-orpc";
@@ -101,7 +102,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           >
             Email *
           </label>
-          <input
+          <Input
             id="username"
             type="email"
             className={`w-full px-3 py-2.5 border rounded-lg text-sm transition-all duration-200 box-border ${
@@ -111,6 +112,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
             } ${isEditing ? "bg-gray-50 cursor-not-allowed" : ""}`}
             placeholder="example@mail.com"
             disabled={isEditing}
+            aria-invalid={!!createErrors.username}
             {...register("username")}
           />
           {createErrors.username && (
@@ -129,15 +131,15 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
               >
                 Пароль *
               </label>
-              <input
+              <PasswordInput
                 id="password"
-                type="password"
-                className={`w-full px-3 py-2.5 border rounded-lg text-sm transition-all duration-200 box-border ${
+                className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-sm transition-all duration-200 box-border ${
                   createErrors.password
                     ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
                     : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
                 }`}
                 placeholder="Минимум 6 символов"
+                aria-invalid={!!createErrors.password}
                 {...register("password")}
               />
               {createErrors.password && (
@@ -154,15 +156,15 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
               >
                 Подтвердите пароль *
               </label>
-              <input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
-                className={`w-full px-3 py-2.5 border rounded-lg text-sm transition-all duration-200 box-border ${
+                className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-sm transition-all duration-200 box-border ${
                   createErrors.confirmPassword
                     ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
                     : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
                 }`}
                 placeholder="Повторите пароль"
+                aria-invalid={!!createErrors.confirmPassword}
                 {...register("confirmPassword")}
               />
               {createErrors.confirmPassword && (
@@ -181,7 +183,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           >
             Имя *
           </label>
-          <input
+          <Input
             id="givenName"
             type="text"
             className={`w-full px-3 py-2.5 border rounded-lg text-sm transition-all duration-200 box-border ${
@@ -190,6 +192,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
                 : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
             }`}
             placeholder="Иван"
+            aria-invalid={!!errors.givenName}
             {...register("givenName")}
           />
           {errors.givenName && (
@@ -206,7 +209,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           >
             Фамилия
           </label>
-          <input
+          <Input
             id="familyName"
             type="text"
             className={`w-full px-3 py-2.5 border rounded-lg text-sm transition-all duration-200 box-border ${
@@ -215,6 +218,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
                 : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
             }`}
             placeholder="Иванов"
+            aria-invalid={!!errors.familyName}
             {...register("familyName")}
           />
           {errors.familyName && (
@@ -231,7 +235,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           >
             Внутренние номера
           </label>
-          <input
+          <Input
             id="internalExtensions"
             type="text"
             className={`w-full px-3 py-2.5 border rounded-lg text-sm transition-all duration-200 box-border ${
@@ -240,6 +244,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
                 : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
             }`}
             placeholder="100,101,102"
+            aria-invalid={!!errors.internalExtensions}
             {...register("internalExtensions")}
           />
           {errors.internalExtensions && (
@@ -256,7 +261,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           >
             Мобильные номера
           </label>
-          <input
+          <Input
             id="mobilePhones"
             type="text"
             className={`w-full px-3 py-2.5 border rounded-lg text-sm transition-all duration-200 box-border ${
@@ -265,6 +270,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
                 : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
             }`}
             placeholder="+79001234567,+79001234568"
+            aria-invalid={!!errors.mobilePhones}
             {...register("mobilePhones")}
           />
           {errors.mobilePhones && (

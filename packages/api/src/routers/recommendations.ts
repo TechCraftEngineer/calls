@@ -1,9 +1,12 @@
 import { createChatBot } from "@calls/ai";
+import { createLogger } from "@calls/api";
 import type { callsService, promptsService } from "@calls/db";
+
+const logger = createLogger("recommendations");
 
 function parseRecommendationsJson(text: string): string[] {
   if (!text || typeof text !== "string") {
-    console.warn("[recommendations] Empty or invalid text received");
+    logger.warn("Empty or invalid text received");
     return [];
   }
 
@@ -21,10 +24,7 @@ function parseRecommendationsJson(text: string): string[] {
       }
     }
   } catch (error) {
-    console.warn(
-      "[recommendations] Failed to parse JSON, trying fallback parsing:",
-      error,
-    );
+    logger.warn("Failed to parse JSON, trying fallback parsing", { error });
   }
 
   const lines = trimmed
@@ -52,10 +52,16 @@ export async function generateRecommendations(
       throw new Error(`Звонок с ID ${callId} не найден`);
     }
 
+    if (!call.workspaceId) {
+      throw new Error(
+        `Звонок с ID ${callId} не привязан к рабочему пространству`,
+      );
+    }
+
     const transcript = await calls.getTranscriptByCallId(callId);
     const evaluation = await calls.getEvaluation(callId);
 
-    let transcriptText = transcript?.text ?? transcript?.raw_text ?? "";
+    let transcriptText = transcript?.text ?? transcript?.rawText ?? "";
     if (!transcriptText.trim()) {
       throw new Error(
         "Транскрипт звонка пуст — невозможно сформировать рекомендации",
@@ -63,14 +69,14 @@ export async function generateRecommendations(
     }
 
     if (transcriptText.length > 50000) {
-      console.warn(
-        `[recommendations] Transcript too long (${transcriptText.length} chars), truncating`,
-      );
+      logger.warn("Transcript too long, truncating", {
+        length: transcriptText.length,
+      });
       transcriptText = `${transcriptText.substring(0, 50000)}...`;
     }
 
     const systemPrompt =
-      (await prompts.getPrompt("manager_recommendations")) ??
+      (await prompts.getPrompt("manager_recommendations", call.workspaceId)) ??
       `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
 
     const apiKey = process.env.OPENROUTER_API_KEY;
@@ -81,10 +87,10 @@ export async function generateRecommendations(
     }
 
     const contextParts: string[] = [];
-    if (evaluation?.value_explanation)
-      contextParts.push(`Оценка ценности: ${evaluation.value_explanation}`);
-    if (evaluation?.manager_feedback)
-      contextParts.push(`Обратная связь: ${evaluation.manager_feedback}`);
+    if (evaluation?.valueExplanation)
+      contextParts.push(`Оценка ценности: ${evaluation.valueExplanation}`);
+    if (evaluation?.managerFeedback)
+      contextParts.push(`Обратная связь: ${evaluation.managerFeedback}`);
 
     const userMessage = `Транскрипт звонка:
 ---
@@ -103,9 +109,7 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
       systemPrompt,
     });
 
-    console.log(
-      `[recommendations] Generating recommendations for call ${callId}`,
-    );
+    logger.info("Generating recommendations", { callId });
     const response = await chatBot.sendMessage([
       { id: "1", role: "user", content: userMessage },
     ]);
@@ -114,9 +118,7 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
     const parsed = parseRecommendationsJson(text);
 
     if (parsed.length === 0) {
-      console.warn(
-        `[recommendations] No valid recommendations generated for call ${callId}`,
-      );
+      logger.warn("No valid recommendations generated", { callId });
       return {
         recommendations: [
           "Не удалось сформировать рекомендации. Попробуйте позже.",
@@ -124,15 +126,22 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
       };
     }
 
-    console.log(
-      `[recommendations] Generated ${parsed.length} recommendations for call ${callId}`,
-    );
+    logger.info("Generated recommendations", {
+      callId,
+      count: parsed.length,
+    });
     return { recommendations: parsed };
   } catch (error) {
-    console.error(
-      `[recommendations] Error generating recommendations for call ${callId}:`,
-      error,
-    );
+    logger.error("Error generating recommendations", {
+      callId,
+      error:
+        error instanceof Error
+          ? {
+              message: error.message,
+              stack: error.stack,
+            }
+          : error,
+    });
 
     if (error instanceof Error) {
       throw new Error(
