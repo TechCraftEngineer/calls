@@ -2,6 +2,7 @@
 
 import { paths } from "@calls/config";
 import Link from "next/link";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import type { User } from "@/lib/auth";
 
 interface NavbarProps {
@@ -9,6 +10,10 @@ interface NavbarProps {
 }
 
 export default function Navbar({ user }: NavbarProps) {
+  const { activeWorkspace } = useWorkspace();
+  const isWorkspaceAdmin =
+    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+
   return (
     <nav className="top-bar">
       <div className="brand">
@@ -31,9 +36,7 @@ export default function Navbar({ user }: NavbarProps) {
         >
           Статистика
         </Link>
-        {(user?.role === "admin" ||
-          user?.username === "admin@mango" ||
-          user?.username === "admin@gmail.com") && (
+        {isWorkspaceAdmin && (
           <>
             <Link
               href={paths.users.root}

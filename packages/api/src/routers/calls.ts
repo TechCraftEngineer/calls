@@ -1,5 +1,6 @@
 import { createChatBot } from "@calls/ai";
 import type { callsService, promptsService } from "@calls/db";
+import { inngest } from "@calls/jobs";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure, workspaceProcedure } from "../orpc";
@@ -296,6 +297,48 @@ export const callsRouter = {
       };
     }),
 
+  transcribe: workspaceProcedure
+    .input(
+      z.object({
+        call_id: z.string(),
+        model: z.string().optional().default("assemblyai"),
+      }),
+    )
+    .handler(async ({ input, context }) => {
+      const call = await context.callsService.getCall(input.call_id);
+      if (!call) {
+        throw new ORPCError("NOT_FOUND", { message: "Звонок не найден" });
+      }
+      if (call.workspaceId !== context.workspaceId) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому звонку",
+        });
+      }
+      await inngest.send({
+        name: "call/transcribe.requested",
+        data: { callId: input.call_id, model: input.model },
+      });
+      return { success: true, message: "Транскрипция запущена" };
+    }),
+
+  evaluate: workspaceProcedure
+    .input(z.object({ call_id: z.string() }))
+    .handler(async ({ input, context }) => {
+      const call = await context.callsService.getCall(input.call_id);
+      if (!call) {
+        throw new ORPCError("NOT_FOUND", { message: "Звонок не найден" });
+      }
+      if (call.workspaceId !== context.workspaceId) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому звонку",
+        });
+      }
+      // TODO: Реализовать Inngest-функцию call/evaluate.requested
+      throw new ORPCError("NOT_IMPLEMENTED", {
+        message: "Переоценка звонка пока не реализована",
+      });
+    }),
+
   generateRecommendations: workspaceProcedure
     .input(z.object({ call_id: z.string() }))
     .handler(async ({ input, context }) => {
@@ -344,9 +387,6 @@ function getInternalNumbersForUser(
 ): string[] | undefined {
   const nums = user.internalExtensions as string | undefined;
   if (!nums || String(nums).trim().toLowerCase() === "all") return undefined;
-  const adminUsernames = ["admin@mango", "admin@gmail.com"];
-  if (adminUsernames.includes((user.username as string) ?? ""))
-    return undefined;
   return (
     nums
       .split(",")

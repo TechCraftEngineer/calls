@@ -46,6 +46,7 @@ export class SettingsService {
     value: string,
     description: string | null,
     workspaceId: string,
+    username: string = "system",
   ): Promise<boolean> {
     const result = await this.promptsRepository.upsert(
       key,
@@ -58,7 +59,7 @@ export class SettingsService {
       await this.systemRepository.addActivityLog(
         "INFO",
         `Setting ${key} updated`,
-        "admin",
+        username,
         workspaceId,
       );
     }
@@ -71,6 +72,7 @@ export class SettingsService {
     user: string,
     password: string,
     workspaceId: string,
+    username: string = "system",
   ): Promise<boolean> {
     const results = await Promise.all([
       this.updateSetting(
@@ -78,18 +80,21 @@ export class SettingsService {
         host,
         "Megafon FTP host",
         workspaceId,
+        username,
       ),
       this.updateSetting(
         "megafon_ftp_user",
         user,
         "Megafon FTP user",
         workspaceId,
+        username,
       ),
       this.updateSetting(
         "megafon_ftp_password",
         password,
         "Megafon FTP password",
         workspaceId,
+        username,
       ),
     ]);
 

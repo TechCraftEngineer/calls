@@ -51,14 +51,18 @@ export default function PromptSection({
       <CardContent className="p-0 pt-0">
         {isTokenOnly ? (
           <div className="filter-item">
-            <label className="filter-label">Токен</label>
+            <label className="filter-label" htmlFor={`prompt-${promptKey}`}>
+              Токен
+            </label>
             <Input
+              id={`prompt-${promptKey}`}
               type="password"
               className="text-input"
               value={prompt.value || ""}
               onChange={onPromptChange(promptKey, "value")}
               placeholder="Введите токен бота"
               autoComplete="off"
+              aria-label={`Токен для ${promptKey}`}
             />
           </div>
         ) : (
@@ -80,23 +84,37 @@ export default function PromptSection({
             )}
 
             <div className="filter-item mb-4">
-              <label className="filter-label">ОПИСАНИЕ</label>
+              <label
+                className="filter-label"
+                htmlFor={`prompt-${promptKey}-description`}
+              >
+                ОПИСАНИЕ
+              </label>
               <Input
+                id={`prompt-${promptKey}-description`}
                 type="text"
                 className="text-input"
                 value={prompt.description || ""}
                 onChange={onPromptChange(promptKey, "description")}
                 placeholder="Описание промпта"
+                aria-label={`Описание промпта ${title}`}
               />
             </div>
 
             <div className="filter-item">
-              <label className="filter-label">ТЕКСТ ПРОМПТА</label>
+              <label
+                className="filter-label"
+                htmlFor={`prompt-${promptKey}-value`}
+              >
+                ТЕКСТ ПРОМПТА
+              </label>
               <Textarea
+                id={`prompt-${promptKey}-value`}
                 className="text-input min-h-[300px] resize-y font-mono text-[13px] leading-relaxed"
                 value={prompt.value || ""}
                 onChange={onPromptChange(promptKey, "value")}
                 placeholder="Введите текст промпта"
+                aria-label={`Текст промпта ${title}`}
               />
             </div>
           </>

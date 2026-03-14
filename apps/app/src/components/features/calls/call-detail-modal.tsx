@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import sanitizeHtml from "sanitize-html";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import AudioPlayer from "@/components/ui/audio-player";
-import api, { API_BASE_URL, restPost } from "@/lib/api";
+import api, { API_BASE_URL } from "@/lib/api";
 import type { User } from "@/lib/auth";
 
 interface CallDetail {
@@ -196,14 +197,15 @@ export default function CallDetailModal({
     try {
       setRestarting(true);
 
-      const transcribeResponse = await restPost<{ success?: boolean }>(
-        `/calls/${callId}/transcribe?model=${selectedModel}`,
-      );
+      const transcribeResponse = await api.calls.transcribe({
+        call_id: callId,
+        model: selectedModel,
+      });
       if (!transcribeResponse?.success) throw new Error("Transcription failed");
 
-      // Шаг 2: Переоценка звонка
+      // Шаг 2: Переоценка звонка (пока не реализована — игнорируем ошибку)
       try {
-        await restPost(`/calls/${callId}/evaluate`);
+        await api.calls.evaluate({ call_id: callId });
       } catch (_evalError) {}
 
       await loadData();
@@ -220,15 +222,9 @@ export default function CallDetailModal({
     }
   };
 
-  // Функция проверки прав администратора
-  const isAdmin = useCallback((): boolean => {
-    if (!user) return false;
-    return (
-      user.username === "admin@mango" ||
-      user.username === "admin@gmail.com" ||
-      user.role === "admin"
-    );
-  }, [user]);
+  const { activeWorkspace } = useWorkspace();
+  const isWorkspaceAdmin =
+    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
   // Функция удаления звонка
   const handleDeleteCall = useCallback(async () => {
@@ -334,7 +330,7 @@ export default function CallDetailModal({
                   {isCompleted ? "ЗАВЕРШЁН" : "ПРОПУЩЕН"}
                 </span>
               </div>
-              {isAdmin() && (
+              {isWorkspaceAdmin && (
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
                   className="py-2 px-4 text-[13px] bg-red-500 text-white border-none rounded-lg cursor-pointer font-semibold flex items-center gap-1.5 transition-colors ml-auto hover:bg-red-600 disabled:opacity-60 disabled:hover:bg-red-500"

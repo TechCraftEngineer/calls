@@ -1,0 +1,1222 @@
+diff --git a/apps/app/src/app/calls/[id]/page.tsx b/apps/app/src/app/calls/[id]/page.tsx
+index 0660528..37862ac 100644
+--- a/apps/app/src/app/calls/[id]/page.tsx
++++ b/apps/app/src/app/calls/[id]/page.tsx
+@@ -8,7 +8,7 @@ import CallSidebar from "@/components/features/calls/call-sidebar";
+ import { TranscriptCard } from "@/components/features/calls/transcript-card";
+ import Header from "@/components/layout/header";
+ import Sidebar from "@/components/layout/sidebar";
+-import api, { restPost } from "@/lib/api";
++import api from "@/lib/api";
+ import { getCurrentUser, type User } from "@/lib/auth";
+ import type {
+   CallDetail,
+@@ -39,7 +39,9 @@ export default function CallDetailPage() {
+       }
+       setUser(currentUser);
+ 
+-      const result = await api.calls.get({ call_id: Number(id) });
++      const callId = Array.isArray(id) ? id[0] : id;
++      if (!callId) return;
++      const result = await api.calls.get({ call_id: callId });
+       setCall(result.call as CallDetail);
+       setTranscript((result.transcript ?? null) as TranscriptDetail | null);
+       setEvaluation((result.evaluation ?? null) as EvaluationDetail | null);
+@@ -62,11 +64,12 @@ export default function CallDetailPage() {
+   }, [loadData]);
+ 
+   const handleGenerateRecommendations = async () => {
+-    if (!id || isGeneratingRecommendations) return;
++    const callId = Array.isArray(id) ? id[0] : id;
++    if (!callId || isGeneratingRecommendations) return;
+     try {
+       setIsGeneratingRecommendations(true);
+       const result = await api.calls.generateRecommendations({
+-        call_id: Number(id),
++        call_id: callId,
+       });
+       const recs = (result as { recommendations?: string[] })?.recommendations;
+       setEvaluation((prev) => {
+@@ -94,22 +97,23 @@ export default function CallDetailPage() {
+   };
+ 
+   const handleRestartAnalysis = async () => {
+-    if (!call || restarting) return;
++    const callId = Array.isArray(id) ? id[0] : id;
++    if (!call || !callId || restarting) return;
+     try {
+       setRestarting(true);
+ 
+       // Шаг 1: Транскрипция с выбранной моделью
+-      const transcribeResponse = await restPost<{ success?: boolean }>(
+-        `/calls/${id}/transcribe?model=${selectedModel}`,
+-      );
+-
++      const transcribeResponse = await api.calls.transcribe({
++        call_id: callId,
++        model: selectedModel,
++      });
+       if (!transcribeResponse?.success) {
+         throw new Error("Transcription failed");
+       }
+ 
+-      // Шаг 2: Переоценка звонка
++      // Шаг 2: Переоценка звонка (пока не реализована — игнорируем ошибку)
+       try {
+-        await restPost(`/calls/${id}/evaluate`);
++        await api.calls.evaluate({ call_id: callId });
+       } catch (evalError) {
+         console.warn(
+           "Evaluation failed, but transcription succeeded:",
+diff --git a/apps/app/src/app/settings/page.tsx b/apps/app/src/app/settings/page.tsx
+index b11fb6c..27a32fa 100644
+--- a/apps/app/src/app/settings/page.tsx
++++ b/apps/app/src/app/settings/page.tsx
+@@ -8,10 +8,15 @@ import { useSettings } from "@/components/features/settings/hooks";
+ import IntegrationsSection from "@/components/features/settings/integrations-section";
+ import PromptSection from "@/components/features/settings/prompt-section";
+ import TelegramSection from "@/components/features/settings/telegram-section";
++import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
+ import Header from "@/components/layout/header";
+ import Sidebar from "@/components/layout/sidebar";
+ 
+ export default function SettingsPage() {
++  const { activeWorkspace } = useWorkspace();
++  const isWorkspaceAdmin =
++    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
++
+   const {
+     currentUser,
+     state,
+@@ -76,7 +81,7 @@ export default function SettingsPage() {
+           />
+         ))}
+ 
+-        {currentUser?.username === "admin@mango" && (
++        {isWorkspaceAdmin && (
+           <BackupSection
+             backupLoading={state.backupLoading}
+             onBackup={handleBackup}
+diff --git a/apps/app/src/components/features/calls/call-detail-modal.tsx b/apps/app/src/components/features/calls/call-detail-modal.tsx
+index bb183b5..ffdb0cd 100644
+--- a/apps/app/src/components/features/calls/call-detail-modal.tsx
++++ b/apps/app/src/components/features/calls/call-detail-modal.tsx
+@@ -2,8 +2,9 @@
+ 
+ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import sanitizeHtml from "sanitize-html";
++import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
+ import AudioPlayer from "@/components/ui/audio-player";
+-import api, { API_BASE_URL, restPost } from "@/lib/api";
++import api, { API_BASE_URL } from "@/lib/api";
+ import type { User } from "@/lib/auth";
+ 
+ interface CallDetail {
+@@ -196,14 +197,15 @@ export default function CallDetailModal({
+     try {
+       setRestarting(true);
+ 
+-      const transcribeResponse = await restPost<{ success?: boolean }>(
+-        `/calls/${callId}/transcribe?model=${selectedModel}`,
+-      );
++      const transcribeResponse = await api.calls.transcribe({
++        call_id: callId,
++        model: selectedModel,
++      });
+       if (!transcribeResponse?.success) throw new Error("Transcription failed");
+ 
+-      // Шаг 2: Переоценка звонка
++      // Шаг 2: Переоценка звонка (пока не реализована — игнорируем ошибку)
+       try {
+-        await restPost(`/calls/${callId}/evaluate`);
++        await api.calls.evaluate({ call_id: callId });
+       } catch (_evalError) {}
+ 
+       await loadData();
+@@ -220,15 +222,9 @@ export default function CallDetailModal({
+     }
+   };
+ 
+-  // Функция проверки прав администратора
+-  const isAdmin = useCallback((): boolean => {
+-    if (!user) return false;
+-    return (
+-      user.username === "admin@mango" ||
+-      user.username === "admin@gmail.com" ||
+-      user.role === "admin"
+-    );
+-  }, [user]);
++  const { activeWorkspace } = useWorkspace();
++  const isWorkspaceAdmin =
++    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+ 
+   // Функция удаления звонка
+   const handleDeleteCall = useCallback(async () => {
+@@ -334,7 +330,7 @@ export default function CallDetailModal({
+                   {isCompleted ? "ЗАВЕРШЁН" : "ПРОПУЩЕН"}
+                 </span>
+               </div>
+-              {isAdmin() && (
++              {isWorkspaceAdmin && (
+                 <button
+                   onClick={() => setShowDeleteConfirm(true)}
+                   className="py-2 px-4 text-[13px] bg-red-500 text-white border-none rounded-lg cursor-pointer font-semibold flex items-center gap-1.5 transition-colors ml-auto hover:bg-red-600 disabled:opacity-60 disabled:hover:bg-red-500"
+diff --git a/apps/app/src/components/features/calls/call-sidebar.tsx b/apps/app/src/components/features/calls/call-sidebar.tsx
+index 7b3dccb..70b5b9c 100644
+--- a/apps/app/src/components/features/calls/call-sidebar.tsx
++++ b/apps/app/src/components/features/calls/call-sidebar.tsx
+@@ -21,6 +21,8 @@ interface EvaluationDetail {
+   value_explanation: string;
+   manager_score?: number | null;
+   manager_feedback?: string | null;
++  manager_quality_score?: number | null;
++  manager_quality_explanation?: string | null;
+   is_quality_analyzable?: boolean | null;
+   not_analyzable_reason?: string | null;
+   manager_recommendations?: string[];
+@@ -69,12 +71,10 @@ export default function CallSidebar({
+   onGenerateRecommendations,
+ }: CallSidebarProps) {
+   const qualityScore =
+-    evaluation?.manager_score ??
+-    (evaluation as any)?.manager_quality_score ??
+-    0;
++    evaluation?.manager_score ?? evaluation?.manager_quality_score ?? 0;
+   const qualityFeedback =
+     evaluation?.manager_feedback ??
+-    (evaluation as any)?.manager_quality_explanation ??
++    evaluation?.manager_quality_explanation ??
+     "";
+   const qualityNotAnalyzableReason = evaluation?.not_analyzable_reason;
+   const isQualityAnalyzable = evaluation?.is_quality_analyzable;
+diff --git a/apps/app/src/components/features/settings/hooks.ts b/apps/app/src/components/features/settings/hooks.ts
+index 7c54b4b..150ed3f 100644
+--- a/apps/app/src/components/features/settings/hooks.ts
++++ b/apps/app/src/components/features/settings/hooks.ts
+@@ -1,6 +1,7 @@
+ "use client";
+ 
+ import { paths } from "@calls/config";
++import { toast } from "@calls/ui";
+ import { useRouter } from "next/navigation";
+ import { useCallback, useState } from "react";
+ import api from "@/lib/api";
+@@ -81,7 +82,7 @@ export function useSettings() {
+       );
+ 
+       if (!ftpValidation.isValid) {
+-        alert(`Ошибка валидации FTP:\n${ftpValidation.errors.join("\n")}`);
++        toast.error(`Ошибка валидации FTP: ${ftpValidation.errors.join(". ")}`);
+         return;
+       }
+ 
+@@ -108,11 +109,15 @@ export function useSettings() {
+       );
+ 
+       await api.settings.updatePrompts(updates);
+-      alert("Настройки успешно сохранены");
++      toast.success("Настройки успешно сохранены");
+       await loadSettings();
+     } catch (error: unknown) {
+       console.error("Failed to save settings:", error);
+-      alert("Ошибка при сохранении настроек");
++      const msg =
++        error instanceof Error
++          ? error.message
++          : "Ошибка при сохранении настроек";
++      toast.error(msg);
+     } finally {
+       setState((prev) => ({ ...prev, saving: false }));
+     }
+@@ -124,12 +129,12 @@ export function useSettings() {
+       setState((prev) => ({ ...prev, backupLoading: true }));
+       const res = await api.settings.backup();
+       const path = res?.path ?? "";
+-      alert(`Резервная копия создана.\n\nПуть на сервере: ${path}`);
++      toast.success(`Резервная копия создана. Путь на сервере: ${path}`);
+     } catch (error: unknown) {
+       const msg =
+         (error instanceof Error ? error.message : String(error)) ||
+         "Ошибка при создании копии";
+-      alert(typeof msg === "string" ? msg : JSON.stringify(msg));
++      toast.error(typeof msg === "string" ? msg : JSON.stringify(msg));
+     } finally {
+       setState((prev) => ({ ...prev, backupLoading: false }));
+     }
+diff --git a/apps/app/src/components/features/settings/integrations-section.tsx b/apps/app/src/components/features/settings/integrations-section.tsx
+index cf1f1cc..a93a16f 100644
+--- a/apps/app/src/components/features/settings/integrations-section.tsx
++++ b/apps/app/src/components/features/settings/integrations-section.tsx
+@@ -17,115 +17,99 @@ export default function IntegrationsSection({
+       <CardContent className="p-0">
+         <div className="flex flex-col gap-7">
+           {/* Megafon FTP */}
+-          <div
+-            style={{
+-              padding: "16px",
+-              background: "#f5f7fa",
+-              borderRadius: "8px",
+-            }}
+-          >
+-            <h4
+-              style={{
+-                margin: "0 0 12px",
+-                fontSize: "14px",
+-                fontWeight: 700,
+-              }}
+-            >
++          <div className="p-4 bg-[#f5f7fa] rounded-lg">
++            <h4 className="m-0 mb-3 text-sm font-bold">
+               Megafon FTP (загрузка записей с PBX)
+             </h4>
+             <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+               <div className="filter-item">
+-                <label className="filter-label">Host</label>
++                <label className="filter-label" htmlFor="megafon-ftp-host">
++                  Host
++                </label>
+                 <Input
++                  id="megafon-ftp-host"
+                   type="text"
+                   className="text-input"
+                   value={prompts.megafon_ftp_host?.value ?? ""}
+                   onChange={onPromptChange("megafon_ftp_host", "value")}
+                   placeholder="records.megapbx.ru"
+                   autoComplete="off"
++                  aria-label="Megafon FTP host"
+                 />
+               </div>
+               <div className="filter-item">
+-                <label className="filter-label">User</label>
++                <label className="filter-label" htmlFor="megafon-ftp-user">
++                  User
++                </label>
+                 <Input
++                  id="megafon-ftp-user"
+                   type="text"
+                   className="text-input"
+                   value={prompts.megafon_ftp_user?.value ?? ""}
+                   onChange={onPromptChange("megafon_ftp_user", "value")}
+                   placeholder="FTP пользователь"
+                   autoComplete="off"
++                  aria-label="Megafon FTP пользователь"
+                 />
+               </div>
+               <div className="filter-item">
+-                <label className="filter-label">Password</label>
++                <label className="filter-label" htmlFor="megafon-ftp-password">
++                  Password
++                </label>
+                 <Input
++                  id="megafon-ftp-password"
+                   type="password"
+                   className="text-input"
+                   value={prompts.megafon_ftp_password?.value ?? ""}
+                   onChange={onPromptChange("megafon_ftp_password", "value")}
+                   placeholder="FTP пароль"
+                   autoComplete="off"
++                  aria-label="Megafon FTP пароль"
+                 />
+               </div>
+             </div>
+           </div>
+ 
+           {/* Telegram Bot */}
+-          <div
+-            style={{
+-              padding: "16px",
+-              background: "#f5f7fa",
+-              borderRadius: "8px",
+-            }}
+-          >
+-            <h4
+-              style={{
+-                margin: "0 0 12px",
+-                fontSize: "14px",
+-                fontWeight: 700,
+-              }}
+-            >
++          <div className="p-4 bg-[#f5f7fa] rounded-lg">
++            <h4 className="m-0 mb-3 text-sm font-bold">
+               Telegram Bot (для отчётов)
+             </h4>
+             <div className="filter-item">
+-              <label className="filter-label">Token</label>
++              <label className="filter-label" htmlFor="telegram-bot-token">
++                Token
++              </label>
+               <Input
++                id="telegram-bot-token"
+                 type="password"
+                 className="text-input"
+                 value={prompts.telegram_bot_token?.value ?? ""}
+                 onChange={onPromptChange("telegram_bot_token", "value")}
+                 placeholder="Введите токен бота"
+                 autoComplete="off"
++                aria-label="Telegram Bot Token"
+               />
+             </div>
+           </div>
+ 
+           {/* MAX Bot */}
+-          <div
+-            style={{
+-              padding: "16px",
+-              background: "#f5f7fa",
+-              borderRadius: "8px",
+-            }}
+-          >
+-            <h4
+-              style={{
+-                margin: "0 0 12px",
+-                fontSize: "14px",
+-                fontWeight: 700,
+-              }}
+-            >
++          <div className="p-4 bg-[#f5f7fa] rounded-lg">
++            <h4 className="m-0 mb-3 text-sm font-bold">
+               MAX Bot (для отчётов)
+             </h4>
+             <div className="filter-item">
+-              <label className="filter-label">Token</label>
++              <label className="filter-label" htmlFor="max-bot-token">
++                Token
++              </label>
+               <Input
++                id="max-bot-token"
+                 type="password"
+                 className="text-input"
+                 value={prompts.max_bot_token?.value ?? ""}
+                 onChange={onPromptChange("max_bot_token", "value")}
+                 placeholder="Введите токен бота"
+                 autoComplete="off"
++                aria-label="MAX Bot Token"
+               />
+             </div>
+           </div>
+diff --git a/apps/app/src/components/features/settings/prompt-section.tsx b/apps/app/src/components/features/settings/prompt-section.tsx
+index e72f502..9ed040a 100644
+--- a/apps/app/src/components/features/settings/prompt-section.tsx
++++ b/apps/app/src/components/features/settings/prompt-section.tsx
+@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, Input, Textarea } from "@calls/ui";
+ import type { PromptSectionProps } from "./types";
+ 
+ export default function PromptSection({
+-  key: promptKey,
+   title,
+   prompt,
+   onPromptChange,
+ }: PromptSectionProps) {
++  const promptKey = prompt.key;
+   const extractVariables = (text: string): string[] => {
+     const matches = text.match(/\{[^}]+\}/g);
+     return matches ? [...new Set(matches)] : [];
+@@ -51,14 +51,18 @@ export default function PromptSection({
+       <CardContent className="p-0 pt-0">
+         {isTokenOnly ? (
+           <div className="filter-item">
+-            <label className="filter-label">Токен</label>
++            <label className="filter-label" htmlFor={`prompt-${promptKey}`}>
++              Токен
++            </label>
+             <Input
++              id={`prompt-${promptKey}`}
+               type="password"
+               className="text-input"
+               value={prompt.value || ""}
+               onChange={onPromptChange(promptKey, "value")}
+               placeholder="Введите токен бота"
+               autoComplete="off"
++              aria-label={`Токен для ${promptKey}`}
+             />
+           </div>
+         ) : (
+@@ -80,23 +84,37 @@ export default function PromptSection({
+             )}
+ 
+             <div className="filter-item mb-4">
+-              <label className="filter-label">ОПИСАНИЕ</label>
++              <label
++                className="filter-label"
++                htmlFor={`prompt-${promptKey}-description`}
++              >
++                ОПИСАНИЕ
++              </label>
+               <Input
++                id={`prompt-${promptKey}-description`}
+                 type="text"
+                 className="text-input"
+                 value={prompt.description || ""}
+                 onChange={onPromptChange(promptKey, "description")}
+                 placeholder="Описание промпта"
++                aria-label={`Описание промпта ${title}`}
+               />
+             </div>
+ 
+             <div className="filter-item">
+-              <label className="filter-label">ТЕКСТ ПРОМПТА</label>
++              <label
++                className="filter-label"
++                htmlFor={`prompt-${promptKey}-value`}
++              >
++                ТЕКСТ ПРОМПТА
++              </label>
+               <Textarea
++                id={`prompt-${promptKey}-value`}
+                 className="text-input min-h-[300px] resize-y font-mono text-[13px] leading-relaxed"
+                 value={prompt.value || ""}
+                 onChange={onPromptChange(promptKey, "value")}
+                 placeholder="Введите текст промпта"
++                aria-label={`Текст промпта ${title}`}
+               />
+             </div>
+           </>
+diff --git a/apps/app/src/components/features/settings/report-settings-form-body.tsx b/apps/app/src/components/features/settings/report-settings-form-body.tsx
+index 9762eb9..4f09c4e 100644
+--- a/apps/app/src/components/features/settings/report-settings-form-body.tsx
++++ b/apps/app/src/components/features/settings/report-settings-form-body.tsx
+@@ -29,7 +29,7 @@ export default function ReportSettingsFormBody({
+   const [sendTestLoading, setSendTestLoading] = useState(false);
+   const [sendTestMessage, setSendTestMessage] = useState("");
+ 
+-  const canSendTest = form.telegram_chat_id?.trim() && !sendTestLoading;
++  const canSendTest = form.telegramChatId?.trim() && !sendTestLoading;
+ 
+   return (
+     <Card className="card mt-6">
+@@ -47,11 +47,11 @@ export default function ReportSettingsFormBody({
+                 </label>
+                 <Input
+                   type="text"
+-                  value={form.telegram_chat_id}
++                  value={form.telegramChatId}
+                   onChange={(e) =>
+                     setForm((f: any) => ({
+                       ...f,
+-                      telegram_chat_id: e.target.value,
++                      telegramChatId: e.target.value,
+                     }))
+                   }
+                   className="w-full py-2 px-3 border border-[#ddd] rounded-md"
+@@ -115,7 +115,7 @@ export default function ReportSettingsFormBody({
+               <div className="mt-3">
+                 <button
+                   type="button"
+-                  disabled={!form.telegram_chat_id?.trim() || sendTestLoading}
++                  disabled={!form.telegramChatId?.trim() || sendTestLoading}
+                   onClick={async () => {
+                     setSendTestMessage("");
+                     setSendTestLoading(true);
+diff --git a/apps/app/src/components/features/settings/report-settings-panel.tsx b/apps/app/src/components/features/settings/report-settings-panel.tsx
+index 2a7f526..ba31b95 100644
+--- a/apps/app/src/components/features/settings/report-settings-panel.tsx
++++ b/apps/app/src/components/features/settings/report-settings-panel.tsx
+@@ -1,5 +1,6 @@
+ import type React from "react";
+ import { useEffect, useState } from "react";
++import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
+ import api from "@/lib/api";
+ import type { User } from "@/lib/auth";
+ import {
+@@ -37,6 +38,10 @@ type UserSettings = {
+ };
+ 
+ export default function ReportSettingsPanel({ user }: { user: User }) {
++  const { activeWorkspace } = useWorkspace();
++  const isWorkspaceAdmin =
++    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
++
+   const [form, setForm] = useState({
+     email: "",
+     email_daily_report: false,
+@@ -73,7 +78,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
+     familyName?: string;
+     internalExtensions?: string;
+   } | null>(null);
+-  const [isAdmin, setIsAdmin] = useState(false);
+   const [allUsers, setAllUsers] = useState<
+     {
+       id: number;
+@@ -92,14 +96,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
+         ]);
+         const u = rawU as UserSettings | undefined;
+         if (!u) return;
+-        const ext = getInternalExtensions(u);
+-        setIsAdmin(
+-          u.username === "admin@mango" ||
+-            u.username === "admin@gmail.com" ||
+-            String(ext ?? "")
+-              .trim()
+-              .toLowerCase() === "all",
+-        );
+         const promptsArr = (Array.isArray(promptsList) ? promptsList : []) as {
+           key: string;
+           value?: string;
+@@ -173,7 +169,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
+   }, [user]);
+ 
+   useEffect(() => {
+-    if (!isAdmin || !user?.id) return;
++    if (!isWorkspaceAdmin || !user?.id) return;
+     api.users
+       .list()
+       .then((list: any) => {
+@@ -193,7 +189,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
+         );
+       })
+       .catch(() => {});
+-  }, [isAdmin, user?.id]);
++  }, [isWorkspaceAdmin, user?.id]);
+ 
+   const handleSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+@@ -229,7 +225,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
+         report_managed_user_ids: form.report_managed_user_ids ?? [],
+       };
+       await api.users.update({ user_id: user.id, data: payload });
+-      if (isAdmin) {
++      if (isWorkspaceAdmin) {
+         await api.settings
+           .updatePrompts({
+             prompts: {
+@@ -329,7 +325,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
+       saving={saving}
+       message={message}
+       user={user}
+-      isAdmin={isAdmin}
++      isAdmin={isWorkspaceAdmin}
+       allUsers={allUsers}
+     />
+   );
+diff --git a/apps/app/src/components/features/settings/types.ts b/apps/app/src/components/features/settings/types.ts
+index c6131b7..15c5ddc 100644
+--- a/apps/app/src/components/features/settings/types.ts
++++ b/apps/app/src/components/features/settings/types.ts
+@@ -29,7 +29,6 @@ export interface IntegrationsSectionProps {
+ }
+ 
+ export interface PromptSectionProps {
+-  key: string;
+   title: string;
+   prompt: Prompt;
+   onPromptChange: (
+diff --git a/apps/app/src/components/layout/header.tsx b/apps/app/src/components/layout/header.tsx
+index a8bcc9c..254f4b6 100644
+--- a/apps/app/src/components/layout/header.tsx
++++ b/apps/app/src/components/layout/header.tsx
+@@ -1,5 +1,6 @@
+ "use client";
+ 
++import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
+ import type { User } from "@/lib/auth";
+ 
+ interface HeaderProps {
+@@ -7,6 +8,10 @@ interface HeaderProps {
+ }
+ 
+ export default function Header({ user }: HeaderProps) {
++  const { activeWorkspace } = useWorkspace();
++  const isWorkspaceAdmin =
++    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
++
+   if (!user) return null;
+ 
+   return (
+@@ -17,10 +22,7 @@ export default function Header({ user }: HeaderProps) {
+             {user.name || user.username}
+           </div>
+           <div className="profile-role text-xs text-gray-500 font-extrabold text-right tracking-wide">
+-            {user.username === "admin@mango" ||
+-            user.username === "admin@gmail.com"
+-              ? "АДМИНИСТРАТОР"
+-              : "МЕНЕДЖЕР"}
++            {isWorkspaceAdmin ? "АДМИНИСТРАТОР" : "МЕНЕДЖЕР"}
+           </div>
+         </div>
+         <div className="profile-avatar bg-gray-50 border border-gray-200 text-gray-700 font-semibold">
+diff --git a/apps/app/src/components/layout/navbar.tsx b/apps/app/src/components/layout/navbar.tsx
+index fe1f7dd..f0ead1e 100644
+--- a/apps/app/src/components/layout/navbar.tsx
++++ b/apps/app/src/components/layout/navbar.tsx
+@@ -2,6 +2,7 @@
+ 
+ import { paths } from "@calls/config";
+ import Link from "next/link";
++import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
+ import type { User } from "@/lib/auth";
+ 
+ interface NavbarProps {
+@@ -9,6 +10,10 @@ interface NavbarProps {
+ }
+ 
+ export default function Navbar({ user }: NavbarProps) {
++  const { activeWorkspace } = useWorkspace();
++  const isWorkspaceAdmin =
++    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
++
+   return (
+     <nav className="top-bar">
+       <div className="brand">
+@@ -31,9 +36,7 @@ export default function Navbar({ user }: NavbarProps) {
+         >
+           Статистика
+         </Link>
+-        {(user?.role === "admin" ||
+-          user?.username === "admin@mango" ||
+-          user?.username === "admin@gmail.com") && (
++        {isWorkspaceAdmin && (
+           <>
+             <Link
+               href={paths.users.root}
+diff --git a/apps/app/src/lib/user-profile.ts b/apps/app/src/lib/user-profile.ts
+index b332d48..93d637c 100644
+--- a/apps/app/src/lib/user-profile.ts
++++ b/apps/app/src/lib/user-profile.ts
+@@ -62,13 +62,12 @@ export function extractUserFields(user: UserLike) {
+ }
+ 
+ /**
+- * Проверка прав администратора на основе username и internalExtensions
++ * Проверка прав администратора на основе internalExtensions.
++ * internalExtensions === "all" — доступ ко всем данным (напр. по всем операторам).
+  */
+ export function isAdminUser(user: UserLike): boolean {
+-  const { username, internalExtensions } = extractUserFields(user);
++  const { internalExtensions } = extractUserFields(user);
+   return (
+-    username === "admin@mango" ||
+-    username === "admin@gmail.com" ||
+     String(internalExtensions ?? "")
+       .trim()
+       .toLowerCase() === "all"
+diff --git a/bun.lock b/bun.lock
+index cedc516..6bcb4f4 100644
+--- a/bun.lock
++++ b/bun.lock
+@@ -90,6 +90,7 @@
+       "dependencies": {
+         "@calls/ai": "workspace:*",
+         "@calls/db": "workspace:*",
++        "@calls/jobs": "workspace:*",
+         "@calls/telegram-bot": "workspace:*",
+         "@orpc/client": "^1.13.7",
+         "@orpc/server": "^1.13.7",
+diff --git a/packages/api/package.json b/packages/api/package.json
+index 59a71e6..cafee2d 100644
+--- a/packages/api/package.json
++++ b/packages/api/package.json
+@@ -19,6 +19,7 @@
+   "dependencies": {
+     "@calls/ai": "workspace:*",
+     "@calls/db": "workspace:*",
++    "@calls/jobs": "workspace:*",
+     "@calls/telegram-bot": "workspace:*",
+     "@orpc/client": "^1.13.7",
+     "@orpc/server": "^1.13.7",
+diff --git a/packages/api/src/routers/calls.ts b/packages/api/src/routers/calls.ts
+index 1885af4..d9a3ea3 100644
+--- a/packages/api/src/routers/calls.ts
++++ b/packages/api/src/routers/calls.ts
+@@ -1,5 +1,7 @@
+ import { createChatBot } from "@calls/ai";
+ import type { callsService, promptsService } from "@calls/db";
++import { inngest } from "@calls/jobs";
++import { ORPCError } from "@orpc/server";
+ import { z } from "zod";
+ import { workspaceAdminProcedure, workspaceProcedure } from "../orpc";
+ 
+@@ -271,10 +273,12 @@ export const callsRouter = {
+     .handler(async ({ input, context }) => {
+       const call = await context.callsService.getCall(input.call_id);
+       if (!call) {
+-        throw new Error("Call not found");
++        throw new ORPCError("NOT_FOUND", { message: "Звонок не найден" });
+       }
+-      if (call.workspace_id !== context.workspaceId) {
+-        throw new Error("Call not found");
++      if (call.workspaceId !== context.workspaceId) {
++        throw new ORPCError("FORBIDDEN", {
++          message: "Нет доступа к этому звонку",
++        });
+       }
+       const transcript = await context.callsService.getTranscriptByCallId(
+         input.call_id,
+@@ -293,12 +297,56 @@ export const callsRouter = {
+       };
+     }),
+ 
++  transcribe: workspaceProcedure
++    .input(
++      z.object({
++        call_id: z.string(),
++        model: z.string().optional().default("assemblyai"),
++      }),
++    )
++    .handler(async ({ input, context }) => {
++      const call = await context.callsService.getCall(input.call_id);
++      if (!call) {
++        throw new ORPCError("NOT_FOUND", { message: "Звонок не найден" });
++      }
++      if (call.workspaceId !== context.workspaceId) {
++        throw new ORPCError("FORBIDDEN", {
++          message: "Нет доступа к этому звонку",
++        });
++      }
++      await inngest.send({
++        name: "call/transcribe.requested",
++        data: { callId: input.call_id, model: input.model },
++      });
++      return { success: true, message: "Транскрипция запущена" };
++    }),
++
++  evaluate: workspaceProcedure
++    .input(z.object({ call_id: z.string() }))
++    .handler(async ({ input, context }) => {
++      const call = await context.callsService.getCall(input.call_id);
++      if (!call) {
++        throw new ORPCError("NOT_FOUND", { message: "Звонок не найден" });
++      }
++      if (call.workspaceId !== context.workspaceId) {
++        throw new ORPCError("FORBIDDEN", {
++          message: "Нет доступа к этому звонку",
++        });
++      }
++      // TODO: Реализовать Inngest-функцию call/evaluate.requested
++      throw new ORPCError("NOT_IMPLEMENTED", {
++        message: "Переоценка звонка пока не реализована",
++      });
++    }),
++
+   generateRecommendations: workspaceProcedure
+     .input(z.object({ call_id: z.string() }))
+     .handler(async ({ input, context }) => {
+       const call = await context.callsService.getCall(input.call_id);
+-      if (call && call.workspace_id !== context.workspaceId) {
+-        throw new Error("Call not found");
++      if (call && call.workspaceId !== context.workspaceId) {
++        throw new ORPCError("FORBIDDEN", {
++          message: "Нет доступа к этому звонку",
++        });
+       }
+       return generateRecommendations(
+         input.call_id,
+@@ -312,18 +360,25 @@ export const callsRouter = {
+     .input(z.object({ call_id: z.string() }))
+     .handler(async ({ input, context }) => {
+       const call = await context.callsService.getCall(input.call_id);
+-      if (!call) throw new Error("Call not found");
+-      if (call.workspace_id !== context.workspaceId) {
+-        throw new Error("Call not found");
++      if (!call) {
++        throw new ORPCError("NOT_FOUND", { message: "Звонок не найден" });
++      }
++      if (call.workspaceId !== context.workspaceId) {
++        throw new ORPCError("FORBIDDEN", {
++          message: "Нет доступа к этому звонку",
++        });
++      }
++      if (!(await context.callsService.deleteCall(input.call_id))) {
++        throw new ORPCError("INTERNAL_SERVER_ERROR", {
++          message: "Не удалось удалить звонок",
++        });
+       }
+-      if (!(await context.callsService.deleteCall(input.call_id)))
+-        throw new Error("Failed to delete call");
+       await context.systemRepository.addActivityLog(
+         "info",
+         `Deleted call #${input.call_id}`,
+         (context.user as Record<string, unknown>).username as string,
+       );
+-      return { success: true, message: `Call #${input.call_id} deleted` };
++      return { success: true, message: `Звонок #${input.call_id} удалён` };
+     }),
+ };
+ 
+@@ -332,9 +387,6 @@ function getInternalNumbersForUser(
+ ): string[] | undefined {
+   const nums = user.internalExtensions as string | undefined;
+   if (!nums || String(nums).trim().toLowerCase() === "all") return undefined;
+-  const adminUsernames = ["admin@mango", "admin@gmail.com"];
+-  if (adminUsernames.includes((user.username as string) ?? ""))
+-    return undefined;
+   return (
+     nums
+       .split(",")
+diff --git a/packages/api/src/routers/settings.ts b/packages/api/src/routers/settings.ts
+deleted file mode 100644
+index 94dde17..0000000
+--- a/packages/api/src/routers/settings.ts
++++ /dev/null
+@@ -1,269 +0,0 @@
+-import { promptsService, settingsService, systemRepository } from "@calls/db";
+-import { z } from "zod";
+-import { workspaceAdminProcedure, workspaceProcedure } from "../orpc";
+-
+-// Список чувствительных ключей для маскирования в логах
+-const SENSITIVE_KEYS = [
+-  "telegram_bot_token",
+-  "max_bot_token",
+-  "megafon_ftp_password",
+-  "password",
+-  "token",
+-  "secret",
+-  "key",
+-];
+-
+-// Функция для маскирования чувствительных данных в логах
+-function maskSensitiveData(key: string, value: string): string {
+-  return SENSITIVE_KEYS.some((sensitive) =>
+-    key.toLowerCase().includes(sensitive),
+-  )
+-    ? `${value.substring(0, 3)}***`
+-    : value;
+-}
+-
+-const DEEPSEEK_MODELS: Record<string, { name: string; max_tokens: number }> = {
+-  "deepseek-chat": { name: "DeepSeek Chat", max_tokens: 8192 },
+-  "deepseek-coder": { name: "DeepSeek Coder", max_tokens: 8192 },
+-};
+-
+-// Валидация для FTP credentials
+-const ftpCredentialsSchema = z.object({
+-  host: z
+-    .string()
+-    .min(1)
+-    .refine(
+-      (val) => {
+-        // Проверяем URL или IP формат
+-        try {
+-          new URL(val.includes("://") ? val : `ftp://${val}`);
+-          return true;
+-        } catch {
+-          // Проверяем IP формат
+-          const ipRegex =
+-            /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+-          return ipRegex.test(val);
+-        }
+-      },
+-      { message: "Некорректный формат хоста (URL или IP)" },
+-    ),
+-  user: z
+-    .string()
+-    .min(1)
+-    .max(50)
+-    .regex(/^[a-zA-Z0-9_.-]+$/, {
+-      message: "Имя пользователя может содержать только буквы, цифры, _, -, .",
+-    }),
+-  password: z.string().min(1, "Пароль обязателен"),
+-});
+-
+-const promptItemSchema = z.object({
+-  value: z.string().optional().nullable(),
+-  description: z.string().optional().nullable(),
+-});
+-
+-const settingsUpdateSchema = z
+-  .object({
+-    deepseek_model: z.string().optional(),
+-    quality_min_value_threshold: z.number().min(0).max(5).optional(),
+-    enable_manager_recommendations: z.boolean().optional(),
+-    telegram_bot_token: z.string().optional().nullable(),
+-    max_bot_token: z.string().optional().nullable(),
+-    megafon_ftp_host: z.string().optional().nullable(),
+-    megafon_ftp_user: z.string().optional().nullable(),
+-    megafon_ftp_password: z.string().optional().nullable(),
+-    prompts: z.record(z.string(), promptItemSchema).optional(),
+-  })
+-  .refine((data) => {
+-    // Если хотя бы одно FTP поле заполнено, все должны быть заполнены
+-    const ftpFields = [
+-      data.megafon_ftp_host,
+-      data.megafon_ftp_user,
+-      data.megafon_ftp_password,
+-    ];
+-    const hasAnyValue = ftpFields.some((field) => field && field.trim() !== "");
+-    const hasAllValues = ftpFields.every(
+-      (field) => field && field.trim() !== "",
+-    );
+-
+-    if (hasAnyValue && !hasAllValues) {
+-      throw new Error("Все поля FTP должны быть заполнены");
+-    }
+-
+-    return true;
+-  });
+-
+-export const settingsRouter = {
+-  getPrompts: workspaceProcedure.handler(async ({ context }) => {
+-    return await promptsService.getAllPrompts(context.workspaceId);
+-  }),
+-
+-  updatePrompts: workspaceAdminProcedure
+-    .input(settingsUpdateSchema)
+-    .handler(async ({ input, context }) => {
+-      const { workspaceId } = context;
+-      if (input.deepseek_model && input.deepseek_model in DEEPSEEK_MODELS) {
+-        await promptsService.updatePrompt(
+-          "deepseek_model",
+-          input.deepseek_model,
+-          "Selected DeepSeek model",
+-          workspaceId,
+-        );
+-      }
+-      if (input.quality_min_value_threshold !== undefined) {
+-        await promptsService.updatePrompt(
+-          "quality_min_value_threshold",
+-          String(input.quality_min_value_threshold),
+-          "Minimum call value for quality evaluation (0-5)",
+-          workspaceId,
+-        );
+-      }
+-      if (input.enable_manager_recommendations !== undefined) {
+-        await promptsService.updatePrompt(
+-          "enable_manager_recommendations",
+-          input.enable_manager_recommendations ? "true" : "false",
+-          "Включить генерацию рекомендаций для менеджера (true/false)",
+-          workspaceId,
+-        );
+-      }
+-      if (input.telegram_bot_token !== undefined) {
+-        await promptsService.updatePrompt(
+-          "telegram_bot_token",
+-          input.telegram_bot_token ?? "",
+-          "Telegram Bot Token",
+-          workspaceId,
+-        );
+-      }
+-      if (input.max_bot_token !== undefined) {
+-        await promptsService.updatePrompt(
+-          "max_bot_token",
+-          input.max_bot_token ?? "",
+-          "MAX Bot Token",
+-          workspaceId,
+-        );
+-      }
+-      if (
+-        input.megafon_ftp_host !== undefined ||
+-        input.megafon_ftp_user !== undefined ||
+-        input.megafon_ftp_password !== undefined
+-      ) {
+-        // Валидируем FTP credentials если они предоставлены
+-        if (
+-          input.megafon_ftp_host &&
+-          input.megafon_ftp_user &&
+-          input.megafon_ftp_password
+-        ) {
+-          try {
+-            ftpCredentialsSchema.parse({
+-              host: input.megafon_ftp_host,
+-              user: input.megafon_ftp_user,
+-              password: input.megafon_ftp_password,
+-            });
+-          } catch (error) {
+-            throw new Error(
+-              `Ошибка валидации FTP: ${(error as Error).message}`,
+-            );
+-          }
+-
+-          // Используем новый сервис для обновления FTP настроек
+-          await settingsService.updateMegafonFtpSettings(
+-            input.megafon_ftp_host,
+-            input.megafon_ftp_user,
+-            input.megafon_ftp_password,
+-            workspaceId,
+-          );
+-        }
+-      }
+-      if (input.prompts) {
+-        const promptKeys = [
+-          "summary",
+-          "transcribe_incoming",
+-          "transcribe_outgoing",
+-          "speaker_analysis",
+-          "speaker_analysis_incoming",
+-          "speaker_analysis_outgoing",
+-          "value_incoming",
+-          "value_outgoing",
+-          "quality",
+-          "manager_recommendations",
+-          "report_daily_time",
+-          "report_weekly_day",
+-          "report_weekly_time",
+-          "report_monthly_day",
+-          "report_monthly_time",
+-        ];
+-        for (const key of promptKeys) {
+-          const p = input.prompts[key] as
+-            | { value?: string; description?: string }
+-            | undefined;
+-          if (p) {
+-            await promptsService.updatePrompt(
+-              key,
+-              p.value ?? "",
+-              p.description ?? "",
+-              workspaceId,
+-            );
+-            // Маскируем чувствительные данные в логах
+-            const maskedValue = maskSensitiveData(key, p.value ?? "");
+-            await systemRepository.addActivityLog(
+-              "info",
+-              `Prompt updated: ${key} = ${maskedValue}`,
+-              (context.user as Record<string, unknown>).username as string,
+-              workspaceId,
+-            );
+-          }
+-        }
+-        const tb = input.prompts.telegram_bot_token as
+-          | { value?: string }
+-          | undefined;
+-        if (tb)
+-          await promptsService.updatePrompt(
+-            "telegram_bot_token",
+-            tb.value ?? "",
+-            "Telegram Bot Token",
+-            workspaceId,
+-          );
+-        const mb = input.prompts.max_bot_token as
+-          | { value?: string }
+-          | undefined;
+-        if (mb)
+-          await promptsService.updatePrompt(
+-            "max_bot_token",
+-            mb.value ?? "",
+-            "MAX Bot Token",
+-            workspaceId,
+-          );
+-      }
+-      return { success: true, message: "Settings updated successfully" };
+-    }),
+-
+-  getModels: workspaceProcedure.handler(async ({ context }) => {
+-    const current = await promptsService.getPrompt(
+-      "deepseek_model",
+-      context.workspaceId,
+-      "deepseek-chat",
+-    );
+-    return { models: DEEPSEEK_MODELS, current_model: current };
+-  }),
+-
+-  backup: workspaceAdminProcedure.handler(async ({ context }) => {
+-    // PostgreSQL: run pg_dump externally for backup:
+-    // pg_dump $POSTGRES_URL > backup_$(date +%Y%m%d_%H%M%S).sql
+-    const timestamp = new Date()
+-      .toISOString()
+-      .replace(/[-:T.]/g, "")
+-      .slice(0, 15);
+-    const backupFilename = `pg_backup_${timestamp}.sql`;
+-    await systemRepository.addActivityLog(
+-      "info",
+-      `Запрошена резервная копия PostgreSQL: ${backupFilename} (выполните pg_dump вручную)`,
+-      (context.user as Record<string, unknown>).username as string,
+-      context.workspaceId,
+-    );
+-    return {
+-      success: true,
+-      message: "Резервная копия: выполните pg_dump $POSTGRES_URL > backup.sql",
+-      path: backupFilename,
+-    };
+-  }),
+-};
+diff --git a/packages/api/src/server.ts b/packages/api/src/server.ts
+index 078854d..4c7c848 100644
+--- a/packages/api/src/server.ts
++++ b/packages/api/src/server.ts
+@@ -30,15 +30,15 @@ export function createBackendApiWithContext(ctx: BackendContext) {
+     calls: {
+       list: (input: Parameters<typeof callProc>[2]) =>
+         callProc(backendRouter.calls.list as ProcedureWithCallable, ctx, input),
+-      get: (input: { call_id: number }) =>
++      get: (input: { call_id: string }) =>
+         callProc(backendRouter.calls.get as ProcedureWithCallable, ctx, input),
+-      generateRecommendations: (input: { call_id: number }) =>
++      generateRecommendations: (input: { call_id: string }) =>
+         callProc(
+           backendRouter.calls.generateRecommendations as ProcedureWithCallable,
+           ctx,
+           input,
+         ),
+-      delete: (input: { call_id: number }) =>
++      delete: (input: { call_id: string }) =>
+         callProc(
+           backendRouter.calls.delete as ProcedureWithCallable,
+           ctx,
+diff --git a/packages/api/src/types/user.ts b/packages/api/src/types/user.ts
+index 2eb5c4c..cf08440 100644
+--- a/packages/api/src/types/user.ts
++++ b/packages/api/src/types/user.ts
+@@ -132,11 +132,13 @@ export function extractUserFields(user: UserLike) {
+   };
+ }
+ 
++/**
++ * Проверка прав администратора на основе internalExtensions.
++ * internalExtensions === "all" — доступ ко всем данным.
++ */
+ export function isAdminUser(u: UserLike): boolean {
+-  const { username, internalExtensions } = extractUserFields(u);
++  const { internalExtensions } = extractUserFields(u);
+   return (
+-    username === "admin@mango" ||
+-    username === "admin@gmail.com" ||
+     String(internalExtensions ?? "")
+       .trim()
+       .toLowerCase() === "all"
+diff --git a/packages/db/src/services/settings.service.ts b/packages/db/src/services/settings.service.ts
+index b206f2e..c851588 100644
+--- a/packages/db/src/services/settings.service.ts
++++ b/packages/db/src/services/settings.service.ts
+@@ -46,6 +46,7 @@ export class SettingsService {
+     value: string,
+     description: string | null,
+     workspaceId: string,
++    username: string = "system",
+   ): Promise<boolean> {
+     const result = await this.promptsRepository.upsert(
+       key,
+@@ -58,7 +59,7 @@ export class SettingsService {
+       await this.systemRepository.addActivityLog(
+         "INFO",
+         `Setting ${key} updated`,
+-        "admin",
++        username,
+         workspaceId,
+       );
+     }
+@@ -71,6 +72,7 @@ export class SettingsService {
+     user: string,
+     password: string,
+     workspaceId: string,
++    username: string = "system",
+   ): Promise<boolean> {
+     const results = await Promise.all([
+       this.updateSetting(
+@@ -78,18 +80,21 @@ export class SettingsService {
+         host,
+         "Megafon FTP host",
+         workspaceId,
++        username,
+       ),
+       this.updateSetting(
+         "megafon_ftp_user",
+         user,
+         "Megafon FTP user",
+         workspaceId,
++        username,
+       ),
+       this.updateSetting(
+         "megafon_ftp_password",
+         password,
+         "Megafon FTP password",
+         workspaceId,
++        username,
+       ),
+     ]);
+ 
+diff --git a/specs/_catalog/catalog.json b/specs/_catalog/catalog.json
+index fe51488..0637a08 100644
+--- a/specs/_catalog/catalog.json
++++ b/specs/_catalog/catalog.json
+@@ -1 +1 @@
+-[]
++[]
+\ No newline at end of file

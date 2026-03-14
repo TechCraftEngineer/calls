@@ -1,5 +1,6 @@
 import type React from "react";
 import { useEffect, useState } from "react";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import api from "@/lib/api";
 import type { User } from "@/lib/auth";
 import {
@@ -37,6 +38,10 @@ type UserSettings = {
 };
 
 export default function ReportSettingsPanel({ user }: { user: User }) {
+  const { activeWorkspace } = useWorkspace();
+  const isWorkspaceAdmin =
+    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+
   const [form, setForm] = useState({
     email: "",
     email_daily_report: false,
@@ -73,7 +78,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     familyName?: string;
     internalExtensions?: string;
   } | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [allUsers, setAllUsers] = useState<
     {
       id: number;
@@ -92,14 +96,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         ]);
         const u = rawU as UserSettings | undefined;
         if (!u) return;
-        const ext = getInternalExtensions(u);
-        setIsAdmin(
-          u.username === "admin@mango" ||
-            u.username === "admin@gmail.com" ||
-            String(ext ?? "")
-              .trim()
-              .toLowerCase() === "all",
-        );
         const promptsArr = (Array.isArray(promptsList) ? promptsList : []) as {
           key: string;
           value?: string;
@@ -173,7 +169,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
   }, [user]);
 
   useEffect(() => {
-    if (!isAdmin || !user?.id) return;
+    if (!isWorkspaceAdmin || !user?.id) return;
     api.users
       .list()
       .then((list: any) => {
@@ -193,7 +189,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         );
       })
       .catch(() => {});
-  }, [isAdmin, user?.id]);
+  }, [isWorkspaceAdmin, user?.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,7 +225,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         report_managed_user_ids: form.report_managed_user_ids ?? [],
       };
       await api.users.update({ user_id: user.id, data: payload });
-      if (isAdmin) {
+      if (isWorkspaceAdmin) {
         await api.settings
           .updatePrompts({
             prompts: {
@@ -329,7 +325,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       saving={saving}
       message={message}
       user={user}
-      isAdmin={isAdmin}
+      isAdmin={isWorkspaceAdmin}
       allUsers={allUsers}
     />
   );

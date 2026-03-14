@@ -132,11 +132,13 @@ export function extractUserFields(user: UserLike) {
   };
 }
 
+/**
+ * Проверка прав администратора на основе internalExtensions.
+ * internalExtensions === "all" — доступ ко всем данным.
+ */
 export function isAdminUser(u: UserLike): boolean {
-  const { username, internalExtensions } = extractUserFields(u);
+  const { internalExtensions } = extractUserFields(u);
   return (
-    username === "admin@mango" ||
-    username === "admin@gmail.com" ||
     String(internalExtensions ?? "")
       .trim()
       .toLowerCase() === "all"

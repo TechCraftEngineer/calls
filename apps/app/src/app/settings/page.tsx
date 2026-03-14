@@ -8,10 +8,15 @@ import { useSettings } from "@/components/features/settings/hooks";
 import IntegrationsSection from "@/components/features/settings/integrations-section";
 import PromptSection from "@/components/features/settings/prompt-section";
 import TelegramSection from "@/components/features/settings/telegram-section";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 
 export default function SettingsPage() {
+  const { activeWorkspace } = useWorkspace();
+  const isWorkspaceAdmin =
+    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+
   const {
     currentUser,
     state,
@@ -76,7 +81,7 @@ export default function SettingsPage() {
           />
         ))}
 
-        {currentUser?.username === "admin@mango" && (
+        {isWorkspaceAdmin && (
           <BackupSection
             backupLoading={state.backupLoading}
             onBackup={handleBackup}

@@ -8,7 +8,7 @@ import CallSidebar from "@/components/features/calls/call-sidebar";
 import { TranscriptCard } from "@/components/features/calls/transcript-card";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
-import api, { restPost } from "@/lib/api";
+import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
 import type {
   CallDetail,
@@ -103,17 +103,17 @@ export default function CallDetailPage() {
       setRestarting(true);
 
       // Шаг 1: Транскрипция с выбранной моделью
-      const transcribeResponse = await restPost<{ success?: boolean }>(
-        `/calls/${callId}/transcribe?model=${selectedModel}`,
-      );
-
+      const transcribeResponse = await api.calls.transcribe({
+        call_id: callId,
+        model: selectedModel,
+      });
       if (!transcribeResponse?.success) {
         throw new Error("Transcription failed");
       }
 
-      // Шаг 2: Переоценка звонка
+      // Шаг 2: Переоценка звонка (пока не реализована — игнорируем ошибку)
       try {
-        await restPost(`/calls/${callId}/evaluate`);
+        await api.calls.evaluate({ call_id: callId });
       } catch (evalError) {
         console.warn(
           "Evaluation failed, but transcription succeeded:",
