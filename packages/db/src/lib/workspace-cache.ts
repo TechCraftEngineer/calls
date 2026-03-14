@@ -17,6 +17,8 @@ class WorkspaceCache {
     DEFAULT_WORKSPACE: "workspace:default",
     BY_SLUG: "workspace:by_slug:",
     BY_ID: "workspace:by_id:",
+    ACTIVE_WORKSPACE: "workspace:active:",
+    USER_WORKSPACES: "workspace:user:",
   } as const;
 
   set<T>(key: string, value: T, ttl: number = this.DEFAULT_TTL): void {
@@ -49,10 +51,11 @@ class WorkspaceCache {
 
   // Cache invalidation for workspace-related operations
   invalidateWorkspace(workspaceId: string): void {
-    const keysToDelete = Array.from(this.cache.keys()).filter((key) =>
-      key === this.KEY_PREFIXES.BY_ID + workspaceId ||
-      key.startsWith(this.KEY_PREFIXES.BY_SLUG) ||
-      key === this.KEY_PREFIXES.DEFAULT_WORKSPACE
+    const keysToDelete = Array.from(this.cache.keys()).filter(
+      (key) =>
+        key === this.KEY_PREFIXES.BY_ID + workspaceId ||
+        key.startsWith(this.KEY_PREFIXES.BY_SLUG + workspaceId) ||
+        key === this.KEY_PREFIXES.DEFAULT_WORKSPACE,
     );
     for (const key of keysToDelete) {
       this.cache.delete(key);
@@ -70,6 +73,21 @@ class WorkspaceCache {
 
   createByIdKey(workspaceId: string): string {
     return this.KEY_PREFIXES.BY_ID + workspaceId;
+  }
+
+  createActiveWorkspaceKey(userId: string): string {
+    return this.KEY_PREFIXES.ACTIVE_WORKSPACE + userId;
+  }
+
+  createUserWorkspacesKey(userId: string): string {
+    return this.KEY_PREFIXES.USER_WORKSPACES + userId;
+  }
+
+  invalidateUserWorkspaces(userId: string): void {
+    const activeKey = this.createActiveWorkspaceKey(userId);
+    const userWorkspacesKey = this.createUserWorkspacesKey(userId);
+    this.cache.delete(activeKey);
+    this.cache.delete(userWorkspacesKey);
   }
 }
 

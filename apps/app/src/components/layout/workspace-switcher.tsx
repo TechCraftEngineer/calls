@@ -54,7 +54,7 @@ export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
     };
   }, []);
 
-  const handleSelect = async (wsId: number) => {
+  const handleSelect = async (wsId: string) => {
     setIsOpen(false);
     await setActiveWorkspace(wsId);
   };

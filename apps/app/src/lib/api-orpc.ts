@@ -249,21 +249,24 @@ export const authApi = {
 };
 
 // Workspaces API
+export interface WorkspaceItem {
+  id: string;
+  name: string;
+  slug: string;
+  role: string;
+  memberSince?: string;
+}
+
 export const workspacesApi = {
-  async list(): Promise<
-    Array<{
-      id: number;
-      name: string;
-      slug: string;
-      role: string;
-      memberSince?: string;
-    }>
-  > {
+  async list(): Promise<{
+    workspaces: WorkspaceItem[];
+    activeWorkspaceId: string | null;
+  }> {
     return await api.workspaces.list();
   },
 
   async create(data: { name: string; slug: string }): Promise<{
-    id: number;
+    id: string;
     name: string;
     slug: string;
   }> {
@@ -271,8 +274,8 @@ export const workspacesApi = {
   },
 
   async setActive(
-    workspaceId: number,
-  ): Promise<{ success: boolean; workspaceId: number }> {
+    workspaceId: string,
+  ): Promise<{ success: boolean; workspaceId: string }> {
     return await api.workspaces.setActive({ workspaceId });
   },
 };

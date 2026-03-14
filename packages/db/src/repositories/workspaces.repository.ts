@@ -177,6 +177,28 @@ export const workspacesRepository = {
       .where(eq(schema.workspaceMembers.userId, userId))
       .orderBy(desc(schema.workspaceMembers.createdAt));
   },
+
+  async getActiveWorkspaceId(userId: string): Promise<string | null> {
+    const result = await db
+      .select({ activeWorkspaceId: schema.userPreferences.activeWorkspaceId })
+      .from(schema.userPreferences)
+      .where(eq(schema.userPreferences.userId, userId))
+      .limit(1);
+    return result[0]?.activeWorkspaceId ?? null;
+  },
+
+  async setActiveWorkspace(userId: string, workspaceId: string): Promise<void> {
+    await db
+      .insert(schema.userPreferences)
+      .values({ userId, activeWorkspaceId: workspaceId })
+      .onConflictDoUpdate({
+        target: schema.userPreferences.userId,
+        set: {
+          activeWorkspaceId: workspaceId,
+          updatedAt: new Date(),
+        },
+      });
+  },
 };
 
 export type WorkspacesRepository = typeof workspacesRepository;

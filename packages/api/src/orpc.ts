@@ -83,7 +83,11 @@ export async function createBackendContext(opts: {
     }
   }
 
-  const workspaceId = getWorkspaceIdFromHeaders(opts.headers);
+  let workspaceId = getWorkspaceIdFromHeaders(opts.headers);
+  // Fallback: если нет cookie/header, но пользователь авторизован — берём из БД
+  if (workspaceId == null && authUserId) {
+    workspaceId = await workspacesService.getActiveWorkspaceId(authUserId);
+  }
   let workspaceRole: WorkspaceRole | null = null;
 
   if (workspaceId != null && authUserId) {

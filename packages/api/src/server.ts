@@ -161,7 +161,7 @@ export function createBackendApiWithContext(ctx: BackendContext) {
     workspaces: {
       list: () =>
         callProc(backendRouter.workspaces.list as ProcedureWithCallable, ctx),
-      get: (input: { workspaceId: number }) =>
+      get: (input: { workspaceId: string }) =>
         callProc(
           backendRouter.workspaces.get as ProcedureWithCallable,
           ctx,
@@ -173,26 +173,26 @@ export function createBackendApiWithContext(ctx: BackendContext) {
           ctx,
           input,
         ),
-      update: (input: { workspaceId: number; name?: string; slug?: string }) =>
+      update: (input: { workspaceId: string; name?: string; slug?: string }) =>
         callProc(
           backendRouter.workspaces.update as ProcedureWithCallable,
           ctx,
           input,
         ),
-      delete: (input: { workspaceId: number }) =>
+      delete: (input: { workspaceId: string }) =>
         callProc(
           backendRouter.workspaces.delete as ProcedureWithCallable,
           ctx,
           input,
         ),
-      listMembers: (input: { workspaceId: number }) =>
+      listMembers: (input: { workspaceId: string }) =>
         callProc(
           backendRouter.workspaces.listMembers as ProcedureWithCallable,
           ctx,
           input,
         ),
       addMember: (input: {
-        workspaceId: number;
+        workspaceId: string;
         userId: string;
         role: "owner" | "admin" | "member";
       }) =>
@@ -201,14 +201,14 @@ export function createBackendApiWithContext(ctx: BackendContext) {
           ctx,
           input,
         ),
-      removeMember: (input: { workspaceId: number; userId: string }) =>
+      removeMember: (input: { workspaceId: string; userId: string }) =>
         callProc(
           backendRouter.workspaces.removeMember as ProcedureWithCallable,
           ctx,
           input,
         ),
       updateMemberRole: (input: {
-        workspaceId: number;
+        workspaceId: string;
         userId: string;
         role: "owner" | "admin" | "member";
       }) =>
@@ -217,7 +217,7 @@ export function createBackendApiWithContext(ctx: BackendContext) {
           ctx,
           input,
         ),
-      setActive: (input: { workspaceId: number }) =>
+      setActive: (input: { workspaceId: string }) =>
         callProc(
           backendRouter.workspaces.setActive as ProcedureWithCallable,
           ctx,

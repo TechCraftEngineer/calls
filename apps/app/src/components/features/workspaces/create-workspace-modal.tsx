@@ -76,7 +76,7 @@ function generateSlugFromName(name: string): string {
 
 interface CreateWorkspaceModalProps {
   onClose: () => void;
-  onSuccess: (workspaceId: number) => void;
+  onSuccess: (workspaceId: string) => void;
 }
 
 export default function CreateWorkspaceModal({

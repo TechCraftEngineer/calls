@@ -32,13 +32,16 @@ export type {
   NewFile,
   NewPrompt,
   NewTranscript,
+  NewUserPreferences,
   NewWorkspace,
   NewWorkspaceMember,
   Prompt,
   Transcript,
+  UserPreferences,
   Workspace,
   WorkspaceMember,
 } from "./types";
+export { userPreferences } from "./user-preferences";
 export {
   workspaceMemberRole,
   workspaceMembers,

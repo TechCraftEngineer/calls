@@ -79,18 +79,18 @@ export class WorkspacesService {
     // Get current workspace to check if slug is changing
     const currentWs = await this.workspacesRepository.getById(id);
     const oldSlug = currentWs?.slug;
-    
+
     const result = await this.workspacesRepository.update(id, data);
-    
+
     // Invalidate cache for this workspace
     workspaceCache.invalidateWorkspace(id);
-    
+
     // If slug changed, invalidate old slug cache
     if (oldSlug && data.slug && oldSlug !== data.slug) {
       const oldSlugKey = workspaceCache.createBySlugKey(oldSlug);
       workspaceCache.delete(oldSlugKey);
     }
-    
+
     return result;
   }
 
@@ -106,11 +106,17 @@ export class WorkspacesService {
   }
 
   async addMember(data: AddMemberData) {
-    return this.workspacesRepository.addMember(data);
+    const result = await this.workspacesRepository.addMember(data);
+    // Invalidate user workspaces cache when member is added
+    workspaceCache.invalidateUserWorkspaces(data.userId);
+    return result;
   }
 
   async removeMember(workspaceId: string, userId: string) {
-    return this.workspacesRepository.removeMember(workspaceId, userId);
+    const result = await this.workspacesRepository.removeMember(workspaceId, userId);
+    // Invalidate user workspaces cache when member is removed
+    workspaceCache.invalidateUserWorkspaces(userId);
+    return result;
   }
 
   async updateMemberRole(
@@ -126,7 +132,15 @@ export class WorkspacesService {
   }
 
   async getUserWorkspaces(userId: string) {
-    return this.workspacesRepository.getUserWorkspaces(userId);
+    const cacheKey = workspaceCache.createUserWorkspacesKey(userId);
+    const cached = workspaceCache.get<
+      Awaited<ReturnType<typeof this.workspacesRepository.getUserWorkspaces>>
+    >(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.workspacesRepository.getUserWorkspaces(userId);
+    workspaceCache.set(cacheKey, result);
+    return result;
   }
 
   async getMemberWithRole(
@@ -149,5 +163,30 @@ export class WorkspacesService {
       userId,
     );
     return (member?.role as WorkspaceMemberRole) ?? null;
+  }
+
+  async getActiveWorkspaceId(userId: string): Promise<string | null> {
+    const cacheKey = workspaceCache.createActiveWorkspaceKey(userId);
+    const cached = workspaceCache.get<string>(cacheKey);
+    if (cached !== undefined) return cached;
+
+    const result = await this.workspacesRepository.getActiveWorkspaceId(userId);
+    workspaceCache.set(cacheKey, result);
+    return result;
+  }
+
+  async setActiveWorkspace(userId: string, workspaceId: string): Promise<void> {
+    // Validate workspace exists and user has access
+    const memberRole = await this.ensureUserInWorkspace(workspaceId, userId);
+    if (!memberRole) {
+      throw new Error("User does not have access to this workspace");
+    }
+
+    await this.workspacesRepository.setActiveWorkspace(userId, workspaceId);
+    // Update cache
+    const cacheKey = workspaceCache.createActiveWorkspaceKey(userId);
+    workspaceCache.set(cacheKey, workspaceId);
+    // Invalidate user workspaces cache since active workspace changed
+    workspaceCache.invalidateUserWorkspaces(userId);
   }
 }

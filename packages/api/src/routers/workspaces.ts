@@ -13,30 +13,30 @@ const createWorkspaceSchema = z.object({
   slug: slugSchema,
 });
 
+const workspaceIdSchema = z.object({
+  workspaceId: z.string().min(1, "workspaceId обязателен"),
+});
+
 const updateWorkspaceSchema = z.object({
-  workspaceId: z.number().int().positive(),
+  workspaceId: z.string().min(1),
   name: z.string().min(1).max(100).optional(),
   slug: slugSchema.optional(),
 });
 
-const workspaceIdSchema = z.object({
-  workspaceId: z.number().int().positive(),
-});
-
 const addMemberSchema = z.object({
-  workspaceId: z.number().int().positive(),
+  workspaceId: z.string().min(1),
   userId: z.string().min(1),
   role: z.enum(["owner", "admin", "member"]),
 });
 
 const updateMemberRoleSchema = z.object({
-  workspaceId: z.number().int().positive(),
+  workspaceId: z.string().min(1),
   userId: z.string().min(1),
   role: z.enum(["owner", "admin", "member"]),
 });
 
 const setActiveSchema = z.object({
-  workspaceId: z.number().int().positive(),
+  workspaceId: z.string().min(1, "workspaceId обязателен"),
 });
 
 export const workspacesRouter = {
@@ -47,12 +47,16 @@ export const workspacesRouter = {
         message: "Требуется авторизация через Better Auth",
       });
     }
-    const rows = await context.workspacesService.getUserWorkspaces(authUserId);
-    return rows.map((r: any) => ({
+    const [rows, activeWorkspaceId] = await Promise.all([
+      context.workspacesService.getUserWorkspaces(authUserId),
+      context.workspacesService.getActiveWorkspaceId(authUserId),
+    ]);
+    const workspaces = rows.map((r: any) => ({
       ...r.workspace,
       role: r.role,
       memberSince: r.createdAt,
     }));
+    return { workspaces, activeWorkspaceId };
   }),
 
   get: protectedProcedure
@@ -229,7 +233,9 @@ export const workspacesRouter = {
     }),
 
   removeMember: protectedProcedure
-    .input(z.object({ workspaceId: z.number(), userId: z.string() }))
+    .input(
+      z.object({ workspaceId: z.string().min(1), userId: z.string().min(1) }),
+    )
     .handler(async ({ input, context }) => {
       if (!context.authUserId) {
         throw new ORPCError("UNAUTHORIZED", {
@@ -304,11 +310,10 @@ export const workspacesRouter = {
           message: "Вы не являетесь участником этого workspace",
         });
       }
-      return {
-        success: true,
-        workspaceId: input.workspaceId,
-        message:
-          "Установите cookie active_workspace_id или заголовок X-Workspace-Id",
-      };
+      await context.workspacesService.setActiveWorkspace(
+        context.authUserId,
+        input.workspaceId,
+      );
+      return { success: true, workspaceId: input.workspaceId };
     }),
 };

@@ -70,7 +70,7 @@ function CreateWorkspaceForm() {
         return;
       }
       try {
-        const workspaces = await workspacesApi.list();
+        const { workspaces } = await workspacesApi.list();
         if (workspaces.length > 0) {
           router.replace(paths.root);
           return;
@@ -90,6 +90,8 @@ function CreateWorkspaceForm() {
         slug: data.slug,
       });
 
+      // Сохраняем активный воркспейс в БД и cookie
+      await workspacesApi.setActive(workspace.id);
       // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
       document.cookie = `active_workspace_id=${workspace.id}; path=/; max-age=31536000; SameSite=Lax`;
       router.push(paths.root);

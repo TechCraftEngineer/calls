@@ -2,14 +2,14 @@ import { randomBytes } from "node:crypto";
 import { promptsService, systemRepository, usersService } from "@calls/db";
 import { getBotUsername } from "@calls/telegram-bot";
 import { z } from "zod";
+import type { WorkspaceRole } from "../orpc";
 import {
   adminProcedure,
   protectedProcedure,
+  workspaceAdminProcedure,
   workspaceProcedure,
 } from "../orpc";
 import { isAdminUser } from "../user-profile";
-import type { WorkspaceRole } from "../orpc";
-import { workspaceAdminProcedure } from "../orpc";
 
 async function canAccessUser(
   currentUserId: string,
@@ -17,12 +17,12 @@ async function canAccessUser(
   workspaceRole: WorkspaceRole | null,
 ): Promise<boolean> {
   if (currentUserId === targetUserId) return true;
-  
+
   // Check workspace role first (fast path)
   if (workspaceRole === "admin" || workspaceRole === "owner") {
     return true;
   }
-  
+
   // Fallback to database check for additional security
   try {
     const user = await usersService.getUser(currentUserId);

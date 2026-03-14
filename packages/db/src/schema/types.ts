@@ -7,6 +7,7 @@ import type { account, session, user, verification } from "./auth";
 // Import all table definitions as types
 import type { callEvaluations, calls, transcripts } from "./calls";
 import type { activityLog, prompts } from "./system";
+import type { userPreferences } from "./user-preferences";
 import type { workspaceMembers, workspaces } from "./workspaces";
 
 export type { File, NewFile } from "./files";
@@ -39,3 +40,5 @@ export type Workspace = typeof workspaces.$inferSelect;
 export type NewWorkspace = typeof workspaces.$inferInsert;
 export type WorkspaceMember = typeof workspaceMembers.$inferSelect;
 export type NewWorkspaceMember = typeof workspaceMembers.$inferInsert;
+export type UserPreferences = typeof userPreferences.$inferSelect;
+export type NewUserPreferences = typeof userPreferences.$inferInsert;
