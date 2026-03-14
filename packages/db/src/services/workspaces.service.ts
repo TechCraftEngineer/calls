@@ -113,7 +113,10 @@ export class WorkspacesService {
   }
 
   async removeMember(workspaceId: string, userId: string) {
-    const result = await this.workspacesRepository.removeMember(workspaceId, userId);
+    const result = await this.workspacesRepository.removeMember(
+      workspaceId,
+      userId,
+    );
     // Invalidate user workspaces cache when member is removed
     workspaceCache.invalidateUserWorkspaces(userId);
     return result;
@@ -133,9 +136,10 @@ export class WorkspacesService {
 
   async getUserWorkspaces(userId: string) {
     const cacheKey = workspaceCache.createUserWorkspacesKey(userId);
-    const cached = workspaceCache.get<
-      Awaited<ReturnType<typeof this.workspacesRepository.getUserWorkspaces>>
-    >(cacheKey);
+    const cached =
+      workspaceCache.get<
+        Awaited<ReturnType<typeof this.workspacesRepository.getUserWorkspaces>>
+      >(cacheKey);
     if (cached) return cached;
 
     const result = await this.workspacesRepository.getUserWorkspaces(userId);

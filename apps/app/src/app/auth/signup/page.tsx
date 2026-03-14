@@ -17,7 +17,7 @@ function RegisterForm() {
   useEffect(() => {
     getCurrentUser().then((user) => {
       if (user) {
-        router.replace(paths.root);
+        router.replace(paths.auth.createWorkspace);
       }
     });
   }, [router]);

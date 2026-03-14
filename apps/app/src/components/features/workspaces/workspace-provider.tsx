@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { paths } from "@calls/config";
+import { usePathname, useRouter } from "next/navigation";
 import {
   createContext,
   type ReactNode,
@@ -39,7 +40,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   );
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
   const isAuthenticated = !!session?.user;
+
+  const isAuthOrCreateWorkspace =
+    pathname?.startsWith(paths.auth.root) ||
+    pathname === paths.auth.createWorkspace;
 
   const loadWorkspaces = useCallback(async () => {
     try {
@@ -114,6 +120,26 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
     loadWorkspaces();
   }, [loadWorkspaces, isAuthenticated, sessionPending]);
+
+  // Редирект на создание воркспейса, если у пользователя нет ни одного
+  useEffect(() => {
+    if (
+      isAuthenticated &&
+      !sessionPending &&
+      !loading &&
+      workspaces.length === 0 &&
+      !isAuthOrCreateWorkspace
+    ) {
+      router.replace(paths.auth.createWorkspace);
+    }
+  }, [
+    isAuthenticated,
+    sessionPending,
+    loading,
+    workspaces.length,
+    isAuthOrCreateWorkspace,
+    router,
+  ]);
 
   return (
     <WorkspaceContext.Provider
