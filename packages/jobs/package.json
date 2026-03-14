@@ -7,7 +7,7 @@
     "./hono": "./src/hono.ts"
   },
   "scripts": {
-    "inngest": "npx --ignore-scripts=false inngest-cli@latest dev -u http://localhost:7100/api/inngest",
+    "inngest": "npx --ignore-scripts=false inngest-cli@latest dev -u http://localhost:8000/api/inngest",
     "typecheck": "tsc --noEmit",
     "start": "bun with-env src/server.ts",
     "dev": "bun with-env --watch src/server.ts",
@@ -23,7 +23,7 @@
     "@calls/shared": "workspace:*",
     "ai": "^6.0.116",
     "basic-ftp": "^5.2.0",
-    "hono": "4.12.7",
+    "hono": "4.12.8",
     "inngest": "^3.52.6",
     "ssh2-sftp-client": "^12.1.0",
     "zod": "4.3.6"

@@ -19,7 +19,7 @@
     "@orpc/server": "^1.13.7",
     "better-auth": "1.5.5",
     "grammy": "^1.38.0",
-    "hono": "4.12.7"
+    "hono": "4.12.8"
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
