@@ -26,15 +26,15 @@ CREATE TABLE "activity_log" (
 --> statement-breakpoint
 CREATE TABLE "call_evaluations" (
 	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
-	"call_id" text NOT NULL,
+	"call_id" uuid NOT NULL,
 	"is_quality_analyzable" boolean DEFAULT true,
 	"not_analyzable_reason" text,
 	"value_score" integer,
 	"value_explanation" text,
 	"manager_score" integer,
 	"manager_feedback" text,
-	"manager_breakdown" text,
-	"manager_recommendations" text,
+	"manager_breakdown" jsonb,
+	"manager_recommendations" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "call_evaluations_call_id_unique" UNIQUE("call_id")
@@ -51,7 +51,7 @@ CREATE TABLE "calls" (
 	"direction" text,
 	"status" text,
 	"size_bytes" integer,
-	"file_id" text,
+	"file_id" uuid,
 	"internal_number" text,
 	"source" text,
 	"customer_name" text,
@@ -69,8 +69,7 @@ CREATE TABLE "files" (
 	"size_bytes" integer NOT NULL,
 	"file_type" text NOT NULL,
 	"storage_key" text NOT NULL,
-	"is_public" boolean DEFAULT false,
-	"metadata" text,
+	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "files_storage_key_unique" UNIQUE("storage_key")
@@ -100,7 +99,7 @@ CREATE TABLE "sessions" (
 --> statement-breakpoint
 CREATE TABLE "transcripts" (
 	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
-	"call_id" text NOT NULL,
+	"call_id" uuid NOT NULL,
 	"text" text,
 	"raw_text" text,
 	"title" text,
@@ -110,7 +109,8 @@ CREATE TABLE "transcripts" (
 	"size_kb" integer,
 	"caller_name" text,
 	"call_type" text,
-	"call_topic" text
+	"call_topic" text,
+	"metadata" jsonb
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
@@ -154,7 +154,7 @@ CREATE TABLE "workspaces" (
 	"id" text PRIMARY KEY DEFAULT workspace_id_generate() NOT NULL,
 	"name" text NOT NULL,
 	"slug" text NOT NULL,
-	"metadata" text,
+	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "workspaces_slug_unique" UNIQUE("slug")

@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1773413577735,
-      "tag": "0000_files-storage-key",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1773414567115,
-      "tag": "0001_minor_the_leader",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1773414853410,
-      "tag": "0002_brave_daredevil",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1731420000000,
-      "tag": "0003_transcripts_metadata",
+      "when": 1773465912282,
+      "tag": "0000_colossal_rocket_raccoon",
       "breakpoints": true
     }
   ]

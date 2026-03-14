@@ -1,21 +1,13 @@
 "use client";
 
 import { Badge, cn } from "@calls/ui";
+import type { CallDetail } from "@/types/calls";
 
-interface CallDetail {
-  number: string;
-  timestamp: string;
-  duration_seconds: number;
-  direction: string;
-  manager_name?: string;
-  operator_name?: string;
-}
-
-interface CallMetaHeaderProps {
+interface Props {
   call: CallDetail;
 }
 
-export default function CallMetaHeader({ call }: CallMetaHeaderProps) {
+export default function CallMetaHeader({ call }: Props) {
   const isCompleted = call.duration_seconds > 0;
 
   return (

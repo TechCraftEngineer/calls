@@ -33,6 +33,4 @@ async function setupDb() {
   console.log("✅ Database setup complete");
 }
 
-if (require.main === module) {
-  setupDb().catch(console.error);
-}
+setupDb().catch(console.error);

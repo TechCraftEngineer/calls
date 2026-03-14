@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@calls/ui";
-import AudioPlayer from "@/components/audio-player";
-import type { CallDetail } from "../types";
+import AudioPlayer from "@/components/ui/audio-player";
+import type { CallDetail } from "@/types/calls";
 
 interface Props {
   call: CallDetail;

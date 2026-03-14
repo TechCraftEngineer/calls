@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Avatar,
   AvatarFallback,
@@ -13,7 +15,7 @@ import {
 } from "@calls/ui";
 import { useMemo, useState } from "react";
 import sanitizeHtml from "sanitize-html";
-import type { CallDetail, TranscriptDetail } from "../types";
+import type { CallDetail, TranscriptDetail } from "@/types/calls";
 
 interface Props {
   call: CallDetail;

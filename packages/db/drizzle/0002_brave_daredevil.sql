@@ -1,4 +1,0 @@
-ALTER TABLE "call_evaluations" ALTER COLUMN "manager_breakdown" SET DATA TYPE jsonb USING (CASE WHEN "manager_breakdown" IS NULL OR trim("manager_breakdown") = '' THEN NULL ELSE "manager_breakdown"::jsonb END);--> statement-breakpoint
-ALTER TABLE "call_evaluations" ALTER COLUMN "manager_recommendations" SET DATA TYPE jsonb USING (CASE WHEN "manager_recommendations" IS NULL OR trim("manager_recommendations") = '' THEN NULL ELSE "manager_recommendations"::jsonb END);--> statement-breakpoint
-ALTER TABLE "files" ALTER COLUMN "metadata" SET DATA TYPE jsonb USING (CASE WHEN "metadata" IS NULL OR trim("metadata") = '' THEN NULL ELSE "metadata"::jsonb END);--> statement-breakpoint
-ALTER TABLE "workspaces" ALTER COLUMN "metadata" SET DATA TYPE jsonb USING (CASE WHEN "metadata" IS NULL OR trim("metadata") = '' THEN NULL ELSE "metadata"::jsonb END);

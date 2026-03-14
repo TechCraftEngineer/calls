@@ -33,7 +33,7 @@ export const calls = pgTable(
     direction: text("direction"), // 'incoming'/'outgoing'/'входящий'/'исходящий'
     status: text("status"),
     sizeBytes: integer("size_bytes"),
-    fileId: text("file_id").references(() => files.id, {
+    fileId: uuid("file_id").references(() => files.id, {
       onDelete: "set null",
     }),
     internalNumber: text("internal_number"),
@@ -62,7 +62,7 @@ export const transcripts = pgTable(
   "transcripts",
   {
     id: uuid("id").primaryKey().default(sql`uuidv7()`),
-    callId: text("call_id")
+    callId: uuid("call_id")
       .notNull()
       .references(() => calls.id, { onDelete: "cascade" }),
     text: text("text"),
@@ -89,7 +89,7 @@ export const callEvaluations = pgTable(
   "call_evaluations",
   {
     id: uuid("id").primaryKey().default(sql`uuidv7()`),
-    callId: text("call_id")
+    callId: uuid("call_id")
       .notNull()
       .unique()
       .references(() => calls.id, { onDelete: "cascade" }),
