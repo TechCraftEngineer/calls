@@ -94,6 +94,7 @@
         "@calls/ai": "workspace:*",
         "@calls/db": "workspace:*",
         "@calls/jobs": "workspace:*",
+        "@calls/shared": "workspace:*",
         "@calls/telegram-bot": "workspace:*",
         "@orpc/client": "^1.13.7",
         "@orpc/server": "^1.13.7",
@@ -220,6 +221,7 @@
       "version": "0.1.0",
       "dependencies": {
         "@sindresorhus/slugify": "^3.0.0",
+        "zod": "4.3.6",
       },
       "devDependencies": {
         "@calls/tsconfig": "workspace:*",

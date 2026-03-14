@@ -2,6 +2,7 @@ const ROOTS = {
   ROOT: "/",
   DASHBOARD: "/", // главная после авторизации
   AUTH: "/auth",
+  ONBOARDING: "/onboarding",
   STATISTICS: "/statistics",
   USERS: "/users",
   SETTINGS: "/settings",
@@ -20,10 +21,13 @@ export const paths = {
     signin: `${ROOTS.AUTH}/signin`,
     signout: `${ROOTS.AUTH}/signout`,
     signup: `${ROOTS.AUTH}/signup`,
-    createWorkspace: `${ROOTS.AUTH}/create-workspace`,
     otp: `${ROOTS.AUTH}/otp`,
     forgotPassword: `${ROOTS.AUTH}/forgot-password`,
     resetPassword: `${ROOTS.AUTH}/reset-password`,
+  },
+  onboarding: {
+    root: ROOTS.ONBOARDING,
+    createWorkspace: `${ROOTS.ONBOARDING}/create-workspace`,
   },
   statistics: {
     root: ROOTS.STATISTICS,

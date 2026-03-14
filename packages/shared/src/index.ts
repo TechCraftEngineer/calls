@@ -14,6 +14,7 @@ export {
   isValidEmail,
   isValidUuid,
   isValidWorkspaceId,
+  workspaceIdSchema,
 } from "./validation";
 export {
   validateFtpCredentials,

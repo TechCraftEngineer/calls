@@ -17,8 +17,13 @@ interface WorkspaceSwitcherProps {
 }
 
 export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
-  const { workspaces, activeWorkspace, loading, setActiveWorkspace } =
-    useWorkspace();
+  const {
+    workspaces,
+    activeWorkspace,
+    loading,
+    setActiveWorkspace,
+    refreshWorkspaces,
+  } = useWorkspace();
   const [isOpen, setIsOpen] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -128,9 +133,9 @@ export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
             // Always allow closing the modal, even if no workspaces exist
             setShowCreateModal(false);
           }}
-          onSuccess={async (wsId) => {
+          onSuccess={async () => {
             setShowCreateModal(false);
-            await setActiveWorkspace(wsId);
+            await refreshWorkspaces();
           }}
         />
       )}

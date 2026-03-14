@@ -104,7 +104,7 @@ export default function WorkspaceSettingsPage() {
     orpc.workspaces.delete.mutationOptions({
       onSuccess: async () => {
         await refreshWorkspaces();
-        router.replace(paths.auth.createWorkspace);
+        router.replace(paths.onboarding.createWorkspace);
       },
     }),
   );

@@ -1,4 +1,4 @@
-import { isValidUuid, isValidWorkspaceId } from "@calls/shared";
+import { isValidUuid, workspaceIdSchema } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../orpc";
@@ -14,27 +14,19 @@ const createWorkspaceSchema = z.object({
   slug: slugSchema,
 });
 
-const workspaceIdSchema = z.object({
-  workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
-    message:
-      "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
-  }),
+/** Схема ввода с workspaceId — использовать везде, где нужен workspaceId */
+const workspaceIdInputSchema = z.object({
+  workspaceId: workspaceIdSchema,
 });
 
 const updateWorkspaceSchema = z.object({
-  workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
-    message:
-      "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
-  }),
+  workspaceId: workspaceIdSchema,
   name: z.string().min(1).max(100).optional(),
   slug: slugSchema.optional(),
 });
 
 const addMemberSchema = z.object({
-  workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
-    message:
-      "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
-  }),
+  workspaceId: workspaceIdSchema,
   userId: z.string().refine((id) => isValidUuid(id), {
     message: "Неверный формат userId. Ожидается UUIDv7",
   }),
@@ -42,21 +34,16 @@ const addMemberSchema = z.object({
 });
 
 const updateMemberRoleSchema = z.object({
-  workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
-    message:
-      "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
-  }),
+  workspaceId: workspaceIdSchema,
   userId: z.string().refine((id) => isValidUuid(id), {
     message: "Неверный формат userId. Ожидается UUIDv7",
   }),
   role: z.enum(["owner", "admin", "member"]),
 });
 
-const setActiveSchema = z.object({
-  workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
-    message:
-      "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
-  }),
+const removeMemberSchema = z.object({
+  workspaceId: workspaceIdSchema,
+  userId: z.string().min(1, "userId обязателен"),
 });
 
 export const workspacesRouter = {
@@ -80,7 +67,7 @@ export const workspacesRouter = {
   }),
 
   get: protectedProcedure
-    .input(workspaceIdSchema)
+    .input(workspaceIdInputSchema)
     .handler(async ({ input, context }) => {
       if (!context.authUserId) {
         throw new ORPCError("UNAUTHORIZED", {
@@ -164,7 +151,7 @@ export const workspacesRouter = {
     }),
 
   delete: protectedProcedure
-    .input(workspaceIdSchema)
+    .input(workspaceIdInputSchema)
     .handler(async ({ input, context }) => {
       if (!context.authUserId) {
         throw new ORPCError("UNAUTHORIZED", {
@@ -185,7 +172,7 @@ export const workspacesRouter = {
     }),
 
   listMembers: protectedProcedure
-    .input(workspaceIdSchema)
+    .input(workspaceIdInputSchema)
     .handler(async ({ input, context }) => {
       if (!context.authUserId) {
         throw new ORPCError("UNAUTHORIZED", {
@@ -253,9 +240,7 @@ export const workspacesRouter = {
     }),
 
   removeMember: protectedProcedure
-    .input(
-      z.object({ workspaceId: z.string().min(1), userId: z.string().min(1) }),
-    )
+    .input(removeMemberSchema)
     .handler(async ({ input, context }) => {
       if (!context.authUserId) {
         throw new ORPCError("UNAUTHORIZED", {
@@ -314,7 +299,7 @@ export const workspacesRouter = {
     }),
 
   listUsersAvailableToAdd: protectedProcedure
-    .input(workspaceIdSchema)
+    .input(workspaceIdInputSchema)
     .handler(async ({ input, context }) => {
       if (!context.authUserId) {
         throw new ORPCError("UNAUTHORIZED", {
@@ -349,7 +334,7 @@ export const workspacesRouter = {
     }),
 
   setActive: protectedProcedure
-    .input(setActiveSchema)
+    .input(workspaceIdInputSchema)
     .handler(async ({ input, context }) => {
       if (!context.authUserId) {
         throw new ORPCError("UNAUTHORIZED", {

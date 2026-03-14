@@ -30,7 +30,7 @@ function LoginForm() {
 
       if (result.success) {
         setTimeout(() => {
-          router.push(paths.auth.createWorkspace);
+          router.push(paths.onboarding.createWorkspace);
         }, 100);
       } else {
         setError("root", { message: result.message || "Ошибка входа" });
@@ -170,7 +170,7 @@ function LoginForm() {
                 onClick={() =>
                   authClient.signIn.social({
                     provider: "google",
-                    callbackURL: paths.auth.createWorkspace,
+                    callbackURL: paths.onboarding.createWorkspace,
                   })
                 }
                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#DDD] bg-white py-3 text-[14px] font-medium text-[#333] transition-all hover:bg-[#F5F5F5]"

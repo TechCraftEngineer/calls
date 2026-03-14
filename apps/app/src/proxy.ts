@@ -17,22 +17,22 @@ export async function proxy(request: NextRequest) {
     pathname === paths.auth.forgotPassword ||
     pathname === paths.auth.resetPassword;
 
-  const isCreateWorkspacePage = pathname === paths.auth.createWorkspace;
+  const isCreateWorkspacePage = pathname === paths.onboarding.createWorkspace;
 
-  // create-workspace: без сессии → signin
+  // onboarding/create-workspace: без сессии → signin
   if (isCreateWorkspacePage && !sessionCookie) {
     return NextResponse.redirect(new URL(paths.auth.signin, request.url));
   }
 
-  // create-workspace с сессией → показать страницу (не редиректить на root)
+  // onboarding/create-workspace с сессией → показать страницу (не редиректить на root)
   if (isCreateWorkspacePage && sessionCookie) {
     return NextResponse.next();
   }
 
-  // Авторизованный пользователь на странице входа → create-workspace (проверка наличия workspace)
+  // Авторизованный пользователь на странице входа → onboarding/create-workspace (проверка наличия workspace)
   if (isAuthPage && sessionCookie) {
     return NextResponse.redirect(
-      new URL(paths.auth.createWorkspace, request.url),
+      new URL(paths.onboarding.createWorkspace, request.url),
     );
   }
 
@@ -66,6 +66,8 @@ export const config = {
     "/users/:path*",
     "/auth",
     "/auth/:path*",
+    "/onboarding",
+    "/onboarding/:path*",
     "/invite",
     "/invite/:path*",
     "/terms",

@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1773466368182,
-      "tag": "0000_absent_reaper",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1773473367359,
-      "tag": "0001_flimsy_puff_adder",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1773502581606,
-      "tag": "0002_deep_speed_demon",
+      "when": 1773515964163,
+      "tag": "0000_oval_sunspot",
       "breakpoints": true
     }
   ]

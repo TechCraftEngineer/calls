@@ -81,8 +81,7 @@ function CreateWorkspaceForm() {
         slug: data.slug,
       });
 
-      // Сохраняем активный воркспейс в БД и cookie
-      await workspacesApi.setActive(workspace.id);
+      // create уже устанавливает активный воркспейс в БД; cookie для заголовков
       // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
       document.cookie = `active_workspace_id=${workspace.id}; path=/; max-age=31536000; SameSite=Lax`;
       router.push(paths.root);

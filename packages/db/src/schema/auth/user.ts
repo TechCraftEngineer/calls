@@ -8,6 +8,8 @@ import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
  * - internal_extensions — внутренние номера/расширения (телефония)
  * - mobile_phones — мобильные номера
  * - telegram_chat_id — Telegram API standard
+ *
+ * Admin plugin fields: role, banned, banReason, banExpires
  */
 export const user = pgTable(
   "users",
@@ -32,12 +34,18 @@ export const user = pgTable(
     mobilePhones: text("mobile_phones"),
     telegramChatId: text("telegram_chat_id"),
 
+    // Admin plugin
+    role: text("role").default("user").notNull(),
+    banned: boolean("banned").default(false).notNull(),
+    banReason: text("ban_reason"),
+    banExpires: timestamp("ban_expires"),
+
     // Soft delete
     deletedAt: timestamp("deleted_at"),
   },
-  (table) => ({
-    usernameIdx: index("user_username_idx").on(table.username),
-    emailIdx: index("user_email_idx").on(table.email),
-    deletedAtIdx: index("user_deleted_at_idx").on(table.deletedAt),
-  }),
+  (table) => [
+    index("user_username_idx").on(table.username),
+    index("user_email_idx").on(table.email),
+    index("user_deleted_at_idx").on(table.deletedAt),
+  ],
 );

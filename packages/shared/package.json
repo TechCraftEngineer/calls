@@ -16,7 +16,8 @@
     "dev": "bun run build:watch"
   },
   "dependencies": {
-    "@sindresorhus/slugify": "^3.0.0"
+    "@sindresorhus/slugify": "^3.0.0",
+    "zod": "4.3.6"
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",

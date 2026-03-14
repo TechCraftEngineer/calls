@@ -51,7 +51,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const isAuthOrCreateWorkspace =
     pathname?.startsWith(paths.auth.root) ||
-    pathname === paths.auth.createWorkspace;
+    pathname?.startsWith(paths.onboarding.root);
 
   const loadWorkspaces = useCallback(async () => {
     try {
@@ -152,7 +152,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       workspaces.length === 0 &&
       !isAuthOrCreateWorkspace
     ) {
-      router.replace(paths.auth.createWorkspace);
+      router.replace(paths.onboarding.createWorkspace);
     }
   }, [
     isAuthenticated,

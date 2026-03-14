@@ -22,7 +22,7 @@ export class WorkspacesService {
     ownerUserId: string,
   ): Promise<string> {
     // Используем транзакцию для атомарного создания workspace и владельца
-    return await db.transaction(async (tx) => {
+    const workspaceId = await db.transaction(async (tx) => {
       // Создаем workspace
       const workspaceResult = await tx
         .insert(this.workspacesRepository.table)
@@ -33,20 +33,25 @@ export class WorkspacesService {
         })
         .returning({ id: this.workspacesRepository.table.id });
 
-      const workspaceId = workspaceResult[0]?.id;
-      if (!workspaceId) {
+      const id = workspaceResult[0]?.id;
+      if (!id) {
         throw new Error("Failed to create workspace");
       }
 
       // Добавляем владельца
       await tx.insert(this.workspacesRepository.workspaceMembersTable).values({
-        workspaceId: workspaceId,
+        workspaceId: id,
         userId: ownerUserId,
         role: "owner",
       });
 
-      return workspaceId;
+      return id;
     });
+
+    // Сразу делаем новый workspace активным для создателя
+    await this.setActiveWorkspace(ownerUserId, workspaceId);
+
+    return workspaceId;
   }
 
   async getById(id: string) {

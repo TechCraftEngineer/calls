@@ -10,6 +10,7 @@ import {
   usersService,
   workspacesService,
 } from "@calls/db";
+import { isValidWorkspaceId } from "@calls/shared";
 import { ORPCError, os } from "@orpc/server";
 import { isAdminUser } from "./user-profile";
 
@@ -29,13 +30,13 @@ function getWorkspaceIdFromHeaders(headers: Headers): string | null {
     headers.get("x-workspace-id") ?? headers.get("X-Workspace-Id");
   if (fromHeader) {
     const trimmed = fromHeader.trim();
-    if (trimmed.length > 0) return trimmed;
+    if (trimmed.length > 0 && isValidWorkspaceId(trimmed)) return trimmed;
   }
   const cookie = headers.get("cookie");
   const match = cookie?.match(/\bactive_workspace_id=([^;]+)/);
   if (match?.[1]) {
     const trimmed = match[1].trim();
-    if (trimmed.length > 0) return trimmed;
+    if (trimmed.length > 0 && isValidWorkspaceId(trimmed)) return trimmed;
   }
   return null;
 }
