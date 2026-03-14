@@ -116,9 +116,23 @@ export function createBackendApiWithContext(ctx: BackendContext) {
           backendRouter.settings.getPrompts as ProcedureWithCallable,
           ctx,
         ),
+      getIntegrations: () =>
+        callProc(
+          backendRouter.settings.getIntegrations as ProcedureWithCallable,
+          ctx,
+        ),
       updatePrompts: (input: Record<string, unknown>) =>
         callProc(
           backendRouter.settings.updatePrompts as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      updateIntegrations: (input: {
+        telegram_bot_token?: string | null;
+        max_bot_token?: string | null;
+      }) =>
+        callProc(
+          backendRouter.settings.updateIntegrations as ProcedureWithCallable,
           ctx,
           input,
         ),
@@ -136,6 +150,17 @@ export function createBackendApiWithContext(ctx: BackendContext) {
       }) =>
         callProc(
           backendRouter.settings.testMegafonFtp as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      updateMegafonFtp: (input: {
+        enabled: boolean;
+        host: string;
+        user: string;
+        password: string;
+      }) =>
+        callProc(
+          backendRouter.settings.updateMegafonFtp as ProcedureWithCallable,
           ctx,
           input,
         ),

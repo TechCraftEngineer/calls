@@ -20,6 +20,13 @@ export class SettingsService {
     return this.promptsRepository.findByKeyWithDefault(key, workspaceId);
   }
 
+  /** Список активных интеграций Megafon FTP по всем workspace */
+  async getActiveMegafonFtpIntegrations(): Promise<
+    Array<{ workspaceId: string; host: string; user: string; password: string }>
+  > {
+    return this.workspaceIntegrationsRepository.listActiveMegafonFtp();
+  }
+
   async getMegafonFtpSettings(workspaceId: string): Promise<{
     enabled: boolean;
     host: string | null;

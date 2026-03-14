@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 export const ftpCredentialsSchema = z.object({
@@ -33,35 +32,14 @@ const promptItemSchema = z.object({
   description: z.string().optional().nullable(),
 });
 
-export const settingsUpdateSchema = z
-  .object({
-    deepseek_model: z.string().optional(),
-    quality_min_value_threshold: z.number().min(0).max(5).optional(),
-    enable_manager_recommendations: z.boolean().optional(),
-    telegram_bot_token: z.string().optional().nullable(),
-    max_bot_token: z.string().optional().nullable(),
-    megafon_ftp_enabled: z.boolean().optional(),
-    megafon_ftp_host: z.string().optional().nullable(),
-    megafon_ftp_user: z.string().optional().nullable(),
-    megafon_ftp_password: z.string().optional().nullable(),
-    prompts: z.record(z.string(), promptItemSchema).optional(),
-  })
-  .refine((data) => {
-    const ftpFields = [
-      data.megafon_ftp_host,
-      data.megafon_ftp_user,
-      data.megafon_ftp_password,
-    ];
-    const hasAnyValue = ftpFields.some((field) => field && field.trim() !== "");
-    const hasAllValues = ftpFields.every(
-      (field) => field && field.trim() !== "",
-    );
+export const settingsUpdateSchema = z.object({
+  deepseek_model: z.string().optional(),
+  quality_min_value_threshold: z.number().min(0).max(5).optional(),
+  enable_manager_recommendations: z.boolean().optional(),
+  prompts: z.record(z.string(), promptItemSchema).optional(),
+});
 
-    if (hasAnyValue && !hasAllValues) {
-      throw new ORPCError("BAD_REQUEST", {
-        message: "Заполните все поля подключения",
-      });
-    }
-
-    return true;
-  });
+export const updateIntegrationsSchema = z.object({
+  telegram_bot_token: z.string().optional().nullable(),
+  max_bot_token: z.string().optional().nullable(),
+});

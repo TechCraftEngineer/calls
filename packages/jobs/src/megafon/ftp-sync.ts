@@ -4,7 +4,7 @@
  */
 
 import { Writable } from "node:stream";
-import { callsService, filesService, workspacesService } from "@calls/db";
+import { callsService, filesService } from "@calls/db";
 import { validateFtpCredentials } from "@calls/shared";
 import { Client } from "basic-ftp";
 import { createLogger } from "../logger";
@@ -80,6 +80,7 @@ export async function testFtpConnection(
 
 export async function syncMegafonFtp(
   config: MegafonFtpConfig,
+  workspaceId: string,
   dateStr?: string,
 ): Promise<SyncResult> {
   const result: SyncResult = {
@@ -117,12 +118,6 @@ export async function syncMegafonFtp(
     });
 
     logger.info("Успешное подключение к FTP");
-
-    const defaultWs = await workspacesService.getBySlug("default");
-    if (!defaultWs) {
-      throw new Error("Рабочее пространство 'default' не найдено");
-    }
-    const workspaceId = defaultWs.id;
 
     const baseRemoteDir = "recordings";
     const remoteDirs: string[] = dateStr

@@ -1,9 +1,4 @@
-import {
-  createWorkspaceErrorResponse,
-  getDefaultWorkspace,
-  settingsService,
-  workspacesService,
-} from "@calls/db";
+import { settingsService } from "@calls/db";
 import { syncMegafonFtp } from "../../megafon/ftp-sync";
 import { inngest } from "../client";
 
@@ -16,39 +11,49 @@ export const megafonSyncFn = inngest.createFunction(
   { cron: "TZ=Europe/Moscow */15 * * * *" },
   async ({ step }) => {
     try {
-      const defaultWs = await getDefaultWorkspace(workspacesService);
-      if (!defaultWs) {
-        return createWorkspaceErrorResponse(
-          "Рабочее пространство 'default' не найдено",
+      const integrations =
+        await settingsService.getActiveMegafonFtpIntegrations();
+
+      if (integrations.length === 0) {
+        return {
+          skipped: true,
+          reason: "Нет активных интеграций Megafon FTP",
+        };
+      }
+
+      const allCreatedCallIds: string[] = [];
+      let totalDownloaded = 0;
+      let totalSkipped = 0;
+      let totalS3Uploaded = 0;
+      const allErrors: string[] = [];
+
+      for (const integration of integrations) {
+        const result = await step.run(
+          `sync-ftp-${integration.workspaceId}`,
+          async () => {
+            return syncMegafonFtp(
+              {
+                host: integration.host,
+                user: integration.user,
+                password: integration.password,
+              },
+              integration.workspaceId,
+            );
+          },
         );
+
+        totalDownloaded += result.downloaded;
+        totalSkipped += result.skipped;
+        totalS3Uploaded += result.s3Uploaded;
+        allCreatedCallIds.push(...result.createdCallIds);
+        allErrors.push(...result.errors);
       }
-
-      const { enabled, host, user, password } =
-        await settingsService.getMegafonFtpSettings(defaultWs.id);
-
-      if (!enabled) {
-        return {
-          skipped: true,
-          reason: "Интеграция Megafon FTP выключена",
-        };
-      }
-
-      if (!host || !user || !password) {
-        return {
-          skipped: true,
-          reason: "MEGAFON_FTP_* не настроены",
-        };
-      }
-
-      const result = await step.run("sync-ftp", async () => {
-        return syncMegafonFtp({ host, user, password });
-      });
 
       // Запускаем транскрибацию для каждого нового звонка с аудио
-      if (result.createdCallIds.length > 0) {
+      if (allCreatedCallIds.length > 0) {
         await step.sendEvent(
           "trigger-transcriptions",
-          result.createdCallIds.map((callId) => ({
+          allCreatedCallIds.map((callId) => ({
             name: "call/transcribe.requested",
             data: { callId },
           })),
@@ -56,12 +61,13 @@ export const megafonSyncFn = inngest.createFunction(
       }
 
       return {
-        downloaded: result.downloaded,
-        skipped: result.skipped,
-        s3Uploaded: result.s3Uploaded,
-        transcriptionQueued: result.createdCallIds.length,
-        errors: result.errors,
-        errorsCount: result.errors.length,
+        workspacesProcessed: integrations.length,
+        downloaded: totalDownloaded,
+        skipped: totalSkipped,
+        s3Uploaded: totalS3Uploaded,
+        transcriptionQueued: allCreatedCallIds.length,
+        errors: allErrors,
+        errorsCount: allErrors.length,
       };
     } catch (error) {
       throw new Error(

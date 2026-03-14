@@ -10,7 +10,48 @@ import type {
   IntegrationType,
 } from "../schema/workspace-integrations";
 
+export type ActiveMegafonFtpIntegration = {
+  workspaceId: string;
+  host: string;
+  user: string;
+  password: string;
+};
+
 export const workspaceIntegrationsRepository = {
+  /** Список активных интеграций Megafon FTP (enabled + валидный config) */
+  async listActiveMegafonFtp(): Promise<ActiveMegafonFtpIntegration[]> {
+    const rows = await db
+      .select({
+        workspaceId: schema.workspaceIntegrations.workspaceId,
+        config: schema.workspaceIntegrations.config,
+      })
+      .from(schema.workspaceIntegrations)
+      .where(
+        and(
+          eq(schema.workspaceIntegrations.integrationType, "megafon_ftp"),
+          eq(schema.workspaceIntegrations.enabled, true),
+        ),
+      );
+
+    const result: ActiveMegafonFtpIntegration[] = [];
+    for (const row of rows) {
+      const cfg = row.config as {
+        host?: string;
+        user?: string;
+        password?: string;
+      };
+      if (cfg?.host && cfg?.user && cfg?.password) {
+        result.push({
+          workspaceId: row.workspaceId,
+          host: cfg.host,
+          user: cfg.user,
+          password: cfg.password,
+        });
+      }
+    }
+    return result;
+  },
+
   async getByWorkspaceAndType(
     workspaceId: string,
     integrationType: IntegrationType,

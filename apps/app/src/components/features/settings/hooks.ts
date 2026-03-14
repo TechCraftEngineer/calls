@@ -35,7 +35,10 @@ export function useSettings() {
       }
       setCurrentUser(user);
 
-      const promptsList = await api.settings.getPrompts();
+      const [promptsList, integrations] = await Promise.all([
+        api.settings.getPrompts(),
+        api.settings.getIntegrations(),
+      ]);
 
       const promptsArr: Prompt[] = (
         Array.isArray(promptsList) ? promptsList : []
@@ -44,6 +47,46 @@ export function useSettings() {
       promptsArr.forEach((p: Prompt) => {
         promptsMap[p.key] = p;
       });
+
+      // Добавляем интеграции (Megafon FTP, Telegram, MAX Bot)
+      const mf = integrations.megafon_ftp;
+      promptsMap.megafon_ftp_enabled = {
+        key: "megafon_ftp_enabled",
+        value: mf.enabled ? "true" : "false",
+        description: "Megafon FTP включён",
+        updated_at: undefined,
+      };
+      promptsMap.megafon_ftp_host = {
+        key: "megafon_ftp_host",
+        value: mf.host ?? "",
+        description: "Megafon FTP host",
+        updated_at: undefined,
+      };
+      promptsMap.megafon_ftp_user = {
+        key: "megafon_ftp_user",
+        value: mf.user ?? "",
+        description: "Megafon FTP user",
+        updated_at: undefined,
+      };
+      promptsMap.megafon_ftp_password = {
+        key: "megafon_ftp_password",
+        value: mf.password ?? "",
+        description: "Megafon FTP password",
+        updated_at: undefined,
+      };
+      promptsMap.telegram_bot_token = {
+        key: "telegram_bot_token",
+        value: integrations.telegram_bot_token ?? "",
+        description: "Telegram Bot Token",
+        updated_at: undefined,
+      };
+      promptsMap.max_bot_token = {
+        key: "max_bot_token",
+        value: integrations.max_bot_token ?? "",
+        description: "MAX Bot Token",
+        updated_at: undefined,
+      };
+
       [...Object.keys(PROMPT_KEYS), ...Object.keys(INTEGRATION_KEYS)].forEach(
         (key) => {
           if (!promptsMap[key]) {
@@ -81,13 +124,8 @@ export function useSettings() {
         prompts: {} as Record<string, { value: string; description: string }>,
       };
 
-      // Добавляем промпты и интеграции, кроме Megafon FTP (у него своя кнопка)
-      const keysWithoutMegafon = [
-        ...Object.keys(PROMPT_KEYS),
-        "telegram_bot_token",
-        "max_bot_token",
-      ];
-      keysWithoutMegafon.forEach((key) => {
+      // Промпты — только PROMPT_KEYS
+      Object.keys(PROMPT_KEYS).forEach((key) => {
         const prompt = state.prompts[key];
         if (prompt) {
           (
@@ -102,7 +140,13 @@ export function useSettings() {
         }
       });
 
-      await api.settings.updatePrompts(updates);
+      await Promise.all([
+        api.settings.updatePrompts(updates),
+        api.settings.updateIntegrations({
+          telegram_bot_token: state.prompts.telegram_bot_token?.value ?? null,
+          max_bot_token: state.prompts.max_bot_token?.value ?? null,
+        }),
+      ]);
       toast.success("Настройки сохранены");
       await loadSettings();
     } catch (error: unknown) {
@@ -133,11 +177,11 @@ export function useSettings() {
         }
       }
 
-      await api.settings.updatePrompts({
-        megafon_ftp_enabled: enabled,
-        megafon_ftp_host: host || null,
-        megafon_ftp_user: user || null,
-        megafon_ftp_password: password || null,
+      await api.settings.updateMegafonFtp({
+        enabled,
+        host,
+        user,
+        password,
       });
       toast.success("Параметры подключения Megafon FTP сохранены");
       await loadSettings();
