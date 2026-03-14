@@ -8,6 +8,7 @@ import type { account, session, user, verification } from "./auth";
 import type { callEvaluations, calls, transcripts } from "./calls";
 import type { activityLog, prompts } from "./system";
 import type { userPreferences } from "./user-preferences";
+import type { workspaceIntegrations } from "./workspace-integrations";
 import type { workspaceMembers, workspaces } from "./workspaces";
 
 export type { File, NewFile } from "./files";
@@ -34,6 +35,9 @@ export type NewPrompt = typeof prompts.$inferInsert;
 
 export type ActivityLog = typeof activityLog.$inferSelect;
 export type NewActivityLog = typeof activityLog.$inferInsert;
+
+export type WorkspaceIntegration = typeof workspaceIntegrations.$inferSelect;
+export type NewWorkspaceIntegration = typeof workspaceIntegrations.$inferInsert;
 
 // Workspace domain types
 export type Workspace = typeof workspaces.$inferSelect;

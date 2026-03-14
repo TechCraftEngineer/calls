@@ -9,6 +9,7 @@ export const PROMPT_KEYS = {
 } as const;
 
 export const INTEGRATION_KEYS = {
+  megafon_ftp_enabled: "Включено",
   megafon_ftp_host: "Host",
   megafon_ftp_user: "User",
   megafon_ftp_password: "Password",

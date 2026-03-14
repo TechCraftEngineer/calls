@@ -14,6 +14,7 @@ export default function SettingsIntegrationsPage() {
     handleSaveMegafonFtp,
     handleTestMegafonFtp,
     updatePrompt,
+    setMegafonFtpEnabled,
   } = useSettings();
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function SettingsIntegrationsPage() {
         <MegafonFtpSection
           prompts={state.prompts}
           onPromptChange={updatePrompt}
+          onEnabledChange={setMegafonFtpEnabled}
           onSave={handleSaveMegafonFtp}
           onTest={handleTestMegafonFtp}
           saving={state.megafonFtpSaving}

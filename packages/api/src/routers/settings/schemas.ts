@@ -40,6 +40,7 @@ export const settingsUpdateSchema = z
     enable_manager_recommendations: z.boolean().optional(),
     telegram_bot_token: z.string().optional().nullable(),
     max_bot_token: z.string().optional().nullable(),
+    megafon_ftp_enabled: z.boolean().optional(),
     megafon_ftp_host: z.string().optional().nullable(),
     megafon_ftp_user: z.string().optional().nullable(),
     megafon_ftp_password: z.string().optional().nullable(),

@@ -7,6 +7,7 @@ import { filesRepository } from "../repositories/files.repository";
 import { promptsRepository } from "../repositories/prompts.repository";
 import { systemRepository } from "../repositories/system.repository";
 import { usersRepository } from "../repositories/users.repository";
+import { workspaceIntegrationsRepository } from "../repositories/workspace-integrations.repository";
 import { workspacesRepository } from "../repositories/workspaces.repository";
 import { CallsService } from "./calls.service";
 import { FilesService } from "./files.service";
@@ -27,6 +28,7 @@ export const promptsService = new PromptsService(
 export const settingsService = new SettingsService(
   promptsRepository,
   systemRepository,
+  workspaceIntegrationsRepository,
 );
 // Export repositories for direct access if needed
 export {

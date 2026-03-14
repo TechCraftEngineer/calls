@@ -23,8 +23,15 @@ export const megafonSyncFn = inngest.createFunction(
         );
       }
 
-      const { host, user, password } =
+      const { enabled, host, user, password } =
         await settingsService.getMegafonFtpSettings(defaultWs.id);
+
+      if (!enabled) {
+        return {
+          skipped: true,
+          reason: "Интеграция Megafon FTP выключена",
+        };
+      }
 
       if (!host || !user || !password) {
         return {

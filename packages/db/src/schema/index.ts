@@ -57,14 +57,15 @@ export type {
   NewTranscript,
   NewUserPreferences,
   NewWorkspace,
+  NewWorkspaceIntegration,
   NewWorkspaceMember,
   Prompt,
   Transcript,
   UserPreferences,
   Workspace,
+  WorkspaceIntegration,
   WorkspaceMember,
 } from "./types";
-
 // Export deprecated user settings (for migration)
 export {
   type NewUserFilterSettings,
@@ -97,6 +98,13 @@ export {
   type UserWorkspaceSettings,
   userWorkspaceSettings,
 } from "./user-workspace-settings";
+export {
+  type FtpIntegrationConfig,
+  INTEGRATION_TYPES,
+  type IntegrationConfig,
+  type IntegrationType,
+  workspaceIntegrations,
+} from "./workspace-integrations";
 export {
   workspaceMemberRole,
   workspaceMembers,

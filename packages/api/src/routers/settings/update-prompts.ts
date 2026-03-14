@@ -50,37 +50,37 @@ export const updatePrompts = workspaceAdminProcedure
       );
     }
     if (
+      input.megafon_ftp_enabled !== undefined ||
       input.megafon_ftp_host !== undefined ||
       input.megafon_ftp_user !== undefined ||
       input.megafon_ftp_password !== undefined
     ) {
-      if (
-        input.megafon_ftp_host &&
-        input.megafon_ftp_user &&
-        input.megafon_ftp_password
-      ) {
+      const current = await settingsService.getMegafonFtpSettings(workspaceId);
+      const enabled = input.megafon_ftp_enabled ?? current.enabled;
+      const host = input.megafon_ftp_host ?? current.host ?? "";
+      const user = input.megafon_ftp_user ?? current.user ?? "";
+      const password = input.megafon_ftp_password ?? current.password ?? "";
+
+      if (host && user && password) {
         try {
-          ftpCredentialsSchema.parse({
-            host: input.megafon_ftp_host,
-            user: input.megafon_ftp_user,
-            password: input.megafon_ftp_password,
-          });
+          ftpCredentialsSchema.parse({ host, user, password });
         } catch (error) {
           throw new ORPCError("BAD_REQUEST", {
             message: `Ошибка валидации FTP: ${(error as Error).message}`,
           });
         }
-
-        const username =
-          (context.user as Record<string, unknown>)?.username ?? "system";
-        await settingsService.updateMegafonFtpSettings(
-          input.megafon_ftp_host,
-          input.megafon_ftp_user,
-          input.megafon_ftp_password,
-          workspaceId,
-          String(username),
-        );
       }
+
+      const username =
+        (context.user as Record<string, unknown>)?.username ?? "system";
+      await settingsService.updateMegafonFtpSettings(
+        enabled,
+        host,
+        user,
+        password,
+        workspaceId,
+        String(username),
+      );
     }
     if (input.prompts) {
       for (const key of PROMPT_KEYS) {

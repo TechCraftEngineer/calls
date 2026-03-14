@@ -72,6 +72,7 @@ export type {
   UserWorkspaceSettings,
   Verification,
   Workspace,
+  WorkspaceIntegration,
   WorkspaceMember,
 } from "./schema";
 export {
@@ -100,6 +101,7 @@ export {
   userReportSettings,
   userWorkspaceSettings,
   verification,
+  workspaceIntegrations,
   workspaceMemberRole,
   workspaceMembers,
   workspaces,

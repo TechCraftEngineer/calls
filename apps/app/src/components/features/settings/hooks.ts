@@ -120,20 +120,24 @@ export function useSettings() {
   const handleSaveMegafonFtp = async () => {
     try {
       setState((prev) => ({ ...prev, megafonFtpSaving: true }));
+      const enabled = state.prompts.megafon_ftp_enabled?.value === "true";
       const host = state.prompts.megafon_ftp_host?.value ?? "";
       const user = state.prompts.megafon_ftp_user?.value ?? "";
       const password = state.prompts.megafon_ftp_password?.value ?? "";
 
-      const ftpValidation = validateFtpCredentials(host, user, password);
-      if (!ftpValidation.isValid) {
-        toast.error(ftpValidation.errors.join(". "));
-        return;
+      if (host || user || password) {
+        const ftpValidation = validateFtpCredentials(host, user, password);
+        if (!ftpValidation.isValid) {
+          toast.error(ftpValidation.errors.join(". "));
+          return;
+        }
       }
 
       await api.settings.updatePrompts({
-        megafon_ftp_host: host,
-        megafon_ftp_user: user,
-        megafon_ftp_password: password,
+        megafon_ftp_enabled: enabled,
+        megafon_ftp_host: host || null,
+        megafon_ftp_user: user || null,
+        megafon_ftp_password: password || null,
       });
       toast.success("Параметры подключения Megafon FTP сохранены");
       await loadSettings();
@@ -265,6 +269,20 @@ export function useSettings() {
       }));
     };
 
+  const setMegafonFtpEnabled = (enabled: boolean) => {
+    setState((prev) => ({
+      ...prev,
+      prompts: {
+        ...prev.prompts,
+        megafon_ftp_enabled: {
+          ...prev.prompts.megafon_ftp_enabled,
+          key: "megafon_ftp_enabled",
+          value: enabled ? "true" : "false",
+        },
+      },
+    }));
+  };
+
   return {
     currentUser,
     state,
@@ -275,5 +293,6 @@ export function useSettings() {
     handleBackup,
     handleSendTest,
     updatePrompt,
+    setMegafonFtpEnabled,
   };
 }

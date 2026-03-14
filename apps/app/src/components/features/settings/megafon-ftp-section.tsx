@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Checkbox,
   Input,
   Label,
   PasswordInput,
@@ -19,6 +20,7 @@ interface MegafonFtpSectionProps {
     key: string,
     field: "value" | "description",
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onEnabledChange: (enabled: boolean) => void;
   onSave: () => Promise<void>;
   onTest: () => Promise<void>;
   saving: boolean;
@@ -29,12 +31,14 @@ interface MegafonFtpSectionProps {
 export default function MegafonFtpSection({
   prompts,
   onPromptChange,
+  onEnabledChange,
   onSave,
   onTest,
   saving,
   testing,
   testMessage,
 }: MegafonFtpSectionProps) {
+  const enabled = prompts.megafon_ftp_enabled?.value === "true";
   const host = prompts.megafon_ftp_host?.value ?? "";
   const user = prompts.megafon_ftp_user?.value ?? "";
   const password = prompts.megafon_ftp_password?.value ?? "";
@@ -43,16 +47,34 @@ export default function MegafonFtpSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <span className="flex size-8 items-center justify-center rounded-md bg-primary/10">
-            📁
-          </span>
-          Megafon FTP (загрузка записей с PBX)
-        </CardTitle>
-        <CardDescription>
-          Подключение к FTP-серверу Megafon PBX для автоматической загрузки
-          записей звонков
-        </CardDescription>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <span className="flex size-8 items-center justify-center rounded-md bg-primary/10">
+                📁
+              </span>
+              Megafon FTP (загрузка записей с PBX)
+            </CardTitle>
+            <CardDescription className="mt-1">
+              Подключение к FTP-серверу Megafon PBX для автоматической загрузки
+              записей звонков
+            </CardDescription>
+          </div>
+          <label
+            htmlFor="megafon-ftp-enabled"
+            className="flex cursor-pointer items-center gap-3 rounded-lg border bg-muted/50 px-4 py-3 transition-colors hover:bg-muted has-focus-visible:ring-2 has-focus-visible:ring-ring"
+          >
+            <Checkbox
+              id="megafon-ftp-enabled"
+              checked={enabled}
+              onCheckedChange={(checked) => onEnabledChange(checked === true)}
+              className="size-5"
+            />
+            <span className="text-sm font-semibold">
+              {enabled ? "Интеграция включена" : "Интеграция выключена"}
+            </span>
+          </label>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-3">

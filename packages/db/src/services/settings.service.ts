@@ -5,11 +5,15 @@
 import { validateMegafonSettings } from "../lib/validation";
 import type { PromptsRepository } from "../repositories/prompts.repository";
 import type { SystemRepository } from "../repositories/system.repository";
+import type { WorkspaceIntegrationsRepository } from "../repositories/workspace-integrations.repository";
+
+const MEGAFON_FTP = "megafon_ftp" as const;
 
 export class SettingsService {
   constructor(
     private promptsRepository: PromptsRepository,
     private systemRepository: SystemRepository,
+    private workspaceIntegrationsRepository: WorkspaceIntegrationsRepository,
   ) {}
 
   async getSetting(key: string, workspaceId: string): Promise<string | null> {
@@ -17,28 +21,55 @@ export class SettingsService {
   }
 
   async getMegafonFtpSettings(workspaceId: string): Promise<{
+    enabled: boolean;
     host: string | null;
     user: string | null;
     password: string | null;
   }> {
-    const [host, user, password] = await Promise.all([
-      this.getSetting("megafon_ftp_host", workspaceId),
-      this.getSetting("megafon_ftp_user", workspaceId),
-      this.getSetting("megafon_ftp_password", workspaceId),
-    ]);
+    const row =
+      await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
+        workspaceId,
+        MEGAFON_FTP,
+      );
 
-    // Validate settings if all are present
+    if (!row) {
+      return { enabled: false, host: null, user: null, password: null };
+    }
+
+    const config = row.config as {
+      host?: string;
+      user?: string;
+      password?: string;
+    };
+    const host = config?.host ?? null;
+    const user = config?.user ?? null;
+    const password = config?.password ?? null;
+
     if (host && user && password) {
       try {
         const validated = validateMegafonSettings({ host, user, password });
-        return validated;
+        return {
+          enabled: row.enabled,
+          host: validated.host,
+          user: validated.user,
+          password: validated.password,
+        };
       } catch {
-        // If validation fails, return null values to indicate misconfiguration
-        return { host: null, user: null, password: null };
+        return {
+          enabled: row.enabled,
+          host: null,
+          user: null,
+          password: null,
+        };
       }
     }
 
-    return { host, user, password };
+    return {
+      enabled: row.enabled,
+      host,
+      user,
+      password,
+    };
   }
 
   async updateSetting(
@@ -68,36 +99,52 @@ export class SettingsService {
   }
 
   async updateMegafonFtpSettings(
+    enabled: boolean,
     host: string,
     user: string,
     password: string,
     workspaceId: string,
     username: string = "system",
   ): Promise<boolean> {
-    const results = await Promise.all([
-      this.updateSetting(
-        "megafon_ftp_host",
-        host,
-        "Megafon FTP host",
-        workspaceId,
-        username,
-      ),
-      this.updateSetting(
-        "megafon_ftp_user",
-        user,
-        "Megafon FTP user",
-        workspaceId,
-        username,
-      ),
-      this.updateSetting(
-        "megafon_ftp_password",
-        password,
-        "Megafon FTP password",
-        workspaceId,
-        username,
-      ),
-    ]);
+    const result = await this.workspaceIntegrationsRepository.upsert(
+      workspaceId,
+      MEGAFON_FTP,
+      enabled,
+      { host, user, password },
+    );
 
-    return results.every(Boolean);
+    if (result) {
+      await this.systemRepository.addActivityLog(
+        "INFO",
+        `Megafon FTP ${enabled ? "включён" : "выключен"}, настройки обновлены`,
+        username,
+        workspaceId,
+      );
+    }
+
+    return result;
+  }
+
+  async setMegafonFtpEnabled(
+    workspaceId: string,
+    enabled: boolean,
+    username: string = "system",
+  ): Promise<boolean> {
+    const result = await this.workspaceIntegrationsRepository.setEnabled(
+      workspaceId,
+      MEGAFON_FTP,
+      enabled,
+    );
+
+    if (result) {
+      await this.systemRepository.addActivityLog(
+        "INFO",
+        `Megafon FTP ${enabled ? "включён" : "выключен"}`,
+        username,
+        workspaceId,
+      );
+    }
+
+    return result;
   }
 }
