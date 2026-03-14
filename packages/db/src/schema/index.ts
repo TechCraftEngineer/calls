@@ -41,7 +41,27 @@ export type {
   Workspace,
   WorkspaceMember,
 } from "./types";
+export {
+  type NewUserFilterSettings,
+  type UserFilterSettings,
+  userFilterSettings,
+} from "./user-filter-settings";
+export {
+  type NewUserKpiSettings,
+  type UserKpiSettings,
+  userKpiSettings,
+} from "./user-kpi-settings";
+export {
+  type NewUserNotificationSettings,
+  type UserNotificationSettings,
+  userNotificationSettings,
+} from "./user-notification-settings";
 export { userPreferences } from "./user-preferences";
+export {
+  type NewUserReportSettings,
+  type UserReportSettings,
+  userReportSettings,
+} from "./user-report-settings";
 export {
   workspaceMemberRole,
   workspaceMembers,

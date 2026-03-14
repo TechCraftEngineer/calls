@@ -1,9 +1,9 @@
 /**
  * Users repository - handles all database operations for users
- * Now using Better Auth schema
+ * Now using Better Auth schema with proper soft delete and UUID
  */
 
-import { randomBytes } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { desc, eq } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
@@ -19,12 +19,12 @@ export const usersRepository = {
     return result[0] ?? null;
   },
 
-  async softDelete(_id: string): Promise<boolean> {
-    // Better Auth doesn't have is_active field, so we just return true
-    console.warn(
-      "[UsersRepository] softDelete called but Better Auth doesn't support soft delete",
-    );
-    return true;
+  async softDelete(id: string): Promise<boolean> {
+    const result = await db
+      .update(schema.user)
+      .set({ deletedAt: new Date() })
+      .where(eq(schema.user.id, id));
+    return (result.rowCount ?? 0) > 0;
   },
 
   async findByUsername(username: string): Promise<schema.User | null> {
@@ -35,22 +35,7 @@ export const usersRepository = {
       .limit(1);
 
     const user = result[0] ?? null;
-    if (user && !user.givenName && user.name) {
-      const parts = user.name.split(/\s+/, 2);
-      user.givenName = parts[0] ?? "";
-      user.familyName = parts[1] ?? "";
-    }
-    return user;
-  },
-
-  async findWithAllData(username: string): Promise<schema.User | null> {
-    const result = await db
-      .select()
-      .from(schema.user)
-      .where(eq(schema.user.username, username))
-      .limit(1);
-
-    const user = result[0] ?? null;
+    if (user && user.deletedAt) return null;
     if (user && !user.givenName && user.name) {
       const parts = user.name.split(/\s+/, 2);
       user.givenName = parts[0] ?? "";
@@ -66,14 +51,16 @@ export const usersRepository = {
         .from(schema.user)
         .orderBy(desc(schema.user.createdAt));
 
-      return results.map((user) => {
-        if (!user.givenName && user.name) {
-          const parts = user.name.split(/\s+/, 2);
-          user.givenName = parts[0] ?? "";
-          user.familyName = parts[1] ?? "";
-        }
-        return user;
-      });
+      return results
+        .filter((user) => !user.deletedAt)
+        .map((user) => {
+          if (!user.givenName && user.name) {
+            const parts = user.name.split(/\s+/, 2);
+            user.givenName = parts[0] ?? "";
+            user.familyName = parts[1] ?? "";
+          }
+          return user;
+        });
     } catch (error) {
       console.error("[UsersRepository] Error in findAllActive:", {
         error: error instanceof Error ? error.message : String(error),
@@ -83,17 +70,15 @@ export const usersRepository = {
   },
 
   async create(data: CreateUserData): Promise<string> {
-    const { hashSync } = await import("bcryptjs");
-    const _passwordHash = hashSync(data.password, 10);
     const fullName = data.familyName
       ? `${data.givenName} ${data.familyName}`.trim()
       : data.givenName;
-    const userId = randomBytes(16).toString("hex");
+    const userId = randomUUID();
 
     await db.insert(schema.user).values({
       id: userId,
       name: fullName,
-      email: data.username, // Using username as email for Better Auth
+      email: data.username,
       username: data.username,
       givenName: data.givenName,
       familyName: data.familyName ?? "",
@@ -145,10 +130,7 @@ export const usersRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
-  async updateEmail(
-    userId: string,
-    email: string | null,
-  ): Promise<boolean> {
+  async updateEmail(userId: string, email: string | null): Promise<boolean> {
     const result = await db
       .update(schema.user)
       .set({ email: email || undefined })
@@ -172,200 +154,6 @@ export const usersRepository = {
       .update(schema.user)
       .set({
         telegramChatId: null,
-      })
-      .where(eq(schema.user.id, userId));
-
-    return (result.rowCount ?? 0) > 0;
-  },
-
-  async updateReportAndKpiSettings(
-    userId: string,
-    data: {
-      filterExcludeAnsweringMachine?: boolean;
-      filterMinDuration?: number;
-      filterMinReplicas?: number;
-      telegramDailyReport?: boolean;
-      telegramManagerReport?: boolean;
-      telegramWeeklyReport?: boolean;
-      telegramMonthlyReport?: boolean;
-      telegramSkipWeekends?: boolean;
-      maxDailyReport?: boolean;
-      maxManagerReport?: boolean;
-      emailDailyReport?: boolean;
-      emailWeeklyReport?: boolean;
-      emailMonthlyReport?: boolean;
-      reportIncludeCallSummaries?: boolean;
-      reportDetailed?: boolean;
-      reportIncludeAvgValue?: boolean;
-      reportIncludeAvgRating?: boolean;
-      reportManagedUserIds?: string | null;
-      kpiBaseSalary?: number;
-      kpiTargetBonus?: number;
-      kpiTargetTalkTimeMinutes?: number;
-    },
-  ): Promise<boolean> {
-    const updateData: Record<string, unknown> = {};
-    
-    if (data.filterExcludeAnsweringMachine !== undefined) {
-      updateData.filterExcludeAnsweringMachine = data.filterExcludeAnsweringMachine;
-    }
-    if (data.filterMinDuration !== undefined) {
-      updateData.filterMinDuration = data.filterMinDuration;
-    }
-    if (data.filterMinReplicas !== undefined) {
-      updateData.filterMinReplicas = data.filterMinReplicas;
-    }
-    if (data.telegramDailyReport !== undefined) {
-      updateData.telegramDailyReport = data.telegramDailyReport;
-    }
-    if (data.telegramManagerReport !== undefined) {
-      updateData.telegramManagerReport = data.telegramManagerReport;
-    }
-    if (data.telegramWeeklyReport !== undefined) {
-      updateData.telegramWeeklyReport = data.telegramWeeklyReport;
-    }
-    if (data.telegramMonthlyReport !== undefined) {
-      updateData.telegramMonthlyReport = data.telegramMonthlyReport;
-    }
-    if (data.telegramSkipWeekends !== undefined) {
-      updateData.telegramSkipWeekends = data.telegramSkipWeekends;
-    }
-    if (data.maxDailyReport !== undefined) {
-      updateData.maxDailyReport = data.maxDailyReport;
-    }
-    if (data.maxManagerReport !== undefined) {
-      updateData.maxManagerReport = data.maxManagerReport;
-    }
-    if (data.emailDailyReport !== undefined) {
-      updateData.emailDailyReport = data.emailDailyReport;
-    }
-    if (data.emailWeeklyReport !== undefined) {
-      updateData.emailWeeklyReport = data.emailWeeklyReport;
-    }
-    if (data.emailMonthlyReport !== undefined) {
-      updateData.emailMonthlyReport = data.emailMonthlyReport;
-    }
-    if (data.reportIncludeCallSummaries !== undefined) {
-      updateData.reportIncludeCallSummaries = data.reportIncludeCallSummaries;
-    }
-    if (data.reportDetailed !== undefined) {
-      updateData.reportDetailed = data.reportDetailed;
-    }
-    if (data.reportIncludeAvgValue !== undefined) {
-      updateData.reportIncludeAvgValue = data.reportIncludeAvgValue;
-    }
-    if (data.reportIncludeAvgRating !== undefined) {
-      updateData.reportIncludeAvgRating = data.reportIncludeAvgRating;
-    }
-    if (data.reportManagedUserIds !== undefined) {
-      updateData.reportManagedUserIds = data.reportManagedUserIds;
-    }
-    if (data.kpiBaseSalary !== undefined) {
-      updateData.kpiBaseSalary = data.kpiBaseSalary;
-    }
-    if (data.kpiTargetBonus !== undefined) {
-      updateData.kpiTargetBonus = data.kpiTargetBonus;
-    }
-    if (data.kpiTargetTalkTimeMinutes !== undefined) {
-      updateData.kpiTargetTalkTimeMinutes = data.kpiTargetTalkTimeMinutes;
-    }
-
-    if (Object.keys(updateData).length === 0) {
-      return true; // Ничего не обновляем
-    }
-
-    const result = await db
-      .update(schema.user)
-      .set(updateData)
-      .where(eq(schema.user.id, userId));
-
-    return (result.rowCount ?? 0) > 0;
-  },
-
-  async updateFilters(
-    userId: string,
-    filterExcludeAnsweringMachine: boolean,
-    filterMinDuration: number,
-    filterMinReplicas: number,
-  ): Promise<boolean> {
-    const result = await db
-      .update(schema.user)
-      .set({
-        filterExcludeAnsweringMachine,
-        filterMinDuration,
-        filterMinReplicas,
-      })
-      .where(eq(schema.user.id, userId));
-
-    return (result.rowCount ?? 0) > 0;
-  },
-
-  async updateTelegramSettings(
-    userId: string,
-    telegramDailyReport: boolean,
-    telegramManagerReport: boolean,
-  ): Promise<boolean> {
-    const result = await db
-      .update(schema.user)
-      .set({
-        telegramDailyReport,
-        telegramManagerReport,
-      })
-      .where(eq(schema.user.id, userId));
-
-    return (result.rowCount ?? 0) > 0;
-  },
-
-  async updatePassword(userId: string, newPassword: string): Promise<boolean> {
-    const { hashSync } = await import("bcryptjs");
-    const passwordHash = hashSync(newPassword, 10);
-    
-    const result = await db
-      .update(schema.user)
-      .set({
-        passwordHash,
-      })
-      .where(eq(schema.user.id, userId));
-
-    return (result.rowCount ?? 0) > 0;
-  },
-
-  async saveTelegramConnectToken(userId: string, token: string): Promise<boolean> {
-    const result = await db
-      .update(schema.user)
-      .set({
-        telegramConnectToken: token,
-      })
-      .where(eq(schema.user.id, userId));
-
-    return (result.rowCount ?? 0) > 0;
-  },
-
-  async findByTelegramConnectToken(token: string): Promise<schema.User | null> {
-    const result = await db
-      .select()
-      .from(schema.user)
-      .where(eq(schema.user.telegramConnectToken, token))
-      .limit(1);
-    return result[0] ?? null;
-  },
-
-  async saveMaxConnectToken(userId: string, token: string): Promise<boolean> {
-    const result = await db
-      .update(schema.user)
-      .set({
-        maxConnectToken: token,
-      })
-      .where(eq(schema.user.id, userId));
-
-    return (result.rowCount ?? 0) > 0;
-  },
-
-  async disconnectMax(userId: string): Promise<boolean> {
-    const result = await db
-      .update(schema.user)
-      .set({
-        maxChatId: null,
       })
       .where(eq(schema.user.id, userId));
 

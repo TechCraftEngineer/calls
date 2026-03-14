@@ -8,7 +8,7 @@ import * as schema from "@calls/db/schema";
 import { ResetPasswordEmail, sendEmail } from "@calls/emails";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { username } from "better-auth/plugins";
+import { admin, username } from "better-auth/plugins";
 
 const baseUrl =
   process.env.BACKEND_URL ?? process.env.APP_URL ?? "http://localhost:7000";
@@ -64,7 +64,12 @@ export const auth = betterAuth({
           },
         }
       : undefined,
-  plugins: [username()],
+  plugins: [
+    username(),
+    admin({
+      defaultRole: "user",
+    }),
+  ],
   user: {
     additionalFields: {
       givenName: { type: "string", required: false, fieldName: "given_name" },

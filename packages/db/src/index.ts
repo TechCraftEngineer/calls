@@ -1,17 +1,31 @@
-export { alias } from "drizzle-orm/pg-core";
-export * from "drizzle-orm/sql";
+/**
+ * Main entry point for the database package
+ * Exports all schemas, repositories, services, and types
+ */
+
+// Database client
 export { db } from "./client";
-export { db as dbEdge } from "./client.edge";
-export * from "./lib/workspace-utils";
-export * from "./schema";
+export { systemRepository } from "./repositories/system.repository";
 export {
-  callsService,
-  filesService,
-  promptsService,
-  settingsService,
-  systemRepository,
-  usersService,
-  workspacesService,
-} from "./services";
-export type { CallWithTranscript, GetCallsParams } from "./types/calls.types";
-export type { UserUpdateData } from "./types/users.types";
+  userFilterSettingsRepository,
+  userKpiSettingsRepository,
+  userNotificationSettingsRepository,
+  userReportSettingsRepository,
+} from "./repositories/user-settings.repository";
+// Repositories
+export { usersRepository } from "./repositories/users.repository";
+// Schemas and types
+export * from "./schema";
+
+// Services
+export { UsersService } from "./services/users.service";
+
+// Types
+export type {
+  CreateUserData,
+  UpdateUserData,
+  UserUpdateData,
+} from "./types/users.types";
+
+// Validators
+export { ValidationError } from "./validators/user.validators";

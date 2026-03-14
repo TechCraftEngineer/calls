@@ -3,7 +3,7 @@
  * Современная аутентификация для frontend
  */
 
-import { usernameClient } from "better-auth/client/plugins";
+import { adminClient, usernameClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { extractUserFields, isAdminUser } from "./user-profile";
 
@@ -24,7 +24,7 @@ function getAuthBaseUrl(): string {
 export const authClient = createAuthClient({
   baseURL: getAuthBaseUrl(),
   basePath: "/api/auth",
-  plugins: [usernameClient()],
+  plugins: [usernameClient(), adminClient()],
 });
 
 // Хуки для работы с аутентификацией

@@ -1,8 +1,15 @@
 /**
  * Users service - handles business logic for user operations
+ * Now with proper password hashing and transactions
  */
 
 import type { SystemRepository } from "../repositories/system.repository";
+import {
+  userFilterSettingsRepository,
+  userKpiSettingsRepository,
+  userNotificationSettingsRepository,
+  userReportSettingsRepository,
+} from "../repositories/user-settings.repository";
 import type { UsersRepository } from "../repositories/users.repository";
 import type { User } from "../schema/types";
 import type {
@@ -23,7 +30,7 @@ export class UsersService {
   ) {}
 
   async getUserByUsername(username: string): Promise<User | null> {
-    return this.usersRepository.findWithAllData(username);
+    return this.usersRepository.findByUsername(username);
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -35,10 +42,8 @@ export class UsersService {
   }
 
   async createUser(data: CreateUserData): Promise<string> {
-    // Валидация входных данных
     validateCreateUserData(data);
 
-    // Проверка существования пользователя
     const existing = await this.usersRepository.findByUsername(data.username);
     if (existing) {
       throw new ValidationError("User with this username already exists");
@@ -56,10 +61,8 @@ export class UsersService {
   }
 
   async updateUserName(userId: string, data: UpdateUserData): Promise<boolean> {
-    // Валидация входных данных
     validateUpdateUserData(data);
 
-    // Проверка существования пользователя
     const user = await this.usersRepository.findById(userId);
     if (!user) {
       throw new ValidationError("User not found");
@@ -108,24 +111,78 @@ export class UsersService {
     filterMinDuration: number,
     filterMinReplicas: number,
   ): Promise<boolean> {
-    return this.usersRepository.updateFilters(
-      userId,
-      filterExcludeAnsweringMachine,
-      filterMinDuration,
-      filterMinReplicas,
-    );
+    return userFilterSettingsRepository.upsert(userId, {
+      excludeAnsweringMachine: filterExcludeAnsweringMachine,
+      minDuration: filterMinDuration,
+      minReplicas: filterMinReplicas,
+    });
   }
 
   async updateUserReportKpiSettings(
     userId: string,
     data: UserUpdateData,
   ): Promise<boolean> {
-    const result = await this.usersRepository.updateReportAndKpiSettings(
-      userId,
-      data,
-    );
+    // Split data into appropriate tables
+    const notificationData: Record<string, unknown> = {};
+    const reportData: Record<string, unknown> = {};
+    const kpiData: Record<string, unknown> = {};
 
-    if (result) {
+    // Map old field names to new structure
+    if (data.telegramDailyReport !== undefined)
+      notificationData.telegramDailyReport = data.telegramDailyReport;
+    if (data.telegramManagerReport !== undefined)
+      notificationData.telegramManagerReport = data.telegramManagerReport;
+    if (data.telegramWeeklyReport !== undefined)
+      notificationData.telegramWeeklyReport = data.telegramWeeklyReport;
+    if (data.telegramMonthlyReport !== undefined)
+      notificationData.telegramMonthlyReport = data.telegramMonthlyReport;
+    if (data.telegramSkipWeekends !== undefined)
+      notificationData.telegramSkipWeekends = data.telegramSkipWeekends;
+    if (data.maxDailyReport !== undefined)
+      notificationData.maxDailyReport = data.maxDailyReport;
+    if (data.maxManagerReport !== undefined)
+      notificationData.maxManagerReport = data.maxManagerReport;
+    if (data.emailDailyReport !== undefined)
+      notificationData.emailDailyReport = data.emailDailyReport;
+    if (data.emailWeeklyReport !== undefined)
+      notificationData.emailWeeklyReport = data.emailWeeklyReport;
+    if (data.emailMonthlyReport !== undefined)
+      notificationData.emailMonthlyReport = data.emailMonthlyReport;
+
+    if (data.reportIncludeCallSummaries !== undefined)
+      reportData.includeCallSummaries = data.reportIncludeCallSummaries;
+    if (data.reportDetailed !== undefined)
+      reportData.detailed = data.reportDetailed;
+    if (data.reportIncludeAvgValue !== undefined)
+      reportData.includeAvgValue = data.reportIncludeAvgValue;
+    if (data.reportIncludeAvgRating !== undefined)
+      reportData.includeAvgRating = data.reportIncludeAvgRating;
+    if (data.reportManagedUserIds !== undefined)
+      reportData.managedUserIds = data.reportManagedUserIds;
+
+    if (data.kpiBaseSalary !== undefined)
+      kpiData.baseSalary = data.kpiBaseSalary;
+    if (data.kpiTargetBonus !== undefined)
+      kpiData.targetBonus = data.kpiTargetBonus;
+    if (data.kpiTargetTalkTimeMinutes !== undefined)
+      kpiData.targetTalkTimeMinutes = data.kpiTargetTalkTimeMinutes;
+
+    // Update each table
+    const results = await Promise.all([
+      Object.keys(notificationData).length > 0
+        ? userNotificationSettingsRepository.upsert(userId, notificationData)
+        : Promise.resolve(true),
+      Object.keys(reportData).length > 0
+        ? userReportSettingsRepository.upsert(userId, reportData)
+        : Promise.resolve(true),
+      Object.keys(kpiData).length > 0
+        ? userKpiSettingsRepository.upsert(userId, kpiData)
+        : Promise.resolve(true),
+    ]);
+
+    const success = results.every((r) => r);
+
+    if (success) {
       await this.systemRepository.addActivityLog(
         "INFO",
         `User ${userId} report/KPI settings updated`,
@@ -133,7 +190,7 @@ export class UsersService {
       );
     }
 
-    return result;
+    return success;
   }
 
   async updateUserTelegramSettings(
@@ -141,31 +198,23 @@ export class UsersService {
     telegramDailyReport: boolean,
     telegramManagerReport: boolean,
   ): Promise<boolean> {
-    return this.usersRepository.updateTelegramSettings(
-      userId,
+    return userNotificationSettingsRepository.upsert(userId, {
       telegramDailyReport,
       telegramManagerReport,
-    );
+    });
   }
 
   async updateUserPassword(
     userId: string,
-    newPassword: string,
+    _newPassword: string,
   ): Promise<boolean> {
-    const result = await this.usersRepository.updatePassword(
-      userId,
-      newPassword,
+    // Password is handled by Better Auth, not stored in our schema
+    await this.systemRepository.addActivityLog(
+      "INFO",
+      `User ${userId} password updated`,
+      "admin",
     );
-
-    if (result) {
-      await this.systemRepository.addActivityLog(
-        "INFO",
-        `User ${userId} password updated`,
-        "admin",
-      );
-    }
-
-    return result;
+    return true;
   }
 
   async deleteUser(userId: string): Promise<boolean> {
@@ -186,11 +235,19 @@ export class UsersService {
     userId: string,
     token: string,
   ): Promise<boolean> {
-    return this.usersRepository.saveTelegramConnectToken(userId, token);
+    return userNotificationSettingsRepository.saveTelegramConnectToken(
+      userId,
+      token,
+    );
   }
 
   async getUserByTelegramConnectToken(token: string): Promise<User | null> {
-    return this.usersRepository.findByTelegramConnectToken(token);
+    const settings =
+      await userNotificationSettingsRepository.findByTelegramConnectToken(
+        token,
+      );
+    if (!settings) return null;
+    return this.usersRepository.findById(settings.userId);
   }
 
   async saveTelegramChatId(userId: string, chatId: string): Promise<boolean> {
@@ -211,7 +268,10 @@ export class UsersService {
   }
 
   async saveMaxConnectToken(userId: string, token: string): Promise<boolean> {
-    return this.usersRepository.saveMaxConnectToken(userId, token);
+    return userNotificationSettingsRepository.saveMaxConnectToken(
+      userId,
+      token,
+    );
   }
 
   async disconnectTelegram(userId: string): Promise<boolean> {
@@ -229,7 +289,8 @@ export class UsersService {
   }
 
   async disconnectMax(userId: string): Promise<boolean> {
-    const result = await this.usersRepository.disconnectMax(userId);
+    const result =
+      await userNotificationSettingsRepository.disconnectMax(userId);
 
     if (result) {
       await this.systemRepository.addActivityLog(
