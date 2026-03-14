@@ -4,15 +4,20 @@ import { paths } from "@calls/config";
 import { Button } from "@calls/ui";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import AddUserModal from "@/components/features/users/add-user-modal";
+import ChangePasswordModal from "@/components/features/users/change-password-modal";
+import EditUserModal from "@/components/features/users/edit-user-modal";
+import type {
+  AddUserForm,
+  EditUserForm,
+  ManagedUser,
+  PasswordForm,
+} from "@/components/features/users/types";
+import UsersTable from "@/components/features/users/users-table";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
-import AddUserModal from "@/components/features/users/add-user-modal";
-import EditUserModal from "@/components/features/users/edit-user-modal";
-import ChangePasswordModal from "@/components/features/users/change-password-modal";
-import UsersTable from "@/components/features/users/users-table";
-import type { AddUserForm, EditUserForm, ManagedUser, PasswordForm } from "@/components/features/users/types";
 
 export default function UsersPage() {
   const router = useRouter();
@@ -45,8 +50,7 @@ export default function UsersPage() {
         "code" in error &&
         (error as { code?: string }).code === "FORBIDDEN"
       ) {
-        alert("Доступ запрещен.");
-        router.push(paths.dashboard.root);
+        router.push(paths.forbidden);
       }
     } finally {
       setLoading(false);
@@ -58,7 +62,8 @@ export default function UsersPage() {
   }, [loadUsers]);
 
   const handleDelete = async (userId: number, username: string) => {
-    if (!confirm(`Вы уверены, что хотите удалить пользователя ${username}?`)) return;
+    if (!confirm(`Вы уверены, что хотите удалить пользователя ${username}?`))
+      return;
     try {
       await api.users.delete({ user_id: userId });
       loadUsers();
@@ -139,7 +144,7 @@ export default function UsersPage() {
           </div>
           <Button
             onClick={() => setShowAddModal(true)}
-            className="bg-gradient-to-br from-[#FF6B35] to-[#F7931E] text-white border-none rounded-lg py-3 px-6 text-sm font-bold flex items-center gap-2 shadow-[0_2px_8px_rgba(255,107,53,0.3)]"
+            className="bg-linear-to-br from-[#FF6B35] to-[#F7931E] text-white border-none rounded-lg py-3 px-6 text-sm font-bold flex items-center gap-2 shadow-[0_2px_8px_rgba(255,107,53,0.3)]"
           >
             <span className="text-lg">+</span> Добавить пользователя
           </Button>

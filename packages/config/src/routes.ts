@@ -6,6 +6,7 @@ const ROOTS = {
   USERS: "/users",
   SETTINGS: "/settings",
   CALLS: "/calls",
+  FORBIDDEN: "/403",
 } as const;
 
 export const paths = {
@@ -43,4 +44,5 @@ export const paths = {
     root: ROOTS.CALLS,
     call: (id: number | string) => `${ROOTS.CALLS}/${id}`,
   },
+  forbidden: ROOTS.FORBIDDEN,
 } as const;

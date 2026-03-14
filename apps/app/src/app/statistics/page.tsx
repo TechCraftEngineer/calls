@@ -20,9 +20,9 @@ import {
 } from "@calls/ui";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
-import Header from "@/components/layout/header";
 import KpiTable from "@/components/features/calls/kpi-table";
 import ReportSettingsPanel from "@/components/features/settings/report-settings-panel";
+import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
@@ -102,8 +102,7 @@ function StatisticsPageContent() {
         "code" in error &&
         (error as { code?: string }).code === "FORBIDDEN"
       ) {
-        alert("Доступ запрещен. Только администратору.");
-        router.push(paths.dashboard.root);
+        router.push(paths.forbidden);
       }
     } finally {
       setLoading(false);
@@ -226,7 +225,7 @@ function StatisticsPageContent() {
                 </div>
                 <div className="flex gap-3">
                   <Button
-                    className="apply-btn bg-gradient-to-br from-[#FF6B35] to-[#F7931E] text-white border-none"
+                    className="apply-btn bg-linear-to-br from-[#FF6B35] to-[#F7931E] text-white border-none"
                     onClick={loadStats}
                   >
                     Применить

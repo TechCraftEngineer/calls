@@ -4,6 +4,7 @@
 
 import type { CallsRepository } from "../repositories/calls.repository";
 import type { SystemRepository } from "../repositories/system.repository";
+import type { Call, CallEvaluation, Transcript } from "../schema";
 import type {
   CallWithTranscript,
   CreateCallData,
@@ -17,7 +18,7 @@ export class CallsService {
     private systemRepository: SystemRepository,
   ) {}
 
-  async getCall(id: string): Promise<any | null> {
+  async getCall(id: string): Promise<Call | null> {
     return this.callsRepository.findById(id);
   }
 
@@ -38,7 +39,7 @@ export class CallsService {
   async getCallByFilename(
     filename: string,
     workspaceId?: string,
-  ): Promise<any | null> {
+  ): Promise<Call | null> {
     return this.callsRepository.findByFilename(filename, workspaceId);
   }
 
@@ -54,7 +55,7 @@ export class CallsService {
     return callId;
   }
 
-  async getTranscriptByCallId(callId: string): Promise<any | null> {
+  async getTranscriptByCallId(callId: string): Promise<Transcript | null> {
     return this.callsRepository.getTranscriptByCallId(callId);
   }
 
@@ -66,12 +67,13 @@ export class CallsService {
     sentiment?: string | null;
     confidence?: number | null;
     summary?: string | null;
+    callTopic?: string | null;
     metadata?: Record<string, unknown> | null;
   }): Promise<string> {
     return this.callsRepository.upsertTranscript(data);
   }
 
-  async getEvaluation(callId: string): Promise<any | null> {
+  async getEvaluation(callId: string): Promise<CallEvaluation | null> {
     return this.callsRepository.getEvaluation(callId);
   }
 
@@ -113,7 +115,7 @@ export class CallsService {
     dateFrom?: string;
     dateTo?: string;
     internalNumbers?: string[];
-  }): Promise<Record<string, any>> {
+  }): Promise<Record<string, unknown>> {
     return this.callsRepository.getEvaluationsStats(params);
   }
 }

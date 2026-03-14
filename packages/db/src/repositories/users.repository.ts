@@ -4,7 +4,7 @@
  */
 
 import { randomBytes } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 import type {
@@ -14,7 +14,7 @@ import type {
 } from "../types/users.types";
 
 export const usersRepository = {
-  async findById(id: string): Promise<any | null> {
+  async findById(id: string): Promise<schema.User | null> {
     const result = await db
       .select()
       .from(schema.user)
@@ -23,7 +23,7 @@ export const usersRepository = {
     return result[0] ?? null;
   },
 
-  async softDelete(id: string): Promise<boolean> {
+  async softDelete(_id: string): Promise<boolean> {
     // Better Auth doesn't have is_active field, so we just return true
     console.warn(
       "[UsersRepository] softDelete called but Better Auth doesn't support soft delete",
@@ -31,7 +31,7 @@ export const usersRepository = {
     return true;
   },
 
-  async findByUsername(username: string): Promise<any | null> {
+  async findByUsername(username: string): Promise<schema.User | null> {
     const result = await db
       .select()
       .from(schema.user)
@@ -47,7 +47,7 @@ export const usersRepository = {
     return user;
   },
 
-  async findWithAllData(username: string): Promise<any | null> {
+  async findWithAllData(username: string): Promise<schema.User | null> {
     const result = await db
       .select()
       .from(schema.user)
@@ -63,7 +63,7 @@ export const usersRepository = {
     return user;
   },
 
-  async findAllActive(): Promise<any[]> {
+  async findAllActive(): Promise<schema.User[]> {
     try {
       const results = await db
         .select()
@@ -151,10 +151,10 @@ export const usersRepository = {
 
   // Legacy methods for removed user settings tables - now handled by Better Auth
   async updateFilters(
-    userId: string,
-    filterExcludeAnsweringMachine: boolean,
-    filterMinDuration: number,
-    filterMinReplicas: number,
+    _userId: string,
+    _filterExcludeAnsweringMachine: boolean,
+    _filterMinDuration: number,
+    _filterMinReplicas: number,
   ): Promise<boolean> {
     // Settings are now stored in Better Auth metadata or separate system
     console.warn(
@@ -164,8 +164,8 @@ export const usersRepository = {
   },
 
   async updateReportAndKpiSettings(
-    userId: string,
-    data: UserUpdateData,
+    _userId: string,
+    _data: UserUpdateData,
   ): Promise<boolean> {
     // Settings are now stored in Better Auth metadata or separate system
     console.warn(
@@ -175,9 +175,9 @@ export const usersRepository = {
   },
 
   async updateTelegramSettings(
-    userId: string,
-    telegramDailyReport: boolean,
-    telegramManagerReport: boolean,
+    _userId: string,
+    _telegramDailyReport: boolean,
+    _telegramManagerReport: boolean,
   ): Promise<boolean> {
     // Telegram settings now stored in Better Auth metadata
     console.warn(
@@ -186,7 +186,10 @@ export const usersRepository = {
     return true;
   },
 
-  async updatePassword(userId: string, newPassword: string): Promise<boolean> {
+  async updatePassword(
+    _userId: string,
+    _newPassword: string,
+  ): Promise<boolean> {
     // Password handling now done by Better Auth
     console.warn(
       "[UsersRepository] updatePassword called but password handling moved to Better Auth",
@@ -194,7 +197,9 @@ export const usersRepository = {
     return true;
   },
 
-  async findByTelegramConnectToken(token: string): Promise<any | null> {
+  async findByTelegramConnectToken(
+    _token: string,
+  ): Promise<schema.User | null> {
     // Telegram integration now handled by Better Auth metadata
     console.warn(
       "[UsersRepository] findByTelegramConnectToken called but telegram integration moved to metadata",
@@ -203,8 +208,8 @@ export const usersRepository = {
   },
 
   async saveTelegramConnectToken(
-    userId: string,
-    token: string,
+    _userId: string,
+    _token: string,
   ): Promise<boolean> {
     // Telegram integration now handled by Better Auth metadata
     console.warn(
@@ -235,7 +240,7 @@ export const usersRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
-  async saveMaxConnectToken(userId: string, token: string): Promise<boolean> {
+  async saveMaxConnectToken(_userId: string, _token: string): Promise<boolean> {
     // MAX integration now handled by Better Auth metadata
     console.warn(
       "[UsersRepository] saveMaxConnectToken called but MAX integration moved to metadata",
@@ -243,7 +248,7 @@ export const usersRepository = {
     return true;
   },
 
-  async disconnectMax(userId: string): Promise<boolean> {
+  async disconnectMax(_userId: string): Promise<boolean> {
     // MAX integration now handled by Better Auth metadata
     console.warn(
       "[UsersRepository] disconnectMax called but MAX integration moved to metadata",

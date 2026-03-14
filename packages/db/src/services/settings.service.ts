@@ -11,19 +11,19 @@ export class SettingsService {
     private systemRepository: SystemRepository,
   ) {}
 
-  async getSetting(key: string): Promise<string | null> {
-    return this.promptsRepository.findByKeyWithDefault(key);
+  async getSetting(key: string, workspaceId: string): Promise<string | null> {
+    return this.promptsRepository.findByKeyWithDefault(key, workspaceId);
   }
 
-  async getMegafonFtpSettings(): Promise<{
+  async getMegafonFtpSettings(workspaceId: string): Promise<{
     host: string | null;
     user: string | null;
     password: string | null;
   }> {
     const [host, user, password] = await Promise.all([
-      this.getSetting("megafon_ftp_host"),
-      this.getSetting("megafon_ftp_user"),
-      this.getSetting("megafon_ftp_password"),
+      this.getSetting("megafon_ftp_host", workspaceId),
+      this.getSetting("megafon_ftp_user", workspaceId),
+      this.getSetting("megafon_ftp_password", workspaceId),
     ]);
 
     return { host, user, password };
@@ -32,15 +32,22 @@ export class SettingsService {
   async updateSetting(
     key: string,
     value: string,
-    description?: string | null,
+    description: string | null,
+    workspaceId: string,
   ): Promise<boolean> {
-    const result = await this.promptsRepository.upsert(key, value, description);
+    const result = await this.promptsRepository.upsert(
+      key,
+      value,
+      description,
+      workspaceId,
+    );
 
     if (result) {
       await this.systemRepository.addActivityLog(
         "INFO",
         `Setting ${key} updated`,
         "admin",
+        workspaceId,
       );
     }
 
@@ -51,14 +58,26 @@ export class SettingsService {
     host: string,
     user: string,
     password: string,
+    workspaceId: string,
   ): Promise<boolean> {
     const results = await Promise.all([
-      this.updateSetting("megafon_ftp_host", host, "Megafon FTP host"),
-      this.updateSetting("megafon_ftp_user", user, "Megafon FTP user"),
+      this.updateSetting(
+        "megafon_ftp_host",
+        host,
+        "Megafon FTP host",
+        workspaceId,
+      ),
+      this.updateSetting(
+        "megafon_ftp_user",
+        user,
+        "Megafon FTP user",
+        workspaceId,
+      ),
       this.updateSetting(
         "megafon_ftp_password",
         password,
         "Megafon FTP password",
+        workspaceId,
       ),
     ]);
 

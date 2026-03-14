@@ -35,8 +35,8 @@ export const authService = new AuthService(usersRepository);
 export {
   callsRepository,
   filesRepository,
-  usersRepository,
   promptsRepository,
   systemRepository,
+  usersRepository,
   workspacesRepository,
 };

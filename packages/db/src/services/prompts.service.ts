@@ -11,11 +11,19 @@ export class PromptsService {
     private systemRepository: SystemRepository,
   ) {}
 
-  async getPrompt(key: string, defaultValue?: string): Promise<string | null> {
-    return this.promptsRepository.findByKeyWithDefault(key, defaultValue);
+  async getPrompt(
+    key: string,
+    workspaceId: string,
+    defaultValue?: string,
+  ): Promise<string | null> {
+    return this.promptsRepository.findByKeyWithDefault(
+      key,
+      workspaceId,
+      defaultValue,
+    );
   }
 
-  async getAllPrompts(): Promise<
+  async getAllPrompts(workspaceId: string): Promise<
     {
       key: string;
       value: string;
@@ -23,21 +31,28 @@ export class PromptsService {
       updatedAt: Date | null;
     }[]
   > {
-    return this.promptsRepository.findAll();
+    return this.promptsRepository.findAll(workspaceId);
   }
 
   async updatePrompt(
     key: string,
     value: string,
-    description?: string | null,
+    description: string | null,
+    workspaceId: string,
   ): Promise<boolean> {
-    const result = await this.promptsRepository.upsert(key, value, description);
+    const result = await this.promptsRepository.upsert(
+      key,
+      value,
+      description,
+      workspaceId,
+    );
 
     if (result) {
       await this.systemRepository.addActivityLog(
         "INFO",
         `Prompt ${key} updated`,
         "admin",
+        workspaceId,
       );
     }
 

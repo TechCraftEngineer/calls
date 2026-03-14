@@ -5,6 +5,7 @@
 import { createLogger } from "../logger";
 import { transcribeWithAssemblyAi } from "./assemblyai";
 import { normalizeWithLlm } from "./normalize";
+import { summarizeWithLlm } from "./summarize";
 import type {
   AsrResult,
   AsrSource,
@@ -72,7 +73,10 @@ function selectBest(results: AsrResult[]): {
 
 export async function runTranscriptionPipeline(
   audioUrl: string,
-  options?: { skipNormalization?: boolean },
+  options?: {
+    skipNormalization?: boolean;
+    summaryPrompt?: string;
+  },
 ): Promise<PipelineResult> {
   const start = Date.now();
   logger.info("Запуск конвейера распознавания", {
@@ -115,7 +119,7 @@ export async function runTranscriptionPipeline(
     );
   }
 
-  const { text: rawText, source, raw } = selectBest(results);
+  const { text: rawText, source } = selectBest(results);
   const processingTimeMs = Date.now() - start;
 
   const metadata: TranscriptMetadata = {
@@ -124,15 +128,15 @@ export async function runTranscriptionPipeline(
     confidence: results[0]?.confidence,
     speakerCount: results[0]?.utterances?.length,
     asrAssemblyai:
-      assemblyaiResult != null
+      assemblyaiResult.status === "fulfilled" && assemblyaiResult.value
         ? {
-            confidence: assemblyaiResult.confidence,
-            hasUtterances: !!assemblyaiResult.utterances?.length,
+            confidence: assemblyaiResult.value.confidence,
+            hasUtterances: !!assemblyaiResult.value.utterances?.length,
           }
         : undefined,
     asrYandex:
-      yandexResult != null
-        ? { processingTimeMs: yandexResult.processingTimeMs }
+      yandexResult.status === "fulfilled" && yandexResult.value
+        ? { processingTimeMs: yandexResult.value.processingTimeMs }
         : undefined,
   };
 
@@ -141,16 +145,36 @@ export async function runTranscriptionPipeline(
     normalizedText = await normalizeWithLlm(rawText);
   }
 
+  let summary: string | undefined;
+  let sentiment: string | undefined;
+  let title: string | undefined;
+  let callTopic: string | undefined;
+
+  if (normalizedText.trim().length > 0) {
+    const analysis = await summarizeWithLlm(normalizedText, {
+      summaryPrompt: options?.summaryPrompt,
+    });
+    summary = analysis.summary;
+    sentiment = analysis.sentiment;
+    title = analysis.title;
+    callTopic = analysis.callTopic;
+  }
+
   logger.info("Конвейер завершён", {
     processingTimeMs,
     asrSource: source,
     rawLength: rawText.length,
     normalizedLength: normalizedText.length,
+    hasSummary: !!summary,
   });
 
   return {
     rawText,
     normalizedText,
     metadata,
+    summary,
+    sentiment,
+    title,
+    callTopic,
   };
 }

@@ -5,10 +5,12 @@ export const env = createEnv({
   server: {
     OPENAI_API_KEY: z.string().optional(),
     OPENROUTER_API_KEY: z.string().optional(),
+    DEEPSEEK_API_KEY: z.string().optional(),
     AI_MODEL: z.string().default("gpt-3.5-turbo"),
     AI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.7),
     AI_MAX_TOKENS: z.coerce.number().min(1).max(4000).default(1000),
-    AI_PROVIDER: z.enum(["openai", "openrouter"]).default("openai"),
+    /** openai | openrouter | deepseek */
+    AI_PROVIDER: z.enum(["openai", "openrouter", "deepseek"]).default("openai"),
     LANGFUSE_SECRET_KEY: z.string().optional(),
     LANGFUSE_PUBLIC_KEY: z.string().optional(),
     LANGFUSE_BASEURL: z.string().optional(),
@@ -71,8 +73,13 @@ export const env = createEnv({
   clientPrefix: "NEXT_PUBLIC_",
   runtimeEnv: {
     AI_MODEL: process.env.AI_MODEL,
+    AI_PROVIDER: process.env.AI_PROVIDER,
+    AI_TEMPERATURE: process.env.AI_TEMPERATURE,
+    AI_MAX_TOKENS: process.env.AI_MAX_TOKENS,
     NODE_ENV: process.env.NODE_ENV,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+    DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
     VERCEL_ENV: process.env.VERCEL_ENV,
     VERCEL_URL: process.env.VERCEL_URL,
     VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,

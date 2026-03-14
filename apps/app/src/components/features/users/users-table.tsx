@@ -11,8 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@calls/ui";
-import type { ManagedUser } from "./types";
 import type { User } from "@/lib/auth";
+import type { ManagedUser } from "./types";
 
 interface UsersTableProps {
   users: ManagedUser[];
@@ -70,13 +70,27 @@ export default function UsersTable({
             ) : users.length > 0 ? (
               users.map((u) => (
                 <TableRow key={u.id}>
-                  <TableCell className="text-[#999] font-medium">{u.id}</TableCell>
-                  <TableCell className="font-semibold text-[#333]">{u.username}</TableCell>
-                  <TableCell className="text-[#555]">{u.givenName || "—"}</TableCell>
-                  <TableCell className="text-[#555]">{u.familyName || "—"}</TableCell>
-                  <TableCell className="text-[#555] font-medium">{u.internalExtensions || "—"}</TableCell>
-                  <TableCell className="text-[#555] font-medium">{u.mobilePhones || "—"}</TableCell>
-                  <TableCell className="text-[#555]">{formatDate(u.created_at)}</TableCell>
+                  <TableCell className="text-[#999] font-medium">
+                    {u.id}
+                  </TableCell>
+                  <TableCell className="font-semibold text-[#333]">
+                    {u.username}
+                  </TableCell>
+                  <TableCell className="text-[#555]">
+                    {u.givenName || "—"}
+                  </TableCell>
+                  <TableCell className="text-[#555]">
+                    {u.familyName || "—"}
+                  </TableCell>
+                  <TableCell className="text-[#555] font-medium">
+                    {u.internalExtensions || "—"}
+                  </TableCell>
+                  <TableCell className="text-[#555] font-medium">
+                    {u.mobilePhones || "—"}
+                  </TableCell>
+                  <TableCell className="text-[#555]">
+                    {formatDate(u.created_at)}
+                  </TableCell>
                   <TableCell>
                     <div className="flex gap-3 justify-end items-center">
                       <Button
@@ -114,7 +128,10 @@ export default function UsersTable({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-10 text-[#999]">
+                <TableCell
+                  colSpan={9}
+                  className="text-center py-10 text-[#999]"
+                >
                   Нет данных
                 </TableCell>
               </TableRow>

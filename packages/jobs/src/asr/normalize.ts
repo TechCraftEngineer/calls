@@ -6,29 +6,39 @@
  * - структурирование в читаемый формат
  */
 
-import { openai } from "@ai-sdk/openai";
+import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
 import { env } from "@calls/config";
-import { generateText } from "ai";
 import { createLogger } from "../logger";
 
 const logger = createLogger("asr-normalize");
 
-const SYSTEM_PROMPT = `Ты — редактор транскриптов разговоров. Нормализуй текст по правилам:
+const SYSTEM_PROMPT = `Отредактируй транскрипт телефонного разговора:
 
-1. Исправь орфографические и пунктуационные ошибки
-2. Преобразуй числительные в словесную форму (123 → сто двадцать три)
-3. Стандартизируй терминологию (если встречаются типичные опечатки ASR — исправь)
-4. Структурируй текст: каждый спикер с новой строки, оставь пометки "Спикер N:"
-5. Разбей длинные абзацы на предложения с правильной пунктуацией
-6. Сохрани смысл и стиль разговорной речи
-7. Не добавляй ничего от себя, не пересказывай — только правь и форматируй
+ИСПРАВЬ:
+• Орфографию и пунктуацию
+• Типичные ошибки ASR: "вадим" → "Вадим", "мэйл" → "email", "окей" → "ок"
+• Числа в словесную форму: "123" → "сто двадцать три", "5%" → "пять процентов"
 
-Верни ТОЛЬКО нормализованный текст, без пояснений.`;
+ФОРМАТИРОВАНИЕ:
+• Каждая реплика с новой строки: "Спикер 1: текст"
+• Длинные реплики разбивай на предложения с правильной пунктуацией
+• Убери повторы слов ("э-э-э", "ну-у-у") и слова-паразиты, если они не несут смысла
+
+СОХРАНИ:
+• Разговорный стиль и интонацию
+• Все факты, имена, цифры, даты
+• Структуру диалога (кто и что сказал)
+
+НЕ ДЕЛАЙ:
+• Не пересказывай своими словами
+• Не добавляй информацию, которой нет в оригинале
+• Не удаляй важные детали
+
+Верни только отредактированный текст без комментариев.`;
 
 export async function normalizeWithLlm(rawText: string): Promise<string> {
-  const apiKey = env.OPENAI_API_KEY;
-  if (!apiKey) {
-    logger.warn("OPENAI_API_KEY не задан, возвращаем исходный текст");
+  if (!hasAiProviderConfigured()) {
+    logger.warn("API ключ AI не задан, возвращаем исходный текст");
     return rawText;
   }
 
@@ -38,13 +48,14 @@ export async function normalizeWithLlm(rawText: string): Promise<string> {
 
   const start = Date.now();
   try {
-    const { text } = await generateText({
-      model: openai(env.AI_MODEL ?? "gpt-4o-mini"),
+    const { text } = await generateWithAi({
+      model: env.AI_MODEL ?? "gpt-4o-mini",
       system: SYSTEM_PROMPT,
       prompt: `Нормализуй следующий транскрипт:\n\n${rawText}`,
       temperature: 0.2,
       maxRetries: 2,
       abortSignal: AbortSignal.timeout(60_000),
+      functionId: "asr-normalize",
     });
 
     logger.info("LLM нормализация завершена", {

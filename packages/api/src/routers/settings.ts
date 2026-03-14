@@ -1,6 +1,10 @@
 import { promptsService, settingsService, systemRepository } from "@calls/db";
 import { z } from "zod";
-import { adminProcedure, protectedProcedure } from "../orpc";
+import {
+  workspaceAdminProcedure,
+  workspaceMemberProcedure,
+  workspaceProcedure,
+} from "../orpc";
 
 // Список чувствительных ключей для маскирования в логах
 const SENSITIVE_KEYS = [
@@ -94,18 +98,20 @@ const settingsUpdateSchema = z
   });
 
 export const settingsRouter = {
-  getPrompts: protectedProcedure.handler(async () => {
-    return await promptsService.getAllPrompts();
+  getPrompts: workspaceProcedure.handler(async ({ context }) => {
+    return await promptsService.getAllPrompts(context.workspaceId);
   }),
 
-  updatePrompts: adminProcedure
+  updatePrompts: workspaceAdminProcedure
     .input(settingsUpdateSchema)
     .handler(async ({ input, context }) => {
+      const { workspaceId } = context;
       if (input.deepseek_model && input.deepseek_model in DEEPSEEK_MODELS) {
         await promptsService.updatePrompt(
           "deepseek_model",
           input.deepseek_model,
           "Selected DeepSeek model",
+          workspaceId,
         );
       }
       if (input.quality_min_value_threshold !== undefined) {
@@ -113,6 +119,7 @@ export const settingsRouter = {
           "quality_min_value_threshold",
           String(input.quality_min_value_threshold),
           "Minimum call value for quality evaluation (0-5)",
+          workspaceId,
         );
       }
       if (input.enable_manager_recommendations !== undefined) {
@@ -120,6 +127,7 @@ export const settingsRouter = {
           "enable_manager_recommendations",
           input.enable_manager_recommendations ? "true" : "false",
           "Включить генерацию рекомендаций для менеджера (true/false)",
+          workspaceId,
         );
       }
       if (input.telegram_bot_token !== undefined) {
@@ -127,6 +135,7 @@ export const settingsRouter = {
           "telegram_bot_token",
           input.telegram_bot_token ?? "",
           "Telegram Bot Token",
+          workspaceId,
         );
       }
       if (input.max_bot_token !== undefined) {
@@ -134,6 +143,7 @@ export const settingsRouter = {
           "max_bot_token",
           input.max_bot_token ?? "",
           "MAX Bot Token",
+          workspaceId,
         );
       }
       if (
@@ -164,6 +174,7 @@ export const settingsRouter = {
             input.megafon_ftp_host,
             input.megafon_ftp_user,
             input.megafon_ftp_password,
+            workspaceId,
           );
         }
       }
@@ -194,6 +205,7 @@ export const settingsRouter = {
               key,
               p.value ?? "",
               p.description ?? "",
+              workspaceId,
             );
             // Маскируем чувствительные данные в логах
             const maskedValue = maskSensitiveData(key, p.value ?? "");
@@ -201,6 +213,7 @@ export const settingsRouter = {
               "info",
               `Prompt updated: ${key} = ${maskedValue}`,
               (context.user as Record<string, unknown>).username as string,
+              workspaceId,
             );
           }
         }
@@ -212,6 +225,7 @@ export const settingsRouter = {
             "telegram_bot_token",
             tb.value ?? "",
             "Telegram Bot Token",
+            workspaceId,
           );
         const mb = input.prompts.max_bot_token as
           | { value?: string }
@@ -221,20 +235,22 @@ export const settingsRouter = {
             "max_bot_token",
             mb.value ?? "",
             "MAX Bot Token",
+            workspaceId,
           );
       }
       return { success: true, message: "Settings updated successfully" };
     }),
 
-  getModels: protectedProcedure.handler(async () => {
+  getModels: workspaceProcedure.handler(async ({ context }) => {
     const current = await promptsService.getPrompt(
       "deepseek_model",
+      context.workspaceId,
       "deepseek-chat",
     );
     return { models: DEEPSEEK_MODELS, current_model: current };
   }),
 
-  backup: adminProcedure.handler(async ({ context }) => {
+  backup: workspaceAdminProcedure.handler(async ({ context }) => {
     // PostgreSQL: run pg_dump externally for backup:
     // pg_dump $POSTGRES_URL > backup_$(date +%Y%m%d_%H%M%S).sql
     const timestamp = new Date()
@@ -246,6 +262,7 @@ export const settingsRouter = {
       "info",
       `Запрошена резервная копия PostgreSQL: ${backupFilename} (выполните pg_dump вручную)`,
       (context.user as Record<string, unknown>).username as string,
+      context.workspaceId,
     );
     return {
       success: true,

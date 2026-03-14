@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { ManagedUser } from "./types";
 import {
   formFieldWrap,
   formInput,
@@ -9,7 +10,6 @@ import {
   modalOverlayClasses,
   type PasswordForm,
 } from "./types";
-import type { ManagedUser } from "./types";
 
 interface ChangePasswordModalProps {
   user: ManagedUser;
@@ -62,7 +62,9 @@ export default function ChangePasswordModal({
         </p>
         <form onSubmit={handleSubmit}>
           {error && (
-            <p style={{ color: "#c00", marginBottom: "12px", fontSize: "14px" }}>
+            <p
+              style={{ color: "#c00", marginBottom: "12px", fontSize: "14px" }}
+            >
               {error}
             </p>
           )}
@@ -71,7 +73,9 @@ export default function ChangePasswordModal({
             <input
               type="password"
               value={form.new_password}
-              onChange={(e) => setForm((f) => ({ ...f, new_password: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, new_password: e.target.value }))
+              }
               className={formInput}
               autoComplete="new-password"
             />
@@ -81,12 +85,16 @@ export default function ChangePasswordModal({
             <input
               type="password"
               value={form.confirm_password}
-              onChange={(e) => setForm((f) => ({ ...f, confirm_password: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, confirm_password: e.target.value }))
+              }
               className={formInput}
               autoComplete="new-password"
             />
           </div>
-          <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+          <div
+            style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}
+          >
             <button
               type="button"
               onClick={onClose}

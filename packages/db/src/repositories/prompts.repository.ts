@@ -7,11 +7,16 @@ import { db } from "../client";
 import * as schema from "../schema";
 
 export const promptsRepository = {
-  async findByKey(key: string): Promise<string | null> {
+  async findByKey(key: string, workspaceId: string): Promise<string | null> {
     const result = await db
       .select()
       .from(schema.prompts)
-      .where(eq(schema.prompts.key, key))
+      .where(
+        and(
+          eq(schema.prompts.key, key),
+          eq(schema.prompts.workspaceId, workspaceId),
+        ),
+      )
       .limit(1);
 
     return result[0]?.value ?? null;
@@ -19,18 +24,24 @@ export const promptsRepository = {
 
   async findByKeyWithDefault(
     key: string,
+    workspaceId: string,
     defaultValue?: string,
   ): Promise<string | null> {
     const result = await db
       .select()
       .from(schema.prompts)
-      .where(eq(schema.prompts.key, key))
+      .where(
+        and(
+          eq(schema.prompts.key, key),
+          eq(schema.prompts.workspaceId, workspaceId),
+        ),
+      )
       .limit(1);
 
     return result[0]?.value ?? defaultValue ?? null;
   },
 
-  async findAll(): Promise<
+  async findAll(workspaceId: string): Promise<
     {
       key: string;
       value: string;
@@ -46,21 +57,27 @@ export const promptsRepository = {
         updatedAt: schema.prompts.updatedAt,
       })
       .from(schema.prompts)
+      .where(eq(schema.prompts.workspaceId, workspaceId))
       .orderBy(schema.prompts.key);
   },
 
   async upsert(
     key: string,
     value: string,
-    description?: string | null,
-    workspaceId?: string,
+    description: string | null,
+    workspaceId: string,
   ): Promise<boolean> {
     const now = new Date();
 
     const existing = await db
       .select()
       .from(schema.prompts)
-      .where(eq(schema.prompts.key, key))
+      .where(
+        and(
+          eq(schema.prompts.key, key),
+          eq(schema.prompts.workspaceId, workspaceId),
+        ),
+      )
       .limit(1);
 
     if (existing[0]) {
@@ -71,7 +88,12 @@ export const promptsRepository = {
           description: description ?? existing[0].description,
           updatedAt: now,
         })
-        .where(eq(schema.prompts.key, key));
+        .where(
+          and(
+            eq(schema.prompts.key, key),
+            eq(schema.prompts.workspaceId, workspaceId),
+          ),
+        );
 
       return (result.rowCount ?? 0) > 0;
     }
@@ -81,7 +103,7 @@ export const promptsRepository = {
       value,
       description: description ?? "",
       updatedAt: now,
-      workspaceId: workspaceId ?? "default",
+      workspaceId: workspaceId,
     });
     return true;
   },

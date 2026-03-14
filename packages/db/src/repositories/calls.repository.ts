@@ -94,7 +94,7 @@ function buildCallConditions(params: {
 }
 
 export const callsRepository = {
-  async findById(id: string): Promise<any | null> {
+  async findById(id: string): Promise<schema.Call | null> {
     const result = await db
       .select()
       .from(schema.calls)
@@ -104,16 +104,14 @@ export const callsRepository = {
   },
 
   async delete(id: string): Promise<boolean> {
-    const result = await db
-      .delete(schema.calls)
-      .where(eq(schema.calls.id, id));
+    const result = await db.delete(schema.calls).where(eq(schema.calls.id, id));
     return (result.rowCount ?? 0) > 0;
   },
 
   async findByFilename(
     filename: string,
     workspaceId?: string,
-  ): Promise<any | null> {
+  ): Promise<schema.Call | null> {
     const conditions = [eq(schema.calls.filename, filename)];
     if (workspaceId != null) {
       conditions.push(eq(schema.calls.workspaceId, workspaceId));
@@ -261,7 +259,9 @@ export const callsRepository = {
     return result[0]?.count ?? 0;
   },
 
-  async getTranscriptByCallId(callId: string): Promise<any | null> {
+  async getTranscriptByCallId(
+    callId: string,
+  ): Promise<schema.Transcript | null> {
     const result = await db
       .select()
       .from(schema.transcripts)
@@ -278,6 +278,7 @@ export const callsRepository = {
     sentiment?: string | null;
     confidence?: number | null;
     summary?: string | null;
+    callTopic?: string | null;
     metadata?: Record<string, unknown> | null;
   }): Promise<string> {
     const values = {
@@ -287,6 +288,7 @@ export const callsRepository = {
       sentiment: data.sentiment ?? null,
       confidence: data.confidence ?? null,
       summary: data.summary ?? null,
+      callTopic: data.callTopic ?? null,
       metadata: data.metadata ?? null,
     };
 
@@ -305,7 +307,7 @@ export const callsRepository = {
     return result[0]?.id ?? "";
   },
 
-  async getEvaluation(callId: string): Promise<any | null> {
+  async getEvaluation(callId: string): Promise<schema.CallEvaluation | null> {
     const result = await db
       .select()
       .from(schema.callEvaluations)

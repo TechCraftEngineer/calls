@@ -21,10 +21,10 @@ COPY tooling/typescript/*.json ./tooling/typescript/
 # Create records directory (Megafon FTP sync destination)
 RUN mkdir -p /app/records
 
-ENV JOBS_PORT=3100
+ENV JOBS_PORT=8000
 ENV DEPLOYMENT_ENV=docker
 
-EXPOSE 3100
+EXPOSE 8000
 
 # Run directly — env vars passed via docker-compose
 CMD ["bun", "./packages/jobs/src/server.ts"]

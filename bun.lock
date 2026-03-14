@@ -66,6 +66,7 @@
       "name": "@calls/ai",
       "version": "0.1.0",
       "dependencies": {
+        "@ai-sdk/deepseek": "^2.0.24",
         "@ai-sdk/openai": "^3.0.41",
         "@calls/config": "workspace:*",
         "@langfuse/otel": "^5.0.0",
@@ -175,7 +176,7 @@
     "packages/jobs": {
       "name": "@calls/jobs",
       "dependencies": {
-        "@ai-sdk/assemblyai": "^2.0.0",
+        "@ai-sdk/assemblyai": "^2.0.24",
         "@ai-sdk/openai": "^3.0.41",
         "@calls/ai": "workspace:*",
         "@calls/config": "workspace:*",
@@ -187,6 +188,7 @@
         "hono": "4.12.7",
         "inngest": "^3.52.6",
         "ssh2-sftp-client": "^12.1.0",
+        "zod": "4.3.6",
       },
       "devDependencies": {
         "@calls/tsconfig": "workspace:*",
@@ -295,6 +297,8 @@
   },
   "packages": {
     "@ai-sdk/assemblyai": ["@ai-sdk/assemblyai@2.0.24", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.19" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-/Ps4e/32l0pwAbJjIHHBk77YH9WxEt7ZWf2rcGWAiuPa15YVZFqGL/iCtHixjHtE7Mq4y1QV9xe8+1LTfztZlA=="],
+
+    "@ai-sdk/deepseek": ["@ai-sdk/deepseek@2.0.24", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.19" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-4vOEekW4TAYVHN0qgiwoUOQZhguGwZBiEw8LDeUmpWBm07QkLRAtxYCaSoMiA4hZZojao5mj6NRGEBW1CnDPtg=="],
 
     "@ai-sdk/gateway": ["@ai-sdk/gateway@3.0.66", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.19", "@vercel/oidc": "3.1.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-SIQ0YY0iMuv+07HLsZ+bB990zUJ6S4ujORAh+Jv1V2KGNn73qQKnGO0JBk+w+Res8YqOFSycwDoWcFlQrVxS4A=="],
 

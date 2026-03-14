@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/components/features/misc/auth-provider";
 import ChatWidget from "@/components/features/chat/chat-widget";
+import { AuthProvider } from "@/components/features/misc/auth-provider";
+import { WorkspaceProvider } from "@/components/features/workspaces/workspace-provider";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -67,10 +69,16 @@ export default function RootLayout({
   return (
     <html lang="ru" className={inter.variable}>
       <body className={inter.className}>
-        <AuthProvider>
-          {children}
-          <ChatWidget />
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <ErrorBoundary>
+              <WorkspaceProvider>
+                {children}
+                <ChatWidget />
+              </WorkspaceProvider>
+            </ErrorBoundary>
+          </AuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

@@ -47,7 +47,10 @@ export const files = pgTable(
     index("files_workspace_id_idx").on(table.workspaceId),
     index("files_file_type_idx").on(table.fileType),
     index("files_storage_key_idx").on(table.storageKey),
-    index("files_workspace_file_type_idx").on(table.workspaceId, table.fileType),
+    index("files_workspace_file_type_idx").on(
+      table.workspaceId,
+      table.fileType,
+    ),
     index("files_created_at_idx").on(table.createdAt),
   ],
 );

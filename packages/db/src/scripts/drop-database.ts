@@ -2,7 +2,6 @@
  * Сбрасывает базу данных: удаляет все таблицы и объекты в схеме public
  */
 
-import { sql } from "drizzle-orm";
 import { Pool } from "pg";
 
 async function dropDatabase() {

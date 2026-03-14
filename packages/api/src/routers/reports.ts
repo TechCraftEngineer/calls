@@ -1,9 +1,10 @@
 import { promptsService, usersService } from "@calls/db";
 import { sendMessage } from "@calls/telegram-bot";
-import { protectedProcedure } from "../orpc";
+import { workspaceProcedure } from "../orpc";
 
 export const reportsRouter = {
-  sendTestTelegram: protectedProcedure.handler(async ({ context }) => {
+  sendTestTelegram: workspaceProcedure.handler(async ({ context }) => {
+    const { workspaceId } = context;
     const username = (context.user as Record<string, unknown>)
       .username as string;
     const user = await usersService.getUserByUsername(username);
@@ -12,7 +13,10 @@ export const reportsRouter = {
       | string
       | undefined;
     if (!chatId) throw new Error("Telegram Chat ID is not set for this user");
-    const token = await promptsService.getPrompt("telegram_bot_token");
+    const token = await promptsService.getPrompt(
+      "telegram_bot_token",
+      workspaceId,
+    );
     if (!token?.trim())
       throw new Error(
         "Telegram Bot Token не настроен. Укажите токен в Настройках.",

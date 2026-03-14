@@ -1,7 +1,7 @@
 "use client";
 
-import { API_BASE_URL } from "@/lib/api";
 import AudioPlayer from "@/components/ui/audio-player";
+import { API_BASE_URL } from "@/lib/api";
 
 interface AudioPlayerModalProps {
   filename: string;

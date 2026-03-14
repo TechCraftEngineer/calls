@@ -1,9 +1,9 @@
 import { callsService } from "@calls/db";
 import { z } from "zod";
-import { adminProcedure, protectedProcedure } from "../orpc";
+import { workspaceAdminProcedure, workspaceProcedure } from "../orpc";
 
 export const statisticsRouter = {
-  getStatistics: adminProcedure
+  getStatistics: workspaceAdminProcedure
     .input(
       z.object({
         date_from: z.string().optional(),
@@ -12,7 +12,8 @@ export const statisticsRouter = {
         order: z.string().optional(),
       }),
     )
-    .handler(async ({ input }) => {
+    .handler(async ({ input, context }) => {
+      const { workspaceId } = context;
       let dateFrom = input.date_from;
       let dateTo = input.date_to;
       if (!dateFrom && !dateTo) {
@@ -28,13 +29,14 @@ export const statisticsRouter = {
       const dateFromDb = dateFrom ? `${dateFrom} 00:00:00` : undefined;
       const dateToDb = dateTo ? `${dateTo} 23:59:59` : undefined;
       const stats = await callsService.getEvaluationsStats({
+        workspaceId,
         dateFrom: dateFromDb,
         dateTo: dateToDb,
       });
       const statsList = Object.values(stats);
       const reverse = input.order === "desc";
       const sortKey = input.sort ?? "name";
-      statsList.sort((a, b) => {
+      statsList.sort((a: any, b: any) => {
         let va: string | number = a.name;
         let vb: string | number = b.name;
         if (sortKey === "incoming_count") {
@@ -57,7 +59,7 @@ export const statisticsRouter = {
       };
     }),
 
-  getMetrics: protectedProcedure.handler(async () => {
-    return await callsService.calculateMetrics();
+  getMetrics: workspaceProcedure.handler(async ({ context }) => {
+    return await callsService.calculateMetrics(context.workspaceId);
   }),
 };

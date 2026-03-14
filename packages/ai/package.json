@@ -22,6 +22,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/deepseek": "^2.0.24",
     "@ai-sdk/openai": "^3.0.41",
     "@calls/config": "workspace:*",
     "@langfuse/otel": "^5.0.0",

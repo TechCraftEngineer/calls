@@ -2,7 +2,8 @@ import { randomBytes } from "node:crypto";
 import { promptsService, usersService } from "@calls/db";
 import { getBotUsername } from "@calls/telegram-bot";
 import { z } from "zod";
-import { protectedProcedure } from "../orpc";
+import { workspaceProcedure } from "../orpc";
+import { isAdminUser } from "../user-profile";
 
 async function canAccessUser(
   currentUserId: string,
@@ -14,15 +15,11 @@ async function canAccessUser(
   return isAdminUser(user as Record<string, unknown>);
 }
 
-function isAdminUser(user: Record<string, unknown>): boolean {
-  const adminUsernames = ["admin@mango", "admin@gmail.com"];
-  return adminUsernames.includes((user.username as string) ?? "");
-}
-
 export const integrationsRouter = {
-  telegramAuthUrl: protectedProcedure
+  telegramAuthUrl: workspaceProcedure
     .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
+      const { workspaceId } = context;
       const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
@@ -31,14 +28,17 @@ export const integrationsRouter = {
       const token = randomBytes(16).toString("base64url");
       if (!(await usersService.saveTelegramConnectToken(input.user_id, token)))
         throw new Error("Failed to save token");
-      const botToken = await promptsService.getPrompt("telegram_bot_token");
+      const botToken = await promptsService.getPrompt(
+        "telegram_bot_token",
+        workspaceId,
+      );
       const botUsername = botToken?.trim()
         ? await getBotUsername(botToken)
         : "mango_react_bot";
       return { url: `https://t.me/${botUsername}?start=${token}` };
     }),
 
-  disconnectTelegram: protectedProcedure
+  disconnectTelegram: workspaceProcedure
     .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;
@@ -49,7 +49,7 @@ export const integrationsRouter = {
       return { success: true };
     }),
 
-  maxAuthUrl: protectedProcedure
+  maxAuthUrl: workspaceProcedure
     .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;
@@ -66,7 +66,7 @@ export const integrationsRouter = {
       };
     }),
 
-  disconnectMax: protectedProcedure
+  disconnectMax: workspaceProcedure
     .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;

@@ -3,7 +3,7 @@
  * Получает аудио из S3, запускает ASR pipeline, сохраняет транскрипт.
  */
 
-import { callsService, filesService } from "@calls/db";
+import { callsService, filesService, promptsService } from "@calls/db";
 import { getDownloadUrl } from "@calls/lib";
 import { runTranscriptionPipeline } from "../../asr";
 import { createLogger } from "../../logger";
@@ -40,12 +40,18 @@ export const transcribeCallFn = inngest.createFunction(
       return getDownloadUrl(file.storageKey);
     });
 
+    const summaryPrompt = await step.run("get-summary-prompt", async () => {
+      return await promptsService.getPrompt("summary", call.workspaceId);
+    });
+
     const result = await step.run("transcribe", async () => {
       logger.info("Запуск транскрибации", {
         callId,
         audioUrlLength: audioUrl.length,
       });
-      return runTranscriptionPipeline(audioUrl);
+      return runTranscriptionPipeline(audioUrl, {
+        summaryPrompt: summaryPrompt ?? undefined,
+      });
     });
 
     await step.run("save-transcript", async () => {
@@ -68,6 +74,10 @@ export const transcribeCallFn = inngest.createFunction(
         rawText: result.rawText,
         confidence: result.metadata.confidence ?? null,
         metadata: serializedMetadata,
+        summary: result.summary,
+        sentiment: result.sentiment,
+        title: result.title,
+        callTopic: result.callTopic,
       });
       logger.info("Транскрипт сохранён", {
         callId,

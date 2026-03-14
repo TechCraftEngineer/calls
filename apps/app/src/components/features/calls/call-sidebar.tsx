@@ -69,9 +69,13 @@ export default function CallSidebar({
   onGenerateRecommendations,
 }: CallSidebarProps) {
   const qualityScore =
-    evaluation?.manager_score ?? (evaluation as any)?.manager_quality_score ?? 0;
+    evaluation?.manager_score ??
+    (evaluation as any)?.manager_quality_score ??
+    0;
   const qualityFeedback =
-    evaluation?.manager_feedback ?? (evaluation as any)?.manager_quality_explanation ?? "";
+    evaluation?.manager_feedback ??
+    (evaluation as any)?.manager_quality_explanation ??
+    "";
   const qualityNotAnalyzableReason = evaluation?.not_analyzable_reason;
   const isQualityAnalyzable = evaluation?.is_quality_analyzable;
   const showQualityUnavailable = isQualityAnalyzable === false || !qualityScore;
@@ -90,7 +94,9 @@ export default function CallSidebar({
                 src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"}/api/records/${call.filename}`}
               />
             ) : (
-              <div className="text-[13px] text-[#999]">Файл записи не найден</div>
+              <div className="text-[13px] text-[#999]">
+                Файл записи не найден
+              </div>
             )}
           </div>
           <div className="mt-3 text-xs text-[#999]">
@@ -102,8 +108,12 @@ export default function CallSidebar({
       {/* Абонент */}
       <Card className="sidebar-card">
         <CardContent className="p-4">
-          <div className={`text-lg font-bold ${call.customer_name ? "text-[#111]" : "text-[#999]"}`}>
-            {call.customer_name ? `Абонент: ${call.customer_name}` : "Имя: не определено"}
+          <div
+            className={`text-lg font-bold ${call.customer_name ? "text-[#111]" : "text-[#999]"}`}
+          >
+            {call.customer_name
+              ? `Абонент: ${call.customer_name}`
+              : "Имя: не определено"}
           </div>
         </CardContent>
       </Card>
@@ -125,18 +135,42 @@ export default function CallSidebar({
                 style={{ width: `${(evaluation?.value_score || 0) * 20}%` }}
               />
             </div>
-            <p style={{ fontSize: "13px", color: "#666", lineHeight: 1.6, marginBottom: "20px" }}>
+            <p
+              style={{
+                fontSize: "13px",
+                color: "#666",
+                lineHeight: 1.6,
+                marginBottom: "20px",
+              }}
+            >
               {evaluation?.value_explanation || "Оценка отсутствует"}
             </p>
           </div>
 
           {showQualityUnavailable ? (
-            <div style={{ padding: "16px", background: "#FFF5F5", border: "1px solid #FFDADA", borderRadius: "8px" }}>
-              <div style={{ color: "#E53E3E", fontSize: "13px", fontWeight: 700, marginBottom: "4px" }}>
+            <div
+              style={{
+                padding: "16px",
+                background: "#FFF5F5",
+                border: "1px solid #FFDADA",
+                borderRadius: "8px",
+              }}
+            >
+              <div
+                style={{
+                  color: "#E53E3E",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  marginBottom: "4px",
+                }}
+              >
                 Качество не оценивалось
               </div>
               <div style={{ color: "#C53030", fontSize: "12px" }}>
-                {qualityNotAnalyzableReason || call.operator_name || call.manager_name || "Автоответчик"}
+                {qualityNotAnalyzableReason ||
+                  call.operator_name ||
+                  call.manager_name ||
+                  "Автоответчик"}
               </div>
             </div>
           ) : (
@@ -148,17 +182,25 @@ export default function CallSidebar({
               <div className="score-bar-bg">
                 <div
                   className="score-bar-fill"
-                  style={{ width: `${Number(qualityScore) * 20}%`, background: "#4CAF50" }}
+                  style={{
+                    width: `${Number(qualityScore) * 20}%`,
+                    background: "#4CAF50",
+                  }}
                 />
               </div>
-              <p style={{ fontSize: "13px", color: "#666", lineHeight: 1.6 }}>{qualityFeedback}</p>
+              <p style={{ fontSize: "13px", color: "#666", lineHeight: 1.6 }}>
+                {qualityFeedback}
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Рекомендации */}
-      <Card className="sidebar-card" style={{ background: "#FFFDF0", borderColor: "#FFECB3" }}>
+      <Card
+        className="sidebar-card"
+        style={{ background: "#FFFDF0", borderColor: "#FFECB3" }}
+      >
         <CardHeader className="flex flex-row justify-between items-center pb-3 px-6 pt-6">
           <CardTitle className="sidebar-card-title text-[#975A16] flex items-center gap-2 m-0">
             💡 РЕКОМЕНДАЦИИ
@@ -172,15 +214,23 @@ export default function CallSidebar({
           >
             {isGeneratingRecommendations
               ? "Загрузка…"
-              : evaluation?.manager_recommendations && evaluation.manager_recommendations.length > 0
+              : evaluation?.manager_recommendations &&
+                  evaluation.manager_recommendations.length > 0
                 ? "Обновить"
                 : "Сформировать"}
           </Button>
         </CardHeader>
         <CardContent className="px-6 pb-6 pt-0">
-          {evaluation?.manager_recommendations && evaluation.manager_recommendations.length > 0 ? (
+          {evaluation?.manager_recommendations &&
+          evaluation.manager_recommendations.length > 0 ? (
             <>
-              <p style={{ margin: "0 0 12px 0", fontSize: "13px", color: "#856404" }}>
+              <p
+                style={{
+                  margin: "0 0 12px 0",
+                  fontSize: "13px",
+                  color: "#856404",
+                }}
+              >
                 Вопросы, которые можно было задать (с учётом истории):
               </p>
               <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
@@ -196,7 +246,15 @@ export default function CallSidebar({
                       color: "#533F03",
                     }}
                   >
-                    <span style={{ position: "absolute", left: 0, color: "#F7931E" }}>•</span>
+                    <span
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        color: "#F7931E",
+                      }}
+                    >
+                      •
+                    </span>
                     {rec}
                   </li>
                 ))}
@@ -204,7 +262,8 @@ export default function CallSidebar({
             </>
           ) : (
             <p className="text-[13px] text-[#856404] italic m-0">
-              Нажмите «Сформировать», чтобы получить рекомендации с учётом истории звонков.
+              Нажмите «Сформировать», чтобы получить рекомендации с учётом
+              истории звонков.
             </p>
           )}
         </CardContent>
@@ -223,7 +282,9 @@ export default function CallSidebar({
             </li>
             <li className="meta-row">
               <span className="meta-label">Настрой:</span>
-              <span className="meta-value text-[#F7931E]">{transcript?.sentiment || "Нейтральный"}</span>
+              <span className="meta-value text-[#F7931E]">
+                {transcript?.sentiment || "Нейтральный"}
+              </span>
             </li>
           </ul>
           <Separator className="my-4 bg-[#eee]" />
@@ -231,9 +292,18 @@ export default function CallSidebar({
             {transcript?.summary || "Резюме отсутствует"}
           </p>
           <div className="flex gap-2 items-center mb-3">
-            <label className="text-xs text-[#666] whitespace-nowrap">Модель:</label>
-            <Select value={selectedModel} onValueChange={onModelChange} disabled={restarting}>
-              <SelectTrigger className="flex-1 h-8 text-xs border-[#ddd] bg-white disabled:bg-[#f5f5f5]" size="sm">
+            <label className="text-xs text-[#666] whitespace-nowrap">
+              Модель:
+            </label>
+            <Select
+              value={selectedModel}
+              onValueChange={onModelChange}
+              disabled={restarting}
+            >
+              <SelectTrigger
+                className="flex-1 h-8 text-xs border-[#ddd] bg-white disabled:bg-[#f5f5f5]"
+                size="sm"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

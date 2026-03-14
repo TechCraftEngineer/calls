@@ -2,14 +2,14 @@
 
 import { Button } from "@calls/ui";
 import { useEffect } from "react";
-import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
 import BackupSection from "@/components/features/settings/backup-section";
+import { PROMPT_KEYS } from "@/components/features/settings/constants";
+import { useSettings } from "@/components/features/settings/hooks";
 import IntegrationsSection from "@/components/features/settings/integrations-section";
 import PromptSection from "@/components/features/settings/prompt-section";
 import TelegramSection from "@/components/features/settings/telegram-section";
-import { PROMPT_KEYS } from "@/components/features/settings/constants";
-import { useSettings } from "@/components/features/settings/hooks";
+import Header from "@/components/layout/header";
+import Sidebar from "@/components/layout/sidebar";
 
 export default function SettingsPage() {
   const {

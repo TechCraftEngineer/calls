@@ -7,9 +7,9 @@ import {
   formFieldWrap,
   formInput,
   formLabel,
+  type ManagedUser,
   modalBoxClasses,
   modalOverlayClasses,
-  type ManagedUser,
 } from "./types";
 
 interface EditUserModalProps {
@@ -31,7 +31,8 @@ function buildEditForm(u: ManagedUser): EditUserForm {
     max_chat_id: u.max_chat_id || "",
     max_daily_report: u.max_daily_report || false,
     max_manager_report: u.max_manager_report || false,
-    filter_exclude_answering_machine: u.filter_exclude_answering_machine || false,
+    filter_exclude_answering_machine:
+      u.filter_exclude_answering_machine || false,
     filter_min_duration: u.filter_min_duration ?? 0,
     filter_min_replicas: u.filter_min_replicas ?? 0,
     email: u.email || "",
@@ -112,7 +113,8 @@ export default function EditUserModal({
         setForm((f) => ({
           ...f,
           telegramChatId: updated.telegramChatId || "",
-          filter_exclude_answering_machine: updated.filter_exclude_answering_machine || false,
+          filter_exclude_answering_machine:
+            updated.filter_exclude_answering_machine || false,
           filter_min_duration: updated.filter_min_duration ?? 0,
           filter_min_replicas: updated.filter_min_replicas ?? 0,
         }));
@@ -141,7 +143,9 @@ export default function EditUserModal({
       if (res.url) {
         window.open(res.url, "_blank");
       } else if (res.manual_instruction) {
-        alert(`Для подключения отправьте боту команду:\n${res.manual_instruction.split(": ")[1]}`);
+        alert(
+          `Для подключения отправьте боту команду:\n${res.manual_instruction.split(": ")[1]}`,
+        );
       }
     } catch (_e) {
       alert("Ошибка при создании ссылки для MAX");
@@ -151,8 +155,12 @@ export default function EditUserModal({
   return (
     <div className={modalOverlayClasses} onClick={onClose}>
       <div className={modalBoxClasses} onClick={(e) => e.stopPropagation()}>
-        <h2 className="m-0 mb-5 text-lg font-bold">Редактировать пользователя</h2>
-        <p className="m-0 mb-4 text-[13px] text-[#666]">Логин: {editUser.username}</p>
+        <h2 className="m-0 mb-5 text-lg font-bold">
+          Редактировать пользователя
+        </h2>
+        <p className="m-0 mb-4 text-[13px] text-[#666]">
+          Логин: {editUser.username}
+        </p>
 
         <form onSubmit={handleSubmit}>
           {error && <p className="text-[#c00] mb-3 text-sm">{error}</p>}
@@ -163,7 +171,9 @@ export default function EditUserModal({
             <input
               type="text"
               value={form.givenName}
-              onChange={(e) => setForm((f) => ({ ...f, givenName: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, givenName: e.target.value }))
+              }
               className={formInput}
             />
           </div>
@@ -172,7 +182,9 @@ export default function EditUserModal({
             <input
               type="text"
               value={form.familyName}
-              onChange={(e) => setForm((f) => ({ ...f, familyName: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, familyName: e.target.value }))
+              }
               className={formInput}
             />
           </div>
@@ -181,7 +193,9 @@ export default function EditUserModal({
             <input
               type="text"
               value={form.internalExtensions}
-              onChange={(e) => setForm((f) => ({ ...f, internalExtensions: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, internalExtensions: e.target.value }))
+              }
               className={formInput}
               placeholder="101, 102 или admin, ovchinnikov_nikita (МегаФон)"
             />
@@ -191,7 +205,9 @@ export default function EditUserModal({
             <input
               type="text"
               value={form.mobilePhones}
-              onChange={(e) => setForm((f) => ({ ...f, mobilePhones: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, mobilePhones: e.target.value }))
+              }
               className={formInput}
               placeholder="79XXXXXXXXX, можно несколько через запятую"
             />
@@ -204,7 +220,9 @@ export default function EditUserModal({
               <input
                 type="text"
                 value={form.telegramChatId}
-                onChange={(e) => setForm((f) => ({ ...f, telegramChatId: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, telegramChatId: e.target.value }))
+                }
                 className="flex-1 py-2 px-3 border border-[#ddd] rounded-md box-border"
                 placeholder="ID чата пользователя"
               />
@@ -244,7 +262,12 @@ export default function EditUserModal({
                       gap: "6px",
                     }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.48-.94-2.4-1.54-1.06-.7-.37-1.09.23-1.72.16-.16 2.87-2.63 2.92-2.85.01-.03.01-.14-.06-.2-.06-.05-.16-.03-.24-.01-.34.08-5.34 3.45-5.56 3.6-.32.22-.6.33-.85.33-.28-.01-.81-.26-1.2-.56-.48-.38-.86-.58-.82-1.23.02-.34.49-.69 1.28-1.05 5.03-2.18 8.38-3.62 10.04-4.3 2.8-1.16 3.38-1.36 3.76-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .24z" />
                     </svg>
                     Подключить Telegram
@@ -270,17 +293,43 @@ export default function EditUserModal({
           </div>
 
           {/* MAX Отчеты */}
-          <div style={{ marginBottom: "16px", padding: "16px", background: "#f5f7fa", borderRadius: "8px" }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>MAX Отчеты</h3>
+          <div
+            style={{
+              marginBottom: "16px",
+              padding: "16px",
+              background: "#f5f7fa",
+              borderRadius: "8px",
+            }}
+          >
+            <h3
+              style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}
+            >
+              MAX Отчеты
+            </h3>
             <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 600 }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "4px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                }}
+              >
                 MAX Chat ID
               </label>
               <input
                 type="text"
                 value={form.max_chat_id}
-                onChange={(e) => setForm((f) => ({ ...f, max_chat_id: e.target.value }))}
-                style={{ width: "100%", padding: "8px 12px", border: "1px solid #ddd", borderRadius: "6px", boxSizing: "border-box" }}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, max_chat_id: e.target.value }))
+                }
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  boxSizing: "border-box",
+                }}
                 placeholder="ID чата MAX"
               />
             </div>
@@ -289,7 +338,15 @@ export default function EditUserModal({
                 <button
                   type="button"
                   onClick={handleDisconnectMax}
-                  style={{ fontSize: "13px", color: "#FF5252", background: "none", border: "1px solid #FF5252", borderRadius: "6px", padding: "6px 12px", cursor: "pointer" }}
+                  style={{
+                    fontSize: "13px",
+                    color: "#FF5252",
+                    background: "none",
+                    border: "1px solid #FF5252",
+                    borderRadius: "6px",
+                    padding: "6px 12px",
+                    cursor: "pointer",
+                  }}
                 >
                   Отвязать MAX
                 </button>
@@ -297,40 +354,94 @@ export default function EditUserModal({
                 <button
                   type="button"
                   onClick={handleConnectMax}
-                  style={{ fontSize: "13px", color: "#6f42c1", background: "none", border: "1px solid #6f42c1", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}
+                  style={{
+                    fontSize: "13px",
+                    color: "#6f42c1",
+                    background: "none",
+                    border: "1px solid #6f42c1",
+                    borderRadius: "6px",
+                    padding: "6px 12px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
                 >
                   <span style={{ fontSize: "16px" }}>⚡</span> Подключить MAX
                 </button>
               )}
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {(["max_daily_report", "max_manager_report"] as const).map((key) => (
-                <label key={key} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={form[key]}
-                    onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.checked }))}
-                  />
-                  {key === "max_daily_report" ? "Получать свои ежедневные отчеты (MAX)" : "Получать отчеты по всем менеджерам (MAX)"}
-                </label>
-              ))}
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+            >
+              {(["max_daily_report", "max_manager_report"] as const).map(
+                (key) => (
+                  <label
+                    key={key}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "13px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form[key]}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, [key]: e.target.checked }))
+                      }
+                    />
+                    {key === "max_daily_report"
+                      ? "Получать свои ежедневные отчеты (MAX)"
+                      : "Получать отчеты по всем менеджерам (MAX)"}
+                  </label>
+                ),
+              )}
             </div>
           </div>
 
           {/* Периодичность Telegram */}
-          <div style={{ marginBottom: "16px", padding: "16px", background: "#f5f7fa", borderRadius: "8px" }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>Периодичность Telegram отчетов</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {([
-                ["telegram_daily_report", "Ежедневный отчет"],
-                ["telegram_weekly_report", "Еженедельный отчет"],
-                ["telegram_monthly_report", "Ежемесячный отчет"],
-              ] as const).map(([key, label]) => (
-                <label key={key} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer" }}>
+          <div
+            style={{
+              marginBottom: "16px",
+              padding: "16px",
+              background: "#f5f7fa",
+              borderRadius: "8px",
+            }}
+          >
+            <h3
+              style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}
+            >
+              Периодичность Telegram отчетов
+            </h3>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+            >
+              {(
+                [
+                  ["telegram_daily_report", "Ежедневный отчет"],
+                  ["telegram_weekly_report", "Еженедельный отчет"],
+                  ["telegram_monthly_report", "Ежемесячный отчет"],
+                ] as const
+              ).map(([key, label]) => (
+                <label
+                  key={key}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={form[key]}
-                    onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.checked }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, [key]: e.target.checked }))
+                    }
                   />
                   {label}
                 </label>
@@ -339,29 +450,72 @@ export default function EditUserModal({
           </div>
 
           {/* Email Отчеты */}
-          <div style={{ marginBottom: "16px", padding: "16px", background: "#f5f7fa", borderRadius: "8px" }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>Email Отчеты</h3>
+          <div
+            style={{
+              marginBottom: "16px",
+              padding: "16px",
+              background: "#f5f7fa",
+              borderRadius: "8px",
+            }}
+          >
+            <h3
+              style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}
+            >
+              Email Отчеты
+            </h3>
             <div style={{ marginBottom: "12px" }}>
-              <label style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 600 }}>Email адрес</label>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "4px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                }}
+              >
+                Email адрес
+              </label>
               <input
                 type="email"
                 value={form.email}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                style={{ width: "100%", padding: "8px 12px", border: "1px solid #ddd", borderRadius: "6px", boxSizing: "border-box" }}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, email: e.target.value }))
+                }
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  boxSizing: "border-box",
+                }}
                 placeholder="otchet@mail.com"
               />
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {([
-                ["email_daily_report", "Ежедневный отчет"],
-                ["email_weekly_report", "Еженедельный отчет"],
-                ["email_monthly_report", "Ежемесячный отчет"],
-              ] as const).map(([key, label]) => (
-                <label key={key} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer" }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+            >
+              {(
+                [
+                  ["email_daily_report", "Ежедневный отчет"],
+                  ["email_weekly_report", "Еженедельный отчет"],
+                  ["email_monthly_report", "Ежемесячный отчет"],
+                ] as const
+              ).map(([key, label]) => (
+                <label
+                  key={key}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={form[key]}
-                    onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.checked }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, [key]: e.target.checked }))
+                    }
                   />
                   {label}
                 </label>
@@ -370,20 +524,49 @@ export default function EditUserModal({
           </div>
 
           {/* Параметры отчетов */}
-          <div style={{ marginBottom: "16px", padding: "16px", background: "#f5f7fa", borderRadius: "8px" }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>Параметры отчетов</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {([
-                ["report_detailed", "Подробный отчет (доп. метрики)"],
-                ["report_include_call_summaries", "Включать ИИ-саммари звонков (Email)"],
-                ["report_include_avg_value", "Средняя сумма сделки"],
-                ["report_include_avg_rating", "Средняя оценка качества"],
-              ] as const).map(([key, label]) => (
-                <label key={key} style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer" }}>
+          <div
+            style={{
+              marginBottom: "16px",
+              padding: "16px",
+              background: "#f5f7fa",
+              borderRadius: "8px",
+            }}
+          >
+            <h3
+              style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}
+            >
+              Параметры отчетов
+            </h3>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+            >
+              {(
+                [
+                  ["report_detailed", "Подробный отчет (доп. метрики)"],
+                  [
+                    "report_include_call_summaries",
+                    "Включать ИИ-саммари звонков (Email)",
+                  ],
+                  ["report_include_avg_value", "Средняя сумма сделки"],
+                  ["report_include_avg_rating", "Средняя оценка качества"],
+                ] as const
+              ).map(([key, label]) => (
+                <label
+                  key={key}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={form[key]}
-                    onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.checked }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, [key]: e.target.checked }))
+                    }
                   />
                   {label}
                 </label>
@@ -392,65 +575,174 @@ export default function EditUserModal({
           </div>
 
           {/* Настройки KPI */}
-          <div style={{ marginBottom: "16px", padding: "16px", background: "#f5f7fa", borderRadius: "8px" }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>Настройки KPI</h3>
-            {([
-              ["kpi_base_salary", "Базовый оклад (₽)"],
-              ["kpi_target_bonus", "Целевой бонус (₽)"],
-              ["kpi_target_talk_time_minutes", "Целевое время разговоров в месяц (мин)"],
-            ] as const).map(([key, label]) => (
+          <div
+            style={{
+              marginBottom: "16px",
+              padding: "16px",
+              background: "#f5f7fa",
+              borderRadius: "8px",
+            }}
+          >
+            <h3
+              style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}
+            >
+              Настройки KPI
+            </h3>
+            {(
+              [
+                ["kpi_base_salary", "Базовый оклад (₽)"],
+                ["kpi_target_bonus", "Целевой бонус (₽)"],
+                [
+                  "kpi_target_talk_time_minutes",
+                  "Целевое время разговоров в месяц (мин)",
+                ],
+              ] as const
+            ).map(([key, label]) => (
               <div key={key} style={{ marginBottom: "12px" }}>
-                <label style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 600 }}>{label}</label>
+                <label
+                  style={{
+                    display: "block",
+                    marginBottom: "4px",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                  }}
+                >
+                  {label}
+                </label>
                 <input
                   type="number"
                   value={form[key]}
-                  onChange={(e) => setForm((f) => ({ ...f, [key]: parseFloat(e.target.value) || 0 }))}
-                  style={{ width: "100%", padding: "8px 12px", border: "1px solid #ddd", borderRadius: "6px", boxSizing: "border-box" }}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      [key]: parseFloat(e.target.value) || 0,
+                    }))
+                  }
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    border: "1px solid #ddd",
+                    borderRadius: "6px",
+                    boxSizing: "border-box",
+                  }}
                 />
               </div>
             ))}
           </div>
 
           {/* Исключить из отчётов */}
-          <div style={{ marginBottom: "16px", padding: "16px", background: "#f5f7fa", borderRadius: "8px" }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}>Исключить из отчётов</h3>
-            <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", cursor: "pointer", marginBottom: "12px" }}>
+          <div
+            style={{
+              marginBottom: "16px",
+              padding: "16px",
+              background: "#f5f7fa",
+              borderRadius: "8px",
+            }}
+          >
+            <h3
+              style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}
+            >
+              Исключить из отчётов
+            </h3>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "13px",
+                cursor: "pointer",
+                marginBottom: "12px",
+              }}
+            >
               <input
                 type="checkbox"
                 checked={form.filter_exclude_answering_machine}
-                onChange={(e) => setForm((f) => ({ ...f, filter_exclude_answering_machine: e.target.checked }))}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    filter_exclude_answering_machine: e.target.checked,
+                  }))
+                }
               />
               Автоответчики
             </label>
             <div style={{ marginBottom: "8px" }}>
-              <label style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 600 }}>Звонки короче (сек)</label>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "4px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                }}
+              >
+                Звонки короче (сек)
+              </label>
               <input
                 type="number"
                 min={0}
                 value={form.filter_min_duration ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, filter_min_duration: parseInt(e.target.value, 10) || 0 }))}
-                style={{ width: "100%", padding: "8px 12px", border: "1px solid #ddd", borderRadius: "6px", boxSizing: "border-box" }}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    filter_min_duration: parseInt(e.target.value, 10) || 0,
+                  }))
+                }
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  boxSizing: "border-box",
+                }}
                 placeholder="0 — не исключать"
               />
             </div>
             <div>
-              <label style={{ display: "block", marginBottom: "4px", fontSize: "13px", fontWeight: 600 }}>Меньше реплик</label>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "4px",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                }}
+              >
+                Меньше реплик
+              </label>
               <input
                 type="number"
                 min={0}
                 value={form.filter_min_replicas ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, filter_min_replicas: parseInt(e.target.value, 10) || 0 }))}
-                style={{ width: "100%", padding: "8px 12px", border: "1px solid #ddd", borderRadius: "6px", boxSizing: "border-box" }}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    filter_min_replicas: parseInt(e.target.value, 10) || 0,
+                  }))
+                }
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  boxSizing: "border-box",
+                }}
                 placeholder="0 — не исключать"
               />
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+          <div
+            style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}
+          >
             <button
               type="button"
               onClick={onClose}
-              style={{ padding: "8px 16px", border: "1px solid #ddd", borderRadius: "6px", background: "white", cursor: "pointer" }}
+              style={{
+                padding: "8px 16px",
+                border: "1px solid #ddd",
+                borderRadius: "6px",
+                background: "white",
+                cursor: "pointer",
+              }}
             >
               Отмена
             </button>

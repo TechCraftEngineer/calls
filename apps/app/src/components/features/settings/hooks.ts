@@ -62,8 +62,7 @@ export function useSettings() {
         "code" in error &&
         (error as { code?: string }).code === "FORBIDDEN"
       ) {
-        alert("Доступ запрещен.");
-        router.push(paths.dashboard.root);
+        router.push(paths.forbidden);
       }
     } finally {
       setState((prev) => ({ ...prev, loading: false }));

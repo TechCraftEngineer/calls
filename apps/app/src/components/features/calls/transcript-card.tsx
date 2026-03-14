@@ -141,9 +141,7 @@ export function TranscriptCard({ call, transcript }: Props) {
             </div>
           ))
         ) : (
-          <div className="text-center py-10 text-[#999]">
-            Текст отсутствует
-          </div>
+          <div className="text-center py-10 text-[#999]">Текст отсутствует</div>
         )}
       </CardContent>
     </Card>

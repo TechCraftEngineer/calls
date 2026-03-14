@@ -18,6 +18,9 @@ export default function SignOutPage() {
         await logout();
         if (isMounted) {
           setIsLoggingOut(false);
+          // Очищаем куку воркспейса при выходе
+          document.cookie =
+            "active_workspace_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
           router.replace(paths.auth.signin);
         }
       } catch (err) {

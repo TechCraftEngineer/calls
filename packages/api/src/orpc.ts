@@ -33,7 +33,7 @@ function getWorkspaceIdFromHeaders(headers: Headers): string | null {
   }
   const cookie = headers.get("cookie");
   const match = cookie?.match(/\bactive_workspace_id=([^;]+)/);
-  if (match && match[1]) {
+  if (match?.[1]) {
     const trimmed = match[1].trim();
     if (trimmed.length > 0) return trimmed;
   }
@@ -159,5 +159,32 @@ export const workspaceProcedure = protectedProcedure.use(
         workspaceRole: context.workspaceRole,
       },
     });
+  },
+);
+
+export const workspaceMemberProcedure = workspaceProcedure;
+
+export const workspaceAdminProcedure = workspaceProcedure.use(
+  ({ context, next }) => {
+    if (
+      context.workspaceRole !== "admin" &&
+      context.workspaceRole !== "owner"
+    ) {
+      throw new ORPCError("FORBIDDEN", {
+        message: "Требуются права администратора workspace",
+      });
+    }
+    return next({ context });
+  },
+);
+
+export const workspaceOwnerProcedure = workspaceProcedure.use(
+  ({ context, next }) => {
+    if (context.workspaceRole !== "owner") {
+      throw new ORPCError("FORBIDDEN", {
+        message: "Требуются права владельца workspace",
+      });
+    }
+    return next({ context });
   },
 );

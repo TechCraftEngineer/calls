@@ -269,6 +269,12 @@ export const workspacesApi = {
   }> {
     return await api.workspaces.create(data);
   },
+
+  async setActive(
+    workspaceId: number,
+  ): Promise<{ success: boolean; workspaceId: number }> {
+    return await api.workspaces.setActive({ workspaceId });
+  },
 };
 
 // Reports API

@@ -2,7 +2,11 @@ import { randomBytes } from "node:crypto";
 import { promptsService, systemRepository, usersService } from "@calls/db";
 import { getBotUsername } from "@calls/telegram-bot";
 import { z } from "zod";
-import { adminProcedure, protectedProcedure } from "../orpc";
+import {
+  adminProcedure,
+  protectedProcedure,
+  workspaceProcedure,
+} from "../orpc";
 import { isAdminUser } from "../user-profile";
 
 async function canAccessUser(
@@ -259,9 +263,10 @@ export const usersRouter = {
       return { success: true, message: "Password changed successfully" };
     }),
 
-  telegramAuthUrl: protectedProcedure
+  telegramAuthUrl: workspaceProcedure
     .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
+      const { workspaceId } = context;
       const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id)))
         throw new Error("Not authorized");
@@ -270,7 +275,10 @@ export const usersRouter = {
       const token = randomBytes(16).toString("base64url");
       if (!(await usersService.saveTelegramConnectToken(input.user_id, token)))
         throw new Error("Failed to save token");
-      const botToken = await promptsService.getPrompt("telegram_bot_token");
+      const botToken = await promptsService.getPrompt(
+        "telegram_bot_token",
+        workspaceId,
+      );
       const botUsername = botToken?.trim()
         ? await getBotUsername(botToken)
         : "mango_react_bot";

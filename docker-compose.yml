@@ -87,11 +87,18 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      minio:
+        condition: service_started
     environment:
       POSTGRES_URL: postgres://postgres:password@postgres:5432/acme
       BACKEND_PORT: 8000
       CORS_ORIGINS: http://localhost:3000
       DEPLOYMENT_ENV: docker
+      AWS_S3_ENDPOINT: http://minio:9002
+      AWS_S3_FORCE_PATH_STYLE: "true"
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: password
+      AWS_S3_BUCKET: files.acme.com
     volumes:
       - ./apps/backend/data:/app/data
       - ./records:/app/records
@@ -106,14 +113,21 @@ services:
     container_name: jobs
     restart: always
     ports:
-      - 3100:3100
+      - 8000:8000
     depends_on:
       postgres:
         condition: service_healthy
+      minio:
+        condition: service_started
     environment:
       POSTGRES_URL: postgres://postgres:password@postgres:5432/acme
-      JOBS_PORT: 3100
+      JOBS_PORT: 8000
       DEPLOYMENT_ENV: docker
+      AWS_S3_ENDPOINT: http://minio:9002
+      AWS_S3_FORCE_PATH_STYLE: "true"
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: password
+      AWS_S3_BUCKET: files.acme.com
       MEGAFON_FTP_HOST: ${MEGAFON_FTP_HOST:-}
       MEGAFON_FTP_USER: ${MEGAFON_FTP_USER:-}
       MEGAFON_FTP_PASSWORD: ${MEGAFON_FTP_PASSWORD:-}

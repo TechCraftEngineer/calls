@@ -47,10 +47,7 @@ const defaultForm: AddUserForm = {
   kpi_target_talk_time_minutes: 0,
 };
 
-export default function AddUserModal({
-  onClose,
-  onSubmit,
-}: AddUserModalProps) {
+export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
   const [form, setForm] = useState<AddUserForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -58,7 +55,11 @@ export default function AddUserModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!form.username.trim() || !form.password.trim() || !form.givenName.trim()) {
+    if (
+      !form.username.trim() ||
+      !form.password.trim() ||
+      !form.givenName.trim()
+    ) {
       setError("Заполните логин, пароль и имя.");
       return;
     }
@@ -67,7 +68,9 @@ export default function AddUserModal({
       await onSubmit(form);
       onClose();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Ошибка при создании пользователя");
+      setError(
+        err instanceof Error ? err.message : "Ошибка при создании пользователя",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -85,7 +88,9 @@ export default function AddUserModal({
             <input
               type="text"
               value={form.username}
-              onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, username: e.target.value }))
+              }
               className={formInput}
               placeholder="example@mail.com"
               autoComplete="username"
@@ -96,7 +101,9 @@ export default function AddUserModal({
             <input
               type="password"
               value={form.password}
-              onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, password: e.target.value }))
+              }
               className={formInput}
               autoComplete="new-password"
             />
@@ -106,7 +113,9 @@ export default function AddUserModal({
             <input
               type="text"
               value={form.givenName}
-              onChange={(e) => setForm((f) => ({ ...f, givenName: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, givenName: e.target.value }))
+              }
               className={formInput}
             />
           </div>
@@ -115,7 +124,9 @@ export default function AddUserModal({
             <input
               type="text"
               value={form.familyName}
-              onChange={(e) => setForm((f) => ({ ...f, familyName: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, familyName: e.target.value }))
+              }
               className={formInput}
             />
           </div>
@@ -124,7 +135,9 @@ export default function AddUserModal({
             <input
               type="text"
               value={form.internalExtensions}
-              onChange={(e) => setForm((f) => ({ ...f, internalExtensions: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, internalExtensions: e.target.value }))
+              }
               className={formInput}
               placeholder="101, 102 или admin, ovchinnikov_nikita (МегаФон)"
             />
@@ -134,7 +147,9 @@ export default function AddUserModal({
             <input
               type="text"
               value={form.mobilePhones}
-              onChange={(e) => setForm((f) => ({ ...f, mobilePhones: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, mobilePhones: e.target.value }))
+              }
               className={formInput}
               placeholder="79XXXXXXXXX, можно несколько через запятую"
             />
@@ -148,18 +163,27 @@ export default function AddUserModal({
               <input
                 type="text"
                 value={form.telegramChatId}
-                onChange={(e) => setForm((f) => ({ ...f, telegramChatId: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, telegramChatId: e.target.value }))
+                }
                 className={formInput}
                 placeholder="ID чата пользователя"
               />
-              <p className="mt-1 text-[11px] text-[#666]">Чтобы узнать ID, напишите боту.</p>
+              <p className="mt-1 text-[11px] text-[#666]">
+                Чтобы узнать ID, напишите боту.
+              </p>
             </div>
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-2 text-[13px] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={form.telegram_daily_report}
-                  onChange={(e) => setForm((f) => ({ ...f, telegram_daily_report: e.target.checked }))}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      telegram_daily_report: e.target.checked,
+                    }))
+                  }
                 />
                 Получать свои ежедневные отчеты
               </label>
@@ -167,7 +191,12 @@ export default function AddUserModal({
                 <input
                   type="checkbox"
                   checked={form.telegram_manager_report}
-                  onChange={(e) => setForm((f) => ({ ...f, telegram_manager_report: e.target.checked }))}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      telegram_manager_report: e.target.checked,
+                    }))
+                  }
                 />
                 Получать отчеты по всем менеджерам (для руководителей)
               </label>
@@ -182,18 +211,27 @@ export default function AddUserModal({
               <input
                 type="text"
                 value={form.max_chat_id}
-                onChange={(e) => setForm((f) => ({ ...f, max_chat_id: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, max_chat_id: e.target.value }))
+                }
                 className={formInput}
                 placeholder="ID чата MAX"
               />
-              <p className="mt-1 text-[11px] text-[#666]">Заполняется автоматически при подключении</p>
+              <p className="mt-1 text-[11px] text-[#666]">
+                Заполняется автоматически при подключении
+              </p>
             </div>
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-2 text-[13px] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={form.max_daily_report}
-                  onChange={(e) => setForm((f) => ({ ...f, max_daily_report: e.target.checked }))}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      max_daily_report: e.target.checked,
+                    }))
+                  }
                 />
                 Получать свои ежедневные отчеты (MAX)
               </label>
@@ -201,14 +239,21 @@ export default function AddUserModal({
                 <input
                   type="checkbox"
                   checked={form.max_manager_report}
-                  onChange={(e) => setForm((f) => ({ ...f, max_manager_report: e.target.checked }))}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      max_manager_report: e.target.checked,
+                    }))
+                  }
                 />
                 Получать отчеты по всем менеджерам (MAX)
               </label>
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+          <div
+            style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}
+          >
             <button
               type="button"
               onClick={onClose}

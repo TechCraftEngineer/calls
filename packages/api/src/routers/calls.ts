@@ -2,8 +2,8 @@ import { createChatBot } from "@calls/ai";
 import type { callsService, promptsService } from "@calls/db";
 import { z } from "zod";
 import {
-  adminProcedure,
   protectedProcedure,
+  workspaceAdminProcedure,
   workspaceProcedure,
 } from "../orpc";
 
@@ -11,6 +11,7 @@ async function generateRecommendations(
   callId: string,
   calls: typeof callsService,
   prompts: typeof promptsService,
+  workspaceId: string,
 ): Promise<{ recommendations: string[] }> {
   try {
     const call = await calls.getCall(callId);
@@ -21,7 +22,7 @@ async function generateRecommendations(
     const transcript = await calls.getTranscriptByCallId(callId);
     const evaluation = await calls.getEvaluation(callId);
 
-    let transcriptText = transcript?.text ?? transcript?.raw_text ?? "";
+    let transcriptText = transcript?.text ?? transcript?.rawText ?? "";
     if (!transcriptText.trim()) {
       throw new Error(
         "Транскрипт звонка пуст — невозможно сформировать рекомендации",
@@ -37,7 +38,7 @@ async function generateRecommendations(
     }
 
     const systemPrompt =
-      (await prompts.getPrompt("manager_recommendations")) ??
+      (await prompts.getPrompt("manager_recommendations", workspaceId)) ??
       `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
 
     const apiKey = process.env.OPENROUTER_API_KEY;
@@ -48,10 +49,10 @@ async function generateRecommendations(
     }
 
     const contextParts: string[] = [];
-    if (evaluation?.value_explanation)
-      contextParts.push(`Оценка ценности: ${evaluation.value_explanation}`);
-    if (evaluation?.manager_feedback)
-      contextParts.push(`Обратная связь: ${evaluation.manager_feedback}`);
+    if (evaluation?.valueExplanation)
+      contextParts.push(`Оценка ценности: ${evaluation.valueExplanation}`);
+    if (evaluation?.managerFeedback)
+      contextParts.push(`Обратная связь: ${evaluation.managerFeedback}`);
 
     const userMessage = `Транскрипт звонка:
 ---
@@ -234,9 +235,10 @@ export const callsRouter = {
 
       const totalPages = Math.ceil(totalItems / input.per_page) || 1;
       const metrics = await callsService.calculateMetrics(workspaceId!);
-      const managers = (await context.usersService.getAllUsers()).filter(
-        (u: any) => (u as Record<string, unknown>).internalExtensions,
-      );
+      const members = await context.workspacesService.getMembers(workspaceId!);
+      const managers = members
+        .map((m: any) => m.user)
+        .filter((u: any) => (u as Record<string, unknown>).internalExtensions);
 
       return {
         calls: callsWithTranscripts,
@@ -306,14 +308,18 @@ export const callsRouter = {
         input.call_id,
         context.callsService,
         context.promptsService,
+        context.workspaceId,
       );
     }),
 
-  delete: adminProcedure
+  delete: workspaceAdminProcedure
     .input(z.object({ call_id: z.string() }))
     .handler(async ({ input, context }) => {
       const call = await context.callsService.getCall(input.call_id);
       if (!call) throw new Error("Call not found");
+      if (call.workspace_id !== context.workspaceId) {
+        throw new Error("Call not found");
+      }
       if (!(await context.callsService.deleteCall(input.call_id)))
         throw new Error("Failed to delete call");
       await context.systemRepository.addActivityLog(

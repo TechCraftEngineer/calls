@@ -33,4 +33,8 @@ export interface PipelineResult {
   rawText: string;
   normalizedText: string;
   metadata: TranscriptMetadata;
+  summary?: string;
+  sentiment?: string;
+  title?: string;
+  callTopic?: string;
 }
