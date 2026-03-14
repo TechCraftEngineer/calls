@@ -5,21 +5,44 @@
  * making it easy to import tables and types from a single location.
  */
 
+// Export new SaaS tables
+export {
+  type AuditLog,
+  auditLog,
+  type NewAuditLog,
+} from "./audit-log";
 // Export Better Auth types
-export type {
-  Account,
-  Session,
-  User,
-  Verification,
-} from "./auth";
+export type { Account, Session, User, Verification } from "./auth";
 // Export Better Auth tables
 export { account, session, user, verification } from "./auth";
+export {
+  type Invoice,
+  invoices,
+  type NewInvoice,
+  type NewSubscription,
+  type NewUsageMetric,
+  type Subscription,
+  subscriptionPlan,
+  subscriptionStatus,
+  subscriptions,
+  type UsageMetric,
+  usageMetrics,
+} from "./billing";
 // Export all table definitions
 export { callEvaluations, calls, transcripts } from "./calls";
+export {
+  type FeatureFlag,
+  featureFlags,
+  type NewFeatureFlag,
+} from "./feature-flags";
 export type { FileType } from "./files";
 export { FILE_TYPES, files } from "./files";
+export {
+  type Invitation,
+  invitations,
+  type NewInvitation,
+} from "./invitations";
 export { activityLog, prompts } from "./system";
-
 // Export all TypeScript types
 export type {
   ActivityLog,
@@ -41,6 +64,8 @@ export type {
   Workspace,
   WorkspaceMember,
 } from "./types";
+
+// Export deprecated user settings (for migration)
 export {
   type NewUserFilterSettings,
   type UserFilterSettings,
@@ -62,6 +87,16 @@ export {
   type UserReportSettings,
   userReportSettings,
 } from "./user-report-settings";
+// Export consolidated user settings
+export {
+  type FilterSettings,
+  type KpiSettings,
+  type NewUserWorkspaceSettings,
+  type NotificationSettings,
+  type ReportSettings,
+  type UserWorkspaceSettings,
+  userWorkspaceSettings,
+} from "./user-workspace-settings";
 export {
   workspaceMemberRole,
   workspaceMembers,

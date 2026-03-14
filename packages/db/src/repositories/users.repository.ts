@@ -1,10 +1,11 @@
 /**
  * Users repository - handles all database operations for users
  * Now using Better Auth schema with proper soft delete and UUID
+ * Password management is handled by Better Auth Admin plugin
  */
 
 import { randomUUID } from "node:crypto";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, isNull } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 import type { CreateUserData, UpdateUserData } from "../types/users.types";
@@ -32,10 +33,27 @@ export const usersRepository = {
       .select()
       .from(schema.user)
       .where(eq(schema.user.username, username))
+      .where(isNull(schema.user.deletedAt))
       .limit(1);
 
     const user = result[0] ?? null;
-    if (user && user.deletedAt) return null;
+    if (user && !user.givenName && user.name) {
+      const parts = user.name.split(/\s+/, 2);
+      user.givenName = parts[0] ?? "";
+      user.familyName = parts[1] ?? "";
+    }
+    return user;
+  },
+
+  async findWithAllData(username: string): Promise<schema.User | null> {
+    const result = await db
+      .select()
+      .from(schema.user)
+      .where(eq(schema.user.username, username))
+      .where(isNull(schema.user.deletedAt))
+      .limit(1);
+
+    const user = result[0] ?? null;
     if (user && !user.givenName && user.name) {
       const parts = user.name.split(/\s+/, 2);
       user.givenName = parts[0] ?? "";
@@ -49,18 +67,17 @@ export const usersRepository = {
       const results = await db
         .select()
         .from(schema.user)
+        .where(isNull(schema.user.deletedAt))
         .orderBy(desc(schema.user.createdAt));
 
-      return results
-        .filter((user) => !user.deletedAt)
-        .map((user) => {
-          if (!user.givenName && user.name) {
-            const parts = user.name.split(/\s+/, 2);
-            user.givenName = parts[0] ?? "";
-            user.familyName = parts[1] ?? "";
-          }
-          return user;
-        });
+      return results.map((user) => {
+        if (!user.givenName && user.name) {
+          const parts = user.name.split(/\s+/, 2);
+          user.givenName = parts[0] ?? "";
+          user.familyName = parts[1] ?? "";
+        }
+        return user;
+      });
     } catch (error) {
       console.error("[UsersRepository] Error in findAllActive:", {
         error: error instanceof Error ? error.message : String(error),
@@ -154,6 +171,154 @@ export const usersRepository = {
       .update(schema.user)
       .set({
         telegramChatId: null,
+      })
+      .where(eq(schema.user.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  async updateReportAndKpiSettings(
+    userId: string,
+    data: Partial<{
+      filterExcludeAnsweringMachine: boolean;
+      filterMinDuration: number;
+      filterMinReplicas: number;
+      telegramDailyReport: boolean;
+      telegramManagerReport: boolean;
+      telegramWeeklyReport: boolean;
+      telegramMonthlyReport: boolean;
+      telegramSkipWeekends: boolean;
+      maxDailyReport: boolean;
+      maxManagerReport: boolean;
+      emailDailyReport: boolean;
+      emailWeeklyReport: boolean;
+      emailMonthlyReport: boolean;
+      reportIncludeCallSummaries: boolean;
+      reportDetailed: boolean;
+      reportIncludeAvgValue: boolean;
+      reportIncludeAvgRating: boolean;
+      reportManagedUserIds: string | null;
+      kpiBaseSalary: number;
+      kpiTargetBonus: number;
+      kpiTargetTalkTimeMinutes: number;
+    }>,
+  ): Promise<boolean> {
+    const allowedFields = [
+      "filterExcludeAnsweringMachine",
+      "filterMinDuration",
+      "filterMinReplicas",
+      "telegramDailyReport",
+      "telegramManagerReport",
+      "telegramWeeklyReport",
+      "telegramMonthlyReport",
+      "telegramSkipWeekends",
+      "maxDailyReport",
+      "maxManagerReport",
+      "emailDailyReport",
+      "emailWeeklyReport",
+      "emailMonthlyReport",
+      "reportIncludeCallSummaries",
+      "reportDetailed",
+      "reportIncludeAvgValue",
+      "reportIncludeAvgRating",
+      "reportManagedUserIds",
+      "kpiBaseSalary",
+      "kpiTargetBonus",
+      "kpiTargetTalkTimeMinutes",
+    ];
+
+    const updateData = Object.fromEntries(
+      Object.entries(data).filter(([key]) => allowedFields.includes(key)),
+    );
+
+    if (Object.keys(updateData).length === 0) {
+      return true;
+    }
+
+    const result = await db
+      .update(schema.user)
+      .set(updateData)
+      .where(eq(schema.user.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  async updateFilters(
+    userId: string,
+    filterExcludeAnsweringMachine: boolean,
+    filterMinDuration: number,
+    filterMinReplicas: number,
+  ): Promise<boolean> {
+    const result = await db
+      .update(schema.user)
+      .set({
+        filterExcludeAnsweringMachine,
+        filterMinDuration,
+        filterMinReplicas,
+      })
+      .where(eq(schema.user.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  async updateTelegramSettings(
+    userId: string,
+    telegramDailyReport: boolean,
+    telegramManagerReport: boolean,
+  ): Promise<boolean> {
+    const result = await db
+      .update(schema.user)
+      .set({
+        telegramDailyReport,
+        telegramManagerReport,
+      })
+      .where(eq(schema.user.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  // Password management is now handled by Better Auth Admin plugin
+  // Use auth.api.setUserPassword() instead
+
+  async saveTelegramConnectToken(
+    userId: string,
+    token: string,
+  ): Promise<boolean> {
+    const result = await db
+      .update(schema.user)
+      .set({
+        telegramConnectToken: token,
+      })
+      .where(eq(schema.user.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  async findByTelegramConnectToken(token: string): Promise<schema.User | null> {
+    const result = await db
+      .select()
+      .from(schema.user)
+      .where(eq(schema.user.telegramConnectToken, token))
+      .limit(1);
+    return result[0] ?? null;
+  },
+
+  async saveMaxConnectToken(userId: string, token: string): Promise<boolean> {
+    const result = await db
+      .update(schema.user)
+      .set({
+        maxConnectToken: token,
+      })
+      .where(eq(schema.user.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  async disconnectMax(userId: string): Promise<boolean> {
+    const result = await db
+      .update(schema.user)
+      .set({
+        maxChatId: null,
       })
       .where(eq(schema.user.id, userId));
 

@@ -36,7 +36,7 @@ export const files = pgTable(
     filename: text("filename").notNull(), // оригинальное имя файла
     originalName: text("original_name").notNull(), // оригинальное имя файла
     mimeType: text("mime_type").notNull(),
-    sizeBytes: integer("size_bytes").notNull(),
+    sizeBytes: integer("size_bytes").notNull().$check(sql`size_bytes >= 0`),
     fileType: text("file_type").notNull(), // из FILE_TYPES
     storageKey: text("storage_key").notNull().unique(), // ключ в object storage
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),

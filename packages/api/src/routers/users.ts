@@ -105,15 +105,30 @@ const updateReportSettingsSchema = z.object({
 });
 
 const updateKpiSettingsSchema = z.object({
-  kpi_base_salary: z.number().min(0, "Значение не может быть отрицательным").optional(),
-  kpi_target_bonus: z.number().min(0, "Значение не может быть отрицательным").optional(),
-  kpi_target_talk_time_minutes: z.number().min(0, "Значение не может быть отрицательным").optional(),
+  kpi_base_salary: z
+    .number()
+    .min(0, "Значение не может быть отрицательным")
+    .optional(),
+  kpi_target_bonus: z
+    .number()
+    .min(0, "Значение не может быть отрицательным")
+    .optional(),
+  kpi_target_talk_time_minutes: z
+    .number()
+    .min(0, "Значение не может быть отрицательным")
+    .optional(),
 });
 
 const updateFilterSettingsSchema = z.object({
   filter_exclude_answering_machine: z.boolean().optional(),
-  filter_min_duration: z.number().min(0, "Значение не может быть отрицательным").optional(),
-  filter_min_replicas: z.number().min(0, "Значение не может быть отрицательным").optional(),
+  filter_min_duration: z
+    .number()
+    .min(0, "Значение не может быть отрицательным")
+    .optional(),
+  filter_min_replicas: z
+    .number()
+    .min(0, "Значение не может быть отрицательным")
+    .optional(),
 });
 
 export const usersRouter = {
@@ -242,10 +257,7 @@ export const usersRouter = {
         }
 
         if (d.email !== undefined) {
-          await usersService.updateUserEmail(
-            input.user_id,
-            d.email,
-          );
+          await usersService.updateUserEmail(input.user_id, d.email);
         }
 
         // Обновляем фильтры
@@ -360,7 +372,9 @@ export const usersRouter = {
     .input(
       z.object({
         user_id: z.string(),
-        new_password: z.string().min(1),
+        new_password: z
+          .string()
+          .min(8, "Пароль должен содержать минимум 8 символов"),
         confirm_password: z.string().min(1),
       }),
     )
@@ -368,25 +382,37 @@ export const usersRouter = {
       const user = await usersService.getUser(input.user_id);
       if (!user)
         throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+
       if (input.new_password !== input.confirm_password)
         throw new ORPCError("BAD_REQUEST", {
           message: "Пароли не совпадают",
         });
-      if (
-        !(await usersService.updateUserPassword(
-          input.user_id,
-          input.new_password,
-        ))
-      )
+
+      // Use Better Auth admin API to set password
+      try {
+        // Import auth from app-server
+        const { auth } = await import("@calls/app-server/auth");
+
+        await auth.api.setUserPassword({
+          body: {
+            userId: input.user_id,
+            newPassword: input.new_password,
+          },
+        });
+
+        await systemRepository.addActivityLog(
+          "info",
+          `Password changed for user: ${user.username}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+
+        return { success: true, message: "Password changed successfully" };
+      } catch (error) {
+        console.error("[Users] Error changing password:", error);
         throw new ORPCError("INTERNAL_SERVER_ERROR", {
           message: "Не удалось изменить пароль",
         });
-      await systemRepository.addActivityLog(
-        "info",
-        `Password changed for user: ${user.username}`,
-        (context.user as Record<string, unknown>).username as string,
-      );
-      return { success: true, message: "Password changed successfully" };
+      }
     }),
 
   telegramAuthUrl: workspaceProcedure
@@ -568,7 +594,9 @@ export const usersRouter = {
     }),
 
   updateTelegramSettings: workspaceProcedure
-    .input(z.object({ user_id: z.string(), data: updateTelegramSettingsSchema }))
+    .input(
+      z.object({ user_id: z.string(), data: updateTelegramSettingsSchema }),
+    )
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
