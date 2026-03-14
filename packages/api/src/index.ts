@@ -9,7 +9,12 @@ export {
   type AuthLike,
   type BackendContext,
   createBackendContext,
+  createBackendContext as createContext,
 } from "./orpc";
-export { type BackendRouter, backendRouter } from "./orpc-root";
+export {
+  type BackendRouter,
+  backendRouter,
+  backendRouter as appRouter,
+} from "./orpc-root";
 export { createBackendApiWithContext } from "./server";
 export { extractUserFields } from "./user-profile";

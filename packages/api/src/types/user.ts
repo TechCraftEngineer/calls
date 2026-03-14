@@ -132,11 +132,17 @@ export function extractUserFields(user: UserLike) {
   };
 }
 
+/** Legacy admin usernames для обратной совместимости (миграция на internalExtensions === "all") */
+const LEGACY_ADMIN_USERNAMES = ["admin@mango", "admin@gmail.com"];
+
 /**
  * Проверка прав администратора на основе internalExtensions.
  * internalExtensions === "all" — доступ ко всем данным.
+ * Для обратной совместимости: admin@mango, admin@gmail.com считаются админами.
  */
 export function isAdminUser(u: UserLike): boolean {
+  const username = (u.username ?? u.displayUsername ?? u.email ?? "") as string;
+  if (LEGACY_ADMIN_USERNAMES.includes(username)) return true;
   const { internalExtensions } = extractUserFields(u);
   return (
     String(internalExtensions ?? "")

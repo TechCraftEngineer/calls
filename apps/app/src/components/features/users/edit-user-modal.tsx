@@ -1,8 +1,9 @@
 "use client";
 
 import { Input } from "@calls/ui";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import api from "@/lib/api";
+import { useORPC } from "@/orpc/react";
 import {
   type EditUserForm,
   formFieldWrap,
@@ -16,7 +17,7 @@ import {
 interface EditUserModalProps {
   user: ManagedUser;
   onClose: () => void;
-  onSubmit: (userId: number, form: EditUserForm) => Promise<void>;
+  onSubmit: (userId: string | number, form: EditUserForm) => Promise<void>;
   onRefresh: () => void;
 }
 
@@ -58,10 +59,34 @@ export default function EditUserModal({
   onSubmit,
   onRefresh,
 }: EditUserModalProps) {
+  const orpc = useORPC();
+  const queryClient = useQueryClient();
   const [form, setForm] = useState<EditUserForm>(() => buildEditForm(user));
   const [editUser, setEditUser] = useState<ManagedUser>(user);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string>("");
+
+  const disconnectTelegramMutation = useMutation(
+    orpc.users.disconnectTelegram.mutationOptions({
+      onSuccess: () => {
+        setForm((f) => ({ ...f, telegramChatId: "" }));
+        setEditUser((u) => ({ ...u, telegramChatId: "" }));
+        onRefresh();
+      },
+      onError: () => alert("Ошибка при отвязке Telegram"),
+    }),
+  );
+
+  const disconnectMaxMutation = useMutation(
+    orpc.users.disconnectMax.mutationOptions({
+      onSuccess: () => {
+        setForm((f) => ({ ...f, max_chat_id: "" }));
+        setEditUser((u) => ({ ...u, max_chat_id: "" }));
+        onRefresh();
+      },
+      onError: () => alert("Ошибка при отвязке MAX"),
+    }),
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,34 +106,47 @@ export default function EditUserModal({
     }
   };
 
-  const handleDisconnectTelegram = useCallback(async () => {
-    if (!confirm("Отвязать Telegram аккаунт?")) return;
-    try {
-      await api.users.disconnectTelegram({ user_id: editUser.id });
-      setForm((f) => ({ ...f, telegramChatId: "" }));
-      setEditUser((u) => ({ ...u, telegramChatId: "" }));
-      onRefresh();
-    } catch (_e) {
-      alert("Ошибка при отвязке Telegram");
-    }
-  }, [editUser.id, onRefresh]);
+  const telegramAuthUrlMutation = useMutation(
+    orpc.users.telegramAuthUrl.mutationOptions({
+      onSuccess: (res) => {
+        if (res.url) {
+          window.open(res.url, "_blank");
+        }
+      },
+      onError: () => alert("Ошибка при создании ссылки для Telegram"),
+    }),
+  );
 
-  const handleConnectTelegram = useCallback(async () => {
-    try {
-      const res = await api.users.telegramAuthUrl({ user_id: editUser.id });
-      if (res.url) {
-        window.open(res.url, "_blank");
-      }
-    } catch (_e) {
-      alert("Ошибка при создании ссылки для Telegram");
-    }
-  }, [editUser.id]);
+  const maxAuthUrlMutation = useMutation(
+    orpc.users.maxAuthUrl.mutationOptions({
+      onSuccess: (res) => {
+        const url = "url" in res ? res.url : undefined;
+        if (typeof url === "string") {
+          window.open(url, "_blank");
+        } else if (res.manual_instruction) {
+          const cmd =
+            res.manual_instruction.split(": ")[1] ?? res.manual_instruction;
+          alert(`Для подключения отправьте боту команду:\n${cmd}`);
+        }
+      },
+      onError: () => alert("Ошибка при создании ссылки для MAX"),
+    }),
+  );
+
+  const handleDisconnectTelegram = useCallback(() => {
+    if (!confirm("Отвязать Telegram аккаунт?")) return;
+    disconnectTelegramMutation.mutate({ user_id: String(editUser.id) });
+  }, [editUser.id, disconnectTelegramMutation]);
+
+  const handleConnectTelegram = useCallback(() => {
+    telegramAuthUrlMutation.mutate({ user_id: String(editUser.id) });
+  }, [editUser.id, telegramAuthUrlMutation]);
 
   const handleCheckTelegramConnection = useCallback(async () => {
     try {
-      const list = await api.users.list();
+      const list = await queryClient.fetchQuery(orpc.users.list.queryOptions());
       const arr = (Array.isArray(list) ? list : []) as ManagedUser[];
-      const updated = arr.find((u) => u.id === editUser.id);
+      const updated = arr.find((u) => String(u.id) === String(editUser.id));
       if (updated) {
         setEditUser(updated);
         setForm((f) => ({
@@ -124,34 +162,16 @@ export default function EditUserModal({
     } catch (_e) {
       alert("Ошибка при проверке подключения");
     }
-  }, [editUser.id, onRefresh]);
+  }, [editUser.id, onRefresh, queryClient, orpc.users.list]);
 
-  const handleDisconnectMax = useCallback(async () => {
+  const handleDisconnectMax = useCallback(() => {
     if (!confirm("Отвязать MAX аккаунт?")) return;
-    try {
-      await api.users.disconnectMax({ user_id: editUser.id });
-      setForm((f) => ({ ...f, max_chat_id: "" }));
-      setEditUser((u) => ({ ...u, max_chat_id: "" }));
-      onRefresh();
-    } catch (_e) {
-      alert("Ошибка при отвязке MAX");
-    }
-  }, [editUser.id, onRefresh]);
+    disconnectMaxMutation.mutate({ user_id: String(editUser.id) });
+  }, [editUser.id, disconnectMaxMutation]);
 
-  const handleConnectMax = useCallback(async () => {
-    try {
-      const res = await api.users.maxAuthUrl({ user_id: editUser.id });
-      if (res.url) {
-        window.open(res.url, "_blank");
-      } else if (res.manual_instruction) {
-        alert(
-          `Для подключения отправьте боту команду:\n${res.manual_instruction.split(": ")[1]}`,
-        );
-      }
-    } catch (_e) {
-      alert("Ошибка при создании ссылки для MAX");
-    }
-  }, [editUser.id]);
+  const handleConnectMax = useCallback(() => {
+    maxAuthUrlMutation.mutate({ user_id: String(editUser.id) });
+  }, [editUser.id, maxAuthUrlMutation]);
 
   return (
     <div className={modalOverlayClasses} onClick={onClose}>
@@ -160,11 +180,13 @@ export default function EditUserModal({
           Редактировать пользователя
         </h2>
         <p className="m-0 mb-4 text-[13px] text-[#666]">
-          Логин: {editUser.username}
+          Логин: {String(editUser.username ?? "")}
         </p>
 
         <form onSubmit={handleSubmit}>
-          {error && <p className="text-[#c00] mb-3 text-sm">{error}</p>}
+          {error ? (
+            <p className="text-[#c00] mb-3 text-sm">{String(error)}</p>
+          ) : null}
 
           {/* Основные поля */}
           <div className={formFieldWrap}>

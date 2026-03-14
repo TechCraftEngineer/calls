@@ -71,12 +71,14 @@ export const updatePrompts = workspaceAdminProcedure
           });
         }
 
+        const username =
+          (context.user as Record<string, unknown>)?.username ?? "system";
         await settingsService.updateMegafonFtpSettings(
           input.megafon_ftp_host,
           input.megafon_ftp_user,
           input.megafon_ftp_password,
           workspaceId,
-          (context.user as Record<string, unknown>).username as string,
+          String(username),
         );
       }
     }
@@ -93,10 +95,12 @@ export const updatePrompts = workspaceAdminProcedure
             workspaceId,
           );
           const maskedValue = maskSensitiveData(key, p.value ?? "");
+          const username =
+            (context.user as Record<string, unknown>)?.username ?? "system";
           await systemRepository.addActivityLog(
             "info",
             `Prompt updated: ${key} = ${maskedValue}`,
-            (context.user as Record<string, unknown>).username as string,
+            String(username),
             workspaceId,
           );
         }

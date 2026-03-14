@@ -6,6 +6,7 @@ import { useWorkspace } from "@/components/features/workspaces/workspace-provide
 import AudioPlayer from "@/components/ui/audio-player";
 import api, { API_BASE_URL } from "@/lib/api";
 import type { User } from "@/lib/auth";
+import { restartCallAnalysis } from "@/lib/restart-analysis";
 
 interface CallDetail {
   id: number;
@@ -196,19 +197,11 @@ export default function CallDetailModal({
 
     try {
       setRestarting(true);
-
-      const transcribeResponse = await api.calls.transcribe({
-        call_id: callId,
+      await restartCallAnalysis({
+        callId,
         model: selectedModel,
+        loadData,
       });
-      if (!transcribeResponse?.success) throw new Error("Transcription failed");
-
-      // Шаг 2: Переоценка звонка (пока не реализована — игнорируем ошибку)
-      try {
-        await api.calls.evaluate({ call_id: callId });
-      } catch (_evalError) {}
-
-      await loadData();
       alert("Анализ успешно перезапущен!");
     } catch (error: unknown) {
       console.error("Failed to restart analysis:", error);

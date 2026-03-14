@@ -48,7 +48,7 @@ export function createBackendApiWithContext(ctx: BackendContext) {
     users: {
       list: () =>
         callProc(backendRouter.users.list as ProcedureWithCallable, ctx),
-      get: (input: { user_id: number }) =>
+      get: (input: { user_id: string }) =>
         callProc(backendRouter.users.get as ProcedureWithCallable, ctx, input),
       create: (input: {
         username: string;
@@ -63,20 +63,20 @@ export function createBackendApiWithContext(ctx: BackendContext) {
           ctx,
           input,
         ),
-      update: (input: { user_id: number; data: Record<string, unknown> }) =>
+      update: (input: { user_id: string; data: Record<string, unknown> }) =>
         callProc(
           backendRouter.users.update as ProcedureWithCallable,
           ctx,
           input,
         ),
-      delete: (input: { user_id: number }) =>
+      delete: (input: { user_id: string }) =>
         callProc(
           backendRouter.users.delete as ProcedureWithCallable,
           ctx,
           input,
         ),
       changePassword: (input: {
-        user_id: number;
+        user_id: string;
         new_password: string;
         confirm_password: string;
       }) =>
@@ -85,25 +85,25 @@ export function createBackendApiWithContext(ctx: BackendContext) {
           ctx,
           input,
         ),
-      telegramAuthUrl: (input: { user_id: number }) =>
+      telegramAuthUrl: (input: { user_id: string }) =>
         callProc(
           backendRouter.users.telegramAuthUrl as ProcedureWithCallable,
           ctx,
           input,
         ),
-      disconnectTelegram: (input: { user_id: number }) =>
+      disconnectTelegram: (input: { user_id: string }) =>
         callProc(
           backendRouter.users.disconnectTelegram as ProcedureWithCallable,
           ctx,
           input,
         ),
-      maxAuthUrl: (input: { user_id: number }) =>
+      maxAuthUrl: (input: { user_id: string }) =>
         callProc(
           backendRouter.users.maxAuthUrl as ProcedureWithCallable,
           ctx,
           input,
         ),
-      disconnectMax: (input: { user_id: number }) =>
+      disconnectMax: (input: { user_id: string }) =>
         callProc(
           backendRouter.users.disconnectMax as ProcedureWithCallable,
           ctx,

@@ -10,6 +10,7 @@ import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
+import { restartCallAnalysis } from "@/lib/restart-analysis";
 import type {
   CallDetail,
   EvaluationDetail,
@@ -101,28 +102,11 @@ export default function CallDetailPage() {
     if (!call || !callId || restarting) return;
     try {
       setRestarting(true);
-
-      // Шаг 1: Транскрипция с выбранной моделью
-      const transcribeResponse = await api.calls.transcribe({
-        call_id: callId,
+      await restartCallAnalysis({
+        callId,
         model: selectedModel,
+        loadData,
       });
-      if (!transcribeResponse?.success) {
-        throw new Error("Transcription failed");
-      }
-
-      // Шаг 2: Переоценка звонка (пока не реализована — игнорируем ошибку)
-      try {
-        await api.calls.evaluate({ call_id: callId });
-      } catch (evalError) {
-        console.warn(
-          "Evaluation failed, but transcription succeeded:",
-          evalError,
-        );
-      }
-
-      // Шаг 3: Обновляем данные на странице
-      await loadData();
       alert("Анализ успешно перезапущен!");
     } catch (error: unknown) {
       console.error("Failed to restart analysis:", error);

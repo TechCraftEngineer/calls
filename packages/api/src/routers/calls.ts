@@ -382,9 +382,14 @@ export const callsRouter = {
     }),
 };
 
+/** Legacy admin usernames — полный доступ к номерам (обратная совместимость) */
+const LEGACY_ADMIN_USERNAMES = ["admin@mango", "admin@gmail.com"];
+
 function getInternalNumbersForUser(
   user: Record<string, unknown>,
 ): string[] | undefined {
+  const username = (user.username ?? user.email ?? "") as string;
+  if (LEGACY_ADMIN_USERNAMES.includes(username)) return undefined;
   const nums = user.internalExtensions as string | undefined;
   if (!nums || String(nums).trim().toLowerCase() === "all") return undefined;
   return (

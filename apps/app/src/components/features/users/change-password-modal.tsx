@@ -15,7 +15,7 @@ import {
 interface ChangePasswordModalProps {
   user: ManagedUser;
   onClose: () => void;
-  onSubmit: (userId: number, form: PasswordForm) => Promise<void>;
+  onSubmit: (userId: string | number, form: PasswordForm) => Promise<void>;
 }
 
 export default function ChangePasswordModal({
@@ -28,7 +28,7 @@ export default function ChangePasswordModal({
     confirm_password: "",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,16 +59,16 @@ export default function ChangePasswordModal({
           Сменить пароль
         </h2>
         <p style={{ margin: "0 0 16px", fontSize: "13px", color: "#666" }}>
-          Пользователь: {user.username}
+          Пользователь: {String(user.username ?? "")}
         </p>
         <form onSubmit={handleSubmit}>
-          {error && (
+          {error ? (
             <p
               style={{ color: "#c00", marginBottom: "12px", fontSize: "14px" }}
             >
-              {error}
+              {String(error)}
             </p>
-          )}
+          ) : null}
           <div className={formFieldWrap}>
             <label className={formLabel}>Новый пароль *</label>
             <PasswordInput

@@ -20,7 +20,7 @@ interface UsersTableProps {
   loading: boolean;
   onEdit: (user: ManagedUser) => void;
   onChangePassword: (user: ManagedUser) => void;
-  onDelete: (userId: number, username: string) => void;
+  onDelete: (userId: string | number, username: string) => void;
 }
 
 function formatDate(dateStr?: string): string {
@@ -74,7 +74,7 @@ export default function UsersTable({
                     {u.id}
                   </TableCell>
                   <TableCell className="font-semibold text-[#333]">
-                    {u.username}
+                    {String(u.username ?? "")}
                   </TableCell>
                   <TableCell className="text-[#555]">
                     {u.givenName || "—"}
@@ -108,7 +108,7 @@ export default function UsersTable({
                         Пароль
                       </Button>
                       <div className="w-20 flex justify-end items-center">
-                        {currentUser?.id === u.id ? (
+                        {String(currentUser?.id) === String(u.id) ? (
                           <span className="text-[11px] text-[#999] font-semibold uppercase tracking-wide">
                             ЭТО ВЫ
                           </span>
@@ -116,7 +116,9 @@ export default function UsersTable({
                           <Button
                             variant="ghost"
                             className="h-8 text-xs p-0 bg-transparent border-none text-[#FF5252] font-semibold hover:opacity-70"
-                            onClick={() => onDelete(u.id, u.username)}
+                            onClick={() =>
+                              onDelete(u.id, String(u.username ?? ""))
+                            }
                           >
                             Удалить
                           </Button>

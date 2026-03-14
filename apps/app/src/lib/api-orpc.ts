@@ -124,8 +124,8 @@ export const usersApi = {
     return await api.users.list();
   },
 
-  async get(userId: number): Promise<User> {
-    return await api.users.get({ user_id: userId });
+  async get(userId: string | number): Promise<User> {
+    return await api.users.get({ user_id: String(userId) });
   },
 
   async create(data: {
@@ -139,48 +139,46 @@ export const usersApi = {
     return await api.users.create(data);
   },
 
-  async update(userId: number, data: Partial<User>): Promise<User> {
-    return await api.users.update({ user_id: userId, data });
+  async update(userId: string | number, data: Partial<User>): Promise<User> {
+    return await api.users.update({ user_id: String(userId), data });
   },
 
-  async delete(userId: number): Promise<{ success: boolean; message: string }> {
-    return await api.users.delete({ user_id: userId });
+  async delete(
+    userId: string | number,
+  ): Promise<{ success: boolean; message: string }> {
+    return await api.users.delete({ user_id: String(userId) });
   },
 
   async changePassword(
-    userId: number,
+    userId: string | number,
     newPassword: string,
     confirmPassword: string,
   ): Promise<{ success: boolean; message: string }> {
     return await api.users.changePassword({
-      user_id: userId,
+      user_id: String(userId),
       new_password: newPassword,
       confirm_password: confirmPassword,
     });
   },
 
-  async telegramAuthUrl(userId: number): Promise<{ url?: string }> {
-    return await api.users.telegramAuthUrl({ user_id: userId });
+  async telegramAuthUrl(userId: string | number): Promise<{ url?: string }> {
+    return await api.users.telegramAuthUrl({ user_id: String(userId) });
   },
 
-  async disconnectTelegram(
-    userId: number,
-  ): Promise<{ success: boolean; message: string }> {
-    return await api.users.disconnectTelegram({ user_id: userId });
+  async disconnectTelegram(userId: string | number): Promise<void> {
+    return await api.users.disconnectTelegram({ user_id: String(userId) });
   },
 
-  async maxAuthUrl(userId: number): Promise<{
+  async maxAuthUrl(userId: string | number): Promise<{
     url?: string;
     manual_instruction?: string;
     token?: string;
   }> {
-    return await api.users.maxAuthUrl({ user_id: userId });
+    return await api.users.maxAuthUrl({ user_id: String(userId) });
   },
 
-  async disconnectMax(
-    userId: number,
-  ): Promise<{ success: boolean; message: string }> {
-    return await api.users.disconnectMax({ user_id: userId });
+  async disconnectMax(userId: string | number): Promise<void> {
+    return await api.users.disconnectMax({ user_id: String(userId) });
   },
 };
 

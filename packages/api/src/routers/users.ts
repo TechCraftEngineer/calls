@@ -1,14 +1,10 @@
 import { randomBytes } from "node:crypto";
 import { promptsService, systemRepository, usersService } from "@calls/db";
 import { getBotUsername } from "@calls/telegram-bot";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import type { WorkspaceRole } from "../orpc";
-import {
-  adminProcedure,
-  protectedProcedure,
-  workspaceAdminProcedure,
-  workspaceProcedure,
-} from "../orpc";
+import { workspaceAdminProcedure, workspaceProcedure } from "../orpc";
 import { isAdminUser } from "../user-profile";
 
 async function canAccessUser(
@@ -74,15 +70,31 @@ const _changePasswordSchema = z.object({
 });
 
 export const usersRouter = {
-  list: workspaceAdminProcedure.handler(async () => {
+  list: workspaceAdminProcedure.handler(async ({ context }) => {
+    const { workspaceId, workspacesService } = context;
     try {
-      return await usersService.getAllUsers();
+      const rows = await workspacesService.getMembers(workspaceId);
+      return rows.map((r: { user: Record<string, unknown> }) => {
+        const u = r.user;
+        return {
+          id: u.id,
+          username: u.username ?? u.email,
+          name: u.name ?? "",
+          givenName: u.givenName,
+          familyName: u.familyName,
+          internalExtensions: u.internalExtensions,
+          mobilePhones: u.mobilePhones,
+          created_at: (u.createdAt as Date)?.toISOString?.() ?? u.createdAt,
+          telegramChatId: u.telegramChatId,
+        };
+      });
     } catch (error) {
-      console.error("[Users] Error in getAllUsers:", {
+      console.error("[Users] Error in list workspace members:", {
         error: error instanceof Error ? error.message : String(error),
       });
-      // Возвращаем пустой массив вместо падения
-      return [];
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Не удалось загрузить список пользователей",
+      });
     }
   }),
 
@@ -91,9 +103,12 @@ export const usersRouter = {
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
-        throw new Error("Not authorized");
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому пользователю",
+        });
       const user = await usersService.getUser(input.user_id);
-      if (!user) throw new Error("User not found");
+      if (!user)
+        throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
       return user;
     }),
 
@@ -101,7 +116,10 @@ export const usersRouter = {
     .input(userCreateSchema)
     .handler(async ({ input, context }) => {
       const existing = await usersService.getUserByUsername(input.username);
-      if (existing) throw new Error("User with this username already exists");
+      if (existing)
+        throw new ORPCError("CONFLICT", {
+          message: "Пользователь с таким логином уже существует",
+        });
       const id = await usersService.createUser({
         username: input.username,
         password: input.password,
@@ -110,13 +128,23 @@ export const usersRouter = {
         internalExtensions: input.internalExtensions ?? null,
         mobilePhones: input.mobilePhones ?? null,
       });
+      if (context.workspaceId) {
+        await context.workspacesService.addMember({
+          workspaceId: context.workspaceId,
+          userId: id,
+          role: "member",
+        });
+      }
       await systemRepository.addActivityLog(
         "info",
         `User created: ${input.username}`,
         (context.user as Record<string, unknown>).username as string,
       );
       const user = await usersService.getUser(id);
-      if (!user) throw new Error("Failed to create user");
+      if (!user)
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Не удалось создать пользователя",
+        });
       return user;
     }),
 
@@ -125,11 +153,14 @@ export const usersRouter = {
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
-        throw new Error("Not authorized");
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому пользователю",
+        });
 
       // Получаем пользователя до обновления для логирования
       const user = await usersService.getUser(input.user_id);
-      if (!user) throw new Error("User not found");
+      if (!user)
+        throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
       const d = input.data;
       const u = user as Record<string, unknown>;
@@ -216,7 +247,10 @@ export const usersRouter = {
 
         // Получаем обновленные данные
         const updated = await usersService.getUser(input.user_id);
-        if (!updated) throw new Error("Failed to retrieve updated user");
+        if (!updated)
+          throw new ORPCError("INTERNAL_SERVER_ERROR", {
+            message: "Не удалось получить обновлённые данные",
+          });
 
         return updated;
       } catch (error) {
@@ -235,18 +269,37 @@ export const usersRouter = {
     .input(z.object({ user_id: z.string() }))
     .handler(async ({ input, context }) => {
       const user = await usersService.getUser(input.user_id);
-      if (!user) throw new Error("User not found");
+      if (!user)
+        throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
       const adminId = (context.user as Record<string, unknown>).id as string;
       if (adminId === input.user_id)
-        throw new Error("Cannot delete your own account");
-      if (!(await usersService.deleteUser(input.user_id)))
-        throw new Error("Failed to delete user");
+        throw new ORPCError("BAD_REQUEST", {
+          message: "Нельзя удалить свой аккаунт",
+        });
+      if (context.workspaceId) {
+        await context.workspacesService.removeMember(
+          context.workspaceId,
+          input.user_id,
+        );
+      } else {
+        if (!(await usersService.deleteUser(input.user_id)))
+          throw new ORPCError("INTERNAL_SERVER_ERROR", {
+            message: "Не удалось удалить пользователя",
+          });
+      }
       await systemRepository.addActivityLog(
         "info",
-        `User deleted: ${user.username}`,
+        context.workspaceId
+          ? `Пользователь исключён из workspace: ${user.username}`
+          : `Пользователь удалён: ${user.username}`,
         (context.user as Record<string, unknown>).username as string,
       );
-      return { success: true, message: `User ${user.username} deleted` };
+      return {
+        success: true,
+        message: context.workspaceId
+          ? `Пользователь ${user.username} исключён из workspace`
+          : `Пользователь ${user.username} удалён`,
+      };
     }),
 
   changePassword: workspaceAdminProcedure
@@ -259,16 +312,21 @@ export const usersRouter = {
     )
     .handler(async ({ input, context }) => {
       const user = await usersService.getUser(input.user_id);
-      if (!user) throw new Error("User not found");
+      if (!user)
+        throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
       if (input.new_password !== input.confirm_password)
-        throw new Error("Passwords do not match");
+        throw new ORPCError("BAD_REQUEST", {
+          message: "Пароли не совпадают",
+        });
       if (
         !(await usersService.updateUserPassword(
           input.user_id,
           input.new_password,
         ))
       )
-        throw new Error("Failed to change password");
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Не удалось изменить пароль",
+        });
       await systemRepository.addActivityLog(
         "info",
         `Password changed for user: ${user.username}`,
@@ -283,12 +341,17 @@ export const usersRouter = {
       const { workspaceId } = context;
       const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
-        throw new Error("Not authorized");
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому пользователю",
+        });
       const user = await usersService.getUser(input.user_id);
-      if (!user) throw new Error("User not found");
+      if (!user)
+        throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
       const token = randomBytes(16).toString("base64url");
       if (!(await usersService.saveTelegramConnectToken(input.user_id, token)))
-        throw new Error("Failed to save token");
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Не удалось сохранить токен",
+        });
       const botToken = await promptsService.getPrompt(
         "telegram_bot_token",
         workspaceId,
@@ -304,9 +367,13 @@ export const usersRouter = {
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
-        throw new Error("Not authorized");
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому пользователю",
+        });
       if (!(await usersService.disconnectTelegram(input.user_id)))
-        throw new Error("Failed to disconnect Telegram");
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Не удалось отключить Telegram",
+        });
       return { success: true };
     }),
 
@@ -315,12 +382,17 @@ export const usersRouter = {
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
-        throw new Error("Not authorized");
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому пользователю",
+        });
       const user = await usersService.getUser(input.user_id);
-      if (!user) throw new Error("User not found");
+      if (!user)
+        throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
       const token = randomBytes(16).toString("base64url");
       if (!(await usersService.saveMaxConnectToken(input.user_id, token)))
-        throw new Error("Failed to save token");
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Не удалось сохранить токен",
+        });
       return {
         manual_instruction: `Отправьте боту команду: /start ${token}`,
         token,
@@ -332,9 +404,13 @@ export const usersRouter = {
     .handler(async ({ input, context }) => {
       const userId = (context.user as Record<string, unknown>).id as string;
       if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
-        throw new Error("Not authorized");
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому пользователю",
+        });
       if (!(await usersService.disconnectMax(input.user_id)))
-        throw new Error("Failed to disconnect MAX");
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Не удалось отключить MAX",
+        });
       return { success: true };
     }),
 };
