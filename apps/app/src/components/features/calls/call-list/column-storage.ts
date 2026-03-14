@@ -8,7 +8,7 @@ export function loadColumnOrder(): string[] {
   if (typeof window === "undefined") return DEFAULT_COLUMN_ORDER;
 
   try {
-    let saved = localStorage.getItem(COLUMN_ORDER_STORAGE_KEY);
+    const saved = localStorage.getItem(COLUMN_ORDER_STORAGE_KEY);
     if (!saved) {
       return DEFAULT_COLUMN_ORDER;
     }

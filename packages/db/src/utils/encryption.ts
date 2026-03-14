@@ -7,8 +7,6 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
-const AUTH_TAG_LENGTH = 16;
-const SALT_LENGTH = 64;
 
 /**
  * Get encryption key from environment
@@ -63,9 +61,14 @@ export function decrypt(encryptedData: string): string {
       throw new Error("Invalid encrypted data format");
     }
 
-    const iv = Buffer.from(parts[0]!, "base64");
-    const authTag = Buffer.from(parts[1]!, "base64");
-    const encrypted = parts[2]!;
+    const [ivPart, authTagPart, encryptedPart] = parts;
+    if (!ivPart || !authTagPart || !encryptedPart) {
+      throw new Error("Invalid encrypted data format");
+    }
+
+    const iv = Buffer.from(ivPart, "base64");
+    const authTag = Buffer.from(authTagPart, "base64");
+    const encrypted = encryptedPart;
 
     const decipher = createDecipheriv(ALGORITHM, key, iv);
     decipher.setAuthTag(authTag);

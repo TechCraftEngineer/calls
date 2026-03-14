@@ -16,13 +16,7 @@ import {
   COLUMNS,
   DEFAULT_COLUMN_ORDER,
 } from "./constants";
-import type {
-  CallListProps,
-  CallWithDetails,
-  ColumnConfig,
-  SortKey,
-  SortOrder,
-} from "./types";
+import type { CallListProps, ColumnConfig, SortKey, SortOrder } from "./types";
 
 export default function CallList({
   calls,

@@ -112,7 +112,7 @@ export default function UsersPage() {
         );
 
         const optimisticUser: ManagedUser = {
-          id: "temp-" + Date.now(),
+          id: `temp-${Date.now()}`,
           username: newUserData.username,
           givenName: newUserData.givenName,
           familyName: newUserData.familyName || "",

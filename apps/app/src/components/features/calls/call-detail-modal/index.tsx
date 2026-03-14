@@ -151,7 +151,7 @@ export default function CallDetailModal({
     } finally {
       setDeleting(false);
     }
-  }, [call, callId, deleting, onCallDeleted, onClose]);
+  }, [call, callId, deleting, onCallDeleted, onClose, showToast]);
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === overlayRef.current && !showDeleteConfirm) onClose();

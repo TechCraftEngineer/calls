@@ -4,7 +4,7 @@ import { paths } from "@calls/config";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { isMobileDevice } from "@/lib/utils";
-import type { CallWithDetails, ColumnConfig } from "./types";
+import type { CallWithDetails } from "./types";
 
 const ROW_BG_LIGHT = "#ffffff";
 const ROW_BG_DARK = "#F1F1F3";
