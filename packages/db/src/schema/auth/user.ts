@@ -67,7 +67,5 @@ export const user = pgTable("users", {
   
   // Интеграция с Telegram
   telegramConnectToken: text("telegram_connect_token"),
-  
-  // Пароль (для Better Auth совместимости)
-  passwordHash: text("password_hash"),
+
 });
