@@ -24,7 +24,8 @@ async function pollUntilDone(operationId: string): Promise<{
     chunks?: Array<{ alternatives?: Array<{ text?: string }> }>;
   };
 }> {
-  const apiKey = env.YANDEX_SPEECHKIT_API_KEY!;
+  const apiKey = env.YANDEX_SPEECHKIT_API_KEY;
+  if (!apiKey) throw new Error("YANDEX_SPEECHKIT_API_KEY is required");
   const res = await fetch(`${YANDEX_OPERATIONS_BASE}/${operationId}`, {
     headers: { Authorization: `Api-Key ${apiKey}` },
   });

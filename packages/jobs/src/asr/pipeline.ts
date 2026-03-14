@@ -36,7 +36,8 @@ function selectBest(results: AsrResult[]): {
     return { text: "", source: "merged", raw: results };
   }
   if (valid.length === 1) {
-    const sole = valid[0]!;
+    const sole = valid[0];
+    if (!sole) return { text: "", source: "merged", raw: results };
     return {
       text: sole.text,
       source: sole.source,
@@ -45,8 +46,9 @@ function selectBest(results: AsrResult[]): {
   }
 
   valid.sort((a, b) => scoreResult(b) - scoreResult(a));
-  const best = valid[0]!;
-  const second = valid[1]!;
+  const best = valid[0];
+  const second = valid[1];
+  if (!best || !second) return { text: "", source: "merged", raw: results };
   const diff = scoreResult(best) - scoreResult(second);
 
   // Если разница маленькая — объединяем

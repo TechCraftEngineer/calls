@@ -8,7 +8,6 @@ import { promptsRepository } from "../repositories/prompts.repository";
 import { systemRepository } from "../repositories/system.repository";
 import { usersRepository } from "../repositories/users.repository";
 import { workspacesRepository } from "../repositories/workspaces.repository";
-import { AuthService } from "./auth.service";
 import { CallsService } from "./calls.service";
 import { FilesService } from "./files.service";
 import { PromptsService } from "./prompts.service";
@@ -29,8 +28,6 @@ export const settingsService = new SettingsService(
   promptsRepository,
   systemRepository,
 );
-export const authService = new AuthService(usersRepository);
-
 // Export repositories for direct access if needed
 export {
   callsRepository,

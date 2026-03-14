@@ -179,7 +179,7 @@ export async function generateWithAi(
     throw new Error("generateWithAi: требуется prompt или messages");
   }
 
-  const promptOrMessages = prompt ? { prompt } : { messages: messages! };
+  const promptOrMessages = prompt ? { prompt } : { messages: messages ?? [] };
 
   return aiGenerateText({
     ...other,

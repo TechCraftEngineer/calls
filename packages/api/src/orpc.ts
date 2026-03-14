@@ -4,7 +4,6 @@
  */
 
 import {
-  authService,
   callsService,
   promptsService,
   systemRepository,
@@ -44,7 +43,6 @@ export async function createBackendContext(opts: {
   headers: Headers;
   auth?: AuthLike;
 }): Promise<{
-  authService: any;
   callsService: any;
   promptsService: any;
   systemRepository: any;
@@ -99,7 +97,6 @@ export async function createBackendContext(opts: {
   }
 
   return {
-    authService,
     callsService,
     promptsService,
     systemRepository,

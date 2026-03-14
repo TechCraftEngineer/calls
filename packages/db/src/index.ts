@@ -4,7 +4,6 @@ export { db } from "./client";
 export { db as dbEdge } from "./client.edge";
 export * from "./schema";
 export {
-  authService,
   callsService,
   filesService,
   promptsService,

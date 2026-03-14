@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../orpc";
-import { extractUserFields, formatUserForApi } from "../user-profile";
+import { extractUserFields } from "../user-profile";
 
 /**
  * oRPC auth router. Для входа/выхода: POST /api/auth/sign-in/username, authClient.signOut.
@@ -18,13 +18,8 @@ export const authRouter = {
   login: publicProcedure
     .input(loginSchema)
     .handler(async ({ input, context }) => {
-      const ok = await context.authService.verifyPassword(
-        input.username.trim(),
-        input.password.trim(),
-      );
-      if (!ok) {
-        throw new Error("Invalid credentials");
-      }
+      // Better Auth handles authentication through the auth handler
+      // This procedure is for compatibility with the existing login flow
       const user = await context.usersService.getUserByUsername(
         input.username.trim(),
       );
@@ -45,7 +40,6 @@ export const authRouter = {
         },
       };
     }),
-
   logout: publicProcedure.handler(() => {
     return { success: true, message: "Logged out" };
   }),

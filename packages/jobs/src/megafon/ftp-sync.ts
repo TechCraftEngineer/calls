@@ -4,7 +4,6 @@
  */
 
 import { Writable } from "node:stream";
-import { env } from "@calls/config";
 import { callsService, filesService, workspacesService } from "@calls/db";
 import { validateFtpCredentials } from "@calls/shared";
 import { Client } from "basic-ftp";

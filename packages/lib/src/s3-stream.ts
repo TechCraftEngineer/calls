@@ -15,11 +15,17 @@ let s3Client: S3Client | null = null;
 
 function getS3Client(): S3Client {
   if (!s3Client) {
+    const accessKey = env.AWS_ACCESS_KEY_ID;
+    const secretKey = env.AWS_SECRET_ACCESS_KEY;
+    if (!accessKey || !secretKey)
+      throw new Error(
+        "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are required",
+      );
     s3Client = new S3Client({
       region: env.AWS_REGION,
       credentials: {
-        accessKeyId: env.AWS_ACCESS_KEY_ID!,
-        secretAccessKey: env.AWS_SECRET_ACCESS_KEY!,
+        accessKeyId: accessKey,
+        secretAccessKey: secretKey,
       },
       ...(env.AWS_S3_ENDPOINT
         ? {
@@ -38,7 +44,8 @@ export async function uploadStreamToS3(
   contentType: string,
   contentLength?: number,
 ): Promise<{ key: string; bucket: string; etag?: string }> {
-  const bucket = env.AWS_S3_BUCKET!;
+  const bucket = env.AWS_S3_BUCKET;
+  if (!bucket) throw new Error("AWS_S3_BUCKET is required");
   const params: PutObjectCommandInput = {
     Bucket: bucket,
     Key: key,

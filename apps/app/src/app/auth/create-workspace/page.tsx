@@ -89,6 +89,7 @@ function CreateWorkspaceForm() {
         slug: data.slug,
       });
 
+      // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
       document.cookie = `active_workspace_id=${workspace.id}; path=/; max-age=31536000; SameSite=Lax`;
       router.push(paths.root);
     } catch (err: unknown) {

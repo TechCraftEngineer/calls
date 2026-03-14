@@ -61,6 +61,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         if (current.id !== cookieValue) {
           const isSecure = window.location.protocol === "https:";
           const cookieString = `active_workspace_id=${current.id}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${isSecure ? "; Secure" : ""}`;
+          // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
           document.cookie = cookieString;
         }
       }
@@ -85,6 +86,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       // Set cookie with security flags
       const isSecure = window.location.protocol === "https:";
       const cookieString = `active_workspace_id=${workspaceId}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${isSecure ? "; Secure" : ""}`;
+      // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
       document.cookie = cookieString;
 
       // Call API to set active workspace

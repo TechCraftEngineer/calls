@@ -129,6 +129,7 @@ export function TranscriptCard({ call, transcript }: Props) {
                 <div className="speaker-name-sm">{m.speaker}</div>
                 <div
                   className="speech-bubble"
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized with sanitizeHtml
                   dangerouslySetInnerHTML={{
                     __html: sanitizeHtml(m.text, {
                       allowedTags: ["b", "i", "em", "strong", "br", "p"],

@@ -37,7 +37,9 @@ function getS3Client(): S3Client {
 
 function getBucketName(): string {
   getS3Client();
-  return bucketName!;
+  const name = bucketName;
+  if (!name) throw new Error("AWS_S3_BUCKET is required");
+  return name;
 }
 
 export async function createPresignedUrl(key: string): Promise<string> {

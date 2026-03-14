@@ -41,7 +41,7 @@ export function useApiData<T>(
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // biome-ignore lint/correctness/useExhaustiveDependencies: deps passed dynamically by caller
   }, deps);
 
   return {

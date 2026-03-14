@@ -1,11 +1,7 @@
 import { createChatBot } from "@calls/ai";
 import type { callsService, promptsService } from "@calls/db";
 import { z } from "zod";
-import {
-  protectedProcedure,
-  workspaceAdminProcedure,
-  workspaceProcedure,
-} from "../orpc";
+import { workspaceAdminProcedure, workspaceProcedure } from "../orpc";
 
 async function generateRecommendations(
   callId: string,
@@ -34,7 +30,7 @@ async function generateRecommendations(
       console.warn(
         `[recommendations] Transcript too long (${transcriptText.length} chars), truncating`,
       );
-      transcriptText = transcriptText.substring(0, 50000) + "...";
+      transcriptText = `${transcriptText.substring(0, 50000)}...`;
     }
 
     const systemPrompt =
@@ -150,7 +146,7 @@ function parseRecommendationsJson(text: string): string[] {
 
   // Последний fallback: возвращаем весь текст как одну рекомендацию
   const fallbackText =
-    trimmed.length > 200 ? trimmed.substring(0, 200) + "..." : trimmed;
+    trimmed.length > 200 ? `${trimmed.substring(0, 200)}...` : trimmed;
   return [fallbackText];
 }
 

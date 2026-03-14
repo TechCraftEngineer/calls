@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import type { User } from "@/lib/auth";
 import {
-  getDisplayName,
   getFamilyName,
   getGivenName,
   getInternalExtensions,

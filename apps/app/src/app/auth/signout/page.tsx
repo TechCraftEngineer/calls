@@ -19,6 +19,7 @@ export default function SignOutPage() {
         if (isMounted) {
           setIsLoggingOut(false);
           // Очищаем куку воркспейса при выходе
+          // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
           document.cookie =
             "active_workspace_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
           router.replace(paths.auth.signin);

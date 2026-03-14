@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface AudioPlayerProps {
   src: string;
@@ -89,12 +89,12 @@ export default function AudioPlayer({
     setCurrentTime(time);
   };
 
-  const applySeek = (value: number) => {
+  const applySeek = useCallback((value: number) => {
     if (audioRef.current && !Number.isNaN(value)) {
       audioRef.current.currentTime = value;
     }
     setIsDragging(false);
-  };
+  }, []);
 
   const handleSeekStart = () => {
     setIsDragging(true);

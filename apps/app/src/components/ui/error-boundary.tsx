@@ -13,7 +13,10 @@ interface ErrorBoundaryProps {
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -42,7 +45,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 }
 
-function DefaultErrorFallback({ error, reset }: { error?: Error; reset: () => void }) {
+function DefaultErrorFallback({
+  error,
+  reset,
+}: {
+  error?: Error;
+  reset: () => void;
+}) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
@@ -65,7 +74,8 @@ function DefaultErrorFallback({ error, reset }: { error?: Error; reset: () => vo
           Что-то пошло не так
         </h2>
         <p className="text-gray-600 mb-4">
-          Произошла ошибка при загрузке приложения. Попробуйте обновить страницу.
+          Произошла ошибка при загрузке приложения. Попробуйте обновить
+          страницу.
         </p>
         {process.env.NODE_ENV === "development" && error && (
           <details className="mb-4 text-left">
@@ -90,7 +100,7 @@ function DefaultErrorFallback({ error, reset }: { error?: Error; reset: () => vo
 
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  errorBoundaryProps?: Omit<ErrorBoundaryProps, "children">
+  errorBoundaryProps?: Omit<ErrorBoundaryProps, "children">,
 ) {
   const WrappedComponent = (props: P) => (
     <ErrorBoundary {...errorBoundaryProps}>
@@ -99,6 +109,6 @@ export function withErrorBoundary<P extends object>(
   );
 
   WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
-  
+
   return WrappedComponent;
 }

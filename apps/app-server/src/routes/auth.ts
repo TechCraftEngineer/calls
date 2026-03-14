@@ -7,10 +7,8 @@ import {
   createBackendContext,
   extractUserFields,
 } from "@calls/api";
-import { authService, usersService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { Hono } from "hono";
-import { setCookie } from "hono/cookie";
 import type { Auth } from "../auth";
 import {
   createCacheKey,
@@ -75,35 +73,7 @@ export function createAuthRoutes(auth: Auth) {
       );
     }
 
-    // Fallback: legacy storage (during migration from Python backend)
-    const ok = await authService.verifyPassword(username, password);
-    if (!ok) {
-      return c.json({ success: false, detail: "Invalid credentials" }, 401);
-    }
-    const user = await usersService.getUserByUsername(username);
-    if (!user) {
-      return c.json({ success: false, detail: "Invalid credentials" }, 401);
-    }
-    setCookie(c, "session", username, {
-      httpOnly: true,
-      secure: c.req.url.startsWith("https"),
-      sameSite: "Lax",
-      path: "/",
-      maxAge: 86400 * 7,
-    });
-    const u = user as Record<string, unknown>;
-    const fields = extractUserFields(u);
-    return c.json({
-      success: true,
-      message: "Login successful",
-      user: {
-        id: user.id,
-        username: fields.username,
-        name: user.name,
-        givenName: fields.givenName,
-        familyName: fields.familyName,
-      },
-    });
+    return c.json({ success: false, detail: "Invalid credentials" }, 401);
   });
 
   r.post("/logout", async (c) => {

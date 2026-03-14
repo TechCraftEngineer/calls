@@ -1,10 +1,6 @@
 import { promptsService, settingsService, systemRepository } from "@calls/db";
 import { z } from "zod";
-import {
-  workspaceAdminProcedure,
-  workspaceMemberProcedure,
-  workspaceProcedure,
-} from "../orpc";
+import { workspaceAdminProcedure, workspaceProcedure } from "../orpc";
 
 // Список чувствительных ключей для маскирования в логах
 const SENSITIVE_KEYS = [
