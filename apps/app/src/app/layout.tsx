@@ -6,6 +6,7 @@ import { AuthProvider } from "@/components/features/misc/auth-provider";
 import { WorkspaceProvider } from "@/components/features/workspaces/workspace-provider";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { ORPCReactProvider } from "@/orpc/react";
+import { ToastProvider } from "@/components/ui/toast";
 
 const inter = Inter({
   subsets: ["latin", "cyrillic"],
@@ -73,12 +74,14 @@ export default function RootLayout({
         <ErrorBoundary>
           <AuthProvider>
             <ErrorBoundary>
-              <ORPCReactProvider>
-                <WorkspaceProvider>
-                  {children}
-                  <ChatWidget />
-                </WorkspaceProvider>
-              </ORPCReactProvider>
+              <ToastProvider>
+                <ORPCReactProvider>
+                  <WorkspaceProvider>
+                    {children}
+                    <ChatWidget />
+                  </WorkspaceProvider>
+                </ORPCReactProvider>
+              </ToastProvider>
             </ErrorBoundary>
           </AuthProvider>
         </ErrorBoundary>

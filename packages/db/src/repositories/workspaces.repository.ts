@@ -2,7 +2,7 @@
  * Workspaces repository - handles database operations for workspaces and members
  */
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 
@@ -176,6 +176,26 @@ export const workspacesRepository = {
       )
       .where(eq(schema.workspaceMembers.userId, userId))
       .orderBy(desc(schema.workspaceMembers.createdAt));
+  },
+
+  async getUsersNotInWorkspace(workspaceId: string) {
+    return db
+      .select({
+        id: schema.user.id,
+        name: schema.user.name,
+        email: schema.user.email,
+        username: schema.user.username,
+      })
+      .from(schema.user)
+      .leftJoin(
+        schema.workspaceMembers,
+        and(
+          eq(schema.workspaceMembers.userId, schema.user.id),
+          eq(schema.workspaceMembers.workspaceId, workspaceId)
+        )
+      )
+      .where(isNull(schema.workspaceMembers.userId))
+      .orderBy(schema.user.name);
   },
 
   async getActiveWorkspaceId(userId: string): Promise<string | null> {

@@ -15,6 +15,8 @@ import {
 } from "@calls/ui";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
+import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import AudioPlayerModal from "@/components/features/calls/audio-player-modal";
 import CallList from "@/components/features/calls/call-list";
 import Header from "@/components/layout/header";
@@ -22,6 +24,7 @@ import Sidebar from "@/components/layout/sidebar";
 import CustomDropdown from "@/components/ui/custom-dropdown";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
+import { useSession } from "@/lib/better-auth";
 
 interface Call {
   id: number;
@@ -73,6 +76,7 @@ interface MetricsData {
 /** Главная страница — список звонков. Доступна только авторизованным. */
 export default function HomePage() {
   const router = useRouter();
+  const { data: session, isPending: sessionPending } = useSession();
   const [user, setUser] = useState<User | null>(null);
   const [calls, setCalls] = useState<CallWithDetails[]>([]);
   const [_metrics, setMetrics] = useState<MetricsData>({
@@ -84,7 +88,7 @@ export default function HomePage() {
   const [pagination, setPagination] = useState<Pagination>({
     total: 0,
     page: 1,
-    per_page: 15,
+    per_page: PAGINATION_CONSTANTS.DEFAULT_PER_PAGE,
     total_pages: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -98,34 +102,35 @@ export default function HomePage() {
     value: [] as number[],
     operator: [] as string[],
   });
+  const debouncedFilters = useDebounce(filters, PAGINATION_CONSTANTS.SEARCH_DEBOUNCE_MS);
   const [activeAudio, setActiveAudio] = useState<{
     filename: string;
     number: string;
   } | null>(null);
 
   const loadData = useCallback(async () => {
+    if (sessionPending) return;
+    if (!session?.user) return;
+
     try {
       setLoading(true);
       const callsParams = {
         page: pagination.page,
         per_page: pagination.per_page,
-        q: filters.q || undefined,
-        date_from: filters.date_from || undefined,
-        date_to: filters.date_to || undefined,
-        direction: filters.direction !== "all" ? filters.direction : undefined,
-        manager: filters.manager || undefined,
-        status: filters.status !== "all" ? filters.status : undefined,
-        value: filters.value?.length ? filters.value : undefined,
-        operator: filters.operator?.length ? filters.operator : undefined,
+        q: debouncedFilters.q || undefined,
+        date_from: debouncedFilters.date_from || undefined,
+        date_to: debouncedFilters.date_to || undefined,
+        direction: debouncedFilters.direction !== "all" ? debouncedFilters.direction : undefined,
+        manager: debouncedFilters.manager || undefined,
+        status: debouncedFilters.status !== "all" ? debouncedFilters.status : undefined,
+        value: debouncedFilters.value?.length ? debouncedFilters.value : undefined,
+        operator: debouncedFilters.operator?.length ? debouncedFilters.operator : undefined,
       };
       const [currentUser, result] = await Promise.all([
         getCurrentUser(),
         api.calls.list(callsParams),
       ]);
-      if (!currentUser) {
-        router.push(paths.auth.signin);
-        return;
-      }
+      if (!currentUser) return;
       setUser(currentUser);
 
       setCalls((result.calls || []) as CallWithDetails[]);
@@ -140,7 +145,7 @@ export default function HomePage() {
       setPagination({
         total: (result.pagination?.total ?? 0) as number,
         page: (result.pagination?.page ?? 1) as number,
-        per_page: (result.pagination?.per_page ?? 15) as number,
+        per_page: (result.pagination?.per_page ?? PAGINATION_CONSTANTS.DEFAULT_PER_PAGE) as number,
         total_pages: (result.pagination?.total_pages ?? 0) as number,
       });
     } catch (error: unknown) {
@@ -155,7 +160,21 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.per_page, filters, router]);
+  }, [
+    pagination.page,
+    pagination.per_page,
+    debouncedFilters,
+    router,
+    session?.user,
+    sessionPending,
+  ]);
+
+  // Редирект на signin только когда сессия точно загружена и пользователя нет
+  useEffect(() => {
+    if (!sessionPending && !session?.user) {
+      router.push(paths.auth.signin);
+    }
+  }, [sessionPending, session?.user, router]);
 
   useEffect(() => {
     loadData();
@@ -310,7 +329,7 @@ export default function HomePage() {
                   </Button>
 
                   {Array.from(
-                    { length: Math.min(pagination.total_pages, 5) },
+                    { length: Math.min(pagination.total_pages, PAGINATION_CONSTANTS.MAX_VISIBLE_PAGES) },
                     (_, i) => i + 1,
                   ).map((p) => (
                     <Button
@@ -327,7 +346,7 @@ export default function HomePage() {
                     </Button>
                   ))}
 
-                  {pagination.total_pages > 5 && (
+                  {pagination.total_pages > PAGINATION_CONSTANTS.MAX_VISIBLE_PAGES && (
                     <>
                       <span className="text-[#999] text-[13px]">...</span>
                       <Button

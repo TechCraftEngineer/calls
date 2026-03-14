@@ -12,6 +12,7 @@ import {
 } from "react";
 import { workspacesApi } from "@/lib/api-orpc";
 import { useSession } from "@/lib/better-auth";
+import { useToast } from "@/components/ui/toast";
 
 interface Workspace {
   id: string;
@@ -39,9 +40,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     null,
   );
   const [loading, setLoading] = useState(true);
+  const [workspacesLoadedOk, setWorkspacesLoadedOk] = useState(false);
+  const [switchingWorkspace, setSwitchingWorkspace] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const isAuthenticated = !!session?.user;
+  const { showToast } = useToast();
 
   const isAuthOrCreateWorkspace =
     pathname?.startsWith(paths.auth.root) ||
@@ -50,9 +54,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const loadWorkspaces = useCallback(async () => {
     try {
       setLoading(true);
+      setWorkspacesLoadedOk(false);
       const { workspaces: list, activeWorkspaceId } =
         await workspacesApi.list();
       setWorkspaces(list);
+      setWorkspacesLoadedOk(true);
 
       // Активный воркспейс из БД (источник истины)
       const current =
@@ -74,21 +80,30 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setActiveWorkspace = async (workspaceId: string) => {
-    const ws = workspaces.find((w) => w.id === workspaceId);
-    if (!ws) {
-      console.error(`Workspace with ID ${workspaceId} not found`);
+    // Предотвращаем одновременные переключения
+    if (switchingWorkspace) {
       return;
     }
 
-    // Store previous state for rollback
-    const previousWorkspace = activeWorkspace;
+    const ws = workspaces.find((w) => w.id === workspaceId);
+    if (!ws) {
+      showToast("Воркспейс не найден", "error");
+      return;
+    }
+
+    // Если уже активный - ничего не делаем
+    if (activeWorkspace?.id === workspaceId) {
+      return;
+    }
 
     try {
-      // Set optimistic state first
-      setActiveWorkspaceState(ws);
-
+      setSwitchingWorkspace(workspaceId);
+      
       // API сохраняет в БД
       await workspacesApi.setActive(workspaceId);
+
+      // Обновляем состояние только после успешного API вызова
+      setActiveWorkspaceState(ws);
 
       // Cookie для серверных запросов
       const isSecure = window.location.protocol === "https:";
@@ -98,35 +113,40 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       // Refresh router state
       router.refresh();
+      
+      showToast("Воркспейс успешно переключен", "success");
     } catch (error) {
       console.error("Failed to set active workspace:", error);
-      // Revert state on error
-      setActiveWorkspaceState(previousWorkspace);
-      // Optionally show user feedback
-      alert("Не удалось переключить воркспейс. Попробуйте снова.");
+      showToast("Не удалось переключить воркспейс. Попробуйте снова.", "error");
+    } finally {
+      setSwitchingWorkspace(null);
     }
   };
 
   useEffect(() => {
     if (sessionPending) {
       setLoading(true);
+      setWorkspacesLoadedOk(false);
       return;
     }
     if (!isAuthenticated) {
       setWorkspaces([]);
       setActiveWorkspaceState(null);
+      setWorkspacesLoadedOk(false);
       setLoading(false);
       return;
     }
     loadWorkspaces();
   }, [loadWorkspaces, isAuthenticated, sessionPending]);
 
-  // Редирект на создание воркспейса, если у пользователя нет ни одного
+  // Редирект на создание воркспейса только если API успешно вернул пустой список
+  // (не редиректим при ошибке API — иначе цикл с create-workspace)
   useEffect(() => {
     if (
       isAuthenticated &&
       !sessionPending &&
       !loading &&
+      workspacesLoadedOk &&
       workspaces.length === 0 &&
       !isAuthOrCreateWorkspace
     ) {
@@ -136,6 +156,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     isAuthenticated,
     sessionPending,
     loading,
+    workspacesLoadedOk,
     workspaces.length,
     isAuthOrCreateWorkspace,
     router,

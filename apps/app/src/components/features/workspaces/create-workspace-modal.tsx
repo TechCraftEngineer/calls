@@ -1,5 +1,6 @@
 "use client";
 
+import { generateWorkspaceSlug } from "@calls/shared";
 import { Input } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
@@ -20,59 +21,6 @@ const createWorkspaceSchema = z.object({
 });
 
 type CreateWorkspaceFormData = z.infer<typeof createWorkspaceSchema>;
-
-function generateSlugFromName(name: string): string {
-  const ru = {
-    а: "a",
-    б: "b",
-    в: "v",
-    г: "g",
-    д: "d",
-    е: "e",
-    ё: "e",
-    ж: "zh",
-    з: "z",
-    и: "i",
-    й: "j",
-    к: "k",
-    л: "l",
-    м: "m",
-    н: "n",
-    о: "o",
-    п: "p",
-    р: "r",
-    с: "s",
-    т: "t",
-    у: "u",
-    ф: "f",
-    х: "h",
-    ц: "c",
-    ч: "ch",
-    ш: "sh",
-    щ: "shch",
-    ы: "y",
-    э: "e",
-    ю: "yu",
-    я: "ya",
-  };
-
-  const transliterated = name
-    .toLowerCase()
-    .split("")
-    .map((char) => {
-      return ru[char as keyof typeof ru] || char;
-    })
-    .join("");
-
-  return (
-    transliterated
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 50) || "workspace"
-  );
-}
 
 interface CreateWorkspaceModalProps {
   onClose: () => void;
@@ -101,7 +49,7 @@ export default function CreateWorkspaceModal({
   useEffect(() => {
     // Обновляем slug только если пользователь еще не редактировал его вручную
     if (nameValue && !dirtyFields.slug) {
-      setValue("slug", generateSlugFromName(nameValue), {
+      setValue("slug", generateWorkspaceSlug(nameValue), {
         shouldValidate: true,
       });
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { generateWorkspaceSlug } from "@calls/shared";
 import { Input } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
@@ -25,18 +26,6 @@ const createWorkspaceSchema = z.object({
 
 type CreateWorkspaceFormData = z.infer<typeof createWorkspaceSchema>;
 
-function generateSlugFromName(name: string): string {
-  return (
-    name
-      .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 50) || "workspace"
-  );
-}
-
 function CreateWorkspaceForm() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
@@ -47,7 +36,7 @@ function CreateWorkspaceForm() {
     setError,
     setValue,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, dirtyFields },
   } = useForm<CreateWorkspaceFormData>({
     resolver: zodResolver(createWorkspaceSchema),
     mode: "onBlur",
@@ -57,10 +46,12 @@ function CreateWorkspaceForm() {
   const nameValue = watch("name");
 
   useEffect(() => {
-    if (nameValue && !watch("slug")) {
-      setValue("slug", generateSlugFromName(nameValue));
+    if (nameValue && !dirtyFields.slug) {
+      setValue("slug", generateWorkspaceSlug(nameValue), {
+        shouldValidate: true,
+      });
     }
-  }, [nameValue, setValue, watch]);
+  }, [nameValue, setValue, dirtyFields.slug]);
 
   useEffect(() => {
     async function check() {

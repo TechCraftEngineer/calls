@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { protectedProcedure } from "../orpc";
+import { isValidWorkspaceId, isValidUuid } from "@calls/shared";
 
 const slugSchema = z
   .string()
@@ -14,29 +15,43 @@ const createWorkspaceSchema = z.object({
 });
 
 const workspaceIdSchema = z.object({
-  workspaceId: z.string().min(1, "workspaceId обязателен"),
+  workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
+    message: "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
+  }),
 });
 
 const updateWorkspaceSchema = z.object({
-  workspaceId: z.string().min(1),
+  workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
+    message: "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
+  }),
   name: z.string().min(1).max(100).optional(),
   slug: slugSchema.optional(),
 });
 
 const addMemberSchema = z.object({
-  workspaceId: z.string().min(1),
-  userId: z.string().min(1),
+  workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
+    message: "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
+  }),
+  userId: z.string().refine((id) => isValidUuid(id), {
+    message: "Неверный формат userId. Ожидается UUIDv7",
+  }),
   role: z.enum(["owner", "admin", "member"]),
 });
 
 const updateMemberRoleSchema = z.object({
-  workspaceId: z.string().min(1),
-  userId: z.string().min(1),
+  workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
+    message: "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
+  }),
+  userId: z.string().refine((id) => isValidUuid(id), {
+    message: "Неверный формат userId. Ожидается UUIDv7",
+  }),
   role: z.enum(["owner", "admin", "member"]),
 });
 
 const setActiveSchema = z.object({
-  workspaceId: z.string().min(1, "workspaceId обязателен"),
+  workspaceId: z.string().refine((id) => isValidWorkspaceId(id), {
+    message: "Неверный формат workspaceId. Ожидается формат ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
+  }),
 });
 
 export const workspacesRouter = {
@@ -291,6 +306,41 @@ export const workspacesRouter = {
         input.role,
       );
       return { success: true };
+    }),
+
+  listUsersAvailableToAdd: protectedProcedure
+    .input(workspaceIdSchema)
+    .handler(async ({ input, context }) => {
+      if (!context.authUserId) {
+        throw new ORPCError("UNAUTHORIZED", {
+          message: "Требуется авторизация через Better Auth",
+        });
+      }
+      const member = await context.workspacesService.getMemberWithRole(
+        input.workspaceId,
+        context.authUserId,
+      );
+      if (!member || (member.role !== "owner" && member.role !== "admin")) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет прав на добавление участников",
+        });
+      }
+      const rows = await context.workspacesService.getUsersNotInWorkspace(
+        input.workspaceId,
+      );
+      return rows.map(
+        (r: {
+          id: string;
+          name: string | null;
+          email: string;
+          username: string | null;
+        }) => ({
+          id: r.id,
+          name: r.name ?? "Без имени",
+          email: r.email,
+          username: r.username ?? r.email ?? `user_${r.id.slice(0, 8)}`,
+        }),
+      );
     }),
 
   setActive: protectedProcedure

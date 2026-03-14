@@ -255,12 +255,35 @@ export interface WorkspaceItem {
   memberSince?: string;
 }
 
+export interface WorkspaceMember {
+  id: string;
+  userId: string;
+  role: string;
+  createdAt: string;
+  user: { id: string; name: string; email: string; username: string | null };
+}
+
+export interface UserAvailableToAdd {
+  id: string;
+  name: string;
+  email: string;
+  username: string;
+}
+
 export const workspacesApi = {
   async list(): Promise<{
     workspaces: WorkspaceItem[];
     activeWorkspaceId: string | null;
   }> {
     return await api.workspaces.list();
+  },
+
+  async get(workspaceId: string): Promise<{
+    id: string;
+    name: string;
+    slug: string;
+  }> {
+    return await api.workspaces.get({ workspaceId });
   },
 
   async create(data: { name: string; slug: string }): Promise<{
@@ -271,10 +294,51 @@ export const workspacesApi = {
     return await api.workspaces.create(data);
   },
 
+  async update(workspaceId: string, data: { name?: string; slug?: string }) {
+    return await api.workspaces.update({ workspaceId, ...data });
+  },
+
+  async delete(workspaceId: string): Promise<{ success: boolean }> {
+    return await api.workspaces.delete({ workspaceId });
+  },
+
   async setActive(
     workspaceId: string,
   ): Promise<{ success: boolean; workspaceId: string }> {
     return await api.workspaces.setActive({ workspaceId });
+  },
+
+  async listMembers(workspaceId: string): Promise<WorkspaceMember[]> {
+    return await api.workspaces.listMembers({ workspaceId });
+  },
+
+  async listUsersAvailableToAdd(
+    workspaceId: string,
+  ): Promise<UserAvailableToAdd[]> {
+    return await api.workspaces.listUsersAvailableToAdd({ workspaceId });
+  },
+
+  async addMember(
+    workspaceId: string,
+    userId: string,
+    role: "owner" | "admin" | "member",
+  ): Promise<{ success: boolean }> {
+    return await api.workspaces.addMember({ workspaceId, userId, role });
+  },
+
+  async removeMember(
+    workspaceId: string,
+    userId: string,
+  ): Promise<{ success: boolean }> {
+    return await api.workspaces.removeMember({ workspaceId, userId });
+  },
+
+  async updateMemberRole(
+    workspaceId: string,
+    userId: string,
+    role: "owner" | "admin" | "member",
+  ): Promise<{ success: boolean }> {
+    return await api.workspaces.updateMemberRole({ workspaceId, userId, role });
   },
 };
 

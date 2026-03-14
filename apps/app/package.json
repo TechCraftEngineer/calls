@@ -15,6 +15,7 @@
     "@calls/ai": "workspace:*",
     "@calls/api": "workspace:*",
     "@calls/config": "workspace:*",
+    "@calls/shared": "workspace:*",
     "@calls/tailwind-config": "workspace:*",
     "@calls/ui": "workspace:*",
     "@hookform/resolvers": "^5.2.2",

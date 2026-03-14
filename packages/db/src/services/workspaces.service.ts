@@ -105,6 +105,10 @@ export class WorkspacesService {
     return this.workspacesRepository.getMembers(workspaceId);
   }
 
+  async getUsersNotInWorkspace(workspaceId: string) {
+    return this.workspacesRepository.getUsersNotInWorkspace(workspaceId);
+  }
+
   async addMember(data: AddMemberData) {
     const result = await this.workspacesRepository.addMember(data);
     // Invalidate user workspaces cache when member is added

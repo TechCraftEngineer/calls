@@ -35,6 +35,7 @@ export const paths = {
   },
   settings: {
     root: ROOTS.SETTINGS,
+    workspace: `${ROOTS.SETTINGS}/workspace`,
     profile: `${ROOTS.SETTINGS}/profile`,
     appearance: `${ROOTS.SETTINGS}/appearance`,
     notifications: `${ROOTS.SETTINGS}/notifications`,

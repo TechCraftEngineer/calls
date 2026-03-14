@@ -15,6 +15,9 @@
     "clean": "rm -rf *.tsbuildinfo .turbo dist",
     "dev": "bun run build:watch"
   },
+  "dependencies": {
+    "@sindresorhus/slugify": "^3.0.0"
+  },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
     "tsdown": "^0.21.2",
