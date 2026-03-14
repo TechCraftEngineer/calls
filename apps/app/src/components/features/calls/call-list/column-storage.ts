@@ -1,6 +1,5 @@
 import {
   COLUMN_ORDER_STORAGE_KEY,
-  COLUMN_ORDER_STORAGE_KEY_LEGACY,
   COLUMNS,
   DEFAULT_COLUMN_ORDER,
 } from "./constants";
@@ -11,14 +10,8 @@ export function loadColumnOrder(): string[] {
   try {
     let saved = localStorage.getItem(COLUMN_ORDER_STORAGE_KEY);
     if (!saved) {
-      const legacy = localStorage.getItem(COLUMN_ORDER_STORAGE_KEY_LEGACY);
-      if (legacy) {
-        localStorage.setItem(COLUMN_ORDER_STORAGE_KEY, legacy);
-        localStorage.removeItem(COLUMN_ORDER_STORAGE_KEY_LEGACY);
-        saved = legacy;
-      }
+      return DEFAULT_COLUMN_ORDER;
     }
-    if (!saved) return DEFAULT_COLUMN_ORDER;
 
     const parsed = JSON.parse(saved) as string[];
     const allKeys = new Set(COLUMNS.map((c) => c.key));

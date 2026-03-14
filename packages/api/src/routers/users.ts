@@ -70,6 +70,52 @@ const _changePasswordSchema = z.object({
   confirm_password: z.string().min(1),
 });
 
+// Схемы для частичного обновления полей
+const updateBasicInfoSchema = z.object({
+  givenName: z.string().min(1, "Имя обязательно для заполнения"),
+  familyName: z.string().optional(),
+  internalExtensions: z.string().optional(),
+  mobilePhones: z.string().optional(),
+});
+
+const updateEmailSettingsSchema = z.object({
+  email: z.string().email("Некорректный email").optional().nullable(),
+  email_daily_report: z.boolean().optional(),
+  email_weekly_report: z.boolean().optional(),
+  email_monthly_report: z.boolean().optional(),
+});
+
+const updateTelegramSettingsSchema = z.object({
+  telegram_daily_report: z.boolean().optional(),
+  telegram_manager_report: z.boolean().optional(),
+  telegram_weekly_report: z.boolean().optional(),
+  telegram_monthly_report: z.boolean().optional(),
+});
+
+const updateMaxSettingsSchema = z.object({
+  max_daily_report: z.boolean().optional(),
+  max_manager_report: z.boolean().optional(),
+});
+
+const updateReportSettingsSchema = z.object({
+  report_include_call_summaries: z.boolean().optional(),
+  report_detailed: z.boolean().optional(),
+  report_include_avg_value: z.boolean().optional(),
+  report_include_avg_rating: z.boolean().optional(),
+});
+
+const updateKpiSettingsSchema = z.object({
+  kpi_base_salary: z.number().min(0, "Значение не может быть отрицательным").optional(),
+  kpi_target_bonus: z.number().min(0, "Значение не может быть отрицательным").optional(),
+  kpi_target_talk_time_minutes: z.number().min(0, "Значение не может быть отрицательным").optional(),
+});
+
+const updateFilterSettingsSchema = z.object({
+  filter_exclude_answering_machine: z.boolean().optional(),
+  filter_min_duration: z.number().min(0, "Значение не может быть отрицательным").optional(),
+  filter_min_replicas: z.number().min(0, "Значение не может быть отрицательным").optional(),
+});
+
 export const usersRouter = {
   list: workspaceAdminProcedure.handler(async ({ context }) => {
     const { workspaceId, workspacesService } = context;
@@ -420,5 +466,296 @@ export const usersRouter = {
           message: "Не удалось отключить MAX",
         });
       return { success: true };
+    }),
+
+  // Новые эндпоинты для частичного обновления
+  updateBasicInfo: workspaceProcedure
+    .input(z.object({ user_id: z.string(), data: updateBasicInfoSchema }))
+    .handler(async ({ input, context }) => {
+      const userId = (context.user as Record<string, unknown>).id as string;
+      if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому пользователю",
+        });
+
+      const user = await usersService.getUser(input.user_id);
+      if (!user)
+        throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+
+      try {
+        // Обновляем основную информацию
+        await usersService.updateUserName(input.user_id, {
+          givenName: input.data.givenName.trim(),
+          familyName: input.data.familyName?.trim() || "",
+        });
+
+        if (input.data.internalExtensions !== undefined) {
+          await usersService.updateUserInternalExtensions(
+            input.user_id,
+            input.data.internalExtensions.trim() || null,
+          );
+        }
+
+        if (input.data.mobilePhones !== undefined) {
+          await usersService.updateUserMobilePhones(
+            input.user_id,
+            input.data.mobilePhones.trim() || null,
+          );
+        }
+
+        await systemRepository.addActivityLog(
+          "info",
+          `User basic info updated: ${user.username}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+
+        const updated = await usersService.getUser(input.user_id);
+        return updated;
+      } catch (error) {
+        await systemRepository.addActivityLog(
+          "error",
+          `Failed to update user basic info ${user.username}: ${error instanceof Error ? error.message : String(error)}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+        throw error;
+      }
+    }),
+
+  updateEmailSettings: workspaceProcedure
+    .input(z.object({ user_id: z.string(), data: updateEmailSettingsSchema }))
+    .handler(async ({ input, context }) => {
+      const userId = (context.user as Record<string, unknown>).id as string;
+      if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому пользователю",
+        });
+
+      const user = await usersService.getUser(input.user_id);
+      if (!user)
+        throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+
+      try {
+        if (input.data.email !== undefined) {
+          await usersService.updateUserEmail(
+            input.user_id,
+            input.data.email?.trim() || null,
+          );
+        }
+
+        // Обновляем настройки email отчетов через общий метод
+        await usersService.updateUserReportKpiSettings(input.user_id, {
+          emailDailyReport: input.data.email_daily_report,
+          emailWeeklyReport: input.data.email_weekly_report,
+          emailMonthlyReport: input.data.email_monthly_report,
+        });
+
+        await systemRepository.addActivityLog(
+          "info",
+          `User email settings updated: ${user.username}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+
+        const updated = await usersService.getUser(input.user_id);
+        return updated;
+      } catch (error) {
+        await systemRepository.addActivityLog(
+          "error",
+          `Failed to update user email settings ${user.username}: ${error instanceof Error ? error.message : String(error)}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+        throw error;
+      }
+    }),
+
+  updateTelegramSettings: workspaceProcedure
+    .input(z.object({ user_id: z.string(), data: updateTelegramSettingsSchema }))
+    .handler(async ({ input, context }) => {
+      const userId = (context.user as Record<string, unknown>).id as string;
+      if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому пользователю",
+        });
+
+      const user = await usersService.getUser(input.user_id);
+      if (!user)
+        throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+
+      try {
+        await usersService.updateUserReportKpiSettings(input.user_id, {
+          telegramDailyReport: input.data.telegram_daily_report,
+          telegramManagerReport: input.data.telegram_manager_report,
+          telegramWeeklyReport: input.data.telegram_weekly_report,
+          telegramMonthlyReport: input.data.telegram_monthly_report,
+        });
+
+        await systemRepository.addActivityLog(
+          "info",
+          `User telegram settings updated: ${user.username}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+
+        const updated = await usersService.getUser(input.user_id);
+        return updated;
+      } catch (error) {
+        await systemRepository.addActivityLog(
+          "error",
+          `Failed to update user telegram settings ${user.username}: ${error instanceof Error ? error.message : String(error)}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+        throw error;
+      }
+    }),
+
+  updateMaxSettings: workspaceProcedure
+    .input(z.object({ user_id: z.string(), data: updateMaxSettingsSchema }))
+    .handler(async ({ input, context }) => {
+      const userId = (context.user as Record<string, unknown>).id as string;
+      if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому пользователю",
+        });
+
+      const user = await usersService.getUser(input.user_id);
+      if (!user)
+        throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+
+      try {
+        await usersService.updateUserReportKpiSettings(input.user_id, {
+          maxDailyReport: input.data.max_daily_report,
+          maxManagerReport: input.data.max_manager_report,
+        });
+
+        await systemRepository.addActivityLog(
+          "info",
+          `User max settings updated: ${user.username}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+
+        const updated = await usersService.getUser(input.user_id);
+        return updated;
+      } catch (error) {
+        await systemRepository.addActivityLog(
+          "error",
+          `Failed to update user max settings ${user.username}: ${error instanceof Error ? error.message : String(error)}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+        throw error;
+      }
+    }),
+
+  updateReportSettings: workspaceProcedure
+    .input(z.object({ user_id: z.string(), data: updateReportSettingsSchema }))
+    .handler(async ({ input, context }) => {
+      const userId = (context.user as Record<string, unknown>).id as string;
+      if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому пользователю",
+        });
+
+      const user = await usersService.getUser(input.user_id);
+      if (!user)
+        throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+
+      try {
+        await usersService.updateUserReportKpiSettings(input.user_id, {
+          reportIncludeCallSummaries: input.data.report_include_call_summaries,
+          reportDetailed: input.data.report_detailed,
+          reportIncludeAvgValue: input.data.report_include_avg_value,
+          reportIncludeAvgRating: input.data.report_include_avg_rating,
+        });
+
+        await systemRepository.addActivityLog(
+          "info",
+          `User report settings updated: ${user.username}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+
+        const updated = await usersService.getUser(input.user_id);
+        return updated;
+      } catch (error) {
+        await systemRepository.addActivityLog(
+          "error",
+          `Failed to update user report settings ${user.username}: ${error instanceof Error ? error.message : String(error)}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+        throw error;
+      }
+    }),
+
+  updateKpiSettings: workspaceProcedure
+    .input(z.object({ user_id: z.string(), data: updateKpiSettingsSchema }))
+    .handler(async ({ input, context }) => {
+      const userId = (context.user as Record<string, unknown>).id as string;
+      if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому пользователю",
+        });
+
+      const user = await usersService.getUser(input.user_id);
+      if (!user)
+        throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+
+      try {
+        await usersService.updateUserReportKpiSettings(input.user_id, {
+          kpiBaseSalary: input.data.kpi_base_salary,
+          kpiTargetBonus: input.data.kpi_target_bonus,
+          kpiTargetTalkTimeMinutes: input.data.kpi_target_talk_time_minutes,
+        });
+
+        await systemRepository.addActivityLog(
+          "info",
+          `User KPI settings updated: ${user.username}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+
+        const updated = await usersService.getUser(input.user_id);
+        return updated;
+      } catch (error) {
+        await systemRepository.addActivityLog(
+          "error",
+          `Failed to update user KPI settings ${user.username}: ${error instanceof Error ? error.message : String(error)}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+        throw error;
+      }
+    }),
+
+  updateFilterSettings: workspaceProcedure
+    .input(z.object({ user_id: z.string(), data: updateFilterSettingsSchema }))
+    .handler(async ({ input, context }) => {
+      const userId = (context.user as Record<string, unknown>).id as string;
+      if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+        throw new ORPCError("FORBIDDEN", {
+          message: "Нет доступа к этому пользователю",
+        });
+
+      const user = await usersService.getUser(input.user_id);
+      if (!user)
+        throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+
+      try {
+        await usersService.updateUserFilters(
+          input.user_id,
+          input.data.filter_exclude_answering_machine ?? false,
+          input.data.filter_min_duration ?? 0,
+          input.data.filter_min_replicas ?? 0,
+        );
+
+        await systemRepository.addActivityLog(
+          "info",
+          `User filter settings updated: ${user.username}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+
+        const updated = await usersService.getUser(input.user_id);
+        return updated;
+      } catch (error) {
+        await systemRepository.addActivityLog(
+          "error",
+          `Failed to update user filter settings ${user.username}: ${error instanceof Error ? error.message : String(error)}`,
+          (context.user as Record<string, unknown>).username as string,
+        );
+        throw error;
+      }
     }),
 };

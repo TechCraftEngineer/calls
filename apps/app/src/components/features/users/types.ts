@@ -1,9 +1,8 @@
 import type { User } from "@/lib/auth";
 
 // Расширенный тип пользователя с полями управления
-// id может быть string (API/БД) или number (legacy)
 export interface ManagedUser extends Omit<User, "id"> {
-  id: string | number;
+  id: string;
   internalExtensions?: string;
   mobilePhones?: string;
   created_at?: string;

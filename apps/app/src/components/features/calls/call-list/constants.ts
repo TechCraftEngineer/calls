@@ -57,5 +57,4 @@ export const COLUMNS: ColumnConfig[] = [
 ];
 
 export const COLUMN_ORDER_STORAGE_KEY = "callList_columnOrder:v1";
-export const COLUMN_ORDER_STORAGE_KEY_LEGACY = "callList_columnOrder";
 export const DEFAULT_COLUMN_ORDER = COLUMNS.map((c) => c.key);

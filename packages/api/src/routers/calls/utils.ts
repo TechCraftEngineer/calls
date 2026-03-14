@@ -1,5 +1,3 @@
-const LEGACY_ADMIN_USERNAMES = ["admin@mango", "admin@gmail.com"];
-
 export function formatDuration(seconds: number): string {
   if (seconds <= 0) return "0:00";
   const h = Math.floor(seconds / 3600);
@@ -14,8 +12,6 @@ export function formatDuration(seconds: number): string {
 export function getInternalNumbersForUser(
   user: Record<string, unknown>,
 ): string[] | undefined {
-  const username = (user.username ?? user.email ?? "") as string;
-  if (LEGACY_ADMIN_USERNAMES.includes(username)) return undefined;
   const nums = user.internalExtensions as string | undefined;
   if (!nums || String(nums).trim().toLowerCase() === "all") return undefined;
   return (

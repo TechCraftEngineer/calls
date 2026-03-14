@@ -11,6 +11,8 @@ export interface UserUpdateData {
   telegramWeeklyReport?: boolean;
   telegramMonthlyReport?: boolean;
   telegramSkipWeekends?: boolean;
+  maxDailyReport?: boolean;
+  maxManagerReport?: boolean;
   emailDailyReport?: boolean;
   emailWeeklyReport?: boolean;
   emailMonthlyReport?: boolean;

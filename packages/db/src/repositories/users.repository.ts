@@ -7,11 +7,7 @@ import { randomBytes } from "node:crypto";
 import { desc, eq } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
-import type {
-  CreateUserData,
-  UpdateUserData,
-  UserUpdateData,
-} from "../types/users.types";
+import type { CreateUserData, UpdateUserData } from "../types/users.types";
 
 export const usersRepository = {
   async findById(id: string): Promise<schema.User | null> {
@@ -160,75 +156,6 @@ export const usersRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
-  // Legacy methods for removed user settings tables - now handled by Better Auth
-  async updateFilters(
-    _userId: string,
-    _filterExcludeAnsweringMachine: boolean,
-    _filterMinDuration: number,
-    _filterMinReplicas: number,
-  ): Promise<boolean> {
-    // Settings are now stored in Better Auth metadata or separate system
-    console.warn(
-      "[UsersRepository] updateFilters called but user filters table removed",
-    );
-    return true;
-  },
-
-  async updateReportAndKpiSettings(
-    _userId: string,
-    _data: UserUpdateData,
-  ): Promise<boolean> {
-    // Settings are now stored in Better Auth metadata or separate system
-    console.warn(
-      "[UsersRepository] updateReportAndKpiSettings called but settings tables removed",
-    );
-    return true;
-  },
-
-  async updateTelegramSettings(
-    _userId: string,
-    _telegramDailyReport: boolean,
-    _telegramManagerReport: boolean,
-  ): Promise<boolean> {
-    // Telegram settings now stored in Better Auth metadata
-    console.warn(
-      "[UsersRepository] updateTelegramSettings called but telegram settings moved to metadata",
-    );
-    return true;
-  },
-
-  async updatePassword(
-    _userId: string,
-    _newPassword: string,
-  ): Promise<boolean> {
-    // Password handling now done by Better Auth
-    console.warn(
-      "[UsersRepository] updatePassword called but password handling moved to Better Auth",
-    );
-    return true;
-  },
-
-  async findByTelegramConnectToken(
-    _token: string,
-  ): Promise<schema.User | null> {
-    // Telegram integration now handled by Better Auth metadata
-    console.warn(
-      "[UsersRepository] findByTelegramConnectToken called but telegram integration moved to metadata",
-    );
-    return null;
-  },
-
-  async saveTelegramConnectToken(
-    _userId: string,
-    _token: string,
-  ): Promise<boolean> {
-    // Telegram integration now handled by Better Auth metadata
-    console.warn(
-      "[UsersRepository] saveTelegramConnectToken called but telegram integration moved to metadata",
-    );
-    return true;
-  },
-
   async saveTelegramChatId(userId: string, chatId: string): Promise<boolean> {
     const result = await db
       .update(schema.user)
@@ -251,20 +178,198 @@ export const usersRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
-  async saveMaxConnectToken(_userId: string, _token: string): Promise<boolean> {
-    // MAX integration now handled by Better Auth metadata
-    console.warn(
-      "[UsersRepository] saveMaxConnectToken called but MAX integration moved to metadata",
-    );
-    return true;
+  async updateReportAndKpiSettings(
+    userId: string,
+    data: {
+      filterExcludeAnsweringMachine?: boolean;
+      filterMinDuration?: number;
+      filterMinReplicas?: number;
+      telegramDailyReport?: boolean;
+      telegramManagerReport?: boolean;
+      telegramWeeklyReport?: boolean;
+      telegramMonthlyReport?: boolean;
+      telegramSkipWeekends?: boolean;
+      maxDailyReport?: boolean;
+      maxManagerReport?: boolean;
+      emailDailyReport?: boolean;
+      emailWeeklyReport?: boolean;
+      emailMonthlyReport?: boolean;
+      reportIncludeCallSummaries?: boolean;
+      reportDetailed?: boolean;
+      reportIncludeAvgValue?: boolean;
+      reportIncludeAvgRating?: boolean;
+      reportManagedUserIds?: string | null;
+      kpiBaseSalary?: number;
+      kpiTargetBonus?: number;
+      kpiTargetTalkTimeMinutes?: number;
+    },
+  ): Promise<boolean> {
+    const updateData: Record<string, unknown> = {};
+    
+    if (data.filterExcludeAnsweringMachine !== undefined) {
+      updateData.filterExcludeAnsweringMachine = data.filterExcludeAnsweringMachine;
+    }
+    if (data.filterMinDuration !== undefined) {
+      updateData.filterMinDuration = data.filterMinDuration;
+    }
+    if (data.filterMinReplicas !== undefined) {
+      updateData.filterMinReplicas = data.filterMinReplicas;
+    }
+    if (data.telegramDailyReport !== undefined) {
+      updateData.telegramDailyReport = data.telegramDailyReport;
+    }
+    if (data.telegramManagerReport !== undefined) {
+      updateData.telegramManagerReport = data.telegramManagerReport;
+    }
+    if (data.telegramWeeklyReport !== undefined) {
+      updateData.telegramWeeklyReport = data.telegramWeeklyReport;
+    }
+    if (data.telegramMonthlyReport !== undefined) {
+      updateData.telegramMonthlyReport = data.telegramMonthlyReport;
+    }
+    if (data.telegramSkipWeekends !== undefined) {
+      updateData.telegramSkipWeekends = data.telegramSkipWeekends;
+    }
+    if (data.maxDailyReport !== undefined) {
+      updateData.maxDailyReport = data.maxDailyReport;
+    }
+    if (data.maxManagerReport !== undefined) {
+      updateData.maxManagerReport = data.maxManagerReport;
+    }
+    if (data.emailDailyReport !== undefined) {
+      updateData.emailDailyReport = data.emailDailyReport;
+    }
+    if (data.emailWeeklyReport !== undefined) {
+      updateData.emailWeeklyReport = data.emailWeeklyReport;
+    }
+    if (data.emailMonthlyReport !== undefined) {
+      updateData.emailMonthlyReport = data.emailMonthlyReport;
+    }
+    if (data.reportIncludeCallSummaries !== undefined) {
+      updateData.reportIncludeCallSummaries = data.reportIncludeCallSummaries;
+    }
+    if (data.reportDetailed !== undefined) {
+      updateData.reportDetailed = data.reportDetailed;
+    }
+    if (data.reportIncludeAvgValue !== undefined) {
+      updateData.reportIncludeAvgValue = data.reportIncludeAvgValue;
+    }
+    if (data.reportIncludeAvgRating !== undefined) {
+      updateData.reportIncludeAvgRating = data.reportIncludeAvgRating;
+    }
+    if (data.reportManagedUserIds !== undefined) {
+      updateData.reportManagedUserIds = data.reportManagedUserIds;
+    }
+    if (data.kpiBaseSalary !== undefined) {
+      updateData.kpiBaseSalary = data.kpiBaseSalary;
+    }
+    if (data.kpiTargetBonus !== undefined) {
+      updateData.kpiTargetBonus = data.kpiTargetBonus;
+    }
+    if (data.kpiTargetTalkTimeMinutes !== undefined) {
+      updateData.kpiTargetTalkTimeMinutes = data.kpiTargetTalkTimeMinutes;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return true; // Ничего не обновляем
+    }
+
+    const result = await db
+      .update(schema.user)
+      .set(updateData)
+      .where(eq(schema.user.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
   },
 
-  async disconnectMax(_userId: string): Promise<boolean> {
-    // MAX integration now handled by Better Auth metadata
-    console.warn(
-      "[UsersRepository] disconnectMax called but MAX integration moved to metadata",
-    );
-    return true;
+  async updateFilters(
+    userId: string,
+    filterExcludeAnsweringMachine: boolean,
+    filterMinDuration: number,
+    filterMinReplicas: number,
+  ): Promise<boolean> {
+    const result = await db
+      .update(schema.user)
+      .set({
+        filterExcludeAnsweringMachine,
+        filterMinDuration,
+        filterMinReplicas,
+      })
+      .where(eq(schema.user.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  async updateTelegramSettings(
+    userId: string,
+    telegramDailyReport: boolean,
+    telegramManagerReport: boolean,
+  ): Promise<boolean> {
+    const result = await db
+      .update(schema.user)
+      .set({
+        telegramDailyReport,
+        telegramManagerReport,
+      })
+      .where(eq(schema.user.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  async updatePassword(userId: string, newPassword: string): Promise<boolean> {
+    const { hashSync } = await import("bcryptjs");
+    const passwordHash = hashSync(newPassword, 10);
+    
+    const result = await db
+      .update(schema.user)
+      .set({
+        passwordHash,
+      })
+      .where(eq(schema.user.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  async saveTelegramConnectToken(userId: string, token: string): Promise<boolean> {
+    const result = await db
+      .update(schema.user)
+      .set({
+        telegramConnectToken: token,
+      })
+      .where(eq(schema.user.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  async findByTelegramConnectToken(token: string): Promise<schema.User | null> {
+    const result = await db
+      .select()
+      .from(schema.user)
+      .where(eq(schema.user.telegramConnectToken, token))
+      .limit(1);
+    return result[0] ?? null;
+  },
+
+  async saveMaxConnectToken(userId: string, token: string): Promise<boolean> {
+    const result = await db
+      .update(schema.user)
+      .set({
+        maxConnectToken: token,
+      })
+      .where(eq(schema.user.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  async disconnectMax(userId: string): Promise<boolean> {
+    const result = await db
+      .update(schema.user)
+      .set({
+        maxChatId: null,
+      })
+      .where(eq(schema.user.id, userId));
+
+    return (result.rowCount ?? 0) > 0;
   },
 };
 

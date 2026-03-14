@@ -13,7 +13,6 @@ import {
 import { loadColumnOrder, saveColumnOrder } from "./column-storage";
 import {
   COLUMN_ORDER_STORAGE_KEY,
-  COLUMN_ORDER_STORAGE_KEY_LEGACY,
   COLUMNS,
   DEFAULT_COLUMN_ORDER,
 } from "./constants";
@@ -173,7 +172,6 @@ export default function CallList({
     setColumnOrder(DEFAULT_COLUMN_ORDER);
     try {
       localStorage.removeItem(COLUMN_ORDER_STORAGE_KEY);
-      localStorage.removeItem(COLUMN_ORDER_STORAGE_KEY_LEGACY);
     } catch {
       // ignore
     }

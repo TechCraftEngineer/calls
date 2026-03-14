@@ -1,6 +1,6 @@
 /**
  * API слой приложения.
- * oRPC для основного API, fetch для auth и legacy эндпоинтов.
+ * oRPC для основного API, fetch для auth эндпоинтов.
  */
 
 import { api, getAPI_BASE_URL } from "./orpc";
