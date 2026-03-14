@@ -10,7 +10,8 @@ if (!process.env.POSTGRES_URL) {
 }
 
 const sql = neon(process.env.POSTGRES_URL);
-const db = drizzle(sql, {
+const db = drizzle({
+  client: sql,
   schema,
   casing: "snake_case",
 });

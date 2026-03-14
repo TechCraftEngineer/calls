@@ -120,5 +120,7 @@ export type {
   UpdateUserData,
   UserUpdateData,
 } from "./types/users.types";
+// Utilities
+export { batchInsert, batchInsertTransaction } from "./utils/batch";
 // Validators
 export { ValidationError } from "./validators/user.validators";

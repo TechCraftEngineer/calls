@@ -179,7 +179,7 @@ export const callsRepository = {
       q,
     });
 
-    let query = db
+    const query = db
       .select({
         call: schema.calls,
         transcript: schema.transcripts,
@@ -196,13 +196,13 @@ export const callsRepository = {
       )
       .orderBy(desc(schema.calls.timestamp), desc(schema.calls.id))
       .limit(limit)
-      .offset(offset);
+      .offset(offset)
+      .$dynamic();
 
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as typeof query;
-    }
-
-    const results = await query;
+    const results =
+      conditions.length > 0
+        ? await query.where(and(...conditions))
+        : await query;
 
     return results.map((row) => ({
       call: row.call,
@@ -250,7 +250,8 @@ export const callsRepository = {
             schema.callEvaluations,
             eq(schema.calls.id, schema.callEvaluations.callId),
           )
-      : db.select({ count: count() }).from(schema.calls);
+          .$dynamic()
+      : db.select({ count: count() }).from(schema.calls).$dynamic();
 
     const result =
       conditions.length > 0
@@ -317,40 +318,31 @@ export const callsRepository = {
   },
 
   async addEvaluation(data: EvaluationData): Promise<string> {
-    // Проверяем существование звонка
-    const existingCall = await db
-      .select({ id: schema.calls.id })
-      .from(schema.calls)
-      .where(eq(schema.calls.id, data.callId))
-      .limit(1);
+    // Используем транзакцию для атомарности операции
+    return await db.transaction(async (tx) => {
+      // Проверяем существование звонка
+      const existingCall = await tx
+        .select({ id: schema.calls.id })
+        .from(schema.calls)
+        .where(eq(schema.calls.id, data.callId))
+        .limit(1);
 
-    if (!existingCall[0]) {
-      throw new Error(`Call with ID ${data.callId} not found`);
-    }
+      if (!existingCall[0]) {
+        throw new Error(`Call with ID ${data.callId} not found`);
+      }
 
-    const breakdown =
-      typeof data.managerBreakdown === "object" ? data.managerBreakdown : null;
-    const recommendations = Array.isArray(data.managerRecommendations)
-      ? data.managerRecommendations
-      : null;
+      const breakdown =
+        typeof data.managerBreakdown === "object"
+          ? data.managerBreakdown
+          : null;
+      const recommendations = Array.isArray(data.managerRecommendations)
+        ? data.managerRecommendations
+        : null;
 
-    const result = await db
-      .insert(schema.callEvaluations)
-      .values({
-        callId: data.callId,
-        isQualityAnalyzable: data.isQualityAnalyzable !== false,
-        notAnalyzableReason: data.notAnalyzableReason ?? null,
-        valueScore: data.valueScore ?? null,
-        valueExplanation: data.valueExplanation ?? null,
-        managerScore: data.managerScore ?? null,
-        managerFeedback: data.managerFeedback ?? null,
-        managerBreakdown: breakdown,
-        managerRecommendations: recommendations,
-        createdAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: schema.callEvaluations.callId,
-        set: {
+      const result = await tx
+        .insert(schema.callEvaluations)
+        .values({
+          callId: data.callId,
           isQualityAnalyzable: data.isQualityAnalyzable !== false,
           notAnalyzableReason: data.notAnalyzableReason ?? null,
           valueScore: data.valueScore ?? null,
@@ -359,12 +351,26 @@ export const callsRepository = {
           managerFeedback: data.managerFeedback ?? null,
           managerBreakdown: breakdown,
           managerRecommendations: recommendations,
-          updatedAt: new Date(),
-        },
-      })
-      .returning({ id: schema.callEvaluations.id });
+          createdAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: schema.callEvaluations.callId,
+          set: {
+            isQualityAnalyzable: data.isQualityAnalyzable !== false,
+            notAnalyzableReason: data.notAnalyzableReason ?? null,
+            valueScore: data.valueScore ?? null,
+            valueExplanation: data.valueExplanation ?? null,
+            managerScore: data.managerScore ?? null,
+            managerFeedback: data.managerFeedback ?? null,
+            managerBreakdown: breakdown,
+            managerRecommendations: recommendations,
+            updatedAt: new Date(),
+          },
+        })
+        .returning({ id: schema.callEvaluations.id });
 
-    return result[0]?.id ?? "";
+      return result[0]?.id ?? "";
+    });
   },
 
   async getMetrics(workspaceId?: string): Promise<{
@@ -377,34 +383,21 @@ export const callsRepository = {
       workspaceId != null
         ? [eq(schema.calls.workspaceId, workspaceId)]
         : undefined;
-    const [
-      totalCallsResult,
-      transcribedResult,
-      avgDurationResult,
-      lastSyncResult,
-    ] = await Promise.all([
-      callConditions
-        ? db
-            .select({ count: count() })
-            .from(schema.calls)
-            .where(and(...callConditions))
-        : db.select({ count: count() }).from(schema.calls),
-      callConditions
-        ? db
-            .select({ count: count() })
-            .from(schema.transcripts)
-            .innerJoin(
-              schema.calls,
-              eq(schema.transcripts.callId, schema.calls.id),
-            )
-            .where(and(...callConditions))
-        : db.select({ count: count() }).from(schema.transcripts),
-      callConditions
-        ? db
-            .select({ avg: avg(schema.calls.duration) })
-            .from(schema.calls)
-            .where(and(...callConditions))
-        : db.select({ avg: avg(schema.calls.duration) }).from(schema.calls),
+
+    const totalCallsQuery = db
+      .select({ count: count() })
+      .from(schema.calls)
+      .$dynamic();
+    const transcribedQuery = db
+      .select({ count: count() })
+      .from(schema.transcripts)
+      .innerJoin(schema.calls, eq(schema.transcripts.callId, schema.calls.id))
+      .$dynamic();
+    const avgDurationQuery = db
+      .select({ avg: avg(schema.calls.duration) })
+      .from(schema.calls)
+      .$dynamic();
+    const lastSyncQuery =
       workspaceId != null
         ? db
             .select({ timestamp: schema.activityLog.timestamp })
@@ -416,7 +409,24 @@ export const callsRepository = {
             .select({ timestamp: schema.activityLog.timestamp })
             .from(schema.activityLog)
             .orderBy(desc(schema.activityLog.timestamp))
-            .limit(1),
+            .limit(1);
+
+    const [
+      totalCallsResult,
+      transcribedResult,
+      avgDurationResult,
+      lastSyncResult,
+    ] = await Promise.all([
+      callConditions
+        ? totalCallsQuery.where(and(...callConditions))
+        : totalCallsQuery,
+      callConditions
+        ? transcribedQuery.where(and(...callConditions))
+        : transcribedQuery,
+      callConditions
+        ? avgDurationQuery.where(and(...callConditions))
+        : avgDurationQuery,
+      lastSyncQuery,
     ]);
 
     const totalCalls = totalCallsResult[0]?.count ?? 0;
@@ -464,7 +474,7 @@ export const callsRepository = {
       conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
     }
 
-    let query = db
+    const query = db
       .select({
         internalNumber: schema.calls.internalNumber,
         managerName: schema.calls.name,
@@ -481,13 +491,14 @@ export const callsRepository = {
         schema.calls.internalNumber,
         schema.calls.name,
         schema.calls.direction,
-      );
+      )
+      .$dynamic();
 
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions)) as typeof query;
-    }
+    const results =
+      conditions.length > 0
+        ? await query.where(and(...conditions))
+        : await query;
 
-    const results = await query;
     const stats: Record<
       string,
       {
