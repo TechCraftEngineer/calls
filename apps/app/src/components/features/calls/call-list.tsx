@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import api from "@/lib/api";
 import { isMobileDevice } from "@/lib/utils";
+import { useToast } from "@/components/ui/toast";
 import CallDetailModal from "./call-detail-modal";
 import RecommendationsModal from "./recommendations-modal";
 
@@ -187,6 +188,7 @@ export default function CallList({
   onCallDeleted,
   onRecommendationsGenerated,
 }: CallListProps) {
+  const { showToast } = useToast();
   const [columnOrder, setColumnOrder] = useState<string[]>(loadColumnOrder);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     COLUMNS.map((c) => c.key),
@@ -414,7 +416,7 @@ export default function CallList({
       onRecommendationsGenerated?.(callId, recs);
     } catch (_error) {
       // Убрали console.error для продакшена
-      alert("Не удалось сформировать рекомендации");
+      showToast("Не удалось сформировать рекомендации", "error");
     } finally {
       setIsLoadingRecommendations(false);
     }

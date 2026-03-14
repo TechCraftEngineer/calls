@@ -6,6 +6,7 @@ import { useWorkspace } from "@/components/features/workspaces/workspace-provide
 import AudioPlayer from "@/components/ui/audio-player";
 import api, { API_BASE_URL } from "@/lib/api";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
+import { useToast } from "@/components/ui/toast";
 
 interface CallDetail {
   id: number;
@@ -53,6 +54,7 @@ export default function CallDetailModal({
   onClose,
   onCallDeleted,
 }: CallDetailModalProps) {
+  const { showToast } = useToast();
   const [call, setCall] = useState<CallDetail | null>(null);
   const [transcript, setTranscript] = useState<TranscriptDetail | null>(null);
   const [evaluation, setEvaluation] = useState<EvaluationDetail | null>(null);
@@ -92,7 +94,7 @@ export default function CallDetailModal({
       });
     } catch (error) {
       console.error("Failed to generate recommendations:", error);
-      alert("Не удалось сформировать рекомендации");
+      showToast("Не удалось сформировать рекомендации", "error");
     } finally {
       setIsGeneratingRecommendations(false);
     }
@@ -199,14 +201,14 @@ export default function CallDetailModal({
         model: selectedModel,
         loadData,
       });
-      alert("Анализ успешно перезапущен!");
+      showToast("Анализ успешно перезапущен!", "success");
     } catch (error: unknown) {
       console.error("Failed to restart analysis:", error);
       const errorMessage =
         error instanceof Error
           ? error.message
           : "Ошибка при перезапуске анализа";
-      alert(`Ошибка: ${errorMessage}`);
+      showToast(`Ошибка: ${errorMessage}`, "error");
     } finally {
       setRestarting(false);
     }
@@ -234,7 +236,7 @@ export default function CallDetailModal({
       console.error("Failed to delete call:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Ошибка при удалении звонка";
-      alert(`Ошибка: ${errorMessage}`);
+      showToast(`Ошибка: ${errorMessage}`, "error");
     } finally {
       setDeleting(false);
     }

@@ -4,6 +4,7 @@ import { Input } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { useORPC } from "@/orpc/react";
+import { useToast } from "@/components/ui/toast";
 import {
   type EditUserForm,
   formFieldWrap,
@@ -61,6 +62,7 @@ export default function EditUserModal({
 }: EditUserModalProps) {
   const orpc = useORPC();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [form, setForm] = useState<EditUserForm>(() => buildEditForm(user));
   const [editUser, setEditUser] = useState<ManagedUser>(user);
   const [submitting, setSubmitting] = useState(false);
@@ -73,7 +75,7 @@ export default function EditUserModal({
         setEditUser((u) => ({ ...u, telegramChatId: "" }));
         onRefresh();
       },
-      onError: () => alert("Ошибка при отвязке Telegram"),
+      onError: () => showToast("Ошибка при отвязке Telegram", "error"),
     }),
   );
 
@@ -84,7 +86,7 @@ export default function EditUserModal({
         setEditUser((u) => ({ ...u, max_chat_id: "" }));
         onRefresh();
       },
-      onError: () => alert("Ошибка при отвязке MAX"),
+      onError: () => showToast("Ошибка при отвязке MAX", "error"),
     }),
   );
 
@@ -113,7 +115,7 @@ export default function EditUserModal({
           window.open(res.url, "_blank");
         }
       },
-      onError: () => alert("Ошибка при создании ссылки для Telegram"),
+      onError: () => showToast("Ошибка при создании ссылки для Telegram", "error"),
     }),
   );
 
@@ -126,10 +128,10 @@ export default function EditUserModal({
         } else if (res.manual_instruction) {
           const cmd =
             res.manual_instruction.split(": ")[1] ?? res.manual_instruction;
-          alert(`Для подключения отправьте боту команду:\n${cmd}`);
+          showToast(`Для подключения отправьте боту команду:\n${cmd}`, "info");
         }
       },
-      onError: () => alert("Ошибка при создании ссылки для MAX"),
+      onError: () => showToast("Ошибка при создании ссылки для MAX", "error"),
     }),
   );
 
@@ -160,7 +162,7 @@ export default function EditUserModal({
         onRefresh();
       }
     } catch (_e) {
-      alert("Ошибка при проверке подключения");
+      showToast("Ошибка при проверке подключения", "error");
     }
   }, [editUser.id, onRefresh, queryClient, orpc.users.list]);
 

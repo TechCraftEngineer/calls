@@ -11,6 +11,7 @@ import Sidebar from "@/components/layout/sidebar";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
+import { useToast } from "@/components/ui/toast";
 import type {
   CallDetail,
   EvaluationDetail,
@@ -20,6 +21,7 @@ import type {
 export default function CallDetailPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { showToast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [call, setCall] = useState<CallDetail | null>(null);
   const [transcript, setTranscript] = useState<TranscriptDetail | null>(null);
@@ -91,7 +93,7 @@ export default function CallDetailPage() {
       });
     } catch (error) {
       console.error("Failed to generate recommendations:", error);
-      alert("Не удалось сформировать рекомендации");
+      showToast("Не удалось сформировать рекомендации", "error");
     } finally {
       setIsGeneratingRecommendations(false);
     }
@@ -107,14 +109,14 @@ export default function CallDetailPage() {
         model: selectedModel,
         loadData,
       });
-      alert("Анализ успешно перезапущен!");
+      showToast("Анализ успешно перезапущен!", "success");
     } catch (error: unknown) {
       console.error("Failed to restart analysis:", error);
       const errorMessage =
         error instanceof Error
           ? error.message
           : "Ошибка при перезапуске анализа";
-      alert(`Ошибка: ${errorMessage}`);
+      showToast(`Ошибка: ${errorMessage}`, "error");
     } finally {
       setRestarting(false);
     }

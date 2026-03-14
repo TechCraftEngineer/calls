@@ -19,11 +19,13 @@ import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
+import { useToast } from "@/components/ui/toast";
 
 export default function UsersPage() {
   const router = useRouter();
   const orpc = useORPC();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -76,7 +78,7 @@ export default function UsersPage() {
         });
       },
       onError: (err) => {
-        alert(err.message || "Ошибка при удалении пользователя");
+        showToast(err.message || "Ошибка при удалении пользователя", "error");
       },
     }),
   );
@@ -98,7 +100,7 @@ export default function UsersPage() {
         });
       },
       onError: (err) => {
-        alert(err.message || "Ошибка при создании пользователя");
+        showToast(err.message || "Ошибка при создании пользователя", "error");
       },
     }),
   );
@@ -124,7 +126,7 @@ export default function UsersPage() {
         });
       },
       onError: (err) => {
-        alert(err.message || "Ошибка при обновлении пользователя");
+        showToast(err.message || "Ошибка при обновлении пользователя", "error");
       },
     }),
   );
@@ -132,7 +134,7 @@ export default function UsersPage() {
   const changePasswordMutation = useMutation(
     orpc.users.changePassword.mutationOptions({
       onError: (err) => {
-        alert(err.message || "Ошибка при смене пароля");
+        showToast(err.message || "Ошибка при смене пароля", "error");
       },
     }),
   );
