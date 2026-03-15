@@ -27,7 +27,6 @@ export default function CallDetailPage() {
   const [transcript, setTranscript] = useState<TranscriptDetail | null>(null);
   const [evaluation, setEvaluation] = useState<EvaluationDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedModel, setSelectedModel] = useState<string>("assemblyai");
   const [restarting, setRestarting] = useState(false);
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] =
     useState(false);
@@ -104,11 +103,7 @@ export default function CallDetailPage() {
     if (!call || !callId || restarting) return;
     try {
       setRestarting(true);
-      await restartCallAnalysis({
-        callId,
-        model: selectedModel,
-        loadData,
-      });
+      await restartCallAnalysis({ callId, loadData });
       showToast("Анализ успешно перезапущен!", "success");
     } catch (error: unknown) {
       console.error("Failed to restart analysis:", error);
@@ -159,10 +154,8 @@ export default function CallDetailPage() {
             call={call}
             transcript={transcript}
             evaluation={evaluation}
-            selectedModel={selectedModel}
             restarting={restarting}
             isGeneratingRecommendations={isGeneratingRecommendations}
-            onModelChange={setSelectedModel}
             onRestartAnalysis={handleRestartAnalysis}
             onGenerateRecommendations={handleGenerateRecommendations}
           />

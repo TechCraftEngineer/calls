@@ -112,7 +112,8 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY,
     LANGFUSE_PUBLIC_KEY: process.env.LANGFUSE_PUBLIC_KEY,
-    LANGFUSE_BASEURL: process.env.LANGFUSE_BASEURL,
+    LANGFUSE_BASEURL:
+      process.env.LANGFUSE_BASEURL ?? process.env.LANGFUSE_BASE_URL,
   },
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",

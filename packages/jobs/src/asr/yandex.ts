@@ -18,10 +18,28 @@ const YANDEX_OPERATIONS_BASE =
 const YANDEX_TRANSCRIBE_URL =
   "https://transcribe.api.cloud.yandex.net/speech/stt/v2/longRunningRecognize";
 
+/** Protobuf Duration в JSON: { seconds: string, nanos?: number } */
+function durationToSeconds(d?: {
+  seconds?: string | number;
+  nanos?: number;
+}): number | undefined {
+  if (!d) return undefined;
+  const sec =
+    typeof d.seconds === "string" ? parseInt(d.seconds, 10) : d.seconds;
+  const nanos = d.nanos ?? 0;
+  if (sec == null || Number.isNaN(sec)) return undefined;
+  return sec + nanos / 1e9;
+}
+
 async function pollUntilDone(operationId: string): Promise<{
   done: boolean;
   response?: {
-    chunks?: Array<{ alternatives?: Array<{ text?: string }> }>;
+    chunks?: Array<{
+      alternatives?: Array<{
+        text?: string;
+        words?: Array<{ end_time?: { seconds?: string; nanos?: number } }>;
+      }>;
+    }>;
   };
 }> {
   const apiKey = env.YANDEX_SPEECHKIT_API_KEY;
@@ -111,17 +129,46 @@ export async function transcribeWithYandex(
             .join("\n")
             .trim();
 
+          // Длительность: макс end_time из words (proto: end_time с seconds/nanos)
+          let durationInSeconds: number | undefined;
+          for (const chunk of chunks) {
+            for (const alt of chunk.alternatives ?? []) {
+              const words = (
+                alt as {
+                  words?: Array<{
+                    end_time?: { seconds?: string; nanos?: number };
+                  }>;
+                }
+              ).words;
+              for (const w of words ?? []) {
+                const sec = w.end_time
+                  ? durationToSeconds(w.end_time)
+                  : undefined;
+                if (
+                  sec != null &&
+                  (durationInSeconds == null || sec > durationInSeconds)
+                ) {
+                  durationInSeconds = sec;
+                }
+              }
+            }
+          }
+
           const processingTimeMs = Date.now() - start;
           logger.info("Yandex распознавание завершено", {
             processingTimeMs,
             textLength: text.length,
+            durationInSeconds,
           });
 
           return {
             source: "yandex",
             text,
             processingTimeMs,
-            raw: { operationId } as Record<string, unknown>,
+            raw: {
+              operationId,
+              ...(durationInSeconds != null && { durationInSeconds }),
+            } as Record<string, unknown>,
           };
         }
       }

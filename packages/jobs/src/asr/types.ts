@@ -20,6 +20,13 @@ export interface AsrResult {
   raw?: Record<string, unknown>;
 }
 
+export interface AsrProviderMeta {
+  text?: string;
+  confidence?: number;
+  hasUtterances?: boolean;
+  processingTimeMs?: number;
+}
+
 export interface TranscriptMetadata {
   asrSource: AsrSource;
   processingTimeMs: number;
@@ -27,8 +34,10 @@ export interface TranscriptMetadata {
   speakerCount?: number;
   /** Длительность аудио в секундах (из AssemblyAI) */
   durationInSeconds?: number;
-  asrAssemblyai?: Record<string, unknown>;
-  asrYandex?: Record<string, unknown>;
+  /** Полный текст и метрики от AssemblyAI */
+  asrAssemblyai?: AsrProviderMeta;
+  /** Полный текст и метрики от Yandex */
+  asrYandex?: AsrProviderMeta;
 }
 
 export interface PipelineResult {

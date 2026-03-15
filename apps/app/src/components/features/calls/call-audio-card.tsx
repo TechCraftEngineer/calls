@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@calls/ui";
-import AudioPlayer from "@/components/ui/audio-player";
 import type { CallDetail } from "@/types/calls";
+import { CallRecordPlayer } from "./call-record-player";
 
 interface Props {
   call: CallDetail;
@@ -19,13 +19,7 @@ export function CallAudioCard({ call }: Props) {
       </CardHeader>
       <CardContent className="px-6 pb-6 pt-4">
         <div className="audio-player-container">
-          {call.filename ? (
-            <AudioPlayer
-              src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"}/api/records/${call.filename}`}
-            />
-          ) : (
-            <div className="text-[13px] text-[#999]">Файл записи не найден</div>
-          )}
+          <CallRecordPlayer callId={call.id} />
         </div>
         <div className="mt-3 text-xs text-[#999]">
           Размер файла: {formatFileSize(call.size_bytes)}

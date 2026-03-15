@@ -86,11 +86,26 @@ export async function transcribeWithAssemblyAi(
         transcript.providerMetadata?.assemblyai as { confidence?: number }
       )?.confidence;
 
+      // Fallback: API может вернуть null для audio_duration. Выводим из сегментов.
+      // Provider возвращает word.start/end как startSecond/endSecond, но в AssemblyAI они в миллисекундах.
+      let durationInSeconds = transcript.durationInSeconds;
+      if (durationInSeconds == null && segments.length > 0) {
+        const maxEnd = Math.max(
+          ...segments.map((s) => (s as { endSecond?: number }).endSecond ?? 0),
+        );
+        if (maxEnd > 0) {
+          // Если > 3600 — скорее всего миллисекунды (1 час = 3600000 ms)
+          durationInSeconds =
+            maxEnd > 3600 ? Math.round(maxEnd / 1000) : Math.round(maxEnd);
+        }
+      }
+
       logger.info("AssemblyAI распознавание завершено", {
         processingTimeMs,
         segmentCount: segments.length,
         textLength: text.length,
         confidence,
+        durationInSeconds,
       });
 
       return {
@@ -102,7 +117,7 @@ export async function transcribeWithAssemblyAi(
         raw: {
           segmentCount: segments.length,
           language: transcript.language,
-          durationInSeconds: transcript.durationInSeconds,
+          durationInSeconds,
         } as Record<string, unknown>,
       };
     },

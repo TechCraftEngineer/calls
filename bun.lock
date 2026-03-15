@@ -51,6 +51,7 @@
     "apps/app-server": {
       "name": "@calls/app-server",
       "dependencies": {
+        "@calls/ai": "workspace:*",
         "@calls/api": "workspace:*",
         "@calls/config": "workspace:*",
         "@calls/db": "workspace:*",

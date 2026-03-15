@@ -3,7 +3,6 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { existsSync } from "node:fs";
 import { backendRouter, createBackendContext, createLogger } from "@calls/api";
 import {
   getDefaultWorkspace,
@@ -15,11 +14,10 @@ import { createWebhookHandler } from "@calls/telegram-bot";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { Hono } from "hono";
-import { serveStatic } from "hono/bun";
 import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
 import { auth } from "./auth";
-import { corsOrigin, getRecordsDir } from "./config";
+import { corsOrigin } from "./config";
 import { rateLimitMap } from "./lib/rate-limit";
 import { cleanupAllCaches, cleanupSessionCache } from "./lib/session-cache";
 import { createAuthRoutes } from "./routes/auth";
@@ -43,18 +41,6 @@ export function createApp() {
       credentials: true,
     }),
   );
-
-  // Static files: /api/records/* -> records folder
-  const recordsDir = getRecordsDir();
-  if (existsSync(recordsDir)) {
-    app.use(
-      "/api/records/*",
-      serveStatic({
-        root: recordsDir,
-        rewriteRequestPath: (p) => p.replace(/^\/api\/records\/?/, ""),
-      }),
-    );
-  }
 
   // oRPC handler
   const rpcHandler = new RPCHandler(backendRouter, {

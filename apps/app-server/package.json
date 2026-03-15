@@ -10,6 +10,7 @@
     "with-env": "bun run --env-file ../../.env"
   },
   "dependencies": {
+    "@calls/ai": "workspace:*",
     "@calls/api": "workspace:*",
     "@calls/config": "workspace:*",
     "@calls/db": "workspace:*",

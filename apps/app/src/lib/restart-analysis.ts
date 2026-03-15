@@ -7,16 +7,12 @@ import { api } from "@/lib/api";
 
 export async function restartCallAnalysis(params: {
   callId: string | number;
-  model: string;
   loadData: () => Promise<void>;
 }): Promise<void> {
-  const { callId, model, loadData } = params;
+  const { callId, loadData } = params;
 
   try {
-    await api.calls.transcribe({
-      call_id: callId,
-      model,
-    });
+    await api.calls.transcribe({ call_id: callId });
   } catch (transcribeError) {
     console.error("Transcription failed:", transcribeError);
     throw new Error("Не удалось выполнить транскрипцию");

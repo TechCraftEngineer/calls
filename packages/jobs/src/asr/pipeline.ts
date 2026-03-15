@@ -1,77 +1,16 @@
 /**
- * Конвейер обработки аудио: ASR (параллельно) → выбор/объединение → LLM нормализация
+ * Конвейер обработки аудио: ASR (параллельно) → LLM объединение → LLM нормализация
  */
 
 import { createLogger } from "../logger";
 import { transcribeWithAssemblyAi } from "./assemblyai";
+import { mergeAsrWithLlm } from "./merge-asr";
 import { normalizeWithLlm } from "./normalize";
 import { summarizeWithLlm } from "./summarize";
-import type {
-  AsrResult,
-  AsrSource,
-  PipelineResult,
-  TranscriptMetadata,
-} from "./types";
+import type { AsrSource, PipelineResult, TranscriptMetadata } from "./types";
 import { transcribeWithYandex } from "./yandex";
 
 const logger = createLogger("asr-pipeline");
-
-/** Оценка качества: длина + confidence, предпочтение AssemblyAI (диаризация) */
-function scoreResult(r: AsrResult): number {
-  let score = r.text.length * 0.1;
-  if (r.confidence != null) score += r.confidence * 100;
-  if (r.utterances?.length) score += Math.min(r.utterances.length * 5, 30);
-  if (r.source === "assemblyai") score += 20; // предпочитаем диаризацию
-  return score;
-}
-
-/** Выбор лучшего результата или объединение при близких оценках */
-function selectBest(results: AsrResult[]): {
-  text: string;
-  source: AsrSource;
-  raw: AsrResult[];
-} {
-  const valid = results.filter((r) => r.text?.trim().length > 0);
-  if (valid.length === 0) {
-    return { text: "", source: "merged", raw: results };
-  }
-  if (valid.length === 1) {
-    const sole = valid[0];
-    if (!sole) return { text: "", source: "merged", raw: results };
-    return {
-      text: sole.text,
-      source: sole.source,
-      raw: results,
-    };
-  }
-
-  valid.sort((a, b) => scoreResult(b) - scoreResult(a));
-  const best = valid[0];
-  const second = valid[1];
-  if (!best || !second) return { text: "", source: "merged", raw: results };
-  const diff = scoreResult(best) - scoreResult(second);
-
-  // Если разница маленькая — объединяем
-  if (diff < 15 && second.text.length > best.text.length * 0.7) {
-    const merged =
-      best.utterances?.length && !second.utterances?.length
-        ? best.text
-        : best.text.length >= second.text.length
-          ? best.text
-          : second.text;
-    return {
-      text: merged,
-      source: "merged",
-      raw: results,
-    };
-  }
-
-  return {
-    text: best.text,
-    source: best.source,
-    raw: results,
-  };
-}
 
 export async function runTranscriptionPipeline(
   audioUrl: string,
@@ -91,11 +30,12 @@ export async function runTranscriptionPipeline(
     transcribeWithYandex(audioUrl),
   ]);
 
-  const results: AsrResult[] = [];
+  const assemblyai =
+    assemblyaiResult.status === "fulfilled" ? assemblyaiResult.value : null;
+  const yandex =
+    yandexResult.status === "fulfilled" ? yandexResult.value : null;
 
-  if (assemblyaiResult.status === "fulfilled" && assemblyaiResult.value) {
-    results.push(assemblyaiResult.value);
-  } else if (assemblyaiResult.status === "rejected") {
+  if (assemblyaiResult.status === "rejected") {
     logger.warn("AssemblyAI распознавание не удалось", {
       error:
         assemblyaiResult.reason instanceof Error
@@ -103,10 +43,7 @@ export async function runTranscriptionPipeline(
           : String(assemblyaiResult.reason),
     });
   }
-
-  if (yandexResult.status === "fulfilled" && yandexResult.value) {
-    results.push(yandexResult.value);
-  } else if (yandexResult.status === "rejected") {
+  if (yandexResult.status === "rejected") {
     logger.warn("Yandex распознавание не удалось", {
       error:
         yandexResult.reason instanceof Error
@@ -115,36 +52,55 @@ export async function runTranscriptionPipeline(
     });
   }
 
-  if (results.length === 0) {
+  if (!assemblyai && !yandex) {
     throw new Error(
       "Ни один ASR провайдер не вернул результат (проверьте API ключи)",
     );
   }
 
-  const { text: rawText, source } = selectBest(results);
+  const assemblyaiText = assemblyai?.text?.trim() ?? "";
+  const yandexText = yandex?.text?.trim() ?? "";
+
+  // LLM объединяет оба транскрипта (или возвращает единственный)
+  const rawText = await mergeAsrWithLlm({
+    assemblyaiText: assemblyaiText || undefined,
+    yandexText: yandexText || undefined,
+  });
+
   const processingTimeMs = Date.now() - start;
 
-  const durationInSeconds = results
-    .map((r) => (r.raw as { durationInSeconds?: number })?.durationInSeconds)
-    .find((d): d is number => typeof d === "number");
+  const durationInSeconds = assemblyai?.raw
+    ? (assemblyai.raw as { durationInSeconds?: number }).durationInSeconds
+    : undefined;
+
+  const asrSource: AsrSource =
+    assemblyaiText && yandexText
+      ? "merged"
+      : assemblyai
+        ? "assemblyai"
+        : "yandex";
 
   const metadata: TranscriptMetadata = {
-    asrSource: source,
+    asrSource,
     processingTimeMs,
-    confidence: results[0]?.confidence,
-    speakerCount: results[0]?.utterances?.length,
-    durationInSeconds,
-    asrAssemblyai:
-      assemblyaiResult.status === "fulfilled" && assemblyaiResult.value
-        ? {
-            confidence: assemblyaiResult.value.confidence,
-            hasUtterances: !!assemblyaiResult.value.utterances?.length,
-          }
-        : undefined,
-    asrYandex:
-      yandexResult.status === "fulfilled" && yandexResult.value
-        ? { processingTimeMs: yandexResult.value.processingTimeMs }
-        : undefined,
+    confidence: assemblyai?.confidence ?? yandex?.confidence,
+    speakerCount: assemblyai?.utterances?.length,
+    durationInSeconds:
+      typeof durationInSeconds === "number" ? durationInSeconds : undefined,
+    asrAssemblyai: assemblyai
+      ? {
+          text: assemblyaiText || undefined,
+          confidence: assemblyai.confidence,
+          hasUtterances: !!assemblyai.utterances?.length,
+          processingTimeMs: assemblyai.processingTimeMs,
+        }
+      : undefined,
+    asrYandex: yandex
+      ? {
+          text: yandexText || undefined,
+          processingTimeMs: yandex.processingTimeMs,
+        }
+      : undefined,
   };
 
   let normalizedText = rawText;
@@ -169,10 +125,12 @@ export async function runTranscriptionPipeline(
 
   logger.info("Конвейер завершён", {
     processingTimeMs,
-    asrSource: source,
+    asrSource,
     rawLength: rawText.length,
     normalizedLength: normalizedText.length,
     hasSummary: !!summary,
+    hasAssemblyai: !!assemblyai,
+    hasYandex: !!yandex,
   });
 
   return {

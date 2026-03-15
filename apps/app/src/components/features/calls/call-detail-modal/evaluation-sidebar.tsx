@@ -7,14 +7,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@calls/ui";
-import AudioPlayer from "@/components/ui/audio-player";
-import { API_BASE_URL } from "@/lib/api";
+import { CallRecordPlayer } from "../call-record-player";
 import type { CallDetail, EvaluationDetail, TranscriptDetail } from "./types";
 
 function formatFileSize(bytes?: number): string {
@@ -26,9 +20,7 @@ interface EvaluationSidebarProps {
   call: CallDetail;
   transcript: TranscriptDetail | null;
   evaluation: EvaluationDetail | null;
-  selectedModel: string;
   restarting: boolean;
-  onModelChange: (model: string) => void;
   onRestartAnalysis: () => void;
   onGenerateRecommendations: () => void;
   isGeneratingRecommendations: boolean;
@@ -38,9 +30,7 @@ export default function EvaluationSidebar({
   call,
   transcript,
   evaluation,
-  selectedModel,
   restarting,
-  onModelChange,
   onRestartAnalysis,
   onGenerateRecommendations,
   isGeneratingRecommendations,
@@ -67,13 +57,7 @@ export default function EvaluationSidebar({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {call.filename ? (
-            <AudioPlayer src={`${API_BASE_URL}/api/records/${call.filename}`} />
-          ) : (
-            <p className="text-muted-foreground text-[13px]">
-              Файл записи не найден
-            </p>
-          )}
+          <CallRecordPlayer callId={call.id} />
           <p className="text-muted-foreground text-xs">
             Размер файла: {formatFileSize(call.size_bytes)}
           </p>
@@ -226,29 +210,11 @@ export default function EvaluationSidebar({
             <p className="text-muted-foreground mb-5 text-[13px] leading-relaxed">
               {transcript?.summary || "Резюме отсутствует"}
             </p>
-            <div className="mb-3 flex items-center gap-2">
-              <label className="text-muted-foreground whitespace-nowrap text-xs">
-                Модель:
-              </label>
-              <Select
-                value={selectedModel}
-                onValueChange={onModelChange}
-                disabled={restarting}
-              >
-                <SelectTrigger className="h-8 flex-1 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="assemblyai">AssemblyAI</SelectItem>
-                  <SelectItem value="salutespeech">SaluteSpeech</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="w-full gap-2"
+              className="mb-3 w-full gap-2"
               onClick={onRestartAnalysis}
               disabled={restarting}
             >

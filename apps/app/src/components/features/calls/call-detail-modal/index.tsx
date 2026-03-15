@@ -35,7 +35,6 @@ export default function CallDetailModal({
   const [transcript, setTranscript] = useState<TranscriptDetail | null>(null);
   const [evaluation, setEvaluation] = useState<EvaluationDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedModel, setSelectedModel] = useState("assemblyai");
   const [restarting, setRestarting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
@@ -118,7 +117,7 @@ export default function CallDetailModal({
     if (!call || restarting) return;
     try {
       setRestarting(true);
-      await restartCallAnalysis({ callId, model: selectedModel, loadData });
+      await restartCallAnalysis({ callId, loadData });
       showToast("Анализ успешно перезапущен!", "success");
     } catch (error: unknown) {
       console.error("Failed to restart analysis:", error);
@@ -251,9 +250,7 @@ export default function CallDetailModal({
                   call={call}
                   transcript={transcript}
                   evaluation={evaluation}
-                  selectedModel={selectedModel}
                   restarting={restarting}
-                  onModelChange={setSelectedModel}
                   onRestartAnalysis={handleRestartAnalysis}
                   onGenerateRecommendations={handleGenerateRecommendations}
                   isGeneratingRecommendations={isGeneratingRecommendations}

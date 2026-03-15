@@ -6,14 +6,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Separator,
 } from "@calls/ui";
-import AudioPlayer from "@/components/ui/audio-player";
+import { CallRecordPlayer } from "./call-record-player";
 
 interface EvaluationDetail {
   id: number;
@@ -29,6 +24,7 @@ interface EvaluationDetail {
 }
 
 interface CallDetail {
+  id: number;
   filename?: string;
   size_bytes?: number;
   customer_name?: string;
@@ -46,10 +42,8 @@ interface CallSidebarProps {
   call: CallDetail;
   transcript: TranscriptDetail | null;
   evaluation: EvaluationDetail | null;
-  selectedModel: string;
   restarting: boolean;
   isGeneratingRecommendations: boolean;
-  onModelChange: (model: string) => void;
   onRestartAnalysis: () => void;
   onGenerateRecommendations: () => void;
 }
@@ -63,10 +57,8 @@ export default function CallSidebar({
   call,
   transcript,
   evaluation,
-  selectedModel,
   restarting,
   isGeneratingRecommendations,
-  onModelChange,
   onRestartAnalysis,
   onGenerateRecommendations,
 }: CallSidebarProps) {
@@ -89,15 +81,7 @@ export default function CallSidebar({
         </CardHeader>
         <CardContent className="px-6 pb-6 pt-4">
           <div className="audio-player-container">
-            {call.filename ? (
-              <AudioPlayer
-                src={`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"}/api/records/${call.filename}`}
-              />
-            ) : (
-              <div className="text-[13px] text-[#999]">
-                Файл записи не найден
-              </div>
-            )}
+            <CallRecordPlayer callId={call.id} />
           </div>
           <div className="mt-3 text-xs text-[#999]">
             Размер файла: {formatFileSize(call.size_bytes)}
@@ -291,27 +275,6 @@ export default function CallSidebar({
           <p className="text-[13px] text-[#666] leading-relaxed mb-5">
             {transcript?.summary || "Резюме отсутствует"}
           </p>
-          <div className="flex gap-2 items-center mb-3">
-            <label className="text-xs text-[#666] whitespace-nowrap">
-              Модель:
-            </label>
-            <Select
-              value={selectedModel}
-              onValueChange={onModelChange}
-              disabled={restarting}
-            >
-              <SelectTrigger
-                className="flex-1 h-8 text-xs border-[#ddd] bg-white disabled:bg-[#f5f5f5]"
-                size="sm"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="assemblyai">AssemblyAI</SelectItem>
-                <SelectItem value="salutespeech">SaluteSpeech</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <Button
             variant="ghost"
             size="sm"

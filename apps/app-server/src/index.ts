@@ -3,7 +3,11 @@
  * Uses Better Auth for authentication.
  */
 
+import { initializeLangfuseTracing } from "@calls/ai";
 import { createLogger } from "@calls/api";
+
+initializeLangfuseTracing();
+
 import { createApp } from "./app";
 import { port } from "./config";
 import { checkDatabaseConnection } from "./lib/db";

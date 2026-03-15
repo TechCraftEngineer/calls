@@ -4,12 +4,7 @@ import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 
 export const transcribe = workspaceProcedure
-  .input(
-    z.object({
-      call_id: z.string(),
-      model: z.string().optional().default("assemblyai"),
-    }),
-  )
+  .input(z.object({ call_id: z.string() }))
   .handler(async ({ input, context }) => {
     const call = await context.callsService.getCall(input.call_id);
     if (!call) {
@@ -22,7 +17,7 @@ export const transcribe = workspaceProcedure
     }
     await inngest.send({
       name: "call/transcribe.requested",
-      data: { callId: input.call_id, model: input.model },
+      data: { callId: input.call_id },
     });
     return { success: true, message: "Транскрипция запущена" };
   });
