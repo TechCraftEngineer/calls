@@ -29,11 +29,13 @@ export interface AddPendingMemberData {
   invitedBy: string;
 }
 
+type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 /**
  * Transaction helper for atomic operations
  */
 export async function withTransaction<T>(
-  callback: (tx: any) => Promise<T>,
+  callback: (tx: Transaction) => Promise<T>,
 ): Promise<T> {
   return db.transaction(callback);
 }

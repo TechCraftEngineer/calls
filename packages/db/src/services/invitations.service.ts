@@ -242,7 +242,7 @@ export class InvitationsService {
     // If not in any workspace and has no password, can delete the user
     // (This is optional - you might want to keep the user record)
     if (userWorkspaces.length === 0) {
-      const user = await this.usersService.getUser(userId);
+      const _user = await this.usersService.getUser(userId);
       // Only delete if user never set a password (never logged in)
       // This check would need to be implemented based on your auth system
     }
