@@ -67,11 +67,7 @@ export default function TranscriptPanel({
           )}
         </div>
 
-        <Button
-          variant="ghost"
-          className="ghost-btn h-8 text-xs px-3"
-          onClick={onDownload}
-        >
+        <Button variant="ghost" size="sm" onClick={onDownload}>
           <span>📥</span> Скачать .txt
         </Button>
       </CardHeader>

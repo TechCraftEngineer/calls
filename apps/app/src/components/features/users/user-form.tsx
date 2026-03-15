@@ -4,7 +4,7 @@
 
 "use client";
 
-import { Input, PasswordInput } from "@calls/ui";
+import { Button, Input, PasswordInput } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { usersApi } from "@/lib/api-orpc";
@@ -256,25 +256,22 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       </div>
 
       <div className="flex gap-3 justify-end mt-6 pt-5 border-t border-gray-200">
-        <button
+        <Button
           type="button"
-          className="px-5 py-2.5 rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 border-none min-w-28 bg-gray-100 text-primary-800 border border-gray-300 hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed"
+          variant="outline"
           onClick={onCancel}
           disabled={isSubmitting}
+          className="min-w-28"
         >
           Отмена
-        </button>
-        <button
-          type="submit"
-          className="px-5 py-2.5 rounded-lg text-sm font-semibold cursor-pointer transition-all duration-200 border-none min-w-28 bg-primary-900 text-white hover:bg-primary-800 hover:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
-          disabled={isSubmitting}
-        >
+        </Button>
+        <Button type="submit" disabled={isSubmitting} className="min-w-28">
           {isSubmitting
             ? "Сохранение…"
             : isEditing
               ? "Сохранить изменения"
               : "Создать пользователя"}
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { useToast } from "@/components/ui/toast";
@@ -258,20 +259,12 @@ export default function EditUserModal({
           <KpiFilterSection form={form} onFormChange={updateForm} />
 
           <div className="flex gap-3 justify-end">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-[#ddd] rounded-md bg-white cursor-pointer"
-            >
+            <Button type="button" variant="outline" onClick={onClose}>
               Отмена
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-4 py-2 border-none rounded-md bg-linear-to-br from-[#FF6B35] to-[#F7931E] text-white font-semibold cursor-pointer disabled:cursor-not-allowed"
-            >
+            </Button>
+            <Button type="submit" variant="accent" disabled={submitting}>
               {submitting ? "Сохранение…" : "Сохранить"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

@@ -127,11 +127,7 @@ export default function WorkspaceGeneralForm({
             )}
           </div>
 
-          <Button
-            type="submit"
-            disabled={saving}
-            className="w-fit bg-gradient-to-br from-[#FF6B35] to-[#F7931E] text-white border-none rounded-lg py-3 px-6 text-sm font-bold shadow-[0_2px_8px_rgba(255,107,53,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <Button type="submit" variant="accent" disabled={saving}>
             {saving ? "Сохранение…" : "Сохранить"}
           </Button>
         </form>

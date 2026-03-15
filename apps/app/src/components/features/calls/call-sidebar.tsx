@@ -314,7 +314,8 @@ export default function CallSidebar({
           </div>
           <Button
             variant="ghost"
-            className="ghost-btn w-full text-xs h-9 gap-2 disabled:opacity-60"
+            size="sm"
+            className="w-full"
             onClick={onRestartAnalysis}
             disabled={restarting}
           >

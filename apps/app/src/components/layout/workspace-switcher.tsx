@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@calls/ui";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import CreateWorkspaceModal from "@/components/features/workspaces/create-workspace-modal";
@@ -75,8 +76,9 @@ export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
   return (
     <>
       <div className="workspace-switcher" ref={dropdownRef}>
-        <button
+        <Button
           type="button"
+          variant="ghost"
           className="workspace-toggle"
           onClick={() => setIsOpen(!isOpen)}
           title={activeWorkspace?.name || "Выберите рабочее пространство"}
@@ -84,17 +86,18 @@ export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
           <div className="workspace-icon">
             {activeWorkspace?.name?.charAt(0).toUpperCase() || "W"}
           </div>
-        </button>
+        </Button>
 
         {isOpen && (
           <div className="workspace-menu">
             <div className="workspace-menu-header">Рабочие пространства</div>
             <div className="workspace-list">
               {workspaces.map((ws) => (
-                <button
+                <Button
                   key={ws.id}
                   type="button"
-                  className={`workspace-item ${ws.id === activeWorkspace?.id ? "is-active" : ""}`}
+                  variant="ghost"
+                  className={`workspace-item w-full justify-start ${ws.id === activeWorkspace?.id ? "is-active" : ""}`}
                   onClick={() => handleSelect(ws.id)}
                 >
                   <div className="workspace-item-icon">
@@ -109,11 +112,12 @@ export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
                   {ws.id === activeWorkspace?.id && (
                     <span className="check-icon">✓</span>
                   )}
-                </button>
+                </Button>
               ))}
             </div>
             <div className="workspace-menu-footer">
-              <button
+              <Button
+                variant="ghost"
                 className="add-workspace-btn"
                 onClick={() => {
                   setIsOpen(false);
@@ -121,7 +125,7 @@ export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
                 }}
               >
                 + Создать рабочее пространство
-              </button>
+              </Button>
             </div>
           </div>
         )}

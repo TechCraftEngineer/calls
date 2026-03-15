@@ -224,15 +224,11 @@ function StatisticsPageContent() {
                   />
                 </div>
                 <div className="flex gap-3">
-                  <Button
-                    className="apply-btn bg-linear-to-br from-[#FF6B35] to-[#F7931E] text-white border-none"
-                    onClick={loadStats}
-                  >
+                  <Button variant="accent" onClick={loadStats}>
                     Применить
                   </Button>
                   <Button
                     variant="outline"
-                    className="ghost-btn bg-white border-[#DDD] text-[#333]"
                     onClick={() => {
                       setFilters({ ...filters, date_from: "", date_to: "" });
                       setTimeout(loadStats, 100);
@@ -258,22 +254,20 @@ function StatisticsPageContent() {
                 </span>
                 <Button
                   variant="outline"
-                  className={`ghost-btn border-[#DDD] py-1.5 px-4 text-[13px] font-semibold ${
-                    filters.sort === "incoming_count"
-                      ? "bg-[#F5F5F7]"
-                      : "bg-white"
-                  }`}
+                  size="sm"
+                  className={
+                    filters.sort === "incoming_count" ? "bg-secondary" : ""
+                  }
                   onClick={() => handleSort("incoming_count")}
                 >
                   Входящие
                 </Button>
                 <Button
                   variant="outline"
-                  className={`ghost-btn border-[#DDD] py-1.5 px-4 text-[13px] font-semibold ${
-                    filters.sort === "outgoing_count"
-                      ? "bg-[#F5F5F7]"
-                      : "bg-white"
-                  }`}
+                  size="sm"
+                  className={
+                    filters.sort === "outgoing_count" ? "bg-secondary" : ""
+                  }
                   onClick={() => handleSort("outgoing_count")}
                 >
                   Исходящие

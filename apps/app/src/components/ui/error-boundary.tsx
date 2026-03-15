@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@calls/ui";
 import React from "react";
 
 interface ErrorBoundaryState {
@@ -87,12 +88,9 @@ function DefaultErrorFallback({
             </pre>
           </details>
         )}
-        <button
-          onClick={reset}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-        >
+        <Button onClick={reset} className="w-full">
           Попробовать снова
-        </button>
+        </Button>
       </div>
     </div>
   );

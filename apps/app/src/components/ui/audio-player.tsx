@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@calls/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface AudioPlayerProps {
@@ -143,14 +144,18 @@ export default function AudioPlayer({
 
       <div className="audio-controls">
         <div className="flex items-center gap-3 justify-center">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             className="player-btn volume-btn"
             onClick={toggleMute}
             title={isMuted ? "Включить звук" : "Выключить звук"}
           >
             {isMuted ? "🔇" : "🔊"}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             className="play-pause-btn"
             onClick={togglePlay}
             disabled={isLoading}
@@ -163,7 +168,7 @@ export default function AudioPlayer({
             ) : (
               "▶"
             )}
-          </button>
+          </Button>
           <div className="w-8" /> {/* Spacer to balance volume btn */}
         </div>
 

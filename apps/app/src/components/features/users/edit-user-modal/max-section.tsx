@@ -1,6 +1,6 @@
 "use client";
 
-import { Input } from "@calls/ui";
+import { Button, Input } from "@calls/ui";
 import type { EditUserForm, ManagedUser } from "../types";
 
 interface MaxSectionProps {
@@ -35,21 +35,25 @@ export function MaxSection({
       </div>
       <div className="mb-3">
         {editUser.max_chat_id ? (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={onDisconnect}
-            className="text-[13px] text-[#FF5252] bg-transparent border border-[#FF5252] rounded-md px-3 py-1.5 cursor-pointer"
+            className="text-[13px] text-[#FF5252] border-[#FF5252] hover:bg-red-50 hover:text-[#FF5252]"
           >
             Отвязать MAX
-          </button>
+          </Button>
         ) : (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={onConnect}
-            className="text-[13px] text-[#6f42c1] bg-transparent border border-[#6f42c1] rounded-md px-3 py-1.5 cursor-pointer flex items-center gap-1.5"
+            className="text-[13px] text-[#6f42c1] border-[#6f42c1] hover:bg-purple-50 hover:text-[#6f42c1]"
           >
             <span className="text-base">⚡</span> Подключить MAX
-          </button>
+          </Button>
         )}
       </div>
       <div className="flex flex-col gap-2">

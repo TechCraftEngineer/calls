@@ -2,7 +2,7 @@
 
 import { paths } from "@calls/config";
 import { generateWorkspaceSlug } from "@calls/shared";
-import { Input } from "@calls/ui";
+import { Button, Input } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -188,13 +188,15 @@ function CreateWorkspaceForm() {
             )}
           </div>
 
-          <button
+          <Button
             type="submit"
-            className="mt-2 w-full cursor-pointer rounded-lg border-none bg-[#111] py-3 text-[15px] font-semibold text-white transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 hover:bg-[#333] hover:-translate-y-px"
+            variant="dark"
+            size="touch"
+            className="mt-2 w-full"
             disabled={isSubmitting}
           >
             {isSubmitting ? "Создание…" : "Создать рабочее пространство"}
-          </button>
+          </Button>
         </form>
 
         <div className="mt-6 text-center">

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@calls/ui";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
@@ -95,26 +96,28 @@ export function ConfirmDialog({
         </p>
 
         <div className="flex gap-3 justify-end">
-          <button
+          <Button
             ref={cancelButtonRef}
             type="button"
+            variant="outline"
+            size="touch"
             onClick={onClose}
-            className="py-2 px-4 border border-gray-300 rounded-md bg-white text-gray-700 font-semibold hover:bg-gray-50 transition-colors min-h-[44px]"
             aria-label={cancelText}
           >
             {cancelText}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="destructive"
+            size="touch"
             onClick={() => {
               onConfirm();
               onClose();
             }}
-            className="py-2 px-4 bg-red-500 text-white rounded-md font-semibold hover:bg-red-600 transition-colors min-h-[44px]"
             aria-label={confirmText}
           >
             {confirmText}
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

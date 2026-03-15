@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@calls/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { useToast } from "@/components/ui/toast";
@@ -199,14 +200,16 @@ export default function CallDetailModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative pt-6 px-6">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             className="modal-close-btn absolute top-6 right-6 z-10"
             onClick={onClose}
             aria-label="Закрыть"
           >
             ×
-          </button>
+          </Button>
         </div>
         <div className="modal-content">
           <div className="call-meta-header">
@@ -221,10 +224,12 @@ export default function CallDetailModal({
                 </span>
               </div>
               {isWorkspaceAdmin && (
-                <button
+                <Button
                   type="button"
+                  variant="destructive"
+                  size="sm"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="py-2 px-4 text-[13px] bg-red-500 text-white border-none rounded-lg cursor-pointer font-semibold flex items-center gap-1.5 transition-colors ml-auto hover:bg-red-600 disabled:opacity-60 disabled:hover:bg-red-500"
+                  className="ml-auto"
                   disabled={deleting}
                   title="Удалить звонок"
                 >
@@ -242,7 +247,7 @@ export default function CallDetailModal({
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                   </svg>
                   {deleting ? "Удаление..." : "Удалить"}
-                </button>
+                </Button>
               )}
             </div>
             <div className="call-sub-meta">

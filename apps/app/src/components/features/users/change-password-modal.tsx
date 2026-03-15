@@ -1,6 +1,6 @@
 "use client";
 
-import { PasswordInput } from "@calls/ui";
+import { Button, PasswordInput } from "@calls/ui";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ManagedUser, PasswordForm } from "./types";
@@ -221,22 +221,24 @@ export default function ChangePasswordModal({
           </div>
 
           <div className="flex gap-3 justify-end">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="touch"
               onClick={onClose}
-              className="py-2 px-4 border border-gray-300 rounded-md bg-white text-gray-700 font-semibold hover:bg-gray-50 transition-colors min-h-[44px]"
               aria-label="Отменить смену пароля"
             >
               Отмена
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="accent"
+              size="touch"
               disabled={submitting}
-              className="py-2 px-4 border-none rounded-md bg-gradient-to-br from-[#FF6B35] to-[#F7931E] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity min-h-[44px]"
               aria-label={submitting ? "Сохранение…" : "Сменить пароль"}
             >
               {submitting ? "Сохранение…" : "Сменить пароль"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

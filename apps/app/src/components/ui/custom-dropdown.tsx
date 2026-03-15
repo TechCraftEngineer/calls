@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@calls/ui";
 import { useEffect, useRef, useState } from "react";
 import api from "@/lib/api";
 
@@ -84,33 +85,40 @@ export default function CustomDropdown({
 
     return (
       <div className="custom-dropdown" ref={dropdownRef}>
-        <button type="button" className="dropdown-toggle" onClick={toggle}>
+        <Button
+          type="button"
+          variant="outline"
+          className="dropdown-toggle w-full justify-between"
+          onClick={toggle}
+        >
           <span className="dropdown-label">{displayLabel}</span>
-        </button>
+        </Button>
         {isOpen && (
           <div className="dropdown-menu">
-            <button
+            <Button
               type="button"
-              className="dropdown-option"
+              variant="ghost"
+              className="dropdown-option w-full justify-start"
               onClick={() => {
                 onChange("");
                 setIsOpen(false);
               }}
             >
               Все менеджеры
-            </button>
+            </Button>
             {managers.map((m) => (
-              <button
+              <Button
                 key={m.id}
                 type="button"
-                className={`dropdown-option ${managerValue === m.id.toString() ? "is-active" : ""}`}
+                variant="ghost"
+                className={`dropdown-option w-full justify-start ${managerValue === m.id.toString() ? "is-active" : ""}`}
                 onClick={() => {
                   onChange(m.id.toString());
                   setIsOpen(false);
                 }}
               >
                 {m.name}
-              </button>
+              </Button>
             ))}
           </div>
         )}
@@ -144,9 +152,14 @@ export default function CustomDropdown({
 
     return (
       <div className="custom-dropdown" ref={dropdownRef}>
-        <button type="button" className="dropdown-toggle" onClick={toggle}>
+        <Button
+          type="button"
+          variant="outline"
+          className="dropdown-toggle w-full justify-between"
+          onClick={toggle}
+        >
           <span className="dropdown-label">{getDisplayLabel()}</span>
-        </button>
+        </Button>
         {isOpen && (
           <div className="dropdown-menu">
             {valueOptions.map((val) => (
@@ -201,9 +214,14 @@ export default function CustomDropdown({
 
     return (
       <div className="custom-dropdown" ref={dropdownRef}>
-        <button type="button" className="dropdown-toggle" onClick={toggle}>
+        <Button
+          type="button"
+          variant="outline"
+          className="dropdown-toggle w-full justify-between"
+          onClick={toggle}
+        >
           <span className="dropdown-label">{getDisplayLabel()}</span>
-        </button>
+        </Button>
         {isOpen && (
           <div className="dropdown-menu">
             {operatorOptions.map((op) => (

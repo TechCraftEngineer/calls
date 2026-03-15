@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@calls/ui";
 import type { CallDetail } from "./types";
 
 interface DeleteConfirmModalProps {
@@ -48,18 +49,10 @@ export default function DeleteConfirmModal({
           </div>
         )}
         <div className="flex gap-3 justify-end">
-          <button
-            onClick={onCancel}
-            disabled={deleting}
-            className="py-2.5 px-5 text-sm bg-gray-100 text-gray-800 border border-gray-300 rounded-lg font-semibold transition-colors hover:bg-gray-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-gray-100"
-          >
+          <Button variant="outline" onClick={onCancel} disabled={deleting}>
             Отмена
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={deleting}
-            className="py-2.5 px-5 text-sm bg-red-500 text-white border-none rounded-lg font-semibold flex items-center gap-2 transition-colors hover:bg-red-600 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-red-500"
-          >
+          </Button>
+          <Button variant="destructive" onClick={onConfirm} disabled={deleting}>
             {deleting ? (
               <>
                 <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full inline-block animate-spin" />
@@ -83,7 +76,7 @@ export default function DeleteConfirmModal({
                 Удалить
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

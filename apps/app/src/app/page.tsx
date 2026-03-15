@@ -335,7 +335,7 @@ export default function HomePage() {
 
                 <div className="filter-item-btn">
                   <Button
-                    className="apply-btn w-full"
+                    className="w-full"
                     onClick={() => setPagination((p) => ({ ...p, page: 1 }))}
                   >
                     Найти

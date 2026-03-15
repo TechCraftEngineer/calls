@@ -3,6 +3,7 @@
 import { Eye, EyeOff } from "lucide-react";
 import { forwardRef, useState } from "react";
 import { cn } from ".";
+import { Button } from "./button";
 
 export const PasswordInput = forwardRef<
   HTMLInputElement,
@@ -24,10 +25,12 @@ export const PasswordInput = forwardRef<
         )}
         {...props}
       />
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         onClick={() => setShowPassword(!showPassword)}
-        className="text-muted-foreground hover:text-foreground absolute right-0 top-0 flex h-full w-10 items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+        className="text-muted-foreground hover:text-foreground absolute right-0 top-0 h-full w-10"
         aria-label={showPassword ? "Hide password" : "Show password"}
       >
         {showPassword ? (
@@ -35,7 +38,7 @@ export const PasswordInput = forwardRef<
         ) : (
           <Eye className="h-4 w-4" aria-hidden="true" />
         )}
-      </button>
+      </Button>
     </div>
   );
 });

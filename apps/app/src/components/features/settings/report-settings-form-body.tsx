@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, Input } from "@calls/ui";
+import { Button, Card, CardContent, CardHeader, Input } from "@calls/ui";
 import type React from "react";
 import { useState } from "react";
 import api from "@/lib/api";
@@ -113,8 +113,10 @@ export default function ReportSettingsFormBody({
                 </label>
               </div>
               <div className="mt-3">
-                <button
+                <Button
                   type="button"
+                  variant={canSendTest ? "success" : "secondary"}
+                  size="sm"
                   disabled={!form.telegramChatId?.trim() || sendTestLoading}
                   onClick={async () => {
                     setSendTestMessage("");
@@ -134,14 +136,9 @@ export default function ReportSettingsFormBody({
                       setSendTestLoading(false);
                     }
                   }}
-                  className={
-                    canSendTest
-                      ? "py-2 px-4 border-none rounded-md bg-gradient-to-br from-[#4CAF50] to-[#388E3C] text-white font-semibold cursor-pointer text-[13px]"
-                      : "py-2 px-4 border-none rounded-md bg-[#ccc] text-white font-semibold cursor-not-allowed text-[13px]"
-                  }
                 >
                   {sendTestLoading ? "Отправка…" : "Отправить отчёт в Telegram"}
-                </button>
+                </Button>
                 {sendTestMessage && (
                   <span
                     className={`ml-3 text-[13px] ${
@@ -497,17 +494,9 @@ export default function ReportSettingsFormBody({
           </div>
 
           <div className="mt-6 flex items-center gap-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className={
-                saving
-                  ? "py-2.5 px-6 border-none rounded-md bg-[#ccc] text-white font-semibold cursor-not-allowed"
-                  : "py-2.5 px-6 border-none rounded-md bg-gradient-to-br from-[#FF6B35] to-[#F7931E] text-white font-semibold cursor-pointer"
-              }
-            >
+            <Button type="submit" variant="accent" disabled={saving}>
               {saving ? "Сохранение…" : "Сохранить настройки"}
-            </button>
+            </Button>
             {message && (
               <span
                 className={`text-sm font-medium ${

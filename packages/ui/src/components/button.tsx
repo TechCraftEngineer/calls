@@ -20,11 +20,22 @@ export const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        /** Тёмный фон, белый текст — для auth, 403 и т.п. */
+        dark:
+          "bg-[#111] text-white hover:bg-[#333] hover:text-white shadow-xs",
+        /** Оранжевый градиент, белый текст — основной CTA (сохранить, добавить) */
+        accent:
+          "bg-gradient-to-br from-[#FF6B35] to-[#F7931E] text-white hover:opacity-90 shadow-xs",
+        /** Зелёный градиент, белый текст — успех (отправить отчёт) */
+        success:
+          "bg-gradient-to-br from-[#4CAF50] to-[#388E3C] text-white hover:opacity-90 shadow-xs",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        default: "h-10 px-4 py-2 has-[>svg]:px-3",
         sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        lg: "h-11 rounded-md px-6 has-[>svg]:px-4",
+        /** Touch-friendly: min 44px для мобильных */
+        touch: "min-h-[44px] h-auto px-4 py-3 has-[>svg]:px-3",
         icon: "size-9",
       },
     },

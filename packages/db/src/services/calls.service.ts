@@ -23,14 +23,20 @@ export class CallsService {
   }
 
   async deleteCall(callId: string): Promise<boolean> {
+    const call = await this.callsRepository.findById(callId);
     const result = await this.callsRepository.delete(callId);
 
-    if (result) {
-      await this.systemRepository.addActivityLog(
-        "INFO",
-        `Call ${callId} deleted`,
-        "system",
-      );
+    if (result && call) {
+      try {
+        await this.systemRepository.addActivityLog(
+          "INFO",
+          `Call ${callId} deleted`,
+          "system",
+          call.workspaceId,
+        );
+      } catch {
+        // Игнорируем ошибки логирования
+      }
     }
 
     return result;
@@ -46,11 +52,16 @@ export class CallsService {
   async createCall(data: CreateCallData): Promise<string> {
     const callId = await this.callsRepository.create(data);
 
-    await this.systemRepository.addActivityLog(
-      "INFO",
-      `Call ${callId} created from file: ${data.filename}`,
-      "system",
-    );
+    try {
+      await this.systemRepository.addActivityLog(
+        "INFO",
+        `Call ${callId} created from file: ${data.filename}`,
+        "system",
+        data.workspaceId,
+      );
+    } catch {
+      // Игнорируем ошибки логирования
+    }
 
     return callId;
   }
@@ -92,11 +103,19 @@ export class CallsService {
   async addEvaluation(data: EvaluationData): Promise<string> {
     const evaluationId = await this.callsRepository.addEvaluation(data);
 
-    await this.systemRepository.addActivityLog(
-      "INFO",
-      `Evaluation added for call ${data.callId}`,
-      "system",
-    );
+    try {
+      const call = await this.callsRepository.findById(data.callId);
+      if (call) {
+        await this.systemRepository.addActivityLog(
+          "INFO",
+          `Evaluation added for call ${data.callId}`,
+          "system",
+          call.workspaceId,
+        );
+      }
+    } catch {
+      // Игнорируем ошибки логирования
+    }
 
     return evaluationId;
   }

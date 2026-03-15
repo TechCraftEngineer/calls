@@ -45,15 +45,18 @@ export default function ForbiddenPage() {
 
           <div className="flex flex-col gap-4 w-full">
             <Button
+              variant="dark"
+              size="touch"
               onClick={() => router.push(paths.dashboard.root)}
-              className="w-full bg-[#1A1A1A] hover:bg-black text-white rounded-2xl py-7 text-base font-bold transition-all duration-300 shadow-[0_10px_20px_rgba(0,0,0,0.1)] hover:shadow-[0_15px_30px_rgba(0,0,0,0.2)] hover:-translate-y-1 active:translate-y-0"
+              className="w-full rounded-2xl"
             >
               Вернуться на главную
             </Button>
 
-            <button
+            <Button
+              variant="ghost"
               onClick={() => router.back()}
-              className="w-full py-4 text-[#999] hover:text-[#333] font-semibold transition-colors flex items-center justify-center gap-2 group"
+              className="w-full py-4 text-[#999] hover:text-[#333] font-semibold group"
             >
               <svg
                 width="18"
@@ -69,7 +72,7 @@ export default function ForbiddenPage() {
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
               Назад
-            </button>
+            </Button>
           </div>
         </div>
       </div>

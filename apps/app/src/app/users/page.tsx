@@ -201,8 +201,9 @@ export default function UsersPage() {
             </p>
           </div>
           <Button
+            variant="accent"
+            size="touch"
             onClick={() => setShowAddModal(true)}
-            className="bg-linear-to-br from-[#FF6B35] to-[#F7931E] text-white border-none rounded-lg py-3 px-6 text-sm font-bold flex items-center gap-2 shadow-[0_2px_8px_rgba(255,107,53,0.3)] min-h-[44px]"
             aria-label="Добавить нового пользователя"
           >
             <span className="text-lg" aria-hidden="true">

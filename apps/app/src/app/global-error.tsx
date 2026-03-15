@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { Button } from "@calls/ui";
 import { useEffect } from "react";
 
 export default function GlobalError({
@@ -29,13 +30,9 @@ export default function GlobalError({
               страницу или вернитесь на главную.
             </p>
             <div className="flex gap-4 justify-center">
-              <button
-                type="button"
-                onClick={reset}
-                className="py-3 px-6 rounded-lg border-none bg-[#FFD600] font-semibold cursor-pointer"
-              >
+              <Button type="button" onClick={reset}>
                 Попробовать снова
-              </button>
+              </Button>
               <a
                 href={paths.root}
                 className="py-3 px-6 rounded-lg border border-[#ddd] bg-white font-semibold text-[#333] no-underline"

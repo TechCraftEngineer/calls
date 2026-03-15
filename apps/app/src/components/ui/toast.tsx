@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@calls/ui";
 import {
   createContext,
   type ReactNode,
@@ -76,13 +77,15 @@ function ToastContainer() {
         >
           <div className="flex justify-between items-start">
             <p className="text-sm font-medium">{toast.message}</p>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => removeToast(toast.id)}
-              className="ml-4 text-gray-400 hover:text-gray-600 transition-colors"
+              className="ml-4 size-8 min-w-8 text-gray-400 hover:text-gray-600"
               aria-label="Закрыть"
             >
               ×
-            </button>
+            </Button>
           </div>
         </div>
       ))}

@@ -99,11 +99,7 @@ export function TranscriptCard({ call, transcript }: Props) {
           )}
         </div>
 
-        <Button
-          variant="ghost"
-          className="ghost-btn h-8 text-xs px-3"
-          onClick={handleDownloadTxt}
-        >
+        <Button variant="ghost" size="sm" onClick={handleDownloadTxt}>
           <span>📥</span> Скачать .txt
         </Button>
       </CardHeader>

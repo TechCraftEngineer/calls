@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@calls/ui";
 import AudioPlayer from "@/components/ui/audio-player";
 import { API_BASE_URL } from "@/lib/api";
 
@@ -23,9 +24,14 @@ export default function AudioPlayerModal({
           <div className="audio-modal-title">
             Запись звонка: <strong>{number}</strong>
           </div>
-          <button className="audio-modal-close" onClick={onClose}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="audio-modal-close"
+            onClick={onClose}
+          >
             &times;
-          </button>
+          </Button>
         </div>
 
         <div className="audio-modal-body">

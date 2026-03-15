@@ -198,7 +198,7 @@ export default function WorkspaceSettingsPage() {
           </p>
         </div>
         {isWorkspaceAdmin && (
-          <Button onClick={() => setShowAddModal(true)}>
+          <Button variant="accent" onClick={() => setShowAddModal(true)}>
             <span className="text-lg">+</span> Добавить участника
           </Button>
         )}

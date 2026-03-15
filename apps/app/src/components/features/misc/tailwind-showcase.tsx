@@ -4,7 +4,7 @@
 
 "use client";
 
-import { Input } from "@calls/ui";
+import { Button, Input } from "@calls/ui";
 import { useState } from "react";
 
 export default function TailwindShowcase() {
@@ -30,12 +30,9 @@ export default function TailwindShowcase() {
                   Tailwind CSS Showcase
                 </h1>
               </div>
-              <button
-                onClick={toggleTheme}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
+              <Button variant="secondary" onClick={toggleTheme}>
                 {isDark ? "🌞 Light" : "🌙 Dark"}
-              </button>
+              </Button>
             </div>
           </div>
         </header>
@@ -91,21 +88,19 @@ export default function TailwindShowcase() {
                 Кнопки
               </h2>
               <div className="space-y-3">
-                <button className="w-full py-3 bg-primary-900 text-white rounded-lg font-semibold hover:bg-primary-800 hover:-translate-y-px transition-all duration-200">
+                <Button variant="dark" className="w-full">
                   Primary Button
-                </button>
-                <button className="w-full py-3 bg-mango-yellow text-black rounded-lg font-semibold hover:bg-yellow-400 hover:-translate-y-px transition-all duration-200">
-                  Mango Button
-                </button>
-                <button className="w-full py-3 bg-gray-100 dark:bg-gray-700 text-primary-800 dark:text-gray-200 rounded-lg font-semibold border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200">
+                </Button>
+                <Button className="w-full">Mango Button</Button>
+                <Button variant="secondary" className="w-full">
                   Secondary Button
-                </button>
-                <button className="w-full py-3 bg-error-500 text-white rounded-lg font-semibold hover:bg-error-600 hover:-translate-y-px transition-all duration-200">
+                </Button>
+                <Button variant="destructive" className="w-full">
                   Error Button
-                </button>
-                <button className="w-full py-3 bg-success-500 text-white rounded-lg font-semibold hover:bg-success-600 hover:-translate-y-px transition-all duration-200">
+                </Button>
+                <Button variant="success" className="w-full">
                   Success Button
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -223,12 +218,8 @@ export default function TailwindShowcase() {
                   <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mb-2"></div>
                   <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
                 </div>
-                <button className="px-4 py-2 bg-mango-yellow text-black rounded-lg font-semibold hover:scale-105 transition-transform duration-200">
-                  Hover: Scale
-                </button>
-                <button className="px-4 py-2 bg-primary-900 text-white rounded-lg font-semibold hover:bg-primary-800 transition-colors duration-200">
-                  Hover: Color
-                </button>
+                <Button className="hover:scale-105">Hover: Scale</Button>
+                <Button variant="dark">Hover: Color</Button>
                 <div className="flex space-x-2">
                   <div className="w-8 h-8 bg-mango-yellow rounded-full animate-bounce"></div>
                   <div className="w-8 h-8 bg-primary-900 rounded-full animate-bounce [animation-delay:0.1s]"></div>

@@ -49,12 +49,17 @@ export class FilesService {
       throw new Error("Failed to create file record");
     }
 
-    // Логируем создание файла
-    await this.systemRepository.addActivityLog(
-      "INFO",
-      `File uploaded: ${fileData.originalName} (${fileData.fileType})`,
-      "system",
-    );
+    // Логируем создание файла (не блокируем загрузку при ошибке)
+    try {
+      await this.systemRepository.addActivityLog(
+        "INFO",
+        `File uploaded: ${fileData.originalName} (${fileData.fileType})`,
+        "system",
+        workspaceId,
+      );
+    } catch {
+      // Игнорируем ошибки логирования — загрузка успешна
+    }
 
     return {
       id: fileRecord.id,
@@ -102,11 +107,16 @@ export class FilesService {
     const file = await this.filesRepository.deleteByStorageKey(storageKey);
 
     if (file) {
-      await this.systemRepository.addActivityLog(
-        "INFO",
-        `File deleted: ${file.originalName}`,
-        "system",
-      );
+      try {
+        await this.systemRepository.addActivityLog(
+          "INFO",
+          `File deleted: ${file.originalName}`,
+          "system",
+          file.workspaceId,
+        );
+      } catch {
+        // Игнорируем ошибки логирования
+      }
       return true;
     }
 

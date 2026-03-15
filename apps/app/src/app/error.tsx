@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { Button } from "@calls/ui";
 import Link from "next/link";
 import { useEffect } from "react";
 
@@ -28,13 +29,9 @@ export default function ErrorPage({
           Произошла непредвиденная ошибка. Попробуйте обновить страницу.
         </p>
         <div className="flex justify-center gap-4">
-          <button
-            type="button"
-            onClick={reset}
-            className="rounded-lg bg-[#FFD600] px-6 py-3 font-semibold text-black transition-colors hover:bg-[#F0CC00]"
-          >
+          <Button type="button" onClick={reset}>
             Попробовать снова
-          </button>
+          </Button>
           <Link
             href={paths.root}
             className="rounded-lg border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50"

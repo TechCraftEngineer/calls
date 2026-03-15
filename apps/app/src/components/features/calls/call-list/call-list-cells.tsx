@@ -1,7 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { TableCell } from "@calls/ui";
+import { Button, TableCell } from "@calls/ui";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { isMobileDevice } from "@/lib/utils";
@@ -112,14 +112,15 @@ export function renderCallListCell({
         {content}
       </Link>
     ) : (
-      <button
+      <Button
         type="button"
+        variant="link"
         onClick={() => onSelectCall(call.id)}
-        className="call-link"
+        className="call-link h-auto p-0 font-inherit"
         style={{ ...linkButtonStyle, ...extraStyle } as object}
       >
         {content}
-      </button>
+      </Button>
     );
 
   switch (colKey) {
@@ -257,8 +258,10 @@ export function renderCallListCell({
           >
             {call.filename && (
               <>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -273,39 +276,7 @@ export function renderCallListCell({
                   }
                   title="Сформировать рекомендации"
                   aria-label="Сформировать рекомендации по звонку"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor:
-                      isLoadingRecommendations &&
-                      recommendationsCallId === call.id
-                        ? "wait"
-                        : "pointer",
-                    padding: "4px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderRadius: "50%",
-                    width: "24px",
-                    height: "24px",
-                    transition: "background 0.2s",
-                    opacity:
-                      isLoadingRecommendations &&
-                      recommendationsCallId === call.id
-                        ? 0.6
-                        : 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (
-                      !isLoadingRecommendations ||
-                      recommendationsCallId !== call.id
-                    ) {
-                      e.currentTarget.style.background = "#f0f0f0";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "none";
-                  }}
+                  className="size-6 min-w-6 p-0"
                 >
                   {isLoadingRecommendations &&
                   recommendationsCallId === call.id ? (
@@ -338,9 +309,11 @@ export function renderCallListCell({
                       />
                     </svg>
                   )}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   className="record-btn"
                   onClick={(e) => {
                     e.preventDefault();
@@ -368,7 +341,7 @@ export function renderCallListCell({
                   >
                     <path d="M8 5 L8 19 L19 12 Z" fill="currentColor" />
                   </svg>
-                </button>
+                </Button>
               </>
             )}
           </div>

@@ -132,7 +132,8 @@ export default function WorkspaceMembersTable({
                         ) : canRemove ? (
                           <Button
                             variant="ghost"
-                            className="h-8 text-xs p-0 bg-transparent border-none text-[#FF5252] font-semibold hover:opacity-70"
+                            size="sm"
+                            className="text-destructive hover:text-destructive/80"
                             onClick={() => onRemoveMember(m.userId)}
                           >
                             Удалить

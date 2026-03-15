@@ -50,15 +50,15 @@ export const megafonSyncFn = inngest.createFunction(
       }
 
       // Запускаем транскрибацию для каждого нового звонка с аудио
-      if (allCreatedCallIds.length > 0) {
-        await step.sendEvent(
-          "trigger-transcriptions",
-          allCreatedCallIds.map((callId) => ({
-            name: "call/transcribe.requested",
-            data: { callId },
-          })),
-        );
-      }
+      // if (allCreatedCallIds.length > 0) {
+      //   await step.sendEvent(
+      //     "trigger-transcriptions",
+      //     allCreatedCallIds.map((callId) => ({
+      //       name: "call/transcribe.requested",
+      //       data: { callId },
+      //     })),
+      //   );
+      // }
 
       return {
         workspacesProcessed: integrations.length,

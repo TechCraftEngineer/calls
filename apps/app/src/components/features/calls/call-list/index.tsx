@@ -1,6 +1,13 @@
 "use client";
 
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "@calls/ui";
+import {
+  Button,
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@calls/ui";
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import api from "@/lib/api";
@@ -222,10 +229,12 @@ export default function CallList({
   return (
     <div className="relative">
       <div className="absolute right-4 -top-[45px] z-10">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={() => setShowColumnToggle(!showColumnToggle)}
-          className="bg-transparent border-none cursor-pointer p-2 flex items-center text-gray-400 hover:text-gray-800 transition-colors"
+          className="text-gray-400 hover:text-gray-800"
           title="Настройка колонок"
           aria-label="Настройка колонок"
         >
@@ -242,7 +251,7 @@ export default function CallList({
             <circle cx="12" cy="12" r="3" />
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
           </svg>
-        </button>
+        </Button>
 
         {showColumnToggle && (
           <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg p-3 shadow-lg w-[200px] z-100">
@@ -263,12 +272,14 @@ export default function CallList({
               </label>
             ))}
             <div className="mt-3 pt-3 border-t border-gray-200">
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleResetOrder}
-                className="w-full py-1.5 px-3 text-xs bg-gray-100 border border-gray-300 rounded cursor-pointer text-gray-500 hover:bg-gray-200 hover:text-gray-800 transition-colors"
+                className="w-full text-xs"
               >
                 Сбросить порядок колонок
-              </button>
+              </Button>
             </div>
           </div>
         )}

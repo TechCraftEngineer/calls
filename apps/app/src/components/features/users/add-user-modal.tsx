@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, PasswordInput } from "@calls/ui";
+import { Button, Input, PasswordInput } from "@calls/ui";
 import { useState } from "react";
 import {
   type AddUserForm,
@@ -254,30 +254,12 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           <div
             style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}
           >
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                padding: "8px 16px",
-                border: "1px solid #ddd",
-                borderRadius: "6px",
-                background: "white",
-                cursor: "pointer",
-              }}
-            >
+            <Button type="button" variant="outline" onClick={onClose}>
               Отмена
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className={
-                submitting
-                  ? "py-2 px-4 border-none rounded-md bg-[#ccc] text-white font-semibold cursor-not-allowed"
-                  : "py-2 px-4 border-none rounded-md bg-gradient-to-br from-[#FF6B35] to-[#F7931E] text-white font-semibold cursor-pointer"
-              }
-            >
+            </Button>
+            <Button type="submit" variant="accent" disabled={submitting}>
               {submitting ? "Сохранение…" : "Добавить"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
