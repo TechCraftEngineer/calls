@@ -17,6 +17,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import AudioPlayerModal from "@/components/features/calls/audio-player-modal";
 import CallList from "@/components/features/calls/call-list";
+import { CallListSkeleton } from "@/components/features/calls/call-list/call-list-skeleton";
+import { TablePagination } from "@/components/features/calls/call-list/table-pagination";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import CustomDropdown from "@/components/ui/custom-dropdown";
@@ -213,6 +215,14 @@ export default function HomePage() {
     setPagination((prev) => ({ ...prev, page: newPage }));
   };
 
+  const handlePerPageChange = (newPerPage: number) => {
+    setPagination((prev) => ({
+      ...prev,
+      per_page: newPerPage,
+      page: 1,
+    }));
+  };
+
   return (
     <div className="app-container">
       <Sidebar user={user} />
@@ -343,122 +353,36 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="mt-16 flex justify-between items-center">
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="page-btn rounded-[20px] px-4 h-8 bg-transparent border-[#eee] text-[13px] font-semibold disabled:text-[#CCC] disabled:cursor-not-allowed"
-                    style={{
-                      color: pagination.page <= 1 ? "#CCC" : "#888",
-                    }}
-                    disabled={pagination.page <= 1}
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                  >
-                    Назад
-                  </Button>
-
-                  {Array.from(
-                    {
-                      length: Math.min(
-                        pagination.total_pages,
-                        PAGINATION_CONSTANTS.MAX_VISIBLE_PAGES,
-                      ),
-                    },
-                    (_, i) => i + 1,
-                  ).map((p) => (
-                    <Button
-                      key={p}
-                      variant={pagination.page === p ? "default" : "secondary"}
-                      className="size-8 rounded-full p-0 text-[13px] font-bold min-w-8"
-                      style={{
-                        background: pagination.page === p ? "#FFD600" : "#333",
-                        color: pagination.page === p ? "#000" : "#fff",
-                      }}
-                      onClick={() => handlePageChange(p)}
-                    >
-                      {p}
-                    </Button>
-                  ))}
-
-                  {pagination.total_pages >
-                    PAGINATION_CONSTANTS.MAX_VISIBLE_PAGES && (
-                    <>
-                      <span className="text-[#999] text-[13px]">...</span>
-                      <Button
-                        variant="secondary"
-                        className="size-8 rounded-full p-0 text-[13px] font-bold min-w-8"
-                        style={{
-                          background:
-                            pagination.page === pagination.total_pages
-                              ? "#FFD600"
-                              : "#333",
-                          color:
-                            pagination.page === pagination.total_pages
-                              ? "#000"
-                              : "#fff",
-                        }}
-                        onClick={() => handlePageChange(pagination.total_pages)}
-                      >
-                        {pagination.total_pages}
-                      </Button>
-                    </>
-                  )}
-
-                  <Button
-                    variant="outline"
-                    className="page-btn rounded-[20px] px-4 h-8 bg-transparent border-[#eee] text-[13px] font-semibold disabled:text-[#CCC] disabled:cursor-not-allowed"
-                    style={{
-                      color:
-                        pagination.page >= pagination.total_pages
-                          ? "#CCC"
-                          : "#888",
-                    }}
-                    disabled={pagination.page >= pagination.total_pages}
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                  >
-                    Вперед
-                  </Button>
+              <div className="mt-16 flex justify-end gap-8 items-center">
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#999] text-sm">
+                    🔍
+                  </span>
+                  <Input
+                    type="text"
+                    className="text-input pl-8 w-60 bg-white border-[#eee]"
+                    placeholder="Поиск..."
+                    value={filters.q}
+                    onChange={(e) =>
+                      setFilters({ ...filters, q: e.target.value })
+                    }
+                  />
                 </div>
-
-                <div className="flex gap-8 items-center">
-                  <div className="relative">
-                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#999] text-sm">
-                      🔍
-                    </span>
-                    <Input
-                      type="text"
-                      className="text-input pl-8 w-60 bg-white border-[#eee]"
-                      placeholder="Поиск..."
-                      value={filters.q}
-                      onChange={(e) =>
-                        setFilters({ ...filters, q: e.target.value })
-                      }
-                    />
-                  </div>
-                  <Button
-                    variant="ghost"
-                    className="xls-download-btn font-normal text-sm gap-2 p-0 h-auto"
-                  >
-                    <span className="text-lg opacity-40">📄</span>
-                    Скачать в xls за сегодня
-                  </Button>
-                </div>
+                <Button
+                  variant="ghost"
+                  className="xls-download-btn font-normal text-sm gap-2 p-0 h-auto"
+                >
+                  <span className="text-lg opacity-40">📄</span>
+                  Скачать в xls за сегодня
+                </Button>
               </div>
             </CardContent>
           </Card>
 
           <Card className="card p-0! min-h-[200px] mt-[54px]">
             <CardContent className="p-0!">
-              {calls.length === 0 && !loading ? (
-                <div
-                  style={{
-                    textAlign: "center",
-                    color: "#999",
-                    fontSize: "14px",
-                  }}
-                >
-                  Нет данных для отображения
-                </div>
+              {loading ? (
+                <CallListSkeleton />
               ) : (
                 <CallList
                   calls={calls}
@@ -488,6 +412,14 @@ export default function HomePage() {
                   }}
                 />
               )}
+              <TablePagination
+                page={pagination.page}
+                perPage={pagination.per_page}
+                total={pagination.total}
+                totalPages={pagination.total_pages}
+                onPageChange={handlePageChange}
+                onPerPageChange={handlePerPageChange}
+              />
             </CardContent>
           </Card>
         </div>
