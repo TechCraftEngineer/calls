@@ -6,9 +6,13 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
-import { INTEGRATION_KEYS, PROMPT_KEYS } from "./constants";
+import { INTEGRATION_KEYS } from "./constants";
 import type { Prompt, SettingsState } from "./types";
-import { validateFtpCredentials } from "./utils";
+import {
+  validateFtpCredentials,
+  validateFtpHost,
+  validateFtpUser,
+} from "./utils";
 
 export function useSettings() {
   const router = useRouter();
@@ -23,6 +27,8 @@ export function useSettings() {
     ftpSaving: false,
     ftpTesting: false,
     ftpTestMessage: "",
+    ftpConnectionStatus: null,
+    ftpStatusLoading: false,
   });
 
   const loadSettings = useCallback(async () => {
@@ -35,18 +41,8 @@ export function useSettings() {
       }
       setCurrentUser(user);
 
-      const [promptsList, integrations] = await Promise.all([
-        api.settings.getPrompts(),
-        api.settings.getIntegrations(),
-      ]);
-
-      const promptsArr: Prompt[] = (
-        Array.isArray(promptsList) ? promptsList : []
-      ) as Prompt[];
+      const integrations = await api.settings.getIntegrations();
       const promptsMap: Record<string, Prompt> = {};
-      promptsArr.forEach((p: Prompt) => {
-        promptsMap[p.key] = p;
-      });
 
       // Добавляем интеграции (FTP, Telegram, MAX Bot)
       const ftp = integrations.ftp;
@@ -70,9 +66,10 @@ export function useSettings() {
       };
       promptsMap.ftp_password = {
         key: "ftp_password",
-        value: ftp.password ?? "",
+        value: "",
         description: "Пароль FTP",
         updated_at: undefined,
+        meta: { passwordSet: ftp.passwordSet },
       };
       promptsMap.telegram_bot_token = {
         key: "telegram_bot_token",
@@ -87,20 +84,50 @@ export function useSettings() {
         updated_at: undefined,
       };
 
-      [...Object.keys(PROMPT_KEYS), ...Object.keys(INTEGRATION_KEYS)].forEach(
-        (key) => {
-          if (!promptsMap[key]) {
-            promptsMap[key] = {
-              key,
-              value: "",
-              description: "",
-              updated_at: undefined,
-            };
-          }
-        },
-      );
+      Object.keys(INTEGRATION_KEYS).forEach((key) => {
+        if (!promptsMap[key]) {
+          promptsMap[key] = {
+            key,
+            value: "",
+            description: "",
+            updated_at: undefined,
+          };
+        }
+      });
 
-      setState((prev) => ({ ...prev, prompts: promptsMap }));
+      const ftpConfigured =
+        Boolean(ftp.host?.trim()) &&
+        Boolean(ftp.user?.trim()) &&
+        ftp.passwordSet;
+      setState((prev) => ({
+        ...prev,
+        prompts: promptsMap,
+        ftpStatusLoading: ftpConfigured,
+        ftpConnectionStatus: null,
+      }));
+
+      if (ftpConfigured) {
+        try {
+          const status = await api.settings.checkFtpStatus();
+          setState((prev) => ({
+            ...prev,
+            ftpConnectionStatus: status,
+            ftpStatusLoading: false,
+          }));
+        } catch {
+          setState((prev) => ({
+            ...prev,
+            ftpConnectionStatus: null,
+            ftpStatusLoading: false,
+          }));
+        }
+      } else {
+        setState((prev) => ({
+          ...prev,
+          ftpConnectionStatus: null,
+          ftpStatusLoading: false,
+        }));
+      }
     } catch (error: unknown) {
       console.error("Failed to load settings:", error);
       if (
@@ -120,33 +147,10 @@ export function useSettings() {
     try {
       setState((prev) => ({ ...prev, saving: true }));
 
-      const updates: Record<string, unknown> = {
-        prompts: {} as Record<string, { value: string; description: string }>,
-      };
-
-      // Промпты — только PROMPT_KEYS
-      Object.keys(PROMPT_KEYS).forEach((key) => {
-        const prompt = state.prompts[key];
-        if (prompt) {
-          (
-            updates.prompts as Record<
-              string,
-              { value: string; description: string }
-            >
-          )[key] = {
-            value: prompt.value || "",
-            description: prompt.description || "",
-          };
-        }
+      await api.settings.updateIntegrations({
+        telegram_bot_token: state.prompts.telegram_bot_token?.value ?? null,
+        max_bot_token: state.prompts.max_bot_token?.value ?? null,
       });
-
-      await Promise.all([
-        api.settings.updatePrompts(updates),
-        api.settings.updateIntegrations({
-          telegram_bot_token: state.prompts.telegram_bot_token?.value ?? null,
-          max_bot_token: state.prompts.max_bot_token?.value ?? null,
-        }),
-      ]);
       toast.success("Настройки сохранены");
       await loadSettings();
     } catch (error: unknown) {
@@ -170,10 +174,28 @@ export function useSettings() {
       const password = state.prompts.ftp_password?.value ?? "";
 
       if (host || user || password) {
-        const ftpValidation = validateFtpCredentials(host, user, password);
-        if (!ftpValidation.isValid) {
-          toast.error(ftpValidation.errors.join(". "));
-          return;
+        if (password.trim()) {
+          const ftpValidation = validateFtpCredentials(host, user, password);
+          if (!ftpValidation.isValid) {
+            toast.error(ftpValidation.errors.join(". "));
+            return;
+          }
+        } else if (state.prompts.ftp_password?.meta?.passwordSet) {
+          const hostValidation = validateFtpHost(host);
+          const userValidation = validateFtpUser(user);
+          const errors = [hostValidation.error, userValidation.error].filter(
+            Boolean,
+          );
+          if (errors.length > 0) {
+            toast.error(errors.join(". "));
+            return;
+          }
+        } else {
+          const ftpValidation = validateFtpCredentials(host, user, password);
+          if (!ftpValidation.isValid) {
+            toast.error(ftpValidation.errors.join(". "));
+            return;
+          }
         }
       }
 
@@ -207,6 +229,15 @@ export function useSettings() {
       const host = state.prompts.ftp_host?.value ?? "";
       const user = state.prompts.ftp_user?.value ?? "";
       const password = state.prompts.ftp_password?.value ?? "";
+      const passwordSet = state.prompts.ftp_password?.meta?.passwordSet;
+
+      if (passwordSet && !password.trim()) {
+        setState((prev) => ({
+          ...prev,
+          ftpTestMessage: "Введите пароль для проверки подключения",
+        }));
+        return;
+      }
 
       const ftpValidation = validateFtpCredentials(host, user, password);
       if (!ftpValidation.isValid) {
@@ -227,11 +258,21 @@ export function useSettings() {
         setState((prev) => ({
           ...prev,
           ftpTestMessage: "Подключение установлено. Учётные данные корректны.",
+          ftpConnectionStatus: {
+            configured: true,
+            success: true,
+            message: "Подключение успешное",
+          },
         }));
       } else {
         setState((prev) => ({
           ...prev,
           ftpTestMessage: result.message,
+          ftpConnectionStatus: {
+            configured: true,
+            success: false,
+            message: result.message,
+          },
         }));
       }
     } catch (error: unknown) {

@@ -1,4 +1,4 @@
-import { promptsService, usersService } from "@calls/db";
+import { promptsRepository, usersService } from "@calls/db";
 import { sendMessage } from "@calls/telegram-bot";
 import { workspaceProcedure } from "../../orpc";
 
@@ -13,7 +13,7 @@ export const sendTestTelegram = workspaceProcedure.handler(
       | string
       | undefined;
     if (!chatId) throw new Error("Telegram Chat ID is not set for this user");
-    const token = await promptsService.getPrompt(
+    const token = await promptsRepository.findByKeyWithDefault(
       "telegram_bot_token",
       workspaceId,
     );

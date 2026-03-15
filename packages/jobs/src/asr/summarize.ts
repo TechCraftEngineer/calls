@@ -95,6 +95,6 @@ export async function summarizeWithLlm(
     logger.error("Ошибка при генерации саммари", {
       error: error instanceof Error ? error.message : String(error),
     });
-    return {};
+    return { ...DEFAULT_FALLBACK };
   }
 }

@@ -32,12 +32,9 @@ export default function ErrorPage({
           <Button type="button" onClick={reset}>
             Попробовать снова
           </Button>
-          <Link
-            href={paths.root}
-            className="rounded-lg border border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            На главную
-          </Link>
+          <Button asChild variant="outline">
+            <Link href={paths.root}>На главную</Link>
+          </Button>
         </div>
       </div>
     </div>

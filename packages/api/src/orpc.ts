@@ -5,7 +5,7 @@
 
 import {
   callsService,
-  promptsService,
+  promptsRepository,
   systemRepository,
   usersService,
   workspacesService,
@@ -46,7 +46,7 @@ export async function createBackendContext(opts: {
   auth?: AuthLike;
 }): Promise<{
   callsService: any;
-  promptsService: any;
+  promptsRepository: typeof promptsRepository;
   systemRepository: any;
   usersService: any;
   workspacesService: any;
@@ -104,7 +104,7 @@ export async function createBackendContext(opts: {
 
   return {
     callsService,
-    promptsService,
+    promptsRepository,
     systemRepository,
     usersService,
     workspacesService,

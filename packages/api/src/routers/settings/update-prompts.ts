@@ -1,4 +1,4 @@
-import { promptsService, systemRepository } from "@calls/db";
+import { promptsRepository, systemRepository } from "@calls/db";
 import { workspaceAdminProcedure } from "../../orpc";
 import { DEEPSEEK_MODELS, PROMPT_KEYS } from "./constants";
 import { settingsUpdateSchema } from "./schemas";
@@ -8,8 +8,11 @@ export const updatePrompts = workspaceAdminProcedure
   .input(settingsUpdateSchema)
   .handler(async ({ input, context }) => {
     const { workspaceId } = context;
+    const username =
+      (context.user as Record<string, unknown>)?.username ?? "system";
+
     if (input.deepseek_model && input.deepseek_model in DEEPSEEK_MODELS) {
-      await promptsService.updatePrompt(
+      await promptsRepository.upsert(
         "deepseek_model",
         input.deepseek_model,
         "Selected DeepSeek model",
@@ -17,7 +20,7 @@ export const updatePrompts = workspaceAdminProcedure
       );
     }
     if (input.quality_min_value_threshold !== undefined) {
-      await promptsService.updatePrompt(
+      await promptsRepository.upsert(
         "quality_min_value_threshold",
         String(input.quality_min_value_threshold),
         "Minimum call value for quality evaluation (0-5)",
@@ -25,7 +28,7 @@ export const updatePrompts = workspaceAdminProcedure
       );
     }
     if (input.enable_manager_recommendations !== undefined) {
-      await promptsService.updatePrompt(
+      await promptsRepository.upsert(
         "enable_manager_recommendations",
         input.enable_manager_recommendations ? "true" : "false",
         "Включить генерацию рекомендаций для менеджера (true/false)",
@@ -38,18 +41,16 @@ export const updatePrompts = workspaceAdminProcedure
           | { value?: string; description?: string }
           | undefined;
         if (p) {
-          await promptsService.updatePrompt(
+          await promptsRepository.upsert(
             key,
             p.value ?? "",
             p.description ?? "",
             workspaceId,
           );
           const maskedValue = maskSensitiveData(key, p.value ?? "");
-          const username =
-            (context.user as Record<string, unknown>)?.username ?? "system";
           await systemRepository.addActivityLog(
             "info",
-            `Prompt updated: ${key} = ${maskedValue}`,
+            `Setting updated: ${key} = ${maskedValue}`,
             String(username),
             workspaceId,
           );

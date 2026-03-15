@@ -1,4 +1,5 @@
 import { backup } from "./backup";
+import { checkFtpStatus } from "./check-ftp-status";
 import { getIntegrations } from "./get-integrations";
 import { getModels } from "./get-models";
 import { getPrompts } from "./get-prompts";
@@ -16,4 +17,5 @@ export const settingsRouter = {
   getModels,
   backup,
   testFtp,
+  checkFtpStatus,
 };

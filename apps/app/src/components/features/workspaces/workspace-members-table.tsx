@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   CardContent,
+  CardHeader,
   Select,
   SelectContent,
   SelectItem,
@@ -58,6 +59,11 @@ export default function WorkspaceMembersTable({
 
   return (
     <Card className="card mb-6">
+      <CardHeader className="p-0 pb-3">
+        <div className="section-title flex items-center gap-2">
+          <span className="text-base">Участники</span>
+        </div>
+      </CardHeader>
       <CardContent className="p-0">
         <Table className="op-table">
           <TableHeader>

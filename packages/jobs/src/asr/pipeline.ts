@@ -118,10 +118,11 @@ export async function runTranscriptionPipeline(
     normalizedText = await normalizeWithLlm(rawText);
   }
 
+  const defaultTopic = "Не определена";
   let summary: string | undefined;
   let sentiment: string | undefined;
   let title: string | undefined;
-  let callTopic: string | undefined;
+  let callTopic: string | undefined = defaultTopic;
 
   if (normalizedText.trim().length > 0) {
     const analysis = await summarizeWithLlm(normalizedText, {
@@ -130,7 +131,7 @@ export async function runTranscriptionPipeline(
     summary = analysis.summary;
     sentiment = analysis.sentiment;
     title = analysis.title;
-    callTopic = analysis.callTopic;
+    callTopic = analysis.callTopic ?? defaultTopic;
   }
 
   logger.info("Конвейер завершён", {

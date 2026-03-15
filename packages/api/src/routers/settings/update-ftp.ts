@@ -9,19 +9,16 @@ const updateFtpSchema = z
     enabled: z.boolean(),
     host: z.string(),
     user: z.string(),
+    /** Пустой пароль = оставить существующий. Новый пароль — только при явном вводе. */
     password: z.string(),
   })
   .refine(
     (data) => {
-      const hasAny = [data.host, data.user, data.password].some(
-        (v) => v && v.trim() !== "",
-      );
-      const hasAll = [data.host, data.user, data.password].every(
-        (v) => v && v.trim() !== "",
-      );
-      return !hasAny || hasAll;
+      const hasHost = data.host.trim() !== "";
+      const hasUser = data.user.trim() !== "";
+      return hasHost === hasUser;
     },
-    { message: "Заполните все поля подключения" },
+    { message: "Заполните Host и User вместе" },
   );
 
 export const updateFtp = workspaceAdminProcedure
@@ -30,9 +27,10 @@ export const updateFtp = workspaceAdminProcedure
     const { workspaceId } = context;
     const { enabled, host, user, password } = input;
 
-    if (host.trim() && user.trim() && password) {
+    const passwordToSave = password.trim() || null;
+    if (host.trim() && user.trim() && passwordToSave) {
       try {
-        ftpCredentialsSchema.parse({ host, user, password });
+        ftpCredentialsSchema.parse({ host, user, password: passwordToSave });
       } catch (error) {
         throw new ORPCError("BAD_REQUEST", {
           message: `Ошибка валидации FTP: ${(error as Error).message}`,
@@ -46,7 +44,7 @@ export const updateFtp = workspaceAdminProcedure
       enabled,
       host,
       user,
-      password,
+      passwordToSave,
       workspaceId,
       String(username),
     );

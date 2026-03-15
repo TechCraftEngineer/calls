@@ -16,17 +16,8 @@ export const SENSITIVE_KEYS = [
   "key",
 ];
 
+/** Ключи настроек отчётов (время, день недели и т.д.) — хранятся в таблице prompts */
 export const PROMPT_KEYS = [
-  "summary",
-  "transcribe_incoming",
-  "transcribe_outgoing",
-  "speaker_analysis",
-  "speaker_analysis_incoming",
-  "speaker_analysis_outgoing",
-  "value_incoming",
-  "value_outgoing",
-  "quality",
-  "manager_recommendations",
   "report_daily_time",
   "report_weekly_day",
   "report_weekly_time",

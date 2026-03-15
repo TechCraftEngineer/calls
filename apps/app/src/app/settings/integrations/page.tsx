@@ -50,6 +50,8 @@ export default function SettingsIntegrationsPage() {
           saving={state.ftpSaving}
           testing={state.ftpTesting}
           testMessage={state.ftpTestMessage}
+          connectionStatus={state.ftpConnectionStatus}
+          statusLoading={state.ftpStatusLoading}
         />
 
         <IntegrationsSection

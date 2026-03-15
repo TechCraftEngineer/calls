@@ -3,6 +3,13 @@ export interface Prompt {
   value: string;
   description?: string;
   updated_at?: string;
+  meta?: { passwordSet?: boolean };
+}
+
+export interface FtpConnectionStatus {
+  configured: boolean;
+  success: boolean | null;
+  message: string | null;
 }
 
 export interface SettingsState {
@@ -15,6 +22,8 @@ export interface SettingsState {
   ftpSaving: boolean;
   ftpTesting: boolean;
   ftpTestMessage: string;
+  ftpConnectionStatus: FtpConnectionStatus | null;
+  ftpStatusLoading: boolean;
 }
 
 export interface TelegramSectionProps {
@@ -25,15 +34,6 @@ export interface TelegramSectionProps {
 
 export interface IntegrationsSectionProps {
   prompts: Record<string, Prompt>;
-  onPromptChange: (
-    key: string,
-    field: "value" | "description",
-  ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-}
-
-export interface PromptSectionProps {
-  title: string;
-  prompt: Prompt;
   onPromptChange: (
     key: string,
     field: "value" | "description",

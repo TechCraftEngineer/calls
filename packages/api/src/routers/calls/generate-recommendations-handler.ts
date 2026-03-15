@@ -15,7 +15,6 @@ export const generateRecommendationsHandler = workspaceProcedure
     return generateRecommendations(
       input.call_id,
       context.callsService,
-      context.promptsService,
       context.workspaceId!,
     );
   });

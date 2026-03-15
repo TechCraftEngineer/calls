@@ -27,7 +27,7 @@ function StackedCallsIllustration() {
 
 export function CallListEmpty() {
   return (
-    <div className="flex items-center justify-center p-4">
+    <div className="flex items-center justify-center rounded-lg bg-white p-4 dark:bg-zinc-900">
       <Empty className="py-12">
         <EmptyHeader>
           <EmptyMedia>

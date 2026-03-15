@@ -3,7 +3,6 @@
  */
 
 import { decrypt, encrypt } from "../lib/encryption";
-import { validateFtpSettings } from "../lib/validation";
 import type { PromptsRepository } from "../repositories/prompts.repository";
 import type { SystemRepository } from "../repositories/system.repository";
 import type { WorkspaceIntegrationsRepository } from "../repositories/workspace-integrations.repository";
@@ -36,7 +35,8 @@ export class SettingsService {
     enabled: boolean;
     host: string | null;
     user: string | null;
-    password: string | null;
+    /** Пароль не возвращается из соображений безопасности. Используйте passwordSet. */
+    passwordSet: boolean;
   }> {
     const row =
       await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
@@ -45,7 +45,7 @@ export class SettingsService {
       );
 
     if (!row) {
-      return { enabled: true, host: null, user: null, password: null };
+      return { enabled: true, host: null, user: null, passwordSet: false };
     }
 
     const config = row.config as {
@@ -56,33 +56,39 @@ export class SettingsService {
     const host = config?.host ?? null;
     const user = config?.user ?? null;
     const encryptedPassword = config?.password ?? null;
-    const password = encryptedPassword ? decrypt(encryptedPassword) : null;
-
-    if (host && user && password) {
-      try {
-        const validated = validateFtpSettings({ host, user, password });
-        return {
-          enabled: row.enabled,
-          host: validated.host,
-          user: validated.user,
-          password: validated.password,
-        };
-      } catch {
-        return {
-          enabled: row.enabled,
-          host: null,
-          user: null,
-          password: null,
-        };
-      }
-    }
+    const passwordSet = Boolean(encryptedPassword?.trim());
 
     return {
       enabled: row.enabled,
       host,
       user,
-      password,
+      passwordSet,
     };
+  }
+
+  /** Конфиг с паролем для проверки подключения (только для внутреннего использования) */
+  async getFtpConfigWithPassword(workspaceId: string): Promise<{
+    host: string;
+    user: string;
+    password: string;
+  } | null> {
+    const row =
+      await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
+        workspaceId,
+        FTP_INTEGRATION,
+      );
+    if (!row) return null;
+    const config = row.config as {
+      host?: string;
+      user?: string;
+      password?: string;
+    };
+    const host = config?.host?.trim();
+    const user = config?.user?.trim();
+    const encryptedPassword = config?.password;
+    if (!host || !user || !encryptedPassword?.trim()) return null;
+    const password = decrypt(encryptedPassword);
+    return { host, user, password };
   }
 
   async updateSetting(
@@ -115,11 +121,23 @@ export class SettingsService {
     enabled: boolean,
     host: string,
     user: string,
-    password: string,
+    password: string | null,
     workspaceId: string,
     username: string = "system",
   ): Promise<boolean> {
-    const encryptedPassword = password ? encrypt(password) : "";
+    const row =
+      await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
+        workspaceId,
+        FTP_INTEGRATION,
+      );
+    const existingConfig = (row?.config ?? {}) as {
+      host?: string;
+      user?: string;
+      password?: string;
+    };
+    const encryptedPassword = password
+      ? encrypt(password)
+      : (existingConfig.password ?? "");
     const result = await this.workspaceIntegrationsRepository.upsert(
       workspaceId,
       FTP_INTEGRATION,

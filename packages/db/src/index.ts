@@ -13,6 +13,7 @@ export {
   getDefaultWorkspace,
   handleWorkspaceError,
 } from "./lib/workspace-utils";
+export { promptsRepository } from "./repositories/prompts.repository";
 export { systemRepository } from "./repositories/system.repository";
 // Repositories
 export { usersRepository } from "./repositories/users.repository";
@@ -92,7 +93,6 @@ export {
 export {
   callsService,
   filesService,
-  promptsService,
   settingsService,
   usersService,
   workspacesService,

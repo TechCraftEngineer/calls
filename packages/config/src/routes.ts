@@ -41,7 +41,6 @@ export const paths = {
     root: ROOTS.SETTINGS,
     workspace: `${ROOTS.SETTINGS}/workspace`,
     integrations: `${ROOTS.SETTINGS}/integrations`,
-    prompts: `${ROOTS.SETTINGS}/prompts`,
     backup: `${ROOTS.SETTINGS}/backup`,
     profile: `${ROOTS.SETTINGS}/profile`,
     appearance: `${ROOTS.SETTINGS}/appearance`,

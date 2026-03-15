@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { backendRouter, createBackendContext, createLogger } from "@calls/api";
 import {
   getDefaultWorkspace,
-  promptsService,
+  promptsRepository,
   workspacesService,
 } from "@calls/db";
 import { createWebhookHandler } from "@calls/telegram-bot";
@@ -117,7 +117,10 @@ export function createApp() {
         backendLogger.warn("Default workspace not found for telegram webhook");
         return null;
       }
-      return promptsService.getPrompt("telegram_bot_token", defaultWs.id);
+      return promptsRepository.findByKeyWithDefault(
+        "telegram_bot_token",
+        defaultWs.id,
+      );
     } catch (error) {
       backendLogger.error("Failed to get workspace for telegram webhook", {
         error: error instanceof Error ? error.message : String(error),

@@ -10,6 +10,30 @@ import { createLogger } from "../logger";
 const logger = createLogger("asr-audio-duration");
 
 /**
+ * Возвращает длительность аудио в секундах по буферу (например, после загрузки с FTP).
+ * Не зависит от ASR/LLM сервисов.
+ */
+export async function getAudioDurationFromBuffer(
+  buffer: Buffer,
+): Promise<number | undefined> {
+  try {
+    const metadata = await parseBuffer(buffer, undefined, { duration: true });
+    const duration = metadata.format.duration;
+
+    if (typeof duration === "number" && duration > 0) {
+      return Math.round(duration * 10) / 10;
+    }
+    return undefined;
+  } catch (err) {
+    logger.warn("Ошибка при определении длительности аудио из буфера", {
+      size: buffer.length,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return undefined;
+  }
+}
+
+/**
  * Возвращает длительность аудио в секундах по URL.
  * Не зависит от ASR/LLM сервисов.
  */

@@ -87,4 +87,8 @@ export function createPromptChangeHandler(
   };
 }
 
-export { validateFtpCredentials } from "@calls/shared";
+export {
+  validateFtpCredentials,
+  validateFtpHost,
+  validateFtpUser,
+} from "@calls/shared";

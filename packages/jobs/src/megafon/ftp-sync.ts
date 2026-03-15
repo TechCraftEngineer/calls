@@ -7,6 +7,7 @@ import { Writable } from "node:stream";
 import { callsService, filesService } from "@calls/db";
 import { validateFtpCredentials } from "@calls/shared";
 import { Client } from "basic-ftp";
+import { getAudioDurationFromBuffer } from "../asr";
 import { createLogger } from "../logger";
 import { parseMegafonFilename } from "./parse-filename";
 
@@ -305,6 +306,23 @@ export async function syncFtp(
             continue;
           }
 
+          // Длительность определяем сразу после загрузки в S3 по уже имеющемуся буферу
+          let durationSeconds: number | null = null;
+          try {
+            const duration = await getAudioDurationFromBuffer(downloadBuffer);
+            if (typeof duration === "number" && duration > 0) {
+              durationSeconds = Math.round(duration);
+            }
+          } catch (durationErr) {
+            logger.warn("Не удалось определить длительность записи", {
+              filename: relativePath,
+              error:
+                durationErr instanceof Error
+                  ? durationErr.message
+                  : String(durationErr),
+            });
+          }
+
           const callId = await callsService.createCall({
             workspaceId,
             filename: relativePath,
@@ -317,6 +335,7 @@ export async function syncFtp(
             name: parsed.internalNumber,
             sizeBytes: downloadBuffer.length,
             fileId: fileId ?? null,
+            duration: durationSeconds,
           });
 
           result.downloaded++;

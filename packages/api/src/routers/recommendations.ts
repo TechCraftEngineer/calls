@@ -1,8 +1,10 @@
 import { createChatBot } from "@calls/ai";
 import { createLogger } from "@calls/api";
-import type { callsService, promptsService } from "@calls/db";
+import type { callsService } from "@calls/db";
 
 const logger = createLogger("recommendations");
+
+const DEFAULT_RECOMMENDATIONS_PROMPT = `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
 
 function parseRecommendationsJson(text: string): string[] {
   if (!text || typeof text !== "string") {
@@ -44,7 +46,6 @@ function parseRecommendationsJson(text: string): string[] {
 export async function generateRecommendations(
   callId: string,
   calls: typeof callsService,
-  prompts: typeof promptsService,
 ): Promise<{ recommendations: string[] }> {
   try {
     const call = await calls.getCall(callId);
@@ -75,9 +76,7 @@ export async function generateRecommendations(
       transcriptText = `${transcriptText.substring(0, 50000)}...`;
     }
 
-    const systemPrompt =
-      (await prompts.getPrompt("manager_recommendations", call.workspaceId)) ??
-      `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
+    const systemPrompt = DEFAULT_RECOMMENDATIONS_PROMPT;
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {

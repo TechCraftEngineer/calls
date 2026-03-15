@@ -149,6 +149,11 @@ export function createBackendApiWithContext(ctx: BackendContext) {
           ctx,
           input,
         ),
+      checkFtpStatus: () =>
+        callProc(
+          backendRouter.settings.checkFtpStatus as ProcedureWithCallable,
+          ctx,
+        ),
       updateFtp: (input: {
         enabled: boolean;
         host: string;

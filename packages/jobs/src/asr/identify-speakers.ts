@@ -102,7 +102,6 @@ export interface IdentifySpeakersOptions {
   direction?: string | null;
   managerName?: string | null;
   workspaceId: string;
-  getPrompt: (key: string, workspaceId: string) => Promise<string | null>;
 }
 
 export interface IdentifySpeakersResult {
@@ -124,15 +123,7 @@ export async function identifySpeakersWithLlm(
     return { text: normalizedText };
   }
 
-  const promptKey =
-    options.direction === "Входящий" || options.direction === "incoming"
-      ? "speaker_analysis_incoming"
-      : "speaker_analysis_outgoing";
-
-  const customPrompt = await options.getPrompt(promptKey, options.workspaceId);
-  const systemPrompt =
-    customPrompt ??
-    `${DEFAULT_SYSTEM_PROMPT}${options.managerName ? `\n\nПодсказка: оператор может представляться как ${options.managerName}.` : ""}`;
+  const systemPrompt = `${DEFAULT_SYSTEM_PROMPT}${options.managerName ? `\n\nПодсказка: оператор может представляться как ${options.managerName}.` : ""}`;
 
   const start = Date.now();
 

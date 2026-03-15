@@ -213,17 +213,14 @@ export default function WorkspaceSettingsPage() {
         />
       ) : null}
 
-      <div className="mb-6">
-        <h2 className="text-base font-bold mb-4">Участники</h2>
-        <WorkspaceMembersTable
-          members={(Array.isArray(members) ? members : []) as WorkspaceMember[]}
-          currentUserId={currentUserId}
-          currentUserRole={activeWorkspace.role}
-          loading={membersLoading}
-          onRemoveMember={handleRemoveMember}
-          onUpdateRole={handleUpdateRole}
-        />
-      </div>
+      <WorkspaceMembersTable
+        members={(Array.isArray(members) ? members : []) as WorkspaceMember[]}
+        currentUserId={currentUserId}
+        currentUserRole={activeWorkspace.role}
+        loading={membersLoading}
+        onRemoveMember={handleRemoveMember}
+        onUpdateRole={handleUpdateRole}
+      />
 
       {isOwner && (
         <Card className="border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20">

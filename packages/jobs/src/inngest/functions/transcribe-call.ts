@@ -3,7 +3,7 @@
  * Получает аудио из S3, запускает ASR pipeline, сохраняет транскрипт.
  */
 
-import { callsService, filesService, promptsService } from "@calls/db";
+import { callsService, filesService } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
 import { identifySpeakersWithLlm, runTranscriptionPipeline } from "../../asr";
 import { createLogger } from "../../logger";
@@ -58,18 +58,12 @@ export const transcribeCallFn = inngest.createFunction(
       return url;
     });
 
-    const summaryPrompt = await step.run("get-summary-prompt", async () => {
-      return await promptsService.getPrompt("summary", call.workspaceId);
-    });
-
     const result = await step.run("transcribe", async () => {
       logger.info("Запуск транскрибации", {
         callId,
         audioUrlLength: audioUrl.length,
       });
-      return runTranscriptionPipeline(audioUrl, {
-        summaryPrompt: summaryPrompt ?? undefined,
-      });
+      return runTranscriptionPipeline(audioUrl, {});
     });
 
     const { text: finalText, customerName } = await step.run(
@@ -79,7 +73,6 @@ export const transcribeCallFn = inngest.createFunction(
           direction: call.direction,
           managerName: call.name,
           workspaceId: call.workspaceId,
-          getPrompt: (key, wsId) => promptsService.getPrompt(key, wsId),
         });
       },
     );

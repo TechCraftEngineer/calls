@@ -72,7 +72,7 @@ export default function WorkspaceGeneralForm({
 
   return (
     <Card className="card mb-6">
-      <CardHeader className="p-0 pb-6">
+      <CardHeader className="p-0 pb-3">
         <div className="section-title flex items-center gap-2">
           <span className="text-base">Общие настройки</span>
         </div>
@@ -127,7 +127,12 @@ export default function WorkspaceGeneralForm({
             )}
           </div>
 
-          <Button type="submit" variant="accent" disabled={saving}>
+          <Button
+            type="submit"
+            variant="success"
+            disabled={saving}
+            className="self-start"
+          >
             {saving ? "Сохранение…" : "Сохранить"}
           </Button>
         </form>

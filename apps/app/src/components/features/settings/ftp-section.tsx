@@ -12,7 +12,7 @@ import {
   Label,
   PasswordInput,
 } from "@calls/ui";
-import type { Prompt } from "./types";
+import type { FtpConnectionStatus, Prompt } from "./types";
 
 interface FtpSectionProps {
   prompts: Record<string, Prompt>;
@@ -26,6 +26,8 @@ interface FtpSectionProps {
   saving: boolean;
   testing: boolean;
   testMessage: string;
+  connectionStatus: FtpConnectionStatus | null;
+  statusLoading: boolean;
 }
 
 export default function FtpSection({
@@ -37,11 +39,14 @@ export default function FtpSection({
   saving,
   testing,
   testMessage,
+  connectionStatus,
+  statusLoading,
 }: FtpSectionProps) {
   const enabled = prompts.ftp_enabled?.value === "true";
   const host = prompts.ftp_host?.value ?? "";
   const user = prompts.ftp_user?.value ?? "";
   const password = prompts.ftp_password?.value ?? "";
+  const passwordSet = prompts.ftp_password?.meta?.passwordSet;
   const hasValues = host.trim() || user.trim() || password;
 
   return (
@@ -57,7 +62,7 @@ export default function FtpSection({
             </CardTitle>
             <CardDescription className="mt-1">
               Подключение к FTP-серверу PBX для автоматической загрузки записей
-              звонков
+              звонков. Учётные данные хранятся в базе в зашифрованном виде.
             </CardDescription>
           </div>
           <label
@@ -117,12 +122,39 @@ export default function FtpSection({
               id="ftp-password"
               value={password}
               onChange={onPromptChange("ftp_password", "value")}
-              placeholder="FTP пароль"
+              placeholder={
+                passwordSet
+                  ? "•••••••• (оставьте пустым, чтобы не менять)"
+                  : "FTP пароль"
+              }
               autoComplete="off"
               className="h-9"
             />
           </div>
         </div>
+
+        {(connectionStatus?.configured || statusLoading) && (
+          <div className="rounded-lg border p-3">
+            {statusLoading ? (
+              <p className="text-sm text-muted-foreground">
+                Проверка подключения…
+              </p>
+            ) : connectionStatus?.success === true ? (
+              <p className="text-sm text-green-600 dark:text-green-400">
+                ✓ {connectionStatus.message}
+              </p>
+            ) : connectionStatus?.success === false ? (
+              <p className="text-sm text-red-600 dark:text-red-400">
+                ✗ Подключение не успешное
+                {connectionStatus.message && (
+                  <span className="block mt-1 text-muted-foreground">
+                    {connectionStatus.message}
+                  </span>
+                )}
+              </p>
+            ) : null}
+          </div>
+        )}
 
         {testMessage && (
           <div
