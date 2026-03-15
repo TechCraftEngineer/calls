@@ -1,6 +1,6 @@
 /**
  * Hono handler для Inngest.
- * Импортировать в app-server: import { inngestHandler } from "@calls/jobs/hono";
+ * Используется в packages/jobs/src/server.ts.
  */
 
 import { serve } from "inngest/hono";

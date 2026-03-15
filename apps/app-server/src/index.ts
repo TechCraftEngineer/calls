@@ -1,17 +1,23 @@
 /**
  * Backend Server - Hono + oRPC replacement for Python FastAPI backend.
  * Uses Better Auth for authentication.
+ *
+ * IMPORTANT: Langfuse tracing must be initialized BEFORE any code that uses AI SDK.
+ * We use dynamic import for the app so that @calls/api (which pulls in @calls/ai) is loaded
+ * only after the OpenTelemetry provider is registered.
  */
 
-import { initializeLangfuseTracing } from "@calls/ai";
-import { createLogger } from "@calls/api";
+import { initializeLangfuseTracing } from "@calls/ai/instrumentation";
 
 initializeLangfuseTracing();
 
-import { createApp } from "./app";
-import { port } from "./config";
-import { checkDatabaseConnection } from "./lib/db";
-import { setupTelegramWebhook } from "./startup/telegram-webhook";
+const {
+  createApp,
+  port,
+  checkDatabaseConnection,
+  setupTelegramWebhook,
+  createLogger,
+} = await import("./main");
 
 const backendLogger = createLogger("backend-server");
 

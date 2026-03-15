@@ -9,7 +9,6 @@ import {
   promptsService,
   workspacesService,
 } from "@calls/db";
-import { inngestHandler } from "@calls/jobs/hono";
 import { createWebhookHandler } from "@calls/telegram-bot";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
@@ -127,9 +126,6 @@ export function createApp() {
     }
   });
   app.post("/api/telegram-webhook", telegramWebhookHandler);
-
-  // Inngest
-  app.on(["GET", "PUT", "POST"], "/api/inngest", inngestHandler);
 
   // Health
   app.get("/", (c) => c.json({ message: "QBS Звонки API", version: "2.0.0" }));

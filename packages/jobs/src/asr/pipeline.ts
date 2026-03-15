@@ -4,6 +4,7 @@
 
 import { createLogger } from "../logger";
 import { transcribeWithAssemblyAi } from "./assemblyai";
+import { getAudioDurationFromUrl } from "./get-audio-duration";
 import { mergeAsrWithLlm } from "./merge-asr";
 import { normalizeWithLlm } from "./normalize";
 import { summarizeWithLlm } from "./summarize";
@@ -24,11 +25,13 @@ export async function runTranscriptionPipeline(
     audioUrl: audioUrl.slice(0, 80),
   });
 
-  // Параллельное распознавание с обработкой ошибок
-  const [assemblyaiResult, yandexResult] = await Promise.allSettled([
-    transcribeWithAssemblyAi(audioUrl),
-    transcribeWithYandex(audioUrl),
-  ]);
+  // Параллельно: ASR + извлечение длительности (music-metadata, без зависимости от ASR)
+  const [assemblyaiResult, yandexResult, durationResult] =
+    await Promise.allSettled([
+      transcribeWithAssemblyAi(audioUrl),
+      transcribeWithYandex(audioUrl),
+      getAudioDurationFromUrl(audioUrl),
+    ]);
 
   const assemblyai =
     assemblyaiResult.status === "fulfilled" ? assemblyaiResult.value : null;
@@ -69,9 +72,16 @@ export async function runTranscriptionPipeline(
 
   const processingTimeMs = Date.now() - start;
 
-  const durationInSeconds = assemblyai?.raw
+  // Приоритет: music-metadata (локально) → fallback на AssemblyAI
+  const durationFromMetadata =
+    durationResult.status === "fulfilled" ? durationResult.value : undefined;
+  const durationFromAssemblyai = assemblyai?.raw
     ? (assemblyai.raw as { durationInSeconds?: number }).durationInSeconds
     : undefined;
+  const durationInSeconds =
+    typeof durationFromMetadata === "number"
+      ? durationFromMetadata
+      : durationFromAssemblyai;
 
   const asrSource: AsrSource =
     assemblyaiText && yandexText
