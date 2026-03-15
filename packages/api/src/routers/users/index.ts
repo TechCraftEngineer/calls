@@ -10,6 +10,7 @@ import { telegramAuthUrl } from "./telegram-auth-url";
 import { update } from "./update";
 import { updateBasicInfo } from "./update-basic-info";
 import { updateEmailSettings } from "./update-email-settings";
+import { updateEvaluationSettings } from "./update-evaluation-settings";
 import { updateFilterSettings } from "./update-filter-settings";
 import { updateKpiSettings } from "./update-kpi-settings";
 import { updateMaxSettings } from "./update-max-settings";
@@ -36,4 +37,5 @@ export const usersRouter = {
   updateReportSettings,
   updateKpiSettings,
   updateFilterSettings,
+  updateEvaluationSettings,
 };

@@ -34,6 +34,11 @@ export const userUpdateSchema = z.object({
   kpi_target_talk_time_minutes: z.number().optional(),
   telegram_skip_weekends: z.boolean().optional(),
   report_managed_user_ids: z.string().optional().nullable(),
+  evaluation_template_slug: z
+    .enum(["sales", "support", "general"])
+    .optional()
+    .nullable(),
+  evaluation_custom_instructions: z.string().optional().nullable(),
 });
 
 export const updateBasicInfoSchema = z.object({

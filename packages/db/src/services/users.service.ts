@@ -67,6 +67,8 @@ export class UsersService {
     kpi_base_salary: number;
     kpi_target_bonus: number;
     kpi_target_talk_time_minutes: number;
+    evaluation_template_slug: "sales" | "support" | "general" | null;
+    evaluation_custom_instructions: string | null;
   } | null> {
     const user = await this.usersRepository.findById(userId);
     if (!user) return null;
@@ -119,6 +121,13 @@ export class UsersService {
           targetTalkTimeMinutes?: number;
         }
       | undefined;
+    const es = settings?.evaluationSettings as
+      | {
+          templateSlug?: "sales" | "support" | "general";
+          customInstructions?: string;
+        }
+      | null
+      | undefined;
 
     return {
       username: (user.username ?? user.email ?? "") as string,
@@ -148,6 +157,8 @@ export class UsersService {
       kpi_base_salary: ks?.baseSalary ?? 0,
       kpi_target_bonus: ks?.targetBonus ?? 0,
       kpi_target_talk_time_minutes: ks?.targetTalkTimeMinutes ?? 0,
+      evaluation_template_slug: es?.templateSlug ?? null,
+      evaluation_custom_instructions: es?.customInstructions ?? null,
     };
   }
 
@@ -359,29 +370,48 @@ export class UsersService {
     if (data.kpiTargetTalkTimeMinutes !== undefined)
       kpiSettings.targetTalkTimeMinutes = data.kpiTargetTalkTimeMinutes;
 
+    const evaluationSettingsRaw =
+      data.evaluationTemplateSlug !== undefined
+        ? data.evaluationTemplateSlug === null
+          ? null
+          : {
+              templateSlug: data.evaluationTemplateSlug,
+              customInstructions:
+                data.evaluationCustomInstructions?.trim() || undefined,
+            }
+        : undefined;
+
     const hasUpdates =
       Object.keys(filterSettings).length > 0 ||
       Object.keys(notificationSettings).length > 0 ||
       Object.keys(reportSettings).length > 0 ||
-      Object.keys(kpiSettings).length > 0;
+      Object.keys(kpiSettings).length > 0 ||
+      evaluationSettingsRaw !== undefined;
 
     if (!hasUpdates) return true;
+
+    const upsertData: Parameters<
+      typeof userWorkspaceSettingsRepository.upsert
+    >[2] = {
+      filterSettings:
+        Object.keys(filterSettings).length > 0 ? filterSettings : undefined,
+      notificationSettings:
+        Object.keys(notificationSettings).length > 0
+          ? notificationSettings
+          : undefined,
+      reportSettings:
+        Object.keys(reportSettings).length > 0 ? reportSettings : undefined,
+      kpiSettings:
+        Object.keys(kpiSettings).length > 0 ? kpiSettings : undefined,
+    };
+    if (evaluationSettingsRaw !== undefined) {
+      upsertData.evaluationSettings = evaluationSettingsRaw;
+    }
 
     const result = await userWorkspaceSettingsRepository.upsert(
       userId,
       workspaceId,
-      {
-        filterSettings:
-          Object.keys(filterSettings).length > 0 ? filterSettings : undefined,
-        notificationSettings:
-          Object.keys(notificationSettings).length > 0
-            ? notificationSettings
-            : undefined,
-        reportSettings:
-          Object.keys(reportSettings).length > 0 ? reportSettings : undefined,
-        kpiSettings:
-          Object.keys(kpiSettings).length > 0 ? kpiSettings : undefined,
-      },
+      upsertData,
     );
 
     if (result) {

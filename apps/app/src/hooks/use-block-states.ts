@@ -55,6 +55,8 @@ export function useBlockStates() {
           "filter_min_duration",
           "filter_min_replicas",
         ];
+      case "evaluation":
+        return ["evaluation_template_slug", "evaluation_custom_instructions"];
       default:
         return [];
     }
@@ -158,6 +160,15 @@ export function useBlockStates() {
     setOriginalForm({ ...form });
   }, []);
 
+  const hasBlockChanges = useCallback(
+    (blockName: string, currentForm?: EditUserForm | null): boolean => {
+      if (changedBlocks.has(blockName)) return true;
+      if (!currentForm || !originalForm) return false;
+      return checkBlockChanges(blockName, currentForm);
+    },
+    [changedBlocks, originalForm, checkBlockChanges],
+  );
+
   return {
     changedBlocks,
     blockStates,
@@ -167,7 +178,7 @@ export function useBlockStates() {
     getBlockAnimationClass,
     initializeForm,
     updateOriginalForm,
-    hasBlockChanges: (blockName: string) => changedBlocks.has(blockName),
+    hasBlockChanges,
     getBlockState: (blockName: string) => blockStates[blockName] || "idle",
   };
 }

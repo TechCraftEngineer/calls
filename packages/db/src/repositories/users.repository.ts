@@ -10,6 +10,14 @@ import { db } from "../client";
 import * as schema from "../schema";
 import type { CreateUserData, UpdateUserData } from "../types/users.types";
 
+function parseInternalExtensions(ext: string | null): string[] | null {
+  if (!ext || String(ext).trim().toLowerCase() === "all") return null;
+  return ext
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export const usersRepository = {
   async findById(id: string): Promise<schema.User | null> {
     const result = await db
@@ -177,6 +185,42 @@ export const usersRepository = {
       .where(eq(schema.user.id, userId));
 
     return (result.rowCount ?? 0) > 0;
+  },
+
+  /**
+   * Находит пользователя workspace по internal_number звонка.
+   * Сопоставление: internal_extensions пользователя (comma-separated) содержит internalNumber.
+   */
+  async findUserByInternalNumber(
+    workspaceId: string,
+    internalNumber: string | null,
+  ): Promise<schema.User | null> {
+    if (!internalNumber?.trim()) return null;
+
+    const members = await db
+      .select({
+        user: schema.user,
+      })
+      .from(schema.workspaceMembers)
+      .innerJoin(
+        schema.user,
+        eq(schema.workspaceMembers.userId, schema.user.id),
+      )
+      .where(
+        and(
+          eq(schema.workspaceMembers.workspaceId, workspaceId),
+          isNull(schema.user.deletedAt),
+        ),
+      );
+
+    const num = internalNumber.trim();
+    for (const row of members) {
+      const extensions = parseInternalExtensions(row.user.internalExtensions);
+      if (extensions && extensions.includes(num)) {
+        return row.user;
+      }
+    }
+    return null;
   },
 };
 

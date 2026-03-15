@@ -27,6 +27,12 @@ const ROLE_LABELS: Record<string, string> = {
   member: "Участник",
 };
 
+const EVALUATION_TEMPLATE_LABELS: Record<string, string> = {
+  sales: "Продажи",
+  support: "Поддержка",
+  general: "Общий",
+};
+
 interface UsersTableProps {
   users: ManagedUser[];
   currentUser: User | null;
@@ -68,6 +74,7 @@ export default function UsersTable({
             <TableRow className="border-none">
               <TableHead>Имя / Логин</TableHead>
               <TableHead>Роль</TableHead>
+              <TableHead>Шаблон оценки</TableHead>
               <TableHead>Внутр. номера</TableHead>
               <TableHead>Мобильные</TableHead>
               <TableHead>Дата</TableHead>
@@ -77,7 +84,7 @@ export default function UsersTable({
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-10">
+                <TableCell colSpan={7} className="text-center py-10">
                   <div className="flex flex-col items-center gap-2">
                     <div
                       className="animate-spin h-8 w-8 border-4 border-gray-200 border-t-orange-500 rounded-full"
@@ -139,6 +146,13 @@ export default function UsersTable({
                         </span>
                       )}
                     </TableCell>
+                    <TableCell className="text-[#555]">
+                      {u.evaluation_template_slug
+                        ? (EVALUATION_TEMPLATE_LABELS[
+                            u.evaluation_template_slug
+                          ] ?? u.evaluation_template_slug)
+                        : "—"}
+                    </TableCell>
                     <TableCell
                       className="text-[#555] font-medium"
                       style={{ fontVariantNumeric: "tabular-nums" }}
@@ -195,7 +209,7 @@ export default function UsersTable({
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-10">
+                <TableCell colSpan={7} className="text-center py-10">
                   <div className="flex flex-col items-center gap-2">
                     <svg
                       className="w-12 h-12 text-gray-300"

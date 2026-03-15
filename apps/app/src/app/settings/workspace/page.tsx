@@ -1,10 +1,20 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { Button, Card, CardContent, toast } from "@calls/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  toast,
+} from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import WorkspaceGeneralForm from "@/components/features/workspaces/workspace-general-form";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { getCurrentUser } from "@/lib/auth";
@@ -28,6 +38,18 @@ export default function WorkspaceSettingsPage() {
     enabled: !!workspaceId,
   });
 
+  const { data: evaluationSettings } = useQuery({
+    ...orpc.settings.getEvaluationSettings.queryOptions(),
+    enabled: !!workspaceId && isWorkspaceAdmin,
+  });
+
+  const { data: evaluationTemplates = [] } = useQuery({
+    ...orpc.settings.getEvaluationTemplates.queryOptions(),
+    enabled: !!workspaceId && isWorkspaceAdmin,
+  });
+
+  const [defaultTemplate, setDefaultTemplate] = useState<string>("general");
+
   const invalidateWorkspaceQueries = () => {
     if (!workspaceId) return;
     queryClient.invalidateQueries({
@@ -48,6 +70,30 @@ export default function WorkspaceSettingsPage() {
         const msg =
           err instanceof Error ? err.message : "Не удалось сохранить настройки";
         toast.error(msg);
+      },
+    }),
+  );
+
+  useEffect(() => {
+    if (evaluationSettings?.defaultTemplateSlug) {
+      setDefaultTemplate(evaluationSettings.defaultTemplateSlug);
+    }
+  }, [evaluationSettings?.defaultTemplateSlug]);
+
+  const updateEvaluationMutation = useMutation(
+    orpc.settings.updateEvaluationSettings.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.getEvaluationSettings.queryKey(),
+        });
+        toast.success("Шаблон оценки по умолчанию сохранён");
+      },
+      onError: (err) => {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Не удалось сохранить настройки оценки",
+        );
       },
     }),
   );
@@ -129,6 +175,51 @@ export default function WorkspaceSettingsPage() {
           saving={updateMutation.isPending}
         />
       ) : null}
+
+      {isWorkspaceAdmin && (
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="text-base font-semibold mb-2">Оценка звонков</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Шаблон по умолчанию для звонков без привязки к пользователю
+            </p>
+            <div className="flex flex-wrap items-center gap-4">
+              <Select
+                value={defaultTemplate}
+                onValueChange={setDefaultTemplate}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(
+                    evaluationTemplates as { slug: string; name: string }[]
+                  ).map((t) => (
+                    <SelectItem key={t.slug} value={t.slug}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={() =>
+                  updateEvaluationMutation.mutate({
+                    defaultTemplateSlug: defaultTemplate as
+                      | "sales"
+                      | "support"
+                      | "general",
+                  })
+                }
+                disabled={updateEvaluationMutation.isPending}
+              >
+                {updateEvaluationMutation.isPending
+                  ? "Сохранение…"
+                  : "Сохранить"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {isOwner && (
         <Card className="border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20">

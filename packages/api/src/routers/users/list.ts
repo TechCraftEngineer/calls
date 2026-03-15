@@ -12,8 +12,13 @@ export const list = workspaceAdminProcedure.handler(async ({ context }) => {
         role: string;
         createdAt: Date;
         user: Record<string, unknown>;
+        evaluationSettings?: { templateSlug?: string } | null;
       }) => {
         const u = r.user;
+        const es = r.evaluationSettings as
+          | { templateSlug?: "sales" | "support" | "general" }
+          | null
+          | undefined;
         return {
           id: u.id,
           memberId: r.id,
@@ -27,6 +32,11 @@ export const list = workspaceAdminProcedure.handler(async ({ context }) => {
           mobilePhones: u.mobilePhones,
           created_at: (u.createdAt as Date)?.toISOString?.() ?? u.createdAt,
           telegramChatId: u.telegramChatId,
+          evaluation_template_slug:
+            es?.templateSlug &&
+            ["sales", "support", "general"].includes(es.templateSlug)
+              ? es.templateSlug
+              : null,
         };
       },
     );

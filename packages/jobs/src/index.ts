@@ -1,5 +1,8 @@
 export { runTranscriptionPipeline } from "./asr";
-export { evaluateCallWithLlm } from "./evaluation";
+export {
+  evaluateCallWithLlm,
+  getEvaluationTemplatesList,
+} from "./evaluation";
 export { inngest } from "./inngest/client";
 export { evaluateCallFn } from "./inngest/functions/evaluate-call";
 export { megafonSyncFn } from "./inngest/functions/megafon-sync";

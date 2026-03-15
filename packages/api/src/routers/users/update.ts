@@ -82,6 +82,8 @@ export const update = workspaceProcedure
           kpiBaseSalary: d.kpi_base_salary,
           kpiTargetBonus: d.kpi_target_bonus,
           kpiTargetTalkTimeMinutes: d.kpi_target_talk_time_minutes,
+          evaluationTemplateSlug: d.evaluation_template_slug,
+          evaluationCustomInstructions: d.evaluation_custom_instructions,
         },
       );
 

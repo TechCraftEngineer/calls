@@ -6,6 +6,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 import type {
+  EvaluationSettings,
   FilterSettings,
   KpiSettings,
   NotificationSettings,
@@ -42,6 +43,7 @@ export const userWorkspaceSettingsRepository = {
         telegram?: Partial<NotificationSettings["telegram"]>;
         max?: Partial<NotificationSettings["max"]>;
       }>;
+      evaluationSettings?: Partial<EvaluationSettings> | null;
     },
   ): Promise<boolean> {
     const existing = await this.findByUserAndWorkspace(userId, workspaceId);
@@ -95,6 +97,17 @@ export const userWorkspaceSettingsRepository = {
             data.notificationSettings,
           )
         : (existing.notificationSettings as NotificationSettings);
+      const evaluationSettings =
+        data.evaluationSettings !== undefined
+          ? data.evaluationSettings === null
+            ? null
+            : merge(
+                (existing.evaluationSettings as EvaluationSettings) ?? {
+                  templateSlug: "general",
+                },
+                data.evaluationSettings,
+              )
+          : (existing.evaluationSettings as EvaluationSettings | null);
 
       const result = await db
         .update(schema.userWorkspaceSettings)
@@ -103,6 +116,7 @@ export const userWorkspaceSettingsRepository = {
           reportSettings,
           kpiSettings,
           notificationSettings,
+          evaluationSettings,
         } as typeof schema.userWorkspaceSettings.$inferInsert)
         .where(
           and(
@@ -142,6 +156,11 @@ export const userWorkspaceSettingsRepository = {
       max: { dailyReport: false, managerReport: false },
     };
 
+    const evaluationSettings =
+      data.evaluationSettings !== undefined && data.evaluationSettings !== null
+        ? merge({ templateSlug: "general" as const }, data.evaluationSettings)
+        : null;
+
     await db.insert(schema.userWorkspaceSettings).values({
       userId,
       workspaceId,
@@ -151,6 +170,7 @@ export const userWorkspaceSettingsRepository = {
       notificationSettings: data.notificationSettings
         ? deepMerge(defaultNotification, data.notificationSettings)
         : defaultNotification,
+      evaluationSettings,
     } as typeof schema.userWorkspaceSettings.$inferInsert);
     return true;
   },

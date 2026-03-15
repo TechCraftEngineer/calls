@@ -1,14 +1,26 @@
 /**
  * Inngest функция: оценка звонка по транскрипту.
  * Запускает LLM-анализ и сохраняет оценку (value_score, manager_score и т.д.).
+ * Использует шаблон оценки пользователя (по internal_number) или workspace default.
  */
 
-import { callsService } from "@calls/db";
-import { evaluateCallWithLlm } from "../../evaluation";
+import {
+  callsService,
+  promptsRepository,
+  usersRepository,
+  userWorkspaceSettingsRepository,
+} from "@calls/db";
+import {
+  type EvaluationTemplateSlug,
+  evaluateCallWithLlm,
+  getEvaluationPrompt,
+} from "../../evaluation";
 import { createLogger } from "../../logger";
 import { inngest } from "../client";
 
 const logger = createLogger("evaluate-call");
+
+const DEFAULT_TEMPLATE: EvaluationTemplateSlug = "general";
 
 export const evaluateCallFn = inngest.createFunction(
   {
@@ -44,8 +56,51 @@ export const evaluateCallFn = inngest.createFunction(
       return { callId, skipped: true, reason: "empty_transcript" };
     }
 
+    const evaluationPrompt = await step.run("resolve-template", async () => {
+      let templateSlug: EvaluationTemplateSlug = DEFAULT_TEMPLATE;
+      let customInstructions: string | null = null;
+      let userHasTemplate = false;
+
+      const user = await usersRepository.findUserByInternalNumber(
+        call.workspaceId,
+        call.internalNumber,
+      );
+
+      if (user) {
+        const settings =
+          await userWorkspaceSettingsRepository.findByUserAndWorkspace(
+            user.id,
+            call.workspaceId,
+          );
+        const evalSettings = settings?.evaluationSettings as
+          | { templateSlug?: string; customInstructions?: string }
+          | null
+          | undefined;
+        if (evalSettings?.templateSlug) {
+          templateSlug = evalSettings.templateSlug as EvaluationTemplateSlug;
+          customInstructions = evalSettings.customInstructions ?? null;
+          userHasTemplate = true;
+        }
+      }
+
+      if (!userHasTemplate) {
+        const defaultTemplate = await promptsRepository.findByKeyWithDefault(
+          "evaluation_default_template",
+          call.workspaceId,
+          DEFAULT_TEMPLATE,
+        );
+        if (defaultTemplate) {
+          templateSlug = defaultTemplate as EvaluationTemplateSlug;
+        }
+      }
+
+      return getEvaluationPrompt(templateSlug, customInstructions);
+    });
+
     const evaluation = await step.run("evaluate", async () => {
-      return evaluateCallWithLlm(transcriptText);
+      return evaluateCallWithLlm(transcriptText, {
+        evaluationPrompt,
+      });
     });
 
     await step.run("save-evaluation", async () => {

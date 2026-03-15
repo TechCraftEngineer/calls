@@ -35,6 +35,14 @@ export const updatePrompts = workspaceAdminProcedure
         workspaceId,
       );
     }
+    if (input.evaluation_default_template !== undefined) {
+      await promptsRepository.upsert(
+        "evaluation_default_template",
+        input.evaluation_default_template,
+        "Шаблон оценки звонков по умолчанию (sales/support/general)",
+        workspaceId,
+      );
+    }
     if (input.prompts) {
       for (const key of PROMPT_KEYS) {
         const p = input.prompts[key] as

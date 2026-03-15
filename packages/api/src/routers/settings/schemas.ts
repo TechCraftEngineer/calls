@@ -32,10 +32,17 @@ const promptItemSchema = z.object({
   description: z.string().optional().nullable(),
 });
 
+export const evaluationTemplateSlugSchema = z.enum([
+  "sales",
+  "support",
+  "general",
+]);
+
 export const settingsUpdateSchema = z.object({
   deepseek_model: z.string().optional(),
   quality_min_value_threshold: z.number().min(0).max(5).optional(),
   enable_manager_recommendations: z.boolean().optional(),
+  evaluation_default_template: evaluationTemplateSlugSchema.optional(),
   prompts: z.record(z.string(), promptItemSchema).optional(),
 });
 

@@ -52,6 +52,8 @@ function buildEditForm(u: ManagedUser): EditUserForm {
     kpi_base_salary: u.kpi_base_salary || 0,
     kpi_target_bonus: u.kpi_target_bonus || 0,
     kpi_target_talk_time_minutes: u.kpi_target_talk_time_minutes || 0,
+    evaluation_template_slug: u.evaluation_template_slug ?? "general",
+    evaluation_custom_instructions: u.evaluation_custom_instructions ?? "",
   };
 }
 

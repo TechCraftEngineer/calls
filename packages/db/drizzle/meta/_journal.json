@@ -15,6 +15,13 @@
       "when": 1773558425712,
       "tag": "0001_many_mandarin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773586930488,
+      "tag": "0002_stormy_bromley",
+      "breakpoints": true
     }
   ]
 }

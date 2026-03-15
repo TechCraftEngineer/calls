@@ -10,6 +10,7 @@ import {
   BasicInfoBlock,
   CheckboxBlock,
   EmailBlock,
+  EvaluationBlock,
   TelegramBlock,
 } from "@/components/features/users/edit";
 import type { EditUserForm } from "@/components/features/users/types";
@@ -152,6 +153,17 @@ export default function UserEditPage() {
     }),
   );
 
+  const updateEvaluationMutation = useMutation(
+    orpc.users.updateEvaluationSettings.mutationOptions({
+      onSuccess: () => {
+        setBlockState("evaluation", "success");
+        clearBlockChanges("evaluation");
+        invalidateUser();
+      },
+      onError: () => setBlockState("evaluation", "error"),
+    }),
+  );
+
   const handleSaveBasicInfo = () => {
     if (!form) return;
     setBlockState("basic", "saving");
@@ -251,6 +263,18 @@ export default function UserEditPage() {
     });
   };
 
+  const handleSaveEvaluationSettings = () => {
+    if (!form) return;
+    setBlockState("evaluation", "saving");
+    updateEvaluationMutation.mutate({
+      user_id: userId,
+      data: {
+        evaluation_template_slug: form.evaluation_template_slug,
+        evaluation_custom_instructions: form.evaluation_custom_instructions,
+      },
+    });
+  };
+
   if (userError) {
     return (
       <div className="app-container">
@@ -305,7 +329,7 @@ export default function UserEditPage() {
           <BasicInfoBlock
             form={form}
             setForm={setForm}
-            hasChanges={hasBlockChanges("basic")}
+            hasChanges={hasBlockChanges("basic", form)}
             isSaving={getBlockState("basic") === "saving"}
             state={getBlockState("basic")}
             onSave={handleSaveBasicInfo}
@@ -315,7 +339,7 @@ export default function UserEditPage() {
           <TelegramBlock
             form={form}
             setForm={setForm}
-            hasChanges={hasBlockChanges("telegram")}
+            hasChanges={hasBlockChanges("telegram", form)}
             isSaving={getBlockState("telegram") === "saving"}
             state={getBlockState("telegram")}
             onSave={handleSaveTelegramSettings}
@@ -326,7 +350,7 @@ export default function UserEditPage() {
           <EmailBlock
             form={form}
             setForm={setForm}
-            hasChanges={hasBlockChanges("email")}
+            hasChanges={hasBlockChanges("email", form)}
             isSaving={getBlockState("email") === "saving"}
             state={getBlockState("email")}
             onSave={handleSaveEmailSettings}
@@ -342,7 +366,7 @@ export default function UserEditPage() {
               "Получать свои ежедневные отчеты (MAX)",
               "Получать отчеты по всем менеджерам (MAX)",
             ]}
-            hasChanges={hasBlockChanges("max")}
+            hasChanges={hasBlockChanges("max", form)}
             isSaving={getBlockState("max") === "saving"}
             state={getBlockState("max")}
             onSave={handleSaveMaxSettings}
@@ -365,7 +389,7 @@ export default function UserEditPage() {
               "Включать среднюю длительность",
               "Включать среднюю оценку",
             ]}
-            hasChanges={hasBlockChanges("reports")}
+            hasChanges={hasBlockChanges("reports", form)}
             isSaving={getBlockState("reports") === "saving"}
             state={getBlockState("reports")}
             onSave={handleSaveReportSettings}
@@ -386,7 +410,7 @@ export default function UserEditPage() {
               "Целевой бонус",
               "Целевое время разговора (минуты)",
             ]}
-            hasChanges={hasBlockChanges("kpi")}
+            hasChanges={hasBlockChanges("kpi", form)}
             isSaving={getBlockState("kpi") === "saving"}
             state={getBlockState("kpi")}
             onSave={handleSaveKpiSettings}
@@ -407,10 +431,20 @@ export default function UserEditPage() {
               "Минимальная длительность разговора (секунды)",
               "Минимальное количество реплик",
             ]}
-            hasChanges={hasBlockChanges("filters")}
+            hasChanges={hasBlockChanges("filters", form)}
             isSaving={getBlockState("filters") === "saving"}
             state={getBlockState("filters")}
             onSave={handleSaveFilterSettings}
+            disabled={false}
+          />
+
+          <EvaluationBlock
+            form={form}
+            setForm={setForm}
+            hasChanges={hasBlockChanges("evaluation", form)}
+            isSaving={getBlockState("evaluation") === "saving"}
+            state={getBlockState("evaluation")}
+            onSave={handleSaveEvaluationSettings}
             disabled={false}
           />
         </div>

@@ -94,11 +94,25 @@ export const workspacesRepository = {
         role: schema.workspaceMembers.role,
         createdAt: schema.workspaceMembers.createdAt,
         user: schema.user,
+        evaluationSettings: schema.userWorkspaceSettings.evaluationSettings,
       })
       .from(schema.workspaceMembers)
       .innerJoin(
         schema.user,
         eq(schema.workspaceMembers.userId, schema.user.id),
+      )
+      .leftJoin(
+        schema.userWorkspaceSettings,
+        and(
+          eq(
+            schema.workspaceMembers.userId,
+            schema.userWorkspaceSettings.userId,
+          ),
+          eq(
+            schema.workspaceMembers.workspaceId,
+            schema.userWorkspaceSettings.workspaceId,
+          ),
+        ),
       )
       .where(eq(schema.workspaceMembers.workspaceId, workspaceId))
       .orderBy(desc(schema.workspaceMembers.createdAt));

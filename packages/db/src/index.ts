@@ -15,6 +15,7 @@ export {
 } from "./lib/workspace-utils";
 export { promptsRepository } from "./repositories/prompts.repository";
 export { systemRepository } from "./repositories/system.repository";
+export { userWorkspaceSettingsRepository } from "./repositories/user-workspace-settings.repository";
 // Repositories
 export { usersRepository } from "./repositories/users.repository";
 // Schemas and types

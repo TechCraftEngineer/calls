@@ -58,6 +58,11 @@ export interface FilterSettings {
   minReplicas: number;
 }
 
+export interface EvaluationSettings {
+  templateSlug: "sales" | "support" | "general";
+  customInstructions?: string;
+}
+
 export const userWorkspaceSettings = pgTable(
   "user_workspace_settings",
   {
@@ -106,6 +111,10 @@ export const userWorkspaceSettings = pgTable(
         "minDuration": 0,
         "minReplicas": 0
       }'::jsonb`),
+
+    evaluationSettings: jsonb("evaluation_settings")
+      .$type<EvaluationSettings | null>()
+      .default(null),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

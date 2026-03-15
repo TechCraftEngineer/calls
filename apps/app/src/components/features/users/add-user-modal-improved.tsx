@@ -40,6 +40,8 @@ const defaultForm: AddUserForm = {
   kpi_base_salary: 0,
   kpi_target_bonus: 0,
   kpi_target_talk_time_minutes: 0,
+  evaluation_template_slug: "general",
+  evaluation_custom_instructions: "",
 };
 
 export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
