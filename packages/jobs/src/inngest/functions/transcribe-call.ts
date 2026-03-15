@@ -79,6 +79,17 @@ export const transcribeCallFn = inngest.createFunction(
         title: result.title,
         callTopic: result.callTopic,
       });
+
+      if (
+        typeof result.metadata.durationInSeconds === "number" &&
+        result.metadata.durationInSeconds > 0
+      ) {
+        await callsService.updateCallDuration(
+          callId,
+          result.metadata.durationInSeconds,
+        );
+      }
+
       logger.info("Транскрипт сохранён", {
         callId,
         processingTimeMs: result.metadata.processingTimeMs,

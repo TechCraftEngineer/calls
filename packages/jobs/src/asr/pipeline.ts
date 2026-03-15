@@ -124,11 +124,16 @@ export async function runTranscriptionPipeline(
   const { text: rawText, source } = selectBest(results);
   const processingTimeMs = Date.now() - start;
 
+  const durationInSeconds = results
+    .map((r) => (r.raw as { durationInSeconds?: number })?.durationInSeconds)
+    .find((d): d is number => typeof d === "number");
+
   const metadata: TranscriptMetadata = {
     asrSource: source,
     processingTimeMs,
     confidence: results[0]?.confidence,
     speakerCount: results[0]?.utterances?.length,
+    durationInSeconds,
     asrAssemblyai:
       assemblyaiResult.status === "fulfilled" && assemblyaiResult.value
         ? {

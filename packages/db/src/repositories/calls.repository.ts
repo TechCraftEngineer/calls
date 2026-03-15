@@ -146,6 +146,13 @@ export const callsRepository = {
     return result[0]?.id ?? "";
   },
 
+  async updateDuration(callId: string, durationSeconds: number): Promise<void> {
+    await db
+      .update(schema.calls)
+      .set({ duration: Math.round(durationSeconds) })
+      .where(eq(schema.calls.id, callId));
+  },
+
   async findWithTranscriptsAndEvaluations(
     params: GetCallsParams = {},
   ): Promise<CallWithTranscript[]> {

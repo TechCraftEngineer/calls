@@ -1,6 +1,7 @@
 "use client";
 
-import { Button } from "@calls/ui";
+import { Button, cn } from "@calls/ui";
+import { Loader2, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface AudioPlayerProps {
@@ -139,42 +140,49 @@ export default function AudioPlayer({
   };
 
   return (
-    <div className={`audio-player ${className || ""}`}>
+    <div className={cn("w-full", className)}>
       <audio ref={audioRef} src={src} />
 
-      <div className="audio-controls">
+      <div className="flex flex-col gap-4 w-full">
         <div className="flex items-center gap-3 justify-center">
           <Button
             variant="ghost"
             size="icon"
-            className="player-btn volume-btn"
+            className="text-muted-foreground hover:text-foreground"
             onClick={toggleMute}
             title={isMuted ? "Включить звук" : "Выключить звук"}
           >
-            {isMuted ? "🔇" : "🔊"}
+            {isMuted ? (
+              <VolumeX className="size-[18px]" />
+            ) : (
+              <Volume2 className="size-[18px]" />
+            )}
           </Button>
           <Button
-            variant="ghost"
             size="icon"
-            className="play-pause-btn"
+            className={cn(
+              "size-12 rounded-full bg-[#FFD600] text-black shadow-md hover:scale-105 active:scale-95 hover:bg-[#FFD600] hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed disabled:bg-muted disabled:shadow-none disabled:hover:scale-100",
+            )}
             onClick={togglePlay}
             disabled={isLoading}
             title={isPlaying ? "Пауза" : "Воспроизвести"}
           >
             {isLoading ? (
-              <span className="spinner"></span>
+              <Loader2 className="size-5 animate-spin" />
             ) : isPlaying ? (
-              "⏸"
+              <Pause className="size-5" />
             ) : (
-              "▶"
+              <Play className="size-5 ml-0.5" />
             )}
           </Button>
-          <div className="w-8" /> {/* Spacer to balance volume btn */}
+          <div className="w-8" />
         </div>
 
-        <div className="seek-container">
-          <span className="time-label">{formatTime(currentTime)}</span>
-          <div className="slider-wrapper">
+        <div className="flex items-center gap-3 w-full">
+          <span className="text-[11px] text-muted-foreground font-semibold w-10 tabular-nums text-center">
+            {formatTime(currentTime)}
+          </span>
+          <div className="flex-1 relative h-1.5 flex items-center">
             <input
               ref={seekSliderRef}
               type="range"
@@ -187,139 +195,18 @@ export default function AudioPlayer({
               onTouchStart={handleSeekStart}
               onMouseUp={handleSeekEnd}
               onTouchEnd={handleSeekEnd}
-              className="seek-slider"
+              className="w-full h-full appearance-none bg-muted rounded-sm outline-none cursor-pointer relative z-2 m-0 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-transform [&:hover::-webkit-slider-thumb]:scale-110"
             />
             <div
-              className="slider-progress"
+              className="absolute left-0 top-0 h-full bg-[#FFD600] rounded-sm z-1 pointer-events-none"
               style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
             />
           </div>
-          <span className="time-label">{formatTime(duration)}</span>
+          <span className="text-[11px] text-muted-foreground font-semibold w-10 tabular-nums text-center">
+            {formatTime(duration)}
+          </span>
         </div>
       </div>
-
-      <style jsx>{`
-                .audio-controls {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 16px;
-                    width: 100%;
-                }
-                .player-btn {
-                    background: none;
-                    border: none;
-                    font-size: 18px;
-                    cursor: pointer;
-                    padding: 6px;
-                    border-radius: 50%;
-                    transition: background 0.2s;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: #555;
-                }
-                .player-btn:hover {
-                    background: #f5f5f7;
-                    color: #111;
-                }
-                .play-pause-btn {
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 50%;
-                    border: none;
-                    background: #FFD600;
-                    color: black;
-                    font-size: 18px;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 3px 8px rgba(255, 214, 0, 0.3);
-                    transition: transform 0.2s, box-shadow 0.2s;
-                }
-                .play-pause-btn:hover:not(:disabled) {
-                    transform: scale(1.05);
-                    box-shadow: 0 5px 12px rgba(255, 214, 0, 0.4);
-                }
-                .play-pause-btn:active:not(:disabled) {
-                    transform: scale(0.95);
-                }
-                .play-pause-btn:disabled {
-                    opacity: 0.7;
-                    cursor: not-allowed;
-                    background: #e0e0e0;
-                    box-shadow: none;
-                }
-                .seek-container {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    width: 100%;
-                }
-                .time-label {
-                    font-size: 11px;
-                    color: #888;
-                    font-weight: 600;
-                    width: 40px;
-                    font-variant-numeric: tabular-nums;
-                    text-align: center;
-                }
-                .slider-wrapper {
-                    flex: 1;
-                    position: relative;
-                    height: 5px;
-                    display: flex;
-                    align-items: center;
-                }
-                .seek-slider {
-                    width: 100%;
-                    height: 100%;
-                    -webkit-appearance: none;
-                    background: #e0e0e0;
-                    border-radius: 3px;
-                    outline: none;
-                    cursor: pointer;
-                    position: relative;
-                    z-index: 2;
-                    margin: 0;
-                }
-                .seek-slider::-webkit-slider-thumb {
-                    -webkit-appearance: none;
-                    width: 12px;
-                    height: 12px;
-                    background: #111;
-                    border-radius: 50%;
-                    cursor: pointer;
-                    border: 2px solid white;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-                    transition: transform 0.1s;
-                }
-                .seek-slider:hover::-webkit-slider-thumb {
-                    transform: scale(1.1);
-                }
-                .slider-progress {
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    height: 100%;
-                    background: #FFD600;
-                    border-radius: 3px;
-                    z-index: 1;
-                    pointer-events: none;
-                }
-                .spinner {
-                    width: 20px;
-                    height: 20px;
-                    border: 2px solid rgba(0,0,0,0.1);
-                    border-top: 2px solid #000;
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                }
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-            `}</style>
     </div>
   );
 }

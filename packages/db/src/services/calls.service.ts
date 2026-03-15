@@ -84,6 +84,13 @@ export class CallsService {
     return this.callsRepository.upsertTranscript(data);
   }
 
+  async updateCallDuration(
+    callId: string,
+    durationSeconds: number,
+  ): Promise<void> {
+    await this.callsRepository.updateDuration(callId, durationSeconds);
+  }
+
   async getEvaluation(callId: string): Promise<CallEvaluation | null> {
     return this.callsRepository.getEvaluation(callId);
   }

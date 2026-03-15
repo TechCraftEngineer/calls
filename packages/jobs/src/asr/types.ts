@@ -25,6 +25,8 @@ export interface TranscriptMetadata {
   processingTimeMs: number;
   confidence?: number;
   speakerCount?: number;
+  /** Длительность аудио в секундах (из AssemblyAI) */
+  durationInSeconds?: number;
   asrAssemblyai?: Record<string, unknown>;
   asrYandex?: Record<string, unknown>;
 }
