@@ -2,18 +2,7 @@
  * Calls repository - handles all database operations for calls
  */
 
-import {
-  and,
-  avg,
-  count,
-  desc,
-  eq,
-  gte,
-  inArray,
-  like,
-  lte,
-  or,
-} from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 import type {
@@ -22,76 +11,9 @@ import type {
   EvaluationData,
   GetCallsParams,
 } from "../types/calls.types";
-
-function buildCallConditions(params: {
-  workspaceId?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  internalNumbers?: string[];
-  mobileNumbers?: string[];
-  direction?: string;
-  valueScores?: number[];
-  operators?: string[];
-  manager?: string;
-  status?: string;
-  q?: string;
-}) {
-  const conditions = [];
-  const {
-    workspaceId,
-    dateFrom,
-    dateTo,
-    internalNumbers,
-    mobileNumbers,
-    direction,
-    valueScores,
-    operators,
-    manager,
-    status,
-    q,
-  } = params;
-
-  if (workspaceId != null) {
-    conditions.push(eq(schema.calls.workspaceId, workspaceId));
-  }
-  if (dateFrom) {
-    conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
-  }
-  if (dateTo) {
-    conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
-  }
-  if (internalNumbers?.length) {
-    conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
-  }
-  if (mobileNumbers?.length) {
-    conditions.push(inArray(schema.calls.number, mobileNumbers));
-  }
-  if (direction) {
-    conditions.push(eq(schema.calls.direction, direction));
-  }
-  if (status) {
-    conditions.push(eq(schema.calls.status, status));
-  }
-  if (operators?.length) {
-    conditions.push(inArray(schema.calls.source, operators));
-  }
-  if (manager) {
-    conditions.push(eq(schema.calls.name, manager));
-  }
-  if (valueScores?.length) {
-    conditions.push(inArray(schema.callEvaluations.valueScore, valueScores));
-  }
-  if (q) {
-    const qCond = or(
-      like(schema.calls.number, `%${q}%`),
-      like(schema.calls.name, `%${q}%`),
-      like(schema.calls.customerName, `%${q}%`),
-    );
-    if (qCond) conditions.push(qCond);
-  }
-
-  return conditions;
-}
+import { buildCallConditions } from "./calls/build-conditions";
+import { getEvaluationsStats as getEvaluationsStatsFn } from "./calls/get-evaluations-stats";
+import { getCallsMetrics } from "./calls/get-metrics";
 
 export const callsRepository = {
   async findById(id: string): Promise<schema.Call | null> {
@@ -390,73 +312,8 @@ export const callsRepository = {
     });
   },
 
-  async getMetrics(workspaceId?: string): Promise<{
-    totalCalls: number;
-    transcribed: number;
-    avgDuration: number;
-    lastSync: string | null;
-  }> {
-    const callConditions =
-      workspaceId != null
-        ? [eq(schema.calls.workspaceId, workspaceId)]
-        : undefined;
-
-    const totalCallsQuery = db
-      .select({ count: count() })
-      .from(schema.calls)
-      .$dynamic();
-    const transcribedQuery = db
-      .select({ count: count() })
-      .from(schema.transcripts)
-      .innerJoin(schema.calls, eq(schema.transcripts.callId, schema.calls.id))
-      .$dynamic();
-    const avgDurationQuery = db
-      .select({ avg: avg(schema.calls.duration) })
-      .from(schema.calls)
-      .$dynamic();
-    const lastSyncQuery =
-      workspaceId != null
-        ? db
-            .select({ timestamp: schema.activityLog.timestamp })
-            .from(schema.activityLog)
-            .where(eq(schema.activityLog.workspaceId, workspaceId))
-            .orderBy(desc(schema.activityLog.timestamp))
-            .limit(1)
-        : db
-            .select({ timestamp: schema.activityLog.timestamp })
-            .from(schema.activityLog)
-            .orderBy(desc(schema.activityLog.timestamp))
-            .limit(1);
-
-    const [
-      totalCallsResult,
-      transcribedResult,
-      avgDurationResult,
-      lastSyncResult,
-    ] = await Promise.all([
-      callConditions
-        ? totalCallsQuery.where(and(...callConditions))
-        : totalCallsQuery,
-      callConditions
-        ? transcribedQuery.where(and(...callConditions))
-        : transcribedQuery,
-      callConditions
-        ? avgDurationQuery.where(and(...callConditions))
-        : avgDurationQuery,
-      lastSyncQuery,
-    ]);
-
-    const totalCalls = totalCallsResult[0]?.count ?? 0;
-    const transcribed = transcribedResult[0]?.count ?? 0;
-    const avgDuration = Math.round(Number(avgDurationResult[0]?.avg ?? 0));
-    const lastSync = lastSyncResult[0]?.timestamp ?? null;
-
-    return {
-      totalCalls: totalCalls,
-      transcribed,
-      avgDuration: avgDuration,
-      lastSync: lastSync ? lastSync.toISOString() : null,
-    };
+  async getMetrics(workspaceId?: string) {
+    return getCallsMetrics(workspaceId);
   },
 
   async getEvaluationsStats(params: {
@@ -464,90 +321,8 @@ export const callsRepository = {
     dateFrom?: string;
     dateTo?: string;
     internalNumbers?: string[];
-  }): Promise<
-    Record<
-      string,
-      {
-        name: string;
-        internalNumber: string | null;
-        incoming: { count: number; duration: number };
-        outgoing: { count: number; duration: number };
-        score_distribution?: Record<
-          number,
-          { count: number; duration: number }
-        >;
-      }
-    >
-  > {
-    const { workspaceId, dateFrom, dateTo, internalNumbers } = params;
-
-    const conditions = [];
-    if (workspaceId != null)
-      conditions.push(eq(schema.calls.workspaceId, workspaceId));
-    if (dateFrom)
-      conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
-    if (dateTo) conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
-    if (internalNumbers?.length) {
-      conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
-    }
-
-    const query = db
-      .select({
-        internalNumber: schema.calls.internalNumber,
-        managerName: schema.calls.name,
-        direction: schema.calls.direction,
-        totalCalls: count(),
-        totalDuration: avg(schema.calls.duration),
-      })
-      .from(schema.calls)
-      .leftJoin(
-        schema.callEvaluations,
-        eq(schema.calls.id, schema.callEvaluations.callId),
-      )
-      .groupBy(
-        schema.calls.internalNumber,
-        schema.calls.name,
-        schema.calls.direction,
-      )
-      .$dynamic();
-
-    const results =
-      conditions.length > 0
-        ? await query.where(and(...conditions))
-        : await query;
-
-    const stats: Record<
-      string,
-      {
-        name: string;
-        internalNumber: string | null;
-        incoming: { count: number; duration: number };
-        outgoing: { count: number; duration: number };
-      }
-    > = {};
-
-    for (const row of results) {
-      const key = row.managerName ?? row.internalNumber ?? "Unknown";
-      if (!stats[key]) {
-        stats[key] = {
-          name: key,
-          internalNumber: row.internalNumber,
-          incoming: { count: 0, duration: 0 },
-          outgoing: { count: 0, duration: 0 },
-        };
-      }
-
-      const dir = String(row.direction ?? "").toLowerCase();
-      const target =
-        dir === "входящий" || dir === "incoming"
-          ? stats[key].incoming
-          : stats[key].outgoing;
-
-      target.count += Number(row.totalCalls ?? 0);
-      target.duration += Number(row.totalDuration ?? 0);
-    }
-
-    return stats;
+  }) {
+    return getEvaluationsStatsFn(params);
   },
 };
 

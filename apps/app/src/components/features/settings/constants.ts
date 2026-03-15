@@ -9,10 +9,10 @@ export const PROMPT_KEYS = {
 } as const;
 
 export const INTEGRATION_KEYS = {
-  megafon_ftp_enabled: "Включено",
-  megafon_ftp_host: "Host",
-  megafon_ftp_user: "User",
-  megafon_ftp_password: "Password",
+  ftp_enabled: "Включено",
+  ftp_host: "Host",
+  ftp_user: "User",
+  ftp_password: "Password",
   telegram_bot_token: "Token",
   max_bot_token: "Token",
 } as const;

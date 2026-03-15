@@ -14,7 +14,7 @@ import {
 } from "@calls/ui";
 import type { Prompt } from "./types";
 
-interface MegafonFtpSectionProps {
+interface FtpSectionProps {
   prompts: Record<string, Prompt>;
   onPromptChange: (
     key: string,
@@ -28,7 +28,7 @@ interface MegafonFtpSectionProps {
   testMessage: string;
 }
 
-export default function MegafonFtpSection({
+export default function FtpSection({
   prompts,
   onPromptChange,
   onEnabledChange,
@@ -37,11 +37,11 @@ export default function MegafonFtpSection({
   saving,
   testing,
   testMessage,
-}: MegafonFtpSectionProps) {
-  const enabled = prompts.megafon_ftp_enabled?.value === "true";
-  const host = prompts.megafon_ftp_host?.value ?? "";
-  const user = prompts.megafon_ftp_user?.value ?? "";
-  const password = prompts.megafon_ftp_password?.value ?? "";
+}: FtpSectionProps) {
+  const enabled = prompts.ftp_enabled?.value === "true";
+  const host = prompts.ftp_host?.value ?? "";
+  const user = prompts.ftp_user?.value ?? "";
+  const password = prompts.ftp_password?.value ?? "";
   const hasValues = host.trim() || user.trim() || password;
 
   return (
@@ -53,19 +53,19 @@ export default function MegafonFtpSection({
               <span className="flex size-8 items-center justify-center rounded-md bg-primary/10">
                 📁
               </span>
-              Megafon FTP (загрузка записей с PBX)
+              FTP (загрузка записей с PBX)
             </CardTitle>
             <CardDescription className="mt-1">
-              Подключение к FTP-серверу Megafon PBX для автоматической загрузки
-              записей звонков
+              Подключение к FTP-серверу PBX для автоматической загрузки записей
+              звонков
             </CardDescription>
           </div>
           <label
-            htmlFor="megafon-ftp-enabled"
+            htmlFor="ftp-enabled"
             className="flex cursor-pointer items-center gap-3 rounded-lg border bg-muted/50 px-4 py-3 transition-colors hover:bg-muted has-focus-visible:ring-2 has-focus-visible:ring-ring"
           >
             <Checkbox
-              id="megafon-ftp-enabled"
+              id="ftp-enabled"
               checked={enabled}
               onCheckedChange={(checked) => onEnabledChange(checked === true)}
               className="size-5"
@@ -79,34 +79,28 @@ export default function MegafonFtpSection({
       <CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
-            <Label
-              htmlFor="megafon-ftp-host"
-              className="text-xs text-muted-foreground"
-            >
+            <Label htmlFor="ftp-host" className="text-xs text-muted-foreground">
               Host
             </Label>
             <Input
-              id="megafon-ftp-host"
+              id="ftp-host"
               type="text"
               value={host}
-              onChange={onPromptChange("megafon_ftp_host", "value")}
-              placeholder="records.megapbx.ru"
+              onChange={onPromptChange("ftp_host", "value")}
+              placeholder="ftp.example.com"
               autoComplete="off"
               className="h-9"
             />
           </div>
           <div className="space-y-2">
-            <Label
-              htmlFor="megafon-ftp-user"
-              className="text-xs text-muted-foreground"
-            >
+            <Label htmlFor="ftp-user" className="text-xs text-muted-foreground">
               User
             </Label>
             <Input
-              id="megafon-ftp-user"
+              id="ftp-user"
               type="text"
               value={user}
-              onChange={onPromptChange("megafon_ftp_user", "value")}
+              onChange={onPromptChange("ftp_user", "value")}
               placeholder="FTP пользователь"
               autoComplete="off"
               className="h-9"
@@ -114,15 +108,15 @@ export default function MegafonFtpSection({
           </div>
           <div className="space-y-2">
             <Label
-              htmlFor="megafon-ftp-password"
+              htmlFor="ftp-password"
               className="text-xs text-muted-foreground"
             >
               Password
             </Label>
             <PasswordInput
-              id="megafon-ftp-password"
+              id="ftp-password"
               value={password}
-              onChange={onPromptChange("megafon_ftp_password", "value")}
+              onChange={onPromptChange("ftp_password", "value")}
               placeholder="FTP пароль"
               autoComplete="off"
               className="h-9"

@@ -16,12 +16,7 @@ import {
 import { workspaces } from "./workspaces";
 
 /** Supported PBX integration types */
-export const INTEGRATION_TYPES = [
-  "megafon_ftp",
-  "mango",
-  "beeline",
-  "mts",
-] as const;
+export const INTEGRATION_TYPES = ["ftp", "mango", "beeline", "mts"] as const;
 
 export type IntegrationType = (typeof INTEGRATION_TYPES)[number];
 

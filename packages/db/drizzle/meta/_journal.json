@@ -8,6 +8,13 @@
       "when": 1773522119685,
       "tag": "0000_bright_phalanx",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1742000000000,
+      "tag": "0001_rename_megafon_ftp_to_ftp",
+      "breakpoints": true
     }
   ]
 }

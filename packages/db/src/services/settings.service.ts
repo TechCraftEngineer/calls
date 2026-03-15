@@ -3,12 +3,12 @@
  */
 
 import { decrypt, encrypt } from "../lib/encryption";
-import { validateMegafonSettings } from "../lib/validation";
+import { validateFtpSettings } from "../lib/validation";
 import type { PromptsRepository } from "../repositories/prompts.repository";
 import type { SystemRepository } from "../repositories/system.repository";
 import type { WorkspaceIntegrationsRepository } from "../repositories/workspace-integrations.repository";
 
-const MEGAFON_FTP = "megafon_ftp" as const;
+const FTP_INTEGRATION = "ftp" as const;
 
 export class SettingsService {
   constructor(
@@ -21,19 +21,18 @@ export class SettingsService {
     return this.promptsRepository.findByKeyWithDefault(key, workspaceId);
   }
 
-  /** Список активных интеграций Megafon FTP по всем workspace */
-  async getActiveMegafonFtpIntegrations(): Promise<
+  /** Список активных интеграций FTP по всем workspace */
+  async getActiveFtpIntegrations(): Promise<
     Array<{ workspaceId: string; host: string; user: string; password: string }>
   > {
-    const rows =
-      await this.workspaceIntegrationsRepository.listActiveMegafonFtp();
+    const rows = await this.workspaceIntegrationsRepository.listActiveFtp();
     return rows.map((r) => ({
       ...r,
       password: decrypt(r.password),
     }));
   }
 
-  async getMegafonFtpSettings(workspaceId: string): Promise<{
+  async getFtpSettings(workspaceId: string): Promise<{
     enabled: boolean;
     host: string | null;
     user: string | null;
@@ -42,11 +41,11 @@ export class SettingsService {
     const row =
       await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
         workspaceId,
-        MEGAFON_FTP,
+        FTP_INTEGRATION,
       );
 
     if (!row) {
-      return { enabled: false, host: null, user: null, password: null };
+      return { enabled: true, host: null, user: null, password: null };
     }
 
     const config = row.config as {
@@ -61,7 +60,7 @@ export class SettingsService {
 
     if (host && user && password) {
       try {
-        const validated = validateMegafonSettings({ host, user, password });
+        const validated = validateFtpSettings({ host, user, password });
         return {
           enabled: row.enabled,
           host: validated.host,
@@ -112,7 +111,7 @@ export class SettingsService {
     return result;
   }
 
-  async updateMegafonFtpSettings(
+  async updateFtpSettings(
     enabled: boolean,
     host: string,
     user: string,
@@ -123,7 +122,7 @@ export class SettingsService {
     const encryptedPassword = password ? encrypt(password) : "";
     const result = await this.workspaceIntegrationsRepository.upsert(
       workspaceId,
-      MEGAFON_FTP,
+      FTP_INTEGRATION,
       enabled,
       { host, user, password: encryptedPassword },
     );
@@ -131,7 +130,7 @@ export class SettingsService {
     if (result) {
       await this.systemRepository.addActivityLog(
         "INFO",
-        `Megafon FTP ${enabled ? "включён" : "выключен"}, настройки обновлены`,
+        `FTP ${enabled ? "включён" : "выключен"}, настройки обновлены`,
         username,
         workspaceId,
       );
@@ -140,21 +139,21 @@ export class SettingsService {
     return result;
   }
 
-  async setMegafonFtpEnabled(
+  async setFtpEnabled(
     workspaceId: string,
     enabled: boolean,
     username: string = "system",
   ): Promise<boolean> {
     const result = await this.workspaceIntegrationsRepository.setEnabled(
       workspaceId,
-      MEGAFON_FTP,
+      FTP_INTEGRATION,
       enabled,
     );
 
     if (result) {
       await this.systemRepository.addActivityLog(
         "INFO",
-        `Megafon FTP ${enabled ? "включён" : "выключен"}`,
+        `FTP ${enabled ? "включён" : "выключен"}`,
         username,
         workspaceId,
       );

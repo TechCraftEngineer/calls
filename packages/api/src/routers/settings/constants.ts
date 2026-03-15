@@ -9,7 +9,7 @@ export const DEEPSEEK_MODELS: Record<
 export const SENSITIVE_KEYS = [
   "telegram_bot_token",
   "max_bot_token",
-  "megafon_ftp_password",
+  "ftp_password",
   "password",
   "token",
   "secret",

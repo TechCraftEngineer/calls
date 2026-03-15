@@ -12,9 +12,9 @@ export interface SettingsState {
   backupLoading: boolean;
   sendTestLoading: boolean;
   sendTestMessage: string;
-  megafonFtpSaving: boolean;
-  megafonFtpTesting: boolean;
-  megafonFtpTestMessage: string;
+  ftpSaving: boolean;
+  ftpTesting: boolean;
+  ftpTestMessage: string;
 }
 
 export interface TelegramSectionProps {

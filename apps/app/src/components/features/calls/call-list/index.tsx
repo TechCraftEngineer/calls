@@ -1,362 +1,58 @@
 "use client";
 
-import {
-  Button,
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@calls/ui";
-import { useEffect, useMemo, useState } from "react";
-import { useToast } from "@/components/ui/toast";
-import api from "@/lib/api";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@calls/ui";
 import CallDetailModal from "../call-detail-modal";
 import RecommendationsModal from "../recommendations-modal";
-import {
-  getDayBackgroundIndex,
-  getRowBackground,
-  renderCallListCell,
-} from "./call-list-cells";
-import { loadColumnOrder, saveColumnOrder } from "./column-storage";
-import {
-  COLUMN_ORDER_STORAGE_KEY,
-  COLUMNS,
-  DEFAULT_COLUMN_ORDER,
-} from "./constants";
-import type { CallListProps, ColumnConfig, SortKey, SortOrder } from "./types";
+import { getRowBackground, renderCallListCell } from "./call-list-cells";
+import { CallListColumnToggle } from "./call-list-column-toggle";
+import { CallListEmpty } from "./call-list-empty";
+import type { CallListProps } from "./types";
+import { useCallListState } from "./use-call-list-state";
 
-function StackedCallsIllustration() {
-  return (
-    <div className="relative h-24 w-52" aria-hidden="true">
-      {/* Back card */}
-      <div className="bg-muted/60 dark:bg-muted/30 border-border/50 absolute inset-x-6 top-0 h-6 rounded-t-lg border" />
-      {/* Middle card */}
-      <div className="bg-muted/80 dark:bg-muted/50 border-border/60 absolute inset-x-3 top-3 h-6 rounded-t-lg border" />
-      {/* Front card */}
-      <div className="bg-background border-border absolute inset-x-0 top-6 flex h-16 items-center gap-3 rounded-lg border px-4 shadow-sm">
-        <div className="bg-muted size-8 shrink-0 rounded" />
-        <div className="flex flex-1 flex-col gap-1.5">
-          <div className="bg-muted h-2.5 w-3/4 rounded" />
-          <div className="bg-muted/60 h-2 w-1/2 rounded" />
-        </div>
-      </div>
-      {/* Fade overlay */}
-      <div className="from-background/0 via-background/60 to-background pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-linear-to-b" />
-    </div>
-  );
-}
+export default function CallList(props: CallListProps) {
+  const state = useCallListState(props);
 
-export default function CallList({
-  calls,
-  onPlay,
-  onCallDeleted,
-  onRecommendationsGenerated,
-}: CallListProps) {
-  const { showToast } = useToast();
-  const [columnOrder, setColumnOrder] = useState<string[]>(loadColumnOrder);
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(
-    COLUMNS.map((c) => c.key),
-  );
-  const [sortConfig, setSortConfig] = useState<{
-    key: SortKey;
-    order: SortOrder;
-  } | null>(null);
-  const [showColumnToggle, setShowColumnToggle] = useState(false);
-  const [selectedCallId, setSelectedCallId] = useState<number | null>(null);
-  const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
-  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
-  const [recommendationsCallId, setRecommendationsCallId] = useState<
-    number | null
-  >(null);
-  const [recommendations, setRecommendations] = useState<string[]>([]);
-  const [isLoadingRecommendations, setIsLoadingRecommendations] =
-    useState(false);
-
-  const handleSort = (key: SortKey) => {
-    const order: SortOrder =
-      sortConfig?.key === key && sortConfig.order === "desc" ? "asc" : "desc";
-    setSortConfig({ key, order });
-  };
-
-  const sortedCalls = useMemo(() => {
-    if (!sortConfig) return calls;
-
-    return calls.toSorted((a, b) => {
-      let valA: string | number;
-      let valB: string | number;
-
-      switch (sortConfig.key) {
-        case "type":
-          valA = a.call.direction || "";
-          valB = b.call.direction || "";
-          break;
-        case "number":
-          valA = a.call.number || "";
-          valB = b.call.number || "";
-          break;
-        case "manager":
-          valA = a.call.manager_name || a.call.operator_name || "";
-          valB = b.call.manager_name || b.call.operator_name || "";
-          break;
-        case "status":
-          valA = a.call.duration_seconds || 0;
-          valB = b.call.duration_seconds || 0;
-          break;
-        case "date":
-          valA = new Date(a.call.timestamp).getTime();
-          valB = new Date(b.call.timestamp).getTime();
-          break;
-        case "score":
-          valA = a.evaluation?.value_score || 0;
-          valB = b.evaluation?.value_score || 0;
-          break;
-        case "summary":
-          valA = a.transcript?.summary || "";
-          valB = b.transcript?.summary || "";
-          break;
-        case "duration":
-          valA = a.call.duration_seconds || 0;
-          valB = b.call.duration_seconds || 0;
-          break;
-        default:
-          return 0;
-      }
-
-      if (valA < valB) return sortConfig.order === "asc" ? -1 : 1;
-      if (valA > valB) return sortConfig.order === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [calls, sortConfig]);
-
-  const dayBackgroundIndex = useMemo(
-    () => getDayBackgroundIndex(sortedCalls),
-    [sortedCalls],
-  );
-
-  useEffect(() => {
-    saveColumnOrder(columnOrder);
-  }, [columnOrder]);
-
-  const orderedColumns = useMemo(() => {
-    return columnOrder
-      .map((key) => COLUMNS.find((col) => col.key === key))
-      .filter((col): col is ColumnConfig => col !== undefined);
-  }, [columnOrder]);
-
-  const handleDragStart = (e: React.DragEvent, columnKey: string) => {
-    setDraggedColumn(columnKey);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", columnKey);
-    if (e.currentTarget instanceof HTMLElement) {
-      e.currentTarget.style.opacity = "0.5";
-    }
-  };
-
-  const handleDragEnd = (e: React.DragEvent) => {
-    setDraggedColumn(null);
-    setDragOverColumn(null);
-    if (e.currentTarget instanceof HTMLElement) {
-      e.currentTarget.style.opacity = "1";
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent, columnKey: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    if (draggedColumn && draggedColumn !== columnKey) {
-      setDragOverColumn(columnKey);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent, targetColumnKey: string) => {
-    e.preventDefault();
-    if (!draggedColumn || draggedColumn === targetColumnKey) {
-      setDraggedColumn(null);
-      setDragOverColumn(null);
-      return;
-    }
-    const newOrder = [...columnOrder];
-    const draggedIndex = newOrder.indexOf(draggedColumn);
-    const targetIndex = newOrder.indexOf(targetColumnKey);
-    if (draggedIndex === -1 || targetIndex === -1) {
-      setDraggedColumn(null);
-      setDragOverColumn(null);
-      return;
-    }
-    newOrder.splice(draggedIndex, 1);
-    newOrder.splice(targetIndex, 0, draggedColumn);
-    setColumnOrder(newOrder);
-    setDraggedColumn(null);
-    setDragOverColumn(null);
-  };
-
-  const handleResetOrder = () => {
-    setColumnOrder(DEFAULT_COLUMN_ORDER);
-    try {
-      localStorage.removeItem(COLUMN_ORDER_STORAGE_KEY);
-    } catch {
-      // ignore
-    }
-  };
-
-  const toggleColumn = (key: string) => {
-    setVisibleColumns((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
-    );
-  };
-
-  const handleGenerateRecommendations = async (
-    callId: number,
-    existingRecommendations?: string[],
-  ) => {
-    if (isLoadingRecommendations) return;
-    if (existingRecommendations && existingRecommendations.length > 0) {
-      setRecommendations(existingRecommendations);
-      setRecommendationsCallId(callId);
-      return;
-    }
-    try {
-      setIsLoadingRecommendations(true);
-      setRecommendationsCallId(callId);
-      setRecommendations([]);
-      const result = await api.calls.generateRecommendations({
-        call_id: callId,
-      });
-      const recs =
-        (result as { recommendations?: string[] })?.recommendations ?? [];
-      setRecommendations(recs);
-      onRecommendationsGenerated?.(callId, recs);
-    } catch {
-      showToast("Не удалось сформировать рекомендации", "error");
-    } finally {
-      setIsLoadingRecommendations(false);
-    }
-  };
-
-  const handleCloseRecommendations = () => {
-    setRecommendationsCallId(null);
-    setRecommendations([]);
-  };
-
-  const handleTranscribe = async (callId: number) => {
-    try {
-      await api.calls.transcribe({ call_id: String(callId) });
-      showToast("Транскрипция запущена", "success");
-    } catch {
-      showToast("Не удалось запустить транскрипцию", "error");
-    }
-  };
-
-  if (calls.length === 0) {
-    return (
-      <div className="flex items-center justify-center p-4">
-        <Empty className="py-12">
-          <EmptyHeader>
-            <EmptyMedia>
-              <StackedCallsIllustration />
-            </EmptyMedia>
-            <EmptyTitle>Нет звонков</EmptyTitle>
-            <EmptyDescription>
-              Пока нет данных для отображения. Мы уведомим вас, когда появятся
-              новые звонки.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      </div>
-    );
+  if (state.calls.length === 0) {
+    return <CallListEmpty />;
   }
 
   return (
     <div className="relative">
-      <div className="absolute right-4 -top-[45px] z-10">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={() => setShowColumnToggle(!showColumnToggle)}
-          className="text-gray-400 hover:text-gray-800"
-          title="Настройка колонок"
-          aria-label="Настройка колонок"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-        </Button>
-
-        {showColumnToggle && (
-          <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg p-3 shadow-lg w-[200px] z-100">
-            <div className="text-xs font-bold mb-2 text-gray-400 uppercase">
-              Видимость колонок
-            </div>
-            {orderedColumns.map((col) => (
-              <label
-                key={col.key}
-                className="flex items-center gap-2 py-1 cursor-pointer text-[13px]"
-              >
-                <input
-                  type="checkbox"
-                  checked={visibleColumns.includes(col.key)}
-                  onChange={() => toggleColumn(col.key)}
-                />
-                {col.label}
-              </label>
-            ))}
-            <div className="mt-3 pt-3 border-t border-gray-200">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleResetOrder}
-                className="w-full text-xs"
-              >
-                Сбросить порядок колонок
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+      <CallListColumnToggle
+        orderedColumns={state.orderedColumns}
+        visibleColumns={state.visibleColumns}
+        showColumnToggle={state.showColumnToggle}
+        onToggle={() => state.setShowColumnToggle(!state.showColumnToggle)}
+        onToggleColumn={state.toggleColumn}
+        onResetOrder={state.handleResetOrder}
+      />
 
       <Table className="op-table">
         <TableHeader>
           <TableRow className="border-none">
-            {orderedColumns.map(
+            {state.orderedColumns.map(
               (col) =>
-                visibleColumns.includes(col.key) && (
+                state.visibleColumns.includes(col.key) && (
                   <TableHead
                     key={col.key}
                     draggable
-                    onDragStart={(e) => handleDragStart(e, col.key)}
-                    onDragEnd={handleDragEnd}
-                    onDragOver={(e) => handleDragOver(e, col.key)}
-                    onDragLeave={() => setDragOverColumn(null)}
-                    onDrop={(e) => handleDrop(e, col.key)}
+                    onDragStart={(e) => state.handleDragStart(e, col.key)}
+                    onDragEnd={state.handleDragEnd}
+                    onDragOver={(e) => state.handleDragOver(e, col.key)}
+                    onDragLeave={() => state.setDragOverColumn(null)}
+                    onDrop={(e) => state.handleDrop(e, col.key)}
                     className="select-none relative transition-colors duration-200"
                     style={{
                       cursor: col.sortKey ? "pointer" : "move",
                       backgroundColor:
-                        dragOverColumn === col.key
+                        state.dragOverColumn === col.key
                           ? "#f0f8ff"
-                          : draggedColumn === col.key
+                          : state.draggedColumn === col.key
                             ? "#f5f5f5"
                             : "transparent",
-                      opacity: draggedColumn === col.key ? 0.5 : 1,
+                      opacity: state.draggedColumn === col.key ? 0.5 : 1,
                     }}
-                    onClick={() => col.sortKey && handleSort(col.sortKey)}
+                    onClick={() => col.sortKey && state.handleSort(col.sortKey)}
                   >
                     <div className="flex items-center gap-1">
                       <span
@@ -393,9 +89,9 @@ export default function CallList({
                           {col.tooltip}
                         </div>
                       </div>
-                      {col.sortKey && sortConfig?.key === col.sortKey && (
+                      {col.sortKey && state.sortConfig?.key === col.sortKey && (
                         <span className="text-[10px] text-gray-800">
-                          {sortConfig.order === "asc" ? "▲" : "▼"}
+                          {state.sortConfig.order === "asc" ? "▲" : "▼"}
                         </span>
                       )}
                     </div>
@@ -405,26 +101,27 @@ export default function CallList({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedCalls.map((item) => {
+          {state.sortedCalls.map((item) => {
             const { call } = item;
             const dateKey = call.timestamp
               ? new Date(call.timestamp).toISOString().slice(0, 10)
               : "";
-            const rowBg = getRowBackground(dateKey, dayBackgroundIndex);
+            const rowBg = getRowBackground(dateKey, state.dayBackgroundIndex);
 
             return (
               <TableRow key={call.id} style={{ backgroundColor: rowBg }}>
-                {columnOrder.map((colKey) =>
+                {state.columnOrder.map((colKey) =>
                   renderCallListCell({
                     item,
                     colKey,
-                    visibleColumns,
-                    onSelectCall: setSelectedCallId,
-                    onGenerateRecommendations: handleGenerateRecommendations,
-                    onTranscribe: handleTranscribe,
-                    onPlay,
-                    isLoadingRecommendations: isLoadingRecommendations,
-                    recommendationsCallId,
+                    visibleColumns: state.visibleColumns,
+                    onSelectCall: state.setSelectedCallId,
+                    onGenerateRecommendations:
+                      state.handleGenerateRecommendations,
+                    onTranscribe: state.handleTranscribe,
+                    onPlay: state.onPlay,
+                    isLoadingRecommendations: state.isLoadingRecommendations,
+                    recommendationsCallId: state.recommendationsCallId,
                   }),
                 )}
               </TableRow>
@@ -433,22 +130,19 @@ export default function CallList({
         </TableBody>
       </Table>
 
-      {selectedCallId && (
+      {state.selectedCallId && (
         <CallDetailModal
-          callId={selectedCallId}
-          onClose={() => setSelectedCallId(null)}
-          onCallDeleted={(callId) => {
-            setSelectedCallId(null);
-            onCallDeleted?.(callId);
-          }}
+          callId={state.selectedCallId}
+          onClose={() => state.setSelectedCallId(null)}
+          onCallDeleted={state.handleCallDeleted}
         />
       )}
 
       <RecommendationsModal
-        isOpen={recommendationsCallId !== null}
-        onClose={handleCloseRecommendations}
-        recommendations={recommendations}
-        isLoading={isLoadingRecommendations}
+        isOpen={state.recommendationsCallId !== null}
+        onClose={state.handleCloseRecommendations}
+        recommendations={state.recommendations}
+        isLoading={state.isLoadingRecommendations}
       />
     </div>
   );

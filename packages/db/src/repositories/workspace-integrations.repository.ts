@@ -7,7 +7,7 @@ import { db } from "../client";
 import type { FtpIntegrationConfig, IntegrationType } from "../schema";
 import * as schema from "../schema";
 
-export type ActiveMegafonFtpIntegration = {
+export type ActiveFtpIntegration = {
   workspaceId: string;
   host: string;
   user: string;
@@ -15,8 +15,8 @@ export type ActiveMegafonFtpIntegration = {
 };
 
 export const workspaceIntegrationsRepository = {
-  /** Список активных интеграций Megafon FTP (enabled + валидный config) */
-  async listActiveMegafonFtp(): Promise<ActiveMegafonFtpIntegration[]> {
+  /** Список активных интеграций FTP (enabled + валидный config) */
+  async listActiveFtp(): Promise<ActiveFtpIntegration[]> {
     const rows = await db
       .select({
         workspaceId: schema.workspaceIntegrations.workspaceId,
@@ -25,12 +25,12 @@ export const workspaceIntegrationsRepository = {
       .from(schema.workspaceIntegrations)
       .where(
         and(
-          eq(schema.workspaceIntegrations.integrationType, "megafon_ftp"),
+          eq(schema.workspaceIntegrations.integrationType, "ftp"),
           eq(schema.workspaceIntegrations.enabled, true),
         ),
       );
 
-    const result: ActiveMegafonFtpIntegration[] = [];
+    const result: ActiveFtpIntegration[] = [];
     for (const row of rows) {
       const cfg = row.config as {
         host?: string;

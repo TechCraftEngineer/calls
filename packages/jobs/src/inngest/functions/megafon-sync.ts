@@ -1,23 +1,22 @@
 import { settingsService } from "@calls/db";
-import { syncMegafonFtp } from "../../megafon/ftp-sync";
+import { syncFtp } from "../../megafon/ftp-sync";
 import { inngest } from "../client";
 
 export const megafonSyncFn = inngest.createFunction(
   {
     id: "megafon-ftp-sync",
-    name: "Загрузка записей Megafon PBX FTP",
+    name: "Загрузка записей FTP",
     retries: 2,
   },
   { cron: "TZ=Europe/Moscow */15 * * * *" },
   async ({ step }) => {
     try {
-      const integrations =
-        await settingsService.getActiveMegafonFtpIntegrations();
+      const integrations = await settingsService.getActiveFtpIntegrations();
 
       if (integrations.length === 0) {
         return {
           skipped: true,
-          reason: "Нет активных интеграций Megafon FTP",
+          reason: "Нет активных интеграций FTP",
         };
       }
 
@@ -31,7 +30,7 @@ export const megafonSyncFn = inngest.createFunction(
         const result = await step.run(
           `sync-ftp-${integration.workspaceId}`,
           async () => {
-            return syncMegafonFtp(
+            return syncFtp(
               {
                 host: integration.host,
                 user: integration.user,
@@ -71,7 +70,7 @@ export const megafonSyncFn = inngest.createFunction(
       };
     } catch (error) {
       throw new Error(
-        `Megafon sync failed: ${error instanceof Error ? error.message : String(error)}`,
+        `FTP sync failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   },

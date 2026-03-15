@@ -2,7 +2,7 @@ import { testFtpConnection } from "@calls/jobs";
 import { workspaceAdminProcedure } from "../../orpc";
 import { ftpCredentialsSchema } from "./schemas";
 
-export const testMegafonFtp = workspaceAdminProcedure
+export const testFtp = workspaceAdminProcedure
   .input(ftpCredentialsSchema)
   .handler(async ({ input }) => {
     const result = await testFtpConnection({

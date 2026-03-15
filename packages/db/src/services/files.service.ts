@@ -2,10 +2,21 @@
  * Files service - handles business logic for file operations
  */
 
-import { generateS3Key, getDownloadUrl, uploadBufferToS3 } from "@calls/lib";
+import {
+  buildStorageKey,
+  type FileSource,
+  getDownloadUrl,
+  uploadBufferToS3,
+} from "@calls/lib";
 import type { FilesRepository } from "../repositories/files.repository";
 import type { SystemRepository } from "../repositories/system.repository";
 import type { FileType } from "../types";
+
+function getDateFromPath(path: string): string {
+  const match = path.match(/^(\d{4}-\d{2}-\d{2})/);
+  const date = match?.[1];
+  return date ?? new Date().toISOString().slice(0, 10);
+}
 
 export class FilesService {
   constructor(
@@ -21,6 +32,7 @@ export class FilesService {
       mimeType: string;
       fileType: FileType;
       metadata?: Record<string, unknown>;
+      source?: FileSource;
     },
   ): Promise<{
     id: string;
@@ -28,9 +40,16 @@ export class FilesService {
     filename: string;
     sizeBytes: number;
   }> {
-    const storageKey = generateS3Key(
-      `${fileData.fileType}/${fileData.originalName}`,
-    );
+    const source = fileData.source ?? "manual";
+    const date = getDateFromPath(fileData.originalName);
+
+    const storageKey = buildStorageKey({
+      workspaceId,
+      source,
+      fileType: fileData.fileType,
+      date,
+      originalName: fileData.originalName,
+    });
 
     await uploadBufferToS3(storageKey, fileData.buffer, fileData.mimeType);
 
@@ -73,6 +92,7 @@ export class FilesService {
     workspaceId: string,
     originalName: string,
     buffer: Buffer | Uint8Array,
+    source: FileSource = "manual",
   ): Promise<{
     id: string;
     storageKey: string;
@@ -84,6 +104,7 @@ export class FilesService {
       buffer,
       mimeType: "audio/mpeg",
       fileType: "call_recording",
+      source,
     });
   }
 

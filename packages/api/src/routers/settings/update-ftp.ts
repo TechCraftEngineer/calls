@@ -4,7 +4,7 @@ import { z } from "zod";
 import { workspaceAdminProcedure } from "../../orpc";
 import { ftpCredentialsSchema } from "./schemas";
 
-const updateMegafonFtpSchema = z
+const updateFtpSchema = z
   .object({
     enabled: z.boolean(),
     host: z.string(),
@@ -24,8 +24,8 @@ const updateMegafonFtpSchema = z
     { message: "Заполните все поля подключения" },
   );
 
-export const updateMegafonFtp = workspaceAdminProcedure
-  .input(updateMegafonFtpSchema)
+export const updateFtp = workspaceAdminProcedure
+  .input(updateFtpSchema)
   .handler(async ({ input, context }) => {
     const { workspaceId } = context;
     const { enabled, host, user, password } = input;
@@ -42,7 +42,7 @@ export const updateMegafonFtp = workspaceAdminProcedure
 
     const username =
       (context.user as Record<string, unknown>)?.username ?? "system";
-    await settingsService.updateMegafonFtpSettings(
+    await settingsService.updateFtpSettings(
       enabled,
       host,
       user,
@@ -51,5 +51,5 @@ export const updateMegafonFtp = workspaceAdminProcedure
       String(username),
     );
 
-    return { success: true, message: "Megafon FTP настройки сохранены" };
+    return { success: true, message: "FTP настройки сохранены" };
   });

@@ -19,14 +19,14 @@ export function validateOptionalString(value: unknown): string | null {
   return value.trim() || null;
 }
 
-export function validateMegafonSettings(settings: {
+export function validateFtpSettings(settings: {
   host: unknown;
   user: unknown;
   password: unknown;
 }): { host: string; user: string; password: string } {
   return {
-    host: validateString(settings.host, "MEGAFON_FTP_HOST"),
-    user: validateString(settings.user, "MEGAFON_FTP_USER"),
-    password: validateString(settings.password, "MEGAFON_FTP_PASSWORD"),
+    host: validateString(settings.host, "FTP_HOST"),
+    user: validateString(settings.user, "FTP_USER"),
+    password: validateString(settings.password, "FTP_PASSWORD"),
   };
 }

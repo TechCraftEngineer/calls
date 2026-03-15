@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
+import FtpSection from "@/components/features/settings/ftp-section";
 import { useSettings } from "@/components/features/settings/hooks";
 import IntegrationsSection from "@/components/features/settings/integrations-section";
-import MegafonFtpSection from "@/components/features/settings/megafon-ftp-section";
 import SettingsPageShell from "@/components/features/settings/settings-page-shell";
 
 export default function SettingsIntegrationsPage() {
@@ -11,10 +11,10 @@ export default function SettingsIntegrationsPage() {
     state,
     loadSettings,
     handleSave,
-    handleSaveMegafonFtp,
-    handleTestMegafonFtp,
+    handleSaveFtp,
+    handleTestFtp,
     updatePrompt,
-    setMegafonFtpEnabled,
+    setFtpEnabled,
   } = useSettings();
 
   useEffect(() => {
@@ -36,20 +36,20 @@ export default function SettingsIntegrationsPage() {
       <header className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight">Интеграции</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Megafon FTP, Telegram Bot, MAX Bot
+          FTP, Telegram Bot, MAX Bot
         </p>
       </header>
 
       <div className="space-y-8">
-        <MegafonFtpSection
+        <FtpSection
           prompts={state.prompts}
           onPromptChange={updatePrompt}
-          onEnabledChange={setMegafonFtpEnabled}
-          onSave={handleSaveMegafonFtp}
-          onTest={handleTestMegafonFtp}
-          saving={state.megafonFtpSaving}
-          testing={state.megafonFtpTesting}
-          testMessage={state.megafonFtpTestMessage}
+          onEnabledChange={setFtpEnabled}
+          onSave={handleSaveFtp}
+          onTest={handleTestFtp}
+          saving={state.ftpSaving}
+          testing={state.ftpTesting}
+          testMessage={state.ftpTestMessage}
         />
 
         <IntegrationsSection

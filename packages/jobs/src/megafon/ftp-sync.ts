@@ -10,9 +10,9 @@ import { Client } from "basic-ftp";
 import { createLogger } from "../logger";
 import { parseMegafonFilename } from "./parse-filename";
 
-const logger = createLogger("megafon-ftp-sync");
+const logger = createLogger("ftp-sync");
 
-export interface MegafonFtpConfig {
+export interface FtpConfig {
   host: string;
   user: string;
   password: string;
@@ -27,7 +27,7 @@ export interface SyncResult {
   createdCallIds: string[];
 }
 
-function validateFtpConfig(config: MegafonFtpConfig): string[] {
+function validateFtpConfig(config: FtpConfig): string[] {
   const validation = validateFtpCredentials(
     config.host,
     config.user,
@@ -38,7 +38,7 @@ function validateFtpConfig(config: MegafonFtpConfig): string[] {
 
 /** Проверка доступа к FTP в онлайн-режиме. Возвращает ошибку или null при успехе. */
 export async function testFtpConnection(
-  config: MegafonFtpConfig,
+  config: FtpConfig,
 ): Promise<{ success: true } | { success: false; error: string }> {
   const validationErrors = validateFtpConfig(config);
   if (validationErrors.length > 0) {
@@ -78,8 +78,8 @@ export async function testFtpConnection(
   }
 }
 
-export async function syncMegafonFtp(
-  config: MegafonFtpConfig,
+export async function syncFtp(
+  config: FtpConfig,
   workspaceId: string,
   dateStr?: string,
 ): Promise<SyncResult> {
@@ -282,6 +282,7 @@ export async function syncMegafonFtp(
               workspaceId,
               relativePath,
               downloadBuffer,
+              "ftp",
             );
             fileId = uploadResult.id;
             storageKey = uploadResult.storageKey;

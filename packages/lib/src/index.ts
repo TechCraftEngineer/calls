@@ -1,5 +1,8 @@
 // S3 utilities
+
+export type { FileSource } from "./s3";
 export {
+  buildStorageKey,
   createPresignedUrl,
   generateS3Key,
   getDownloadUrl,

@@ -16,9 +16,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import AudioPlayerModal from "@/components/features/calls/audio-player-modal";
-import CallList from "@/components/features/calls/call-list";
-import { CallListSkeleton } from "@/components/features/calls/call-list/call-list-skeleton";
-import { TablePagination } from "@/components/features/calls/call-list/table-pagination";
+import { CallListDataGrid } from "@/components/features/calls/call-list/call-list-data-grid";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import CustomDropdown from "@/components/ui/custom-dropdown";
@@ -211,15 +209,11 @@ export default function HomePage() {
     loadData();
   }, [loadData]);
 
-  const handlePageChange = (newPage: number) => {
-    setPagination((prev) => ({ ...prev, page: newPage }));
-  };
-
-  const handlePerPageChange = (newPerPage: number) => {
+  const handlePaginationChange = (page: number, perPage: number) => {
     setPagination((prev) => ({
       ...prev,
-      per_page: newPerPage,
-      page: 1,
+      page,
+      per_page: perPage,
     }));
   };
 
@@ -381,44 +375,33 @@ export default function HomePage() {
 
           <Card className="card p-0! min-h-[200px] mt-[54px]">
             <CardContent className="p-0!">
-              {loading ? (
-                <CallListSkeleton />
-              ) : (
-                <CallList
-                  calls={calls}
-                  onPlay={(callId, number) =>
-                    setActiveAudio({ callId, number })
-                  }
-                  onCallDeleted={(callId) => {
-                    setCalls((prev) =>
-                      prev.filter((item) => item.call.id !== callId),
-                    );
-                    loadData();
-                  }}
-                  onRecommendationsGenerated={(callId, recommendations) => {
-                    setCalls((prev) =>
-                      prev.map((item) =>
-                        item.call.id === callId
-                          ? {
-                              ...item,
-                              evaluation: {
-                                ...(item.evaluation || {}),
-                                manager_recommendations: recommendations,
-                              },
-                            }
-                          : item,
-                      ),
-                    );
-                  }}
-                />
-              )}
-              <TablePagination
-                page={pagination.page}
-                perPage={pagination.per_page}
-                total={pagination.total}
-                totalPages={pagination.total_pages}
-                onPageChange={handlePageChange}
-                onPerPageChange={handlePerPageChange}
+              <CallListDataGrid
+                calls={calls}
+                pagination={pagination}
+                isLoading={loading}
+                onPaginationChange={handlePaginationChange}
+                onPlay={(callId, number) => setActiveAudio({ callId, number })}
+                onCallDeleted={(callId) => {
+                  setCalls((prev) =>
+                    prev.filter((item) => item.call.id !== callId),
+                  );
+                  loadData();
+                }}
+                onRecommendationsGenerated={(callId, recommendations) => {
+                  setCalls((prev) =>
+                    prev.map((item) =>
+                      item.call.id === callId
+                        ? {
+                            ...item,
+                            evaluation: {
+                              ...(item.evaluation || {}),
+                              manager_recommendations: recommendations,
+                            },
+                          }
+                        : item,
+                    ),
+                  );
+                }}
               />
             </CardContent>
           </Card>

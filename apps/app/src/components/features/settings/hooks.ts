@@ -20,9 +20,9 @@ export function useSettings() {
     backupLoading: false,
     sendTestLoading: false,
     sendTestMessage: "",
-    megafonFtpSaving: false,
-    megafonFtpTesting: false,
-    megafonFtpTestMessage: "",
+    ftpSaving: false,
+    ftpTesting: false,
+    ftpTestMessage: "",
   });
 
   const loadSettings = useCallback(async () => {
@@ -48,30 +48,30 @@ export function useSettings() {
         promptsMap[p.key] = p;
       });
 
-      // Добавляем интеграции (Megafon FTP, Telegram, MAX Bot)
-      const mf = integrations.megafon_ftp;
-      promptsMap.megafon_ftp_enabled = {
-        key: "megafon_ftp_enabled",
-        value: mf.enabled ? "true" : "false",
-        description: "Megafon FTP включён",
+      // Добавляем интеграции (FTP, Telegram, MAX Bot)
+      const ftp = integrations.ftp;
+      promptsMap.ftp_enabled = {
+        key: "ftp_enabled",
+        value: ftp.enabled ? "true" : "false",
+        description: "FTP включён",
         updated_at: undefined,
       };
-      promptsMap.megafon_ftp_host = {
-        key: "megafon_ftp_host",
-        value: mf.host ?? "",
-        description: "Megafon FTP host",
+      promptsMap.ftp_host = {
+        key: "ftp_host",
+        value: ftp.host ?? "",
+        description: "FTP host",
         updated_at: undefined,
       };
-      promptsMap.megafon_ftp_user = {
-        key: "megafon_ftp_user",
-        value: mf.user ?? "",
-        description: "Megafon FTP user",
+      promptsMap.ftp_user = {
+        key: "ftp_user",
+        value: ftp.user ?? "",
+        description: "FTP user",
         updated_at: undefined,
       };
-      promptsMap.megafon_ftp_password = {
-        key: "megafon_ftp_password",
-        value: mf.password ?? "",
-        description: "Megafon FTP password",
+      promptsMap.ftp_password = {
+        key: "ftp_password",
+        value: ftp.password ?? "",
+        description: "FTP password",
         updated_at: undefined,
       };
       promptsMap.telegram_bot_token = {
@@ -161,13 +161,13 @@ export function useSettings() {
     }
   };
 
-  const handleSaveMegafonFtp = async () => {
+  const handleSaveFtp = async () => {
     try {
-      setState((prev) => ({ ...prev, megafonFtpSaving: true }));
-      const enabled = state.prompts.megafon_ftp_enabled?.value === "true";
-      const host = state.prompts.megafon_ftp_host?.value ?? "";
-      const user = state.prompts.megafon_ftp_user?.value ?? "";
-      const password = state.prompts.megafon_ftp_password?.value ?? "";
+      setState((prev) => ({ ...prev, ftpSaving: true }));
+      const enabled = state.prompts.ftp_enabled?.value === "true";
+      const host = state.prompts.ftp_host?.value ?? "";
+      const user = state.prompts.ftp_user?.value ?? "";
+      const password = state.prompts.ftp_password?.value ?? "";
 
       if (host || user || password) {
         const ftpValidation = validateFtpCredentials(host, user, password);
@@ -177,47 +177,47 @@ export function useSettings() {
         }
       }
 
-      await api.settings.updateMegafonFtp({
+      await api.settings.updateFtp({
         enabled,
         host,
         user,
         password,
       });
-      toast.success("Параметры подключения Megafon FTP сохранены");
+      toast.success("Параметры подключения FTP сохранены");
       await loadSettings();
     } catch (error: unknown) {
-      console.error("Failed to save Megafon FTP:", error);
+      console.error("Failed to save FTP:", error);
       const msg =
         error instanceof Error
           ? error.message
           : "Не удалось сохранить параметры FTP";
       toast.error(msg);
     } finally {
-      setState((prev) => ({ ...prev, megafonFtpSaving: false }));
+      setState((prev) => ({ ...prev, ftpSaving: false }));
     }
   };
 
-  const handleTestMegafonFtp = async () => {
+  const handleTestFtp = async () => {
     try {
       setState((prev) => ({
         ...prev,
-        megafonFtpTestMessage: "",
-        megafonFtpTesting: true,
+        ftpTestMessage: "",
+        ftpTesting: true,
       }));
-      const host = state.prompts.megafon_ftp_host?.value ?? "";
-      const user = state.prompts.megafon_ftp_user?.value ?? "";
-      const password = state.prompts.megafon_ftp_password?.value ?? "";
+      const host = state.prompts.ftp_host?.value ?? "";
+      const user = state.prompts.ftp_user?.value ?? "";
+      const password = state.prompts.ftp_password?.value ?? "";
 
       const ftpValidation = validateFtpCredentials(host, user, password);
       if (!ftpValidation.isValid) {
         setState((prev) => ({
           ...prev,
-          megafonFtpTestMessage: ftpValidation.errors.join(". "),
+          ftpTestMessage: ftpValidation.errors.join(". "),
         }));
         return;
       }
 
-      const result = await api.settings.testMegafonFtp({
+      const result = await api.settings.testFtp({
         host,
         user,
         password,
@@ -226,13 +226,12 @@ export function useSettings() {
       if (result.success) {
         setState((prev) => ({
           ...prev,
-          megafonFtpTestMessage:
-            "Подключение установлено. Учётные данные корректны.",
+          ftpTestMessage: "Подключение установлено. Учётные данные корректны.",
         }));
       } else {
         setState((prev) => ({
           ...prev,
-          megafonFtpTestMessage: result.message,
+          ftpTestMessage: result.message,
         }));
       }
     } catch (error: unknown) {
@@ -242,10 +241,10 @@ export function useSettings() {
           : "Не удалось проверить подключение";
       setState((prev) => ({
         ...prev,
-        megafonFtpTestMessage: msg,
+        ftpTestMessage: msg,
       }));
     } finally {
-      setState((prev) => ({ ...prev, megafonFtpTesting: false }));
+      setState((prev) => ({ ...prev, ftpTesting: false }));
     }
   };
 
@@ -313,14 +312,14 @@ export function useSettings() {
       }));
     };
 
-  const setMegafonFtpEnabled = (enabled: boolean) => {
+  const setFtpEnabled = (enabled: boolean) => {
     setState((prev) => ({
       ...prev,
       prompts: {
         ...prev.prompts,
-        megafon_ftp_enabled: {
-          ...prev.prompts.megafon_ftp_enabled,
-          key: "megafon_ftp_enabled",
+        ftp_enabled: {
+          ...prev.prompts.ftp_enabled,
+          key: "ftp_enabled",
           value: enabled ? "true" : "false",
         },
       },
@@ -332,11 +331,11 @@ export function useSettings() {
     state,
     loadSettings,
     handleSave,
-    handleSaveMegafonFtp,
-    handleTestMegafonFtp,
+    handleSaveFtp,
+    handleTestFtp,
     handleBackup,
     handleSendTest,
     updatePrompt,
-    setMegafonFtpEnabled,
+    setFtpEnabled,
   };
 }

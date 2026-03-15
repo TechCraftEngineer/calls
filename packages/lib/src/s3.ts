@@ -52,6 +52,29 @@ export async function createPresignedUrl(key: string): Promise<string> {
   return getSignedUrl(getS3Client(), command, { expiresIn: 3600 }); // 1 hour
 }
 
+/** Источник загрузки файла */
+export type FileSource = "ftp" | "manual" | "api";
+
+/**
+ * Формирует S3 ключ: {workspace_id}/{source}/{file_type}/{date}/{unique}.{ext}
+ * Изоляция по workspace, разделение по источнику, партиционирование по дате.
+ */
+export function buildStorageKey(params: {
+  workspaceId: string;
+  source: FileSource;
+  fileType: string;
+  date: string;
+  originalName: string;
+}): string {
+  const ext =
+    params.originalName.includes(".") && !params.originalName.endsWith(".")
+      ? (params.originalName.split(".").pop() ?? "bin")
+      : "bin";
+  const unique = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+  return `${params.workspaceId}/${params.source}/${params.fileType}/${params.date}/${unique}.${ext}`;
+}
+
+/** @deprecated Используйте buildStorageKey. Оставлено для совместимости (temp, presigned). */
 export function generateS3Key(originalKey: string, temporary = false): string {
   const timestamp = Date.now();
   const randomId = Math.random().toString(36).substring(2, 15);
