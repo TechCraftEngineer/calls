@@ -63,12 +63,6 @@ export interface UpdateUserData {
   is_active?: boolean;
 }
 
-// Данные для смены пароля
-export interface ChangePasswordData {
-  new_password: string;
-  confirm_password: string;
-}
-
 // Настройки отчетов пользователя
 export interface UserReportSettings {
   email?: string;

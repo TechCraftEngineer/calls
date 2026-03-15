@@ -34,7 +34,7 @@ const result = await api.calls.list({ page: 1 });
 
 - **auth** — login, logout, me
 - **calls** — list, get, delete, generateRecommendations
-- **users** — list, get, create, update, delete, changePassword, telegram/max
+- **users** — list, get, create, update, delete, telegram/max
 - **settings** — getPrompts, updatePrompts, getModels, backup
 - **statistics** — getStatistics, getMetrics
 - **reports** — sendTestTelegram

@@ -149,18 +149,6 @@ export const usersApi = {
     return await api.users.delete({ user_id: String(userId) });
   },
 
-  async changePassword(
-    userId: string | number,
-    newPassword: string,
-    confirmPassword: string,
-  ): Promise<{ success: boolean; message: string }> {
-    return await api.users.changePassword({
-      user_id: String(userId),
-      new_password: newPassword,
-      confirm_password: confirmPassword,
-    });
-  },
-
   async telegramAuthUrl(userId: string | number): Promise<{ url?: string }> {
     return await api.users.telegramAuthUrl({ user_id: String(userId) });
   },

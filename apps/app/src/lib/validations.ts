@@ -88,24 +88,6 @@ export const updateUserSchema = z.object({
 
 export type UpdateUserData = z.infer<typeof updateUserSchema>;
 
-// Схема для смены пароля
-export const changePasswordSchema = z
-  .object({
-    new_password: z
-      .string()
-      .min(6, "Пароль должен содержать минимум 6 символов")
-      .regex(/[A-Z]/, "Пароль должен содержать хотя бы одну заглавную букву")
-      .regex(/[a-z]/, "Пароль должен содержать хотя бы одну строчную букву")
-      .regex(/[0-9]/, "Пароль должен содержать хотя бы одну цифру"),
-    confirm_password: z.string(),
-  })
-  .refine((data) => data.new_password === data.confirm_password, {
-    message: "Пароли не совпадают",
-    path: ["confirm_password"],
-  });
-
-export type ChangePasswordData = z.infer<typeof changePasswordSchema>;
-
 // Схема для настроек отчетов
 export const reportSettingsSchema = z.object({
   email: z.string().email("Введите корректный email").optional(),

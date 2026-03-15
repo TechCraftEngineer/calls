@@ -198,9 +198,9 @@ export default function InviteUserModal({
               onValueChange={(v: "admin" | "member") => setRole(v)}
             >
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue placeholder="Выберите роль" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[2100]">
                 <SelectItem value="admin">{ROLE_LABELS.admin}</SelectItem>
                 <SelectItem value="member">{ROLE_LABELS.member}</SelectItem>
               </SelectContent>

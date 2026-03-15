@@ -1,6 +1,9 @@
 "use client";
 
+import { paths } from "@calls/config";
+import { Button } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -10,7 +13,10 @@ import {
   TelegramBlock,
 } from "@/components/features/users/edit";
 import type { EditUserForm } from "@/components/features/users/types";
+import Header from "@/components/layout/header";
+import Sidebar from "@/components/layout/sidebar";
 import { useBlockStates } from "@/hooks/use-block-states";
+import { getCurrentUser, type User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 
 export default function UserEditPage() {
@@ -19,8 +25,13 @@ export default function UserEditPage() {
   const orpc = useORPC();
   const queryClient = useQueryClient();
 
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [form, setForm] = useState<EditUserForm | null>(null);
   const [username, setUsername] = useState<string>("");
+
+  useEffect(() => {
+    getCurrentUser().then(setCurrentUser);
+  }, []);
 
   const {
     clearBlockChanges,
@@ -241,27 +252,55 @@ export default function UserEditPage() {
   };
 
   if (userError) {
-    return <div>Ошибка загрузки пользователя</div>;
+    return (
+      <div className="app-container">
+        <Sidebar user={currentUser} />
+        <Header user={currentUser} />
+        <main className="main-content">
+          <div className="p-6">
+            <p className="text-destructive">Ошибка загрузки пользователя</p>
+            <Button variant="outline" size="sm" className="mt-4" asChild>
+              <Link href={paths.users.root}>← К списку пользователей</Link>
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   if (isPending || !form) {
-    return <div>Загрузка...</div>;
+    return (
+      <div className="app-container">
+        <Sidebar user={currentUser} />
+        <Header user={currentUser} />
+        <main className="main-content">
+          <div className="p-6">
+            <div className="animate-pulse h-8 bg-gray-200 rounded w-48 mb-4" />
+            <div className="animate-pulse h-4 bg-gray-100 rounded w-full max-w-md" />
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <div className="app-container">
+      <Sidebar user={currentUser} />
+      <Header user={currentUser} />
+
+      <main className="main-content">
+        <header className="page-header mb-6 flex justify-between items-start">
           <div>
             <h1 className="page-title">Редактирование пользователя</h1>
             <p className="page-subtitle mt-1 text-sm text-[#999]">
               Логин: {username}
             </p>
           </div>
-        </div>
-      </header>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={paths.users.root}>← К списку пользователей</Link>
+          </Button>
+        </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-4xl">
           <BasicInfoBlock
             form={form}

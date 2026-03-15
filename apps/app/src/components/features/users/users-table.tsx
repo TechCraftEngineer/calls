@@ -32,7 +32,6 @@ interface UsersTableProps {
   currentUser: User | null;
   currentUserRole: string | null;
   loading: boolean;
-  onChangePassword: (user: ManagedUser) => void;
   onRemoveMember: (userId: string, username: string) => void;
   onUpdateRole: (userId: string, role: "owner" | "admin" | "member") => void;
 }
@@ -55,7 +54,6 @@ export default function UsersTable({
   currentUser,
   currentUserRole,
   loading,
-  onChangePassword,
   onRemoveMember,
   onUpdateRole,
 }: UsersTableProps) {
@@ -165,19 +163,10 @@ export default function UsersTable({
                           variant="outline"
                           size="sm"
                           className="ghost-btn text-xs px-3 bg-white border-[#DDD] text-[#333] font-semibold hover:bg-gray-50"
-                          onClick={() => router.push(`/users/${u.id}/edit`)}
+                          onClick={() => router.push(`/users/${userId}/edit`)}
                           aria-label={`Редактировать ${u.username}`}
                         >
                           Настройки
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="ghost-btn text-xs px-3 bg-white border-[#DDD] text-[#333] font-semibold hover:bg-gray-50"
-                          onClick={() => onChangePassword(u)}
-                          aria-label={`Изменить пароль ${u.username}`}
-                        >
-                          Пароль
                         </Button>
                         {isCurrentUser ? (
                           <span className="text-[11px] text-[#999] font-semibold uppercase tracking-wide">

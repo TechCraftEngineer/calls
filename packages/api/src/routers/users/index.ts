@@ -1,4 +1,3 @@
-import { changePassword } from "./change-password";
 import { create } from "./create";
 import { deleteUser } from "./delete";
 import { disconnectMax } from "./disconnect-max";
@@ -23,7 +22,6 @@ export const usersRouter = {
   getForEdit,
   create,
   delete: deleteUser,
-  changePassword,
 
   telegramAuthUrl,
   disconnectTelegram,

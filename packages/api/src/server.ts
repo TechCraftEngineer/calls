@@ -75,16 +75,6 @@ export function createBackendApiWithContext(ctx: BackendContext) {
           ctx,
           input,
         ),
-      changePassword: (input: {
-        user_id: string;
-        new_password: string;
-        confirm_password: string;
-      }) =>
-        callProc(
-          backendRouter.users.changePassword as ProcedureWithCallable,
-          ctx,
-          input,
-        ),
       telegramAuthUrl: (input: { user_id: string }) =>
         callProc(
           backendRouter.users.telegramAuthUrl as ProcedureWithCallable,

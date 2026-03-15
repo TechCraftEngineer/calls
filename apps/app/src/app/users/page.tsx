@@ -5,14 +5,9 @@ import { Button, Card, CardContent, toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import ChangePasswordModal from "@/components/features/users/change-password-modal";
 import { ConfirmDialog } from "@/components/features/users/confirm-dialog";
-import type {
-  ManagedUser,
-  PasswordForm,
-} from "@/components/features/users/types";
+import type { ManagedUser } from "@/components/features/users/types";
 import UsersTable from "@/components/features/users/users-table";
-import AddWorkspaceMemberModal from "@/components/features/workspaces/add-workspace-member-modal";
 import InviteUserModal from "@/components/features/workspaces/invite-user-modal";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
@@ -40,9 +35,6 @@ export default function UsersPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showAddExistingModal, setShowAddExistingModal] = useState(false);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [passwordUser, setPasswordUser] = useState<ManagedUser | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<{
     userId: string;
     username: string;
@@ -63,24 +55,11 @@ export default function UsersPage() {
     enabled: !!workspaceId,
   });
 
-  const { data: usersAvailableToAdd = [], isPending: usersAvailableLoading } =
-    useQuery({
-      ...orpc.workspaces.listUsersAvailableToAdd.queryOptions({
-        input: { workspaceId: workspaceId ?? "" },
-      }),
-      enabled: !!workspaceId && !!showAddExistingModal,
-    });
-
   const invalidateQueries = () => {
     queryClient.invalidateQueries({ queryKey: orpc.users.list.queryKey() });
     if (workspaceId) {
       queryClient.invalidateQueries({
         queryKey: orpc.workspaces.listInvitations.queryKey({
-          input: { workspaceId },
-        }),
-      });
-      queryClient.invalidateQueries({
-        queryKey: orpc.workspaces.listUsersAvailableToAdd.queryKey({
           input: { workspaceId },
         }),
       });
@@ -162,31 +141,6 @@ export default function UsersPage() {
     }),
   );
 
-  const addMemberMutation = useMutation(
-    orpc.workspaces.addMember.mutationOptions({
-      onSuccess: () => {
-        invalidateQueries();
-        toast.success("Участник добавлен");
-      },
-      onError: (err) => {
-        toast.error(
-          err instanceof Error ? err.message : "Не удалось добавить участника",
-        );
-      },
-    }),
-  );
-
-  const changePasswordMutation = useMutation(
-    orpc.users.changePassword.mutationOptions({
-      onError: (err) => {
-        toast.error(err.message || "Ошибка при смене пароля");
-      },
-      onSuccess: () => {
-        toast.success("Пароль успешно изменен");
-      },
-    }),
-  );
-
   const handleInviteSubmit = async (
     email: string,
     role: "admin" | "member",
@@ -204,15 +158,6 @@ export default function UsersPage() {
     };
   };
 
-  const handleAddExisting = async (
-    userId: string,
-    role: "owner" | "admin" | "member",
-  ) => {
-    if (!workspaceId) return;
-    await addMemberMutation.mutateAsync({ workspaceId, userId, role });
-    setShowAddExistingModal(false);
-  };
-
   const handleRemoveMember = (userId: string, username: string) => {
     setConfirmRemove({ userId, username });
   };
@@ -223,16 +168,6 @@ export default function UsersPage() {
   ) => {
     if (!workspaceId) return;
     updateRoleMutation.mutate({ workspaceId, userId, role });
-  };
-
-  const handlePasswordSubmit = async (userId: string, form: PasswordForm) => {
-    await changePasswordMutation.mutateAsync({
-      user_id: userId,
-      new_password: form.new_password,
-      confirm_password: form.confirm_password,
-    });
-    setShowPasswordModal(false);
-    setPasswordUser(null);
   };
 
   const activeUsersCount = (users as ManagedUser[]).filter((u) => u.id).length;
@@ -252,14 +187,6 @@ export default function UsersPage() {
           </div>
           <div className="flex gap-2">
             <Button
-              variant="outline"
-              size="touch"
-              onClick={() => setShowAddExistingModal(true)}
-              aria-label="Добавить существующего пользователя"
-            >
-              Добавить участника
-            </Button>
-            <Button
               variant="accent"
               size="touch"
               onClick={() => setShowInviteModal(true)}
@@ -278,10 +205,6 @@ export default function UsersPage() {
           currentUser={currentUser}
           currentUserRole={activeWorkspace?.role ?? null}
           loading={loading}
-          onChangePassword={(u) => {
-            setPasswordUser(u);
-            setShowPasswordModal(true);
-          }}
           onRemoveMember={handleRemoveMember}
           onUpdateRole={handleUpdateRole}
         />
@@ -331,38 +254,6 @@ export default function UsersPage() {
         <InviteUserModal
           onClose={() => setShowInviteModal(false)}
           onSubmit={handleInviteSubmit}
-        />
-      )}
-
-      {showAddExistingModal && (
-        <AddWorkspaceMemberModal
-          users={
-            (Array.isArray(usersAvailableToAdd) ? usersAvailableToAdd : []) as {
-              id: string;
-              name: string;
-              email: string;
-              username: string;
-            }[]
-          }
-          existingMembers={(users as ManagedUser[]).map((u) => ({
-            id: u.userId ?? u.id,
-            name: String(u.name ?? u.username ?? ""),
-            email: String(u.username ?? u.email ?? ""),
-          }))}
-          loading={usersAvailableLoading}
-          onClose={() => setShowAddExistingModal(false)}
-          onSubmit={handleAddExisting}
-        />
-      )}
-
-      {showPasswordModal && passwordUser && (
-        <ChangePasswordModal
-          user={passwordUser}
-          onClose={() => {
-            setShowPasswordModal(false);
-            setPasswordUser(null);
-          }}
-          onSubmit={handlePasswordSubmit}
         />
       )}
 

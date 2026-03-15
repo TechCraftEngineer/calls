@@ -69,12 +69,6 @@ export interface AddUserForm {
 // Форма редактирования пользователя (без логина и пароля)
 export type EditUserForm = Omit<AddUserForm, "username" | "password">;
 
-// Форма смены пароля
-export interface PasswordForm {
-  new_password: string;
-  confirm_password: string;
-}
-
 // CSS классы для модальных окон
 export const modalOverlayClasses =
   "fixed inset-0 bg-black/50 flex items-center justify-center z-[1000]";
