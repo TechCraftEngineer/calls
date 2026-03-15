@@ -86,7 +86,7 @@ export function getCallListColumns(
       meta: { headerTitle: "Сотрудник" },
     },
     {
-      accessorKey: "call.duration_seconds",
+      accessorKey: "call.duration",
       id: "status",
       header: ({ column }) => (
         <DataGridColumnHeader
@@ -165,7 +165,7 @@ export function getCallListColumns(
       enableSorting: false,
     },
     {
-      accessorKey: "call.duration_seconds",
+      accessorKey: "call.duration",
       id: "duration",
       header: ({ column }) => (
         <DataGridColumnHeader

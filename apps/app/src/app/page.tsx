@@ -32,7 +32,7 @@ interface Call {
   filename?: string;
   number?: string;
   timestamp: string;
-  duration_seconds?: number;
+  duration?: number | null;
   direction?: string;
   internal_number?: string;
   operator_name?: string;

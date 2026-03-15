@@ -183,15 +183,15 @@ export default function CallDetailModal({
                     </Badge>
                     <Badge
                       variant={
-                        call.duration_seconds > 0 ? "outline" : "destructive"
+                        (call.duration ?? 0) > 0 ? "outline" : "destructive"
                       }
                       className={
-                        call.duration_seconds > 0
+                        (call.duration ?? 0) > 0
                           ? "border-green-500/30 bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400"
                           : undefined
                       }
                     >
-                      {call.duration_seconds > 0 ? "ЗАВЕРШЁН" : "ПРОПУЩЕН"}
+                      {(call.duration ?? 0) > 0 ? "ЗАВЕРШЁН" : "ПРОПУЩЕН"}
                     </Badge>
                   </div>
                   {isWorkspaceAdmin && (
@@ -231,7 +231,7 @@ export default function CallDetailModal({
                       minute: "2-digit",
                     })}
                   </span>
-                  <span>⏱️ {Math.round(call.duration_seconds)}с</span>
+                  <span>⏱️ {Math.round(call.duration ?? 0)}с</span>
                   <span>
                     👤 {call.manager_name || call.operator_name || "—"}
                   </span>

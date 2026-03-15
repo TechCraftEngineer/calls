@@ -233,8 +233,8 @@ function sortCalls(
         valB = b.call.manager_name || b.call.operator_name || "";
         break;
       case "status":
-        valA = a.call.duration_seconds || 0;
-        valB = b.call.duration_seconds || 0;
+        valA = a.call.duration || 0;
+        valB = b.call.duration || 0;
         break;
       case "date":
         valA = new Date(a.call.timestamp).getTime();
@@ -249,8 +249,8 @@ function sortCalls(
         valB = b.transcript?.summary || "";
         break;
       case "duration":
-        valA = a.call.duration_seconds || 0;
-        valB = b.call.duration_seconds || 0;
+        valA = a.call.duration || 0;
+        valB = b.call.duration || 0;
         break;
       default:
         return 0;

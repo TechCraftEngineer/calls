@@ -94,7 +94,7 @@ export function renderCallListCell({
   if (!visibleColumns.includes(colKey)) return null;
 
   const isMissed =
-    call.duration_seconds === 0 &&
+    (call.duration ?? 0) === 0 &&
     (call.direction === "Входящий" || call.direction === "incoming");
 
   const directionLabel =
@@ -388,7 +388,7 @@ export function renderCallListCell({
     case "duration":
       return (
         <TableCell key={colKey} style={{ fontWeight: 600, color: "#444" }}>
-          {formatDuration(call.duration_seconds)}
+          {formatDuration(call.duration ?? 0)}
         </TableCell>
       );
     default:

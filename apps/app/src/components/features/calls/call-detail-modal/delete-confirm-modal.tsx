@@ -44,7 +44,7 @@ export default function DeleteConfirmModal({
             </div>
             <div>
               <strong className="text-foreground">Длительность:</strong>{" "}
-              {Math.round(call.duration_seconds)} с
+              {Math.round(call.duration ?? 0)} с
             </div>
           </div>
         )}

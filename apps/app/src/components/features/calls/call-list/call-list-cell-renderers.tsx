@@ -98,7 +98,7 @@ export function renderManagerCell(call: CallWithDetails["call"]) {
 
 export function renderStatusCell(call: CallWithDetails["call"]) {
   const isMissed =
-    call.duration_seconds === 0 &&
+    (call.duration ?? 0) === 0 &&
     (call.direction === "Входящий" || call.direction === "incoming");
   return (
     <span
@@ -175,7 +175,7 @@ export function renderSummaryCell(transcript: CallWithDetails["transcript"]) {
 export function renderDurationCell(call: CallWithDetails["call"]) {
   return (
     <span style={{ fontWeight: 600, color: "#444" }}>
-      {formatDuration(call.duration_seconds)}
+      {formatDuration(call.duration ?? 0)}
     </span>
   );
 }

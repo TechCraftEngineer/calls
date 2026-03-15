@@ -8,7 +8,7 @@ interface Props {
 }
 
 export default function CallMetaHeader({ call }: Props) {
-  const isCompleted = call.duration_seconds > 0;
+  const isCompleted = (call.duration ?? 0) > 0;
 
   return (
     <div className="call-meta-header">
@@ -42,7 +42,7 @@ export default function CallMetaHeader({ call }: Props) {
           })}
         </div>
         <div className="meta-item-inline">
-          ⏱️ {Math.round(call.duration_seconds)}с
+          ⏱️ {Math.round(call.duration ?? 0)}с
         </div>
         <div className="meta-item-inline">
           👤 {call.manager_name || call.operator_name || "—"}

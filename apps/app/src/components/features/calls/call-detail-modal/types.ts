@@ -2,7 +2,7 @@ export interface CallDetail {
   id: number;
   number: string;
   timestamp: string;
-  duration_seconds: number;
+  duration: number;
   direction: string;
   internal_number?: string;
   manager_name?: string;
