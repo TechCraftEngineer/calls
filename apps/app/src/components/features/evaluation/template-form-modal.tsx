@@ -217,21 +217,14 @@ export function TemplateFormModal({
           </FieldDescription>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
             {BASE_TEMPLATES.map((t) => (
-              <button
+              <Button
                 key={t.slug}
                 type="button"
+                variant={baseTemplateSlug === t.slug ? "default" : "outline"}
                 onClick={() => setBaseTemplateSlug(t.slug)}
-                className={cn(
-                  "flex flex-col gap-1 p-4 rounded-lg border text-left transition-all",
-                  "hover:border-primary/50 hover:bg-muted/50",
-                  baseTemplateSlug === t.slug
-                    ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                    : "border-border bg-card",
-                )}
               >
-                <span className="font-medium text-sm">{t.name}</span>
-                <span className="text-xs text-muted-foreground">{t.desc}</span>
-              </button>
+                {t.name}
+              </Button>
             ))}
           </div>
         </FieldGroup>

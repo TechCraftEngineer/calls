@@ -102,13 +102,14 @@ export default function InviteUserModal({
             <h2 className="text-xl font-bold text-gray-900 m-0">
               Приглашение создано
             </h2>
-            <button
+            <Button
               type="button"
-              className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-colors border-none cursor-pointer"
+              variant="ghost"
+              size="icon-sm"
               onClick={onClose}
             >
               &times;
-            </button>
+            </Button>
           </div>
 
           <p className="text-sm text-gray-600 m-0">
@@ -119,22 +120,13 @@ export default function InviteUserModal({
 
           <div className="flex gap-2">
             <Input readOnly value={inviteUrl} className="font-mono text-xs" />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopy}
-              className="shrink-0"
-            >
+            <Button variant="outline" size="sm" onClick={handleCopy}>
               {copied ? "Скопировано" : "Копировать"}
             </Button>
           </div>
 
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={handleSendEmail}
-            >
+            <Button variant="outline" onClick={handleSendEmail}>
               Открыть почту
             </Button>
             <Button variant="accent" onClick={onClose}>
@@ -159,13 +151,14 @@ export default function InviteUserModal({
           <h2 className="text-xl font-bold text-gray-900 m-0">
             Пригласить по email
           </h2>
-          <button
+          <Button
             type="button"
-            className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-colors border-none cursor-pointer"
+            variant="ghost"
+            size="icon-sm"
             onClick={onClose}
           >
             &times;
-          </button>
+          </Button>
         </div>
 
         <p className="text-sm text-gray-500 m-0">
@@ -212,19 +205,10 @@ export default function InviteUserModal({
           </div>
 
           <div className="flex gap-3 mt-2">
-            <button
-              type="button"
-              className="flex-1 h-11 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-              onClick={onClose}
-            >
+            <Button type="button" variant="outline" onClick={onClose}>
               Отмена
-            </button>
-            <Button
-              type="submit"
-              variant="accent"
-              className="flex-2"
-              disabled={submitting}
-            >
+            </Button>
+            <Button type="submit" variant="accent" disabled={submitting}>
               {submitting ? "Отправка…" : "Отправить приглашение"}
             </Button>
           </div>

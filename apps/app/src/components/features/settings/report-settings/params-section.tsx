@@ -81,9 +81,9 @@ function KpiSettings({
   return (
     <div className="mt-4 border-t border-[#ddd] pt-4">
       <h4 className="m-0 mb-3 text-sm font-bold">Настройки KPI</h4>
-      <div className="flex flex-wrap gap-3 items-center mb-3">
-        <label className="text-[13px]">
-          Базовый оклад (₽):{" "}
+      <div className="flex flex-col gap-3">
+        <label className="flex items-center gap-2 text-[13px]">
+          <span className="min-w-[180px]">Базовый оклад (₽):</span>
           <Input
             type="number"
             min={0}
@@ -97,8 +97,8 @@ function KpiSettings({
             className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
           />
         </label>
-        <label className="text-[13px]">
-          Целевой бонус (₽):{" "}
+        <label className="flex items-center gap-2 text-[13px]">
+          <span className="min-w-[180px]">Целевой бонус (₽):</span>
           <Input
             type="number"
             min={0}
@@ -112,8 +112,10 @@ function KpiSettings({
             className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
           />
         </label>
-        <label className="text-[13px]">
-          Целевое время разговоров (мин):{" "}
+        <label className="flex items-center gap-2 text-[13px]">
+          <span className="min-w-[180px]">
+            Целевое время разговоров в месяц (мин):
+          </span>
           <Input
             type="number"
             min={0}
@@ -124,7 +126,7 @@ function KpiSettings({
                 kpi_target_talk_time_minutes: parseInt(e.target.value, 10) || 0,
               }))
             }
-            className="w-[80px] py-1.5 px-2 border border-[#ddd] rounded"
+            className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
           />
         </label>
       </div>

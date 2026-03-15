@@ -31,6 +31,63 @@ export default function ReportSettingsFormBody({
 }: ReportSettingsFormBodyProps) {
   const [sendTestLoading, setSendTestLoading] = useState(false);
   const [sendTestMessage, setSendTestMessage] = useState("");
+  const [connectTelegramLoading, setConnectTelegramLoading] = useState(false);
+  const [disconnectTelegramLoading, setDisconnectTelegramLoading] =
+    useState(false);
+  const [checkConnectionLoading, setCheckConnectionLoading] = useState(false);
+
+  const handleConnectTelegram = async () => {
+    setConnectTelegramLoading(true);
+    try {
+      const res = await api.users.telegramAuthUrl({ user_id: String(user.id) });
+      if (res?.url) {
+        window.open(res.url, "_blank");
+        toast.success(
+          "Откройте Telegram и нажмите «Старт» в чате с ботом. Затем нажмите «Проверить подключение».",
+        );
+      } else {
+        toast.error("Не удалось получить ссылку для подключения");
+      }
+    } catch {
+      toast.error("Ошибка при создании ссылки для Telegram");
+    } finally {
+      setConnectTelegramLoading(false);
+    }
+  };
+
+  const handleDisconnectTelegram = async () => {
+    if (!confirm("Отвязать Telegram аккаунт?")) return;
+    setDisconnectTelegramLoading(true);
+    try {
+      await api.users.disconnectTelegram({ user_id: String(user.id) });
+      setForm((f: any) => ({ ...f, telegramChatId: "" }));
+      toast.success("Telegram отвязан");
+    } catch {
+      toast.error("Ошибка при отвязке Telegram");
+    } finally {
+      setDisconnectTelegramLoading(false);
+    }
+  };
+
+  const handleCheckConnection = async () => {
+    setCheckConnectionLoading(true);
+    try {
+      const u = await api.users.get({ user_id: String(user.id) });
+      const chatId = (u as { telegramChatId?: string })?.telegramChatId ?? "";
+      setForm((f: any) => ({ ...f, telegramChatId: chatId }));
+      if (chatId) {
+        toast.success("Telegram подключён");
+      } else {
+        toast.info(
+          "Подключение не обнаружено. Нажмите «Подключить Telegram», откройте ссылку и отправьте боту /start",
+        );
+      }
+    } catch {
+      toast.error("Ошибка при проверке подключения");
+    } finally {
+      setCheckConnectionLoading(false);
+    }
+  };
 
   const handleSendTest = async () => {
     setSendTestMessage("");
@@ -66,6 +123,13 @@ export default function ReportSettingsFormBody({
               sendTestLoading={sendTestLoading}
               sendTestMessage={sendTestMessage}
               onSendTest={handleSendTest}
+              user={user}
+              onConnect={handleConnectTelegram}
+              onDisconnect={handleDisconnectTelegram}
+              onCheckConnection={handleCheckConnection}
+              connectLoading={connectTelegramLoading}
+              disconnectLoading={disconnectTelegramLoading}
+              checkConnectionLoading={checkConnectionLoading}
             />
 
             {isAdmin && (

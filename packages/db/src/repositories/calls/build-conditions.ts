@@ -1,4 +1,4 @@
-import { eq, gte, inArray, like, lte, or } from "drizzle-orm";
+import { eq, gte, inArray, like, lte, or, sql } from "drizzle-orm";
 import * as schema from "../../schema";
 
 export interface CallConditionsParams {
@@ -40,10 +40,26 @@ export function buildCallConditions(params: CallConditionsParams) {
   if (dateTo) {
     conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
   }
-  if (internalNumbers?.length) {
+  if (internalNumbers !== undefined && mobileNumbers !== undefined) {
+    const hasInternal = internalNumbers.length > 0;
+    const hasMobile = mobileNumbers.length > 0;
+    if (hasInternal && hasMobile) {
+      const orCond = or(
+        inArray(schema.calls.internalNumber, internalNumbers),
+        inArray(schema.calls.number, mobileNumbers),
+      );
+      if (orCond) conditions.push(orCond);
+    } else if (hasInternal) {
+      conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
+    } else if (hasMobile) {
+      conditions.push(inArray(schema.calls.number, mobileNumbers));
+    } else {
+      // Оба пусты — участник без идентификаторов, не показываем звонки
+      conditions.push(sql`false`);
+    }
+  } else if (internalNumbers?.length) {
     conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
-  }
-  if (mobileNumbers?.length) {
+  } else if (mobileNumbers?.length) {
     conditions.push(inArray(schema.calls.number, mobileNumbers));
   }
   if (direction) {

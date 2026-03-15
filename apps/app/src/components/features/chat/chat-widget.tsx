@@ -1,6 +1,6 @@
 "use client";
 
-import { DatePicker } from "@calls/ui";
+import { Button, DatePicker } from "@calls/ui";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/lib/better-auth";
 import { type ChatMessage, sendChatMessage } from "@/lib/chat";
@@ -92,11 +92,12 @@ export default function ChatWidget() {
   return (
     <>
       {/* FAB - Ear style */}
-      <button
+      <Button
         type="button"
+        variant="default"
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? "Закрыть чат" : "Открыть чат"}
-        className={`fixed top-1/2 -translate-y-1/2 w-12 h-[120px] rounded-l-2xl rounded-r-none bg-[#FFD600] shadow-[-4px_0_12px_rgba(0,0,0,0.15)] border-none z-9998 flex flex-col items-center justify-center py-4 px-1.5 gap-2 transition-[right,transform] duration-300 ease-out ${
+        className={`fixed top-1/2 -translate-y-1/2 w-12 h-[120px] rounded-l-2xl rounded-r-none bg-[#FFD600] shadow-[-4px_0_12px_rgba(0,0,0,0.15)] border-none z-9998 flex flex-col items-center justify-center py-4 px-1.5 gap-2 transition-[right,transform] duration-300 ease-out hover:bg-[#FFD600] ${
           open ? "right-[-60px]" : "right-0"
         }`}
         onMouseEnter={(e) => {
@@ -112,46 +113,42 @@ export default function ChatWidget() {
         <span className="[writing-mode:vertical-rl] [text-orientation:upright] font-bold text-sm tracking-wider">
           ИИ
         </span>
-      </button>
+      </Button>
 
       {open && (
         <div className="fixed top-1/2 right-6 -translate-y-1/2 w-[min(420px,calc(100vw-48px))] max-h-[min(80vh,600px)] bg-white rounded-xl shadow-xl z-9999 flex flex-col overflow-visible">
           {/* Крестик закрытия — сверху справа */}
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => setOpen(false)}
             aria-label="Закрыть"
-            className="absolute top-3 right-3 w-9 h-9 rounded-full bg-[#FFD600] flex items-center justify-center text-xl font-bold text-[#333] shadow-md hover:bg-gray-200 hover:text-black transition-colors z-10000"
+            className="absolute top-3 right-3 z-10000"
           >
             ×
-          </button>
+          </Button>
           <div className="p-3 border-b border-[#eee] shrink-0">
             <div className="mb-2">
               <div className="font-semibold">ИИ-чат</div>
             </div>
             <div className="flex gap-2 mb-2">
-              <button
+              <Button
                 type="button"
+                variant={contextMode === CONTEXT_GENERAL ? "outline" : "ghost"}
+                size="sm"
                 onClick={() => setContextMode(CONTEXT_GENERAL)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  contextMode === CONTEXT_GENERAL
-                    ? "border-2 border-[#FFD600] bg-[#fffde7]"
-                    : "border border-[#ddd] bg-white"
-                }`}
               >
                 Общий ИИ
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant={contextMode === CONTEXT_CALLS ? "outline" : "ghost"}
+                size="sm"
                 onClick={() => setContextMode(CONTEXT_CALLS)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  contextMode === CONTEXT_CALLS
-                    ? "border-2 border-[#FFD600] bg-[#fffde7]"
-                    : "border border-[#ddd] bg-white"
-                }`}
               >
                 База звонков
-              </button>
+              </Button>
             </div>
             {contextMode === CONTEXT_CALLS && (
               <div className="flex gap-2 items-center flex-wrap">
@@ -219,14 +216,15 @@ export default function ChatWidget() {
                 disabled={loading}
                 className="flex-1 p-2.5 rounded-lg border border-[#ddd] resize-none text-sm focus:outline-none focus:ring-2 focus:ring-[#FFD600]/50"
               />
-              <button
+              <Button
                 type="button"
+                variant="default"
+                size="sm"
                 onClick={handleSend}
                 disabled={loading || !inputValue.trim()}
-                className="px-4 py-2.5 rounded-lg bg-[#FFD600] font-medium self-end disabled:opacity-70 disabled:cursor-not-allowed hover:bg-[#E6C200] transition-colors"
               >
                 Отправить
-              </button>
+              </Button>
             </div>
           </div>
         </div>

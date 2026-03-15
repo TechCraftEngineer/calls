@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@calls/ui";
+
 export default function UsersError({
   error,
   reset,
@@ -18,13 +20,13 @@ export default function UsersError({
             <p className="text-gray-600 mb-6">
               {error.message || "Произошла ошибка при загрузке пользователей"}
             </p>
-            <button
+            <Button
               onClick={reset}
-              className="px-6 py-3 bg-gradient-to-br from-[#FF6B35] to-[#F7931E] text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
+              variant="default"
               aria-label="Попробовать снова"
             >
               Попробовать снова
-            </button>
+            </Button>
           </div>
         </div>
       </div>

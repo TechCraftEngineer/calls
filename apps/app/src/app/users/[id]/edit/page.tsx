@@ -1,7 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { Button } from "@calls/ui";
+import { Button, toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -47,6 +47,7 @@ export default function UserEditPage() {
     data,
     error: userError,
     isPending,
+    isFetching,
   } = useQuery({
     ...orpc.users.getForEdit.queryOptions({ input: { user_id: userId } }),
     enabled: !!userId,
@@ -96,6 +97,22 @@ export default function UserEditPage() {
         setForm((f) => (f ? { ...f, telegramChatId: "" } : f));
         invalidateUser();
       },
+    }),
+  );
+
+  const telegramAuthUrlMutation = useMutation(
+    orpc.users.telegramAuthUrl.mutationOptions({
+      onSuccess: (res: { url?: string }) => {
+        if (res?.url) {
+          window.open(res.url, "_blank");
+          toast.success(
+            "Откройте Telegram и нажмите «Старт» в чате с ботом. Затем нажмите «Проверить подключение».",
+          );
+        } else {
+          toast.error("Не удалось получить ссылку для подключения");
+        }
+      },
+      onError: () => toast.error("Ошибка при создании ссылки для Telegram"),
     }),
   );
 
@@ -196,6 +213,14 @@ export default function UserEditPage() {
   const handleDisconnectTelegram = () => {
     if (!form) return;
     disconnectTelegramMutation.mutate({ user_id: userId });
+  };
+
+  const handleConnectTelegram = () => {
+    telegramAuthUrlMutation.mutate({ user_id: userId });
+  };
+
+  const handleCheckTelegramConnection = () => {
+    invalidateUser();
   };
 
   const handleSaveEmailSettings = () => {
@@ -346,6 +371,10 @@ export default function UserEditPage() {
             onSave={handleSaveTelegramSettings}
             disabled={false}
             onDisconnect={handleDisconnectTelegram}
+            onConnect={handleConnectTelegram}
+            onCheckConnection={handleCheckTelegramConnection}
+            connectLoading={telegramAuthUrlMutation.isPending}
+            checkConnectionLoading={isFetching && !isPending}
           />
 
           <EmailBlock

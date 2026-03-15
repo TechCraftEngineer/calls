@@ -57,7 +57,12 @@ function StatisticsPageContent() {
         "code" in error &&
         (error as { code?: string }).code === "FORBIDDEN"
       ) {
-        router.push(paths.forbidden);
+        // Участник (member) не имеет доступа к сводной статистике, но может настроить отчёты в Telegram
+        setActiveTab("settings");
+        setStats([]);
+        router.replace(paths.statistics.settings);
+      } else {
+        throw error;
       }
     } finally {
       setLoading(false);

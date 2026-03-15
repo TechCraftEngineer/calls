@@ -26,8 +26,18 @@ export const list = workspaceProcedure
       : undefined;
     const dateTo = input.date_to ? `${input.date_to}T23:59:59` : undefined;
 
-    const internalNumbers = getInternalNumbersForUser(user!);
-    const mobileNumbers = getMobileNumbersForUser(user!);
+    let internalNumbers = getInternalNumbersForUser(user!);
+    let mobileNumbers = getMobileNumbersForUser(user!);
+
+    // Участник (member) видит только свои звонки — при отсутствии internalExtensions/mobilePhones возвращаем пустой список
+    if (context.workspaceRole === "member") {
+      const hasIdentifiers =
+        (internalNumbers?.length ?? 0) > 0 || (mobileNumbers?.length ?? 0) > 0;
+      if (!hasIdentifiers) {
+        internalNumbers = [];
+        mobileNumbers = [];
+      }
+    }
 
     const callsWithTranscripts = await callsService.getCallsWithTranscripts({
       workspaceId: workspaceId!,

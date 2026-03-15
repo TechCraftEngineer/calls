@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@calls/ui";
 import { useEffect, useRef } from "react";
 
 interface RecommendationsModalProps {
@@ -59,13 +60,16 @@ export default function RecommendationsModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative p-6">
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
             onClick={onClose}
             aria-label="Закрыть"
-            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full border-none bg-transparent text-[28px] cursor-pointer text-gray-400 hover:bg-gray-100 hover:text-gray-800 transition-all duration-200 z-10"
+            className="absolute top-4 right-4 z-10"
           >
             ×
-          </button>
+          </Button>
 
           <div className="pr-10">
             <h3 className="mb-5 text-xl font-bold text-[#111] flex items-center gap-2">

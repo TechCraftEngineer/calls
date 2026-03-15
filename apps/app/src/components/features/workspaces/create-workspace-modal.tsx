@@ -1,7 +1,7 @@
 "use client";
 
 import { generateWorkspaceSlug } from "@calls/shared";
-import { Input, toast } from "@calls/ui";
+import { Button, Input, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -94,13 +94,14 @@ export default function CreateWorkspaceModal({
               Создать рабочее пространство
             </h2>
           </div>
-          <button
+          <Button
             type="button"
-            className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:text-gray-900 transition-colors border-none cursor-pointer"
+            variant="ghost"
+            size="icon-sm"
             onClick={onClose}
           >
             &times;
-          </button>
+          </Button>
         </div>
 
         <p className="text-sm text-gray-500 m-0 leading-relaxed">
@@ -170,20 +171,12 @@ export default function CreateWorkspaceModal({
           </div>
 
           <div className="flex gap-3 mt-2">
-            <button
-              type="button"
-              className="flex-1 h-11 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-              onClick={onClose}
-            >
+            <Button type="button" variant="outline" onClick={onClose}>
               Отмена
-            </button>
-            <button
-              type="submit"
-              className="flex-[2] h-11 rounded-lg border-none bg-[#111] text-sm font-semibold text-white hover:bg-gray-800 transition-all hover:-translate-y-px disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              disabled={isSubmitting}
-            >
+            </Button>
+            <Button type="submit" variant="dark" disabled={isSubmitting}>
               {isSubmitting ? "Создание..." : "Создать рабочее пространство"}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

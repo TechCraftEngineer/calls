@@ -187,10 +187,11 @@ export default function UsersPage() {
           </div>
           <div className="flex gap-2">
             <Button
-              variant="accent"
+              variant="default"
               size="touch"
               onClick={() => setShowInviteModal(true)}
               aria-label="Пригласить по email"
+              className="shadow-md hover:shadow-lg"
             >
               <span className="text-lg" aria-hidden="true">
                 +

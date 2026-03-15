@@ -1,7 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { Input, PasswordInput } from "@calls/ui";
+import { Button, Input, PasswordInput } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -193,13 +193,14 @@ function RegisterForm() {
             )}
           </div>
 
-          <button
+          <Button
             type="submit"
-            className="mt-2 w-full cursor-pointer rounded-lg border-none bg-[#111] py-3 text-[15px] font-semibold text-white transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 hover:bg-[#333] hover:-translate-y-px"
+            variant="dark"
+            className="mt-2 w-full"
             disabled={isSubmitting}
           >
             {isSubmitting ? "Регистрация…" : "Зарегистрироваться"}
-          </button>
+          </Button>
 
           {process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED !== "false" && (
             <div className="mt-4">
@@ -211,15 +212,16 @@ function RegisterForm() {
                   <span className="bg-white px-2 text-[#888]">или</span>
                 </div>
               </div>
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                className="w-full"
                 onClick={() =>
                   authClient.signIn.social({
                     provider: "google",
                     callbackURL: paths.onboarding.createWorkspace,
                   })
                 }
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#DDD] bg-white py-3 text-[14px] font-medium text-[#333] transition-all hover:bg-[#F5F5F5]"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path
@@ -240,7 +242,7 @@ function RegisterForm() {
                   />
                 </svg>
                 Зарегистрироваться через Google
-              </button>
+              </Button>
             </div>
           )}
         </form>

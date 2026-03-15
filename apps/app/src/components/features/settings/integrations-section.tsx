@@ -107,13 +107,14 @@ export default function IntegrationsSection({
               Токен бота
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
+                  <Button
                     type="button"
-                    className="inline-flex size-3.5 cursor-help items-center justify-center rounded-full bg-muted-foreground/20 text-[10px] text-muted-foreground hover:bg-muted-foreground/30"
+                    variant="ghost"
+                    size="icon-xs"
                     aria-label="Подсказка о формате токена"
                   >
                     ?
-                  </button>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-65">
                   Формат: 1234567890:ABCdefGHI... (цифры:буквы и цифры). Токен
