@@ -85,6 +85,7 @@ export {
   FormMessage,
   FormField,
 } from "./form";
+export { IconPlaceholder } from "./icon-placeholder";
 export { Input } from "./input";
 export { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "./input-otp";
 export { PasswordInput } from "./password-input";

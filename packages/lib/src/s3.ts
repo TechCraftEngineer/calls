@@ -120,3 +120,17 @@ export async function getDownloadUrl(key: string): Promise<string> {
 
   return getSignedUrl(getS3Client(), command, { expiresIn: 3600 }); // 1 hour
 }
+
+/**
+ * Pre-signed URL для ASR (Yandex SpeechKit и др.).
+ * Увеличенный срок действия (4 ч) — SpeechKit может обрабатывать запрос с задержкой.
+ * @see https://yandex.cloud/docs/storage/concepts/pre-signed-urls
+ */
+export async function getDownloadUrlForAsr(key: string): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: getBucketName(),
+    Key: key,
+  });
+
+  return getSignedUrl(getS3Client(), command, { expiresIn: 4 * 3600 }); // 4 hours
+}

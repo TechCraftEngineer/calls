@@ -59,31 +59,31 @@ export function useSettings() {
       promptsMap.ftp_host = {
         key: "ftp_host",
         value: ftp.host ?? "",
-        description: "FTP host",
+        description: "Хост FTP",
         updated_at: undefined,
       };
       promptsMap.ftp_user = {
         key: "ftp_user",
         value: ftp.user ?? "",
-        description: "FTP user",
+        description: "Пользователь FTP",
         updated_at: undefined,
       };
       promptsMap.ftp_password = {
         key: "ftp_password",
         value: ftp.password ?? "",
-        description: "FTP password",
+        description: "Пароль FTP",
         updated_at: undefined,
       };
       promptsMap.telegram_bot_token = {
         key: "telegram_bot_token",
         value: integrations.telegram_bot_token ?? "",
-        description: "Telegram Bot Token",
+        description: "Токен Telegram-бота",
         updated_at: undefined,
       };
       promptsMap.max_bot_token = {
         key: "max_bot_token",
         value: integrations.max_bot_token ?? "",
-        description: "MAX Bot Token",
+        description: "Токен MAX-бота",
         updated_at: undefined,
       };
 

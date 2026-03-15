@@ -6,6 +6,7 @@ export {
   createPresignedUrl,
   generateS3Key,
   getDownloadUrl,
+  getDownloadUrlForAsr,
   uploadBufferToS3,
 } from "./s3";
 export {

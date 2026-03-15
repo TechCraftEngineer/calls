@@ -593,6 +593,8 @@ textarea.text-input:focus {
 }
 
 .op-table tbody tr:hover {
+  position: relative;
+  z-index: 1;
   box-shadow: inset 0 0 0 1px #F9D904;
 }
 

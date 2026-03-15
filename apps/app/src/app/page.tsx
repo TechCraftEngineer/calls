@@ -20,6 +20,7 @@ import { CallListDataGrid } from "@/components/features/calls/call-list/call-lis
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import CustomDropdown from "@/components/ui/custom-dropdown";
+import { SearchInput } from "@/components/ui/search-input";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import { useDebounce } from "@/hooks/use-debounce";
 import api from "@/lib/api";
@@ -234,6 +235,20 @@ export default function HomePage() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+                <SearchInput
+                  value={filters.q}
+                  onChange={(q) => setFilters((f) => ({ ...f, q }))}
+                  onSearch={() => setPagination((p) => ({ ...p, page: 1 }))}
+                />
+                <Button
+                  variant="ghost"
+                  className="xls-download-btn font-normal text-sm gap-2 p-0 h-auto"
+                >
+                  <span className="text-lg opacity-40">📄</span>
+                  Скачать в xls за сегодня
+                </Button>
+              </div>
               <div className="filters-grid">
                 <div className="filter-item">
                   <span className="filter-label">Направление</span>
@@ -346,65 +361,39 @@ export default function HomePage() {
                   </Button>
                 </div>
               </div>
-
-              <div className="mt-16 flex justify-end gap-8 items-center">
-                <div className="relative">
-                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#999] text-sm">
-                    🔍
-                  </span>
-                  <Input
-                    type="text"
-                    className="text-input pl-8 w-60 bg-white border-[#eee]"
-                    placeholder="Поиск..."
-                    value={filters.q}
-                    onChange={(e) =>
-                      setFilters({ ...filters, q: e.target.value })
-                    }
-                  />
-                </div>
-                <Button
-                  variant="ghost"
-                  className="xls-download-btn font-normal text-sm gap-2 p-0 h-auto"
-                >
-                  <span className="text-lg opacity-40">📄</span>
-                  Скачать в xls за сегодня
-                </Button>
-              </div>
             </CardContent>
           </Card>
 
-          <Card className="card p-0! min-h-[200px] mt-[54px]">
-            <CardContent className="p-0!">
-              <CallListDataGrid
-                calls={calls}
-                pagination={pagination}
-                isLoading={loading}
-                onPaginationChange={handlePaginationChange}
-                onPlay={(callId, number) => setActiveAudio({ callId, number })}
-                onCallDeleted={(callId) => {
-                  setCalls((prev) =>
-                    prev.filter((item) => item.call.id !== callId),
-                  );
-                  loadData();
-                }}
-                onRecommendationsGenerated={(callId, recommendations) => {
-                  setCalls((prev) =>
-                    prev.map((item) =>
-                      item.call.id === callId
-                        ? {
-                            ...item,
-                            evaluation: {
-                              ...(item.evaluation || {}),
-                              manager_recommendations: recommendations,
-                            },
-                          }
-                        : item,
-                    ),
-                  );
-                }}
-              />
-            </CardContent>
-          </Card>
+          <section className="mt-[54px] min-h-[200px] overflow-hidden rounded-lg border border-border/30 bg-card/40">
+            <CallListDataGrid
+              calls={calls}
+              pagination={pagination}
+              isLoading={loading}
+              onPaginationChange={handlePaginationChange}
+              onPlay={(callId, number) => setActiveAudio({ callId, number })}
+              onCallDeleted={(callId) => {
+                setCalls((prev) =>
+                  prev.filter((item) => item.call.id !== callId),
+                );
+                loadData();
+              }}
+              onRecommendationsGenerated={(callId, recommendations) => {
+                setCalls((prev) =>
+                  prev.map((item) =>
+                    item.call.id === callId
+                      ? {
+                          ...item,
+                          evaluation: {
+                            ...(item.evaluation || {}),
+                            manager_recommendations: recommendations,
+                          },
+                        }
+                      : item,
+                  ),
+                );
+              }}
+            />
+          </section>
         </div>
 
         {activeAudio && (

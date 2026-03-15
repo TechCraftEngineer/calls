@@ -4,7 +4,7 @@
  */
 
 import { callsService, filesService, promptsService } from "@calls/db";
-import { getDownloadUrl } from "@calls/lib";
+import { getDownloadUrlForAsr } from "@calls/lib";
 import { identifySpeakersWithLlm, runTranscriptionPipeline } from "../../asr";
 import { createLogger } from "../../logger";
 import { inngest } from "../client";
@@ -37,7 +37,7 @@ export const transcribeCallFn = inngest.createFunction(
       if (!fileId) throw new Error(`У звонка ${callId} нет привязанного файла`);
       const file = await filesService.getFileById(fileId);
       if (!file) throw new Error(`Файл не найден: ${fileId}`);
-      return getDownloadUrl(file.storageKey);
+      return getDownloadUrlForAsr(file.storageKey);
     });
 
     const summaryPrompt = await step.run("get-summary-prompt", async () => {

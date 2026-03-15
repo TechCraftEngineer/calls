@@ -42,6 +42,18 @@ export function getCallListColumns(
 
   const renderLinkOrButton = createLinkOrButton(onSelectCall);
 
+  const columnTooltips: Record<string, string> = {
+    type: "Входящий или исходящий звонок",
+    number: "Номер телефона абонента",
+    manager: "Сотрудник, принявший или совершивший звонок",
+    status: "Результат звонка (отвечен, пропущен и т.д.)",
+    date: "Дата и время звонка",
+    score: "Оценка качества звонка",
+    summary: "Краткое резюме разговора",
+    record: "Запись разговора и действия",
+    duration: "Длительность звонка в минутах и секундах",
+  };
+
   return [
     {
       accessorKey: "call.direction",
@@ -50,6 +62,7 @@ export function getCallListColumns(
         <DataGridColumnHeader
           column={column}
           title="Направление"
+          tooltip={columnTooltips.type}
           visibility={true}
         />
       ),
@@ -60,7 +73,12 @@ export function getCallListColumns(
       accessorKey: "call.number",
       id: "number",
       header: ({ column }) => (
-        <DataGridColumnHeader column={column} title="Номер" visibility={true} />
+        <DataGridColumnHeader
+          column={column}
+          title="Номер"
+          tooltip={columnTooltips.number}
+          visibility={true}
+        />
       ),
       cell: ({ row }) => renderNumberCell(row.original, renderLinkOrButton),
       meta: { headerTitle: "Номер" },
@@ -72,6 +90,7 @@ export function getCallListColumns(
         <DataGridColumnHeader
           column={column}
           title="Сотрудник"
+          tooltip={columnTooltips.manager}
           visibility={true}
         />
       ),
@@ -85,6 +104,7 @@ export function getCallListColumns(
         <DataGridColumnHeader
           column={column}
           title="Результат"
+          tooltip={columnTooltips.status}
           visibility={true}
         />
       ),
@@ -98,6 +118,7 @@ export function getCallListColumns(
         <DataGridColumnHeader
           column={column}
           title="Дата и время"
+          tooltip={columnTooltips.date}
           visibility={true}
         />
       ),
@@ -111,6 +132,7 @@ export function getCallListColumns(
         <DataGridColumnHeader
           column={column}
           title="Оценка"
+          tooltip={columnTooltips.score}
           visibility={true}
         />
       ),
@@ -124,6 +146,7 @@ export function getCallListColumns(
         <DataGridColumnHeader
           column={column}
           title="Резюме"
+          tooltip={columnTooltips.summary}
           visibility={true}
         />
       ),
@@ -137,6 +160,7 @@ export function getCallListColumns(
         <DataGridColumnHeader
           column={column}
           title="Запись"
+          tooltip={columnTooltips.record}
           visibility={true}
         />
       ),
@@ -160,6 +184,7 @@ export function getCallListColumns(
         <DataGridColumnHeader
           column={column}
           title="Длительность"
+          tooltip={columnTooltips.duration}
           visibility={true}
         />
       ),

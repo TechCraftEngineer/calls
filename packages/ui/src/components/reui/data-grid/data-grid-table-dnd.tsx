@@ -16,7 +16,7 @@ import {
   DataGridTableHeadRowCell,
   DataGridTableHeadRowCellResize,
   DataGridTableRowSpacer,
-} from "./data-grid-table"
+} from "./data-grid-table-parts"
 import {
   closestCenter,
   DndContext,
@@ -29,6 +29,7 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core"
 import {
+  arrayMove,
   horizontalListSortingStrategy,
   SortableContext,
   useSortable,
@@ -143,9 +144,22 @@ function DataGridTableDndCell<TData>({ cell }: { cell: Cell<TData, unknown> }) {
 function DataGridTableDnd<TData>({
   handleDragEnd,
 }: {
-  handleDragEnd: (event: DragEndEvent) => void
+  handleDragEnd?: (event: DragEndEvent) => void
 }) {
   const { table, isLoading, props } = useDataGrid()
+
+  const defaultHandleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const columnOrder = table.getState().columnOrder
+    const oldIndex = columnOrder.indexOf(active.id as string)
+    const newIndex = columnOrder.indexOf(over.id as string)
+    if (oldIndex === -1 || newIndex === -1) return
+    const newOrder = arrayMove(columnOrder, oldIndex, newIndex)
+    table.setColumnOrder(newOrder)
+  }
+
+  const onDragEnd = handleDragEnd ?? defaultHandleDragEnd
   const pagination = table.getState().pagination
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -183,7 +197,7 @@ function DataGridTableDnd<TData>({
       collisionDetection={closestCenter}
       id={useId()}
       modifiers={[restrictToTableBounds]}
-      onDragEnd={handleDragEnd}
+      onDragEnd={onDragEnd}
       sensors={sensors}
     >
       <div ref={containerRef}>

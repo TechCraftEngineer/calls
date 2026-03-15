@@ -1,7 +1,9 @@
 "use client";
 
 import {
+  Button,
   DataGrid,
+  DataGridColumnVisibility,
   DataGridContainer,
   DataGridPagination,
   DataGridTable,
@@ -10,6 +12,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
+  IconPlaceholder,
 } from "@calls/ui";
 import {
   getCoreRowModel,
@@ -224,21 +227,42 @@ export function CallListDataGrid({
         }}
         tableClassNames={{ base: "op-table" }}
       >
-        <DataGridContainer className="border-0">
-          <div className="overflow-x-auto">
-            <DataGridTable<(typeof calls)[0]> />
-          </div>
-          <div className="border-t px-2">
-            <DataGridPagination
-              sizes={[...PAGINATION_CONSTANTS.PER_PAGE_OPTIONS]}
-              sizesLabel="Строк на странице"
-              info="{from} - {to} из {count}"
-              rowsPerPageLabel="Строк на странице"
-              previousPageLabel="Предыдущая страница"
-              nextPageLabel="Следующая страница"
+        <div className="flex flex-col">
+          <div className="flex justify-end px-4 pt-3 pb-1">
+            <DataGridColumnVisibility
+              table={table}
+              trigger={
+                <Button variant="outline" size="sm">
+                  <IconPlaceholder
+                    lucide="Settings2Icon"
+                    tabler="IconSettings"
+                    hugeicons="Settings01Icon"
+                    phosphor="GearIcon"
+                    remixicon="RiSettings3Line"
+                    className="size-4"
+                    aria-hidden={true}
+                  />
+                  Колонки
+                </Button>
+              }
             />
           </div>
-        </DataGridContainer>
+          <DataGridContainer className="border-0">
+            <div className="overflow-x-auto">
+              <DataGridTable<(typeof calls)[0]> />
+            </div>
+            <div className="px-4 py-3">
+              <DataGridPagination
+                sizes={[...PAGINATION_CONSTANTS.PER_PAGE_OPTIONS]}
+                sizesLabel="Строк на странице"
+                info="{from} - {to} из {count}"
+                rowsPerPageLabel="Строк на странице"
+                previousPageLabel="Предыдущая страница"
+                nextPageLabel="Следующая страница"
+              />
+            </div>
+          </DataGridContainer>
+        </div>
       </DataGrid>
 
       {selectedCallId && (

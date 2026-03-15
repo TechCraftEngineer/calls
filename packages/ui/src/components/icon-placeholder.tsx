@@ -20,6 +20,9 @@ const LUCIDE_MAP: Record<string, LucideIcon> = {
   GripVerticalIcon: LucideIcons.GripVertical,
   ChevronDownIcon: LucideIcons.ChevronDown,
   FilterIcon: LucideIcons.Filter,
+  SearchIcon: LucideIcons.Search,
+  XIcon: LucideIcons.X,
+  InfoIcon: LucideIcons.Info,
 };
 
 interface IconPlaceholderProps extends React.SVGAttributes<SVGSVGElement> {

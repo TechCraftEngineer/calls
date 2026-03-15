@@ -47,7 +47,7 @@ export function SortMenuItems<TData, TValue>({
           remixicon="RiArrowUpLine"
           className="size-3.5!"
         />
-        <span className="grow">Asc</span>
+        <span className="grow">По возрастанию</span>
         {isSorted === "asc" && (
           <IconPlaceholder
             lucide="CheckIcon"
@@ -77,7 +77,7 @@ export function SortMenuItems<TData, TValue>({
           remixicon="RiArrowDownLine"
           className="size-3.5!"
         />
-        <span className="grow">Desc</span>
+        <span className="grow">По убыванию</span>
         {isSorted === "desc" && (
           <IconPlaceholder
             lucide="CheckIcon"
@@ -120,7 +120,7 @@ export function PinMenuItems<TData, TValue>({
           className="size-3.5!"
           aria-hidden="true"
         />
-        <span className="grow">Pin to left</span>
+        <span className="grow">Закрепить слева</span>
         {isPinned === "left" && (
           <IconPlaceholder
             lucide="CheckIcon"
@@ -144,7 +144,7 @@ export function PinMenuItems<TData, TValue>({
           className="size-3.5!"
           aria-hidden="true"
         />
-        <span className="grow">Pin to right</span>
+        <span className="grow">Закрепить справа</span>
         {isPinned === "right" && (
           <IconPlaceholder
             lucide="CheckIcon"
@@ -201,7 +201,7 @@ export function MoveMenuItems<TData, TValue>({
           className="size-3.5!"
           aria-hidden="true"
         />
-        <span>Move to Left</span>
+        <span>Переместить влево</span>
       </DropdownMenuItem>
       <DropdownMenuItem
         onClick={() => {
@@ -223,7 +223,7 @@ export function MoveMenuItems<TData, TValue>({
           className="size-3.5!"
           aria-hidden="true"
         />
-        <span>Move to Right</span>
+        <span>Переместить вправо</span>
       </DropdownMenuItem>
     </>
   );
@@ -251,7 +251,7 @@ export function VisibilityMenuItems<TData>({
           remixicon="RiEqualizer2Line"
           className="size-3.5!"
         />
-        <span>Columns</span>
+        <span>Колонки</span>
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent>
         {table

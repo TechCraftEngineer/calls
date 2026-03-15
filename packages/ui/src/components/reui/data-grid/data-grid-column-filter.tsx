@@ -69,7 +69,7 @@ function DataGridColumnFilter<TData, TValue>({
                     variant="secondary"
                     className="rounded-sm px-1 font-normal"
                   >
-                    {selectedValues.size} selected
+                    {selectedValues.size} выбрано
                   </Badge>
                 ) : (
                   options
@@ -101,7 +101,7 @@ function DataGridColumnFilter<TData, TValue>({
         <div className="max-h-[300px] overflow-y-auto">
           {filteredOptions.length === 0 ? (
             <div className="text-muted-foreground py-6 text-center text-sm">
-              No results found.
+              Ничего не найдено.
             </div>
           ) : (
             <div className="p-1">
@@ -165,7 +165,7 @@ function DataGridColumnFilter<TData, TValue>({
                   onClick={() => column?.setFilterValue(undefined)}
                   className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center justify-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none"
                 >
-                  Clear filters
+                  Сбросить фильтры
                 </div>
               </div>
             </>

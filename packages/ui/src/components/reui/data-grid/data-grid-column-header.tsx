@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "../../dropdown-menu";
 import { IconPlaceholder } from "../../icon-placeholder";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../tooltip";
 import { buildMenuItems } from "./data-grid-column-header-menu";
 
 interface DataGridColumnHeaderProps<
@@ -21,6 +22,7 @@ interface DataGridColumnHeaderProps<
   column: Column<TData, TValue>;
   title?: string;
   icon?: ReactNode;
+  tooltip?: string;
   pinnable?: boolean;
   filter?: ReactNode;
   visibility?: boolean;
@@ -30,6 +32,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
   column,
   title = "",
   icon,
+  tooltip,
   className,
   filter,
   visibility = false,
@@ -105,6 +108,28 @@ function DataGridColumnHeaderInner<TData, TValue>({
     (props.tableLayout?.columnsPinnable && canPin) ||
     filter;
 
+  const infoIcon = tooltip ? (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className="inline-flex shrink-0 cursor-help text-muted-foreground/70 hover:text-muted-foreground"
+          onClick={(e) => e.stopPropagation()}
+          aria-label={tooltip}
+        >
+          <IconPlaceholder
+            lucide="InfoIcon"
+            tabler="IconInfoCircle"
+            hugeicons="InfoCircleIcon"
+            phosphor="InfoIcon"
+            remixicon="RiInformationLine"
+            className="size-3.5"
+          />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top">{tooltip}</TooltipContent>
+    </Tooltip>
+  ) : null;
+
   const menuItems = useMemo(
     () =>
       buildMenuItems({
@@ -156,6 +181,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             >
               {icon && icon}
               {title}
+              {infoIcon}
               {sortIcon}
             </Button>
           </DropdownMenuTrigger>
@@ -169,8 +195,8 @@ function DataGridColumnHeaderInner<TData, TValue>({
             variant="ghost"
             className="-me-1 size-7 rounded-md"
             onClick={() => column.pin(false)}
-            aria-label={`Unpin ${title} column`}
-            title={`Unpin ${title} column`}
+            aria-label={`Открепить колонку «${title}»`}
+            title={`Открепить колонку «${title}»`}
           >
             <IconPlaceholder
               lucide="PinOffIcon"
@@ -198,6 +224,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
         >
           {icon && icon}
           {title}
+          {infoIcon}
           {sortIcon}
         </Button>
       </div>
@@ -208,6 +235,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
     <div className={headerLabelClassName}>
       {icon && icon}
       {title}
+      {infoIcon}
     </div>
   );
 }

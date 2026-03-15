@@ -15,18 +15,28 @@ function formatDate(d: Date): string {
 
 export default function ChatWidget() {
   const { data: session } = useSession();
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [contextMode, setContextMode] = useState<ContextMode>(CONTEXT_GENERAL);
-  const [startDate, setStartDate] = useState(() =>
-    formatDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)),
-  );
-  const [endDate, setEndDate] = useState(() => formatDate(new Date()));
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      setStartDate(formatDate(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)));
+      setEndDate(formatDate(new Date()));
+    }
+  }, [mounted]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -75,7 +85,7 @@ export default function ChatWidget() {
     }
   };
 
-  if (!session?.user) {
+  if (!mounted || !session?.user) {
     return null;
   }
 

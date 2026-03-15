@@ -3,6 +3,7 @@
 import { Fragment } from "react";
 import { Cell, flexRender, HeaderGroup, Row } from "@tanstack/react-table";
 import { useDataGrid } from "./data-grid";
+import { DataGridTableDnd } from "./data-grid-table-dnd";
 import {
   DataGridTableBase,
   DataGridTableBody,
@@ -22,6 +23,13 @@ import {
 function DataGridTable<TData>() {
   const { table, isLoading, props } = useDataGrid();
   const pagination = table.getState().pagination;
+
+  const columnsDraggable =
+    props.tableLayout?.columnsMovable || props.tableLayout?.columnsDraggable;
+
+  if (columnsDraggable) {
+    return <DataGridTableDnd />;
+  }
 
   return (
     <DataGridTableBase>
@@ -103,7 +111,7 @@ function DataGridTable<TData>() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                {props.loadingMessage || "Loading..."}
+                {props.loadingMessage || "Загрузка…"}
               </div>
             </td>
           </tr>
