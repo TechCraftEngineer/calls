@@ -153,6 +153,16 @@ export const callsRepository = {
       .where(eq(schema.calls.id, callId));
   },
 
+  async updateCustomerName(
+    callId: string,
+    customerName: string | null,
+  ): Promise<void> {
+    await db
+      .update(schema.calls)
+      .set({ customerName })
+      .where(eq(schema.calls.id, callId));
+  },
+
   async findWithTranscriptsAndEvaluations(
     params: GetCallsParams = {},
   ): Promise<CallWithTranscript[]> {

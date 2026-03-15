@@ -62,6 +62,7 @@ interface CellRendererProps {
     callId: number,
     existingRecommendations?: string[],
   ) => void;
+  onTranscribe?: (callId: number) => void;
   onPlay?: (filename: string, number: string) => void;
   isLoadingRecommendations: boolean;
   recommendationsCallId: number | null;
@@ -83,6 +84,7 @@ export function renderCallListCell({
   visibleColumns,
   onSelectCall,
   onGenerateRecommendations,
+  onTranscribe,
   onPlay,
   isLoadingRecommendations,
   recommendationsCallId,
@@ -310,6 +312,47 @@ export function renderCallListCell({
                     </svg>
                   )}
                 </Button>
+                {onTranscribe && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onTranscribe(call.id);
+                    }}
+                    title="Запустить транскрипцию"
+                    aria-label="Запустить транскрипцию звонка"
+                    className="size-6 min-w-6 p-0"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ color: "#666" }}
+                    >
+                      <path
+                        d="M12 2a3 3 0 0 1 3 3v12a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                      />
+                      <path
+                        d="M19 10v4a7 7 0 0 1-14 0v-4"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                      />
+                    </svg>
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant="ghost"

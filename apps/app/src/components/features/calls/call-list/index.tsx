@@ -218,6 +218,15 @@ export default function CallList({
     setRecommendations([]);
   };
 
+  const handleTranscribe = async (callId: number) => {
+    try {
+      await api.calls.transcribe({ call_id: String(callId) });
+      showToast("Транскрипция запущена", "success");
+    } catch {
+      showToast("Не удалось запустить транскрипцию", "error");
+    }
+  };
+
   if (calls.length === 0) {
     return (
       <div className="py-[60px] px-5 text-center text-gray-400">
@@ -375,6 +384,7 @@ export default function CallList({
                     visibleColumns,
                     onSelectCall: setSelectedCallId,
                     onGenerateRecommendations: handleGenerateRecommendations,
+                    onTranscribe: handleTranscribe,
                     onPlay,
                     isLoadingRecommendations: isLoadingRecommendations,
                     recommendationsCallId,

@@ -1,9 +1,9 @@
 import { promptsService, usersService } from "@calls/db";
 import { sendMessage } from "@calls/telegram-bot";
-import { workspaceProcedure } from "../orpc";
+import { workspaceProcedure } from "../../orpc";
 
-export const reportsRouter = {
-  sendTestTelegram: workspaceProcedure.handler(async ({ context }) => {
+export const sendTestTelegram = workspaceProcedure.handler(
+  async ({ context }) => {
     const { workspaceId } = context;
     const username = (context.user as Record<string, unknown>)
       .username as string;
@@ -28,5 +28,5 @@ export const reportsRouter = {
       );
     }
     return { success: true };
-  }),
-};
+  },
+);

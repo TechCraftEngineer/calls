@@ -91,6 +91,13 @@ export class CallsService {
     await this.callsRepository.updateDuration(callId, durationSeconds);
   }
 
+  async updateCustomerName(
+    callId: string,
+    customerName: string | null,
+  ): Promise<void> {
+    await this.callsRepository.updateCustomerName(callId, customerName);
+  }
+
   async getEvaluation(callId: string): Promise<CallEvaluation | null> {
     return this.callsRepository.getEvaluation(callId);
   }

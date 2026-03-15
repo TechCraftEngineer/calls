@@ -5,7 +5,7 @@
 
 import { callsService, filesService, promptsService } from "@calls/db";
 import { getDownloadUrl } from "@calls/lib";
-import { runTranscriptionPipeline } from "../../asr";
+import { identifySpeakersWithLlm, runTranscriptionPipeline } from "../../asr";
 import { createLogger } from "../../logger";
 import { inngest } from "../client";
 
@@ -54,6 +54,18 @@ export const transcribeCallFn = inngest.createFunction(
       });
     });
 
+    const { text: finalText, customerName } = await step.run(
+      "identify-speakers",
+      async () => {
+        return identifySpeakersWithLlm(result.normalizedText, {
+          direction: call.direction,
+          managerName: call.name,
+          workspaceId: call.workspaceId,
+          getPrompt: (key, wsId) => promptsService.getPrompt(key, wsId),
+        });
+      },
+    );
+
     await step.run("save-transcript", async () => {
       // Безопасная сериализация метаданных
       let serializedMetadata: Record<string, unknown> = {};
@@ -70,7 +82,7 @@ export const transcribeCallFn = inngest.createFunction(
 
       await callsService.upsertTranscript({
         callId,
-        text: result.normalizedText,
+        text: finalText,
         rawText: result.rawText,
         confidence: result.metadata.confidence ?? null,
         metadata: serializedMetadata,
@@ -90,6 +102,10 @@ export const transcribeCallFn = inngest.createFunction(
         );
       }
 
+      if (customerName) {
+        await callsService.updateCustomerName(callId, customerName);
+      }
+
       logger.info("Транскрипт сохранён", {
         callId,
         processingTimeMs: result.metadata.processingTimeMs,
@@ -101,7 +117,8 @@ export const transcribeCallFn = inngest.createFunction(
       callId,
       processingTimeMs: result.metadata.processingTimeMs,
       asrSource: result.metadata.asrSource,
-      textLength: result.normalizedText.length,
+      textLength: finalText.length,
+      customerName: customerName ?? null,
     };
   },
 );

@@ -1,4 +1,5 @@
 export { transcribeWithAssemblyAi } from "./assemblyai";
+export { identifySpeakersWithLlm } from "./identify-speakers";
 export { normalizeWithLlm } from "./normalize";
 export { runTranscriptionPipeline } from "./pipeline";
 export { withRetry } from "./retry";

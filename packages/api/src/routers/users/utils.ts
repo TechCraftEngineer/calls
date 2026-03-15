@@ -1,6 +1,21 @@
-import { usersService } from "@calls/db";
+import { systemRepository, usersService } from "@calls/db";
 import type { WorkspaceRole } from "../../orpc";
 import { isAdminUser } from "../../user-profile";
+
+export async function logUpdate(
+  action: string,
+  username: string,
+  contextUsername: string,
+  error?: unknown,
+) {
+  await systemRepository.addActivityLog(
+    error ? "error" : "info",
+    error
+      ? `Failed to ${action} ${username}: ${error instanceof Error ? error.message : String(error)}`
+      : `User ${action}: ${username}`,
+    contextUsername,
+  );
+}
 
 export async function canAccessUser(
   currentUserId: string,
