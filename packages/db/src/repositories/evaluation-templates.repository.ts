@@ -123,7 +123,7 @@ export const evaluationTemplatesRepository = {
   },
 
   generateCustomSlug(): string {
-    return "t_" + randomBytes(8).toString("base64url").slice(0, 12);
+    return `t_${randomBytes(8).toString("base64url").slice(0, 12)}`;
   },
 };
 

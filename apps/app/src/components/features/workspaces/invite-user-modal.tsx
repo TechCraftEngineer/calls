@@ -16,6 +16,8 @@ const ROLE_LABELS: Record<string, string> = {
   member: "Участник",
 };
 
+const COPY_FEEDBACK_TIMEOUT = 2000;
+
 interface InviteUserModalProps {
   onClose: () => void;
   onSubmit: (
@@ -71,7 +73,7 @@ export default function InviteUserModal({
     try {
       await navigator.clipboard.writeText(inviteUrl);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), COPY_FEEDBACK_TIMEOUT);
     } catch {
       setError("Не удалось скопировать ссылку");
     }
@@ -81,7 +83,7 @@ export default function InviteUserModal({
     if (!inviteUrl || !email.trim()) return;
     const subject = encodeURIComponent("Приглашение в QBS Звонки");
     const body = encodeURIComponent(
-      `Вас пригласили в рабочее пространство. Перейдите по ссылке для регистрации:\n\n${inviteUrl}`,
+      `Вас пригласили присоединиться к рабочему пространству QBS Звонки.\n\nПерейдите по ссылке, чтобы создать аккаунт и получить доступ:\n\n${inviteUrl}`,
     );
     window.open(`mailto:${email.trim()}?subject=${subject}&body=${body}`);
   };
@@ -89,7 +91,7 @@ export default function InviteUserModal({
   if (inviteUrl) {
     return (
       <div
-        className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
         onClick={onClose}
       >
         <div
@@ -110,8 +112,9 @@ export default function InviteUserModal({
           </div>
 
           <p className="text-sm text-gray-600 m-0">
-            Отправьте ссылку приглашения на <strong>{email}</strong>.
-            Пользователь перейдёт по ссылке и задаст свой пароль.
+            Скопируйте ссылку и отправьте её на <strong>{email}</strong>. Новый
+            пользователь перейдёт по ссылке, создаст аккаунт и получит доступ к
+            рабочему пространству.
           </p>
 
           <div className="flex gap-2">
@@ -132,7 +135,7 @@ export default function InviteUserModal({
               className="flex-1"
               onClick={handleSendEmail}
             >
-              Отправить на email
+              Открыть почту
             </Button>
             <Button variant="accent" onClick={onClose}>
               Готово
@@ -145,7 +148,7 @@ export default function InviteUserModal({
 
   return (
     <div
-      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div
@@ -166,7 +169,8 @@ export default function InviteUserModal({
         </div>
 
         <p className="text-sm text-gray-500 m-0">
-          Пользователь получит ссылку и задаст пароль самостоятельно.
+          Введите email и выберите роль. После создания вы получите ссылку —
+          отправьте её коллеге, он перейдёт по ссылке и зарегистрируется.
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -200,7 +204,7 @@ export default function InviteUserModal({
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Выберите роль" />
               </SelectTrigger>
-              <SelectContent className="z-[2100]">
+              <SelectContent className="z-2100">
                 <SelectItem value="admin">{ROLE_LABELS.admin}</SelectItem>
                 <SelectItem value="member">{ROLE_LABELS.member}</SelectItem>
               </SelectContent>
@@ -218,10 +222,10 @@ export default function InviteUserModal({
             <Button
               type="submit"
               variant="accent"
-              className="flex-[2]"
+              className="flex-2"
               disabled={submitting}
             >
-              {submitting ? "Создание…" : "Создать приглашение"}
+              {submitting ? "Отправка…" : "Отправить приглашение"}
             </Button>
           </div>
         </form>

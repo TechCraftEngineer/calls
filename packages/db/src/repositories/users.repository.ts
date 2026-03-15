@@ -216,7 +216,7 @@ export const usersRepository = {
     const num = internalNumber.trim();
     for (const row of members) {
       const extensions = parseInternalExtensions(row.user.internalExtensions);
-      if (extensions && extensions.includes(num)) {
+      if (extensions?.includes(num)) {
         return row.user;
       }
     }

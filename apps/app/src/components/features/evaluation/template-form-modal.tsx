@@ -2,22 +2,32 @@
 
 import {
   Button,
+  cn,
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Drawer,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
   Input,
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Textarea,
   toast,
 } from "@calls/ui";
+import { useIsMobile } from "@calls/ui/hooks";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 import { useORPC } from "@/orpc/react";
 
 const PROMPT_STRUCTURE_EXAMPLE = `Ты эксперт по анализу телефонных переговоров. Оцени звонок по двум критериям.
@@ -39,11 +49,37 @@ manager_feedback — 1–2 предложения: что сделано хор�
 
 Отвечай только на русском.`;
 
+const MAX_PROMPT_LENGTH = 10000;
+const PROMPT_WARNING_THRESHOLD = 9500;
+
 const BASE_TEMPLATES = [
-  { slug: "sales", name: "Продажи" },
-  { slug: "support", name: "Поддержка" },
-  { slug: "general", name: "Общий" },
+  { slug: "sales", name: "Продажи", desc: "B2B-продажи, сделки, возражения" },
+  { slug: "support", name: "Поддержка", desc: "Техподдержка, решение проблем" },
+  { slug: "general", name: "Общий", desc: "Универсальный шаблон" },
 ] as const;
+
+const createSchema = z.object({
+  name: z.string().min(1, "Введите название").max(200, "Не более 200 символов"),
+  description: z.string().max(500, "Не более 500 символов").optional(),
+  systemPrompt: z
+    .string()
+    .min(1, "Промпт обязателен")
+    .max(
+      MAX_PROMPT_LENGTH,
+      `Не более ${MAX_PROMPT_LENGTH.toLocaleString()} символов`,
+    )
+    .refine((prompt) => {
+      const lower = prompt.toLowerCase();
+      return (
+        lower.includes("value_score") &&
+        lower.includes("manager_score") &&
+        lower.includes("value_explanation") &&
+        lower.includes("manager_feedback")
+      );
+    }, "Промпт должен содержать: value_score, manager_score, value_explanation, manager_feedback"),
+});
+
+type CreateFormData = z.infer<typeof createSchema>;
 
 interface TemplateFormModalProps {
   open: boolean;
@@ -56,7 +92,6 @@ interface TemplateFormModalProps {
     description: string;
     systemPrompt: string;
   } | null;
-  /** Pre-fill when creating from built-in template */
   initialPrompt?: string;
   initialName?: string;
 }
@@ -71,21 +106,32 @@ export function TemplateFormModal({
 }: TemplateFormModalProps) {
   const orpc = useORPC();
   const queryClient = useQueryClient();
-  const [name, setName] = useState(template?.name ?? initialName ?? "");
-  const [description, setDescription] = useState(template?.description ?? "");
-  const [systemPrompt, setSystemPrompt] = useState(
-    template?.systemPrompt ?? initialPrompt ?? "",
-  );
+  const isMobile = useIsMobile();
+
   const [baseTemplateSlug, setBaseTemplateSlug] = useState<string>("");
+
+  const form = useForm<CreateFormData>({
+    resolver: zodResolver(createSchema),
+    mode: "onBlur",
+    defaultValues: {
+      name: template?.name ?? initialName ?? "",
+      description: template?.description ?? "",
+      systemPrompt: template?.systemPrompt ?? initialPrompt ?? "",
+    },
+  });
+
+  const { watch, setValue, reset } = form;
 
   useEffect(() => {
     if (open) {
-      setName(template?.name ?? initialName ?? "");
-      setDescription(template?.description ?? "");
-      setSystemPrompt(template?.systemPrompt ?? initialPrompt ?? "");
+      reset({
+        name: template?.name ?? initialName ?? "",
+        description: template?.description ?? "",
+        systemPrompt: template?.systemPrompt ?? initialPrompt ?? "",
+      });
       setBaseTemplateSlug("");
     }
-  }, [open, template, initialPrompt, initialName]);
+  }, [open, template, initialPrompt, initialName, reset]);
 
   const { data: baseTemplateContent } = useQuery({
     ...orpc.settings.getEvaluationTemplateBySlug.queryOptions({
@@ -96,10 +142,12 @@ export function TemplateFormModal({
 
   useEffect(() => {
     if (baseTemplateContent && baseTemplateSlug) {
-      setSystemPrompt(baseTemplateContent.systemPrompt);
-      if (!name) setName(`${baseTemplateContent.name} (копия)`);
+      setValue("systemPrompt", baseTemplateContent.systemPrompt);
+      if (!form.getValues("name")) {
+        setValue("name", `${baseTemplateContent.name} (копия)`);
+      }
     }
-  }, [baseTemplateContent, baseTemplateSlug, name]);
+  }, [baseTemplateContent, baseTemplateSlug, setValue, form]);
 
   const createMutation = useMutation(
     orpc.settings.createEvaluationTemplate.mutationOptions({
@@ -135,119 +183,182 @@ export function TemplateFormModal({
     }),
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !systemPrompt.trim()) return;
+  const onSubmit = (data: CreateFormData) => {
     if (mode === "create") {
       createMutation.mutate({
-        name: name.trim(),
-        description: description.trim() || undefined,
-        systemPrompt: systemPrompt.trim(),
+        name: data.name.trim(),
+        description: data.description?.trim() || undefined,
+        systemPrompt: data.systemPrompt.trim(),
       });
-    } else if (template) {
+    } else if (template?.id) {
       updateMutation.mutate({
         id: template.id,
-        name: name.trim(),
-        description: description.trim() || null,
-        systemPrompt: systemPrompt.trim(),
+        name: data.name.trim(),
+        description: data.description?.trim() || null,
+        systemPrompt: data.systemPrompt.trim(),
       });
     }
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+  const promptLength = watch("systemPrompt")?.length ?? 0;
+
+  const formContent = (
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="flex flex-col gap-6"
+    >
+      {mode === "create" && (
+        <FieldGroup>
+          <FieldLabel>Начать с шаблона</FieldLabel>
+          <FieldDescription>
+            Выберите встроенный шаблон — промпт скопируется, его можно
+            отредактировать
+          </FieldDescription>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
+            {BASE_TEMPLATES.map((t) => (
+              <button
+                key={t.slug}
+                type="button"
+                onClick={() => setBaseTemplateSlug(t.slug)}
+                className={cn(
+                  "flex flex-col gap-1 p-4 rounded-lg border text-left transition-all",
+                  "hover:border-primary/50 hover:bg-muted/50",
+                  baseTemplateSlug === t.slug
+                    ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                    : "border-border bg-card",
+                )}
+              >
+                <span className="font-medium text-sm">{t.name}</span>
+                <span className="text-xs text-muted-foreground">{t.desc}</span>
+              </button>
+            ))}
+          </div>
+        </FieldGroup>
+      )}
+
+      <Field orientation="vertical">
+        <FieldLabel htmlFor="name">Название</FieldLabel>
+        <Input
+          id="name"
+          placeholder="Например: Продажи B2B"
+          aria-invalid={!!form.formState.errors.name}
+          {...form.register("name")}
+        />
+        {form.formState.errors.name && (
+          <p className="text-sm text-destructive">
+            {form.formState.errors.name.message}
+          </p>
+        )}
+      </Field>
+
+      <Field orientation="vertical">
+        <FieldLabel htmlFor="description">Описание</FieldLabel>
+        <FieldDescription>
+          Краткое описание для списка шаблонов
+        </FieldDescription>
+        <Input
+          id="description"
+          placeholder="Необязательно"
+          aria-invalid={!!form.formState.errors.description}
+          {...form.register("description")}
+        />
+        {form.formState.errors.description && (
+          <p className="text-sm text-destructive">
+            {form.formState.errors.description.message}
+          </p>
+        )}
+      </Field>
+
+      <Field orientation="vertical">
+        <FieldLabel htmlFor="systemPrompt">Системный промпт</FieldLabel>
+        <FieldDescription>
+          Инструкции для AI. Обязательные поля: value_score, value_explanation,
+          manager_score, manager_feedback
+        </FieldDescription>
+        <div className="relative">
+          <Textarea
+            id="systemPrompt"
+            placeholder={PROMPT_STRUCTURE_EXAMPLE}
+            rows={12}
+            className="font-mono text-sm min-h-[240px] resize-y"
+            aria-invalid={!!form.formState.errors.systemPrompt}
+            {...form.register("systemPrompt")}
+          />
+          <span
+            className={cn(
+              "absolute bottom-2 right-2 text-[10px] tabular-nums",
+              promptLength > PROMPT_WARNING_THRESHOLD
+                ? "text-destructive"
+                : "text-muted-foreground",
+            )}
+          >
+            {promptLength.toLocaleString()} /{" "}
+            {MAX_PROMPT_LENGTH.toLocaleString()}
+          </span>
+        </div>
+        {form.formState.errors.systemPrompt && (
+          <p className="text-sm text-destructive mt-1">
+            {form.formState.errors.systemPrompt.message}
+          </p>
+        )}
+      </Field>
+    </form>
+  );
+
+  const footer = (
+    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+      <Button type="button" variant="outline" onClick={onClose}>
+        Отмена
+      </Button>
+      <Button onClick={form.handleSubmit(onSubmit)} disabled={isPending}>
+        {isPending
+          ? "Сохранение…"
+          : mode === "create"
+            ? "Создать шаблон"
+            : "Сохранить"}
+      </Button>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={(v) => !v && onClose()}>
+        <DrawerContent className="max-h-[90vh]">
+          <DrawerHeader>
+            <DrawerTitle>
+              {mode === "create" ? "Создать шаблон" : "Редактировать шаблон"}
+            </DrawerTitle>
+            <DialogDescription className="sr-only">
+              {mode === "create"
+                ? "Создание нового шаблона оценки звонков"
+                : "Редактирование шаблона"}
+            </DialogDescription>
+          </DrawerHeader>
+          <div className="overflow-y-auto px-4 pb-4 flex-1 -mt-2">
+            {formContent}
+          </div>
+          <DrawerFooter className="border-t pt-4">{footer}</DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? "Создать шаблон" : "Редактировать шаблон"}
           </DialogTitle>
+          <DialogDescription>
+            {mode === "create"
+              ? "Создайте кастомный шаблон оценки звонков на основе встроенных или с нуля"
+              : "Измените название, описание и системный промпт"}
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Название</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Например: Продажи B2B"
-              required
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label htmlFor="description">Описание (необязательно)</Label>
-            <Input
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Краткое описание шаблона"
-              className="mt-1"
-            />
-          </div>
-          {mode === "create" && (
-            <div>
-              <Label>Взять за основу встроенный шаблон</Label>
-              <Select
-                value={baseTemplateSlug}
-                onValueChange={setBaseTemplateSlug}
-              >
-                <SelectTrigger className="mt-1 w-full max-w-xs">
-                  <SelectValue placeholder="Выберите для копирования промпта" />
-                </SelectTrigger>
-                <SelectContent>
-                  {BASE_TEMPLATES.map((t) => (
-                    <SelectItem key={t.slug} value={t.slug}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Скопирует промпт встроенного шаблона — можно отредактировать
-              </p>
-            </div>
-          )}
-
-          <div>
-            <Label htmlFor="systemPrompt">Системный промпт</Label>
-            <p className="mb-1 text-xs text-muted-foreground">
-              Инструкции для AI. Обязательно укажите value_score,
-              value_explanation, manager_score, manager_feedback.
-            </p>
-            <textarea
-              id="systemPrompt"
-              value={systemPrompt}
-              onChange={(e) => setSystemPrompt(e.target.value)}
-              placeholder={PROMPT_STRUCTURE_EXAMPLE}
-              required
-              rows={14}
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 font-mono"
-            />
-          </div>
-
-          <details className="rounded-md border bg-muted/30 p-3">
-            <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
-              Пример структуры промпта
-            </summary>
-            <pre className="mt-3 whitespace-pre-wrap text-xs font-mono text-muted-foreground">
-              {PROMPT_STRUCTURE_EXAMPLE}
-            </pre>
-          </details>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Отмена
-            </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending
-                ? "Сохранение…"
-                : mode === "create"
-                  ? "Создать"
-                  : "Сохранить"}
-            </Button>
-          </DialogFooter>
-        </form>
+        <div className="overflow-y-auto flex-1 -mx-1 px-1">{formContent}</div>
+        <DialogFooter className="border-t pt-4 shrink-0">{footer}</DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -11,6 +11,7 @@ import {
   CheckboxBlock,
   EmailBlock,
   EvaluationBlock,
+  KpiBlock,
   TelegramBlock,
 } from "@/components/features/users/edit";
 import type { EditUserForm } from "@/components/features/users/types";
@@ -396,20 +397,9 @@ export default function UserEditPage() {
             disabled={false}
           />
 
-          <CheckboxBlock
-            title="Настройки KPI"
+          <KpiBlock
             form={form}
             setForm={setForm}
-            fields={[
-              "kpi_base_salary",
-              "kpi_target_bonus",
-              "kpi_target_talk_time_minutes",
-            ]}
-            labels={[
-              "Базовый оклад",
-              "Целевой бонус",
-              "Целевое время разговора (минуты)",
-            ]}
             hasChanges={hasBlockChanges("kpi", form)}
             isSaving={getBlockState("kpi") === "saving"}
             state={getBlockState("kpi")}

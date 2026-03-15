@@ -247,6 +247,7 @@ export default function EvaluationSettingsPage() {
                             variant="outline"
                             size="sm"
                             onClick={async () => {
+                              if (!t.id) return;
                               const full = await queryClient.fetchQuery(
                                 orpc.settings.getEvaluationTemplate.queryOptions(
                                   {
@@ -269,6 +270,7 @@ export default function EvaluationSettingsPage() {
                             className="text-destructive hover:text-destructive"
                             onClick={() => {
                               if (
+                                t.id &&
                                 confirm(
                                   `Удалить шаблон «${t.name}»? Пользователи с этим шаблоном перейдут на шаблон по умолчанию.`,
                                 )
@@ -384,7 +386,7 @@ export default function EvaluationSettingsPage() {
             mode: "create",
             template: null,
             initialPrompt: systemPrompt,
-            initialName: name + " (копия)",
+            initialName: `${name} (копия)`,
           });
         }}
       />

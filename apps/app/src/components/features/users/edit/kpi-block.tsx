@@ -1,18 +1,9 @@
 "use client";
 
-import {
-  Button,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@calls/ui";
-import { useQuery } from "@tanstack/react-query";
+import { Button, Input } from "@calls/ui";
 import type { EditUserForm } from "@/components/features/users/types";
-import { useORPC } from "@/orpc/react";
 
-interface EvaluationBlockProps {
+interface KpiBlockProps {
   form: EditUserForm;
   setForm: (form: EditUserForm) => void;
   hasChanges: boolean;
@@ -22,7 +13,17 @@ interface EvaluationBlockProps {
   disabled: boolean;
 }
 
-export function EvaluationBlock({
+const KPI_FIELDS = [
+  ["kpi_base_salary", "Базовый оклад (₽)", "0"],
+  ["kpi_target_bonus", "Целевой бонус (₽)", "0"],
+  [
+    "kpi_target_talk_time_minutes",
+    "Целевое время разговоров в месяц (мин)",
+    "0",
+  ],
+] as const;
+
+export function KpiBlock({
   form,
   setForm,
   hasChanges,
@@ -30,12 +31,7 @@ export function EvaluationBlock({
   state,
   onSave,
   disabled,
-}: EvaluationBlockProps) {
-  const orpc = useORPC();
-  const { data: templates = [] } = useQuery(
-    orpc.settings.getEvaluationTemplates.queryOptions(),
-  );
-
+}: KpiBlockProps) {
   const getBlockAnimationClass = () => {
     switch (state) {
       case "success":
@@ -49,7 +45,21 @@ export function EvaluationBlock({
     }
   };
 
-  const value = form.evaluation_template_slug ?? "general";
+  const handleNumberChange = (
+    key: (typeof KPI_FIELDS)[number][0],
+    value: string,
+  ) => {
+    const num = parseInt(value, 10);
+    // Prevent extremely large numbers that could cause issues
+    const maxValue = 999999999; // 1 billion
+    const safeNum = Number.isNaN(num)
+      ? 0
+      : Math.max(0, Math.min(maxValue, num));
+    setForm({
+      ...form,
+      [key]: safeNum,
+    });
+  };
 
   return (
     <div
@@ -57,7 +67,7 @@ export function EvaluationBlock({
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Оценка звонков</h2>
+          <h2 className="text-lg font-semibold">Настройки KPI</h2>
           {hasChanges && (
             <div className="flex items-center gap-1 text-amber-600">
               <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
@@ -135,52 +145,26 @@ export function EvaluationBlock({
       </div>
 
       <p className="text-sm text-muted-foreground mb-4">
-        Шаблон оценки применяется к звонкам этого менеджера (по внутренним
-        номерам).
+        Укажите суммы и целевые показатели для расчёта KPI в отчётах и на
+        вкладке «Расчёт KPI».
       </p>
 
-      <div className="mb-4">
-        <label className="block mb-1 text-[13px] font-semibold">
-          Шаблон оценки
-        </label>
-        <Select
-          value={value}
-          onValueChange={(v: string) =>
-            setForm({
-              ...form,
-              evaluation_template_slug: v,
-            })
-          }
-        >
-          <SelectTrigger className="w-full max-w-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {(templates as { slug: string; name: string }[]).map((t) => (
-              <SelectItem key={t.slug} value={t.slug}>
-                {t.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="mb-4">
-        <label className="block mb-1 text-[13px] font-semibold">
-          Доп. инструкции (необязательно)
-        </label>
-        <textarea
-          value={form.evaluation_custom_instructions ?? ""}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-            setForm({
-              ...form,
-              evaluation_custom_instructions: e.target.value || null,
-            })
-          }
-          className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border min-h-[80px] resize-y"
-          placeholder="1–2 предложения для уточнения критериев оценки"
-          rows={3}
-        />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {KPI_FIELDS.map(([key, label, placeholder]) => (
+          <div key={key}>
+            <label className="block mb-1.5 text-[13px] font-semibold">
+              {label}
+            </label>
+            <Input
+              type="number"
+              min={0}
+              value={form[key] ?? ""}
+              onChange={(e) => handleNumberChange(key, e.target.value)}
+              className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border font-medium tabular-nums"
+              placeholder={placeholder}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
