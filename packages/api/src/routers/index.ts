@@ -4,7 +4,7 @@ export { authRouter } from "./auth";
 export { callsRouter } from "./calls";
 // Integrations routes
 export { integrationsRouter } from "./integrations";
-export { recommendationsRouter } from "./recommendations-router";
+export { recommendationsRouter } from "./recommendations";
 // Analytics routes (reports + statistics)
 export { reportsRouter } from "./reports";
 // Settings routes

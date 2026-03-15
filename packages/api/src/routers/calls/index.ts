@@ -1,6 +1,6 @@
 import { deleteCall } from "./delete";
 import { evaluate } from "./evaluate";
-import { generateRecommendationsHandler } from "./generate-recommendations-handler";
+import { generateRecommendationsProcedure } from "./generate-recommendations";
 import { get } from "./get";
 import { getPlaybackUrl } from "./get-playback-url";
 import { list } from "./list";
@@ -12,6 +12,6 @@ export const callsRouter = {
   get,
   transcribe,
   evaluate,
-  generateRecommendations: generateRecommendationsHandler,
+  generateRecommendations: generateRecommendationsProcedure,
   delete: deleteCall,
 };

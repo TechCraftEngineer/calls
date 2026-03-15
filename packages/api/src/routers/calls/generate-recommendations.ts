@@ -1,5 +1,8 @@
 import { createChatBot } from "@calls/ai";
 import type { callsService } from "@calls/db";
+import { ORPCError } from "@orpc/server";
+import { z } from "zod";
+import { workspaceProcedure } from "../../orpc";
 
 const DEFAULT_RECOMMENDATIONS_PROMPT = `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
 
@@ -138,3 +141,19 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
     throw new Error("Не удалось сгенерировать рекомендации. Попробуйте позже.");
   }
 }
+
+export const generateRecommendationsProcedure = workspaceProcedure
+  .input(z.object({ call_id: z.string() }))
+  .handler(async ({ input, context }) => {
+    const call = await context.callsService.getCall(input.call_id);
+    if (call && call.workspaceId !== context.workspaceId) {
+      throw new ORPCError("FORBIDDEN", {
+        message: "Нет доступа к этому звонку",
+      });
+    }
+    return generateRecommendations(
+      input.call_id,
+      context.callsService,
+      context.workspaceId!,
+    );
+  });
