@@ -4,6 +4,7 @@ import { paths } from "@calls/config";
 import { generateWorkspaceSlug } from "@calls/shared";
 import { Button, Input } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -11,6 +12,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { workspacesApi } from "@/lib/api-orpc";
 import { getCurrentUser } from "@/lib/auth";
+import { orpc } from "@/orpc/react";
 
 const createWorkspaceSchema = z.object({
   name: z.string().min(1, "Введите название").max(100, "Не более 100 символов"),
@@ -28,6 +30,7 @@ type CreateWorkspaceFormData = z.infer<typeof createWorkspaceSchema>;
 
 function CreateWorkspaceForm() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [checking, setChecking] = useState(true);
 
   const {
@@ -84,6 +87,10 @@ function CreateWorkspaceForm() {
       // create уже устанавливает активный воркспейс в БД; cookie для заголовков
       // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
       document.cookie = `active_workspace_id=${workspace.id}; path=/; max-age=31536000; SameSite=Lax`;
+      // Инвалидируем кэш списка воркспейсов, чтобы на главной не показывалась модалка «Создать рабочее пространство»
+      await queryClient.invalidateQueries({
+        queryKey: orpc.workspaces.list.queryKey(),
+      });
       router.push(paths.root);
     } catch (err: unknown) {
       const msg =

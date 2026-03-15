@@ -158,3 +158,44 @@ export { Toaster, toast } from "./toast";
 export { Toggle, toggleVariants } from "./toggle";
 export { ToggleGroup, ToggleGroupItem } from "./toggle-group";
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "./tooltip";
+
+// ReUI Data Grid
+export {
+  DataGrid,
+  DataGridContainer,
+  DataGridProvider,
+  useDataGrid,
+  DataGridColumnFilter,
+  DataGridColumnHeader,
+  DataGridColumnVisibility,
+  DataGridPagination,
+  DataGridTableDnd,
+  DataGridTableDndRowHandle,
+  DataGridTableDndRows,
+  DataGridTable,
+  DataGridTableBase,
+  DataGridTableBody,
+  DataGridTableBodyRow,
+  DataGridTableBodyRowCell,
+  DataGridTableBodyRowExpandded,
+  DataGridTableBodyRowSkeleton,
+  DataGridTableBodyRowSkeletonCell,
+  DataGridTableEmpty,
+  DataGridTableHead,
+  DataGridTableHeadRow,
+  DataGridTableHeadRowCell,
+  DataGridTableHeadRowCellResize,
+  DataGridTableLoader,
+  DataGridTableRowSelect,
+  DataGridTableRowSelectAll,
+  DataGridTableRowSpacer,
+} from "./reui/data-grid";
+export type {
+  DataGridApiFetchParams,
+  DataGridApiResponse,
+  DataGridProps,
+  DataGridRequestParams,
+  DataGridColumnFilterProps,
+  DataGridColumnHeaderProps,
+  DataGridPaginationProps,
+} from "./reui/data-grid";

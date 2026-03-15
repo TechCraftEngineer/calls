@@ -19,7 +19,7 @@
     },
     "shadcn": {
       "command": "npx",
-      "args": ["-y", "shadcn@latest", "mcp"]
+      "args": ["shadcn@latest", "mcp"]
     },
     "next-devtools": {
       "command": "npx",

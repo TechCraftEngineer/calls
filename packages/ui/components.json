@@ -3,6 +3,9 @@
   "style": "new-york",
   "rsc": true,
   "tsx": true,
+  "registries": {
+    "@reui": "https://reui.io/r/{style}/{name}.json"
+  },
   "tailwind": {
     "config": "",
     "css": "unused.css",
