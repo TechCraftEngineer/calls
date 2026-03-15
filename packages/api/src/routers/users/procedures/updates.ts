@@ -75,7 +75,7 @@ export const update = workspaceProcedure
 
       await usersService.updateUserFilters(
         input.user_id,
-        context.workspaceId,
+        context.workspaceId!,
         d.filter_exclude_answering_machine ??
           (u.filter_exclude_answering_machine as boolean) ??
           false,
@@ -85,7 +85,7 @@ export const update = workspaceProcedure
 
       await usersService.updateUserReportKpiSettings(
         input.user_id,
-        context.workspaceId,
+        context.workspaceId!,
         {
           filterExcludeAnsweringMachine: d.filter_exclude_answering_machine,
           filterMinDuration: d.filter_min_duration,
@@ -111,7 +111,7 @@ export const update = workspaceProcedure
 
       await usersService.updateUserTelegramSettings(
         input.user_id,
-        context.workspaceId,
+        context.workspaceId!,
         d.telegram_daily_report ??
           (u.telegram_daily_report as boolean) ??
           false,
@@ -122,8 +122,9 @@ export const update = workspaceProcedure
 
       await logUpdate(
         "updated",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
       );
 
       const updated = await usersService.getUser(input.user_id);
@@ -136,8 +137,9 @@ export const update = workspaceProcedure
     } catch (error) {
       await logUpdate(
         "update",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
         error,
       );
       throw error;
@@ -179,16 +181,18 @@ export const updateBasicInfo = workspaceProcedure
 
       await logUpdate(
         "basic info updated",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
       );
 
       return await usersService.getUser(input.user_id);
     } catch (error) {
       await logUpdate(
         "update user basic info",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
         error,
       );
       throw error;
@@ -218,7 +222,7 @@ export const updateEmailSettings = workspaceProcedure
 
       await usersService.updateUserReportKpiSettings(
         input.user_id,
-        context.workspaceId,
+        context.workspaceId!,
         {
           emailDailyReport: input.data.email_daily_report,
           emailWeeklyReport: input.data.email_weekly_report,
@@ -228,16 +232,18 @@ export const updateEmailSettings = workspaceProcedure
 
       await logUpdate(
         "email settings updated",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
       );
 
       return await usersService.getUser(input.user_id);
     } catch (error) {
       await logUpdate(
         "update user email settings",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
         error,
       );
       throw error;
@@ -260,7 +266,7 @@ export const updateTelegramSettings = workspaceProcedure
     try {
       await usersService.updateUserReportKpiSettings(
         input.user_id,
-        context.workspaceId,
+        context.workspaceId!,
         {
           telegramDailyReport: input.data.telegram_daily_report,
           telegramManagerReport: input.data.telegram_manager_report,
@@ -271,16 +277,18 @@ export const updateTelegramSettings = workspaceProcedure
 
       await logUpdate(
         "telegram settings updated",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
       );
 
       return await usersService.getUser(input.user_id);
     } catch (error) {
       await logUpdate(
         "update user telegram settings",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
         error,
       );
       throw error;
@@ -303,7 +311,7 @@ export const updateMaxSettings = workspaceProcedure
     try {
       await usersService.updateUserReportKpiSettings(
         input.user_id,
-        context.workspaceId,
+        context.workspaceId!,
         {
           maxDailyReport: input.data.max_daily_report,
           maxManagerReport: input.data.max_manager_report,
@@ -312,16 +320,18 @@ export const updateMaxSettings = workspaceProcedure
 
       await logUpdate(
         "max settings updated",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
       );
 
       return await usersService.getUser(input.user_id);
     } catch (error) {
       await logUpdate(
         "update user max settings",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
         error,
       );
       throw error;
@@ -344,7 +354,7 @@ export const updateReportSettings = workspaceProcedure
     try {
       await usersService.updateUserReportKpiSettings(
         input.user_id,
-        context.workspaceId,
+        context.workspaceId!,
         {
           reportIncludeCallSummaries: input.data.report_include_call_summaries,
           reportDetailed: input.data.report_detailed,
@@ -355,16 +365,18 @@ export const updateReportSettings = workspaceProcedure
 
       await logUpdate(
         "report settings updated",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
       );
 
       return await usersService.getUser(input.user_id);
     } catch (error) {
       await logUpdate(
         "update user report settings",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
         error,
       );
       throw error;
@@ -387,7 +399,7 @@ export const updateKpiSettings = workspaceProcedure
     try {
       await usersService.updateUserReportKpiSettings(
         input.user_id,
-        context.workspaceId,
+        context.workspaceId!,
         {
           kpiBaseSalary: input.data.kpi_base_salary,
           kpiTargetBonus: input.data.kpi_target_bonus,
@@ -397,16 +409,18 @@ export const updateKpiSettings = workspaceProcedure
 
       await logUpdate(
         "KPI settings updated",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
       );
 
       return await usersService.getUser(input.user_id);
     } catch (error) {
       await logUpdate(
         "update user KPI settings",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
         error,
       );
       throw error;
@@ -429,7 +443,7 @@ export const updateFilterSettings = workspaceProcedure
     try {
       await usersService.updateUserFilters(
         input.user_id,
-        context.workspaceId,
+        context.workspaceId!,
         input.data.filter_exclude_answering_machine ?? false,
         input.data.filter_min_duration ?? 0,
         input.data.filter_min_replicas ?? 0,
@@ -437,16 +451,18 @@ export const updateFilterSettings = workspaceProcedure
 
       await logUpdate(
         "filter settings updated",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
       );
 
       return await usersService.getUser(input.user_id);
     } catch (error) {
       await logUpdate(
         "update user filter settings",
-        user.username,
-        (context.user as Record<string, unknown>).username as string,
+        user.username ?? "unknown",
+        ((context.user as Record<string, unknown>).username as string) ??
+          "unknown",
         error,
       );
       throw error;

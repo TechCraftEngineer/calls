@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
 import { createPortal } from "react-dom";
 import AudioPlayer from "@/components/ui/audio-player";
-import { useORPC } from "~/orpc/react";
+import { useORPC } from "@/orpc/react";
 
 interface AudioPlayerModalProps {
   callId: string;
@@ -20,7 +20,7 @@ export default function AudioPlayerModal({
 }: AudioPlayerModalProps) {
   const orpc = useORPC();
   const { data, isPending, isError, error } = useQuery(
-    orpc.calls.getPlaybackUrl.queryOptions({ call_id: callId }),
+    orpc.calls.getPlaybackUrl.queryOptions({ input: { call_id: callId } }),
   );
 
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -29,7 +29,7 @@ export default function AudioPlayerModal({
 
   const content = (
     <div
-      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-2000 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"

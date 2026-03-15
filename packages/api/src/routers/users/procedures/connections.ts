@@ -69,7 +69,7 @@ export const maxAuthUrl = workspaceProcedure
     if (
       !(await usersService.saveMaxConnectToken(
         input.user_id,
-        context.workspaceId,
+        context.workspaceId!,
         token,
       ))
     )

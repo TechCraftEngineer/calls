@@ -67,7 +67,7 @@ export const integrationsRouter = {
       if (
         !(await usersService.saveMaxConnectToken(
           input.user_id,
-          context.workspaceId,
+          context.workspaceId!,
           token,
         ))
       )

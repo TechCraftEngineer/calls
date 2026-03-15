@@ -103,7 +103,7 @@ export const userWorkspaceSettingsRepository = {
           reportSettings,
           kpiSettings,
           notificationSettings,
-        } as Parameters<typeof db.update>[1])
+        } as typeof schema.userWorkspaceSettings.$inferInsert)
         .where(
           and(
             eq(schema.userWorkspaceSettings.userId, userId),
