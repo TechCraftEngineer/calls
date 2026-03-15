@@ -29,6 +29,13 @@
       "when": 1773588638962,
       "tag": "0003_quick_gunslinger",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1773608240166,
+      "tag": "0004_shallow_cable",
+      "breakpoints": true
     }
   ]
 }
