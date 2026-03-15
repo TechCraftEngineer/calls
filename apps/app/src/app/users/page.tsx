@@ -1,31 +1,21 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { Button, Card, CardContent, toast } from "@calls/ui";
+import { Button, toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "@/components/features/users/confirm-dialog";
 import type { ManagedUser } from "@/components/features/users/types";
 import UsersTable from "@/components/features/users/users-table";
+import ConfigureInvitationSettingsModal from "@/components/features/workspaces/configure-invitation-settings-modal";
 import InviteUserModal from "@/components/features/workspaces/invite-user-modal";
+import PendingInvitations from "@/components/features/workspaces/pending-invitations";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
-
-function getInviteUrl(token: string): string {
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}/invite/${token}`;
-  }
-  const base =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.VERCEL_URL ??
-    "http://localhost:3000";
-  const origin = base.startsWith("http") ? base : `https://${base}`;
-  return `${origin}/invite/${token}`;
-}
 
 export default function UsersPage() {
   const router = useRouter();
@@ -35,6 +25,11 @@ export default function UsersPage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [configureInvitation, setConfigureInvitation] = useState<{
+    id: string;
+    email: string;
+    settings?: unknown;
+  } | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<{
     userId: string;
     username: string;
@@ -117,9 +112,15 @@ export default function UsersPage() {
 
   const createInvitationMutation = useMutation(
     orpc.workspaces.createInvitation.mutationOptions({
+      onSuccess: () => {
+        invalidateQueries();
+        toast.success("Приглашение отправлено");
+      },
       onError: (err) => {
         toast.error(
-          err instanceof Error ? err.message : "Не удалось создать приглашение",
+          err instanceof Error
+            ? err.message
+            : "Не удалось отправить приглашение",
         );
       },
     }),
@@ -141,21 +142,30 @@ export default function UsersPage() {
     }),
   );
 
+  const updateInvitationSettingsMutation = useMutation(
+    orpc.workspaces.updateInvitationSettings.mutationOptions({
+      onSuccess: () => {
+        invalidateQueries();
+        toast.success("Настройки сохранены");
+      },
+      onError: (err) => {
+        toast.error(
+          err instanceof Error ? err.message : "Не удалось сохранить настройки",
+        );
+      },
+    }),
+  );
+
   const handleInviteSubmit = async (
     email: string,
     role: "admin" | "member",
   ) => {
     if (!workspaceId) throw new Error("Нет рабочего пространства");
-    const result = await createInvitationMutation.mutateAsync({
+    await createInvitationMutation.mutateAsync({
       workspaceId,
       email,
       role,
     });
-    return {
-      token: result.token,
-      inviteUrl: getInviteUrl(result.token),
-      expiresAt: result.expiresAt,
-    };
   };
 
   const handleRemoveMember = (userId: string, username: string) => {
@@ -168,6 +178,27 @@ export default function UsersPage() {
   ) => {
     if (!workspaceId) return;
     updateRoleMutation.mutate({ workspaceId, userId, role });
+  };
+
+  const handleConfigureInvitation = (invitationId: string, email: string) => {
+    const invitation = invitations.find((inv) => inv.id === invitationId);
+    setConfigureInvitation({
+      id: invitationId,
+      email,
+      settings: invitation?.pendingSettings,
+    });
+  };
+
+  const handleSaveInvitationSettings = async (
+    invitationId: string,
+    settings: unknown,
+  ) => {
+    if (!workspaceId) throw new Error("Нет рабочего пространства");
+    await updateInvitationSettingsMutation.mutateAsync({
+      workspaceId,
+      invitationId,
+      settings,
+    });
   };
 
   const activeUsersCount = (users as ManagedUser[]).filter((u) => u.id).length;
@@ -211,43 +242,28 @@ export default function UsersPage() {
         />
 
         {Array.isArray(invitations) && invitations.length > 0 && (
-          <Card className="mt-8">
-            <CardContent className="p-6">
-              <h3 className="text-base font-semibold mb-4">
-                Ожидают подтверждения
-              </h3>
-              <ul className="space-y-2">
-                {(
-                  invitations as { id: string; email: string; role: string }[]
-                ).map((inv) => (
-                  <li
-                    key={inv.id}
-                    className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
-                  >
-                    <span className="text-[#555]">
-                      {inv.email} ·{" "}
-                      {inv.role === "admin" ? "Администратор" : "Участник"}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive/80"
-                      onClick={() => {
-                        if (workspaceId && confirm("Отменить приглашение?")) {
-                          revokeInvitationMutation.mutate({
-                            workspaceId,
-                            invitationId: inv.id,
-                          });
-                        }
-                      }}
-                    >
-                      Отменить
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+          <PendingInvitations
+            invitations={
+              invitations as Array<{
+                id: string;
+                email: string;
+                role: string;
+                createdAt?: Date;
+                expiresAt?: Date;
+                pendingSettings?: unknown;
+              }>
+            }
+            onRevoke={(invitationId) => {
+              if (workspaceId) {
+                revokeInvitationMutation.mutate({
+                  workspaceId,
+                  invitationId,
+                });
+              }
+            }}
+            onConfigureSettings={handleConfigureInvitation}
+            isRevoking={revokeInvitationMutation.isPending}
+          />
         )}
       </main>
 
@@ -255,6 +271,16 @@ export default function UsersPage() {
         <InviteUserModal
           onClose={() => setShowInviteModal(false)}
           onSubmit={handleInviteSubmit}
+        />
+      )}
+
+      {configureInvitation && (
+        <ConfigureInvitationSettingsModal
+          invitationId={configureInvitation.id}
+          email={configureInvitation.email}
+          initialSettings={configureInvitation.settings as never}
+          onClose={() => setConfigureInvitation(null)}
+          onSave={handleSaveInvitationSettings}
         />
       )}
 

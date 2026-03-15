@@ -1,4 +1,6 @@
+import { APP_CONFIG, env, paths } from "@calls/config";
 import { invitationsService } from "@calls/db";
+import { InvitationEmail, sendEmail } from "@calls/emails";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../orpc";
@@ -22,11 +24,27 @@ export const createInvitation = workspaceAdminProcedure
         input.role,
         context.authUserId,
       );
-      if (!result) {
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: "Не удалось создать приглашение",
-        });
-      }
+
+      const workspace = await invitationsService.workspacesService.getById(
+        input.workspaceId,
+      );
+      const inviter = await invitationsService.usersService.getUser(
+        context.authUserId,
+      );
+
+      const inviteLink = `${env.APP_URL}${paths.invite.byToken(result.token)}`;
+      const emailRole = input.role === "owner" ? "admin" : input.role;
+      await sendEmail({
+        to: [input.email],
+        subject: `Приглашение в ${workspace?.name ?? "workspace"} · ${APP_CONFIG.shortName}`,
+        react: InvitationEmail({
+          inviteLink,
+          workspaceName: workspace?.name ?? "Workspace",
+          inviterName: inviter?.name ?? undefined,
+          role: emailRole,
+        }),
+      });
+
       return result;
     } catch (err) {
       const msg =

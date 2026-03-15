@@ -12,6 +12,7 @@ import { removeMember } from "./remove-member";
 import { revokeInvitation } from "./revoke-invitation";
 import { setActive } from "./set-active";
 import { update } from "./update";
+import { updateInvitationSettings } from "./update-invitation-settings";
 import { updateMemberRole } from "./update-member-role";
 
 export const workspacesRouter = {
@@ -29,5 +30,6 @@ export const workspacesRouter = {
   createInvitation,
   listInvitations,
   revokeInvitation,
+  updateInvitationSettings,
   getInvitationByToken,
 };

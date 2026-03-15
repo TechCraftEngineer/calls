@@ -100,6 +100,17 @@ export const invitationsRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
+  async updatePendingSettings(
+    invitationId: string,
+    settings: Record<string, unknown>,
+  ) {
+    const result = await db
+      .update(schema.invitations)
+      .set({ pendingSettings: settings as never })
+      .where(eq(schema.invitations.id, invitationId));
+    return (result.rowCount ?? 0) > 0;
+  },
+
   async hasPendingForEmail(
     workspaceId: string,
     email: string,

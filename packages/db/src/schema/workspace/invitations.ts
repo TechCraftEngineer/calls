@@ -3,9 +3,31 @@
  */
 
 import { sql } from "drizzle-orm";
-import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  index,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { user } from "../auth/user";
+import type {
+  EvaluationSettings,
+  FilterSettings,
+  KpiSettings,
+  NotificationSettings,
+  ReportSettings,
+} from "../user/workspace-settings";
 import { workspaceMemberRole, workspaces } from "./workspaces";
+
+export interface PendingUserSettings {
+  notificationSettings?: NotificationSettings;
+  reportSettings?: ReportSettings;
+  kpiSettings?: KpiSettings;
+  filterSettings?: FilterSettings;
+  evaluationSettings?: EvaluationSettings | null;
+}
 
 export const invitations = pgTable(
   "invitations",
@@ -22,6 +44,8 @@ export const invitations = pgTable(
     invitedBy: text("invited_by")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+
+    pendingSettings: jsonb("pending_settings").$type<PendingUserSettings>(),
 
     expiresAt: timestamp("expires_at").notNull(),
     acceptedAt: timestamp("accepted_at"),

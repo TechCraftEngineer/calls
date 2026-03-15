@@ -1,5 +1,11 @@
 /**
  * Workspace members - user membership and roles
+ *
+ * Invitation fields:
+ * - status: 'active' (accepted) | 'pending' (invited but not accepted)
+ * - invitationToken: unique token for accepting invitation
+ * - invitationExpiresAt: expiration date for invitation
+ * - invitedBy: user who sent the invitation
  */
 
 import { sql } from "drizzle-orm";
@@ -25,6 +31,15 @@ export const workspaceMembers = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     role: workspaceMemberRole("role").notNull().default("member"),
+
+    // Invitation fields
+    status: text("status").notNull().default("active"),
+    invitationToken: text("invitation_token"),
+    invitationExpiresAt: timestamp("invitation_expires_at"),
+    invitedBy: text("invited_by").references(() => user.id, {
+      onDelete: "set null",
+    }),
+
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
@@ -38,5 +53,7 @@ export const workspaceMembers = pgTable(
       table.workspaceId,
       table.userId,
     ),
+    index("workspace_members_status_idx").on(table.status),
+    index("workspace_members_invitation_token_idx").on(table.invitationToken),
   ],
 );

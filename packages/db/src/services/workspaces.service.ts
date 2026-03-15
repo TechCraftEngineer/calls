@@ -121,6 +121,48 @@ export class WorkspacesService {
     return result;
   }
 
+  async addPendingMember(data: {
+    workspaceId: string;
+    userId: string;
+    role: WorkspaceMemberRole;
+    invitationToken: string;
+    invitationExpiresAt: Date;
+    invitedBy: string;
+  }) {
+    const result = await this.workspacesRepository.addPendingMember(data);
+    // Invalidate user workspaces cache when member is added
+    workspaceCache.invalidateUserWorkspaces(data.userId);
+    return result;
+  }
+
+  async getPendingMembers(workspaceId: string) {
+    return this.workspacesRepository.getPendingMembers(workspaceId);
+  }
+
+  async getMemberByInvitationToken(token: string) {
+    return this.workspacesRepository.getMemberByInvitationToken(token);
+  }
+
+  async activateMember(memberId: string) {
+    return this.workspacesRepository.activateMember(memberId);
+  }
+
+  async updateMemberInvitationToken(
+    memberId: string,
+    token: string,
+    expiresAt: Date,
+  ) {
+    return this.workspacesRepository.updateMemberInvitationToken(
+      memberId,
+      token,
+      expiresAt,
+    );
+  }
+
+  async listUserWorkspaces(userId: string) {
+    return this.getUserWorkspaces(userId);
+  }
+
   async removeMember(workspaceId: string, userId: string) {
     const result = await this.workspacesRepository.removeMember(
       workspaceId,
@@ -159,12 +201,32 @@ export class WorkspacesService {
   async getMemberWithRole(
     workspaceId: string,
     userId: string,
-  ): Promise<{ role: WorkspaceMemberRole } | null> {
+  ): Promise<{
+    role: WorkspaceMemberRole;
+    status: string;
+    id: string;
+    userId: string;
+    workspaceId: string;
+    invitationToken: string | null;
+    invitationExpiresAt: Date | null;
+    invitedBy: string | null;
+  } | null> {
     const member = await this.workspacesRepository.getMember(
       workspaceId,
       userId,
     );
-    return member ? { role: member.role as WorkspaceMemberRole } : null;
+    return member
+      ? {
+          role: member.role as WorkspaceMemberRole,
+          status: member.status,
+          id: member.id,
+          userId: member.userId,
+          workspaceId: member.workspaceId,
+          invitationToken: member.invitationToken,
+          invitationExpiresAt: member.invitationExpiresAt,
+          invitedBy: member.invitedBy,
+        }
+      : null;
   }
 
   async ensureUserInWorkspace(

@@ -20,6 +20,24 @@ export interface AddMemberData {
   role: WorkspaceMemberRole;
 }
 
+export interface AddPendingMemberData {
+  workspaceId: string;
+  userId: string;
+  role: WorkspaceMemberRole;
+  invitationToken: string;
+  invitationExpiresAt: Date;
+  invitedBy: string;
+}
+
+/**
+ * Transaction helper for atomic operations
+ */
+export async function withTransaction<T>(
+  callback: (tx: any) => Promise<T>,
+): Promise<T> {
+  return db.transaction(callback);
+}
+
 export const workspacesRepository = {
   get table() {
     return schema.workspaces;
@@ -92,6 +110,10 @@ export const workspacesRepository = {
         workspaceId: schema.workspaceMembers.workspaceId,
         userId: schema.workspaceMembers.userId,
         role: schema.workspaceMembers.role,
+        status: schema.workspaceMembers.status,
+        invitationToken: schema.workspaceMembers.invitationToken,
+        invitationExpiresAt: schema.workspaceMembers.invitationExpiresAt,
+        invitedBy: schema.workspaceMembers.invitedBy,
         createdAt: schema.workspaceMembers.createdAt,
         user: schema.user,
         evaluationSettings: schema.userWorkspaceSettings.evaluationSettings,
@@ -125,9 +147,97 @@ export const workspacesRepository = {
         workspaceId: data.workspaceId,
         userId: data.userId,
         role: data.role,
+        status: "active",
       })
       .returning({ id: schema.workspaceMembers.id });
     return result[0]?.id ?? "";
+  },
+
+  async addPendingMember(data: {
+    workspaceId: string;
+    userId: string;
+    role: WorkspaceMemberRole;
+    invitationToken: string;
+    invitationExpiresAt: Date;
+    invitedBy: string;
+  }): Promise<string> {
+    const result = await db
+      .insert(schema.workspaceMembers)
+      .values({
+        workspaceId: data.workspaceId,
+        userId: data.userId,
+        role: data.role,
+        status: "pending",
+        invitationToken: data.invitationToken,
+        invitationExpiresAt: data.invitationExpiresAt,
+        invitedBy: data.invitedBy,
+      })
+      .returning({ id: schema.workspaceMembers.id });
+    return result[0]?.id ?? "";
+  },
+
+  async getPendingMembers(workspaceId: string) {
+    return db
+      .select({
+        id: schema.workspaceMembers.id,
+        workspaceId: schema.workspaceMembers.workspaceId,
+        userId: schema.workspaceMembers.userId,
+        role: schema.workspaceMembers.role,
+        status: schema.workspaceMembers.status,
+        invitationToken: schema.workspaceMembers.invitationToken,
+        invitationExpiresAt: schema.workspaceMembers.invitationExpiresAt,
+        invitedBy: schema.workspaceMembers.invitedBy,
+        createdAt: schema.workspaceMembers.createdAt,
+        user: schema.user,
+      })
+      .from(schema.workspaceMembers)
+      .innerJoin(
+        schema.user,
+        eq(schema.workspaceMembers.userId, schema.user.id),
+      )
+      .where(
+        and(
+          eq(schema.workspaceMembers.workspaceId, workspaceId),
+          eq(schema.workspaceMembers.status, "pending"),
+        ),
+      )
+      .orderBy(desc(schema.workspaceMembers.createdAt));
+  },
+
+  async getMemberByInvitationToken(token: string) {
+    const result = await db
+      .select()
+      .from(schema.workspaceMembers)
+      .where(eq(schema.workspaceMembers.invitationToken, token))
+      .limit(1);
+    return result[0] ?? null;
+  },
+
+  async activateMember(memberId: string): Promise<boolean> {
+    const result = await db
+      .update(schema.workspaceMembers)
+      .set({
+        status: "active",
+        invitationToken: null,
+        invitationExpiresAt: null,
+      })
+      .where(eq(schema.workspaceMembers.id, memberId));
+    return (result.rowCount ?? 0) > 0;
+  },
+
+  async updateMemberInvitationToken(
+    memberId: string,
+    token: string,
+    expiresAt: Date,
+  ): Promise<boolean> {
+    const result = await db
+      .update(schema.workspaceMembers)
+      .set({
+        invitationToken: token,
+        invitationExpiresAt: expiresAt,
+      })
+      .where(eq(schema.workspaceMembers.id, memberId));
+    return (result.rowCount ?? 0) > 0;
   },
 
   async removeMember(workspaceId: string, userId: string): Promise<boolean> {
@@ -162,7 +272,9 @@ export const workspacesRepository = {
   async getMember(
     workspaceId: string,
     userId: string,
-  ): Promise<typeof schema.workspaceMembers.$inferSelect | null> {
+  ): Promise<
+    (typeof schema.workspaceMembers.$inferSelect & { status: string }) | null
+  > {
     const result = await db
       .select()
       .from(schema.workspaceMembers)

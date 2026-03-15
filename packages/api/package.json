@@ -20,6 +20,7 @@
   "dependencies": {
     "@calls/ai": "workspace:*",
     "@calls/db": "workspace:*",
+    "@calls/emails": "workspace:*",
     "@calls/jobs": "workspace:*",
     "@calls/lib": "workspace:*",
     "@calls/shared": "workspace:*",

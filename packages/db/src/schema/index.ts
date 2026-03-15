@@ -86,6 +86,7 @@ export {
   type Invitation,
   invitations,
   type NewInvitation,
+  type PendingUserSettings,
   workspaceIntegrations,
   workspaceMemberRole,
   workspaceMembers,

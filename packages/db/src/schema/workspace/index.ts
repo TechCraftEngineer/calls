@@ -9,6 +9,7 @@ export {
   type Invitation,
   invitations,
   type NewInvitation,
+  type PendingUserSettings,
 } from "./invitations";
 export { workspaceMembers } from "./members";
 export { workspaceMemberRole, workspaces } from "./workspaces";

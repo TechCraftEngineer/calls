@@ -69,5 +69,41 @@ export function createInvitationsRoutes(auth: Auth) {
     }
   });
 
+  r.post("/accept-existing", async (c) => {
+    let body: { token?: string };
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Invalid JSON" }, 400);
+    }
+
+    const token = typeof body.token === "string" ? body.token.trim() : "";
+
+    if (!token) {
+      return c.json({ error: "Токен приглашения обязателен" }, 400);
+    }
+
+    const session = await auth.api.getSession({ headers: c.req.raw.headers });
+    if (!session?.user?.id) {
+      return c.json({ error: "Необходима авторизация" }, 401);
+    }
+
+    try {
+      const result = await invitationsService.acceptInvitationForExistingUser(
+        token,
+        session.user.id,
+      );
+      return c.json({
+        success: true,
+        workspaceId: result.workspaceId,
+        workspaceName: result.workspaceName,
+      });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Не удалось принять приглашение";
+      return c.json({ error: msg }, 400);
+    }
+  });
+
   return r;
 }
