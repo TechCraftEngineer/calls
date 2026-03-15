@@ -1,1 +1,1 @@
-export { default } from "./edit-user-modal";
+export { default } from "./edit-user-modal/index";

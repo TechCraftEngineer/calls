@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { validateTelegramBotToken } from "@calls/shared";
 import { toast } from "@calls/ui";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -29,6 +30,8 @@ export function useSettings() {
     ftpTestMessage: "",
     ftpConnectionStatus: null,
     ftpStatusLoading: false,
+    telegramSaving: false,
+    maxBotSaving: false,
   });
 
   const loadSettings = useCallback(async () => {
@@ -70,6 +73,12 @@ export function useSettings() {
         description: "Пароль FTP",
         updated_at: undefined,
         meta: { passwordSet: ftp.passwordSet },
+      };
+      promptsMap.ftp_sync_from_date = {
+        key: "ftp_sync_from_date",
+        value: ftp.syncFromDate ?? "",
+        description: "С какой даты выгружать",
+        updated_at: undefined,
       };
       promptsMap.telegram_bot_token = {
         key: "telegram_bot_token",
@@ -143,25 +152,52 @@ export function useSettings() {
     }
   }, [router]);
 
-  const handleSave = async () => {
-    try {
-      setState((prev) => ({ ...prev, saving: true }));
+  const handleSaveTelegram = async () => {
+    const telegramToken = state.prompts.telegram_bot_token?.value?.trim();
+    if (telegramToken) {
+      const validation = validateTelegramBotToken(telegramToken);
+      if (!validation.isValid && validation.error) {
+        toast.error(validation.error);
+        return;
+      }
+    }
 
+    try {
+      setState((prev) => ({ ...prev, telegramSaving: true }));
       await api.settings.updateIntegrations({
         telegram_bot_token: state.prompts.telegram_bot_token?.value ?? null,
-        max_bot_token: state.prompts.max_bot_token?.value ?? null,
       });
-      toast.success("Настройки сохранены");
+      toast.success("Telegram Bot сохранён");
       await loadSettings();
     } catch (error: unknown) {
-      console.error("Failed to save settings:", error);
+      console.error("Failed to save Telegram:", error);
       const msg =
         error instanceof Error
           ? error.message
-          : "Не удалось сохранить настройки";
+          : "Не удалось сохранить настройки Telegram";
       toast.error(msg);
     } finally {
-      setState((prev) => ({ ...prev, saving: false }));
+      setState((prev) => ({ ...prev, telegramSaving: false }));
+    }
+  };
+
+  const handleSaveMaxBot = async () => {
+    try {
+      setState((prev) => ({ ...prev, maxBotSaving: true }));
+      await api.settings.updateIntegrations({
+        max_bot_token: state.prompts.max_bot_token?.value ?? null,
+      });
+      toast.success("MAX Bot сохранён");
+      await loadSettings();
+    } catch (error: unknown) {
+      console.error("Failed to save MAX Bot:", error);
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Не удалось сохранить настройки MAX Bot";
+      toast.error(msg);
+    } finally {
+      setState((prev) => ({ ...prev, maxBotSaving: false }));
     }
   };
 
@@ -199,11 +235,16 @@ export function useSettings() {
         }
       }
 
+      const syncFromDate = state.prompts.ftp_sync_from_date?.value?.trim();
       await api.settings.updateFtp({
         enabled,
         host,
         user,
         password,
+        syncFromDate:
+          syncFromDate && /^\d{4}-\d{2}-\d{2}$/.test(syncFromDate)
+            ? syncFromDate
+            : undefined,
       });
       toast.success("Параметры подключения FTP сохранены");
       await loadSettings();
@@ -261,7 +302,7 @@ export function useSettings() {
           ftpConnectionStatus: {
             configured: true,
             success: true,
-            message: "Подключение успешное",
+            message: "Подключено",
           },
         }));
       } else {
@@ -340,7 +381,11 @@ export function useSettings() {
 
   const updatePrompt =
     (key: string, field: "value" | "description") =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    (
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >,
+    ) => {
       setState((prev) => ({
         ...prev,
         prompts: {
@@ -352,6 +397,20 @@ export function useSettings() {
         },
       }));
     };
+
+  const setPromptValue = (key: string, value: string) => {
+    setState((prev) => ({
+      ...prev,
+      prompts: {
+        ...prev.prompts,
+        [key]: {
+          ...prev.prompts[key],
+          key,
+          value,
+        },
+      },
+    }));
+  };
 
   const setFtpEnabled = (enabled: boolean) => {
     setState((prev) => ({
@@ -371,12 +430,14 @@ export function useSettings() {
     currentUser,
     state,
     loadSettings,
-    handleSave,
+    handleSaveTelegram,
+    handleSaveMaxBot,
     handleSaveFtp,
     handleTestFtp,
     handleBackup,
     handleSendTest,
     updatePrompt,
+    setPromptValue,
     setFtpEnabled,
   };
 }

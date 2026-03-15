@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, CardHeader } from "@calls/ui";
+import { Button, Card, CardContent, CardHeader, toast } from "@calls/ui";
 import type React from "react";
 import { useState } from "react";
 import api from "@/lib/api";
@@ -15,7 +15,6 @@ interface ReportSettingsFormBodyProps {
   setForm: React.Dispatch<React.SetStateAction<any>>;
   handleSubmit: (e: React.FormEvent) => void;
   saving: boolean;
-  message: string;
   user: User;
   isAdmin: boolean;
   allUsers: any[];
@@ -26,7 +25,6 @@ export default function ReportSettingsFormBody({
   setForm,
   handleSubmit,
   saving,
-  message,
   user,
   isAdmin,
   allUsers,
@@ -39,15 +37,15 @@ export default function ReportSettingsFormBody({
     setSendTestLoading(true);
     try {
       await api.reports.sendTestTelegram();
-      setSendTestMessage("Тестовый отчёт отправлен в Telegram");
-      setTimeout(() => setSendTestMessage(""), 4000);
+      toast.success("Тестовый отчёт отправлен в Telegram");
     } catch (err: unknown) {
       const d = err instanceof Error ? err.message : null;
-      setSendTestMessage(
+      const msg =
         typeof d === "string"
           ? d
-          : "Не удалось отправить. Укажите Telegram Chat ID в настройках отчётов.",
-      );
+          : "Не удалось отправить. Укажите Telegram Chat ID в настройках отчётов.";
+      toast.error(msg);
+      setSendTestMessage(msg);
     } finally {
       setSendTestLoading(false);
     }
@@ -88,17 +86,6 @@ export default function ReportSettingsFormBody({
             <Button type="submit" variant="accent" disabled={saving}>
               {saving ? "Сохранение…" : "Сохранить настройки"}
             </Button>
-            {message && (
-              <span
-                className={`text-sm font-medium ${
-                  message.includes("Ошибка")
-                    ? "text-[#FF5252]"
-                    : "text-[#4CAF50]"
-                }`}
-              >
-                {message}
-              </span>
-            )}
           </div>
         </form>
       </CardContent>

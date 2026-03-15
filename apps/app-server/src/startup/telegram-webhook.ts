@@ -5,7 +5,7 @@
 import { createLogger } from "@calls/api";
 import {
   getDefaultWorkspace,
-  promptsRepository,
+  settingsService,
   workspacesService,
 } from "@calls/db";
 import { Bot } from "grammy";
@@ -38,7 +38,7 @@ export async function setupTelegramWebhook(): Promise<boolean> {
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const token = await promptsRepository.findByKeyWithDefault(
+      const token = await settingsService.getDecryptedBotToken(
         "telegram_bot_token",
         defaultWs.id,
       );

@@ -25,6 +25,8 @@ export interface FtpIntegrationConfig {
   host: string;
   user: string;
   password: string;
+  /** С какой даты выгружать записи (YYYY-MM-DD). По умолчанию — неделя назад */
+  syncFromDate?: string;
 }
 
 /** Generic config for future integrations */

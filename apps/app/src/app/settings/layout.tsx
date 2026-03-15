@@ -34,7 +34,7 @@ const SETTINGS_NAV = [
   {
     href: paths.settings.workspace,
     label: "Рабочее пространство",
-    description: "Участники и параметры",
+    description: "Название и параметры",
     icon: (
       <svg
         width="18"

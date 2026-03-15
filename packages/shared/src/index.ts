@@ -22,3 +22,4 @@ export {
   validateFtpPassword,
   validateFtpUser,
 } from "./validation/ftp";
+export { validateTelegramBotToken } from "./validation/telegram";

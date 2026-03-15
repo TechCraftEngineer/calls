@@ -2,6 +2,7 @@
 
 import { paths } from "@calls/config";
 import { Button } from "@calls/ui";
+import Link from "next/link";
 import { useEffect } from "react";
 
 export default function GlobalError({
@@ -19,26 +20,23 @@ export default function GlobalError({
 
   return (
     <html lang="ru">
-      <body className="m-0 font-['Inter',sans-serif]">
-        <div className="min-h-screen flex flex-col items-center justify-center bg-[#F5F5F7] p-6">
-          <div className="text-center max-w-[400px]">
-            <h1 className="mb-4 text-2xl font-bold text-[#111]">
+      <body className="m-0 font-sans antialiased">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-muted p-6">
+          <div className="max-w-[400px] text-center">
+            <h1 className="mb-4 text-2xl font-bold text-foreground">
               Критическая ошибка
             </h1>
-            <p className="mb-8 text-[#666] leading-relaxed">
+            <p className="mb-8 leading-relaxed text-muted-foreground">
               Приложение столкнулось с серьёзной ошибкой. Пожалуйста, обновите
               страницу или вернитесь на главную.
             </p>
-            <div className="flex gap-4 justify-center">
+            <div className="flex justify-center gap-4">
               <Button type="button" onClick={reset}>
                 Попробовать снова
               </Button>
-              <a
-                href={paths.root}
-                className="py-3 px-6 rounded-lg border border-[#ddd] bg-white font-semibold text-[#333] no-underline"
-              >
-                На главную
-              </a>
+              <Button asChild variant="outline">
+                <Link href={paths.root}>На главную</Link>
+              </Button>
             </div>
           </div>
         </div>

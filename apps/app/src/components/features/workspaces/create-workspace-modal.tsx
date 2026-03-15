@@ -1,7 +1,7 @@
 "use client";
 
 import { generateWorkspaceSlug } from "@calls/shared";
-import { Input } from "@calls/ui";
+import { Input, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -61,7 +61,7 @@ export default function CreateWorkspaceModal({
         name: data.name,
         slug: data.slug,
       });
-
+      toast.success("Рабочее пространство создано");
       onSuccess(workspace.id);
     } catch (err: unknown) {
       const msg =
@@ -72,6 +72,7 @@ export default function CreateWorkspaceModal({
         typeof msg === "string" &&
         (msg.includes("slug") || msg.includes("идентификатор"));
       setError(isSlugError ? "slug" : "root", { message: msg });
+      toast.error(msg);
     }
   };
 

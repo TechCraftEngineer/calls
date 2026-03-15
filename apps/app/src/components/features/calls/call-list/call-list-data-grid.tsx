@@ -8,6 +8,7 @@ import {
   DataGridPagination,
   DataGridTable,
   IconPlaceholder,
+  toast,
 } from "@calls/ui";
 import {
   getCoreRowModel,
@@ -15,7 +16,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useToast } from "@/components/ui/toast";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import api from "@/lib/api";
 import CallDetailModal from "../call-detail-modal";
@@ -48,7 +48,6 @@ export function CallListDataGrid({
   isLoading = false,
   onPaginationChange,
 }: CallListDataGridProps) {
-  const { showToast } = useToast();
   const [selectedCallId, setSelectedCallId] = useState<number | null>(null);
   const [recommendationsCallId, setRecommendationsCallId] = useState<
     number | null
@@ -77,12 +76,12 @@ export function CallListDataGrid({
         setRecommendations(recs);
         onRecommendationsGenerated?.(callId, recs);
       } catch {
-        showToast("Не удалось сформировать рекомендации", "error");
+        toast.error("Не удалось сформировать рекомендации");
       } finally {
         setIsLoadingRecommendations(false);
       }
     },
-    [isLoadingRecommendations, onRecommendationsGenerated, showToast],
+    [isLoadingRecommendations, onRecommendationsGenerated],
   );
 
   const handleCloseRecommendations = useCallback(() => {
@@ -90,17 +89,14 @@ export function CallListDataGrid({
     setRecommendations([]);
   }, []);
 
-  const handleTranscribe = useCallback(
-    async (callId: number) => {
-      try {
-        await api.calls.transcribe({ call_id: String(callId) });
-        showToast("Транскрипция запущена", "success");
-      } catch {
-        showToast("Не удалось запустить транскрипцию", "error");
-      }
-    },
-    [showToast],
-  );
+  const handleTranscribe = useCallback(async (callId: number) => {
+    try {
+      await api.calls.transcribe({ call_id: String(callId) });
+      toast.success("Транскрипция запущена");
+    } catch {
+      toast.error("Не удалось запустить транскрипцию");
+    }
+  }, []);
 
   const columns = useMemo(
     () =>

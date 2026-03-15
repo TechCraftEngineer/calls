@@ -24,6 +24,8 @@ export interface SettingsState {
   ftpTestMessage: string;
   ftpConnectionStatus: FtpConnectionStatus | null;
   ftpStatusLoading: boolean;
+  telegramSaving: boolean;
+  maxBotSaving: boolean;
 }
 
 export interface TelegramSectionProps {
@@ -38,6 +40,10 @@ export interface IntegrationsSectionProps {
     key: string,
     field: "value" | "description",
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onSaveTelegram: () => Promise<void>;
+  onSaveMaxBot: () => Promise<void>;
+  telegramSaving: boolean;
+  maxBotSaving: boolean;
 }
 
 export interface BackupSectionProps {

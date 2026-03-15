@@ -43,7 +43,7 @@ function parseRecommendationsJson(text: string): string[] {
 export async function generateRecommendations(
   callId: string,
   calls: typeof callsService,
-  workspaceId: string,
+  _workspaceId: string,
 ): Promise<{ recommendations: string[] }> {
   try {
     const call = await calls.getCall(callId);

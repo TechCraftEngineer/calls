@@ -4,7 +4,7 @@
 
 "use client";
 
-import { Button, Input, PasswordInput } from "@calls/ui";
+import { Button, Input, PasswordInput, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { usersApi } from "@/lib/api-orpc";
@@ -62,9 +62,11 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       if (isEditing && user) {
         // Редактирование пользователя
         await usersApi.update(user.id, data as UpdateUserData);
+        toast.success("Пользователь обновлён");
       } else {
         // Создание нового пользователя
         await usersApi.create(data as CreateUserData);
+        toast.success("Пользователь создан");
       }
 
       onSuccess?.();
@@ -75,6 +77,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
         (err as Error).message ||
         "Ошибка сохранения";
       setError("root", { message });
+      toast.error(typeof message === "string" ? message : "Ошибка сохранения");
     }
   };
 
@@ -122,32 +125,30 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
         </div>
 
         {!isEditing && (
-          <>
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-semibold text-primary-800 mb-2"
-              >
-                Пароль *
-              </label>
-              <PasswordInput
-                id="password"
-                className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-sm transition-all duration-200 box-border ${
-                  createErrors.password
-                    ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
-                    : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
-                }`}
-                placeholder="Минимум 6 символов"
-                aria-invalid={!!createErrors.password}
-                {...register("password")}
-              />
-              {createErrors.password && (
-                <div className="text-error-600 text-xs mt-1 leading-tight">
-                  {createErrors.password.message}
-                </div>
-              )}
-            </div>
-          </>
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-semibold text-primary-800 mb-2"
+            >
+              Пароль *
+            </label>
+            <PasswordInput
+              id="password"
+              className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-sm transition-all duration-200 box-border ${
+                createErrors.password
+                  ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
+                  : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
+              }`}
+              placeholder="Минимум 6 символов"
+              aria-invalid={!!createErrors.password}
+              {...register("password")}
+            />
+            {createErrors.password && (
+              <div className="text-error-600 text-xs mt-1 leading-tight">
+                {createErrors.password.message}
+              </div>
+            )}
+          </div>
         )}
 
         <div>

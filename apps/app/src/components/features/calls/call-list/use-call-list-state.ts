@@ -1,7 +1,7 @@
 "use client";
 
+import { toast } from "@calls/ui";
 import { useEffect, useMemo, useState } from "react";
-import { useToast } from "@/components/ui/toast";
 import api from "@/lib/api";
 import { getDayBackgroundIndex } from "./call-list-cells";
 import { loadColumnOrder, saveColumnOrder } from "./column-storage";
@@ -20,7 +20,6 @@ import type {
 
 export function useCallListState(props: CallListProps) {
   const { onPlay, onCallDeleted, onRecommendationsGenerated } = props;
-  const { showToast } = useToast();
 
   const [columnOrder, setColumnOrder] = useState<string[]>(loadColumnOrder);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
@@ -151,7 +150,7 @@ export function useCallListState(props: CallListProps) {
       setRecommendations(recs);
       onRecommendationsGenerated?.(callId, recs);
     } catch {
-      showToast("Не удалось сформировать рекомендации", "error");
+      toast.error("Не удалось сформировать рекомендации");
     } finally {
       setIsLoadingRecommendations(false);
     }
@@ -165,9 +164,9 @@ export function useCallListState(props: CallListProps) {
   const handleTranscribe = async (callId: number) => {
     try {
       await api.calls.transcribe({ call_id: String(callId) });
-      showToast("Транскрипция запущена", "success");
+      toast.success("Транскрипция запущена");
     } catch {
-      showToast("Не удалось запустить транскрипцию", "error");
+      toast.error("Не удалось запустить транскрипцию");
     }
   };
 

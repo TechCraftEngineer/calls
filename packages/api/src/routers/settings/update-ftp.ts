@@ -11,6 +11,11 @@ const updateFtpSchema = z
     user: z.string(),
     /** Пустой пароль = оставить существующий. Новый пароль — только при явном вводе. */
     password: z.string(),
+    /** С какой даты выгружать записи (YYYY-MM-DD) */
+    syncFromDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
   })
   .refine(
     (data) => {
@@ -25,7 +30,7 @@ export const updateFtp = workspaceAdminProcedure
   .input(updateFtpSchema)
   .handler(async ({ input, context }) => {
     const { workspaceId } = context;
-    const { enabled, host, user, password } = input;
+    const { enabled, host, user, password, syncFromDate } = input;
 
     const passwordToSave = password.trim() || null;
     if (host.trim() && user.trim() && passwordToSave) {
@@ -47,6 +52,7 @@ export const updateFtp = workspaceAdminProcedure
       passwordToSave,
       workspaceId,
       String(username),
+      syncFromDate,
     );
 
     return { success: true, message: "FTP настройки сохранены" };

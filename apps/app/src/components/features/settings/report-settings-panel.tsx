@@ -1,3 +1,4 @@
+import { toast } from "@calls/ui";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
@@ -72,7 +73,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
   const [loadedUser, setLoadedUser] = useState<{
     givenName?: string;
     familyName?: string;
@@ -194,7 +194,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMessage("");
     try {
       const payload = {
         givenName: loadedUser?.givenName ?? getGivenName(user) ?? "",
@@ -253,8 +252,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
           })
           .catch(() => {});
       }
-      setMessage("Настройки сохранены");
-      setTimeout(() => setMessage(""), 3000);
+      toast.success("Настройки сохранены");
       // Перезагружаем данные с сервера, чтобы форма отображала сохранённые значения
       const rawU = await api.users.get({ user_id: user.id });
       const u = rawU as UserSettings;
@@ -309,7 +307,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         : typeof detail === "string"
           ? detail
           : "Не удалось сохранить настройки.";
-      setMessage(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -323,7 +321,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       setForm={setForm}
       handleSubmit={handleSubmit}
       saving={saving}
-      message={message}
       user={user}
       isAdmin={isWorkspaceAdmin}
       allUsers={allUsers}

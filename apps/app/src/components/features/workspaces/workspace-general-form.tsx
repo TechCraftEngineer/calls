@@ -88,7 +88,7 @@ export default function WorkspaceGeneralForm({
 
           <div className="filter-item">
             <label className="filter-label" htmlFor="ws-name">
-              Название воркспейса
+              Название рабочего пространства
             </label>
             <Input
               id="ws-name"

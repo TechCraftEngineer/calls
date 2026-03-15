@@ -82,7 +82,7 @@ export async function testFtpConnection(
 export async function syncFtp(
   config: FtpConfig,
   workspaceId: string,
-  dateStr?: string,
+  options?: { dateStr?: string; syncFromDate?: string },
 ): Promise<SyncResult> {
   const result: SyncResult = {
     downloaded: 0,
@@ -150,12 +150,24 @@ export async function syncFtp(
         .filter((f) => (f.isDirectory ?? true) && DATE_DIR_PATTERN.test(f.name))
         .map((f) => f.name);
 
+      const dateStr = options?.dateStr;
+      const syncFromDate = options?.syncFromDate;
+
       if (dateStr) {
         dateDirs = dateDirs.filter((d) => d === dateStr);
+      } else if (syncFromDate) {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        dateDirs = dateDirs
+          .filter((d) => d >= syncFromDate && d <= todayStr)
+          .sort();
       } else {
-        // Без явной даты — только последние 2 дня
-        dateDirs.sort().reverse();
-        dateDirs = dateDirs.slice(0, 2);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const fromDate = new Date(today);
+        fromDate.setDate(fromDate.getDate() - 7);
+        const fromStr = fromDate.toISOString().slice(0, 10);
+        const todayStr = today.toISOString().slice(0, 10);
+        dateDirs = dateDirs.filter((d) => d >= fromStr && d <= todayStr).sort();
       }
 
       logger.info("Найдены папки с записями", { dateDirs });

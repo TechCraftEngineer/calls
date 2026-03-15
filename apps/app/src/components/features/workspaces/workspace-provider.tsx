@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -12,7 +13,6 @@ import {
   useMemo,
   useRef,
 } from "react";
-import { useToast } from "@/components/ui/toast";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 
@@ -49,7 +49,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const pathname = usePathname();
-  const { showToast } = useToast();
   const lastRedirectToCreateRef = useRef(0);
 
   const isAuthenticated = !!session?.user;
@@ -75,12 +74,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           queryKey: orpc.workspaces.list.queryKey(),
         });
         router.refresh();
-        showToast("Рабочее пространство успешно переключено", "success");
+        toast.success("Рабочее пространство успешно переключено");
       },
       onError: () => {
-        showToast(
+        toast.error(
           "Не удалось переключить рабочее пространство. Повторите попытку.",
-          "error",
         );
       },
     }),
@@ -110,7 +108,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     async (workspaceId: string) => {
       const ws = workspaces.find((w: Workspace) => w.id === workspaceId);
       if (!ws) {
-        showToast("Рабочее пространство не найдено", "error");
+        toast.error("Рабочее пространство не найдено");
         return;
       }
       if (activeWorkspace?.id === workspaceId) return;
@@ -118,7 +116,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       setActiveMutation.mutate({ workspaceId });
     },
-    [workspaces, activeWorkspace?.id, setActiveMutation, showToast],
+    [workspaces, activeWorkspace?.id, setActiveMutation],
   );
 
   const refreshWorkspaces = useCallback(async () => {

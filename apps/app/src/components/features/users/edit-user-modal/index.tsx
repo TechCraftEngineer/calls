@@ -1,9 +1,8 @@
 "use client";
 
-import { Button } from "@calls/ui";
+import { Button, toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { useToast } from "@/components/ui/toast";
 import { useORPC } from "@/orpc/react";
 import {
   type EditUserForm,
@@ -87,7 +86,6 @@ export default function EditUserModal({
 }: EditUserModalProps) {
   const orpc = useORPC();
   const queryClient = useQueryClient();
-  const { showToast } = useToast();
   const [form, setForm] = useState<EditUserForm>(() => buildEditForm(user));
   const [editUser, setEditUser] = useState<ManagedUser>(user);
   const [submitting, setSubmitting] = useState(false);
@@ -103,8 +101,9 @@ export default function EditUserModal({
         updateForm({ telegramChatId: "" });
         setEditUser((u) => ({ ...u, telegramChatId: "" }));
         onRefresh();
+        toast.success("Telegram отвязан");
       },
-      onError: () => showToast("Ошибка при отвязке Telegram", "error"),
+      onError: () => toast.error("Ошибка при отвязке Telegram"),
     }),
   );
 
@@ -114,8 +113,9 @@ export default function EditUserModal({
         updateForm({ max_chat_id: "" });
         setEditUser((u) => ({ ...u, max_chat_id: "" }));
         onRefresh();
+        toast.success("MAX отвязан");
       },
-      onError: () => showToast("Ошибка при отвязке MAX", "error"),
+      onError: () => toast.error("Ошибка при отвязке MAX"),
     }),
   );
 
@@ -132,6 +132,7 @@ export default function EditUserModal({
     setSubmitting(true);
     try {
       await onSubmit(String(editUser.id), form);
+      toast.success("Настройки пользователя сохранены");
       onClose();
     } catch (err: unknown) {
       const errorMessage =
@@ -149,8 +150,7 @@ export default function EditUserModal({
           window.open(res.url, "_blank");
         }
       },
-      onError: () =>
-        showToast("Ошибка при создании ссылки для Telegram", "error"),
+      onError: () => toast.error("Ошибка при создании ссылки для Telegram"),
     }),
   );
 
@@ -167,10 +167,10 @@ export default function EditUserModal({
         } else if (res.manual_instruction) {
           const cmd =
             res.manual_instruction.split(": ")[1] ?? res.manual_instruction;
-          showToast(`Для подключения отправьте боту команду:\n${cmd}`, "info");
+          toast.info(`Для подключения отправьте боту команду:\n${cmd}`);
         }
       },
-      onError: () => showToast("Ошибка при создании ссылки для MAX", "error"),
+      onError: () => toast.error("Ошибка при создании ссылки для MAX"),
     }),
   );
 
@@ -200,16 +200,9 @@ export default function EditUserModal({
         onRefresh();
       }
     } catch (_e) {
-      showToast("Ошибка при проверке подключения", "error");
+      toast.error("Ошибка при проверке подключения");
     }
-  }, [
-    editUser.id,
-    onRefresh,
-    queryClient,
-    orpc.users.list,
-    showToast,
-    updateForm,
-  ]);
+  }, [editUser.id, onRefresh, queryClient, orpc.users.list, updateForm]);
 
   const handleDisconnectMax = useCallback(() => {
     if (!confirm("Отвязать MAX аккаунт?")) return;

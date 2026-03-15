@@ -12,6 +12,7 @@ export type ActiveFtpIntegration = {
   host: string;
   user: string;
   password: string;
+  syncFromDate: string;
 };
 
 export const workspaceIntegrationsRepository = {
@@ -31,18 +32,40 @@ export const workspaceIntegrationsRepository = {
       );
 
     const result: ActiveFtpIntegration[] = [];
+    const defaultFromDate = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      return d.toISOString().slice(0, 10);
+    })();
     for (const row of rows) {
       const cfg = row.config as {
         host?: string;
         user?: string;
         password?: string;
+        syncDaysBack?: number;
+        syncFromDate?: string;
       };
       if (cfg?.host && cfg?.user && cfg?.password) {
+        let syncFromDate = defaultFromDate;
+        if (
+          typeof cfg.syncFromDate === "string" &&
+          /^\d{4}-\d{2}-\d{2}$/.test(cfg.syncFromDate)
+        ) {
+          syncFromDate = cfg.syncFromDate;
+        } else if (
+          typeof cfg.syncDaysBack === "number" &&
+          cfg.syncDaysBack >= 1
+        ) {
+          const d = new Date();
+          d.setDate(d.getDate() - cfg.syncDaysBack);
+          syncFromDate = d.toISOString().slice(0, 10);
+        }
         result.push({
           workspaceId: row.workspaceId,
           host: cfg.host,
           user: cfg.user,
           password: cfg.password,
+          syncFromDate,
         });
       }
     }

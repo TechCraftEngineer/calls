@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, CardContent, CardHeader, Input } from "@calls/ui";
+import { Button, Card, CardContent, CardHeader, DatePicker } from "@calls/ui";
 
 interface StatisticsFiltersProps {
   dateFrom: string;
@@ -30,26 +30,18 @@ export function StatisticsFilters({
         <div className="flex gap-6 items-end flex-wrap">
           <div className="filter-item min-w-[150px]">
             <label className="filter-label">ДАТА ОТ</label>
-            <Input
-              type="date"
-              className="date-input"
+            <DatePicker
               value={dateFrom}
-              onChange={(e) => onDateFromChange(e.target.value)}
-              onClick={(e) =>
-                (e.currentTarget as HTMLInputElement).showPicker?.()
-              }
+              onChange={onDateFromChange}
+              placeholder="Выберите дату"
             />
           </div>
           <div className="filter-item min-w-[150px]">
             <label className="filter-label">ДАТА ДО</label>
-            <Input
-              type="date"
-              className="date-input"
+            <DatePicker
               value={dateTo}
-              onChange={(e) => onDateToChange(e.target.value)}
-              onClick={(e) =>
-                (e.currentTarget as HTMLInputElement).showPicker?.()
-              }
+              onChange={onDateToChange}
+              placeholder="Выберите дату"
             />
           </div>
           <div className="flex gap-3">

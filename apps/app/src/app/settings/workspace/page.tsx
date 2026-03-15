@@ -1,16 +1,13 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { Button, Card, CardContent } from "@calls/ui";
+import { Button, Card, CardContent, toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import AddWorkspaceMemberModal from "@/components/features/workspaces/add-workspace-member-modal";
+import { useEffect } from "react";
 import WorkspaceGeneralForm from "@/components/features/workspaces/workspace-general-form";
-import WorkspaceMembersTable from "@/components/features/workspaces/workspace-members-table";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import type { UserAvailableToAdd, WorkspaceMember } from "@/lib/api-orpc";
-import { getCurrentUser, type User } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 
 export default function WorkspaceSettingsPage() {
@@ -18,8 +15,6 @@ export default function WorkspaceSettingsPage() {
   const queryClient = useQueryClient();
   const orpc = useORPC();
   const { activeWorkspace, refreshWorkspaces } = useWorkspace();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [showAddModal, setShowAddModal] = useState(false);
 
   const workspaceId = activeWorkspace?.id ?? null;
   const isWorkspaceAdmin =
@@ -33,39 +28,10 @@ export default function WorkspaceSettingsPage() {
     enabled: !!workspaceId,
   });
 
-  const {
-    data: members = [],
-    isPending: membersLoading,
-    error: membersError,
-  } = useQuery({
-    ...orpc.workspaces.listMembers.queryOptions({
-      input: { workspaceId: workspaceId ?? "" },
-    }),
-    enabled: !!workspaceId,
-  });
-
-  const { data: usersAvailableToAdd = [], isPending: usersAvailableLoading } =
-    useQuery({
-      ...orpc.workspaces.listUsersAvailableToAdd.queryOptions({
-        input: { workspaceId: workspaceId ?? "" },
-      }),
-      enabled: !!workspaceId && !!showAddModal,
-    });
-
   const invalidateWorkspaceQueries = () => {
     if (!workspaceId) return;
     queryClient.invalidateQueries({
       queryKey: orpc.workspaces.get.queryKey({
-        input: { workspaceId },
-      }),
-    });
-    queryClient.invalidateQueries({
-      queryKey: orpc.workspaces.listMembers.queryKey({
-        input: { workspaceId },
-      }),
-    });
-    queryClient.invalidateQueries({
-      queryKey: orpc.workspaces.listUsersAvailableToAdd.queryKey({
         input: { workspaceId },
       }),
     });
@@ -76,25 +42,13 @@ export default function WorkspaceSettingsPage() {
       onSuccess: () => {
         refreshWorkspaces();
         invalidateWorkspaceQueries();
+        toast.success("Настройки рабочего пространства сохранены");
       },
-    }),
-  );
-
-  const addMemberMutation = useMutation(
-    orpc.workspaces.addMember.mutationOptions({
-      onSuccess: invalidateWorkspaceQueries,
-    }),
-  );
-
-  const removeMemberMutation = useMutation(
-    orpc.workspaces.removeMember.mutationOptions({
-      onSuccess: invalidateWorkspaceQueries,
-    }),
-  );
-
-  const updateRoleMutation = useMutation(
-    orpc.workspaces.updateMemberRole.mutationOptions({
-      onSuccess: invalidateWorkspaceQueries,
+      onError: (err) => {
+        const msg =
+          err instanceof Error ? err.message : "Не удалось сохранить настройки";
+        toast.error(msg);
+      },
     }),
   );
 
@@ -102,7 +56,15 @@ export default function WorkspaceSettingsPage() {
     orpc.workspaces.delete.mutationOptions({
       onSuccess: async () => {
         await refreshWorkspaces();
+        toast.success("Рабочее пространство удалено");
         router.replace(paths.onboarding.createWorkspace);
+      },
+      onError: (err) => {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Не удалось удалить рабочее пространство",
+        );
       },
     }),
   );
@@ -111,22 +73,9 @@ export default function WorkspaceSettingsPage() {
     getCurrentUser().then((user) => {
       if (!user) {
         router.push(paths.auth.signin);
-        return;
       }
-      setCurrentUser(user);
     });
   }, [router]);
-
-  useEffect(() => {
-    if (
-      membersError &&
-      typeof membersError === "object" &&
-      "code" in membersError &&
-      (membersError as { code?: string }).code === "FORBIDDEN"
-    ) {
-      router.push(paths.forbidden);
-    }
-  }, [membersError, router]);
 
   if (!activeWorkspace) {
     return (
@@ -150,29 +99,6 @@ export default function WorkspaceSettingsPage() {
     });
   };
 
-  const handleAddMember = async (
-    userId: string,
-    role: "owner" | "admin" | "member",
-  ) => {
-    if (!workspaceId) return;
-    await addMemberMutation.mutateAsync({ workspaceId, userId, role });
-    setShowAddModal(false);
-  };
-
-  const handleRemoveMember = (userId: string) => {
-    if (!workspaceId) return;
-    if (!confirm("Исключить участника из рабочего пространства?")) return;
-    removeMemberMutation.mutate({ workspaceId, userId });
-  };
-
-  const handleUpdateRole = (
-    userId: string,
-    role: "owner" | "admin" | "member",
-  ) => {
-    if (!workspaceId) return;
-    updateRoleMutation.mutate({ workspaceId, userId, role });
-  };
-
   const handleDeleteWorkspace = () => {
     if (!workspaceId) return;
     if (
@@ -184,24 +110,15 @@ export default function WorkspaceSettingsPage() {
     deleteMutation.mutate({ workspaceId });
   };
 
-  const currentUserId = currentUser ? String(currentUser.id) : null;
-
   return (
     <div className="space-y-8">
-      <header className="flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Настройки рабочего пространства
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {activeWorkspace.name}
-          </p>
-        </div>
-        {isWorkspaceAdmin && (
-          <Button variant="accent" onClick={() => setShowAddModal(true)}>
-            <span className="text-lg">+</span> Добавить участника
-          </Button>
-        )}
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Настройки рабочего пространства
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {activeWorkspace.name}
+        </p>
       </header>
 
       {workspace ? (
@@ -212,15 +129,6 @@ export default function WorkspaceSettingsPage() {
           saving={updateMutation.isPending}
         />
       ) : null}
-
-      <WorkspaceMembersTable
-        members={(Array.isArray(members) ? members : []) as WorkspaceMember[]}
-        currentUserId={currentUserId}
-        currentUserRole={activeWorkspace.role}
-        loading={membersLoading}
-        onRemoveMember={handleRemoveMember}
-        onUpdateRole={handleUpdateRole}
-      />
 
       {isOwner && (
         <Card className="border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20">
@@ -244,19 +152,6 @@ export default function WorkspaceSettingsPage() {
             </Button>
           </CardContent>
         </Card>
-      )}
-
-      {showAddModal && (
-        <AddWorkspaceMemberModal
-          users={
-            (Array.isArray(usersAvailableToAdd)
-              ? usersAvailableToAdd
-              : []) as UserAvailableToAdd[]
-          }
-          loading={usersAvailableLoading}
-          onClose={() => setShowAddModal(false)}
-          onSubmit={handleAddMember}
-        />
       )}
     </div>
   );

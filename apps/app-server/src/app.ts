@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { backendRouter, createBackendContext, createLogger } from "@calls/api";
 import {
   getDefaultWorkspace,
-  promptsRepository,
+  settingsService,
   workspacesService,
 } from "@calls/db";
 import { createWebhookHandler } from "@calls/telegram-bot";
@@ -20,6 +20,7 @@ import { corsOrigin } from "./config";
 import { rateLimitMap } from "./lib/rate-limit";
 import { cleanupAllCaches, cleanupSessionCache } from "./lib/session-cache";
 import { createAuthRoutes } from "./routes/auth";
+import { createInvitationsRoutes } from "./routes/invitations";
 
 const backendLogger = createLogger("backend-server");
 
@@ -100,6 +101,7 @@ export function createApp() {
 
   // REST routes
   app.route("/api/auth", createAuthRoutes(auth));
+  app.route("/api/invitations", createInvitationsRoutes(auth));
 
   // Better Auth handler for remaining /api/auth/* endpoints
   app.on(["GET", "POST"], "/api/auth/*", (c) => {
@@ -117,7 +119,7 @@ export function createApp() {
         backendLogger.warn("Default workspace not found for telegram webhook");
         return null;
       }
-      return promptsRepository.findByKeyWithDefault(
+      return settingsService.getDecryptedBotToken(
         "telegram_bot_token",
         defaultWs.id,
       );

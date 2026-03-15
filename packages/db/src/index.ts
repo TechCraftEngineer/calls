@@ -93,6 +93,7 @@ export {
 export {
   callsService,
   filesService,
+  invitationsService,
   settingsService,
   usersService,
   workspacesService,

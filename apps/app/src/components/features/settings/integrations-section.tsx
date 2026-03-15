@@ -1,20 +1,55 @@
 "use client";
 
+import { validateTelegramBotToken } from "@calls/shared";
 import {
+  Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  Input,
   Label,
+  PasswordInput,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from "@calls/ui";
+
+const linkClass =
+  "text-foreground underline underline-offset-2 hover:opacity-80";
+
+import { useCallback, useState } from "react";
 import type { IntegrationsSectionProps } from "./types";
+
+const BOTFATHER_URL = "https://t.me/BotFather";
+const TELEGRAM_BOT_DOCS_URL =
+  "https://core.telegram.org/bots/features#creating-a-new-bot";
+const MAX_PARTNERS_URL = "https://business.max.ru/self";
+const MAX_DOCS_URL = "https://dev.max.ru/docs-api";
+const MAX_BOTS_CREATE_URL =
+  "https://dev.max.ru/docs/chatbots/bots-nocode/create";
 
 export default function IntegrationsSection({
   prompts,
   onPromptChange,
+  onSaveTelegram,
+  onSaveMaxBot,
+  telegramSaving,
+  maxBotSaving,
 }: IntegrationsSectionProps) {
+  const [telegramError, setTelegramError] = useState<string | null>(null);
+
+  const telegramValue = prompts.telegram_bot_token?.value ?? "";
+  const handleTelegramChange = onPromptChange("telegram_bot_token", "value");
+  const handleTelegramBlur = useCallback(() => {
+    if (!telegramValue.trim()) {
+      setTelegramError(null);
+      return;
+    }
+    const validation = validateTelegramBotToken(telegramValue);
+    setTelegramError(validation.isValid ? null : (validation.error ?? null));
+  }, [telegramValue]);
+
   return (
     <Card>
       <CardHeader>
@@ -25,51 +60,179 @@ export default function IntegrationsSection({
           Интеграции рабочего пространства
         </CardTitle>
         <CardDescription>
-          Настройки подключений к Telegram и MAX Bot
+          Настройки подключений к Telegram и MAX Bot. Токены хранятся в базе в
+          зашифрованном виде.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Telegram Bot */}
         <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-4">
-          <h4 className="font-semibold text-sm">Telegram Bot (для отчётов)</h4>
+          <div>
+            <h4 className="font-semibold text-sm">
+              Telegram Bot (для отчётов)
+            </h4>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Отправка отчётов и уведомлений пользователям в Telegram
+            </p>
+          </div>
+
+          <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground mb-2">
+              Как получить токен
+            </p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>
+                Откройте{" "}
+                <a
+                  href={BOTFATHER_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={linkClass}
+                >
+                  @BotFather
+                </a>{" "}
+                в Telegram
+              </li>
+              <li>Отправьте команду /newbot</li>
+              <li>Укажите имя и username бота</li>
+              <li>Скопируйте выданный токен в поле ниже</li>
+            </ol>
+          </div>
+
           <div className="space-y-2 max-w-md">
             <Label
               htmlFor="telegram-bot-token"
-              className="text-xs text-muted-foreground"
+              className="text-xs text-muted-foreground flex items-center gap-1.5"
             >
-              Token
+              Токен бота
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex size-3.5 cursor-help items-center justify-center rounded-full bg-muted-foreground/20 text-[10px] text-muted-foreground hover:bg-muted-foreground/30"
+                    aria-label="Подсказка о формате токена"
+                  >
+                    ?
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-65">
+                  Формат: 1234567890:ABCdefGHI... (цифры:буквы и цифры). Токен
+                  выдаёт только @BotFather при создании бота.
+                </TooltipContent>
+              </Tooltip>
             </Label>
-            <Input
+            <PasswordInput
               id="telegram-bot-token"
-              type="password"
-              value={prompts.telegram_bot_token?.value ?? ""}
-              onChange={onPromptChange("telegram_bot_token", "value")}
-              placeholder="Введите токен бота"
+              value={telegramValue}
+              onChange={(e) => {
+                setTelegramError(null);
+                handleTelegramChange(e);
+              }}
+              onBlur={handleTelegramBlur}
+              placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
               autoComplete="off"
-              className="h-9"
+              className={`h-9 ${telegramError ? "border-destructive focus-visible:ring-destructive" : ""}`}
+              aria-invalid={!!telegramError}
+              aria-describedby={
+                telegramError ? "telegram-token-error" : undefined
+              }
             />
+            {telegramError && (
+              <p
+                id="telegram-token-error"
+                className="text-xs text-destructive"
+                role="alert"
+              >
+                {telegramError}
+              </p>
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              <a
+                href={TELEGRAM_BOT_DOCS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={linkClass}
+              >
+                Документация Telegram Bot API
+              </a>
+            </p>
+            <Button onClick={onSaveTelegram} disabled={telegramSaving}>
+              {telegramSaving ? "Сохранение…" : "Сохранить"}
+            </Button>
           </div>
         </div>
 
         {/* MAX Bot */}
         <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-4">
-          <h4 className="font-semibold text-sm">MAX Bot (для отчётов)</h4>
+          <div>
+            <h4 className="font-semibold text-sm">MAX Bot (для отчётов)</h4>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Отправка отчётов через чат-бот в мессенджере MAX
+            </p>
+          </div>
+
+          <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground mb-2">
+              Как получить токен
+            </p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>
+                Зарегистрируйте организацию на платформе{" "}
+                <a
+                  href={MAX_PARTNERS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={linkClass}
+                >
+                  MAX для партнёров
+                </a>{" "}
+                и пройдите верификацию
+              </li>
+              <li>Создайте чат-бота в разделе Чат-боты</li>
+              <li>
+                После модерации откройте Чат-боты → Интеграция → Получить токен
+              </li>
+              <li>Скопируйте выданный токен в поле ниже</li>
+            </ol>
+          </div>
+
           <div className="space-y-2 max-w-md">
             <Label
               htmlFor="max-bot-token"
               className="text-xs text-muted-foreground"
             >
-              Token
+              Токен бота
             </Label>
-            <Input
+            <PasswordInput
               id="max-bot-token"
-              type="password"
               value={prompts.max_bot_token?.value ?? ""}
               onChange={onPromptChange("max_bot_token", "value")}
-              placeholder="Введите токен бота"
+              placeholder="AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw"
               autoComplete="off"
               className="h-9"
             />
+            <p className="text-[11px] text-muted-foreground">
+              <a
+                href={MAX_DOCS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={linkClass}
+              >
+                Документация API MAX
+              </a>
+              {" · "}
+              <a
+                href={MAX_BOTS_CREATE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={linkClass}
+              >
+                Создание чат-бота
+              </a>
+            </p>
+            <Button onClick={onSaveMaxBot} disabled={maxBotSaving}>
+              {maxBotSaving ? "Сохранение…" : "Сохранить"}
+            </Button>
           </div>
         </div>
       </CardContent>

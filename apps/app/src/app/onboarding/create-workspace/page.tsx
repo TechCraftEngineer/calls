@@ -2,7 +2,7 @@
 
 import { paths } from "@calls/config";
 import { generateWorkspaceSlug } from "@calls/shared";
-import { Button, Input } from "@calls/ui";
+import { Button, Input, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -83,11 +83,12 @@ function CreateWorkspaceForm() {
         name: data.name,
         slug: data.slug,
       });
+      toast.success("Рабочее пространство создано");
 
-      // create уже устанавливает активный воркспейс в БД; cookie для заголовков
+      // create уже устанавливает активное рабочее пространство в БД; cookie для заголовков
       // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
       document.cookie = `active_workspace_id=${workspace.id}; path=/; max-age=31536000; SameSite=Lax`;
-      // Инвалидируем кэш списка воркспейсов, чтобы на главной не показывалась модалка «Создать рабочее пространство»
+      // Инвалидируем кэш списка рабочих пространств, чтобы на главной не показывалась модалка «Создать рабочее пространство»
       await queryClient.invalidateQueries({
         queryKey: orpc.workspaces.list.queryKey(),
       });
@@ -101,6 +102,7 @@ function CreateWorkspaceForm() {
         typeof msg === "string" &&
         (msg.includes("slug") || msg.includes("идентификатор"));
       setError(isSlugError ? "slug" : "root", { message: msg });
+      toast.error(msg);
     }
   };
 
@@ -122,11 +124,11 @@ function CreateWorkspaceForm() {
             M
           </div>
           <h1 className="mb-2 text-[24px] font-bold text-[#111]">
-            Создайте workspace
+            Создайте рабочее пространство
           </h1>
           <p className="m-0 text-[14px] text-[#888]">
-            Workspace — это пространство для вашей команды. Начните с названия
-            компании или проекта.
+            Рабочее пространство — это пространство для вашей команды. Начните с
+            названия компании или проекта.
           </p>
         </div>
 

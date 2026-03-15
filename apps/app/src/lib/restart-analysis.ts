@@ -1,5 +1,6 @@
 /**
  * Утилита перезапуска анализа звонка (транскрипция + оценка).
+ * Транскрипция автоматически запускает оценку по завершении.
  * Используется на странице детали звонка и в модальном окне.
  */
 
@@ -16,13 +17,6 @@ export async function restartCallAnalysis(params: {
   } catch (transcribeError) {
     console.error("Transcription failed:", transcribeError);
     throw new Error("Не удалось выполнить транскрипцию");
-  }
-
-  try {
-    await api.calls.evaluate({ call_id: callId });
-  } catch (evalError) {
-    console.warn("Evaluation failed, but transcription succeeded:", evalError);
-    // Не прерываем выполнение, если оценка не удалась
   }
 
   await loadData();

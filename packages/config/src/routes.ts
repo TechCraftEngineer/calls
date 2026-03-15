@@ -37,6 +37,10 @@ export const paths = {
   users: {
     root: ROOTS.USERS,
   },
+  invite: {
+    root: "/invite",
+    byToken: (token: string) => `/invite/${token}`,
+  },
   settings: {
     root: ROOTS.SETTINGS,
     workspace: `${ROOTS.SETTINGS}/workspace`,

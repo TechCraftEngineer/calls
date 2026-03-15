@@ -37,6 +37,7 @@ export const megafonSyncFn = inngest.createFunction(
                 password: integration.password,
               },
               integration.workspaceId,
+              { syncFromDate: integration.syncFromDate },
             );
           },
         );

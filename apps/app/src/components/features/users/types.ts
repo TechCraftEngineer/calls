@@ -3,6 +3,8 @@ import type { User } from "@/lib/auth";
 // Расширенный тип пользователя с полями управления
 export interface ManagedUser extends Omit<User, "id"> {
   id: string;
+  userId?: string;
+  role?: "owner" | "admin" | "member";
   internalExtensions?: string;
   mobilePhones?: string;
   created_at?: string;

@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
   Checkbox,
+  DatePicker,
   Input,
   Label,
   PasswordInput,
@@ -20,6 +21,7 @@ interface FtpSectionProps {
     key: string,
     field: "value" | "description",
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onSyncFromDateChange: (key: string, value: string) => void;
   onEnabledChange: (enabled: boolean) => void;
   onSave: () => Promise<void>;
   onTest: () => Promise<void>;
@@ -33,6 +35,7 @@ interface FtpSectionProps {
 export default function FtpSection({
   prompts,
   onPromptChange,
+  onSyncFromDateChange,
   onEnabledChange,
   onSave,
   onTest,
@@ -47,6 +50,13 @@ export default function FtpSection({
   const user = prompts.ftp_user?.value ?? "";
   const password = prompts.ftp_password?.value ?? "";
   const passwordSet = prompts.ftp_password?.meta?.passwordSet;
+  const defaultFromDate = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().slice(0, 10);
+  })();
+  const syncFromDate =
+    prompts.ftp_sync_from_date?.value?.trim() || defaultFromDate;
   const hasValues = host.trim() || user.trim() || password;
 
   return (
@@ -133,25 +143,69 @@ export default function FtpSection({
           </div>
         </div>
 
+        <div className="space-y-2 max-w-xs">
+          <Label
+            htmlFor="ftp-sync-from-date"
+            className="text-xs text-muted-foreground"
+          >
+            Выгружать с даты
+          </Label>
+          <DatePicker
+            id="ftp-sync-from-date"
+            value={syncFromDate}
+            onChange={(v) => onSyncFromDateChange("ftp_sync_from_date", v)}
+            placeholder="Выберите дату"
+            className="h-9"
+          />
+          <p className="text-xs text-muted-foreground">
+            Записи с этой даты по сегодня будут загружаться при синхронизации
+          </p>
+        </div>
+
         {(connectionStatus?.configured || statusLoading) && (
-          <div className="rounded-lg border p-3">
+          <div className="rounded-lg border bg-muted/30 px-4 py-3">
             {statusLoading ? (
-              <p className="text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span
+                  className="size-2 animate-pulse rounded-full bg-muted-foreground/50"
+                  aria-hidden
+                />
                 Проверка подключения…
-              </p>
+              </div>
             ) : connectionStatus?.success === true ? (
-              <p className="text-sm text-green-600 dark:text-green-400">
-                ✓ {connectionStatus.message}
-              </p>
-            ) : connectionStatus?.success === false ? (
-              <p className="text-sm text-red-600 dark:text-red-400">
-                ✗ Подключение не успешное
-                {connectionStatus.message && (
-                  <span className="block mt-1 text-muted-foreground">
-                    {connectionStatus.message}
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="size-2 shrink-0 rounded-full bg-green-500"
+                    aria-hidden
+                  />
+                  <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                    {host.trim()
+                      ? `Подключено к ${host}`
+                      : (connectionStatus.message ?? "Подключено")}
                   </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  FTP-сервер доступен, синхронизация возможна
+                </p>
+              </div>
+            ) : connectionStatus?.success === false ? (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="size-2 shrink-0 rounded-full bg-red-500"
+                    aria-hidden
+                  />
+                  <span className="text-sm font-medium text-red-700 dark:text-red-400">
+                    Ошибка подключения
+                  </span>
+                </div>
+                {connectionStatus.message && (
+                  <p className="text-xs text-muted-foreground">
+                    {connectionStatus.message}
+                  </p>
                 )}
-              </p>
+              </div>
             ) : null}
           </div>
         )}

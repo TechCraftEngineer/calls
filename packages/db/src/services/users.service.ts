@@ -35,6 +35,122 @@ export class UsersService {
     return this.usersRepository.findById(id);
   }
 
+  /** User + workspace settings flattened for edit form */
+  async getUserForEdit(
+    userId: string,
+    workspaceId: string,
+  ): Promise<{
+    username: string;
+    givenName: string;
+    familyName: string;
+    internalExtensions: string;
+    mobilePhones: string;
+    telegramChatId: string;
+    telegram_daily_report: boolean;
+    telegram_manager_report: boolean;
+    max_chat_id: string;
+    max_daily_report: boolean;
+    max_manager_report: boolean;
+    filter_exclude_answering_machine: boolean;
+    filter_min_duration: number;
+    filter_min_replicas: number;
+    email: string;
+    email_daily_report: boolean;
+    email_weekly_report: boolean;
+    email_monthly_report: boolean;
+    telegram_weekly_report: boolean;
+    telegram_monthly_report: boolean;
+    report_include_call_summaries: boolean;
+    report_detailed: boolean;
+    report_include_avg_value: boolean;
+    report_include_avg_rating: boolean;
+    kpi_base_salary: number;
+    kpi_target_bonus: number;
+    kpi_target_talk_time_minutes: number;
+  } | null> {
+    const user = await this.usersRepository.findById(userId);
+    if (!user) return null;
+
+    const settings =
+      await userWorkspaceSettingsRepository.findByUserAndWorkspace(
+        userId,
+        workspaceId,
+      );
+
+    const ns = settings?.notificationSettings as
+      | {
+          email?: {
+            dailyReport?: boolean;
+            weeklyReport?: boolean;
+            monthlyReport?: boolean;
+          };
+          telegram?: {
+            dailyReport?: boolean;
+            managerReport?: boolean;
+            weeklyReport?: boolean;
+            monthlyReport?: boolean;
+          };
+          max?: {
+            chatId?: string;
+            dailyReport?: boolean;
+            managerReport?: boolean;
+          };
+        }
+      | undefined;
+    const fs = settings?.filterSettings as
+      | {
+          excludeAnsweringMachine?: boolean;
+          minDuration?: number;
+          minReplicas?: number;
+        }
+      | undefined;
+    const rs = settings?.reportSettings as
+      | {
+          includeCallSummaries?: boolean;
+          detailed?: boolean;
+          includeAvgValue?: boolean;
+          includeAvgRating?: boolean;
+        }
+      | undefined;
+    const ks = settings?.kpiSettings as
+      | {
+          baseSalary?: number;
+          targetBonus?: number;
+          targetTalkTimeMinutes?: number;
+        }
+      | undefined;
+
+    return {
+      username: (user.username ?? user.email ?? "") as string,
+      givenName: user.givenName ?? "",
+      familyName: user.familyName ?? "",
+      internalExtensions: user.internalExtensions ?? "",
+      mobilePhones: user.mobilePhones ?? "",
+      telegramChatId: user.telegramChatId ?? "",
+      telegram_daily_report: ns?.telegram?.dailyReport ?? false,
+      telegram_manager_report: ns?.telegram?.managerReport ?? false,
+      max_chat_id: ns?.max?.chatId ?? "",
+      max_daily_report: ns?.max?.dailyReport ?? false,
+      max_manager_report: ns?.max?.managerReport ?? false,
+      filter_exclude_answering_machine: fs?.excludeAnsweringMachine ?? false,
+      filter_min_duration: fs?.minDuration ?? 0,
+      filter_min_replicas: fs?.minReplicas ?? 0,
+      email: user.email ?? "",
+      email_daily_report: ns?.email?.dailyReport ?? false,
+      email_weekly_report: ns?.email?.weeklyReport ?? false,
+      email_monthly_report: ns?.email?.monthlyReport ?? false,
+      telegram_weekly_report: ns?.telegram?.weeklyReport ?? false,
+      telegram_monthly_report: ns?.telegram?.monthlyReport ?? false,
+      report_include_call_summaries: rs?.includeCallSummaries ?? false,
+      report_detailed: rs?.detailed ?? false,
+      report_include_avg_value: rs?.includeAvgValue ?? false,
+      report_include_avg_rating: rs?.includeAvgRating ?? false,
+      kpi_base_salary: ks?.baseSalary ?? 0,
+      kpi_target_bonus: ks?.targetBonus ?? 0,
+      kpi_target_talk_time_minutes: ks?.targetTalkTimeMinutes ?? 0,
+    };
+  }
+
   async createUser(data: CreateUserData): Promise<string> {
     validateCreateUserData(data);
 

@@ -10,7 +10,6 @@ import {
   pgTable,
   text,
   timestamp,
-  uuid,
 } from "drizzle-orm/pg-core";
 
 export const workspaceMemberRole = pgEnum("workspace_member_role", [

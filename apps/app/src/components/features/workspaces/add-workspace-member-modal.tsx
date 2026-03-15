@@ -103,7 +103,7 @@ export default function AddWorkspaceMemberModal({
         ) : users.length === 0 ? (
           <p className="text-sm text-gray-500 m-0">
             Нет пользователей, которых можно добавить. Все зарегистрированные
-            пользователи уже в воркспейсе.
+            пользователи уже в рабочем пространстве.
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">

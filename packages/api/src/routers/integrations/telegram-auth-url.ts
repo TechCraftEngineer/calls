@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { promptsRepository, usersService } from "@calls/db";
+import { settingsService, usersService } from "@calls/db";
 import { getBotUsername } from "@calls/telegram-bot";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
@@ -23,7 +23,7 @@ export const telegramAuthUrl = workspaceProcedure
       ))
     )
       throw new Error("Failed to save token");
-    const botToken = await promptsRepository.findByKeyWithDefault(
+    const botToken = await settingsService.getDecryptedBotToken(
       "telegram_bot_token",
       workspaceId,
     );

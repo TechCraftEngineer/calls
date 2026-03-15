@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { toast } from "@calls/ui";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import CallMetaHeader from "@/components/features/calls/call-meta-header";
@@ -8,7 +9,6 @@ import CallSidebar from "@/components/features/calls/call-sidebar";
 import { TranscriptCard } from "@/components/features/calls/transcript-card";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
-import { useToast } from "@/components/ui/toast";
 import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
@@ -21,13 +21,13 @@ import type {
 export default function CallDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { showToast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [call, setCall] = useState<CallDetail | null>(null);
   const [transcript, setTranscript] = useState<TranscriptDetail | null>(null);
   const [evaluation, setEvaluation] = useState<EvaluationDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [restarting, setRestarting] = useState(false);
+  const [reevaluating, setReevaluating] = useState(false);
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] =
     useState(false);
 
@@ -92,7 +92,7 @@ export default function CallDetailPage() {
       });
     } catch (error) {
       console.error("Failed to generate recommendations:", error);
-      showToast("Не удалось сформировать рекомендации", "error");
+      toast.error("Не удалось сформировать рекомендации");
     } finally {
       setIsGeneratingRecommendations(false);
     }
@@ -104,16 +104,34 @@ export default function CallDetailPage() {
     try {
       setRestarting(true);
       await restartCallAnalysis({ callId, loadData });
-      showToast("Анализ успешно перезапущен!", "success");
+      toast.success("Анализ успешно перезапущен!");
     } catch (error: unknown) {
       console.error("Failed to restart analysis:", error);
       const errorMessage =
         error instanceof Error
           ? error.message
           : "Ошибка при перезапуске анализа";
-      showToast(`Ошибка: ${errorMessage}`, "error");
+      toast.error(`Ошибка: ${errorMessage}`);
     } finally {
       setRestarting(false);
+    }
+  };
+
+  const handleReevaluate = async () => {
+    const callId = Array.isArray(id) ? id[0] : id;
+    if (!callId || reevaluating) return;
+    try {
+      setReevaluating(true);
+      await api.calls.evaluate({ call_id: callId });
+      toast.success(
+        "Оценка запущена. Данные обновятся через несколько секунд.",
+      );
+      setTimeout(loadData, 6000);
+    } catch (error: unknown) {
+      console.error("Failed to reevaluate:", error);
+      toast.error("Не удалось запустить оценку");
+    } finally {
+      setReevaluating(false);
     }
   };
 
@@ -155,9 +173,11 @@ export default function CallDetailPage() {
             transcript={transcript}
             evaluation={evaluation}
             restarting={restarting}
-            isGeneratingRecommendations={isGeneratingRecommendations}
+            reevaluating={reevaluating}
             onRestartAnalysis={handleRestartAnalysis}
+            onReevaluate={handleReevaluate}
             onGenerateRecommendations={handleGenerateRecommendations}
+            isGeneratingRecommendations={isGeneratingRecommendations}
           />
         </div>
       </main>

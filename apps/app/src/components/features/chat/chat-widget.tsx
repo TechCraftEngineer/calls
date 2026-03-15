@@ -1,6 +1,6 @@
 "use client";
 
-import { Input } from "@calls/ui";
+import { DatePicker } from "@calls/ui";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/lib/better-auth";
 import { type ChatMessage, sendChatMessage } from "@/lib/chat";
@@ -155,22 +155,22 @@ export default function ChatWidget() {
             </div>
             {contextMode === CONTEXT_CALLS && (
               <div className="flex gap-2 items-center flex-wrap">
-                <label className="text-xs">
+                <label className="text-xs flex flex-col gap-1">
                   С:
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="ml-1 p-1 rounded border border-[#ddd]"
+                    onChange={setStartDate}
+                    placeholder="Дата от"
+                    className="min-w-[120px] h-8"
                   />
                 </label>
-                <label className="text-xs">
+                <label className="text-xs flex flex-col gap-1">
                   По:
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="ml-1 p-1 rounded border border-[#ddd]"
+                    onChange={setEndDate}
+                    placeholder="Дата до"
+                    className="min-w-[120px] h-8"
                   />
                 </label>
               </div>

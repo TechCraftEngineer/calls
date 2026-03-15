@@ -1,18 +1,8 @@
 "use client";
 
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Dialog,
-  DialogContent,
-} from "@calls/ui";
+import { Badge, Button, Dialog, DialogContent, toast } from "@calls/ui";
 import { useCallback, useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import { useToast } from "@/components/ui/toast";
 import api from "@/lib/api";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
 import DeleteConfirmModal from "./delete-confirm-modal";
@@ -30,12 +20,12 @@ export default function CallDetailModal({
   onClose,
   onCallDeleted,
 }: CallDetailModalProps) {
-  const { showToast } = useToast();
   const [call, setCall] = useState<CallDetail | null>(null);
   const [transcript, setTranscript] = useState<TranscriptDetail | null>(null);
   const [evaluation, setEvaluation] = useState<EvaluationDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [restarting, setRestarting] = useState(false);
+  const [reevaluating, setReevaluating] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -97,7 +87,7 @@ export default function CallDetailModal({
       });
     } catch (error) {
       console.error("Failed to generate recommendations:", error);
-      showToast("Не удалось сформировать рекомендации", "error");
+      toast.error("Не удалось сформировать рекомендации");
     } finally {
       setIsGeneratingRecommendations(false);
     }
@@ -118,16 +108,33 @@ export default function CallDetailModal({
     try {
       setRestarting(true);
       await restartCallAnalysis({ callId, loadData });
-      showToast("Анализ успешно перезапущен!", "success");
+      toast.success("Анализ успешно перезапущен!");
     } catch (error: unknown) {
       console.error("Failed to restart analysis:", error);
       const errorMessage =
         error instanceof Error
           ? error.message
           : "Ошибка при перезапуске анализа";
-      showToast(`Ошибка: ${errorMessage}`, "error");
+      toast.error(`Ошибка: ${errorMessage}`);
     } finally {
       setRestarting(false);
+    }
+  };
+
+  const handleReevaluate = async () => {
+    if (!callId || reevaluating) return;
+    try {
+      setReevaluating(true);
+      await api.calls.evaluate({ call_id: callId });
+      toast.success(
+        "Оценка запущена. Данные обновятся через несколько секунд.",
+      );
+      setTimeout(loadData, 6000);
+    } catch (error: unknown) {
+      console.error("Failed to reevaluate:", error);
+      toast.error("Не удалось запустить оценку");
+    } finally {
+      setReevaluating(false);
     }
   };
 
@@ -143,15 +150,16 @@ export default function CallDetailModal({
       setShowDeleteConfirm(false);
       onCallDeleted?.(callId);
       onClose();
+      toast.success("Звонок удалён");
     } catch (error: unknown) {
       console.error("Failed to delete call:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Ошибка при удалении звонка";
-      showToast(`Ошибка: ${errorMessage}`, "error");
+      toast.error(`Ошибка: ${errorMessage}`);
     } finally {
       setDeleting(false);
     }
-  }, [call, callId, deleting, onCallDeleted, onClose, showToast]);
+  }, [call, callId, deleting, onCallDeleted, onClose]);
 
   const isOpen = !!callId;
 
@@ -251,7 +259,9 @@ export default function CallDetailModal({
                   transcript={transcript}
                   evaluation={evaluation}
                   restarting={restarting}
+                  reevaluating={reevaluating}
                   onRestartAnalysis={handleRestartAnalysis}
+                  onReevaluate={handleReevaluate}
                   onGenerateRecommendations={handleGenerateRecommendations}
                   isGeneratingRecommendations={isGeneratingRecommendations}
                 />

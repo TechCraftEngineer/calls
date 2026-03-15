@@ -124,6 +124,11 @@ export const transcribeCallFn = inngest.createFunction(
       });
     });
 
+    await step.sendEvent("trigger-evaluation", {
+      name: "call/evaluate.requested",
+      data: { callId },
+    });
+
     return {
       callId,
       processingTimeMs: result.metadata.processingTimeMs,

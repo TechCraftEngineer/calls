@@ -159,6 +159,7 @@ export function createBackendApiWithContext(ctx: BackendContext) {
         host: string;
         user: string;
         password: string;
+        syncFromDate?: string;
       }) =>
         callProc(
           backendRouter.settings.updateFtp as ProcedureWithCallable,
@@ -256,6 +257,38 @@ export function createBackendApiWithContext(ctx: BackendContext) {
       setActive: (input: { workspaceId: string }) =>
         callProc(
           backendRouter.workspaces.setActive as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      createInvitation: (input: {
+        workspaceId: string;
+        email: string;
+        role?: "owner" | "admin" | "member";
+      }) =>
+        callProc(
+          backendRouter.workspaces.createInvitation as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      listInvitations: (input: { workspaceId: string }) =>
+        callProc(
+          backendRouter.workspaces.listInvitations as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      revokeInvitation: (input: {
+        workspaceId: string;
+        invitationId: string;
+      }) =>
+        callProc(
+          backendRouter.workspaces.revokeInvitation as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      getInvitationByToken: (input: { token: string }) =>
+        callProc(
+          backendRouter.workspaces
+            .getInvitationByToken as ProcedureWithCallable,
           ctx,
           input,
         ),

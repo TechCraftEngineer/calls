@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, like, lte, or } from "drizzle-orm";
+import { eq, gte, inArray, like, lte, or } from "drizzle-orm";
 import * as schema from "../../schema";
 
 export interface CallConditionsParams {

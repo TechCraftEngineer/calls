@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@calls/ui";
 import ChatWidget from "@/components/features/chat/chat-widget";
 import { AuthProvider } from "@/components/features/misc/auth-provider";
 import { WorkspaceProvider } from "@/components/features/workspaces/workspace-provider";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { ToastProvider } from "@/components/ui/toast";
 import { ORPCReactProvider } from "@/orpc/react";
 
 const inter = Inter({
@@ -69,19 +69,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru" className={inter.variable}>
+    <html lang="ru" className={`${inter.variable} light`}>
       <body className={inter.className}>
         <ErrorBoundary>
           <AuthProvider>
             <ErrorBoundary>
-              <ToastProvider>
-                <ORPCReactProvider>
-                  <WorkspaceProvider>
-                    {children}
-                    <ChatWidget />
-                  </WorkspaceProvider>
-                </ORPCReactProvider>
-              </ToastProvider>
+              <ORPCReactProvider>
+                <WorkspaceProvider>
+                  {children}
+                  <ChatWidget />
+                </WorkspaceProvider>
+              </ORPCReactProvider>
+              <Toaster />
             </ErrorBoundary>
           </AuthProvider>
         </ErrorBoundary>

@@ -8,6 +8,8 @@ export { Avatar, AvatarImage, AvatarFallback } from "./avatar";
 export { Badge, badgeVariants } from "./badge";
 export { Button, buttonVariants } from "./button";
 export { Calendar, CalendarDayButton } from "./calendar";
+export { DatePicker } from "./date-picker";
+export type { DatePickerProps } from "./date-picker";
 export {
   Card,
   CardHeader,
@@ -160,12 +162,7 @@ export {
 } from "./table";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { Textarea } from "./textarea";
-export {
-  themeDetectorScript,
-  ThemeProvider,
-  useTheme,
-  ThemeToggle,
-} from "./theme";
+export { useTheme } from "./theme";
 export type { ThemeMode, ResolvedTheme } from "./theme";
 export { Toaster, toast } from "./toast";
 export { Toggle, toggleVariants } from "./toggle";

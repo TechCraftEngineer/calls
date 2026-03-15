@@ -19,7 +19,7 @@ export const checkFtpStatus = workspaceProcedure.handler(
       return {
         configured: true,
         success: true,
-        message: "Подключение успешное",
+        message: "Подключено",
       };
     }
     return {

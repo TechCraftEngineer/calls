@@ -10,10 +10,12 @@ export default function SettingsIntegrationsPage() {
   const {
     state,
     loadSettings,
-    handleSave,
+    handleSaveTelegram,
+    handleSaveMaxBot,
     handleSaveFtp,
     handleTestFtp,
     updatePrompt,
+    setPromptValue,
     setFtpEnabled,
   } = useSettings();
 
@@ -44,6 +46,7 @@ export default function SettingsIntegrationsPage() {
         <FtpSection
           prompts={state.prompts}
           onPromptChange={updatePrompt}
+          onSyncFromDateChange={setPromptValue}
           onEnabledChange={setFtpEnabled}
           onSave={handleSaveFtp}
           onTest={handleTestFtp}
@@ -57,14 +60,12 @@ export default function SettingsIntegrationsPage() {
         <IntegrationsSection
           prompts={state.prompts}
           onPromptChange={updatePrompt}
+          onSaveTelegram={handleSaveTelegram}
+          onSaveMaxBot={handleSaveMaxBot}
+          telegramSaving={state.telegramSaving}
+          maxBotSaving={state.maxBotSaving}
         />
       </div>
-
-      <SettingsPageShell.Footer
-        onSave={handleSave}
-        onCancel={loadSettings}
-        saving={state.saving}
-      />
     </SettingsPageShell>
   );
 }

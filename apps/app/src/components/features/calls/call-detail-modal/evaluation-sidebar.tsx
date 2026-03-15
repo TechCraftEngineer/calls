@@ -21,7 +21,9 @@ interface EvaluationSidebarProps {
   transcript: TranscriptDetail | null;
   evaluation: EvaluationDetail | null;
   restarting: boolean;
+  reevaluating: boolean;
   onRestartAnalysis: () => void;
+  onReevaluate: () => void;
   onGenerateRecommendations: () => void;
   isGeneratingRecommendations: boolean;
 }
@@ -31,7 +33,9 @@ export default function EvaluationSidebar({
   transcript,
   evaluation,
   restarting,
+  reevaluating,
   onRestartAnalysis,
+  onReevaluate,
   onGenerateRecommendations,
   isGeneratingRecommendations,
 }: EvaluationSidebarProps) {
@@ -210,17 +214,33 @@ export default function EvaluationSidebar({
             <p className="text-muted-foreground mb-5 text-[13px] leading-relaxed">
               {transcript?.summary || "Резюме отсутствует"}
             </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mb-3 w-full gap-2"
-              onClick={onRestartAnalysis}
-              disabled={restarting}
-            >
-              <span className="text-sm">🔄</span>
-              {restarting ? "Перезапуск..." : "Перезапустить анализ"}
-            </Button>
+            <div className="mb-3 flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex-1 gap-2"
+                onClick={onRestartAnalysis}
+                disabled={restarting || reevaluating}
+              >
+                <span className="text-sm">🔄</span>
+                {restarting ? "Перезапуск..." : "Перезапустить анализ"}
+              </Button>
+              {transcript?.text && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={onReevaluate}
+                  disabled={restarting || reevaluating}
+                  title="Переоценить звонок без повторной транскрипции"
+                >
+                  <span className="text-sm">📊</span>
+                  {reevaluating ? "Оценка..." : "Переоценить"}
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

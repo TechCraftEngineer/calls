@@ -6,7 +6,7 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Input,
+  DatePicker,
   Select,
   SelectContent,
   SelectItem,
@@ -324,31 +324,19 @@ export default function HomePage() {
 
                 <div className="filter-item min-w-[150px]">
                   <label className="filter-label">ДАТА ОТ</label>
-                  <Input
-                    type="date"
-                    className="date-input"
+                  <DatePicker
                     value={filters.date_from}
-                    onChange={(e) =>
-                      setFilters({ ...filters, date_from: e.target.value })
-                    }
-                    onClick={(e) =>
-                      (e.currentTarget as HTMLInputElement).showPicker?.()
-                    }
+                    onChange={(v) => setFilters({ ...filters, date_from: v })}
+                    placeholder="Выберите дату"
                   />
                 </div>
 
                 <div className="filter-item min-w-[150px]">
                   <label className="filter-label">ДАТА ДО</label>
-                  <Input
-                    type="date"
-                    className="date-input"
+                  <DatePicker
                     value={filters.date_to}
-                    onChange={(e) =>
-                      setFilters({ ...filters, date_to: e.target.value })
-                    }
-                    onClick={(e) =>
-                      (e.currentTarget as HTMLInputElement).showPicker?.()
-                    }
+                    onChange={(v) => setFilters({ ...filters, date_to: v })}
+                    placeholder="Выберите дату"
                   />
                 </div>
 

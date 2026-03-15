@@ -36,6 +36,7 @@ interface TranscriptDetail {
   call_type?: string;
   sentiment?: string;
   summary?: string;
+  text?: string;
 }
 
 interface CallSidebarProps {
@@ -43,9 +44,11 @@ interface CallSidebarProps {
   transcript: TranscriptDetail | null;
   evaluation: EvaluationDetail | null;
   restarting: boolean;
-  isGeneratingRecommendations: boolean;
+  reevaluating: boolean;
   onRestartAnalysis: () => void;
+  onReevaluate: () => void;
   onGenerateRecommendations: () => void;
+  isGeneratingRecommendations: boolean;
 }
 
 function formatFileSize(bytes?: number): string {
@@ -58,8 +61,10 @@ export default function CallSidebar({
   transcript,
   evaluation,
   restarting,
+  reevaluating,
   isGeneratingRecommendations,
   onRestartAnalysis,
+  onReevaluate,
   onGenerateRecommendations,
 }: CallSidebarProps) {
   const qualityScore =
@@ -275,16 +280,30 @@ export default function CallSidebar({
           <p className="text-[13px] text-[#666] leading-relaxed mb-5">
             {transcript?.summary || "Резюме отсутствует"}
           </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full"
-            onClick={onRestartAnalysis}
-            disabled={restarting}
-          >
-            <span className="text-sm">🔄</span>
-            {restarting ? "Перезапуск…" : "Перезапустить анализ"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1"
+              onClick={onRestartAnalysis}
+              disabled={restarting || reevaluating}
+            >
+              <span className="text-sm">🔄</span>
+              {restarting ? "Перезапуск…" : "Перезапустить анализ"}
+            </Button>
+            {(transcript?.text || transcript?.summary) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onReevaluate}
+                disabled={restarting || reevaluating}
+                title="Переоценить звонок"
+              >
+                <span className="text-sm">📊</span>
+                {reevaluating ? "Оценка…" : "Переоценить"}
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

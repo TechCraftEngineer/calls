@@ -5,10 +5,11 @@
 
 import { serve } from "inngest/hono";
 import { inngest } from "./inngest/client";
+import { evaluateCallFn } from "./inngest/functions/evaluate-call";
 import { megafonSyncFn } from "./inngest/functions/megafon-sync";
 import { transcribeCallFn } from "./inngest/functions/transcribe-call";
 
 export const inngestHandler = serve({
   client: inngest,
-  functions: [megafonSyncFn, transcribeCallFn],
+  functions: [megafonSyncFn, transcribeCallFn, evaluateCallFn],
 });

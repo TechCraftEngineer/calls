@@ -1,3 +1,4 @@
+import { inngest } from "@calls/jobs";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
@@ -14,7 +15,13 @@ export const evaluate = workspaceProcedure
         message: "Нет доступа к этому звонку",
       });
     }
-    throw new ORPCError("NOT_IMPLEMENTED", {
-      message: "Переоценка звонка пока не реализована",
+    await inngest.send({
+      name: "call/evaluate.requested",
+      data: { callId: input.call_id },
     });
+    return {
+      success: true,
+      message:
+        "Оценка звонка запущена. Результат появится через несколько секунд.",
+    };
   });

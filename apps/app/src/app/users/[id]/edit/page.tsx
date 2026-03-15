@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -9,211 +9,242 @@ import {
   EmailBlock,
   TelegramBlock,
 } from "@/components/features/users/edit";
-import type {
-  EditUserForm,
-  ManagedUser,
-} from "@/components/features/users/types";
+import type { EditUserForm } from "@/components/features/users/types";
 import { useBlockStates } from "@/hooks/use-block-states";
-
-function buildEditForm(u: ManagedUser): EditUserForm {
-  return {
-    givenName: u.givenName || "",
-    familyName: u.familyName || "",
-    internalExtensions: u.internalExtensions || "",
-    mobilePhones: u.mobilePhones || "",
-    telegramChatId: u.telegramChatId || "",
-    telegram_daily_report: u.telegram_daily_report || false,
-    telegram_manager_report: u.telegram_manager_report || false,
-    max_chat_id: u.max_chat_id || "",
-    max_daily_report: u.max_daily_report || false,
-    max_manager_report: u.max_manager_report || false,
-    filter_exclude_answering_machine:
-      u.filter_exclude_answering_machine || false,
-    filter_min_duration: u.filter_min_duration || 0,
-    filter_min_replicas: u.filter_min_replicas || 0,
-    email: u.email || "",
-    email_daily_report: u.email_daily_report || false,
-    email_weekly_report: u.email_weekly_report || false,
-    email_monthly_report: u.email_monthly_report || false,
-    telegram_weekly_report: u.telegram_weekly_report || false,
-    telegram_monthly_report: u.telegram_monthly_report || false,
-    report_include_call_summaries: u.report_include_call_summaries || false,
-    report_detailed: u.report_detailed || false,
-    report_include_avg_value: u.report_include_avg_value || false,
-    report_include_avg_rating: u.report_include_avg_rating || false,
-    kpi_base_salary: u.kpi_base_salary || 0,
-    kpi_target_bonus: u.kpi_target_bonus || 0,
-    kpi_target_talk_time_minutes: u.kpi_target_talk_time_minutes || 0,
-  };
-}
+import { useORPC } from "@/orpc/react";
 
 export default function UserEditPage() {
   const params = useParams();
   const userId = params.id as string;
+  const orpc = useORPC();
+  const queryClient = useQueryClient();
 
   const [form, setForm] = useState<EditUserForm | null>(null);
-  const [editUser, setEditUser] = useState<ManagedUser | null>(null);
+  const [username, setUsername] = useState<string>("");
 
   const {
     clearBlockChanges,
     setBlockState,
     initializeForm,
-    updateOriginalForm,
     hasBlockChanges,
     getBlockState,
   } = useBlockStates();
 
-  // Загрузка данных пользователя
-  const { data: user, error: userError } = useQuery({
-    queryKey: ["user", userId],
-    queryFn: async () => {
-      // Заглушка для API вызова
-      return null;
-    },
+  const {
+    data,
+    error: userError,
+    isPending,
+  } = useQuery({
+    ...orpc.users.getForEdit.queryOptions({ input: { user_id: userId } }),
+    enabled: !!userId,
   });
 
   useEffect(() => {
-    if (user) {
-      const managedUser = user as ManagedUser;
-      setEditUser(managedUser);
-      const newForm = buildEditForm(managedUser);
-      setForm(newForm);
-      initializeForm(newForm);
+    if (data) {
+      const { username: u, ...formData } = data;
+      setUsername(u);
+      const formValues = formData as EditUserForm;
+      setForm(formValues);
+      initializeForm(formValues);
     }
-  }, [user, initializeForm]);
+  }, [data, initializeForm]);
 
-  const handleSaveBasicInfo = async () => {
+  const invalidateUser = () => {
+    queryClient.invalidateQueries({
+      queryKey: orpc.users.getForEdit.queryKey({ input: { user_id: userId } }),
+    });
+  };
+
+  const updateBasicInfoMutation = useMutation(
+    orpc.users.updateBasicInfo.mutationOptions({
+      onSuccess: () => {
+        setBlockState("basic", "success");
+        clearBlockChanges("basic");
+        invalidateUser();
+      },
+      onError: () => setBlockState("basic", "error"),
+    }),
+  );
+
+  const updateTelegramMutation = useMutation(
+    orpc.users.updateTelegramSettings.mutationOptions({
+      onSuccess: () => {
+        setBlockState("telegram", "success");
+        clearBlockChanges("telegram");
+        invalidateUser();
+      },
+      onError: () => setBlockState("telegram", "error"),
+    }),
+  );
+
+  const disconnectTelegramMutation = useMutation(
+    orpc.users.disconnectTelegram.mutationOptions({
+      onSuccess: () => {
+        setForm((f) => (f ? { ...f, telegramChatId: "" } : f));
+        invalidateUser();
+      },
+    }),
+  );
+
+  const updateEmailMutation = useMutation(
+    orpc.users.updateEmailSettings.mutationOptions({
+      onSuccess: () => {
+        setBlockState("email", "success");
+        clearBlockChanges("email");
+        invalidateUser();
+      },
+      onError: () => setBlockState("email", "error"),
+    }),
+  );
+
+  const updateMaxMutation = useMutation(
+    orpc.users.updateMaxSettings.mutationOptions({
+      onSuccess: () => {
+        setBlockState("max", "success");
+        clearBlockChanges("max");
+        invalidateUser();
+      },
+      onError: () => setBlockState("max", "error"),
+    }),
+  );
+
+  const updateReportMutation = useMutation(
+    orpc.users.updateReportSettings.mutationOptions({
+      onSuccess: () => {
+        setBlockState("reports", "success");
+        clearBlockChanges("reports");
+        invalidateUser();
+      },
+      onError: () => setBlockState("reports", "error"),
+    }),
+  );
+
+  const updateKpiMutation = useMutation(
+    orpc.users.updateKpiSettings.mutationOptions({
+      onSuccess: () => {
+        setBlockState("kpi", "success");
+        clearBlockChanges("kpi");
+        invalidateUser();
+      },
+      onError: () => setBlockState("kpi", "error"),
+    }),
+  );
+
+  const updateFilterMutation = useMutation(
+    orpc.users.updateFilterSettings.mutationOptions({
+      onSuccess: () => {
+        setBlockState("filters", "success");
+        clearBlockChanges("filters");
+        invalidateUser();
+      },
+      onError: () => setBlockState("filters", "error"),
+    }),
+  );
+
+  const handleSaveBasicInfo = () => {
     if (!form) return;
-
     setBlockState("basic", "saving");
-    try {
-      // Заглушка для API вызова
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setBlockState("basic", "success");
-      clearBlockChanges("basic");
-      updateOriginalForm(form);
-      console.log("Сохранено:", form);
-    } catch (err) {
-      setBlockState("basic", "error");
-      console.error("Ошибка сохранения:", err);
-    }
+    updateBasicInfoMutation.mutate({
+      user_id: userId,
+      data: {
+        givenName: form.givenName,
+        familyName: form.familyName,
+        internalExtensions: form.internalExtensions,
+        mobilePhones: form.mobilePhones,
+      },
+    });
   };
 
-  const handleSaveTelegramSettings = async () => {
+  const handleSaveTelegramSettings = () => {
     if (!form) return;
-
     setBlockState("telegram", "saving");
-    try {
-      // Заглушка для API вызова
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setBlockState("telegram", "success");
-      clearBlockChanges("telegram");
-      updateOriginalForm(form);
-      console.log("Сохранено Telegram:", form);
-    } catch (err) {
-      setBlockState("telegram", "error");
-      console.error("Ошибка сохранения Telegram:", err);
-    }
+    updateTelegramMutation.mutate({
+      user_id: userId,
+      data: {
+        telegram_daily_report: form.telegram_daily_report,
+        telegram_manager_report: form.telegram_manager_report,
+        telegram_weekly_report: form.telegram_weekly_report,
+        telegram_monthly_report: form.telegram_monthly_report,
+      },
+    });
   };
 
-  const handleDisconnectTelegram = async () => {
+  const handleDisconnectTelegram = () => {
     if (!form) return;
-
-    try {
-      // Заглушка для API вызова
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setForm({ ...form, telegramChatId: "" });
-      console.log("Telegram отвязан");
-    } catch (err) {
-      console.error("Ошибка отвязки Telegram:", err);
-    }
+    disconnectTelegramMutation.mutate({ user_id: userId });
   };
 
-  const handleSaveEmailSettings = async () => {
+  const handleSaveEmailSettings = () => {
     if (!form) return;
-
     setBlockState("email", "saving");
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setBlockState("email", "success");
-      clearBlockChanges("email");
-      updateOriginalForm(form);
-      console.log("Сохранено Email:", form);
-    } catch (err) {
-      setBlockState("email", "error");
-      console.error("Ошибка сохранения Email:", err);
-    }
+    updateEmailMutation.mutate({
+      user_id: userId,
+      data: {
+        email: form.email,
+        email_daily_report: form.email_daily_report,
+        email_weekly_report: form.email_weekly_report,
+        email_monthly_report: form.email_monthly_report,
+      },
+    });
   };
 
-  const handleSaveMaxSettings = async () => {
+  const handleSaveMaxSettings = () => {
     if (!form) return;
-
     setBlockState("max", "saving");
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setBlockState("max", "success");
-      clearBlockChanges("max");
-      updateOriginalForm(form);
-      console.log("Сохранено MAX:", form);
-    } catch (err) {
-      setBlockState("max", "error");
-      console.error("Ошибка сохранения MAX:", err);
-    }
+    updateMaxMutation.mutate({
+      user_id: userId,
+      data: {
+        max_daily_report: form.max_daily_report,
+        max_manager_report: form.max_manager_report,
+      },
+    });
   };
 
-  const handleSaveReportSettings = async () => {
+  const handleSaveReportSettings = () => {
     if (!form) return;
-
     setBlockState("reports", "saving");
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setBlockState("reports", "success");
-      clearBlockChanges("reports");
-      updateOriginalForm(form);
-      console.log("Сохранено отчеты:", form);
-    } catch (err) {
-      setBlockState("reports", "error");
-      console.error("Ошибка сохранения отчетов:", err);
-    }
+    updateReportMutation.mutate({
+      user_id: userId,
+      data: {
+        report_include_call_summaries: form.report_include_call_summaries,
+        report_detailed: form.report_detailed,
+        report_include_avg_value: form.report_include_avg_value,
+        report_include_avg_rating: form.report_include_avg_rating,
+      },
+    });
   };
 
-  const handleSaveKpiSettings = async () => {
+  const handleSaveKpiSettings = () => {
     if (!form) return;
-
     setBlockState("kpi", "saving");
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setBlockState("kpi", "success");
-      clearBlockChanges("kpi");
-      updateOriginalForm(form);
-      console.log("Сохранено KPI:", form);
-    } catch (err) {
-      setBlockState("kpi", "error");
-      console.error("Ошибка сохранения KPI:", err);
-    }
+    updateKpiMutation.mutate({
+      user_id: userId,
+      data: {
+        kpi_base_salary: form.kpi_base_salary,
+        kpi_target_bonus: form.kpi_target_bonus,
+        kpi_target_talk_time_minutes: form.kpi_target_talk_time_minutes,
+      },
+    });
   };
 
-  const handleSaveFilterSettings = async () => {
+  const handleSaveFilterSettings = () => {
     if (!form) return;
-
     setBlockState("filters", "saving");
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setBlockState("filters", "success");
-      clearBlockChanges("filters");
-      updateOriginalForm(form);
-      console.log("Сохранено фильтры:", form);
-    } catch (err) {
-      setBlockState("filters", "error");
-      console.error("Ошибка сохранения фильтров:", err);
-    }
+    updateFilterMutation.mutate({
+      user_id: userId,
+      data: {
+        filter_exclude_answering_machine: form.filter_exclude_answering_machine,
+        filter_min_duration: form.filter_min_duration,
+        filter_min_replicas: form.filter_min_replicas,
+      },
+    });
   };
 
   if (userError) {
     return <div>Ошибка загрузки пользователя</div>;
   }
 
-  if (!form || !editUser) {
+  if (isPending || !form) {
     return <div>Загрузка...</div>;
   }
 
@@ -224,7 +255,7 @@ export default function UserEditPage() {
           <div>
             <h1 className="page-title">Редактирование пользователя</h1>
             <p className="page-subtitle mt-1 text-sm text-[#999]">
-              Логин: {String(editUser.username ?? "")}
+              Логин: {username}
             </p>
           </div>
         </div>
