@@ -128,7 +128,7 @@ export async function identifySpeakersWithLlm(
   const start = Date.now();
 
   try {
-    const { output: result } = await generateWithAi({
+    const response = await generateWithAi({
       model: env.AI_MODEL ?? "gpt-4o-mini",
       system: systemPrompt,
       prompt: `Проанализируй разговор и определи роли и имена всех спикеров. Верни JSON с speakerMapping, operatorName и customerName (если известны).
@@ -143,6 +143,21 @@ ${normalizedText}
       abortSignal: AbortSignal.timeout(30_000),
       functionId: "asr-identify-speakers",
     });
+
+    let result: z.infer<typeof schema>;
+    try {
+      result = response.output;
+    } catch (outputError) {
+      const msg =
+        outputError instanceof Error
+          ? outputError.message
+          : String(outputError);
+      if (msg.includes("No output generated") && response.text?.trim()) {
+        result = schema.parse(JSON.parse(response.text));
+      } else {
+        throw outputError;
+      }
+    }
 
     const mapping = result.speakerMapping ?? {};
     const operatorName = result.operatorName?.trim() || undefined;
