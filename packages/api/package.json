@@ -21,6 +21,7 @@
     "@calls/ai": "workspace:*",
     "@calls/db": "workspace:*",
     "@calls/jobs": "workspace:*",
+    "@calls/lib": "workspace:*",
     "@calls/shared": "workspace:*",
     "@calls/telegram-bot": "workspace:*",
     "@orpc/client": "^1.13.7",

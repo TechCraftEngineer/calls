@@ -319,12 +319,7 @@ export function renderCallListCell({
                     e.preventDefault();
                     e.stopPropagation();
                     if (onPlay && call.filename) {
-                      onPlay(call.filename, call.number || "");
-                    } else if (call.filename) {
-                      window.open(
-                        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:7000"}/api/records/${call.filename}`,
-                        "_blank",
-                      );
+                      onPlay(String(call.id), call.number || "");
                     }
                   }}
                   title="Прослушать запись"

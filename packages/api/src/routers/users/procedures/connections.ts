@@ -19,7 +19,13 @@ export const telegramAuthUrl = workspaceProcedure
     if (!user)
       throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
     const token = randomBytes(16).toString("base64url");
-    if (!(await usersService.saveTelegramConnectToken(input.user_id, token)))
+    if (
+      !(await usersService.saveTelegramConnectToken(
+        input.user_id,
+        workspaceId,
+        token,
+      ))
+    )
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message: "Не удалось сохранить токен",
       });
@@ -60,7 +66,13 @@ export const maxAuthUrl = workspaceProcedure
     if (!user)
       throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
     const token = randomBytes(16).toString("base64url");
-    if (!(await usersService.saveMaxConnectToken(input.user_id, token)))
+    if (
+      !(await usersService.saveMaxConnectToken(
+        input.user_id,
+        context.workspaceId,
+        token,
+      ))
+    )
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message: "Не удалось сохранить токен",
       });

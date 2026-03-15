@@ -1,41 +1,18 @@
 /**
- * Workspace domain schema - multi-tenant SaaS
+ * Workspace members - user membership and roles
  */
 
 import { sql } from "drizzle-orm";
 import {
   index,
-  jsonb,
-  pgEnum,
   pgTable,
   text,
   timestamp,
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import { user } from "./auth/user";
-
-export const workspaceMemberRole = pgEnum("workspace_member_role", [
-  "owner",
-  "admin",
-  "member",
-]);
-
-export const workspaces = pgTable(
-  "workspaces",
-  {
-    id: text("id").primaryKey().default(sql`workspace_id_generate()`),
-    name: text("name").notNull(),
-    slug: text("slug").notNull().unique(),
-    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-      .defaultNow()
-      .$onUpdate(() => new Date())
-      .notNull(),
-  },
-  (table) => [index("workspaces_slug_idx").on(table.slug)],
-);
+import { user } from "../auth/user";
+import { workspaceMemberRole, workspaces } from "./workspaces";
 
 export const workspaceMembers = pgTable(
   "workspace_members",

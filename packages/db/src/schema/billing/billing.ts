@@ -1,5 +1,5 @@
 /**
- * Billing domain schema - subscriptions, plans, and usage tracking
+ * Billing - subscriptions, plans, and usage tracking
  */
 
 import { sql } from "drizzle-orm";
@@ -15,9 +15,8 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import { workspaces } from "./workspaces";
+import { workspaces } from "../workspace/workspaces";
 
-// Enums
 export const subscriptionPlan = pgEnum("subscription_plan", [
   "free",
   "starter",
@@ -34,7 +33,6 @@ export const subscriptionStatus = pgEnum("subscription_status", [
   "incomplete",
 ]);
 
-// Subscriptions table
 export const subscriptions = pgTable(
   "subscriptions",
   {
@@ -47,22 +45,18 @@ export const subscriptions = pgTable(
     plan: subscriptionPlan("plan").notNull().default("free"),
     status: subscriptionStatus("status").notNull().default("active"),
 
-    // Billing period
     currentPeriodStart: timestamp("current_period_start").notNull(),
     currentPeriodEnd: timestamp("current_period_end").notNull(),
     cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
     canceledAt: timestamp("canceled_at"),
 
-    // Trial
     trialStart: timestamp("trial_start"),
     trialEnd: timestamp("trial_end"),
 
-    // Stripe integration (encrypted)
     stripeCustomerId: text("stripe_customer_id"),
     stripeSubscriptionId: text("stripe_subscription_id"),
     stripePaymentMethodId: text("stripe_payment_method_id"),
 
-    // Plan limits
     limits: jsonb("limits").$type<{
       maxCalls: number;
       maxStorageGb: number;
@@ -88,7 +82,6 @@ export const subscriptions = pgTable(
   ],
 );
 
-// Usage metrics table
 export const usageMetrics = pgTable(
   "usage_metrics",
   {
@@ -97,9 +90,9 @@ export const usageMetrics = pgTable(
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
 
-    metricType: text("metric_type").notNull(), // 'calls', 'storage_gb', 'api_requests', 'users'
+    metricType: text("metric_type").notNull(),
     value: integer("value").notNull(),
-    period: text("period").notNull(), // 'YYYY-MM' format
+    period: text("period").notNull(),
 
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
 
@@ -124,7 +117,6 @@ export const usageMetrics = pgTable(
   ],
 );
 
-// Invoices table
 export const invoices = pgTable(
   "invoices",
   {
@@ -134,7 +126,7 @@ export const invoices = pgTable(
       .references(() => workspaces.id, { onDelete: "cascade" }),
 
     stripeInvoiceId: text("stripe_invoice_id").unique(),
-    status: text("status").notNull(), // 'draft', 'open', 'paid', 'void', 'uncollectible'
+    status: text("status").notNull(),
 
     amountDue: integer("amount_due").notNull(),
     amountPaid: integer("amount_paid").notNull(),

@@ -108,7 +108,7 @@ export default function HomePage() {
     PAGINATION_CONSTANTS.SEARCH_DEBOUNCE_MS,
   );
   const [activeAudio, setActiveAudio] = useState<{
-    filename: string;
+    callId: string;
     number: string;
   } | null>(null);
 
@@ -462,8 +462,8 @@ export default function HomePage() {
               ) : (
                 <CallList
                   calls={calls}
-                  onPlay={(filename, number) =>
-                    setActiveAudio({ filename, number })
+                  onPlay={(callId, number) =>
+                    setActiveAudio({ callId, number })
                   }
                   onCallDeleted={(callId) => {
                     setCalls((prev) =>
@@ -494,7 +494,7 @@ export default function HomePage() {
 
         {activeAudio && (
           <AudioPlayerModal
-            filename={activeAudio.filename}
+            callId={activeAudio.callId}
             number={activeAudio.number}
             onClose={() => setActiveAudio(null)}
           />

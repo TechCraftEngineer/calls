@@ -1,10 +1,10 @@
 /**
- * Invitations schema - workspace member invitations
+ * Workspace invitations - member invitations
  */
 
 import { sql } from "drizzle-orm";
 import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { user } from "./auth/user";
+import { user } from "../auth/user";
 import { workspaceMemberRole, workspaces } from "./workspaces";
 
 export const invitations = pgTable(

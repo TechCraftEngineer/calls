@@ -1,5 +1,5 @@
 /**
- * Feature flags schema - A/B testing and gradual rollouts
+ * Feature flags - A/B testing and gradual rollouts
  */
 
 import { sql } from "drizzle-orm";
@@ -24,14 +24,12 @@ export const featureFlags = pgTable(
 
     enabled: boolean("enabled").default(false).notNull(),
 
-    // Targeting
-    workspaceIds: jsonb("workspace_ids").$type<string[]>(), // null = all workspaces
-    userIds: jsonb("user_ids").$type<string[]>(), // specific users
+    workspaceIds: jsonb("workspace_ids").$type<string[]>(),
+    userIds: jsonb("user_ids").$type<string[]>(),
     rolloutPercentage: integer("rollout_percentage").default(0).notNull(),
 
-    // Conditions
     conditions: jsonb("conditions").$type<{
-      plans?: string[]; // ['pro', 'enterprise']
+      plans?: string[];
       minVersion?: string;
       maxVersion?: string;
       countries?: string[];

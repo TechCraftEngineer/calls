@@ -2,7 +2,7 @@
  * Types related to files operations
  */
 
-import type { FileType } from "../schema/files";
+import type { FileType } from "../schema";
 
 export type { FileType };
 

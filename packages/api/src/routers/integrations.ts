@@ -26,7 +26,13 @@ export const integrationsRouter = {
       const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       const token = randomBytes(16).toString("base64url");
-      if (!(await usersService.saveTelegramConnectToken(input.user_id, token)))
+      if (
+        !(await usersService.saveTelegramConnectToken(
+          input.user_id,
+          workspaceId,
+          token,
+        ))
+      )
         throw new Error("Failed to save token");
       const botToken = await promptsService.getPrompt(
         "telegram_bot_token",
@@ -58,7 +64,13 @@ export const integrationsRouter = {
       const user = await usersService.getUser(input.user_id);
       if (!user) throw new Error("User not found");
       const token = randomBytes(16).toString("base64url");
-      if (!(await usersService.saveMaxConnectToken(input.user_id, token)))
+      if (
+        !(await usersService.saveMaxConnectToken(
+          input.user_id,
+          context.workspaceId,
+          token,
+        ))
+      )
         throw new Error("Failed to save token");
       return {
         manual_instruction: `Отправьте боту команду: /start ${token}`,

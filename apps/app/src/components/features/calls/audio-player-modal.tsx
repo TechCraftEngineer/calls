@@ -1,102 +1,81 @@
 "use client";
 
-import { Button } from "@calls/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@calls/ui";
+import { useQuery } from "@tanstack/react-query";
+import { XIcon } from "lucide-react";
+import { createPortal } from "react-dom";
 import AudioPlayer from "@/components/ui/audio-player";
-import { API_BASE_URL } from "@/lib/api";
+import { useORPC } from "~/orpc/react";
 
 interface AudioPlayerModalProps {
-  filename: string;
+  callId: string;
   number: string;
   onClose: () => void;
 }
 
 export default function AudioPlayerModal({
-  filename,
+  callId,
   number,
   onClose,
 }: AudioPlayerModalProps) {
-  const audioUrl = `${API_BASE_URL}/api/records/${filename}`;
+  const orpc = useORPC();
+  const { data, isPending, isError, error } = useQuery(
+    orpc.calls.getPlaybackUrl.queryOptions({ call_id: callId }),
+  );
 
-  return (
-    <div className="audio-modal-overlay" onClick={onClose}>
-      <div className="audio-modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="audio-modal-header">
-          <div className="audio-modal-title">
-            Запись звонка: <strong>{number}</strong>
-          </div>
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
+  const content = (
+    <div
+      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={handleOverlayClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="audio-modal-title"
+    >
+      <Card
+        className="mx-4 w-full max-w-[440px] border-border/60 shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <CardHeader className="flex flex-row items-center justify-between gap-4 pb-4">
+          <CardTitle
+            id="audio-modal-title"
+            className="text-sm font-medium text-muted-foreground"
+          >
+            Запись звонка:{" "}
+            <span className="font-semibold text-foreground">{number}</span>
+          </CardTitle>
           <Button
             variant="ghost"
             size="icon"
-            className="audio-modal-close"
             onClick={onClose}
+            aria-label="Закрыть"
+            className="size-9 rounded-full"
           >
-            &times;
+            <XIcon className="size-5" />
           </Button>
-        </div>
-
-        <div className="audio-modal-body">
-          <AudioPlayer src={audioUrl} autoPlay={true} />
-        </div>
-      </div>
-
-      <style jsx>{`
-                .audio-modal-overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: rgba(0,0,0,0.4);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 2000;
-                    backdrop-filter: blur(4px);
-                }
-                .audio-modal-content {
-                    background: white;
-                    border-radius: 16px;
-                    width: 440px;
-                    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-                    padding: 28px;
-                    border: 1px solid #eee;
-                }
-                .audio-modal-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 24px;
-                }
-                .audio-modal-title {
-                    font-size: 14px;
-                    color: #666;
-                }
-                .audio-modal-title strong {
-                    color: #111;
-                    margin-left: 4px;
-                }
-                .audio-modal-close {
-                    background: #f5f5f7;
-                    border: none;
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 50%;
-                    font-size: 20px;
-                    cursor: pointer;
-                    color: #999;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    transition: all 0.2s;
-                }
-                .audio-modal-close:hover {
-                    background: #eee;
-                    color: #333;
-                }
-                .audio-modal-body {
-                    padding-bottom: 8px;
-                }
-            `}</style>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {isPending && (
+            <div className="flex items-center justify-center py-8">
+              <div
+                className="size-8 animate-spin rounded-full border-2 border-muted border-t-primary"
+                aria-hidden
+              />
+            </div>
+          )}
+          {isError && (
+            <p className="py-6 text-center text-sm text-destructive">
+              {error?.message ?? "Не удалось загрузить запись"}
+            </p>
+          )}
+          {data?.url && <AudioPlayer src={data.url} autoPlay={true} />}
+        </CardContent>
+      </Card>
     </div>
   );
+
+  return createPortal(content, document.body);
 }

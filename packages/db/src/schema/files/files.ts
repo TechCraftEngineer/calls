@@ -1,5 +1,5 @@
 /**
- * Files domain schema - PostgreSQL table for storing file metadata and S3 references
+ * Files - file metadata and storage references
  */
 
 import { sql } from "drizzle-orm";
@@ -12,7 +12,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { workspaces } from "./workspaces";
+import { workspaces } from "../workspace/workspaces";
 
 // File types enum
 export const FILE_TYPES = {
@@ -25,7 +25,6 @@ export const FILE_TYPES = {
 
 export type FileType = (typeof FILE_TYPES)[keyof typeof FILE_TYPES];
 
-// Files table - универсальная таблица для хранения метаданных файлов
 export const files = pgTable(
   "files",
   {
@@ -33,12 +32,12 @@ export const files = pgTable(
     workspaceId: text("workspace_id")
       .references(() => workspaces.id, { onDelete: "cascade" })
       .notNull(),
-    filename: text("filename").notNull(), // оригинальное имя файла
-    originalName: text("original_name").notNull(), // оригинальное имя файла
+    filename: text("filename").notNull(),
+    originalName: text("original_name").notNull(),
     mimeType: text("mime_type").notNull(),
     sizeBytes: integer("size_bytes").notNull(),
-    fileType: text("file_type").notNull(), // из FILE_TYPES
-    storageKey: text("storage_key").notNull().unique(), // ключ в object storage
+    fileType: text("file_type").notNull(),
+    storageKey: text("storage_key").notNull().unique(),
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),

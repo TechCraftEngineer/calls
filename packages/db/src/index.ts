@@ -14,12 +14,6 @@ export {
   handleWorkspaceError,
 } from "./lib/workspace-utils";
 export { systemRepository } from "./repositories/system.repository";
-export {
-  userFilterSettingsRepository,
-  userKpiSettingsRepository,
-  userNotificationSettingsRepository,
-  userReportSettingsRepository,
-} from "./repositories/user-settings.repository";
 // Repositories
 export { usersRepository } from "./repositories/users.repository";
 // Schemas and types
@@ -48,11 +42,7 @@ export type {
   NewSubscription,
   NewTranscript,
   NewUsageMetric,
-  NewUserFilterSettings,
-  NewUserKpiSettings,
-  NewUserNotificationSettings,
   NewUserPreferences,
-  NewUserReportSettings,
   NewUserWorkspaceSettings,
   NewWorkspace,
   NewWorkspaceMember,
@@ -64,11 +54,7 @@ export type {
   Transcript,
   UsageMetric,
   User,
-  UserFilterSettings,
-  UserKpiSettings,
-  UserNotificationSettings,
   UserPreferences,
-  UserReportSettings,
   UserWorkspaceSettings,
   Verification,
   Workspace,
@@ -94,11 +80,7 @@ export {
   transcripts,
   usageMetrics,
   user,
-  userFilterSettings,
-  userKpiSettings,
-  userNotificationSettings,
   userPreferences,
-  userReportSettings,
   userWorkspaceSettings,
   verification,
   workspaceIntegrations,

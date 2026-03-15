@@ -3,8 +3,8 @@
  */
 
 import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
-import { user } from "./auth/user";
-import { workspaces } from "./workspaces";
+import { user } from "../auth/user";
+import { workspaces } from "../workspace/workspaces";
 
 export const userPreferences = pgTable("user_preferences", {
   userId: text("user_id")
@@ -20,6 +20,5 @@ export const userPreferences = pgTable("user_preferences", {
     .notNull(),
 });
 
-// TypeScript types
 export type UserPreferences = typeof userPreferences.$inferSelect;
 export type NewUserPreferences = typeof userPreferences.$inferInsert;

@@ -1,5 +1,5 @@
 /**
- * Audit log schema - comprehensive audit trail for compliance
+ * Audit log - compliance audit trail
  */
 
 import { sql } from "drizzle-orm";
@@ -11,8 +11,8 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
-import { user } from "./auth/user";
-import { workspaces } from "./workspaces";
+import { user } from "../auth/user";
+import { workspaces } from "../workspace/workspaces";
 
 export const auditLog = pgTable(
   "audit_log",
@@ -25,21 +25,17 @@ export const auditLog = pgTable(
       onDelete: "set null",
     }),
 
-    // Action details
-    action: text("action").notNull(), // 'CREATE', 'UPDATE', 'DELETE', 'READ'
-    resource: text("resource").notNull(), // 'call', 'user', 'workspace', etc.
+    action: text("action").notNull(),
+    resource: text("resource").notNull(),
     resourceId: text("resource_id"),
 
-    // Changes
     oldValues: jsonb("old_values").$type<Record<string, unknown>>(),
     newValues: jsonb("new_values").$type<Record<string, unknown>>(),
 
-    // Request context
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
     requestId: text("request_id"),
 
-    // Additional metadata
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),

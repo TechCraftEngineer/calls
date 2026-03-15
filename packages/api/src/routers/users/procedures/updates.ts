@@ -75,6 +75,7 @@ export const update = workspaceProcedure
 
       await usersService.updateUserFilters(
         input.user_id,
+        context.workspaceId,
         d.filter_exclude_answering_machine ??
           (u.filter_exclude_answering_machine as boolean) ??
           false,
@@ -82,30 +83,35 @@ export const update = workspaceProcedure
         d.filter_min_replicas ?? (u.filter_min_replicas as number) ?? 0,
       );
 
-      await usersService.updateUserReportKpiSettings(input.user_id, {
-        filterExcludeAnsweringMachine: d.filter_exclude_answering_machine,
-        filterMinDuration: d.filter_min_duration,
-        filterMinReplicas: d.filter_min_replicas,
-        telegramDailyReport: d.telegram_daily_report,
-        telegramManagerReport: d.telegram_manager_report,
-        telegramWeeklyReport: d.telegram_weekly_report,
-        telegramMonthlyReport: d.telegram_monthly_report,
-        telegramSkipWeekends: d.telegram_skip_weekends,
-        emailDailyReport: d.email_daily_report,
-        emailWeeklyReport: d.email_weekly_report,
-        emailMonthlyReport: d.email_monthly_report,
-        reportIncludeCallSummaries: d.report_include_call_summaries,
-        reportDetailed: d.report_detailed,
-        reportIncludeAvgValue: d.report_include_avg_value,
-        reportIncludeAvgRating: d.report_include_avg_rating,
-        reportManagedUserIds: d.report_managed_user_ids,
-        kpiBaseSalary: d.kpi_base_salary,
-        kpiTargetBonus: d.kpi_target_bonus,
-        kpiTargetTalkTimeMinutes: d.kpi_target_talk_time_minutes,
-      });
+      await usersService.updateUserReportKpiSettings(
+        input.user_id,
+        context.workspaceId,
+        {
+          filterExcludeAnsweringMachine: d.filter_exclude_answering_machine,
+          filterMinDuration: d.filter_min_duration,
+          filterMinReplicas: d.filter_min_replicas,
+          telegramDailyReport: d.telegram_daily_report,
+          telegramManagerReport: d.telegram_manager_report,
+          telegramWeeklyReport: d.telegram_weekly_report,
+          telegramMonthlyReport: d.telegram_monthly_report,
+          telegramSkipWeekends: d.telegram_skip_weekends,
+          emailDailyReport: d.email_daily_report,
+          emailWeeklyReport: d.email_weekly_report,
+          emailMonthlyReport: d.email_monthly_report,
+          reportIncludeCallSummaries: d.report_include_call_summaries,
+          reportDetailed: d.report_detailed,
+          reportIncludeAvgValue: d.report_include_avg_value,
+          reportIncludeAvgRating: d.report_include_avg_rating,
+          reportManagedUserIds: d.report_managed_user_ids,
+          kpiBaseSalary: d.kpi_base_salary,
+          kpiTargetBonus: d.kpi_target_bonus,
+          kpiTargetTalkTimeMinutes: d.kpi_target_talk_time_minutes,
+        },
+      );
 
       await usersService.updateUserTelegramSettings(
         input.user_id,
+        context.workspaceId,
         d.telegram_daily_report ??
           (u.telegram_daily_report as boolean) ??
           false,
@@ -210,11 +216,15 @@ export const updateEmailSettings = workspaceProcedure
         );
       }
 
-      await usersService.updateUserReportKpiSettings(input.user_id, {
-        emailDailyReport: input.data.email_daily_report,
-        emailWeeklyReport: input.data.email_weekly_report,
-        emailMonthlyReport: input.data.email_monthly_report,
-      });
+      await usersService.updateUserReportKpiSettings(
+        input.user_id,
+        context.workspaceId,
+        {
+          emailDailyReport: input.data.email_daily_report,
+          emailWeeklyReport: input.data.email_weekly_report,
+          emailMonthlyReport: input.data.email_monthly_report,
+        },
+      );
 
       await logUpdate(
         "email settings updated",
@@ -248,12 +258,16 @@ export const updateTelegramSettings = workspaceProcedure
       throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(input.user_id, {
-        telegramDailyReport: input.data.telegram_daily_report,
-        telegramManagerReport: input.data.telegram_manager_report,
-        telegramWeeklyReport: input.data.telegram_weekly_report,
-        telegramMonthlyReport: input.data.telegram_monthly_report,
-      });
+      await usersService.updateUserReportKpiSettings(
+        input.user_id,
+        context.workspaceId,
+        {
+          telegramDailyReport: input.data.telegram_daily_report,
+          telegramManagerReport: input.data.telegram_manager_report,
+          telegramWeeklyReport: input.data.telegram_weekly_report,
+          telegramMonthlyReport: input.data.telegram_monthly_report,
+        },
+      );
 
       await logUpdate(
         "telegram settings updated",
@@ -287,10 +301,14 @@ export const updateMaxSettings = workspaceProcedure
       throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(input.user_id, {
-        maxDailyReport: input.data.max_daily_report,
-        maxManagerReport: input.data.max_manager_report,
-      });
+      await usersService.updateUserReportKpiSettings(
+        input.user_id,
+        context.workspaceId,
+        {
+          maxDailyReport: input.data.max_daily_report,
+          maxManagerReport: input.data.max_manager_report,
+        },
+      );
 
       await logUpdate(
         "max settings updated",
@@ -324,12 +342,16 @@ export const updateReportSettings = workspaceProcedure
       throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(input.user_id, {
-        reportIncludeCallSummaries: input.data.report_include_call_summaries,
-        reportDetailed: input.data.report_detailed,
-        reportIncludeAvgValue: input.data.report_include_avg_value,
-        reportIncludeAvgRating: input.data.report_include_avg_rating,
-      });
+      await usersService.updateUserReportKpiSettings(
+        input.user_id,
+        context.workspaceId,
+        {
+          reportIncludeCallSummaries: input.data.report_include_call_summaries,
+          reportDetailed: input.data.report_detailed,
+          reportIncludeAvgValue: input.data.report_include_avg_value,
+          reportIncludeAvgRating: input.data.report_include_avg_rating,
+        },
+      );
 
       await logUpdate(
         "report settings updated",
@@ -363,11 +385,15 @@ export const updateKpiSettings = workspaceProcedure
       throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(input.user_id, {
-        kpiBaseSalary: input.data.kpi_base_salary,
-        kpiTargetBonus: input.data.kpi_target_bonus,
-        kpiTargetTalkTimeMinutes: input.data.kpi_target_talk_time_minutes,
-      });
+      await usersService.updateUserReportKpiSettings(
+        input.user_id,
+        context.workspaceId,
+        {
+          kpiBaseSalary: input.data.kpi_base_salary,
+          kpiTargetBonus: input.data.kpi_target_bonus,
+          kpiTargetTalkTimeMinutes: input.data.kpi_target_talk_time_minutes,
+        },
+      );
 
       await logUpdate(
         "KPI settings updated",
@@ -403,6 +429,7 @@ export const updateFilterSettings = workspaceProcedure
     try {
       await usersService.updateUserFilters(
         input.user_id,
+        context.workspaceId,
         input.data.filter_exclude_answering_machine ?? false,
         input.data.filter_min_duration ?? 0,
         input.data.filter_min_replicas ?? 0,

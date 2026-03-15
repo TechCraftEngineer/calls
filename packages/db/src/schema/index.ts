@@ -1,20 +1,12 @@
 /**
  * Database schema exports - Main entry point for all database tables and types
- *
- * This file provides a centralized export point for all database schemas,
- * making it easy to import tables and types from a single location.
  */
 
-// Export new SaaS tables
-export {
-  type AuditLog,
-  auditLog,
-  type NewAuditLog,
-} from "./audit-log";
-// Export Better Auth types
+// Auth (Better Auth)
 export type { Account, Session, User, Verification } from "./auth";
-// Export Better Auth tables
 export { account, session, user, verification } from "./auth";
+
+// Billing
 export {
   type Invoice,
   invoices,
@@ -28,67 +20,49 @@ export {
   type UsageMetric,
   usageMetrics,
 } from "./billing";
-// Export all table definitions
+
+// Calls
 export { callEvaluations, calls, transcripts } from "./calls";
-export {
-  type FeatureFlag,
-  featureFlags,
-  type NewFeatureFlag,
-} from "./feature-flags";
+
+// Files
 export type { FileType } from "./files";
 export { FILE_TYPES, files } from "./files";
+// System
 export {
-  type Invitation,
-  invitations,
-  type NewInvitation,
-} from "./invitations";
-export { activityLog, prompts } from "./system";
-// Export all TypeScript types
+  type ActivityLog,
+  type AuditLog,
+  activityLog,
+  auditLog,
+  type FeatureFlag,
+  featureFlags,
+  type NewActivityLog,
+  type NewAuditLog,
+  type NewFeatureFlag,
+  type NewPrompt,
+  type Prompt,
+  prompts,
+} from "./system";
+
+// Types (inferred from tables)
 export type {
-  ActivityLog,
   Call,
   CallEvaluation,
   File,
-  NewActivityLog,
   NewCall,
   NewCallEvaluation,
   NewFile,
-  NewPrompt,
   NewTranscript,
   NewUserPreferences,
   NewWorkspace,
   NewWorkspaceIntegration,
   NewWorkspaceMember,
-  Prompt,
   Transcript,
   UserPreferences,
   Workspace,
   WorkspaceIntegration,
   WorkspaceMember,
 } from "./types";
-// Export deprecated user settings (for migration)
-export {
-  type NewUserFilterSettings,
-  type UserFilterSettings,
-  userFilterSettings,
-} from "./user-filter-settings";
-export {
-  type NewUserKpiSettings,
-  type UserKpiSettings,
-  userKpiSettings,
-} from "./user-kpi-settings";
-export {
-  type NewUserNotificationSettings,
-  type UserNotificationSettings,
-  userNotificationSettings,
-} from "./user-notification-settings";
-export { userPreferences } from "./user-preferences";
-export {
-  type NewUserReportSettings,
-  type UserReportSettings,
-  userReportSettings,
-} from "./user-report-settings";
-// Export consolidated user settings
+// User
 export {
   type FilterSettings,
   type KpiSettings,
@@ -96,17 +70,21 @@ export {
   type NotificationSettings,
   type ReportSettings,
   type UserWorkspaceSettings,
+  userPreferences,
   userWorkspaceSettings,
-} from "./user-workspace-settings";
+} from "./user";
+
+// Workspace
 export {
   type FtpIntegrationConfig,
   INTEGRATION_TYPES,
   type IntegrationConfig,
   type IntegrationType,
+  type Invitation,
+  invitations,
+  type NewInvitation,
   workspaceIntegrations,
-} from "./workspace-integrations";
-export {
   workspaceMemberRole,
   workspaceMembers,
   workspaces,
-} from "./workspaces";
+} from "./workspace";

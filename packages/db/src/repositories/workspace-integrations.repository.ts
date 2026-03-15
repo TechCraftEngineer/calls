@@ -4,11 +4,8 @@
 
 import { and, eq } from "drizzle-orm";
 import { db } from "../client";
+import type { FtpIntegrationConfig, IntegrationType } from "../schema";
 import * as schema from "../schema";
-import type {
-  FtpIntegrationConfig,
-  IntegrationType,
-} from "../schema/workspace-integrations";
 
 export type ActiveMegafonFtpIntegration = {
   workspaceId: string;

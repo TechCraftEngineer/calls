@@ -1,15 +1,9 @@
 /**
  * Users service - handles business logic for user operations
- * Now with proper password hashing and transactions
  */
 
 import type { SystemRepository } from "../repositories/system.repository";
-import {
-  userFilterSettingsRepository,
-  userKpiSettingsRepository,
-  userNotificationSettingsRepository,
-  userReportSettingsRepository,
-} from "../repositories/user-settings.repository";
+import { userWorkspaceSettingsRepository } from "../repositories/user-workspace-settings.repository";
 import type { UsersRepository } from "../repositories/users.repository";
 import type { User } from "../schema/types";
 import type {
@@ -107,82 +101,174 @@ export class UsersService {
 
   async updateUserFilters(
     userId: string,
+    workspaceId: string,
     filterExcludeAnsweringMachine: boolean,
     filterMinDuration: number,
     filterMinReplicas: number,
   ): Promise<boolean> {
-    return userFilterSettingsRepository.upsert(userId, {
-      excludeAnsweringMachine: filterExcludeAnsweringMachine,
-      minDuration: filterMinDuration,
-      minReplicas: filterMinReplicas,
+    return userWorkspaceSettingsRepository.upsert(userId, workspaceId, {
+      filterSettings: {
+        excludeAnsweringMachine: filterExcludeAnsweringMachine,
+        minDuration: filterMinDuration,
+        minReplicas: filterMinReplicas,
+      },
     });
   }
 
   async updateUserReportKpiSettings(
     userId: string,
+    workspaceId: string,
     data: UserUpdateData,
   ): Promise<boolean> {
-    // Split data into appropriate tables
-    const notificationData: Record<string, unknown> = {};
-    const reportData: Record<string, unknown> = {};
-    const kpiData: Record<string, unknown> = {};
+    const filterSettings: Partial<{
+      excludeAnsweringMachine: boolean;
+      minDuration: number;
+      minReplicas: number;
+    }> = {};
+    const notificationSettings: Partial<{
+      email: {
+        dailyReport?: boolean;
+        weeklyReport?: boolean;
+        monthlyReport?: boolean;
+      };
+      telegram: {
+        dailyReport?: boolean;
+        managerReport?: boolean;
+        weeklyReport?: boolean;
+        monthlyReport?: boolean;
+        skipWeekends?: boolean;
+      };
+      max: { dailyReport?: boolean; managerReport?: boolean };
+    }> = {};
+    const reportSettings: Partial<{
+      includeCallSummaries: boolean;
+      detailed: boolean;
+      includeAvgValue: boolean;
+      includeAvgRating: boolean;
+      managedUserIds: string[];
+    }> = {};
+    const kpiSettings: Partial<{
+      baseSalary: number;
+      targetBonus: number;
+      targetTalkTimeMinutes: number;
+    }> = {};
 
-    // Map old field names to new structure
+    if (data.filterExcludeAnsweringMachine !== undefined)
+      filterSettings.excludeAnsweringMachine =
+        data.filterExcludeAnsweringMachine;
+    if (data.filterMinDuration !== undefined)
+      filterSettings.minDuration = data.filterMinDuration;
+    if (data.filterMinReplicas !== undefined)
+      filterSettings.minReplicas = data.filterMinReplicas;
+
     if (data.telegramDailyReport !== undefined)
-      notificationData.telegramDailyReport = data.telegramDailyReport;
+      notificationSettings.telegram = {
+        ...notificationSettings.telegram,
+        dailyReport: data.telegramDailyReport,
+      };
     if (data.telegramManagerReport !== undefined)
-      notificationData.telegramManagerReport = data.telegramManagerReport;
+      notificationSettings.telegram = {
+        ...notificationSettings.telegram,
+        managerReport: data.telegramManagerReport,
+      };
     if (data.telegramWeeklyReport !== undefined)
-      notificationData.telegramWeeklyReport = data.telegramWeeklyReport;
+      notificationSettings.telegram = {
+        ...notificationSettings.telegram,
+        weeklyReport: data.telegramWeeklyReport,
+      };
     if (data.telegramMonthlyReport !== undefined)
-      notificationData.telegramMonthlyReport = data.telegramMonthlyReport;
+      notificationSettings.telegram = {
+        ...notificationSettings.telegram,
+        monthlyReport: data.telegramMonthlyReport,
+      };
     if (data.telegramSkipWeekends !== undefined)
-      notificationData.telegramSkipWeekends = data.telegramSkipWeekends;
+      notificationSettings.telegram = {
+        ...notificationSettings.telegram,
+        skipWeekends: data.telegramSkipWeekends,
+      };
     if (data.maxDailyReport !== undefined)
-      notificationData.maxDailyReport = data.maxDailyReport;
+      notificationSettings.max = {
+        ...notificationSettings.max,
+        dailyReport: data.maxDailyReport,
+      };
     if (data.maxManagerReport !== undefined)
-      notificationData.maxManagerReport = data.maxManagerReport;
+      notificationSettings.max = {
+        ...notificationSettings.max,
+        managerReport: data.maxManagerReport,
+      };
     if (data.emailDailyReport !== undefined)
-      notificationData.emailDailyReport = data.emailDailyReport;
+      notificationSettings.email = {
+        ...notificationSettings.email,
+        dailyReport: data.emailDailyReport,
+      };
     if (data.emailWeeklyReport !== undefined)
-      notificationData.emailWeeklyReport = data.emailWeeklyReport;
+      notificationSettings.email = {
+        ...notificationSettings.email,
+        weeklyReport: data.emailWeeklyReport,
+      };
     if (data.emailMonthlyReport !== undefined)
-      notificationData.emailMonthlyReport = data.emailMonthlyReport;
+      notificationSettings.email = {
+        ...notificationSettings.email,
+        monthlyReport: data.emailMonthlyReport,
+      };
 
     if (data.reportIncludeCallSummaries !== undefined)
-      reportData.includeCallSummaries = data.reportIncludeCallSummaries;
+      reportSettings.includeCallSummaries = data.reportIncludeCallSummaries;
     if (data.reportDetailed !== undefined)
-      reportData.detailed = data.reportDetailed;
+      reportSettings.detailed = data.reportDetailed;
     if (data.reportIncludeAvgValue !== undefined)
-      reportData.includeAvgValue = data.reportIncludeAvgValue;
+      reportSettings.includeAvgValue = data.reportIncludeAvgValue;
     if (data.reportIncludeAvgRating !== undefined)
-      reportData.includeAvgRating = data.reportIncludeAvgRating;
-    if (data.reportManagedUserIds !== undefined)
-      reportData.managedUserIds = data.reportManagedUserIds;
+      reportSettings.includeAvgRating = data.reportIncludeAvgRating;
+    if (data.reportManagedUserIds !== undefined) {
+      const v = data.reportManagedUserIds;
+      reportSettings.managedUserIds = Array.isArray(v)
+        ? v
+        : typeof v === "string"
+          ? (() => {
+              try {
+                const j = JSON.parse(v) as unknown;
+                return Array.isArray(j) ? (j as string[]) : [];
+              } catch {
+                return [];
+              }
+            })()
+          : [];
+    }
 
     if (data.kpiBaseSalary !== undefined)
-      kpiData.baseSalary = data.kpiBaseSalary;
+      kpiSettings.baseSalary = data.kpiBaseSalary;
     if (data.kpiTargetBonus !== undefined)
-      kpiData.targetBonus = data.kpiTargetBonus;
+      kpiSettings.targetBonus = data.kpiTargetBonus;
     if (data.kpiTargetTalkTimeMinutes !== undefined)
-      kpiData.targetTalkTimeMinutes = data.kpiTargetTalkTimeMinutes;
+      kpiSettings.targetTalkTimeMinutes = data.kpiTargetTalkTimeMinutes;
 
-    // Update each table
-    const results = await Promise.all([
-      Object.keys(notificationData).length > 0
-        ? userNotificationSettingsRepository.upsert(userId, notificationData)
-        : Promise.resolve(true),
-      Object.keys(reportData).length > 0
-        ? userReportSettingsRepository.upsert(userId, reportData)
-        : Promise.resolve(true),
-      Object.keys(kpiData).length > 0
-        ? userKpiSettingsRepository.upsert(userId, kpiData)
-        : Promise.resolve(true),
-    ]);
+    const hasUpdates =
+      Object.keys(filterSettings).length > 0 ||
+      Object.keys(notificationSettings).length > 0 ||
+      Object.keys(reportSettings).length > 0 ||
+      Object.keys(kpiSettings).length > 0;
 
-    const success = results.every((r) => r);
+    if (!hasUpdates) return true;
 
-    if (success) {
+    const result = await userWorkspaceSettingsRepository.upsert(
+      userId,
+      workspaceId,
+      {
+        filterSettings:
+          Object.keys(filterSettings).length > 0 ? filterSettings : undefined,
+        notificationSettings:
+          Object.keys(notificationSettings).length > 0
+            ? notificationSettings
+            : undefined,
+        reportSettings:
+          Object.keys(reportSettings).length > 0 ? reportSettings : undefined,
+        kpiSettings:
+          Object.keys(kpiSettings).length > 0 ? kpiSettings : undefined,
+      },
+    );
+
+    if (result) {
       await this.systemRepository.addActivityLog(
         "INFO",
         `User ${userId} report/KPI settings updated`,
@@ -190,17 +276,24 @@ export class UsersService {
       );
     }
 
-    return success;
+    return result;
   }
 
   async updateUserTelegramSettings(
     userId: string,
+    workspaceId: string,
     telegramDailyReport: boolean,
     telegramManagerReport: boolean,
   ): Promise<boolean> {
-    return userNotificationSettingsRepository.upsert(userId, {
-      telegramDailyReport,
-      telegramManagerReport,
+    return userWorkspaceSettingsRepository.upsert(userId, workspaceId, {
+      notificationSettings: {
+        telegram: {
+          dailyReport: telegramDailyReport,
+          managerReport: telegramManagerReport,
+        },
+      } as Partial<
+        import("../schema/user/workspace-settings").NotificationSettings
+      >,
     });
   }
 
@@ -208,7 +301,6 @@ export class UsersService {
     userId: string,
     _newPassword: string,
   ): Promise<boolean> {
-    // Password is handled by Better Auth, not stored in our schema
     await this.systemRepository.addActivityLog(
       "INFO",
       `User ${userId} password updated`,
@@ -233,19 +325,19 @@ export class UsersService {
 
   async saveTelegramConnectToken(
     userId: string,
+    workspaceId: string,
     token: string,
   ): Promise<boolean> {
-    return userNotificationSettingsRepository.saveTelegramConnectToken(
+    return userWorkspaceSettingsRepository.saveTelegramConnectToken(
       userId,
+      workspaceId,
       token,
     );
   }
 
   async getUserByTelegramConnectToken(token: string): Promise<User | null> {
     const settings =
-      await userNotificationSettingsRepository.findByTelegramConnectToken(
-        token,
-      );
+      await userWorkspaceSettingsRepository.findByTelegramConnectToken(token);
     if (!settings) return null;
     return this.usersRepository.findById(settings.userId);
   }
@@ -267,9 +359,14 @@ export class UsersService {
     return result;
   }
 
-  async saveMaxConnectToken(userId: string, token: string): Promise<boolean> {
-    return userNotificationSettingsRepository.saveMaxConnectToken(
+  async saveMaxConnectToken(
+    userId: string,
+    workspaceId: string,
+    token: string,
+  ): Promise<boolean> {
+    return userWorkspaceSettingsRepository.saveMaxConnectToken(
       userId,
+      workspaceId,
       token,
     );
   }
@@ -289,8 +386,7 @@ export class UsersService {
   }
 
   async disconnectMax(userId: string): Promise<boolean> {
-    const result =
-      await userNotificationSettingsRepository.disconnectMax(userId);
+    const result = await userWorkspaceSettingsRepository.disconnectMax(userId);
 
     if (result) {
       await this.systemRepository.addActivityLog(

@@ -13,10 +13,9 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import { user } from "./auth/user";
-import { workspaces } from "./workspaces";
+import { user } from "../auth/user";
+import { workspaces } from "../workspace/workspaces";
 
-// TypeScript types for JSONB fields
 export interface NotificationSettings {
   email: {
     dailyReport: boolean;
@@ -29,13 +28,13 @@ export interface NotificationSettings {
     weeklyReport: boolean;
     monthlyReport: boolean;
     skipWeekends: boolean;
-    connectToken?: string; // encrypted
+    connectToken?: string;
   };
   max: {
     chatId?: string;
     dailyReport: boolean;
     managerReport: boolean;
-    connectToken?: string; // encrypted
+    connectToken?: string;
   };
 }
 
@@ -44,7 +43,7 @@ export interface ReportSettings {
   detailed: boolean;
   includeAvgValue: boolean;
   includeAvgRating: boolean;
-  managedUserIds: string[]; // array of user IDs
+  managedUserIds: string[];
 }
 
 export interface KpiSettings {
@@ -70,7 +69,6 @@ export const userWorkspaceSettings = pgTable(
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
 
-    // Consolidated settings as JSONB
     notificationSettings: jsonb("notification_settings")
       .$type<NotificationSettings>()
       .notNull()
@@ -122,7 +120,6 @@ export const userWorkspaceSettings = pgTable(
     ),
     index("user_workspace_settings_workspace_idx").on(table.workspaceId),
     index("user_workspace_settings_user_idx").on(table.userId),
-    // GIN indexes for JSONB search
     index("user_workspace_settings_notification_gin_idx").using(
       "gin",
       table.notificationSettings,

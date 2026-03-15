@@ -1,7 +1,5 @@
 /**
- * Workspace integrations - universal table for PBX integrations.
- * Supports Megafon, Mango, Beeline, MTS and other providers.
- * Each integration can be enabled/disabled independently.
+ * Workspace integrations - PBX integrations (Megafon, Mango, Beeline, MTS)
  */
 
 import { sql } from "drizzle-orm";

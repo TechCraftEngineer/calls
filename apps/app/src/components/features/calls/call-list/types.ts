@@ -34,7 +34,7 @@ export interface CallWithDetails {
 
 export interface CallListProps {
   calls: CallWithDetails[];
-  onPlay?: (filename: string, number: string) => void;
+  onPlay?: (callId: string, number: string) => void;
   onCallDeleted?: (callId: number) => void;
   onRecommendationsGenerated?: (
     callId: number,
