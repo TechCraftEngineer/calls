@@ -233,60 +233,56 @@ export default function EvaluationSettingsPage() {
                     {t.isBuiltin ? "Встроенный" : "Кастомный"}
                   </TableCell>
                   <TableCell className="text-right">
-                    {t.isBuiltin ? (
+                    <div className="flex gap-2 justify-end">
                       <Button
-                        variant="outline"
+                        variant={t.isBuiltin ? "outline" : "ghost"}
                         size="sm"
                         onClick={() => setViewModalSlug(t.slug)}
                       >
                         Просмотреть
                       </Button>
-                    ) : t.id ? (
-                      <div className="flex gap-2 justify-end">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setViewModalSlug(t.slug)}
-                        >
-                          Просмотреть
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={async () => {
-                            const full = await queryClient.fetchQuery(
-                              orpc.settings.getEvaluationTemplate.queryOptions({
-                                input: { id: t.id! },
-                              }),
-                            );
-                            setTemplateModal({
-                              open: true,
-                              mode: "edit",
-                              template: full,
-                            });
-                          }}
-                        >
-                          Редактировать
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => {
-                            if (
-                              confirm(
-                                `Удалить шаблон «${t.name}»? Пользователи с этим шаблоном перейдут на шаблон по умолчанию.`,
-                              )
-                            ) {
-                              deleteTemplateMutation.mutate({ id: t.id! });
-                            }
-                          }}
-                          disabled={deleteTemplateMutation.isPending}
-                        >
-                          Удалить
-                        </Button>
-                      </div>
-                    ) : null}
+                      {!t.isBuiltin && t.id && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              const full = await queryClient.fetchQuery(
+                                orpc.settings.getEvaluationTemplate.queryOptions(
+                                  {
+                                    input: { id: t.id },
+                                  },
+                                ),
+                              );
+                              setTemplateModal({
+                                open: true,
+                                mode: "edit",
+                                template: full,
+                              });
+                            }}
+                          >
+                            Редактировать
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => {
+                              if (
+                                confirm(
+                                  `Удалить шаблон «${t.name}»? Пользователи с этим шаблоном перейдут на шаблон по умолчанию.`,
+                                )
+                              ) {
+                                deleteTemplateMutation.mutate({ id: t.id });
+                              }
+                            }}
+                            disabled={deleteTemplateMutation.isPending}
+                          >
+                            Удалить
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
