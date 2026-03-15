@@ -1,7 +1,16 @@
 "use client";
 
-import { Button } from "@calls/ui";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Dialog,
+  DialogContent,
+} from "@calls/ui";
+import { useCallback, useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { useToast } from "@/components/ui/toast";
 import api from "@/lib/api";
@@ -33,8 +42,6 @@ export default function CallDetailModal({
   const [deleting, setDeleting] = useState(false);
   const [isGeneratingRecommendations, setIsGeneratingRecommendations] =
     useState(false);
-  const modalRef = useRef<HTMLDivElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -66,13 +73,6 @@ export default function CallDetailModal({
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [onClose, showDeleteConfirm]);
-
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, []);
 
   const handleGenerateRecommendations = async () => {
     if (!callId) return;
@@ -154,144 +154,117 @@ export default function CallDetailModal({
     }
   }, [call, callId, deleting, onCallDeleted, onClose, showToast]);
 
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === overlayRef.current && !showDeleteConfirm) onClose();
-  };
-
-  if (loading) {
-    return (
-      <div
-        className="modal-overlay"
-        ref={overlayRef}
-        onClick={handleOverlayClick}
-      >
-        <div className="modal-container" ref={modalRef}>
-          <div className="py-10 text-center">Загрузка...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!call) {
-    return (
-      <div
-        className="modal-overlay"
-        ref={overlayRef}
-        onClick={handleOverlayClick}
-      >
-        <div className="modal-container" ref={modalRef}>
-          <div className="py-10 text-center">Звонок не найден</div>
-        </div>
-      </div>
-    );
-  }
-
-  const isCompleted = call.duration_seconds > 0;
+  const isOpen = !!callId;
 
   return (
-    <div
-      className="modal-overlay"
-      ref={overlayRef}
-      onClick={handleOverlayClick}
-    >
-      <div
-        className="modal-container"
-        ref={modalRef}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="relative pt-6 px-6">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="modal-close-btn absolute top-6 right-6 z-10"
-            onClick={onClose}
-            aria-label="Закрыть"
-          >
-            ×
-          </Button>
-        </div>
-        <div className="modal-content">
-          <div className="call-meta-header">
-            <div className="call-title-row flex items-center justify-between w-full pr-[50px]">
-              <div className="flex items-center gap-3 flex-1">
-                <span className="call-main-number">{call.number}</span>
-                <span className="call-direction-tag bg-[#F5F5F7] text-gray-500">
-                  {call.direction === "incoming" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ"}
-                </span>
-                <span className="call-status-tag">
-                  {isCompleted ? "ЗАВЕРШЁН" : "ПРОПУЩЕН"}
-                </span>
-              </div>
-              {isWorkspaceAdmin && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="ml-auto"
-                  disabled={deleting}
-                  title="Удалить звонок"
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                  </svg>
-                  {deleting ? "Удаление..." : "Удалить"}
-                </Button>
-              )}
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent
+          className="max-w-[1400px] max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto p-0 gap-0 text-left"
+          showCloseButton={true}
+        >
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <p className="text-muted-foreground">Загрузка...</p>
             </div>
-            <div className="call-sub-meta">
-              <div className="meta-item-inline">
-                📅 {new Date(call.timestamp).toLocaleDateString()}
+          ) : !call ? (
+            <div className="flex items-center justify-center py-16">
+              <p className="text-muted-foreground">Звонок не найден</p>
+            </div>
+          ) : (
+            <div className="p-6">
+              <div className="mb-8">
+                <div className="flex flex-wrap items-center justify-between gap-4 pr-10">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-foreground text-3xl font-extrabold tracking-tight">
+                      {call.number}
+                    </span>
+                    <Badge variant="secondary">
+                      {call.direction === "incoming" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ"}
+                    </Badge>
+                    <Badge
+                      variant={
+                        call.duration_seconds > 0 ? "outline" : "destructive"
+                      }
+                      className={
+                        call.duration_seconds > 0
+                          ? "border-green-500/30 bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400"
+                          : undefined
+                      }
+                    >
+                      {call.duration_seconds > 0 ? "ЗАВЕРШЁН" : "ПРОПУЩЕН"}
+                    </Badge>
+                  </div>
+                  {isWorkspaceAdmin && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={deleting}
+                      title="Удалить звонок"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      </svg>
+                      {deleting ? "Удаление..." : "Удалить"}
+                    </Button>
+                  )}
+                </div>
+                <div className="text-muted-foreground mt-3 flex flex-wrap gap-6 text-sm font-medium">
+                  <span>
+                    📅 {new Date(call.timestamp).toLocaleDateString()}
+                  </span>
+                  <span>
+                    ⏰{" "}
+                    {new Date(call.timestamp).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                  <span>⏱️ {Math.round(call.duration_seconds)}с</span>
+                  <span>
+                    👤 {call.manager_name || call.operator_name || "—"}
+                  </span>
+                </div>
               </div>
-              <div className="meta-item-inline">
-                ⏰{" "}
-                {new Date(call.timestamp).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </div>
-              <div className="meta-item-inline">
-                ⏱️ {Math.round(call.duration_seconds)}с
-              </div>
-              <div className="meta-item-inline">
-                👤 {call.manager_name || call.operator_name || "—"}
+
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
+                <TranscriptSection
+                  transcript={transcript}
+                  showRaw={showRaw}
+                  onShowRawChange={setShowRaw}
+                  onDownloadTxt={handleDownloadTxt}
+                  managerName={call.manager_name}
+                />
+                <EvaluationSidebar
+                  call={call}
+                  transcript={transcript}
+                  evaluation={evaluation}
+                  selectedModel={selectedModel}
+                  restarting={restarting}
+                  onModelChange={setSelectedModel}
+                  onRestartAnalysis={handleRestartAnalysis}
+                  onGenerateRecommendations={handleGenerateRecommendations}
+                  isGeneratingRecommendations={isGeneratingRecommendations}
+                />
               </div>
             </div>
-          </div>
-          <div className="detail-grid">
-            <TranscriptSection
-              transcript={transcript}
-              showRaw={showRaw}
-              onShowRawChange={setShowRaw}
-              onDownloadTxt={handleDownloadTxt}
-              managerName={call.manager_name}
-            />
-            <EvaluationSidebar
-              call={call}
-              transcript={transcript}
-              evaluation={evaluation}
-              selectedModel={selectedModel}
-              restarting={restarting}
-              onModelChange={setSelectedModel}
-              onRestartAnalysis={handleRestartAnalysis}
-              onGenerateRecommendations={handleGenerateRecommendations}
-              isGeneratingRecommendations={isGeneratingRecommendations}
-            />
-          </div>
-        </div>
-      </div>
-      {showDeleteConfirm && (
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {showDeleteConfirm && call && (
         <DeleteConfirmModal
           call={call}
           deleting={deleting}
@@ -299,6 +272,6 @@ export default function CallDetailModal({
           onCancel={() => setShowDeleteConfirm(false)}
         />
       )}
-    </div>
+    </>
   );
 }

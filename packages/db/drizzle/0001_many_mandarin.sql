@@ -1,0 +1,1 @@
+ALTER TABLE "transcripts" ADD CONSTRAINT "transcripts_call_id_unique" UNIQUE("call_id");

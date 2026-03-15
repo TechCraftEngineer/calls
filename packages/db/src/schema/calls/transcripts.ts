@@ -20,6 +20,7 @@ export const transcripts = pgTable(
     id: uuid("id").primaryKey().default(sql`uuidv7()`),
     callId: uuid("call_id")
       .notNull()
+      .unique()
       .references(() => calls.id, { onDelete: "cascade" }),
     text: text("text"),
     rawText: text("raw_text"),

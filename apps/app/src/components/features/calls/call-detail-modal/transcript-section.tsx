@@ -1,5 +1,6 @@
 "use client";
 
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@calls/ui";
 import sanitizeHtml from "sanitize-html";
 import type { TranscriptDetail } from "./types";
 
@@ -65,61 +66,61 @@ export default function TranscriptSection({
   const messages = parseMessages(transcript, showRaw, managerName);
 
   return (
-    <div className="transcript-card">
-      <div className="transcript-header flex justify-between items-center mb-4">
+    <Card className="flex min-h-[600px] max-h-[800px] flex-col overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between gap-4 border-b px-6 py-5">
         <div className="flex items-center gap-3">
-          <h3 className="m-0 text-base font-bold flex items-center gap-2">
+          <CardTitle className="mb-0 flex items-center gap-2 text-base">
             <span className="text-lg">💬</span> Расшифровка
-          </h3>
+          </CardTitle>
           {transcript?.raw_text && (
-            <div className="flex bg-gray-100 p-0.5 rounded-md ml-2">
-              <button
+            <div className="bg-muted flex rounded-md p-0.5">
+              <Button
+                variant={showRaw ? "ghost" : "secondary"}
+                size="sm"
+                className="h-7 px-2.5 text-[11px]"
                 onClick={() => onShowRawChange(false)}
-                className={`py-1 px-2.5 text-[11px] border-none rounded cursor-pointer transition-all ${
-                  !showRaw
-                    ? "bg-white text-[#111] font-semibold shadow-sm"
-                    : "bg-transparent text-gray-500"
-                }`}
               >
                 Обработка
-              </button>
-              <button
+              </Button>
+              <Button
+                variant={showRaw ? "secondary" : "ghost"}
+                size="sm"
+                className="h-7 px-2.5 text-[11px]"
                 onClick={() => onShowRawChange(true)}
-                className={`py-1 px-2.5 text-[11px] border-none rounded cursor-pointer transition-all ${
-                  showRaw
-                    ? "bg-white text-[#111] font-semibold shadow-sm"
-                    : "bg-transparent text-gray-500"
-                }`}
               >
                 Оригинал
-              </button>
+              </Button>
             </div>
           )}
         </div>
-        <button
+        <Button
           type="button"
-          className="ghost-btn h-8 text-xs py-0 px-3 flex items-center gap-1.5"
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground h-8 gap-1.5 px-3 text-xs"
           onClick={onDownloadTxt}
         >
           <span>📥</span> Скачать .txt
-        </button>
-      </div>
-      <div className="message-list">
+        </Button>
+      </CardHeader>
+      <CardContent className="bg-muted/30 flex flex-1 flex-col gap-4 overflow-y-auto p-6">
         {messages.length > 0 ? (
           messages.map((m, i) => (
             <div
               key={i}
-              className={`message-item ${m.isOperator ? "is-operator" : ""}`}
+              className={`flex max-w-[85%] gap-3 ${m.isOperator ? "self-start" : "self-end"}`}
             >
-              <div className="avatar-circle-sm">
+              <div className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold">
                 {m.speaker.includes("АВТООТВЕТЧИК")
                   ? "🤖"
                   : m.speaker[0]?.toUpperCase() || "👤"}
               </div>
-              <div className="message-content">
-                <div className="speaker-name-sm">{m.speaker}</div>
+              <div className="flex flex-col gap-1">
+                <div className="text-muted-foreground text-[11px] font-bold uppercase tracking-wide">
+                  {m.speaker}
+                </div>
                 <div
-                  className="speech-bubble"
+                  className="bg-background border-border rounded-bl-2xl rounded-br-2xl rounded-tl-sm rounded-tr-2xl border px-4 py-3 text-sm leading-relaxed shadow-sm"
                   // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized
                   dangerouslySetInnerHTML={{
                     __html: sanitizeHtml(m.text, {
@@ -133,11 +134,11 @@ export default function TranscriptSection({
             </div>
           ))
         ) : (
-          <div className="text-center py-10 text-gray-400">
+          <div className="text-muted-foreground py-10 text-center">
             Текст отсутствует
           </div>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

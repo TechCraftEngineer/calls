@@ -1,16 +1,26 @@
 /**
  * AssemblyAI ASR провайдер через @ai-sdk/assemblyai.
  * @see https://ai-sdk.dev/providers/ai-sdk-providers/assemblyai
+ *
+ * Используем undici fetch вместо Bun fetch — обход бага Bun:
+ * "socket connection was closed unexpectedly" (oven-sh/bun#9881)
  */
 
-import { assemblyai } from "@ai-sdk/assemblyai";
+import { createAssemblyAI } from "@ai-sdk/assemblyai";
+import type { FetchFunction } from "@ai-sdk/provider-utils";
 import { env } from "@calls/config";
 import { experimental_transcribe as transcribe } from "ai";
+import { fetch as undiciFetch } from "undici";
 import { createLogger } from "../logger";
 import { withRetry } from "./retry";
 import type { AsrResult, Utterance } from "./types";
 
 const logger = createLogger("asr-assemblyai");
+
+/** Провайдер с undici fetch — обход бага Bun socket connection */
+const assemblyai = createAssemblyAI({
+  fetch: undiciFetch as unknown as FetchFunction,
+});
 
 /** Таймаут транскрибации — 10 минут (длинные записи) */
 const TRANSCRIBE_TIMEOUT_MS = 10 * 60 * 1000;

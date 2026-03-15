@@ -35,6 +35,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import type { Table } from "@tanstack/react-table"
 import {
   Cell,
   flexRender,
@@ -141,21 +142,28 @@ function DataGridTableDndCell<TData>({ cell }: { cell: Cell<TData, unknown> }) {
   )
 }
 
+function getEffectiveColumnOrder(table: Table<unknown>) {
+  const columnOrder = table.getState().columnOrder
+  if (columnOrder?.length) return columnOrder
+  return table.getVisibleFlatColumns().map((col) => col.id)
+}
+
 function DataGridTableDnd<TData>({
   handleDragEnd,
 }: {
   handleDragEnd?: (event: DragEndEvent) => void
 }) {
   const { table, isLoading, props } = useDataGrid()
+  const columnOrder = getEffectiveColumnOrder(table)
 
   const defaultHandleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
-    const columnOrder = table.getState().columnOrder
-    const oldIndex = columnOrder.indexOf(active.id as string)
-    const newIndex = columnOrder.indexOf(over.id as string)
+    const order = getEffectiveColumnOrder(table)
+    const oldIndex = order.indexOf(active.id as string)
+    const newIndex = order.indexOf(over.id as string)
     if (oldIndex === -1 || newIndex === -1) return
-    const newOrder = arrayMove(columnOrder, oldIndex, newIndex)
+    const newOrder = arrayMove(order, oldIndex, newIndex)
     table.setColumnOrder(newOrder)
   }
 
@@ -209,7 +217,7 @@ function DataGridTableDnd<TData>({
                 return (
                   <DataGridTableHeadRow headerGroup={headerGroup} key={index}>
                     <SortableContext
-                      items={table.getState().columnOrder}
+                      items={columnOrder}
                       strategy={horizontalListSortingStrategy}
                     >
                       {headerGroup.headers.map((header) => (
@@ -257,7 +265,7 @@ function DataGridTableDnd<TData>({
                           return (
                             <SortableContext
                               key={cell.id}
-                              items={table.getState().columnOrder}
+                              items={columnOrder}
                               strategy={horizontalListSortingStrategy}
                             >
                               <DataGridTableDndCell cell={cell} />

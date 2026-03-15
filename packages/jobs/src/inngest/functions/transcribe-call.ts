@@ -16,6 +16,10 @@ export const transcribeCallFn = inngest.createFunction(
     id: "transcribe-call",
     name: "Транскрибация звонка (ASR + LLM нормализация)",
     retries: 2,
+    concurrency: {
+      limit: 1,
+      key: "event.data.callId",
+    },
   },
   { event: "call/transcribe.requested" },
   async ({ event, step }) => {
@@ -37,7 +41,21 @@ export const transcribeCallFn = inngest.createFunction(
       if (!fileId) throw new Error(`У звонка ${callId} нет привязанного файла`);
       const file = await filesService.getFileById(fileId);
       if (!file) throw new Error(`Файл не найден: ${fileId}`);
-      return getDownloadUrlForAsr(file.storageKey);
+      const url = await getDownloadUrlForAsr(file.storageKey);
+      // Диагностика: проверка доступности URL (Yandex SpeechKit получает 403 при недоступном URL)
+      const headRes = await fetch(url, { method: "HEAD" });
+      if (!headRes.ok) {
+        logger.warn(
+          "Pre-signed URL недоступен — проверьте права S3 ключа и bucket",
+          {
+            callId,
+            storageKey: file.storageKey,
+            status: headRes.status,
+            statusText: headRes.statusText,
+          },
+        );
+      }
+      return url;
     });
 
     const summaryPrompt = await step.run("get-summary-prompt", async () => {

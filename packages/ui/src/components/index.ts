@@ -27,6 +27,18 @@ export {
 export type { ChartConfig } from "./chart";
 export { Checkbox } from "./checkbox";
 export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogTrigger,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "./dialog";
+export {
   Drawer,
   DrawerPortal,
   DrawerOverlay,

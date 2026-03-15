@@ -1,6 +1,14 @@
 "use client";
 
-import { Button } from "@calls/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@calls/ui";
 import type { CallDetail } from "./types";
 
 interface DeleteConfirmModalProps {
@@ -17,45 +25,37 @@ export default function DeleteConfirmModal({
   onCancel,
 }: DeleteConfirmModalProps) {
   return (
-    <div
-      className="modal-overlay z-3000"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onCancel();
-      }}
-    >
-      <div
-        className="modal-container max-w-[480px] p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="mb-4 text-lg font-bold text-[#111]">
-          Подтверждение удаления
-        </h3>
-        <p className="mb-6 text-sm text-gray-500 leading-relaxed">
-          Вы уверены, что хотите удалить этот звонок?
-        </p>
+    <Dialog open={true} onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="z-[100] max-w-[480px]" showCloseButton={true}>
+        <DialogHeader>
+          <DialogTitle>Подтверждение удаления</DialogTitle>
+          <DialogDescription>
+            Вы уверены, что хотите удалить этот звонок?
+          </DialogDescription>
+        </DialogHeader>
         {call && (
-          <div className="mb-6 p-3 bg-gray-100 rounded-lg text-[13px] text-gray-600">
+          <div className="bg-muted rounded-lg p-3 text-[13px] text-muted-foreground">
             <div>
-              <strong>Номер:</strong> {call.number}
+              <strong className="text-foreground">Номер:</strong> {call.number}
             </div>
             <div>
-              <strong>Дата:</strong>{" "}
+              <strong className="text-foreground">Дата:</strong>{" "}
               {new Date(call.timestamp).toLocaleString("ru-RU")}
             </div>
             <div>
-              <strong>Длительность:</strong> {Math.round(call.duration_seconds)}
-              с
+              <strong className="text-foreground">Длительность:</strong>{" "}
+              {Math.round(call.duration_seconds)} с
             </div>
           </div>
         )}
-        <div className="flex gap-3 justify-end">
+        <DialogFooter>
           <Button variant="outline" onClick={onCancel} disabled={deleting}>
             Отмена
           </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={deleting}>
             {deleting ? (
               <>
-                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full inline-block animate-spin" />
+                <span className="inline-block size-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                 Удаление...
               </>
             ) : (
@@ -77,8 +77,8 @@ export default function DeleteConfirmModal({
               </>
             )}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -19,13 +19,17 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import api from "@/lib/api";
 import CallDetailModal from "../call-detail-modal";
 import RecommendationsModal from "../recommendations-modal";
 import { getCallListColumns } from "./call-list-columns";
+import {
+  loadColumnSchema,
+  saveColumnSchema,
+} from "./call-list-data-grid-storage";
 import type { CallListProps } from "./types";
 
 function StackedCallsIllustration() {
@@ -138,6 +142,42 @@ export function CallListDataGrid({
     ],
   );
 
+  const [columnSchema, setColumnSchema] = useState(loadColumnSchema);
+
+  useEffect(() => {
+    saveColumnSchema(columnSchema);
+  }, [columnSchema]);
+
+  const handleColumnOrderChange = useCallback(
+    (updaterOrValue: string[] | ((old: string[]) => string[])) => {
+      setColumnSchema((prev) => ({
+        ...prev,
+        columnOrder:
+          typeof updaterOrValue === "function"
+            ? updaterOrValue(prev.columnOrder)
+            : updaterOrValue,
+      }));
+    },
+    [],
+  );
+
+  const handleColumnVisibilityChange = useCallback(
+    (
+      updaterOrValue:
+        | Record<string, boolean>
+        | ((old: Record<string, boolean>) => Record<string, boolean>),
+    ) => {
+      setColumnSchema((prev) => ({
+        ...prev,
+        columnVisibility:
+          typeof updaterOrValue === "function"
+            ? updaterOrValue(prev.columnVisibility)
+            : updaterOrValue,
+      }));
+    },
+    [],
+  );
+
   const table = useReactTable({
     data: calls,
     columns,
@@ -150,7 +190,11 @@ export function CallListDataGrid({
         pageIndex: pagination.page - 1,
         pageSize: pagination.per_page,
       },
+      columnOrder: columnSchema.columnOrder,
+      columnVisibility: columnSchema.columnVisibility,
     },
+    onColumnOrderChange: handleColumnOrderChange,
+    onColumnVisibilityChange: handleColumnVisibilityChange,
     onPaginationChange: (updater) => {
       const prev = {
         pageIndex: pagination.page - 1,
@@ -160,13 +204,6 @@ export function CallListDataGrid({
       if (next) {
         onPaginationChange(next.pageIndex + 1, next.pageSize);
       }
-    },
-    initialState: {
-      columnVisibility: Object.fromEntries(
-        columns
-          .map((col) => (col.id ? ([col.id, true] as const) : null))
-          .filter((x): x is [string, boolean] => x !== null),
-      ),
     },
   });
 
@@ -220,7 +257,7 @@ export function CallListDataGrid({
         emptyMessage={emptyMessage}
         tableLayout={{
           columnsVisibility: true,
-          columnsMovable: true,
+          columnsDraggable: true,
           rowBorder: true,
           headerBorder: true,
           headerBackground: true,
