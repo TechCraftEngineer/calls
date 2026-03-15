@@ -10,17 +10,13 @@ import {
   usersRepository,
   userWorkspaceSettingsRepository,
 } from "@calls/db";
-import {
-  type EvaluationTemplateSlug,
-  evaluateCallWithLlm,
-  getEvaluationPrompt,
-} from "../../evaluation";
+import { evaluateCallWithLlm, resolveEvaluationPrompt } from "../../evaluation";
 import { createLogger } from "../../logger";
 import { inngest } from "../client";
 
 const logger = createLogger("evaluate-call");
 
-const DEFAULT_TEMPLATE: EvaluationTemplateSlug = "general";
+const DEFAULT_TEMPLATE = "general";
 
 export const evaluateCallFn = inngest.createFunction(
   {
@@ -57,7 +53,7 @@ export const evaluateCallFn = inngest.createFunction(
     }
 
     const evaluationPrompt = await step.run("resolve-template", async () => {
-      let templateSlug: EvaluationTemplateSlug = DEFAULT_TEMPLATE;
+      let templateSlug: string = DEFAULT_TEMPLATE;
       let customInstructions: string | null = null;
       let userHasTemplate = false;
 
@@ -77,7 +73,7 @@ export const evaluateCallFn = inngest.createFunction(
           | null
           | undefined;
         if (evalSettings?.templateSlug) {
-          templateSlug = evalSettings.templateSlug as EvaluationTemplateSlug;
+          templateSlug = evalSettings.templateSlug;
           customInstructions = evalSettings.customInstructions ?? null;
           userHasTemplate = true;
         }
@@ -90,11 +86,15 @@ export const evaluateCallFn = inngest.createFunction(
           DEFAULT_TEMPLATE,
         );
         if (defaultTemplate) {
-          templateSlug = defaultTemplate as EvaluationTemplateSlug;
+          templateSlug = defaultTemplate;
         }
       }
 
-      return getEvaluationPrompt(templateSlug, customInstructions);
+      return resolveEvaluationPrompt(
+        call.workspaceId,
+        templateSlug,
+        customInstructions,
+      );
     });
 
     const evaluation = await step.run("evaluate", async () => {

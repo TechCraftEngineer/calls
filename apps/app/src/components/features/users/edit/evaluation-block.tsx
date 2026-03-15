@@ -151,7 +151,7 @@ export function EvaluationBlock({
         </label>
         <Select
           value={value}
-          onValueChange={(v: "sales" | "support" | "general") =>
+          onValueChange={(v: string) =>
             setForm({
               ...form,
               evaluation_template_slug: v,

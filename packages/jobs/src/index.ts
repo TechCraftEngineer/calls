@@ -1,5 +1,7 @@
 export { runTranscriptionPipeline } from "./asr";
+export type { EvaluationTemplateSlug } from "./evaluation";
 export {
+  EVALUATION_TEMPLATES,
   evaluateCallWithLlm,
   getEvaluationTemplatesList,
 } from "./evaluation";

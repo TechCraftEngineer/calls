@@ -32,7 +32,7 @@ export interface ManagedUser extends Omit<User, "id"> {
   kpi_base_salary?: number;
   kpi_target_bonus?: number;
   kpi_target_talk_time_minutes?: number;
-  evaluation_template_slug?: "sales" | "support" | "general" | null;
+  evaluation_template_slug?: string | null;
   evaluation_custom_instructions?: string | null;
 }
 
@@ -66,7 +66,7 @@ export interface AddUserForm {
   kpi_base_salary: number;
   kpi_target_bonus: number;
   kpi_target_talk_time_minutes: number;
-  evaluation_template_slug: "sales" | "support" | "general" | null;
+  evaluation_template_slug: string | null;
   evaluation_custom_instructions: string | null;
 }
 

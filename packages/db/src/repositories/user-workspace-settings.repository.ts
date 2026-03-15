@@ -247,6 +247,53 @@ export const userWorkspaceSettingsRepository = {
     }
     return true;
   },
+
+  async updateEvaluationTemplateForWorkspace(
+    workspaceId: string,
+    fromTemplateSlug: string,
+    toTemplateSlug: string,
+  ): Promise<number> {
+    // Find all users in the workspace who use the specified template
+    const rows = await db
+      .select()
+      .from(schema.userWorkspaceSettings)
+      .where(
+        and(
+          eq(schema.userWorkspaceSettings.workspaceId, workspaceId),
+          sql`${schema.userWorkspaceSettings.evaluationSettings}->>'templateSlug' = ${fromTemplateSlug}`,
+        ),
+      );
+
+    let updatedCount = 0;
+    for (const row of rows) {
+      const evaluationSettings =
+        row.evaluationSettings as EvaluationSettings | null;
+      if (evaluationSettings?.templateSlug === fromTemplateSlug) {
+        const updatedEvaluationSettings: EvaluationSettings = {
+          ...evaluationSettings,
+          templateSlug: toTemplateSlug,
+        };
+
+        const result = await db
+          .update(schema.userWorkspaceSettings)
+          .set({
+            evaluationSettings: updatedEvaluationSettings,
+          } as typeof schema.userWorkspaceSettings.$inferInsert)
+          .where(
+            and(
+              eq(schema.userWorkspaceSettings.userId, row.userId),
+              eq(schema.userWorkspaceSettings.workspaceId, workspaceId),
+            ),
+          );
+
+        if ((result.rowCount ?? 0) > 0) {
+          updatedCount++;
+        }
+      }
+    }
+
+    return updatedCount;
+  },
 };
 
 export type UserWorkspaceSettingsRepository =

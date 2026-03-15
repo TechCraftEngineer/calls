@@ -59,7 +59,7 @@ export interface FilterSettings {
 }
 
 export interface EvaluationSettings {
-  templateSlug: "sales" | "support" | "general";
+  templateSlug: string;
   customInstructions?: string;
 }
 

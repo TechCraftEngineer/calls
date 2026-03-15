@@ -24,7 +24,7 @@ export interface UserUpdateData {
   kpiBaseSalary?: number;
   kpiTargetBonus?: number;
   kpiTargetTalkTimeMinutes?: number;
-  evaluationTemplateSlug?: "sales" | "support" | "general" | null;
+  evaluationTemplateSlug?: string | null;
   evaluationCustomInstructions?: string | null;
 }
 

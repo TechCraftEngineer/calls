@@ -13,6 +13,7 @@ export {
   getDefaultWorkspace,
   handleWorkspaceError,
 } from "./lib/workspace-utils";
+export { evaluationTemplatesRepository } from "./repositories/evaluation-templates.repository";
 export { promptsRepository } from "./repositories/prompts.repository";
 export { systemRepository } from "./repositories/system.repository";
 export { userWorkspaceSettingsRepository } from "./repositories/user-workspace-settings.repository";

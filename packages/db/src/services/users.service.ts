@@ -67,7 +67,7 @@ export class UsersService {
     kpi_base_salary: number;
     kpi_target_bonus: number;
     kpi_target_talk_time_minutes: number;
-    evaluation_template_slug: "sales" | "support" | "general" | null;
+    evaluation_template_slug: string | null;
     evaluation_custom_instructions: string | null;
   } | null> {
     const user = await this.usersRepository.findById(userId);

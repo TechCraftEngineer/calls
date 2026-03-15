@@ -21,16 +21,12 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { TemplateFormModal } from "@/components/features/evaluation/template-form-modal";
+import { ViewTemplateModal } from "@/components/features/evaluation/view-template-modal";
 import type { ManagedUser } from "@/components/features/users/types";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { getCurrentUser } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
-
-const TEMPLATE_LABELS: Record<string, string> = {
-  sales: "Продажи",
-  support: "Поддержка",
-  general: "Общий",
-};
 
 export default function EvaluationSettingsPage() {
   const router = useRouter();
@@ -58,12 +54,42 @@ export default function EvaluationSettingsPage() {
   });
 
   const [defaultTemplate, setDefaultTemplate] = useState<string>("general");
+  const [templateModal, setTemplateModal] = useState<{
+    open: boolean;
+    mode: "create" | "edit";
+    template?: {
+      id: string;
+      slug: string;
+      name: string;
+      description: string;
+      systemPrompt: string;
+    } | null;
+    initialPrompt?: string;
+    initialName?: string;
+  }>({ open: false, mode: "create", template: null });
+  const [viewModalSlug, setViewModalSlug] = useState<string | null>(null);
 
   useEffect(() => {
     if (evaluationSettings?.defaultTemplateSlug) {
       setDefaultTemplate(evaluationSettings.defaultTemplateSlug);
     }
   }, [evaluationSettings?.defaultTemplateSlug]);
+
+  const deleteTemplateMutation = useMutation(
+    orpc.settings.deleteEvaluationTemplate.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.getEvaluationTemplates.queryKey(),
+        });
+        toast.success("Шаблон удалён");
+      },
+      onError: (err) => {
+        toast.error(
+          err instanceof Error ? err.message : "Не удалось удалить шаблон",
+        );
+      },
+    }),
+  );
 
   const updateEvaluationMutation = useMutation(
     orpc.settings.updateEvaluationSettings.mutationOptions({
@@ -106,11 +132,25 @@ export default function EvaluationSettingsPage() {
 
   const handleSaveDefault = () => {
     updateEvaluationMutation.mutate({
-      defaultTemplateSlug: defaultTemplate as "sales" | "support" | "general",
+      defaultTemplateSlug: defaultTemplate,
     });
   };
 
+  const getTemplateName = (slug: string) => {
+    const t = (evaluationTemplates as { slug: string; name: string }[]).find(
+      (x) => x.slug === slug,
+    );
+    return t?.name ?? slug;
+  };
+
   const managedUsers = users as ManagedUser[];
+  const templatesList = evaluationTemplates as {
+    slug: string;
+    name: string;
+    description: string;
+    isBuiltin: boolean;
+    id: string | null;
+  }[];
 
   return (
     <div className="space-y-8">
@@ -152,6 +192,106 @@ export default function EvaluationSettingsPage() {
               {updateEvaluationMutation.isPending ? "Сохранение…" : "Сохранить"}
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-base font-semibold">Шаблоны оценки</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Встроенные шаблоны и созданные вами. Редактируйте промпты для
+                кастомных шаблонов.
+              </p>
+            </div>
+            <Button
+              onClick={() =>
+                setTemplateModal({ open: true, mode: "create", template: null })
+              }
+            >
+              Создать шаблон
+            </Button>
+          </div>
+          <Table className="op-table">
+            <TableHeader>
+              <TableRow className="border-none">
+                <TableHead>Название</TableHead>
+                <TableHead>Описание</TableHead>
+                <TableHead>Тип</TableHead>
+                <TableHead className="text-right">Действия</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {templatesList.map((t) => (
+                <TableRow key={t.slug}>
+                  <TableCell className="font-medium">{t.name}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {t.description || "—"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {t.isBuiltin ? "Встроенный" : "Кастомный"}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {t.isBuiltin ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setViewModalSlug(t.slug)}
+                      >
+                        Просмотреть
+                      </Button>
+                    ) : t.id ? (
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setViewModalSlug(t.slug)}
+                        >
+                          Просмотреть
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={async () => {
+                            const full = await queryClient.fetchQuery(
+                              orpc.settings.getEvaluationTemplate.queryOptions({
+                                input: { id: t.id! },
+                              }),
+                            );
+                            setTemplateModal({
+                              open: true,
+                              mode: "edit",
+                              template: full,
+                            });
+                          }}
+                        >
+                          Редактировать
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                `Удалить шаблон «${t.name}»? Пользователи с этим шаблоном перейдут на шаблон по умолчанию.`,
+                              )
+                            ) {
+                              deleteTemplateMutation.mutate({ id: t.id! });
+                            }
+                          }}
+                          disabled={deleteTemplateMutation.isPending}
+                        >
+                          Удалить
+                        </Button>
+                      </div>
+                    ) : null}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
@@ -205,8 +345,7 @@ export default function EvaluationSettingsPage() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {u.evaluation_template_slug
-                          ? (TEMPLATE_LABELS[u.evaluation_template_slug] ??
-                            u.evaluation_template_slug)
+                          ? getTemplateName(u.evaluation_template_slug)
                           : "По умолчанию"}
                       </TableCell>
                       <TableCell className="text-right">
@@ -237,6 +376,39 @@ export default function EvaluationSettingsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <ViewTemplateModal
+        open={!!viewModalSlug}
+        onClose={() => setViewModalSlug(null)}
+        slug={viewModalSlug}
+        onCreateFrom={(systemPrompt, name) => {
+          setViewModalSlug(null);
+          setTemplateModal({
+            open: true,
+            mode: "create",
+            template: null,
+            initialPrompt: systemPrompt,
+            initialName: name + " (копия)",
+          });
+        }}
+      />
+
+      <TemplateFormModal
+        open={templateModal.open}
+        onClose={() =>
+          setTemplateModal({
+            open: false,
+            mode: "create",
+            template: null,
+            initialPrompt: undefined,
+            initialName: undefined,
+          })
+        }
+        mode={templateModal.mode}
+        template={templateModal.template ?? undefined}
+        initialPrompt={templateModal.initialPrompt}
+        initialName={templateModal.initialName}
+      />
     </div>
   );
 }

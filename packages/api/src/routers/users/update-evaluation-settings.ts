@@ -5,10 +5,7 @@ import { workspaceProcedure } from "../../orpc";
 import { canAccessUser, logUpdate } from "./utils";
 
 const updateEvaluationSettingsSchema = z.object({
-  evaluation_template_slug: z
-    .enum(["sales", "support", "general"])
-    .optional()
-    .nullable(),
+  evaluation_template_slug: z.string().min(1).optional().nullable(),
   evaluation_custom_instructions: z.string().optional().nullable(),
 });
 

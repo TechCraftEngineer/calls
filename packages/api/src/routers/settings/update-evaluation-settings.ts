@@ -14,7 +14,7 @@ export const updateEvaluationSettings = workspaceAdminProcedure
       await promptsRepository.upsert(
         "evaluation_default_template",
         input.defaultTemplateSlug,
-        "Шаблон оценки звонков по умолчанию (sales/support/general)",
+        "Шаблон оценки звонков по умолчанию",
         context.workspaceId,
       );
     }
