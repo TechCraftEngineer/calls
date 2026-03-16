@@ -30,7 +30,7 @@ function LoginForm() {
 
       if (result.success) {
         setTimeout(() => {
-          router.push(paths.onboarding.createWorkspace);
+          router.push(paths.root);
         }, 100);
       } else {
         setError("root", {
@@ -177,7 +177,7 @@ function LoginForm() {
                 onClick={() =>
                   authClient.signIn.social({
                     provider: "google",
-                    callbackURL: paths.onboarding.createWorkspace,
+                    callbackURL: paths.root,
                   })
                 }
                 className="w-full"

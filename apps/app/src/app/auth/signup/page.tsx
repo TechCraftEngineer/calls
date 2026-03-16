@@ -17,7 +17,7 @@ function RegisterForm() {
   useEffect(() => {
     getCurrentUser().then((user) => {
       if (user) {
-        router.replace(paths.onboarding.createWorkspace);
+        router.replace(paths.root);
       }
     });
   }, [router]);
@@ -46,7 +46,7 @@ function RegisterForm() {
         });
       } else {
         setTimeout(() => {
-          router.push(paths.onboarding.createWorkspace);
+          router.push(paths.root);
         }, 100);
       }
     } catch (err: unknown) {
@@ -219,7 +219,7 @@ function RegisterForm() {
                 onClick={() =>
                   authClient.signIn.social({
                     provider: "google",
-                    callbackURL: paths.onboarding.createWorkspace,
+                    callbackURL: paths.root,
                   })
                 }
               >

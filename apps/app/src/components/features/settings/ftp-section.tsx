@@ -92,149 +92,164 @@ export default function FtpSection({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="space-y-2">
-            <Label htmlFor="ftp-host" className="text-xs text-muted-foreground">
-              Host
-            </Label>
-            <Input
-              id="ftp-host"
-              type="text"
-              value={host}
-              onChange={onPromptChange("ftp_host", "value")}
-              placeholder="ftp.example.com"
-              autoComplete="off"
-              className="h-9"
-            />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void onSave();
+          }}
+          className="space-y-4"
+        >
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label
+                htmlFor="ftp-host"
+                className="text-xs text-muted-foreground"
+              >
+                Host
+              </Label>
+              <Input
+                id="ftp-host"
+                type="text"
+                value={host}
+                onChange={onPromptChange("ftp_host", "value")}
+                placeholder="ftp.example.com"
+                autoComplete="off"
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label
+                htmlFor="ftp-user"
+                className="text-xs text-muted-foreground"
+              >
+                User
+              </Label>
+              <Input
+                id="ftp-user"
+                type="text"
+                value={user}
+                onChange={onPromptChange("ftp_user", "value")}
+                placeholder="FTP пользователь"
+                autoComplete="off"
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label
+                htmlFor="ftp-password"
+                className="text-xs text-muted-foreground"
+              >
+                Password
+              </Label>
+              <PasswordInput
+                id="ftp-password"
+                value={password}
+                onChange={onPromptChange("ftp_password", "value")}
+                placeholder={
+                  passwordSet
+                    ? "•••••••• (оставьте пустым, чтобы не менять)"
+                    : "FTP пароль"
+                }
+                autoComplete="off"
+                className="h-9"
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="ftp-user" className="text-xs text-muted-foreground">
-              User
-            </Label>
-            <Input
-              id="ftp-user"
-              type="text"
-              value={user}
-              onChange={onPromptChange("ftp_user", "value")}
-              placeholder="FTP пользователь"
-              autoComplete="off"
-              className="h-9"
-            />
-          </div>
-          <div className="space-y-2">
+
+          <div className="space-y-2 max-w-xs">
             <Label
-              htmlFor="ftp-password"
+              htmlFor="ftp-sync-from-date"
               className="text-xs text-muted-foreground"
             >
-              Password
+              Выгружать с даты
             </Label>
-            <PasswordInput
-              id="ftp-password"
-              value={password}
-              onChange={onPromptChange("ftp_password", "value")}
-              placeholder={
-                passwordSet
-                  ? "•••••••• (оставьте пустым, чтобы не менять)"
-                  : "FTP пароль"
-              }
-              autoComplete="off"
+            <DatePicker
+              id="ftp-sync-from-date"
+              value={syncFromDate}
+              onChange={(v) => onSyncFromDateChange("ftp_sync_from_date", v)}
+              placeholder="Выберите дату"
               className="h-9"
             />
+            <p className="text-xs text-muted-foreground">
+              Записи с этой даты по сегодня будут загружаться при синхронизации
+            </p>
           </div>
-        </div>
 
-        <div className="space-y-2 max-w-xs">
-          <Label
-            htmlFor="ftp-sync-from-date"
-            className="text-xs text-muted-foreground"
-          >
-            Выгружать с даты
-          </Label>
-          <DatePicker
-            id="ftp-sync-from-date"
-            value={syncFromDate}
-            onChange={(v) => onSyncFromDateChange("ftp_sync_from_date", v)}
-            placeholder="Выберите дату"
-            className="h-9"
-          />
-          <p className="text-xs text-muted-foreground">
-            Записи с этой даты по сегодня будут загружаться при синхронизации
-          </p>
-        </div>
-
-        {(connectionStatus?.configured || statusLoading) && (
-          <div className="rounded-lg border bg-muted/30 px-4 py-3">
-            {statusLoading ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span
-                  className="size-2 animate-pulse rounded-full bg-muted-foreground/50"
-                  aria-hidden
-                />
-                Проверка подключения…
-              </div>
-            ) : connectionStatus?.success === true ? (
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
+          {(connectionStatus?.configured || statusLoading) && (
+            <div className="rounded-lg border bg-muted/30 px-4 py-3">
+              {statusLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span
-                    className="size-2 shrink-0 rounded-full bg-green-500"
+                    className="size-2 animate-pulse rounded-full bg-muted-foreground/50"
                     aria-hidden
                   />
-                  <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                    {host.trim()
-                      ? `Подключено к ${host}`
-                      : (connectionStatus.message ?? "Подключено")}
-                  </span>
+                  Проверка подключения…
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  FTP-сервер доступен, синхронизация возможна
-                </p>
-              </div>
-            ) : connectionStatus?.success === false ? (
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <span
-                    className="size-2 shrink-0 rounded-full bg-red-500"
-                    aria-hidden
-                  />
-                  <span className="text-sm font-medium text-red-700 dark:text-red-400">
-                    Ошибка подключения
-                  </span>
-                </div>
-                {connectionStatus.message && (
+              ) : connectionStatus?.success === true ? (
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="size-2 shrink-0 rounded-full bg-green-500"
+                      aria-hidden
+                    />
+                    <span className="text-sm font-medium text-green-700 dark:text-green-400">
+                      {host.trim()
+                        ? `Подключено к ${host}`
+                        : (connectionStatus.message ?? "Подключено")}
+                    </span>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    {connectionStatus.message}
+                    FTP-сервер доступен, синхронизация возможна
                   </p>
-                )}
-              </div>
-            ) : null}
-          </div>
-        )}
+                </div>
+              ) : connectionStatus?.success === false ? (
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="size-2 shrink-0 rounded-full bg-red-500"
+                      aria-hidden
+                    />
+                    <span className="text-sm font-medium text-red-700 dark:text-red-400">
+                      Ошибка подключения
+                    </span>
+                  </div>
+                  {connectionStatus.message && (
+                    <p className="text-xs text-muted-foreground">
+                      {connectionStatus.message}
+                    </p>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          )}
 
-        {testMessage && (
-          <div
-            className={`rounded-lg border p-3 text-sm ${
-              testMessage.includes("установлено") ||
-              testMessage.includes("корректны")
-                ? "border-green-200 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-400"
-                : "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400"
-            }`}
-          >
-            {testMessage}
-          </div>
-        )}
+          {testMessage && (
+            <div
+              className={`rounded-lg border p-3 text-sm ${
+                testMessage.includes("установлено") ||
+                testMessage.includes("корректны")
+                  ? "border-green-200 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-400"
+                  : "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400"
+              }`}
+            >
+              {testMessage}
+            </div>
+          )}
 
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={onTest}
-            disabled={testing || !hasValues}
-          >
-            {testing ? "Проверка…" : "Проверить подключение"}
-          </Button>
-          <Button onClick={onSave} disabled={saving}>
-            {saving ? "Сохранение…" : "Сохранить"}
-          </Button>
-        </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onTest}
+              disabled={testing || !hasValues}
+            >
+              {testing ? "Проверка…" : "Проверить подключение"}
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Сохранение…" : "Сохранить"}
+            </Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );

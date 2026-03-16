@@ -29,11 +29,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Авторизованный пользователь на странице входа → onboarding/create-workspace (проверка наличия workspace)
+  // Авторизованный пользователь на странице входа → dashboard (workspace-provider сам решит, нужен ли create-workspace)
   if (isAuthPage && sessionCookie) {
-    return NextResponse.redirect(
-      new URL(paths.onboarding.createWorkspace, request.url),
-    );
+    return NextResponse.redirect(new URL(paths.root, request.url));
   }
 
   // Публичные пути — доступ без сессии
