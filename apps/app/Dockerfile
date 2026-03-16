@@ -49,7 +49,6 @@ USER nextjs
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=installer --chown=nextjs:nodejs /app/apps/app/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/app/.next/static ./apps/app/.next/static
-COPY --from=installer --chown=nextjs:nodejs /app/apps/app/public ./apps/app/public
 
 # Expose port
 EXPOSE 3000
