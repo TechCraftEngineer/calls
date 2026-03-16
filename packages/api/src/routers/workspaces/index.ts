@@ -1,3 +1,5 @@
+import { acceptInvitation } from "./accept-invitation";
+import { acceptInvitationForExistingUser } from "./accept-invitation-for-existing-user";
 import { addMember } from "./add-member";
 import { create } from "./create";
 import { createInvitation } from "./create-invitation";
@@ -32,4 +34,6 @@ export const workspacesRouter = {
   revokeInvitation,
   updateInvitationSettings,
   getInvitationByToken,
+  acceptInvitation,
+  acceptInvitationForExistingUser,
 };

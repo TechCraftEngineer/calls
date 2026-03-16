@@ -1,5 +1,6 @@
 "use client";
 
+import { paths } from "@calls/config";
 import {
   Button,
   Field,
@@ -14,13 +15,23 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 
+function getInviteUrl(
+  inviteUrl: string | undefined,
+  token: string | undefined,
+): string {
+  if (inviteUrl) return inviteUrl;
+  if (!token || typeof window === "undefined") return "";
+  const base = window.location.origin;
+  return `${base}${paths.invite.byToken(token)}`;
+}
+
 const ROLE_LABELS: Record<string, string> = {
   admin: "Администратор",
   member: "Участник",
 };
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
-  admin: "Может управлять участниками и настройками workspace",
+  admin: "Может управлять участниками и настройками рабочего пространства",
   member: "Может просматривать и работать с контентом",
 };
 
@@ -47,7 +58,6 @@ export default function InviteUserModal({
   } | null>(null);
   const [copied, setCopied] = useState(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
-  const inviteLinkRef = useRef<HTMLInputElement>(null);
   const modalRef = useFocusTrap<HTMLDivElement>();
 
   useEffect(() => {
@@ -82,7 +92,7 @@ export default function InviteUserModal({
       const inviteResult = await onSubmit(trimmed, role);
       setResult({
         email: trimmed,
-        inviteUrl: inviteResult.inviteUrl,
+        inviteUrl: getInviteUrl(inviteResult.inviteUrl, inviteResult.token),
         expiresAt: inviteResult.expiresAt,
       });
     } catch (err) {
@@ -99,14 +109,38 @@ export default function InviteUserModal({
   const handleCopyLink = async () => {
     if (!result?.inviteUrl) return;
 
-    try {
-      await navigator.clipboard.writeText(result.inviteUrl);
+    const showSuccess = () => {
       setCopied(true);
       toast.success("Ссылка скопирована");
       setTimeout(() => setCopied(false), 2000);
+    };
+
+    const fallbackCopy = () => {
+      const textarea = document.createElement("textarea");
+      textarea.value = result.inviteUrl;
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        const ok = document.execCommand("copy");
+        if (ok) showSuccess();
+        else toast.error("Не удалось скопировать");
+      } catch {
+        toast.error("Не удалось скопировать");
+      }
+      document.body.removeChild(textarea);
+    };
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(result.inviteUrl);
+        showSuccess();
+      } else {
+        fallbackCopy();
+      }
     } catch {
-      inviteLinkRef.current?.select();
-      toast.error("Не удалось скопировать");
+      fallbackCopy();
     }
   };
 
@@ -201,14 +235,13 @@ export default function InviteUserModal({
             >
               Ссылка для приглашения
             </label>
-            <div className="flex gap-2">
+            <div className="flex min-w-0 gap-2">
               <Input
-                ref={inviteLinkRef}
                 id="invite-link"
                 type="text"
                 value={result.inviteUrl}
                 readOnly
-                className="flex-1 font-mono text-sm bg-white"
+                className="min-w-0 flex-1 font-mono text-sm text-gray-900 bg-white"
                 onClick={(e) => e.currentTarget.select()}
               />
               <Button
@@ -257,9 +290,9 @@ export default function InviteUserModal({
           <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
             <p className="text-sm text-blue-900 m-0">
               <strong>Что дальше?</strong> Получатель перейдёт по ссылке,
-              создаст аккаунт и автоматически получит доступ к workspace. Вы
-              также можете скопировать ссылку и отправить её любым удобным
-              способом.
+              создаст аккаунт и автоматически получит доступ к рабочему
+              пространству. Вы также можете скопировать ссылку и отправить её
+              любым удобным способом.
             </p>
           </div>
 
@@ -334,7 +367,7 @@ export default function InviteUserModal({
 
         <p className="text-sm text-gray-600 m-0">
           Отправьте приглашение по email. Получатель создаст аккаунт и
-          автоматически присоединится к workspace.
+          автоматически присоединится к рабочему пространству.
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">

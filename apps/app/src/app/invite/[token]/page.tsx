@@ -1,13 +1,26 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { Button, Input, PasswordInput } from "@calls/ui";
-import { useQuery } from "@tanstack/react-query";
+import {
+  Button,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Input,
+  PasswordInput,
+} from "@calls/ui";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { getCurrentUser } from "@/lib/auth";
-import { getAPI_BASE_URL } from "@/lib/orpc";
+import { type InviteAcceptData, inviteAcceptSchema } from "@/lib/validations";
 import { useORPC } from "@/orpc/react";
 
 export default function InviteAcceptPage() {
@@ -16,17 +29,21 @@ export default function InviteAcceptPage() {
   const orpc = useORPC();
   const token = typeof params.token === "string" ? params.token : "";
 
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [name, setName] = useState("");
   const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [currentUser, setCurrentUser] = useState<{
-    id: string;
+    id: string | number;
     email: string;
   } | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  const form = useForm<InviteAcceptData>({
+    resolver: zodResolver(inviteAcceptSchema),
+    defaultValues: {
+      name: "",
+      password: "",
+      confirmPassword: "",
+    },
+    mode: "onBlur",
+  });
 
   const {
     data: invitation,
@@ -46,9 +63,40 @@ export default function InviteAcceptPage() {
 
   useEffect(() => {
     if (invitation && !isLoading && !checkingAuth && !currentUser) {
-      nameInputRef.current?.focus();
+      form.setFocus("name");
     }
-  }, [invitation, isLoading, checkingAuth, currentUser]);
+  }, [invitation, isLoading, checkingAuth, currentUser, form]);
+
+  const acceptExistingMutation = useMutation(
+    orpc.workspaces.acceptInvitationForExistingUser.mutationOptions({
+      onSuccess: (data) => {
+        router.push(`/?workspace=${data.workspaceId}&message=joined`);
+      },
+      onError: (err) => {
+        setError(
+          err instanceof Error ? err.message : "Не удалось принять приглашение",
+        );
+      },
+    }),
+  );
+
+  const acceptInvitationMutation = useMutation(
+    orpc.workspaces.acceptInvitation.mutationOptions({
+      onSuccess: () => {
+        router.push(
+          `${paths.auth.signin}?message=invite_accepted&email=${encodeURIComponent(invitation?.email ?? "")}`,
+        );
+      },
+      onError: (err) => {
+        setError(
+          err instanceof Error ? err.message : "Не удалось принять приглашение",
+        );
+      },
+    }),
+  );
+
+  const submitting =
+    acceptExistingMutation.isPending || acceptInvitationMutation.isPending;
 
   const handleAcceptForExistingUser = async () => {
     if (!currentUser || !invitation) return;
@@ -60,83 +108,17 @@ export default function InviteAcceptPage() {
       return;
     }
 
-    setSubmitting(true);
     setError("");
-
-    try {
-      const baseUrl = getAPI_BASE_URL();
-      const res = await fetch(`${baseUrl}/api/invitations/accept-existing`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ token }),
-      });
-
-      const data = (await res.json()) as {
-        error?: string;
-        success?: boolean;
-        workspaceId?: string;
-        workspaceName?: string;
-      };
-
-      if (!res.ok) {
-        setError(data.error ?? "Не удалось принять приглашение");
-        return;
-      }
-
-      router.push(`/?workspace=${data.workspaceId}&message=joined`);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Не удалось принять приглашение",
-      );
-    } finally {
-      setSubmitting(false);
-    }
+    acceptExistingMutation.mutate({ token });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = (data: InviteAcceptData) => {
     setError("");
-
-    if (!password || password.length < 8) {
-      setError("Пароль должен быть не менее 8 символов");
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError("Пароли не совпадают");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const baseUrl = getAPI_BASE_URL();
-      const res = await fetch(`${baseUrl}/api/invitations/accept`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token,
-          password,
-          name: name.trim() || undefined,
-        }),
-      });
-
-      const data = (await res.json()) as { error?: string; success?: boolean };
-
-      if (!res.ok) {
-        setError(data.error ?? "Не удалось принять приглашение");
-        return;
-      }
-
-      router.push(
-        `${paths.auth.signin}?message=invite_accepted&email=${encodeURIComponent(invitation?.email ?? "")}`,
-      );
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Не удалось принять приглашение",
-      );
-    } finally {
-      setSubmitting(false);
-    }
+    acceptInvitationMutation.mutate({
+      token,
+      password: data.password,
+      name: data.name?.trim() || undefined,
+    });
   };
 
   if (!token) {
@@ -247,7 +229,7 @@ export default function InviteAcceptPage() {
             </div>
             <h1 className="mb-2 text-2xl font-bold text-gray-900">
               {isCorrectEmail
-                ? "Присоединиться к workspace"
+                ? "Присоединиться к рабочему пространству"
                 : "Несоответствие email"}
             </h1>
             <p className="text-sm text-gray-600 mb-1">
@@ -287,7 +269,7 @@ export default function InviteAcceptPage() {
               <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
                 <p className="text-sm text-blue-900 m-0">
                   Вы уже авторизованы. Нажмите кнопку ниже, чтобы присоединиться
-                  к workspace.
+                  к рабочему пространству.
                 </p>
               </div>
 
@@ -297,7 +279,9 @@ export default function InviteAcceptPage() {
                 className="w-full min-h-[48px] text-base font-semibold"
                 disabled={submitting}
               >
-                {submitting ? "Присоединение…" : "Присоединиться к workspace"}
+                {submitting
+                  ? "Присоединение…"
+                  : "Присоединиться к рабочему пространству"}
               </Button>
             </div>
           ) : (
@@ -368,7 +352,7 @@ export default function InviteAcceptPage() {
             </svg>
           </div>
           <h1 className="mb-2 text-2xl font-bold text-gray-900">
-            Присоединяйтесь к workspace
+            Присоединяйтесь к рабочему пространству
           </h1>
           <p className="text-sm text-gray-600 mb-1">
             Вас пригласили в «<strong>{invitation.workspaceName}</strong>»
@@ -397,81 +381,89 @@ export default function InviteAcceptPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <div>
-            <label
-              htmlFor="name"
-              className="mb-2 block text-sm font-semibold text-gray-700"
-            >
-              Ваше имя
-            </label>
-            <Input
-              ref={nameInputRef}
-              id="name"
-              type="text"
-              name="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Как к вам обращаться"
-              className="w-full text-base"
-              autoComplete="name"
-              disabled={submitting}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="mb-2 block text-sm font-semibold text-gray-700"
-            >
-              Пароль <span className="text-red-500">*</span>
-            </label>
-            <PasswordInput
-              id="password"
-              name="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Минимум 8 символов"
-              className="w-full text-base"
-              autoComplete="new-password"
-              required
-              disabled={submitting}
-              aria-describedby="password-hint"
-            />
-            <p id="password-hint" className="mt-1 text-xs text-gray-500">
-              Используйте не менее 8 символов
-            </p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="confirmPassword"
-              className="mb-2 block text-sm font-semibold text-gray-700"
-            >
-              Подтвердите пароль <span className="text-red-500">*</span>
-            </label>
-            <PasswordInput
-              id="confirmPassword"
-              name="confirm-password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Повторите пароль"
-              className="w-full text-base"
-              autoComplete="new-password"
-              required
-              disabled={submitting}
-            />
-          </div>
-
-          <Button
-            type="submit"
-            variant="accent"
-            className="mt-4 w-full min-h-[48px] text-base font-semibold"
-            disabled={submitting}
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col gap-5"
           >
-            {submitting ? "Создание аккаунта…" : "Принять приглашение"}
-          </Button>
-        </form>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">Ваше имя</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="text"
+                      placeholder="Как к вам обращаться"
+                      className="w-full text-base"
+                      autoComplete="name"
+                      disabled={submitting}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">
+                    Пароль <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <PasswordInput
+                      placeholder="Минимум 8 символов"
+                      className="w-full text-base"
+                      autoComplete="new-password"
+                      disabled={submitting}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription className="text-gray-500">
+                    Используйте не менее 8 символов
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700">
+                    Подтвердите пароль <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <PasswordInput
+                      placeholder="Повторите пароль"
+                      className="w-full text-base"
+                      autoComplete="new-password"
+                      disabled={submitting}
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button
+              type="submit"
+              variant="dark"
+              className="mt-4 w-full min-h-[48px] text-base font-semibold"
+              disabled={submitting}
+            >
+              {submitting ? "Создание аккаунта…" : "Принять приглашение"}
+            </Button>
+          </form>
+        </Form>
 
         <div className="mt-6 border-t border-gray-200 pt-6 text-center">
           <p className="text-sm text-gray-600">

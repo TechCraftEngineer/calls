@@ -8,7 +8,7 @@ import { workspaceIdInputSchema } from "./schemas";
 
 const createInvitationSchema = workspaceIdInputSchema.extend({
   email: z.string().email("Некорректный email"),
-  role: z.enum(["owner", "admin", "member"]).default("member"),
+  role: z.enum(["admin", "member"]).default("member"),
 });
 
 export const createInvitation = workspaceAdminProcedure
@@ -33,7 +33,6 @@ export const createInvitation = workspaceAdminProcedure
       );
 
       const inviteLink = `${env.APP_URL}${paths.invite.byToken(result.token)}`;
-      const emailRole = input.role === "owner" ? "admin" : input.role;
       await sendEmail({
         to: [input.email],
         subject: `Приглашение в ${workspace?.name ?? "рабочее пространство"} · ${APP_CONFIG.shortName}`,
@@ -41,14 +40,36 @@ export const createInvitation = workspaceAdminProcedure
           inviteLink,
           workspaceName: workspace?.name ?? "Рабочее пространство",
           inviterName: inviter?.name ?? undefined,
-          role: emailRole,
+          role: input.role,
+          userExists: result.userExists,
         }),
       });
 
-      return result;
+      return {
+        ...result,
+        inviteUrl: inviteLink,
+      };
     } catch (err) {
-      const msg =
+      const rawMsg =
         err instanceof Error ? err.message : "Ошибка создания приглашения";
+
+      // Безопасные сообщения, которые можно показывать пользователю
+      const safeMessages = [
+        "Пользователь с таким email уже существует",
+        "Недостаточно прав для создания приглашения",
+        "Рабочее пространство не найдено",
+        "Некорректный email адрес",
+        "Ошибка создания приглашения",
+      ];
+
+      const isSafeMessage = safeMessages.some((safeMsg) =>
+        rawMsg.toLowerCase().includes(safeMsg.toLowerCase()),
+      );
+
+      const msg = isSafeMessage
+        ? rawMsg
+        : "Не удалось отправить приглашение. Попробуйте позже.";
+
       throw new ORPCError("BAD_REQUEST", { message: msg });
     }
   });

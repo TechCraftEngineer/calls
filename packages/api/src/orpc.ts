@@ -22,6 +22,14 @@ export type AuthLike = {
     getSession: (opts: {
       headers: Headers;
     }) => Promise<{ user?: Record<string, unknown>; session?: unknown } | null>;
+    createUser?: (opts: {
+      body: {
+        email: string;
+        password: string;
+        name: string;
+        data?: { givenName?: string; familyName?: string };
+      };
+    }) => Promise<{ user?: { id: string } }>;
   };
 };
 
@@ -55,6 +63,7 @@ export async function createBackendContext(opts: {
   authUserId: string | null;
   workspaceId: string | null;
   workspaceRole: WorkspaceRole | null;
+  auth: AuthLike | undefined;
 }> {
   let user: any = null;
   let authUserId: string | null = null;
@@ -111,6 +120,7 @@ export async function createBackendContext(opts: {
     authUserId,
     workspaceId,
     workspaceRole,
+    auth: opts.auth,
   };
 }
 

@@ -105,6 +105,44 @@ export class InvitationsService {
   }
 
   /**
+   * Get invitation by token - for invite page display
+   */
+  async getByToken(token: string): Promise<{
+    email: string;
+    role: "owner" | "admin" | "member";
+    expiresAt: Date;
+    workspaceId: string;
+    workspaceName: string;
+  } | null> {
+    const member =
+      await this.workspacesService.getMemberByInvitationToken(token);
+
+    if (!member || member.status !== "pending") {
+      return null;
+    }
+
+    const expiresAt = member.invitationExpiresAt;
+    if (!expiresAt || expiresAt < new Date()) {
+      return null;
+    }
+
+    const user = await this.usersService.getUser(member.userId);
+    const workspace = await this.workspacesService.getById(member.workspaceId);
+
+    if (!user || !workspace || !user.email) {
+      return null;
+    }
+
+    return {
+      email: user.email,
+      role: member.role as "owner" | "admin" | "member",
+      expiresAt,
+      workspaceId: member.workspaceId,
+      workspaceName: workspace.name,
+    };
+  }
+
+  /**
    * Get pending members for a workspace
    */
   async listPendingByWorkspace(workspaceId: string) {
@@ -112,11 +150,20 @@ export class InvitationsService {
   }
 
   /**
-   * Accept invitation - updates workspace_member status to active
+   * Accept invitation - updates workspace_member status to active.
+   * When createUserFn is provided, creates Better Auth user before activating.
    */
   async acceptInvitation(
     token: string,
     password?: string,
+    name?: string,
+    createUserFn?: (opts: {
+      email: string;
+      password: string;
+      name: string;
+      givenName?: string;
+      familyName?: string;
+    }) => Promise<{ id: string }>,
   ): Promise<{ userId: string; workspaceId: string }> {
     // Find member by invitation token
     const member =
@@ -130,20 +177,22 @@ export class InvitationsService {
       throw new Error("Срок действия приглашения истек");
     }
 
-    // If password provided, set it for new users
-    if (password) {
-      if (password.length < 8) {
-        throw new Error("Пароль должен быть не менее 8 символов");
-      }
-
-      // Check if this is a new user (no password set yet)
+    // If createUserFn provided (new user flow), create Better Auth user first
+    if (createUserFn && password && password.length >= 8) {
       const user = await this.usersService.getUser(member.userId);
-      if (user) {
-        // For new users, we need to set their password
-        // This would typically be done through Better Auth's password update API
-        // For now, we'll store this information and let the auth layer handle it
-        // The actual password setting happens in the route handler via Better Auth
+      if (!user?.email) {
+        throw new Error("Приглашение не найдено");
       }
+      const displayName = name?.trim() || user.email.split("@")[0] || "User";
+      await createUserFn({
+        email: user.email,
+        password,
+        name: displayName,
+        givenName: displayName,
+        familyName: "",
+      });
+    } else if (password && password.length < 8) {
+      throw new Error("Пароль должен быть не менее 8 символов");
     }
 
     // Activate membership

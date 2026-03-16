@@ -161,7 +161,7 @@ export default function UsersPage() {
     role: "admin" | "member",
   ) => {
     if (!workspaceId) throw new Error("Нет рабочего пространства");
-    await createInvitationMutation.mutateAsync({
+    return createInvitationMutation.mutateAsync({
       workspaceId,
       email,
       role,

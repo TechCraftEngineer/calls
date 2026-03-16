@@ -21,7 +21,7 @@ export const workspaceIdSchema = z
   .string()
   .regex(
     WORKSPACE_ID_REGEX,
-    "Неверный формат workspaceId. Ожидается ws_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx или ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
+    "Неверный формат ID рабочего пространства. Ожидается ws_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx или ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
   );
 
 /**

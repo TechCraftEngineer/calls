@@ -104,3 +104,16 @@ export const reportSettingsSchema = z.object({
 });
 
 export type ReportSettingsData = z.infer<typeof reportSettingsSchema>;
+
+// Схема для принятия приглашения (создание аккаунта по ссылке)
+export const inviteAcceptSchema = z
+  .object({
+    name: z.string().optional(),
+    password: z.string().min(8, "Пароль должен быть не менее 8 символов"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Пароли не совпадают",
+    path: ["confirmPassword"],
+  });
+export type InviteAcceptData = z.infer<typeof inviteAcceptSchema>;

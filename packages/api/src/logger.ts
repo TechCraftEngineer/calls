@@ -26,6 +26,9 @@ const SENSITIVE_FIELDS = [
 // Список чувствительных полей для частичной маскировки
 const PARTIAL_MASK_FIELDS = ["email", "username"];
 
+// Поля, которые не маскируются (сообщения об ошибках, stack trace для отладки)
+const NOT_MASKED_FIELDS = ["message", "stack"];
+
 /**
  * Маскирует чувствительные данные в объекте
  */
@@ -50,7 +53,9 @@ export function sanitizeForLogging(data: unknown): unknown {
     )) {
       const lowerKey = key.toLowerCase();
 
-      if (
+      if (NOT_MASKED_FIELDS.some((field) => lowerKey === field.toLowerCase())) {
+        sanitized[key] = value;
+      } else if (
         SENSITIVE_FIELDS.some((field) => lowerKey.includes(field.toLowerCase()))
       ) {
         sanitized[key] = "[REDACTED]";
