@@ -1,6 +1,6 @@
 import { ORPCError } from "@orpc/server";
-import { protectedProcedure } from "../../orpc";
-import { updateMemberRoleSchema } from "./schemas";
+import { protectedProcedure } from "../../../orpc";
+import { updateMemberRoleSchema } from "../schemas";
 
 export const updateMemberRole = protectedProcedure
   .input(updateMemberRoleSchema)

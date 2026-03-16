@@ -3,8 +3,8 @@ import { invitationsService } from "@calls/db";
 import { InvitationEmail, sendEmail } from "@calls/emails";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
-import { workspaceAdminProcedure } from "../../orpc";
-import { workspaceIdInputSchema } from "./schemas";
+import { workspaceAdminProcedure } from "../../../orpc";
+import { workspaceIdInputSchema } from "../schemas";
 
 const createInvitationSchema = workspaceIdInputSchema.extend({
   email: z.string().email("Некорректный email"),

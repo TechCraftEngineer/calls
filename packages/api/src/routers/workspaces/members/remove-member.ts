@@ -1,6 +1,6 @@
 import { ORPCError } from "@orpc/server";
-import { protectedProcedure } from "../../orpc";
-import { removeMemberSchema } from "./schemas";
+import { protectedProcedure } from "../../../orpc";
+import { removeMemberSchema } from "../schemas";
 
 export const removeMember = protectedProcedure
   .input(removeMemberSchema)

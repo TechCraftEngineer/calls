@@ -2,7 +2,7 @@ import { createLogger } from "@calls/api";
 import { invitationsService, workspacesService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
-import { publicProcedure } from "../../orpc";
+import { publicProcedure } from "../../../orpc";
 
 const logger = createLogger("get-invitation-by-token");
 

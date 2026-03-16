@@ -1,9 +1,9 @@
 import { ORPCError } from "@orpc/server";
-import { protectedProcedure } from "../../orpc";
-import { workspaceIdInputSchema } from "./schemas";
+import { protectedProcedure } from "../../../orpc";
+import { addMemberSchema } from "../schemas";
 
-export const listUsersAvailableToAdd = protectedProcedure
-  .input(workspaceIdInputSchema)
+export const addMember = protectedProcedure
+  .input(addMemberSchema)
   .handler(async ({ input, context }) => {
     if (!context.authUserId) {
       throw new ORPCError("UNAUTHORIZED", {
@@ -19,14 +19,19 @@ export const listUsersAvailableToAdd = protectedProcedure
         message: "Недостаточно прав для добавления участников",
       });
     }
-    const rows = await context.workspacesService.getUsersNotInWorkspace(
+    const existing = await context.workspacesService.getMemberWithRole(
       input.workspaceId,
+      input.userId,
     );
-    return rows.map(
-      (r: { id: string; name: string | null; email: string }) => ({
-        id: r.id,
-        name: r.name ?? "Без имени",
-        email: r.email ?? `user_${r.id.slice(0, 8)}`,
-      }),
-    );
+    if (existing) {
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Пользователь уже является участником рабочего пространства",
+      });
+    }
+    await context.workspacesService.addMember({
+      workspaceId: input.workspaceId,
+      userId: input.userId,
+      role: input.role,
+    });
+    return { success: true };
   });

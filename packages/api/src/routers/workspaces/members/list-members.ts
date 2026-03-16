@@ -1,6 +1,6 @@
 import { ORPCError } from "@orpc/server";
-import { protectedProcedure } from "../../orpc";
-import { workspaceIdInputSchema } from "./schemas";
+import { protectedProcedure } from "../../../orpc";
+import { workspaceIdInputSchema } from "../schemas";
 
 export const listMembers = protectedProcedure
   .input(workspaceIdInputSchema)

@@ -1,8 +1,8 @@
 import { invitationsService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
-import { workspaceAdminProcedure } from "../../orpc";
-import { workspaceIdInputSchema } from "./schemas";
+import { workspaceAdminProcedure } from "../../../orpc";
+import { workspaceIdInputSchema } from "../schemas";
 
 const updateInvitationSettingsSchema = workspaceIdInputSchema.extend({
   invitationId: z.string().uuid("Некорректный ID приглашения"),

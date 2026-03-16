@@ -7,7 +7,7 @@ import { createLogger } from "@calls/api";
 import { invitationsService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
-import { protectedProcedure } from "../../orpc";
+import { protectedProcedure } from "../../../orpc";
 
 const logger = createLogger("accept-invitation-for-existing-user");
 

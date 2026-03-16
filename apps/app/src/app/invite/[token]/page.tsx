@@ -35,6 +35,8 @@ export default function InviteAcceptPage() {
     email: string;
   } | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [userHasPassword, setUserHasPassword] = useState<boolean | null>(null);
+  const [checkingPassword, setCheckingPassword] = useState(false);
   const form = useForm<InviteAcceptData>({
     resolver: zodResolver(inviteAcceptSchema),
     defaultValues: {
@@ -53,12 +55,30 @@ export default function InviteAcceptPage() {
     enabled: !!token,
   });
 
+  // Проверяем наличие пароля у пользователя, если он авторизован и email совпадает
+  const { data: passwordCheck, isLoading: checkingPasswordQuery } = useQuery({
+    ...orpc.workspaces.checkUserPassword.queryOptions({
+      input: { email: currentUser?.email || "" },
+    }),
+    enabled:
+      !!currentUser &&
+      !!invitation &&
+      currentUser.email.toLowerCase() === invitation.email.toLowerCase(),
+  });
+
   useEffect(() => {
     getCurrentUser().then((user) => {
       setCurrentUser(user);
       setCheckingAuth(false);
     });
   }, []);
+
+  useEffect(() => {
+    if (passwordCheck) {
+      setUserHasPassword(passwordCheck.hasPassword);
+      setCheckingPassword(false);
+    }
+  }, [passwordCheck]);
 
   useEffect(() => {
     if (invitation && !isLoading && !checkingAuth && !currentUser) {
@@ -96,6 +116,8 @@ export default function InviteAcceptPage() {
 
   const submitting =
     acceptExistingMutation.isPending || acceptInvitationMutation.isPending;
+
+  const isLoading = checkingAuth || checkingPasswordQuery;
 
   const handleAcceptForExistingUser = async () => {
     if (!currentUser || !invitation) return;
@@ -161,7 +183,9 @@ export default function InviteAcceptPage() {
       <div className="flex min-h-screen items-center justify-center bg-[#F8F9FB]">
         <div className="flex flex-col items-center gap-4">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
-          <p className="text-gray-600">Загрузка…</p>
+          <p className="text-gray-600">
+            {checkingPasswordQuery ? "Проверка данных..." : "Загрузка…"}
+          </p>
         </div>
       </div>
     );
@@ -228,7 +252,11 @@ export default function InviteAcceptPage() {
             </div>
             <h1 className="mb-2 text-2xl font-bold text-gray-900">
               {isCorrectEmail
-                ? "Присоединиться к рабочему пространству"
+                ? userHasPassword === null
+                  ? "Проверка данных..."
+                  : userHasPassword
+                    ? "Присоединиться к рабочему пространству"
+                    : "Создайте пароль для входа"
                 : "Несоответствие email"}
             </h1>
             <p className="text-sm text-gray-600 mb-1">
@@ -238,6 +266,14 @@ export default function InviteAcceptPage() {
             {!isCorrectEmail && (
               <p className="text-sm text-amber-600 mt-2">
                 Вы вошли как: {currentUser.email}
+              </p>
+            )}
+            {isCorrectEmail && userHasPassword !== null && (
+              <p className="text-sm text-blue-600 mt-2">
+                {userHasPassword
+                  ? "У вас уже есть пароль. Нажмите кнопку ниже для присоединения."
+                  : "У вас еще нет пароля. Создайте его, чтобы войти в систему и присоединиться к рабочему пространству."
+                }
               </p>
             )}
           </div>
@@ -263,25 +299,99 @@ export default function InviteAcceptPage() {
             </div>
           )}
 
-          {isCorrectEmail ? (
+          {isCorrectEmail && userHasPassword !== null && (
             <div className="space-y-6">
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                <p className="text-sm text-blue-900 m-0">
-                  Вы уже авторизованы. Нажмите кнопку ниже, чтобы присоединиться
-                  к рабочему пространству.
-                </p>
-              </div>
+              {userHasPassword ? (
+                <div className="bg-green-50 rounded-lg p-4 border border-green-100">
+                  <p className="text-sm text-green-900 m-0">
+                    У вас уже есть пароль. Нажмите кнопку ниже, чтобы присоединиться к рабочему пространству.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                  <p className="text-sm text-blue-900 m-0">
+                    Создайте пароль для вашего аккаунта. После этого вы сможете войти в систему
+                    и присоединиться к рабочему пространству.
+                  </p>
+                </div>
+              )}
 
-              <Button
-                onClick={handleAcceptForExistingUser}
-                variant="accent"
-                className="w-full min-h-[48px] text-base font-semibold"
-                disabled={submitting}
-              >
-                {submitting
-                  ? "Присоединение…"
-                  : "Присоединиться к рабочему пространству"}
-              </Button>
+              {userHasPassword ? (
+                <Button
+                  onClick={handleAcceptForExistingUser}
+                  variant="accent"
+                  className="w-full min-h-[48px] text-base font-semibold"
+                  disabled={submitting || checkingPasswordQuery}
+                >
+                  {submitting
+                    ? "Присоединение…"
+                    : "Присоединиться к рабочему пространству"}
+                </Button>
+              ) : (
+                <Form {...form}>
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="flex flex-col gap-5"
+                  >
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700">Ваше имя</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="text"
+                              placeholder="Как к вам обращаться"
+                              className="w-full text-base"
+                              autoComplete="name"
+                              disabled={submitting || checkingPasswordQuery}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700">
+                            Пароль <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <PasswordInput
+                              placeholder="Минимум 8 символов"
+                              className="w-full text-base"
+                              autoComplete="new-password"
+                              disabled={submitting || checkingPasswordQuery}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription className="text-gray-500">
+                            Используйте не менее 8 символов
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button
+                      type="submit"
+                      variant="dark"
+                      className="mt-4 w-full min-h-[48px] text-base font-semibold"
+                      disabled={submitting || checkingPasswordQuery}
+                    >
+                      {submitting || checkingPasswordQuery
+                        ? "Создание пароля…"
+                        : "Создать пароль и присоединиться"}
+                    </Button>
+                  </form>
+                </Form>
+              )}
             </div>
           ) : (
             <div className="space-y-6">

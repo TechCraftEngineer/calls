@@ -1,6 +1,6 @@
 import { invitationsService } from "@calls/db";
-import { workspaceAdminProcedure } from "../../orpc";
-import { workspaceIdInputSchema } from "./schemas";
+import { workspaceAdminProcedure } from "../../../orpc";
+import { workspaceIdInputSchema } from "../schemas";
 
 type ListInvitationItem = {
   id: string;

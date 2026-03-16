@@ -27,81 +27,108 @@ export class InvitationsService {
   /**
    * Валидация настроек из pendingSettings
    */
-  private validatePendingSettings(settings: Record<string, unknown>): Record<string, unknown> | null {
+  private validatePendingSettings(
+    settings: Record<string, unknown>,
+  ): Record<string, unknown> | null {
     try {
       const validated: Record<string, unknown> = {};
-      
+
       // Валидация email настроек
-      if (settings.email && typeof settings.email === 'string') {
+      if (settings.email && typeof settings.email === "string") {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (emailRegex.test(settings.email)) {
           validated.email = settings.email;
         }
       }
-      
+
       // Валидация boolean настроек отчетов
       const booleanFields = [
-        'email_daily_report', 'email_weekly_report', 'email_monthly_report',
-        'telegram_daily_report', 'telegram_weekly_report', 'telegram_monthly_report',
-        'telegram_skip_weekends', 'report_include_call_summaries', 'report_detailed',
-        'report_include_avg_value', 'report_include_avg_rating',
-        'filter_exclude_answering_machine'
+        "email_daily_report",
+        "email_weekly_report",
+        "email_monthly_report",
+        "telegram_daily_report",
+        "telegram_weekly_report",
+        "telegram_monthly_report",
+        "telegram_skip_weekends",
+        "report_include_call_summaries",
+        "report_detailed",
+        "report_include_avg_value",
+        "report_include_avg_rating",
+        "filter_exclude_answering_machine",
       ];
-      
+
       for (const field of booleanFields) {
-        if (field in settings && typeof settings[field] === 'boolean') {
+        if (field in settings && typeof settings[field] === "boolean") {
           validated[field] = settings[field];
         }
       }
-      
+
       // Валидация числовых полей (неотрицательные)
       const numericFields = [
-        'filter_min_duration', 'filter_min_replicas', 'kpi_base_salary',
-        'kpi_target_bonus', 'kpi_target_talk_time_minutes'
+        "filter_min_duration",
+        "filter_min_replicas",
+        "kpi_base_salary",
+        "kpi_target_bonus",
+        "kpi_target_talk_time_minutes",
       ];
-      
+
       for (const field of numericFields) {
-        if (field in settings && typeof settings[field] === 'number' && settings[field] >= 0) {
+        if (
+          field in settings &&
+          typeof settings[field] === "number" &&
+          settings[field] >= 0
+        ) {
           validated[field] = settings[field];
         }
       }
-      
+
       // Валидация времени
-      const timeFields = ['report_daily_time', 'report_weekly_time', 'report_monthly_time'];
+      const timeFields = [
+        "report_daily_time",
+        "report_weekly_time",
+        "report_monthly_time",
+      ];
       const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-      
+
       for (const field of timeFields) {
-        if (field in settings && typeof settings[field] === 'string' && timeRegex.test(settings[field])) {
+        if (
+          field in settings &&
+          typeof settings[field] === "string" &&
+          timeRegex.test(settings[field])
+        ) {
           validated[field] = settings[field];
         }
       }
-      
+
       // Валидация дней недели
-      if ('report_weekly_day' in settings) {
-        const validDays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+      if ("report_weekly_day" in settings) {
+        const validDays = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
         if (validDays.includes(settings.report_weekly_day as string)) {
           validated.report_weekly_day = settings.report_weekly_day;
         }
       }
-      
+
       // Валидация дня месяца
-      if ('report_monthly_day' in settings) {
-        const validDays = ['1', '15', 'last'];
+      if ("report_monthly_day" in settings) {
+        const validDays = ["1", "15", "last"];
         if (validDays.includes(settings.report_monthly_day as string)) {
           validated.report_monthly_day = settings.report_monthly_day;
         }
       }
-      
+
       // Валидация массива ID пользователей
-      if ('report_managed_user_ids' in settings && Array.isArray(settings.report_managed_user_ids)) {
-        const validIds = settings.report_managed_user_ids.filter(id => 
-          typeof id === 'number' && id > 0
+      if (
+        "report_managed_user_ids" in settings &&
+        Array.isArray(settings.report_managed_user_ids)
+      ) {
+        const validIds = settings.report_managed_user_ids.filter(
+          (id) => typeof id === "number" && id > 0,
         );
         if (validIds.length > 0) {
           validated.report_managed_user_ids = validIds;
         }
       }
-      
+
       return Object.keys(validated).length > 0 ? validated : null;
     } catch (error) {
       // При ошибке валидации возвращаем null, чтобы не сохранять некорректные данные
@@ -378,8 +405,31 @@ export class InvitationsService {
         throw new Error("Приглашение уже принято");
       }
 
-      if (password && password.length >= 8 && setPasswordFn) {
-        await setPasswordFn(member.userId, password);
+      // Для существующих пользователей устанавливаем пароль только если у них НЕТ credential аккаунта
+      if (password && setPasswordFn) {
+        console.log(
+          `[InvitationsService] Checking password setup for existing user: ${member.userId}`,
+        );
+        try {
+          await setPasswordFn(member.userId, password);
+          console.log(
+            `[InvitationsService] Password setup completed for user: ${member.userId}`,
+          );
+        } catch (error) {
+          console.error(
+            `[InvitationsService] Failed to set up password for user: ${member.userId}`,
+            error,
+          );
+          throw error;
+        }
+      } else if (!password) {
+        console.log(
+          `[InvitationsService] No password provided for existing user: ${member.userId}`,
+        );
+      } else if (!setPasswordFn) {
+        console.log(
+          `[InvitationsService] setPasswordFn not available for user: ${member.userId}`,
+        );
       }
 
       // Атомарно обновляем статус с проверкой
@@ -426,7 +476,9 @@ export class InvitationsService {
 
     if (inv.pendingSettings && Object.keys(inv.pendingSettings).length > 0) {
       // Валидация настроек перед сохранением
-      const validatedSettings = this.validatePendingSettings(inv.pendingSettings as Record<string, unknown>);
+      const validatedSettings = this.validatePendingSettings(
+        inv.pendingSettings as Record<string, unknown>,
+      );
       if (validatedSettings) {
         await this.userWorkspaceSettingsRepository.upsert(
           userId,
@@ -439,7 +491,10 @@ export class InvitationsService {
     }
 
     // Помечаем приглашение как принято с проверкой на дублирование
-    const markedAccepted = await this.invitationsRepository.markAccepted(inv.id, userId);
+    const markedAccepted = await this.invitationsRepository.markAccepted(
+      inv.id,
+      userId,
+    );
     if (!markedAccepted) {
       throw new Error("Не удалось отметить приглашение как принятое");
     }
@@ -560,7 +615,9 @@ export class InvitationsService {
       return this.userWorkspaceSettingsRepository.upsert(
         member.userId,
         workspaceId,
-        validatedSettings as Parameters<UserWorkspaceSettingsRepository["upsert"]>[2],
+        validatedSettings as Parameters<
+          UserWorkspaceSettingsRepository["upsert"]
+        >[2],
       );
     }
 

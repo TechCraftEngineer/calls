@@ -1,21 +1,12 @@
-import { acceptInvitation } from "./accept-invitation";
-import { acceptInvitationForExistingUser } from "./accept-invitation-for-existing-user";
-import { addMember } from "./add-member";
+import { checkUserPassword } from "./check-user-password";
 import { create } from "./create";
-import { createInvitation } from "./create-invitation";
 import { deleteWorkspace } from "./delete";
 import { get } from "./get";
-import { getInvitationByToken } from "./get-invitation-by-token";
+import { invitationsRouter } from "./invitations";
 import { list } from "./list";
-import { listInvitations } from "./list-invitations";
-import { listMembers } from "./list-members";
-import { listUsersAvailableToAdd } from "./list-users-available-to-add";
-import { removeMember } from "./remove-member";
-import { revokeInvitation } from "./revoke-invitation";
+import { membersRouter } from "./members";
 import { setActive } from "./set-active";
 import { update } from "./update";
-import { updateInvitationSettings } from "./update-invitation-settings";
-import { updateMemberRole } from "./update-member-role";
 
 export const workspacesRouter = {
   list,
@@ -23,17 +14,21 @@ export const workspacesRouter = {
   create,
   update,
   delete: deleteWorkspace,
-  listMembers,
-  addMember,
-  removeMember,
-  updateMemberRole,
-  listUsersAvailableToAdd,
   setActive,
-  createInvitation,
-  listInvitations,
-  revokeInvitation,
-  updateInvitationSettings,
-  getInvitationByToken,
-  acceptInvitation,
-  acceptInvitationForExistingUser,
+  checkUserPassword,
+
+  listMembers: membersRouter.listMembers,
+  addMember: membersRouter.addMember,
+  removeMember: membersRouter.removeMember,
+  updateMemberRole: membersRouter.updateMemberRole,
+  listUsersAvailableToAdd: membersRouter.listUsersAvailableToAdd,
+
+  createInvitation: invitationsRouter.createInvitation,
+  listInvitations: invitationsRouter.listInvitations,
+  revokeInvitation: invitationsRouter.revokeInvitation,
+  updateInvitationSettings: invitationsRouter.updateInvitationSettings,
+  getInvitationByToken: invitationsRouter.getInvitationByToken,
+  acceptInvitation: invitationsRouter.acceptInvitation,
+  acceptInvitationForExistingUser:
+    invitationsRouter.acceptInvitationForExistingUser,
 };
