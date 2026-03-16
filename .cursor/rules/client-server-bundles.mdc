@@ -15,14 +15,14 @@ alwaysApply: false
 
 | Задача | Пакет | Пример |
 |--------|-------|--------|
-| Утилиты дат (возраст, форматирование) | `@qbs-autonaim/lib/utils` | `import { calculateAge, formatBirthDate } from "@qbs-autonaim/lib/utils"` |
-| Inngest каналы и схемы | `@qbs-autonaim/jobs/channels` | `import { analyzeResponseProgressSchema } from "@qbs-autonaim/jobs/channels"` |
-| Типы API | `@qbs-autonaim/api` | `import type { RouterOutputs } from "@qbs-autonaim/api"` |
-| Утилиты (инициалы, форматирование) | `@qbs-autonaim/shared` | `import { getInitials, getResponseEventTitle } from "@qbs-autonaim/shared"` |
-| Схемы и константы БД | `@qbs-autonaim/db/schema` | `import { RESPONSE_STATUS_LABELS } from "@qbs-autonaim/db/schema"` |
-| Пути, конфиг | `@qbs-autonaim/config` | `import { paths, APP_CONFIG } from "@qbs-autonaim/config"` |
-| UI компоненты | `@qbs-autonaim/ui` | — |
-| Валидация (Zod схемы) | `@qbs-autonaim/validators` | — |
+| Утилиты дат (возраст, форматирование) | `@calls/lib/utils` | `import { calculateAge, formatBirthDate } from "@calls/lib/utils"` |
+| Inngest каналы и схемы | `@calls/jobs/channels` | `import { analyzeResponseProgressSchema } from "@calls/jobs/channels"` |
+| Типы API | `@calls/api` | `import type { RouterOutputs } from "@calls/api"` |
+| Утилиты (инициалы, форматирование) | `@calls/shared` | `import { getInitials, getResponseEventTitle } from "@calls/shared"` |
+| Схемы и константы БД | `@calls/db/schema` | `import { RESPONSE_STATUS_LABELS } from "@calls/db/schema"` |
+| Пути, конфиг | `@calls/config` | `import { paths, APP_CONFIG } from "@calls/config"` |
+| UI компоненты | `@calls/ui` | — |
+| Валидация (Zod схемы) | `@calls/validators` | — |
 
 ---
 
@@ -30,15 +30,15 @@ alwaysApply: false
 
 | Пакет | Причина |
 |-------|---------|
-| `@qbs-autonaim/lib` (main) | Barrel с rate-limiter, logger, может тянуть server-код |
-| `@qbs-autonaim/lib/ai` | AI SDK, Langfuse, sharp |
-| `@qbs-autonaim/lib/s3` | AWS SDK |
-| `@qbs-autonaim/lib/image` | sharp |
-| `@qbs-autonaim/lib/server` | Pin validation, server-only логика |
-| `@qbs-autonaim/integration-clients/server` | cheerio, парсинг HTML |
-| `@qbs-autonaim/jobs-parsers` | puppeteer, crawlee, cheerio |
-| `@qbs-autonaim/db` или `db/client` | Drizzle client, pg — только schema для типов/констант |
-| `@qbs-autonaim/server-utils` | rate limit, db — только для middleware/API |
+| `@calls/lib` (main) | Barrel с rate-limiter, logger, может тянуть server-код |
+| `@calls/lib/ai` | AI SDK, Langfuse, sharp |
+| `@calls/lib/s3` | AWS SDK |
+| `@calls/lib/image` | sharp |
+| `@calls/lib/server` | Pin validation, server-only логика |
+| `@calls/integration-clients/server` | cheerio, парсинг HTML |
+| `@calls/jobs-parsers` | puppeteer, crawlee, cheerio |
+| `@calls/db` или `db/client` | Drizzle client, pg — только schema для типов/констант |
+| `@calls/server-utils` | rate limit, db — только для middleware/API |
 
 ---
 
@@ -78,12 +78,12 @@ alwaysApply: false
 ## Пакет api (Next.js сервер)
 
 ### Рекомендуемые импорты
-- `@qbs-autonaim/db`, `db/client`, `db/schema` — Drizzle, репозитории
-- `@qbs-autonaim/lib/ai`, `lib/s3`, `lib/image` — серверные утилиты
-- `@qbs-autonaim/integration-clients` — HTTP API (не /server, если не нужен cheerio)
-- `@qbs-autonaim/jobs/client` — Inngest для фоновых задач
-- `@qbs-autonaim/shared/server` — RankingService, InterviewLinkGenerator и т.д.
-- `@qbs-autonaim/config`, `@qbs-autonaim/emails` — конфиг, отправка писем
+- `@calls/db`, `db/client`, `db/schema` — Drizzle, репозитории
+- `@calls/lib/ai`, `lib/s3`, `lib/image` — серверные утилиты
+- `@calls/integration-clients` — HTTP API (не /server, если не нужен cheerio)
+- `@calls/jobs/client` — Inngest для фоновых задач
+- `@calls/shared/server` — RankingService, InterviewLinkGenerator и т.д.
+- `@calls/config`, `@calls/emails` — конфиг, отправка писем
 
 ### serverExternalPackages (next.config)
-Для корректной сборки добавить: `@qbs-autonaim/lib`, `@qbs-autonaim/document-processor`.
+Для корректной сборки добавить: `@calls/lib`, `@calls/document-processor`.

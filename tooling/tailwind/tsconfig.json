@@ -1,5 +1,5 @@
 {
-  "extends": "@qbs-autonaim/tsconfig/base.json",
+  "extends": "@calls/tsconfig/base.json",
   "include": ["."],
   "exclude": ["node_modules"]
 }

@@ -1,3 +1,7 @@
+/**
+ * Обратная совместимость: /api/chat/completions и т.д. → OpenAI.
+ * Рекомендуется использовать /api/openai/... для явного указания провайдера.
+ */
 import { type NextRequest, NextResponse } from "next/server";
 import { env } from "~/env";
 
@@ -8,38 +12,35 @@ export async function POST(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path } = await params;
-
+  const key = env.OPENAI_API_KEY;
+  if (!key) {
+    return NextResponse.json(
+      { error: "OpenAI API key not configured" },
+      { status: 503 },
+    );
+  }
   try {
     const body = await request.json();
     const openaiPath = path.join("/");
-
     if (body.model?.startsWith("openai/")) {
       body.model = body.model.replace("openai/", "");
     }
-
-    const openaiResponse = await fetch(
-      `https://api.openai.com/v1/${openaiPath}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify(body),
+    const res = await fetch(`https://api.openai.com/v1/${openaiPath}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${key}`,
       },
-    );
-
-    if (!openaiResponse.ok) {
-      const error = await openaiResponse.text();
-      console.error("OpenAI API error:", error);
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const error = await res.text();
       return NextResponse.json(
         { error: "OpenAI API error", details: error },
-        { status: openaiResponse.status },
+        { status: res.status },
       );
     }
-
-    const data = await openaiResponse.json();
-    return NextResponse.json(data);
+    return NextResponse.json(await res.json());
   } catch (error) {
     console.error("Proxy error:", error);
     return NextResponse.json(
@@ -54,30 +55,27 @@ export async function GET(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path } = await params;
-
+  const key = env.OPENAI_API_KEY;
+  if (!key) {
+    return NextResponse.json(
+      { error: "OpenAI API key not configured" },
+      { status: 503 },
+    );
+  }
   try {
     const openaiPath = path.join("/");
-
-    const openaiResponse = await fetch(
-      `https://api.openai.com/v1/${openaiPath}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-        },
-      },
-    );
-
-    if (!openaiResponse.ok) {
-      const error = await openaiResponse.text();
+    const res = await fetch(`https://api.openai.com/v1/${openaiPath}`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${key}` },
+    });
+    if (!res.ok) {
+      const error = await res.text();
       return NextResponse.json(
         { error: "OpenAI API error", details: error },
-        { status: openaiResponse.status },
+        { status: res.status },
       );
     }
-
-    const data = await openaiResponse.json();
-    return NextResponse.json(data);
+    return NextResponse.json(await res.json());
   } catch (error) {
     console.error("Proxy error:", error);
     return NextResponse.json(

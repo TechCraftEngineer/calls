@@ -26,7 +26,7 @@ packages/config, packages/types, packages/ui
 ### MUST (обязательно)
 
 1. **Нет циклов** — пакет A не должен импортировать пакет B, если B (напрямую или транзитивно) импортирует A
-2. **shared — потребитель** — `@qbs-autonaim/shared` может зависеть от db, ai, config, types, validators. Обратное запрещено: db, ai НЕ должны импортировать shared
+2. **shared — потребитель** — `@calls/shared` может зависеть от db, ai, config, types, validators. Обратное запрещено: db, ai НЕ должны импортировать shared
 3. **api — вершина packages** — api агрегирует всё; приложения зависят от api, не от внутренних packages напрямую (кроме ui, auth, validators для типов)
 
 ### SHOULD (рекомендуется)

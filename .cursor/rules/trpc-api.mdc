@@ -197,7 +197,7 @@ export type AppRouter = typeof appRouter;
 
 ```typescript
 import { z } from "zod";
-import { workspaceIdSchema } from "@qbs-autonaim/validators";
+import { workspaceIdSchema } from "@calls/validators";
 
 // Переиспользование схем из пакета validators
 export const get = protectedProcedure
@@ -222,7 +222,7 @@ export const update = protectedProcedure
 
 ### Переиспользование схем
 
-Храните общие схемы в `@qbs-autonaim/validators`:
+Храните общие схемы в `@calls/validators`:
 
 ```typescript
 // packages/validators/src/workspace.ts
@@ -230,7 +230,7 @@ export const workspaceIdSchema = z.string().regex(/^ws_[0-9a-fA-F]{32}$/, "Inval
 export const workspaceSlugSchema = z.string().min(3).max(50);
 
 // packages/api/src/routers/workspace/get.ts
-import { workspaceIdSchema } from "@qbs-autonaim/validators";
+import { workspaceIdSchema } from "@calls/validators";
 ```
 
 ## Обработка ошибок
@@ -442,14 +442,14 @@ export const update = protectedProcedure
 
 ### 3. Схемы vacancyId + workspaceId — переиспользовать
 
-Для операций с вакансией/гигом используйте общие схемы из `@qbs-autonaim/validators`:
+Для операций с вакансией/гигом используйте общие схемы из `@calls/validators`:
 
 ```typescript
 // packages/validators — vacancyWorkspaceInputSchema, gigWorkspaceInputSchema
 import {
   vacancyWorkspaceInputSchema,
   gigWorkspaceInputSchema,
-} from "@qbs-autonaim/validators";
+} from "@calls/validators";
 ```
 
 Используйте `.merge()` для расширения:
@@ -536,7 +536,7 @@ user/
 ### SHOULD (рекомендуется)
 
 1. **Группируйте связанную функциональность** - используйте вложенные роутеры
-2. **Переиспользуйте схемы** - храните общие схемы в `@qbs-autonaim/validators`
+2. **Переиспользуйте схемы** - храните общие схемы в `@calls/validators`
 3. **Используйте репозитории** - для сложной бизнес-логики
 4. **Документируйте сложные роуты** - добавляйте комментарии для неочевидной логики
 5. **Проверяйте существование перед доступом** - сначала NOT_FOUND, потом FORBIDDEN

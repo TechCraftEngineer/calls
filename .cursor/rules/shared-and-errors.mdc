@@ -5,7 +5,7 @@ alwaysApply: false
 
 # Shared и обработка ошибок
 
-## Пакет @qbs-autonaim/shared
+## Пакет @calls/shared
 
 ### Структура
 
@@ -20,16 +20,16 @@ alwaysApply: false
 
 ```ts
 // ✅ Допустимо
-import { getInitials, getResponseEventTitle } from "@qbs-autonaim/shared";
-import type { BaseVacancyData } from "@qbs-autonaim/shared";
-import { CreateDraftInputSchema } from "@qbs-autonaim/shared";
+import { getInitials, getResponseEventTitle } from "@calls/shared";
+import type { BaseVacancyData } from "@calls/shared";
+import { CreateDraftInputSchema } from "@calls/shared";
 ```
 
 ### Использование на сервере
 
 ```ts
 // Серверный код — только в API, Inngest и т.п.
-import { GigShortlistGenerator, RankingService } from "@qbs-autonaim/shared/server";
+import { GigShortlistGenerator, RankingService } from "@calls/shared/server";
 ```
 
 ---

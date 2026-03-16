@@ -275,7 +275,7 @@ const { mutate, isPending } = useMutation(
 ## Type Inference
 
 ```tsx
-import type { RouterInputs, RouterOutputs } from "@qbs-autonaim/api";
+import type { RouterInputs, RouterOutputs } from "@calls/api";
 
 type BrandCreateInput = RouterInputs["brands"]["create"];
 type Brand = RouterOutputs["brands"]["getById"];
