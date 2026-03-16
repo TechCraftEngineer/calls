@@ -1,6 +1,19 @@
 "use client";
 
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@calls/ui";
+import {
+  Avatar,
+  AvatarFallback,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  cn,
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+} from "@calls/ui";
 import { Download, MessageSquare } from "lucide-react";
 import sanitizeHtml from "sanitize-html";
 import type { TranscriptDetail } from "./types";
@@ -106,22 +119,35 @@ export default function TranscriptSection({
           Скачать .txt
         </Button>
       </CardHeader>
-      <CardContent className="bg-muted/20 flex flex-1 flex-col gap-4 overflow-y-auto p-6">
+      <CardContent className="flex flex-1 flex-col gap-5 overflow-y-auto p-6">
         {messages.length > 0 ? (
           messages.map((m, i) => (
-            <div
-              key={i}
-              className={`flex max-w-[85%] gap-2 ${m.isOperator ? "self-start flex-row" : "self-end flex-row-reverse"}`}
-            >
-              <div className="bg-muted text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium ring-1 ring-border/60">
-                {m.speaker[0]?.toUpperCase() || "?"}
-              </div>
-              <div className="flex min-w-0 flex-col gap-1 text-left">
-                <div className="text-muted-foreground text-xs font-medium">
+            <div key={i} className="flex max-w-full gap-3 self-start">
+              <Avatar className="size-8 shrink-0">
+                <AvatarFallback
+                  className={cn(
+                    "text-xs font-medium",
+                    m.isOperator
+                      ? "bg-primary/10 text-primary ring-1 ring-primary/20"
+                      : "bg-muted text-muted-foreground ring-1 ring-border/50",
+                  )}
+                >
+                  {m.speaker.includes("АВТООТВЕТЧИК")
+                    ? "🤖"
+                    : m.speaker[0]?.toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5 items-start">
+                <span className="text-muted-foreground text-xs font-medium">
                   {m.speaker}
-                </div>
+                </span>
                 <div
-                  className="bg-background border-border/60 rounded-lg border px-4 py-3 text-left text-sm leading-relaxed shadow-sm"
+                  className={cn(
+                    "rounded-lg border-l-4 px-4 py-2.5 text-sm leading-relaxed",
+                    m.isOperator
+                      ? "border-primary bg-primary/5 text-foreground"
+                      : "border-muted-foreground/40 bg-muted/50 text-foreground",
+                  )}
                   // biome-ignore lint/security/noDangerouslySetInnerHtml: sanitized
                   dangerouslySetInnerHTML={{
                     __html: sanitizeHtml(m.text, {
@@ -135,10 +161,14 @@ export default function TranscriptSection({
             </div>
           ))
         ) : (
-          <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center gap-2 py-16">
-            <MessageSquare className="size-10 opacity-40" />
-            <p className="text-sm">Текст отсутствует</p>
-          </div>
+          <Empty className="flex-1 py-16">
+            <EmptyHeader>
+              <EmptyMedia variant="icon" className="bg-muted/50">
+                <MessageSquare className="text-muted-foreground size-8" />
+              </EmptyMedia>
+              <EmptyDescription>Текст отсутствует</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
       </CardContent>
     </Card>

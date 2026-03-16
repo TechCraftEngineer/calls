@@ -113,6 +113,12 @@ export {
 export { UsersService } from "./services/users.service";
 // Types
 export type {
+  CallWithTranscript,
+  CreateCallData,
+  EvaluationData,
+  GetCallsParams,
+} from "./types/calls.types";
+export type {
   CreateUserData,
   UpdateUserData,
   UserUpdateData,

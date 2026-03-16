@@ -201,6 +201,7 @@ export {
   DataGridTableRowSelectAll,
   DataGridTableRowSpacer,
 } from "./reui/data-grid";
+export { Rating } from "./reui/rating";
 export type {
   DataGridApiFetchParams,
   DataGridApiResponse,

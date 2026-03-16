@@ -1,7 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { Button } from "@calls/ui";
+import { Button, Rating } from "@calls/ui";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { isMobileDevice } from "@/lib/utils";
@@ -118,19 +118,11 @@ export function renderDateCell(call: CallWithDetails["call"]) {
 }
 
 export function renderScoreCell(evaluation: CallWithDetails["evaluation"]) {
-  return evaluation?.value_score ? (
+  const score = evaluation?.value_score ?? 0;
+  return (
     <div className="op-tooltip">
-      <div
-        style={{
-          color: "#FFD600",
-          fontSize: "16px",
-          letterSpacing: "2px",
-        }}
-      >
-        {"★".repeat(evaluation.value_score)}
-        {"☆".repeat(5 - evaluation.value_score)}
-      </div>
-      {evaluation.value_explanation && (
+      <Rating rating={score} size="sm" />
+      {evaluation?.value_explanation && (
         <div className="tooltip-content">
           <strong>Обоснование:</strong>
           <br />
@@ -138,8 +130,6 @@ export function renderScoreCell(evaluation: CallWithDetails["evaluation"]) {
         </div>
       )}
     </div>
-  ) : (
-    <span style={{ color: "#FFD600", opacity: 0.3 }}>☆☆☆☆☆</span>
   );
 }
 

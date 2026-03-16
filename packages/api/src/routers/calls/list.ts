@@ -1,3 +1,4 @@
+import type { CallWithTranscript } from "@calls/db";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 import { getInternalNumbersForUser, getMobileNumbersForUser } from "./utils";
@@ -39,7 +40,7 @@ export const list = workspaceProcedure
       }
     }
 
-    const callsWithTranscripts = await callsService.getCallsWithTranscripts({
+    const rawCalls = await callsService.getCallsWithTranscripts({
       workspaceId: workspaceId!,
       limit: input.per_page,
       offset,
@@ -58,6 +59,30 @@ export const list = workspaceProcedure
       manager: input.manager || undefined,
       status: input.status || undefined,
       q: input.q?.trim() || undefined,
+    });
+
+    // Маппинг для фронтенда (snake_case) — evaluation приходит в camelCase из Drizzle
+    const callsWithTranscripts = rawCalls.map((item: CallWithTranscript) => {
+      const ev = item.evaluation as
+        | {
+            valueScore?: number;
+            valueExplanation?: string;
+            managerRecommendations?: string[] | null;
+          }
+        | null
+        | undefined;
+      const evaluationForFrontend = ev
+        ? {
+            ...ev,
+            value_score: ev.valueScore,
+            value_explanation: ev.valueExplanation,
+            manager_recommendations: ev.managerRecommendations ?? undefined,
+          }
+        : null;
+      return {
+        ...item,
+        evaluation: evaluationForFrontend,
+      };
     });
 
     const totalItems = await callsService.countCalls({

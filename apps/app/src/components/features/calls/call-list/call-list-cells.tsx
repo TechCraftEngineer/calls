@@ -1,7 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { Button, TableCell } from "@calls/ui";
+import { Button, Rating, TableCell } from "@calls/ui";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { isMobileDevice } from "@/lib/utils";
@@ -186,29 +186,16 @@ export function renderCallListCell({
     case "score":
       return (
         <TableCell key={colKey}>
-          {evaluation?.value_score ? (
-            <div className="op-tooltip">
-              <div
-                style={{
-                  color: "#FFD600",
-                  fontSize: "16px",
-                  letterSpacing: "2px",
-                }}
-              >
-                {"★".repeat(evaluation.value_score)}
-                {"☆".repeat(5 - evaluation.value_score)}
+          <div className="op-tooltip">
+            <Rating rating={evaluation?.value_score ?? 0} size="sm" />
+            {evaluation?.value_explanation && (
+              <div className="tooltip-content">
+                <strong>Обоснование:</strong>
+                <br />
+                {evaluation.value_explanation}
               </div>
-              {evaluation.value_explanation && (
-                <div className="tooltip-content">
-                  <strong>Обоснование:</strong>
-                  <br />
-                  {evaluation.value_explanation}
-                </div>
-              )}
-            </div>
-          ) : (
-            <span style={{ color: "#FFD600", opacity: 0.3 }}>☆☆☆☆☆</span>
-          )}
+            )}
+          </div>
         </TableCell>
       );
     case "summary":

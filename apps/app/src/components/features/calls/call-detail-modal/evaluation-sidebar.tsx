@@ -62,15 +62,15 @@ export default function EvaluationSidebar({
   const showQualityUnavailable = isQualityAnalyzable === false || !qualityScore;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex min-w-0 flex-col gap-4 sm:gap-6">
       <Card className="border-border/60">
-        <CardHeader className="pb-3">
+        <CardHeader className="px-4 pb-2 sm:px-6 sm:pb-3">
           <CardTitle className="text-muted-foreground flex items-center gap-2 text-xs font-medium uppercase tracking-wider">
-            <FileAudio className="size-3.5" />
+            <FileAudio className="size-3.5 shrink-0" />
             Запись звонка
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 px-4 pb-4 sm:px-6 sm:pb-6">
           <CallRecordPlayer callId={call.id} />
           <p className="text-muted-foreground text-xs">
             Размер: {formatFileSize(call.size_bytes)}
@@ -79,24 +79,26 @@ export default function EvaluationSidebar({
       </Card>
 
       <Card className="border-border/60">
-        <CardContent className="pt-6">
+        <CardContent className="px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-6">
           <p
-            className={`flex items-center gap-2 text-base font-medium ${call.customer_name ? "text-foreground" : "text-muted-foreground"}`}
+            className={`flex min-w-0 items-center gap-2 wrap-break-word text-sm font-medium sm:text-base ${call.customer_name ? "text-foreground" : "text-muted-foreground"}`}
           >
             <User className="size-4 shrink-0" />
-            {call.customer_name ? call.customer_name : "Имя не определено"}
+            <span className="min-w-0 wrap-break-word">
+              {call.customer_name ? call.customer_name : "Имя не определено"}
+            </span>
           </p>
         </CardContent>
       </Card>
 
       <Card className="border-border/60">
-        <CardHeader className="pb-3">
+        <CardHeader className="px-4 pb-2 sm:px-6 sm:pb-3">
           <CardTitle className="text-muted-foreground flex items-center gap-2 text-xs font-medium uppercase tracking-wider">
-            <BarChart3 className="size-3.5" />
+            <BarChart3 className="size-3.5 shrink-0" />
             Оценка
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-4 px-4 pb-4 sm:space-y-5 sm:px-6 sm:pb-6">
           <div>
             <div className="mb-2 flex justify-between text-sm font-medium">
               <span>Ценность звонка</span>
@@ -144,20 +146,38 @@ export default function EvaluationSidebar({
               </p>
             </div>
           )}
+          {transcript?.text && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-4 w-full gap-2 sm:w-auto"
+              onClick={onReevaluate}
+              disabled={restarting || reevaluating}
+              title="Переоценить звонок без повторной транскрипции"
+            >
+              {reevaluating ? (
+                <Loader2 className="size-3.5 shrink-0 animate-spin" />
+              ) : (
+                <BarChart3 className="size-3.5 shrink-0" />
+              )}
+              {reevaluating ? "Оценка..." : "Переоценить"}
+            </Button>
+          )}
         </CardContent>
       </Card>
 
       <Card className="border-amber-200/60 bg-amber-50/50 dark:border-amber-800/60 dark:bg-amber-950/20">
-        <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
+        <CardHeader className="flex flex-col gap-2 px-4 pb-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <CardTitle className="text-amber-800 dark:text-amber-200 m-0 flex items-center gap-2 text-xs font-medium uppercase tracking-wider">
-            <Lightbulb className="size-3.5" />
+            <Lightbulb className="size-3.5 shrink-0" />
             Рекомендации
           </CardTitle>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="border-amber-600/50 text-amber-700 hover:bg-amber-100 dark:border-amber-500/50 dark:text-amber-300 dark:hover:bg-amber-900/30"
+            className="w-full shrink-0 border-amber-600/50 text-amber-700 hover:bg-amber-100 sm:w-auto dark:border-amber-500/50 dark:text-amber-300 dark:hover:bg-amber-900/30"
             onClick={onGenerateRecommendations}
             disabled={isGeneratingRecommendations}
           >
@@ -171,7 +191,7 @@ export default function EvaluationSidebar({
             )}
           </Button>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 px-4 pb-4 sm:px-6 sm:pb-6">
           {evaluation?.manager_recommendations &&
           evaluation.manager_recommendations.length > 0 ? (
             <>
@@ -199,13 +219,13 @@ export default function EvaluationSidebar({
       </Card>
 
       <Card className="border-border/60">
-        <CardHeader className="pb-3">
+        <CardHeader className="px-4 pb-2 sm:px-6 sm:pb-3">
           <CardTitle className="text-muted-foreground flex items-center gap-2 text-xs font-medium uppercase tracking-wider">
-            <Sparkles className="size-3.5" />
+            <Sparkles className="size-3.5 shrink-0" />
             Резюме
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-4 pb-4 sm:px-6 sm:pb-6">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Тип:</span>
@@ -227,41 +247,24 @@ export default function EvaluationSidebar({
             <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
               {transcript?.summary || "Резюме отсутствует"}
             </p>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="flex-1 gap-2 min-w-0"
-                onClick={onRestartAnalysis}
-                disabled={restarting || reevaluating}
-              >
-                {restarting ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <RefreshCw className="size-3.5" />
-                )}
-                {restarting ? "Перезапуск..." : "Перезапустить анализ"}
-              </Button>
-              {transcript?.text && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  onClick={onReevaluate}
-                  disabled={restarting || reevaluating}
-                  title="Переоценить звонок без повторной транскрипции"
-                >
-                  {reevaluating ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <BarChart3 className="size-3.5" />
-                  )}
-                  {reevaluating ? "Оценка..." : "Переоценить"}
-                </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full min-w-0 gap-2 truncate sm:w-auto"
+              onClick={onRestartAnalysis}
+              disabled={restarting || reevaluating}
+              title="Перезапустить анализ"
+            >
+              {restarting ? (
+                <Loader2 className="size-3.5 shrink-0 animate-spin" />
+              ) : (
+                <RefreshCw className="size-3.5 shrink-0" />
               )}
-            </div>
+              <span className="min-w-0 truncate">
+                {restarting ? "Перезапуск..." : "Перезапустить анализ"}
+              </span>
+            </Button>
           </div>
         </CardContent>
       </Card>

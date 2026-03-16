@@ -21,6 +21,7 @@ const LUCIDE_MAP: Record<string, LucideIcon> = {
   ChevronDownIcon: LucideIcons.ChevronDown,
   FilterIcon: LucideIcons.Filter,
   SearchIcon: LucideIcons.Search,
+  StarIcon: LucideIcons.Star,
   XIcon: LucideIcons.X,
   InfoIcon: LucideIcons.Info,
 };
