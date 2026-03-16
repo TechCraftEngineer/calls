@@ -49,12 +49,22 @@ function CreateWorkspaceForm() {
 
   const {
     data: workspacesData,
-    isPending: checking,
+    isPending: checkingWorkspaces,
     error: workspacesError,
   } = useQuery({
     ...orpc.workspaces.list.queryOptions(),
     retry: false,
   });
+
+  const { data: pendingInvitationsData, isPending: checkingInvitations } =
+    useQuery({
+      ...orpc.workspaces.getPendingInvitationsForCurrentUser.queryOptions(),
+      retry: false,
+    });
+
+  const validateTokenMutation = useMutation(
+    orpc.workspaces.validateInvitationToken.mutationOptions(),
+  );
 
   useEffect(() => {
     getCurrentUser().then((user) => {
@@ -76,11 +86,49 @@ function CreateWorkspaceForm() {
     }
   }, [workspacesError, router]);
 
+  const checking = checkingWorkspaces || checkingInvitations;
+
   useEffect(() => {
-    if (!checking && workspacesData?.workspaces?.length) {
+    if (checking) return;
+
+    const invitations = pendingInvitationsData?.invitations ?? [];
+    
+    // Приоритет приглашениям, если они есть
+    if (invitations.length > 0) {
+      const firstInvitation = invitations[0];
+      
+      // Валидируем токен перед редиректом
+      validateTokenMutation.mutate(
+        { token: firstInvitation.token },
+        {
+          onSuccess: (result) => {
+            if (result.valid) {
+              router.replace(paths.invite.byToken(firstInvitation.token));
+            } else {
+              console.warn("Invalid invitation token:", result.reason);
+              // Если токен невалиден, проверяем воркспейсы
+              if (workspacesData?.workspaces?.length) {
+                router.replace(paths.root);
+              }
+            }
+          },
+          onError: (error) => {
+            console.error("Error validating invitation token:", error);
+            // При ошибке валидации, проверяем воркспейсы
+            if (workspacesData?.workspaces?.length) {
+              router.replace(paths.root);
+            }
+          },
+        }
+      );
+      return;
+    }
+
+    // Иначе проверяем воркспейсы
+    if (workspacesData?.workspaces?.length) {
       router.replace(paths.root);
     }
-  }, [checking, workspacesData, router]);
+  }, [checking, workspacesData, pendingInvitationsData, router, validateTokenMutation]);
 
   const createMutation = useMutation(
     orpc.workspaces.create.mutationOptions({
@@ -119,7 +167,7 @@ function CreateWorkspaceForm() {
     createMutation.mutate({ name: data.name, slug: data.slug });
   };
 
-  if (checking && !workspacesData) {
+  if (checking) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-[#F8F9FB] font-[Inter]">
         <div className="w-full max-w-[420px] rounded-[16px] border-[#EEE] bg-white p-12 shadow-[0_10px_40px_rgba(0,0,0,0.04)]">

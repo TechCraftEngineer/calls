@@ -129,6 +129,23 @@ export const invitationsRepository = {
     return result[0] ?? null;
   },
 
+  async findPendingByEmail(email: string) {
+    const now = new Date();
+    return db
+      .select({
+        token: schema.invitations.token,
+        workspaceId: schema.invitations.workspaceId,
+      })
+      .from(schema.invitations)
+      .where(
+        and(
+          eq(schema.invitations.email, email.toLowerCase().trim()),
+          isNull(schema.invitations.acceptedAt),
+          gt(schema.invitations.expiresAt, now),
+        ),
+      );
+  },
+
   async hasPendingForEmail(
     workspaceId: string,
     email: string,

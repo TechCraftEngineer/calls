@@ -36,7 +36,6 @@ export default function InviteAcceptPage() {
   } | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [userHasPassword, setUserHasPassword] = useState<boolean | null>(null);
-  const [checkingPassword, setCheckingPassword] = useState(false);
   const form = useForm<InviteAcceptData>({
     resolver: zodResolver(inviteAcceptSchema),
     defaultValues: {
@@ -76,7 +75,6 @@ export default function InviteAcceptPage() {
   useEffect(() => {
     if (passwordCheck) {
       setUserHasPassword(passwordCheck.hasPassword);
-      setCheckingPassword(false);
     }
   }, [passwordCheck]);
 
@@ -117,7 +115,7 @@ export default function InviteAcceptPage() {
   const submitting =
     acceptExistingMutation.isPending || acceptInvitationMutation.isPending;
 
-  const isLoading = checkingAuth || checkingPasswordQuery;
+  const isCheckingUser = checkingAuth || checkingPasswordQuery;
 
   const handleAcceptForExistingUser = async () => {
     if (!currentUser || !invitation) return;
@@ -178,7 +176,7 @@ export default function InviteAcceptPage() {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || isCheckingUser) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8F9FB]">
         <div className="flex flex-col items-center gap-4">
@@ -272,8 +270,7 @@ export default function InviteAcceptPage() {
               <p className="text-sm text-blue-600 mt-2">
                 {userHasPassword
                   ? "У вас уже есть пароль. Нажмите кнопку ниже для присоединения."
-                  : "У вас еще нет пароля. Создайте его, чтобы войти в систему и присоединиться к рабочему пространству."
-                }
+                  : "У вас еще нет пароля. Создайте его, чтобы войти в систему и присоединиться к рабочему пространству."}
               </p>
             )}
           </div>
@@ -299,19 +296,20 @@ export default function InviteAcceptPage() {
             </div>
           )}
 
-          {isCorrectEmail && userHasPassword !== null && (
+          {isCorrectEmail && userHasPassword !== null ? (
             <div className="space-y-6">
               {userHasPassword ? (
                 <div className="bg-green-50 rounded-lg p-4 border border-green-100">
                   <p className="text-sm text-green-900 m-0">
-                    У вас уже есть пароль. Нажмите кнопку ниже, чтобы присоединиться к рабочему пространству.
+                    У вас уже есть пароль. Нажмите кнопку ниже, чтобы
+                    присоединиться к рабочему пространству.
                   </p>
                 </div>
               ) : (
                 <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
                   <p className="text-sm text-blue-900 m-0">
-                    Создайте пароль для вашего аккаунта. После этого вы сможете войти в систему
-                    и присоединиться к рабочему пространству.
+                    Создайте пароль для вашего аккаунта. После этого вы сможете
+                    войти в систему и присоединиться к рабочему пространству.
                   </p>
                 </div>
               )}
@@ -338,7 +336,9 @@ export default function InviteAcceptPage() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">Ваше имя</FormLabel>
+                          <FormLabel className="text-gray-700">
+                            Ваше имя
+                          </FormLabel>
                           <FormControl>
                             <Input
                               type="text"

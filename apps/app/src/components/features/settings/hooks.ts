@@ -372,7 +372,7 @@ export function useSettings() {
     if (state.backupLoading) return;
     try {
       setState((prev) => ({ ...prev, backupLoading: true }));
-      const res = await backupMutation.mutateAsync(undefined as void);
+      const res = await backupMutation.mutateAsync(undefined);
       const path = res?.path ?? "";
       toast.success(`Резервная копия создана: ${path}`);
     } catch (error: unknown) {
@@ -392,7 +392,7 @@ export function useSettings() {
       sendTestLoading: true,
     }));
     try {
-      await sendTestTelegramMutation.mutateAsync(undefined as void);
+      await sendTestTelegramMutation.mutateAsync(undefined);
       setState((prev) => ({
         ...prev,
         sendTestMessage: "Тестовый отчёт отправлен в Telegram",

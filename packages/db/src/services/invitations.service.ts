@@ -130,7 +130,7 @@ export class InvitationsService {
       }
 
       return Object.keys(validated).length > 0 ? validated : null;
-    } catch (error) {
+    } catch (_error) {
       // При ошибке валидации возвращаем null, чтобы не сохранять некорректные данные
       return null;
     }
@@ -315,6 +315,55 @@ export class InvitationsService {
       }),
     );
     return withSettings;
+  }
+
+  /**
+   * Get all pending invitations for a user (for onboarding redirect).
+   * Combines: invitations table (by email) + workspace_members (by userId, status=pending).
+   */
+  async getPendingInvitationsForUser(
+    userId: string,
+    email: string,
+  ): Promise<Array<{ token: string; workspaceName: string }>> {
+    try {
+      const [fromInvitations, fromMembers] = await Promise.all([
+        this.invitationsRepository.findPendingByEmail(email),
+        this.workspacesService.getPendingInvitationsForUser(userId),
+      ]);
+
+      const workspaceIds = [
+        ...new Set([
+          ...fromInvitations.map((i) => i.workspaceId),
+          ...fromMembers.map((m) => m.workspaceId),
+        ]),
+      ];
+      
+      // Оптимизация: один запрос вместо N+1
+      const workspaces = await this.workspacesService.getByIds(workspaceIds);
+      const workspacesMap = new Map(workspaces.map(ws => [ws.id, ws.name]));
+
+      const result: Array<{ token: string; workspaceName: string }> = [];
+
+      for (const inv of fromInvitations) {
+        const name = workspacesMap.get(inv.workspaceId) ?? "Рабочее пространство";
+        result.push({ token: inv.token, workspaceName: name });
+      }
+      for (const m of fromMembers) {
+        if (m.token) {
+          const name = workspacesMap.get(m.workspaceId) ?? "Рабочее пространство";
+          result.push({ token: m.token, workspaceName: name });
+        }
+      }
+
+      return result;
+    } catch (error) {
+      console.error("Error in getPendingInvitationsForUser:", {
+        userId,
+        email,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   }
 
   /**

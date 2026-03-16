@@ -111,7 +111,7 @@ export default function ReportSettingsFormBody({
 
   const handleSendTest = () => {
     setSendTestMessage("");
-    sendTestMutation.mutate(undefined as void);
+    sendTestMutation.mutate(undefined);
   };
 
   return (

@@ -2,7 +2,7 @@
  * Workspaces repository - handles database operations for workspaces and members
  */
 
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, isNull } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 
@@ -349,8 +349,44 @@ export const workspacesRepository = {
         schema.workspaces,
         eq(schema.workspaceMembers.workspaceId, schema.workspaces.id),
       )
-      .where(eq(schema.workspaceMembers.userId, userId))
+      .where(
+        and(
+          eq(schema.workspaceMembers.userId, userId),
+          eq(schema.workspaceMembers.status, "active"),
+        ),
+      )
       .orderBy(desc(schema.workspaceMembers.createdAt));
+  },
+
+  async getPendingInvitationsForUser(userId: string) {
+    const now = new Date();
+    return db
+      .select({
+        token: schema.workspaceMembers.invitationToken,
+        workspaceId: schema.workspaceMembers.workspaceId,
+      })
+      .from(schema.workspaceMembers)
+      .where(
+        and(
+          eq(schema.workspaceMembers.userId, userId),
+          eq(schema.workspaceMembers.status, "pending"),
+          isNotNull(schema.workspaceMembers.invitationToken),
+          isNotNull(schema.workspaceMembers.invitationExpiresAt),
+          gt(schema.workspaceMembers.invitationExpiresAt, now),
+        ),
+      );
+  },
+
+  async getByIds(workspaceIds: string[]) {
+    if (workspaceIds.length === 0) return [];
+    
+    return db
+      .select({
+        id: schema.workspaces.id,
+        name: schema.workspaces.name,
+      })
+      .from(schema.workspaces)
+      .where(inArray(schema.workspaces.id, workspaceIds));
   },
 
   async getUsersNotInWorkspace(workspaceId: string) {

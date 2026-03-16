@@ -63,7 +63,7 @@ export const acceptInvitation = publicProcedure
     const authCtx = await auth.$context;
     const { internalAdapter, password: pwd, generateId } = authCtx;
     // authApi находится в context.auth.api, а не в authCtx
-    const authApi = (auth as any).api;
+    const _authApi = (auth as any).api;
 
     const createUserFn = async (opts: {
       email: string;

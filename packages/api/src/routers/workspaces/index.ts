@@ -28,6 +28,9 @@ export const workspacesRouter = {
   revokeInvitation: invitationsRouter.revokeInvitation,
   updateInvitationSettings: invitationsRouter.updateInvitationSettings,
   getInvitationByToken: invitationsRouter.getInvitationByToken,
+  getPendingInvitationsForCurrentUser:
+    invitationsRouter.getPendingInvitationsForCurrentUser,
+  validateInvitationToken: invitationsRouter.validateInvitationToken,
   acceptInvitation: invitationsRouter.acceptInvitation,
   acceptInvitationForExistingUser:
     invitationsRouter.acceptInvitationForExistingUser,
