@@ -160,7 +160,10 @@ export class UsersService {
     };
   }
 
-  async createUser(data: CreateUserData): Promise<string> {
+  async createUser(
+    data: CreateUserData,
+    workspaceId?: string | null,
+  ): Promise<string> {
     validateCreateUserData(data);
 
     const existing = await this.usersRepository.findByEmail(data.email);
@@ -174,6 +177,7 @@ export class UsersService {
       "INFO",
       `User ${data.email} created`,
       "admin",
+      workspaceId,
     );
 
     return userId;

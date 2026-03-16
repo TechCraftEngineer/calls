@@ -110,6 +110,7 @@ export {
   PopoverContent,
   PopoverAnchor,
 } from "./popover";
+export { RadioGroup, RadioGroupItem } from "./radio-group";
 export {
   Select,
   SelectContent,

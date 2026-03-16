@@ -11,14 +11,14 @@ export const systemRepository = {
     level: string,
     message: string,
     actor: string,
-    workspaceId = "system",
+    workspaceId?: string | null,
   ): Promise<void> {
     await db.insert(schema.activityLog).values({
       timestamp: new Date(),
       level,
       message,
       actor,
-      workspaceId,
+      ...(workspaceId != null && { workspaceId }),
     });
   },
 

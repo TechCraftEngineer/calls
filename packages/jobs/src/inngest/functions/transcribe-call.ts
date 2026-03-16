@@ -61,9 +61,9 @@ export const transcribeCallFn = inngest.createFunction(
     const workspace = await step.run("get-workspace", async () => {
       const ws = await workspacesService.getById(call.workspaceId);
       if (!ws) {
-        logger.warn("Workspace not found for call transcription", { 
-          workspaceId: call.workspaceId, 
-          callId 
+        logger.warn("Workspace not found for call transcription", {
+          workspaceId: call.workspaceId,
+          callId,
         });
         throw new Error(`Workspace not found: ${call.workspaceId}`);
       }

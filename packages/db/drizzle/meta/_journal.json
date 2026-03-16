@@ -15,6 +15,13 @@
       "when": 1773644626624,
       "tag": "0001_wooden_starfox",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1710580000000,
+      "tag": "0002_activity_log_nullable_workspace",
+      "breakpoints": true
     }
   ]
 }

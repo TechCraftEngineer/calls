@@ -2,12 +2,13 @@
 
 import {
   Button,
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
   Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  RadioGroup,
+  RadioGroupItem,
   toast,
 } from "@calls/ui";
 import { useEffect, useRef, useState } from "react";
@@ -383,39 +384,40 @@ export default function InviteUserModal({
           </div>
 
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="invite-role"
-              className="text-sm font-semibold text-gray-700"
-            >
-              Роль
-            </label>
-            <Select
+            <span className="text-sm font-semibold text-gray-700">Роль</span>
+            <RadioGroup
               value={role}
               onValueChange={(v: "admin" | "member") => setRole(v)}
+              className="w-fit"
               disabled={submitting}
             >
-              <SelectTrigger id="invite-role" className="w-full min-h-[44px]">
-                <SelectValue placeholder="Выберите роль" />
-              </SelectTrigger>
-              <SelectContent className="z-2100">
-                <SelectItem value="member">
-                  <div className="flex flex-col items-start py-1">
-                    <span className="font-medium">{ROLE_LABELS.member}</span>
-                    <span className="text-xs text-gray-500">
-                      {ROLE_DESCRIPTIONS.member}
-                    </span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="admin">
-                  <div className="flex flex-col items-start py-1">
-                    <span className="font-medium">{ROLE_LABELS.admin}</span>
-                    <span className="text-xs text-gray-500">
-                      {ROLE_DESCRIPTIONS.admin}
-                    </span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              <Field orientation="horizontal">
+                <RadioGroupItem value="member" id="invite-role-member" />
+                <FieldContent>
+                  <FieldLabel
+                    htmlFor="invite-role-member"
+                    className="font-normal"
+                  >
+                    {ROLE_LABELS.member}
+                  </FieldLabel>
+                  <FieldDescription>
+                    {ROLE_DESCRIPTIONS.member}
+                  </FieldDescription>
+                </FieldContent>
+              </Field>
+              <Field orientation="horizontal">
+                <RadioGroupItem value="admin" id="invite-role-admin" />
+                <FieldContent>
+                  <FieldLabel
+                    htmlFor="invite-role-admin"
+                    className="font-normal"
+                  >
+                    {ROLE_LABELS.admin}
+                  </FieldLabel>
+                  <FieldDescription>{ROLE_DESCRIPTIONS.admin}</FieldDescription>
+                </FieldContent>
+              </Field>
+            </RadioGroup>
           </div>
 
           <div className="flex gap-3 mt-2">
@@ -430,7 +432,7 @@ export default function InviteUserModal({
             </Button>
             <Button
               type="submit"
-              variant="accent"
+              variant="dark"
               disabled={submitting}
               className="flex-1"
             >

@@ -11,14 +11,17 @@ export const create = workspaceAdminProcedure
       throw new ORPCError("CONFLICT", {
         message: "Пользователь с таким email уже существует",
       });
-    const id = await usersService.createUser({
-      email: input.email,
-      password: input.password,
-      givenName: input.givenName,
-      familyName: input.familyName ?? "",
-      internalExtensions: input.internalExtensions ?? null,
-      mobilePhones: input.mobilePhones ?? null,
-    });
+    const id = await usersService.createUser(
+      {
+        email: input.email,
+        password: input.password,
+        givenName: input.givenName,
+        familyName: input.familyName ?? "",
+        internalExtensions: input.internalExtensions ?? null,
+        mobilePhones: input.mobilePhones ?? null,
+      },
+      context.workspaceId,
+    );
     if (context.workspaceId) {
       await context.workspacesService.addMember({
         workspaceId: context.workspaceId,
@@ -30,6 +33,7 @@ export const create = workspaceAdminProcedure
       "info",
       `User created: ${input.email}`,
       (context.user as Record<string, unknown>).email as string,
+      context.workspaceId,
     );
     const user = await usersService.getUser(id);
     if (!user)

@@ -61,14 +61,17 @@ export class InvitationsService {
       const emailPrefix = trimmedEmail.split("@")[0] || "User";
       const tempPassword = randomUUID(); // Temporary password, will be updated
 
-      await this.usersService.createUser({
-        email: trimmedEmail,
-        password: tempPassword,
-        givenName: emailPrefix,
-        familyName: "",
-        internalExtensions: null,
-        mobilePhones: null,
-      });
+      await this.usersService.createUser(
+        {
+          email: trimmedEmail,
+          password: tempPassword,
+          givenName: emailPrefix,
+          familyName: "",
+          internalExtensions: null,
+          mobilePhones: null,
+        },
+        workspaceId,
+      );
 
       user = await this.usersService.getUserByEmail(trimmedEmail);
       if (!user) {

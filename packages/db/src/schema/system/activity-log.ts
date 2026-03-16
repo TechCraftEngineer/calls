@@ -10,9 +10,9 @@ export const activityLog = pgTable(
   "activity_log",
   {
     id: uuid("id").primaryKey().default(sql`uuidv7()`),
-    workspaceId: text("workspace_id")
-      .notNull()
-      .references(() => workspaces.id, { onDelete: "cascade" }),
+    workspaceId: text("workspace_id").references(() => workspaces.id, {
+      onDelete: "cascade",
+    }),
     timestamp: timestamp("timestamp").notNull(),
     level: text("level").notNull(),
     message: text("message").notNull(),
