@@ -12,7 +12,7 @@ RUN turbo prune @calls/app-server --docker
 FROM base AS builder
 COPY --from=prepare /app/out/json/ .
 
-RUN bun install --ignore-scripts --production
+RUN bun install --ignore-scripts
 
 COPY --from=prepare /app/out/full/ .
 
