@@ -54,9 +54,6 @@ export const auth = betterAuth({
         });
       });
     },
-    onPasswordReset: async ({ user }) => {
-      console.log(`[Auth] Password reset completed for: ${user.email}`);
-    },
   },
   socialProviders:
     process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET

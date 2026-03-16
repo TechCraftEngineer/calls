@@ -167,7 +167,7 @@ export class UsersService {
 
     const existing = await this.usersRepository.findByUsername(data.username);
     if (existing) {
-      throw new ValidationError("User with this username already exists");
+      throw new ValidationError("Пользователь с таким логином уже существует");
     }
 
     const userId = await this.usersRepository.create(data);
@@ -186,7 +186,7 @@ export class UsersService {
 
     const user = await this.usersRepository.findById(userId);
     if (!user) {
-      throw new ValidationError("User not found");
+      throw new ValidationError("Пользователь не найден");
     }
 
     const result = await this.usersRepository.updateName(userId, data);

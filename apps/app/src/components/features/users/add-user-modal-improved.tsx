@@ -44,6 +44,8 @@ const defaultForm: AddUserForm = {
   evaluation_custom_instructions: "",
 };
 
+const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
+
 export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
   const [form, setForm] = useState<AddUserForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
@@ -99,8 +101,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
 
     if (!form.username.trim()) {
       newErrors.username = "Обязательное поле";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.username.trim())) {
-      newErrors.username = "Неверный формат email";
+    } else if (form.username.length < 3) {
+      newErrors.username = "Логин должен содержать минимум 3 символа";
+    } else if (!USERNAME_REGEX.test(form.username)) {
+      newErrors.username =
+        "Логин может содержать только буквы, цифры, подчёркивания и дефисы";
     }
 
     if (!form.password.trim()) {
@@ -192,7 +197,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
               ref={firstInputRef}
               id="username"
               name="username"
-              type="email"
+              type="text"
               value={form.username}
               onChange={(e) => {
                 setForm((f) => ({ ...f, username: e.target.value }));
@@ -201,7 +206,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
                 }
               }}
               className="w-full py-2 px-3 border border-gray-300 rounded-md text-base"
-              placeholder="example@mail.com"
+              placeholder="ivanov_ivan"
               autoComplete="username"
               spellCheck={false}
               aria-invalid={errors.username ? "true" : "false"}

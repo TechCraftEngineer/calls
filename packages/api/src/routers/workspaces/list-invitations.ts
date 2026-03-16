@@ -5,13 +5,15 @@ import { workspaceIdInputSchema } from "./schemas";
 export const listInvitations = workspaceAdminProcedure
   .input(workspaceIdInputSchema)
   .handler(async ({ input }) => {
-    const rows = await invitationsService.listByWorkspace(input.workspaceId);
+    const rows = await invitationsService.listPendingByWorkspace(
+      input.workspaceId,
+    );
     return rows.map((r) => ({
       id: r.id,
-      email: r.email,
+      email: r.user.email,
       role: r.role,
-      token: r.token,
-      expiresAt: r.expiresAt,
+      token: r.invitationToken,
+      expiresAt: r.invitationExpiresAt,
       createdAt: r.createdAt,
       invitedBy: r.invitedBy,
     }));

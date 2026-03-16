@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   Button,
@@ -214,7 +214,7 @@ export default function InviteUserModal({
                 type="button"
                 variant="outline"
                 onClick={handleCopyLink}
-                className="shrink-0 min-w-[44px] min-h-[44px]"
+                className="shrink-0 min-w-[44px]"
                 aria-label="Скопировать ссылку"
               >
                 {copied ? (
@@ -271,7 +271,7 @@ export default function InviteUserModal({
                 setEmail("");
                 setRole("member");
               }}
-              className="flex-1 min-h-[44px]"
+              className="flex-1"
             >
               Пригласить ещё
             </Button>
@@ -279,7 +279,7 @@ export default function InviteUserModal({
               type="button"
               variant="accent"
               onClick={handleClose}
-              className="flex-1 min-h-[44px]"
+              className="flex-1"
             >
               Готово
             </Button>
@@ -316,7 +316,7 @@ export default function InviteUserModal({
             onClick={handleClose}
             aria-label="Закрыть"
             disabled={submitting}
-            className="min-w-[44px] min-h-[44px]"
+            className="min-w-[44px]"
           >
             <svg
               width="20"
@@ -424,7 +424,7 @@ export default function InviteUserModal({
               variant="outline"
               onClick={handleClose}
               disabled={submitting}
-              className="flex-1 min-h-[44px]"
+              className="flex-1"
             >
               Отмена
             </Button>
@@ -432,7 +432,7 @@ export default function InviteUserModal({
               type="submit"
               variant="accent"
               disabled={submitting}
-              className="flex-1 min-h-[44px]"
+              className="flex-1"
             >
               {submitting ? "Отправка…" : "Отправить приглашение"}
             </Button>

@@ -38,10 +38,10 @@ export const sendEmail = async (email: Emails) => {
     return transporter.sendMail(mailOptions);
   }
   if (!resend) {
-    console.log(
-      "Resend is not configured. You need to add a RESEND_API_KEY in your .env file for emails to work.",
-    );
-    return Promise.resolve();
+    const msg =
+      "Resend is not configured. Add RESEND_API_KEY to .env or enable EMAIL_SANDBOX_ENABLED=true for local MailHog.";
+    console.error("[Emails]", msg);
+    return Promise.reject(new Error(msg));
   }
   await resend.emails.send({
     to: email.to,

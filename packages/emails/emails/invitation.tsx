@@ -18,7 +18,7 @@ import { emailTailwindConfig } from "../tailwind";
 
 export default function InvitationEmail({
   inviteLink = `${env.APP_URL}${paths.invite.byToken("abc123")}`,
-  workspaceName = "Workspace",
+  workspaceName = "Рабочее пространство",
   inviterName,
   role = "member",
   userExists = false,
@@ -64,19 +64,19 @@ export default function InvitationEmail({
             </div>
 
             <Heading className="mx-0 mb-[16px] p-0 text-center text-[28px] font-bold text-[#111827]">
-              Приглашение в workspace
+              Приглашение в рабочее пространство
             </Heading>
 
             <Text className="mb-[24px] text-center text-[16px] leading-[24px] text-[#6b7280]">
               {inviterName ? (
                 <>
                   <strong>{inviterName}</strong> пригласил вас присоединиться к
-                  workspace «<strong>{workspaceName}</strong>» в качестве{" "}
-                  {roleLabel}
+                  рабочему пространству «<strong>{workspaceName}</strong>» в
+                  качестве {roleLabel}
                 </>
               ) : (
                 <>
-                  Вас пригласили присоединиться к workspace «
+                  Вас пригласили присоединиться к рабочему пространству «
                   <strong>{workspaceName}</strong>» в качестве {roleLabel}
                 </>
               )}
@@ -98,12 +98,12 @@ export default function InvitationEmail({
                 {userExists ? (
                   <>
                     Нажмите кнопку выше и войдите в свой аккаунт. После входа вы
-                    автоматически получите доступ к workspace.
+                    автоматически получите доступ к рабочему пространству.
                   </>
                 ) : (
                   <>
                     Нажмите кнопку выше, создайте аккаунт и автоматически
-                    получите доступ к workspace.
+                    получите доступ к рабочему пространству.
                   </>
                 )}{" "}
                 Если кнопка не работает, скопируйте ссылку ниже в браузер.

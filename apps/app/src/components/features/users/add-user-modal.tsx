@@ -55,6 +55,8 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -66,9 +68,20 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
       setError("Заполните логин, пароль и имя.");
       return;
     }
+    const trimmedUsername = form.username.trim();
+    if (trimmedUsername.length < 3) {
+      setError("Логин должен содержать минимум 3 символа.");
+      return;
+    }
+    if (!USERNAME_REGEX.test(trimmedUsername)) {
+      setError(
+        "Логин может содержать только буквы, цифры, подчёркивания и дефисы.",
+      );
+      return;
+    }
     setSubmitting(true);
     try {
-      await onSubmit(form);
+      await onSubmit({ ...form, username: trimmedUsername });
       onClose();
     } catch (err: unknown) {
       setError(
@@ -95,7 +108,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
                 setForm((f) => ({ ...f, username: e.target.value }))
               }
               className={formInput}
-              placeholder="example@mail.com"
+              placeholder="ivanov_ivan"
               autoComplete="username"
             />
           </div>

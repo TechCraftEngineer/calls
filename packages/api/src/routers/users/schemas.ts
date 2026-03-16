@@ -1,9 +1,19 @@
 import { z } from "zod";
 
+const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
+
 export const userCreateSchema = z.object({
-  username: z.string().min(1),
-  password: z.string().min(1),
-  givenName: z.string().min(1),
+  username: z
+    .string()
+    .min(1, "Логин обязателен")
+    .min(3, "Логин должен содержать минимум 3 символа")
+    .max(50, "Логин не должен превышать 50 символов")
+    .regex(
+      USERNAME_REGEX,
+      "Логин может содержать только буквы, цифры, подчёркивания и дефисы",
+    ),
+  password: z.string().min(1, "Пароль обязателен"),
+  givenName: z.string().min(1, "Имя обязательно"),
   familyName: z.string().optional().default(""),
   internalExtensions: z.string().optional().nullable(),
   mobilePhones: z.string().optional().nullable(),

@@ -36,10 +36,10 @@ export const createInvitation = workspaceAdminProcedure
       const emailRole = input.role === "owner" ? "admin" : input.role;
       await sendEmail({
         to: [input.email],
-        subject: `Приглашение в ${workspace?.name ?? "workspace"} · ${APP_CONFIG.shortName}`,
+        subject: `Приглашение в ${workspace?.name ?? "рабочее пространство"} · ${APP_CONFIG.shortName}`,
         react: InvitationEmail({
           inviteLink,
-          workspaceName: workspace?.name ?? "Workspace",
+          workspaceName: workspace?.name ?? "Рабочее пространство",
           inviterName: inviter?.name ?? undefined,
           role: emailRole,
         }),
