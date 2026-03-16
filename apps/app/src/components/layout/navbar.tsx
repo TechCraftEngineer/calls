@@ -58,7 +58,7 @@ export default function Navbar({ user }: NavbarProps) {
         <div className="user-meta flex items-center gap-4">
           <div className="text-right">
             <div className="user-name">{user.name}</div>
-            <div className="user-email">{user.username}</div>
+            <div className="user-email">{user.email}</div>
           </div>
           <Link
             href={paths.auth.signout}

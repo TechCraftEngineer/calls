@@ -42,13 +42,13 @@ export default function CustomDropdown({
       api.users.list().then((list: any) => {
         const arr = (Array.isArray(list) ? list : []) as {
           id: number;
-          username?: string;
+          email?: string;
           name?: string;
         }[];
         setManagers(
           arr.map((u) => ({
             id: String(u.id),
-            name: u.name || u.username || String(u.id),
+            name: u.name || u.email || String(u.id),
           })),
         );
       });

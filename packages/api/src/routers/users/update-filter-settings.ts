@@ -29,8 +29,8 @@ export const updateFilterSettings = workspaceProcedure
 
       await logUpdate(
         "filter settings updated",
-        user.username ?? "unknown",
-        ((context.user as Record<string, unknown>).username as string) ??
+        user.email ?? "unknown",
+        ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
       );
 
@@ -38,8 +38,8 @@ export const updateFilterSettings = workspaceProcedure
     } catch (error) {
       await logUpdate(
         "update user filter settings",
-        user.username ?? "unknown",
-        ((context.user as Record<string, unknown>).username as string) ??
+        user.email ?? "unknown",
+        ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
       );

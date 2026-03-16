@@ -5,7 +5,7 @@ interface ManagedUsersSectionProps {
   form: any;
   setForm: React.Dispatch<React.SetStateAction<any>>;
   user: { id: number };
-  allUsers: Array<{ id: number; username?: string }>;
+  allUsers: Array<{ id: number; email?: string }>;
 }
 
 export function ManagedUsersSection({
@@ -28,7 +28,7 @@ export function ManagedUsersSection({
         {allUsers
           .filter((u) => u.id !== user.id)
           .map((u) => {
-            const name = getDisplayName(u) || u.username;
+            const name = getDisplayName(u) || u.email;
             const checked =
               form.report_managed_user_ids?.includes(u.id) ?? false;
             return (
@@ -46,7 +46,7 @@ export function ManagedUsersSection({
                     }));
                   }}
                 />
-                {name} ({u.username})
+                {name} ({u.email})
               </label>
             );
           })}

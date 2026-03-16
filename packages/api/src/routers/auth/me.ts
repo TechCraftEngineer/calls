@@ -7,7 +7,7 @@ export const me = protectedProcedure.handler(async ({ context }) => {
 
   return {
     id: u.id,
-    username: fields.username,
+    email: fields.email,
     name: u.name,
     givenName: fields.givenName,
     familyName: fields.familyName,

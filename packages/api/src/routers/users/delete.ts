@@ -28,14 +28,14 @@ export const deleteUser = workspaceAdminProcedure
     await systemRepository.addActivityLog(
       "info",
       context.workspaceId
-        ? `Пользователь исключён из рабочего пространства: ${user.username}`
-        : `Пользователь удалён: ${user.username}`,
-      (context.user as Record<string, unknown>).username as string,
+        ? `Пользователь исключён из рабочего пространства: ${user.email}`
+        : `Пользователь удалён: ${user.email}`,
+      (context.user as Record<string, unknown>).email as string,
     );
     return {
       success: true,
       message: context.workspaceId
-        ? `Пользователь ${user.username} исключён из рабочего пространства`
-        : `Пользователь ${user.username} удалён`,
+        ? `Пользователь ${user.email} исключён из рабочего пространства`
+        : `Пользователь ${user.email} удалён`,
     };
   });

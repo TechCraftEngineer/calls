@@ -32,7 +32,7 @@ export default function UsersPage() {
   } | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<{
     userId: string;
-    username: string;
+    email: string;
   } | null>(null);
 
   const workspaceId = activeWorkspace?.id ?? null;
@@ -168,8 +168,8 @@ export default function UsersPage() {
     });
   };
 
-  const handleRemoveMember = (userId: string, username: string) => {
-    setConfirmRemove({ userId, username });
+  const handleRemoveMember = (userId: string, email: string) => {
+    setConfirmRemove({ userId, email });
   };
 
   const handleUpdateRole = (
@@ -297,7 +297,7 @@ export default function UsersPage() {
           }
         }}
         title="Исключить участника?"
-        message={`Исключить ${confirmRemove?.username} из рабочего пространства?`}
+        message={`Исключить ${confirmRemove?.email} из рабочего пространства?`}
       />
     </div>
   );

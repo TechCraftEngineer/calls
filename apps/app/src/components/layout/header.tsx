@@ -19,14 +19,14 @@ export default function Header({ user }: HeaderProps) {
       <div className="user-profile">
         <div className="profile-info mr-1">
           <div className="profile-name text-sm font-bold text-gray-900">
-            {user.name || user.username}
+            {user.name || user.email}
           </div>
           <div className="profile-role text-xs text-gray-500 font-extrabold text-right tracking-wide">
             {isWorkspaceAdmin ? "АДМИНИСТРАТОР" : "МЕНЕДЖЕР"}
           </div>
         </div>
         <div className="profile-avatar bg-gray-50 border border-gray-200 text-gray-700 font-semibold">
-          {(user.name || user.username)[0].toUpperCase()}
+          {(user.name || user.email)[0].toUpperCase()}
         </div>
       </div>
     </header>

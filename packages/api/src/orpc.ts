@@ -50,7 +50,7 @@ export async function createBackendContext(opts: {
   systemRepository: any;
   usersService: any;
   workspacesService: any;
-  sessionUsername: string | null;
+  sessionEmail: string | null;
   user: any;
   authUserId: string | null;
   workspaceId: string | null;
@@ -64,11 +64,9 @@ export async function createBackendContext(opts: {
     if (session?.user) {
       const baUser = session.user as Record<string, unknown>;
       authUserId = typeof baUser.id === "string" ? baUser.id : null;
-      const username = (baUser.username ?? baUser.email ?? baUser.name) as
-        | string
-        | undefined;
-      if (username) {
-        const profile = await usersService.getUserByUsername(username);
+      const email = (baUser.email ?? baUser.name) as string | undefined;
+      if (email) {
+        const profile = await usersService.getUserByEmail(email);
         user = profile ? { ...profile, ...baUser } : baUser;
       }
     }
@@ -77,11 +75,11 @@ export async function createBackendContext(opts: {
   if (!user) {
     const cookie = opts.headers.get("cookie");
     const match = cookie?.match(/\bsession=([^;]+)/);
-    const sessionUsername = match?.[1]
+    const sessionEmail = match?.[1]
       ? decodeURIComponent(match[1].trim())
       : null;
-    if (sessionUsername) {
-      user = await usersService.getUserByUsername(sessionUsername);
+    if (sessionEmail) {
+      user = await usersService.getUserByEmail(sessionEmail);
     }
   }
 
@@ -108,7 +106,7 @@ export async function createBackendContext(opts: {
     systemRepository,
     usersService,
     workspacesService,
-    sessionUsername: user?.username ?? null,
+    sessionEmail: user?.email ?? null,
     user,
     authUserId,
     workspaceId,

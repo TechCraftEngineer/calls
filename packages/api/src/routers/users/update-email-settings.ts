@@ -38,8 +38,8 @@ export const updateEmailSettings = workspaceProcedure
 
       await logUpdate(
         "email settings updated",
-        user.username ?? "unknown",
-        ((context.user as Record<string, unknown>).username as string) ??
+        user.email ?? "unknown",
+        ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
       );
 
@@ -47,8 +47,8 @@ export const updateEmailSettings = workspaceProcedure
     } catch (error) {
       await logUpdate(
         "update user email settings",
-        user.username ?? "unknown",
-        ((context.user as Record<string, unknown>).username as string) ??
+        user.email ?? "unknown",
+        ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
       );

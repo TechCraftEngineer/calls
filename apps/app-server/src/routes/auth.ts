@@ -20,21 +20,21 @@ export function createAuthRoutes(auth: Auth) {
   const r = new Hono();
 
   r.post("/login", async (c) => {
-    const body = await c.req.json<{ username: string; password: string }>();
-    const username = (body.username ?? "").trim();
+    const body = await c.req.json<{ email: string; password: string }>();
+    const email = (body.email ?? "").trim().toLowerCase();
     const password = (body.password ?? "").trim();
-    if (!username || !password) {
+    if (!email || !password) {
       return c.json({ success: false, detail: "Invalid credentials" }, 401);
     }
 
     const authUrl = new URL(c.req.url).origin;
-    const authRequest = new Request(`${authUrl}/api/auth/sign-in/username`, {
+    const authRequest = new Request(`${authUrl}/api/auth/sign-in/email`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Cookie: c.req.header("Cookie") ?? "",
       },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ email, password }),
     });
     const authResponse = await auth.handler(authRequest);
 
@@ -62,8 +62,8 @@ export function createAuthRoutes(auth: Auth) {
           message: "Login successful",
           user: {
             id: u?.id,
-            username: u?.username ?? username,
-            name: u?.name ?? username,
+            email: u?.email ?? email,
+            name: u?.name ?? email,
             givenName: fields.givenName,
             familyName: fields.familyName,
           },

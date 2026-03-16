@@ -10,7 +10,7 @@ export const backup = workspaceAdminProcedure.handler(async ({ context }) => {
   await systemRepository.addActivityLog(
     "info",
     `Запрошена резервная копия PostgreSQL: ${backupFilename} (выполните pg_dump вручную)`,
-    (context.user as Record<string, unknown>).username as string,
+    (context.user as Record<string, unknown>).email as string,
     context.workspaceId,
   );
   return {

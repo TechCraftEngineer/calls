@@ -36,12 +36,13 @@ export const usersRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
-  async findByUsername(username: string): Promise<schema.User | null> {
+  async findByEmail(email: string): Promise<schema.User | null> {
+    const normalized = email.trim().toLowerCase();
     const result = await db
       .select()
       .from(schema.user)
       .where(
-        and(eq(schema.user.username, username), isNull(schema.user.deletedAt)),
+        and(eq(schema.user.email, normalized), isNull(schema.user.deletedAt)),
       )
       .limit(1);
 
@@ -54,22 +55,8 @@ export const usersRepository = {
     return user;
   },
 
-  async findWithAllData(username: string): Promise<schema.User | null> {
-    const result = await db
-      .select()
-      .from(schema.user)
-      .where(
-        and(eq(schema.user.username, username), isNull(schema.user.deletedAt)),
-      )
-      .limit(1);
-
-    const user = result[0] ?? null;
-    if (user && !user.givenName && user.name) {
-      const parts = user.name.split(/\s+/, 2);
-      user.givenName = parts[0] ?? "";
-      user.familyName = parts[1] ?? "";
-    }
-    return user;
+  async findWithAllData(email: string): Promise<schema.User | null> {
+    return this.findByEmail(email);
   },
 
   async findAllActive(): Promise<schema.User[]> {
@@ -105,8 +92,8 @@ export const usersRepository = {
     await db.insert(schema.user).values({
       id: userId,
       name: fullName,
-      email: data.username,
-      username: data.username,
+      email: data.email,
+      username: data.email,
       givenName: data.givenName,
       familyName: data.familyName ?? "",
       internalExtensions: data.internalExtensions ?? null,

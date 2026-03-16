@@ -95,7 +95,7 @@ export default function WorkspaceMembersTable({
                 return (
                   <TableRow key={m.id}>
                     <TableCell className="font-semibold text-[#333]">
-                      {m.user?.name || m.user?.username || "—"}
+                      {m.user?.name || m.user?.email || "—"}
                     </TableCell>
                     <TableCell className="text-[#555]">
                       {m.user?.email || "—"}

@@ -44,7 +44,7 @@ export const updateFtp = workspaceAdminProcedure
     }
 
     const username =
-      (context.user as Record<string, unknown>)?.username ?? "system";
+      (context.user as Record<string, unknown>)?.email ?? "system";
     await settingsService.updateFtpSettings(
       enabled,
       host,

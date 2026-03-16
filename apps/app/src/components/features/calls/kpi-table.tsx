@@ -14,7 +14,7 @@ import { restGet } from "@/lib/api";
 interface KpiRow {
   user_id: number;
   name: string;
-  username: string;
+  email: string;
   base_salary: number;
   target_bonus: number;
   target_talk_time_minutes: number;
@@ -85,7 +85,7 @@ export default function KpiTable({
               <TableRow key={row.user_id}>
                 <TableCell className="font-semibold">
                   {row.name} <br />
-                  <small className="text-[#999]">{row.username}</small>
+                  <small className="text-[#999]">{row.email}</small>
                 </TableCell>
                 <TableCell>{row.base_salary.toLocaleString()} ₽</TableCell>
                 <TableCell>{row.target_bonus.toLocaleString()} ₽</TableCell>

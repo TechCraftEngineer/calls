@@ -3,15 +3,15 @@ import { publicProcedure } from "../../orpc";
 import { extractUserFields } from "../../user-profile";
 
 const loginSchema = z.object({
-  username: z.string().min(1),
-  password: z.string().min(1),
+  email: z.string().email("Введите корректный email"),
+  password: z.string().min(1, "Пароль обязателен"),
 });
 
 export const login = publicProcedure
   .input(loginSchema)
   .handler(async ({ input, context }) => {
-    const user = await context.usersService.getUserByUsername(
-      input.username.trim(),
+    const user = await context.usersService.getUserByEmail(
+      input.email.trim().toLowerCase(),
     );
     if (!user) {
       throw new Error("Invalid credentials");
@@ -22,7 +22,7 @@ export const login = publicProcedure
       message: "Login successful",
       user: {
         id: user.id,
-        username: fields.username,
+        email: fields.email,
         name: user.name,
         givenName: fields.givenName,
         familyName: fields.familyName,

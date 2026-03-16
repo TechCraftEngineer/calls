@@ -6,13 +6,13 @@ import { userCreateSchema } from "./schemas";
 export const create = workspaceAdminProcedure
   .input(userCreateSchema)
   .handler(async ({ input, context }) => {
-    const existing = await usersService.getUserByUsername(input.username);
+    const existing = await usersService.getUserByEmail(input.email);
     if (existing)
       throw new ORPCError("CONFLICT", {
-        message: "Пользователь с таким логином уже существует",
+        message: "Пользователь с таким email уже существует",
       });
     const id = await usersService.createUser({
-      username: input.username,
+      email: input.email,
       password: input.password,
       givenName: input.givenName,
       familyName: input.familyName ?? "",
@@ -28,8 +28,8 @@ export const create = workspaceAdminProcedure
     }
     await systemRepository.addActivityLog(
       "info",
-      `User created: ${input.username}`,
-      (context.user as Record<string, unknown>).username as string,
+      `User created: ${input.email}`,
+      (context.user as Record<string, unknown>).email as string,
     );
     const user = await usersService.getUser(id);
     if (!user)

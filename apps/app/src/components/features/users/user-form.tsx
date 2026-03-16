@@ -35,7 +35,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
     resolver: zodResolver(schema),
     defaultValues: user
       ? {
-          username: String((user as { username?: string }).username ?? ""),
+          email: String((user as { email?: string }).email ?? ""),
           givenName: String((user as Record<string, unknown>).givenName ?? ""),
           familyName: String(
             (user as Record<string, unknown>).familyName ?? "",
@@ -48,7 +48,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           ),
         }
       : {
-          username: "",
+          email: "",
           password: "",
           givenName: "",
           familyName: "",
@@ -99,27 +99,27 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       <div className="space-y-5">
         <div>
           <label
-            htmlFor="username"
+            htmlFor="email"
             className="block text-sm font-semibold text-primary-800 mb-2"
           >
-            Логин *
+            Email *
           </label>
           <Input
-            id="username"
-            type="text"
+            id="email"
+            type="email"
             className={`w-full px-3 py-2.5 border rounded-lg text-sm transition-all duration-200 box-border ${
-              createErrors.username
+              createErrors.email
                 ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
                 : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
             } ${isEditing ? "bg-gray-50 cursor-not-allowed" : ""}`}
-            placeholder="ivanov_ivan"
+            placeholder="example@mail.com"
             disabled={isEditing}
-            aria-invalid={!!createErrors.username}
-            {...register("username")}
+            aria-invalid={!!createErrors.email}
+            {...register("email")}
           />
-          {createErrors.username && (
+          {createErrors.email && (
             <div className="text-error-600 text-xs mt-1 leading-tight">
-              {createErrors.username.message}
+              {createErrors.email.message}
             </div>
           )}
         </div>

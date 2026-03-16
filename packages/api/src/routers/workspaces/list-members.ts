@@ -30,7 +30,6 @@ export const listMembers = protectedProcedure
           id: string;
           name: string | null;
           email: string;
-          username: string | null;
         };
       }) => ({
         id: r.id,
@@ -41,7 +40,6 @@ export const listMembers = protectedProcedure
           id: r.user.id,
           name: r.user.name,
           email: r.user.email,
-          username: r.user.username,
         },
       }),
     );

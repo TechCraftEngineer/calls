@@ -22,7 +22,7 @@ export const deleteCall = workspaceAdminProcedure
     await context.systemRepository.addActivityLog(
       "info",
       `Deleted call #${input.call_id}`,
-      (context.user as Record<string, unknown>).username as string,
+      (context.user as Record<string, unknown>).email as string,
     );
     return { success: true, message: `Звонок #${input.call_id} удалён` };
   });

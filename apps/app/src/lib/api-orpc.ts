@@ -51,7 +51,7 @@ export interface CallEvaluation {
 
 export interface User {
   id: number;
-  username: string;
+  email: string;
   name: string;
   givenName?: string;
   familyName?: string;
@@ -129,7 +129,7 @@ export const usersApi = {
   },
 
   async create(data: {
-    username: string;
+    email: string;
     password: string;
     givenName: string;
     familyName?: string;
@@ -241,14 +241,14 @@ export interface WorkspaceMember {
   userId: string;
   role: string;
   createdAt: string;
-  user: { id: string; name: string; email: string; username: string | null };
+  user: { id: string; name: string; email: string; email: string | null };
 }
 
 export interface UserAvailableToAdd {
   id: string;
   name: string;
   email: string;
-  username: string;
+  email: string;
 }
 
 export const workspacesApi = {

@@ -23,8 +23,8 @@ export class UsersService {
     private systemRepository: SystemRepository,
   ) {}
 
-  async getUserByUsername(username: string): Promise<User | null> {
-    return this.usersRepository.findByUsername(username);
+  async getUserByEmail(email: string): Promise<User | null> {
+    return this.usersRepository.findByEmail(email);
   }
 
   async getAllUsers(): Promise<User[]> {
@@ -40,7 +40,7 @@ export class UsersService {
     userId: string,
     workspaceId: string,
   ): Promise<{
-    username: string;
+    email: string;
     givenName: string;
     familyName: string;
     internalExtensions: string;
@@ -130,7 +130,7 @@ export class UsersService {
       | undefined;
 
     return {
-      username: (user.username ?? user.email ?? "") as string,
+      email: (user.email ?? "") as string,
       givenName: user.givenName ?? "",
       familyName: user.familyName ?? "",
       internalExtensions: user.internalExtensions ?? "",
@@ -144,7 +144,6 @@ export class UsersService {
       filter_exclude_answering_machine: fs?.excludeAnsweringMachine ?? false,
       filter_min_duration: fs?.minDuration ?? 0,
       filter_min_replicas: fs?.minReplicas ?? 0,
-      email: user.email ?? "",
       email_daily_report: ns?.email?.dailyReport ?? false,
       email_weekly_report: ns?.email?.weeklyReport ?? false,
       email_monthly_report: ns?.email?.monthlyReport ?? false,
@@ -165,16 +164,16 @@ export class UsersService {
   async createUser(data: CreateUserData): Promise<string> {
     validateCreateUserData(data);
 
-    const existing = await this.usersRepository.findByUsername(data.username);
+    const existing = await this.usersRepository.findByEmail(data.email);
     if (existing) {
-      throw new ValidationError("Пользователь с таким логином уже существует");
+      throw new ValidationError("Пользователь с таким email уже существует");
     }
 
     const userId = await this.usersRepository.create(data);
 
     await this.systemRepository.addActivityLog(
       "INFO",
-      `User ${data.username} created`,
+      `User ${data.email} created`,
       "admin",
     );
 

@@ -31,8 +31,8 @@ export const updateKpiSettings = workspaceProcedure
 
       await logUpdate(
         "KPI settings updated",
-        user.username ?? "unknown",
-        ((context.user as Record<string, unknown>).username as string) ??
+        user.email ?? "unknown",
+        ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
       );
 
@@ -40,8 +40,8 @@ export const updateKpiSettings = workspaceProcedure
     } catch (error) {
       await logUpdate(
         "update user KPI settings",
-        user.username ?? "unknown",
-        ((context.user as Record<string, unknown>).username as string) ??
+        user.email ?? "unknown",
+        ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
       );

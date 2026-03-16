@@ -222,7 +222,7 @@ export default function EditUserModal({
           Редактировать пользователя
         </h2>
         <p className="m-0 mb-4 text-[13px] text-[#666]">
-          Логин: {String(editUser.username ?? "")}
+          Email: {String(editUser.email ?? "")}
         </p>
 
         <form onSubmit={handleSubmit}>

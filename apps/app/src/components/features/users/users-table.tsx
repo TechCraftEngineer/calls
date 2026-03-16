@@ -38,7 +38,7 @@ interface UsersTableProps {
   currentUser: User | null;
   currentUserRole: string | null;
   loading: boolean;
-  onRemoveMember: (userId: string, username: string) => void;
+  onRemoveMember: (userId: string, email: string) => void;
   onUpdateRole: (userId: string, role: "owner" | "admin" | "member") => void;
 }
 
@@ -112,10 +112,10 @@ export default function UsersTable({
                         ? [u.givenName, u.familyName]
                             .filter((x): x is string => !!x)
                             .join(" ")
-                        : String(u.username ?? "")}
-                      {u.username && (u.givenName || u.familyName) ? (
+                        : String(u.email ?? "")}
+                      {u.email && (u.givenName || u.familyName) ? (
                         <span className="block text-xs text-[#999] font-normal">
-                          {String(u.username)}
+                          {String(u.email)}
                         </span>
                       ) : null}
                     </TableCell>
@@ -178,7 +178,7 @@ export default function UsersTable({
                           size="sm"
                           className="ghost-btn text-xs px-3 bg-white border-[#DDD] text-[#333] font-semibold hover:bg-gray-50"
                           onClick={() => router.push(`/users/${userId}/edit`)}
-                          aria-label={`Редактировать ${u.username}`}
+                          aria-label={`Редактировать ${u.email}`}
                         >
                           Настройки
                         </Button>
@@ -194,10 +194,10 @@ export default function UsersTable({
                             onClick={() =>
                               onRemoveMember(
                                 userId,
-                                String(u.username ?? u.name ?? ""),
+                                String(u.email ?? u.name ?? ""),
                               )
                             }
-                            aria-label={`Исключить ${u.username}`}
+                            aria-label={`Исключить ${u.email}`}
                           >
                             Исключить
                           </Button>

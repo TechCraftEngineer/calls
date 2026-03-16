@@ -12,7 +12,7 @@ interface AddUserModalProps {
 }
 
 const defaultForm: AddUserForm = {
-  username: "",
+  email: "",
   password: "",
   givenName: "",
   familyName: "",
@@ -43,8 +43,6 @@ const defaultForm: AddUserForm = {
   evaluation_template_slug: "general",
   evaluation_custom_instructions: "",
 };
-
-const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
 
 export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
   const [form, setForm] = useState<AddUserForm>(defaultForm);
@@ -99,13 +97,10 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!form.username.trim()) {
-      newErrors.username = "Обязательное поле";
-    } else if (form.username.length < 3) {
-      newErrors.username = "Логин должен содержать минимум 3 символа";
-    } else if (!USERNAME_REGEX.test(form.username)) {
-      newErrors.username =
-        "Логин может содержать только буквы, цифры, подчёркивания и дефисы";
+    if (!form.email.trim()) {
+      newErrors.email = "Обязательное поле";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      newErrors.email = "Введите корректный email адрес";
     }
 
     if (!form.password.trim()) {
@@ -122,7 +117,9 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
 
     if (Object.keys(newErrors).length > 0) {
       const firstErrorField = Object.keys(newErrors)[0];
-      const element = document.getElementById(firstErrorField);
+      const element = document.getElementById(
+        firstErrorField === "email" ? "email" : firstErrorField,
+      );
       element?.focus();
       return false;
     }
@@ -139,7 +136,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
     try {
       await onSubmit({
         ...form,
-        username: form.username.trim(),
+        email: form.email.trim().toLowerCase(),
         givenName: form.givenName.trim(),
         familyName: form.familyName.trim(),
         internalExtensions: form.internalExtensions.trim(),
@@ -187,40 +184,37 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           )}
 
           <div className="mb-3">
-            <label
-              htmlFor="username"
-              className="block mb-1 text-sm font-semibold"
-            >
-              Логин *
+            <label htmlFor="email" className="block mb-1 text-sm font-semibold">
+              Email *
             </label>
             <Input
               ref={firstInputRef}
-              id="username"
-              name="username"
-              type="text"
-              value={form.username}
+              id="email"
+              name="email"
+              type="email"
+              value={form.email}
               onChange={(e) => {
-                setForm((f) => ({ ...f, username: e.target.value }));
-                if (errors.username) {
-                  setErrors((e) => ({ ...e, username: "" }));
+                setForm((f) => ({ ...f, email: e.target.value }));
+                if (errors.email) {
+                  setErrors((e) => ({ ...e, email: "" }));
                 }
               }}
               className="w-full py-2 px-3 border border-gray-300 rounded-md text-base"
-              placeholder="ivanov_ivan"
-              autoComplete="username"
+              placeholder="example@mail.com"
+              autoComplete="email"
               spellCheck={false}
-              aria-invalid={errors.username ? "true" : "false"}
-              aria-describedby={errors.username ? "username-error" : undefined}
+              aria-invalid={errors.email ? "true" : "false"}
+              aria-describedby={errors.email ? "email-error" : undefined}
               style={{ fontSize: "16px" }}
               required
             />
-            {errors.username && (
+            {errors.email && (
               <p
-                id="username-error"
+                id="email-error"
                 className="text-red-500 text-sm mt-1"
                 role="alert"
               >
-                {errors.username}
+                {errors.email}
               </p>
             )}
           </div>

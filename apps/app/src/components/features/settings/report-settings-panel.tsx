@@ -12,7 +12,7 @@ import {
 import ReportSettingsFormBody from "./report-settings-form-body";
 
 type UserSettings = {
-  username?: string;
+  email?: string;
   internalExtensions?: string;
   givenName?: string;
   familyName?: string;
@@ -81,7 +81,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
   const [allUsers, setAllUsers] = useState<
     {
       id: number;
-      username: string;
+      email: string;
       givenName?: string;
       familyName?: string;
     }[]
@@ -179,14 +179,14 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       .then((list: any) => {
         const arr = (Array.isArray(list) ? list : []) as {
           id: number;
-          username: string;
+          email: string;
           givenName?: string;
           familyName?: string;
         }[];
         setAllUsers(
           arr.map((u) => ({
             id: u.id,
-            username: u.username,
+            email: u.email,
             givenName: getGivenName(u),
             familyName: getFamilyName(u),
           })),

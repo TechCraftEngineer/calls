@@ -9,7 +9,7 @@ export const updatePrompts = workspaceAdminProcedure
   .handler(async ({ input, context }) => {
     const { workspaceId } = context;
     const username =
-      (context.user as Record<string, unknown>)?.username ?? "system";
+      (context.user as Record<string, unknown>)?.email ?? "system";
 
     if (input.deepseek_model && input.deepseek_model in DEEPSEEK_MODELS) {
       await promptsRepository.upsert(

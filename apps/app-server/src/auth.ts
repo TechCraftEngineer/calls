@@ -1,6 +1,6 @@
 /**
  * Better Auth configuration for backend-server.
- * Uses PostgreSQL + username plugin for calls app authentication.
+ * Uses PostgreSQL + email/password for calls app authentication.
  */
 
 import { db } from "@calls/db";
@@ -8,7 +8,7 @@ import * as schema from "@calls/db/schema";
 import { ResetPasswordEmail, sendEmail } from "@calls/emails";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin, username } from "better-auth/plugins";
+import { admin } from "better-auth/plugins";
 
 // BETTER_AUTH_URL / baseURL — публичный URL приложения (для ссылок в письмах, OAuth callback)
 const publicBaseUrl =
@@ -66,7 +66,6 @@ export const auth = betterAuth({
         }
       : undefined,
   plugins: [
-    username(),
     admin({
       defaultRole: "user",
     }),

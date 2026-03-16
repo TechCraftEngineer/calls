@@ -29,7 +29,7 @@ export default function UserEditPage() {
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [form, setForm] = useState<EditUserForm | null>(null);
-  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
 
   useEffect(() => {
     getCurrentUser().then(setCurrentUser);
@@ -55,8 +55,8 @@ export default function UserEditPage() {
 
   useEffect(() => {
     if (data) {
-      const { username: u, ...formData } = data;
-      setUsername(u);
+      const { email: e, ...formData } = data;
+      setEmail(e);
       const formValues = formData as EditUserForm;
       setForm(formValues);
       initializeForm(formValues);
@@ -343,7 +343,7 @@ export default function UserEditPage() {
           <div>
             <h1 className="page-title">Редактирование пользователя</h1>
             <p className="page-subtitle mt-1 text-sm text-[#999]">
-              Логин: {username}
+              Email: {email}
             </p>
           </div>
           <Button variant="outline" size="sm" asChild>

@@ -173,6 +173,13 @@ export class WorkspacesService {
     return result;
   }
 
+  async removePendingMemberById(
+    memberId: string,
+    workspaceId: string,
+  ): Promise<boolean> {
+    return this.workspacesRepository.removeMemberById(memberId, workspaceId);
+  }
+
   async updateMemberRole(
     workspaceId: string,
     userId: string,

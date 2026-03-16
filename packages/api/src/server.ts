@@ -51,7 +51,7 @@ export function createBackendApiWithContext(ctx: BackendContext) {
       get: (input: { user_id: string }) =>
         callProc(backendRouter.users.get as ProcedureWithCallable, ctx, input),
       create: (input: {
-        username: string;
+        email: string;
         password: string;
         givenName: string;
         familyName?: string;

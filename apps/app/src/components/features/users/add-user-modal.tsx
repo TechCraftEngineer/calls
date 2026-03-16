@@ -18,7 +18,7 @@ interface AddUserModalProps {
 }
 
 const defaultForm: AddUserForm = {
-  username: "",
+  email: "",
   password: "",
   givenName: "",
   familyName: "",
@@ -33,7 +33,6 @@ const defaultForm: AddUserForm = {
   filter_exclude_answering_machine: false,
   filter_min_duration: 0,
   filter_min_replicas: 0,
-  email: "",
   email_daily_report: false,
   email_weekly_report: false,
   email_monthly_report: false,
@@ -55,33 +54,21 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (
-      !form.username.trim() ||
-      !form.password.trim() ||
-      !form.givenName.trim()
-    ) {
-      setError("Заполните логин, пароль и имя.");
+    const trimmedEmail = form.email.trim().toLowerCase();
+    if (!trimmedEmail || !form.password.trim() || !form.givenName.trim()) {
+      setError("Заполните email, пароль и имя.");
       return;
     }
-    const trimmedUsername = form.username.trim();
-    if (trimmedUsername.length < 3) {
-      setError("Логин должен содержать минимум 3 символа.");
-      return;
-    }
-    if (!USERNAME_REGEX.test(trimmedUsername)) {
-      setError(
-        "Логин может содержать только буквы, цифры, подчёркивания и дефисы.",
-      );
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setError("Введите корректный email адрес.");
       return;
     }
     setSubmitting(true);
     try {
-      await onSubmit({ ...form, username: trimmedUsername });
+      await onSubmit({ ...form, email: trimmedEmail });
       onClose();
     } catch (err: unknown) {
       setError(
@@ -100,16 +87,16 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           {error && <p className="text-[#c00] mb-3 text-sm">{error}</p>}
 
           <div className={formFieldWrap}>
-            <label className={formLabel}>Логин *</label>
+            <label className={formLabel}>Email *</label>
             <Input
-              type="text"
-              value={form.username}
+              type="email"
+              value={form.email}
               onChange={(e) =>
-                setForm((f) => ({ ...f, username: e.target.value }))
+                setForm((f) => ({ ...f, email: e.target.value }))
               }
               className={formInput}
-              placeholder="ivanov_ivan"
-              autoComplete="username"
+              placeholder="example@mail.com"
+              autoComplete="email"
             />
           </div>
           <div className={formFieldWrap}>

@@ -4,9 +4,9 @@
 
 import { z } from "zod";
 
-// Схема для формы входа (email или логин)
+// Схема для формы входа (email)
 export const loginSchema = z.object({
-  username: z.string().min(1, "Введите email или логин"),
+  email: z.string().min(1, "Введите email").email("Введите корректный email"),
   password: z
     .string()
     .min(1, "Пароль обязателен")
@@ -39,20 +39,9 @@ export const resetPasswordSchema = z
   });
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
-// Логин: только буквы, цифры, подчёркивания и дефисы
-const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
-
 // Схема для создания пользователя
 export const createUserSchema = z.object({
-  username: z
-    .string()
-    .min(1, "Логин обязателен")
-    .min(3, "Логин должен содержать минимум 3 символа")
-    .max(50, "Логин не должен превышать 50 символов")
-    .regex(
-      USERNAME_REGEX,
-      "Логин может содержать только буквы, цифры, подчёркивания и дефисы",
-    ),
+  email: z.string().email("Введите корректный email"),
   password: z
     .string()
     .min(6, "Пароль должен содержать минимум 6 символов")

@@ -41,7 +41,7 @@ export class InvitationsService {
     }
 
     // Check if user already exists
-    let user = await this.usersService.getUserByUsername(trimmedEmail);
+    let user = await this.usersService.getUserByEmail(trimmedEmail);
     const userExists = !!user;
     let requiresPassword = false;
 
@@ -62,7 +62,7 @@ export class InvitationsService {
       const tempPassword = randomUUID(); // Temporary password, will be updated
 
       await this.usersService.createUser({
-        username: trimmedEmail,
+        email: trimmedEmail,
         password: tempPassword,
         givenName: emailPrefix,
         familyName: "",
@@ -70,7 +70,7 @@ export class InvitationsService {
         mobilePhones: null,
       });
 
-      user = await this.usersService.getUserByUsername(trimmedEmail);
+      user = await this.usersService.getUserByEmail(trimmedEmail);
       if (!user) {
         throw new Error("Failed to create user");
       }
@@ -217,6 +217,20 @@ export class InvitationsService {
       workspaceId: member.workspaceId,
       workspaceName: workspace.name,
     };
+  }
+
+  /**
+   * Revoke invitation by member id (workspace_member.id) - used by API
+   */
+  async revoke(
+    memberId: string,
+    workspaceId: string,
+    _authUserId: string,
+  ): Promise<boolean> {
+    return this.workspacesService.removePendingMemberById(
+      memberId,
+      workspaceId,
+    );
   }
 
   /**

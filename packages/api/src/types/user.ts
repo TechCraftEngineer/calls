@@ -50,7 +50,7 @@ export interface UserLike {
 
 export interface ApiUser {
   id: string;
-  username: string;
+  email: string;
   name: string;
   givenName: string;
   familyName: string;
@@ -105,9 +105,9 @@ export function getDisplayName(u: UserLike): string {
  * Использует fallback к name.split() для обратной совместимости
  */
 export function extractUserFields(user: UserLike) {
-  const username = (user.username ??
+  const email = (user.email ??
+    user.username ??
     user.displayUsername ??
-    user.email ??
     user.name ??
     "—") as string;
 
@@ -122,7 +122,7 @@ export function extractUserFields(user: UserLike) {
   const telegramChatId = (user.telegramChatId ?? null) as string | null;
 
   return {
-    username,
+    email,
     givenName,
     familyName,
     internalExtensions,
@@ -154,7 +154,7 @@ export function formatUserForApi(user: UserLike): ApiUser {
 
   return {
     id: String(user.id),
-    username: fields.username,
+    email: fields.email,
     name: user.name || "—",
     givenName: fields.givenName,
     familyName: fields.familyName,

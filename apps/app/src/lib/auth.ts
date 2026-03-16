@@ -10,7 +10,7 @@ import {
 
 export interface User {
   id: number;
-  username: string;
+  email: string;
   name: string;
   givenName?: string;
   familyName?: string;

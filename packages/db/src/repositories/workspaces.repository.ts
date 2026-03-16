@@ -254,6 +254,22 @@ export const workspacesRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
+  async removeMemberById(
+    memberId: string,
+    workspaceId: string,
+  ): Promise<boolean> {
+    const result = await db
+      .delete(schema.workspaceMembers)
+      .where(
+        and(
+          eq(schema.workspaceMembers.id, memberId),
+          eq(schema.workspaceMembers.workspaceId, workspaceId),
+          eq(schema.workspaceMembers.status, "pending"),
+        ),
+      );
+    return (result.rowCount ?? 0) > 0;
+  },
+
   async updateMemberRole(
     workspaceId: string,
     userId: string,

@@ -40,8 +40,8 @@ export const updateBasicInfo = workspaceProcedure
 
       await logUpdate(
         "basic info updated",
-        user.username ?? "unknown",
-        ((context.user as Record<string, unknown>).username as string) ??
+        user.email ?? "unknown",
+        ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
       );
 
@@ -49,8 +49,8 @@ export const updateBasicInfo = workspaceProcedure
     } catch (error) {
       await logUpdate(
         "update user basic info",
-        user.username ?? "unknown",
-        ((context.user as Record<string, unknown>).username as string) ??
+        user.email ?? "unknown",
+        ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
       );

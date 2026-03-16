@@ -5,9 +5,8 @@ import { workspaceProcedure } from "../../orpc";
 export const sendTestTelegram = workspaceProcedure.handler(
   async ({ context }) => {
     const { workspaceId } = context;
-    const username = (context.user as Record<string, unknown>)
-      .username as string;
-    const user = await usersService.getUserByUsername(username);
+    const email = (context.user as Record<string, unknown>).email as string;
+    const user = await usersService.getUserByEmail(email);
     if (!user) throw new Error("User not found");
     const chatId = (user as Record<string, unknown>).telegramChatId as
       | string

@@ -30,8 +30,8 @@ export const updateMaxSettings = workspaceProcedure
 
       await logUpdate(
         "max settings updated",
-        user.username ?? "unknown",
-        ((context.user as Record<string, unknown>).username as string) ??
+        user.email ?? "unknown",
+        ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
       );
 
@@ -39,8 +39,8 @@ export const updateMaxSettings = workspaceProcedure
     } catch (error) {
       await logUpdate(
         "update user max settings",
-        user.username ?? "unknown",
-        ((context.user as Record<string, unknown>).username as string) ??
+        user.email ?? "unknown",
+        ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
       );

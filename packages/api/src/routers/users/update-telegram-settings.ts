@@ -32,8 +32,8 @@ export const updateTelegramSettings = workspaceProcedure
 
       await logUpdate(
         "telegram settings updated",
-        user.username ?? "unknown",
-        ((context.user as Record<string, unknown>).username as string) ??
+        user.email ?? "unknown",
+        ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
       );
 
@@ -41,8 +41,8 @@ export const updateTelegramSettings = workspaceProcedure
     } catch (error) {
       await logUpdate(
         "update user telegram settings",
-        user.username ?? "unknown",
-        ((context.user as Record<string, unknown>).username as string) ??
+        user.email ?? "unknown",
+        ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
       );

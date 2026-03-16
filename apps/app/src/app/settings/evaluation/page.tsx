@@ -322,16 +322,15 @@ export default function EvaluationSettingsPage() {
                   const displayName =
                     nameParts.length > 0
                       ? nameParts.join(" ")
-                      : String(u.username ?? "");
-                  const usernameStr =
-                    typeof u.username === "string" ? u.username : "";
+                      : String(u.email ?? "");
+                  const emailStr = typeof u.email === "string" ? u.email : "";
                   return (
                     <TableRow key={u.id}>
                       <TableCell className="font-medium">
                         {displayName || "—"}
-                        {usernameStr && displayName && (
+                        {emailStr && displayName && (
                           <span className="block text-xs text-muted-foreground font-normal">
-                            {usernameStr}
+                            {emailStr}
                           </span>
                         )}
                       </TableCell>
@@ -353,7 +352,7 @@ export default function EvaluationSettingsPage() {
                           onClick={() =>
                             router.push(`${paths.users.root}/${userId}/edit`)
                           }
-                          aria-label={`Редактировать ${u.username}`}
+                          aria-label={`Редактировать ${u.email}`}
                         >
                           Настройки
                         </Button>

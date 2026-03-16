@@ -24,7 +24,7 @@ export const list = workspaceAdminProcedure.handler(async ({ context }) => {
           memberId: r.id,
           userId: r.userId,
           role: r.role,
-          username: u.username ?? u.email,
+          email: u.email ?? "",
           name: u.name ?? "",
           givenName: u.givenName,
           familyName: u.familyName,

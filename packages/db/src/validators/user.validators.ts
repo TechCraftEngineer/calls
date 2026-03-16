@@ -3,13 +3,12 @@
  */
 
 export interface CreateUserData {
-  username: string;
+  email: string;
   password: string;
   givenName: string;
   familyName?: string;
   internalExtensions?: string | null;
   mobilePhones?: string | null;
-  email?: string | null;
 }
 
 export interface UpdateUserData {
@@ -28,29 +27,22 @@ export class ValidationError extends Error {
 }
 
 export function validateCreateUserData(data: CreateUserData): void {
-  // Валидация username
-  if (!data.username || typeof data.username !== "string") {
-    throw new ValidationError("Логин обязателен и должен быть строкой");
+  // Валидация email
+  if (!data.email || typeof data.email !== "string") {
+    throw new ValidationError("Email обязателен и должен быть строкой");
   }
 
-  if (data.username.trim().length === 0) {
-    throw new ValidationError("Логин не может быть пустым");
+  const trimmed = data.email.trim().toLowerCase();
+  if (trimmed.length === 0) {
+    throw new ValidationError("Email не может быть пустым");
   }
 
-  if (data.username.length < 3) {
-    throw new ValidationError("Логин должен содержать минимум 3 символа");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+    throw new ValidationError("Введите корректный email адрес");
   }
 
-  if (data.username.length > 255) {
-    throw new ValidationError("Логин не должен превышать 255 символов");
-  }
-
-  // Допускаем email (для приглашений) или логин (буквы, цифры, подчёркивания, дефисы)
-  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.username);
-  if (!isEmail && !/^[a-zA-Z0-9_-]+$/.test(data.username)) {
-    throw new ValidationError(
-      "Логин может содержать только буквы, цифры, подчёркивания и дефисы, либо быть корректным email",
-    );
+  if (data.email.length > 255) {
+    throw new ValidationError("Email не должен превышать 255 символов");
   }
 
   // Валидация password

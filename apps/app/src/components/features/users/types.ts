@@ -38,7 +38,7 @@ export interface ManagedUser extends Omit<User, "id"> {
 
 // Форма создания пользователя
 export interface AddUserForm {
-  username: string;
+  email: string;
   password: string;
   givenName: string;
   familyName: string;
@@ -71,7 +71,7 @@ export interface AddUserForm {
 }
 
 // Форма редактирования пользователя (без логина и пароля)
-export type EditUserForm = Omit<AddUserForm, "username" | "password">;
+export type EditUserForm = Omit<AddUserForm, "email" | "password">;
 
 // CSS классы для модальных окон
 export const modalOverlayClasses =

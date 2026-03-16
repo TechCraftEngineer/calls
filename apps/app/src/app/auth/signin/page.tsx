@@ -26,7 +26,7 @@ function LoginForm() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      const result = await login(data.username, data.password);
+      const result = await login(data.email, data.password);
 
       if (result.success) {
         setTimeout(() => {
@@ -42,9 +42,9 @@ function LoginForm() {
               ?.data?.detail
           : err instanceof Error
             ? err.message
-            : "Неверный логин или пароль";
+            : "Неверный email или пароль";
       setError("root", {
-        message: String(errorMessage || "Неверный логин или пароль"),
+        message: String(errorMessage || "Неверный email или пароль"),
       });
     }
   };
@@ -88,27 +88,27 @@ function LoginForm() {
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="mb-5">
             <label
-              htmlFor="username"
+              htmlFor="email"
               className="mb-2 block text-[13px] font-semibold text-[#333]"
             >
               Электронная почта
             </label>
             <Input
-              id="username"
+              id="email"
               type="email"
               className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
-                errors.username
+                errors.email
                   ? "border-red-500 bg-red-50 focus:border-red-500 focus:shadow-[0_0_0_3px_rgba(220,53,69,0.1)]"
                   : ""
               }`}
               placeholder="example@mail.com"
-              autoComplete="username"
-              aria-invalid={!!errors.username}
-              {...register("username")}
+              autoComplete="email"
+              aria-invalid={!!errors.email}
+              {...register("email")}
             />
-            {errors.username && (
+            {errors.email && (
               <div className="mt-1 text-xs leading-tight text-red-600">
-                {errors.username.message}
+                {errors.email.message}
               </div>
             )}
           </div>

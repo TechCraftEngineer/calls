@@ -32,7 +32,7 @@ export const listUsersAvailableToAdd = protectedProcedure
         id: r.id,
         name: r.name ?? "Без имени",
         email: r.email,
-        username: r.username ?? r.email ?? `user_${r.id.slice(0, 8)}`,
+        email: r.email ?? `user_${r.id.slice(0, 8)}`,
       }),
     );
   });
