@@ -1,21 +1,11 @@
 import { create } from "./create";
 import { deleteUser } from "./delete";
-import { disconnectMax } from "./disconnect-max";
-import { disconnectTelegram } from "./disconnect-telegram";
 import { get } from "./get";
 import { getForEdit } from "./get-for-edit";
+import { integrationsRouter } from "./integrations";
 import { list } from "./list";
-import { maxAuthUrl } from "./max-auth-url";
-import { telegramAuthUrl } from "./telegram-auth-url";
+import { userSettingsRouter } from "./settings";
 import { update } from "./update";
-import { updateBasicInfo } from "./update-basic-info";
-import { updateEmailSettings } from "./update-email-settings";
-import { updateEvaluationSettings } from "./update-evaluation-settings";
-import { updateFilterSettings } from "./update-filter-settings";
-import { updateKpiSettings } from "./update-kpi-settings";
-import { updateMaxSettings } from "./update-max-settings";
-import { updateReportSettings } from "./update-report-settings";
-import { updateTelegramSettings } from "./update-telegram-settings";
 
 export const usersRouter = {
   list,
@@ -24,18 +14,18 @@ export const usersRouter = {
   create,
   delete: deleteUser,
 
-  telegramAuthUrl,
-  disconnectTelegram,
-  maxAuthUrl,
-  disconnectMax,
+  telegramAuthUrl: integrationsRouter.telegramAuthUrl,
+  disconnectTelegram: integrationsRouter.disconnectTelegram,
+  maxAuthUrl: integrationsRouter.maxAuthUrl,
+  disconnectMax: integrationsRouter.disconnectMax,
 
   update,
-  updateBasicInfo,
-  updateEmailSettings,
-  updateTelegramSettings,
-  updateMaxSettings,
-  updateReportSettings,
-  updateKpiSettings,
-  updateFilterSettings,
-  updateEvaluationSettings,
+  updateBasicInfo: userSettingsRouter.updateBasicInfo,
+  updateEmailSettings: userSettingsRouter.updateEmailSettings,
+  updateTelegramSettings: userSettingsRouter.updateTelegramSettings,
+  updateMaxSettings: userSettingsRouter.updateMaxSettings,
+  updateReportSettings: userSettingsRouter.updateReportSettings,
+  updateKpiSettings: userSettingsRouter.updateKpiSettings,
+  updateFilterSettings: userSettingsRouter.updateFilterSettings,
+  updateEvaluationSettings: userSettingsRouter.updateEvaluationSettings,
 };
