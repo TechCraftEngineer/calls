@@ -1,1 +1,0 @@
-ALTER TABLE "user_workspace_settings" ADD COLUMN "evaluation_settings" jsonb DEFAULT 'null'::jsonb;
