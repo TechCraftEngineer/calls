@@ -3,10 +3,11 @@
 import { paths } from "@calls/config";
 import { validateTelegramBotToken } from "@calls/shared";
 import { toast } from "@calls/ui";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
+import { useORPC } from "@/orpc/react";
 import { INTEGRATION_KEYS } from "./constants";
 import type { Prompt, SettingsState } from "./types";
 import {
@@ -17,6 +18,8 @@ import {
 
 export function useSettings() {
   const router = useRouter();
+  const orpc = useORPC();
+  const queryClient = useQueryClient();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [state, setState] = useState<SettingsState>({
     prompts: {},
@@ -44,7 +47,9 @@ export function useSettings() {
       }
       setCurrentUser(user);
 
-      const integrations = await api.settings.getIntegrations();
+      const integrations = await queryClient.fetchQuery(
+        orpc.settings.getIntegrations.queryOptions(),
+      );
       const promptsMap: Record<string, Prompt> = {};
 
       // Добавляем интеграции (FTP, Telegram, MAX Bot)
@@ -117,7 +122,9 @@ export function useSettings() {
 
       if (ftpConfigured) {
         try {
-          const status = await api.settings.checkFtpStatus();
+          const status = await queryClient.fetchQuery(
+            orpc.settings.checkFtpStatus.queryOptions(),
+          );
           setState((prev) => ({
             ...prev,
             ftpConnectionStatus: status,
@@ -150,7 +157,38 @@ export function useSettings() {
     } finally {
       setState((prev) => ({ ...prev, loading: false }));
     }
-  }, [router]);
+  }, [orpc, queryClient, router]);
+
+  const updateIntegrationsMutation = useMutation(
+    orpc.settings.updateIntegrations.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.getIntegrations.queryKey(),
+        });
+      },
+    }),
+  );
+
+  const updateFtpMutation = useMutation(
+    orpc.settings.updateFtp.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.getIntegrations.queryKey(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.checkFtpStatus.queryKey(),
+        });
+      },
+    }),
+  );
+
+  const testFtpMutation = useMutation(orpc.settings.testFtp.mutationOptions());
+
+  const backupMutation = useMutation(orpc.settings.backup.mutationOptions());
+
+  const sendTestTelegramMutation = useMutation(
+    orpc.reports.sendTestTelegram.mutationOptions(),
+  );
 
   const handleSaveTelegram = async () => {
     const telegramToken = state.prompts.telegram_bot_token?.value?.trim();
@@ -164,7 +202,7 @@ export function useSettings() {
 
     try {
       setState((prev) => ({ ...prev, telegramSaving: true }));
-      await api.settings.updateIntegrations({
+      await updateIntegrationsMutation.mutateAsync({
         telegram_bot_token: state.prompts.telegram_bot_token?.value ?? null,
       });
       toast.success("Telegram Bot сохранён");
@@ -184,7 +222,7 @@ export function useSettings() {
   const handleSaveMaxBot = async () => {
     try {
       setState((prev) => ({ ...prev, maxBotSaving: true }));
-      await api.settings.updateIntegrations({
+      await updateIntegrationsMutation.mutateAsync({
         max_bot_token: state.prompts.max_bot_token?.value ?? null,
       });
       toast.success("MAX Bot сохранён");
@@ -236,7 +274,7 @@ export function useSettings() {
       }
 
       const syncFromDate = state.prompts.ftp_sync_from_date?.value?.trim();
-      await api.settings.updateFtp({
+      await updateFtpMutation.mutateAsync({
         enabled,
         host,
         user,
@@ -289,7 +327,7 @@ export function useSettings() {
         return;
       }
 
-      const result = await api.settings.testFtp({
+      const result = await testFtpMutation.mutateAsync({
         host,
         user,
         password,
@@ -334,7 +372,7 @@ export function useSettings() {
     if (state.backupLoading) return;
     try {
       setState((prev) => ({ ...prev, backupLoading: true }));
-      const res = await api.settings.backup();
+      const res = await backupMutation.mutateAsync(undefined as void);
       const path = res?.path ?? "";
       toast.success(`Резервная копия создана: ${path}`);
     } catch (error: unknown) {
@@ -354,7 +392,7 @@ export function useSettings() {
       sendTestLoading: true,
     }));
     try {
-      await api.reports.sendTestTelegram();
+      await sendTestTelegramMutation.mutateAsync(undefined as void);
       setState((prev) => ({
         ...prev,
         sendTestMessage: "Тестовый отчёт отправлен в Telegram",
@@ -363,16 +401,14 @@ export function useSettings() {
         setState((prev) => ({ ...prev, sendTestMessage: "" }));
       }, 4000);
     } catch (err: unknown) {
-      const e = err as {
-        response?: { data?: { detail?: string } };
-      };
-      const d = e.response?.data?.detail;
+      const e = err as Error;
+      const msg =
+        e instanceof Error
+          ? e.message
+          : "Не удалось отправить. Укажите Telegram Chat ID в настройках отчётов.";
       setState((prev) => ({
         ...prev,
-        sendTestMessage:
-          typeof d === "string"
-            ? d
-            : "Не удалось отправить. Укажите Telegram Chat ID в настройках отчётов.",
+        sendTestMessage: msg,
       }));
     } finally {
       setState((prev) => ({ ...prev, sendTestLoading: false }));

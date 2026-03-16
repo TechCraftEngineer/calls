@@ -13,8 +13,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@calls/ui";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AudioPlayerModal from "@/components/features/calls/audio-player-modal";
 import { CallListDataGrid } from "@/components/features/calls/call-list/call-list-data-grid";
 import Header from "@/components/layout/header";
@@ -23,9 +24,9 @@ import CustomDropdown from "@/components/ui/custom-dropdown";
 import { SearchInput } from "@/components/ui/search-input";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import { useDebounce } from "@/hooks/use-debounce";
-import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { useSession } from "@/lib/better-auth";
+import { useORPC } from "@/orpc/react";
 
 interface Call {
   id: number;
@@ -67,33 +68,20 @@ interface Pagination {
   total_pages: number;
 }
 
-interface MetricsData {
-  total_calls: number;
-  transcribed: number;
-  avg_duration: number;
-  last_sync?: string | null;
-}
-
 /** Главная страница — список звонков. Доступна только авторизованным. */
 export default function HomePage() {
   const router = useRouter();
+  const orpc = useORPC();
+  const queryClient = useQueryClient();
   const { data: session, isPending: sessionPending } = useSession();
   const hasSessionFetchedRef = useRef(false);
   const [user, setUser] = useState<User | null>(null);
-  const [calls, setCalls] = useState<CallWithDetails[]>([]);
-  const [_metrics, setMetrics] = useState<MetricsData>({
-    total_calls: 0,
-    transcribed: 0,
-    avg_duration: 0,
-    last_sync: null,
-  });
   const [pagination, setPagination] = useState<Pagination>({
     total: 0,
     page: 1,
     per_page: PAGINATION_CONSTANTS.DEFAULT_PER_PAGE,
     total_pages: 0,
   });
-  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     q: "",
     date_from: "",
@@ -113,77 +101,67 @@ export default function HomePage() {
     number: string;
   } | null>(null);
 
-  const loadData = useCallback(async () => {
-    if (sessionPending) return;
-    if (!session?.user) return;
+  const callsListInput = {
+    page: pagination.page,
+    per_page: pagination.per_page,
+    q: debouncedFilters.q || undefined,
+    date_from: debouncedFilters.date_from || undefined,
+    date_to: debouncedFilters.date_to || undefined,
+    direction:
+      debouncedFilters.direction !== "all"
+        ? debouncedFilters.direction
+        : undefined,
+    manager: debouncedFilters.manager || undefined,
+    status:
+      debouncedFilters.status !== "all" ? debouncedFilters.status : undefined,
+    value: debouncedFilters.value?.length ? debouncedFilters.value : undefined,
+    operator: debouncedFilters.operator?.length
+      ? debouncedFilters.operator
+      : undefined,
+  };
 
-    try {
-      setLoading(true);
-      const callsParams = {
-        page: pagination.page,
-        per_page: pagination.per_page,
-        q: debouncedFilters.q || undefined,
-        date_from: debouncedFilters.date_from || undefined,
-        date_to: debouncedFilters.date_to || undefined,
-        direction:
-          debouncedFilters.direction !== "all"
-            ? debouncedFilters.direction
-            : undefined,
-        manager: debouncedFilters.manager || undefined,
-        status:
-          debouncedFilters.status !== "all"
-            ? debouncedFilters.status
-            : undefined,
-        value: debouncedFilters.value?.length
-          ? debouncedFilters.value
-          : undefined,
-        operator: debouncedFilters.operator?.length
-          ? debouncedFilters.operator
-          : undefined,
-      };
-      const [currentUser, result] = await Promise.all([
-        getCurrentUser(),
-        api.calls.list(callsParams),
-      ]);
-      if (!currentUser) return;
-      setUser(currentUser);
+  const {
+    data: result,
+    isPending: loading,
+    error: callsError,
+  } = useQuery({
+    ...orpc.calls.list.queryOptions({ input: callsListInput }),
+    enabled: !!session?.user && !sessionPending,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 2 * 60 * 1000, // 2 минуты для списка звонков
+    gcTime: 5 * 60 * 1000, // 5 минут
+  });
 
-      setCalls((result.calls || []) as CallWithDetails[]);
-      setMetrics(
-        (result.metrics ?? {
-          total_calls: 0,
-          transcribed: 0,
-          avg_duration: 0,
-          last_sync: null,
-        }) as unknown as MetricsData,
-      );
-      setPagination({
-        total: (result.pagination?.total ?? 0) as number,
-        page: (result.pagination?.page ?? 1) as number,
-        per_page: (result.pagination?.per_page ??
-          PAGINATION_CONSTANTS.DEFAULT_PER_PAGE) as number,
-        total_pages: (result.pagination?.total_pages ?? 0) as number,
-      });
-    } catch (error: unknown) {
-      if (
-        error &&
-        typeof error === "object" &&
-        "code" in error &&
-        (error as { code?: string }).code === "UNAUTHORIZED"
-      ) {
+  useEffect(() => {
+    getCurrentUser().then(setUser);
+  }, []);
+
+  useEffect(() => {
+    if (callsError && typeof callsError === "object" && "code" in callsError) {
+      if ((callsError as { code?: string }).code === "UNAUTHORIZED") {
         router.push(paths.auth.signin);
       }
-    } finally {
-      setLoading(false);
     }
-  }, [
-    pagination.page,
-    pagination.per_page,
-    debouncedFilters,
-    router,
-    session?.user,
-    sessionPending,
-  ]);
+  }, [callsError, router]);
+
+  useEffect(() => {
+    if (result) {
+      setPagination({
+        total: result.pagination?.total ?? 0,
+        page: result.pagination?.page ?? 1,
+        per_page:
+          result.pagination?.per_page ?? PAGINATION_CONSTANTS.DEFAULT_PER_PAGE,
+        total_pages: result.pagination?.total_pages ?? 0,
+      });
+    }
+  }, [result]);
+
+  const calls = (result?.calls ?? []) as CallWithDetails[];
+  const invalidateCalls = () =>
+    queryClient.invalidateQueries({
+      queryKey: orpc.calls.list.queryKey({ input: callsListInput }),
+    });
 
   // Редирект на signin только когда сессия точно загружена и пользователя нет.
   // useSession может вернуть isPending: false до завершения первого fetch (Better Auth #960),
@@ -205,10 +183,6 @@ export default function HomePage() {
     }, 300);
     return () => clearTimeout(timer);
   }, [sessionPending, session?.user, router]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
 
   const handlePaginationChange = (page: number, perPage: number) => {
     setPagination((prev) => ({
@@ -359,25 +333,28 @@ export default function HomePage() {
               isLoading={loading}
               onPaginationChange={handlePaginationChange}
               onPlay={(callId, number) => setActiveAudio({ callId, number })}
-              onCallDeleted={(callId) => {
-                setCalls((prev) =>
-                  prev.filter((item) => item.call.id !== callId),
-                );
-                loadData();
-              }}
+              onCallDeleted={() => invalidateCalls()}
               onRecommendationsGenerated={(callId, recommendations) => {
-                setCalls((prev) =>
-                  prev.map((item) =>
-                    item.call.id === callId
-                      ? {
-                          ...item,
-                          evaluation: {
-                            ...(item.evaluation || {}),
-                            manager_recommendations: recommendations,
-                          },
-                        }
-                      : item,
-                  ),
+                queryClient.setQueryData(
+                  orpc.calls.list.queryKey({ input: callsListInput }),
+                  (prev: typeof result) => {
+                    if (!prev) return prev;
+                    return {
+                      ...prev,
+                      calls: prev.calls.map(
+                        (item: (typeof prev.calls)[number]) =>
+                          item.call.id === callId
+                            ? {
+                                ...item,
+                                evaluation: {
+                                  ...(item.evaluation || {}),
+                                  manager_recommendations: recommendations,
+                                },
+                              }
+                            : item,
+                      ),
+                    };
+                  },
                 );
               }}
             />

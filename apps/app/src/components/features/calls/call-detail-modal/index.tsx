@@ -1,10 +1,11 @@
 "use client";
 
 import { Badge, Button, Dialog, DialogContent, toast } from "@calls/ui";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import api from "@/lib/api";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
+import { useORPC } from "@/orpc/react";
 import DeleteConfirmModal from "./delete-confirm-modal";
 import EvaluationSidebar from "./evaluation-sidebar";
 import TranscriptSection from "./transcript-section";
@@ -20,37 +21,105 @@ export default function CallDetailModal({
   onClose,
   onCallDeleted,
 }: CallDetailModalProps) {
-  const [call, setCall] = useState<CallDetail | null>(null);
-  const [transcript, setTranscript] = useState<TranscriptDetail | null>(null);
+  const orpc = useORPC();
   const [evaluation, setEvaluation] = useState<EvaluationDetail | null>(null);
-  const [loading, setLoading] = useState(true);
   const [restarting, setRestarting] = useState(false);
-  const [reevaluating, setReevaluating] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [isGeneratingRecommendations, setIsGeneratingRecommendations] =
-    useState(false);
 
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const result = await api.calls.get({ call_id: callId });
-      setCall(result.call as CallDetail);
-      setTranscript((result.transcript ?? null) as TranscriptDetail | null);
-      setEvaluation((result.evaluation ?? null) as EvaluationDetail | null);
-      const t = result.transcript as TranscriptDetail | null;
-      if (!t?.raw_text) setShowRaw(false);
-    } catch (error) {
-      console.error("Failed to load call detail:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [callId]);
+  // Валидация UUID v7 формата
+  const isValidCallId = (id: string | number): boolean => {
+    if (!id) return false;
+    const idStr = String(id);
+    // UUID v7 с префиксом ws_ или обычный UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidWithPrefixRegex = /^ws_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(idStr) || uuidWithPrefixRegex.test(idStr);
+  };
+
+  const callIdStr = isValidCallId(callId) ? String(callId) : "";
+  const {
+    data: result,
+    isPending: loading,
+    refetch: loadData,
+  } = useQuery({
+    ...orpc.calls.get.queryOptions({ input: { call_id: callIdStr } }),
+    enabled: !!callIdStr,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 5 * 60 * 1000, // 5 минут
+    gcTime: 10 * 60 * 1000, // 10 минут
+  });
+
+  // Безопасное приведение типов с проверкой структуры
+  const call = result?.call && typeof result.call === 'object' ? result.call as CallDetail : null;
+  const transcript = result?.transcript && typeof result.transcript === 'object' ? result.transcript as TranscriptDetail : null;
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    setEvaluation((result?.evaluation ?? null) as EvaluationDetail | null);
+  }, [result?.evaluation]);
+
+  useEffect(() => {
+    const t = result?.transcript as TranscriptDetail | null;
+    if (!t?.raw_text) setShowRaw(false);
+  }, [result?.transcript]);
+
+  const generateRecommendationsMutation = useMutation(
+    orpc.calls.generateRecommendations.mutationOptions({
+      onSuccess: (data) => {
+        const recs =
+          (data as { recommendations?: string[] })?.recommendations ?? [];
+        setEvaluation((prev) => {
+          if (!prev) {
+            return {
+              id: 0,
+              value_score: 0,
+              value_explanation: "",
+              manager_score: 0,
+              manager_feedback: "",
+              manager_recommendations: recs,
+            } as EvaluationDetail;
+          }
+          return { ...prev, manager_recommendations: recs };
+        });
+      },
+      onError: (error) => {
+        const errorMessage = error instanceof Error ? error.message : "Не удалось сформировать рекомендации";
+        toast.error(`Ошибка: ${errorMessage}`);
+      },
+    }),
+  );
+
+  const evaluateMutation = useMutation(
+    orpc.calls.evaluate.mutationOptions({
+      onSuccess: () => {
+        toast.success(
+          "Оценка запущена. Данные обновятся через несколько секунд.",
+        );
+        setTimeout(() => void loadData(), 6000);
+      },
+      onError: (error) => {
+        const errorMessage = error instanceof Error ? error.message : "Не удалось запустить оценку";
+        toast.error(`Ошибка: ${errorMessage}`);
+      },
+    }),
+  );
+
+  const deleteMutation = useMutation(
+    orpc.calls.delete.mutationOptions({
+      onSuccess: () => {
+        setShowDeleteConfirm(false);
+        onCallDeleted?.(callId);
+        onClose();
+        toast.success("Звонок удалён");
+      },
+      onError: (error) => {
+        const errorMessage =
+          error instanceof Error ? error.message : "Ошибка при удалении звонка";
+        toast.error(`Ошибка: ${errorMessage}`);
+      },
+    }),
+  );
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -63,34 +132,15 @@ export default function CallDetailModal({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [onClose, showDeleteConfirm]);
 
-  const handleGenerateRecommendations = async () => {
-    if (!callId) return;
-    try {
-      setIsGeneratingRecommendations(true);
-      const result = await api.calls.generateRecommendations({
-        call_id: callId,
-      });
-      const recs =
-        (result as { recommendations?: string[] })?.recommendations ?? [];
-      setEvaluation((prev) => {
-        if (!prev) {
-          return {
-            id: 0,
-            value_score: 0,
-            value_explanation: "",
-            manager_score: 0,
-            manager_feedback: "",
-            manager_recommendations: recs,
-          } as EvaluationDetail;
-        }
-        return { ...prev, manager_recommendations: recs };
-      });
-    } catch (error) {
-      console.error("Failed to generate recommendations:", error);
-      toast.error("Не удалось сформировать рекомендации");
-    } finally {
-      setIsGeneratingRecommendations(false);
+  const handleGenerateRecommendations = () => {
+    if (!callIdStr || generateRecommendationsMutation.isPending) return;
+    
+    // Дополнительная защита от race condition
+    if (generateRecommendationsMutation.variables?.call_id === callIdStr) {
+      return;
     }
+    
+    generateRecommendationsMutation.mutate({ call_id: callIdStr });
   };
 
   const handleDownloadTxt = () => {
@@ -107,7 +157,10 @@ export default function CallDetailModal({
     if (!call || restarting) return;
     try {
       setRestarting(true);
-      await restartCallAnalysis({ callId, loadData });
+      await restartCallAnalysis({
+        callId,
+        loadData: () => loadData().then(() => {}),
+      });
       toast.success("Анализ успешно перезапущен!");
     } catch (error: unknown) {
       console.error("Failed to restart analysis:", error);
@@ -121,45 +174,25 @@ export default function CallDetailModal({
     }
   };
 
-  const handleReevaluate = async () => {
-    if (!callId || reevaluating) return;
-    try {
-      setReevaluating(true);
-      await api.calls.evaluate({ call_id: callId });
-      toast.success(
-        "Оценка запущена. Данные обновятся через несколько секунд.",
-      );
-      setTimeout(loadData, 6000);
-    } catch (error: unknown) {
-      console.error("Failed to reevaluate:", error);
-      toast.error("Не удалось запустить оценку");
-    } finally {
-      setReevaluating(false);
+  const handleReevaluate = () => {
+    if (!callIdStr || evaluateMutation.isPending) return;
+    
+    // Дополнительная защита от race condition
+    if (evaluateMutation.variables?.call_id === callIdStr) {
+      return;
     }
+    
+    evaluateMutation.mutate({ call_id: callIdStr });
   };
 
   const { activeWorkspace } = useWorkspace();
   const isWorkspaceAdmin =
     activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
-  const handleDeleteCall = useCallback(async () => {
-    if (!call || deleting) return;
-    try {
-      setDeleting(true);
-      await api.calls.delete({ call_id: callId });
-      setShowDeleteConfirm(false);
-      onCallDeleted?.(callId);
-      onClose();
-      toast.success("Звонок удалён");
-    } catch (error: unknown) {
-      console.error("Failed to delete call:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Ошибка при удалении звонка";
-      toast.error(`Ошибка: ${errorMessage}`);
-    } finally {
-      setDeleting(false);
-    }
-  }, [call, callId, deleting, onCallDeleted, onClose]);
+  const handleDeleteCall = useCallback(() => {
+    if (!call || deleteMutation.isPending) return;
+    deleteMutation.mutate({ call_id: callIdStr });
+  }, [call, callIdStr, deleteMutation]);
 
   const isOpen = !!callId;
 
@@ -208,7 +241,7 @@ export default function CallDetailModal({
                       variant="destructive"
                       size="sm"
                       onClick={() => setShowDeleteConfirm(true)}
-                      disabled={deleting}
+                      disabled={deleteMutation.isPending}
                       title="Удалить звонок"
                     >
                       <svg
@@ -224,7 +257,7 @@ export default function CallDetailModal({
                         <polyline points="3 6 5 6 21 6" />
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                       </svg>
-                      {deleting ? "Удаление..." : "Удалить"}
+                      {deleteMutation.isPending ? "Удаление..." : "Удалить"}
                     </Button>
                   )}
                 </div>
@@ -259,11 +292,13 @@ export default function CallDetailModal({
                   transcript={transcript}
                   evaluation={evaluation}
                   restarting={restarting}
-                  reevaluating={reevaluating}
+                  reevaluating={evaluateMutation.isPending}
                   onRestartAnalysis={handleRestartAnalysis}
                   onReevaluate={handleReevaluate}
                   onGenerateRecommendations={handleGenerateRecommendations}
-                  isGeneratingRecommendations={isGeneratingRecommendations}
+                  isGeneratingRecommendations={
+                    generateRecommendationsMutation.isPending
+                  }
                 />
               </div>
             </div>
@@ -274,7 +309,7 @@ export default function CallDetailModal({
       {showDeleteConfirm && call && (
         <DeleteConfirmModal
           call={call}
-          deleting={deleting}
+          deleting={deleteMutation.isPending}
           onConfirm={handleDeleteCall}
           onCancel={() => setShowDeleteConfirm(false)}
         />

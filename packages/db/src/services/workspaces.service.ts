@@ -144,6 +144,13 @@ export class WorkspacesService {
     return this.workspacesRepository.getMemberByInvitationToken(token);
   }
 
+  async getPendingMemberById(memberId: string, workspaceId: string) {
+    return this.workspacesRepository.getPendingMemberById(
+      memberId,
+      workspaceId,
+    );
+  }
+
   async activateMember(memberId: string) {
     return this.workspacesRepository.activateMember(memberId);
   }

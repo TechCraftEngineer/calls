@@ -1,8 +1,9 @@
 "use client";
 
 import { Button } from "@calls/ui";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import api from "@/lib/api";
+import { useORPC } from "@/orpc/react";
 
 interface Manager {
   id: string;
@@ -33,27 +34,24 @@ export default function CustomDropdown({
   onChange,
   type,
 }: DropdownProps) {
+  const orpc = useORPC();
   const [isOpen, setIsOpen] = useState(false);
-  const [managers, setManagers] = useState<Manager[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (type === "manager") {
-      api.users.list().then((list: any) => {
-        const arr = (Array.isArray(list) ? list : []) as {
-          id: number;
-          email?: string;
-          name?: string;
-        }[];
-        setManagers(
-          arr.map((u) => ({
+  const { data: managersList = [] } = useQuery({
+    ...orpc.users.list.queryOptions(),
+    enabled: type === "manager",
+  });
+
+  const managers: Manager[] =
+    type === "manager"
+      ? (managersList as { id: string; name?: string; email?: string }[]).map(
+          (u) => ({
             id: String(u.id),
             name: u.name || u.email || String(u.id),
-          })),
-        );
-      });
-    }
-  }, [type]);
+          }),
+        )
+      : [];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

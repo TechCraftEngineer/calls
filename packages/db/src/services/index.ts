@@ -7,6 +7,7 @@ import { filesRepository } from "../repositories/files.repository";
 import { invitationsRepository } from "../repositories/invitations.repository";
 import { promptsRepository } from "../repositories/prompts.repository";
 import { systemRepository } from "../repositories/system.repository";
+import { userWorkspaceSettingsRepository } from "../repositories/user-workspace-settings.repository";
 import { usersRepository } from "../repositories/users.repository";
 import { workspaceIntegrationsRepository } from "../repositories/workspace-integrations.repository";
 import { workspacesRepository } from "../repositories/workspaces.repository";
@@ -25,6 +26,7 @@ export const usersService = new UsersService(usersRepository, systemRepository);
 export const invitationsService = new InvitationsService(
   workspacesService,
   usersService,
+  userWorkspaceSettingsRepository,
 );
 export const settingsService = new SettingsService(
   promptsRepository,

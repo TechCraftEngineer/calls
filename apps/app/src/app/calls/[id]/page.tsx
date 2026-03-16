@@ -2,16 +2,17 @@
 
 import { paths } from "@calls/config";
 import { toast } from "@calls/ui";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import CallMetaHeader from "@/components/features/calls/call-meta-header";
 import CallSidebar from "@/components/features/calls/call-sidebar";
 import { TranscriptCard } from "@/components/features/calls/transcript-card";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
-import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
+import { useORPC } from "@/orpc/react";
 import type {
   CallDetail,
   EvaluationDetail,
@@ -21,89 +22,121 @@ import type {
 export default function CallDetailPage() {
   const { id } = useParams();
   const router = useRouter();
+  const orpc = useORPC();
   const [user, setUser] = useState<User | null>(null);
-  const [call, setCall] = useState<CallDetail | null>(null);
-  const [transcript, setTranscript] = useState<TranscriptDetail | null>(null);
-  const [evaluation, setEvaluation] = useState<EvaluationDetail | null>(null);
-  const [loading, setLoading] = useState(true);
   const [restarting, setRestarting] = useState(false);
-  const [reevaluating, setReevaluating] = useState(false);
-  const [isGeneratingRecommendations, setIsGeneratingRecommendations] =
-    useState(false);
 
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        router.push(paths.auth.signin);
-        return;
-      }
-      setUser(currentUser);
+  // Валидация UUID v7 формата (ws_123456 или UUID)
+  const isValidCallId = (id: string): boolean => {
+    if (!id || typeof id !== "string") return false;
+    // UUID v7 с префиксом ws_ или обычный UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidWithPrefixRegex = /^ws_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(id) || uuidWithPrefixRegex.test(id);
+  };
 
-      const callId = Array.isArray(id) ? id[0] : id;
-      if (!callId) return;
-      const result = await api.calls.get({ call_id: callId });
-      setCall(result.call as CallDetail);
-      setTranscript((result.transcript ?? null) as TranscriptDetail | null);
-      setEvaluation((result.evaluation ?? null) as EvaluationDetail | null);
-    } catch (error: unknown) {
-      if (
-        error &&
-        typeof error === "object" &&
-        "code" in error &&
-        (error as { code?: string }).code === "UNAUTHORIZED"
-      ) {
-        router.push(paths.auth.signin);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [id, router]);
+  const rawCallId = Array.isArray(id) ? id[0] : (id ?? "");
+  const callId = isValidCallId(rawCallId) ? rawCallId : "";
+
+  const {
+    data: result,
+    isPending: loading,
+    error: callError,
+    refetch: loadData,
+  } = useQuery({
+    ...orpc.calls.get.queryOptions({ input: { call_id: callId } }),
+    enabled: !!callId,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 5 * 60 * 1000, // 5 минут
+    gcTime: 10 * 60 * 1000, // 10 минут
+  });
+
+  // Безопасное приведение типов с проверкой структуры
+  const call = result?.call && typeof result.call === 'object' ? result.call as CallDetail : null;
+  const transcript = result?.transcript && typeof result.transcript === 'object' ? result.transcript as TranscriptDetail : null;
+  const [evaluation, setEvaluation] = useState<EvaluationDetail | null>(null);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const handleGenerateRecommendations = async () => {
-    const callId = Array.isArray(id) ? id[0] : id;
-    if (!callId || isGeneratingRecommendations) return;
-    try {
-      setIsGeneratingRecommendations(true);
-      const result = await api.calls.generateRecommendations({
-        call_id: callId,
-      });
-      const recs = (result as { recommendations?: string[] })?.recommendations;
-      setEvaluation((prev) => {
-        if (!prev) {
-          return {
-            id: 0,
-            value_score: 0,
-            value_explanation: "",
-            manager_score: 0,
-            manager_feedback: "",
-            manager_recommendations: recs ?? [],
-          } as EvaluationDetail;
-        }
-        return {
-          ...prev,
-          manager_recommendations: recs ?? prev.manager_recommendations,
-        };
-      });
-    } catch (error) {
-      console.error("Failed to generate recommendations:", error);
-      toast.error("Не удалось сформировать рекомендации");
-    } finally {
-      setIsGeneratingRecommendations(false);
+    if (result?.evaluation) {
+      setEvaluation((result.evaluation ?? null) as EvaluationDetail | null);
     }
+  }, [result?.evaluation]);
+
+  const generateRecommendationsMutation = useMutation(
+    orpc.calls.generateRecommendations.mutationOptions({
+      onSuccess: (data) => {
+        const recs = (data as { recommendations?: string[] })?.recommendations;
+        setEvaluation((prev) => {
+          if (!prev) {
+            return {
+              id: 0,
+              value_score: 0,
+              value_explanation: "",
+              manager_score: 0,
+              manager_feedback: "",
+              manager_recommendations: recs ?? [],
+            } as EvaluationDetail;
+          }
+          return {
+            ...prev,
+            manager_recommendations: recs ?? prev.manager_recommendations,
+          };
+        });
+      },
+      onError: (error) => {
+        const errorMessage = error instanceof Error ? error.message : "Не удалось сформировать рекомендации";
+        toast.error(`Ошибка: ${errorMessage}`);
+      },
+    }),
+  );
+
+  const evaluateMutation = useMutation(
+    orpc.calls.evaluate.mutationOptions({
+      onSuccess: () => {
+        toast.success(
+          "Оценка запущена. Данные обновятся через несколько секунд.",
+        );
+        setTimeout(() => loadData(), 6000);
+      },
+      onError: (error) => {
+        const errorMessage = error instanceof Error ? error.message : "Не удалось запустить оценку";
+        toast.error(`Ошибка: ${errorMessage}`);
+      },
+    }),
+  );
+
+  useEffect(() => {
+    getCurrentUser().then(setUser);
+  }, []);
+
+  useEffect(() => {
+    if (callError && typeof callError === "object" && "code" in callError) {
+      if ((callError as { code?: string }).code === "UNAUTHORIZED") {
+        router.push(paths.auth.signin);
+      }
+    }
+  }, [callError, router]);
+
+  const handleGenerateRecommendations = () => {
+    if (!callId || generateRecommendationsMutation.isPending) return;
+    
+    // Дополнительная защита от race condition
+    if (generateRecommendationsMutation.variables?.call_id === callId) {
+      return;
+    }
+    
+    generateRecommendationsMutation.mutate({ call_id: callId });
   };
 
   const handleRestartAnalysis = async () => {
-    const callId = Array.isArray(id) ? id[0] : id;
     if (!call || !callId || restarting) return;
     try {
       setRestarting(true);
-      await restartCallAnalysis({ callId, loadData });
+      await restartCallAnalysis({
+        callId,
+        loadData: () => loadData().then(() => {}),
+      });
       toast.success("Анализ успешно перезапущен!");
     } catch (error: unknown) {
       console.error("Failed to restart analysis:", error);
@@ -117,22 +150,15 @@ export default function CallDetailPage() {
     }
   };
 
-  const handleReevaluate = async () => {
-    const callId = Array.isArray(id) ? id[0] : id;
-    if (!callId || reevaluating) return;
-    try {
-      setReevaluating(true);
-      await api.calls.evaluate({ call_id: callId });
-      toast.success(
-        "Оценка запущена. Данные обновятся через несколько секунд.",
-      );
-      setTimeout(loadData, 6000);
-    } catch (error: unknown) {
-      console.error("Failed to reevaluate:", error);
-      toast.error("Не удалось запустить оценку");
-    } finally {
-      setReevaluating(false);
+  const handleReevaluate = () => {
+    if (!callId || evaluateMutation.isPending) return;
+    
+    // Дополнительная защита от race condition
+    if (evaluateMutation.variables?.call_id === callId) {
+      return;
     }
+    
+    evaluateMutation.mutate({ call_id: callId });
   };
 
   if (loading)
@@ -173,11 +199,13 @@ export default function CallDetailPage() {
             transcript={transcript}
             evaluation={evaluation}
             restarting={restarting}
-            reevaluating={reevaluating}
+            reevaluating={evaluateMutation.isPending}
             onRestartAnalysis={handleRestartAnalysis}
             onReevaluate={handleReevaluate}
             onGenerateRecommendations={handleGenerateRecommendations}
-            isGeneratingRecommendations={isGeneratingRecommendations}
+            isGeneratingRecommendations={
+              generateRecommendationsMutation.isPending
+            }
           />
         </div>
       </main>

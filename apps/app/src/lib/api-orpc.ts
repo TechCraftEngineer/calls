@@ -1,11 +1,14 @@
 /**
- * API слой на основе oRPC.
- * Заменяет axios запросы на типизированный oRPC client.
+ * Типы для API на основе oRPC.
+ * Для вызовов API используйте useORPC() в клиентских компонентах с queryOptions/mutationOptions.
+ *
+ * @example
+ * const orpc = useORPC();
+ * const { data } = useQuery(orpc.calls.list.queryOptions(params));
+ * const mutation = useMutation(orpc.calls.delete.mutationOptions({ ... }));
  */
 
-import { api } from "./orpc";
-
-// Типы для API (будут уточняться по мере использования)
+// Типы для API
 export interface Call {
   id: number;
   filename?: string;
@@ -60,7 +63,6 @@ export interface User {
   created_at: string;
   is_active: boolean;
   telegramChatId?: string;
-  email?: string;
 }
 
 export interface CallsResponse {
@@ -82,152 +84,6 @@ export interface CallsResponse {
   managers: string[];
 }
 
-// Calls API
-export const callsApi = {
-  async list(
-    params: {
-      page?: number;
-      per_page?: number;
-      date_from?: string;
-      date_to?: string;
-      direction?: string;
-      value?: number[];
-      operator?: string[];
-      q?: string;
-      status?: string;
-      manager?: string;
-    } = {},
-  ): Promise<CallsResponse> {
-    return await api.calls.list(params);
-  },
-
-  async get(callId: number): Promise<{
-    call: Call;
-    transcript?: Transcript;
-    evaluation?: CallEvaluation;
-  }> {
-    return await api.calls.get({ call_id: callId });
-  },
-
-  async delete(callId: number): Promise<{ success: boolean; message: string }> {
-    return await api.calls.delete({ call_id: callId });
-  },
-
-  async generateRecommendations(callId: number): Promise<any> {
-    return await api.calls.generateRecommendations({ call_id: callId });
-  },
-};
-
-// Users API
-export const usersApi = {
-  async list(): Promise<User[]> {
-    return await api.users.list();
-  },
-
-  async get(userId: string | number): Promise<User> {
-    return await api.users.get({ user_id: String(userId) });
-  },
-
-  async create(data: {
-    email: string;
-    password: string;
-    givenName: string;
-    familyName?: string;
-    internalExtensions?: string;
-    mobilePhones?: string;
-  }): Promise<User> {
-    return await api.users.create(data);
-  },
-
-  async update(userId: string | number, data: Partial<User>): Promise<User> {
-    return await api.users.update({ user_id: String(userId), data });
-  },
-
-  async delete(
-    userId: string | number,
-  ): Promise<{ success: boolean; message: string }> {
-    return await api.users.delete({ user_id: String(userId) });
-  },
-
-  async telegramAuthUrl(userId: string | number): Promise<{ url?: string }> {
-    return await api.users.telegramAuthUrl({ user_id: String(userId) });
-  },
-
-  async disconnectTelegram(userId: string | number): Promise<void> {
-    return await api.users.disconnectTelegram({ user_id: String(userId) });
-  },
-
-  async maxAuthUrl(userId: string | number): Promise<{
-    url?: string;
-    manual_instruction?: string;
-    token?: string;
-  }> {
-    return await api.users.maxAuthUrl({ user_id: String(userId) });
-  },
-
-  async disconnectMax(userId: string | number): Promise<void> {
-    return await api.users.disconnectMax({ user_id: String(userId) });
-  },
-};
-
-// Settings API
-export const settingsApi = {
-  async getPrompts(): Promise<
-    Array<{
-      key: string;
-      value: string;
-      description?: string;
-      updated_at?: string;
-    }>
-  > {
-    return await api.settings.getPrompts();
-  },
-
-  async updatePrompts(
-    prompts: Record<
-      string,
-      {
-        value?: string;
-        description?: string;
-      }
-    >,
-  ): Promise<{ success: boolean; message: string }> {
-    return await api.settings.updatePrompts({ prompts });
-  },
-
-  async getModels(): Promise<{
-    models: Record<string, any>;
-    current_model: string;
-  }> {
-    return await api.settings.getModels();
-  },
-
-  async backup(): Promise<{ success: boolean; path?: string }> {
-    return await api.settings.backup();
-  },
-};
-
-// Statistics API
-export const statisticsApi = {
-  async getStatistics(params?: {
-    date_from?: string;
-    date_to?: string;
-    sort?: string;
-    order?: string;
-  }): Promise<{
-    statistics: any[];
-    date_from: string;
-    date_to: string;
-  }> {
-    return await api.statistics.getStatistics(params);
-  },
-
-  async getMetrics(): Promise<any> {
-    return await api.statistics.getMetrics();
-  },
-};
-
-// Workspaces API
 export interface WorkspaceItem {
   id: string;
   name: string;
@@ -241,91 +97,11 @@ export interface WorkspaceMember {
   userId: string;
   role: string;
   createdAt: string;
-  user: { id: string; name: string; email: string; email: string | null };
+  user: { id: string; name: string; email: string | null };
 }
 
 export interface UserAvailableToAdd {
   id: string;
   name: string;
   email: string;
-  email: string;
 }
-
-export const workspacesApi = {
-  async list(): Promise<{
-    workspaces: WorkspaceItem[];
-    activeWorkspaceId: string | null;
-  }> {
-    return await api.workspaces.list();
-  },
-
-  async get(workspaceId: string): Promise<{
-    id: string;
-    name: string;
-    slug: string;
-  }> {
-    return await api.workspaces.get({ workspaceId });
-  },
-
-  async create(data: { name: string; slug: string }): Promise<{
-    id: string;
-    name: string;
-    slug: string;
-  }> {
-    return await api.workspaces.create(data);
-  },
-
-  async update(workspaceId: string, data: { name?: string; slug?: string }) {
-    return await api.workspaces.update({ workspaceId, ...data });
-  },
-
-  async delete(workspaceId: string): Promise<{ success: boolean }> {
-    return await api.workspaces.delete({ workspaceId });
-  },
-
-  async setActive(
-    workspaceId: string,
-  ): Promise<{ success: boolean; workspaceId: string }> {
-    return await api.workspaces.setActive({ workspaceId });
-  },
-
-  async listMembers(workspaceId: string): Promise<WorkspaceMember[]> {
-    return await api.workspaces.listMembers({ workspaceId });
-  },
-
-  async listUsersAvailableToAdd(
-    workspaceId: string,
-  ): Promise<UserAvailableToAdd[]> {
-    return await api.workspaces.listUsersAvailableToAdd({ workspaceId });
-  },
-
-  async addMember(
-    workspaceId: string,
-    userId: string,
-    role: "owner" | "admin" | "member",
-  ): Promise<{ success: boolean }> {
-    return await api.workspaces.addMember({ workspaceId, userId, role });
-  },
-
-  async removeMember(
-    workspaceId: string,
-    userId: string,
-  ): Promise<{ success: boolean }> {
-    return await api.workspaces.removeMember({ workspaceId, userId });
-  },
-
-  async updateMemberRole(
-    workspaceId: string,
-    userId: string,
-    role: "owner" | "admin" | "member",
-  ): Promise<{ success: boolean }> {
-    return await api.workspaces.updateMemberRole({ workspaceId, userId, role });
-  },
-};
-
-// Reports API
-export const reportsApi = {
-  async sendTestTelegram(): Promise<{ success: boolean }> {
-    return await api.reports.sendTestTelegram();
-  },
-};

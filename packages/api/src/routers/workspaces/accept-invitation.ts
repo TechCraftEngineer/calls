@@ -66,7 +66,7 @@ export const acceptInvitation = publicProcedure
       const msg =
         err instanceof Error ? err.message : "Не удалось принять приглашение";
       logger.error("acceptInvitation failed", {
-        token: token.slice(0, 8) + "...",
+        token: `${token.slice(0, 8)}...`,
         error: msg,
       });
       throw new ORPCError("BAD_REQUEST", { message: msg });

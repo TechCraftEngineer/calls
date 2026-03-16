@@ -6,14 +6,15 @@
 
 import { Button, Input, PasswordInput, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { usersApi } from "@/lib/api-orpc";
 import {
   type CreateUserData,
   createUserSchema,
   type UpdateUserData,
   updateUserSchema,
 } from "@/lib/validations";
+import { useORPC } from "@/orpc/react";
 
 interface UserFormProps {
   user?: UpdateUserData & { id: number };
@@ -22,6 +23,7 @@ interface UserFormProps {
 }
 
 export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
+  const orpc = useORPC();
   const isEditing = !!user;
   const schema = isEditing ? updateUserSchema : createUserSchema;
 
@@ -29,7 +31,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
     register,
     handleSubmit,
     setError,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     reset,
   } = useForm<CreateUserData | UpdateUserData>({
     resolver: zodResolver(schema),
@@ -57,27 +59,46 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
         },
   });
 
-  const onSubmit = async (data: CreateUserData | UpdateUserData) => {
-    try {
-      if (isEditing && user) {
-        // Редактирование пользователя
-        await usersApi.update(user.id, data as UpdateUserData);
+  const updateMutation = useMutation(
+    orpc.users.update.mutationOptions({
+      onSuccess: () => {
         toast.success("Пользователь обновлён");
-      } else {
-        // Создание нового пользователя
-        await usersApi.create(data as CreateUserData);
-        toast.success("Пользователь создан");
-      }
+        onSuccess?.();
+        reset();
+      },
+      onError: (err) => {
+        const message =
+          err instanceof Error ? err.message : "Ошибка сохранения";
+        setError("root", { message });
+        toast.error(message);
+      },
+    }),
+  );
 
-      onSuccess?.();
-      reset();
-    } catch (err: unknown) {
-      const message =
-        (err as any)?.response?.data?.detail ||
-        (err as Error).message ||
-        "Ошибка сохранения";
-      setError("root", { message });
-      toast.error(typeof message === "string" ? message : "Ошибка сохранения");
+  const createMutation = useMutation(
+    orpc.users.create.mutationOptions({
+      onSuccess: () => {
+        toast.success("Пользователь создан");
+        onSuccess?.();
+        reset();
+      },
+      onError: (err) => {
+        const message =
+          err instanceof Error ? err.message : "Ошибка сохранения";
+        setError("root", { message });
+        toast.error(message);
+      },
+    }),
+  );
+
+  const onSubmit = (data: CreateUserData | UpdateUserData) => {
+    if (isEditing && user) {
+      updateMutation.mutate({
+        user_id: String(user.id),
+        data: data as UpdateUserData,
+      });
+    } else {
+      createMutation.mutate(data as CreateUserData);
     }
   };
 
@@ -261,13 +282,17 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           type="button"
           variant="outline"
           onClick={onCancel}
-          disabled={isSubmitting}
+          disabled={updateMutation.isPending || createMutation.isPending}
           className="min-w-28"
         >
           Отмена
         </Button>
-        <Button type="submit" disabled={isSubmitting} className="min-w-28">
-          {isSubmitting
+        <Button
+          type="submit"
+          disabled={updateMutation.isPending || createMutation.isPending}
+          className="min-w-28"
+        >
+          {updateMutation.isPending || createMutation.isPending
             ? "Сохранение…"
             : isEditing
               ? "Сохранить изменения"

@@ -216,6 +216,36 @@ export const workspacesRepository = {
     return result[0] ?? null;
   },
 
+  async getPendingMemberById(
+    memberId: string,
+    workspaceId: string,
+  ): Promise<{
+    id: string;
+    userId: string;
+    workspaceId: string;
+    role: string;
+    status: string;
+  } | null> {
+    const result = await db
+      .select({
+        id: schema.workspaceMembers.id,
+        userId: schema.workspaceMembers.userId,
+        workspaceId: schema.workspaceMembers.workspaceId,
+        role: schema.workspaceMembers.role,
+        status: schema.workspaceMembers.status,
+      })
+      .from(schema.workspaceMembers)
+      .where(
+        and(
+          eq(schema.workspaceMembers.id, memberId),
+          eq(schema.workspaceMembers.workspaceId, workspaceId),
+          eq(schema.workspaceMembers.status, "pending"),
+        ),
+      )
+      .limit(1);
+    return result[0] ?? null;
+  },
+
   async activateMember(memberId: string): Promise<boolean> {
     const result = await db
       .update(schema.workspaceMembers)

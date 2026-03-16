@@ -53,7 +53,6 @@ export interface AddUserForm {
   filter_exclude_answering_machine: boolean;
   filter_min_duration: number;
   filter_min_replicas: number;
-  email: string;
   email_daily_report: boolean;
   email_weekly_report: boolean;
   email_monthly_report: boolean;
@@ -70,8 +69,8 @@ export interface AddUserForm {
   evaluation_custom_instructions: string | null;
 }
 
-// Форма редактирования пользователя (без логина и пароля)
-export type EditUserForm = Omit<AddUserForm, "email" | "password">;
+// Форма редактирования пользователя (без пароля)
+export type EditUserForm = Omit<AddUserForm, "password">;
 
 // CSS классы для модальных окон
 export const modalOverlayClasses =

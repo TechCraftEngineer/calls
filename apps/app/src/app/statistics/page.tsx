@@ -2,14 +2,15 @@
 
 import { paths } from "@calls/config";
 import { Tabs, TabsList, TabsTrigger } from "@calls/ui";
+import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import KpiTable from "@/components/features/calls/kpi-table";
 import ReportSettingsPanel from "@/components/features/settings/report-settings-panel";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
-import api from "@/lib/api";
 import { getCurrentUser, type User } from "@/lib/auth";
+import { useORPC } from "@/orpc/react";
 import { StatisticsFilters } from "./statistics-filters";
 import type { StatsRow } from "./statistics-table";
 import { StatisticsTable } from "./statistics-table";
@@ -17,10 +18,9 @@ import { StatisticsTable } from "./statistics-table";
 function StatisticsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const orpc = useORPC();
   const tabFromUrl = searchParams.get("tab");
   const [user, setUser] = useState<User | null>(null);
-  const [stats, setStats] = useState<StatsRow[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(
     tabFromUrl === "settings" || tabFromUrl === "kpi"
       ? tabFromUrl
@@ -33,45 +33,40 @@ function StatisticsPageContent() {
     order: "asc",
   });
 
-  const loadStats = useCallback(async () => {
-    try {
-      setLoading(true);
-      const currentUser = await getCurrentUser();
-      if (!currentUser) {
-        router.push(paths.auth.signin);
-        return;
-      }
-      setUser(currentUser);
+  const statsInput = {
+    sort: filters.sort,
+    order: filters.order,
+    date_from: filters.date_from || undefined,
+    date_to: filters.date_to || undefined,
+  };
 
-      const result = await api.statistics.getStatistics({
-        sort: filters.sort,
-        order: filters.order,
-        date_from: filters.date_from || undefined,
-        date_to: filters.date_to || undefined,
-      });
-      setStats((result.statistics || []) as StatsRow[]);
-    } catch (error: unknown) {
-      if (
-        error &&
-        typeof error === "object" &&
-        "code" in error &&
-        (error as { code?: string }).code === "FORBIDDEN"
-      ) {
-        // Участник (member) не имеет доступа к сводной статистике, но может настроить отчёты в Telegram
-        setActiveTab("settings");
-        setStats([]);
-        router.replace(paths.statistics.settings);
-      } else {
-        throw error;
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, router]);
+  const {
+    data: result,
+    isPending: loading,
+    error: statsError,
+    refetch: loadStats,
+  } = useQuery({
+    ...orpc.statistics.getStatistics.queryOptions({ input: statsInput }),
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+    staleTime: 10 * 60 * 1000, // 10 минут для статистики
+    gcTime: 15 * 60 * 1000, // 15 минут
+  });
+
+  const stats = (result?.statistics ?? []) as StatsRow[];
 
   useEffect(() => {
-    loadStats();
-  }, [loadStats]);
+    getCurrentUser().then(setUser);
+  }, []);
+
+  useEffect(() => {
+    if (statsError && typeof statsError === "object" && "code" in statsError) {
+      if ((statsError as { code?: string }).code === "FORBIDDEN") {
+        setActiveTab("settings");
+        router.replace(paths.statistics.settings);
+      }
+    }
+  }, [statsError, router]);
 
   useEffect(() => {
     const t = searchParams.get("tab");
@@ -89,7 +84,6 @@ function StatisticsPageContent() {
 
   const handleResetFilters = () => {
     setFilters((prev) => ({ ...prev, date_from: "", date_to: "" }));
-    setTimeout(loadStats, 100);
   };
 
   return (

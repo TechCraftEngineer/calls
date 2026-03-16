@@ -3,10 +3,11 @@
 import { generateWorkspaceSlug } from "@calls/shared";
 import { Button, Input, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { workspacesApi } from "@/lib/api-orpc";
+import { useORPC } from "@/orpc/react";
 
 const createWorkspaceSchema = z.object({
   name: z.string().min(1, "Введите название").max(100, "Не более 100 символов"),
@@ -31,13 +32,14 @@ export default function CreateWorkspaceModal({
   onClose,
   onSuccess,
 }: CreateWorkspaceModalProps) {
+  const orpc = useORPC();
   const {
     register,
     handleSubmit,
     setError,
     setValue,
     watch,
-    formState: { errors, isSubmitting, dirtyFields },
+    formState: { errors, dirtyFields },
   } = useForm<CreateWorkspaceFormData>({
     resolver: zodResolver(createWorkspaceSchema),
     mode: "onBlur",
@@ -55,25 +57,28 @@ export default function CreateWorkspaceModal({
     }
   }, [nameValue, setValue, dirtyFields.slug]);
 
-  const onSubmit = async (data: CreateWorkspaceFormData) => {
-    try {
-      const workspace = await workspacesApi.create({
-        name: data.name,
-        slug: data.slug,
-      });
-      toast.success("Рабочее пространство создано");
-      onSuccess(workspace.id);
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : "Не удалось создать рабочее пространство";
-      const isSlugError =
-        typeof msg === "string" &&
-        (msg.includes("slug") || msg.includes("идентификатор"));
-      setError(isSlugError ? "slug" : "root", { message: msg });
-      toast.error(msg);
-    }
+  const createMutation = useMutation(
+    orpc.workspaces.create.mutationOptions({
+      onSuccess: (workspace) => {
+        toast.success("Рабочее пространство создано");
+        onSuccess(workspace.id);
+      },
+      onError: (err) => {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Не удалось создать рабочее пространство";
+        const isSlugError =
+          typeof msg === "string" &&
+          (msg.includes("slug") || msg.includes("идентификатор"));
+        setError(isSlugError ? "slug" : "root", { message: msg });
+        toast.error(msg);
+      },
+    }),
+  );
+
+  const onSubmit = (data: CreateWorkspaceFormData) => {
+    createMutation.mutate({ name: data.name, slug: data.slug });
   };
 
   return (
@@ -174,8 +179,14 @@ export default function CreateWorkspaceModal({
             <Button type="button" variant="outline" onClick={onClose}>
               Отмена
             </Button>
-            <Button type="submit" variant="dark" disabled={isSubmitting}>
-              {isSubmitting ? "Создание..." : "Создать рабочее пространство"}
+            <Button
+              type="submit"
+              variant="dark"
+              disabled={createMutation.isPending}
+            >
+              {createMutation.isPending
+                ? "Создание..."
+                : "Создать рабочее пространство"}
             </Button>
           </div>
         </form>

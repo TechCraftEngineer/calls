@@ -10,6 +10,7 @@ import {
   IconPlaceholder,
   toast,
 } from "@calls/ui";
+import { useMutation } from "@tanstack/react-query";
 import {
   getCoreRowModel,
   getSortedRowModel,
@@ -17,7 +18,7 @@ import {
 } from "@tanstack/react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
-import api from "@/lib/api";
+import { useORPC } from "@/orpc/react";
 import CallDetailModal from "../call-detail-modal";
 import RecommendationsModal from "../recommendations-modal";
 import { getCallListColumns } from "./call-list-columns";
@@ -48,40 +49,49 @@ export function CallListDataGrid({
   isLoading = false,
   onPaginationChange,
 }: CallListDataGridProps) {
+  const orpc = useORPC();
   const [selectedCallId, setSelectedCallId] = useState<number | null>(null);
   const [recommendationsCallId, setRecommendationsCallId] = useState<
     number | null
   >(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
-  const [isLoadingRecommendations, setIsLoadingRecommendations] =
-    useState(false);
+
+  const generateRecommendationsMutation = useMutation(
+    orpc.calls.generateRecommendations.mutationOptions({
+      onError: () => toast.error("Не удалось сформировать рекомендации"),
+    }),
+  );
+
+  const transcribeMutation = useMutation(
+    orpc.calls.transcribe.mutationOptions({
+      onSuccess: () => toast.success("Транскрипция запущена"),
+      onError: () => toast.error("Не удалось запустить транскрипцию"),
+    }),
+  );
 
   const handleGenerateRecommendations = useCallback(
-    async (callId: number, existingRecommendations?: string[]) => {
-      if (isLoadingRecommendations) return;
+    (callId: number, existingRecommendations?: string[]) => {
+      if (generateRecommendationsMutation.isPending) return;
       if (existingRecommendations && existingRecommendations.length > 0) {
         setRecommendations(existingRecommendations);
         setRecommendationsCallId(callId);
         return;
       }
-      try {
-        setIsLoadingRecommendations(true);
-        setRecommendationsCallId(callId);
-        setRecommendations([]);
-        const result = await api.calls.generateRecommendations({
-          call_id: callId,
-        });
-        const recs =
-          (result as { recommendations?: string[] })?.recommendations ?? [];
-        setRecommendations(recs);
-        onRecommendationsGenerated?.(callId, recs);
-      } catch {
-        toast.error("Не удалось сформировать рекомендации");
-      } finally {
-        setIsLoadingRecommendations(false);
-      }
+      setRecommendationsCallId(callId);
+      setRecommendations([]);
+      generateRecommendationsMutation.mutate(
+        { call_id: String(callId) },
+        {
+          onSuccess: (result) => {
+            const recs =
+              (result as { recommendations?: string[] })?.recommendations ?? [];
+            setRecommendations(recs);
+            onRecommendationsGenerated?.(callId, recs);
+          },
+        },
+      );
     },
-    [isLoadingRecommendations, onRecommendationsGenerated],
+    [generateRecommendationsMutation, onRecommendationsGenerated],
   );
 
   const handleCloseRecommendations = useCallback(() => {
@@ -89,14 +99,12 @@ export function CallListDataGrid({
     setRecommendations([]);
   }, []);
 
-  const handleTranscribe = useCallback(async (callId: number) => {
-    try {
-      await api.calls.transcribe({ call_id: String(callId) });
-      toast.success("Транскрипция запущена");
-    } catch {
-      toast.error("Не удалось запустить транскрипцию");
-    }
-  }, []);
+  const handleTranscribe = useCallback(
+    (callId: number) => {
+      transcribeMutation.mutate({ call_id: String(callId) });
+    },
+    [transcribeMutation],
+  );
 
   const columns = useMemo(
     () =>
@@ -105,14 +113,14 @@ export function CallListDataGrid({
         onGenerateRecommendations: handleGenerateRecommendations,
         onTranscribe: handleTranscribe,
         onPlay,
-        isLoadingRecommendations: isLoadingRecommendations,
+        isLoadingRecommendations: generateRecommendationsMutation.isPending,
         recommendationsCallId,
       }),
     [
       onPlay,
       handleGenerateRecommendations,
       handleTranscribe,
-      isLoadingRecommendations,
+      generateRecommendationsMutation.isPending,
       recommendationsCallId,
     ],
   );
@@ -200,7 +208,7 @@ export function CallListDataGrid({
           isOpen={recommendationsCallId !== null}
           onClose={handleCloseRecommendations}
           recommendations={recommendations}
-          isLoading={isLoadingRecommendations}
+          isLoading={generateRecommendationsMutation.isPending}
         />
       </>
     );
@@ -275,7 +283,7 @@ export function CallListDataGrid({
         isOpen={recommendationsCallId !== null}
         onClose={handleCloseRecommendations}
         recommendations={recommendations}
-        isLoading={isLoadingRecommendations}
+        isLoading={generateRecommendationsMutation.isPending}
       />
     </>
   );

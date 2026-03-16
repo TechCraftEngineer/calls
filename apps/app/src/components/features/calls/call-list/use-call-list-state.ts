@@ -1,8 +1,9 @@
 "use client";
 
 import { toast } from "@calls/ui";
+import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import api from "@/lib/api";
+import { useORPC } from "@/orpc/react";
 import { getDayBackgroundIndex } from "./call-list-cells";
 import { loadColumnOrder, saveColumnOrder } from "./column-storage";
 import {
@@ -20,6 +21,20 @@ import type {
 
 export function useCallListState(props: CallListProps) {
   const { onPlay, onCallDeleted, onRecommendationsGenerated } = props;
+  const orpc = useORPC();
+
+  const generateRecommendationsMutation = useMutation(
+    orpc.calls.generateRecommendations.mutationOptions({
+      onError: () => toast.error("Не удалось сформировать рекомендации"),
+    }),
+  );
+
+  const transcribeMutation = useMutation(
+    orpc.calls.transcribe.mutationOptions({
+      onSuccess: () => toast.success("Транскрипция запущена"),
+      onError: () => toast.error("Не удалось запустить транскрипцию"),
+    }),
+  );
 
   const [columnOrder, setColumnOrder] = useState<string[]>(loadColumnOrder);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
@@ -37,8 +52,6 @@ export function useCallListState(props: CallListProps) {
     number | null
   >(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
-  const [isLoadingRecommendations, setIsLoadingRecommendations] =
-    useState(false);
 
   const handleSort = (key: SortKey) => {
     const order: SortOrder =
@@ -128,32 +141,29 @@ export function useCallListState(props: CallListProps) {
     );
   };
 
-  const handleGenerateRecommendations = async (
+  const handleGenerateRecommendations = (
     callId: number,
     existingRecommendations?: string[],
   ) => {
-    if (isLoadingRecommendations) return;
+    if (generateRecommendationsMutation.isPending) return;
     if (existingRecommendations && existingRecommendations.length > 0) {
       setRecommendations(existingRecommendations);
       setRecommendationsCallId(callId);
       return;
     }
-    try {
-      setIsLoadingRecommendations(true);
-      setRecommendationsCallId(callId);
-      setRecommendations([]);
-      const result = await api.calls.generateRecommendations({
-        call_id: callId,
-      });
-      const recs =
-        (result as { recommendations?: string[] })?.recommendations ?? [];
-      setRecommendations(recs);
-      onRecommendationsGenerated?.(callId, recs);
-    } catch {
-      toast.error("Не удалось сформировать рекомендации");
-    } finally {
-      setIsLoadingRecommendations(false);
-    }
+    setRecommendationsCallId(callId);
+    setRecommendations([]);
+    generateRecommendationsMutation.mutate(
+      { call_id: String(callId) },
+      {
+        onSuccess: (result) => {
+          const recs =
+            (result as { recommendations?: string[] })?.recommendations ?? [];
+          setRecommendations(recs);
+          onRecommendationsGenerated?.(callId, recs);
+        },
+      },
+    );
   };
 
   const handleCloseRecommendations = () => {
@@ -161,13 +171,8 @@ export function useCallListState(props: CallListProps) {
     setRecommendations([]);
   };
 
-  const handleTranscribe = async (callId: number) => {
-    try {
-      await api.calls.transcribe({ call_id: String(callId) });
-      toast.success("Транскрипция запущена");
-    } catch {
-      toast.error("Не удалось запустить транскрипцию");
-    }
+  const handleTranscribe = (callId: number) => {
+    transcribeMutation.mutate({ call_id: String(callId) });
   };
 
   const handleCallDeleted = (callId: number) => {
@@ -192,7 +197,7 @@ export function useCallListState(props: CallListProps) {
     setDragOverColumn,
     recommendationsCallId,
     recommendations,
-    isLoadingRecommendations,
+    isLoadingRecommendations: generateRecommendationsMutation.isPending,
     onPlay,
     handleSort,
     handleDragStart,

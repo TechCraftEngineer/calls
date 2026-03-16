@@ -1,8 +1,9 @@
 import { Button, Card, CardContent, CardHeader, toast } from "@calls/ui";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { useState } from "react";
-import api from "@/lib/api";
 import type { User } from "@/lib/auth";
+import { useORPC } from "@/orpc/react";
 import {
   EmailReportSection,
   ManagedUsersSection,
@@ -29,51 +30,70 @@ export default function ReportSettingsFormBody({
   isAdmin,
   allUsers,
 }: ReportSettingsFormBodyProps) {
-  const [sendTestLoading, setSendTestLoading] = useState(false);
+  const orpc = useORPC();
+  const queryClient = useQueryClient();
+  const userId = String(user.id);
+
+  const telegramAuthUrlMutation = useMutation(
+    orpc.users.telegramAuthUrl.mutationOptions({
+      onSuccess: (res) => {
+        if (res?.url) {
+          window.open(res.url, "_blank");
+          toast.success(
+            "Откройте Telegram и нажмите «Старт» в чате с ботом. Затем нажмите «Проверить подключение».",
+          );
+        } else {
+          toast.error("Не удалось получить ссылку для подключения");
+        }
+      },
+      onError: () => toast.error("Ошибка при создании ссылки для Telegram"),
+    }),
+  );
+
+  const disconnectTelegramMutation = useMutation(
+    orpc.users.disconnectTelegram.mutationOptions({
+      onSuccess: () => {
+        setForm((f: any) => ({ ...f, telegramChatId: "" }));
+        toast.success("Telegram отвязан");
+      },
+      onError: () => toast.error("Ошибка при отвязке Telegram"),
+    }),
+  );
+
+  const sendTestMutation = useMutation(
+    orpc.reports.sendTestTelegram.mutationOptions({
+      onSuccess: () => toast.success("Тестовый отчёт отправлен в Telegram"),
+      onError: (err) => {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Не удалось отправить. Укажите Telegram Chat ID в настройках отчётов.";
+        toast.error(msg);
+        setSendTestMessage(msg);
+      },
+    }),
+  );
+
   const [sendTestMessage, setSendTestMessage] = useState("");
-  const [connectTelegramLoading, setConnectTelegramLoading] = useState(false);
-  const [disconnectTelegramLoading, setDisconnectTelegramLoading] =
-    useState(false);
   const [checkConnectionLoading, setCheckConnectionLoading] = useState(false);
 
-  const handleConnectTelegram = async () => {
-    setConnectTelegramLoading(true);
-    try {
-      const res = await api.users.telegramAuthUrl({ user_id: String(user.id) });
-      if (res?.url) {
-        window.open(res.url, "_blank");
-        toast.success(
-          "Откройте Telegram и нажмите «Старт» в чате с ботом. Затем нажмите «Проверить подключение».",
-        );
-      } else {
-        toast.error("Не удалось получить ссылку для подключения");
-      }
-    } catch {
-      toast.error("Ошибка при создании ссылки для Telegram");
-    } finally {
-      setConnectTelegramLoading(false);
-    }
+  const handleConnectTelegram = () => {
+    telegramAuthUrlMutation.mutate({ user_id: userId });
   };
 
-  const handleDisconnectTelegram = async () => {
+  const handleDisconnectTelegram = () => {
     if (!confirm("Отвязать Telegram аккаунт?")) return;
-    setDisconnectTelegramLoading(true);
-    try {
-      await api.users.disconnectTelegram({ user_id: String(user.id) });
-      setForm((f: any) => ({ ...f, telegramChatId: "" }));
-      toast.success("Telegram отвязан");
-    } catch {
-      toast.error("Ошибка при отвязке Telegram");
-    } finally {
-      setDisconnectTelegramLoading(false);
-    }
+    disconnectTelegramMutation.mutate({ user_id: userId });
   };
 
   const handleCheckConnection = async () => {
     setCheckConnectionLoading(true);
     try {
-      const u = await api.users.get({ user_id: String(user.id) });
-      const chatId = (u as { telegramChatId?: string })?.telegramChatId ?? "";
+      const result = await queryClient.fetchQuery(
+        orpc.users.get.queryOptions({ input: { user_id: userId } }),
+      );
+      const chatId =
+        (result as { telegramChatId?: string })?.telegramChatId ?? "";
       setForm((f: any) => ({ ...f, telegramChatId: chatId }));
       if (chatId) {
         toast.success("Telegram подключён");
@@ -89,23 +109,9 @@ export default function ReportSettingsFormBody({
     }
   };
 
-  const handleSendTest = async () => {
+  const handleSendTest = () => {
     setSendTestMessage("");
-    setSendTestLoading(true);
-    try {
-      await api.reports.sendTestTelegram();
-      toast.success("Тестовый отчёт отправлен в Telegram");
-    } catch (err: unknown) {
-      const d = err instanceof Error ? err.message : null;
-      const msg =
-        typeof d === "string"
-          ? d
-          : "Не удалось отправить. Укажите Telegram Chat ID в настройках отчётов.";
-      toast.error(msg);
-      setSendTestMessage(msg);
-    } finally {
-      setSendTestLoading(false);
-    }
+    sendTestMutation.mutate(undefined as void);
   };
 
   return (
@@ -120,15 +126,15 @@ export default function ReportSettingsFormBody({
               form={form}
               setForm={setForm}
               isAdmin={isAdmin}
-              sendTestLoading={sendTestLoading}
+              sendTestLoading={sendTestMutation.isPending}
               sendTestMessage={sendTestMessage}
               onSendTest={handleSendTest}
               user={user}
               onConnect={handleConnectTelegram}
               onDisconnect={handleDisconnectTelegram}
               onCheckConnection={handleCheckConnection}
-              connectLoading={connectTelegramLoading}
-              disconnectLoading={disconnectTelegramLoading}
+              connectLoading={telegramAuthUrlMutation.isPending}
+              disconnectLoading={disconnectTelegramMutation.isPending}
               checkConnectionLoading={checkConnectionLoading}
             />
 

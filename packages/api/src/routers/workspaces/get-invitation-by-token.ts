@@ -27,7 +27,7 @@ export const getInvitationByToken = publicProcedure
     } catch (e) {
       if (e instanceof ORPCError) throw e;
       logger.error("getInvitationByToken failed", {
-        token: input.token.slice(0, 8) + "...",
+        token: `${input.token.slice(0, 8)}...`,
         error: e instanceof Error ? e.message : String(e),
         stack: e instanceof Error ? e.stack : undefined,
       });

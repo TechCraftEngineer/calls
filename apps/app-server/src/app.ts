@@ -18,15 +18,42 @@ import { logger as honoLogger } from "hono/logger";
 import { auth } from "./auth";
 import { corsOrigin } from "./config";
 import { rateLimitMap } from "./lib/rate-limit";
-import { cleanupAllCaches, cleanupSessionCache } from "./lib/session-cache";
-import { createAuthRoutes } from "./routes/auth";
-import { createInvitationsRoutes } from "./routes/invitations";
+import { cleanupAllCaches } from "./lib/session-cache";
+
+// Экспортируем функции для управления интервалом (для тестов)
+interface CleanupIntervalControl {
+  startCleanupInterval: () => void;
+  stopCleanupInterval: () => void;
+}
+
+declare global {
+  var __cleanupIntervalControl: CleanupIntervalControl | undefined;
+}
 
 const backendLogger = createLogger("backend-server");
 
-// Cache cleanup intervals
-setInterval(cleanupSessionCache, 30000);
-setInterval(() => cleanupAllCaches(rateLimitMap), 5 * 60 * 1000);
+// Cache cleanup interval for rate limits
+let cleanupInterval: NodeJS.Timeout | null = null;
+
+const startCleanupInterval = () => {
+  if (cleanupInterval) return; // Предотвращаем дублирование интервалов
+  cleanupInterval = setInterval(() => cleanupAllCaches(rateLimitMap), 5 * 60 * 1000);
+};
+
+const stopCleanupInterval = () => {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+};
+
+// Запускаем интервал при старте приложения
+startCleanupInterval();
+
+// Устанавливаем глобальный контроль для тестов
+if (process.env.NODE_ENV === 'test') {
+  globalThis.__cleanupIntervalControl = { startCleanupInterval, stopCleanupInterval };
+}
 
 export function createApp() {
   const app = new Hono();
@@ -99,34 +126,32 @@ export function createApp() {
     }
   });
 
-  // REST routes
-  app.route("/api/auth", createAuthRoutes(auth));
-  app.route("/api/invitations", createInvitationsRoutes(auth));
+  // Better Auth handler for /api/auth/* (sign-in, sign-out, get-session, callbacks)
+  app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
-  // Better Auth handler for remaining /api/auth/* endpoints
-  app.on(["GET", "POST"], "/api/auth/*", (c) => {
-    if (c.req.path === "/api/auth/get-session") {
-      return c.notFound();
-    }
-    return auth.handler(c.req.raw);
-  });
-
-  // Telegram webhook
+  // Telegram webhook с улучшенной обработкой ошибок
   const telegramWebhookHandler = createWebhookHandler(async () => {
     try {
       const defaultWs = await getDefaultWorkspace(workspacesService);
       if (!defaultWs) {
         backendLogger.warn("Default workspace not found for telegram webhook");
-        return null;
+        throw new Error("Default workspace not found");
       }
-      return settingsService.getDecryptedBotToken(
+      const botToken = await settingsService.getDecryptedBotToken(
         "telegram_bot_token",
         defaultWs.id,
       );
+      if (!botToken) {
+        backendLogger.warn("Telegram bot token not configured for default workspace");
+        throw new Error("Bot token not configured");
+      }
+      return botToken;
     } catch (error) {
       backendLogger.error("Failed to get workspace for telegram webhook", {
         error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
       });
+      // Возвращаем null только для критических ошибок, чтобы webhook мог обработать запрос
       return null;
     }
   });

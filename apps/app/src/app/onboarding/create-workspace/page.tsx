@@ -4,15 +4,14 @@ import { paths } from "@calls/config";
 import { generateWorkspaceSlug } from "@calls/shared";
 import { Button, Input, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { workspacesApi } from "@/lib/api-orpc";
 import { getCurrentUser } from "@/lib/auth";
-import { orpc } from "@/orpc/react";
+import { useORPC } from "@/orpc/react";
 
 const createWorkspaceSchema = z.object({
   name: z.string().min(1, "Введите название").max(100, "Не более 100 символов"),
@@ -30,8 +29,8 @@ type CreateWorkspaceFormData = z.infer<typeof createWorkspaceSchema>;
 
 function CreateWorkspaceForm() {
   const router = useRouter();
+  const orpc = useORPC();
   const queryClient = useQueryClient();
-  const [checking, setChecking] = useState(true);
 
   const {
     register,
@@ -39,7 +38,7 @@ function CreateWorkspaceForm() {
     setError,
     setValue,
     watch,
-    formState: { errors, isSubmitting, dirtyFields },
+    formState: { errors, dirtyFields },
   } = useForm<CreateWorkspaceFormData>({
     resolver: zodResolver(createWorkspaceSchema),
     mode: "onBlur",
@@ -47,6 +46,66 @@ function CreateWorkspaceForm() {
   });
 
   const nameValue = watch("name");
+
+  const {
+    data: workspacesData,
+    isPending: checking,
+    error: workspacesError,
+  } = useQuery({
+    ...orpc.workspaces.list.queryOptions(),
+    retry: false,
+  });
+
+  useEffect(() => {
+    getCurrentUser().then((user) => {
+      if (!user) {
+        router.replace(paths.auth.signin);
+      }
+    });
+  }, [router]);
+
+  useEffect(() => {
+    if (
+      workspacesError &&
+      typeof workspacesError === "object" &&
+      "code" in workspacesError
+    ) {
+      if ((workspacesError as { code?: string }).code === "UNAUTHORIZED") {
+        router.replace(paths.auth.signin);
+      }
+    }
+  }, [workspacesError, router]);
+
+  useEffect(() => {
+    if (!checking && workspacesData?.workspaces?.length) {
+      router.replace(paths.root);
+    }
+  }, [checking, workspacesData, router]);
+
+  const createMutation = useMutation(
+    orpc.workspaces.create.mutationOptions({
+      onSuccess: async (workspace) => {
+        toast.success("Рабочее пространство создано");
+        // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
+        document.cookie = `active_workspace_id=${workspace.id}; path=/; max-age=31536000; SameSite=Lax`;
+        await queryClient.invalidateQueries({
+          queryKey: orpc.workspaces.list.queryKey(),
+        });
+        router.push(paths.root);
+      },
+      onError: (err) => {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Не удалось создать рабочее пространство";
+        const isSlugError =
+          typeof msg === "string" &&
+          (msg.includes("slug") || msg.includes("идентификатор"));
+        setError(isSlugError ? "slug" : "root", { message: msg });
+        toast.error(msg);
+      },
+    }),
+  );
 
   useEffect(() => {
     if (nameValue && !dirtyFields.slug) {
@@ -56,57 +115,11 @@ function CreateWorkspaceForm() {
     }
   }, [nameValue, setValue, dirtyFields.slug]);
 
-  useEffect(() => {
-    async function check() {
-      const user = await getCurrentUser();
-      if (!user) {
-        router.replace(paths.auth.signin);
-        return;
-      }
-      try {
-        const { workspaces } = await workspacesApi.list();
-        if (workspaces.length > 0) {
-          router.replace(paths.root);
-          return;
-        }
-      } catch {
-        // API может быть недоступен — показываем форму
-      }
-      setChecking(false);
-    }
-    check();
-  }, [router]);
-
-  const onSubmit = async (data: CreateWorkspaceFormData) => {
-    try {
-      const workspace = await workspacesApi.create({
-        name: data.name,
-        slug: data.slug,
-      });
-      toast.success("Рабочее пространство создано");
-
-      // create уже устанавливает активное рабочее пространство в БД; cookie для заголовков
-      // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
-      document.cookie = `active_workspace_id=${workspace.id}; path=/; max-age=31536000; SameSite=Lax`;
-      // Инвалидируем кэш списка рабочих пространств, чтобы на главной не показывалась модалка «Создать рабочее пространство»
-      await queryClient.invalidateQueries({
-        queryKey: orpc.workspaces.list.queryKey(),
-      });
-      router.push(paths.root);
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : "Не удалось создать рабочее пространство";
-      const isSlugError =
-        typeof msg === "string" &&
-        (msg.includes("slug") || msg.includes("идентификатор"));
-      setError(isSlugError ? "slug" : "root", { message: msg });
-      toast.error(msg);
-    }
+  const onSubmit = (data: CreateWorkspaceFormData) => {
+    createMutation.mutate({ name: data.name, slug: data.slug });
   };
 
-  if (checking) {
+  if (checking && !workspacesData) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-[#F8F9FB] font-[Inter]">
         <div className="w-full max-w-[420px] rounded-[16px] border-[#EEE] bg-white p-12 shadow-[0_10px_40px_rgba(0,0,0,0.04)]">
@@ -202,9 +215,11 @@ function CreateWorkspaceForm() {
             variant="dark"
             size="touch"
             className="mt-2 w-full"
-            disabled={isSubmitting}
+            disabled={createMutation.isPending}
           >
-            {isSubmitting ? "Создание…" : "Создать рабочее пространство"}
+            {createMutation.isPending
+              ? "Создание…"
+              : "Создать рабочее пространство"}
           </Button>
         </form>
 

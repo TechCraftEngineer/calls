@@ -11,6 +11,7 @@ import {
   generateInviteToken,
   getDefaultExpiresAt,
 } from "../repositories/invitations.repository";
+import type { UserWorkspaceSettingsRepository } from "../repositories/user-workspace-settings.repository";
 import type { UsersService } from "./users.service";
 import type { WorkspacesService } from "./workspaces.service";
 
@@ -18,6 +19,7 @@ export class InvitationsService {
   constructor(
     public workspacesService: WorkspacesService,
     public usersService: UsersService,
+    private userWorkspaceSettingsRepository: UserWorkspaceSettingsRepository,
   ) {}
 
   /**
@@ -147,6 +149,35 @@ export class InvitationsService {
    */
   async listPendingByWorkspace(workspaceId: string) {
     return this.workspacesService.getPendingMembers(workspaceId);
+  }
+
+  /**
+   * Get pending members with their settings for a workspace
+   */
+  async listPendingByWorkspaceWithSettings(workspaceId: string) {
+    const rows = await this.workspacesService.getPendingMembers(workspaceId);
+    const withSettings = await Promise.all(
+      rows.map(async (r) => {
+        const settings =
+          await this.userWorkspaceSettingsRepository.findByUserAndWorkspace(
+            r.userId,
+            workspaceId,
+          );
+        return {
+          ...r,
+          pendingSettings: settings
+            ? ({
+                notificationSettings: settings.notificationSettings,
+                reportSettings: settings.reportSettings,
+                kpiSettings: settings.kpiSettings,
+                filterSettings: settings.filterSettings,
+                evaluationSettings: settings.evaluationSettings,
+              } as Record<string, unknown>)
+            : undefined,
+        };
+      }),
+    );
+    return withSettings;
   }
 
   /**
@@ -283,6 +314,28 @@ export class InvitationsService {
     return this.workspacesService.removePendingMemberById(
       memberId,
       workspaceId,
+    );
+  }
+
+  /**
+   * Update invitation settings - saves pending user settings before they accept
+   */
+  async updateInvitationSettings(
+    invitationId: string,
+    workspaceId: string,
+    settings: Record<string, unknown>,
+  ): Promise<boolean> {
+    const member = await this.workspacesService.getPendingMemberById(
+      invitationId,
+      workspaceId,
+    );
+    if (!member) {
+      throw new Error("Приглашение не найдено или уже принято");
+    }
+    return this.userWorkspaceSettingsRepository.upsert(
+      member.userId,
+      workspaceId,
+      settings as Parameters<UserWorkspaceSettingsRepository["upsert"]>[2],
     );
   }
 

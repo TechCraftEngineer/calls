@@ -12,7 +12,6 @@ interface AddUserModalProps {
 }
 
 const defaultForm: AddUserForm = {
-  email: "",
   password: "",
   givenName: "",
   familyName: "",

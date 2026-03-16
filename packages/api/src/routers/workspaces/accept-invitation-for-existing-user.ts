@@ -36,7 +36,7 @@ export const acceptInvitationForExistingUser = protectedProcedure
       const msg =
         err instanceof Error ? err.message : "Не удалось принять приглашение";
       logger.error("acceptInvitationForExistingUser failed", {
-        token: input.token.slice(0, 8) + "...",
+        token: `${input.token.slice(0, 8)}...`,
         error: msg,
       });
       throw new ORPCError("BAD_REQUEST", { message: msg });

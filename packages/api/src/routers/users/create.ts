@@ -6,7 +6,7 @@ import { userCreateSchema } from "./schemas";
 export const create = workspaceAdminProcedure
   .input(userCreateSchema)
   .handler(async ({ input, context }) => {
-    const result = await db.transaction(async (tx) => {
+    const result = await db.transaction(async (_tx) => {
       const id = await usersService.createUser(
         {
           email: input.email,

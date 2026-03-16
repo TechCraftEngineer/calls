@@ -191,7 +191,13 @@ export default function UsersPage() {
 
   const handleSaveInvitationSettings = async (
     invitationId: string,
-    settings: unknown,
+    settings: {
+      notificationSettings?: unknown;
+      reportSettings?: unknown;
+      kpiSettings?: unknown;
+      filterSettings?: unknown;
+      evaluationSettings?: unknown;
+    },
   ) => {
     if (!workspaceId) throw new Error("Нет рабочего пространства");
     await updateInvitationSettingsMutation.mutateAsync({

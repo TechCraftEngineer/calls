@@ -2,10 +2,21 @@ import { invitationsService } from "@calls/db";
 import { workspaceAdminProcedure } from "../../orpc";
 import { workspaceIdInputSchema } from "./schemas";
 
+type ListInvitationItem = {
+  id: string;
+  email: string;
+  role: string;
+  token: string | null;
+  expiresAt: Date | null;
+  createdAt: Date;
+  invitedBy: string | null;
+  pendingSettings?: Record<string, unknown>;
+};
+
 export const listInvitations = workspaceAdminProcedure
   .input(workspaceIdInputSchema)
-  .handler(async ({ input }) => {
-    const rows = await invitationsService.listPendingByWorkspace(
+  .handler(async ({ input }): Promise<ListInvitationItem[]> => {
+    const rows = await invitationsService.listPendingByWorkspaceWithSettings(
       input.workspaceId,
     );
     return rows.map((r) => ({
@@ -16,5 +27,6 @@ export const listInvitations = workspaceAdminProcedure
       expiresAt: r.invitationExpiresAt,
       createdAt: r.createdAt,
       invitedBy: r.invitedBy,
+      pendingSettings: r.pendingSettings as Record<string, unknown> | undefined,
     }));
   });

@@ -52,7 +52,7 @@ export default function WorkspaceGeneralForm({
     watch,
     formState: { errors, dirtyFields },
   } = useForm<WorkspaceGeneralFormData>({
-    resolver: zodResolver(workspaceGeneralSchema),
+    resolver: zodResolver(workspaceGeneralSchema) as never,
     mode: "onBlur",
     defaultValues: { name, slug, description: description ?? "" },
   });
@@ -88,7 +88,12 @@ export default function WorkspaceGeneralForm({
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+        <form
+          onSubmit={handleSubmit(
+            onSubmit as (data: WorkspaceGeneralFormData) => Promise<void>,
+          )}
+          className="flex flex-col gap-5"
+        >
           {errors.root && (
             <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-[13px] font-medium flex items-center gap-2">
               <span>⚠️</span>
