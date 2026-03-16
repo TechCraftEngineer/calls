@@ -1,44 +1,58 @@
-# Build stage
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS base
 
+FROM base AS builder
+RUN apk update
+RUN apk add --no-cache libc6-compat
+# Install bun
+RUN npm install -g bun
+# Set working directory
 WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm ci
-
-# Copy source code
+# Install turbo globally
+RUN npm install -g turbo@2.8.17
 COPY . .
 
-# Set build-time arguments for Next.js (NEXT_PUBLIC_* встраиваются в клиентский бандл)
-# API: same origin (client) или APP_SERVER_URL (server), NEXT_PUBLIC_API_URL не нужен
-ARG NEXT_PUBLIC_APP_URL
-ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+# Generate a partial monorepo with a pruned lockfile for a target workspace.
+# Using @calls/app as the target workspace
+RUN turbo prune @calls/app --docker
 
-# Build Next.js application
-RUN npm run build
-
-# Production stage
-FROM node:20-alpine AS runner
-
-# Install wget for healthcheck
-RUN apk add --no-cache wget
-
+# Add lockfile and package.json's of isolated subworkspace
+FROM base AS installer
+RUN apk update
+RUN apk add --no-cache libc6-compat
+# Install bun
+RUN npm install -g bun
 WORKDIR /app
 
-ENV NODE_ENV=production
+# First install the dependencies (as they change less often)
+COPY --from=builder /app/out/json/ .
+COPY --from=builder /app/bun.lock .
+RUN bun install
 
-# Copy necessary files from builder
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Build the project
+COPY --from=builder /app/out/full/ .
+ARG POSTGRES_URL
+ARG NEXT_PUBLIC_APP_URL
+ENV POSTGRES_URL=$POSTGRES_URL
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV CI=true
+RUN bun turbo run build --filter=@calls/app
 
+FROM base AS runner
+WORKDIR /app
+
+# Don't run production as root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+USER nextjs
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=installer --chown=nextjs:nodejs /app/apps/app/.next/standalone ./
+COPY --from=installer --chown=nextjs:nodejs /app/apps/app/.next/static ./apps/app/.next/static
+COPY --from=installer --chown=nextjs:nodejs /app/apps/app/public ./apps/app/public
+
+# Expose port
 EXPOSE 3000
 
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["node", "server.js"]
-
+# Use node to run the server
+CMD ["node", "apps/app/server.js"]
