@@ -44,7 +44,7 @@ jobs:
         uses: kodermax/kubectl-aws-eks@main
         env:
           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-          CR_REGISTRY: crpl5fte5jrniapk2mka
+          CR_REGISTRY: crp24o2ikuqdvoam2u99
           CR_REPOSITORY: app-server
           IMAGE_TAG: ${{ github.sha }}
         with:
