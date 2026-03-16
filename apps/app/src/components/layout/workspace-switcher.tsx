@@ -4,7 +4,6 @@ import { Button } from "@calls/ui";
 import { useEffect, useRef, useState } from "react";
 import CreateWorkspaceModal from "@/components/features/workspaces/create-workspace-modal";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import type { User } from "@/lib/auth";
 
 const roleTranslations: Record<string, string> = {
   owner: "Владелец",
@@ -12,11 +11,7 @@ const roleTranslations: Record<string, string> = {
   member: "Участник",
 };
 
-interface WorkspaceSwitcherProps {
-  user: User | null;
-}
-
-export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
+export default function WorkspaceSwitcher() {
   const {
     workspaces,
     activeWorkspace,

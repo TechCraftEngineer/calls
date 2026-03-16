@@ -4,14 +4,10 @@ import { paths } from "@calls/config";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import type { User } from "@/lib/auth";
+
 import WorkspaceSwitcher from "./workspace-switcher";
 
-interface SidebarProps {
-  user: User | null;
-}
-
-export default function Sidebar({ user }: SidebarProps) {
+export default function Sidebar() {
   const pathname = usePathname();
   const { activeWorkspace } = useWorkspace();
   const isWorkspaceAdmin =
@@ -130,7 +126,7 @@ export default function Sidebar({ user }: SidebarProps) {
         M
       </Link>
 
-      <WorkspaceSwitcher user={user} />
+      <WorkspaceSwitcher />
 
       <nav className="w-full flex flex-col gap-2">
         <Link

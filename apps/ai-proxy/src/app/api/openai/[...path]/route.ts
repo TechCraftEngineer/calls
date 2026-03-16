@@ -45,9 +45,7 @@ async function proxyRequest(
   const res = await fetch(url, {
     method,
     headers:
-      body instanceof FormData
-        ? { Authorization: headers.Authorization }
-        : headers,
+      body instanceof FormData ? { Authorization: `Bearer ${key}` } : headers,
     body,
   });
 
