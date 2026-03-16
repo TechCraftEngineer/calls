@@ -71,6 +71,7 @@ export class InvitationsService {
           mobilePhones: null,
         },
         workspaceId,
+        "system", // Приглашения создаются системой
       );
 
       user = await this.usersService.getUserByEmail(trimmedEmail);

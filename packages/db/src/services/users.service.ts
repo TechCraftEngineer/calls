@@ -163,6 +163,7 @@ export class UsersService {
   async createUser(
     data: CreateUserData,
     workspaceId?: string | null,
+    actor?: string,
   ): Promise<string> {
     validateCreateUserData(data);
 
@@ -176,7 +177,7 @@ export class UsersService {
     await this.systemRepository.addActivityLog(
       "INFO",
       `User ${data.email} created`,
-      "admin",
+      actor || "admin",
       workspaceId,
     );
 

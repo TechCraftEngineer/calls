@@ -387,7 +387,11 @@ export default function InviteUserModal({
             <span className="text-sm font-semibold text-gray-700">Роль</span>
             <RadioGroup
               value={role}
-              onValueChange={(v: "admin" | "member") => setRole(v)}
+              onValueChange={(v) => {
+                if (v === "admin" || v === "member") {
+                  setRole(v);
+                }
+              }}
               className="w-fit"
               disabled={submitting}
             >

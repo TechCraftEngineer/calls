@@ -6,11 +6,6 @@ import { userCreateSchema } from "./schemas";
 export const create = workspaceAdminProcedure
   .input(userCreateSchema)
   .handler(async ({ input, context }) => {
-    const existing = await usersService.getUserByEmail(input.email);
-    if (existing)
-      throw new ORPCError("CONFLICT", {
-        message: "Пользователь с таким email уже существует",
-      });
     const id = await usersService.createUser(
       {
         email: input.email,
@@ -21,6 +16,7 @@ export const create = workspaceAdminProcedure
         mobilePhones: input.mobilePhones ?? null,
       },
       context.workspaceId,
+      (context.user as Record<string, unknown>).email as string,
     );
     if (context.workspaceId) {
       await context.workspacesService.addMember({
@@ -30,15 +26,22 @@ export const create = workspaceAdminProcedure
       });
     }
     await systemRepository.addActivityLog(
-      "info",
+      "INFO",
       `User created: ${input.email}`,
       (context.user as Record<string, unknown>).email as string,
       context.workspaceId,
     );
     const user = await usersService.getUser(id);
-    if (!user)
+    if (!user) {
+      await systemRepository.addActivityLog(
+        "ERROR",
+        `Failed to retrieve created user: ${input.email} (ID: ${id})`,
+        (context.user as Record<string, unknown>).email as string,
+        context.workspaceId,
+      );
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Не удалось создать пользователя",
+        message: "Не удалось создать пользователя. Пожалуйста, попробуйте снова.",
       });
+    }
     return user;
   });
