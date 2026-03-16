@@ -223,7 +223,7 @@
         "hono": "4.12.8",
         "inngest": "^3.52.7",
         "music-metadata": "^11.12.3",
-        "ssh2-sftp-client": "^12.1.0",
+        "ssh2-sftp-client": "12.1.0",
         "undici": "^7.24.4",
         "zod": "4.3.6",
       },

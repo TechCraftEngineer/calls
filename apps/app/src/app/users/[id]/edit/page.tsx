@@ -304,7 +304,7 @@ export default function UserEditPage() {
   if (userError) {
     return (
       <div className="app-container">
-        <Sidebar user={currentUser} />
+        <Sidebar />
         <Header user={currentUser} />
         <main className="main-content">
           <div className="p-6">
@@ -321,7 +321,7 @@ export default function UserEditPage() {
   if (isPending || !form) {
     return (
       <div className="app-container">
-        <Sidebar user={currentUser} />
+        <Sidebar />
         <Header user={currentUser} />
         <main className="main-content">
           <div className="p-6">
@@ -335,7 +335,7 @@ export default function UserEditPage() {
 
   return (
     <div className="app-container">
-      <Sidebar user={currentUser} />
+      <Sidebar />
       <Header user={currentUser} />
 
       <main className="main-content">

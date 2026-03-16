@@ -194,7 +194,7 @@ export default function HomePage() {
 
   return (
     <div className="app-container">
-      <Sidebar user={user} />
+      <Sidebar />
       <Header user={user} />
 
       <main className="main-content">

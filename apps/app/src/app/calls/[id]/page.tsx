@@ -178,7 +178,7 @@ export default function CallDetailPage() {
   if (loading)
     return (
       <div className="app-container">
-        <Sidebar user={user} />
+        <Sidebar />
         <Header user={user} />
         <main className="main-content flex items-center justify-center min-h-[200px]">
           <div className="text-[#666]">Загрузка…</div>
@@ -189,7 +189,7 @@ export default function CallDetailPage() {
   if (!call)
     return (
       <div className="app-container">
-        <Sidebar user={user} />
+        <Sidebar />
         <Header user={user} />
         <main className="main-content flex items-center justify-center min-h-[200px]">
           <div className="text-[#666]">Звонок не найден</div>
@@ -199,7 +199,7 @@ export default function CallDetailPage() {
 
   return (
     <div className="app-container">
-      <Sidebar user={user} />
+      <Sidebar />
       <Header user={user} />
 
       <main className="main-content">

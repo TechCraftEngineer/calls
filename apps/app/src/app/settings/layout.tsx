@@ -139,7 +139,7 @@ export default function SettingsLayout({
 
   return (
     <div className="app-container">
-      <Sidebar user={currentUser} />
+      <Sidebar />
       <Header user={currentUser} />
 
       <main className="main-content">

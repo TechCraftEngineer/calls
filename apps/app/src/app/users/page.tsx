@@ -211,7 +211,7 @@ export default function UsersPage() {
 
   return (
     <div className="app-container">
-      <Sidebar user={currentUser} />
+      <Sidebar />
       <Header user={currentUser} />
 
       <main className="main-content">
