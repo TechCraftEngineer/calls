@@ -1,7 +1,13 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { Button, Rating } from "@calls/ui";
+import {
+  Button,
+  Rating,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@calls/ui";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { isMobileDevice } from "@/lib/utils";
@@ -134,17 +140,24 @@ export function renderScoreCell(evaluation: CallWithDetails["evaluation"]) {
 }
 
 export function renderSummaryCell(transcript: CallWithDetails["transcript"]) {
-  return transcript?.summary ? (
-    <div className="op-tooltip min-w-0 max-w-[220px] overflow-hidden">
-      <span className="block truncate text-[#666]">{transcript.summary}</span>
-      <div className="tooltip-content" style={{ width: "280px" }}>
-        <strong>Вывод:</strong>
-        <br />
+  if (!transcript?.summary) {
+    return <span style={{ color: "#ccc" }}>—</span>;
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="block min-w-0 max-w-[220px] truncate cursor-default text-[#666]">
+          {transcript.summary}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="max-w-md max-h-80 overflow-y-auto whitespace-pre-wrap text-left"
+      >
+        <div className="font-medium mb-1">Резюме</div>
         {transcript.summary}
-      </div>
-    </div>
-  ) : (
-    <span style={{ color: "#ccc" }}>—</span>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
