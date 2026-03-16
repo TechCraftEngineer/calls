@@ -78,6 +78,7 @@ export class WorkspacesService {
     data: {
       name?: string;
       slug?: string;
+      description?: string | null;
       metadata?: Record<string, unknown> | null;
     },
   ) {

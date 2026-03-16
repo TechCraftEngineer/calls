@@ -18,6 +18,7 @@ export async function runTranscriptionPipeline(
   options?: {
     skipNormalization?: boolean;
     summaryPrompt?: string;
+    companyContext?: string | null;
   },
 ): Promise<PipelineResult> {
   const start = Date.now();
@@ -127,6 +128,7 @@ export async function runTranscriptionPipeline(
   if (normalizedText.trim().length > 0) {
     const analysis = await summarizeWithLlm(normalizedText, {
       summaryPrompt: options?.summaryPrompt,
+      companyContext: options?.companyContext,
     });
     summary = analysis.summary;
     sentiment = analysis.sentiment;

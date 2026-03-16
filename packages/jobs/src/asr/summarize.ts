@@ -16,6 +16,7 @@ const logger = createLogger("asr-summarize");
 
 export interface SummarizeOptions {
   summaryPrompt?: string;
+  companyContext?: string | null;
   model?: string;
 }
 
@@ -39,9 +40,11 @@ export async function summarizeWithLlm(
     return DEFAULT_FALLBACK;
   }
 
-  const systemPrompt =
-    options.summaryPrompt ||
-    `Проанализируй телефонный разговор и извлеки ключевую информацию:
+  const companyBlock = options.companyContext?.trim()
+    ? `КОНТЕКСТ КОМПАНИИ:\n${options.companyContext.trim()}\n\nУчитывай это при определении темы (topic), заголовка (title) и sentiment.\n\n`
+    : "";
+
+  const defaultPrompt = `Проанализируй телефонный разговор и извлеки ключевую информацию:
 
 1. summary — краткое содержание (2-3 предложения): что обсуждалось, какие решения приняты
 2. sentiment — эмоциональный тон: Позитивный (клиент доволен), Нейтральный (деловой тон), Негативный (жалобы, недовольство)
@@ -56,6 +59,8 @@ export async function summarizeWithLlm(
 • Сохраняй точные названия продуктов и услуг из разговора
 
 Отвечай только на русском языке. Будь конкретным и лаконичным.`;
+
+  const systemPrompt = companyBlock + (options.summaryPrompt || defaultPrompt);
 
   const schema = z.object({
     summary: z

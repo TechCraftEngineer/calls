@@ -88,6 +88,7 @@ export const workspacesRepository = {
     data: {
       name?: string;
       slug?: string;
+      description?: string | null;
       metadata?: Record<string, unknown> | null;
     },
   ): Promise<boolean> {

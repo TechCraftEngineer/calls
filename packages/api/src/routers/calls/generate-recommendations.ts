@@ -47,6 +47,7 @@ export async function generateRecommendations(
   callId: string,
   calls: typeof callsService,
   _workspaceId: string,
+  companyContext?: string | null,
 ): Promise<{ recommendations: string[] }> {
   try {
     const call = await calls.getCall(callId);
@@ -71,7 +72,10 @@ export async function generateRecommendations(
       transcriptText = `${transcriptText.substring(0, 50000)}...`;
     }
 
-    const systemPrompt = DEFAULT_RECOMMENDATIONS_PROMPT;
+    const companyBlock = companyContext?.trim()
+      ? `КОНТЕКСТ КОМПАНИИ:\n${companyContext.trim()}\n\nУчитывай специфику бизнеса при формировании рекомендаций.\n\n`
+      : "";
+    const systemPrompt = companyBlock + DEFAULT_RECOMMENDATIONS_PROMPT;
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
@@ -151,9 +155,14 @@ export const generateRecommendationsProcedure = workspaceProcedure
         message: "Нет доступа к этому звонку",
       });
     }
+    const workspace =
+      context.workspaceId != null
+        ? await context.workspacesService.getById(context.workspaceId)
+        : null;
     return generateRecommendations(
       input.call_id,
       context.callsService,
       context.workspaceId!,
+      workspace?.description,
     );
   });

@@ -16,6 +16,7 @@ const logger = createLogger("evaluation-evaluate");
 
 export interface EvaluateCallOptions {
   evaluationPrompt?: string;
+  companyContext?: string | null;
   model?: string;
 }
 
@@ -92,10 +93,17 @@ export async function evaluateCallWithLlm(
       .describe("Обратная связь по коммуникации менеджера (1–2 предложения)"),
   });
 
+  const companyBlock = options.companyContext?.trim()
+    ? `КОНТЕКСТ КОМПАНИИ:\n${options.companyContext.trim()}\n\nУчитывай специфику бизнеса при оценке value_score и manager_score.\n\n`
+    : "";
+
+  const evaluationPrompt =
+    companyBlock + (options.evaluationPrompt || EVALUATION_SYSTEM_PROMPT);
+
   try {
     const { output: result } = await generateWithAi({
       model: options.model || env.AI_MODEL || "gpt-4o-mini",
-      system: options.evaluationPrompt || EVALUATION_SYSTEM_PROMPT,
+      system: evaluationPrompt,
       prompt: `Оцени следующий телефонный разговор:\n\n${text}`,
       output: Output.object({ schema }),
       functionId: "evaluation-evaluate-call",

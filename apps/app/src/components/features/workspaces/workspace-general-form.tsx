@@ -1,7 +1,14 @@
 "use client";
 
 import { generateWorkspaceSlug } from "@calls/shared";
-import { Button, Card, CardContent, CardHeader, Input } from "@calls/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Input,
+  Textarea,
+} from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -17,6 +24,7 @@ const workspaceGeneralSchema = z.object({
       /^[a-z0-9-]+$/,
       "Только латинские буквы, цифры и дефис (например: my-company)",
     ),
+  description: z.string().max(2000, "Не более 2000 символов").default(""),
 });
 
 export type WorkspaceGeneralFormData = z.infer<typeof workspaceGeneralSchema>;
@@ -24,6 +32,7 @@ export type WorkspaceGeneralFormData = z.infer<typeof workspaceGeneralSchema>;
 interface WorkspaceGeneralFormProps {
   name: string;
   slug: string;
+  description?: string | null;
   onSave: (data: WorkspaceGeneralFormData) => Promise<void>;
   saving?: boolean;
 }
@@ -31,6 +40,7 @@ interface WorkspaceGeneralFormProps {
 export default function WorkspaceGeneralForm({
   name,
   slug,
+  description,
   onSave,
   saving = false,
 }: WorkspaceGeneralFormProps) {
@@ -44,7 +54,7 @@ export default function WorkspaceGeneralForm({
   } = useForm<WorkspaceGeneralFormData>({
     resolver: zodResolver(workspaceGeneralSchema),
     mode: "onBlur",
-    defaultValues: { name, slug },
+    defaultValues: { name, slug, description: description ?? "" },
   });
 
   const nameValue = watch("name");
@@ -123,6 +133,28 @@ export default function WorkspaceGeneralForm({
             {errors.slug && (
               <span className="text-xs text-red-500 mt-1 block">
                 {errors.slug.message}
+              </span>
+            )}
+          </div>
+
+          <div className="filter-item">
+            <label className="filter-label" htmlFor="ws-description">
+              Описание компании
+            </label>
+            <Textarea
+              id="ws-description"
+              className={`text-input min-h-[100px] resize-y ${errors.description ? "border-red-500 bg-red-50" : ""}`}
+              placeholder="Например: продаём промышленное оборудование. Типичные звонки — запросы цен, консультации, жалобы на доставку."
+              aria-invalid={!!errors.description}
+              {...register("description")}
+            />
+            <span className="text-[11px] text-gray-400 mt-1 block">
+              Используется для более точного анализа и оценки звонков. Можно
+              заполнить позже.
+            </span>
+            {errors.description && (
+              <span className="text-xs text-red-500 mt-1 block">
+                {errors.description.message}
               </span>
             )}
           </div>

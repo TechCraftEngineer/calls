@@ -3,7 +3,7 @@
  * Получает аудио из S3, запускает ASR pipeline, сохраняет транскрипт.
  */
 
-import { callsService, filesService } from "@calls/db";
+import { callsService, filesService, workspacesService } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
 import { identifySpeakersWithLlm, runTranscriptionPipeline } from "../../asr";
 import { createLogger } from "../../logger";
@@ -58,12 +58,26 @@ export const transcribeCallFn = inngest.createFunction(
       return url;
     });
 
+    const workspace = await step.run("get-workspace", async () => {
+      const ws = await workspacesService.getById(call.workspaceId);
+      if (!ws) {
+        logger.warn("Workspace not found for call transcription", { 
+          workspaceId: call.workspaceId, 
+          callId 
+        });
+        throw new Error(`Workspace not found: ${call.workspaceId}`);
+      }
+      return ws;
+    });
+
     const result = await step.run("transcribe", async () => {
       logger.info("Запуск транскрибации", {
         callId,
         audioUrlLength: audioUrl.length,
       });
-      return runTranscriptionPipeline(audioUrl, {});
+      return runTranscriptionPipeline(audioUrl, {
+        companyContext: workspace.description ?? undefined,
+      });
     });
 
     const { text: finalText, customerName } = await step.run(

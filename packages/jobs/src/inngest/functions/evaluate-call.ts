@@ -9,6 +9,7 @@ import {
   promptsRepository,
   usersRepository,
   userWorkspaceSettingsRepository,
+  workspacesService,
 } from "@calls/db";
 import { evaluateCallWithLlm, resolveEvaluationPrompt } from "../../evaluation";
 import { createLogger } from "../../logger";
@@ -97,9 +98,22 @@ export const evaluateCallFn = inngest.createFunction(
       );
     });
 
+    const workspace = await step.run("get-workspace", async () => {
+      const ws = await workspacesService.getById(call.workspaceId);
+      if (!ws) {
+        logger.warn("Workspace not found for call evaluation", { 
+          workspaceId: call.workspaceId, 
+          callId 
+        });
+        throw new Error(`Workspace not found: ${call.workspaceId}`);
+      }
+      return ws;
+    });
+
     const evaluation = await step.run("evaluate", async () => {
       return evaluateCallWithLlm(transcriptText, {
         evaluationPrompt,
+        companyContext: workspace.description ?? undefined,
       });
     });
 

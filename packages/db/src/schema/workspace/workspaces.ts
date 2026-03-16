@@ -24,6 +24,7 @@ export const workspaces = pgTable(
     id: text("id").primaryKey().default(sql`workspace_id_generate()`),
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
+    description: text("description"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

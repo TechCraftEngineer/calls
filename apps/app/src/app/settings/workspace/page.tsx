@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import type { workspaces } from "@calls/db";
 import { Button, Card, CardContent, toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -21,7 +22,7 @@ export default function WorkspaceSettingsPage() {
     activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const isOwner = activeWorkspace?.role === "owner";
 
-  const { data: workspace } = useQuery({
+  const { data: workspace } = useQuery<typeof workspaces.$inferSelect>({
     ...orpc.workspaces.get.queryOptions({
       input: { workspaceId: workspaceId ?? "" },
     }),
@@ -90,12 +91,17 @@ export default function WorkspaceSettingsPage() {
     return null;
   }
 
-  const handleSaveGeneral = async (data: { name: string; slug: string }) => {
+  const handleSaveGeneral = async (data: {
+    name: string;
+    slug: string;
+    description?: string | null;
+  }) => {
     if (!workspaceId) return;
     await updateMutation.mutateAsync({
       workspaceId,
       name: data.name,
       slug: data.slug,
+      description: data.description?.trim() || null,
     });
   };
 
@@ -123,8 +129,9 @@ export default function WorkspaceSettingsPage() {
 
       {workspace ? (
         <WorkspaceGeneralForm
-          name={(workspace as { name: string }).name}
-          slug={(workspace as { slug: string }).slug}
+          name={workspace.name}
+          slug={workspace.slug}
+          description={workspace.description}
           onSave={handleSaveGeneral}
           saving={updateMutation.isPending}
         />

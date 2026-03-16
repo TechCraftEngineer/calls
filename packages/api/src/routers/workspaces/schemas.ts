@@ -20,6 +20,11 @@ export const updateWorkspaceSchema = z.object({
   workspaceId: workspaceIdSchema,
   name: z.string().min(1).max(100).optional(),
   slug: slugSchema.optional(),
+  description: z
+    .string()
+    .max(2000, "Не более 2000 символов")
+    .nullable()
+    .optional(),
 });
 
 export const addMemberSchema = z.object({
