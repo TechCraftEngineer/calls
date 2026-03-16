@@ -50,9 +50,9 @@ export function CallListDataGrid({
   onPaginationChange,
 }: CallListDataGridProps) {
   const orpc = useORPC();
-  const [selectedCallId, setSelectedCallId] = useState<number | null>(null);
+  const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [recommendationsCallId, setRecommendationsCallId] = useState<
-    number | null
+    string | null
   >(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
 
@@ -70,7 +70,7 @@ export function CallListDataGrid({
   );
 
   const handleGenerateRecommendations = useCallback(
-    (callId: number, existingRecommendations?: string[]) => {
+    (callId: string, existingRecommendations?: string[]) => {
       if (generateRecommendationsMutation.isPending) return;
       if (existingRecommendations && existingRecommendations.length > 0) {
         setRecommendations(existingRecommendations);
@@ -80,7 +80,7 @@ export function CallListDataGrid({
       setRecommendationsCallId(callId);
       setRecommendations([]);
       generateRecommendationsMutation.mutate(
-        { call_id: String(callId) },
+        { call_id: callId },
         {
           onSuccess: (result) => {
             const recs =
@@ -100,8 +100,8 @@ export function CallListDataGrid({
   }, []);
 
   const handleTranscribe = useCallback(
-    (callId: number) => {
-      transcribeMutation.mutate({ call_id: String(callId) });
+    (callId: string) => {
+      transcribeMutation.mutate({ call_id: callId });
     },
     [transcribeMutation],
   );

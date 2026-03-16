@@ -29,30 +29,30 @@ import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 
 interface Call {
-  id: number;
+  id: string;
   filename?: string;
   number?: string;
   timestamp: string;
   duration?: number | null;
   direction?: string;
-  internal_number?: string;
-  operator_name?: string;
-  manager_name?: string;
+  internalNumber?: string;
+  operatorName?: string | null;
+  managerName?: string | null;
 }
 
 interface Transcript {
-  id: number;
+  id: string;
   summary?: string;
-  call_type?: string;
-  call_topic?: string;
+  callType?: string;
+  callTopic?: string;
   sentiment?: string;
 }
 
 interface Evaluation {
-  id?: number;
-  value_score?: number;
-  value_explanation?: string;
-  manager_recommendations?: string[];
+  id?: string;
+  valueScore?: number;
+  valueExplanation?: string;
+  managerRecommendations?: string[];
 }
 
 interface CallWithDetails {
@@ -348,7 +348,7 @@ export default function HomePage() {
                                 ...item,
                                 evaluation: {
                                   ...(item.evaluation || {}),
-                                  manager_recommendations: recommendations,
+                                  managerRecommendations: recommendations,
                                 },
                               }
                             : item,

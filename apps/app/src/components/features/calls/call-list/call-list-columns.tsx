@@ -17,15 +17,15 @@ import { RecordColumnCell } from "./call-list-record-cell";
 import type { CallWithDetails } from "./types";
 
 export interface CallListColumnsOptions {
-  onSelectCall: (callId: number) => void;
+  onSelectCall: (callId: string) => void;
   onGenerateRecommendations: (
-    callId: number,
+    callId: string,
     existingRecommendations?: string[],
   ) => void;
-  onTranscribe?: (callId: number) => void;
+  onTranscribe?: (callId: string) => void;
   onPlay?: (filename: string, number: string) => void;
   isLoadingRecommendations: boolean;
-  recommendationsCallId: number | null;
+  recommendationsCallId: string | null;
 }
 
 export function getCallListColumns(
@@ -73,7 +73,7 @@ export function getCallListColumns(
       meta: { headerTitle: "Номер" },
     },
     {
-      accessorKey: "call.manager_name",
+      accessorKey: "call.managerName",
       id: "manager",
       header: ({ column }) => (
         <DataGridColumnHeader
@@ -113,7 +113,7 @@ export function getCallListColumns(
       meta: { headerTitle: "Дата и время" },
     },
     {
-      accessorKey: "evaluation.value_score",
+      accessorKey: "evaluation.valueScore",
       id: "score",
       header: ({ column }) => (
         <DataGridColumnHeader

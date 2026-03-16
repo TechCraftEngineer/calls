@@ -1,34 +1,34 @@
 export interface CallDetail {
-  id: number;
+  id: string;
   number: string;
   timestamp: string;
   duration: number;
   direction: string;
-  internal_number?: string;
-  manager_name?: string;
-  operator_name?: string;
+  internalNumber?: string;
+  managerName?: string | null;
+  operatorName?: string | null;
   filename?: string;
-  size_bytes?: number;
-  customer_name?: string;
+  sizeBytes?: number;
+  customerName?: string;
 }
 
 export interface TranscriptDetail {
-  id: number;
+  id: string;
   text: string;
-  raw_text?: string;
+  rawText?: string;
   summary: string;
-  call_type: string;
-  call_topic: string;
+  callType: string;
+  callTopic: string;
   sentiment: string;
 }
 
 export interface EvaluationDetail {
-  id: number;
-  value_score: number;
-  value_explanation: string;
-  manager_score?: number | null;
-  manager_feedback?: string | null;
-  is_quality_analyzable?: boolean | null;
-  not_analyzable_reason?: string | null;
-  manager_recommendations?: string[];
+  id: string;
+  valueScore: number;
+  valueExplanation: string;
+  managerScore?: number | null;
+  managerFeedback?: string | null;
+  isQualityAnalyzable?: boolean | null;
+  notAnalyzableReason?: string | null;
+  managerRecommendations?: string[];
 }

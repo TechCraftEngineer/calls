@@ -11,29 +11,27 @@ import {
 import { CallRecordPlayer } from "./call-record-player";
 
 interface EvaluationDetail {
-  id: number;
-  value_score: number;
-  value_explanation: string;
-  manager_score?: number | null;
-  manager_feedback?: string | null;
-  manager_quality_score?: number | null;
-  manager_quality_explanation?: string | null;
-  is_quality_analyzable?: boolean | null;
-  not_analyzable_reason?: string | null;
-  manager_recommendations?: string[];
+  id: string;
+  valueScore: number;
+  valueExplanation: string;
+  managerScore?: number | null;
+  managerFeedback?: string | null;
+  isQualityAnalyzable?: boolean | null;
+  notAnalyzableReason?: string | null;
+  managerRecommendations?: string[];
 }
 
 interface CallDetail {
-  id: number;
+  id: string;
   filename?: string;
-  size_bytes?: number;
-  customer_name?: string;
-  operator_name?: string;
-  manager_name?: string;
+  sizeBytes?: number;
+  customerName?: string;
+  operatorName?: string | null;
+  managerName?: string | null;
 }
 
 interface TranscriptDetail {
-  call_type?: string;
+  callType?: string;
   sentiment?: string;
   summary?: string;
   text?: string;
@@ -67,14 +65,10 @@ export default function CallSidebar({
   onReevaluate,
   onGenerateRecommendations,
 }: CallSidebarProps) {
-  const qualityScore =
-    evaluation?.manager_score ?? evaluation?.manager_quality_score ?? 0;
-  const qualityFeedback =
-    evaluation?.manager_feedback ??
-    evaluation?.manager_quality_explanation ??
-    "";
-  const qualityNotAnalyzableReason = evaluation?.not_analyzable_reason;
-  const isQualityAnalyzable = evaluation?.is_quality_analyzable;
+  const qualityScore = evaluation?.managerScore ?? 0;
+  const qualityFeedback = evaluation?.managerFeedback ?? "";
+  const qualityNotAnalyzableReason = evaluation?.notAnalyzableReason;
+  const isQualityAnalyzable = evaluation?.isQualityAnalyzable;
   const showQualityUnavailable = isQualityAnalyzable === false || !qualityScore;
 
   return (
@@ -89,7 +83,7 @@ export default function CallSidebar({
             <CallRecordPlayer callId={call.id} />
           </div>
           <div className="mt-3 text-xs text-[#999]">
-            Размер файла: {formatFileSize(call.size_bytes)}
+            Размер файла: {formatFileSize(call.sizeBytes)}
           </div>
         </CardContent>
       </Card>
@@ -98,10 +92,10 @@ export default function CallSidebar({
       <Card className="sidebar-card">
         <CardContent className="p-4">
           <div
-            className={`text-lg font-bold ${call.customer_name ? "text-[#111]" : "text-[#999]"}`}
+            className={`text-lg font-bold ${call.customerName ? "text-[#111]" : "text-[#999]"}`}
           >
-            {call.customer_name
-              ? `Абонент: ${call.customer_name}`
+            {call.customerName
+              ? `Абонент: ${call.customerName}`
               : "Имя: не определено"}
           </div>
         </CardContent>
@@ -116,12 +110,12 @@ export default function CallSidebar({
           <div className="score-item">
             <div className="score-header">
               <span>Ценность звонка</span>
-              <span>{evaluation?.value_score || 0}/5</span>
+              <span>{evaluation?.valueScore || 0}/5</span>
             </div>
             <div className="score-bar-bg">
               <div
                 className="score-bar-fill"
-                style={{ width: `${(evaluation?.value_score || 0) * 20}%` }}
+                style={{ width: `${(evaluation?.valueScore || 0) * 20}%` }}
               />
             </div>
             <p
@@ -132,7 +126,7 @@ export default function CallSidebar({
                 marginBottom: "20px",
               }}
             >
-              {evaluation?.value_explanation || "Оценка отсутствует"}
+              {evaluation?.valueExplanation || "Оценка отсутствует"}
             </p>
           </div>
 
@@ -157,8 +151,8 @@ export default function CallSidebar({
               </div>
               <div style={{ color: "#C53030", fontSize: "12px" }}>
                 {qualityNotAnalyzableReason ||
-                  call.operator_name ||
-                  call.manager_name ||
+                  call.operatorName ||
+                  call.managerName ||
                   "Автоответчик"}
               </div>
             </div>
@@ -203,15 +197,15 @@ export default function CallSidebar({
           >
             {isGeneratingRecommendations
               ? "Загрузка…"
-              : evaluation?.manager_recommendations &&
-                  evaluation.manager_recommendations.length > 0
+              : evaluation?.managerRecommendations &&
+                  evaluation.managerRecommendations.length > 0
                 ? "Обновить"
                 : "Сформировать"}
           </Button>
         </CardHeader>
         <CardContent className="px-6 pb-6 pt-0">
-          {evaluation?.manager_recommendations &&
-          evaluation.manager_recommendations.length > 0 ? (
+          {evaluation?.managerRecommendations &&
+          evaluation.managerRecommendations.length > 0 ? (
             <>
               <p
                 style={{
@@ -223,7 +217,7 @@ export default function CallSidebar({
                 Вопросы, которые можно было задать (с учётом истории):
               </p>
               <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                {evaluation.manager_recommendations.map((rec, i) => (
+                {evaluation.managerRecommendations.map((rec, i) => (
                   <li
                     key={i}
                     style={{
@@ -267,7 +261,7 @@ export default function CallSidebar({
           <ul className="meta-list">
             <li className="meta-row">
               <span className="meta-label">Тип:</span>
-              <span className="meta-value">{transcript?.call_type || "—"}</span>
+              <span className="meta-value">{transcript?.callType || "—"}</span>
             </li>
             <li className="meta-row">
               <span className="meta-label">Настрой:</span>

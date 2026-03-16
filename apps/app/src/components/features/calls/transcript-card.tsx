@@ -27,7 +27,7 @@ export function TranscriptCard({ call, transcript }: Props) {
 
   const messages = useMemo(() => {
     const sourceText = showRaw
-      ? transcript?.raw_text || transcript?.text
+      ? transcript?.rawText || transcript?.text
       : transcript?.text;
     if (!sourceText) return [];
 
@@ -47,7 +47,7 @@ export function TranscriptCard({ call, transcript }: Props) {
         const isOperator =
           speaker.toLowerCase().includes("оператор") ||
           speaker.toLowerCase().includes("менеджер") ||
-          (call?.manager_name && speaker.includes(call.manager_name));
+          (call?.managerName && speaker.includes(call.managerName));
 
         const formattedText = text.replace(
           /\*\*(.*?)\*\*/g,
@@ -76,7 +76,7 @@ export function TranscriptCard({ call, transcript }: Props) {
             <span className="text-lg">💬</span> Расшифровка
           </CardTitle>
 
-          {transcript?.raw_text && (
+          {transcript?.rawText && (
             <Tabs
               value={showRaw ? "raw" : "processed"}
               onValueChange={(v) => setShowRaw(v === "raw")}

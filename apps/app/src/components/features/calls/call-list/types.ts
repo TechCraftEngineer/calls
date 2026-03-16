@@ -1,29 +1,29 @@
 export interface Call {
-  id: number;
+  id: string;
   number?: string;
   timestamp: string;
   direction?: string;
-  internal_number?: string;
-  manager_name?: string;
-  operator_name?: string;
+  internalNumber?: string;
+  managerName?: string | null;
+  operatorName?: string | null;
   duration?: number | null;
   filename?: string;
-  customer_name?: string;
+  customerName?: string;
 }
 
 export interface Transcript {
-  id: number;
+  id: string;
   summary?: string;
-  call_type?: string;
-  call_topic?: string;
+  callType?: string;
+  callTopic?: string;
   sentiment?: string;
 }
 
 export interface Evaluation {
-  id?: number;
-  value_score?: number;
-  value_explanation?: string;
-  manager_recommendations?: string[];
+  id?: string;
+  valueScore?: number;
+  valueExplanation?: string;
+  managerRecommendations?: string[];
 }
 
 export interface CallWithDetails {
@@ -35,9 +35,9 @@ export interface CallWithDetails {
 export interface CallListProps {
   calls: CallWithDetails[];
   onPlay?: (callId: string, number: string) => void;
-  onCallDeleted?: (callId: number) => void;
+  onCallDeleted?: (callId: string) => void;
   onRecommendationsGenerated?: (
-    callId: number,
+    callId: string,
     recommendations: string[],
   ) => void;
 }

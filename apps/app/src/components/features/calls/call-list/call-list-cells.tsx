@@ -57,15 +57,15 @@ interface CellRendererProps {
   item: CallWithDetails;
   colKey: string;
   visibleColumns: string[];
-  onSelectCall: (callId: number) => void;
+  onSelectCall: (callId: string) => void;
   onGenerateRecommendations: (
-    callId: number,
+    callId: string,
     existingRecommendations?: string[],
   ) => void;
-  onTranscribe?: (callId: number) => void;
+  onTranscribe?: (callId: string) => void;
   onPlay?: (filename: string, number: string) => void;
   isLoadingRecommendations: boolean;
-  recommendationsCallId: number | null;
+  recommendationsCallId: string | null;
 }
 
 const linkButtonStyle = {
@@ -135,9 +135,9 @@ export function renderCallListCell({
     case "number":
       return (
         <TableCell key={colKey}>
-          {call.customer_name ? (
+          {call.customerName ? (
             <>
-              {renderLinkOrButton(call.customer_name, {
+              {renderLinkOrButton(call.customerName, {
                 fontSize: "15px",
                 fontWeight: 700,
                 display: "block",
@@ -153,7 +153,7 @@ export function renderCallListCell({
               <div
                 style={{ fontSize: "11px", color: "#999", marginTop: "2px" }}
               >
-                {call.internal_number || ""}
+                {call.internalNumber || ""}
               </div>
             </>
           )}
@@ -163,7 +163,7 @@ export function renderCallListCell({
       return (
         <TableCell key={colKey}>
           <span style={{ color: "#555", fontWeight: 500 }}>
-            {call.manager_name || call.operator_name || "—"}
+            {call.managerName || call.operatorName || "—"}
           </span>
         </TableCell>
       );
@@ -187,12 +187,12 @@ export function renderCallListCell({
       return (
         <TableCell key={colKey}>
           <div className="op-tooltip">
-            <Rating rating={evaluation?.value_score ?? 0} size="sm" />
-            {evaluation?.value_explanation && (
+            <Rating rating={evaluation?.valueScore ?? 0} size="sm" />
+            {evaluation?.valueExplanation && (
               <div className="tooltip-content">
                 <strong>Обоснование:</strong>
                 <br />
-                {evaluation.value_explanation}
+                {evaluation.valueExplanation}
               </div>
             )}
           </div>
@@ -240,7 +240,7 @@ export function renderCallListCell({
                     e.stopPropagation();
                     onGenerateRecommendations(
                       call.id,
-                      evaluation?.manager_recommendations,
+                      evaluation?.managerRecommendations ?? undefined,
                     );
                   }}
                   disabled={

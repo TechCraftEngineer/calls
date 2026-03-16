@@ -78,17 +78,17 @@ export default function CallDetailPage() {
         setEvaluation((prev) => {
           if (!prev) {
             return {
-              id: 0,
-              value_score: 0,
-              value_explanation: "",
-              manager_score: 0,
-              manager_feedback: "",
-              manager_recommendations: recs ?? [],
+              id: "",
+              valueScore: 0,
+              valueExplanation: "",
+              managerScore: 0,
+              managerFeedback: "",
+              managerRecommendations: recs ?? [],
             } as EvaluationDetail;
           }
           return {
             ...prev,
-            manager_recommendations: recs ?? prev.manager_recommendations,
+            managerRecommendations: recs ?? prev.managerRecommendations,
           };
         });
       },

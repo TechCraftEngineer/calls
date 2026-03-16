@@ -5,7 +5,7 @@ import AudioPlayer from "@/components/ui/audio-player";
 import { useORPC } from "@/orpc/react";
 
 interface CallRecordPlayerProps {
-  callId: number;
+  callId: string;
   className?: string;
 }
 
@@ -16,7 +16,7 @@ export function CallRecordPlayer({ callId, className }: CallRecordPlayerProps) {
   const orpc = useORPC();
   const { data, isPending, isError } = useQuery({
     ...orpc.calls.getPlaybackUrl.queryOptions({
-      input: { call_id: String(callId) },
+      input: { call_id: callId },
     }),
     enabled: !!callId,
   });

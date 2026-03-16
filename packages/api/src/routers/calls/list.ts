@@ -61,29 +61,14 @@ export const list = workspaceProcedure
       q: input.q?.trim() || undefined,
     });
 
-    // Маппинг для фронтенда (snake_case) — evaluation приходит в camelCase из Drizzle
-    const callsWithTranscripts = rawCalls.map((item: CallWithTranscript) => {
-      const ev = item.evaluation as
-        | {
-            valueScore?: number;
-            valueExplanation?: string;
-            managerRecommendations?: string[] | null;
-          }
-        | null
-        | undefined;
-      const evaluationForFrontend = ev
-        ? {
-            ...ev,
-            value_score: ev.valueScore,
-            value_explanation: ev.valueExplanation,
-            manager_recommendations: ev.managerRecommendations ?? undefined,
-          }
-        : null;
-      return {
-        ...item,
-        evaluation: evaluationForFrontend,
-      };
-    });
+    const callsWithTranscripts = rawCalls.map((item: CallWithTranscript) => ({
+      ...item,
+      call: {
+        ...item.call,
+        managerName: item.call.name ?? null,
+        operatorName: item.call.name ?? null,
+      },
+    }));
 
     const totalItems = await callsService.countCalls({
       workspaceId: workspaceId!,

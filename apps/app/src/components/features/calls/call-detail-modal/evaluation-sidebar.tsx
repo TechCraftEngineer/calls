@@ -50,17 +50,10 @@ export default function EvaluationSidebar({
   onGenerateRecommendations,
   isGeneratingRecommendations,
 }: EvaluationSidebarProps) {
-  const qualityScore =
-    evaluation?.manager_score ??
-    (evaluation as { manager_quality_score?: number })?.manager_quality_score ??
-    0;
-  const qualityFeedback =
-    evaluation?.manager_feedback ??
-    (evaluation as { manager_quality_explanation?: string })
-      ?.manager_quality_explanation ??
-    "";
-  const qualityNotAnalyzableReason = evaluation?.not_analyzable_reason;
-  const isQualityAnalyzable = evaluation?.is_quality_analyzable;
+  const qualityScore = evaluation?.managerScore ?? 0;
+  const qualityFeedback = evaluation?.managerFeedback ?? "";
+  const qualityNotAnalyzableReason = evaluation?.notAnalyzableReason;
+  const isQualityAnalyzable = evaluation?.isQualityAnalyzable;
   const showQualityUnavailable = isQualityAnalyzable === false || !qualityScore;
 
   return (
@@ -75,7 +68,7 @@ export default function EvaluationSidebar({
         <CardContent className="space-y-3 px-4 pb-4 sm:px-6 sm:pb-6">
           <CallRecordPlayer callId={call.id} />
           <p className="text-muted-foreground text-xs">
-            Размер: {formatFileSize(call.size_bytes)}
+            Размер: {formatFileSize(call.sizeBytes)}
           </p>
         </CardContent>
       </Card>
@@ -83,11 +76,11 @@ export default function EvaluationSidebar({
       <Card className="border-border/60">
         <CardContent className="px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-6">
           <p
-            className={`flex min-w-0 items-center gap-2 wrap-break-word text-sm font-medium sm:text-base ${call.customer_name ? "text-foreground" : "text-muted-foreground"}`}
+            className={`flex min-w-0 items-center gap-2 wrap-break-word text-sm font-medium sm:text-base ${call.customerName ? "text-foreground" : "text-muted-foreground"}`}
           >
             <User className="size-4 shrink-0" />
             <span className="min-w-0 wrap-break-word">
-              {call.customer_name ? call.customer_name : "Имя не определено"}
+              {call.customerName ? call.customerName : "Имя не определено"}
             </span>
           </p>
         </CardContent>
@@ -111,18 +104,18 @@ export default function EvaluationSidebar({
             </p>
             <div className="mb-2 flex justify-between text-sm font-medium">
               <span>Оценка</span>
-              <span>{evaluation?.value_score ?? 0}/5</span>
+              <span>{evaluation?.valueScore ?? 0}/5</span>
             </div>
             <div className="bg-muted mb-3 h-2 overflow-hidden rounded-full">
               <div
                 className="bg-primary h-full rounded-full transition-[width]"
                 style={{
-                  width: `${(evaluation?.value_score ?? 0) * 20}%`,
+                  width: `${(evaluation?.valueScore ?? 0) * 20}%`,
                 }}
               />
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              {evaluation?.value_explanation ?? "Оценка отсутствует"}
+              {evaluation?.valueExplanation ?? "Оценка отсутствует"}
             </p>
           </section>
 
@@ -141,8 +134,8 @@ export default function EvaluationSidebar({
                 </p>
                 <p className="text-destructive/80 text-xs">
                   {qualityNotAnalyzableReason ||
-                    call.operator_name ||
-                    call.manager_name ||
+                    call.operatorName ||
+                    call.managerName ||
                     "Автоответчик"}
                 </p>
               </div>
@@ -201,8 +194,8 @@ export default function EvaluationSidebar({
           >
             {isGeneratingRecommendations ? (
               <Loader2 className="size-3.5 animate-spin" />
-            ) : evaluation?.manager_recommendations &&
-              evaluation.manager_recommendations.length > 0 ? (
+            ) : evaluation?.managerRecommendations &&
+              evaluation.managerRecommendations.length > 0 ? (
               "Обновить"
             ) : (
               "Сформировать"
@@ -210,14 +203,14 @@ export default function EvaluationSidebar({
           </Button>
         </CardHeader>
         <CardContent className="space-y-3 px-4 pb-4 sm:px-6 sm:pb-6">
-          {evaluation?.manager_recommendations &&
-          evaluation.manager_recommendations.length > 0 ? (
+          {evaluation?.managerRecommendations &&
+          evaluation.managerRecommendations.length > 0 ? (
             <>
               <p className="text-amber-800 dark:text-amber-200 text-sm">
                 Вопросы, которые можно было задать (с учётом истории):
               </p>
               <ul className="m-0 list-none space-y-2 p-0">
-                {evaluation.manager_recommendations.map((rec, i) => (
+                {evaluation.managerRecommendations.map((rec, i) => (
                   <li
                     key={i}
                     className="text-amber-900 dark:text-amber-100 relative pl-4 text-sm leading-snug before:absolute before:left-0 before:content-['•'] before:text-amber-500"
@@ -247,9 +240,7 @@ export default function EvaluationSidebar({
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Тип:</span>
-              <span className="font-medium">
-                {transcript?.call_type || "—"}
-              </span>
+              <span className="font-medium">{transcript?.callType || "—"}</span>
             </div>
             <div className="flex justify-between items-center gap-2 text-sm">
               <span className="text-muted-foreground">Настрой:</span>

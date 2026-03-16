@@ -6,13 +6,13 @@ import type { CallWithDetails } from "./types";
 interface RecordColumnCellProps {
   item: CallWithDetails;
   onGenerateRecommendations: (
-    callId: number,
+    callId: string,
     existingRecommendations?: string[],
   ) => void;
-  onTranscribe?: (callId: number) => void;
+  onTranscribe?: (callId: string) => void;
   onPlay?: (callId: string, number: string) => void;
   isLoadingRecommendations: boolean;
-  recommendationsCallId: number | null;
+  recommendationsCallId: string | null;
 }
 
 function RecommendationsIcon() {
@@ -129,7 +129,7 @@ export function RecordColumnCell({
           e.stopPropagation();
           onGenerateRecommendations(
             call.id,
-            evaluation?.manager_recommendations,
+            evaluation?.managerRecommendations ?? undefined,
           );
         }}
         disabled={isRecommendationsLoading}

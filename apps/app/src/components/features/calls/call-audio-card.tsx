@@ -22,7 +22,7 @@ export function CallAudioCard({ call }: Props) {
           <CallRecordPlayer callId={call.id} />
         </div>
         <div className="mt-3 text-xs text-[#999]">
-          Размер файла: {formatFileSize(call.size_bytes)}
+          Размер файла: {formatFileSize(call.sizeBytes)}
         </div>
       </CardContent>
     </Card>

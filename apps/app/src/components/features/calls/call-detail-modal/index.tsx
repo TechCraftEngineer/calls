@@ -79,7 +79,7 @@ export default function CallDetailModal({
 
   useEffect(() => {
     const t = result?.transcript as TranscriptDetail | null;
-    if (!t?.raw_text) setShowRaw(false);
+    if (!t?.rawText) setShowRaw(false);
   }, [result?.transcript]);
 
   const generateRecommendationsMutation = useMutation(
@@ -90,15 +90,15 @@ export default function CallDetailModal({
         setEvaluation((prev) => {
           if (!prev) {
             return {
-              id: 0,
-              value_score: 0,
-              value_explanation: "",
-              manager_score: 0,
-              manager_feedback: "",
-              manager_recommendations: recs,
+              id: "",
+              valueScore: 0,
+              valueExplanation: "",
+              managerScore: 0,
+              managerFeedback: "",
+              managerRecommendations: recs,
             } as EvaluationDetail;
           }
-          return { ...prev, manager_recommendations: recs };
+          return { ...prev, managerRecommendations: recs };
         });
       },
       onError: (error) => {
@@ -295,7 +295,7 @@ export default function CallDetailModal({
                   <span>{Math.round(call.duration ?? 0)} с</span>
                   <span className="flex items-center gap-1.5">
                     <User className="size-3.5" />
-                    {call.manager_name || call.operator_name || "—"}
+                    {call.managerName || call.operatorName || "—"}
                   </span>
                 </div>
               </DialogHeader>
@@ -306,7 +306,9 @@ export default function CallDetailModal({
                   showRaw={showRaw}
                   onShowRawChange={setShowRaw}
                   onDownloadTxt={handleDownloadTxt}
-                  managerName={call.manager_name}
+                  managerName={
+                    call.managerName ?? call.operatorName ?? undefined
+                  }
                 />
                 <EvaluationSidebar
                   call={call}

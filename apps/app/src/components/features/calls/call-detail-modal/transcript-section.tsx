@@ -38,7 +38,7 @@ function parseMessages(
   managerName?: string,
 ): Message[] {
   const sourceText = showRaw
-    ? transcript?.raw_text || transcript?.text
+    ? transcript?.rawText || transcript?.text
     : transcript?.text;
   if (!sourceText) return [];
 
@@ -87,7 +87,7 @@ export default function TranscriptSection({
             <MessageSquare className="text-muted-foreground size-4" />
             Расшифровка
           </CardTitle>
-          {transcript?.raw_text && (
+          {transcript?.rawText && (
             <div className="bg-muted/50 flex rounded-md p-0.5">
               <Button
                 variant={showRaw ? "ghost" : "secondary"}

@@ -19,7 +19,7 @@ const linkButtonStyle = {
 } as const;
 
 export function createLinkOrButton(
-  onSelectCall: (callId: number) => void,
+  onSelectCall: (callId: string) => void,
 ): (
   item: CallWithDetails,
   content: ReactNode,
@@ -68,9 +68,9 @@ export function renderNumberCell(
   ) => ReactNode,
 ) {
   const { call } = item;
-  return call.customer_name ? (
+  return call.customerName ? (
     <>
-      {renderLinkOrButton(item, call.customer_name, {
+      {renderLinkOrButton(item, call.customerName, {
         fontSize: "15px",
         fontWeight: 700,
         display: "block",
@@ -82,7 +82,7 @@ export function renderNumberCell(
     <>
       {renderLinkOrButton(item, call.number)}
       <div style={{ fontSize: "11px", color: "#999", marginTop: "2px" }}>
-        {call.internal_number || ""}
+        {call.internalNumber || ""}
       </div>
     </>
   );
@@ -91,7 +91,7 @@ export function renderNumberCell(
 export function renderManagerCell(call: CallWithDetails["call"]) {
   return (
     <span style={{ color: "#555", fontWeight: 500 }}>
-      {call.manager_name || call.operator_name || "—"}
+      {call.managerName || call.operatorName || "—"}
     </span>
   );
 }
@@ -118,15 +118,15 @@ export function renderDateCell(call: CallWithDetails["call"]) {
 }
 
 export function renderScoreCell(evaluation: CallWithDetails["evaluation"]) {
-  const score = evaluation?.value_score ?? 0;
+  const score = evaluation?.valueScore ?? 0;
   return (
     <div className="op-tooltip">
       <Rating rating={score} size="sm" />
-      {evaluation?.value_explanation && (
+      {evaluation?.valueExplanation && (
         <div className="tooltip-content">
           <strong>Обоснование:</strong>
           <br />
-          {evaluation.value_explanation}
+          {evaluation.valueExplanation}
         </div>
       )}
     </div>

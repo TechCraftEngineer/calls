@@ -45,7 +45,7 @@ export default function CallMetaHeader({ call }: Props) {
           ⏱️ {Math.round(call.duration ?? 0)}с
         </div>
         <div className="meta-item-inline">
-          👤 {call.manager_name || call.operator_name || "—"}
+          👤 {call.managerName || call.operatorName || "—"}
         </div>
       </div>
     </div>

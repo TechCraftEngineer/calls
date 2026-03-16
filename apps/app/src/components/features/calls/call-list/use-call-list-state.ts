@@ -45,11 +45,11 @@ export function useCallListState(props: CallListProps) {
     order: SortOrder;
   } | null>(null);
   const [showColumnToggle, setShowColumnToggle] = useState(false);
-  const [selectedCallId, setSelectedCallId] = useState<number | null>(null);
+  const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [recommendationsCallId, setRecommendationsCallId] = useState<
-    number | null
+    string | null
   >(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
 
@@ -142,7 +142,7 @@ export function useCallListState(props: CallListProps) {
   };
 
   const handleGenerateRecommendations = (
-    callId: number,
+    callId: string,
     existingRecommendations?: string[],
   ) => {
     if (generateRecommendationsMutation.isPending) return;
@@ -154,7 +154,7 @@ export function useCallListState(props: CallListProps) {
     setRecommendationsCallId(callId);
     setRecommendations([]);
     generateRecommendationsMutation.mutate(
-      { call_id: String(callId) },
+      { call_id: callId },
       {
         onSuccess: (result) => {
           const recs =
@@ -171,11 +171,11 @@ export function useCallListState(props: CallListProps) {
     setRecommendations([]);
   };
 
-  const handleTranscribe = (callId: number) => {
-    transcribeMutation.mutate({ call_id: String(callId) });
+  const handleTranscribe = (callId: string) => {
+    transcribeMutation.mutate({ call_id: callId });
   };
 
-  const handleCallDeleted = (callId: number) => {
+  const handleCallDeleted = (callId: string) => {
     setSelectedCallId(null);
     onCallDeleted?.(callId);
   };
@@ -233,8 +233,8 @@ function sortCalls(
         valB = b.call.number || "";
         break;
       case "manager":
-        valA = a.call.manager_name || a.call.operator_name || "";
-        valB = b.call.manager_name || b.call.operator_name || "";
+        valA = a.call.managerName || a.call.operatorName || "";
+        valB = b.call.managerName || b.call.operatorName || "";
         break;
       case "status":
         valA = a.call.duration || 0;
@@ -245,8 +245,8 @@ function sortCalls(
         valB = new Date(b.call.timestamp).getTime();
         break;
       case "score":
-        valA = a.evaluation?.value_score || 0;
-        valB = b.evaluation?.value_score || 0;
+        valA = a.evaluation?.valueScore || 0;
+        valB = b.evaluation?.valueScore || 0;
         break;
       case "summary":
         valA = a.transcript?.summary || "";

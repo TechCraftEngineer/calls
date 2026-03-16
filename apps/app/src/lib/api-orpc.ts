@@ -8,9 +8,9 @@
  * const mutation = useMutation(orpc.calls.delete.mutationOptions({ ... }));
  */
 
-// Типы для API
+// Типы для API (camelCase — соответствует Drizzle/БД)
 export interface Call {
-  id: number;
+  id: string;
   filename?: string;
   number?: string;
   timestamp: string;
@@ -18,38 +18,40 @@ export interface Call {
   duration?: number;
   direction?: string;
   status?: string;
-  size_bytes?: number;
-  internal_number?: string;
+  sizeBytes?: number;
+  internalNumber?: string;
   source?: string;
-  customer_name?: string;
+  customerName?: string;
+  managerName?: string | null;
+  operatorName?: string | null;
 }
 
 export interface Transcript {
-  id: number;
-  call_id: number;
+  id: string;
+  callId: string;
   text?: string;
-  raw_text?: string;
+  rawText?: string;
   title?: string;
   sentiment?: string;
   confidence?: number;
   summary?: string;
-  size_kb?: number;
-  caller_name?: string;
-  call_type?: string;
-  call_topic?: string;
+  sizeKb?: number;
+  callerName?: string;
+  callType?: string;
+  callTopic?: string;
 }
 
 export interface CallEvaluation {
-  id: number;
-  call_id: number;
-  value_score?: number;
-  value_explanation?: string;
-  manager_score?: number;
-  manager_feedback?: string;
-  manager_recommendations?: string[];
-  is_quality_analyzable?: boolean;
-  not_analyzable_reason?: string;
-  created_at: string;
+  id: string;
+  callId: string;
+  valueScore?: number;
+  valueExplanation?: string;
+  managerScore?: number;
+  managerFeedback?: string;
+  managerRecommendations?: string[] | null;
+  isQualityAnalyzable?: boolean;
+  notAnalyzableReason?: string;
+  createdAt: string;
 }
 
 export interface User {
