@@ -25,7 +25,7 @@
     "@calls/lib": "workspace:*",
     "@calls/shared": "workspace:*",
     "@calls/telegram-bot": "workspace:*",
-    "@orpc/client": "^1.13.7",
+    "@orpc/client": "1.13.7",
     "@orpc/server": "^1.13.7",
     "zod": "4.3.6"
   },

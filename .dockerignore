@@ -1,0 +1,22 @@
+# Dependencies - installed fresh in container
+node_modules
+
+# Git
+.git
+
+# Stale turbo prune output - created fresh in container
+out
+
+# Build artifacts
+.next
+.turbo
+dist
+.cache
+
+# Local env (secrets)
+.env
+.env.*
+
+# Misc
+*.log
+.DS_Store
