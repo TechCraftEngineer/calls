@@ -10,8 +10,12 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin, username } from "better-auth/plugins";
 
-const baseUrl =
-  process.env.BACKEND_URL ?? process.env.APP_URL ?? "http://localhost:7000";
+// BETTER_AUTH_URL / baseURL — публичный URL приложения (для ссылок в письмах, OAuth callback)
+const publicBaseUrl =
+  process.env.BETTER_AUTH_URL ??
+  process.env.NEXT_PUBLIC_APP_URL ??
+  process.env.APP_URL ??
+  "http://localhost:3000";
 
 const trustedOrigins = [
   "http://localhost:3000",
@@ -30,28 +34,28 @@ export const auth = betterAuth({
       verification: schema.verification,
     },
   }),
-  baseURL: baseUrl,
+  baseURL: publicBaseUrl,
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins,
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
+    minPasswordLength: 8,
+    maxPasswordLength: 128,
     sendResetPassword: async ({ user, url }) => {
-      try {
-        await sendEmail({
-          to: [user.email],
-          subject: "Сброс пароля — QBS Звонки",
-          react: ResetPasswordEmail({ resetLink: url }),
-        });
-        console.log(`[Auth] Password reset email sent to: ${user.email}`);
-      } catch (error) {
+      void sendEmail({
+        to: [user.email],
+        subject: "Сброс пароля — QBS Звонки",
+        react: ResetPasswordEmail({ resetLink: url }),
+      }).catch((error) => {
         console.error("[Auth] Failed to send password reset email:", {
           email: user.email,
           error: error instanceof Error ? error.message : String(error),
         });
-        // Не прерываем процесс, но логируем ошибку
-        // Better Auth продолжит процесс даже если email не отправлен
-      }
+      });
+    },
+    onPasswordReset: async ({ user }) => {
+      console.log(`[Auth] Password reset completed for: ${user.email}`);
     },
   },
   socialProviders:
@@ -60,7 +64,7 @@ export const auth = betterAuth({
           google: {
             clientId: process.env.AUTH_GOOGLE_ID,
             clientSecret: process.env.AUTH_GOOGLE_SECRET,
-            redirectURI: `${baseUrl}/api/auth/callback/google`,
+            redirectURI: `${publicBaseUrl}/api/auth/callback/google`,
           },
         }
       : undefined,

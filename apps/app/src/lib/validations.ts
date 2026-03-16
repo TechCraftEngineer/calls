@@ -15,36 +15,19 @@ export const loginSchema = z.object({
 
 export type LoginFormData = z.infer<typeof loginSchema>;
 
-// Схема для «Забыли пароль» с асинхронной валидацией существования email
+// Схема для «Забыли пароль» — только формат email, без проверки существования
+// (защита от перебора: не раскрываем, зарегистрирован ли email)
 export const forgotPasswordSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Введите email")
-    .email("Введите корректный email")
-    .refine(
-      async (email) => {
-        try {
-          const { authApi } = await import("./api-orpc");
-          const result = await authApi.checkEmail(email);
-          return result.exists;
-        } catch {
-          // Если API недоступно, пропускаем валидацию
-          return true;
-        }
-      },
-      {
-        message: "Пользователь с таким email не найден",
-      },
-    ),
+  email: z.string().min(1, "Введите email").email("Введите корректный email"),
 });
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
-// Схема для сброса пароля
+// Схема для сброса пароля (min 8 — по стандарту Better Auth)
 export const resetPasswordSchema = z
   .object({
     newPassword: z
       .string()
-      .min(6, "Пароль должен содержать минимум 6 символов")
+      .min(8, "Пароль должен содержать минимум 8 символов")
       .regex(/[A-Z]/, "Пароль должен содержать хотя бы одну заглавную букву")
       .regex(/[a-z]/, "Пароль должен содержать хотя бы одну строчную букву")
       .regex(/[0-9]/, "Пароль должен содержать хотя бы одну цифру"),

@@ -227,13 +227,6 @@ export const statisticsApi = {
   },
 };
 
-// Auth API
-export const authApi = {
-  async checkEmail(email: string): Promise<{ exists: boolean }> {
-    return await api.auth.checkEmail({ email });
-  },
-};
-
 // Workspaces API
 export interface WorkspaceItem {
   id: string;

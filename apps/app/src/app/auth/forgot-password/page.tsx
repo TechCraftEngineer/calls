@@ -30,18 +30,11 @@ function ForgotPasswordForm() {
           ? `${window.location.origin}${paths.auth.resetPassword}`
           : `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}${paths.auth.resetPassword}`;
 
-      const result = await authClient.requestPasswordReset({
+      await authClient.requestPasswordReset({
         email: data.email,
         redirectTo,
       });
-
-      if (result.error) {
-        setError("root", {
-          message: result.error.message || "Ошибка при отправке письма",
-        });
-        return;
-      }
-      // Всегда показываем успех (защита от перебора email)
+      // Всегда показываем успех — защита от перебора email (Better Auth / OWASP)
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "Ошибка при отправке письма";

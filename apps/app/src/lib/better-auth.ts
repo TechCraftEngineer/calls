@@ -7,17 +7,17 @@ import { adminClient, usernameClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { extractUserFields, isAdminUser } from "./user-profile";
 
+// baseURL — URL приложения (запросы идут через Next.js proxy /api/auth → backend)
 function getAuthBaseUrl(): string {
   if (typeof window !== "undefined") {
-    const envUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (envUrl) return envUrl.replace(/\/?$/, "");
-    if (window.location.origin.includes("zvonki.qbs.ru"))
-      return "https://zvonki.qbsoft.ru";
-    return window.location.origin;
+    return (
+      process.env.NEXT_PUBLIC_APP_URL?.replace(/\/?$/, "") ||
+      window.location.origin
+    );
   }
   return (
-    process.env.NEXT_PUBLIC_API_URL?.replace(/\/?$/, "") ||
-    "http://localhost:7000"
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/?$/, "") ||
+    "http://localhost:3000"
   );
 }
 

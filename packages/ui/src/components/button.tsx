@@ -19,7 +19,7 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
-        dark: "bg-muted-foreground text-muted hover:bg-muted-foreground/90",
+        dark: "bg-[var(--button-dark,#111)] text-white hover:bg-[var(--button-dark-hover,#333)]",
         accent:
           "bg-accent text-accent-foreground hover:bg-accent/80",
         success:

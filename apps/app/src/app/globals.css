@@ -32,6 +32,8 @@
   --destructive-foreground: #fff;
   --success: #22C55E;
   --success-foreground: #fff;
+  --button-dark: #111;
+  --button-dark-hover: #333;
   --popover: #FFFFFF;
   --popover-foreground: #333;
   --radius: 0.5rem;
