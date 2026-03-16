@@ -4,7 +4,6 @@ import {
   QueryCache,
   QueryClient,
 } from "@tanstack/react-query";
-import SuperJSON from "superjson";
 
 function captureApiErrorToPostHog(error: unknown) {
   if (typeof window === "undefined") return;
@@ -48,14 +47,10 @@ export const createQueryClient = () => {
         staleTime: 30 * 1000,
       },
       dehydrate: {
-        serializeData: SuperJSON.serialize,
         shouldDehydrateQuery: (query) =>
           defaultShouldDehydrateQuery(query) ||
           query.state.status === "pending",
         shouldRedactErrors: () => process.env.NODE_ENV !== "development",
-      },
-      hydrate: {
-        deserializeData: SuperJSON.deserialize,
       },
     },
   });
