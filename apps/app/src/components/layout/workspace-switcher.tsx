@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@calls/ui";
-import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import CreateWorkspaceModal from "@/components/features/workspaces/create-workspace-modal";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
@@ -28,19 +27,6 @@ export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const pathname = usePathname();
-
-  useEffect(() => {
-    // Показываем модалку если загрузка завершена, рабочих пространств нет и мы не на странице входа
-    if (
-      !loading &&
-      user &&
-      workspaces.length === 0 &&
-      !pathname.includes("/auth/signin")
-    ) {
-      setShowCreateModal(true);
-    }
-  }, [loading, user, workspaces.length, pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -72,7 +58,6 @@ export default function WorkspaceSwitcher({ user }: WorkspaceSwitcherProps) {
       </div>
     );
   }
-
   return (
     <>
       <div className="workspace-switcher" ref={dropdownRef}>

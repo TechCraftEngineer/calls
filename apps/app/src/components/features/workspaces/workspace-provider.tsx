@@ -1,9 +1,8 @@
 "use client";
 
-import { paths } from "@calls/config";
 import { toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   createContext,
   type ReactNode,
@@ -11,7 +10,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
 } from "react";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
@@ -48,20 +46,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const orpc = useORPC();
   const queryClient = useQueryClient();
   const router = useRouter();
-  const pathname = usePathname();
-  const lastRedirectToCreateRef = useRef(0);
 
   const isAuthenticated = !!session?.user;
   const shouldFetchWorkspaces = isAuthenticated && !sessionPending;
-  const isAuthOrCreateWorkspace =
-    pathname?.startsWith(paths.auth.root) ||
-    pathname?.startsWith(paths.onboarding.root);
 
-  const {
-    data: workspacesData,
-    isPending: workspacesPending,
-    isSuccess: workspacesSuccess,
-  } = useQuery({
+  const { data: workspacesData, isPending: workspacesPending } = useQuery({
     ...orpc.workspaces.list.queryOptions(),
     enabled: shouldFetchWorkspaces,
   });
@@ -124,30 +113,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       queryKey: orpc.workspaces.list.queryKey(),
     });
   }, [queryClient, orpc.workspaces.list]);
-
-  useEffect(() => {
-    if (
-      isAuthenticated &&
-      !sessionPending &&
-      !loading &&
-      workspacesSuccess &&
-      workspaces.length === 0 &&
-      !isAuthOrCreateWorkspace
-    ) {
-      const now = Date.now();
-      if (now - lastRedirectToCreateRef.current < 2000) return;
-      lastRedirectToCreateRef.current = now;
-      router.replace(paths.onboarding.createWorkspace);
-    }
-  }, [
-    isAuthenticated,
-    sessionPending,
-    loading,
-    workspacesSuccess,
-    workspaces.length,
-    isAuthOrCreateWorkspace,
-    router,
-  ]);
 
   const value = useMemo<WorkspaceContextType>(
     () => ({

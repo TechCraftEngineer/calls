@@ -1,7 +1,17 @@
 "use client";
 
-import { Badge, Button, Dialog, DialogContent, toast } from "@calls/ui";
+import {
+  Badge,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Separator,
+  toast,
+} from "@calls/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Calendar, Clock, Loader2, Phone, Trash2, User } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
@@ -214,40 +224,46 @@ export default function CallDetailModal({
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <DialogContent
-          className="max-w-[1400px] max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto p-0 gap-0 text-left"
+          className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-4xl overflow-y-auto p-0 gap-0 text-left sm:max-w-[1400px]"
           showCloseButton={true}
         >
           {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <p className="text-muted-foreground">Загрузка...</p>
+            <div className="flex flex-col items-center justify-center gap-3 py-20">
+              <Loader2 className="text-muted-foreground size-8 animate-spin" />
+              <p className="text-muted-foreground text-sm">Загрузка...</p>
             </div>
           ) : !call ? (
-            <div className="flex items-center justify-center py-16">
-              <p className="text-muted-foreground">Звонок не найден</p>
+            <div className="flex flex-col items-center justify-center gap-3 py-20">
+              <Phone className="text-muted-foreground size-10 opacity-50" />
+              <p className="text-muted-foreground text-sm">Звонок не найден</p>
             </div>
           ) : (
-            <div className="p-6">
-              <div className="mb-8">
-                <div className="flex flex-wrap items-center justify-between gap-4 pr-10">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-foreground text-3xl font-extrabold tracking-tight">
+            <>
+              <DialogHeader className="space-y-1.5 px-6 pt-6 pb-4">
+                <div className="flex flex-wrap items-center justify-between gap-4 pr-8">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <DialogTitle className="text-2xl font-semibold tracking-tight sm:text-3xl">
                       {call.number}
-                    </span>
-                    <Badge variant="secondary">
-                      {call.direction === "incoming" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ"}
-                    </Badge>
-                    <Badge
-                      variant={
-                        (call.duration ?? 0) > 0 ? "outline" : "destructive"
-                      }
-                      className={
-                        (call.duration ?? 0) > 0
-                          ? "border-green-500/30 bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400"
-                          : undefined
-                      }
-                    >
-                      {(call.duration ?? 0) > 0 ? "ЗАВЕРШЁН" : "ПРОПУЩЕН"}
-                    </Badge>
+                    </DialogTitle>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge variant="secondary" className="font-medium">
+                        {call.direction === "incoming"
+                          ? "Входящий"
+                          : "Исходящий"}
+                      </Badge>
+                      <Badge
+                        variant={
+                          (call.duration ?? 0) > 0 ? "outline" : "destructive"
+                        }
+                        className={
+                          (call.duration ?? 0) > 0
+                            ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400"
+                            : undefined
+                        }
+                      >
+                        {(call.duration ?? 0) > 0 ? "Завершён" : "Пропущен"}
+                      </Badge>
+                    </div>
                   </div>
                   {isWorkspaceAdmin && (
                     <Button
@@ -257,43 +273,34 @@ export default function CallDetailModal({
                       onClick={() => setShowDeleteConfirm(true)}
                       disabled={deleteMutation.isPending}
                       title="Удалить звонок"
+                      className="gap-1.5"
                     >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      </svg>
+                      <Trash2 className="size-4" />
                       {deleteMutation.isPending ? "Удаление..." : "Удалить"}
                     </Button>
                   )}
                 </div>
-                <div className="text-muted-foreground mt-3 flex flex-wrap gap-6 text-sm font-medium">
-                  <span>
-                    📅 {new Date(call.timestamp).toLocaleDateString()}
+                <div className="text-muted-foreground flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="size-3.5" />
+                    {new Date(call.timestamp).toLocaleDateString("ru-RU")}
                   </span>
-                  <span>
-                    ⏰{" "}
-                    {new Date(call.timestamp).toLocaleTimeString([], {
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="size-3.5" />
+                    {new Date(call.timestamp).toLocaleTimeString("ru-RU", {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
                   </span>
-                  <span>⏱️ {Math.round(call.duration ?? 0)}с</span>
-                  <span>
-                    👤 {call.manager_name || call.operator_name || "—"}
+                  <span>{Math.round(call.duration ?? 0)} с</span>
+                  <span className="flex items-center gap-1.5">
+                    <User className="size-3.5" />
+                    {call.manager_name || call.operator_name || "—"}
                   </span>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
+              </DialogHeader>
+              <Separator />
+              <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-[1fr_340px]">
                 <TranscriptSection
                   transcript={transcript}
                   showRaw={showRaw}
@@ -315,7 +322,7 @@ export default function CallDetailModal({
                   }
                 />
               </div>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
