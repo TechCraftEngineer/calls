@@ -54,7 +54,6 @@ export class UsersService {
     filter_exclude_answering_machine: boolean;
     filter_min_duration: number;
     filter_min_replicas: number;
-    email: string;
     email_daily_report: boolean;
     email_weekly_report: boolean;
     email_monthly_report: boolean;

@@ -29,7 +29,6 @@ export const me = protectedProcedure.handler(async ({ context }) => {
       (u as Record<string, unknown>).filter_min_duration ?? 0,
     filter_min_replicas:
       (u as Record<string, unknown>).filter_min_replicas ?? 0,
-    email: (u as Record<string, unknown>).email ?? null,
     telegram_weekly_report:
       (u as Record<string, unknown>).telegram_weekly_report ?? false,
     telegram_monthly_report:

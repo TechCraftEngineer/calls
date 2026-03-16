@@ -58,7 +58,6 @@ export interface ApiUser {
   internalExtensions: string | null;
   mobilePhones: string | null;
   telegramChatId: string | null;
-  email: string;
   created_at: string | null;
   is_active: boolean;
 }
@@ -162,7 +161,6 @@ export function formatUserForApi(user: UserLike): ApiUser {
     internalExtensions: fields.internalExtensions,
     mobilePhones: fields.mobilePhones,
     telegramChatId: fields.telegramChatId,
-    email: user.email as string,
     created_at: user.created_at as string | null,
     is_active: (user as { is_active?: boolean }).is_active ?? true,
   };

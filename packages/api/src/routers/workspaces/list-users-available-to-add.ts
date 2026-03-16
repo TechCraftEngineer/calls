@@ -23,15 +23,9 @@ export const listUsersAvailableToAdd = protectedProcedure
       input.workspaceId,
     );
     return rows.map(
-      (r: {
-        id: string;
-        name: string | null;
-        email: string;
-        username: string | null;
-      }) => ({
+      (r: { id: string; name: string | null; email: string }) => ({
         id: r.id,
         name: r.name ?? "Без имени",
-        email: r.email,
         email: r.email ?? `user_${r.id.slice(0, 8)}`,
       }),
     );
