@@ -15,7 +15,7 @@ const {
   createApp,
   port,
   checkDatabaseConnection,
-  setupTelegramWebhook,
+  setupTelegramWebhooks,
   createLogger,
 } = await import("./main");
 
@@ -29,11 +29,18 @@ const backendLogger = createLogger("backend-server");
     );
   }
 
-  const webhookSetupSuccess = await setupTelegramWebhook();
-  if (!webhookSetupSuccess) {
+  const webhookSetupResult = await setupTelegramWebhooks();
+  if (!webhookSetupResult.success) {
     backendLogger.warn(
-      "Telegram webhook setup failed, but server will continue running",
+      "Some Telegram webhooks failed to setup, but server will continue running",
+      {
+        failedCount: webhookSetupResult.results.filter((r) => !r.success)
+          .length,
+        totalCount: webhookSetupResult.results.length,
+      },
     );
+  } else {
+    backendLogger.info("All Telegram webhooks setup successfully");
   }
 })();
 

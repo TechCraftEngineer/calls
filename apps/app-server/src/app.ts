@@ -4,11 +4,7 @@
 
 import { randomUUID } from "node:crypto";
 import { backendRouter, createBackendContext, createLogger } from "@calls/api";
-import {
-  getDefaultWorkspace,
-  settingsService,
-  workspacesService,
-} from "@calls/db";
+import { isValidWorkspaceId, settingsService } from "@calls/db";
 import { createWebhookHandler } from "@calls/telegram-bot";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
@@ -17,8 +13,14 @@ import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
 import { auth } from "./auth";
 import { corsOrigin } from "./config";
-import { rateLimitMap } from "./lib/rate-limit";
+import { createRateLimit, rateLimitMap } from "./lib/rate-limit";
 import { cleanupAllCaches } from "./lib/session-cache";
+
+// Rate limiting для webhook endpoints (защита от DoS)
+const webhookRateLimit = createRateLimit({
+  windowMs: 60 * 1000, // 1 минута
+  maxRequests: 30, // максимум 30 запросов в минуту на IP
+});
 
 // Экспортируем функции для управления интервалом (для тестов)
 interface CleanupIntervalControl {
@@ -135,35 +137,65 @@ export function createApp() {
   // Better Auth handler for /api/auth/* (sign-in, sign-out, get-session, callbacks)
   app.on(["GET", "POST"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
-  // Telegram webhook с улучшенной обработкой ошибок
-  const telegramWebhookHandler = createWebhookHandler(async () => {
-    try {
-      const defaultWs = await getDefaultWorkspace(workspacesService);
-      if (!defaultWs) {
-        backendLogger.warn("Default workspace not found for telegram webhook");
-        throw new Error("Default workspace not found");
+  // Telegram webhook: /api/telegram-webhook/:workspaceId (SaaS, каждый workspace — свой URL)
+  app.post(
+    "/api/telegram-webhook/:workspaceId",
+    webhookRateLimit,
+    async (c) => {
+      const workspaceId = c.req.param("workspaceId");
+      if (!workspaceId || !isValidWorkspaceId(workspaceId)) {
+        backendLogger.warn("Invalid workspace ID in webhook request", {
+          workspaceId,
+          userAgent: c.req.header("user-agent"),
+          ip:
+            c.req.header("x-forwarded-for") ||
+            c.req.header("x-real-ip") ||
+            "unknown",
+        });
+        return c.json({ error: "Invalid workspace" }, 400);
       }
-      const botToken = await settingsService.getDecryptedBotToken(
-        "telegram_bot_token",
-        defaultWs.id,
-      );
-      if (!botToken) {
-        backendLogger.warn(
-          "Telegram bot token not configured for default workspace",
-        );
-        throw new Error("Bot token not configured");
-      }
-      return botToken;
-    } catch (error) {
-      backendLogger.error("Failed to get workspace for telegram webhook", {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
+
+      const handler = createWebhookHandler(async () => {
+        try {
+          const botToken = await settingsService.getDecryptedBotToken(
+            "telegram_bot_token",
+            workspaceId,
+          );
+          if (!botToken) {
+            backendLogger.warn(
+              "No Telegram bot token configured for workspace",
+              {
+                workspaceId,
+              },
+            );
+            return null;
+          }
+          return botToken;
+        } catch (error) {
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
+          backendLogger.error("Failed to get token for telegram webhook", {
+            workspaceId,
+            error: errorMsg,
+            stack: error instanceof Error ? error.stack : undefined,
+          });
+          return null;
+        }
       });
-      // Возвращаем null только для критических ошибок, чтобы webhook мог обработать запрос
-      return null;
-    }
-  });
-  app.post("/api/telegram-webhook", telegramWebhookHandler);
+
+      try {
+        return await handler(c);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        backendLogger.error("Telegram webhook handler failed", {
+          workspaceId,
+          error: errorMsg,
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+        return c.json({ error: "Webhook processing failed" }, 500);
+      }
+    },
+  );
 
   // Health
   app.get("/", (c) => c.json({ message: "QBS Звонки API", version: "2.0.0" }));

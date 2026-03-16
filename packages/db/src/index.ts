@@ -119,5 +119,6 @@ export type {
 } from "./types/users.types";
 // Utilities
 export { batchInsert, batchInsertTransaction } from "./utils/batch";
+export { isValidWorkspaceId } from "./utils/workspace-id-generator";
 // Validators
 export { ValidationError } from "./validators/user.validators";

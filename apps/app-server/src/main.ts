@@ -7,4 +7,5 @@ export { createLogger } from "@calls/api";
 export { createApp } from "./app";
 export { port } from "./config";
 export { checkDatabaseConnection } from "./lib/db";
-export { setupTelegramWebhook } from "./startup/telegram-webhook";
+export type { SetupTelegramWebhooksResult } from "./startup/telegram-webhook";
+export { setupTelegramWebhooks } from "./startup/telegram-webhook";
