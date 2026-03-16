@@ -12,9 +12,10 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Set build-time arguments for Next.js
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# Set build-time arguments for Next.js (NEXT_PUBLIC_* встраиваются в клиентский бандл)
+# API: same origin (client) или APP_SERVER_URL (server), NEXT_PUBLIC_API_URL не нужен
+ARG NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 
 # Build Next.js application
 RUN npm run build

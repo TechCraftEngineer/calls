@@ -36,6 +36,19 @@ export function formatTelegramReport(params: FormatReportParams): string {
     workspaceName,
   } = params;
 
+  // Валидация входных параметров
+  if (!stats || typeof stats !== "object") {
+    return "❌ Ошибка: отсутствуют данные статистики";
+  }
+
+  if (!dateFrom || !dateTo) {
+    return "❌ Ошибка: отсутствуют даты периода";
+  }
+
+  if (!reportType || !["daily", "weekly", "monthly"].includes(reportType)) {
+    return "❌ Ошибка: неверный тип отчёта";
+  }
+
   const typeLabel =
     reportType === "daily"
       ? "Ежедневный"
@@ -60,23 +73,39 @@ export function formatTelegramReport(params: FormatReportParams): string {
 
   let totalIncoming = 0;
   let totalOutgoing = 0;
-  let totalInDuration = 0;
-  let totalOutDuration = 0;
+  let _totalInDuration = 0;
+  let _totalOutDuration = 0;
 
   for (const [, s] of entries) {
-    totalIncoming += s.incoming.count;
-    totalOutgoing += s.outgoing.count;
+    // Валидация структуры данных для подсчета totals
+    if (!s || typeof s !== "object") {
+      continue;
+    }
+
+    const inCount = s.incoming?.count ?? 0;
+    const outCount = s.outgoing?.count ?? 0;
+    const inDur = s.incoming?.duration ?? 0;
+    const outDur = s.outgoing?.duration ?? 0;
+
+    totalIncoming += inCount;
+    totalOutgoing += outCount;
     // duration в stats — средняя; для общей длительности нужно среднее * количество
-    totalInDuration += s.incoming.duration * s.incoming.count;
-    totalOutDuration += s.outgoing.duration * s.outgoing.count;
+    _totalInDuration += inDur * inCount;
+    _totalOutDuration += outDur * outCount;
   }
 
   for (const [key, s] of entries) {
-    const inCount = s.incoming.count;
-    const outCount = s.outgoing.count;
+    // Валидация структуры данных статистики
+    if (!s || typeof s !== "object") {
+      lines.push(`❌ Некорректные данные для ${key}`);
+      continue;
+    }
+
+    const inCount = s.incoming?.count ?? 0;
+    const outCount = s.outgoing?.count ?? 0;
     // duration в stats — средняя длительность на один звонок
-    const inDur = s.incoming.duration;
-    const outDur = s.outgoing.duration;
+    const inDur = s.incoming?.duration ?? 0;
+    const outDur = s.outgoing?.duration ?? 0;
     const inDurStr = inCount > 0 ? formatDuration(inDur) : "—";
     const outDurStr = outCount > 0 ? formatDuration(outDur) : "—";
 

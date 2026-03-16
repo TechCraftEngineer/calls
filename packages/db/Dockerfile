@@ -10,8 +10,9 @@ COPY packages/config/package.json ./packages/config/
 # Install dependencies
 RUN bun install --frozen-lockfile
 
-# Copy source code
+# Copy source code and migrations
 COPY packages/db/src ./packages/db/src
+COPY packages/db/drizzle ./packages/db/drizzle
 COPY packages/config/src ./packages/config/src
 COPY drizzle.config.ts ./
 

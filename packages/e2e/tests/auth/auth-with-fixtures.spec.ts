@@ -1,4 +1,4 @@
-import { expect, test } from "../fixtures/auth";
+import { test } from "../fixtures/auth";
 import { AuthHelpers } from "../helpers/auth-helpers";
 
 test.describe("Тесты аутентификации с фикстурами", () => {

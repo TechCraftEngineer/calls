@@ -81,7 +81,7 @@ test.describe("Безопасность и производительность 
 
     // HTML не должен быть слишком большим
     if (htmlResponse?.size) {
-      expect(parseInt(htmlResponse.size)).toBeLessThan(100000); // 100KB
+      expect(parseInt(htmlResponse.size, 10)).toBeLessThan(100000); // 100KB
     }
 
     console.log(

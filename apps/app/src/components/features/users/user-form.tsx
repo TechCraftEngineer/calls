@@ -160,7 +160,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
                   ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
                   : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
               }`}
-              placeholder="Минимум 6 символов"
+              placeholder="Минимум 8 символов"
               aria-invalid={!!createErrors.password}
               {...register("password")}
             />

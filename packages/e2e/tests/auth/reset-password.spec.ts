@@ -67,7 +67,7 @@ test.describe("Страница сброса пароля", () => {
     await page.click('button[type="submit"]');
 
     await expect(
-      page.locator("text=Пароль должен содержать минимум 6 символов"),
+      page.locator("text=Пароль должен содержать минимум 8 символов"),
     ).toBeVisible();
     await expect(page.locator("text=Подтвердите пароль")).toBeVisible();
   });

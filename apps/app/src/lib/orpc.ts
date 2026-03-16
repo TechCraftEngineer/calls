@@ -1,22 +1,18 @@
 /**
  * oRPC client for backend-api.
- * Основной API клиент приложения.
+ * API всегда через app: localhost:3000/api или app.zvonki.qbsoft.ru/api
  */
 
 import { createBackendClient } from "@calls/api/client";
 
 function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {
-    const envUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (envUrl) return envUrl.replace(/\/(api|\/api\/)?$/, "");
-    if (window.location.origin.includes("zvonki.qbs.ru"))
-      return "https://zvonki.qbsoft.ru";
     return window.location.origin;
   }
-  return (
-    process.env.NEXT_PUBLIC_API_URL?.replace(/\/(api|\/api\/)?$/, "") ||
-    "http://localhost:7000"
-  );
+  // Server: APP_SERVER_URL (k8s) или localhost:3000 (Next.js rewrites)
+  const appUrl = process.env.APP_SERVER_URL;
+  if (appUrl) return appUrl.replace(/\/?$/, "");
+  return `http://localhost:${process.env.PORT || 3000}`;
 }
 
 let clientInstance: any = null;

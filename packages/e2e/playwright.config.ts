@@ -23,12 +23,4 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-
-  // Отключаем webServer для отладки
-  // webServer: {
-  //   command: "bun run dev:next",
-  //   url: "http://localhost:3001",
-  //   reuseExistingServer: !process.env.CI,
-  //   cwd: "../..",
-  // },
 });

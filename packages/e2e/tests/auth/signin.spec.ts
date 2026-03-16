@@ -26,14 +26,12 @@ test.describe("Страница входа", () => {
 
     // Проверяем ошибки валидации
     await expect(page.locator("text=Введите email")).toBeVisible();
-    await expect(
-      page.locator("text=Пароль должен содержать минимум 6 символов"),
-    ).toBeVisible();
+    await expect(page.locator("text=Пароль обязателен")).toBeVisible();
   });
 
   test("показывает ошибку для некорректного email", async ({ page }) => {
     await page.fill("#email", "неправильный-email");
-    await page.fill("#password", "123456");
+    await page.fill("#password", "Password123");
     await page.click('button[type="submit"]');
 
     await expect(page.locator("text=Введите корректный email")).toBeVisible();
@@ -45,13 +43,13 @@ test.describe("Страница входа", () => {
     await page.click('button[type="submit"]');
 
     await expect(
-      page.locator("text=Пароль должен содержать минимум 6 символов"),
+      page.locator("text=Пароль должен содержать минимум 8 символов"),
     ).toBeVisible();
   });
 
   test("отправляет форму с валидными данными", async ({ page }) => {
     await page.fill("#email", "test@example.com");
-    await page.fill("#password", "password123");
+    await page.fill("#password", "Password123");
 
     // Перехватываем запрос аутентификации
     const responsePromise = page.waitForResponse(
@@ -117,7 +115,7 @@ test.describe("Страница входа", () => {
 
   test("поддерживает отправку формы по Enter", async ({ page }) => {
     await page.fill("#email", "test@example.com");
-    await page.fill("#password", "password123");
+    await page.fill("#password", "Password123");
 
     const responsePromise = page.waitForResponse(
       (response) =>
