@@ -76,7 +76,7 @@ jobs:
             kind: Job
             metadata:
               name: db-migrate-${{ github.sha }}
-              namespace: qbs
+              namespace: calls
             spec:
               ttlSecondsAfterFinished: 300
               backoffLimit: 2
@@ -109,7 +109,7 @@ jobs:
         env:
           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
         with:
-          args: wait --for=condition=complete --timeout=300s job/db-migrate-${{ github.sha }} -n qbs
+          args: wait --for=condition=complete --timeout=300s job/db-migrate-${{ github.sha }} -n calls
 
       - name: Get migration logs
         if: always() && steps.migration-changes.outputs.db-migrations == 'true'
@@ -117,7 +117,7 @@ jobs:
         env:
           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
         with:
-          args: logs job/db-migrate-${{ github.sha }} -n qbs
+          args: logs job/db-migrate-${{ github.sha }} -n calls
 
       - name: Deploy To Cluster
         uses: kodermax/kubectl-aws-eks@main
@@ -127,14 +127,14 @@ jobs:
           CR_REPOSITORY: app
           IMAGE_TAG: ${{ github.sha }}
         with:
-          args: set image deployment/$CR_REPOSITORY $CR_REPOSITORY=cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG -n qbs
+          args: set image deployment/$CR_REPOSITORY $CR_REPOSITORY=cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG -n calls
 
       - name: Verify Deployment
         uses: kodermax/kubectl-aws-eks@main
         env:
           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
         with:
-          args: rollout status deployment/app -n qbs
+          args: rollout status deployment/app -n calls
 
       - name: Cleanup migration job
         if: always() && steps.migration-changes.outputs.db-migrations == 'true'
@@ -142,4 +142,4 @@ jobs:
         env:
           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
         with:
-          args: delete job db-migrate-${{ github.sha }} -n qbs --ignore-not-found=true
+          args: delete job db-migrate-${{ github.sha }} -n calls --ignore-not-found=true

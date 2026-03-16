@@ -46,11 +46,11 @@ jobs:
           CR_REPOSITORY: app-server
           IMAGE_TAG: ${{ github.sha }}
         with:
-          args: set image deployment/$CR_REPOSITORY $CR_REPOSITORY=cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG -n qbs
+          args: set image deployment/$CR_REPOSITORY $CR_REPOSITORY=cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG -n calls
 
       - name: Verify Deployment
         uses: kodermax/kubectl-aws-eks@main
         env:
           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
         with:
-          args: rollout status deployment/app-server -n qbs
+          args: rollout status deployment/app-server -n calls
