@@ -199,6 +199,7 @@
         "@calls/db": "workspace:*",
         "@calls/lib": "workspace:*",
         "@calls/shared": "workspace:*",
+        "@calls/telegram-bot": "workspace:*",
         "ai": "^6.0.116",
         "basic-ftp": "^5.2.0",
         "hono": "4.12.8",

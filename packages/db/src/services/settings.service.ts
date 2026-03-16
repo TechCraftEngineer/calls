@@ -49,6 +49,11 @@ export class SettingsService {
     );
   }
 
+  /** Workspace IDs с настроенным Telegram ботом */
+  async getWorkspaceIdsWithTelegramBot(): Promise<string[]> {
+    return this.promptsRepository.findWorkspaceIdsWithKey("telegram_bot_token");
+  }
+
   /** Список активных интеграций FTP по всем workspace */
   async getActiveFtpIntegrations(): Promise<
     Array<{

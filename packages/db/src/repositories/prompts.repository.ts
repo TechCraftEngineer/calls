@@ -2,7 +2,7 @@
  * Prompts repository - handles all database operations for prompts
  */
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 
@@ -59,6 +59,20 @@ export const promptsRepository = {
       .from(schema.prompts)
       .where(eq(schema.prompts.workspaceId, workspaceId))
       .orderBy(schema.prompts.key);
+  },
+
+  /** Workspace IDs that have non-empty value for the given key */
+  async findWorkspaceIdsWithKey(key: string): Promise<string[]> {
+    const rows = await db
+      .select({ workspaceId: schema.prompts.workspaceId })
+      .from(schema.prompts)
+      .where(
+        and(
+          eq(schema.prompts.key, key),
+          sql`${schema.prompts.value} IS NOT NULL AND trim(${schema.prompts.value}) != ''`,
+        ),
+      );
+    return rows.map((r) => r.workspaceId);
   },
 
   async upsert(

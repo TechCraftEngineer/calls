@@ -22,28 +22,13 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
-    {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
-    {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
-    },
-    {
-      name: "Mobile Chrome",
-      use: { ...devices["Pixel 5"] },
-    },
-    {
-      name: "Mobile Safari",
-      use: { ...devices["iPhone 12"] },
-    },
   ],
 
-  webServer: {
-    command: "bun run dev:next",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-    cwd: "../..",
-  },
+  // Отключаем webServer для отладки
+  // webServer: {
+  //   command: "bun run dev:next",
+  //   url: "http://localhost:3001",
+  //   reuseExistingServer: !process.env.CI,
+  //   cwd: "../..",
+  // },
 });

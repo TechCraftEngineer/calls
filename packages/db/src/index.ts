@@ -100,6 +100,16 @@ export {
   usersService,
   workspacesService,
 } from "./services";
+export type {
+  ReportScheduleSettings,
+  ReportType,
+  TelegramReportRecipient,
+} from "./services/telegram-reports.service";
+// Telegram reports
+export {
+  getReportScheduleSettings,
+  getTelegramReportRecipients,
+} from "./services/telegram-reports.service";
 export { UsersService } from "./services/users.service";
 // Types
 export type {
