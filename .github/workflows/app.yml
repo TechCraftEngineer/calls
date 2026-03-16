@@ -1,0 +1,145 @@
+name: Deploy App
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/app/**"
+      - "packages/**"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for db migration changes
+        id: migration-changes
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.ref }}
+          filters: |
+            db-migrations:
+              - 'packages/db/drizzle/**'
+              - 'packages/db/src/schema/**'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Login to Yandex Cloud Container Registry
+        id: login-cr
+        uses: yc-actions/yc-cr-login@v2
+        with:
+          yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
+
+      - name: Build, tag, and push image
+        env:
+          CR_REGISTRY: crp24o2ikuqdvoam2u99
+          CR_REPOSITORY: app
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -f apps/app/Dockerfile --build-arg POSTGRES_URL="${{ secrets.POSTGRES_URL }}" --build-arg NEXT_PUBLIC_APP_URL="${{ secrets.NEXT_PUBLIC_APP_URL }}" --build-arg NEXT_PUBLIC_APP_NAME="${{ secrets.NEXT_PUBLIC_APP_NAME }}" --build-arg NEXT_PUBLIC_INTERVIEW_URL="${{ secrets.NEXT_PUBLIC_INTERVIEW_URL }}" --build-arg NEXT_PUBLIC_POSTHOG_KEY="phc_vTemct6Dxow98lRDKCzjA9q0ijfw2LsUj52mHp0qJVp" -t cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG -t cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:latest .
+          docker push cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG
+          docker push cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:latest
+
+      - name: Build migration image
+        if: steps.migration-changes.outputs.db-migrations == 'true'
+        env:
+          CR_REGISTRY: crp24o2ikuqdvoam2u99
+          CR_REPOSITORY: db-migrate
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -f packages/db/Dockerfile.migrate \
+            -t cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG \
+            -t cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:latest .
+          docker push cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG
+          docker push cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:latest
+
+      - name: Run database migration
+        if: steps.migration-changes.outputs.db-migrations == 'true'
+        uses: kodermax/kubectl-aws-eks@main
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+          CR_REGISTRY: crp24o2ikuqdvoam2u99
+          CR_REPOSITORY: db-migrate
+          IMAGE_TAG: ${{ github.sha }}
+        with:
+          args: |
+            apply -f - <<EOF
+            apiVersion: batch/v1
+            kind: Job
+            metadata:
+              name: db-migrate-${{ github.sha }}
+              namespace: qbs
+            spec:
+              ttlSecondsAfterFinished: 300
+              backoffLimit: 2
+              template:
+                spec:
+                  restartPolicy: Never
+                  imagePullSecrets:
+                  - name: regcred
+                  containers:
+                  - name: migrate
+                    image: cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG
+                    env:
+                    - name: POSTGRES_URL
+                      valueFrom:
+                        secretKeyRef:
+                          name: db-credentials
+                          key: postgres-url
+                    resources:
+                      requests:
+                        memory: "256Mi"
+                        cpu: "100m"
+                      limits:
+                        memory: "512Mi"
+                        cpu: "500m"
+            EOF
+
+      - name: Wait for migration to complete
+        if: steps.migration-changes.outputs.db-migrations == 'true'
+        uses: kodermax/kubectl-aws-eks@main
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        with:
+          args: wait --for=condition=complete --timeout=300s job/db-migrate-${{ github.sha }} -n qbs
+
+      - name: Get migration logs
+        if: always() && steps.migration-changes.outputs.db-migrations == 'true'
+        uses: kodermax/kubectl-aws-eks@main
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        with:
+          args: logs job/db-migrate-${{ github.sha }} -n qbs
+
+      - name: Deploy To Cluster
+        uses: kodermax/kubectl-aws-eks@main
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+          CR_REGISTRY: crp24o2ikuqdvoam2u99
+          CR_REPOSITORY: app
+          IMAGE_TAG: ${{ github.sha }}
+        with:
+          args: set image deployment/$CR_REPOSITORY $CR_REPOSITORY=cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG -n qbs
+
+      - name: Verify Deployment
+        uses: kodermax/kubectl-aws-eks@main
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        with:
+          args: rollout status deployment/app -n qbs
+
+      - name: Cleanup migration job
+        if: always() && steps.migration-changes.outputs.db-migrations == 'true'
+        uses: kodermax/kubectl-aws-eks@main
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        with:
+          args: delete job db-migrate-${{ github.sha }} -n qbs --ignore-not-found=true
