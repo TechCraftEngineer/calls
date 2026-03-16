@@ -37,7 +37,10 @@ let cleanupInterval: NodeJS.Timeout | null = null;
 
 const startCleanupInterval = () => {
   if (cleanupInterval) return; // Предотвращаем дублирование интервалов
-  cleanupInterval = setInterval(() => cleanupAllCaches(rateLimitMap), 5 * 60 * 1000);
+  cleanupInterval = setInterval(
+    () => cleanupAllCaches(rateLimitMap),
+    5 * 60 * 1000,
+  );
 };
 
 const stopCleanupInterval = () => {
@@ -51,8 +54,11 @@ const stopCleanupInterval = () => {
 startCleanupInterval();
 
 // Устанавливаем глобальный контроль для тестов
-if (process.env.NODE_ENV === 'test') {
-  globalThis.__cleanupIntervalControl = { startCleanupInterval, stopCleanupInterval };
+if (process.env.NODE_ENV === "test") {
+  globalThis.__cleanupIntervalControl = {
+    startCleanupInterval,
+    stopCleanupInterval,
+  };
 }
 
 export function createApp() {
@@ -142,7 +148,9 @@ export function createApp() {
         defaultWs.id,
       );
       if (!botToken) {
-        backendLogger.warn("Telegram bot token not configured for default workspace");
+        backendLogger.warn(
+          "Telegram bot token not configured for default workspace",
+        );
         throw new Error("Bot token not configured");
       }
       return botToken;

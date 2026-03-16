@@ -9,10 +9,11 @@ import * as schema from "../schema";
 const INVITATION_EXPIRY_DAYS = 7;
 
 export function generateInviteToken(): string {
-  return (
-    crypto.randomUUID().replace(/-/g, "") +
-    crypto.randomUUID().replace(/-/g, "").slice(0, 16)
-  );
+  // Используем криптографически безопасный генератор
+  // 32 байта = 64 hex символа - достаточно для безопасности
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 export function getDefaultExpiresAt(): Date {
@@ -111,6 +112,21 @@ export const invitationsRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
+  async findByIdAndWorkspace(invitationId: string, workspaceId: string) {
+    const result = await db
+      .select()
+      .from(schema.invitations)
+      .where(
+        and(
+          eq(schema.invitations.id, invitationId),
+          eq(schema.invitations.workspaceId, workspaceId),
+          isNull(schema.invitations.acceptedAt),
+        ),
+      )
+      .limit(1);
+    return result[0] ?? null;
+  },
+
   async hasPendingForEmail(
     workspaceId: string,
     email: string,
@@ -128,6 +144,21 @@ export const invitationsRepository = {
       )
       .limit(1);
     return result.length > 0;
+  },
+
+  async revokeByIdAndWorkspace(
+    invitationId: string,
+    workspaceId: string,
+  ): Promise<boolean> {
+    const result = await db
+      .delete(schema.invitations)
+      .where(
+        and(
+          eq(schema.invitations.id, invitationId),
+          eq(schema.invitations.workspaceId, workspaceId),
+        ),
+      );
+    return (result.rowCount ?? 0) > 0;
   },
 };
 

@@ -3,6 +3,9 @@
  * Фильтрует чувствительные данные перед выводом в логи
  */
 
+const IS_DEV =
+  process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
+
 // Список чувствительных полей для фильтрации
 const SENSITIVE_FIELDS = [
   "password",
@@ -27,12 +30,14 @@ const SENSITIVE_FIELDS = [
 const PARTIAL_MASK_FIELDS = ["email", "username"];
 
 // Поля, которые не маскируются (сообщения об ошибках, stack trace для отладки)
-const NOT_MASKED_FIELDS = ["message", "stack"];
+const NOT_MASKED_FIELDS = ["message", "stack", "error"];
 
 /**
  * Маскирует чувствительные данные в объекте
  */
 export function sanitizeForLogging(data: unknown): unknown {
+  if (IS_DEV) return data;
+
   if (data === null || data === undefined) {
     return data;
   }

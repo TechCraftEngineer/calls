@@ -4,13 +4,21 @@
 
 import { z } from "zod";
 
+// Общая схема валидации пароля с требованиями сложности
+const passwordValidation = z
+  .string()
+  .min(8, "Пароль должен содержать минимум 8 символов")
+  .regex(/[A-Z]/, "Пароль должен содержать хотя бы одну заглавную букву")
+  .regex(/[a-z]/, "Пароль должен содержать хотя бы одну строчную букву")
+  .regex(/[0-9]/, "Пароль должен содержать хотя бы одну цифру");
+
 // Схема для формы входа (email)
 export const loginSchema = z.object({
   email: z.string().min(1, "Введите email").email("Введите корректный email"),
   password: z
     .string()
     .min(1, "Пароль обязателен")
-    .min(6, "Пароль должен содержать минимум 6 символов"),
+    .min(8, "Пароль должен содержать минимум 8 символов"),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
@@ -22,15 +30,10 @@ export const forgotPasswordSchema = z.object({
 });
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
-// Схема для сброса пароля (min 8 — по стандарту Better Auth)
+// Схема для сброса пароля
 export const resetPasswordSchema = z
   .object({
-    newPassword: z
-      .string()
-      .min(8, "Пароль должен содержать минимум 8 символов")
-      .regex(/[A-Z]/, "Пароль должен содержать хотя бы одну заглавную букву")
-      .regex(/[a-z]/, "Пароль должен содержать хотя бы одну строчную букву")
-      .regex(/[0-9]/, "Пароль должен содержать хотя бы одну цифру"),
+    newPassword: passwordValidation,
     confirmPassword: z.string(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
@@ -42,12 +45,7 @@ export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 // Схема для создания пользователя
 export const createUserSchema = z.object({
   email: z.string().email("Введите корректный email"),
-  password: z
-    .string()
-    .min(6, "Пароль должен содержать минимум 6 символов")
-    .regex(/[A-Z]/, "Пароль должен содержать хотя бы одну заглавную букву")
-    .regex(/[a-z]/, "Пароль должен содержать хотя бы одну строчную букву")
-    .regex(/[0-9]/, "Пароль должен содержать хотя бы одну цифру"),
+  password: passwordValidation,
   givenName: z.string().min(1, "Имя обязательно"),
   familyName: z.string().optional(),
   internalExtensions: z.string().optional(),
@@ -106,14 +104,8 @@ export const reportSettingsSchema = z.object({
 export type ReportSettingsData = z.infer<typeof reportSettingsSchema>;
 
 // Схема для принятия приглашения (создание аккаунта по ссылке)
-export const inviteAcceptSchema = z
-  .object({
-    name: z.string().optional(),
-    password: z.string().min(8, "Пароль должен быть не менее 8 символов"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Пароли не совпадают",
-    path: ["confirmPassword"],
-  });
+export const inviteAcceptSchema = z.object({
+  name: z.string().optional(),
+  password: passwordValidation,
+});
 export type InviteAcceptData = z.infer<typeof inviteAcceptSchema>;

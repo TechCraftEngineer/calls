@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useForm } from "react-hook-form";
-import { authClient, login } from "@/lib/better-auth";
+import { authClient, login, toRussianAuthMessage } from "@/lib/better-auth";
 import { type LoginFormData, loginSchema } from "@/lib/validations";
 
 function LoginForm() {
@@ -33,10 +33,12 @@ function LoginForm() {
           router.push(paths.onboarding.createWorkspace);
         }, 100);
       } else {
-        setError("root", { message: result.message || "Ошибка входа" });
+        setError("root", {
+          message: toRussianAuthMessage(result.message || "Ошибка входа"),
+        });
       }
     } catch (err: unknown) {
-      const errorMessage =
+      const rawMessage =
         err && typeof err === "object" && "response" in err
           ? (err as { response?: { data?: { detail?: string } } }).response
               ?.data?.detail
@@ -44,7 +46,9 @@ function LoginForm() {
             ? err.message
             : "Неверный email или пароль";
       setError("root", {
-        message: String(errorMessage || "Неверный email или пароль"),
+        message: toRussianAuthMessage(
+          String(rawMessage || "Неверный email или пароль"),
+        ),
       });
     }
   };

@@ -30,6 +30,20 @@ export const authClient = createAuthClient({
 // Хуки для работы с аутентификацией
 export const { useSession, signIn, signUp, signOut } = authClient;
 
+/** Маппинг английских сообщений об ошибках аутентификации на русские */
+const AUTH_ERROR_MESSAGES_RU: Record<string, string> = {
+  "Invalid email or password": "Неверный email или пароль",
+  "Invalid credentials": "Неверный email или пароль",
+  "Invalid email address": "Неверный email или пароль",
+  "Email is required": "Введите email",
+  "Password is required": "Введите пароль",
+};
+
+/** Переводит сообщения об ошибках аутентификации на русский */
+export function toRussianAuthMessage(msg: string): string {
+  return AUTH_ERROR_MESSAGES_RU[msg] ?? msg;
+}
+
 // Утилиты для совместимости со старым кодом (вход по email)
 export async function login(email: string, password: string) {
   try {
@@ -39,9 +53,10 @@ export async function login(email: string, password: string) {
     });
 
     if (result.error) {
+      const rawMessage = result.error.message || "Ошибка входа";
       return {
         success: false,
-        message: result.error.message || "Ошибка входа",
+        message: toRussianAuthMessage(rawMessage),
         user: undefined,
       };
     }
@@ -52,9 +67,10 @@ export async function login(email: string, password: string) {
       user: result.data?.user,
     };
   } catch (err) {
+    const rawMessage = err instanceof Error ? err.message : "Ошибка входа";
     return {
       success: false,
-      message: err instanceof Error ? err.message : "Ошибка входа",
+      message: toRussianAuthMessage(rawMessage),
       user: undefined,
     };
   }

@@ -23,6 +23,7 @@ export const getInvitationByToken = publicProcedure
         expiresAt: inv.expiresAt,
         workspaceId: inv.workspaceId,
         workspaceName: workspace?.name ?? "Рабочее пространство",
+        userExists: inv.userExists,
       };
     } catch (e) {
       if (e instanceof ORPCError) throw e;

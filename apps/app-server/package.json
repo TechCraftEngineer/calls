@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun with-env src/index.ts",
+    "dev": "bun with-env --watch src/index.ts",
     "start": "bun with-env dist/index.js",
     "build": "bun build ./src/index.ts --outdir ./dist --target bun",
     "typecheck": "tsc --noEmit",
@@ -19,7 +19,7 @@
     "@calls/telegram-bot": "workspace:*",
     "@orpc/server": "^1.13.7",
     "better-auth": "1.5.5",
-    "grammy": "^1.38.0",
+    "grammy": "^1.41.1",
     "hono": "4.12.8"
   },
   "devDependencies": {

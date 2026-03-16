@@ -30,8 +30,10 @@ export default function CallDetailPage() {
   const isValidCallId = (id: string): boolean => {
     if (!id || typeof id !== "string") return false;
     // UUID v7 с префиксом ws_ или обычный UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    const uuidWithPrefixRegex = /^ws_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidWithPrefixRegex =
+      /^ws_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(id) || uuidWithPrefixRegex.test(id);
   };
 
@@ -53,8 +55,14 @@ export default function CallDetailPage() {
   });
 
   // Безопасное приведение типов с проверкой структуры
-  const call = result?.call && typeof result.call === 'object' ? result.call as CallDetail : null;
-  const transcript = result?.transcript && typeof result.transcript === 'object' ? result.transcript as TranscriptDetail : null;
+  const call =
+    result?.call && typeof result.call === "object"
+      ? (result.call as CallDetail)
+      : null;
+  const transcript =
+    result?.transcript && typeof result.transcript === "object"
+      ? (result.transcript as TranscriptDetail)
+      : null;
   const [evaluation, setEvaluation] = useState<EvaluationDetail | null>(null);
 
   useEffect(() => {
@@ -85,7 +93,10 @@ export default function CallDetailPage() {
         });
       },
       onError: (error) => {
-        const errorMessage = error instanceof Error ? error.message : "Не удалось сформировать рекомендации";
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Не удалось сформировать рекомендации";
         toast.error(`Ошибка: ${errorMessage}`);
       },
     }),
@@ -100,7 +111,10 @@ export default function CallDetailPage() {
         setTimeout(() => loadData(), 6000);
       },
       onError: (error) => {
-        const errorMessage = error instanceof Error ? error.message : "Не удалось запустить оценку";
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Не удалось запустить оценку";
         toast.error(`Ошибка: ${errorMessage}`);
       },
     }),
@@ -120,12 +134,12 @@ export default function CallDetailPage() {
 
   const handleGenerateRecommendations = () => {
     if (!callId || generateRecommendationsMutation.isPending) return;
-    
+
     // Дополнительная защита от race condition
     if (generateRecommendationsMutation.variables?.call_id === callId) {
       return;
     }
-    
+
     generateRecommendationsMutation.mutate({ call_id: callId });
   };
 
@@ -152,12 +166,12 @@ export default function CallDetailPage() {
 
   const handleReevaluate = () => {
     if (!callId || evaluateMutation.isPending) return;
-    
+
     // Дополнительная защита от race condition
     if (evaluateMutation.variables?.call_id === callId) {
       return;
     }
-    
+
     evaluateMutation.mutate({ call_id: callId });
   };
 

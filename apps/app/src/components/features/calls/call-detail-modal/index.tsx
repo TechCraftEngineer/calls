@@ -32,8 +32,10 @@ export default function CallDetailModal({
     if (!id) return false;
     const idStr = String(id);
     // UUID v7 с префиксом ws_ или обычный UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    const uuidWithPrefixRegex = /^ws_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidWithPrefixRegex =
+      /^ws_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(idStr) || uuidWithPrefixRegex.test(idStr);
   };
 
@@ -52,8 +54,14 @@ export default function CallDetailModal({
   });
 
   // Безопасное приведение типов с проверкой структуры
-  const call = result?.call && typeof result.call === 'object' ? result.call as CallDetail : null;
-  const transcript = result?.transcript && typeof result.transcript === 'object' ? result.transcript as TranscriptDetail : null;
+  const call =
+    result?.call && typeof result.call === "object"
+      ? (result.call as CallDetail)
+      : null;
+  const transcript =
+    result?.transcript && typeof result.transcript === "object"
+      ? (result.transcript as TranscriptDetail)
+      : null;
 
   useEffect(() => {
     setEvaluation((result?.evaluation ?? null) as EvaluationDetail | null);
@@ -84,7 +92,10 @@ export default function CallDetailModal({
         });
       },
       onError: (error) => {
-        const errorMessage = error instanceof Error ? error.message : "Не удалось сформировать рекомендации";
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Не удалось сформировать рекомендации";
         toast.error(`Ошибка: ${errorMessage}`);
       },
     }),
@@ -99,7 +110,10 @@ export default function CallDetailModal({
         setTimeout(() => void loadData(), 6000);
       },
       onError: (error) => {
-        const errorMessage = error instanceof Error ? error.message : "Не удалось запустить оценку";
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Не удалось запустить оценку";
         toast.error(`Ошибка: ${errorMessage}`);
       },
     }),
@@ -134,12 +148,12 @@ export default function CallDetailModal({
 
   const handleGenerateRecommendations = () => {
     if (!callIdStr || generateRecommendationsMutation.isPending) return;
-    
+
     // Дополнительная защита от race condition
     if (generateRecommendationsMutation.variables?.call_id === callIdStr) {
       return;
     }
-    
+
     generateRecommendationsMutation.mutate({ call_id: callIdStr });
   };
 
@@ -176,12 +190,12 @@ export default function CallDetailModal({
 
   const handleReevaluate = () => {
     if (!callIdStr || evaluateMutation.isPending) return;
-    
+
     // Дополнительная защита от race condition
     if (evaluateMutation.variables?.call_id === callIdStr) {
       return;
     }
-    
+
     evaluateMutation.mutate({ call_id: callIdStr });
   };
 

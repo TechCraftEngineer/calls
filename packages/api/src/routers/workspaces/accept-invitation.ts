@@ -1,5 +1,6 @@
 /**
- * Accept invitation - new user creates account via Better Auth and joins workspace.
+ * Accept invitation - new user creates account via Better Auth internal adapter
+ * (создание пользователя + linkAccount с паролем) and joins workspace.
  * Public procedure (no auth required).
  */
 
@@ -17,17 +18,38 @@ const inputSchema = z.object({
   name: z.string().optional(),
 });
 
+type AuthWithContext = {
+  $context: Promise<{
+    internalAdapter: {
+      createUser: (user: Record<string, unknown>) => Promise<{ id: string }>;
+      linkAccount: (account: {
+        userId: string;
+        accountId: string;
+        providerId: string;
+        password: string;
+      }) => Promise<unknown>;
+      findAccounts: (userId: string) => Promise<Array<{ providerId: string }>>;
+      updatePassword: (userId: string, hashedPassword: string) => Promise<void>;
+    };
+    password: { hash: (plain: string) => Promise<string> };
+    generateId: (opts?: { model?: string; size?: number }) => string;
+  }>;
+};
+
 export const acceptInvitation = publicProcedure
   .input(inputSchema)
   .handler(async ({ input, context }) => {
     const { token, password, name } = input;
-    const auth = context.auth;
+    const auth = context.auth as AuthWithContext | undefined;
 
-    if (!auth?.api?.createUser) {
+    if (!auth?.$context) {
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message: "Сервис авторизации недоступен",
       });
     }
+
+    const authCtx = await auth.$context;
+    const { internalAdapter, password: pwd, generateId } = authCtx;
 
     const createUserFn = async (opts: {
       email: string;
@@ -36,22 +58,61 @@ export const acceptInvitation = publicProcedure
       givenName?: string;
       familyName?: string;
     }) => {
-      const res = await auth.api.createUser!({
-        body: {
-          email: opts.email,
-          password: opts.password,
-          name: opts.name,
-          data: {
-            givenName: opts.givenName ?? opts.name,
-            familyName: opts.familyName ?? "",
-          },
-        },
+      const normalizedEmail = opts.email.toLowerCase().trim();
+      const userId = generateId({ model: "user" }) ?? crypto.randomUUID();
+
+      const createdUser = await internalAdapter.createUser({
+        id: userId,
+        email: normalizedEmail,
+        name: opts.name,
+        emailVerified: false,
+        givenName: opts.givenName ?? opts.name,
+        familyName: opts.familyName ?? "",
       });
-      const userId = res?.user?.id;
-      if (!userId) {
+
+      if (!createdUser?.id) {
         throw new Error("Не удалось создать пользователя");
       }
-      return { id: userId };
+
+      const hashedPassword = await pwd.hash(opts.password);
+      // Генерируем уникальный accountId для Better Auth
+      const accountId = generateId({ model: "account" }) ?? crypto.randomUUID();
+      
+      await internalAdapter.linkAccount({
+        userId: createdUser.id,
+        accountId: accountId,
+        providerId: "credential",
+        password: hashedPassword,
+      });
+
+      return { id: createdUser.id };
+    };
+
+    const setPasswordFn = async (userId: string, newPassword: string) => {
+      try {
+        const hashedPassword = await pwd.hash(newPassword);
+        const accounts = await internalAdapter.findAccounts(userId);
+        const hasCredential = accounts.some((a) => a.providerId === "credential");
+
+        if (hasCredential) {
+          await internalAdapter.updatePassword(userId, hashedPassword);
+        } else {
+          // Генерируем уникальный accountId для нового аккаунта
+          const accountId = generateId({ model: "account" }) ?? crypto.randomUUID();
+          await internalAdapter.linkAccount({
+            userId,
+            accountId: accountId,
+            providerId: "credential",
+            password: hashedPassword,
+          });
+        }
+      } catch (error) {
+        logger.error("Failed to set password for user", {
+          userId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw new Error("Не удалось установить пароль");
+      }
     };
 
     try {
@@ -60,6 +121,7 @@ export const acceptInvitation = publicProcedure
         password,
         name,
         createUserFn,
+        setPasswordFn,
       );
       return { success: true, userId };
     } catch (err) {

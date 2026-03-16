@@ -40,7 +40,6 @@ export default function InviteAcceptPage() {
     defaultValues: {
       name: "",
       password: "",
-      confirmPassword: "",
     },
     mode: "onBlur",
   });
@@ -333,6 +332,8 @@ export default function InviteAcceptPage() {
     );
   }
 
+  // Не авторизован — показываем форму (регистрация или установка пароля).
+  // Для новых юзеров — создаём аккаунт. Для существующих без пароля — устанавливаем пароль.
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-[#F8F9FB] p-4">
       <div className="w-full max-w-[480px] rounded-2xl border border-gray-200 bg-white p-8 shadow-lg">
@@ -427,28 +428,6 @@ export default function InviteAcceptPage() {
                   <FormDescription className="text-gray-500">
                     Используйте не менее 8 символов
                   </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-gray-700">
-                    Подтвердите пароль <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <PasswordInput
-                      placeholder="Повторите пароль"
-                      className="w-full text-base"
-                      autoComplete="new-password"
-                      disabled={submitting}
-                      {...field}
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

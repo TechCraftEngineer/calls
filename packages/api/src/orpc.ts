@@ -17,19 +17,28 @@ import { isAdminUser } from "./user-profile";
 export { createBackendContext as createContext };
 export type WorkspaceRole = "owner" | "admin" | "member";
 
+type SignUpFn = (opts: {
+  body: {
+    email: string;
+    password: string;
+    name: string;
+    data?: { givenName?: string; familyName?: string };
+  };
+}) => Promise<{ user?: { id: string } }>;
+
 export type AuthLike = {
   api: {
     getSession: (opts: {
       headers: Headers;
     }) => Promise<{ user?: Record<string, unknown>; session?: unknown } | null>;
-    createUser?: (opts: {
-      body: {
-        email: string;
-        password: string;
-        name: string;
-        data?: { givenName?: string; familyName?: string };
-      };
-    }) => Promise<{ user?: { id: string } }>;
+    /** signUpEmail — стандартный метод Better Auth для регистрации по email/паролю */
+    signUpEmail?: SignUpFn;
+    /** createUser — fallback из admin plugin */
+    createUser?: SignUpFn;
+    /** setUserPassword — установка пароля существующему пользователю (admin) */
+    setUserPassword?: (opts: {
+      body: { userId: string; newPassword: string };
+    }) => Promise<unknown>;
   };
 };
 

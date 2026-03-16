@@ -27,6 +27,7 @@ export const invitationsService = new InvitationsService(
   workspacesService,
   usersService,
   userWorkspaceSettingsRepository,
+  invitationsRepository,
 );
 export const settingsService = new SettingsService(
   promptsRepository,
