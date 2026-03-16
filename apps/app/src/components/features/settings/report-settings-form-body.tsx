@@ -7,6 +7,7 @@ import { useORPC } from "@/orpc/react";
 import {
   EmailReportSection,
   ManagedUsersSection,
+  MaxReportSection,
   ReportParamsSection,
   TelegramReportSection,
 } from "./report-settings";
@@ -114,6 +115,38 @@ export default function ReportSettingsFormBody({
     sendTestMutation.mutate(undefined);
   };
 
+  const maxAuthUrlMutation = useMutation(
+    orpc.users.maxAuthUrl.mutationOptions({
+      onSuccess: (res: { manual_instruction?: string; token?: string }) => {
+        if (res.manual_instruction) {
+          const cmd =
+            res.manual_instruction.split(": ")[1] ?? res.manual_instruction;
+          toast.info(`Для подключения отправьте боту команду:\n${cmd}`);
+        }
+      },
+      onError: () => toast.error("Ошибка при создании ссылки для MAX"),
+    }),
+  );
+
+  const disconnectMaxMutation = useMutation(
+    orpc.users.disconnectMax.mutationOptions({
+      onSuccess: () => {
+        setForm((f: any) => ({ ...f, maxChatId: "" }));
+        toast.success("MAX отвязан");
+      },
+      onError: () => toast.error("Ошибка при отвязке MAX"),
+    }),
+  );
+
+  const handleConnectMax = () => {
+    maxAuthUrlMutation.mutate({ user_id: userId });
+  };
+
+  const handleDisconnectMax = () => {
+    if (!confirm("Отвязать MAX аккаунт?")) return;
+    disconnectMaxMutation.mutate({ user_id: userId });
+  };
+
   return (
     <Card className="card mt-6">
       <CardHeader className="p-0 pb-0">
@@ -136,6 +169,17 @@ export default function ReportSettingsFormBody({
               connectLoading={telegramAuthUrlMutation.isPending}
               disconnectLoading={disconnectTelegramMutation.isPending}
               checkConnectionLoading={checkConnectionLoading}
+            />
+
+            <MaxReportSection
+              form={form}
+              setForm={setForm}
+              isAdmin={isAdmin}
+              user={user}
+              onConnect={handleConnectMax}
+              onDisconnect={handleDisconnectMax}
+              connectLoading={maxAuthUrlMutation.isPending}
+              disconnectLoading={disconnectMaxMutation.isPending}
             />
 
             {isAdmin && (

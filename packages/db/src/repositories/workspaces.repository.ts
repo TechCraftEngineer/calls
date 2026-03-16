@@ -379,7 +379,7 @@ export const workspacesRepository = {
 
   async getByIds(workspaceIds: string[]) {
     if (workspaceIds.length === 0) return [];
-    
+
     return db
       .select({
         id: schema.workspaces.id,

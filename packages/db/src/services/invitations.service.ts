@@ -337,20 +337,22 @@ export class InvitationsService {
           ...fromMembers.map((m) => m.workspaceId),
         ]),
       ];
-      
+
       // Оптимизация: один запрос вместо N+1
       const workspaces = await this.workspacesService.getByIds(workspaceIds);
-      const workspacesMap = new Map(workspaces.map(ws => [ws.id, ws.name]));
+      const workspacesMap = new Map(workspaces.map((ws) => [ws.id, ws.name]));
 
       const result: Array<{ token: string; workspaceName: string }> = [];
 
       for (const inv of fromInvitations) {
-        const name = workspacesMap.get(inv.workspaceId) ?? "Рабочее пространство";
+        const name =
+          workspacesMap.get(inv.workspaceId) ?? "Рабочее пространство";
         result.push({ token: inv.token, workspaceName: name });
       }
       for (const m of fromMembers) {
         if (m.token) {
-          const name = workspacesMap.get(m.workspaceId) ?? "Рабочее пространство";
+          const name =
+            workspacesMap.get(m.workspaceId) ?? "Рабочее пространство";
           result.push({ token: m.token, workspaceName: name });
         }
       }

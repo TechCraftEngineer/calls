@@ -268,7 +268,7 @@ export class UsersService {
         monthlyReport?: boolean;
         skipWeekends?: boolean;
       };
-      max: { dailyReport?: boolean; managerReport?: boolean };
+      max: { chatId?: string; dailyReport?: boolean; managerReport?: boolean };
     }> = {};
     const reportSettings: Partial<{
       includeCallSummaries: boolean;
@@ -315,6 +315,11 @@ export class UsersService {
       notificationSettings.telegram = {
         ...notificationSettings.telegram,
         skipWeekends: data.telegramSkipWeekends,
+      };
+    if (data.maxChatId !== undefined)
+      notificationSettings.max = {
+        ...notificationSettings.max,
+        chatId: data.maxChatId?.trim() || undefined,
       };
     if (data.maxDailyReport !== undefined)
       notificationSettings.max = {

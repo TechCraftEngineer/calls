@@ -23,6 +23,7 @@ export const updateMaxSettings = workspaceProcedure
         input.user_id,
         context.workspaceId!,
         {
+          maxChatId: input.data.max_chat_id,
           maxDailyReport: input.data.max_daily_report,
           maxManagerReport: input.data.max_manager_report,
         },

@@ -63,6 +63,7 @@ export const updateTelegramSettingsSchema = z.object({
 });
 
 export const updateMaxSettingsSchema = z.object({
+  max_chat_id: z.string().optional().nullable(),
   max_daily_report: z.boolean().optional(),
   max_manager_report: z.boolean().optional(),
 });

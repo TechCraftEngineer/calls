@@ -12,7 +12,7 @@ export const validateInvitationToken = publicProcedure
   .handler(async ({ input }) => {
     try {
       const invitation = await invitationsService.getByToken(input.token);
-      
+
       if (!invitation) {
         return { valid: false, reason: "Приглашение не найдено" };
       }
@@ -23,12 +23,12 @@ export const validateInvitationToken = publicProcedure
         return { valid: false, reason: "Срок действия приглашения истёк" };
       }
 
-      return { 
-        valid: true, 
+      return {
+        valid: true,
         invitation: {
           email: invitation.email,
           workspaceName: invitation.workspaceName,
-        }
+        },
       };
     } catch (e) {
       console.error("Error validating invitation token:", e);

@@ -92,11 +92,11 @@ function CreateWorkspaceForm() {
     if (checking) return;
 
     const invitations = pendingInvitationsData?.invitations ?? [];
-    
+
     // Приоритет приглашениям, если они есть
     if (invitations.length > 0) {
       const firstInvitation = invitations[0];
-      
+
       // Валидируем токен перед редиректом
       validateTokenMutation.mutate(
         { token: firstInvitation.token },
@@ -119,7 +119,7 @@ function CreateWorkspaceForm() {
               router.replace(paths.root);
             }
           },
-        }
+        },
       );
       return;
     }
@@ -128,7 +128,13 @@ function CreateWorkspaceForm() {
     if (workspacesData?.workspaces?.length) {
       router.replace(paths.root);
     }
-  }, [checking, workspacesData, pendingInvitationsData, router, validateTokenMutation]);
+  }, [
+    checking,
+    workspacesData,
+    pendingInvitationsData,
+    router,
+    validateTokenMutation,
+  ]);
 
   const createMutation = useMutation(
     orpc.workspaces.create.mutationOptions({

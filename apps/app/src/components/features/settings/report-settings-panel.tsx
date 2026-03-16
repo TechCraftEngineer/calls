@@ -26,6 +26,9 @@ type UserSettings = {
   telegram_weekly_report?: unknown;
   telegram_monthly_report?: unknown;
   telegram_skip_weekends?: unknown;
+  max_chat_id?: string;
+  max_daily_report?: unknown;
+  max_manager_report?: unknown;
   report_include_call_summaries?: unknown;
   report_detailed?: unknown;
   report_include_avg_value?: unknown;
@@ -47,7 +50,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
   const userId = user?.id ? String(user.id) : "";
 
   const usersQuery = useQuery({
-    ...orpc.users.get.queryOptions({ input: { user_id: userId } }),
+    ...orpc.users.getForEdit.queryOptions({ input: { user_id: userId } }),
     enabled: !!userId,
   });
   const userData = usersQuery.data;
@@ -101,6 +104,9 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     report_monthly_day: "last",
     report_monthly_time: "18:20",
     report_managed_user_ids: [] as number[],
+    maxChatId: "",
+    max_daily_report: false,
+    max_manager_report: false,
   });
 
   const [loadedUser, setLoadedUser] = useState<{
@@ -170,6 +176,9 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       telegram_weekly_report: bool(u.telegram_weekly_report),
       telegram_monthly_report: bool(u.telegram_monthly_report),
       telegram_skip_weekends: bool(u.telegram_skip_weekends),
+      maxChatId: u.max_chat_id || "",
+      max_daily_report: bool(u.max_daily_report),
+      max_manager_report: bool(u.max_manager_report),
       report_include_call_summaries: bool(u.report_include_call_summaries),
       report_detailed: bool(u.report_detailed),
       report_include_avg_value: bool(u.report_include_avg_value),
@@ -196,9 +205,22 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     }),
   );
 
+  const updateMaxMutation = useMutation(
+    orpc.users.updateMaxSettings.mutationOptions({
+      onError: (err) => {
+        toast.error(
+          err instanceof Error ? err.message : "Не удалось сохранить MAX",
+        );
+      },
+    }),
+  );
+
   const loading = usersQuery.isPending || promptsQuery.isPending;
 
-  const saving = updateMutation.isPending || updatePromptsMutation.isPending;
+  const saving =
+    updateMutation.isPending ||
+    updatePromptsMutation.isPending ||
+    updateMaxMutation.isPending;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -237,6 +259,14 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         user_id: userId,
         data: payload,
       });
+      await updateMaxMutation.mutateAsync({
+        user_id: userId,
+        data: {
+          max_chat_id: form.maxChatId?.trim() || null,
+          max_daily_report: form.max_daily_report,
+          max_manager_report: form.max_manager_report,
+        },
+      });
       if (isWorkspaceAdmin) {
         await updatePromptsMutation
           .mutateAsync({
@@ -266,7 +296,9 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
           .catch(() => {});
       }
       await queryClient.invalidateQueries({
-        queryKey: orpc.users.get.queryKey({ input: { user_id: userId } }),
+        queryKey: orpc.users.getForEdit.queryKey({
+          input: { user_id: userId },
+        }),
       });
       await queryClient.invalidateQueries({
         queryKey: orpc.settings.getPrompts.queryKey(),

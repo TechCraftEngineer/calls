@@ -25,7 +25,10 @@
     "lint:ws": "bunx sherif@latest",
     "postinstall": "bun lint:ws",
     "typecheck": "turbo run typecheck",
-    "ui-add": "turbo run ui-add"
+    "ui-add": "turbo run ui-add",
+    "test:e2e": "turbo -F @calls/e2e test",
+    "test:e2e:ui": "turbo -F @calls/e2e test:ui",
+    "test:e2e:auth": "turbo -F @calls/e2e test:auth"
   },
   "devDependencies": {
     "@ai-sdk/openai": "^3.0.41",
