@@ -78,9 +78,28 @@ export const get = workspaceProcedure
           value_explanation:
             (evaluation as { valueExplanation?: string }).valueExplanation ??
             (evaluation as { value_explanation?: string }).value_explanation,
+          manager_score:
+            (evaluation as { managerScore?: number }).managerScore ??
+            (evaluation as { manager_score?: number }).manager_score,
+          manager_feedback:
+            (evaluation as { managerFeedback?: string }).managerFeedback ??
+            (evaluation as { manager_feedback?: string }).manager_feedback,
+          is_quality_analyzable:
+            (evaluation as { isQualityAnalyzable?: boolean })
+              .isQualityAnalyzable ??
+            (evaluation as { is_quality_analyzable?: boolean })
+              .is_quality_analyzable,
+          not_analyzable_reason:
+            (evaluation as { notAnalyzableReason?: string })
+              .notAnalyzableReason ??
+            (evaluation as { not_analyzable_reason?: string })
+              .not_analyzable_reason,
           manager_recommendations:
-            (evaluation as { managerRecommendations?: string[] | null }).managerRecommendations ??
-            (evaluation as { manager_recommendations?: string[] | null }).manager_recommendations,
+            (evaluation as { managerRecommendations?: string[] | null })
+              .managerRecommendations ??
+            (evaluation as { manager_recommendations?: string[] | null })
+              .manager_recommendations ??
+            null,
         }
       : null;
 

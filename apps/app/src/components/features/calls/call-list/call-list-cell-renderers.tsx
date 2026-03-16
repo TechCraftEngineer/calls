@@ -135,22 +135,8 @@ export function renderScoreCell(evaluation: CallWithDetails["evaluation"]) {
 
 export function renderSummaryCell(transcript: CallWithDetails["transcript"]) {
   return transcript?.summary ? (
-    <div
-      className="op-tooltip"
-      style={{ display: "flex", alignItems: "center", gap: "4px" }}
-    >
-      <span
-        style={{
-          maxWidth: "220px",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          color: "#666",
-        }}
-      >
-        {transcript.summary}
-      </span>
-      <span className="info-icon">i</span>
+    <div className="op-tooltip min-w-0 max-w-[220px] overflow-hidden">
+      <span className="block truncate text-[#666]">{transcript.summary}</span>
       <div className="tooltip-content" style={{ width: "280px" }}>
         <strong>Вывод:</strong>
         <br />

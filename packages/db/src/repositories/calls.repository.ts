@@ -12,6 +12,7 @@ import type {
   GetCallsParams,
 } from "../types/calls.types";
 import { buildCallConditions } from "./calls/build-conditions";
+import { computeCallStatus } from "./calls/compute-call-status";
 import { getEvaluationsStats as getEvaluationsStatsFn } from "./calls/get-evaluations-stats";
 import { getCallsMetrics } from "./calls/get-metrics";
 
@@ -47,6 +48,8 @@ export const callsRepository = {
   },
 
   async create(data: CreateCallData): Promise<string> {
+    const status =
+      data.status ?? computeCallStatus(data.duration, data.direction);
     const result = await db
       .insert(schema.calls)
       .values({
@@ -57,7 +60,7 @@ export const callsRepository = {
         name: data.name ?? null,
         duration: data.duration ?? null,
         direction: data.direction ?? null,
-        status: data.status ?? null,
+        status,
         sizeBytes: data.sizeBytes ?? null,
         fileId: data.fileId ?? null,
         internalNumber: data.internalNumber ?? null,
@@ -69,9 +72,12 @@ export const callsRepository = {
   },
 
   async updateDuration(callId: string, durationSeconds: number): Promise<void> {
+    const call = await this.findById(callId);
+    const newDuration = Math.round(durationSeconds);
+    const status = call ? computeCallStatus(newDuration, call.direction) : null;
     await db
       .update(schema.calls)
-      .set({ duration: Math.round(durationSeconds) })
+      .set({ duration: newDuration, ...(status != null && { status }) })
       .where(eq(schema.calls.id, callId));
   },
 

@@ -86,6 +86,15 @@ export async function createBackendContext(opts: {
       if (email) {
         const profile = await usersService.getUserByEmail(email);
         user = profile ? { ...profile, ...baUser } : baUser;
+      } else if (
+        authUserId &&
+        baUser &&
+        typeof baUser === "object" &&
+        baUser.id
+      ) {
+        // Сессия есть, но email не передан — используем данные из сессии
+        // Дополнительная проверка что baUser является валидным объектом с id
+        user = baUser;
       }
     }
   }

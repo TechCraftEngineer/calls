@@ -10,12 +10,14 @@ import {
 } from "@calls/ui";
 import {
   BarChart3,
+  Briefcase,
   FileAudio,
   Lightbulb,
   Loader2,
   RefreshCw,
   Sparkles,
   User,
+  UserCheck,
 } from "lucide-react";
 import { CallRecordPlayer } from "../call-record-player";
 import type { CallDetail, EvaluationDetail, TranscriptDetail } from "./types";
@@ -98,54 +100,70 @@ export default function EvaluationSidebar({
             Оценка
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 px-4 pb-4 sm:space-y-5 sm:px-6 sm:pb-6">
-          <div>
+        <CardContent className="space-y-5 px-4 pb-4 sm:space-y-6 sm:px-6 sm:pb-6">
+          <section>
+            <h4 className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider">
+              <Briefcase className="size-3.5 shrink-0" />
+              Ценность звонка для бизнеса
+            </h4>
+            <p className="text-muted-foreground mb-1 text-xs">
+              Результат разговора: сделка, договорённости, решение проблемы
+            </p>
             <div className="mb-2 flex justify-between text-sm font-medium">
-              <span>Ценность звонка</span>
-              <span>{evaluation?.value_score || 0}/5</span>
+              <span>Оценка</span>
+              <span>{evaluation?.value_score ?? 0}/5</span>
             </div>
             <div className="bg-muted mb-3 h-2 overflow-hidden rounded-full">
               <div
                 className="bg-primary h-full rounded-full transition-[width]"
                 style={{
-                  width: `${(evaluation?.value_score || 0) * 20}%`,
+                  width: `${(evaluation?.value_score ?? 0) * 20}%`,
                 }}
               />
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed">
-              {evaluation?.value_explanation || "Оценка отсутствует"}
+              {evaluation?.value_explanation ?? "Оценка отсутствует"}
             </p>
-          </div>
+          </section>
 
-          {showQualityUnavailable ? (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-              <p className="mb-1 text-sm font-medium text-destructive">
-                Качество не оценивалось
-              </p>
-              <p className="text-destructive/80 text-xs">
-                {qualityNotAnalyzableReason ||
-                  call.operator_name ||
-                  call.manager_name ||
-                  "Автоответчик"}
-              </p>
-            </div>
-          ) : (
-            <div>
-              <div className="mb-2 flex justify-between text-sm font-medium">
-                <span>Качество работы</span>
-                <span>{qualityScore}/5</span>
+          <div className="border-border/60 border-t pt-4">
+            <h4 className="text-muted-foreground mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wider">
+              <UserCheck className="size-3.5 shrink-0" />
+              Качество работы менеджера
+            </h4>
+            <p className="text-muted-foreground mb-1 text-xs">
+              Коммуникация: эмпатия, вежливость, структурированность
+            </p>
+            {showQualityUnavailable ? (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                <p className="mb-1 text-sm font-medium text-destructive">
+                  Качество не оценивалось
+                </p>
+                <p className="text-destructive/80 text-xs">
+                  {qualityNotAnalyzableReason ||
+                    call.operator_name ||
+                    call.manager_name ||
+                    "Автоответчик"}
+                </p>
               </div>
-              <div className="bg-muted mb-3 h-2 overflow-hidden rounded-full">
-                <div
-                  className="bg-emerald-500 h-full rounded-full transition-[width]"
-                  style={{ width: `${Number(qualityScore) * 20}%` }}
-                />
-              </div>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                {qualityFeedback}
-              </p>
-            </div>
-          )}
+            ) : (
+              <>
+                <div className="mb-2 flex justify-between text-sm font-medium">
+                  <span>Оценка</span>
+                  <span>{qualityScore}/5</span>
+                </div>
+                <div className="bg-muted mb-3 h-2 overflow-hidden rounded-full">
+                  <div
+                    className="bg-emerald-500 h-full rounded-full transition-[width]"
+                    style={{ width: `${Number(qualityScore) * 20}%` }}
+                  />
+                </div>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {qualityFeedback}
+                </p>
+              </>
+            )}
+          </div>
           {transcript?.text && (
             <Button
               type="button"

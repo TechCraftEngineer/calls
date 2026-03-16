@@ -129,6 +129,8 @@ export function getCallListColumns(
     {
       accessorKey: "transcript.summary",
       id: "summary",
+      size: 220,
+      maxSize: 220,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
@@ -138,7 +140,10 @@ export function getCallListColumns(
         />
       ),
       cell: ({ row }) => renderSummaryCell(row.original.transcript),
-      meta: { headerTitle: "Резюме" },
+      meta: {
+        headerTitle: "Резюме",
+        cellClassName: "max-w-[220px] overflow-hidden",
+      },
     },
     {
       id: "record",
