@@ -17,6 +17,7 @@ RUN bun install --ignore-scripts
 COPY --from=prepare /app/out/full/ .
 
 ENV TURBO_TELEMETRY_DISABLED=1
+RUN bun turbo run build --filter=@calls/app-server...
 
 FROM base AS runner
 RUN mkdir -p /app/data /app/logs /app/records
@@ -28,4 +29,4 @@ EXPOSE 8000
 
 COPY --from=builder /app .
 
-CMD ["bun", "./apps/app-server/src/index.ts"]
+CMD ["bun", "./apps/app-server/dist/index.js"]
