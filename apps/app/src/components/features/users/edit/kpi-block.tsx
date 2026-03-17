@@ -14,13 +14,9 @@ interface KpiBlockProps {
 }
 
 const KPI_FIELDS = [
-  ["kpi_base_salary", "Базовый оклад (₽)", "0"],
-  ["kpi_target_bonus", "Целевой бонус (₽)", "0"],
-  [
-    "kpi_target_talk_time_minutes",
-    "Целевое время разговоров в месяц (мин)",
-    "0",
-  ],
+  ["kpiBaseSalary", "Базовый оклад (₽)", "0"],
+  ["kpiTargetBonus", "Целевой бонус (₽)", "0"],
+  ["kpiTargetTalkTimeMinutes", "Целевое время разговоров в месяц (мин)", "0"],
 ] as const;
 
 export function KpiBlock({

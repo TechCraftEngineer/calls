@@ -22,9 +22,9 @@ export function ReportSettingsSection({
         <div className="flex flex-col gap-2">
           {(
             [
-              ["telegram_daily_report", "Ежедневный отчет"],
-              ["telegram_weekly_report", "Еженедельный отчет"],
-              ["telegram_monthly_report", "Ежемесячный отчет"],
+              ["telegramDailyReport", "Ежедневный отчет"],
+              ["telegramWeeklyReport", "Еженедельный отчет"],
+              ["telegramMonthlyReport", "Ежемесячный отчет"],
             ] as const
           ).map(([key, label]) => (
             <label
@@ -60,9 +60,9 @@ export function ReportSettingsSection({
         <div className="flex flex-col gap-2">
           {(
             [
-              ["email_daily_report", "Ежедневный отчет"],
-              ["email_weekly_report", "Еженедельный отчет"],
-              ["email_monthly_report", "Ежемесячный отчет"],
+              ["emailDailyReport", "Ежедневный отчет"],
+              ["emailWeeklyReport", "Еженедельный отчет"],
+              ["emailMonthlyReport", "Ежемесячный отчет"],
             ] as const
           ).map(([key, label]) => (
             <label
@@ -86,13 +86,13 @@ export function ReportSettingsSection({
         <div className="flex flex-col gap-2">
           {(
             [
-              ["report_detailed", "Подробный отчет (доп. метрики)"],
+              ["reportDetailed", "Подробный отчет (доп. метрики)"],
               [
-                "report_include_call_summaries",
+                "reportIncludeCallSummaries",
                 "Включать ИИ-саммари звонков (Email)",
               ],
-              ["report_include_avg_value", "Средняя сумма сделки"],
-              ["report_include_avg_rating", "Средняя оценка качества"],
+              ["reportIncludeAvgValue", "Средняя сумма сделки"],
+              ["reportIncludeAvgRating", "Средняя оценка качества"],
             ] as const
           ).map(([key, label]) => (
             <label

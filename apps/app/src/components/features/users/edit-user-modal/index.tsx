@@ -24,63 +24,69 @@ interface EditUserModalProps {
 }
 
 function buildEditForm(u: WorkspaceMemberUser): EditUserForm {
+  const ext = u as unknown as Record<string, unknown>;
   return {
     givenName: u.givenName ?? "",
     familyName: u.familyName ?? "",
     internalExtensions: u.internalExtensions ?? "",
     mobilePhones: u.mobilePhones ?? "",
     telegramChatId: u.telegramChatId ?? "",
-    telegram_daily_report:
-      (u as { telegram_daily_report?: boolean }).telegram_daily_report ?? false,
-    telegram_manager_report:
-      (u as { telegram_manager_report?: boolean }).telegram_manager_report ??
+    telegramDailyReport:
+      ((ext.telegramDailyReport ?? ext.telegram_daily_report) as boolean) ??
       false,
-    max_chat_id: (u as { max_chat_id?: string }).max_chat_id ?? "",
-    max_daily_report:
-      (u as { max_daily_report?: boolean }).max_daily_report ?? false,
-    max_manager_report:
-      (u as { max_manager_report?: boolean }).max_manager_report ?? false,
-    filter_exclude_answering_machine:
-      (u as { filter_exclude_answering_machine?: boolean })
-        .filter_exclude_answering_machine ?? false,
-    filter_min_duration:
-      (u as { filter_min_duration?: number }).filter_min_duration ?? 0,
-    filter_min_replicas:
-      (u as { filter_min_replicas?: number }).filter_min_replicas ?? 0,
+    telegramManagerReport:
+      ((ext.telegramManagerReport ?? ext.telegram_manager_report) as boolean) ??
+      false,
+    maxChatId: ((ext.maxChatId ?? ext.max_chat_id) as string) ?? "",
+    maxDailyReport:
+      ((ext.maxDailyReport ?? ext.max_daily_report) as boolean) ?? false,
+    maxManagerReport:
+      ((ext.maxManagerReport ?? ext.max_manager_report) as boolean) ?? false,
+    filterExcludeAnsweringMachine:
+      ((ext.filterExcludeAnsweringMachine ??
+        ext.filter_exclude_answering_machine) as boolean) ?? false,
+    filterMinDuration:
+      ((ext.filterMinDuration ?? ext.filter_min_duration) as number) ?? 0,
+    filterMinReplicas:
+      ((ext.filterMinReplicas ?? ext.filter_min_replicas) as number) ?? 0,
     email: u.email ?? "",
-    email_daily_report:
-      (u as { email_daily_report?: boolean }).email_daily_report ?? false,
-    email_weekly_report:
-      (u as { email_weekly_report?: boolean }).email_weekly_report ?? false,
-    email_monthly_report:
-      (u as { email_monthly_report?: boolean }).email_monthly_report ?? false,
-    telegram_weekly_report:
-      (u as { telegram_weekly_report?: boolean }).telegram_weekly_report ??
+    emailDailyReport:
+      ((ext.emailDailyReport ?? ext.email_daily_report) as boolean) ?? false,
+    emailWeeklyReport:
+      ((ext.emailWeeklyReport ?? ext.email_weekly_report) as boolean) ?? false,
+    emailMonthlyReport:
+      ((ext.emailMonthlyReport ?? ext.email_monthly_report) as boolean) ??
       false,
-    telegram_monthly_report:
-      (u as { telegram_monthly_report?: boolean }).telegram_monthly_report ??
+    telegramWeeklyReport:
+      ((ext.telegramWeeklyReport ?? ext.telegram_weekly_report) as boolean) ??
       false,
-    report_include_call_summaries:
-      (u as { report_include_call_summaries?: boolean })
-        .report_include_call_summaries ?? false,
-    report_detailed:
-      (u as { report_detailed?: boolean }).report_detailed ?? false,
-    report_include_avg_value:
-      (u as { report_include_avg_value?: boolean }).report_include_avg_value ??
+    telegramMonthlyReport:
+      ((ext.telegramMonthlyReport ?? ext.telegram_monthly_report) as boolean) ??
       false,
-    report_include_avg_rating:
-      (u as { report_include_avg_rating?: boolean })
-        .report_include_avg_rating ?? false,
-    kpi_base_salary: (u as { kpi_base_salary?: number }).kpi_base_salary ?? 0,
-    kpi_target_bonus:
-      (u as { kpi_target_bonus?: number }).kpi_target_bonus ?? 0,
-    kpi_target_talk_time_minutes:
-      (u as { kpi_target_talk_time_minutes?: number })
-        .kpi_target_talk_time_minutes ?? 0,
-    evaluation_template_slug: u.evaluation_template_slug ?? "general",
-    evaluation_custom_instructions:
-      (u as { evaluation_custom_instructions?: string })
-        .evaluation_custom_instructions ?? "",
+    reportIncludeCallSummaries:
+      ((ext.reportIncludeCallSummaries ??
+        ext.report_include_call_summaries) as boolean) ?? false,
+    reportDetailed:
+      ((ext.reportDetailed ?? ext.report_detailed) as boolean) ?? false,
+    reportIncludeAvgValue:
+      ((ext.reportIncludeAvgValue ??
+        ext.report_include_avg_value) as boolean) ?? false,
+    reportIncludeAvgRating:
+      ((ext.reportIncludeAvgRating ??
+        ext.report_include_avg_rating) as boolean) ?? false,
+    kpiBaseSalary: ((ext.kpiBaseSalary ?? ext.kpi_base_salary) as number) ?? 0,
+    kpiTargetBonus:
+      ((ext.kpiTargetBonus ?? ext.kpi_target_bonus) as number) ?? 0,
+    kpiTargetTalkTimeMinutes:
+      ((ext.kpiTargetTalkTimeMinutes ??
+        ext.kpi_target_talk_time_minutes) as number) ?? 0,
+    evaluationTemplateSlug:
+      u.evaluationTemplateSlug ??
+      (ext.evaluation_template_slug as string) ??
+      "general",
+    evaluationCustomInstructions:
+      ((ext.evaluationCustomInstructions ??
+        ext.evaluation_custom_instructions) as string) ?? "",
   };
 }
 
@@ -96,11 +102,11 @@ function validateForm(form: EditUserForm): string | null {
     }
   }
 
-  if (form.filter_min_duration < 0) {
+  if (form.filterMinDuration < 0) {
     return "Минимальная длительность звонка не может быть отрицательной.";
   }
 
-  if (form.filter_min_replicas < 0) {
+  if (form.filterMinReplicas < 0) {
     return "Минимальное количество реплик не может быть отрицательным.";
   }
 
@@ -139,8 +145,8 @@ export default function EditUserModal({
   const disconnectMaxMutation = useMutation(
     orpc.users.disconnectMax.mutationOptions({
       onSuccess: () => {
-        updateForm({ max_chat_id: "" });
-        setEditUser((u) => ({ ...u, max_chat_id: "" }));
+        updateForm({ maxChatId: "" });
+        setEditUser((u) => ({ ...u, maxChatId: "" }));
         onRefresh();
         toast.success("MAX отвязан");
       },
@@ -219,17 +225,16 @@ export default function EditUserModal({
       const updated = arr.find((u) => String(u.id) === String(editUser.id));
       if (updated) {
         setEditUser(updated);
+        const u = updated as unknown as Record<string, unknown>;
         updateForm({
           telegramChatId: updated.telegramChatId ?? "",
-          filter_exclude_answering_machine:
-            (updated as { filter_exclude_answering_machine?: boolean })
-              .filter_exclude_answering_machine ?? false,
-          filter_min_duration:
-            (updated as { filter_min_duration?: number }).filter_min_duration ??
-            0,
-          filter_min_replicas:
-            (updated as { filter_min_replicas?: number }).filter_min_replicas ??
-            0,
+          filterExcludeAnsweringMachine:
+            ((u.filterExcludeAnsweringMachine ??
+              u.filter_exclude_answering_machine) as boolean) ?? false,
+          filterMinDuration:
+            ((u.filterMinDuration ?? u.filter_min_duration) as number) ?? 0,
+          filterMinReplicas:
+            ((u.filterMinReplicas ?? u.filter_min_replicas) as number) ?? 0,
         });
         onRefresh();
       }

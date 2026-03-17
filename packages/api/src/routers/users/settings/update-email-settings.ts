@@ -30,9 +30,9 @@ export const updateEmailSettings = workspaceProcedure
         input.user_id,
         context.workspaceId!,
         {
-          emailDailyReport: input.data.email_daily_report,
-          emailWeeklyReport: input.data.email_weekly_report,
-          emailMonthlyReport: input.data.email_monthly_report,
+          emailDailyReport: input.data.emailDailyReport,
+          emailWeeklyReport: input.data.emailWeeklyReport,
+          emailMonthlyReport: input.data.emailMonthlyReport,
         },
       );
 
@@ -41,6 +41,8 @@ export const updateEmailSettings = workspaceProcedure
         user.email ?? "unknown",
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
+        undefined,
+        context.workspaceId,
       );
 
       return await usersService.getUser(input.user_id);
@@ -51,6 +53,7 @@ export const updateEmailSettings = workspaceProcedure
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
+        context.workspaceId,
       );
       throw error;
     }

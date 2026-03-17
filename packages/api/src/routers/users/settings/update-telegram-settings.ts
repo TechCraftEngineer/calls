@@ -23,10 +23,10 @@ export const updateTelegramSettings = workspaceProcedure
         input.user_id,
         context.workspaceId!,
         {
-          telegramDailyReport: input.data.telegram_daily_report,
-          telegramManagerReport: input.data.telegram_manager_report,
-          telegramWeeklyReport: input.data.telegram_weekly_report,
-          telegramMonthlyReport: input.data.telegram_monthly_report,
+          telegramDailyReport: input.data.telegramDailyReport,
+          telegramManagerReport: input.data.telegramManagerReport,
+          telegramWeeklyReport: input.data.telegramWeeklyReport,
+          telegramMonthlyReport: input.data.telegramMonthlyReport,
         },
       );
 
@@ -35,6 +35,8 @@ export const updateTelegramSettings = workspaceProcedure
         user.email ?? "unknown",
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
+        undefined,
+        context.workspaceId,
       );
 
       return await usersService.getUser(input.user_id);
@@ -45,6 +47,7 @@ export const updateTelegramSettings = workspaceProcedure
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
+        context.workspaceId,
       );
       throw error;
     }

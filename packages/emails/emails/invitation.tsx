@@ -2,142 +2,112 @@ import { APP_CONFIG, env, paths } from "@calls/config";
 import {
   Body,
   Button,
+  Column,
   Container,
   Head,
   Heading,
   Hr,
   Html,
+  Img,
   Link,
   Preview,
+  pixelBasedPreset,
+  Row,
   Section,
   Tailwind,
   Text,
 } from "@react-email/components";
 
-import { emailTailwindConfig } from "../tailwind";
-
-export default function InvitationEmail({
-  inviteLink = `${env.APP_URL}${paths.invite.byToken("abc123")}`,
-  workspaceName = "Рабочее пространство",
-  inviterName,
-  role = "member",
-  userExists = false,
-}: {
+interface InvitationEmailProps {
   inviteLink?: string;
   workspaceName?: string;
   inviterName?: string;
   role?: "admin" | "member";
   userExists?: boolean;
-}) {
+}
+
+export const InvitationEmail = ({
+  inviteLink = `${env.APP_URL}${paths.invite.byToken("abc123")}`,
+  workspaceName = "Рабочее пространство",
+  inviterName,
+  role = "member",
+  userExists = false,
+}: InvitationEmailProps) => {
   const roleLabel = role === "admin" ? "администратора" : "участника";
+  const previewText = `Вас приглашают в «${workspaceName}» · ${APP_CONFIG.shortName}`;
 
   return (
     <Html>
       <Head />
-      <Preview>
-        Вас приглашают в «{workspaceName}» · {APP_CONFIG.shortName}
-      </Preview>
-      <Tailwind config={emailTailwindConfig}>
-        <Body className="mx-auto my-auto bg-[#f8f9fb] font-sans">
-          <Container className="mx-auto my-[40px] max-w-[600px] rounded-lg border border-solid border-[#e5e7eb] bg-white p-[32px] shadow-sm">
-            <div className="mb-[24px] text-center">
-              <div
-                className="mx-auto mb-[16px] inline-flex h-[56px] w-[56px] items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600"
-                role="img"
-                aria-label="Иконка приглашения"
-              >
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2"
-                  aria-hidden
-                >
-                  <title>Иконка приглашения</title>
-                  <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-                </svg>
-              </div>
-            </div>
-
-            <Heading className="mx-0 mb-[16px] p-0 text-center text-[28px] font-bold text-[#111827]">
+      <Tailwind
+        config={{
+          presets: [pixelBasedPreset],
+        }}
+      >
+        <Body className="mx-auto my-auto bg-white px-2 font-sans">
+          <Preview>{previewText}</Preview>
+          <Container className="mx-auto my-[40px] max-w-[465px] rounded border border-[#eaeaea] border-solid p-[20px]">
+            <Heading className="mx-0 my-[30px] p-0 text-center font-normal text-[24px] text-black">
               Вас приглашают в рабочее пространство
             </Heading>
 
-            <Text className="mb-[24px] text-center text-[16px] leading-[24px] text-[#6b7280]">
+            <Text className="text-[14px] leading-[24px] text-black">
               {inviterName ? (
                 <>
                   <strong>{inviterName}</strong> приглашает вас в рабочее
                   пространство «<strong>{workspaceName}</strong>» в качестве{" "}
-                  {roleLabel}
+                  {roleLabel}.
                 </>
               ) : (
                 <>
                   Вас пригласили в рабочее пространство «
-                  <strong>{workspaceName}</strong>» в качестве {roleLabel}
+                  <strong>{workspaceName}</strong>» в качестве {roleLabel}.
                 </>
               )}
             </Text>
 
-            <Section className="my-[32px] text-center">
+            <Section className="mt-[32px] mb-[32px] text-center">
               <Button
-                className="rounded-lg bg-[#111827] px-[32px] py-[14px] text-center text-[15px] font-semibold text-white no-underline shadow-sm"
+                className="rounded bg-[#000000] px-5 py-3 text-center font-semibold text-[12px] text-white no-underline"
                 href={inviteLink}
               >
                 {userExists ? "Присоединиться" : "Принять приглашение"}
               </Button>
             </Section>
 
-            <div className="my-[24px] rounded-lg border border-solid border-[#e5e7eb] bg-[#f9fafb] p-[16px]">
-              <Text className="m-0 text-[13px] leading-[20px] text-[#6b7280]">
-                <strong className="text-[#374151]">Как присоединиться</strong>
-                <br />
-                {userExists ? (
-                  <>
-                    Нажмите кнопку выше и войдите в свой аккаунт — доступ к
-                    рабочему пространству откроется автоматически.
-                  </>
-                ) : (
-                  <>
-                    Нажмите кнопку выше, зарегистрируйтесь — и вы сразу получите
-                    доступ к рабочему пространству.
-                  </>
-                )}{" "}
-                Если кнопка не сработала, скопируйте ссылку ниже и вставьте её в
-                адресную строку браузера.
-              </Text>
-            </div>
-
-            <Text className="mb-[8px] text-[13px] leading-[20px] text-[#6b7280]">
-              Резервная ссылка:
-            </Text>
-            <Link
-              href={inviteLink}
-              className="block break-all rounded bg-[#f3f4f6] px-[12px] py-[8px] text-[13px] text-[#2563eb] no-underline"
-            >
-              {inviteLink}
-            </Link>
-
-            <Text className="mt-[16px] text-[13px] leading-[20px] text-[#9ca3af]">
-              ⏱ Срок действия ссылки — 7 дней
+            <Text className="text-[14px] leading-[24px] text-black">
+              Или скопируйте и вставьте эту ссылку в браузер:{" "}
+              <Link href={inviteLink} className="text-blue-600 no-underline">
+                {inviteLink}
+              </Link>
             </Text>
 
-            <Hr className="mx-0 my-[32px] w-full border border-solid border-[#e5e7eb]" />
+            <Text className="text-[14px] leading-[24px] text-black">
+              Срок действия ссылки — 7 дней.
+            </Text>
 
-            <Text className="text-center text-[12px] leading-[20px] text-[#9ca3af]">
+            <Hr className="mx-0 my-[26px] w-full border border-[#eaeaea] border-solid" />
+
+            <Text className="text-[12px] leading-[24px] text-[#666666]">
               Это автоматическое письмо от{" "}
-              <Link href={env.APP_URL} className="text-[#9ca3af] no-underline">
+              <Link href={env.APP_URL} className="text-blue-600 no-underline">
                 {APP_CONFIG.shortName}
               </Link>
-              <br />
-              Если вы не ожидали этого письма, просто проигнорируйте его.
+              . Если вы не ожидали этого письма, просто проигнорируйте его.
             </Text>
           </Container>
         </Body>
       </Tailwind>
     </Html>
   );
-}
+};
+
+InvitationEmail.PreviewProps = {
+  inviteLink: `${env.APP_URL}${paths.invite.byToken("abc123")}`,
+  workspaceName: "Рабочее пространство",
+  inviterName: "Иван Иванов",
+  role: "member" as const,
+  userExists: false,
+} as InvitationEmailProps;
+
+export default InvitationEmail;

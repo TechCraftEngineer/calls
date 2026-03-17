@@ -23,6 +23,7 @@ export const deleteCall = workspaceAdminProcedure
       "info",
       `Deleted call #${input.call_id}`,
       (context.user as Record<string, unknown>).email as string,
+      context.workspaceId,
     );
     return { success: true, message: `Звонок #${input.call_id} удалён` };
   });

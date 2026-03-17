@@ -23,9 +23,9 @@ export const updateMaxSettings = workspaceProcedure
         input.user_id,
         context.workspaceId!,
         {
-          maxChatId: input.data.max_chat_id,
-          maxDailyReport: input.data.max_daily_report,
-          maxManagerReport: input.data.max_manager_report,
+          maxChatId: input.data.maxChatId,
+          maxDailyReport: input.data.maxDailyReport,
+          maxManagerReport: input.data.maxManagerReport,
         },
       );
 
@@ -34,6 +34,8 @@ export const updateMaxSettings = workspaceProcedure
         user.email ?? "unknown",
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
+        undefined,
+        context.workspaceId,
       );
 
       return await usersService.getUser(input.user_id);
@@ -44,6 +46,7 @@ export const updateMaxSettings = workspaceProcedure
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
+        context.workspaceId,
       );
       throw error;
     }

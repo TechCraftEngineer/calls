@@ -2,7 +2,6 @@ import { toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { z } from "zod";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import type { User } from "@/lib/auth";
 import {
@@ -13,40 +12,6 @@ import {
 import { useORPC } from "@/orpc/react";
 import ReportSettingsFormBody from "./report-settings-form-body";
 import type { ReportSettingsForm } from "./report-settings-types";
-import {
-  serializeMaxSettingsForApi,
-  serializePromptsForApi,
-  serializeReportSettingsForApi,
-} from "./report-settings-types";
-
-type UserSettings = {
-  email?: string;
-  internalExtensions?: string;
-  givenName?: string;
-  familyName?: string;
-  report_managed_user_ids?: unknown;
-  email_daily_report?: unknown;
-  email_weekly_report?: unknown;
-  email_monthly_report?: unknown;
-  telegramChatId?: string;
-  telegram_daily_report?: unknown;
-  telegram_weekly_report?: unknown;
-  telegram_monthly_report?: unknown;
-  telegram_skip_weekends?: unknown;
-  max_chat_id?: string;
-  max_daily_report?: unknown;
-  max_manager_report?: unknown;
-  report_include_call_summaries?: unknown;
-  report_detailed?: unknown;
-  report_include_avg_value?: unknown;
-  report_include_avg_rating?: unknown;
-  filter_exclude_answering_machine?: unknown;
-  filter_min_duration?: unknown;
-  filter_min_replicas?: unknown;
-  kpi_base_salary?: unknown;
-  kpi_target_bonus?: unknown;
-  kpi_target_talk_time_minutes?: unknown;
-};
 
 export default function ReportSettingsPanel({ user }: { user: User }) {
   const orpc = useORPC();
@@ -100,11 +65,11 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     reportIncludeAvgValue: false,
     reportIncludeAvgRating: false,
     filterExcludeAnsweringMachine: false,
-    filterMinDuration: 0,
-    filterMinReplicas: 0,
-    kpiBaseSalary: 0,
-    kpiTargetBonus: 0,
-    kpiTargetTalkTimeMinutes: 0,
+    filterMinDuration: "0",
+    filterMinReplicas: "0",
+    kpiBaseSalary: "0",
+    kpiTargetBonus: "0",
+    kpiTargetTalkTimeMinutes: "0",
     reportDailyTime: "18:00",
     reportWeeklyDay: "fri",
     reportWeeklyTime: "18:10",
@@ -141,7 +106,36 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
   );
 
   useEffect(() => {
-    const u = userData as UserSettings | undefined;
+    const u = userData as
+      | {
+          email?: string;
+          givenName?: string;
+          familyName?: string;
+          internalExtensions?: string;
+          telegramChatId?: string;
+          reportManagedUserIds?: string[];
+          emailDailyReport?: boolean;
+          emailWeeklyReport?: boolean;
+          emailMonthlyReport?: boolean;
+          telegramDailyReport?: boolean;
+          telegramWeeklyReport?: boolean;
+          telegramMonthlyReport?: boolean;
+          telegramSkipWeekends?: boolean;
+          maxChatId?: string;
+          maxDailyReport?: boolean;
+          maxManagerReport?: boolean;
+          reportIncludeCallSummaries?: boolean;
+          reportDetailed?: boolean;
+          reportIncludeAvgValue?: boolean;
+          reportIncludeAvgRating?: boolean;
+          filterExcludeAnsweringMachine?: boolean;
+          filterMinDuration?: number;
+          filterMinReplicas?: number;
+          kpiBaseSalary?: number;
+          kpiTargetBonus?: number;
+          kpiTargetTalkTimeMinutes?: number;
+        }
+      | undefined;
     if (!u) return;
     const promptsArr = (Array.isArray(promptsList) ? promptsList : []) as {
       key: string;
@@ -151,71 +145,49 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     promptsArr.forEach((p) => {
       promptsMap[p.key] = p.value ?? "";
     });
-    setLoadedUser({
-      givenName: getGivenName(u),
-      familyName: getFamilyName(u),
-      internalExtensions: getInternalExtensions(u) ?? undefined,
-    });
-    const bool = (v: unknown) => v === true || v === 1 || v === "1";
-    const _normTime = (s: string) => {
+    const normTime = (s: string) => {
       if (!s) return "";
       const m = s.match(/(\d{1,2}):?(\d{0,2})/);
       return m
         ? `${m[1].padStart(2, "0")}:${(m[2] || "0").padStart(2, "0")}`
         : s;
     };
-    const managedUserIdSchema = z
-      .string()
-      .min(1, "ID не может быть пустым")
-      .refine((s) => !/^(null|undefined|\[object Object\])$/i.test(s));
-    const managedIdsArraySchema = z.array(managedUserIdSchema);
-    let managedIds: string[] = [];
-    try {
-      const raw = u.report_managed_user_ids;
-      let toValidate: unknown[] = [];
-      if (Array.isArray(raw)) {
-        toValidate = raw;
-      } else if (typeof raw === "string" && raw.trim()) {
-        const parsed = JSON.parse(raw) as unknown;
-        toValidate = Array.isArray(parsed) ? parsed : [];
-      }
-      const result = managedIdsArraySchema.safeParse(
-        toValidate.map((x) => String(x)).filter(Boolean),
-      );
-      managedIds = result.success ? result.data : [];
-    } catch (_) {
-      managedIds = [];
-    }
+    setLoadedUser({
+      givenName: getGivenName(u),
+      familyName: getFamilyName(u),
+      internalExtensions: getInternalExtensions(u) ?? undefined,
+    });
+    const managedIds = u.reportManagedUserIds ?? [];
     setForm((prev) => ({
       ...prev,
-      reportManagedUserIds: managedIds,
+      reportManagedUserIds: Array.isArray(managedIds) ? managedIds : [],
       email: u.email || "",
-      emailDailyReport: bool(u.email_daily_report),
-      emailWeeklyReport: bool(u.email_weekly_report),
-      emailMonthlyReport: bool(u.email_monthly_report),
+      emailDailyReport: u.emailDailyReport ?? false,
+      emailWeeklyReport: u.emailWeeklyReport ?? false,
+      emailMonthlyReport: u.emailMonthlyReport ?? false,
       telegramChatId: u.telegramChatId || "",
-      telegramDailyReport: bool(u.telegram_daily_report),
-      telegramWeeklyReport: bool(u.telegram_weekly_report),
-      telegramMonthlyReport: bool(u.telegram_monthly_report),
-      telegramSkipWeekends: bool(u.telegram_skip_weekends),
-      maxChatId: u.max_chat_id || "",
-      maxDailyReport: bool(u.max_daily_report),
-      maxManagerReport: bool(u.max_manager_report),
-      reportIncludeCallSummaries: bool(u.report_include_call_summaries),
-      reportDetailed: bool(u.report_detailed),
-      reportIncludeAvgValue: bool(u.report_include_avg_value),
-      reportIncludeAvgRating: bool(u.report_include_avg_rating),
-      filterExcludeAnsweringMachine: bool(u.filter_exclude_answering_machine),
-      filterMinDuration: Number(u.filter_min_duration) || 0,
-      filterMinReplicas: Number(u.filter_min_replicas) || 0,
-      kpiBaseSalary: Number(u.kpi_base_salary) || 0,
-      kpiTargetBonus: Number(u.kpi_target_bonus) || 0,
-      kpiTargetTalkTimeMinutes: Number(u.kpi_target_talk_time_minutes) || 0,
-      reportDailyTime: _normTime(promptsMap.report_daily_time) || "18:00",
-      reportWeeklyDay: (promptsMap.report_weekly_day || "fri").toLowerCase(),
-      reportWeeklyTime: _normTime(promptsMap.report_weekly_time) || "18:10",
-      reportMonthlyDay: promptsMap.report_monthly_day || "last",
-      reportMonthlyTime: _normTime(promptsMap.report_monthly_time) || "18:20",
+      telegramDailyReport: u.telegramDailyReport ?? false,
+      telegramWeeklyReport: u.telegramWeeklyReport ?? false,
+      telegramMonthlyReport: u.telegramMonthlyReport ?? false,
+      telegramSkipWeekends: u.telegramSkipWeekends ?? false,
+      maxChatId: u.maxChatId || "",
+      maxDailyReport: u.maxDailyReport ?? false,
+      maxManagerReport: u.maxManagerReport ?? false,
+      reportIncludeCallSummaries: u.reportIncludeCallSummaries ?? false,
+      reportDetailed: u.reportDetailed ?? false,
+      reportIncludeAvgValue: u.reportIncludeAvgValue ?? false,
+      reportIncludeAvgRating: u.reportIncludeAvgRating ?? false,
+      filterExcludeAnsweringMachine: u.filterExcludeAnsweringMachine ?? false,
+      filterMinDuration: String(u.filterMinDuration ?? 0),
+      filterMinReplicas: String(u.filterMinReplicas ?? 0),
+      kpiBaseSalary: String(u.kpiBaseSalary ?? 0),
+      kpiTargetBonus: String(u.kpiTargetBonus ?? 0),
+      kpiTargetTalkTimeMinutes: String(u.kpiTargetTalkTimeMinutes ?? 0),
+      reportDailyTime: normTime(promptsMap.reportDailyTime) || "18:00",
+      reportWeeklyDay: (promptsMap.reportWeeklyDay || "fri").toLowerCase(),
+      reportWeeklyTime: normTime(promptsMap.reportWeeklyTime) || "18:10",
+      reportMonthlyDay: promptsMap.reportMonthlyDay || "last",
+      reportMonthlyTime: normTime(promptsMap.reportMonthlyTime) || "18:20",
     }));
   }, [userData, promptsList]);
 
@@ -244,7 +216,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const reportPayload = serializeReportSettingsForApi(form);
     const payload = {
       givenName: loadedUser?.givenName ?? getGivenName(user) ?? "",
       familyName: loadedUser?.familyName ?? getFamilyName(user) ?? "",
@@ -252,7 +223,27 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         loadedUser?.internalExtensions ??
         getInternalExtensions(user) ??
         undefined,
-      ...reportPayload,
+      email: form.email.trim() || undefined,
+      emailDailyReport: form.emailDailyReport,
+      emailWeeklyReport: form.emailWeeklyReport,
+      emailMonthlyReport: form.emailMonthlyReport,
+      telegramChatId: form.telegramChatId.trim() || undefined,
+      telegramDailyReport: form.telegramDailyReport,
+      telegramWeeklyReport: form.telegramWeeklyReport,
+      telegramMonthlyReport: form.telegramMonthlyReport,
+      telegramSkipWeekends: form.telegramSkipWeekends,
+      reportIncludeCallSummaries: form.reportIncludeCallSummaries,
+      reportDetailed: form.reportDetailed,
+      reportIncludeAvgValue: form.reportIncludeAvgValue,
+      reportIncludeAvgRating: form.reportIncludeAvgRating,
+      filterExcludeAnsweringMachine: form.filterExcludeAnsweringMachine,
+      filterMinDuration: parseInt(form.filterMinDuration, 10) || 0,
+      filterMinReplicas: parseInt(form.filterMinReplicas, 10) || 0,
+      kpiBaseSalary: parseInt(form.kpiBaseSalary, 10) || 0,
+      kpiTargetBonus: parseInt(form.kpiTargetBonus, 10) || 0,
+      kpiTargetTalkTimeMinutes:
+        parseInt(form.kpiTargetTalkTimeMinutes, 10) || 0,
+      reportManagedUserIds: JSON.stringify(form.reportManagedUserIds ?? []),
     };
     try {
       await updateMutation.mutateAsync({
@@ -261,12 +252,37 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       });
       await updateMaxMutation.mutateAsync({
         user_id: userId,
-        data: serializeMaxSettingsForApi(form),
+        data: {
+          maxChatId: form.maxChatId?.trim() || null,
+          maxDailyReport: form.maxDailyReport,
+          maxManagerReport: form.maxManagerReport,
+        },
       });
       if (isWorkspaceAdmin) {
         await updatePromptsMutation
           .mutateAsync({
-            prompts: serializePromptsForApi(form),
+            prompts: {
+              reportDailyTime: {
+                value: form.reportDailyTime || "18:00",
+                description: "Время ежедневного отчёта (ЧЧ:ММ)",
+              },
+              reportWeeklyDay: {
+                value: form.reportWeeklyDay || "fri",
+                description: "День недели еженедельного",
+              },
+              reportWeeklyTime: {
+                value: form.reportWeeklyTime || "18:10",
+                description: "Время еженедельного отчёта",
+              },
+              reportMonthlyDay: {
+                value: form.reportMonthlyDay || "last",
+                description: "День месяца (1-28 или last)",
+              },
+              reportMonthlyTime: {
+                value: form.reportMonthlyTime || "18:20",
+                description: "Время ежемесячного отчёта",
+              },
+            },
           })
           .catch(() => {});
       }

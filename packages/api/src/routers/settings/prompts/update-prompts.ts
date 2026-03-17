@@ -1,7 +1,7 @@
 import { systemRepository, workspaceSettingsRepository } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { workspaceAdminProcedure } from "../../../orpc";
-import { DEEPSEEK_MODELS, REPORT_SETTINGS_KEYS } from "../constants";
+import { DEEPSEEK_MODELS, REPORT_PROMPTS_CAMEL_TO_SNAKE } from "../constants";
 import { settingsUpdateSchema } from "../schemas";
 import { maskSensitiveData } from "../utils";
 
@@ -56,15 +56,17 @@ export const updatePrompts = workspaceAdminProcedure
     }
     const promptLogItems: { key: string; value: string }[] = [];
     if (input.prompts) {
-      for (const key of REPORT_SETTINGS_KEYS) {
-        const p = input.prompts[key] as
+      for (const [camelKey, snakeKey] of Object.entries(
+        REPORT_PROMPTS_CAMEL_TO_SNAKE,
+      )) {
+        const p = input.prompts[camelKey] as
           | { value?: string; description?: string }
           | undefined;
         if (p) {
-          promptLogItems.push({ key, value: p.value ?? "" });
+          promptLogItems.push({ key: snakeKey, value: p.value ?? "" });
           upserts.push(
             workspaceSettingsRepository.upsert(
-              key,
+              snakeKey,
               p.value ?? "",
               p.description ?? "",
               workspaceId,
@@ -82,12 +84,16 @@ export const updatePrompts = workspaceAdminProcedure
     }
     for (const { key, value } of promptLogItems) {
       const maskedValue = maskSensitiveData(key, value);
-      await systemRepository.addActivityLog(
-        "info",
-        `Setting updated: ${key} = ${maskedValue}`,
-        String(username),
-        workspaceId,
-      );
+      try {
+        await systemRepository.addActivityLog(
+          "info",
+          `Настройка обновлена: ${key} = ${maskedValue}`,
+          String(username),
+          workspaceId,
+        );
+      } catch {
+        // Логирование best-effort: не прерываем обработчик при ошибке
+      }
     }
     return { success: true };
   });

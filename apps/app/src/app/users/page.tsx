@@ -8,8 +8,6 @@ import { useEffect, useState } from "react";
 import { ConfirmDialog } from "@/components/features/users/confirm-dialog";
 import type { WorkspaceMemberUser } from "@/components/features/users/types";
 import UsersTable from "@/components/features/users/users-table";
-import ConfigureInvitationSettingsModal from "@/components/features/workspaces/configure-invitation-settings-modal";
-import type { InvitationSettingsPayload } from "@/components/features/workspaces/invitation-settings-types";
 import InviteUserModal from "@/components/features/workspaces/invite-user-modal";
 import PendingInvitations from "@/components/features/workspaces/pending-invitations";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
@@ -28,11 +26,6 @@ export default function UsersPage() {
   const userLoading = sessionPending;
 
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [configureInvitation, setConfigureInvitation] = useState<{
-    id: string;
-    email: string;
-    settings?: InvitationSettingsPayload;
-  } | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<{
     userId: string;
     email: string;
@@ -141,20 +134,6 @@ export default function UsersPage() {
     }),
   );
 
-  const updateInvitationSettingsMutation = useMutation(
-    orpc.workspaces.updateInvitationSettings.mutationOptions({
-      onSuccess: () => {
-        invalidateQueries();
-        toast.success("Настройки сохранены");
-      },
-      onError: (err) => {
-        toast.error(
-          err instanceof Error ? err.message : "Не удалось сохранить настройки",
-        );
-      },
-    }),
-  );
-
   const handleInviteSubmit = async (
     email: string,
     role: "admin" | "member",
@@ -177,29 +156,6 @@ export default function UsersPage() {
   ) => {
     if (!workspaceId) return;
     updateRoleMutation.mutate({ workspaceId, userId, role });
-  };
-
-  const handleConfigureInvitation = (invitationId: string, email: string) => {
-    const invitation = invitations.find((inv) => inv.id === invitationId);
-    setConfigureInvitation({
-      id: invitationId,
-      email,
-      settings: invitation?.pendingSettings as
-        | InvitationSettingsPayload
-        | undefined,
-    });
-  };
-
-  const handleSaveInvitationSettings = async (
-    invitationId: string,
-    settings: InvitationSettingsPayload,
-  ) => {
-    if (!workspaceId) throw new Error("Нет рабочего пространства");
-    await updateInvitationSettingsMutation.mutateAsync({
-      workspaceId,
-      invitationId,
-      settings,
-    });
   };
 
   const activeUsersCount = (users as WorkspaceMemberUser[]).filter(
@@ -264,7 +220,6 @@ export default function UsersPage() {
                 });
               }
             }}
-            onConfigureSettings={handleConfigureInvitation}
             isRevoking={revokeInvitationMutation.isPending}
           />
         )}
@@ -274,16 +229,6 @@ export default function UsersPage() {
         <InviteUserModal
           onClose={() => setShowInviteModal(false)}
           onSubmit={handleInviteSubmit}
-        />
-      )}
-
-      {configureInvitation && (
-        <ConfigureInvitationSettingsModal
-          invitationId={configureInvitation.id}
-          email={configureInvitation.email}
-          initialSettings={configureInvitation.settings}
-          onClose={() => setConfigureInvitation(null)}
-          onSave={handleSaveInvitationSettings}
         />
       )}
 

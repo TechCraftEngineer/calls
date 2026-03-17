@@ -36,9 +36,9 @@ export function EmailBlock({
   };
 
   const emailOptions = [
-    ["email_daily_report", "Ежедневный отчет (Email)"],
-    ["email_weekly_report", "Еженедельный отчет (Email)"],
-    ["email_monthly_report", "Ежемесячный отчет (Email)"],
+    ["emailDailyReport", "Ежедневный отчет (Email)"],
+    ["emailWeeklyReport", "Еженедельный отчет (Email)"],
+    ["emailMonthlyReport", "Ежемесячный отчет (Email)"],
   ] as const;
 
   return (

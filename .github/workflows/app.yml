@@ -116,6 +116,7 @@ jobs:
 
       - name: Get migration logs
         if: always() && steps.migration-changes.outputs.db-migrations == 'true'
+        continue-on-error: true
         uses: kodermax/kubectl-aws-eks@main
         env:
           KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}

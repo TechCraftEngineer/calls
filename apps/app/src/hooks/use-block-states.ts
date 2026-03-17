@@ -22,41 +22,37 @@ export function useBlockStates() {
         ];
       case "telegram":
         return [
-          "telegram_daily_report",
-          "telegram_manager_report",
-          "telegram_weekly_report",
-          "telegram_monthly_report",
+          "telegramDailyReport",
+          "telegramManagerReport",
+          "telegramWeeklyReport",
+          "telegramMonthlyReport",
         ];
       case "max":
-        return ["max_daily_report", "max_manager_report"];
+        return ["maxChatId", "maxDailyReport", "maxManagerReport"];
       case "email":
         return [
           "email",
-          "email_daily_report",
-          "email_weekly_report",
-          "email_monthly_report",
+          "emailDailyReport",
+          "emailWeeklyReport",
+          "emailMonthlyReport",
         ];
       case "reports":
         return [
-          "report_include_call_summaries",
-          "report_detailed",
-          "report_include_avg_value",
-          "report_include_avg_rating",
+          "reportIncludeCallSummaries",
+          "reportDetailed",
+          "reportIncludeAvgValue",
+          "reportIncludeAvgRating",
         ];
       case "kpi":
-        return [
-          "kpi_base_salary",
-          "kpi_target_bonus",
-          "kpi_target_talk_time_minutes",
-        ];
+        return ["kpiBaseSalary", "kpiTargetBonus", "kpiTargetTalkTimeMinutes"];
       case "filters":
         return [
-          "filter_exclude_answering_machine",
-          "filter_min_duration",
-          "filter_min_replicas",
+          "filterExcludeAnsweringMachine",
+          "filterMinDuration",
+          "filterMinReplicas",
         ];
       case "evaluation":
-        return ["evaluation_template_slug", "evaluation_custom_instructions"];
+        return ["evaluationTemplateSlug", "evaluationCustomInstructions"];
       default:
         return [];
     }

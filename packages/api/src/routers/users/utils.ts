@@ -7,6 +7,7 @@ export async function logUpdate(
   username: string,
   contextUsername: string,
   error?: unknown,
+  workspaceId?: string | null,
 ) {
   await systemRepository.addActivityLog(
     error ? "error" : "info",
@@ -14,6 +15,7 @@ export async function logUpdate(
       ? `Failed to ${action} ${username}: ${error instanceof Error ? error.message : String(error)}`
       : `User ${action}: ${username}`,
     contextUsername,
+    workspaceId,
   );
 }
 

@@ -14,7 +14,7 @@ export interface WorkspaceMemberUser {
   mobilePhones: string | null;
   created_at: string | null;
   telegramChatId: string | null;
-  evaluation_template_slug: "sales" | "support" | "general" | null;
+  evaluationTemplateSlug: "sales" | "support" | "general" | null;
 }
 
 // Расширенный тип пользователя с полями управления
@@ -29,28 +29,28 @@ export interface ManagedUser extends Omit<User, "id" | "email"> {
   givenName?: string;
   familyName?: string;
   telegramChatId?: string;
-  telegram_daily_report?: boolean;
-  telegram_manager_report?: boolean;
-  max_chat_id?: string;
-  max_daily_report?: boolean;
-  max_manager_report?: boolean;
-  filter_exclude_answering_machine?: boolean;
-  filter_min_duration?: number;
-  filter_min_replicas?: number;
-  email_daily_report?: boolean;
-  email_weekly_report?: boolean;
-  email_monthly_report?: boolean;
-  telegram_weekly_report?: boolean;
-  telegram_monthly_report?: boolean;
-  report_include_call_summaries?: boolean;
-  report_detailed?: boolean;
-  report_include_avg_value?: boolean;
-  report_include_avg_rating?: boolean;
-  kpi_base_salary?: number;
-  kpi_target_bonus?: number;
-  kpi_target_talk_time_minutes?: number;
-  evaluation_template_slug?: string | null;
-  evaluation_custom_instructions?: string | null;
+  telegramDailyReport?: boolean;
+  telegramManagerReport?: boolean;
+  maxChatId?: string;
+  maxDailyReport?: boolean;
+  maxManagerReport?: boolean;
+  filterExcludeAnsweringMachine?: boolean;
+  filterMinDuration?: number;
+  filterMinReplicas?: number;
+  emailDailyReport?: boolean;
+  emailWeeklyReport?: boolean;
+  emailMonthlyReport?: boolean;
+  telegramWeeklyReport?: boolean;
+  telegramMonthlyReport?: boolean;
+  reportIncludeCallSummaries?: boolean;
+  reportDetailed?: boolean;
+  reportIncludeAvgValue?: boolean;
+  reportIncludeAvgRating?: boolean;
+  kpiBaseSalary?: number;
+  kpiTargetBonus?: number;
+  kpiTargetTalkTimeMinutes?: number;
+  evaluationTemplateSlug?: string | null;
+  evaluationCustomInstructions?: string | null;
 }
 
 // Форма создания пользователя
@@ -62,28 +62,28 @@ export interface AddUserForm {
   internalExtensions: string;
   mobilePhones: string;
   telegramChatId: string;
-  telegram_daily_report: boolean;
-  telegram_manager_report: boolean;
-  max_chat_id: string;
-  max_daily_report: boolean;
-  max_manager_report: boolean;
-  filter_exclude_answering_machine: boolean;
-  filter_min_duration: number;
-  filter_min_replicas: number;
-  email_daily_report: boolean;
-  email_weekly_report: boolean;
-  email_monthly_report: boolean;
-  telegram_weekly_report: boolean;
-  telegram_monthly_report: boolean;
-  report_include_call_summaries: boolean;
-  report_detailed: boolean;
-  report_include_avg_value: boolean;
-  report_include_avg_rating: boolean;
-  kpi_base_salary: number;
-  kpi_target_bonus: number;
-  kpi_target_talk_time_minutes: number;
-  evaluation_template_slug: string | null;
-  evaluation_custom_instructions: string | null;
+  telegramDailyReport: boolean;
+  telegramManagerReport: boolean;
+  maxChatId: string;
+  maxDailyReport: boolean;
+  maxManagerReport: boolean;
+  filterExcludeAnsweringMachine: boolean;
+  filterMinDuration: number;
+  filterMinReplicas: number;
+  emailDailyReport: boolean;
+  emailWeeklyReport: boolean;
+  emailMonthlyReport: boolean;
+  telegramWeeklyReport: boolean;
+  telegramMonthlyReport: boolean;
+  reportIncludeCallSummaries: boolean;
+  reportDetailed: boolean;
+  reportIncludeAvgValue: boolean;
+  reportIncludeAvgRating: boolean;
+  kpiBaseSalary: number;
+  kpiTargetBonus: number;
+  kpiTargetTalkTimeMinutes: number;
+  evaluationTemplateSlug: string | null;
+  evaluationCustomInstructions: string | null;
 }
 
 // Форма редактирования пользователя (без пароля)

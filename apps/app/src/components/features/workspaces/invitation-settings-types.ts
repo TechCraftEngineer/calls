@@ -1,5 +1,5 @@
 /**
- * Типы для настроек приглашения (pending settings).
+ * Типы для настроек приглашения (ожидающие настройки).
  * Соответствуют PendingUserSettings из packages/db.
  */
 
@@ -15,11 +15,13 @@ export interface InvitationNotificationSettings {
     weeklyReport?: boolean;
     monthlyReport?: boolean;
     skipWeekends?: boolean;
+    connectToken?: string;
   };
   max?: {
     chatId?: string;
     dailyReport?: boolean;
     managerReport?: boolean;
+    connectToken?: string;
   };
 }
 

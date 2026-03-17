@@ -2,32 +2,42 @@ import { APP_CONFIG, env, paths } from "@calls/config";
 import {
   Body,
   Button,
+  Column,
   Container,
   Head,
   Heading,
   Hr,
   Html,
+  Img,
   Link,
   Preview,
+  pixelBasedPreset,
+  Row,
   Section,
   Tailwind,
   Text,
 } from "@react-email/components";
 
-import { emailTailwindConfig } from "../tailwind";
-
-export default function ResetPasswordEmail({
-  resetLink = `${env.APP_URL}${paths.auth.resetPassword}?token=abc123`,
-}: {
+interface ResetPasswordEmailProps {
   resetLink?: string;
-}) {
+}
+
+export const ResetPasswordEmail = ({
+  resetLink = `${env.APP_URL}${paths.auth.resetPassword}?token=abc123`,
+}: ResetPasswordEmailProps) => {
+  const previewText = `Сброс пароля — ${APP_CONFIG.shortName}`;
+
   return (
     <Html>
       <Head />
-      <Preview>Сброс пароля — {APP_CONFIG.shortName}</Preview>
-      <Tailwind config={emailTailwindConfig}>
-        <Body className="mx-auto my-auto bg-white font-sans">
-          <Container className="mx-auto my-[40px] w-[465px] rounded border border-solid border-[#eaeaea] p-[20px]">
+      <Tailwind
+        config={{
+          presets: [pixelBasedPreset],
+        }}
+      >
+        <Body className="mx-auto my-auto bg-white px-2 font-sans">
+          <Preview>{previewText}</Preview>
+          <Container className="mx-auto my-[40px] max-w-[465px] rounded border border-[#eaeaea] border-solid p-[20px]">
             <Heading className="mx-0 my-[30px] p-0 text-center text-[24px] font-normal text-black">
               Сброс пароля для{" "}
               <Link href={env.APP_URL} className="text-black">
@@ -41,23 +51,20 @@ export default function ResetPasswordEmail({
               Мы получили запрос на сброс пароля. Нажмите кнопку ниже, чтобы
               создать новый пароль:
             </Text>
-            <Section className="my-[32px] text-center">
+            <Section className="mt-[32px] mb-[32px] text-center">
               <Button
-                className="rounded bg-[#000000] px-[20px] py-[12px] text-center text-[14px] font-semibold text-white no-underline"
+                className="rounded bg-[#000000] px-5 py-3 text-center font-semibold text-[12px] text-white no-underline"
                 href={resetLink}
               >
                 Сбросить пароль
               </Button>
             </Section>
             <Text className="text-[14px] leading-[24px] text-black">
-              Или скопируйте и вставьте эту ссылку в браузер:
+              Или скопируйте и вставьте эту ссылку в браузер:{" "}
+              <Link href={resetLink} className="text-blue-600 no-underline">
+                {resetLink}
+              </Link>
             </Text>
-            <Link
-              href={resetLink}
-              className="text-[14px] text-blue-600 no-underline"
-            >
-              {resetLink}
-            </Link>
             <Text className="text-[14px] leading-[24px] text-black">
               Ссылка действительна 1 час по соображениям безопасности.
             </Text>
@@ -75,4 +82,10 @@ export default function ResetPasswordEmail({
       </Tailwind>
     </Html>
   );
-}
+};
+
+ResetPasswordEmail.PreviewProps = {
+  resetLink: `${env.APP_URL}${paths.auth.resetPassword}?token=abc123`,
+} as ResetPasswordEmailProps;
+
+export default ResetPasswordEmail;

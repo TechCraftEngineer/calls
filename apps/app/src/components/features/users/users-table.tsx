@@ -48,10 +48,11 @@ function formatDate(dateStr?: string | null): string {
   if (Number.isNaN(date.getTime())) {
     return dateStr.substring(0, 10).replace(/-/g, ".");
   }
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}.${month}.${year}`;
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
 }
 
 export default function UsersTable({
@@ -146,10 +147,10 @@ export default function UsersTable({
                       )}
                     </TableCell>
                     <TableCell className="text-[#555]">
-                      {u.evaluation_template_slug
+                      {u.evaluationTemplateSlug
                         ? (EVALUATION_TEMPLATE_LABELS[
-                            u.evaluation_template_slug
-                          ] ?? u.evaluation_template_slug)
+                            u.evaluationTemplateSlug
+                          ] ?? u.evaluationTemplateSlug)
                         : "—"}
                     </TableCell>
                     <TableCell

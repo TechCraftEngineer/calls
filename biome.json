@@ -73,16 +73,6 @@
       }
     },
     {
-      "includes": ["packages/api/**/*.ts", "packages/backend-storage/**/*.ts"],
-      "linter": {
-        "rules": {
-          "style": { "noNonNullAssertion": "off" },
-          "correctness": { "noUnusedFunctionParameters": "warn" },
-          "suspicious": { "noExplicitAny": "off" }
-        }
-      }
-    },
-    {
       "includes": ["apps/app/**/*.tsx", "apps/app/**/*.ts"],
       "linter": {
         "rules": {

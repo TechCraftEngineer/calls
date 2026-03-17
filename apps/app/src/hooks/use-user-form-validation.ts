@@ -36,7 +36,7 @@ export function useUserFormValidation() {
       }
 
       // Валидация числовых полей
-      if (form.filter_min_duration < 0) {
+      if (form.filterMinDuration < 0) {
         newErrors.push({
           field: "filter_min_duration",
           message:
@@ -44,28 +44,28 @@ export function useUserFormValidation() {
         });
       }
 
-      if (form.filter_min_replicas < 0) {
+      if (form.filterMinReplicas < 0) {
         newErrors.push({
           field: "filter_min_replicas",
           message: "Минимальное количество реплик не может быть отрицательным.",
         });
       }
 
-      if (form.kpi_base_salary < 0) {
+      if (form.kpiBaseSalary < 0) {
         newErrors.push({
-          field: "kpi_base_salary",
+          field: "kpiBaseSalary",
           message: "Базовый оклад не может быть отрицательным.",
         });
       }
 
-      if (form.kpi_target_bonus < 0) {
+      if (form.kpiTargetBonus < 0) {
         newErrors.push({
           field: "kpi_target_bonus",
           message: "Целевой бонус не может быть отрицательным.",
         });
       }
 
-      if (form.kpi_target_talk_time_minutes < 0) {
+      if (form.kpiTargetTalkTimeMinutes < 0) {
         newErrors.push({
           field: "kpi_target_talk_time_minutes",
           message: "Целевое время разговоров не может быть отрицательным.",

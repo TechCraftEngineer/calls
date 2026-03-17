@@ -5,8 +5,8 @@ import { workspaceProcedure } from "../../../orpc";
 import { canAccessUser, logUpdate } from "../utils";
 
 const updateEvaluationSettingsSchema = z.object({
-  evaluation_template_slug: z.string().min(1).optional().nullable(),
-  evaluation_custom_instructions: z.string().optional().nullable(),
+  evaluationTemplateSlug: z.string().min(1).optional().nullable(),
+  evaluationCustomInstructions: z.string().optional().nullable(),
 });
 
 export const updateEvaluationSettings = workspaceProcedure
@@ -29,9 +29,8 @@ export const updateEvaluationSettings = workspaceProcedure
         input.user_id,
         context.workspaceId!,
         {
-          evaluationTemplateSlug: input.data.evaluation_template_slug,
-          evaluationCustomInstructions:
-            input.data.evaluation_custom_instructions,
+          evaluationTemplateSlug: input.data.evaluationTemplateSlug,
+          evaluationCustomInstructions: input.data.evaluationCustomInstructions,
         },
       );
 
@@ -40,6 +39,8 @@ export const updateEvaluationSettings = workspaceProcedure
         user.email ?? "unknown",
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
+        undefined,
+        context.workspaceId,
       );
 
       return await usersService.getUserForEdit(
@@ -53,6 +54,7 @@ export const updateEvaluationSettings = workspaceProcedure
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
+        context.workspaceId,
       );
       throw error;
     }

@@ -3,6 +3,10 @@ import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 import { getInternalNumbersForUser, getMobileNumbersForUser } from "./utils";
 
+const transcriptMetadataSchema = z
+  .object({ operatorName: z.string().optional() })
+  .strict();
+
 const listCallsSchema = z.object({
   page: z.number().min(1).default(1),
   per_page: z.number().min(1).max(100).default(15),
@@ -70,11 +74,13 @@ export const list = workspaceProcedure
             ? item.call.timestamp.toISOString()
             : item.call.timestamp,
         managerName: item.call.name ?? null,
-        operatorName:
-          (item.transcript?.metadata as { operatorName?: string } | undefined)
-            ?.operatorName ??
-          item.call.name ??
-          null,
+        operatorName: (() => {
+          const meta = item.transcript?.metadata;
+          const parsed = transcriptMetadataSchema.safeParse(meta);
+          return parsed.success && typeof parsed.data.operatorName === "string"
+            ? parsed.data.operatorName
+            : (item.call.name ?? null);
+        })(),
       },
     }));
 

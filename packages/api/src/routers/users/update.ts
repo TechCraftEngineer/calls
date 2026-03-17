@@ -52,49 +52,47 @@ export const update = workspaceProcedure
       await usersService.updateUserFilters(
         input.user_id,
         context.workspaceId!,
-        d.filter_exclude_answering_machine ??
-          (u.filter_exclude_answering_machine as boolean) ??
+        d.filterExcludeAnsweringMachine ??
+          (u.filterExcludeAnsweringMachine as boolean) ??
           false,
-        d.filter_min_duration ?? (u.filter_min_duration as number) ?? 0,
-        d.filter_min_replicas ?? (u.filter_min_replicas as number) ?? 0,
+        d.filterMinDuration ?? (u.filterMinDuration as number) ?? 0,
+        d.filterMinReplicas ?? (u.filterMinReplicas as number) ?? 0,
       );
 
       await usersService.updateUserReportKpiSettings(
         input.user_id,
         context.workspaceId!,
         {
-          filterExcludeAnsweringMachine: d.filter_exclude_answering_machine,
-          filterMinDuration: d.filter_min_duration,
-          filterMinReplicas: d.filter_min_replicas,
-          telegramDailyReport: d.telegram_daily_report,
-          telegramManagerReport: d.telegram_manager_report,
-          telegramWeeklyReport: d.telegram_weekly_report,
-          telegramMonthlyReport: d.telegram_monthly_report,
-          telegramSkipWeekends: d.telegram_skip_weekends,
-          emailDailyReport: d.email_daily_report,
-          emailWeeklyReport: d.email_weekly_report,
-          emailMonthlyReport: d.email_monthly_report,
-          reportIncludeCallSummaries: d.report_include_call_summaries,
-          reportDetailed: d.report_detailed,
-          reportIncludeAvgValue: d.report_include_avg_value,
-          reportIncludeAvgRating: d.report_include_avg_rating,
-          reportManagedUserIds: d.report_managed_user_ids,
-          kpiBaseSalary: d.kpi_base_salary,
-          kpiTargetBonus: d.kpi_target_bonus,
-          kpiTargetTalkTimeMinutes: d.kpi_target_talk_time_minutes,
-          evaluationTemplateSlug: d.evaluation_template_slug,
-          evaluationCustomInstructions: d.evaluation_custom_instructions,
+          filterExcludeAnsweringMachine: d.filterExcludeAnsweringMachine,
+          filterMinDuration: d.filterMinDuration,
+          filterMinReplicas: d.filterMinReplicas,
+          telegramDailyReport: d.telegramDailyReport,
+          telegramManagerReport: d.telegramManagerReport,
+          telegramWeeklyReport: d.telegramWeeklyReport,
+          telegramMonthlyReport: d.telegramMonthlyReport,
+          telegramSkipWeekends: d.telegramSkipWeekends,
+          emailDailyReport: d.emailDailyReport,
+          emailWeeklyReport: d.emailWeeklyReport,
+          emailMonthlyReport: d.emailMonthlyReport,
+          reportIncludeCallSummaries: d.reportIncludeCallSummaries,
+          reportDetailed: d.reportDetailed,
+          reportIncludeAvgValue: d.reportIncludeAvgValue,
+          reportIncludeAvgRating: d.reportIncludeAvgRating,
+          reportManagedUserIds: d.reportManagedUserIds,
+          kpiBaseSalary: d.kpiBaseSalary,
+          kpiTargetBonus: d.kpiTargetBonus,
+          kpiTargetTalkTimeMinutes: d.kpiTargetTalkTimeMinutes,
+          evaluationTemplateSlug: d.evaluationTemplateSlug,
+          evaluationCustomInstructions: d.evaluationCustomInstructions,
         },
       );
 
       await usersService.updateUserTelegramSettings(
         input.user_id,
         context.workspaceId!,
-        d.telegram_daily_report ??
-          (u.telegram_daily_report as boolean) ??
-          false,
-        d.telegram_manager_report ??
-          (u.telegram_manager_report as boolean) ??
+        d.telegramDailyReport ?? (u.telegramDailyReport as boolean) ?? false,
+        d.telegramManagerReport ??
+          (u.telegramManagerReport as boolean) ??
           false,
       );
 
@@ -103,6 +101,8 @@ export const update = workspaceProcedure
         user.email ?? "unknown",
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
+        undefined,
+        context.workspaceId,
       );
 
       const updated = await usersService.getUser(input.user_id);
@@ -119,6 +119,7 @@ export const update = workspaceProcedure
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
+        context.workspaceId,
       );
       throw error;
     }

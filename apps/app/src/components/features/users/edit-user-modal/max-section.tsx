@@ -5,7 +5,10 @@ import type { EditUserForm, WorkspaceMemberUser } from "../types";
 
 interface MaxSectionProps {
   form: EditUserForm;
-  editUser: WorkspaceMemberUser & { max_chat_id?: string | null };
+  editUser: WorkspaceMemberUser & {
+    maxChatId?: string | null;
+    max_chat_id?: string | null;
+  };
   onFormChange: (updates: Partial<EditUserForm>) => void;
   onDisconnect: () => void;
   onConnect: () => void;
@@ -27,14 +30,15 @@ export function MaxSection({
         </label>
         <Input
           type="text"
-          value={form.max_chat_id}
-          onChange={(e) => onFormChange({ max_chat_id: e.target.value })}
+          value={form.maxChatId}
+          onChange={(e) => onFormChange({ maxChatId: e.target.value })}
           className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
           placeholder="ID чата MAX"
         />
       </div>
       <div className="mb-3">
-        {editUser.max_chat_id ? (
+        {(editUser.maxChatId ??
+        (editUser as { max_chat_id?: string }).max_chat_id) ? (
           <Button
             type="button"
             variant="outline"
@@ -57,7 +61,7 @@ export function MaxSection({
         )}
       </div>
       <div className="flex flex-col gap-2">
-        {(["max_daily_report", "max_manager_report"] as const).map((key) => (
+        {(["maxDailyReport", "maxManagerReport"] as const).map((key) => (
           <label
             key={key}
             className="flex items-center gap-2 text-[13px] cursor-pointer"
@@ -67,7 +71,7 @@ export function MaxSection({
               checked={form[key]}
               onChange={(e) => onFormChange({ [key]: e.target.checked })}
             />
-            {key === "max_daily_report"
+            {key === "maxDailyReport"
               ? "Получать свои ежедневные отчеты (MAX)"
               : "Получать отчеты по всем менеджерам (MAX)"}
           </label>

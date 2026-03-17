@@ -83,12 +83,19 @@ const updateInvitationSettingsSchema = workspaceIdInputSchema.extend({
       evaluationSettings: partialEvaluationSettingsSchema,
     })
     .refine(
-      (s) =>
-        s.notificationSettings !== undefined ||
-        s.reportSettings !== undefined ||
-        s.kpiSettings !== undefined ||
-        s.filterSettings !== undefined ||
-        s.evaluationSettings !== undefined,
+      (s) => {
+        const isNonEmpty = (block: unknown) =>
+          block != null &&
+          typeof block === "object" &&
+          Object.keys(block).length > 0;
+        return (
+          isNonEmpty(s.notificationSettings) ||
+          isNonEmpty(s.reportSettings) ||
+          isNonEmpty(s.kpiSettings) ||
+          isNonEmpty(s.filterSettings) ||
+          isNonEmpty(s.evaluationSettings)
+        );
+      },
       { message: "Требуется хотя бы один блок настроек" },
     ),
 });

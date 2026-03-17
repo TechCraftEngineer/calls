@@ -25,28 +25,28 @@ const defaultForm: AddUserForm = {
   internalExtensions: "",
   mobilePhones: "",
   telegramChatId: "",
-  telegram_daily_report: false,
-  telegram_manager_report: false,
-  max_chat_id: "",
-  max_daily_report: false,
-  max_manager_report: false,
-  filter_exclude_answering_machine: false,
-  filter_min_duration: 0,
-  filter_min_replicas: 0,
-  email_daily_report: false,
-  email_weekly_report: false,
-  email_monthly_report: false,
-  telegram_weekly_report: false,
-  telegram_monthly_report: false,
-  report_include_call_summaries: false,
-  report_detailed: false,
-  report_include_avg_value: false,
-  report_include_avg_rating: false,
-  kpi_base_salary: 0,
-  kpi_target_bonus: 0,
-  kpi_target_talk_time_minutes: 0,
-  evaluation_template_slug: "general",
-  evaluation_custom_instructions: "",
+  telegramDailyReport: false,
+  telegramManagerReport: false,
+  maxChatId: "",
+  maxDailyReport: false,
+  maxManagerReport: false,
+  filterExcludeAnsweringMachine: false,
+  filterMinDuration: 0,
+  filterMinReplicas: 0,
+  emailDailyReport: false,
+  emailWeeklyReport: false,
+  emailMonthlyReport: false,
+  telegramWeeklyReport: false,
+  telegramMonthlyReport: false,
+  reportIncludeCallSummaries: false,
+  reportDetailed: false,
+  reportIncludeAvgValue: false,
+  reportIncludeAvgRating: false,
+  kpiBaseSalary: 0,
+  kpiTargetBonus: 0,
+  kpiTargetTalkTimeMinutes: 0,
+  evaluationTemplateSlug: "general",
+  evaluationCustomInstructions: "",
 };
 
 export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
@@ -179,11 +179,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
               <label className="flex items-center gap-2 text-[13px] cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={form.telegram_daily_report}
+                  checked={form.telegramDailyReport}
                   onChange={(e) =>
                     setForm((f) => ({
                       ...f,
-                      telegram_daily_report: e.target.checked,
+                      telegramDailyReport: e.target.checked,
                     }))
                   }
                 />
@@ -192,11 +192,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
               <label className="flex items-center gap-2 text-[13px] cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={form.telegram_manager_report}
+                  checked={form.telegramManagerReport}
                   onChange={(e) =>
                     setForm((f) => ({
                       ...f,
-                      telegram_manager_report: e.target.checked,
+                      telegramManagerReport: e.target.checked,
                     }))
                   }
                 />
@@ -212,9 +212,9 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
               <label className={formLabel}>MAX Chat ID</label>
               <Input
                 type="text"
-                value={form.max_chat_id}
+                value={form.maxChatId}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, max_chat_id: e.target.value }))
+                  setForm((f) => ({ ...f, maxChatId: e.target.value }))
                 }
                 className={formInput}
                 placeholder="ID чата MAX"
@@ -227,11 +227,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
               <label className="flex items-center gap-2 text-[13px] cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={form.max_daily_report}
+                  checked={form.maxDailyReport}
                   onChange={(e) =>
                     setForm((f) => ({
                       ...f,
-                      max_daily_report: e.target.checked,
+                      maxDailyReport: e.target.checked,
                     }))
                   }
                 />
@@ -240,11 +240,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
               <label className="flex items-center gap-2 text-[13px] cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={form.max_manager_report}
+                  checked={form.maxManagerReport}
                   onChange={(e) =>
                     setForm((f) => ({
                       ...f,
-                      max_manager_report: e.target.checked,
+                      maxManagerReport: e.target.checked,
                     }))
                   }
                 />
