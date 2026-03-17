@@ -1,4 +1,4 @@
-import { promptsRepository } from "@calls/db";
+import { workspaceSettingsRepository } from "@calls/db";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { evaluationTemplateSlugSchema } from "../schemas";
@@ -11,7 +11,7 @@ export const updateEvaluationSettings = workspaceAdminProcedure
   .input(updateEvaluationSettingsSchema)
   .handler(async ({ input, context }) => {
     if (input.defaultTemplateSlug !== undefined) {
-      await promptsRepository.upsert(
+      await workspaceSettingsRepository.upsert(
         "evaluation_default_template",
         input.defaultTemplateSlug,
         "Шаблон оценки звонков по умолчанию",

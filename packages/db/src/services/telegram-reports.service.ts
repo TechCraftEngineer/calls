@@ -202,7 +202,7 @@ export interface ReportScheduleSettings {
  * Получить настройки времени отчётов для воркспейса.
  */
 export async function getReportScheduleSettings(
-  promptsRepository: {
+  settingsRepository: {
     findByKeyWithDefault: (
       k: string,
       w: string,
@@ -213,27 +213,27 @@ export async function getReportScheduleSettings(
 ): Promise<ReportScheduleSettings> {
   const [dailyTime, weeklyDay, weeklyTime, monthlyDay, monthlyTime] =
     await Promise.all([
-      promptsRepository.findByKeyWithDefault(
+      settingsRepository.findByKeyWithDefault(
         "report_daily_time",
         workspaceId,
         "18:00",
       ),
-      promptsRepository.findByKeyWithDefault(
+      settingsRepository.findByKeyWithDefault(
         "report_weekly_day",
         workspaceId,
         "fri",
       ),
-      promptsRepository.findByKeyWithDefault(
+      settingsRepository.findByKeyWithDefault(
         "report_weekly_time",
         workspaceId,
         "18:10",
       ),
-      promptsRepository.findByKeyWithDefault(
+      settingsRepository.findByKeyWithDefault(
         "report_monthly_day",
         workspaceId,
         "last",
       ),
-      promptsRepository.findByKeyWithDefault(
+      settingsRepository.findByKeyWithDefault(
         "report_monthly_time",
         workspaceId,
         "18:20",

@@ -159,6 +159,123 @@ export const workspaceIntegrationsRepository = {
       );
     return (result.rowCount ?? 0) > 0;
   },
+
+  /** Зашифрованный токен бота (telegram/max) */
+  async getBotToken(
+    workspaceId: string,
+    integrationType: "telegram" | "max",
+  ): Promise<string | null> {
+    try {
+      if (!workspaceId?.trim()) {
+        console.error("Invalid workspaceId provided to getBotToken");
+        return null;
+      }
+
+      if (!["telegram", "max"].includes(integrationType)) {
+        console.error(`Invalid integration type: ${integrationType}`);
+        return null;
+      }
+
+      const row = await db
+        .select({ config: schema.workspaceIntegrations.config })
+        .from(schema.workspaceIntegrations)
+        .where(
+          and(
+            eq(schema.workspaceIntegrations.workspaceId, workspaceId),
+            eq(schema.workspaceIntegrations.integrationType, integrationType),
+          ),
+        )
+        .limit(1);
+
+      const cfg = row[0]?.config as { botToken?: string } | undefined;
+      const token = cfg?.botToken?.trim() || null;
+      
+      if (token) {
+        console.debug(`Found bot token for ${integrationType} in workspace ${workspaceId}`);
+      } else {
+        console.debug(`No bot token found for ${integrationType} in workspace ${workspaceId}`);
+      }
+      
+      return token;
+    } catch (error) {
+      console.error(`Error getting bot token for ${integrationType} in workspace ${workspaceId}:`, error);
+      return null;
+    }
+  },
+
+  /** Сохранить зашифрованный токен бота */
+  async upsertBotToken(
+    workspaceId: string,
+    integrationType: "telegram" | "max",
+    encryptedToken: string,
+  ): Promise<boolean> {
+    try {
+      if (!workspaceId?.trim()) {
+        console.error("Invalid workspaceId provided to upsertBotToken");
+        return false;
+      }
+
+      if (!["telegram", "max"].includes(integrationType)) {
+        console.error(`Invalid integration type: ${integrationType}`);
+        return false;
+      }
+
+      // Validate encrypted token format (should be non-empty string)
+      if (typeof encryptedToken !== "string") {
+        console.error(`Invalid encrypted token type for ${integrationType} in workspace ${workspaceId}`);
+        return false;
+      }
+
+      // Empty string is valid (means token removed)
+      if (!encryptedToken.trim()) {
+        console.log(`Removing bot token for ${integrationType} in workspace ${workspaceId}`);
+      } else {
+        // Basic validation for encrypted tokens (should be reasonably long after encryption)
+        if (encryptedToken.length < 20) {
+          console.error(`Encrypted token too short for ${integrationType} in workspace ${workspaceId}`);
+          return false;
+        }
+        console.log(`Updating bot token for ${integrationType} in workspace ${workspaceId}`);
+      }
+
+      const config = { botToken: encryptedToken };
+      const result = await this.upsert(
+        workspaceId,
+        integrationType,
+        Boolean(encryptedToken.trim()),
+        config,
+      );
+
+      if (result) {
+        console.log(`Successfully upserted bot token for ${integrationType} in workspace ${workspaceId}`);
+      } else {
+        console.error(`Failed to upsert bot token for ${integrationType} in workspace ${workspaceId}`);
+      }
+
+      return result;
+    } catch (error) {
+      console.error(`Error upserting bot token for ${integrationType} in workspace ${workspaceId}:`, error);
+      return false;
+    }
+  },
+
+  /** Workspace IDs с настроенным Telegram ботом */
+  async findWorkspaceIdsWithTelegramBot(): Promise<string[]> {
+    const rows = await db
+      .select({
+        workspaceId: schema.workspaceIntegrations.workspaceId,
+        config: schema.workspaceIntegrations.config,
+      })
+      .from(schema.workspaceIntegrations)
+      .where(eq(schema.workspaceIntegrations.integrationType, "telegram"));
+
+    return rows
+      .filter((r) => {
+        const cfg = r.config as { botToken?: string } | undefined;
+        return cfg?.botToken?.trim();
+      })
+      .map((r) => r.workspaceId);
+  },
 };
 
 export type WorkspaceIntegrationsRepository =

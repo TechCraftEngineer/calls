@@ -16,7 +16,7 @@ export const SENSITIVE_KEYS = [
   "key",
 ];
 
-/** Ключи настроек отчётов (время, день недели и т.д.) — хранятся в таблице prompts */
+/** Ключи настроек отчётов (время, день недели и т.д.) — хранятся в workspace_settings */
 export const PROMPT_KEYS = [
   "report_daily_time",
   "report_weekly_day",

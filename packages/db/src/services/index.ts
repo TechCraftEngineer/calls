@@ -5,11 +5,11 @@
 import { callsRepository } from "../repositories/calls.repository";
 import { filesRepository } from "../repositories/files.repository";
 import { invitationsRepository } from "../repositories/invitations.repository";
-import { promptsRepository } from "../repositories/prompts.repository";
 import { systemRepository } from "../repositories/system.repository";
 import { userWorkspaceSettingsRepository } from "../repositories/user-workspace-settings.repository";
 import { usersRepository } from "../repositories/users.repository";
 import { workspaceIntegrationsRepository } from "../repositories/workspace-integrations.repository";
+import { workspaceSettingsRepository } from "../repositories/workspace-settings.repository";
 import { workspacesRepository } from "../repositories/workspaces.repository";
 import { CallsService } from "./calls.service";
 import { FilesService } from "./files.service";
@@ -30,7 +30,7 @@ export const invitationsService = new InvitationsService(
   invitationsRepository,
 );
 export const settingsService = new SettingsService(
-  promptsRepository,
+  workspaceSettingsRepository,
   systemRepository,
   workspaceIntegrationsRepository,
 );
@@ -39,8 +39,8 @@ export {
   callsRepository,
   filesRepository,
   invitationsRepository,
-  promptsRepository,
   systemRepository,
   usersRepository,
+  type workspaceSettingsRepository,
   workspacesRepository,
 };

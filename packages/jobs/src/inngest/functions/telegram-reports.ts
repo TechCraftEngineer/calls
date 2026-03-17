@@ -7,8 +7,8 @@ import {
   callsService,
   getReportScheduleSettings,
   getTelegramReportRecipients,
-  promptsRepository,
   settingsService,
+  workspaceSettingsRepository,
   workspacesService,
 } from "@calls/db";
 import { sendMessage } from "@calls/telegram-bot";
@@ -103,7 +103,7 @@ export const telegramReportsFn = inngest.createFunction(
           }
 
           const schedule = await getReportScheduleSettings(
-            promptsRepository,
+            workspaceSettingsRepository,
             workspaceId,
           );
 

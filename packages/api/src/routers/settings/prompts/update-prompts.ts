@@ -1,4 +1,4 @@
-import { promptsRepository, systemRepository } from "@calls/db";
+import { systemRepository, workspaceSettingsRepository } from "@calls/db";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { DEEPSEEK_MODELS, PROMPT_KEYS } from "../constants";
 import { settingsUpdateSchema } from "../schemas";
@@ -12,7 +12,7 @@ export const updatePrompts = workspaceAdminProcedure
       (context.user as Record<string, unknown>)?.email ?? "system";
 
     if (input.deepseek_model && input.deepseek_model in DEEPSEEK_MODELS) {
-      await promptsRepository.upsert(
+      await workspaceSettingsRepository.upsert(
         "deepseek_model",
         input.deepseek_model,
         "Selected DeepSeek model",
@@ -20,7 +20,7 @@ export const updatePrompts = workspaceAdminProcedure
       );
     }
     if (input.quality_min_value_threshold !== undefined) {
-      await promptsRepository.upsert(
+      await workspaceSettingsRepository.upsert(
         "quality_min_value_threshold",
         String(input.quality_min_value_threshold),
         "Minimum call value for quality evaluation (0-5)",
@@ -28,7 +28,7 @@ export const updatePrompts = workspaceAdminProcedure
       );
     }
     if (input.enable_manager_recommendations !== undefined) {
-      await promptsRepository.upsert(
+      await workspaceSettingsRepository.upsert(
         "enable_manager_recommendations",
         input.enable_manager_recommendations ? "true" : "false",
         "Включить генерацию рекомендаций для менеджера (true/false)",
@@ -36,7 +36,7 @@ export const updatePrompts = workspaceAdminProcedure
       );
     }
     if (input.evaluation_default_template !== undefined) {
-      await promptsRepository.upsert(
+      await workspaceSettingsRepository.upsert(
         "evaluation_default_template",
         input.evaluation_default_template,
         "Шаблон оценки звонков по умолчанию (sales/support/general)",
@@ -49,7 +49,7 @@ export const updatePrompts = workspaceAdminProcedure
           | { value?: string; description?: string }
           | undefined;
         if (p) {
-          await promptsRepository.upsert(
+          await workspaceSettingsRepository.upsert(
             key,
             p.value ?? "",
             p.description ?? "",

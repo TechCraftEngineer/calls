@@ -3,21 +3,29 @@
  */
 
 import { decrypt, encrypt } from "../lib/encryption";
-import type { PromptsRepository } from "../repositories/prompts.repository";
 import type { SystemRepository } from "../repositories/system.repository";
 import type { WorkspaceIntegrationsRepository } from "../repositories/workspace-integrations.repository";
+import type { WorkspaceSettingsRepository } from "../repositories/workspace-settings.repository";
 
 const FTP_INTEGRATION = "ftp" as const;
 
+const BOT_KEY_TO_TYPE: Record<string, "telegram" | "max"> = {
+  telegram_bot_token: "telegram",
+  max_bot_token: "max",
+};
+
 export class SettingsService {
   constructor(
-    private promptsRepository: PromptsRepository,
+    private workspaceSettingsRepository: WorkspaceSettingsRepository,
     private systemRepository: SystemRepository,
     private workspaceIntegrationsRepository: WorkspaceIntegrationsRepository,
   ) {}
 
   async getSetting(key: string, workspaceId: string): Promise<string | null> {
-    return this.promptsRepository.findByKeyWithDefault(key, workspaceId);
+    return this.workspaceSettingsRepository.findByKeyWithDefault(
+      key,
+      workspaceId,
+    );
   }
 
   /** Токен бота в расшифрованном виде (для Telegram, MAX и др.) */
@@ -25,33 +33,96 @@ export class SettingsService {
     key: string,
     workspaceId: string,
   ): Promise<string | null> {
-    const raw = await this.promptsRepository.findByKeyWithDefault(
-      key,
-      workspaceId,
-    );
-    if (!raw?.trim()) return null;
-    return decrypt(raw);
+    try {
+      const botType = BOT_KEY_TO_TYPE[key];
+      if (!botType) {
+        console.warn(`Unknown bot token key: ${key}`);
+        return null;
+      }
+
+      const raw = await this.workspaceIntegrationsRepository.getBotToken(
+        workspaceId,
+        botType,
+      );
+      
+      if (!raw?.trim()) {
+        console.debug(`No bot token found for key: ${key}, workspace: ${workspaceId}`);
+        return null;
+      }
+
+      const decrypted = decrypt(raw);
+      if (!decrypted?.trim()) {
+        console.warn(`Failed to decrypt bot token for key: ${key}, workspace: ${workspaceId}`);
+        return null;
+      }
+      
+      return decrypted;
+    } catch (error) {
+      console.error(`Error decrypting bot token for key: ${key}, workspace: ${workspaceId}`, error);
+      return null;
+    }
   }
 
   /** Сохранить токен бота в зашифрованном виде */
   async updateBotToken(
     key: string,
     value: string,
-    description: string,
+    _description: string,
     workspaceId: string,
   ): Promise<boolean> {
-    const toStore = value.trim() ? encrypt(value.trim()) : "";
-    return this.promptsRepository.upsert(
-      key,
-      toStore,
-      description,
-      workspaceId,
-    );
+    try {
+      const botType = BOT_KEY_TO_TYPE[key];
+      if (!botType) {
+        console.error(`Unknown bot token key: ${key}`);
+        return false;
+      }
+
+      // Handle empty/null values properly
+      if (!value || !value.trim()) {
+        console.log(`Removing bot token for key: ${key}, workspace: ${workspaceId}`);
+        return this.workspaceIntegrationsRepository.upsertBotToken(
+          workspaceId,
+          botType,
+          "",
+        );
+      }
+
+      const trimmedValue = value.trim();
+      
+      // Basic validation for bot tokens
+      if (trimmedValue.length < 10) {
+        console.error(`Bot token too short for key: ${key}, workspace: ${workspaceId}`);
+        return false;
+      }
+
+      const encrypted = encrypt(trimmedValue);
+      if (!encrypted) {
+        console.error(`Failed to encrypt bot token for key: ${key}, workspace: ${workspaceId}`);
+        return false;
+      }
+
+      const result = await this.workspaceIntegrationsRepository.upsertBotToken(
+        workspaceId,
+        botType,
+        encrypted,
+      );
+
+      if (result) {
+        console.log(`Successfully updated bot token for key: ${key}, workspace: ${workspaceId}`);
+      } else {
+        console.error(`Failed to save bot token for key: ${key}, workspace: ${workspaceId}`);
+      }
+
+      return result;
+    } catch (error) {
+      console.error(`Error updating bot token for key: ${key}, workspace: ${workspaceId}`, error);
+      return false;
+    }
   }
 
   /** Workspace IDs с настроенным Telegram ботом */
   async getWorkspaceIdsWithTelegramBot(): Promise<string[]> {
-    return this.promptsRepository.findWorkspaceIdsWithKey("telegram_bot_token");
+    return this.workspaceIntegrationsRepository.findWorkspaceIdsWithTelegramBot();
   }
 
   /** Список активных интеграций FTP по всем workspace */
@@ -172,7 +243,7 @@ export class SettingsService {
     workspaceId: string,
     username: string = "system",
   ): Promise<boolean> {
-    const result = await this.promptsRepository.upsert(
+    const result = await this.workspaceSettingsRepository.upsert(
       key,
       value,
       description,

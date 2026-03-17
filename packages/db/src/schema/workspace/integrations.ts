@@ -15,8 +15,15 @@ import {
 } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
 
-/** Supported PBX integration types */
-export const INTEGRATION_TYPES = ["ftp", "mango", "beeline", "mts"] as const;
+/** Supported integration types */
+export const INTEGRATION_TYPES = [
+  "ftp",
+  "mango",
+  "beeline",
+  "mts",
+  "telegram",
+  "max",
+] as const;
 
 export type IntegrationType = (typeof INTEGRATION_TYPES)[number];
 
@@ -29,8 +36,16 @@ export interface FtpIntegrationConfig {
   syncFromDate?: string;
 }
 
+/** Config для Telegram/MAX ботов — botToken хранится зашифрованным */
+export interface BotIntegrationConfig {
+  botToken: string;
+}
+
 /** Generic config for future integrations */
-export type IntegrationConfig = FtpIntegrationConfig | Record<string, unknown>;
+export type IntegrationConfig =
+  | FtpIntegrationConfig
+  | BotIntegrationConfig
+  | Record<string, unknown>;
 
 export const workspaceIntegrations = pgTable(
   "workspace_integrations",
