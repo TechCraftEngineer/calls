@@ -319,23 +319,25 @@ export default function HomePage() {
               onRecommendationsGenerated={(callId, recommendations) => {
                 queryClient.setQueryData(
                   orpc.calls.list.queryKey({ input: callsListInput }),
-                  (prev: typeof result) => {
+                  (prev) => {
                     if (!prev) return prev;
-                    return {
-                      ...prev,
-                      calls: prev.calls.map(
-                        (item: (typeof prev.calls)[number]) =>
-                          item.call.id === callId
-                            ? {
-                                ...item,
-                                evaluation: {
-                                  ...(item.evaluation || {}),
+                    const updated = prev.calls.map((item) =>
+                      item.call.id === callId
+                        ? {
+                            ...item,
+                            evaluation: item.evaluation
+                              ? {
+                                  ...item.evaluation,
                                   managerRecommendations: recommendations,
-                                },
-                              }
-                            : item,
-                      ),
-                    };
+                                }
+                              : ({
+                                  id: "",
+                                  managerRecommendations: recommendations,
+                                } as (typeof item)["evaluation"]),
+                          }
+                        : item,
+                    );
+                    return { ...prev, calls: updated };
                   },
                 );
               }}

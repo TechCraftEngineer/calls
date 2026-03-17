@@ -11,7 +11,17 @@ export const list = workspaceAdminProcedure.handler(async ({ context }) => {
         userId: string;
         role: string;
         createdAt: Date;
-        user: Record<string, unknown>;
+        user: {
+          id: string;
+          email?: string | null;
+          name?: string | null;
+          givenName?: string | null;
+          familyName?: string | null;
+          internalExtensions?: string | null;
+          mobilePhones?: string | null;
+          createdAt?: Date | null;
+          telegramChatId?: string | null;
+        };
         evaluationSettings?: { templateSlug?: string } | null;
       }) => {
         const u = r.user;
@@ -26,12 +36,15 @@ export const list = workspaceAdminProcedure.handler(async ({ context }) => {
           role: r.role,
           email: u.email ?? "",
           name: u.name ?? "",
-          givenName: u.givenName,
-          familyName: u.familyName,
-          internalExtensions: u.internalExtensions,
-          mobilePhones: u.mobilePhones,
-          created_at: (u.createdAt as Date)?.toISOString?.() ?? u.createdAt,
-          telegramChatId: u.telegramChatId,
+          givenName: u.givenName ?? null,
+          familyName: u.familyName ?? null,
+          internalExtensions: u.internalExtensions ?? null,
+          mobilePhones: u.mobilePhones ?? null,
+          created_at:
+            u.createdAt instanceof Date
+              ? u.createdAt.toISOString()
+              : ((u.createdAt as string | null) ?? null),
+          telegramChatId: u.telegramChatId ?? null,
           evaluation_template_slug:
             es?.templateSlug &&
             ["sales", "support", "general"].includes(es.templateSlug)

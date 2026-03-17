@@ -4,16 +4,15 @@
  * Используется на странице детали звонка и в модальном окне.
  */
 
-import { api } from "@/lib/api";
-
 export async function restartCallAnalysis(params: {
   callId: string | number;
+  transcribe: (input: { call_id: string }) => Promise<unknown>;
   loadData: () => Promise<void>;
 }): Promise<void> {
-  const { callId, loadData } = params;
+  const { callId, transcribe, loadData } = params;
 
   try {
-    await api.calls.transcribe({ call_id: callId });
+    await transcribe({ call_id: String(callId) });
   } catch (transcribeError) {
     console.error("Transcription failed:", transcribeError);
     throw new Error("Не удалось выполнить транскрипцию");

@@ -132,7 +132,6 @@ export interface ForgotPasswordData {
 
 export interface ResetPasswordData {
   newPassword: string;
-  confirmPassword: string;
 }
 
 // Типы для Telegram интеграции

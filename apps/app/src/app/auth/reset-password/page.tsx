@@ -164,32 +164,6 @@ function ResetPasswordForm() {
                 )}
               </div>
 
-              <div className="mb-5">
-                <label
-                  htmlFor="confirmPassword"
-                  className="mb-2 block text-[13px] font-semibold text-[#333]"
-                >
-                  Подтвердите пароль
-                </label>
-                <PasswordInput
-                  id="confirmPassword"
-                  className={`w-full rounded-lg border border-[#DDD] px-4 py-3 pr-10 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
-                    errors.confirmPassword
-                      ? "border-red-500 bg-red-50 focus:border-red-500"
-                      : ""
-                  }`}
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  aria-invalid={!!errors.confirmPassword}
-                  {...register("confirmPassword")}
-                />
-                {errors.confirmPassword && (
-                  <div className="mt-1 text-xs leading-tight text-red-600">
-                    {errors.confirmPassword.message}
-                  </div>
-                )}
-              </div>
-
               <Button
                 type="submit"
                 variant="dark"

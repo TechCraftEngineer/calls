@@ -37,8 +37,7 @@ test.describe("Страница сброса пароля", () => {
 
     // Проверяем основные элементы страницы
     await expect(page.locator("h1")).toContainText("Новый пароль");
-    await expect(page.locator("#password")).toBeVisible();
-    await expect(page.locator("#confirmPassword")).toBeVisible();
+    await expect(page.locator("#newPassword")).toBeVisible();
     await expect(page.locator('button[type="submit"]')).toContainText(
       "Сохранить пароль",
     );
@@ -51,7 +50,7 @@ test.describe("Страница сброса пароля", () => {
     await expect(page.locator("text=⚠️")).toBeVisible();
 
     // Форма не должна отображаться
-    await expect(page.locator("#password")).not.toBeVisible();
+    await expect(page.locator("#newPassword")).not.toBeVisible();
   });
 
   test("показывает ошибку для истёкшего токена", async ({ page }) => {
@@ -69,17 +68,6 @@ test.describe("Страница сброса пароля", () => {
     await expect(
       page.locator("text=Пароль должен содержать минимум 8 символов"),
     ).toBeVisible();
-    await expect(page.locator("text=Подтвердите пароль")).toBeVisible();
-  });
-
-  test("показывает ошибку для несовпадающих паролей", async ({ page }) => {
-    await page.goto(`/auth/reset-password?token=${validToken}`);
-
-    await page.fill("#password", "newpassword123");
-    await page.fill("#confirmPassword", "differentpassword");
-    await page.click('button[type="submit"]');
-
-    await expect(page.locator("text=Пароли не совпадают")).toBeVisible();
   });
 
   test("успешно сбрасывает пароль", async ({ page }) => {
@@ -98,8 +86,7 @@ test.describe("Страница сброса пароля", () => {
       }
     });
 
-    await page.fill("#password", "newpassword123");
-    await page.fill("#confirmPassword", "newpassword123");
+    await page.fill("#newPassword", "newpassword123");
 
     await page.click('button[type="submit"]');
 
@@ -123,41 +110,28 @@ test.describe("Страница сброса пароля", () => {
   test("поддерживает автозаполнение паролей", async ({ page }) => {
     await page.goto(`/auth/reset-password?token=${validToken}`);
 
-    const passwordField = page.locator("#password");
-    const confirmPasswordField = page.locator("#confirmPassword");
+    const passwordField = page.locator("#newPassword");
 
     await expect(passwordField).toHaveAttribute("autocomplete", "new-password");
-    await expect(confirmPasswordField).toHaveAttribute(
-      "autocomplete",
-      "new-password",
-    );
   });
 
-  test("показывает/скрывает пароли при клике на иконки", async ({ page }) => {
+  test("показывает/скрывает пароль при клике на иконку", async ({ page }) => {
     await page.goto(`/auth/reset-password?token=${validToken}`);
 
-    const passwordField = page.locator("#password");
-    const confirmPasswordField = page.locator("#confirmPassword");
+    const passwordField = page.locator("#newPassword");
 
-    await page.fill("#password", "testpassword");
-    await page.fill("#confirmPassword", "testpassword");
+    await page.fill("#newPassword", "testpassword");
 
-    // Изначально пароли скрыты
+    // Изначально пароль скрыт
     await expect(passwordField).toHaveAttribute("type", "password");
-    await expect(confirmPasswordField).toHaveAttribute("type", "password");
 
-    // Проверяем кнопки переключения, если они есть
+    // Проверяем кнопку переключения, если она есть
     const toggleButtons = page.locator('[data-testid="password-toggle"]');
     const toggleCount = await toggleButtons.count();
 
     if (toggleCount > 0) {
       await toggleButtons.first().click();
       await expect(passwordField).toHaveAttribute("type", "text");
-
-      if (toggleCount > 1) {
-        await toggleButtons.nth(1).click();
-        await expect(confirmPasswordField).toHaveAttribute("type", "text");
-      }
     }
   });
 });

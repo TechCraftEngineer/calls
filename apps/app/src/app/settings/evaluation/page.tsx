@@ -23,7 +23,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TemplateFormModal } from "@/components/features/evaluation/template-form-modal";
 import { ViewTemplateModal } from "@/components/features/evaluation/view-template-modal";
-import type { ManagedUser } from "@/components/features/users/types";
+import type { WorkspaceMemberUser } from "@/components/features/users/types";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { getCurrentUser } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
@@ -143,7 +143,7 @@ export default function EvaluationSettingsPage() {
     return t?.name ?? slug;
   };
 
-  const managedUsers = users as ManagedUser[];
+  const managedUsers = users as WorkspaceMemberUser[];
   const templatesList = evaluationTemplates as {
     slug: string;
     name: string;

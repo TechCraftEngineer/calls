@@ -11,12 +11,15 @@ export const updateEvaluationSettings = workspaceAdminProcedure
   .input(updateEvaluationSettingsSchema)
   .handler(async ({ input, context }) => {
     if (input.defaultTemplateSlug !== undefined) {
-      await workspaceSettingsRepository.upsert(
+      const ok = await workspaceSettingsRepository.upsert(
         "evaluation_default_template",
         input.defaultTemplateSlug,
         "Шаблон оценки звонков по умолчанию",
         context.workspaceId,
       );
+      if (!ok) {
+        return { success: false };
+      }
     }
     return { success: true };
   });

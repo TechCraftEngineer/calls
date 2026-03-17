@@ -1,5 +1,22 @@
 import type { User } from "@/lib/auth";
 
+/** Пользователь из API users.list (workspace members) */
+export interface WorkspaceMemberUser {
+  id: string;
+  memberId: string;
+  userId: string;
+  role: string;
+  email: string;
+  name: string;
+  givenName: string | null;
+  familyName: string | null;
+  internalExtensions: string | null;
+  mobilePhones: string | null;
+  created_at: string | null;
+  telegramChatId: string | null;
+  evaluation_template_slug: "sales" | "support" | "general" | null;
+}
+
 // Расширенный тип пользователя с полями управления
 export interface ManagedUser extends Omit<User, "id" | "email"> {
   id: string;

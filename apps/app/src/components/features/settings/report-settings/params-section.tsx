@@ -1,9 +1,10 @@
 import { Input } from "@calls/ui";
 import type React from "react";
+import type { ReportSettingsForm } from "../report-settings-types";
 
 interface ParamsSectionProps {
-  form: any;
-  setForm: React.Dispatch<React.SetStateAction<any>>;
+  form: ReportSettingsForm;
+  setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
 }
 
 export function ReportParamsSection({ form, setForm }: ParamsSectionProps) {
@@ -16,7 +17,7 @@ export function ReportParamsSection({ form, setForm }: ParamsSectionProps) {
             type="checkbox"
             checked={form.report_detailed}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 report_detailed: e.target.checked,
               }))
@@ -29,7 +30,7 @@ export function ReportParamsSection({ form, setForm }: ParamsSectionProps) {
             type="checkbox"
             checked={form.report_include_call_summaries}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 report_include_call_summaries: e.target.checked,
               }))
@@ -42,7 +43,7 @@ export function ReportParamsSection({ form, setForm }: ParamsSectionProps) {
             type="checkbox"
             checked={form.report_include_avg_value}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 report_include_avg_value: e.target.checked,
               }))
@@ -55,7 +56,7 @@ export function ReportParamsSection({ form, setForm }: ParamsSectionProps) {
             type="checkbox"
             checked={form.report_include_avg_rating}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 report_include_avg_rating: e.target.checked,
               }))
@@ -75,8 +76,8 @@ function KpiSettings({
   form,
   setForm,
 }: {
-  form: any;
-  setForm: React.Dispatch<React.SetStateAction<any>>;
+  form: ReportSettingsForm;
+  setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
 }) {
   return (
     <div className="mt-4 border-t border-[#ddd] pt-4">
@@ -89,7 +90,7 @@ function KpiSettings({
             min={0}
             value={form.kpi_base_salary}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 kpi_base_salary: parseInt(e.target.value, 10) || 0,
               }))
@@ -104,7 +105,7 @@ function KpiSettings({
             min={0}
             value={form.kpi_target_bonus}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 kpi_target_bonus: parseInt(e.target.value, 10) || 0,
               }))
@@ -121,7 +122,7 @@ function KpiSettings({
             min={0}
             value={form.kpi_target_talk_time_minutes}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 kpi_target_talk_time_minutes: parseInt(e.target.value, 10) || 0,
               }))
@@ -138,8 +139,8 @@ function FilterExclusions({
   form,
   setForm,
 }: {
-  form: any;
-  setForm: React.Dispatch<React.SetStateAction<any>>;
+  form: ReportSettingsForm;
+  setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
 }) {
   return (
     <div className="mt-4 border-t border-[#ddd] pt-4">
@@ -149,7 +150,7 @@ function FilterExclusions({
           type="checkbox"
           checked={form.filter_exclude_answering_machine}
           onChange={(e) =>
-            setForm((f: any) => ({
+            setForm((f) => ({
               ...f,
               filter_exclude_answering_machine: e.target.checked,
             }))
@@ -163,7 +164,7 @@ function FilterExclusions({
           type="number"
           value={form.filter_min_duration}
           onChange={(e) =>
-            setForm((f: any) => ({
+            setForm((f) => ({
               ...f,
               filter_min_duration: parseInt(e.target.value, 10) || 0,
             }))

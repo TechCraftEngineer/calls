@@ -1,10 +1,11 @@
 import { Button, Input } from "@calls/ui";
 import type React from "react";
 import type { User } from "@/lib/auth";
+import type { ReportSettingsForm } from "../report-settings-types";
 
 interface TelegramSectionProps {
-  form: any;
-  setForm: React.Dispatch<React.SetStateAction<any>>;
+  form: ReportSettingsForm;
+  setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   isAdmin: boolean;
   sendTestLoading: boolean;
   sendTestMessage: string;
@@ -48,7 +49,7 @@ export function TelegramReportSection({
             type="text"
             value={form.telegramChatId}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 telegramChatId: e.target.value,
               }))
@@ -132,7 +133,7 @@ export function TelegramReportSection({
             type="checkbox"
             checked={form.telegram_daily_report}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 telegram_daily_report: e.target.checked,
               }))
@@ -145,7 +146,7 @@ export function TelegramReportSection({
             type="checkbox"
             checked={form.telegram_weekly_report}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 telegram_weekly_report: e.target.checked,
               }))
@@ -158,7 +159,7 @@ export function TelegramReportSection({
             type="checkbox"
             checked={form.telegram_monthly_report}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 telegram_monthly_report: e.target.checked,
               }))
@@ -171,7 +172,7 @@ export function TelegramReportSection({
             type="checkbox"
             checked={form.telegram_skip_weekends}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 telegram_skip_weekends: e.target.checked,
               }))
@@ -211,8 +212,8 @@ function ReportTimeSettings({
   form,
   setForm,
 }: {
-  form: any;
-  setForm: React.Dispatch<React.SetStateAction<any>>;
+  form: ReportSettingsForm;
+  setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
 }) {
   return (
     <div className="mt-4 border-t border-[#ddd] pt-3">
@@ -226,7 +227,7 @@ function ReportTimeSettings({
             type="time"
             value={form.report_daily_time}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 report_daily_time: e.target.value,
               }))
@@ -239,7 +240,7 @@ function ReportTimeSettings({
           <select
             value={form.report_weekly_day}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 report_weekly_day: e.target.value,
               }))
@@ -256,7 +257,7 @@ function ReportTimeSettings({
             type="time"
             value={form.report_weekly_time}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 report_weekly_time: e.target.value,
               }))
@@ -269,7 +270,7 @@ function ReportTimeSettings({
           <select
             value={form.report_monthly_day}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 report_monthly_day: e.target.value,
               }))
@@ -287,7 +288,7 @@ function ReportTimeSettings({
             type="time"
             value={form.report_monthly_time}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 report_monthly_time: e.target.value,
               }))

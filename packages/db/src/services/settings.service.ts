@@ -9,6 +9,9 @@ import type { WorkspaceSettingsRepository } from "../repositories/workspace-sett
 
 const FTP_INTEGRATION = "ftp" as const;
 
+/** Минимальная длина токена бота (консервативное значение для Telegram/MAX) */
+const BOT_TOKEN_MIN_LENGTH = 10;
+
 const BOT_KEY_TO_TYPE: Record<string, "telegram" | "max"> = {
   telegram_bot_token: "telegram",
   max_bot_token: "max",
@@ -44,21 +47,28 @@ export class SettingsService {
         workspaceId,
         botType,
       );
-      
+
       if (!raw?.trim()) {
-        console.debug(`No bot token found for key: ${key}, workspace: ${workspaceId}`);
+        console.debug(
+          `No bot token found for key: ${key}, workspace: ${workspaceId}`,
+        );
         return null;
       }
 
       const decrypted = decrypt(raw);
       if (!decrypted?.trim()) {
-        console.warn(`Failed to decrypt bot token for key: ${key}, workspace: ${workspaceId}`);
+        console.warn(
+          `Failed to decrypt bot token for key: ${key}, workspace: ${workspaceId}`,
+        );
         return null;
       }
-      
+
       return decrypted;
     } catch (error) {
-      console.error(`Error decrypting bot token for key: ${key}, workspace: ${workspaceId}`, error);
+      console.error(
+        `Error decrypting bot token for key: ${key}, workspace: ${workspaceId}`,
+        error,
+      );
       return null;
     }
   }
@@ -67,7 +77,7 @@ export class SettingsService {
   async updateBotToken(
     key: string,
     value: string,
-    _description: string,
+    description: string,
     workspaceId: string,
   ): Promise<boolean> {
     try {
@@ -79,25 +89,32 @@ export class SettingsService {
 
       // Handle empty/null values properly
       if (!value || !value.trim()) {
-        console.log(`Removing bot token for key: ${key}, workspace: ${workspaceId}`);
+        console.log(
+          `Removing bot token for key: ${key}, workspace: ${workspaceId}`,
+        );
         return this.workspaceIntegrationsRepository.upsertBotToken(
           workspaceId,
           botType,
           "",
+          description,
         );
       }
 
       const trimmedValue = value.trim();
-      
+
       // Basic validation for bot tokens
-      if (trimmedValue.length < 10) {
-        console.error(`Bot token too short for key: ${key}, workspace: ${workspaceId}`);
+      if (trimmedValue.length < BOT_TOKEN_MIN_LENGTH) {
+        console.error(
+          `Bot token too short for key: ${key}, workspace: ${workspaceId}`,
+        );
         return false;
       }
 
       const encrypted = encrypt(trimmedValue);
       if (!encrypted) {
-        console.error(`Failed to encrypt bot token for key: ${key}, workspace: ${workspaceId}`);
+        console.error(
+          `Failed to encrypt bot token for key: ${key}, workspace: ${workspaceId}`,
+        );
         return false;
       }
 
@@ -105,17 +122,25 @@ export class SettingsService {
         workspaceId,
         botType,
         encrypted,
+        description,
       );
 
       if (result) {
-        console.log(`Successfully updated bot token for key: ${key}, workspace: ${workspaceId}`);
+        console.log(
+          `Successfully updated bot token for key: ${key}, workspace: ${workspaceId}`,
+        );
       } else {
-        console.error(`Failed to save bot token for key: ${key}, workspace: ${workspaceId}`);
+        console.error(
+          `Failed to save bot token for key: ${key}, workspace: ${workspaceId}`,
+        );
       }
 
       return result;
     } catch (error) {
-      console.error(`Error updating bot token for key: ${key}, workspace: ${workspaceId}`, error);
+      console.error(
+        `Error updating bot token for key: ${key}, workspace: ${workspaceId}`,
+        error,
+      );
       return false;
     }
   }

@@ -1,6 +1,6 @@
 import { systemRepository, workspaceSettingsRepository } from "@calls/db";
 import { workspaceAdminProcedure } from "../../../orpc";
-import { DEEPSEEK_MODELS, PROMPT_KEYS } from "../constants";
+import { DEEPSEEK_MODELS, REPORT_SETTINGS_KEYS } from "../constants";
 import { settingsUpdateSchema } from "../schemas";
 import { maskSensitiveData } from "../utils";
 
@@ -11,49 +11,61 @@ export const updatePrompts = workspaceAdminProcedure
     const username =
       (context.user as Record<string, unknown>)?.email ?? "system";
 
+    const upserts: Promise<boolean>[] = [];
+
     if (input.deepseek_model && input.deepseek_model in DEEPSEEK_MODELS) {
-      await workspaceSettingsRepository.upsert(
-        "deepseek_model",
-        input.deepseek_model,
-        "Selected DeepSeek model",
-        workspaceId,
+      upserts.push(
+        workspaceSettingsRepository.upsert(
+          "deepseek_model",
+          input.deepseek_model,
+          "Selected DeepSeek model",
+          workspaceId,
+        ),
       );
     }
     if (input.quality_min_value_threshold !== undefined) {
-      await workspaceSettingsRepository.upsert(
-        "quality_min_value_threshold",
-        String(input.quality_min_value_threshold),
-        "Minimum call value for quality evaluation (0-5)",
-        workspaceId,
+      upserts.push(
+        workspaceSettingsRepository.upsert(
+          "quality_min_value_threshold",
+          String(input.quality_min_value_threshold),
+          "Minimum call value for quality evaluation (0-5)",
+          workspaceId,
+        ),
       );
     }
     if (input.enable_manager_recommendations !== undefined) {
-      await workspaceSettingsRepository.upsert(
-        "enable_manager_recommendations",
-        input.enable_manager_recommendations ? "true" : "false",
-        "Включить генерацию рекомендаций для менеджера (true/false)",
-        workspaceId,
+      upserts.push(
+        workspaceSettingsRepository.upsert(
+          "enable_manager_recommendations",
+          input.enable_manager_recommendations ? "true" : "false",
+          "Включить генерацию рекомендаций для менеджера (true/false)",
+          workspaceId,
+        ),
       );
     }
     if (input.evaluation_default_template !== undefined) {
-      await workspaceSettingsRepository.upsert(
-        "evaluation_default_template",
-        input.evaluation_default_template,
-        "Шаблон оценки звонков по умолчанию (sales/support/general)",
-        workspaceId,
+      upserts.push(
+        workspaceSettingsRepository.upsert(
+          "evaluation_default_template",
+          input.evaluation_default_template,
+          "Шаблон оценки звонков по умолчанию (sales/support/general)",
+          workspaceId,
+        ),
       );
     }
     if (input.prompts) {
-      for (const key of PROMPT_KEYS) {
+      for (const key of REPORT_SETTINGS_KEYS) {
         const p = input.prompts[key] as
           | { value?: string; description?: string }
           | undefined;
         if (p) {
-          await workspaceSettingsRepository.upsert(
-            key,
-            p.value ?? "",
-            p.description ?? "",
-            workspaceId,
+          upserts.push(
+            workspaceSettingsRepository.upsert(
+              key,
+              p.value ?? "",
+              p.description ?? "",
+              workspaceId,
+            ),
           );
           const maskedValue = maskSensitiveData(key, p.value ?? "");
           await systemRepository.addActivityLog(
@@ -64,6 +76,11 @@ export const updatePrompts = workspaceAdminProcedure
           );
         }
       }
+    }
+
+    const results = await Promise.all(upserts);
+    if (results.some((ok) => !ok)) {
+      return { success: false, message: "Failed to update some settings" };
     }
     return { success: true, message: "Settings updated successfully" };
   });

@@ -21,7 +21,7 @@ export const get = workspaceProcedure
     const evaluation = await context.callsService.getEvaluation(input.call_id);
 
     // Размер: из call или из связанного файла
-    let sizeBytes = call.sizeBytes;
+    let sizeBytes: number | null | undefined = call.sizeBytes;
     if (sizeBytes == null && call.fileId) {
       try {
         const file = await filesService.getFileById(call.fileId);
@@ -34,7 +34,13 @@ export const get = workspaceProcedure
     return {
       call: {
         ...call,
-        sizeBytes: sizeBytes ?? undefined,
+        timestamp:
+          call.timestamp instanceof Date
+            ? call.timestamp.toISOString()
+            : call.timestamp,
+        sizeBytes: (sizeBytes === undefined ? null : sizeBytes) as
+          | number
+          | null,
         managerName: call.name ?? null,
         operatorName: call.name ?? null,
       },

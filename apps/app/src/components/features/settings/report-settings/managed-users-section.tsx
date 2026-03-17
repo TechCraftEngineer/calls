@@ -1,11 +1,19 @@
 import type React from "react";
-import { getDisplayName } from "@/lib/user-profile";
+import type {
+  ReportSettingsForm,
+  ReportSettingsUserOption,
+} from "../report-settings-types";
+
+function getDisplayName(u: ReportSettingsUserOption): string {
+  const parts = [u.givenName, u.familyName].filter(Boolean);
+  return parts.length > 0 ? parts.join(" ") : u.email;
+}
 
 interface ManagedUsersSectionProps {
-  form: any;
-  setForm: React.Dispatch<React.SetStateAction<any>>;
-  user: { id: number | string };
-  allUsers: Array<{ id: number | string; email?: string }>;
+  form: ReportSettingsForm;
+  setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
+  user: { id: string };
+  allUsers: ReportSettingsUserOption[];
 }
 
 export function ManagedUsersSection({
@@ -28,7 +36,7 @@ export function ManagedUsersSection({
         {allUsers
           .filter((u) => u.id !== user.id)
           .map((u) => {
-            const name = getDisplayName(u) || u.email;
+            const name = getDisplayName(u) || u.email || "—";
             const checked =
               form.report_managed_user_ids?.includes(u.id) ?? false;
             return (
@@ -37,8 +45,8 @@ export function ManagedUsersSection({
                   type="checkbox"
                   checked={checked}
                   onChange={(e) => {
-                    const ids: number[] = form.report_managed_user_ids ?? [];
-                    setForm((f: any) => ({
+                    const ids: string[] = form.report_managed_user_ids ?? [];
+                    setForm((f) => ({
                       ...f,
                       report_managed_user_ids: e.target.checked
                         ? [...ids, u.id]

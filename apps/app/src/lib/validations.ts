@@ -31,28 +31,16 @@ export const forgotPasswordSchema = z.object({
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 // Схема для сброса пароля
-export const resetPasswordSchema = z
-  .object({
-    newPassword: passwordValidation,
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Пароли не совпадают",
-    path: ["confirmPassword"],
-  });
+export const resetPasswordSchema = z.object({
+  newPassword: passwordValidation,
+});
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 // Схема для смены пароля (в настройках аккаунта)
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, "Введите текущий пароль"),
-    newPassword: passwordValidation,
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Пароли не совпадают",
-    path: ["confirmPassword"],
-  });
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Введите текущий пароль"),
+  newPassword: passwordValidation,
+});
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 
 // Схема для обновления профиля (имя)

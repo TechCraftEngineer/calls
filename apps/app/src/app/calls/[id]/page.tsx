@@ -73,6 +73,10 @@ export default function CallDetailPage() {
     }
   }, [result?.evaluation]);
 
+  const transcribeMutation = useMutation(
+    orpc.calls.transcribe.mutationOptions(),
+  );
+
   const generateRecommendationsMutation = useMutation(
     orpc.calls.generateRecommendations.mutationOptions({
       onSuccess: (data) => {
@@ -147,6 +151,7 @@ export default function CallDetailPage() {
       setRestarting(true);
       await restartCallAnalysis({
         callId,
+        transcribe: (input) => transcribeMutation.mutateAsync(input),
         loadData: () => loadData().then(() => {}),
       });
       toast.success("Анализ успешно перезапущен!");
