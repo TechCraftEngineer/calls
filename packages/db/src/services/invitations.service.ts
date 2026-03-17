@@ -7,6 +7,7 @@
  *   via Better Auth only when they accept the invitation.
  */
 
+import { z } from "zod";
 import type { InvitationsRepository } from "../repositories/invitations.repository";
 import {
   generateInviteToken,
@@ -33,10 +34,9 @@ export class InvitationsService {
     try {
       const validated: Record<string, unknown> = {};
 
-      // Валидация email настроек
+      // Валидация email настроек (Zod)
       if (settings.email && typeof settings.email === "string") {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (emailRegex.test(settings.email)) {
+        if (z.string().email().safeParse(settings.email).success) {
           validated.email = settings.email;
         }
       }

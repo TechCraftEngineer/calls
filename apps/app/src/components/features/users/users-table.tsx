@@ -21,6 +21,12 @@ import { useRouter } from "next/navigation";
 import type { User } from "@/lib/auth";
 import type { WorkspaceMemberUser } from "./types";
 
+const RUS_DATE_FORMATTER = new Intl.DateTimeFormat("ru-RU", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
 const ROLE_LABELS: Record<string, string> = {
   owner: "Владелец",
   admin: "Администратор",
@@ -48,11 +54,7 @@ function formatDate(dateStr?: string | null): string {
   if (Number.isNaN(date.getTime())) {
     return dateStr.substring(0, 10).replace(/-/g, ".");
   }
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
+  return RUS_DATE_FORMATTER.format(date);
 }
 
 export default function UsersTable({
@@ -169,7 +171,7 @@ export default function UsersTable({
                       className="text-[#555]"
                       style={{ fontVariantNumeric: "tabular-nums" }}
                     >
-                      {formatDate(u.created_at)}
+                      {formatDate(u.createdAt)}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-3 justify-end items-center">

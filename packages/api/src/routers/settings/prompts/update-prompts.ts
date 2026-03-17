@@ -1,7 +1,11 @@
 import { systemRepository, workspaceSettingsRepository } from "@calls/db";
 import { ORPCError } from "@orpc/server";
+import { createLogger } from "../../../logger";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { DEEPSEEK_MODELS, REPORT_PROMPTS_CAMEL_TO_SNAKE } from "../constants";
+
+const logger = createLogger("update-prompts");
+
 import { settingsUpdateSchema } from "../schemas";
 import { maskSensitiveData } from "../utils";
 
@@ -91,8 +95,9 @@ export const updatePrompts = workspaceAdminProcedure
           String(username),
           workspaceId,
         );
-      } catch {
-        // Логирование best-effort: не прерываем обработчик при ошибке
+      } catch (err) {
+        // Логирование: не прерываем обработчик при ошибке, фиксируем предупреждение
+        logger.warn("addActivityLog failed", { key, err });
       }
     }
     return { success: true };

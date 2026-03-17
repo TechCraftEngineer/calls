@@ -19,10 +19,12 @@ export const deleteCall = workspaceAdminProcedure
         message: "Не удалось удалить звонок",
       });
     }
+    const userEmail = (context.user as Record<string, unknown>)?.email;
+    const email = typeof userEmail === "string" ? userEmail : "unknown";
     await context.systemRepository.addActivityLog(
       "info",
       `Deleted call #${input.call_id}`,
-      (context.user as Record<string, unknown>).email as string,
+      email,
       context.workspaceId,
     );
     return { success: true, message: `Звонок #${input.call_id} удалён` };

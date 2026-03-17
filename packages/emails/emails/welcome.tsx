@@ -2,27 +2,31 @@ import { APP_CONFIG, env } from "@calls/config";
 import {
   Body,
   Button,
-  Column,
   Container,
   Head,
   Heading,
   Hr,
   Html,
-  Img,
   Link,
   Preview,
   pixelBasedPreset,
-  Row,
   Section,
   Tailwind,
   Text,
 } from "@react-email/components";
 
 interface WelcomeEmailProps {
+  /** Имя для приветствия (или email, если имя недоступно) */
   username?: string;
+  /** Email получателя — для футера «письмо отправлено на» */
+  email?: string;
 }
 
-export const WelcomeEmail = ({ username = "username" }: WelcomeEmailProps) => {
+export const WelcomeEmail = ({
+  username = "пользователь",
+  email,
+}: WelcomeEmailProps) => {
+  const displayEmail = email ?? username;
   const previewText = `Добро пожаловать в ${APP_CONFIG.shortName}`;
 
   return (
@@ -70,10 +74,10 @@ export const WelcomeEmail = ({ username = "username" }: WelcomeEmailProps) => {
             </Text>
             <Hr className="mx-0 my-[26px] w-full border border-solid border-[#eaeaea]" />
             <Text className="text-[12px] leading-[24px] text-[#666666]">
-              Это письмо отправлено на{" "}
-              <span className="text-black">{username}</span>. Если вы не
-              создавали аккаунт в {APP_CONFIG.shortName}, проигнорируйте это
-              письмо или обратитесь в поддержку.
+              Это письмо отправлено на адрес{" "}
+              <span className="text-black">{displayEmail}</span>. Если вы не
+              регистрировались в {APP_CONFIG.shortName}, проигнорируйте это
+              письмо или обратитесь в службу поддержки.
             </Text>
           </Container>
         </Body>
@@ -82,8 +86,11 @@ export const WelcomeEmail = ({ username = "username" }: WelcomeEmailProps) => {
   );
 };
 
-WelcomeEmail.PreviewProps = {
-  username: "username",
-} as WelcomeEmailProps;
+Object.assign(WelcomeEmail, {
+  PreviewProps: {
+    username: "Иван",
+    email: "ivan@example.com",
+  } as WelcomeEmailProps,
+});
 
 export default WelcomeEmail;

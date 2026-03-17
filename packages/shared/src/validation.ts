@@ -35,12 +35,12 @@ export function isValidUuid(id: string): boolean {
   return uuidPattern.test(id);
 }
 
+const emailSchema = z.string().email();
+
 /**
- * Проверяет, является ли строка валидным email
+ * Проверяет, является ли строка валидным email (через Zod)
  */
 export function isValidEmail(email: string): boolean {
   if (typeof email !== "string") return false;
-
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailPattern.test(email);
+  return emailSchema.safeParse(email.trim()).success;
 }

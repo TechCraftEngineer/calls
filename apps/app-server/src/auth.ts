@@ -3,9 +3,10 @@
  * Uses PostgreSQL + email/password for calls app authentication.
  */
 
+import { APP_CONFIG } from "@calls/config";
 import { db } from "@calls/db";
 import * as schema from "@calls/db/schema";
-import { ResetPasswordEmail, sendEmail } from "@calls/emails";
+import { ResetPasswordEmail, sendEmail, WelcomeEmail } from "@calls/emails";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin } from "better-auth/plugins";
@@ -34,6 +35,27 @@ export const auth = betterAuth({
       verification: schema.verification,
     },
   }),
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          void sendEmail({
+            to: [user.email],
+            subject: `Добро пожаловать в ${APP_CONFIG.shortName}`,
+            react: WelcomeEmail({
+              username: user.name ?? user.givenName ?? user.email,
+              email: user.email,
+            }),
+          }).catch((error) => {
+            console.error("[Auth] Failed to send welcome email:", {
+              email: user.email,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          });
+        },
+      },
+    },
+  },
   baseURL: publicBaseUrl,
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins,

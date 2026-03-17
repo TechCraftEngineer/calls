@@ -5,7 +5,7 @@ import { getInternalNumbersForUser, getMobileNumbersForUser } from "./utils";
 
 const transcriptMetadataSchema = z
   .object({ operatorName: z.string().optional() })
-  .strict();
+  .passthrough();
 
 const listCallsSchema = z.object({
   page: z.number().min(1).default(1),

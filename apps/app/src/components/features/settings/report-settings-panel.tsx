@@ -10,8 +10,38 @@ import {
   getInternalExtensions,
 } from "@/lib/user-profile";
 import { useORPC } from "@/orpc/react";
+import type { UserLike } from "@/types/user";
 import ReportSettingsFormBody from "./report-settings-form-body";
 import type { ReportSettingsForm } from "./report-settings-types";
+
+interface UserSettingsData {
+  email?: string;
+  givenName?: string;
+  familyName?: string;
+  internalExtensions?: string;
+  telegramChatId?: string;
+  reportManagedUserIds?: string[];
+  emailDailyReport?: boolean;
+  emailWeeklyReport?: boolean;
+  emailMonthlyReport?: boolean;
+  telegramDailyReport?: boolean;
+  telegramWeeklyReport?: boolean;
+  telegramMonthlyReport?: boolean;
+  telegramSkipWeekends?: boolean;
+  maxChatId?: string;
+  maxDailyReport?: boolean;
+  maxManagerReport?: boolean;
+  reportIncludeCallSummaries?: boolean;
+  reportDetailed?: boolean;
+  reportIncludeAvgValue?: boolean;
+  reportIncludeAvgRating?: boolean;
+  filterExcludeAnsweringMachine?: boolean;
+  filterMinDuration?: number;
+  filterMinReplicas?: number;
+  kpiBaseSalary?: number;
+  kpiTargetBonus?: number;
+  kpiTargetTalkTimeMinutes?: number;
+}
 
 export default function ReportSettingsPanel({ user }: { user: User }) {
   const orpc = useORPC();
@@ -106,36 +136,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
   );
 
   useEffect(() => {
-    const u = userData as
-      | {
-          email?: string;
-          givenName?: string;
-          familyName?: string;
-          internalExtensions?: string;
-          telegramChatId?: string;
-          reportManagedUserIds?: string[];
-          emailDailyReport?: boolean;
-          emailWeeklyReport?: boolean;
-          emailMonthlyReport?: boolean;
-          telegramDailyReport?: boolean;
-          telegramWeeklyReport?: boolean;
-          telegramMonthlyReport?: boolean;
-          telegramSkipWeekends?: boolean;
-          maxChatId?: string;
-          maxDailyReport?: boolean;
-          maxManagerReport?: boolean;
-          reportIncludeCallSummaries?: boolean;
-          reportDetailed?: boolean;
-          reportIncludeAvgValue?: boolean;
-          reportIncludeAvgRating?: boolean;
-          filterExcludeAnsweringMachine?: boolean;
-          filterMinDuration?: number;
-          filterMinReplicas?: number;
-          kpiBaseSalary?: number;
-          kpiTargetBonus?: number;
-          kpiTargetTalkTimeMinutes?: number;
-        }
-      | undefined;
+    const u = userData as UserSettingsData | undefined;
     if (!u) return;
     const promptsArr = (Array.isArray(promptsList) ? promptsList : []) as {
       key: string;
@@ -153,9 +154,9 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         : s;
     };
     setLoadedUser({
-      givenName: getGivenName(u),
-      familyName: getFamilyName(u),
-      internalExtensions: getInternalExtensions(u) ?? undefined,
+      givenName: getGivenName(u as UserLike),
+      familyName: getFamilyName(u as UserLike),
+      internalExtensions: getInternalExtensions(u as UserLike) ?? undefined,
     });
     const managedIds = u.reportManagedUserIds ?? [];
     setForm((prev) => ({

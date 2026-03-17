@@ -102,12 +102,14 @@ export const InvitationEmail = ({
   );
 };
 
-InvitationEmail.PreviewProps = {
-  inviteLink: `${env.APP_URL}${paths.invite.byToken("abc123")}`,
-  workspaceName: "Рабочее пространство",
-  inviterName: "Иван Иванов",
-  role: "member" as const,
-  userExists: false,
-} as InvitationEmailProps;
+Object.assign(InvitationEmail, {
+  PreviewProps: {
+    inviteLink: `${env.APP_URL}${paths.invite.byToken("abc123")}`,
+    workspaceName: "Рабочее пространство",
+    inviterName: "Иван Иванов",
+    role: "member" as const,
+    userExists: false,
+  } as InvitationEmailProps,
+});
 
 export default InvitationEmail;

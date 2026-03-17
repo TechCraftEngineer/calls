@@ -2,6 +2,10 @@
  * Валидаторы для пользовательских данных
  */
 
+import { z } from "zod";
+
+const emailSchema = z.string().email("Некорректный формат email").max(255);
+
 export interface CreateUserData {
   email: string;
   password: string;
@@ -37,12 +41,12 @@ export function validateCreateUserData(data: CreateUserData): void {
     throw new ValidationError("Email не может быть пустым");
   }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-    throw new ValidationError("Введите корректный email адрес");
-  }
-
-  if (data.email.length > 255) {
-    throw new ValidationError("Email не должен превышать 255 символов");
+  const emailResult = emailSchema.safeParse(trimmed);
+  if (!emailResult.success) {
+    const first = emailResult.error.issues[0];
+    throw new ValidationError(
+      (first?.message as string) ?? "Введите корректный email адрес",
+    );
   }
 
   // Валидация password
@@ -116,15 +120,12 @@ export function validateCreateUserData(data: CreateUserData): void {
     if (typeof data.email !== "string") {
       throw new ValidationError("Email должен быть строкой");
     }
-
-    if (data.email.length > 255) {
-      throw new ValidationError("Email не должен превышать 255 символов");
-    }
-
-    // Простая валидация email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (data.email && !emailRegex.test(data.email)) {
-      throw new ValidationError("Некорректный формат email");
+    const emailResult = emailSchema.safeParse(data.email.trim());
+    if (!emailResult.success) {
+      const first = emailResult.error.issues[0];
+      throw new ValidationError(
+        (first?.message as string) ?? "Некорректный формат email",
+      );
     }
   }
 }
@@ -190,15 +191,12 @@ export function validateUpdateUserData(data: UpdateUserData): void {
     if (typeof data.email !== "string") {
       throw new ValidationError("Email должен быть строкой");
     }
-
-    if (data.email.length > 255) {
-      throw new ValidationError("Email не должен превышать 255 символов");
-    }
-
-    // Простая валидация email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (data.email && !emailRegex.test(data.email)) {
-      throw new ValidationError("Некорректный формат email");
+    const emailResult = emailSchema.safeParse(data.email.trim());
+    if (!emailResult.success) {
+      const first = emailResult.error.issues[0];
+      throw new ValidationError(
+        (first?.message as string) ?? "Некорректный формат email",
+      );
     }
   }
 }

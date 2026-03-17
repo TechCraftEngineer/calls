@@ -28,13 +28,15 @@
     "ui-add": "turbo run ui-add",
     "test:e2e": "turbo -F @calls/e2e test",
     "test:e2e:ui": "turbo -F @calls/e2e test:ui",
-    "test:e2e:auth": "turbo -F @calls/e2e test:auth"
+    "test:e2e:auth": "turbo -F @calls/e2e test:auth",
+    "generate-favicon": "bun run scripts/generate-favicon.mjs"
   },
   "devDependencies": {
     "@ai-sdk/openai": "^3.0.41",
     "@biomejs/biome": "2.4.7",
     "@turbo/gen": "^2.8.17",
     "ai": "^6.0.116",
+    "to-ico": "^1.1.5",
     "turbo": "^2.8.17",
     "typescript": "5.9.3"
   },
