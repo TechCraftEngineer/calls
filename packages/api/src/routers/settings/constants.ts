@@ -24,3 +24,27 @@ export const REPORT_SETTINGS_KEYS = [
   "report_monthly_day",
   "report_monthly_time",
 ] as const;
+
+/** Маппинг camelCase → snake_case для ключей prompts */
+export const REPORT_PROMPTS_CAMEL_TO_SNAKE: Record<
+  string,
+  (typeof REPORT_SETTINGS_KEYS)[number]
+> = {
+  reportDailyTime: "report_daily_time",
+  reportWeeklyDay: "report_weekly_day",
+  reportWeeklyTime: "report_weekly_time",
+  reportMonthlyDay: "report_monthly_day",
+  reportMonthlyTime: "report_monthly_time",
+};
+
+/** Маппинг snake_case → camelCase для ключей prompts */
+export const REPORT_PROMPTS_SNAKE_TO_CAMEL: Record<
+  (typeof REPORT_SETTINGS_KEYS)[number],
+  string
+> = {
+  report_daily_time: "reportDailyTime",
+  report_weekly_day: "reportWeeklyDay",
+  report_weekly_time: "reportWeeklyTime",
+  report_monthly_day: "reportMonthlyDay",
+  report_monthly_time: "reportMonthlyTime",
+};

@@ -45,7 +45,7 @@ export const list = workspaceAdminProcedure.handler(async ({ context }) => {
               ? u.createdAt.toISOString()
               : ((u.createdAt as string | null) ?? null),
           telegramChatId: u.telegramChatId ?? null,
-          evaluation_template_slug:
+          evaluationTemplateSlug:
             es?.templateSlug &&
             ["sales", "support", "general"].includes(es.templateSlug)
               ? es.templateSlug

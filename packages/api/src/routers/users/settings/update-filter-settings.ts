@@ -22,9 +22,9 @@ export const updateFilterSettings = workspaceProcedure
       await usersService.updateUserFilters(
         input.user_id,
         context.workspaceId!,
-        input.data.filter_exclude_answering_machine ?? false,
-        input.data.filter_min_duration ?? 0,
-        input.data.filter_min_replicas ?? 0,
+        input.data.filterExcludeAnsweringMachine ?? false,
+        input.data.filterMinDuration ?? 0,
+        input.data.filterMinReplicas ?? 0,
       );
 
       await logUpdate(

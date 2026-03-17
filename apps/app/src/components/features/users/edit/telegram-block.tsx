@@ -46,10 +46,10 @@ export function TelegramBlock({
   };
 
   const telegramOptions = [
-    ["telegram_daily_report", "Ежедневный отчет (Telegram)"],
-    ["telegram_manager_report", "Отчет по менеджерам (Telegram)"],
-    ["telegram_weekly_report", "Еженедельный отчет (Telegram)"],
-    ["telegram_monthly_report", "Ежемесячный отчет (Telegram)"],
+    ["telegramDailyReport", "Ежедневный отчет (Telegram)"],
+    ["telegramManagerReport", "Отчет по менеджерам (Telegram)"],
+    ["telegramWeeklyReport", "Еженедельный отчет (Telegram)"],
+    ["telegramMonthlyReport", "Ежемесячный отчет (Telegram)"],
   ] as const;
 
   return (

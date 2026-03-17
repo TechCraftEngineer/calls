@@ -114,9 +114,9 @@ export const getKpi = workspaceAdminProcedure
       const userForEdit = userEditMap.get(userId);
       if (!userForEdit) continue;
 
-      const baseSalary = userForEdit.kpi_base_salary ?? 0;
-      const targetBonus = userForEdit.kpi_target_bonus ?? 0;
-      const targetTalkTime = userForEdit.kpi_target_talk_time_minutes ?? 0;
+      const baseSalary = userForEdit.kpiBaseSalary ?? 0;
+      const targetBonus = userForEdit.kpiTargetBonus ?? 0;
+      const targetTalkTime = userForEdit.kpiTargetTalkTimeMinutes ?? 0;
 
       const extensions = parseInternalExtensions(memberUser.internalExtensions);
       let actualTalkTime = 0;

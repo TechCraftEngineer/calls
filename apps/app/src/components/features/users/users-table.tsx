@@ -147,10 +147,10 @@ export default function UsersTable({
                       )}
                     </TableCell>
                     <TableCell className="text-[#555]">
-                      {u.evaluation_template_slug
+                      {u.evaluationTemplateSlug
                         ? (EVALUATION_TEMPLATE_LABELS[
-                            u.evaluation_template_slug
-                          ] ?? u.evaluation_template_slug)
+                            u.evaluationTemplateSlug
+                          ] ?? u.evaluationTemplateSlug)
                         : "—"}
                     </TableCell>
                     <TableCell

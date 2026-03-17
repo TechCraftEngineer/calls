@@ -35,7 +35,7 @@ export class UsersService {
     return this.usersRepository.findById(id);
   }
 
-  /** User + workspace settings flattened for edit form */
+  /** User + workspace settings flattened for edit form (camelCase) */
   async getUserForEdit(
     userId: string,
     workspaceId: string,
@@ -46,28 +46,30 @@ export class UsersService {
     internalExtensions: string;
     mobilePhones: string;
     telegramChatId: string;
-    telegram_daily_report: boolean;
-    telegram_manager_report: boolean;
-    max_chat_id: string;
-    max_daily_report: boolean;
-    max_manager_report: boolean;
-    filter_exclude_answering_machine: boolean;
-    filter_min_duration: number;
-    filter_min_replicas: number;
-    email_daily_report: boolean;
-    email_weekly_report: boolean;
-    email_monthly_report: boolean;
-    telegram_weekly_report: boolean;
-    telegram_monthly_report: boolean;
-    report_include_call_summaries: boolean;
-    report_detailed: boolean;
-    report_include_avg_value: boolean;
-    report_include_avg_rating: boolean;
-    kpi_base_salary: number;
-    kpi_target_bonus: number;
-    kpi_target_talk_time_minutes: number;
-    evaluation_template_slug: string | null;
-    evaluation_custom_instructions: string | null;
+    telegramDailyReport: boolean;
+    telegramManagerReport: boolean;
+    maxChatId: string;
+    maxDailyReport: boolean;
+    maxManagerReport: boolean;
+    filterExcludeAnsweringMachine: boolean;
+    filterMinDuration: number;
+    filterMinReplicas: number;
+    emailDailyReport: boolean;
+    emailWeeklyReport: boolean;
+    emailMonthlyReport: boolean;
+    telegramWeeklyReport: boolean;
+    telegramMonthlyReport: boolean;
+    telegramSkipWeekends: boolean;
+    reportIncludeCallSummaries: boolean;
+    reportDetailed: boolean;
+    reportIncludeAvgValue: boolean;
+    reportIncludeAvgRating: boolean;
+    reportManagedUserIds: string[];
+    kpiBaseSalary: number;
+    kpiTargetBonus: number;
+    kpiTargetTalkTimeMinutes: number;
+    evaluationTemplateSlug: string | null;
+    evaluationCustomInstructions: string | null;
   } | null> {
     const user = await this.usersRepository.findById(userId);
     if (!user) return null;
@@ -90,6 +92,7 @@ export class UsersService {
             managerReport?: boolean;
             weeklyReport?: boolean;
             monthlyReport?: boolean;
+            skipWeekends?: boolean;
           };
           max?: {
             chatId?: string;
@@ -111,6 +114,7 @@ export class UsersService {
           detailed?: boolean;
           includeAvgValue?: boolean;
           includeAvgRating?: boolean;
+          managedUserIds?: string[];
         }
       | undefined;
     const ks = settings?.kpiSettings as
@@ -128,6 +132,11 @@ export class UsersService {
       | null
       | undefined;
 
+    const managedIds = rs?.managedUserIds;
+    const reportManagedUserIds = Array.isArray(managedIds)
+      ? managedIds
+      : ([] as string[]);
+
     return {
       email: (user.email ?? "") as string,
       givenName: user.givenName ?? "",
@@ -135,28 +144,30 @@ export class UsersService {
       internalExtensions: user.internalExtensions ?? "",
       mobilePhones: user.mobilePhones ?? "",
       telegramChatId: user.telegramChatId ?? "",
-      telegram_daily_report: ns?.telegram?.dailyReport ?? false,
-      telegram_manager_report: ns?.telegram?.managerReport ?? false,
-      max_chat_id: ns?.max?.chatId ?? "",
-      max_daily_report: ns?.max?.dailyReport ?? false,
-      max_manager_report: ns?.max?.managerReport ?? false,
-      filter_exclude_answering_machine: fs?.excludeAnsweringMachine ?? false,
-      filter_min_duration: fs?.minDuration ?? 0,
-      filter_min_replicas: fs?.minReplicas ?? 0,
-      email_daily_report: ns?.email?.dailyReport ?? false,
-      email_weekly_report: ns?.email?.weeklyReport ?? false,
-      email_monthly_report: ns?.email?.monthlyReport ?? false,
-      telegram_weekly_report: ns?.telegram?.weeklyReport ?? false,
-      telegram_monthly_report: ns?.telegram?.monthlyReport ?? false,
-      report_include_call_summaries: rs?.includeCallSummaries ?? false,
-      report_detailed: rs?.detailed ?? false,
-      report_include_avg_value: rs?.includeAvgValue ?? false,
-      report_include_avg_rating: rs?.includeAvgRating ?? false,
-      kpi_base_salary: ks?.baseSalary ?? 0,
-      kpi_target_bonus: ks?.targetBonus ?? 0,
-      kpi_target_talk_time_minutes: ks?.targetTalkTimeMinutes ?? 0,
-      evaluation_template_slug: es?.templateSlug ?? null,
-      evaluation_custom_instructions: es?.customInstructions ?? null,
+      telegramDailyReport: ns?.telegram?.dailyReport ?? false,
+      telegramManagerReport: ns?.telegram?.managerReport ?? false,
+      maxChatId: ns?.max?.chatId ?? "",
+      maxDailyReport: ns?.max?.dailyReport ?? false,
+      maxManagerReport: ns?.max?.managerReport ?? false,
+      filterExcludeAnsweringMachine: fs?.excludeAnsweringMachine ?? false,
+      filterMinDuration: fs?.minDuration ?? 0,
+      filterMinReplicas: fs?.minReplicas ?? 0,
+      emailDailyReport: ns?.email?.dailyReport ?? false,
+      emailWeeklyReport: ns?.email?.weeklyReport ?? false,
+      emailMonthlyReport: ns?.email?.monthlyReport ?? false,
+      telegramWeeklyReport: ns?.telegram?.weeklyReport ?? false,
+      telegramMonthlyReport: ns?.telegram?.monthlyReport ?? false,
+      telegramSkipWeekends: ns?.telegram?.skipWeekends ?? false,
+      reportIncludeCallSummaries: rs?.includeCallSummaries ?? false,
+      reportDetailed: rs?.detailed ?? false,
+      reportIncludeAvgValue: rs?.includeAvgValue ?? false,
+      reportIncludeAvgRating: rs?.includeAvgRating ?? false,
+      reportManagedUserIds,
+      kpiBaseSalary: ks?.baseSalary ?? 0,
+      kpiTargetBonus: ks?.targetBonus ?? 0,
+      kpiTargetTalkTimeMinutes: ks?.targetTalkTimeMinutes ?? 0,
+      evaluationTemplateSlug: es?.templateSlug ?? null,
+      evaluationCustomInstructions: es?.customInstructions ?? null,
     };
   }
 

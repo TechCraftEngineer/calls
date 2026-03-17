@@ -56,7 +56,7 @@ export default function UserEditPage() {
     if (data) {
       const { email: e, ...formData } = data;
       setEmail(e);
-      const formValues = formData as EditUserForm;
+      const formValues = { ...formData, email: e } as EditUserForm;
       setForm(formValues);
       initializeForm(formValues);
     }
@@ -201,10 +201,10 @@ export default function UserEditPage() {
     updateTelegramMutation.mutate({
       user_id: userId,
       data: {
-        telegram_daily_report: form.telegram_daily_report,
-        telegram_manager_report: form.telegram_manager_report,
-        telegram_weekly_report: form.telegram_weekly_report,
-        telegram_monthly_report: form.telegram_monthly_report,
+        telegramDailyReport: form.telegramDailyReport,
+        telegramManagerReport: form.telegramManagerReport,
+        telegramWeeklyReport: form.telegramWeeklyReport,
+        telegramMonthlyReport: form.telegramMonthlyReport,
       },
     });
   };
@@ -229,9 +229,9 @@ export default function UserEditPage() {
       user_id: userId,
       data: {
         email: form.email,
-        email_daily_report: form.email_daily_report,
-        email_weekly_report: form.email_weekly_report,
-        email_monthly_report: form.email_monthly_report,
+        emailDailyReport: form.emailDailyReport,
+        emailWeeklyReport: form.emailWeeklyReport,
+        emailMonthlyReport: form.emailMonthlyReport,
       },
     });
   };
@@ -242,8 +242,9 @@ export default function UserEditPage() {
     updateMaxMutation.mutate({
       user_id: userId,
       data: {
-        max_daily_report: form.max_daily_report,
-        max_manager_report: form.max_manager_report,
+        maxChatId: form.maxChatId,
+        maxDailyReport: form.maxDailyReport,
+        maxManagerReport: form.maxManagerReport,
       },
     });
   };
@@ -254,10 +255,10 @@ export default function UserEditPage() {
     updateReportMutation.mutate({
       user_id: userId,
       data: {
-        report_include_call_summaries: form.report_include_call_summaries,
-        report_detailed: form.report_detailed,
-        report_include_avg_value: form.report_include_avg_value,
-        report_include_avg_rating: form.report_include_avg_rating,
+        reportIncludeCallSummaries: form.reportIncludeCallSummaries,
+        reportDetailed: form.reportDetailed,
+        reportIncludeAvgValue: form.reportIncludeAvgValue,
+        reportIncludeAvgRating: form.reportIncludeAvgRating,
       },
     });
   };
@@ -268,9 +269,9 @@ export default function UserEditPage() {
     updateKpiMutation.mutate({
       user_id: userId,
       data: {
-        kpi_base_salary: form.kpi_base_salary,
-        kpi_target_bonus: form.kpi_target_bonus,
-        kpi_target_talk_time_minutes: form.kpi_target_talk_time_minutes,
+        kpiBaseSalary: form.kpiBaseSalary,
+        kpiTargetBonus: form.kpiTargetBonus,
+        kpiTargetTalkTimeMinutes: form.kpiTargetTalkTimeMinutes,
       },
     });
   };
@@ -281,9 +282,9 @@ export default function UserEditPage() {
     updateFilterMutation.mutate({
       user_id: userId,
       data: {
-        filter_exclude_answering_machine: form.filter_exclude_answering_machine,
-        filter_min_duration: form.filter_min_duration,
-        filter_min_replicas: form.filter_min_replicas,
+        filterExcludeAnsweringMachine: form.filterExcludeAnsweringMachine,
+        filterMinDuration: form.filterMinDuration,
+        filterMinReplicas: form.filterMinReplicas,
       },
     });
   };
@@ -294,8 +295,8 @@ export default function UserEditPage() {
     updateEvaluationMutation.mutate({
       user_id: userId,
       data: {
-        evaluation_template_slug: form.evaluation_template_slug,
-        evaluation_custom_instructions: form.evaluation_custom_instructions,
+        evaluationTemplateSlug: form.evaluationTemplateSlug,
+        evaluationCustomInstructions: form.evaluationCustomInstructions,
       },
     });
   };
@@ -390,7 +391,7 @@ export default function UserEditPage() {
             title="MAX Отчеты"
             form={form}
             setForm={setForm}
-            fields={["max_daily_report", "max_manager_report"]}
+            fields={["maxDailyReport", "maxManagerReport"]}
             labels={[
               "Получать свои ежедневные отчеты (MAX)",
               "Получать отчеты по всем менеджерам (MAX)",
@@ -407,10 +408,10 @@ export default function UserEditPage() {
             form={form}
             setForm={setForm}
             fields={[
-              "report_include_call_summaries",
-              "report_detailed",
-              "report_include_avg_value",
-              "report_include_avg_rating",
+              "reportIncludeCallSummaries",
+              "reportDetailed",
+              "reportIncludeAvgValue",
+              "reportIncludeAvgRating",
             ]}
             labels={[
               "Включать тексты звонков",
@@ -440,9 +441,9 @@ export default function UserEditPage() {
             form={form}
             setForm={setForm}
             fields={[
-              "filter_exclude_answering_machine",
-              "filter_min_duration",
-              "filter_min_replicas",
+              "filterExcludeAnsweringMachine",
+              "filterMinDuration",
+              "filterMinReplicas",
             ]}
             labels={[
               "Исключить автоответчик",

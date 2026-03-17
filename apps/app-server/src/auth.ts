@@ -79,23 +79,11 @@ export const auth = betterAuth({
       enabled: true,
     },
     additionalFields: {
-      givenName: { type: "string", required: false, fieldName: "given_name" },
-      familyName: { type: "string", required: false, fieldName: "family_name" },
-      internalExtensions: {
-        type: "string",
-        required: false,
-        fieldName: "internal_extensions",
-      },
-      mobilePhones: {
-        type: "string",
-        required: false,
-        fieldName: "mobile_phones",
-      },
-      telegramChatId: {
-        type: "string",
-        required: false,
-        fieldName: "telegram_chat_id",
-      },
+      givenName: { type: "string", required: false },
+      familyName: { type: "string", required: false },
+      internalExtensions: { type: "string", required: false },
+      mobilePhones: { type: "string", required: false },
+      telegramChatId: { type: "string", required: false },
     },
   },
 });

@@ -341,8 +341,8 @@ export default function EvaluationSettingsPage() {
                         {u.internalExtensions || "—"}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {u.evaluation_template_slug
-                          ? getTemplateName(u.evaluation_template_slug)
+                        {u.evaluationTemplateSlug
+                          ? getTemplateName(u.evaluationTemplateSlug)
                           : "По умолчанию"}
                       </TableCell>
                       <TableCell className="text-right">

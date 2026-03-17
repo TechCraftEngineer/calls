@@ -15,30 +15,30 @@ export const userUpdateSchema = z.object({
   internalExtensions: z.string().optional().nullable(),
   mobilePhones: z.string().optional().nullable(),
   email: z.string().optional().nullable(),
-  filter_exclude_answering_machine: z.boolean().optional(),
-  filter_min_duration: z.number().optional(),
-  filter_min_replicas: z.number().optional(),
-  telegram_daily_report: z.boolean().optional(),
-  telegram_manager_report: z.boolean().optional(),
-  telegram_weekly_report: z.boolean().optional(),
-  telegram_monthly_report: z.boolean().optional(),
-  email_daily_report: z.boolean().optional(),
-  email_weekly_report: z.boolean().optional(),
-  email_monthly_report: z.boolean().optional(),
-  report_include_call_summaries: z.boolean().optional(),
-  report_detailed: z.boolean().optional(),
-  report_include_avg_value: z.boolean().optional(),
-  report_include_avg_rating: z.boolean().optional(),
-  kpi_base_salary: z.number().optional(),
-  kpi_target_bonus: z.number().optional(),
-  kpi_target_talk_time_minutes: z.number().optional(),
-  telegram_skip_weekends: z.boolean().optional(),
-  report_managed_user_ids: z.string().optional().nullable(),
-  evaluation_template_slug: z
+  filterExcludeAnsweringMachine: z.boolean().optional(),
+  filterMinDuration: z.number().optional(),
+  filterMinReplicas: z.number().optional(),
+  telegramDailyReport: z.boolean().optional(),
+  telegramManagerReport: z.boolean().optional(),
+  telegramWeeklyReport: z.boolean().optional(),
+  telegramMonthlyReport: z.boolean().optional(),
+  emailDailyReport: z.boolean().optional(),
+  emailWeeklyReport: z.boolean().optional(),
+  emailMonthlyReport: z.boolean().optional(),
+  reportIncludeCallSummaries: z.boolean().optional(),
+  reportDetailed: z.boolean().optional(),
+  reportIncludeAvgValue: z.boolean().optional(),
+  reportIncludeAvgRating: z.boolean().optional(),
+  kpiBaseSalary: z.number().optional(),
+  kpiTargetBonus: z.number().optional(),
+  kpiTargetTalkTimeMinutes: z.number().optional(),
+  telegramSkipWeekends: z.boolean().optional(),
+  reportManagedUserIds: z.string().optional().nullable(),
+  evaluationTemplateSlug: z
     .enum(["sales", "support", "general"])
     .optional()
     .nullable(),
-  evaluation_custom_instructions: z.string().optional().nullable(),
+  evaluationCustomInstructions: z.string().optional().nullable(),
 });
 
 export const updateBasicInfoSchema = z.object({
@@ -50,53 +50,53 @@ export const updateBasicInfoSchema = z.object({
 
 export const updateEmailSettingsSchema = z.object({
   email: z.string().email("Некорректный email").optional().nullable(),
-  email_daily_report: z.boolean().optional(),
-  email_weekly_report: z.boolean().optional(),
-  email_monthly_report: z.boolean().optional(),
+  emailDailyReport: z.boolean().optional(),
+  emailWeeklyReport: z.boolean().optional(),
+  emailMonthlyReport: z.boolean().optional(),
 });
 
 export const updateTelegramSettingsSchema = z.object({
-  telegram_daily_report: z.boolean().optional(),
-  telegram_manager_report: z.boolean().optional(),
-  telegram_weekly_report: z.boolean().optional(),
-  telegram_monthly_report: z.boolean().optional(),
+  telegramDailyReport: z.boolean().optional(),
+  telegramManagerReport: z.boolean().optional(),
+  telegramWeeklyReport: z.boolean().optional(),
+  telegramMonthlyReport: z.boolean().optional(),
 });
 
 export const updateMaxSettingsSchema = z.object({
-  max_chat_id: z.string().optional().nullable(),
-  max_daily_report: z.boolean().optional(),
-  max_manager_report: z.boolean().optional(),
+  maxChatId: z.string().optional().nullable(),
+  maxDailyReport: z.boolean().optional(),
+  maxManagerReport: z.boolean().optional(),
 });
 
 export const updateReportSettingsSchema = z.object({
-  report_include_call_summaries: z.boolean().optional(),
-  report_detailed: z.boolean().optional(),
-  report_include_avg_value: z.boolean().optional(),
-  report_include_avg_rating: z.boolean().optional(),
+  reportIncludeCallSummaries: z.boolean().optional(),
+  reportDetailed: z.boolean().optional(),
+  reportIncludeAvgValue: z.boolean().optional(),
+  reportIncludeAvgRating: z.boolean().optional(),
 });
 
 export const updateKpiSettingsSchema = z.object({
-  kpi_base_salary: z
+  kpiBaseSalary: z
     .number()
     .min(0, "Значение не может быть отрицательным")
     .optional(),
-  kpi_target_bonus: z
+  kpiTargetBonus: z
     .number()
     .min(0, "Значение не может быть отрицательным")
     .optional(),
-  kpi_target_talk_time_minutes: z
+  kpiTargetTalkTimeMinutes: z
     .number()
     .min(0, "Значение не может быть отрицательным")
     .optional(),
 });
 
 export const updateFilterSettingsSchema = z.object({
-  filter_exclude_answering_machine: z.boolean().optional(),
-  filter_min_duration: z
+  filterExcludeAnsweringMachine: z.boolean().optional(),
+  filterMinDuration: z
     .number()
     .min(0, "Значение не может быть отрицательным")
     .optional(),
-  filter_min_replicas: z
+  filterMinReplicas: z
     .number()
     .min(0, "Значение не может быть отрицательным")
     .optional(),

@@ -23,9 +23,9 @@ export const updateKpiSettings = workspaceProcedure
         input.user_id,
         context.workspaceId!,
         {
-          kpiBaseSalary: input.data.kpi_base_salary,
-          kpiTargetBonus: input.data.kpi_target_bonus,
-          kpiTargetTalkTimeMinutes: input.data.kpi_target_talk_time_minutes,
+          kpiBaseSalary: input.data.kpiBaseSalary,
+          kpiTargetBonus: input.data.kpiTargetBonus,
+          kpiTargetTalkTimeMinutes: input.data.kpiTargetTalkTimeMinutes,
         },
       );
 

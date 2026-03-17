@@ -19,10 +19,10 @@ export function KpiFilterSection({
         <h3 className="m-0 mb-3 text-sm font-bold">Настройки KPI</h3>
         {(
           [
-            ["kpi_base_salary", "Базовый оклад (₽)"],
-            ["kpi_target_bonus", "Целевой бонус (₽)"],
+            ["kpiBaseSalary", "Базовый оклад (₽)"],
+            ["kpiTargetBonus", "Целевой бонус (₽)"],
             [
-              "kpi_target_talk_time_minutes",
+              "kpiTargetTalkTimeMinutes",
               "Целевое время разговоров в месяц (мин)",
             ],
           ] as const
@@ -52,10 +52,10 @@ export function KpiFilterSection({
         <label className="flex items-center gap-2 text-[13px] cursor-pointer mb-3">
           <input
             type="checkbox"
-            checked={form.filter_exclude_answering_machine}
+            checked={form.filterExcludeAnsweringMachine}
             onChange={(e) =>
               onFormChange({
-                filter_exclude_answering_machine: e.target.checked,
+                filterExcludeAnsweringMachine: e.target.checked,
               })
             }
           />
@@ -68,13 +68,11 @@ export function KpiFilterSection({
           <Input
             type="number"
             min={0}
-            value={form.filter_min_duration ?? ""}
+            value={form.filterMinDuration ?? ""}
             onChange={(e) => {
               const value = parseInt(e.target.value, 10);
               onFormChange({
-                filter_min_duration: Number.isNaN(value)
-                  ? 0
-                  : Math.max(0, value),
+                filterMinDuration: Number.isNaN(value) ? 0 : Math.max(0, value),
               });
             }}
             className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"
@@ -88,13 +86,11 @@ export function KpiFilterSection({
           <Input
             type="number"
             min={0}
-            value={form.filter_min_replicas ?? ""}
+            value={form.filterMinReplicas ?? ""}
             onChange={(e) => {
               const value = parseInt(e.target.value, 10);
               onFormChange({
-                filter_min_replicas: Number.isNaN(value)
-                  ? 0
-                  : Math.max(0, value),
+                filterMinReplicas: Number.isNaN(value) ? 0 : Math.max(0, value),
               });
             }}
             className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border"

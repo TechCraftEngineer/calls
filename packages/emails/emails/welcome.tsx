@@ -2,32 +2,40 @@ import { APP_CONFIG, env } from "@calls/config";
 import {
   Body,
   Button,
+  Column,
   Container,
   Head,
   Heading,
   Hr,
   Html,
+  Img,
   Link,
   Preview,
+  pixelBasedPreset,
+  Row,
   Section,
   Tailwind,
   Text,
 } from "@react-email/components";
 
-import { emailTailwindConfig } from "../tailwind";
+interface WelcomeEmailProps {
+  username?: string;
+}
 
-export default function WelcomeEmail({
-  username = "username",
-}: {
-  username: string;
-}) {
+export const WelcomeEmail = ({ username = "username" }: WelcomeEmailProps) => {
+  const previewText = `Добро пожаловать в ${APP_CONFIG.shortName}`;
+
   return (
     <Html>
       <Head />
-      <Preview>Добро пожаловать в {APP_CONFIG.shortName}</Preview>
-      <Tailwind config={emailTailwindConfig}>
-        <Body className="mx-auto my-auto bg-white font-sans">
-          <Container className="mx-auto my-[40px] w-[465px] rounded border border-solid border-[#eaeaea] p-[20px]">
+      <Tailwind
+        config={{
+          presets: [pixelBasedPreset],
+        }}
+      >
+        <Body className="mx-auto my-auto bg-white px-2 font-sans">
+          <Preview>{previewText}</Preview>
+          <Container className="mx-auto my-[40px] max-w-[465px] rounded border border-[#eaeaea] border-solid p-[20px]">
             <Heading className="mx-0 my-[30px] p-0 text-center text-[24px] font-normal text-black">
               Добро пожаловать в{" "}
               <Link href={env.APP_URL} className="text-black">
@@ -55,11 +63,9 @@ export default function WelcomeEmail({
             </Section>
             <Text className="text-[14px] leading-[24px] text-black">
               Если кнопка не работает, скопируйте и вставьте эту ссылку в
-              браузер:
-            </Text>
-            <Text className="mb-[20px]">
-              <Link href={env.APP_URL} className="text-black no-underline">
-                <strong>{env.APP_URL}</strong>
+              браузер:{" "}
+              <Link href={env.APP_URL} className="text-blue-600 no-underline">
+                {env.APP_URL}
               </Link>
             </Text>
             <Hr className="mx-0 my-[26px] w-full border border-solid border-[#eaeaea]" />
@@ -74,4 +80,10 @@ export default function WelcomeEmail({
       </Tailwind>
     </Html>
   );
-}
+};
+
+WelcomeEmail.PreviewProps = {
+  username: "username",
+} as WelcomeEmailProps;
+
+export default WelcomeEmail;

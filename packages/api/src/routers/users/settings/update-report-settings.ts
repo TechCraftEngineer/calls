@@ -23,10 +23,10 @@ export const updateReportSettings = workspaceProcedure
         input.user_id,
         context.workspaceId!,
         {
-          reportIncludeCallSummaries: input.data.report_include_call_summaries,
-          reportDetailed: input.data.report_detailed,
-          reportIncludeAvgValue: input.data.report_include_avg_value,
-          reportIncludeAvgRating: input.data.report_include_avg_rating,
+          reportIncludeCallSummaries: input.data.reportIncludeCallSummaries,
+          reportDetailed: input.data.reportDetailed,
+          reportIncludeAvgValue: input.data.reportIncludeAvgValue,
+          reportIncludeAvgRating: input.data.reportIncludeAvgRating,
         },
       );
 

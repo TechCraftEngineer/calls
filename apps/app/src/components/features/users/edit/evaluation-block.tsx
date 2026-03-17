@@ -49,7 +49,7 @@ export function EvaluationBlock({
     }
   };
 
-  const value = form.evaluation_template_slug ?? "general";
+  const value = form.evaluationTemplateSlug ?? "general";
 
   return (
     <div
@@ -148,7 +148,7 @@ export function EvaluationBlock({
           onValueChange={(v: string) =>
             setForm({
               ...form,
-              evaluation_template_slug: v,
+              evaluationTemplateSlug: v,
             })
           }
         >
@@ -170,11 +170,11 @@ export function EvaluationBlock({
           Доп. инструкции (необязательно)
         </label>
         <textarea
-          value={form.evaluation_custom_instructions ?? ""}
+          value={form.evaluationCustomInstructions ?? ""}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
             setForm({
               ...form,
-              evaluation_custom_instructions: e.target.value || null,
+              evaluationCustomInstructions: e.target.value || null,
             })
           }
           className="w-full py-2 px-3 border border-[#ddd] rounded-md box-border min-h-[80px] resize-y"
