@@ -176,6 +176,28 @@ export default function FtpSection({
             </p>
           </div>
 
+          <div className="space-y-2">
+            <Label
+              htmlFor="ftp-exclude-phone-numbers"
+              className="text-xs text-muted-foreground"
+            >
+              Исключить номера из загрузки и анализа
+            </Label>
+            <Textarea
+              id="ftp-exclude-phone-numbers"
+              value={prompts.ftp_exclude_phone_numbers?.value ?? ""}
+              onChange={onPromptChange("ftp_exclude_phone_numbers", "value")}
+              placeholder="79035553973, 9035553973"
+              rows={3}
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              Номера телефонов (внутренние или внешние), которые не будут
+              загружаться с FTP и не попадут в аналитику. Один номер на строку
+              или через запятую.
+            </p>
+          </div>
+
           {(connectionStatus?.configured || statusLoading) && (
             <div className="rounded-lg border bg-muted/30 px-4 py-3">
               {statusLoading ? (

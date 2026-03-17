@@ -158,6 +158,7 @@ export class SettingsService {
       user: string;
       password: string;
       syncFromDate: string;
+      excludePhoneNumbers: string[];
     }>
   > {
     const rows = await this.workspaceIntegrationsRepository.listActiveFtp();

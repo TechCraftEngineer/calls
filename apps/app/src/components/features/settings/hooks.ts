@@ -299,8 +299,7 @@ export function useSettings() {
           syncFromDate && /^\d{4}-\d{2}-\d{2}$/.test(syncFromDate)
             ? syncFromDate
             : undefined,
-        excludePhoneNumbers:
-          excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+        excludePhoneNumbers,
       });
       toast.success("Параметры подключения FTP сохранены");
       await loadSettings();
