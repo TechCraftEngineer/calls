@@ -27,6 +27,8 @@
     "@calls/telegram-bot": "workspace:*",
     "@orpc/client": "1.13.7",
     "@orpc/server": "^1.13.7",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "zod": "4.3.6"
   },
   "devDependencies": {

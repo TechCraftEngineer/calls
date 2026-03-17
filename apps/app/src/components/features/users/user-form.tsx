@@ -283,8 +283,9 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       <div className="flex gap-3 justify-end mt-6 pt-5 border-t border-gray-200">
         <Button
           type="button"
-          variant="outline"
+          variant="link"
           onClick={onCancel}
+          className="text-primary"
           disabled={updateMutation.isPending || createMutation.isPending}
           className="min-w-28"
         >

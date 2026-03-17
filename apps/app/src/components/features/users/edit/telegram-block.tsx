@@ -174,7 +174,7 @@ export function TelegramBlock({
                 {onCheckConnection && (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="default"
                     size="sm"
                     onClick={onCheckConnection}
                     disabled={checkConnectionLoading}
@@ -187,7 +187,7 @@ export function TelegramBlock({
               onCheckConnection && (
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   onClick={onCheckConnection}
                   disabled={checkConnectionLoading}

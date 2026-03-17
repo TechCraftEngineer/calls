@@ -235,7 +235,7 @@ export default function EvaluationSettingsPage() {
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
                       <Button
-                        variant={t.isBuiltin ? "outline" : "ghost"}
+                        variant="default"
                         size="sm"
                         onClick={() => setViewModalSlug(t.slug)}
                       >
@@ -244,7 +244,7 @@ export default function EvaluationSettingsPage() {
                       {!t.isBuiltin && t.id && (
                         <>
                           <Button
-                            variant="outline"
+                            variant="default"
                             size="sm"
                             onClick={async () => {
                               if (!t.id) return;
@@ -347,7 +347,7 @@ export default function EvaluationSettingsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
-                          variant="outline"
+                          variant="default"
                           size="sm"
                           onClick={() =>
                             router.push(`${paths.users.root}/${userId}/edit`)

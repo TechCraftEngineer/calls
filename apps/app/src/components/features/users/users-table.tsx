@@ -176,9 +176,9 @@ export default function UsersTable({
                     <TableCell className="align-top pt-3">
                       <div className="flex gap-3 justify-end items-start">
                         <Button
-                          variant="outline"
+                          variant="default"
                           size="sm"
-                          className="ghost-btn text-xs px-3 bg-white border-[#DDD] text-[#333] font-semibold hover:bg-gray-50"
+                          className="text-xs px-3"
                           onClick={() => router.push(`/users/${userId}/edit`)}
                           aria-label={`Редактировать ${u.email}`}
                         >

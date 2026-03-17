@@ -239,7 +239,7 @@ export default function FtpSection({
           <div className="flex flex-wrap items-center gap-3">
             <Button
               type="button"
-              variant="outline"
+              variant="default"
               onClick={onTest}
               disabled={testing || !hasValues}
             >

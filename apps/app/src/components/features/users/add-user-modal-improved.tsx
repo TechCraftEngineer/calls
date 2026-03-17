@@ -364,16 +364,16 @@ export default function AddUserModal({
           <div className="flex gap-3 justify-end">
             <Button
               type="button"
-              variant="outline"
+              variant="link"
               onClick={onClose}
-              className="min-h-[44px]"
+              className="min-h-[44px] text-primary"
               aria-label="Отменить добавление пользователя"
             >
               Отмена
             </Button>
             <Button
               type="submit"
-              variant="accent"
+              variant="default"
               size="touch"
               disabled={submitting}
               aria-label={submitting ? "Сохранение…" : "Добавить пользователя"}

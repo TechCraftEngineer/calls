@@ -246,7 +246,7 @@ export default function InviteUserModal({
               />
               <Button
                 type="button"
-                variant="outline"
+                variant="default"
                 onClick={handleCopyLink}
                 className="shrink-0 min-w-[44px]"
                 aria-label="Скопировать ссылку"
@@ -299,19 +299,19 @@ export default function InviteUserModal({
           <div className="flex gap-3">
             <Button
               type="button"
-              variant="outline"
+              variant="link"
               onClick={() => {
                 setResult(null);
                 setEmail("");
                 setRole("member");
               }}
-              className="flex-1"
+              className="flex-1 text-primary"
             >
               Пригласить ещё
             </Button>
             <Button
               type="button"
-              variant="accent"
+              variant="default"
               onClick={handleClose}
               className="flex-1"
             >
@@ -460,10 +460,10 @@ export default function InviteUserModal({
           <div className="flex gap-3 mt-2">
             <Button
               type="button"
-              variant="outline"
+              variant="link"
               onClick={handleClose}
               disabled={submitting}
-              className="flex-1"
+              className="flex-1 text-primary"
             >
               Отмена
             </Button>

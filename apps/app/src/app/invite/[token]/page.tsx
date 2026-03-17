@@ -317,7 +317,7 @@ export default function InviteAcceptPage() {
               {userHasPassword ? (
                 <Button
                   onClick={handleAcceptForExistingUser}
-                  variant="accent"
+                  variant="default"
                   className="w-full min-h-[48px] text-base font-semibold"
                   disabled={submitting || checkingPasswordQuery}
                 >
@@ -406,8 +406,8 @@ export default function InviteAcceptPage() {
               <div className="flex gap-3">
                 <Button
                   onClick={() => router.push(paths.auth.signout)}
-                  variant="outline"
-                  className="flex-1 min-h-[44px]"
+                  variant="link"
+                  className="flex-1 min-h-[44px] text-primary"
                 >
                   Выйти
                 </Button>
@@ -417,7 +417,7 @@ export default function InviteAcceptPage() {
                       `${paths.auth.signin}?email=${encodeURIComponent(invitation.email)}`,
                     )
                   }
-                  variant="accent"
+                  variant="default"
                   className="flex-1 min-h-[44px]"
                 >
                   Войти как {invitation.email.split("@")[0]}

@@ -309,7 +309,12 @@ export default function UserEditPage() {
         <main className="main-content">
           <div className="p-6">
             <p className="text-destructive">Ошибка загрузки пользователя</p>
-            <Button variant="outline" size="sm" className="mt-4" asChild>
+            <Button
+              variant="link"
+              size="sm"
+              className="mt-4 text-primary"
+              asChild
+            >
               <Link href={paths.users.root}>← К списку пользователей</Link>
             </Button>
           </div>
@@ -346,7 +351,7 @@ export default function UserEditPage() {
               Email: {email}
             </p>
           </div>
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="link" size="sm" className="text-primary" asChild>
             <Link href={paths.users.root}>← К списку пользователей</Link>
           </Button>
         </header>

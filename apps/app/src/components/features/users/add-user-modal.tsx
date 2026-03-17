@@ -256,10 +256,15 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           <div
             style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}
           >
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button
+              type="button"
+              variant="link"
+              onClick={onClose}
+              className="text-primary"
+            >
               Отмена
             </Button>
-            <Button type="submit" variant="accent" disabled={submitting}>
+            <Button type="submit" variant="default" disabled={submitting}>
               {submitting ? "Сохранение…" : "Добавить"}
             </Button>
           </div>

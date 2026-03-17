@@ -45,10 +45,10 @@ export function StatisticsFilters({
             />
           </div>
           <div className="flex gap-3">
-            <Button variant="accent" onClick={onApply}>
+            <Button variant="default" onClick={onApply}>
               Применить
             </Button>
-            <Button variant="outline" onClick={onReset}>
+            <Button variant="link" onClick={onReset} className="text-primary">
               Сбросить
             </Button>
           </div>

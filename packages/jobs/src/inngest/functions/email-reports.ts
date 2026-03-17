@@ -1,6 +1,6 @@
 /**
  * Inngest функция: отправка email-отчётов по звонкам.
- * Запускается каждый час, проверяет настройки времени и отправляет отчёты.
+ * Запускается каждые 15 минут, проверяет настройки времени и отправляет отчёты.
  */
 
 import {
@@ -12,6 +12,7 @@ import {
   workspacesService,
 } from "@calls/db";
 import { ReportEmail, sendEmail } from "@calls/emails";
+import { toZonedTime } from "date-fns-tz";
 import type { ManagerStats } from "../../reports/format-report";
 import { formatTelegramReport } from "../../reports/format-report";
 import { inngest } from "../client";
@@ -25,9 +26,25 @@ function formatDateInMoscow(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function maskEmail(email: string): string {
+  const [local, domain] = email.split("@");
+  if (!domain || !local) return "***";
+  const safeLocal =
+    local.length <= 2
+      ? (local[0] ?? "*")
+      : `${local[0] ?? "*"}***${local.at(-1) ?? "*"}`;
+  const [domName, domTld] = domain.split(".");
+  if (!domName) return "***";
+  const safeDomName =
+    domName.length <= 2
+      ? (domName[0] ?? "*")
+      : `${domName[0] ?? "*"}***${domName.at(-1) ?? "*"}`;
+  return `${safeLocal}@${safeDomName}.${domTld ?? "***"}`;
+}
+
 function nowInMoscow(): Date {
   const now = new Date();
-  return new Date(now.toLocaleString("en-US", { timeZone: TZ }));
+  return toZonedTime(now, TZ);
 }
 
 function parseTimeHHMM(s: string): { h: number; m: number } {
@@ -70,7 +87,10 @@ export const emailReportsFn = inngest.createFunction(
     );
 
     if (workspaceIds.length === 0) {
-      return { skipped: true, reason: "Нет воркспейсов с email-отчётами" };
+      return {
+        skipped: true,
+        reason: "Нет рабочих пространств с email-отчётами",
+      };
     }
 
     const now = nowInMoscow();
@@ -196,8 +216,9 @@ export const emailReportsFn = inngest.createFunction(
                 });
                 sent++;
               } catch (e) {
+                const identifier = r.userId ?? maskEmail(r.email);
                 errs.push(
-                  `Не удалось отправить на ${r.email}: ${e instanceof Error ? e.message : String(e)}`,
+                  `Не удалось отправить на получателя ${identifier}: ${e instanceof Error ? e.message : String(e)}`,
                 );
               }
             }

@@ -71,11 +71,10 @@ export function MaxReportSection({
           <div className="mt-2">
             <Button
               type="button"
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={onConnect}
               disabled={connectLoading}
-              className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
             >
               <span className="text-base">⚡</span> Подключить MAX
             </Button>

@@ -118,6 +118,8 @@
         "@calls/telegram-bot": "workspace:*",
         "@orpc/client": "1.13.7",
         "@orpc/server": "^1.13.7",
+        "date-fns": "^4.1.0",
+        "date-fns-tz": "^3.2.0",
         "zod": "4.3.6",
       },
       "devDependencies": {
@@ -222,6 +224,8 @@
         "@calls/telegram-bot": "workspace:*",
         "ai": "^6.0.116",
         "basic-ftp": "^5.2.0",
+        "date-fns": "^4.1.0",
+        "date-fns-tz": "^3.2.0",
         "hono": "4.12.8",
         "inngest": "4.0.0",
         "music-metadata": "^11.12.3",
@@ -1747,6 +1751,8 @@
     "date-fns": ["date-fns@4.1.0", "", {}, "sha512-Ukq0owbQXxa/U3EGtsdVBkR1w7KOQ5gIBqdH2hkvknzZPYvBxb/aa6E8L7tmjFtkwZBu3UXBbjIgPo/Ez4xaNg=="],
 
     "date-fns-jalali": ["date-fns-jalali@4.1.0-0", "", {}, "sha512-hTIP/z+t+qKwBDcmmsnmjWTduxCg+5KfdqWQvb2X/8C9+knYY6epN/pfxdDuyVlSVeFz0sM5eEfwIUQ70U4ckg=="],
+
+    "date-fns-tz": ["date-fns-tz@3.2.0", "", { "peerDependencies": { "date-fns": "^3.0.0 || ^4.0.0" } }, "sha512-sg8HqoTEulcbbbVXeg84u5UnlsQa8GS5QXMqjjYIhS4abEVVKIUwe0/l/UhrZdKaL/W5eWZNlbTeEIiOXTcsBQ=="],
 
     "debounce": ["debounce@2.2.0", "", {}, "sha512-Xks6RUDLZFdz8LIdR6q0MTH44k7FikOmnh5xkSjMig6ch45afc8sjTjRQf3P6ax8dMgcQrYO/AR2RGWURrruqw=="],
 

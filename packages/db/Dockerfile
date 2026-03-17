@@ -19,8 +19,10 @@ COPY --from=prepare /app/out/full/ .
 ENV TURBO_TELEMETRY_DISABLED=1
 
 FROM base AS runner
-ENV POSTGRES_URL=postgres://postgres:password@postgres:5432/acme
+ARG POSTGRES_URL
+ENV POSTGRES_URL=${POSTGRES_URL}
 
 COPY --from=builder /app .
 
-CMD ["bun", "run", "--cwd", "packages/db", "migrate"]
+WORKDIR /app/packages/db
+CMD ["bunx", "drizzle-kit", "migrate"]

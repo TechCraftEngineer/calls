@@ -289,10 +289,15 @@ export default function EditUserModal({
           <KpiFilterSection form={form} onFormChange={updateForm} />
 
           <div className="flex gap-3 justify-end">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button
+              type="button"
+              variant="link"
+              onClick={onClose}
+              className="text-primary"
+            >
               Отмена
             </Button>
-            <Button type="submit" variant="accent" disabled={submitting}>
+            <Button type="submit" variant="default" disabled={submitting}>
               {submitting ? (
                 <>
                   <span

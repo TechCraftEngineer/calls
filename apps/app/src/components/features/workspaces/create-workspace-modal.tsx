@@ -176,7 +176,12 @@ export default function CreateWorkspaceModal({
           </div>
 
           <div className="flex gap-3 mt-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button
+              type="button"
+              variant="link"
+              onClick={onClose}
+              className="text-primary"
+            >
               Отмена
             </Button>
             <Button

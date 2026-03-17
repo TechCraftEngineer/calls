@@ -88,18 +88,17 @@ export function TelegramReportSection({
               <>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   onClick={onConnect}
                   disabled={connectLoading}
-                  className="text-primary border-primary hover:bg-primary/10 hover:text-primary"
                 >
                   {connectLoading ? "…" : "Подключить Telegram"}
                 </Button>
                 {onCheckConnection && (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="default"
                     size="sm"
                     onClick={onCheckConnection}
                     disabled={checkConnectionLoading}
@@ -112,7 +111,7 @@ export function TelegramReportSection({
               onCheckConnection && (
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   onClick={onCheckConnection}
                   disabled={checkConnectionLoading}
@@ -177,7 +176,7 @@ export function TelegramReportSection({
       <div className="mt-3">
         <Button
           type="button"
-          variant={canSendTest ? "success" : "secondary"}
+          variant={canSendTest ? "success" : "default"}
           size="sm"
           disabled={!form.telegramChatId?.trim() || sendTestLoading}
           onClick={onSendTest}
