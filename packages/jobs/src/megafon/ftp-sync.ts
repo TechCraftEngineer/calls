@@ -264,7 +264,7 @@ export async function syncFtp(
           });
           if (isExcluded) {
             result.skipped++;
-            logger.debug("Файл пропущен (номер в списке исключений)", {
+            logger.info("Файл пропущен (номер в списке исключений)", {
               filename: relativePath,
               internalNumber: parsed.internalNumber,
               externalNumber: parsed.externalNumber,
