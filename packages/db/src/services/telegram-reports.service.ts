@@ -189,7 +189,7 @@ export async function getTelegramReportRecipients(
 }
 
 export async function getInternalNumbersForUserIds(
-  _workspaceId: string,
+  workspaceId: string,
   userIds: string[] | null,
 ): Promise<string[] | null> {
   if (!userIds?.length) return null;
@@ -199,7 +199,16 @@ export async function getInternalNumbersForUserIds(
       internalExtensions: schema.user.internalExtensions,
     })
     .from(schema.user)
-    .where(inArray(schema.user.id, userIds));
+    .innerJoin(
+      schema.workspaceMembers,
+      eq(schema.user.id, schema.workspaceMembers.userId),
+    )
+    .where(
+      and(
+        inArray(schema.user.id, userIds),
+        eq(schema.workspaceMembers.workspaceId, workspaceId),
+      ),
+    );
 
   const allNumbers: string[] = [];
   for (const u of users) {

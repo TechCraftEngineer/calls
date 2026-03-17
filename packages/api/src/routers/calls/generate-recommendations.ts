@@ -6,6 +6,21 @@ import { workspaceProcedure } from "../../orpc";
 
 const DEFAULT_RECOMMENDATIONS_PROMPT = `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
 
+function sanitizeCompanyContext(s: string): string {
+  const trimmed = s.trim();
+  let out = "";
+  for (let i = 0; i < trimmed.length; i++) {
+    const code = trimmed.charCodeAt(i);
+    if (code > 31 && code !== 127) out += trimmed[i];
+  }
+  return out.length > 2000 ? out.slice(0, 2000) : out;
+}
+
+const companyContextSchema = z
+  .string()
+  .transform(sanitizeCompanyContext)
+  .pipe(z.string().max(2000));
+
 function parseRecommendationsJson(text: string): string[] {
   if (!text || typeof text !== "string") {
     console.warn("[recommendations] Empty or invalid text received");
@@ -155,7 +170,10 @@ export const generateRecommendationsProcedure = workspaceProcedure
       });
 
     const call = await context.callsService.getCall(input.call_id);
-    if (call && call.workspaceId !== context.workspaceId) {
+    if (!call) {
+      throw new ORPCError("NOT_FOUND", { message: "Звонок не найден" });
+    }
+    if (call.workspaceId !== context.workspaceId) {
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому звонку",
       });
@@ -165,13 +183,22 @@ export const generateRecommendationsProcedure = workspaceProcedure
       context.workspaceId,
     );
     if (!workspace) {
-      throw new ORPCError("NOT_FOUND", { message: "Workspace not found" });
+      throw new ORPCError("NOT_FOUND", {
+        message: "Рабочая область не найдена",
+      });
     }
+
+    const companyContextResult = companyContextSchema.safeParse(
+      workspace.description ?? "",
+    );
+    const companyContext = companyContextResult.success
+      ? companyContextResult.data || undefined
+      : undefined;
 
     return generateRecommendations(
       input.call_id,
       context.callsService,
       context.workspaceId,
-      workspace.description,
+      companyContext,
     );
   });
