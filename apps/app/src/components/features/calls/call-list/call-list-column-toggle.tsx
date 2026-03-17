@@ -72,7 +72,7 @@ export function CallListColumnToggle({
           ))}
           <div className="mt-3 pt-3 border-t border-gray-200">
             <Button
-              variant="default"
+              variant="outline"
               size="sm"
               onClick={onResetOrder}
               className="w-full text-xs"

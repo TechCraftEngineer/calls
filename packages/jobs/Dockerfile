@@ -12,13 +12,13 @@ RUN turbo prune @calls/jobs --docker
 FROM base AS builder
 COPY --from=prepare /app/out/json/ .
 
-RUN bun install --ignore-scripts --production
+RUN bun install --ignore-scripts
 
 COPY --from=prepare /app/out/full/ .
 
 ENV TURBO_TELEMETRY_DISABLED=1
 
-# Сборка jobs и его зависимостей
+# Build jobs and its dependencies
 RUN bunx turbo run build --filter=@calls/jobs...
 
 FROM base AS runner
@@ -31,4 +31,6 @@ EXPOSE 8000
 
 COPY --from=builder /app .
 
-CMD ["bun", "./packages/jobs/dist/server.js"]
+WORKDIR /app/packages/jobs
+
+CMD ["bun", "run", "start"]

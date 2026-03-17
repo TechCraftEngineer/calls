@@ -246,7 +246,7 @@ export default function InviteUserModal({
               />
               <Button
                 type="button"
-                variant="default"
+                variant="outline"
                 onClick={handleCopyLink}
                 className="shrink-0 min-w-[44px]"
                 aria-label="Скопировать ссылку"
@@ -311,7 +311,7 @@ export default function InviteUserModal({
             </Button>
             <Button
               type="button"
-              variant="default"
+              variant="dark"
               onClick={handleClose}
               className="flex-1"
             >

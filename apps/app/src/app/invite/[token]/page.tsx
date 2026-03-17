@@ -317,7 +317,7 @@ export default function InviteAcceptPage() {
               {userHasPassword ? (
                 <Button
                   onClick={handleAcceptForExistingUser}
-                  variant="default"
+                  variant="dark"
                   className="w-full min-h-[48px] text-base font-semibold"
                   disabled={submitting || checkingPasswordQuery}
                 >
@@ -417,7 +417,7 @@ export default function InviteAcceptPage() {
                       `${paths.auth.signin}?email=${encodeURIComponent(invitation.email)}`,
                     )
                   }
-                  variant="default"
+                  variant="dark"
                   className="flex-1 min-h-[44px]"
                 >
                   Войти как {invitation.email.split("@")[0]}

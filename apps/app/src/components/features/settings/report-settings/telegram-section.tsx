@@ -88,7 +88,7 @@ export function TelegramReportSection({
               <>
                 <Button
                   type="button"
-                  variant="default"
+                  variant="outline"
                   size="sm"
                   onClick={onConnect}
                   disabled={connectLoading}
@@ -98,7 +98,7 @@ export function TelegramReportSection({
                 {onCheckConnection && (
                   <Button
                     type="button"
-                    variant="default"
+                    variant="outline"
                     size="sm"
                     onClick={onCheckConnection}
                     disabled={checkConnectionLoading}
@@ -111,7 +111,7 @@ export function TelegramReportSection({
               onCheckConnection && (
                 <Button
                   type="button"
-                  variant="default"
+                  variant="outline"
                   size="sm"
                   onClick={onCheckConnection}
                   disabled={checkConnectionLoading}

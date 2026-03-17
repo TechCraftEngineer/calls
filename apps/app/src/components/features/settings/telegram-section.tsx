@@ -54,7 +54,7 @@ export default function TelegramSection({
               ? "Отправка…"
               : "Отправить тестовый отчёт в Telegram"}
           </Button>
-          <Button variant="default" asChild>
+          <Button variant="outline" asChild>
             <Link href={paths.statistics.settings}>
               Перейти к настройкам отчётов
             </Link>

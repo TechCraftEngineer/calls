@@ -71,7 +71,7 @@ export function MaxReportSection({
           <div className="mt-2">
             <Button
               type="button"
-              variant="default"
+              variant="outline"
               size="sm"
               onClick={onConnect}
               disabled={connectLoading}

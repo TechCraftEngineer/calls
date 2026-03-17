@@ -246,7 +246,7 @@ export function CallListDataGrid({
             <DataGridColumnVisibility
               table={table}
               trigger={
-                <Button variant="default" size="sm">
+                <Button variant="outline" size="sm">
                   <IconPlaceholder
                     lucide="Settings2Icon"
                     tabler="IconSettings"
