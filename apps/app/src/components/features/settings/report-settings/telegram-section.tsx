@@ -247,9 +247,17 @@ function ReportTimeSettings({
             }
             className="py-1 rounded border border-[#ddd]"
           >
-            {["mon", "tue", "wed", "thu", "fri", "sat", "sun"].map((d) => (
-              <option key={d} value={d}>
-                {d}
+            {[
+              { value: "mon", label: "Пн" },
+              { value: "tue", label: "Вт" },
+              { value: "wed", label: "Ср" },
+              { value: "thu", label: "Чт" },
+              { value: "fri", label: "Пт" },
+              { value: "sat", label: "Сб" },
+              { value: "sun", label: "Вс" },
+            ].map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
               </option>
             ))}
           </select>{" "}

@@ -15,11 +15,11 @@ export interface ReportSettingsForm {
   reportIncludeAvgValue: boolean;
   reportIncludeAvgRating: boolean;
   filterExcludeAnsweringMachine: boolean;
-  filterMinDuration: number;
-  filterMinReplicas: number;
-  kpiBaseSalary: number;
-  kpiTargetBonus: number;
-  kpiTargetTalkTimeMinutes: number;
+  filterMinDuration: string;
+  filterMinReplicas: string;
+  kpiBaseSalary: string;
+  kpiTargetBonus: string;
+  kpiTargetTalkTimeMinutes: string;
   reportDailyTime: string;
   reportWeeklyDay: string;
   reportWeeklyTime: string;
@@ -57,11 +57,12 @@ export function serializeReportSettingsForApi(
     report_include_avg_value: form.reportIncludeAvgValue,
     report_include_avg_rating: form.reportIncludeAvgRating,
     filter_exclude_answering_machine: form.filterExcludeAnsweringMachine,
-    filter_min_duration: form.filterMinDuration,
-    filter_min_replicas: form.filterMinReplicas,
-    kpi_base_salary: form.kpiBaseSalary,
-    kpi_target_bonus: form.kpiTargetBonus,
-    kpi_target_talk_time_minutes: form.kpiTargetTalkTimeMinutes,
+    filter_min_duration: parseInt(form.filterMinDuration, 10) || 0,
+    filter_min_replicas: parseInt(form.filterMinReplicas, 10) || 0,
+    kpi_base_salary: parseInt(form.kpiBaseSalary, 10) || 0,
+    kpi_target_bonus: parseInt(form.kpiTargetBonus, 10) || 0,
+    kpi_target_talk_time_minutes:
+      parseInt(form.kpiTargetTalkTimeMinutes, 10) || 0,
     report_managed_user_ids: JSON.stringify(form.reportManagedUserIds ?? []),
   };
 }

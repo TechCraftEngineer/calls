@@ -82,12 +82,16 @@ export const updatePrompts = workspaceAdminProcedure
     }
     for (const { key, value } of promptLogItems) {
       const maskedValue = maskSensitiveData(key, value);
-      await systemRepository.addActivityLog(
-        "info",
-        `Setting updated: ${key} = ${maskedValue}`,
-        String(username),
-        workspaceId,
-      );
+      try {
+        await systemRepository.addActivityLog(
+          "info",
+          `Настройка обновлена: ${key} = ${maskedValue}`,
+          String(username),
+          workspaceId,
+        );
+      } catch {
+        // Логирование best-effort: не прерываем обработчик при ошибке
+      }
     }
     return { success: true };
   });

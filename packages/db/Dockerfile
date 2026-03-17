@@ -14,7 +14,7 @@ RUN bun install --frozen-lockfile
 COPY packages/db/src ./packages/db/src
 COPY packages/db/drizzle ./packages/db/drizzle
 COPY packages/config/src ./packages/config/src
-COPY drizzle.config.ts ./
+COPY packages/db/drizzle.config.ts ./
 
 # Set environment
 ENV POSTGRES_URL=postgres://postgres:password@postgres:5432/acme

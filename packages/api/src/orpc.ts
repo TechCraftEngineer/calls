@@ -108,9 +108,17 @@ export async function createBackendContext(opts: {
     const cookieSessionValue = match?.[1]
       ? decodeURIComponent(match[1].trim())
       : null;
-    if (cookieSessionValue) {
-      sessionEmail = sessionEmail ?? cookieSessionValue;
-      user = await usersService.getUserByEmail(cookieSessionValue);
+    const isValidEmail =
+      cookieSessionValue &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cookieSessionValue);
+    if (isValidEmail) {
+      const foundUser = await usersService.getUserByEmail(
+        cookieSessionValue as string,
+      );
+      if (foundUser) {
+        sessionEmail = sessionEmail ?? cookieSessionValue;
+        user = foundUser;
+      }
     }
   }
 

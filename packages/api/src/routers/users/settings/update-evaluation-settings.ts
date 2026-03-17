@@ -40,6 +40,8 @@ export const updateEvaluationSettings = workspaceProcedure
         user.email ?? "unknown",
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
+        undefined,
+        context.workspaceId,
       );
 
       return await usersService.getUserForEdit(
@@ -53,6 +55,7 @@ export const updateEvaluationSettings = workspaceProcedure
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
+        context.workspaceId,
       );
       throw error;
     }

@@ -92,7 +92,7 @@ function KpiSettings({
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                kpiBaseSalary: parseInt(e.target.value, 10) || 0,
+                kpiBaseSalary: e.target.value,
               }))
             }
             className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
@@ -107,7 +107,7 @@ function KpiSettings({
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                kpiTargetBonus: parseInt(e.target.value, 10) || 0,
+                kpiTargetBonus: e.target.value,
               }))
             }
             className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
@@ -124,7 +124,7 @@ function KpiSettings({
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                kpiTargetTalkTimeMinutes: parseInt(e.target.value, 10) || 0,
+                kpiTargetTalkTimeMinutes: e.target.value,
               }))
             }
             className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
@@ -166,7 +166,7 @@ function FilterExclusions({
           onChange={(e) =>
             setForm((f) => ({
               ...f,
-              filterMinDuration: parseInt(e.target.value, 10) || 0,
+              filterMinDuration: e.target.value,
             }))
           }
           className="w-[60px] py-1 px-2 border border-[#ddd] rounded"
@@ -180,7 +180,7 @@ function FilterExclusions({
           onChange={(e) =>
             setForm((f) => ({
               ...f,
-              filterMinReplicas: parseInt(e.target.value, 10) || 0,
+              filterMinReplicas: e.target.value,
             }))
           }
           className="w-[60px] py-1 px-2 border border-[#ddd] rounded"

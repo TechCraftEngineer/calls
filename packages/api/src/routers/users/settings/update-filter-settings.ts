@@ -32,6 +32,8 @@ export const updateFilterSettings = workspaceProcedure
         user.email ?? "unknown",
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
+        undefined,
+        context.workspaceId,
       );
 
       return await usersService.getUser(input.user_id);
@@ -42,6 +44,7 @@ export const updateFilterSettings = workspaceProcedure
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
+        context.workspaceId,
       );
       throw error;
     }

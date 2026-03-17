@@ -103,6 +103,8 @@ export const update = workspaceProcedure
         user.email ?? "unknown",
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
+        undefined,
+        context.workspaceId,
       );
 
       const updated = await usersService.getUser(input.user_id);
@@ -119,6 +121,7 @@ export const update = workspaceProcedure
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
+        context.workspaceId,
       );
       throw error;
     }

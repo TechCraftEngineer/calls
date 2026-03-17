@@ -34,6 +34,8 @@ export const updateKpiSettings = workspaceProcedure
         user.email ?? "unknown",
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
+        undefined,
+        context.workspaceId,
       );
 
       return await usersService.getUser(input.user_id);
@@ -44,6 +46,7 @@ export const updateKpiSettings = workspaceProcedure
         ((context.user as Record<string, unknown>).email as string) ??
           "unknown",
         error,
+        context.workspaceId,
       );
       throw error;
     }

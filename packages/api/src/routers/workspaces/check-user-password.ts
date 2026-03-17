@@ -27,12 +27,11 @@ type AuthWithInternalContext = {
 function isAuthWithInternalContext(
   auth: unknown,
 ): auth is AuthWithInternalContext {
-  return (
-    auth != null &&
-    typeof auth === "object" &&
-    "$context" in auth &&
-    typeof (auth as { $context?: unknown }).$context === "object"
-  );
+  const ctx =
+    auth != null && typeof auth === "object" && "$context" in auth
+      ? (auth as { $context?: unknown }).$context
+      : undefined;
+  return ctx != null && typeof ctx === "object";
 }
 
 const inputSchema = z.object({
