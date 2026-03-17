@@ -84,9 +84,12 @@ const updateInvitationSettingsSchema = workspaceIdInputSchema.extend({
     })
     .refine(
       (s) => {
-        const isNonEmpty = (block: unknown) =>
+        const isNonEmpty = (
+          block: Record<string, unknown> | null | undefined,
+        ) =>
           block != null &&
           typeof block === "object" &&
+          !Array.isArray(block) &&
           Object.keys(block).length > 0;
         return (
           isNonEmpty(s.notificationSettings) ||
@@ -115,6 +118,15 @@ export const updateInvitationSettings = workspaceAdminProcedure
         err instanceof Error
           ? err.message
           : "Ошибка обновления настроек приглашения";
-      throw new ORPCError("BAD_REQUEST", { message: msg });
+      if (
+        msg.includes("не найдено") ||
+        msg.includes("не найдено или уже принято")
+      ) {
+        throw new ORPCError("NOT_FOUND", { message: msg });
+      }
+      if (msg.includes("Некорректные настройки")) {
+        throw new ORPCError("BAD_REQUEST", { message: msg });
+      }
+      throw new ORPCError("INTERNAL_SERVER_ERROR", { message: msg });
     }
   });

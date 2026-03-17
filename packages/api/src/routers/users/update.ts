@@ -49,15 +49,21 @@ export const update = workspaceProcedure
         await usersService.updateUserEmail(input.user_id, d.email);
       }
 
-      await usersService.updateUserFilters(
-        input.user_id,
-        context.workspaceId!,
-        d.filterExcludeAnsweringMachine ??
-          (u.filterExcludeAnsweringMachine as boolean) ??
-          false,
-        d.filterMinDuration ?? (u.filterMinDuration as number) ?? 0,
-        d.filterMinReplicas ?? (u.filterMinReplicas as number) ?? 0,
-      );
+      const hasFilterUpdates =
+        d.filterExcludeAnsweringMachine !== undefined ||
+        d.filterMinDuration !== undefined ||
+        d.filterMinReplicas !== undefined;
+      if (hasFilterUpdates) {
+        await usersService.updateUserFilters(
+          input.user_id,
+          context.workspaceId!,
+          d.filterExcludeAnsweringMachine ??
+            (u.filterExcludeAnsweringMachine as boolean) ??
+            false,
+          d.filterMinDuration ?? (u.filterMinDuration as number) ?? 0,
+          d.filterMinReplicas ?? (u.filterMinReplicas as number) ?? 0,
+        );
+      }
 
       await usersService.updateUserReportKpiSettings(
         input.user_id,
@@ -87,14 +93,19 @@ export const update = workspaceProcedure
         },
       );
 
-      await usersService.updateUserTelegramSettings(
-        input.user_id,
-        context.workspaceId!,
-        d.telegramDailyReport ?? (u.telegramDailyReport as boolean) ?? false,
-        d.telegramManagerReport ??
-          (u.telegramManagerReport as boolean) ??
-          false,
-      );
+      const hasTelegramUpdates =
+        d.telegramDailyReport !== undefined ||
+        d.telegramManagerReport !== undefined;
+      if (hasTelegramUpdates) {
+        await usersService.updateUserTelegramSettings(
+          input.user_id,
+          context.workspaceId!,
+          d.telegramDailyReport ?? (u.telegramDailyReport as boolean) ?? false,
+          d.telegramManagerReport ??
+            (u.telegramManagerReport as boolean) ??
+            false,
+        );
+      }
 
       await logUpdate(
         "updated",

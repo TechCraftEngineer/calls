@@ -3,6 +3,7 @@
 import { Button, Input, PasswordInput } from "@calls/ui";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { createUserSchema } from "@/lib/validations";
 import type { AddUserForm } from "./types";
 
 interface AddUserModalProps {
@@ -94,36 +95,30 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
   }, [onClose]);
 
   const validateForm = (): boolean => {
+    const result = createUserSchema.safeParse({
+      email: form.email.trim(),
+      password: form.password,
+      givenName: form.givenName.trim(),
+      familyName: form.familyName,
+      internalExtensions: form.internalExtensions,
+      mobilePhones: form.mobilePhones,
+    });
+    if (result.success) {
+      setErrors({});
+      return true;
+    }
     const newErrors: Record<string, string> = {};
-
-    if (!form.email.trim()) {
-      newErrors.email = "Обязательное поле";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      newErrors.email = "Введите корректный email адрес";
+    for (const e of result.error.issues) {
+      const field = (e.path[0] as string) ?? "root";
+      if (!newErrors[field]) newErrors[field] = e.message;
     }
-
-    if (!form.password.trim()) {
-      newErrors.password = "Обязательное поле";
-    } else if (form.password.length < 8) {
-      newErrors.password = "Минимум 8 символов";
-    }
-
-    if (!form.givenName.trim()) {
-      newErrors.givenName = "Обязательное поле";
-    }
-
     setErrors(newErrors);
-
-    if (Object.keys(newErrors).length > 0) {
-      const firstErrorField = Object.keys(newErrors)[0];
-      const element = document.getElementById(
-        firstErrorField === "email" ? "email" : firstErrorField,
-      );
-      element?.focus();
-      return false;
-    }
-
-    return true;
+    const firstErrorField = Object.keys(newErrors)[0];
+    const element = document.getElementById(
+      firstErrorField === "email" ? "email" : firstErrorField,
+    );
+    element?.focus();
+    return false;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

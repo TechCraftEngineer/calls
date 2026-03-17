@@ -3,6 +3,7 @@
 import { Button, toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
+import { editUserFormSchema } from "@/lib/validations";
 import { useORPC } from "@/orpc/react";
 import {
   type EditUserForm,
@@ -23,6 +24,16 @@ interface EditUserModalProps {
   onRefresh: () => void;
 }
 
+function toBool(v: unknown): boolean {
+  return v === true || v === false ? v : false;
+}
+function toNum(v: unknown): number {
+  return typeof v === "number" ? v : 0;
+}
+function toStr(v: unknown): string {
+  return typeof v === "string" ? v : "";
+}
+
 function buildEditForm(u: WorkspaceMemberUser): EditUserForm {
   const ext = u as unknown as Record<string, unknown>;
   return {
@@ -31,86 +42,70 @@ function buildEditForm(u: WorkspaceMemberUser): EditUserForm {
     internalExtensions: u.internalExtensions ?? "",
     mobilePhones: u.mobilePhones ?? "",
     telegramChatId: u.telegramChatId ?? "",
-    telegramDailyReport:
-      ((ext.telegramDailyReport ?? ext.telegram_daily_report) as boolean) ??
-      false,
-    telegramManagerReport:
-      ((ext.telegramManagerReport ?? ext.telegram_manager_report) as boolean) ??
-      false,
-    maxChatId: ((ext.maxChatId ?? ext.max_chat_id) as string) ?? "",
-    maxDailyReport:
-      ((ext.maxDailyReport ?? ext.max_daily_report) as boolean) ?? false,
-    maxManagerReport:
-      ((ext.maxManagerReport ?? ext.max_manager_report) as boolean) ?? false,
-    filterExcludeAnsweringMachine:
-      ((ext.filterExcludeAnsweringMachine ??
-        ext.filter_exclude_answering_machine) as boolean) ?? false,
-    filterMinDuration:
-      ((ext.filterMinDuration ?? ext.filter_min_duration) as number) ?? 0,
-    filterMinReplicas:
-      ((ext.filterMinReplicas ?? ext.filter_min_replicas) as number) ?? 0,
+    telegramDailyReport: toBool(
+      u.telegramDailyReport ?? ext.telegram_daily_report,
+    ),
+    telegramManagerReport: toBool(
+      u.telegramManagerReport ?? ext.telegram_manager_report,
+    ),
+    maxChatId: u.maxChatId ?? toStr(ext.max_chat_id) ?? "",
+    maxDailyReport: toBool(u.maxDailyReport ?? ext.max_daily_report),
+    maxManagerReport: toBool(u.maxManagerReport ?? ext.max_manager_report),
+    filterExcludeAnsweringMachine: toBool(
+      u.filterExcludeAnsweringMachine ?? ext.filter_exclude_answering_machine,
+    ),
+    filterMinDuration: toNum(u.filterMinDuration ?? ext.filter_min_duration),
+    filterMinReplicas: toNum(u.filterMinReplicas ?? ext.filter_min_replicas),
     email: u.email ?? "",
-    emailDailyReport:
-      ((ext.emailDailyReport ?? ext.email_daily_report) as boolean) ?? false,
-    emailWeeklyReport:
-      ((ext.emailWeeklyReport ?? ext.email_weekly_report) as boolean) ?? false,
-    emailMonthlyReport:
-      ((ext.emailMonthlyReport ?? ext.email_monthly_report) as boolean) ??
-      false,
-    telegramWeeklyReport:
-      ((ext.telegramWeeklyReport ?? ext.telegram_weekly_report) as boolean) ??
-      false,
-    telegramMonthlyReport:
-      ((ext.telegramMonthlyReport ?? ext.telegram_monthly_report) as boolean) ??
-      false,
-    reportIncludeCallSummaries:
-      ((ext.reportIncludeCallSummaries ??
-        ext.report_include_call_summaries) as boolean) ?? false,
-    reportDetailed:
-      ((ext.reportDetailed ?? ext.report_detailed) as boolean) ?? false,
-    reportIncludeAvgValue:
-      ((ext.reportIncludeAvgValue ??
-        ext.report_include_avg_value) as boolean) ?? false,
-    reportIncludeAvgRating:
-      ((ext.reportIncludeAvgRating ??
-        ext.report_include_avg_rating) as boolean) ?? false,
-    kpiBaseSalary: ((ext.kpiBaseSalary ?? ext.kpi_base_salary) as number) ?? 0,
-    kpiTargetBonus:
-      ((ext.kpiTargetBonus ?? ext.kpi_target_bonus) as number) ?? 0,
-    kpiTargetTalkTimeMinutes:
-      ((ext.kpiTargetTalkTimeMinutes ??
-        ext.kpi_target_talk_time_minutes) as number) ?? 0,
+    emailDailyReport: toBool(u.emailDailyReport ?? ext.email_daily_report),
+    emailWeeklyReport: toBool(u.emailWeeklyReport ?? ext.email_weekly_report),
+    emailMonthlyReport: toBool(
+      u.emailMonthlyReport ?? ext.email_monthly_report,
+    ),
+    telegramWeeklyReport: toBool(
+      u.telegramWeeklyReport ?? ext.telegram_weekly_report,
+    ),
+    telegramMonthlyReport: toBool(
+      u.telegramMonthlyReport ?? ext.telegram_monthly_report,
+    ),
+    reportIncludeCallSummaries: toBool(
+      u.reportIncludeCallSummaries ?? ext.report_include_call_summaries,
+    ),
+    reportDetailed: toBool(u.reportDetailed ?? ext.report_detailed),
+    reportIncludeAvgValue: toBool(
+      u.reportIncludeAvgValue ?? ext.report_include_avg_value,
+    ),
+    reportIncludeAvgRating: toBool(
+      u.reportIncludeAvgRating ?? ext.report_include_avg_rating,
+    ),
+    kpiBaseSalary: toNum(u.kpiBaseSalary ?? ext.kpi_base_salary),
+    kpiTargetBonus: toNum(u.kpiTargetBonus ?? ext.kpi_target_bonus),
+    kpiTargetTalkTimeMinutes: toNum(
+      u.kpiTargetTalkTimeMinutes ?? ext.kpi_target_talk_time_minutes,
+    ),
     evaluationTemplateSlug:
       u.evaluationTemplateSlug ??
-      (ext.evaluation_template_slug as string) ??
-      "general",
+      (toStr(ext.evaluation_template_slug) || "general"),
     evaluationCustomInstructions:
-      ((ext.evaluationCustomInstructions ??
-        ext.evaluation_custom_instructions) as string) ?? "",
+      u.evaluationCustomInstructions ??
+      toStr(ext.evaluation_custom_instructions) ??
+      "",
   };
 }
 
 function validateForm(form: EditUserForm): string | null {
-  if (!form.givenName.trim()) {
-    return "Укажите имя.";
-  }
-
-  if (form.email?.trim()) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email.trim())) {
-      return "Укажите корректный email адрес.";
-    }
-  }
-
-  if (form.filterMinDuration < 0) {
-    return "Минимальная длительность звонка не может быть отрицательной.";
-  }
-
-  if (form.filterMinReplicas < 0) {
-    return "Минимальное количество реплик не может быть отрицательным.";
-  }
-
-  return null;
+  const result = editUserFormSchema.safeParse({
+    givenName: form.givenName,
+    email: form.email ?? "",
+    filterMinDuration: form.filterMinDuration,
+    filterMinReplicas: form.filterMinReplicas,
+    kpiBaseSalary: form.kpiBaseSalary,
+    kpiTargetBonus: form.kpiTargetBonus,
+    kpiTargetTalkTimeMinutes: form.kpiTargetTalkTimeMinutes,
+  });
+  if (result.success) return null;
+  const first = result.error.issues[0];
+  return first?.message ?? "Ошибка валидации";
 }
 
 export default function EditUserModal({
@@ -225,16 +220,19 @@ export default function EditUserModal({
       const updated = arr.find((u) => String(u.id) === String(editUser.id));
       if (updated) {
         setEditUser(updated);
-        const u = updated as unknown as Record<string, unknown>;
+        const ext = updated as unknown as Record<string, unknown>;
         updateForm({
           telegramChatId: updated.telegramChatId ?? "",
-          filterExcludeAnsweringMachine:
-            ((u.filterExcludeAnsweringMachine ??
-              u.filter_exclude_answering_machine) as boolean) ?? false,
-          filterMinDuration:
-            ((u.filterMinDuration ?? u.filter_min_duration) as number) ?? 0,
-          filterMinReplicas:
-            ((u.filterMinReplicas ?? u.filter_min_replicas) as number) ?? 0,
+          filterExcludeAnsweringMachine: toBool(
+            updated.filterExcludeAnsweringMachine ??
+              ext.filter_exclude_answering_machine,
+          ),
+          filterMinDuration: toNum(
+            updated.filterMinDuration ?? ext.filter_min_duration,
+          ),
+          filterMinReplicas: toNum(
+            updated.filterMinReplicas ?? ext.filter_min_replicas,
+          ),
         });
         onRefresh();
       }
@@ -295,7 +293,17 @@ export default function EditUserModal({
               Отмена
             </Button>
             <Button type="submit" variant="accent" disabled={submitting}>
-              {submitting ? "Сохранение…" : "Сохранить"}
+              {submitting ? (
+                <>
+                  <span
+                    className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                    aria-hidden
+                  />
+                  Сохранить
+                </>
+              ) : (
+                "Сохранить"
+              )}
             </Button>
           </div>
         </form>

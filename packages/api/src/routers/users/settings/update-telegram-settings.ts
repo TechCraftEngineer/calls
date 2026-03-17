@@ -8,7 +8,9 @@ import { canAccessUser, logUpdate } from "../utils";
 export const updateTelegramSettings = workspaceProcedure
   .input(z.object({ user_id: z.string(), data: updateTelegramSettingsSchema }))
   .handler(async ({ input, context }) => {
-    const userId = (context.user as Record<string, unknown>).id as string;
+    const authUser = context.user as Record<string, unknown>;
+    const userId = authUser.id as string;
+    const authEmail = (authUser.email as string) ?? "unknown";
     if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
@@ -33,8 +35,7 @@ export const updateTelegramSettings = workspaceProcedure
       await logUpdate(
         "telegram settings updated",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        authEmail,
         undefined,
         context.workspaceId,
       );
@@ -44,8 +45,7 @@ export const updateTelegramSettings = workspaceProcedure
       await logUpdate(
         "update user telegram settings",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        authEmail,
         error,
         context.workspaceId,
       );

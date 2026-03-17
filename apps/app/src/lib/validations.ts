@@ -116,3 +116,26 @@ export const inviteAcceptSchema = z.object({
   password: passwordValidation,
 });
 export type InviteAcceptData = z.infer<typeof inviteAcceptSchema>;
+
+// Схема валидации формы редактирования пользователя (подмножество полей)
+export const editUserFormSchema = z.object({
+  givenName: z.string().min(1, "Укажите имя."),
+  email: z
+    .union([z.string().email("Укажите корректный email адрес."), z.literal("")])
+    .optional(),
+  filterMinDuration: z
+    .number()
+    .min(0, "Минимальная длительность звонка не может быть отрицательной."),
+  filterMinReplicas: z
+    .number()
+    .min(0, "Минимальное количество реплик не может быть отрицательным."),
+  kpiBaseSalary: z
+    .number()
+    .min(0, "Базовый оклад не может быть отрицательным."),
+  kpiTargetBonus: z
+    .number()
+    .min(0, "Целевой бонус не может быть отрицательным."),
+  kpiTargetTalkTimeMinutes: z
+    .number()
+    .min(0, "Целевое время разговоров не может быть отрицательным."),
+});

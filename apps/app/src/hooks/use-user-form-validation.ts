@@ -1,80 +1,44 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { z } from "zod";
 import type { EditUserForm } from "@/components/features/users/types";
+import { editUserFormSchema } from "@/lib/validations";
 
 export interface FormValidationError {
   field: string;
   message: string;
 }
 
+const optionalEmailSchema = z
+  .union([z.string().email(), z.literal("")])
+  .optional();
+
 export function useUserFormValidation() {
   const [errors, setErrors] = useState<FormValidationError[]>([]);
 
   const validateEmail = useCallback((email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email.trim());
+    return optionalEmailSchema.safeParse(email || "").success;
   }, []);
 
   const validateForm = useCallback(
     (form: EditUserForm): FormValidationError[] => {
-      const newErrors: FormValidationError[] = [];
-
-      // Валидация имени
-      if (!form.givenName.trim()) {
-        newErrors.push({ field: "givenName", message: "Укажите имя." });
-      }
-
-      // Валидация email если указан
-      if (form.email?.trim()) {
-        if (!validateEmail(form.email)) {
-          newErrors.push({
-            field: "email",
-            message: "Укажите корректный email адрес.",
-          });
-        }
-      }
-
-      // Валидация числовых полей
-      if (form.filterMinDuration < 0) {
-        newErrors.push({
-          field: "filter_min_duration",
-          message:
-            "Минимальная длительность звонка не может быть отрицательной.",
-        });
-      }
-
-      if (form.filterMinReplicas < 0) {
-        newErrors.push({
-          field: "filter_min_replicas",
-          message: "Минимальное количество реплик не может быть отрицательным.",
-        });
-      }
-
-      if (form.kpiBaseSalary < 0) {
-        newErrors.push({
-          field: "kpiBaseSalary",
-          message: "Базовый оклад не может быть отрицательным.",
-        });
-      }
-
-      if (form.kpiTargetBonus < 0) {
-        newErrors.push({
-          field: "kpi_target_bonus",
-          message: "Целевой бонус не может быть отрицательным.",
-        });
-      }
-
-      if (form.kpiTargetTalkTimeMinutes < 0) {
-        newErrors.push({
-          field: "kpi_target_talk_time_minutes",
-          message: "Целевое время разговоров не может быть отрицательным.",
-        });
-      }
-
-      return newErrors;
+      const result = editUserFormSchema.safeParse({
+        givenName: form.givenName,
+        email: form.email ?? "",
+        filterMinDuration: form.filterMinDuration,
+        filterMinReplicas: form.filterMinReplicas,
+        kpiBaseSalary: form.kpiBaseSalary,
+        kpiTargetBonus: form.kpiTargetBonus,
+        kpiTargetTalkTimeMinutes: form.kpiTargetTalkTimeMinutes,
+      });
+      if (result.success) return [];
+      return result.error.issues.map((e) => ({
+        field: (e.path[0] as string) ?? "root",
+        message: e.message,
+      }));
     },
-    [validateEmail],
+    [],
   );
 
   const clearErrors = useCallback(() => {

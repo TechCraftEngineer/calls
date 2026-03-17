@@ -40,7 +40,7 @@ export const list = workspaceAdminProcedure.handler(async ({ context }) => {
           familyName: u.familyName ?? null,
           internalExtensions: u.internalExtensions ?? null,
           mobilePhones: u.mobilePhones ?? null,
-          created_at:
+          createdAt:
             u.createdAt instanceof Date
               ? u.createdAt.toISOString()
               : ((u.createdAt as string | null) ?? null),

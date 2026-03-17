@@ -75,9 +75,11 @@ export const OtpSignInEmail = ({
   );
 };
 
-OtpSignInEmail.PreviewProps = {
-  otp: "123456",
-  isSignUp: false,
-} as OtpSignInEmailProps;
+Object.assign(OtpSignInEmail, {
+  PreviewProps: {
+    otp: "123456",
+    isSignUp: false,
+  } as OtpSignInEmailProps,
+});
 
 export default OtpSignInEmail;

@@ -11,6 +11,7 @@ import {
 } from "@calls/db";
 import { isValidWorkspaceId } from "@calls/shared";
 import { ORPCError, os } from "@orpc/server";
+import { z } from "zod";
 import { isAdminUser } from "./user-profile";
 
 export { createBackendContext as createContext };
@@ -108,15 +109,11 @@ export async function createBackendContext(opts: {
     const cookieSessionValue = match?.[1]
       ? decodeURIComponent(match[1].trim())
       : null;
-    const isValidEmail =
-      cookieSessionValue &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cookieSessionValue);
-    if (isValidEmail) {
-      const foundUser = await usersService.getUserByEmail(
-        cookieSessionValue as string,
-      );
+    const parsed = z.string().email().safeParse(cookieSessionValue);
+    if (parsed.success) {
+      const foundUser = await usersService.getUserByEmail(parsed.data);
       if (foundUser) {
-        sessionEmail = sessionEmail ?? cookieSessionValue;
+        sessionEmail = sessionEmail ?? parsed.data;
         user = foundUser;
       }
     }

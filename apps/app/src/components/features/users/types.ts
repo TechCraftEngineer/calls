@@ -12,20 +12,42 @@ export interface WorkspaceMemberUser {
   familyName: string | null;
   internalExtensions: string | null;
   mobilePhones: string | null;
-  created_at: string | null;
+  createdAt: string | null;
   telegramChatId: string | null;
   evaluationTemplateSlug: "sales" | "support" | "general" | null;
+  // Опциональные поля отчётов и настроек (camelCase и snake_case для совместимости с API)
+  telegramDailyReport?: boolean;
+  telegramManagerReport?: boolean;
+  maxChatId?: string | null;
+  maxDailyReport?: boolean;
+  maxManagerReport?: boolean;
+  filterExcludeAnsweringMachine?: boolean;
+  filterMinDuration?: number;
+  filterMinReplicas?: number;
+  emailDailyReport?: boolean;
+  emailWeeklyReport?: boolean;
+  emailMonthlyReport?: boolean;
+  telegramWeeklyReport?: boolean;
+  telegramMonthlyReport?: boolean;
+  reportIncludeCallSummaries?: boolean;
+  reportDetailed?: boolean;
+  reportIncludeAvgValue?: boolean;
+  reportIncludeAvgRating?: boolean;
+  kpiBaseSalary?: number;
+  kpiTargetBonus?: number;
+  kpiTargetTalkTimeMinutes?: number;
+  evaluationCustomInstructions?: string | null;
 }
 
 // Расширенный тип пользователя с полями управления
-export interface ManagedUser extends Omit<User, "id" | "email"> {
+export interface ManagedUser extends Omit<User, "id" | "email" | "createdAt"> {
   id: string;
   email: string;
   userId?: string;
   role?: "owner" | "admin" | "member";
   internalExtensions?: string;
   mobilePhones?: string;
-  created_at?: string;
+  createdAt?: string;
   givenName?: string;
   familyName?: string;
   telegramChatId?: string;

@@ -84,8 +84,10 @@ export const ResetPasswordEmail = ({
   );
 };
 
-ResetPasswordEmail.PreviewProps = {
-  resetLink: `${env.APP_URL}${paths.auth.resetPassword}?token=abc123`,
-} as ResetPasswordEmailProps;
+Object.assign(ResetPasswordEmail, {
+  PreviewProps: {
+    resetLink: `${env.APP_URL}${paths.auth.resetPassword}?token=abc123`,
+  } as ResetPasswordEmailProps,
+});
 
 export default ResetPasswordEmail;
