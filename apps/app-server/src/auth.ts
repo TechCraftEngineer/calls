@@ -48,7 +48,6 @@ export const auth = betterAuth({
             }),
           }).catch((error) => {
             console.error("[Auth] Failed to send welcome email:", {
-              email: user.email,
               error: error instanceof Error ? error.message : String(error),
             });
           });
@@ -71,7 +70,6 @@ export const auth = betterAuth({
         react: ResetPasswordEmail({ resetLink: url }),
       }).catch((error) => {
         console.error("[Auth] Failed to send password reset email:", {
-          email: user.email,
           error: error instanceof Error ? error.message : String(error),
         });
       });

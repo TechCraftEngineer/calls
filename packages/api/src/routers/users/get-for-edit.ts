@@ -12,10 +12,14 @@ export const getForEdit = workspaceProcedure
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
+    if (context.workspaceId == null)
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Требуется активное рабочее пространство",
+      });
 
     const data = await usersService.getUserForEdit(
       input.user_id,
-      context.workspaceId!,
+      context.workspaceId,
     );
     if (!data)
       throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });

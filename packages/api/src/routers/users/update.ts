@@ -13,6 +13,10 @@ export const update = workspaceProcedure
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
+    if (context.workspaceId == null)
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Требуется активное рабочее пространство",
+      });
 
     const user = await usersService.getUser(input.user_id);
     if (!user)
@@ -56,7 +60,7 @@ export const update = workspaceProcedure
       if (hasFilterUpdates) {
         await usersService.updateUserFilters(
           input.user_id,
-          context.workspaceId!,
+          context.workspaceId,
           d.filterExcludeAnsweringMachine ??
             (u.filterExcludeAnsweringMachine as boolean) ??
             false,
@@ -67,7 +71,7 @@ export const update = workspaceProcedure
 
       await usersService.updateUserReportKpiSettings(
         input.user_id,
-        context.workspaceId!,
+        context.workspaceId,
         {
           filterExcludeAnsweringMachine: d.filterExcludeAnsweringMachine,
           filterMinDuration: d.filterMinDuration,
@@ -99,7 +103,7 @@ export const update = workspaceProcedure
       if (hasTelegramUpdates) {
         await usersService.updateUserTelegramSettings(
           input.user_id,
-          context.workspaceId!,
+          context.workspaceId,
           d.telegramDailyReport ?? (u.telegramDailyReport as boolean) ?? false,
           d.telegramManagerReport ??
             (u.telegramManagerReport as boolean) ??

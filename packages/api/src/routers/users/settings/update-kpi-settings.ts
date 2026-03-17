@@ -13,6 +13,10 @@ export const updateKpiSettings = workspaceProcedure
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
+    if (context.workspaceId == null)
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Требуется активное рабочее пространство",
+      });
 
     const user = await usersService.getUser(input.user_id);
     if (!user)
@@ -21,7 +25,7 @@ export const updateKpiSettings = workspaceProcedure
     try {
       await usersService.updateUserReportKpiSettings(
         input.user_id,
-        context.workspaceId!,
+        context.workspaceId,
         {
           kpiBaseSalary: input.data.kpiBaseSalary,
           kpiTargetBonus: input.data.kpiTargetBonus,

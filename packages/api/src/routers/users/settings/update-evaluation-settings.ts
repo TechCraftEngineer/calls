@@ -19,6 +19,10 @@ export const updateEvaluationSettings = workspaceProcedure
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
+    if (context.workspaceId == null)
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Требуется активное рабочее пространство",
+      });
 
     const user = await usersService.getUser(input.user_id);
     if (!user)
@@ -27,7 +31,7 @@ export const updateEvaluationSettings = workspaceProcedure
     try {
       await usersService.updateUserReportKpiSettings(
         input.user_id,
-        context.workspaceId!,
+        context.workspaceId,
         {
           evaluationTemplateSlug: input.data.evaluationTemplateSlug,
           evaluationCustomInstructions: input.data.evaluationCustomInstructions,
@@ -45,7 +49,7 @@ export const updateEvaluationSettings = workspaceProcedure
 
       return await usersService.getUserForEdit(
         input.user_id,
-        context.workspaceId!,
+        context.workspaceId,
       );
     } catch (error) {
       await logUpdate(

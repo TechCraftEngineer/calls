@@ -44,7 +44,11 @@ const defaultForm: AddUserForm = {
   evaluationCustomInstructions: "",
 };
 
-export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
+export default function AddUserModal({
+  onClose,
+  onSuccess,
+  onSubmit,
+}: AddUserModalProps) {
   const [form, setForm] = useState<AddUserForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -136,6 +140,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
         internalExtensions: form.internalExtensions.trim(),
         mobilePhones: form.mobilePhones.trim(),
       });
+      await onSuccess();
       onClose();
     } catch (err: unknown) {
       setErrors({

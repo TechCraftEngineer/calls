@@ -194,7 +194,13 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
 
   const updatePromptsMutation = useMutation(
     orpc.settings.updatePrompts.mutationOptions({
-      onError: () => {},
+      onError: (err: unknown) => {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Не удалось обновить настройки шаблонов";
+        toast.error(msg);
+      },
     }),
   );
 
@@ -260,32 +266,30 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         },
       });
       if (isWorkspaceAdmin) {
-        await updatePromptsMutation
-          .mutateAsync({
-            prompts: {
-              reportDailyTime: {
-                value: form.reportDailyTime || "18:00",
-                description: "Время ежедневного отчёта (ЧЧ:ММ)",
-              },
-              reportWeeklyDay: {
-                value: form.reportWeeklyDay || "fri",
-                description: "День недели еженедельного",
-              },
-              reportWeeklyTime: {
-                value: form.reportWeeklyTime || "18:10",
-                description: "Время еженедельного отчёта",
-              },
-              reportMonthlyDay: {
-                value: form.reportMonthlyDay || "last",
-                description: "День месяца (1-28 или last)",
-              },
-              reportMonthlyTime: {
-                value: form.reportMonthlyTime || "18:20",
-                description: "Время ежемесячного отчёта",
-              },
+        await updatePromptsMutation.mutateAsync({
+          prompts: {
+            reportDailyTime: {
+              value: form.reportDailyTime || "18:00",
+              description: "Время ежедневного отчёта (ЧЧ:ММ)",
             },
-          })
-          .catch(() => {});
+            reportWeeklyDay: {
+              value: form.reportWeeklyDay || "fri",
+              description: "День недели еженедельного",
+            },
+            reportWeeklyTime: {
+              value: form.reportWeeklyTime || "18:10",
+              description: "Время еженедельного отчёта",
+            },
+            reportMonthlyDay: {
+              value: form.reportMonthlyDay || "last",
+              description: "День месяца (1-28 или last)",
+            },
+            reportMonthlyTime: {
+              value: form.reportMonthlyTime || "18:20",
+              description: "Время ежемесячного отчёта",
+            },
+          },
+        });
       }
       await queryClient.invalidateQueries({
         queryKey: orpc.users.getForEdit.queryKey({
