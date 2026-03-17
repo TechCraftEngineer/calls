@@ -35,12 +35,17 @@ export const list = workspaceProcedure
       : undefined;
     const dateTo = input.date_to ? `${input.date_to}T23:59:59` : undefined;
 
-    const internalNumbers = getInternalNumbersForUser(user);
-    const mobileNumbers = getMobileNumbersForUser(user);
+    const isAdminOrOwner =
+      context.workspaceRole === "admin" || context.workspaceRole === "owner";
+    const internalNumbers = isAdminOrOwner
+      ? undefined
+      : getInternalNumbersForUser(user);
+    const mobileNumbers = isAdminOrOwner
+      ? undefined
+      : getMobileNumbersForUser(user);
 
     const ftpSettings = await settingsService.getFtpSettings(workspaceId);
     const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
-
     // Участник (member) видит только свои звонки — при отсутствии internalExtensions/mobilePhones возвращаем пустой список
     if (context.workspaceRole === "member") {
       const hasIdentifiers =
