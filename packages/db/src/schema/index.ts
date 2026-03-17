@@ -41,9 +41,6 @@ export {
   type NewAuditLog,
   type NewEvaluationTemplate,
   type NewFeatureFlag,
-  type NewPrompt,
-  type Prompt,
-  prompts,
 } from "./system";
 
 // Types (inferred from tables)
@@ -79,6 +76,7 @@ export {
 
 // Workspace
 export {
+  type BotIntegrationConfig,
   type FtpIntegrationConfig,
   INTEGRATION_TYPES,
   type IntegrationConfig,
@@ -86,9 +84,12 @@ export {
   type Invitation,
   invitations,
   type NewInvitation,
+  type NewWorkspaceSetting,
   type PendingUserSettings,
+  type WorkspaceSetting,
   workspaceIntegrations,
   workspaceMemberRole,
   workspaceMembers,
+  workspaceSettings,
   workspaces,
 } from "./workspace";

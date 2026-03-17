@@ -14,11 +14,11 @@ export {
   handleWorkspaceError,
 } from "./lib/workspace-utils";
 export { evaluationTemplatesRepository } from "./repositories/evaluation-templates.repository";
-export { promptsRepository } from "./repositories/prompts.repository";
 export { systemRepository } from "./repositories/system.repository";
 export { userWorkspaceSettingsRepository } from "./repositories/user-workspace-settings.repository";
 // Repositories
 export { usersRepository } from "./repositories/users.repository";
+export { workspaceSettingsRepository } from "./repositories/workspace-settings.repository";
 // Schemas and types
 export type {
   Account,
@@ -41,7 +41,6 @@ export type {
   NewFile,
   NewInvitation,
   NewInvoice,
-  NewPrompt,
   NewSubscription,
   NewTranscript,
   NewUsageMetric,
@@ -50,7 +49,6 @@ export type {
   NewWorkspace,
   NewWorkspaceMember,
   NotificationSettings,
-  Prompt,
   ReportSettings,
   Session,
   Subscription,
@@ -75,7 +73,6 @@ export {
   files,
   invitations,
   invoices,
-  prompts,
   session,
   subscriptionPlan,
   subscriptionStatus,
@@ -89,6 +86,7 @@ export {
   workspaceIntegrations,
   workspaceMemberRole,
   workspaceMembers,
+  workspaceSettings,
   workspaces,
 } from "./schema";
 // Services

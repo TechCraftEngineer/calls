@@ -6,9 +6,9 @@
 
 import {
   callsService,
-  promptsRepository,
   usersRepository,
   userWorkspaceSettingsRepository,
+  workspaceSettingsRepository,
   workspacesService,
 } from "@calls/db";
 import { evaluateCallWithLlm, resolveEvaluationPrompt } from "../../evaluation";
@@ -81,11 +81,12 @@ export const evaluateCallFn = inngest.createFunction(
       }
 
       if (!userHasTemplate) {
-        const defaultTemplate = await promptsRepository.findByKeyWithDefault(
-          "evaluation_default_template",
-          call.workspaceId,
-          DEFAULT_TEMPLATE,
-        );
+        const defaultTemplate =
+          await workspaceSettingsRepository.findByKeyWithDefault(
+            "evaluation_default_template",
+            call.workspaceId,
+            DEFAULT_TEMPLATE,
+          );
         if (defaultTemplate) {
           templateSlug = defaultTemplate;
         }

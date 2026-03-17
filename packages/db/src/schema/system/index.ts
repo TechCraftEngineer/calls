@@ -18,5 +18,3 @@ export {
   featureFlags,
   type NewFeatureFlag,
 } from "./feature-flags";
-export type { NewPrompt, Prompt } from "./prompts";
-export { prompts } from "./prompts";
