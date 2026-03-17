@@ -301,7 +301,12 @@ export function TemplateFormModal({
 
   const footer = (
     <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-      <Button type="button" variant="outline" onClick={onClose}>
+      <Button
+        type="button"
+        variant="link"
+        onClick={onClose}
+        className="text-primary"
+      >
         Отмена
       </Button>
       <Button onClick={form.handleSubmit(onSubmit)} disabled={isPending}>

@@ -209,7 +209,7 @@ export function SignUpForm() {
               </div>
               <Button
                 type="button"
-                variant="outline"
+                variant="default"
                 className="w-full"
                 onClick={() =>
                   authClient.signIn.social({

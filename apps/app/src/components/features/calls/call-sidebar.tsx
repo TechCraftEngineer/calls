@@ -189,7 +189,7 @@ export default function CallSidebar({
             💡 РЕКОМЕНДАЦИИ
           </CardTitle>
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
             onClick={onGenerateRecommendations}
             disabled={isGeneratingRecommendations}

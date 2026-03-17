@@ -373,7 +373,7 @@ export default function AddUserModal({
             </Button>
             <Button
               type="submit"
-              variant="accent"
+              variant="default"
               size="touch"
               disabled={submitting}
               aria-label={submitting ? "Сохранение…" : "Добавить пользователя"}

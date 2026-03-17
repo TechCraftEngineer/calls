@@ -99,9 +99,10 @@ export function ConfirmDialog({
           <Button
             ref={cancelButtonRef}
             type="button"
-            variant="outline"
+            variant="link"
             size="touch"
             onClick={onClose}
+            className="text-primary"
             aria-label={cancelText}
           >
             {cancelText}

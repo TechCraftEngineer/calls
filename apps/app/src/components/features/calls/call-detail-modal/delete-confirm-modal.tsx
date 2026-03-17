@@ -61,7 +61,12 @@ export default function DeleteConfirmModal({
           </div>
         )}
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={onCancel} disabled={deleting}>
+          <Button
+            variant="link"
+            onClick={onCancel}
+            disabled={deleting}
+            className="text-primary"
+          >
             Отмена
           </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={deleting}>
