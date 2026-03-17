@@ -39,7 +39,7 @@ export function isMobileDevice(): boolean {
   }
 
   // Проверка по User-Agent
-  if (typeof navigator !== "undefined") {
+  if (typeof navigator !== "undefined" && typeof window !== "undefined") {
     const win = window as Window & { opera?: string };
     const userAgent =
       navigator.userAgent || navigator.vendor || win.opera || "";

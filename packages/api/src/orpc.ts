@@ -78,6 +78,7 @@ export async function createBackendContext(opts: {
 }> {
   let user: BackendUser | null = null;
   let authUserId: string | null = null;
+  let sessionEmail: string | null = null;
 
   if (opts.auth) {
     const session = await opts.auth.api.getSession({ headers: opts.headers });
@@ -86,6 +87,7 @@ export async function createBackendContext(opts: {
       authUserId = typeof baUser.id === "string" ? baUser.id : null;
       const email = (baUser.email ?? baUser.name) as string | undefined;
       if (email) {
+        sessionEmail = email;
         const profile = await usersService.getUserByEmail(email);
         user = profile ? { ...profile, ...baUser } : baUser;
       } else if (
@@ -95,7 +97,6 @@ export async function createBackendContext(opts: {
         baUser.id
       ) {
         // Сессия есть, но email не передан — используем данные из сессии
-        // Дополнительная проверка что baUser является валидным объектом с id
         user = baUser;
       }
     }
@@ -104,11 +105,12 @@ export async function createBackendContext(opts: {
   if (!user) {
     const cookie = opts.headers.get("cookie");
     const match = cookie?.match(/\bsession=([^;]+)/);
-    const sessionEmail = match?.[1]
+    const cookieSessionValue = match?.[1]
       ? decodeURIComponent(match[1].trim())
       : null;
-    if (sessionEmail) {
-      user = await usersService.getUserByEmail(sessionEmail);
+    if (cookieSessionValue) {
+      sessionEmail = sessionEmail ?? cookieSessionValue;
+      user = await usersService.getUserByEmail(cookieSessionValue);
     }
   }
 
@@ -135,9 +137,10 @@ export async function createBackendContext(opts: {
     usersService,
     workspacesService,
     sessionEmail:
+      sessionEmail ??
       (user && typeof user === "object" && "email" in user
-        ? (user as { email?: string }).email
-        : undefined) ?? null,
+        ? ((user as { email?: string }).email ?? null)
+        : null),
     user,
     authUserId,
     workspaceId,

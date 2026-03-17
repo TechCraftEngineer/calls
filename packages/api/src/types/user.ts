@@ -41,7 +41,7 @@ export interface UserLike {
   report_detailed?: boolean | undefined;
   report_include_avg_value?: boolean | undefined;
   report_include_avg_rating?: boolean | undefined;
-  report_managed_user_ids?: unknown;
+  report_managed_user_ids?: string[];
   // KPI settings
   kpi_base_salary?: number | undefined;
   kpi_target_bonus?: number | undefined;

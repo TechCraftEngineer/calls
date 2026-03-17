@@ -12,7 +12,7 @@ const logger = createLogger("check-user-password");
 type AuthWithInternalContext = {
   $context: Promise<{
     internalAdapter: {
-      findUserByEmail?: (
+      findUserByEmail: (
         email: string,
       ) => Promise<{ id: string } | Array<{ id: string }> | null | undefined>;
       findAccounts: (
@@ -24,6 +24,17 @@ type AuthWithInternalContext = {
   }>;
 };
 
+function isAuthWithInternalContext(
+  auth: unknown,
+): auth is AuthWithInternalContext {
+  return (
+    auth != null &&
+    typeof auth === "object" &&
+    "$context" in auth &&
+    typeof (auth as { $context?: unknown }).$context === "object"
+  );
+}
+
 const inputSchema = z.object({
   email: z.string().email("Некорректный email"),
 });
@@ -32,9 +43,9 @@ export const checkUserPassword = publicProcedure
   .input(inputSchema)
   .handler(async ({ input, context }) => {
     try {
-      const auth = context.auth as AuthWithInternalContext | undefined;
+      const auth = context.auth;
 
-      if (!auth?.$context) {
+      if (!isAuthWithInternalContext(auth)) {
         throw new ORPCError("INTERNAL_SERVER_ERROR", {
           message: "Сервис авторизации недоступен",
         });
@@ -43,8 +54,13 @@ export const checkUserPassword = publicProcedure
       const authCtx = await auth.$context;
       const { internalAdapter } = authCtx;
 
-      // Ищем пользователя по email
-      const users = await internalAdapter.findUserByEmail?.(
+      if (typeof internalAdapter.findUserByEmail !== "function") {
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Сервис авторизации недоступен",
+        });
+      }
+
+      const users = await internalAdapter.findUserByEmail(
         input.email.toLowerCase().trim(),
       );
 

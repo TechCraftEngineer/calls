@@ -86,7 +86,7 @@ test.describe("Страница сброса пароля", () => {
       }
     });
 
-    await page.fill("#newPassword", "newpassword123");
+    await page.fill("#newPassword", "Newpassword123!");
 
     await page.click('button[type="submit"]');
 

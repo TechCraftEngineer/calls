@@ -36,25 +36,26 @@ export function ManagedUsersSection({
         {allUsers
           .filter((u) => u.id !== user.id)
           .map((u) => {
-            const name = getDisplayName(u) || u.email || "—";
-            const checked =
-              form.report_managed_user_ids?.includes(u.id) ?? false;
+            const display = getDisplayName(u) || u.email || "—";
+            const checked = form.reportManagedUserIds?.includes(u.id) ?? false;
+            const label =
+              display !== u.email ? `${display} (${u.email})` : display;
             return (
               <label key={u.id} className="flex items-center gap-2 text-[13px]">
                 <input
                   type="checkbox"
                   checked={checked}
                   onChange={(e) => {
-                    const ids: string[] = form.report_managed_user_ids ?? [];
+                    const ids: string[] = form.reportManagedUserIds ?? [];
                     setForm((f) => ({
                       ...f,
-                      report_managed_user_ids: e.target.checked
+                      reportManagedUserIds: e.target.checked
                         ? [...ids, u.id]
                         : ids.filter((id) => id !== u.id),
                     }));
                   }}
                 />
-                {name} ({u.email})
+                {label}
               </label>
             );
           })}

@@ -1,4 +1,5 @@
 import { systemRepository, workspaceSettingsRepository } from "@calls/db";
+import { ORPCError } from "@orpc/server";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { DEEPSEEK_MODELS, REPORT_SETTINGS_KEYS } from "../constants";
 import { settingsUpdateSchema } from "../schemas";
@@ -53,12 +54,14 @@ export const updatePrompts = workspaceAdminProcedure
         ),
       );
     }
+    const promptLogItems: { key: string; value: string }[] = [];
     if (input.prompts) {
       for (const key of REPORT_SETTINGS_KEYS) {
         const p = input.prompts[key] as
           | { value?: string; description?: string }
           | undefined;
         if (p) {
+          promptLogItems.push({ key, value: p.value ?? "" });
           upserts.push(
             workspaceSettingsRepository.upsert(
               key,
@@ -67,20 +70,24 @@ export const updatePrompts = workspaceAdminProcedure
               workspaceId,
             ),
           );
-          const maskedValue = maskSensitiveData(key, p.value ?? "");
-          await systemRepository.addActivityLog(
-            "info",
-            `Setting updated: ${key} = ${maskedValue}`,
-            String(username),
-            workspaceId,
-          );
         }
       }
     }
 
     const results = await Promise.all(upserts);
     if (results.some((ok) => !ok)) {
-      return { success: false, message: "Failed to update some settings" };
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Не удалось обновить некоторые настройки",
+      });
     }
-    return { success: true, message: "Settings updated successfully" };
+    for (const { key, value } of promptLogItems) {
+      const maskedValue = maskSensitiveData(key, value);
+      await systemRepository.addActivityLog(
+        "info",
+        `Setting updated: ${key} = ${maskedValue}`,
+        String(username),
+        workspaceId,
+      );
+    }
+    return { success: true };
   });

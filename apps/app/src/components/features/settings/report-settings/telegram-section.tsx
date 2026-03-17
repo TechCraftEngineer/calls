@@ -131,11 +131,11 @@ export function TelegramReportSection({
         <label className="flex items-center gap-2 text-[13px]">
           <input
             type="checkbox"
-            checked={form.telegram_daily_report}
+            checked={form.telegramDailyReport}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                telegram_daily_report: e.target.checked,
+                telegramDailyReport: e.target.checked,
               }))
             }
           />{" "}
@@ -144,11 +144,11 @@ export function TelegramReportSection({
         <label className="flex items-center gap-2 text-[13px]">
           <input
             type="checkbox"
-            checked={form.telegram_weekly_report}
+            checked={form.telegramWeeklyReport}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                telegram_weekly_report: e.target.checked,
+                telegramWeeklyReport: e.target.checked,
               }))
             }
           />{" "}
@@ -157,11 +157,11 @@ export function TelegramReportSection({
         <label className="flex items-center gap-2 text-[13px]">
           <input
             type="checkbox"
-            checked={form.telegram_monthly_report}
+            checked={form.telegramMonthlyReport}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                telegram_monthly_report: e.target.checked,
+                telegramMonthlyReport: e.target.checked,
               }))
             }
           />{" "}
@@ -170,11 +170,11 @@ export function TelegramReportSection({
         <label className="flex items-center gap-2 text-[13px]">
           <input
             type="checkbox"
-            checked={form.telegram_skip_weekends}
+            checked={form.telegramSkipWeekends}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                telegram_skip_weekends: e.target.checked,
+                telegramSkipWeekends: e.target.checked,
               }))
             }
           />{" "}
@@ -225,11 +225,11 @@ function ReportTimeSettings({
           Ежедневно:{" "}
           <Input
             type="time"
-            value={form.report_daily_time}
+            value={form.reportDailyTime}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                report_daily_time: e.target.value,
+                reportDailyTime: e.target.value,
               }))
             }
             className="py-1 rounded border border-[#ddd]"
@@ -238,11 +238,11 @@ function ReportTimeSettings({
         <label className="text-xs">
           Еженедельно:{" "}
           <select
-            value={form.report_weekly_day}
+            value={form.reportWeeklyDay}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                report_weekly_day: e.target.value,
+                reportWeeklyDay: e.target.value,
               }))
             }
             className="py-1 rounded border border-[#ddd]"
@@ -255,11 +255,11 @@ function ReportTimeSettings({
           </select>{" "}
           <Input
             type="time"
-            value={form.report_weekly_time}
+            value={form.reportWeeklyTime}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                report_weekly_time: e.target.value,
+                reportWeeklyTime: e.target.value,
               }))
             }
             className="py-1 rounded border border-[#ddd]"
@@ -268,11 +268,11 @@ function ReportTimeSettings({
         <label className="text-xs">
           Ежемесячно:{" "}
           <select
-            value={form.report_monthly_day}
+            value={form.reportMonthlyDay}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                report_monthly_day: e.target.value,
+                reportMonthlyDay: e.target.value,
               }))
             }
             className="py-1 rounded border border-[#ddd]"
@@ -286,11 +286,11 @@ function ReportTimeSettings({
           </select>{" "}
           <Input
             type="time"
-            value={form.report_monthly_time}
+            value={form.reportMonthlyTime}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                report_monthly_time: e.target.value,
+                reportMonthlyTime: e.target.value,
               }))
             }
             className="py-1 rounded border border-[#ddd]"
