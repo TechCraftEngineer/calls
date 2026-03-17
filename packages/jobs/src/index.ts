@@ -5,7 +5,11 @@ export {
   evaluateCallWithLlm,
   getEvaluationTemplatesList,
 } from "./evaluation";
-export { inngest } from "./inngest/client";
+export {
+  evaluateRequested,
+  inngest,
+  transcribeRequested,
+} from "./inngest/client";
 export { evaluateCallFn } from "./inngest/functions/evaluate-call";
 export { megafonSyncFn } from "./inngest/functions/megafon-sync";
 export { telegramReportsFn } from "./inngest/functions/telegram-reports";

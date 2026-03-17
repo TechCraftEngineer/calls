@@ -1,4 +1,4 @@
-import { inngest } from "@calls/jobs";
+import { evaluateRequested, inngest } from "@calls/jobs";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
@@ -15,10 +15,7 @@ export const evaluate = workspaceProcedure
         message: "Нет доступа к этому звонку",
       });
     }
-    await inngest.send({
-      name: "call/evaluate.requested",
-      data: { callId: input.call_id },
-    });
+    await inngest.send(evaluateRequested.create({ callId: input.call_id }));
     return {
       success: true,
       message:

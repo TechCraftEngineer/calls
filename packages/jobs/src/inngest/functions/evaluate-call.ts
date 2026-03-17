@@ -13,7 +13,7 @@ import {
 } from "@calls/db";
 import { evaluateCallWithLlm, resolveEvaluationPrompt } from "../../evaluation";
 import { createLogger } from "../../logger";
-import { inngest } from "../client";
+import { evaluateRequested, inngest } from "../client";
 
 const logger = createLogger("evaluate-call");
 
@@ -28,10 +28,10 @@ export const evaluateCallFn = inngest.createFunction(
       limit: 5,
       key: "event.data.callId",
     },
+    triggers: [evaluateRequested],
   },
-  { event: "call/evaluate.requested" },
   async ({ event, step }) => {
-    const { callId } = event.data as { callId: string };
+    const { callId } = event.data;
     if (!callId) {
       throw new Error("callId обязателен");
     }

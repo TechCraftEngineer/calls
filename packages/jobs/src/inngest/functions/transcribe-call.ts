@@ -7,7 +7,7 @@ import { callsService, filesService, workspacesService } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
 import { identifySpeakersWithLlm, runTranscriptionPipeline } from "../../asr";
 import { createLogger } from "../../logger";
-import { inngest } from "../client";
+import { evaluateRequested, inngest, transcribeRequested } from "../client";
 
 const logger = createLogger("transcribe-call");
 
@@ -20,10 +20,10 @@ export const transcribeCallFn = inngest.createFunction(
       limit: 1,
       key: "event.data.callId",
     },
+    triggers: [transcribeRequested],
   },
-  { event: "call/transcribe.requested" },
   async ({ event, step }) => {
-    const { callId } = event.data as { callId: string };
+    const { callId } = event.data;
     if (!callId) {
       throw new Error("callId обязателен");
     }
@@ -138,10 +138,10 @@ export const transcribeCallFn = inngest.createFunction(
       });
     });
 
-    await step.sendEvent("trigger-evaluation", {
-      name: "call/evaluate.requested",
-      data: { callId },
-    });
+    await step.sendEvent(
+      "trigger-evaluation",
+      evaluateRequested.create({ callId }),
+    );
 
     return {
       callId,

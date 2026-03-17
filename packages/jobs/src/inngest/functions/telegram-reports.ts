@@ -65,8 +65,8 @@ export const telegramReportsFn = inngest.createFunction(
     id: "telegram-reports",
     name: "Telegram отчёты по звонкам",
     retries: 2,
+    triggers: [{ cron: `TZ=${TZ} */15 * * * *` }],
   },
-  { cron: `TZ=${TZ} */15 * * * *` },
   async ({ step }) => {
     const workspaceIds = await step.run(
       "get-workspaces-with-telegram",
