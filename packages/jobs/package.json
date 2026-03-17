@@ -15,8 +15,8 @@
     "with-env": "bun run --env-file ../../.env"
   },
   "dependencies": {
-    "@ai-sdk/assemblyai": "^2.0.24",
-    "@ai-sdk/openai": "^3.0.41",
+    "@ai-sdk/assemblyai": "2.0.24",
+    "@ai-sdk/openai": "3.0.41",
     "@calls/ai": "workspace:*",
     "@calls/config": "workspace:*",
     "@calls/db": "workspace:*",
