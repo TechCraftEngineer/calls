@@ -123,7 +123,7 @@ export function TelegramBlock({
               variant="outline"
               size="sm"
               onClick={onDisconnect}
-              className="gap-2 shrink-0"
+              className="gap-2 shrink-0 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
               <svg
                 className="h-4 w-4"

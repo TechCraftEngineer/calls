@@ -79,10 +79,19 @@ export async function testFtpConnection(
   }
 }
 
+/** Нормализация номера для сравнения (только цифры) */
+function normalizePhoneForMatch(phone: string): string {
+  return phone.replace(/\D/g, "");
+}
+
 export async function syncFtp(
   config: FtpConfig,
   workspaceId: string,
-  options?: { dateStr?: string; syncFromDate?: string },
+  options?: {
+    dateStr?: string;
+    syncFromDate?: string;
+    excludePhoneNumbers?: string[];
+  },
 ): Promise<SyncResult> {
   const result: SyncResult = {
     downloaded: 0,
@@ -237,6 +246,31 @@ export async function syncFtp(
             filename: relativePath,
           });
           continue;
+        }
+
+        const excludeList = options?.excludePhoneNumbers ?? [];
+        if (excludeList.length > 0) {
+          const internalNorm = normalizePhoneForMatch(parsed.internalNumber);
+          const externalNorm = normalizePhoneForMatch(parsed.externalNumber);
+          const isExcluded = excludeList.some((excl) => {
+            const exclNorm = normalizePhoneForMatch(excl);
+            if (!exclNorm) return false;
+            return (
+              internalNorm === exclNorm ||
+              externalNorm === exclNorm ||
+              internalNorm.endsWith(exclNorm) ||
+              externalNorm.endsWith(exclNorm)
+            );
+          });
+          if (isExcluded) {
+            result.skipped++;
+            logger.debug("Файл пропущен (номер в списке исключений)", {
+              filename: relativePath,
+              internalNumber: parsed.internalNumber,
+              externalNumber: parsed.externalNumber,
+            });
+            continue;
+          }
         }
 
         try {

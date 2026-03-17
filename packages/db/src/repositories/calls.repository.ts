@@ -106,6 +106,7 @@ export const callsRepository = {
       dateTo,
       internalNumbers,
       mobileNumbers,
+      excludePhoneNumbers,
       direction,
       valueScores,
       operators,
@@ -120,6 +121,7 @@ export const callsRepository = {
       dateTo,
       internalNumbers,
       mobileNumbers,
+      excludePhoneNumbers,
       direction,
       valueScores,
       operators,
@@ -169,6 +171,7 @@ export const callsRepository = {
       dateTo,
       internalNumbers,
       mobileNumbers,
+      excludePhoneNumbers,
       direction,
       valueScores,
       operators,
@@ -183,6 +186,7 @@ export const callsRepository = {
       dateTo,
       internalNumbers,
       mobileNumbers,
+      excludePhoneNumbers,
       direction,
       valueScores,
       operators,
@@ -322,8 +326,8 @@ export const callsRepository = {
     });
   },
 
-  async getMetrics(workspaceId?: string) {
-    return getCallsMetrics(workspaceId);
+  async getMetrics(workspaceId?: string, excludePhoneNumbers?: string[]) {
+    return getCallsMetrics(workspaceId, excludePhoneNumbers);
   },
 
   async getEvaluationsStats(params: {
@@ -331,6 +335,7 @@ export const callsRepository = {
     dateFrom?: string;
     dateTo?: string;
     internalNumbers?: string[];
+    excludePhoneNumbers?: string[];
   }) {
     return getEvaluationsStatsFn(params);
   },
@@ -340,6 +345,7 @@ export const callsRepository = {
     dateFrom?: string;
     dateTo?: string;
     internalNumbers?: string[];
+    excludePhoneNumbers?: string[];
     maxScore?: number;
   }) {
     return getLowRatedCallsCountFn(params);
@@ -349,6 +355,7 @@ export const callsRepository = {
     workspaceId: string;
     dateFrom: string;
     dateTo: string;
+    excludePhoneNumbers?: string[];
   }) {
     return getKpiStatsFn(params);
   },

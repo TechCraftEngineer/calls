@@ -90,11 +90,16 @@ export const sendTestTelegram = workspaceProcedure.handler(
     const dateFromDb = `${dateFrom} 00:00:00`;
     const dateToDb = `${dateTo} 23:59:59`;
 
+    const ftpSettings = await settingsService.getFtpSettings(workspaceId);
+    const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
+
     const stats = await callsService.getEvaluationsStats({
       workspaceId,
       dateFrom: dateFromDb,
       dateTo: dateToDb,
       internalNumbers: internalNumbers ?? undefined,
+      excludePhoneNumbers:
+        excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
     });
 
     let lowRatedCalls: Record<string, number> = {};
@@ -104,6 +109,8 @@ export const sendTestTelegram = workspaceProcedure.handler(
         dateFrom: dateFromDb,
         dateTo: dateToDb,
         internalNumbers: internalNumbers ?? undefined,
+        excludePhoneNumbers:
+          excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
         maxScore: 3,
       });
     }

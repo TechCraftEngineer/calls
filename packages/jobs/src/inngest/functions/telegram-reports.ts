@@ -183,6 +183,10 @@ export const telegramReportsFn = inngest.createFunction(
             const dateFromDb = `${dateFrom} 00:00:00`;
             const dateToDb = `${dateTo} 23:59:59`;
 
+            const ftpSettings =
+              await settingsService.getFtpSettings(workspaceId);
+            const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
+
             for (const r of recipients) {
               if (r.skipWeekends && weekend) continue;
 
@@ -191,6 +195,10 @@ export const telegramReportsFn = inngest.createFunction(
                 dateFrom: dateFromDb,
                 dateTo: dateToDb,
                 internalNumbers: r.internalNumbers ?? undefined,
+                excludePhoneNumbers:
+                  excludePhoneNumbers.length > 0
+                    ? excludePhoneNumbers
+                    : undefined,
               })) as Record<string, ManagerStats>;
 
               let lowRatedCalls: Record<string, number> = {};
@@ -200,6 +208,10 @@ export const telegramReportsFn = inngest.createFunction(
                   dateFrom: dateFromDb,
                   dateTo: dateToDb,
                   internalNumbers: r.internalNumbers ?? undefined,
+                  excludePhoneNumbers:
+                    excludePhoneNumbers.length > 0
+                      ? excludePhoneNumbers
+                      : undefined,
                   maxScore: 3,
                 });
               }

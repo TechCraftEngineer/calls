@@ -175,6 +175,8 @@ export class SettingsService {
     passwordSet: boolean;
     /** С какой даты выгружать записи (YYYY-MM-DD) */
     syncFromDate: string;
+    /** Номера телефонов, исключённые из загрузки и анализа */
+    excludePhoneNumbers: string[];
   }> {
     const row =
       await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
@@ -191,6 +193,7 @@ export class SettingsService {
         user: null,
         passwordSet: false,
         syncFromDate: defaultFromDate,
+        excludePhoneNumbers: [],
       };
     }
 
@@ -200,6 +203,7 @@ export class SettingsService {
       password?: string;
       syncDaysBack?: number;
       syncFromDate?: string;
+      excludePhoneNumbers?: string[];
     };
     const host = config?.host ?? null;
     const user = config?.user ?? null;
@@ -208,6 +212,11 @@ export class SettingsService {
     const syncFromDate = this.parseSyncFromDate(
       config?.syncFromDate ?? config?.syncDaysBack,
     );
+    const excludePhoneNumbers = Array.isArray(config?.excludePhoneNumbers)
+      ? config.excludePhoneNumbers.filter(
+          (n): n is string => typeof n === "string" && n.trim() !== "",
+        )
+      : [];
 
     return {
       enabled: row.enabled,
@@ -215,6 +224,7 @@ export class SettingsService {
       user,
       passwordSet,
       syncFromDate,
+      excludePhoneNumbers,
     };
   }
 
@@ -295,6 +305,7 @@ export class SettingsService {
     workspaceId: string,
     username: string = "system",
     syncFromDate?: string,
+    excludePhoneNumbers?: string[],
   ): Promise<boolean> {
     const row =
       await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
@@ -306,6 +317,7 @@ export class SettingsService {
       user?: string;
       password?: string;
       syncFromDate?: string;
+      excludePhoneNumbers?: string[];
     };
     const encryptedPassword = password
       ? encrypt(password)
@@ -315,6 +327,11 @@ export class SettingsService {
       /^\d{4}-\d{2}-\d{2}$/.test(syncFromDate)
         ? syncFromDate
         : this.getDefaultSyncFromDate();
+    const validExcludePhoneNumbers = Array.isArray(excludePhoneNumbers)
+      ? excludePhoneNumbers
+          .map((n) => (typeof n === "string" ? n.trim() : ""))
+          .filter(Boolean)
+      : (existingConfig.excludePhoneNumbers ?? []);
     const result = await this.workspaceIntegrationsRepository.upsert(
       workspaceId,
       FTP_INTEGRATION,
@@ -324,6 +341,7 @@ export class SettingsService {
         user,
         password: encryptedPassword,
         syncFromDate: validSyncFromDate,
+        excludePhoneNumbers: validExcludePhoneNumbers,
       },
     );
 

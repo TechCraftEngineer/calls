@@ -8,6 +8,7 @@ import {
   getEmailReportRecipients,
   getReportScheduleSettings,
   getWorkspaceIdsWithEmailReportRecipients,
+  settingsService,
   workspaceSettingsRepository,
   workspacesService,
 } from "@calls/db";
@@ -187,12 +188,20 @@ export const emailReportsFn = inngest.createFunction(
             const dateFromDb = `${dateFrom} 00:00:00`;
             const dateToDb = `${dateTo} 23:59:59`;
 
+            const ftpSettings =
+              await settingsService.getFtpSettings(workspaceId);
+            const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
+
             for (const r of recipients) {
               const stats = (await callsService.getEvaluationsStats({
                 workspaceId,
                 dateFrom: dateFromDb,
                 dateTo: dateToDb,
                 internalNumbers: r.internalNumbers ?? undefined,
+                excludePhoneNumbers:
+                  excludePhoneNumbers.length > 0
+                    ? excludePhoneNumbers
+                    : undefined,
               })) as Record<string, ManagerStats>;
 
               const text = formatTelegramReport({

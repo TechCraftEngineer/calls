@@ -22,6 +22,7 @@ export const getIntegrations = workspaceProcedure.handler(
         user: ftpSettings.user ?? "",
         passwordSet: ftpSettings.passwordSet,
         syncFromDate: ftpSettings.syncFromDate,
+        excludePhoneNumbers: ftpSettings.excludePhoneNumbers ?? [],
       },
       telegram_bot_token: telegramToken ?? "",
       max_bot_token: maxToken ?? "",

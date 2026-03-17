@@ -1,4 +1,4 @@
-import { callsService } from "@calls/db";
+import { callsService, settingsService } from "@calls/db";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../orpc";
 
@@ -27,10 +27,14 @@ export const getStatistics = workspaceAdminProcedure
     }
     const dateFromDb = dateFrom ? `${dateFrom} 00:00:00` : undefined;
     const dateToDb = dateTo ? `${dateTo} 23:59:59` : undefined;
+    const ftpSettings = await settingsService.getFtpSettings(workspaceId);
+    const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
     const stats = await callsService.getEvaluationsStats({
       workspaceId,
       dateFrom: dateFromDb,
       dateTo: dateToDb,
+      excludePhoneNumbers:
+        excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
     });
     const statsList = Object.values(stats);
     const reverse = input.order === "desc";

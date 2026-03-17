@@ -12,6 +12,7 @@ import {
   Input,
   Label,
   PasswordInput,
+  Textarea,
 } from "@calls/ui";
 import type { FtpConnectionStatus, Prompt } from "./types";
 
