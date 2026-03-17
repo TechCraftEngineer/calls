@@ -3,7 +3,8 @@
 import { paths } from "@calls/config";
 import { Tabs, TabsList, TabsTrigger } from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import KpiTable from "@/components/features/calls/kpi-table";
 import ReportSettingsPanel from "@/components/features/settings/report-settings-panel";
@@ -11,21 +12,28 @@ import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
-import { StatisticsFilters } from "./statistics-filters";
-import type { StatsRow } from "./statistics-table";
-import { StatisticsTable } from "./statistics-table";
+import { StatisticsFilters } from "../statistics-filters";
+import type { StatsRow } from "../statistics-table";
+import { StatisticsTable } from "../statistics-table";
+
+const TAB_STYLE =
+  "rounded-none border-b-2 border-transparent -mb-0.5 data-[state=active]:border-[#FF6B35] data-[state=active]:text-[#FF6B35] text-[#666] bg-transparent shadow-none py-3 px-6";
+
+function getActiveTab(pathname: string): "statistics" | "kpi" | "settings" {
+  const segments = pathname.replace(/\/$/, "").split("/");
+  const last = segments[segments.length - 1];
+  if (last === "kpi") return "kpi";
+  if (last === "settings") return "settings";
+  return "statistics";
+}
 
 function StatisticsPageContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const orpc = useORPC();
-  const tabFromUrl = searchParams.get("tab");
+  const activeTab = getActiveTab(pathname);
+
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState(
-    tabFromUrl === "settings" || tabFromUrl === "kpi"
-      ? tabFromUrl
-      : "statistics",
-  );
   const [filters, setFilters] = useState({
     date_from: "",
     date_to: "",
@@ -49,8 +57,8 @@ function StatisticsPageContent() {
     ...orpc.statistics.getStatistics.queryOptions({ input: statsInput }),
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-    staleTime: 10 * 60 * 1000, // 10 минут для статистики
-    gcTime: 15 * 60 * 1000, // 15 минут
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
   const stats = (result?.statistics ?? []) as StatsRow[];
@@ -60,19 +68,19 @@ function StatisticsPageContent() {
   }, []);
 
   useEffect(() => {
+    const segments = pathname.replace(/\/$/, "").split("/");
+    if (segments.length >= 3 && !["kpi", "settings"].includes(segments[2])) {
+      router.replace(paths.statistics.root);
+    }
+  }, [pathname, router]);
+
+  useEffect(() => {
     if (statsError && typeof statsError === "object" && "code" in statsError) {
       if ((statsError as { code?: string }).code === "FORBIDDEN") {
-        setActiveTab("settings");
         router.replace(paths.statistics.settings);
       }
     }
   }, [statsError, router]);
-
-  useEffect(() => {
-    const t = searchParams.get("tab");
-    if (t === "settings" || t === "kpi") setActiveTab(t);
-    else if (t === "statistics") setActiveTab("statistics");
-  }, [searchParams]);
 
   const handleSort = (field: string) => {
     setFilters((prev) => ({
@@ -97,31 +105,16 @@ function StatisticsPageContent() {
           <p className="page-subtitle">Эффективность работы менеджеров</p>
         </header>
 
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) =>
-            setActiveTab(v as "statistics" | "kpi" | "settings")
-          }
-          className="mb-6"
-        >
+        <Tabs value={activeTab} className="mb-6">
           <TabsList className="flex gap-0 p-0 h-auto bg-transparent border-b-2 border-[#EEE] rounded-none w-auto">
-            <TabsTrigger
-              value="statistics"
-              className="rounded-none border-b-2 border-transparent -mb-0.5 data-[state=active]:border-[#FF6B35] data-[state=active]:text-[#FF6B35] text-[#666] bg-transparent shadow-none py-3 px-6"
-            >
-              Сводная статистика
+            <TabsTrigger value="statistics" asChild className={TAB_STYLE}>
+              <Link href={paths.statistics.root}>Сводная статистика</Link>
             </TabsTrigger>
-            <TabsTrigger
-              value="kpi"
-              className="rounded-none border-b-2 border-transparent -mb-0.5 data-[state=active]:border-[#FF6B35] data-[state=active]:text-[#FF6B35] text-[#666] bg-transparent shadow-none py-3 px-6"
-            >
-              Расчет KPI
+            <TabsTrigger value="kpi" asChild className={TAB_STYLE}>
+              <Link href={paths.statistics.kpi}>Расчет KPI</Link>
             </TabsTrigger>
-            <TabsTrigger
-              value="settings"
-              className="rounded-none border-b-2 border-transparent -mb-0.5 data-[state=active]:border-[#FF6B35] data-[state=active]:text-[#FF6B35] text-[#666] bg-transparent shadow-none py-3 px-6"
-            >
-              Настройки отчетов
+            <TabsTrigger value="settings" asChild className={TAB_STYLE}>
+              <Link href={paths.statistics.settings}>Настройки отчетов</Link>
             </TabsTrigger>
           </TabsList>
         </Tabs>

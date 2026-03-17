@@ -31,8 +31,8 @@ export const paths = {
   },
   statistics: {
     root: ROOTS.STATISTICS,
-    settings: `${ROOTS.STATISTICS}?tab=settings`,
-    kpi: `${ROOTS.STATISTICS}?tab=kpi`,
+    kpi: `${ROOTS.STATISTICS}/kpi`,
+    settings: `${ROOTS.STATISTICS}/settings`,
   },
   users: {
     root: ROOTS.USERS,

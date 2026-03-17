@@ -138,7 +138,7 @@ export default function Sidebar() {
         </Link>
         <Link
           href={paths.statistics.root}
-          className={`nav-item ${pathname === paths.statistics.root ? "is-active" : ""}`}
+          className={`nav-item ${pathname.startsWith(paths.statistics.root) ? "is-active" : ""}`}
           title="Статистика"
         >
           <div className="icon-bubble bg-blue-50">{icons.statistics}</div>
