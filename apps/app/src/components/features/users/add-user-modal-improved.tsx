@@ -143,10 +143,11 @@ export default function AddUserModal({
 
       try {
         await onSuccess();
-        onClose();
       } catch (successError) {
         console.error("Error in onSuccess callback:", successError);
         // Не показываем ошибку создания пользователя, так как пользователь уже создан
+      } finally {
+        onClose();
       }
     } catch (err: unknown) {
       setErrors({

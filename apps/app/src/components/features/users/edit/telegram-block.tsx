@@ -57,7 +57,7 @@ export function TelegramBlock({
       className={`bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6 transition-all duration-300 ${getBlockAnimationClass()}`}
     >
       <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-lg font-semibold">Telegram</h2>
+        <h2 className="text-lg font-semibold">Телеграм</h2>
         {hasChanges && (
           <div className="flex items-center gap-1 text-amber-600">
             <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>

@@ -39,6 +39,16 @@ function formatValue(value: number): string {
   return new Intl.NumberFormat("ru-RU").format(Math.round(value));
 }
 
+/** Русская склонение: 1 звонок, 2 звонка, 5 звонков */
+function pluralizeCalls(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 19) return "звонков";
+  if (mod10 === 1) return "звонок";
+  if (mod10 >= 2 && mod10 <= 4) return "звонка";
+  return "звонков";
+}
+
 export function formatTelegramReport(params: FormatReportParams): string {
   const {
     stats,
@@ -161,7 +171,7 @@ export function formatTelegramReport(params: FormatReportParams): string {
     lines.push("");
     lines.push("─── Требуют внимания (оценка < 3) ───");
     for (const [manager, count] of lowRatedEntries) {
-      lines.push(`• ${manager}: ${count} звонк(ов)`);
+      lines.push(`• ${manager}: ${count} ${pluralizeCalls(count)}`);
     }
   }
 

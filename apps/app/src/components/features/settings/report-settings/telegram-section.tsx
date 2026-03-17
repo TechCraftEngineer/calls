@@ -211,6 +211,11 @@ const WEEKDAYS = [
   { value: "sun", label: "Вс" },
 ] as const;
 
+const TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => {
+  const value = `${hour.toString().padStart(2, "0")}:00`;
+  return { value, label: value };
+});
+
 function ReportTimeSettings({
   form,
   setForm,
@@ -224,17 +229,26 @@ function ReportTimeSettings({
       <div className="flex flex-wrap items-center gap-3">
         <Field orientation="horizontal" className="items-center gap-2">
           <Label className="text-xs font-normal">Ежедневно:</Label>
-          <Input
-            type="time"
+          <Select
             value={form.reportDailyTime}
-            onChange={(e) =>
+            onValueChange={(v) =>
               setForm((f) => ({
                 ...f,
-                reportDailyTime: e.target.value,
+                reportDailyTime: v,
               }))
             }
-            className="h-8 w-auto"
-          />
+          >
+            <SelectTrigger size="sm" className="h-8 w-[90px]">
+              <SelectValue placeholder="Время" />
+            </SelectTrigger>
+            <SelectContent>
+              {TIME_OPTIONS.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </Field>
         <Field orientation="horizontal" className="items-center gap-2">
           <Label className="text-xs font-normal">Еженедельно:</Label>
@@ -255,17 +269,26 @@ function ReportTimeSettings({
               ))}
             </SelectContent>
           </Select>
-          <Input
-            type="time"
+          <Select
             value={form.reportWeeklyTime}
-            onChange={(e) =>
+            onValueChange={(v) =>
               setForm((f) => ({
                 ...f,
-                reportWeeklyTime: e.target.value,
+                reportWeeklyTime: v,
               }))
             }
-            className="h-8 w-auto"
-          />
+          >
+            <SelectTrigger size="sm" className="h-8 w-[90px]">
+              <SelectValue placeholder="Время" />
+            </SelectTrigger>
+            <SelectContent>
+              {TIME_OPTIONS.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </Field>
         <Field orientation="horizontal" className="items-center gap-2">
           <Label className="text-xs font-normal">Ежемесячно:</Label>
@@ -287,17 +310,26 @@ function ReportTimeSettings({
               ))}
             </SelectContent>
           </Select>
-          <Input
-            type="time"
+          <Select
             value={form.reportMonthlyTime}
-            onChange={(e) =>
+            onValueChange={(v) =>
               setForm((f) => ({
                 ...f,
-                reportMonthlyTime: e.target.value,
+                reportMonthlyTime: v,
               }))
             }
-            className="h-8 w-auto"
-          />
+          >
+            <SelectTrigger size="sm" className="h-8 w-[90px]">
+              <SelectValue placeholder="Время" />
+            </SelectTrigger>
+            <SelectContent>
+              {TIME_OPTIONS.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </Field>
       </div>
     </div>

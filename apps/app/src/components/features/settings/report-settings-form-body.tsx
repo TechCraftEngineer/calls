@@ -1,7 +1,7 @@
 import { Button, Card, CardContent, CardHeader, toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 import {
@@ -65,12 +65,19 @@ export default function ReportSettingsFormBody({
     }),
   );
 
+  const sendTestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const sendTestMutation = useMutation(
     orpc.reports.sendTestTelegram.mutationOptions({
       onSuccess: () => {
         toast.success("Ежедневный отчёт отправлен в Telegram");
         setSendTestMessage("Ежедневный отчёт отправлен");
-        setTimeout(() => setSendTestMessage(""), 4000);
+        if (sendTestTimeoutRef.current != null)
+          clearTimeout(sendTestTimeoutRef.current);
+        sendTestTimeoutRef.current = setTimeout(
+          () => setSendTestMessage(""),
+          4000,
+        );
       },
       onError: (err) => {
         const msg =
@@ -85,6 +92,16 @@ export default function ReportSettingsFormBody({
 
   const [sendTestMessage, setSendTestMessage] = useState("");
   const [checkConnectionLoading, setCheckConnectionLoading] = useState(false);
+
+  useEffect(
+    () => () => {
+      if (sendTestTimeoutRef.current != null) {
+        clearTimeout(sendTestTimeoutRef.current);
+        sendTestTimeoutRef.current = null;
+      }
+    },
+    [],
+  );
 
   const handleConnectTelegram = () => {
     telegramAuthUrlMutation.mutate({ user_id: userId });

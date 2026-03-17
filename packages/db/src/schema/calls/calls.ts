@@ -65,5 +65,9 @@ export const calls = pgTable(
     ),
     index("calls_number_idx").on(table.number),
     index("calls_status_idx").on(table.status),
+    index("calls_name_internal_number_idx").on(
+      table.name,
+      table.internalNumber,
+    ),
   ],
 );

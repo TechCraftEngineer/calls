@@ -7,6 +7,7 @@ import {
 } from "@calls/db";
 import { formatTelegramReport, type ManagerStats } from "@calls/jobs";
 import { sendMessage } from "@calls/telegram-bot";
+import { ORPCError } from "@orpc/server";
 import { workspaceProcedure } from "../../orpc";
 
 const TZ = "Europe/Moscow";
@@ -30,44 +31,50 @@ export const sendTestTelegram = workspaceProcedure.handler(
   async ({ context }) => {
     const { workspaceId, workspaceRole } = context;
     if (!workspaceId)
-      throw new Error("Требуется активное рабочее пространство");
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Требуется активное рабочее пространство",
+      });
 
     const email = (context.user as Record<string, unknown>).email as string;
     const user = await usersService.getUserByEmail(email);
-    if (!user) throw new Error("Пользователь не найден");
+    if (!user)
+      throw new ORPCError("NOT_FOUND", {
+        message: "Пользователь не найден",
+      });
 
     const chatId = (user as Record<string, unknown>).telegramChatId as
       | string
       | undefined;
     if (!chatId?.trim())
-      throw new Error(
-        "Telegram Chat ID не указан. Подключите Telegram в настройках.",
-      );
+      throw new ORPCError("BAD_REQUEST", {
+        message:
+          "Telegram Chat ID не указан. Подключите Telegram в настройках.",
+      });
 
     const token = await settingsService.getDecryptedBotToken(
       "telegram_bot_token",
       workspaceId,
     );
     if (!token?.trim())
-      throw new Error(
-        "Telegram Bot Token не настроен. Укажите токен в Настройках.",
-      );
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Telegram Bot Token не настроен. Укажите токен в Настройках.",
+      });
 
     const userForEdit = await usersService.getUserForEdit(user.id, workspaceId);
-    if (!userForEdit) throw new Error("Не удалось загрузить настройки");
+    if (!userForEdit)
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Не удалось загрузить настройки",
+      });
 
     const isAdmin = workspaceRole === "admin" || workspaceRole === "owner";
     const isManagerReport =
       isAdmin && (userForEdit.telegramManagerReport ?? false);
 
     let internalNumbers: string[] | null = null;
-    if (
-      isManagerReport &&
-      (userForEdit.reportManagedUserIds?.length ?? 0) > 0
-    ) {
+    if (isManagerReport) {
       internalNumbers = await getInternalNumbersForUserIds(
         workspaceId,
-        userForEdit.reportManagedUserIds,
+        userForEdit.reportManagedUserIds ?? null,
       );
     } else {
       internalNumbers = parseInternalExtensions(
@@ -118,9 +125,10 @@ export const sendTestTelegram = workspaceProcedure.handler(
 
     const success = await sendMessage(token, chatId.trim(), text);
     if (!success) {
-      throw new Error(
-        "Не удалось отправить сообщение в Telegram. Проверьте настройки и подключение.",
-      );
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message:
+          "Не удалось отправить сообщение в Telegram. Проверьте настройки и подключение.",
+      });
     }
     return { success: true };
   },
