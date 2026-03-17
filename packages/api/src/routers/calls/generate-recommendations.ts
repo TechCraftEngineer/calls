@@ -155,14 +155,17 @@ export const generateRecommendationsProcedure = workspaceProcedure
         message: "Нет доступа к этому звонку",
       });
     }
-    const workspace =
-      context.workspaceId != null
-        ? await context.workspacesService.getById(context.workspaceId)
-        : null;
+    if (context.workspaceId == null)
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Требуется активное рабочее пространство",
+      });
+    const workspace = await context.workspacesService.getById(
+      context.workspaceId,
+    );
     return generateRecommendations(
       input.call_id,
       context.callsService,
-      context.workspaceId!,
+      context.workspaceId,
       workspace?.description,
     );
   });

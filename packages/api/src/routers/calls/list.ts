@@ -1,4 +1,5 @@
 import type { CallWithTranscript } from "@calls/db";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 import { getInternalNumbersForUser, getMobileNumbersForUser } from "./utils";
@@ -24,6 +25,10 @@ export const list = workspaceProcedure
   .input(listCallsSchema)
   .handler(async ({ input, context }) => {
     const { callsService, user, workspaceId } = context;
+    if (!user || workspaceId == null)
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Требуется активное рабочее пространство",
+      });
     const offset = (input.page - 1) * input.per_page;
 
     const dateFrom = input.date_from
@@ -31,8 +36,8 @@ export const list = workspaceProcedure
       : undefined;
     const dateTo = input.date_to ? `${input.date_to}T23:59:59` : undefined;
 
-    let internalNumbers = getInternalNumbersForUser(user!);
-    let mobileNumbers = getMobileNumbersForUser(user!);
+    let internalNumbers = getInternalNumbersForUser(user);
+    let mobileNumbers = getMobileNumbersForUser(user);
 
     // Участник (member) видит только свои звонки — при отсутствии internalExtensions/mobilePhones возвращаем пустой список
     if (context.workspaceRole === "member") {
@@ -45,7 +50,7 @@ export const list = workspaceProcedure
     }
 
     const rawCalls = await callsService.getCallsWithTranscripts({
-      workspaceId: workspaceId!,
+      workspaceId,
       limit: input.per_page,
       offset,
       dateFrom,
@@ -85,7 +90,7 @@ export const list = workspaceProcedure
     }));
 
     const totalItems = await callsService.countCalls({
-      workspaceId: workspaceId!,
+      workspaceId,
       dateFrom,
       dateTo,
       internalNumbers,
@@ -104,8 +109,8 @@ export const list = workspaceProcedure
     });
 
     const totalPages = Math.ceil(totalItems / input.per_page) || 1;
-    const metrics = await callsService.calculateMetrics(workspaceId!);
-    const members = await context.workspacesService.getMembers(workspaceId!);
+    const metrics = await callsService.calculateMetrics(workspaceId);
+    const members = await context.workspacesService.getMembers(workspaceId);
     const managers = members
       .map((m: { user?: unknown }) => m.user)
       .filter(

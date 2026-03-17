@@ -26,9 +26,9 @@
     "@ai-sdk/deepseek": "^2.0.24",
     "@ai-sdk/openai": "^3.0.41",
     "@calls/config": "workspace:*",
-    "@langfuse/otel": "^5.0.0",
-    "@langfuse/tracing": "^5.0.0",
-    "@openrouter/ai-sdk-provider": "^2.3.0",
+    "@langfuse/otel": "^5.0.1",
+    "@langfuse/tracing": "^5.0.1",
+    "@openrouter/ai-sdk-provider": "^2.3.3",
     "@opentelemetry/sdk-trace-node": "^2.6.0",
     "ai": "^6.0.116",
     "langfuse": "^3.38.6",
@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
-    "tsdown": "^0.21.2",
+    "tsdown": "^0.21.4",
     "typescript": "5.9.3"
   }
 }

@@ -65,8 +65,11 @@ export const getKpi = workspaceAdminProcedure
 
     // Оптимизация: загружаем все данные пользователей за один запрос
     const activeMemberUsers = members
-      .filter((row) => row.user && row.status === "active")
-      .map((row) => row.user!);
+      .filter(
+        (row): row is typeof row & { user: NonNullable<typeof row.user> } =>
+          Boolean(row.user && row.status === "active"),
+      )
+      .map((row) => row.user);
 
     const userIds = activeMemberUsers.map((user) => user.id);
     const usersForEdit = await Promise.all(

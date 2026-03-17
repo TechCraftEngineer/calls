@@ -19,5 +19,9 @@ export const create = protectedProcedure
     }
     const id = await context.workspacesService.create(input, authUserId);
     const ws = await context.workspacesService.getById(id);
-    return ws!;
+    if (!ws)
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Не удалось получить созданное рабочее пространство",
+      });
+    return ws;
   });

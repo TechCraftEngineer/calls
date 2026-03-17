@@ -1,8 +1,10 @@
+import { ORPCError } from "@orpc/server";
 import { protectedProcedure } from "../../orpc";
 import { extractUserFields } from "../../user-profile";
 
 export const me = protectedProcedure.handler(async ({ context }) => {
-  const u = context.user! as Record<string, unknown>;
+  if (!context.user) throw new ORPCError("UNAUTHORIZED");
+  const u = context.user as Record<string, unknown>;
   const fields = extractUserFields(u);
 
   return {

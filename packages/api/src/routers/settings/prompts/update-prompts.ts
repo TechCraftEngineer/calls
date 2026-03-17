@@ -97,7 +97,7 @@ export const updatePrompts = workspaceAdminProcedure
         );
       } catch (err) {
         // Логирование: не прерываем обработчик при ошибке, фиксируем предупреждение
-        logger.warn("addActivityLog failed", { key, err });
+        logger.warn("Не удалось добавить запись активности", { key, err });
       }
     }
     return { success: true };

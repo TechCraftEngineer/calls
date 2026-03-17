@@ -13,6 +13,10 @@ export const maxAuthUrl = workspaceProcedure
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
+    if (context.workspaceId == null)
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Требуется активное рабочее пространство",
+      });
     const user = await usersService.getUser(input.user_id);
     if (!user)
       throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
@@ -20,7 +24,7 @@ export const maxAuthUrl = workspaceProcedure
     if (
       !(await usersService.saveMaxConnectToken(
         input.user_id,
-        context.workspaceId!,
+        context.workspaceId,
         token,
       ))
     )

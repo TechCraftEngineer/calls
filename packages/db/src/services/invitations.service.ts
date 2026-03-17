@@ -153,11 +153,14 @@ export class InvitationsService {
     requiresPassword: boolean;
   }> {
     const trimmedEmail = email.toLowerCase().trim();
-    if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      throw new Error("Некорректный email");
+    const emailResult = z.string().email().safeParse(trimmedEmail);
+    if (!emailResult.success) {
+      const first = emailResult.error.issues[0];
+      throw new Error((first?.message as string) ?? "Некорректный email");
     }
+    const validatedEmail = emailResult.data;
 
-    const user = await this.usersService.getUserByEmail(trimmedEmail);
+    const user = await this.usersService.getUserByEmail(validatedEmail);
     const userExists = !!user;
     const requiresPassword = !userExists;
 
@@ -197,7 +200,7 @@ export class InvitationsService {
     // New user: check for existing pending invitation
     const hasPending = await this.invitationsRepository.hasPendingForEmail(
       workspaceId,
-      trimmedEmail,
+      validatedEmail,
     );
     if (hasPending) {
       throw new Error(
@@ -210,7 +213,7 @@ export class InvitationsService {
 
     await this.invitationsRepository.create({
       workspaceId,
-      email: trimmedEmail,
+      email: validatedEmail,
       role,
       token,
       invitedBy,
@@ -700,17 +703,5 @@ export class InvitationsService {
 
     // Remove from workspace
     await this.workspacesService.removeMember(workspaceId, userId);
-
-    // Check if user is in any other workspaces
-    const userWorkspaces =
-      await this.workspacesService.listUserWorkspaces(userId);
-
-    // If not in any workspace and has no password, can delete the user
-    // (This is optional - you might want to keep the user record)
-    if (userWorkspaces.length === 0) {
-      const _user = await this.usersService.getUser(userId);
-      // Only delete if user never set a password (never logged in)
-      // This check would need to be implemented based on your auth system
-    }
   }
 }

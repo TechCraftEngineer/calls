@@ -1,19 +1,14 @@
 import { APP_CONFIG, env } from "@calls/config";
 import {
   Body,
-  Button,
-  Column,
   Container,
   Head,
   Heading,
   Hr,
   Html,
-  Img,
   Link,
   Preview,
   pixelBasedPreset,
-  Row,
-  Section,
   Tailwind,
   Text,
 } from "@react-email/components";
