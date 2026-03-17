@@ -65,6 +65,10 @@ export const list = workspaceProcedure
       ...item,
       call: {
         ...item.call,
+        timestamp:
+          item.call.timestamp instanceof Date
+            ? item.call.timestamp.toISOString()
+            : item.call.timestamp,
         managerName: item.call.name ?? null,
         operatorName: item.call.name ?? null,
       },
@@ -121,8 +125,8 @@ export const list = workspaceProcedure
       metrics: {
         total_calls: totalItems,
         transcribed: metrics.transcribed,
-        avg_duration: metrics.avg_duration,
-        last_sync: metrics.last_sync,
+        avg_duration: metrics.avgDuration,
+        last_sync: metrics.lastSync,
       },
       managers,
     };

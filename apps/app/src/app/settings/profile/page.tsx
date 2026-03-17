@@ -83,7 +83,6 @@ export default function AccountSettingsPage() {
     defaultValues: {
       currentPassword: "",
       newPassword: "",
-      confirmPassword: "",
     },
   });
 
@@ -114,7 +113,6 @@ export default function AccountSettingsPage() {
     passwordForm.reset({
       currentPassword: "",
       newPassword: "",
-      confirmPassword: "",
     });
   };
 
@@ -278,28 +276,6 @@ export default function AccountSettingsPage() {
                   <p className="mt-1 text-xs text-muted-foreground">
                     Минимум 8 символов, заглавная, строчная буква и цифра
                   </p>
-                </div>
-                <div>
-                  <label
-                    htmlFor="confirmPassword"
-                    className="mb-2 block text-sm font-medium"
-                  >
-                    Подтвердите новый пароль
-                  </label>
-                  <PasswordInput
-                    id="confirmPassword"
-                    {...passwordForm.register("confirmPassword")}
-                    placeholder="••••••••"
-                    className="max-w-sm"
-                    aria-invalid={
-                      !!passwordForm.formState.errors.confirmPassword
-                    }
-                  />
-                  {passwordForm.formState.errors.confirmPassword && (
-                    <p className="mt-1 text-sm text-destructive">
-                      {passwordForm.formState.errors.confirmPassword.message}
-                    </p>
-                  )}
                 </div>
                 <Button
                   type="submit"

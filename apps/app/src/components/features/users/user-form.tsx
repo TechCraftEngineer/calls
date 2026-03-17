@@ -7,6 +7,7 @@
 import { Button, Input, PasswordInput, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import type { FieldErrors } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import {
   type CreateUserData,
@@ -102,8 +103,10 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
     }
   };
 
-  // Типизированные ошибки для разных схем
-  const createErrors = errors as any;
+  const createErrors = errors as FieldErrors<CreateUserData | UpdateUserData>;
+  const passwordError = !isEditing
+    ? (errors as FieldErrors<CreateUserData>).password
+    : undefined;
 
   return (
     <form
@@ -156,17 +159,17 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
             <PasswordInput
               id="password"
               className={`w-full px-3 py-2.5 pr-10 border rounded-lg text-sm transition-all duration-200 box-border ${
-                createErrors.password
+                passwordError
                   ? "border-error-500 bg-error-50 focus:border-error-500 focus:ring-2 focus:ring-error-200"
                   : "border-gray-300 focus:border-mango-yellow focus:ring-2 focus:ring-mango-yellow/20"
               }`}
               placeholder="Минимум 8 символов"
-              aria-invalid={!!createErrors.password}
+              aria-invalid={!!passwordError}
               {...register("password")}
             />
-            {createErrors.password && (
+            {passwordError && (
               <div className="text-error-600 text-xs mt-1 leading-tight">
-                {createErrors.password.message}
+                {passwordError.message}
               </div>
             )}
           </div>

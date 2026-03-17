@@ -3,6 +3,7 @@
  * API всегда через app: localhost:3000/api или app.zvonki.qbsoft.ru/api
  */
 
+import type { BackendApiClient } from "@calls/api/client";
 import { createBackendClient } from "@calls/api/client";
 
 function getApiBaseUrl(): string {
@@ -15,9 +16,9 @@ function getApiBaseUrl(): string {
   return `http://localhost:${process.env.PORT || 3000}`;
 }
 
-let clientInstance: any = null;
+let clientInstance: BackendApiClient | null = null;
 
-export function getApiClient(): any {
+export function getApiClient(): BackendApiClient {
   if (!clientInstance) {
     clientInstance = createBackendClient(getApiBaseUrl());
   }

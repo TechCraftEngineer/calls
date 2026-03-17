@@ -15,7 +15,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
 
-/** Supported integration types */
+/** Поддерживаемые типы интеграций */
 export const INTEGRATION_TYPES = [
   "ftp",
   "mango",
@@ -41,7 +41,7 @@ export interface BotIntegrationConfig {
   botToken: string;
 }
 
-/** Generic config for future integrations */
+/** Универсальный конфиг для будущих интеграций */
 export type IntegrationConfig =
   | FtpIntegrationConfig
   | BotIntegrationConfig

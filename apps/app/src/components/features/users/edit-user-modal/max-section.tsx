@@ -1,11 +1,11 @@
 "use client";
 
 import { Button, Input } from "@calls/ui";
-import type { EditUserForm, ManagedUser } from "../types";
+import type { EditUserForm, WorkspaceMemberUser } from "../types";
 
 interface MaxSectionProps {
   form: EditUserForm;
-  editUser: ManagedUser;
+  editUser: WorkspaceMemberUser & { max_chat_id?: string | null };
   onFormChange: (updates: Partial<EditUserForm>) => void;
   onDisconnect: () => void;
   onConnect: () => void;

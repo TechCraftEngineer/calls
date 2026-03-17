@@ -6,7 +6,7 @@
 // Базовые типы для backend
 export interface UserLike {
   id?: string | number;
-  username?: string;
+  username?: string | null;
   displayUsername?: string;
   name?: string;
   email?: string | null | undefined;

@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ConfirmDialog } from "@/components/features/users/confirm-dialog";
-import type { ManagedUser } from "@/components/features/users/types";
+import type { WorkspaceMemberUser } from "@/components/features/users/types";
 import UsersTable from "@/components/features/users/users-table";
 import ConfigureInvitationSettingsModal from "@/components/features/workspaces/configure-invitation-settings-modal";
 import InviteUserModal from "@/components/features/workspaces/invite-user-modal";
@@ -190,11 +190,11 @@ export default function UsersPage() {
   const handleSaveInvitationSettings = async (
     invitationId: string,
     settings: {
-      notificationSettings?: unknown;
-      reportSettings?: unknown;
-      kpiSettings?: unknown;
-      filterSettings?: unknown;
-      evaluationSettings?: unknown;
+      notificationSettings?: Record<string, unknown>;
+      reportSettings?: Record<string, unknown>;
+      kpiSettings?: Record<string, unknown>;
+      filterSettings?: Record<string, unknown>;
+      evaluationSettings?: Record<string, unknown>;
     },
   ) => {
     if (!workspaceId) throw new Error("Нет рабочего пространства");
@@ -205,7 +205,9 @@ export default function UsersPage() {
     });
   };
 
-  const activeUsersCount = (users as ManagedUser[]).filter((u) => u.id).length;
+  const activeUsersCount = (users as WorkspaceMemberUser[]).filter(
+    (u) => u.id,
+  ).length;
 
   return (
     <div className="app-container">
@@ -237,7 +239,7 @@ export default function UsersPage() {
         </header>
 
         <UsersTable
-          users={(users ?? []) as ManagedUser[]}
+          users={(users ?? []) as WorkspaceMemberUser[]}
           currentUser={user}
           currentUserRole={activeWorkspace?.role ?? null}
           loading={loading}

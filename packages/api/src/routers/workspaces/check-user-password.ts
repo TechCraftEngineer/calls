@@ -9,6 +9,21 @@ import { publicProcedure } from "../../orpc";
 
 const logger = createLogger("check-user-password");
 
+type AuthWithInternalContext = {
+  $context: Promise<{
+    internalAdapter: {
+      findUserByEmail?: (
+        email: string,
+      ) => Promise<{ id: string } | Array<{ id: string }> | null | undefined>;
+      findAccounts: (
+        userId: string,
+      ) => Promise<
+        Array<{ providerId: string; accountId: string; userId: string }>
+      >;
+    };
+  }>;
+};
+
 const inputSchema = z.object({
   email: z.string().email("Некорректный email"),
 });
@@ -17,7 +32,7 @@ export const checkUserPassword = publicProcedure
   .input(inputSchema)
   .handler(async ({ input, context }) => {
     try {
-      const auth = context.auth as any;
+      const auth = context.auth as AuthWithInternalContext | undefined;
 
       if (!auth?.$context) {
         throw new ORPCError("INTERNAL_SERVER_ERROR", {
@@ -45,9 +60,7 @@ export const checkUserPassword = publicProcedure
 
       // Проверяем наличие credential аккаунта
       const accounts = await internalAdapter.findAccounts(user.id);
-      const hasCredential = accounts.some(
-        (a: any) => a.providerId === "credential",
-      );
+      const hasCredential = accounts.some((a) => a.providerId === "credential");
 
       logger.info("Password check result", {
         email: input.email,

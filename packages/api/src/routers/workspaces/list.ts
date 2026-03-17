@@ -16,11 +16,13 @@ export const list = protectedProcedure.handler(async ({ context }) => {
   ]);
   const workspaces = rows.map(
     (r: {
-      workspace: Record<string, unknown>;
+      workspace: { id: string; name: string; slug: string };
       role: string;
       createdAt: Date;
     }) => ({
-      ...(r.workspace as object),
+      id: r.workspace.id,
+      name: r.workspace.name,
+      slug: r.workspace.slug,
       role: r.role,
       memberSince: r.createdAt,
     }),

@@ -6,9 +6,9 @@ import { useCallback, useState } from "react";
 import { useORPC } from "@/orpc/react";
 import {
   type EditUserForm,
-  type ManagedUser,
   modalBoxClasses,
   modalOverlayClasses,
+  type WorkspaceMemberUser,
 } from "../types";
 import { BasicFields } from "./basic-fields";
 import { KpiFilterSection } from "./kpi-filter-section";
@@ -17,43 +17,70 @@ import { ReportSettingsSection } from "./report-settings-section";
 import { TelegramSection } from "./telegram-section";
 
 interface EditUserModalProps {
-  user: ManagedUser;
+  user: WorkspaceMemberUser;
   onClose: () => void;
   onSubmit: (userId: string, form: EditUserForm) => Promise<void>;
   onRefresh: () => void;
 }
 
-function buildEditForm(u: ManagedUser): EditUserForm {
+function buildEditForm(u: WorkspaceMemberUser): EditUserForm {
   return {
-    givenName: u.givenName || "",
-    familyName: u.familyName || "",
-    internalExtensions: u.internalExtensions || "",
-    mobilePhones: u.mobilePhones || "",
-    telegramChatId: u.telegramChatId || "",
-    telegram_daily_report: u.telegram_daily_report || false,
-    telegram_manager_report: u.telegram_manager_report || false,
-    max_chat_id: u.max_chat_id || "",
-    max_daily_report: u.max_daily_report || false,
-    max_manager_report: u.max_manager_report || false,
+    givenName: u.givenName ?? "",
+    familyName: u.familyName ?? "",
+    internalExtensions: u.internalExtensions ?? "",
+    mobilePhones: u.mobilePhones ?? "",
+    telegramChatId: u.telegramChatId ?? "",
+    telegram_daily_report:
+      (u as { telegram_daily_report?: boolean }).telegram_daily_report ?? false,
+    telegram_manager_report:
+      (u as { telegram_manager_report?: boolean }).telegram_manager_report ??
+      false,
+    max_chat_id: (u as { max_chat_id?: string }).max_chat_id ?? "",
+    max_daily_report:
+      (u as { max_daily_report?: boolean }).max_daily_report ?? false,
+    max_manager_report:
+      (u as { max_manager_report?: boolean }).max_manager_report ?? false,
     filter_exclude_answering_machine:
-      u.filter_exclude_answering_machine || false,
-    filter_min_duration: u.filter_min_duration ?? 0,
-    filter_min_replicas: u.filter_min_replicas ?? 0,
-    email: u.email || "",
-    email_daily_report: u.email_daily_report || false,
-    email_weekly_report: u.email_weekly_report || false,
-    email_monthly_report: u.email_monthly_report || false,
-    telegram_weekly_report: u.telegram_weekly_report || false,
-    telegram_monthly_report: u.telegram_monthly_report || false,
-    report_include_call_summaries: u.report_include_call_summaries || false,
-    report_detailed: u.report_detailed || false,
-    report_include_avg_value: u.report_include_avg_value || false,
-    report_include_avg_rating: u.report_include_avg_rating || false,
-    kpi_base_salary: u.kpi_base_salary || 0,
-    kpi_target_bonus: u.kpi_target_bonus || 0,
-    kpi_target_talk_time_minutes: u.kpi_target_talk_time_minutes || 0,
+      (u as { filter_exclude_answering_machine?: boolean })
+        .filter_exclude_answering_machine ?? false,
+    filter_min_duration:
+      (u as { filter_min_duration?: number }).filter_min_duration ?? 0,
+    filter_min_replicas:
+      (u as { filter_min_replicas?: number }).filter_min_replicas ?? 0,
+    email: u.email ?? "",
+    email_daily_report:
+      (u as { email_daily_report?: boolean }).email_daily_report ?? false,
+    email_weekly_report:
+      (u as { email_weekly_report?: boolean }).email_weekly_report ?? false,
+    email_monthly_report:
+      (u as { email_monthly_report?: boolean }).email_monthly_report ?? false,
+    telegram_weekly_report:
+      (u as { telegram_weekly_report?: boolean }).telegram_weekly_report ??
+      false,
+    telegram_monthly_report:
+      (u as { telegram_monthly_report?: boolean }).telegram_monthly_report ??
+      false,
+    report_include_call_summaries:
+      (u as { report_include_call_summaries?: boolean })
+        .report_include_call_summaries ?? false,
+    report_detailed:
+      (u as { report_detailed?: boolean }).report_detailed ?? false,
+    report_include_avg_value:
+      (u as { report_include_avg_value?: boolean }).report_include_avg_value ??
+      false,
+    report_include_avg_rating:
+      (u as { report_include_avg_rating?: boolean })
+        .report_include_avg_rating ?? false,
+    kpi_base_salary: (u as { kpi_base_salary?: number }).kpi_base_salary ?? 0,
+    kpi_target_bonus:
+      (u as { kpi_target_bonus?: number }).kpi_target_bonus ?? 0,
+    kpi_target_talk_time_minutes:
+      (u as { kpi_target_talk_time_minutes?: number })
+        .kpi_target_talk_time_minutes ?? 0,
     evaluation_template_slug: u.evaluation_template_slug ?? "general",
-    evaluation_custom_instructions: u.evaluation_custom_instructions ?? "",
+    evaluation_custom_instructions:
+      (u as { evaluation_custom_instructions?: string })
+        .evaluation_custom_instructions ?? "",
   };
 }
 
@@ -89,7 +116,7 @@ export default function EditUserModal({
   const orpc = useORPC();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<EditUserForm>(() => buildEditForm(user));
-  const [editUser, setEditUser] = useState<ManagedUser>(user);
+  const [editUser, setEditUser] = useState<WorkspaceMemberUser>(user);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
 
@@ -188,16 +215,21 @@ export default function EditUserModal({
   const handleCheckTelegramConnection = useCallback(async () => {
     try {
       const list = await queryClient.fetchQuery(orpc.users.list.queryOptions());
-      const arr = (Array.isArray(list) ? list : []) as ManagedUser[];
+      const arr = (Array.isArray(list) ? list : []) as WorkspaceMemberUser[];
       const updated = arr.find((u) => String(u.id) === String(editUser.id));
       if (updated) {
         setEditUser(updated);
         updateForm({
-          telegramChatId: updated.telegramChatId || "",
+          telegramChatId: updated.telegramChatId ?? "",
           filter_exclude_answering_machine:
-            updated.filter_exclude_answering_machine || false,
-          filter_min_duration: updated.filter_min_duration ?? 0,
-          filter_min_replicas: updated.filter_min_replicas ?? 0,
+            (updated as { filter_exclude_answering_machine?: boolean })
+              .filter_exclude_answering_machine ?? false,
+          filter_min_duration:
+            (updated as { filter_min_duration?: number }).filter_min_duration ??
+            0,
+          filter_min_replicas:
+            (updated as { filter_min_replicas?: number }).filter_min_replicas ??
+            0,
         });
         onRefresh();
       }

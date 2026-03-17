@@ -1,9 +1,10 @@
 import { Input } from "@calls/ui";
 import type React from "react";
+import type { ReportSettingsForm } from "../report-settings-types";
 
 interface EmailSectionProps {
-  form: any;
-  setForm: React.Dispatch<React.SetStateAction<any>>;
+  form: ReportSettingsForm;
+  setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
 }
 
 export function EmailReportSection({ form, setForm }: EmailSectionProps) {
@@ -17,9 +18,7 @@ export function EmailReportSection({ form, setForm }: EmailSectionProps) {
         <Input
           type="email"
           value={form.email}
-          onChange={(e) =>
-            setForm((f: any) => ({ ...f, email: e.target.value }))
-          }
+          onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
           className="w-full py-2 px-3 border border-[#ddd] rounded-md"
           placeholder="Ваш Email"
         />
@@ -30,7 +29,7 @@ export function EmailReportSection({ form, setForm }: EmailSectionProps) {
             type="checkbox"
             checked={form.email_daily_report}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 email_daily_report: e.target.checked,
               }))
@@ -43,7 +42,7 @@ export function EmailReportSection({ form, setForm }: EmailSectionProps) {
             type="checkbox"
             checked={form.email_weekly_report}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 email_weekly_report: e.target.checked,
               }))
@@ -56,7 +55,7 @@ export function EmailReportSection({ form, setForm }: EmailSectionProps) {
             type="checkbox"
             checked={form.email_monthly_report}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 email_monthly_report: e.target.checked,
               }))

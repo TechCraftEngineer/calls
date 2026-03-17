@@ -1,8 +1,8 @@
 /**
- * Workspace settings repository - key-value настройки воркспейса
+ * Репозиторий настроек воркспейса — key-value хранилище настроек
  */
 
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 
@@ -10,7 +10,10 @@ export const workspaceSettingsRepository = {
   async findByKey(key: string, workspaceId: string): Promise<string | null> {
     try {
       if (!key?.trim() || !workspaceId?.trim()) {
-        console.warn("Invalid parameters provided to findByKey:", { key, workspaceId });
+        console.warn("Invalid parameters provided to findByKey:", {
+          key,
+          workspaceId,
+        });
         return null;
       }
 
@@ -27,7 +30,10 @@ export const workspaceSettingsRepository = {
 
       return result[0]?.value ?? null;
     } catch (error) {
-      console.error(`Error finding workspace setting: ${key} for workspace: ${workspaceId}`, error);
+      console.error(
+        `Error finding workspace setting: ${key} for workspace: ${workspaceId}`,
+        error,
+      );
       return null;
     }
   },
@@ -39,25 +45,61 @@ export const workspaceSettingsRepository = {
   ): Promise<string | null> {
     try {
       if (!key?.trim() || !workspaceId?.trim()) {
-        console.warn("Invalid parameters provided to findByKeyWithDefault:", { key, workspaceId });
+        console.warn("Invalid parameters provided to findByKeyWithDefault:", {
+          key,
+          workspaceId,
+        });
         return defaultValue ?? null;
       }
 
-      const result = await db
-        .select()
+      const foundValue = await this.findByKey(key, workspaceId);
+      return foundValue ?? defaultValue ?? null;
+    } catch (error) {
+      console.error(
+        `Error finding workspace setting with default: ${key} for workspace: ${workspaceId}`,
+        error,
+      );
+      return defaultValue ?? null;
+    }
+  },
+
+  async findByKeys(
+    keys: readonly string[],
+    workspaceId: string,
+  ): Promise<
+    {
+      key: string;
+      value: string;
+      description: string | null;
+      updatedAt: Date | null;
+    }[]
+  > {
+    try {
+      if (!workspaceId?.trim() || keys.length === 0) {
+        return [];
+      }
+
+      return await db
+        .select({
+          key: schema.workspaceSettings.key,
+          value: schema.workspaceSettings.value,
+          description: schema.workspaceSettings.description,
+          updatedAt: schema.workspaceSettings.updatedAt,
+        })
         .from(schema.workspaceSettings)
         .where(
           and(
-            eq(schema.workspaceSettings.key, key),
             eq(schema.workspaceSettings.workspaceId, workspaceId),
+            inArray(schema.workspaceSettings.key, [...keys]),
           ),
         )
-        .limit(1);
-
-      return result[0]?.value ?? defaultValue ?? null;
+        .orderBy(schema.workspaceSettings.key);
     } catch (error) {
-      console.error(`Error finding workspace setting with default: ${key} for workspace: ${workspaceId}`, error);
-      return defaultValue ?? null;
+      console.error(
+        `Error finding workspace settings by keys for workspace: ${workspaceId}`,
+        error,
+      );
+      return [];
     }
   },
 
@@ -86,7 +128,10 @@ export const workspaceSettingsRepository = {
         .where(eq(schema.workspaceSettings.workspaceId, workspaceId))
         .orderBy(schema.workspaceSettings.key);
     } catch (error) {
-      console.error(`Error finding all workspace settings for workspace: ${workspaceId}`, error);
+      console.error(
+        `Error finding all workspace settings for workspace: ${workspaceId}`,
+        error,
+      );
       return [];
     }
   },
@@ -99,7 +144,10 @@ export const workspaceSettingsRepository = {
   ): Promise<boolean> {
     try {
       if (!key?.trim() || !workspaceId?.trim()) {
-        console.error("Invalid parameters provided to upsert:", { key, workspaceId });
+        console.error("Invalid parameters provided to upsert:", {
+          key,
+          workspaceId,
+        });
         return false;
       }
 
@@ -110,34 +158,36 @@ export const workspaceSettingsRepository = {
 
       const now = new Date();
 
-      await db.transaction(async (tx) => {
-        // Use ON CONFLICT DO UPDATE to handle race conditions atomically
-        await tx
-          .insert(schema.workspaceSettings)
-          .values({
-            key,
+      await db
+        .insert(schema.workspaceSettings)
+        .values({
+          key,
+          value,
+          description: description ?? null,
+          updatedAt: now,
+          workspaceId,
+        })
+        .onConflictDoUpdate({
+          target: [
+            schema.workspaceSettings.workspaceId,
+            schema.workspaceSettings.key,
+          ],
+          set: {
             value,
-            description: description ?? "",
+            description: sql`COALESCE(excluded.description, workspace_settings.description)`,
             updatedAt: now,
-            workspaceId,
-          })
-          .onConflictDoUpdate({
-            target: [
-              schema.workspaceSettings.workspaceId,
-              schema.workspaceSettings.key,
-            ],
-            set: {
-              value,
-              description: description ?? sql`workspace_settings.description`,
-              updatedAt: now,
-            },
-          });
-      });
-      
-      console.log(`Successfully upserted workspace setting: ${key} for workspace: ${workspaceId}`);
+          },
+        });
+
+      console.debug(
+        `Successfully upserted workspace setting: ${key} for workspace: ${workspaceId}`,
+      );
       return true;
     } catch (error) {
-      console.error(`Failed to upsert workspace setting: ${key} for workspace: ${workspaceId}`, error);
+      console.error(
+        `Failed to upsert workspace setting: ${key} for workspace: ${workspaceId}`,
+        error,
+      );
       return false;
     }
   },

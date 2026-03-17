@@ -4,14 +4,20 @@ import { z } from "zod";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { workspaceIdInputSchema } from "../schemas";
 
+const partialNotificationSettingsSchema = z.object({}).passthrough().optional();
+const partialReportSettingsSchema = z.object({}).passthrough().optional();
+const partialKpiSettingsSchema = z.object({}).passthrough().optional();
+const partialFilterSettingsSchema = z.object({}).passthrough().optional();
+const partialEvaluationSettingsSchema = z.object({}).passthrough().optional();
+
 const updateInvitationSettingsSchema = workspaceIdInputSchema.extend({
   invitationId: z.string().uuid("Некорректный ID приглашения"),
   settings: z.object({
-    notificationSettings: z.any().optional(),
-    reportSettings: z.any().optional(),
-    kpiSettings: z.any().optional(),
-    filterSettings: z.any().optional(),
-    evaluationSettings: z.any().optional(),
+    notificationSettings: partialNotificationSettingsSchema,
+    reportSettings: partialReportSettingsSchema,
+    kpiSettings: partialKpiSettingsSchema,
+    filterSettings: partialFilterSettingsSchema,
+    evaluationSettings: partialEvaluationSettingsSchema,
   }),
 });
 

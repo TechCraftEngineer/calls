@@ -11,15 +11,19 @@ import {
   ReportParamsSection,
   TelegramReportSection,
 } from "./report-settings";
+import type {
+  ReportSettingsForm,
+  ReportSettingsUserOption,
+} from "./report-settings-types";
 
 interface ReportSettingsFormBodyProps {
-  form: any;
-  setForm: React.Dispatch<React.SetStateAction<any>>;
+  form: ReportSettingsForm;
+  setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   handleSubmit: (e: React.FormEvent) => void;
   saving: boolean;
   user: User;
   isAdmin: boolean;
-  allUsers: any[];
+  allUsers: ReportSettingsUserOption[];
 }
 
 export default function ReportSettingsFormBody({
@@ -54,7 +58,7 @@ export default function ReportSettingsFormBody({
   const disconnectTelegramMutation = useMutation(
     orpc.users.disconnectTelegram.mutationOptions({
       onSuccess: () => {
-        setForm((f: any) => ({ ...f, telegramChatId: "" }));
+        setForm((f) => ({ ...f, telegramChatId: "" }));
         toast.success("Telegram отвязан");
       },
       onError: () => toast.error("Ошибка при отвязке Telegram"),
@@ -95,7 +99,7 @@ export default function ReportSettingsFormBody({
       );
       const chatId =
         (result as { telegramChatId?: string })?.telegramChatId ?? "";
-      setForm((f: any) => ({ ...f, telegramChatId: chatId }));
+      setForm((f) => ({ ...f, telegramChatId: chatId }));
       if (chatId) {
         toast.success("Telegram подключён");
       } else {
@@ -131,7 +135,7 @@ export default function ReportSettingsFormBody({
   const disconnectMaxMutation = useMutation(
     orpc.users.disconnectMax.mutationOptions({
       onSuccess: () => {
-        setForm((f: any) => ({ ...f, maxChatId: "" }));
+        setForm((f) => ({ ...f, maxChatId: "" }));
         toast.success("MAX отвязан");
       },
       onError: () => toast.error("Ошибка при отвязке MAX"),

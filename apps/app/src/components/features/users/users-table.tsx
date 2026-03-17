@@ -19,7 +19,7 @@ import {
 } from "@calls/ui";
 import { useRouter } from "next/navigation";
 import type { User } from "@/lib/auth";
-import type { ManagedUser } from "./types";
+import type { WorkspaceMemberUser } from "./types";
 
 const ROLE_LABELS: Record<string, string> = {
   owner: "Владелец",
@@ -34,7 +34,7 @@ const EVALUATION_TEMPLATE_LABELS: Record<string, string> = {
 };
 
 interface UsersTableProps {
-  users: ManagedUser[];
+  users: WorkspaceMemberUser[];
   currentUser: User | null;
   currentUserRole: string | null;
   loading: boolean;
@@ -42,7 +42,7 @@ interface UsersTableProps {
   onUpdateRole: (userId: string, role: "owner" | "admin" | "member") => void;
 }
 
-function formatDate(dateStr?: string): string {
+function formatDate(dateStr?: string | null): string {
   if (!dateStr) return "—";
   try {
     const date = new Date(dateStr);

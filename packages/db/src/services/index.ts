@@ -41,6 +41,6 @@ export {
   invitationsRepository,
   systemRepository,
   usersRepository,
-  type workspaceSettingsRepository,
+  workspaceSettingsRepository,
   workspacesRepository,
 };

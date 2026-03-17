@@ -3,14 +3,14 @@
 import { Button, Input } from "@calls/ui";
 import type React from "react";
 import type { User } from "@/lib/auth";
+import type { ReportSettingsForm } from "../report-settings-types";
 
 interface MaxReportSectionProps {
-  form: {
-    maxChatId?: string;
-    max_daily_report?: boolean;
-    max_manager_report?: boolean;
-  };
-  setForm: React.Dispatch<React.SetStateAction<any>>;
+  form: Pick<
+    ReportSettingsForm,
+    "maxChatId" | "max_daily_report" | "max_manager_report"
+  >;
+  setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   isAdmin: boolean;
   user?: User;
   onConnect?: () => void;
@@ -46,7 +46,7 @@ export function MaxReportSection({
             type="text"
             value={form.maxChatId ?? ""}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 maxChatId: e.target.value,
               }))
@@ -88,7 +88,7 @@ export function MaxReportSection({
             type="checkbox"
             checked={form.max_daily_report}
             onChange={(e) =>
-              setForm((f: any) => ({
+              setForm((f) => ({
                 ...f,
                 max_daily_report: e.target.checked,
               }))
@@ -102,7 +102,7 @@ export function MaxReportSection({
               type="checkbox"
               checked={form.max_manager_report}
               onChange={(e) =>
-                setForm((f: any) => ({
+                setForm((f) => ({
                   ...f,
                   max_manager_report: e.target.checked,
                 }))

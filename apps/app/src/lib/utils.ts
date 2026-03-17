@@ -40,8 +40,9 @@ export function isMobileDevice(): boolean {
 
   // Проверка по User-Agent
   if (typeof navigator !== "undefined") {
+    const win = window as Window & { opera?: string };
     const userAgent =
-      navigator.userAgent || navigator.vendor || (window as any).opera;
+      navigator.userAgent || navigator.vendor || win.opera || "";
     const mobileRegex =
       /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
     return mobileRegex.test(userAgent.toLowerCase());

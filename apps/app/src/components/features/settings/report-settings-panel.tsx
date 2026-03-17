@@ -103,7 +103,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     report_weekly_time: "18:10",
     report_monthly_day: "last",
     report_monthly_time: "18:20",
-    report_managed_user_ids: [] as number[],
+    report_managed_user_ids: [] as string[],
     maxChatId: "",
     max_daily_report: false,
     max_manager_report: false,
@@ -119,13 +119,13 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     () =>
       (
         usersList as {
-          id: number;
+          id: string;
           email?: string;
           givenName?: string;
           familyName?: string;
         }[]
       ).map((u) => ({
-        id: u.id,
+        id: String(u.id),
         email: u.email ?? "",
         givenName: getGivenName(u),
         familyName: getFamilyName(u),
@@ -157,12 +157,17 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         ? `${m[1].padStart(2, "0")}:${(m[2] || "0").padStart(2, "0")}`
         : s;
     };
-    let managedIds: number[] = [];
+    let managedIds: string[] = [];
     try {
       const raw = u.report_managed_user_ids;
-      if (Array.isArray(raw)) managedIds = raw.map(Number).filter(Boolean);
-      else if (typeof raw === "string" && raw.trim())
-        managedIds = JSON.parse(raw).map(Number).filter(Boolean);
+      if (Array.isArray(raw))
+        managedIds = raw.map((x) => String(x)).filter(Boolean);
+      else if (typeof raw === "string" && raw.trim()) {
+        const parsed = JSON.parse(raw) as unknown;
+        managedIds = Array.isArray(parsed)
+          ? parsed.map((x) => String(x)).filter(Boolean)
+          : [];
+      }
     } catch (_) {}
     setForm((prev) => ({
       ...prev,

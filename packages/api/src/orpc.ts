@@ -57,22 +57,26 @@ function getWorkspaceIdFromHeaders(headers: Headers): string | null {
   return null;
 }
 
+type BackendUser =
+  | Awaited<ReturnType<typeof usersService.getUserByEmail>>
+  | Record<string, unknown>;
+
 export async function createBackendContext(opts: {
   headers: Headers;
   auth?: AuthLike;
 }): Promise<{
-  callsService: any;
-  systemRepository: any;
-  usersService: any;
-  workspacesService: any;
+  callsService: typeof callsService;
+  systemRepository: typeof systemRepository;
+  usersService: typeof usersService;
+  workspacesService: typeof workspacesService;
   sessionEmail: string | null;
-  user: any;
+  user: BackendUser | null;
   authUserId: string | null;
   workspaceId: string | null;
   workspaceRole: WorkspaceRole | null;
   auth: AuthLike | undefined;
 }> {
-  let user: any = null;
+  let user: BackendUser | null = null;
   let authUserId: string | null = null;
 
   if (opts.auth) {
@@ -130,7 +134,10 @@ export async function createBackendContext(opts: {
     systemRepository,
     usersService,
     workspacesService,
-    sessionEmail: user?.email ?? null,
+    sessionEmail:
+      (user && typeof user === "object" && "email" in user
+        ? (user as { email?: string }).email
+        : undefined) ?? null,
     user,
     authUserId,
     workspaceId,

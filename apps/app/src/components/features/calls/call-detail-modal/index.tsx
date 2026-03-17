@@ -82,6 +82,10 @@ export default function CallDetailModal({
     if (!t?.rawText) setShowRaw(false);
   }, [result?.transcript]);
 
+  const transcribeMutation = useMutation(
+    orpc.calls.transcribe.mutationOptions(),
+  );
+
   const generateRecommendationsMutation = useMutation(
     orpc.calls.generateRecommendations.mutationOptions({
       onSuccess: (data) => {
@@ -182,7 +186,8 @@ export default function CallDetailModal({
     try {
       setRestarting(true);
       await restartCallAnalysis({
-        callId,
+        callId: callIdStr,
+        transcribe: (input) => transcribeMutation.mutateAsync(input),
         loadData: () => loadData().then(() => {}),
       });
       toast.success("Анализ успешно перезапущен!");

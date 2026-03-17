@@ -1,11 +1,11 @@
 "use client";
 
 import { Button, Input } from "@calls/ui";
-import type { EditUserForm, ManagedUser } from "../types";
+import type { EditUserForm, WorkspaceMemberUser } from "../types";
 
 interface TelegramSectionProps {
   form: EditUserForm;
-  editUser: ManagedUser;
+  editUser: WorkspaceMemberUser & { telegramChatId?: string | null };
   onFormChange: (updates: Partial<EditUserForm>) => void;
   onDisconnect: () => void;
   onConnect: () => void;
