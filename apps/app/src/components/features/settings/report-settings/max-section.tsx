@@ -8,7 +8,7 @@ import type { ReportSettingsForm } from "../report-settings-types";
 interface MaxReportSectionProps {
   form: Pick<
     ReportSettingsForm,
-    "maxChatId" | "max_daily_report" | "max_manager_report"
+    "maxChatId" | "maxDailyReport" | "maxManagerReport"
   >;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   isAdmin: boolean;
@@ -86,11 +86,11 @@ export function MaxReportSection({
         <label className="flex items-center gap-2 text-[13px]">
           <input
             type="checkbox"
-            checked={form.max_daily_report}
+            checked={form.maxDailyReport}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                max_daily_report: e.target.checked,
+                maxDailyReport: e.target.checked,
               }))
             }
           />{" "}
@@ -100,11 +100,11 @@ export function MaxReportSection({
           <label className="flex items-center gap-2 text-[13px]">
             <input
               type="checkbox"
-              checked={form.max_manager_report}
+              checked={form.maxManagerReport}
               onChange={(e) =>
                 setForm((f) => ({
                   ...f,
-                  max_manager_report: e.target.checked,
+                  maxManagerReport: e.target.checked,
                 }))
               }
             />{" "}

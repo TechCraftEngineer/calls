@@ -15,11 +15,11 @@ export function ReportParamsSection({ form, setForm }: ParamsSectionProps) {
         <label className="flex items-center gap-2 text-[13px]">
           <input
             type="checkbox"
-            checked={form.report_detailed}
+            checked={form.reportDetailed}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                report_detailed: e.target.checked,
+                reportDetailed: e.target.checked,
               }))
             }
           />{" "}
@@ -28,11 +28,11 @@ export function ReportParamsSection({ form, setForm }: ParamsSectionProps) {
         <label className="flex items-center gap-2 text-[13px]">
           <input
             type="checkbox"
-            checked={form.report_include_call_summaries}
+            checked={form.reportIncludeCallSummaries}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                report_include_call_summaries: e.target.checked,
+                reportIncludeCallSummaries: e.target.checked,
               }))
             }
           />{" "}
@@ -41,11 +41,11 @@ export function ReportParamsSection({ form, setForm }: ParamsSectionProps) {
         <label className="flex items-center gap-2 text-[13px]">
           <input
             type="checkbox"
-            checked={form.report_include_avg_value}
+            checked={form.reportIncludeAvgValue}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                report_include_avg_value: e.target.checked,
+                reportIncludeAvgValue: e.target.checked,
               }))
             }
           />{" "}
@@ -54,11 +54,11 @@ export function ReportParamsSection({ form, setForm }: ParamsSectionProps) {
         <label className="flex items-center gap-2 text-[13px]">
           <input
             type="checkbox"
-            checked={form.report_include_avg_rating}
+            checked={form.reportIncludeAvgRating}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                report_include_avg_rating: e.target.checked,
+                reportIncludeAvgRating: e.target.checked,
               }))
             }
           />{" "}
@@ -88,11 +88,11 @@ function KpiSettings({
           <Input
             type="number"
             min={0}
-            value={form.kpi_base_salary}
+            value={form.kpiBaseSalary}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                kpi_base_salary: parseInt(e.target.value, 10) || 0,
+                kpiBaseSalary: parseInt(e.target.value, 10) || 0,
               }))
             }
             className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
@@ -103,11 +103,11 @@ function KpiSettings({
           <Input
             type="number"
             min={0}
-            value={form.kpi_target_bonus}
+            value={form.kpiTargetBonus}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                kpi_target_bonus: parseInt(e.target.value, 10) || 0,
+                kpiTargetBonus: parseInt(e.target.value, 10) || 0,
               }))
             }
             className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
@@ -120,11 +120,11 @@ function KpiSettings({
           <Input
             type="number"
             min={0}
-            value={form.kpi_target_talk_time_minutes}
+            value={form.kpiTargetTalkTimeMinutes}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                kpi_target_talk_time_minutes: parseInt(e.target.value, 10) || 0,
+                kpiTargetTalkTimeMinutes: parseInt(e.target.value, 10) || 0,
               }))
             }
             className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
@@ -148,11 +148,11 @@ function FilterExclusions({
       <label className="flex items-center gap-2 text-[13px] mb-2">
         <input
           type="checkbox"
-          checked={form.filter_exclude_answering_machine}
+          checked={form.filterExcludeAnsweringMachine}
           onChange={(e) =>
             setForm((f) => ({
               ...f,
-              filter_exclude_answering_machine: e.target.checked,
+              filterExcludeAnsweringMachine: e.target.checked,
             }))
           }
         />{" "}
@@ -162,11 +162,25 @@ function FilterExclusions({
         <span className="text-[13px]">Короче (сек):</span>
         <Input
           type="number"
-          value={form.filter_min_duration}
+          value={form.filterMinDuration}
           onChange={(e) =>
             setForm((f) => ({
               ...f,
-              filter_min_duration: parseInt(e.target.value, 10) || 0,
+              filterMinDuration: parseInt(e.target.value, 10) || 0,
+            }))
+          }
+          className="w-[60px] py-1 px-2 border border-[#ddd] rounded"
+        />
+      </div>
+      <div className="flex items-center gap-2 mt-2">
+        <span className="text-[13px]">Мин. реплик:</span>
+        <Input
+          type="number"
+          value={form.filterMinReplicas}
+          onChange={(e) =>
+            setForm((f) => ({
+              ...f,
+              filterMinReplicas: parseInt(e.target.value, 10) || 0,
             }))
           }
           className="w-[60px] py-1 px-2 border border-[#ddd] rounded"

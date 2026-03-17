@@ -27,11 +27,11 @@ export function EmailReportSection({ form, setForm }: EmailSectionProps) {
         <label className="flex items-center gap-2 text-[13px]">
           <input
             type="checkbox"
-            checked={form.email_daily_report}
+            checked={form.emailDailyReport}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                email_daily_report: e.target.checked,
+                emailDailyReport: e.target.checked,
               }))
             }
           />{" "}
@@ -40,11 +40,11 @@ export function EmailReportSection({ form, setForm }: EmailSectionProps) {
         <label className="flex items-center gap-2 text-[13px]">
           <input
             type="checkbox"
-            checked={form.email_weekly_report}
+            checked={form.emailWeeklyReport}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                email_weekly_report: e.target.checked,
+                emailWeeklyReport: e.target.checked,
               }))
             }
           />{" "}
@@ -53,11 +53,11 @@ export function EmailReportSection({ form, setForm }: EmailSectionProps) {
         <label className="flex items-center gap-2 text-[13px]">
           <input
             type="checkbox"
-            checked={form.email_monthly_report}
+            checked={form.emailMonthlyReport}
             onChange={(e) =>
               setForm((f) => ({
                 ...f,
-                email_monthly_report: e.target.checked,
+                emailMonthlyReport: e.target.checked,
               }))
             }
           />{" "}
