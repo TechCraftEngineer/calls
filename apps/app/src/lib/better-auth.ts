@@ -37,6 +37,8 @@ const AUTH_ERROR_MESSAGES_RU: Record<string, string> = {
   "Invalid email address": "Неверный email или пароль",
   "Email is required": "Введите email",
   "Password is required": "Введите пароль",
+  "User already exists. Use another email.":
+    "Пользователь с таким email уже существует. Укажите другой email.",
 };
 
 /** Переводит сообщения об ошибках аутентификации на русский */

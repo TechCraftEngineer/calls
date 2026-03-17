@@ -174,6 +174,12 @@ export function createBackendApiWithContext(ctx: BackendContext) {
           backendRouter.statistics.getMetrics as ProcedureWithCallable,
           ctx,
         ),
+      getKpi: (input: { startDate: string; endDate: string }) =>
+        callProc(
+          backendRouter.statistics.getKpi as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
     },
     reports: {
       sendTestTelegram: () =>

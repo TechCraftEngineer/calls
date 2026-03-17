@@ -13,6 +13,10 @@ import Sidebar from "@/components/layout/sidebar";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 import { StatisticsFilters } from "../statistics-filters";
+import {
+  StatisticsPageSkeleton,
+  StatisticsSettingsSkeleton,
+} from "../statistics-skeletons";
 import type { StatsRow } from "../statistics-table";
 import { StatisticsTable } from "../statistics-table";
 
@@ -34,18 +38,15 @@ function StatisticsPageContent() {
   const activeTab = getActiveTab(pathname);
 
   const [user, setUser] = useState<User | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
   const [filters, setFilters] = useState({
-    date_from: "",
-    date_to: "",
-    sort: "name",
-    order: "asc",
+    dateFrom: "",
+    dateTo: "",
   });
 
   const statsInput = {
-    sort: filters.sort,
-    order: filters.order,
-    date_from: filters.date_from || undefined,
-    date_to: filters.date_to || undefined,
+    date_from: filters.dateFrom || undefined,
+    date_to: filters.dateTo || undefined,
   };
 
   const {
@@ -55,6 +56,7 @@ function StatisticsPageContent() {
     refetch: loadStats,
   } = useQuery({
     ...orpc.statistics.getStatistics.queryOptions({ input: statsInput }),
+    enabled: activeTab !== "settings",
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     staleTime: 10 * 60 * 1000,
@@ -64,7 +66,23 @@ function StatisticsPageContent() {
   const stats = (result?.statistics ?? []) as StatsRow[];
 
   useEffect(() => {
-    getCurrentUser().then(setUser);
+    let isMounted = true;
+
+    getCurrentUser()
+      .then((u) => {
+        if (isMounted) {
+          setUser(u);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setUserLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -82,16 +100,8 @@ function StatisticsPageContent() {
     }
   }, [statsError, router]);
 
-  const handleSort = (field: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      sort: field,
-      order: prev.sort === field && prev.order === "asc" ? "desc" : "asc",
-    }));
-  };
-
   const handleResetFilters = () => {
-    setFilters((prev) => ({ ...prev, date_from: "", date_to: "" }));
+    setFilters((prev) => ({ ...prev, dateFrom: "", dateTo: "" }));
   };
 
   return (
@@ -121,13 +131,13 @@ function StatisticsPageContent() {
 
         {activeTab !== "settings" && (
           <StatisticsFilters
-            dateFrom={filters.date_from}
-            dateTo={filters.date_to}
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
             onDateFromChange={(v) =>
-              setFilters((prev) => ({ ...prev, date_from: v }))
+              setFilters((prev) => ({ ...prev, dateFrom: v }))
             }
             onDateToChange={(v) =>
-              setFilters((prev) => ({ ...prev, date_to: v }))
+              setFilters((prev) => ({ ...prev, dateTo: v }))
             }
             onApply={loadStats}
             onReset={handleResetFilters}
@@ -135,20 +145,23 @@ function StatisticsPageContent() {
         )}
 
         {activeTab === "statistics" && (
-          <StatisticsTable
-            stats={stats}
-            loading={loading}
-            filters={filters}
-            onSort={handleSort}
-          />
+          <StatisticsTable stats={stats} loading={loading} />
         )}
 
         {activeTab === "kpi" && (
-          <KpiTable dateFrom={filters.date_from} dateTo={filters.date_to} />
+          <KpiTable dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
         )}
 
-        {activeTab === "settings" && user && (
+        {activeTab === "settings" && userLoading && (
+          <StatisticsSettingsSkeleton />
+        )}
+        {activeTab === "settings" && !userLoading && user && (
           <ReportSettingsPanel user={user} />
+        )}
+        {activeTab === "settings" && !userLoading && !user && (
+          <div className="py-12 text-center text-[#666]">
+            Войдите в систему для настройки отчётов.
+          </div>
         )}
       </main>
     </div>
@@ -160,7 +173,11 @@ export default function StatisticsPage() {
     <Suspense
       fallback={
         <div className="app-container">
-          <main className="main-content py-12 text-center">Загрузка…</main>
+          <Sidebar />
+          <Header user={null} />
+          <main className="main-content">
+            <StatisticsPageSkeleton />
+          </main>
         </div>
       }
     >

@@ -84,8 +84,8 @@ export default function HomePage() {
   });
   const [filters, setFilters] = useState({
     q: "",
-    date_from: "",
-    date_to: "",
+    dateFrom: "",
+    dateTo: "",
     direction: "all",
     manager: "",
     status: "all",
@@ -105,8 +105,8 @@ export default function HomePage() {
     page: pagination.page,
     per_page: pagination.per_page,
     q: debouncedFilters.q || undefined,
-    date_from: debouncedFilters.date_from || undefined,
-    date_to: debouncedFilters.date_to || undefined,
+    date_from: debouncedFilters.dateFrom || undefined,
+    date_to: debouncedFilters.dateTo || undefined,
     direction:
       debouncedFilters.direction !== "all"
         ? debouncedFilters.direction
@@ -299,8 +299,8 @@ export default function HomePage() {
                 <div className="filter-item min-w-[150px]">
                   <label className="filter-label">ДАТА ОТ</label>
                   <DatePicker
-                    value={filters.date_from}
-                    onChange={(v) => setFilters({ ...filters, date_from: v })}
+                    value={filters.dateFrom}
+                    onChange={(v) => setFilters({ ...filters, dateFrom: v })}
                     placeholder="Выберите дату"
                   />
                 </div>
@@ -308,8 +308,8 @@ export default function HomePage() {
                 <div className="filter-item min-w-[150px]">
                   <label className="filter-label">ДАТА ДО</label>
                   <DatePicker
-                    value={filters.date_to}
-                    onChange={(v) => setFilters({ ...filters, date_to: v })}
+                    value={filters.dateTo}
+                    onChange={(v) => setFilters({ ...filters, dateTo: v })}
                     placeholder="Выберите дату"
                   />
                 </div>

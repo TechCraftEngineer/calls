@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { getCurrentUser, signUp } from "@/lib/auth";
-import { authClient } from "@/lib/better-auth";
+import { authClient, toRussianAuthMessage } from "@/lib/better-auth";
 import { type CreateUserData, createUserSchema } from "@/lib/validations";
 
 function RegisterForm() {
@@ -42,11 +42,13 @@ function RegisterForm() {
 
       if (result.error) {
         setError("root", {
-          message: result.error.message || "Ошибка регистрации",
+          message: toRussianAuthMessage(
+            result.error.message || "Ошибка регистрации",
+          ),
         });
       } else {
         setTimeout(() => {
-          router.push(paths.root);
+          router.push(paths.onboarding.createWorkspace);
         }, 100);
       }
     } catch (err: unknown) {
@@ -58,7 +60,9 @@ function RegisterForm() {
             ? err.message
             : "Ошибка регистрации";
       setError("root", {
-        message: String(errorMessage || "Ошибка регистрации"),
+        message: toRussianAuthMessage(
+          String(errorMessage || "Ошибка регистрации"),
+        ),
       });
     }
   };
@@ -219,7 +223,7 @@ function RegisterForm() {
                 onClick={() =>
                   authClient.signIn.social({
                     provider: "google",
-                    callbackURL: paths.root,
+                    callbackURL: paths.onboarding.createWorkspace,
                   })
                 }
               >

@@ -8,22 +8,24 @@ import {
   TableHeader,
   TableRow,
 } from "@calls/ui";
-import { useEffect, useState } from "react";
-import { restGet } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { KpiTableSkeleton } from "@/app/statistics/statistics-skeletons";
+import { useORPC } from "@/orpc/react";
 
 interface KpiRow {
-  user_id: number;
+  userId: string | number;
   name: string;
   email: string;
-  base_salary: number;
-  target_bonus: number;
-  target_talk_time_minutes: number;
-  period_target_talk_time_minutes: number;
-  actual_talk_time_minutes: number;
-  kpi_completion_percentage: number;
-  calculated_bonus: number;
-  total_calculated_salary: number;
-  total_calls: number;
+  baseSalary: number;
+  targetBonus: number;
+  targetTalkTimeMinutes: number;
+  periodTargetTalkTimeMinutes: number;
+  actualTalkTimeMinutes: number;
+  kpiCompletionPercentage: number;
+  calculatedBonus: number;
+  totalCalculatedSalary: number;
+  totalCalls: number;
   incoming: number;
   outgoing: number;
   missed: number;
@@ -36,29 +38,20 @@ export default function KpiTable({
   dateFrom: string;
   dateTo: string;
 }) {
-  const [data, setData] = useState<KpiRow[]>([]);
-  const [loading, setLoading] = useState(false);
+  const orpc = useORPC();
+  const dFrom = dateFrom || new Date().toISOString().split("T")[0];
+  const dTo = dateTo || new Date().toISOString().split("T")[0];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const d_from = dateFrom || new Date().toISOString().split("T")[0];
-        const d_to = dateTo || new Date().toISOString().split("T")[0];
-        const res = await restGet<KpiRow[]>(
-          `/v1/kpi/?start_date=${d_from}&end_date=${d_to}`,
-        );
-        setData(Array.isArray(res) ? res : []);
-      } catch (_err) {
-        // Убрали console.error для продакшена
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [dateFrom, dateTo]);
+  const { data = [], isPending: loading } = useQuery({
+    ...orpc.statistics.getKpi.queryOptions({
+      input: { startDate: dFrom, endDate: dTo },
+    }),
+    enabled: !!dFrom && !!dTo,
+  });
 
-  if (loading) return <div>Загрузка таблиц KPI…</div>;
+  const rows = Array.isArray(data) ? (data as KpiRow[]) : [];
+
+  if (loading) return <KpiTableSkeleton />;
 
   return (
     <Card className="card p-0! overflow-hidden mt-6">
@@ -81,25 +74,24 @@ export default function KpiTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((row) => (
-              <TableRow key={row.user_id}>
+            {rows.map((row) => (
+              <TableRow key={row.userId}>
                 <TableCell className="font-semibold">
                   {row.name} <br />
                   <small className="text-[#999]">{row.email}</small>
                 </TableCell>
-                <TableCell>{row.base_salary.toLocaleString()} ₽</TableCell>
-                <TableCell>{row.target_bonus.toLocaleString()} ₽</TableCell>
-                <TableCell>{row.target_talk_time_minutes}</TableCell>
-                <TableCell>{row.period_target_talk_time_minutes}</TableCell>
+                <TableCell>{row.baseSalary.toLocaleString()} ₽</TableCell>
+                <TableCell>{row.targetBonus.toLocaleString()} ₽</TableCell>
+                <TableCell>{row.targetTalkTimeMinutes}</TableCell>
+                <TableCell>{row.periodTargetTalkTimeMinutes}</TableCell>
                 <TableCell
                   className={
-                    row.actual_talk_time_minutes >=
-                    row.period_target_talk_time_minutes
+                    row.actualTalkTimeMinutes >= row.periodTargetTalkTimeMinutes
                       ? "text-[var(--status-success)]"
                       : "text-[var(--status-warning)]"
                   }
                 >
-                  {row.actual_talk_time_minutes}
+                  {row.actualTalkTimeMinutes}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -107,28 +99,28 @@ export default function KpiTable({
                       <div
                         className="h-full"
                         style={{
-                          width: `${row.kpi_completion_percentage}%`,
+                          width: `${row.kpiCompletionPercentage}%`,
                           background:
-                            row.kpi_completion_percentage >= 100
+                            row.kpiCompletionPercentage >= 100
                               ? "var(--status-success)"
                               : "var(--status-warning)",
                         }}
                       />
                     </div>
                     <span className="text-xs font-semibold">
-                      {row.kpi_completion_percentage}%
+                      {row.kpiCompletionPercentage}%
                     </span>
                   </div>
                 </TableCell>
                 <TableCell className="font-semibold">
-                  {row.calculated_bonus.toLocaleString()} ₽
+                  {row.calculatedBonus.toLocaleString()} ₽
                 </TableCell>
                 <TableCell className="font-bold text-[var(--brand-primary)]">
-                  {row.total_calculated_salary.toLocaleString()} ₽
+                  {row.totalCalculatedSalary.toLocaleString()} ₽
                 </TableCell>
               </TableRow>
             ))}
-            {data.length === 0 && (
+            {rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={9} className="text-center py-8 text-[#888]">
                   Нет данных для отображения

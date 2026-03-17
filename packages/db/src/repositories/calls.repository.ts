@@ -14,6 +14,7 @@ import type {
 import { buildCallConditions } from "./calls/build-conditions";
 import { computeCallStatus } from "./calls/compute-call-status";
 import { getEvaluationsStats as getEvaluationsStatsFn } from "./calls/get-evaluations-stats";
+import { getKpiStats as getKpiStatsFn } from "./calls/get-kpi-stats";
 import { getCallsMetrics } from "./calls/get-metrics";
 
 export const callsRepository = {
@@ -329,6 +330,14 @@ export const callsRepository = {
     internalNumbers?: string[];
   }) {
     return getEvaluationsStatsFn(params);
+  },
+
+  async getKpiStats(params: {
+    workspaceId: string;
+    dateFrom: string;
+    dateTo: string;
+  }) {
+    return getKpiStatsFn(params);
   },
 };
 

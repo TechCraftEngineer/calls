@@ -151,4 +151,12 @@ export class CallsService {
   }): Promise<Record<string, unknown>> {
     return this.callsRepository.getEvaluationsStats(params);
   }
+
+  async getKpiStats(params: {
+    workspaceId: string;
+    dateFrom: string;
+    dateTo: string;
+  }) {
+    return this.callsRepository.getKpiStats(params);
+  }
 }
