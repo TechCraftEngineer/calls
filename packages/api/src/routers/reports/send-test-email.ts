@@ -1,4 +1,9 @@
-import { callsService, usersService, workspacesService } from "@calls/db";
+import {
+  callsService,
+  settingsService,
+  usersService,
+  workspacesService,
+} from "@calls/db";
 import { ReportEmail, sendEmail } from "@calls/emails";
 import { formatTelegramReport, type ManagerStats } from "@calls/jobs";
 import { ORPCError } from "@orpc/server";
@@ -79,11 +84,16 @@ export const sendTestEmail = workspaceProcedure.handler(async ({ context }) => {
   const dateFromDb = `${dateFrom} 00:00:00`;
   const dateToDb = `${dateTo} 23:59:59`;
 
+  const ftpSettings = await settingsService.getFtpSettings(workspaceId);
+  const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
+
   const rawStats = await callsService.getEvaluationsStats({
     workspaceId,
     dateFrom: dateFromDb,
     dateTo: dateToDb,
     internalNumbers: internalNumbers ?? undefined,
+    excludePhoneNumbers:
+      excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
   });
 
   const parseResult = statsSchema.safeParse(rawStats);

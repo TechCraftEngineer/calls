@@ -1,4 +1,4 @@
-import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { and, eq, gte, isNull, lte, notInArray, or, sql } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 
@@ -6,6 +6,7 @@ export interface GetKpiStatsParams {
   workspaceId: string;
   dateFrom: string;
   dateTo: string;
+  excludePhoneNumbers?: string[];
 }
 
 export interface KpiStatsByInternalNumber {
@@ -24,7 +25,28 @@ export interface KpiStatsByInternalNumber {
 export async function getKpiStats(
   params: GetKpiStatsParams,
 ): Promise<KpiStatsByInternalNumber[]> {
-  const { workspaceId, dateFrom, dateTo } = params;
+  const { workspaceId, dateFrom, dateTo, excludePhoneNumbers } = params;
+
+  const conditions = [
+    eq(schema.calls.workspaceId, workspaceId),
+    gte(schema.calls.timestamp, new Date(dateFrom)),
+    lte(schema.calls.timestamp, new Date(dateTo)),
+    sql`${schema.calls.internalNumber} IS NOT NULL AND TRIM(${schema.calls.internalNumber}) != ''`,
+  ];
+  if (excludePhoneNumbers?.length) {
+    conditions.push(
+      and(
+        or(
+          isNull(schema.calls.internalNumber),
+          notInArray(schema.calls.internalNumber, excludePhoneNumbers),
+        ),
+        or(
+          isNull(schema.calls.number),
+          notInArray(schema.calls.number, excludePhoneNumbers),
+        ),
+      )!,
+    );
+  }
 
   const results = await db
     .select({
@@ -36,14 +58,7 @@ export async function getKpiStats(
       missed: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) IN ('входящий', 'incoming') AND COALESCE(${schema.calls.duration}, 0) = 0)::int`,
     })
     .from(schema.calls)
-    .where(
-      and(
-        eq(schema.calls.workspaceId, workspaceId),
-        gte(schema.calls.timestamp, new Date(dateFrom)),
-        lte(schema.calls.timestamp, new Date(dateTo)),
-        sql`${schema.calls.internalNumber} IS NOT NULL AND TRIM(${schema.calls.internalNumber}) != ''`,
-      ),
-    )
+    .where(and(...conditions))
     .groupBy(schema.calls.internalNumber);
 
   return results

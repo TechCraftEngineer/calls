@@ -160,7 +160,7 @@ export default function EvaluationSidebar({
           {transcript?.text && (
             <Button
               type="button"
-              variant="outline"
+              variant="default"
               size="sm"
               className="mt-4 w-full gap-2 sm:w-auto"
               onClick={onReevaluate}
@@ -258,7 +258,7 @@ export default function EvaluationSidebar({
             </p>
             <Button
               type="button"
-              variant="outline"
+              variant="default"
               size="sm"
               className="w-full min-w-0 gap-2 truncate sm:w-auto"
               onClick={onRestartAnalysis}

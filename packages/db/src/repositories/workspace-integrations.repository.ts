@@ -30,6 +30,7 @@ export type ActiveFtpIntegration = {
   user: string;
   password: string;
   syncFromDate: string;
+  excludePhoneNumbers: string[];
 };
 
 export const workspaceIntegrationsRepository = {
@@ -61,6 +62,7 @@ export const workspaceIntegrationsRepository = {
         password?: string;
         syncDaysBack?: number;
         syncFromDate?: string;
+        excludePhoneNumbers?: string[];
       };
       if (cfg?.host && cfg?.user && cfg?.password) {
         let syncFromDate = defaultFromDate;
@@ -77,12 +79,18 @@ export const workspaceIntegrationsRepository = {
           d.setDate(d.getDate() - cfg.syncDaysBack);
           syncFromDate = d.toISOString().slice(0, 10);
         }
+        const excludePhoneNumbers = Array.isArray(cfg.excludePhoneNumbers)
+          ? cfg.excludePhoneNumbers.filter(
+              (n): n is string => typeof n === "string" && n.trim() !== "",
+            )
+          : [];
         result.push({
           workspaceId: row.workspaceId,
           host: cfg.host,
           user: cfg.user,
           password: cfg.password,
           syncFromDate,
+          excludePhoneNumbers,
         });
       }
     }

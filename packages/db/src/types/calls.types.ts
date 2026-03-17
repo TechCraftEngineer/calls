@@ -12,6 +12,8 @@ export interface GetCallsParams {
   dateTo?: string;
   internalNumbers?: string[];
   mobileNumbers?: string[];
+  /** Номера телефонов, исключённые из выборки */
+  excludePhoneNumbers?: string[];
   direction?: string;
   valueScores?: number[];
   operators?: string[];

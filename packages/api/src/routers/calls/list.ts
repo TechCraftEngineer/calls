@@ -1,4 +1,4 @@
-import type { CallWithTranscript } from "@calls/db";
+import { type CallWithTranscript, settingsService } from "@calls/db";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 import {
@@ -37,6 +37,9 @@ export const list = workspaceProcedure
 
     const internalNumbers = getInternalNumbersForUser(user);
     const mobileNumbers = getMobileNumbersForUser(user);
+
+    const ftpSettings = await settingsService.getFtpSettings(workspaceId);
+    const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
 
     // Участник (member) видит только свои звонки — при отсутствии internalExtensions/mobilePhones возвращаем пустой список
     if (context.workspaceRole === "member") {
@@ -82,6 +85,8 @@ export const list = workspaceProcedure
       dateTo,
       internalNumbers,
       mobileNumbers,
+      excludePhoneNumbers:
+        excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
       direction:
         input.direction === "incoming" || input.direction === "Входящий"
           ? "Входящий"
@@ -101,6 +106,8 @@ export const list = workspaceProcedure
       dateTo,
       internalNumbers,
       mobileNumbers,
+      excludePhoneNumbers:
+        excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
       direction:
         input.direction === "incoming" || input.direction === "Входящий"
           ? "Входящий"
@@ -115,7 +122,10 @@ export const list = workspaceProcedure
     });
 
     const totalPages = Math.ceil(totalItems / input.per_page) || 1;
-    const metrics = await callsService.calculateMetrics(workspaceId);
+    const metrics = await callsService.calculateMetrics(
+      workspaceId,
+      excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+    );
     const members = await context.workspacesService.getMembers(workspaceId);
     const managers = members
       .map((m: { user?: unknown }) => m.user)

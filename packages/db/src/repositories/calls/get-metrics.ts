@@ -1,8 +1,11 @@
-import { and, avg, count, desc, eq } from "drizzle-orm";
+import { and, avg, count, desc, eq, isNull, notInArray, or } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 
-export async function getCallsMetrics(workspaceId?: string): Promise<{
+export async function getCallsMetrics(
+  workspaceId?: string,
+  excludePhoneNumbers?: string[],
+): Promise<{
   totalCalls: number;
   transcribed: number;
   avgDuration: number;
@@ -12,6 +15,26 @@ export async function getCallsMetrics(workspaceId?: string): Promise<{
     workspaceId != null
       ? [eq(schema.calls.workspaceId, workspaceId)]
       : undefined;
+
+  const excludeConditions =
+    excludePhoneNumbers?.length && callConditions
+      ? [
+          and(
+            or(
+              isNull(schema.calls.internalNumber),
+              notInArray(schema.calls.internalNumber, excludePhoneNumbers),
+            ),
+            or(
+              isNull(schema.calls.number),
+              notInArray(schema.calls.number, excludePhoneNumbers),
+            ),
+          )!,
+        ]
+      : [];
+  const allConditions =
+    callConditions && excludeConditions.length
+      ? [...callConditions, ...excludeConditions]
+      : callConditions;
 
   const totalCallsQuery = db
     .select({ count: count() })
@@ -46,14 +69,14 @@ export async function getCallsMetrics(workspaceId?: string): Promise<{
     avgDurationResult,
     lastSyncResult,
   ] = await Promise.all([
-    callConditions
-      ? totalCallsQuery.where(and(...callConditions))
+    allConditions
+      ? totalCallsQuery.where(and(...allConditions))
       : totalCallsQuery,
-    callConditions
-      ? transcribedQuery.where(and(...callConditions))
+    allConditions
+      ? transcribedQuery.where(and(...allConditions))
       : transcribedQuery,
-    callConditions
-      ? avgDurationQuery.where(and(...callConditions))
+    allConditions
+      ? avgDurationQuery.where(and(...allConditions))
       : avgDurationQuery,
     lastSyncQuery,
   ]);

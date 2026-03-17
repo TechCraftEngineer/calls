@@ -1,4 +1,9 @@
-import { callsService, usersService, workspacesService } from "@calls/db";
+import {
+  callsService,
+  settingsService,
+  usersService,
+  workspacesService,
+} from "@calls/db";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../orpc";
 
@@ -52,12 +57,17 @@ export const getKpi = workspaceAdminProcedure
     const dateFrom = `${startDate} 00:00:00`;
     const dateTo = `${endDate} 23:59:59`;
 
+    const ftpSettings = await settingsService.getFtpSettings(workspaceId);
+    const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
+
     const [members, kpiStats] = await Promise.all([
       workspacesService.getMembers(workspaceId),
       callsService.getKpiStats({
         workspaceId,
         dateFrom,
         dateTo,
+        excludePhoneNumbers:
+          excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
       }),
     ]);
 

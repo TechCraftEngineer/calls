@@ -134,13 +134,16 @@ export class CallsService {
     return evaluationId;
   }
 
-  async calculateMetrics(workspaceId?: string): Promise<{
+  async calculateMetrics(
+    workspaceId?: string,
+    excludePhoneNumbers?: string[],
+  ): Promise<{
     totalCalls: number;
     transcribed: number;
     avgDuration: number;
     lastSync: string | null;
   }> {
-    return this.callsRepository.getMetrics(workspaceId);
+    return this.callsRepository.getMetrics(workspaceId, excludePhoneNumbers);
   }
 
   async getEvaluationsStats(params: {
@@ -148,6 +151,7 @@ export class CallsService {
     dateFrom?: string;
     dateTo?: string;
     internalNumbers?: string[];
+    excludePhoneNumbers?: string[];
   }): Promise<Record<string, unknown>> {
     return this.callsRepository.getEvaluationsStats(params);
   }
@@ -157,6 +161,7 @@ export class CallsService {
     dateFrom?: string;
     dateTo?: string;
     internalNumbers?: string[];
+    excludePhoneNumbers?: string[];
     maxScore?: number;
   }): Promise<Record<string, number>> {
     return this.callsRepository.getLowRatedCallsCount(params);
@@ -166,6 +171,7 @@ export class CallsService {
     workspaceId: string;
     dateFrom: string;
     dateTo: string;
+    excludePhoneNumbers?: string[];
   }) {
     return this.callsRepository.getKpiStats(params);
   }

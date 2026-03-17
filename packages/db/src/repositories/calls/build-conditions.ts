@@ -1,4 +1,15 @@
-import { eq, gte, inArray, like, lte, or, sql } from "drizzle-orm";
+import {
+  and,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  like,
+  lte,
+  notInArray,
+  or,
+  sql,
+} from "drizzle-orm";
 import * as schema from "../../schema";
 
 export interface CallConditionsParams {
@@ -7,6 +18,8 @@ export interface CallConditionsParams {
   dateTo?: string;
   internalNumbers?: string[];
   mobileNumbers?: string[];
+  /** Номера телефонов, исключённые из выборки (внутренние или внешние) */
+  excludePhoneNumbers?: string[];
   direction?: string;
   valueScores?: number[];
   operators?: string[];
@@ -23,6 +36,7 @@ export function buildCallConditions(params: CallConditionsParams) {
     dateTo,
     internalNumbers,
     mobileNumbers,
+    excludePhoneNumbers,
     direction,
     valueScores,
     operators,
@@ -84,6 +98,21 @@ export function buildCallConditions(params: CallConditionsParams) {
       like(schema.calls.customerName, `%${q}%`),
     );
     if (qCond) conditions.push(qCond);
+  }
+
+  if (excludePhoneNumbers?.length) {
+    conditions.push(
+      and(
+        or(
+          isNull(schema.calls.internalNumber),
+          notInArray(schema.calls.internalNumber, excludePhoneNumbers),
+        ),
+        or(
+          isNull(schema.calls.number),
+          notInArray(schema.calls.number, excludePhoneNumbers),
+        ),
+      )!,
+    );
   }
 
   return conditions;

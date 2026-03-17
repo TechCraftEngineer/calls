@@ -1,4 +1,16 @@
-import { and, avg, count, eq, gte, inArray, lt, lte } from "drizzle-orm";
+import {
+  and,
+  avg,
+  count,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  lte,
+  notInArray,
+  or,
+} from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 
@@ -7,6 +19,7 @@ export interface GetEvaluationsStatsParams {
   dateFrom?: string;
   dateTo?: string;
   internalNumbers?: string[];
+  excludePhoneNumbers?: string[];
 }
 
 export interface ManagerStatsRow {
@@ -22,7 +35,13 @@ export interface ManagerStatsRow {
 export async function getEvaluationsStats(
   params: GetEvaluationsStatsParams,
 ): Promise<Record<string, ManagerStatsRow>> {
-  const { workspaceId, dateFrom, dateTo, internalNumbers } = params;
+  const {
+    workspaceId,
+    dateFrom,
+    dateTo,
+    internalNumbers,
+    excludePhoneNumbers,
+  } = params;
 
   const conditions = [];
   if (workspaceId != null)
@@ -32,6 +51,20 @@ export async function getEvaluationsStats(
   if (dateTo) conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
   if (internalNumbers?.length) {
     conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
+  }
+  if (excludePhoneNumbers?.length) {
+    conditions.push(
+      and(
+        or(
+          isNull(schema.calls.internalNumber),
+          notInArray(schema.calls.internalNumber, excludePhoneNumbers),
+        ),
+        or(
+          isNull(schema.calls.number),
+          notInArray(schema.calls.number, excludePhoneNumbers),
+        ),
+      )!,
+    );
   }
 
   const query = db
@@ -122,6 +155,7 @@ export interface GetLowRatedCallsParams {
   dateFrom?: string;
   dateTo?: string;
   internalNumbers?: string[];
+  excludePhoneNumbers?: string[];
   maxScore?: number;
 }
 
@@ -134,6 +168,7 @@ export async function getLowRatedCallsCount(
     dateFrom,
     dateTo,
     internalNumbers,
+    excludePhoneNumbers,
     maxScore = 3,
   } = params;
 
@@ -148,6 +183,20 @@ export async function getLowRatedCallsCount(
   if (dateTo) conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
   if (internalNumbers?.length) {
     conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
+  }
+  if (excludePhoneNumbers?.length) {
+    conditions.push(
+      and(
+        or(
+          isNull(schema.calls.internalNumber),
+          notInArray(schema.calls.internalNumber, excludePhoneNumbers),
+        ),
+        or(
+          isNull(schema.calls.number),
+          notInArray(schema.calls.number, excludePhoneNumbers),
+        ),
+      )!,
+    );
   }
 
   const rows = await db

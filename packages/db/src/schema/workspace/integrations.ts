@@ -34,6 +34,8 @@ export interface FtpIntegrationConfig {
   password: string;
   /** С какой даты выгружать записи (YYYY-MM-DD). По умолчанию — неделя назад */
   syncFromDate?: string;
+  /** Номера телефонов (внутренние или внешние), исключённые из загрузки и анализа */
+  excludePhoneNumbers?: string[];
 }
 
 /** Config для Telegram/MAX ботов — botToken хранится зашифрованным */

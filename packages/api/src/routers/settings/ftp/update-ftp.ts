@@ -16,6 +16,8 @@ const updateFtpSchema = z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/)
       .optional(),
+    /** Номера телефонов, исключённые из загрузки и анализа */
+    excludePhoneNumbers: z.array(z.string()).optional(),
   })
   .refine(
     (data) => {
@@ -30,7 +32,8 @@ export const updateFtp = workspaceAdminProcedure
   .input(updateFtpSchema)
   .handler(async ({ input, context }) => {
     const { workspaceId } = context;
-    const { enabled, host, user, password, syncFromDate } = input;
+    const { enabled, host, user, password, syncFromDate, excludePhoneNumbers } =
+      input;
 
     const passwordToSave = password.trim() || null;
     if (host.trim() && user.trim() && passwordToSave) {
@@ -45,6 +48,9 @@ export const updateFtp = workspaceAdminProcedure
 
     const username =
       (context.user as Record<string, unknown>)?.email ?? "system";
+    const excludeList = excludePhoneNumbers
+      ? excludePhoneNumbers.map((n) => n.trim()).filter(Boolean)
+      : undefined;
     await settingsService.updateFtpSettings(
       enabled,
       host,
@@ -53,6 +59,7 @@ export const updateFtp = workspaceAdminProcedure
       workspaceId,
       String(username),
       syncFromDate,
+      excludeList,
     );
 
     return { success: true, message: "FTP настройки сохранены" };

@@ -85,6 +85,14 @@ export function useSettings() {
         description: "С какой даты выгружать",
         updated_at: undefined,
       };
+      promptsMap.ftp_exclude_phone_numbers = {
+        key: "ftp_exclude_phone_numbers",
+        value: Array.isArray(ftp.excludePhoneNumbers)
+          ? ftp.excludePhoneNumbers.join("\n")
+          : "",
+        description: "Номера, исключённые из загрузки и анализа",
+        updated_at: undefined,
+      };
       promptsMap.telegram_bot_token = {
         key: "telegram_bot_token",
         value: integrations.telegram_bot_token ?? "",
@@ -274,6 +282,14 @@ export function useSettings() {
       }
 
       const syncFromDate = state.prompts.ftp_sync_from_date?.value?.trim();
+      const excludeRaw =
+        state.prompts.ftp_exclude_phone_numbers?.value?.trim() ?? "";
+      const excludePhoneNumbers = excludeRaw
+        ? excludeRaw
+            .split(/[\n,;]+/)
+            .map((n) => n.trim())
+            .filter(Boolean)
+        : [];
       await updateFtpMutation.mutateAsync({
         enabled,
         host,
@@ -283,6 +299,8 @@ export function useSettings() {
           syncFromDate && /^\d{4}-\d{2}-\d{2}$/.test(syncFromDate)
             ? syncFromDate
             : undefined,
+        excludePhoneNumbers:
+          excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
       });
       toast.success("Параметры подключения FTP сохранены");
       await loadSettings();
