@@ -140,8 +140,14 @@ export default function AddUserModal({
         internalExtensions: form.internalExtensions.trim(),
         mobilePhones: form.mobilePhones.trim(),
       });
-      await onSuccess();
-      onClose();
+
+      try {
+        await onSuccess();
+        onClose();
+      } catch (successError) {
+        console.error("Error in onSuccess callback:", successError);
+        // Не показываем ошибку создания пользователя, так как пользователь уже создан
+      }
     } catch (err: unknown) {
       setErrors({
         submit:

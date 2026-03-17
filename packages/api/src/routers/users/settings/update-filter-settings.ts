@@ -8,14 +8,15 @@ import { canAccessUser, logUpdate } from "../utils";
 export const updateFilterSettings = workspaceProcedure
   .input(z.object({ user_id: z.string(), data: updateFilterSettingsSchema }))
   .handler(async ({ input, context }) => {
+    if (context.workspaceId == null)
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Требуется активное рабочее пространство",
+      });
+
     const userId = (context.user as Record<string, unknown>).id as string;
     if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
-      });
-    if (context.workspaceId == null)
-      throw new ORPCError("BAD_REQUEST", {
-        message: "Требуется активное рабочее пространство",
       });
 
     const user = await usersService.getUser(input.user_id);

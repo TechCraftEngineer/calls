@@ -193,6 +193,17 @@ export const telegramReportsFn = inngest.createFunction(
                 internalNumbers: r.internalNumbers ?? undefined,
               })) as Record<string, ManagerStats>;
 
+              let lowRatedCalls: Record<string, number> = {};
+              if (r.isManagerReport) {
+                lowRatedCalls = await callsService.getLowRatedCallsCount({
+                  workspaceId,
+                  dateFrom: dateFromDb,
+                  dateTo: dateToDb,
+                  internalNumbers: r.internalNumbers ?? undefined,
+                  maxScore: 3,
+                });
+              }
+
               const text = formatTelegramReport({
                 stats,
                 dateFrom,
@@ -200,6 +211,9 @@ export const telegramReportsFn = inngest.createFunction(
                 reportType,
                 isManagerReport: r.isManagerReport,
                 workspaceName,
+                includeAvgRating: r.reportSettings?.includeAvgRating ?? false,
+                includeAvgValue: r.reportSettings?.includeAvgValue ?? false,
+                lowRatedCalls,
               });
 
               const ok = await sendMessage(token, r.chatId, text);

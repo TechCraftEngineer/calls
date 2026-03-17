@@ -266,30 +266,35 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         },
       });
       if (isWorkspaceAdmin) {
-        await updatePromptsMutation.mutateAsync({
-          prompts: {
-            reportDailyTime: {
-              value: form.reportDailyTime || "18:00",
-              description: "Время ежедневного отчёта (ЧЧ:ММ)",
+        try {
+          await updatePromptsMutation.mutateAsync({
+            prompts: {
+              reportDailyTime: {
+                value: form.reportDailyTime || "18:00",
+                description: "Время ежедневного отчёта (ЧЧ:ММ)",
+              },
+              reportWeeklyDay: {
+                value: form.reportWeeklyDay || "fri",
+                description: "День недели еженедельного отчёта",
+              },
+              reportWeeklyTime: {
+                value: form.reportWeeklyTime || "18:10",
+                description: "Время еженедельного отчёта",
+              },
+              reportMonthlyDay: {
+                value: form.reportMonthlyDay || "last",
+                description: "День месяца (1-28 или last)",
+              },
+              reportMonthlyTime: {
+                value: form.reportMonthlyTime || "18:20",
+                description: "Время ежемесячного отчёта",
+              },
             },
-            reportWeeklyDay: {
-              value: form.reportWeeklyDay || "fri",
-              description: "День недели еженедельного",
-            },
-            reportWeeklyTime: {
-              value: form.reportWeeklyTime || "18:10",
-              description: "Время еженедельного отчёта",
-            },
-            reportMonthlyDay: {
-              value: form.reportMonthlyDay || "last",
-              description: "День месяца (1-28 или last)",
-            },
-            reportMonthlyTime: {
-              value: form.reportMonthlyTime || "18:20",
-              description: "Время ежемесячного отчёта",
-            },
-          },
-        });
+          });
+        } catch (error) {
+          console.error("Failed to update prompts:", error);
+          // Продолжаем выполнение даже при ошибке обновления промптов
+        }
       }
       await queryClient.invalidateQueries({
         queryKey: orpc.users.getForEdit.queryKey({

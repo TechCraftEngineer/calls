@@ -67,7 +67,7 @@ export const env = createEnv({
   },
   client: {
     NEXT_PUBLIC_APP_NAME: z.string().default("QBS Звонки"),
-    NEXT_PUBLIC_APP_SHORT_NAME: z.string().default("Звонки"),
+    NEXT_PUBLIC_APP_SHORT_NAME: z.string().default("QBS Звонки"),
     NEXT_PUBLIC_APP_URL: z.string().default("http://localhost:3000"),
   },
   clientPrefix: "NEXT_PUBLIC_",

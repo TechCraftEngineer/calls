@@ -25,10 +25,6 @@ export const list = workspaceProcedure
   .input(listCallsSchema)
   .handler(async ({ input, context }) => {
     const { callsService, user, workspaceId } = context;
-    if (!user || workspaceId == null)
-      throw new ORPCError("BAD_REQUEST", {
-        message: "Требуется активное рабочее пространство",
-      });
     const offset = (input.page - 1) * input.per_page;
 
     const dateFrom = input.date_from
@@ -36,16 +32,45 @@ export const list = workspaceProcedure
       : undefined;
     const dateTo = input.date_to ? `${input.date_to}T23:59:59` : undefined;
 
-    let internalNumbers = getInternalNumbersForUser(user);
-    let mobileNumbers = getMobileNumbersForUser(user);
+    const internalNumbers = getInternalNumbersForUser(user);
+    const mobileNumbers = getMobileNumbersForUser(user);
 
     // Участник (member) видит только свои звонки — при отсутствии internalExtensions/mobilePhones возвращаем пустой список
     if (context.workspaceRole === "member") {
       const hasIdentifiers =
         (internalNumbers?.length ?? 0) > 0 || (mobileNumbers?.length ?? 0) > 0;
       if (!hasIdentifiers) {
-        internalNumbers = [];
-        mobileNumbers = [];
+        return {
+          calls: [],
+          pagination: {
+            page: input.page,
+            total: 0,
+            per_page: input.per_page,
+            total_pages: 0,
+            has_next: false,
+            has_prev: false,
+            next_num: input.page + 1,
+            prev_num: input.page - 1,
+            query: input.q ?? "",
+            date_from: input.date_from ?? "",
+            date_to: input.date_to ?? "",
+            direction: input.direction ?? "",
+            manager: input.manager ?? "",
+            status: input.status ?? "",
+            value: input.value ?? [],
+            operator: input.operator ?? [],
+          },
+          metrics: {
+            totalCalls: 0,
+            totalDuration: 0,
+            avgDuration: 0,
+            incomingCalls: 0,
+            outgoingCalls: 0,
+            missedCalls: 0,
+            answeredCalls: 0,
+          },
+          managers: [],
+        };
       }
     }
 

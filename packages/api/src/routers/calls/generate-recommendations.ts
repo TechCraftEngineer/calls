@@ -149,23 +149,29 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
 export const generateRecommendationsProcedure = workspaceProcedure
   .input(z.object({ call_id: z.string() }))
   .handler(async ({ input, context }) => {
+    if (context.workspaceId == null)
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Требуется активное рабочее пространство",
+      });
+
     const call = await context.callsService.getCall(input.call_id);
     if (call && call.workspaceId !== context.workspaceId) {
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому звонку",
       });
     }
-    if (context.workspaceId == null)
-      throw new ORPCError("BAD_REQUEST", {
-        message: "Требуется активное рабочее пространство",
-      });
+
     const workspace = await context.workspacesService.getById(
       context.workspaceId,
     );
+    if (!workspace) {
+      throw new ORPCError("NOT_FOUND", { message: "Workspace not found" });
+    }
+
     return generateRecommendations(
       input.call_id,
       context.callsService,
       context.workspaceId,
-      workspace?.description,
+      workspace.description,
     );
   });

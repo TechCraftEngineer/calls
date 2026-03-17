@@ -152,6 +152,16 @@ export class CallsService {
     return this.callsRepository.getEvaluationsStats(params);
   }
 
+  async getLowRatedCallsCount(params: {
+    workspaceId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    internalNumbers?: string[];
+    maxScore?: number;
+  }): Promise<Record<string, number>> {
+    return this.callsRepository.getLowRatedCallsCount(params);
+  }
+
   async getKpiStats(params: {
     workspaceId: string;
     dateFrom: string;
