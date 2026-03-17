@@ -6,9 +6,11 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY packages/db/package.json ./packages/db/
 COPY packages/config/package.json ./packages/config/
+COPY packages/lib/package.json ./packages/lib/
+COPY tooling/typescript/package.json ./tooling/typescript/
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # Copy source code and migrations
 COPY packages/db/src ./packages/db/src
