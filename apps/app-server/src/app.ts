@@ -81,10 +81,16 @@ export function createApp() {
   const rpcHandler = new RPCHandler(backendRouter, {
     interceptors: [
       onError((error) => {
+        const err = error as Error & {
+          cause?: unknown;
+          code?: string;
+          path?: string;
+        };
         backendLogger.error("oRPC Error", {
-          message: error instanceof Error ? error.message : String(error),
-          code: (error as { code?: string })?.code,
-          path: (error as { path?: string })?.path,
+          message: err.message,
+          code: err.code,
+          path: err.path,
+          cause: err.cause instanceof Error ? err.cause.message : err.cause,
         });
       }),
     ],

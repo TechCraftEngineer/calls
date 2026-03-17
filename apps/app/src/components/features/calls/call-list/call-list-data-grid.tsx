@@ -23,6 +23,7 @@ import CallDetailModal from "../call-detail-modal";
 import RecommendationsModal from "../recommendations-modal";
 import { getCallListColumns } from "./call-list-columns";
 import {
+  getDefaultSchema,
   loadColumnSchema,
   saveColumnSchema,
 } from "./call-list-data-grid-storage";
@@ -125,11 +126,21 @@ export function CallListDataGrid({
     ],
   );
 
-  const [columnSchema, setColumnSchema] = useState(loadColumnSchema);
+  // Use default schema for initial render to avoid hydration mismatch:
+  // server always uses default; client would use localStorage and get different order
+  const [columnSchema, setColumnSchema] = useState(() => getDefaultSchema());
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    saveColumnSchema(columnSchema);
-  }, [columnSchema]);
+    setColumnSchema(loadColumnSchema());
+    setIsHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (isHydrated) {
+      saveColumnSchema(columnSchema);
+    }
+  }, [columnSchema, isHydrated]);
 
   const handleColumnOrderChange = useCallback(
     (updaterOrValue: string[] | ((old: string[]) => string[])) => {

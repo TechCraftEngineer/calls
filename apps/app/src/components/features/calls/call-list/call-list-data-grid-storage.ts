@@ -17,7 +17,7 @@ export type ColumnSchema = {
   columnVisibility: Record<string, boolean>;
 };
 
-function getDefaultSchema(): ColumnSchema {
+export function getDefaultSchema(): ColumnSchema {
   return {
     columnOrder: [...DEFAULT_COLUMN_IDS],
     columnVisibility: Object.fromEntries(
