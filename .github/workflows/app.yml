@@ -57,7 +57,7 @@ jobs:
           CR_REPOSITORY: db-migrate
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -f packages/db/Dockerfile.migrate \
+          docker build -f packages/db/Dockerfile \
             -t cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG \
             -t cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:latest .
           docker push cr.yandex/$CR_REGISTRY/$CR_REPOSITORY:$IMAGE_TAG
