@@ -8,9 +8,9 @@ import { useEffect, useState } from "react";
 import CallMetaHeader from "@/components/features/calls/call-meta-header";
 import CallSidebar from "@/components/features/calls/call-sidebar";
 import { TranscriptCard } from "@/components/features/calls/transcript-card";
+import { useSession } from "@/lib/better-auth";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
-import { getCurrentUser, type User } from "@/lib/auth";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
 import { useORPC } from "@/orpc/react";
 import type {
@@ -23,7 +23,9 @@ export default function CallDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const orpc = useORPC();
-  const [user, setUser] = useState<User | null>(null);
+  const { data: session, isPending: sessionPending } = useSession();
+  const user = session?.user;
+  const userLoading = sessionPending;
   const [restarting, setRestarting] = useState(false);
 
   // Валидация UUID v7 формата (ws_123456 или UUID)
@@ -119,10 +121,6 @@ export default function CallDetailPage() {
       },
     }),
   );
-
-  useEffect(() => {
-    getCurrentUser().then(setUser);
-  }, []);
 
   useEffect(() => {
     if (callError && typeof callError === "object" && "code" in callError) {

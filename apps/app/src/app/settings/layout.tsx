@@ -4,13 +4,32 @@ import { paths } from "@calls/config";
 import { cn } from "@calls/ui";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSession } from "@/lib/better-auth";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
-import { getCurrentUser, type User } from "@/lib/auth";
 
 const SETTINGS_NAV = [
+  {
+    href: paths.settings.profile,
+    label: "Аккаунт",
+    description: "Имя, пароль, профиль",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+    ),
+  },
   {
     href: paths.settings.root,
     label: "Общие",
@@ -125,13 +144,11 @@ export default function SettingsLayout({
 }) {
   const pathname = usePathname();
   const { activeWorkspace } = useWorkspace();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { data: session, isPending: sessionPending } = useSession();
+  const user = session?.user;
+  const userLoading = sessionPending;
   const isWorkspaceAdmin =
     activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
-
-  useEffect(() => {
-    getCurrentUser().then(setCurrentUser);
-  }, []);
 
   const navItems = SETTINGS_NAV.filter(
     (item) => !("adminOnly" in item && item.adminOnly) || isWorkspaceAdmin,
@@ -140,7 +157,7 @@ export default function SettingsLayout({
   return (
     <div className="app-container">
       <Sidebar />
-      <Header user={currentUser} />
+      <Header user={user} />
 
       <main className="main-content">
         <div className="flex gap-8">

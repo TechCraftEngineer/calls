@@ -5,6 +5,7 @@ import { Button, toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSession } from "@/lib/better-auth";
 import { ConfirmDialog } from "@/components/features/users/confirm-dialog";
 import type { ManagedUser } from "@/components/features/users/types";
 import UsersTable from "@/components/features/users/users-table";
@@ -14,7 +15,7 @@ import PendingInvitations from "@/components/features/workspaces/pending-invitat
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
-import { getCurrentUser, type User } from "@/lib/auth";
+import type { User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 
 export default function UsersPage() {
@@ -22,7 +23,9 @@ export default function UsersPage() {
   const orpc = useORPC();
   const queryClient = useQueryClient();
   const { activeWorkspace } = useWorkspace();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { data: session, isPending: sessionPending } = useSession();
+  const user = session?.user;
+  const userLoading = sessionPending;
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [configureInvitation, setConfigureInvitation] = useState<{
@@ -62,14 +65,10 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
-    getCurrentUser().then((user) => {
-      if (!user) {
-        router.push(paths.auth.signin);
-        return;
-      }
-      setCurrentUser(user);
-    });
-  }, [router]);
+    if (!userLoading && !currentUser) {
+      router.push(paths.auth.signin);
+    }
+  }, [userLoading, currentUser, router]);
 
   useEffect(() => {
     if (

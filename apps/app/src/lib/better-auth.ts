@@ -27,8 +27,13 @@ export const authClient = createAuthClient({
   plugins: [adminClient()],
 });
 
-// Хуки для работы с аутентификацией
-export const { useSession, signIn, signUp, signOut } = authClient;
+// Типизированные хуки для работы с аутентификацией
+export const { 
+  useSession, 
+  signIn, 
+  signUp, 
+  signOut 
+} = authClient;
 
 /** Маппинг английских сообщений об ошибках аутентификации на русские */
 const AUTH_ERROR_MESSAGES_RU: Record<string, string> = {
@@ -39,6 +44,8 @@ const AUTH_ERROR_MESSAGES_RU: Record<string, string> = {
   "Password is required": "Введите пароль",
   "User already exists. Use another email.":
     "Пользователь с таким email уже существует. Укажите другой email.",
+  "Invalid password": "Неверный текущий пароль",
+  "Password is incorrect": "Неверный текущий пароль",
 };
 
 /** Переводит сообщения об ошибках аутентификации на русский */
@@ -97,7 +104,7 @@ export async function getCurrentUser() {
     const isAdmin = isAdminUser(user as Record<string, unknown>);
 
     return {
-      id: Number(user.id),
+      id: user.id,
       email: user.email,
       name: user.name || "—",
       givenName: fields.givenName,
@@ -110,7 +117,9 @@ export async function getCurrentUser() {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
-  } catch {
+  } catch (error) {
+    // Логируем ошибку для отладки, но не прерываем работу приложения
+    console.error("[getCurrentUser] Error fetching user:", error instanceof Error ? error.message : error);
     return null;
   }
 }

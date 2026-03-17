@@ -7,10 +7,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import KpiTable from "@/components/features/calls/kpi-table";
+import { useSession } from "@/lib/better-auth";
 import ReportSettingsPanel from "@/components/features/settings/report-settings-panel";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
-import { getCurrentUser, type User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 import { StatisticsFilters } from "../statistics-filters";
 import {
@@ -37,8 +37,9 @@ function StatisticsPageContent() {
   const orpc = useORPC();
   const activeTab = getActiveTab(pathname);
 
-  const [user, setUser] = useState<User | null>(null);
-  const [userLoading, setUserLoading] = useState(true);
+  const { data: session, isPending: sessionPending } = useSession();
+  const user = session?.user;
+  const userLoading = sessionPending;
   const [filters, setFilters] = useState({
     dateFrom: "",
     dateTo: "",
@@ -64,26 +65,6 @@ function StatisticsPageContent() {
   });
 
   const stats = (result?.statistics ?? []) as StatsRow[];
-
-  useEffect(() => {
-    let isMounted = true;
-
-    getCurrentUser()
-      .then((u) => {
-        if (isMounted) {
-          setUser(u);
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setUserLoading(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   useEffect(() => {
     const segments = pathname.replace(/\/$/, "").split("/");

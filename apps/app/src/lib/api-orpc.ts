@@ -54,7 +54,7 @@ export interface CallEvaluation {
   createdAt: string;
 }
 
-export interface User {
+export interface ApiUser {
   id: number;
   email: string;
   name: string;

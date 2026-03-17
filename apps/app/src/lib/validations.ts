@@ -42,6 +42,25 @@ export const resetPasswordSchema = z
   });
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
+// Схема для смены пароля (в настройках аккаунта)
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Введите текущий пароль"),
+    newPassword: passwordValidation,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Пароли не совпадают",
+    path: ["confirmPassword"],
+  });
+export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
+
+// Схема для обновления профиля (имя)
+export const updateProfileSchema = z.object({
+  name: z.string().min(1, "Имя обязательно").max(200, "Имя слишком длинное"),
+});
+export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>;
+
 // Схема для создания пользователя
 export const createUserSchema = z.object({
   email: z.string().email("Введите корректный email"),

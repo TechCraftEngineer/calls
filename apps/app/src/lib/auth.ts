@@ -7,18 +7,11 @@ import {
   logout as betterAuthLogout,
   signUp as betterAuthSignUp,
 } from "./better-auth";
+import { authClient } from "./better-auth";
 
-export interface User {
-  id: number;
-  email: string;
-  name: string;
-  givenName?: string;
-  familyName?: string;
-  internalExtensions?: string | null;
-  mobilePhones?: string | null;
-  role?: string;
-  [key: string]: unknown;
-}
+// Infer types from Better Auth client
+export type Session = typeof authClient.$Infer.Session;
+export type User = typeof authClient.$Infer.Session["user"];
 
 export interface LoginResponse {
   success: boolean;

@@ -70,7 +70,14 @@ export const auth = betterAuth({
       defaultRole: "user",
     }),
   ],
+  session: {
+    // Позволяет удалять аккаунт без ввода пароля (подтверждение фразой в UI)
+    freshAge: 60 * 60 * 24 * 30, // 30 дней — сессия считается «свежей»
+  },
   user: {
+    deleteUser: {
+      enabled: true,
+    },
     additionalFields: {
       givenName: { type: "string", required: false, fieldName: "given_name" },
       familyName: { type: "string", required: false, fieldName: "family_name" },
@@ -93,4 +100,7 @@ export const auth = betterAuth({
   },
 });
 
+// Infer types from Better Auth configuration
+export type Session = typeof auth.$Infer.Session;
+export type User = typeof auth.$Infer.Session["user"];
 export type Auth = typeof auth;

@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSession } from "@/lib/better-auth";
 import {
   BasicInfoBlock,
   CheckboxBlock,
@@ -18,7 +19,6 @@ import type { EditUserForm } from "@/components/features/users/types";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import { useBlockStates } from "@/hooks/use-block-states";
-import { getCurrentUser, type User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 
 export default function UserEditPage() {
@@ -27,13 +27,12 @@ export default function UserEditPage() {
   const orpc = useORPC();
   const queryClient = useQueryClient();
 
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [form, setForm] = useState<EditUserForm | null>(null);
   const [email, setEmail] = useState<string>("");
 
-  useEffect(() => {
-    getCurrentUser().then(setCurrentUser);
-  }, []);
+  const { data: session, isPending: sessionPending } = useSession();
+  const user = session?.user;
+  const userLoading = sessionPending;
 
   const {
     clearBlockChanges,
@@ -305,7 +304,7 @@ export default function UserEditPage() {
     return (
       <div className="app-container">
         <Sidebar />
-        <Header user={currentUser} />
+        <Header user={user} />
         <main className="main-content">
           <div className="p-6">
             <p className="text-destructive">Ошибка загрузки пользователя</p>
@@ -322,7 +321,7 @@ export default function UserEditPage() {
     return (
       <div className="app-container">
         <Sidebar />
-        <Header user={currentUser} />
+        <Header user={user} />
         <main className="main-content">
           <div className="p-6">
             <div className="animate-pulse h-8 bg-gray-200 rounded w-48 mb-4" />
@@ -336,7 +335,7 @@ export default function UserEditPage() {
   return (
     <div className="app-container">
       <Sidebar />
-      <Header user={currentUser} />
+      <Header user={user} />
 
       <main className="main-content">
         <header className="page-header mb-6 flex justify-between items-start">

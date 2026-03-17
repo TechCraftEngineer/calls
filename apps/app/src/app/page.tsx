@@ -18,14 +18,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import AudioPlayerModal from "@/components/features/calls/audio-player-modal";
 import { CallListDataGrid } from "@/components/features/calls/call-list/call-list-data-grid";
+import { useSession } from "@/lib/better-auth";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import CustomDropdown from "@/components/ui/custom-dropdown";
 import { SearchInput } from "@/components/ui/search-input";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import { useDebounce } from "@/hooks/use-debounce";
-import { getCurrentUser, type User } from "@/lib/auth";
-import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 
 interface Call {
@@ -74,8 +73,8 @@ export default function HomePage() {
   const orpc = useORPC();
   const queryClient = useQueryClient();
   const { data: session, isPending: sessionPending } = useSession();
-  const hasSessionFetchedRef = useRef(false);
-  const [user, setUser] = useState<User | null>(null);
+  const user = session?.user;
+  const userLoading = sessionPending;
   const [pagination, setPagination] = useState<Pagination>({
     total: 0,
     page: 1,
@@ -134,10 +133,6 @@ export default function HomePage() {
   });
 
   useEffect(() => {
-    getCurrentUser().then(setUser);
-  }, []);
-
-  useEffect(() => {
     if (callsError && typeof callsError === "object" && "code" in callsError) {
       if ((callsError as { code?: string }).code === "UNAUTHORIZED") {
         router.push(paths.auth.signin);
@@ -164,24 +159,11 @@ export default function HomePage() {
     });
 
   // Редирект на signin только когда сессия точно загружена и пользователя нет.
-  // useSession может вернуть isPending: false до завершения первого fetch (Better Auth #960),
-  // поэтому ждём либо перехода sessionPending true→false, либо 300ms перед редиректом.
   useEffect(() => {
-    if (sessionPending) {
-      hasSessionFetchedRef.current = true;
-      return;
-    }
+    if (sessionPending) return;
     if (session?.user) return;
-
-    if (hasSessionFetchedRef.current) {
-      router.push(paths.auth.signin);
-      return;
-    }
-    const timer = setTimeout(() => {
-      hasSessionFetchedRef.current = true;
-      router.push(paths.auth.signin);
-    }, 300);
-    return () => clearTimeout(timer);
+    
+    router.push(paths.auth.signin);
   }, [sessionPending, session?.user, router]);
 
   const handlePaginationChange = (page: number, perPage: number) => {

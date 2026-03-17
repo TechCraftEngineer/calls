@@ -3,6 +3,8 @@
  * Унифицированные типы для использования во всем приложении
  */
 
+import type { User } from "@/lib/auth";
+
 // Базовые поля пользователя (OIDC + domain стандарты)
 export interface BaseUserFields {
   id: string | number;
@@ -24,14 +26,8 @@ export interface UserAdditionalFields {
   telegramChatId?: string | null;
 }
 
-// Полный интерфейс пользователя
-export interface User extends BaseUserFields, UserAdditionalFields {
-  role?: "admin" | "user";
-  is_active?: boolean;
-}
-
 // Пользователь из API ответа
-export interface ApiUser extends User {
+export interface ApiUser extends Omit<User, 'id'> {
   id: number;
   created_at?: string | null;
 }
