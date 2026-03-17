@@ -1,8 +1,11 @@
 import type { CallWithTranscript } from "@calls/db";
-import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
-import { getInternalNumbersForUser, getMobileNumbersForUser } from "./utils";
+import {
+  buildInternalNumberToManagerMap,
+  getInternalNumbersForUser,
+  getMobileNumbersForUser,
+} from "./utils";
 
 const transcriptMetadataSchema = z
   .object({ operatorName: z.string().optional() })
@@ -92,25 +95,6 @@ export const list = workspaceProcedure
       q: input.q?.trim() || undefined,
     });
 
-    const callsWithTranscripts = rawCalls.map((item: CallWithTranscript) => ({
-      ...item,
-      call: {
-        ...item.call,
-        timestamp:
-          item.call.timestamp instanceof Date
-            ? item.call.timestamp.toISOString()
-            : item.call.timestamp,
-        managerName: item.call.name ?? null,
-        operatorName: (() => {
-          const meta = item.transcript?.metadata;
-          const parsed = transcriptMetadataSchema.safeParse(meta);
-          return parsed.success && typeof parsed.data.operatorName === "string"
-            ? parsed.data.operatorName
-            : (item.call.name ?? null);
-        })(),
-      },
-    }));
-
     const totalItems = await callsService.countCalls({
       workspaceId,
       dateFrom,
@@ -138,6 +122,40 @@ export const list = workspaceProcedure
       .filter(
         (u: unknown) => u && (u as Record<string, unknown>).internalExtensions,
       );
+
+    const internalToManager = buildInternalNumberToManagerMap(members);
+
+    const callsWithTranscripts = rawCalls.map((item: CallWithTranscript) => {
+      const operatorName = (() => {
+        const meta = item.transcript?.metadata;
+        const parsed = transcriptMetadataSchema.safeParse(meta);
+        return parsed.success && typeof parsed.data.operatorName === "string"
+          ? parsed.data.operatorName
+          : (item.call.name ?? null);
+      })();
+      const managerFromWorkspace = item.call.internalNumber
+        ? internalToManager.get(item.call.internalNumber)
+        : undefined;
+      const managerName =
+        managerFromWorkspace?.displayName ??
+        operatorName ??
+        item.call.name ??
+        null;
+
+      return {
+        ...item,
+        call: {
+          ...item.call,
+          timestamp:
+            item.call.timestamp instanceof Date
+              ? item.call.timestamp.toISOString()
+              : item.call.timestamp,
+          managerName,
+          operatorName,
+          managerId: managerFromWorkspace?.userId ?? null,
+        },
+      };
+    });
 
     return {
       calls: callsWithTranscripts,

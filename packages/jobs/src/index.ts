@@ -10,6 +10,7 @@ export {
   inngest,
   transcribeRequested,
 } from "./inngest/client";
+export { emailReportsFn } from "./inngest/functions/email-reports";
 export { evaluateCallFn } from "./inngest/functions/evaluate-call";
 export { megafonSyncFn } from "./inngest/functions/megafon-sync";
 export { telegramReportsFn } from "./inngest/functions/telegram-reports";

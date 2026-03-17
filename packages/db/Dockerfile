@@ -3,7 +3,7 @@ FROM oven/bun:1-alpine
 WORKDIR /app
 
 # Copy package files
-COPY package.json bun.lockb ./
+COPY package.json bun.lock ./
 COPY packages/db/package.json ./packages/db/
 COPY packages/config/package.json ./packages/config/
 

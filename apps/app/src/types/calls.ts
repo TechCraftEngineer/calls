@@ -7,6 +7,7 @@ export interface CallDetail {
   internalNumber?: string;
   managerName?: string | null;
   operatorName?: string | null;
+  managerId?: string | null;
   filename?: string;
   sizeBytes?: number;
   customerName?: string;
