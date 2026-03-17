@@ -18,8 +18,8 @@ COPY --from=prepare /app/out/full/ .
 
 ENV TURBO_TELEMETRY_DISABLED=1
 
-# Сборка зависимостей (emails и др.), которые экспортируют dist/
-RUN bunx turbo run build --filter=@calls/jobs^...
+# Сборка jobs и его зависимостей
+RUN bunx turbo run build --filter=@calls/jobs...
 
 FROM base AS runner
 RUN mkdir -p /app/records
@@ -31,4 +31,4 @@ EXPOSE 8000
 
 COPY --from=builder /app .
 
-CMD ["bun", "./packages/jobs/src/server.ts"]
+CMD ["bun", "./packages/jobs/dist/server.js"]

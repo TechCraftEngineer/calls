@@ -7,9 +7,10 @@
     "./hono": "./src/hono.ts"
   },
   "scripts": {
+    "build": "bun build ./src/server.ts --outdir ./dist --target bun",
     "inngest": "npx --ignore-scripts=false inngest-cli@latest dev -u http://localhost:8000/api/inngest",
     "typecheck": "tsc --noEmit",
-    "start": "bun with-env src/server.ts",
+    "start": "bun with-env dist/server.js",
     "dev": "bun with-env --watch src/server.ts",
     "with-env": "bun run --env-file ../../.env"
   },
