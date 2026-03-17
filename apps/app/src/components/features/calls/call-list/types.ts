@@ -6,6 +6,7 @@ export interface Call {
   internalNumber?: string;
   managerName?: string | null;
   operatorName?: string | null;
+  managerId?: string | null;
   duration?: number | null;
   filename?: string;
   customerName?: string;

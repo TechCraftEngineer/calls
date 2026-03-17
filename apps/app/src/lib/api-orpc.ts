@@ -24,6 +24,7 @@ export interface Call {
   customerName?: string;
   managerName?: string | null;
   operatorName?: string | null;
+  managerId?: string | null;
 }
 
 export interface Transcript {

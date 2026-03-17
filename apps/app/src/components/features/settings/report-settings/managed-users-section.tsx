@@ -1,3 +1,4 @@
+import { Checkbox, Label } from "@calls/ui";
 import type React from "react";
 import type {
   ReportSettingsForm,
@@ -23,16 +24,16 @@ export function ManagedUsersSection({
   allUsers,
 }: ManagedUsersSectionProps) {
   return (
-    <div className="p-4 bg-[#f5f7fa] rounded-lg">
-      <h4 className="m-0 mb-3 text-sm font-bold">
+    <div className="rounded-lg border bg-card p-4 text-card-foreground">
+      <h4 className="mb-2 text-sm font-bold">
         Сводный отчёт по выбранным менеджерам
       </h4>
-      <p className="m-0 mb-3 text-xs text-[#666]">
+      <p className="mb-3 text-sm text-muted-foreground">
         Выберите, по каким менеджерам включать данные в сводный отчёт в Telegram
         (опция «Получать отчеты по всем менеджерам» настраивается в Управлении
         пользователями). Если никого не выбрано — в сводку попадают все.
       </p>
-      <div className="flex flex-col gap-1.5 max-h-[200px] overflow-y-auto">
+      <div className="flex max-h-[200px] flex-col gap-1.5 overflow-y-auto">
         {allUsers
           .filter((u) => u.id !== user.id)
           .map((u) => {
@@ -41,26 +42,31 @@ export function ManagedUsersSection({
             const label =
               display !== u.email ? `${display} (${u.email})` : display;
             return (
-              <label key={u.id} className="flex items-center gap-2 text-[13px]">
-                <input
-                  type="checkbox"
+              <Label
+                key={u.id}
+                className="flex cursor-pointer items-center gap-2 text-sm font-normal"
+              >
+                <Checkbox
                   checked={checked}
-                  onChange={(e) => {
+                  onCheckedChange={(value) => {
                     const ids: string[] = form.reportManagedUserIds ?? [];
                     setForm((f) => ({
                       ...f,
-                      reportManagedUserIds: e.target.checked
-                        ? [...ids, u.id]
-                        : ids.filter((id) => id !== u.id),
+                      reportManagedUserIds:
+                        value === true
+                          ? [...ids, u.id]
+                          : ids.filter((id) => id !== u.id),
                     }));
                   }}
                 />
                 {label}
-              </label>
+              </Label>
             );
           })}
         {allUsers.length <= 1 && (
-          <span className="text-xs text-[#999]">Нет других пользователей</span>
+          <span className="text-sm text-muted-foreground">
+            Нет других пользователей
+          </span>
         )}
       </div>
     </div>

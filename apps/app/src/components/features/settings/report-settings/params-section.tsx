@@ -1,4 +1,4 @@
-import { Input } from "@calls/ui";
+import { Checkbox, Field, Input, Label, Separator } from "@calls/ui";
 import type React from "react";
 import type { ReportSettingsForm } from "../report-settings-types";
 
@@ -9,61 +9,57 @@ interface ParamsSectionProps {
 
 export function ReportParamsSection({ form, setForm }: ParamsSectionProps) {
   return (
-    <div className="p-4 bg-[#f5f7fa] rounded-lg">
-      <h4 className="m-0 mb-3 text-sm font-bold">Параметры отчетов</h4>
+    <div className="rounded-lg border bg-card p-4 text-card-foreground">
+      <h4 className="mb-3 text-sm font-bold">Параметры отчетов</h4>
       <div className="flex flex-col gap-2">
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
+        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+          <Checkbox
             checked={form.reportDetailed}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               setForm((f) => ({
                 ...f,
-                reportDetailed: e.target.checked,
+                reportDetailed: checked === true,
               }))
             }
-          />{" "}
+          />
           Подробный формат
-        </label>
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
+        </Label>
+        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+          <Checkbox
             checked={form.reportIncludeCallSummaries}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               setForm((f) => ({
                 ...f,
-                reportIncludeCallSummaries: e.target.checked,
+                reportIncludeCallSummaries: checked === true,
               }))
             }
-          />{" "}
+          />
           ИИ-саммари вызовов (Email)
-        </label>
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
+        </Label>
+        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+          <Checkbox
             checked={form.reportIncludeAvgValue}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               setForm((f) => ({
                 ...f,
-                reportIncludeAvgValue: e.target.checked,
+                reportIncludeAvgValue: checked === true,
               }))
             }
-          />{" "}
+          />
           Средняя сумма сделки
-        </label>
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
+        </Label>
+        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+          <Checkbox
             checked={form.reportIncludeAvgRating}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               setForm((f) => ({
                 ...f,
-                reportIncludeAvgRating: e.target.checked,
+                reportIncludeAvgRating: checked === true,
               }))
             }
-          />{" "}
+          />
           Средняя оценка качества
-        </label>
+        </Label>
       </div>
 
       <KpiSettings form={form} setForm={setForm} />
@@ -80,11 +76,14 @@ function KpiSettings({
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
 }) {
   return (
-    <div className="mt-4 border-t border-[#ddd] pt-4">
-      <h4 className="m-0 mb-3 text-sm font-bold">Настройки KPI</h4>
+    <div className="mt-4 pt-4">
+      <Separator className="mb-4" />
+      <h4 className="mb-3 text-sm font-bold">Настройки KPI</h4>
       <div className="flex flex-col gap-3">
-        <label className="flex items-center gap-2 text-[13px]">
-          <span className="min-w-[180px]">Базовый оклад (₽):</span>
+        <Field orientation="horizontal" className="items-center gap-2">
+          <Label className="min-w-[180px] text-sm font-normal">
+            Базовый оклад (₽):
+          </Label>
           <Input
             type="number"
             min={0}
@@ -95,11 +94,13 @@ function KpiSettings({
                 kpiBaseSalary: e.target.value,
               }))
             }
-            className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
+            className="h-8 w-[100px]"
           />
-        </label>
-        <label className="flex items-center gap-2 text-[13px]">
-          <span className="min-w-[180px]">Целевой бонус (₽):</span>
+        </Field>
+        <Field orientation="horizontal" className="items-center gap-2">
+          <Label className="min-w-[180px] text-sm font-normal">
+            Целевой бонус (₽):
+          </Label>
           <Input
             type="number"
             min={0}
@@ -110,13 +111,13 @@ function KpiSettings({
                 kpiTargetBonus: e.target.value,
               }))
             }
-            className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
+            className="h-8 w-[100px]"
           />
-        </label>
-        <label className="flex items-center gap-2 text-[13px]">
-          <span className="min-w-[180px]">
+        </Field>
+        <Field orientation="horizontal" className="items-center gap-2">
+          <Label className="min-w-[180px] text-sm font-normal">
             Целевое время разговоров в месяц (мин):
-          </span>
+          </Label>
           <Input
             type="number"
             min={0}
@@ -127,9 +128,9 @@ function KpiSettings({
                 kpiTargetTalkTimeMinutes: e.target.value,
               }))
             }
-            className="w-[100px] py-1.5 px-2 border border-[#ddd] rounded"
+            className="h-8 w-[100px]"
           />
-        </label>
+        </Field>
       </div>
     </div>
   );
@@ -143,48 +144,50 @@ function FilterExclusions({
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
 }) {
   return (
-    <div className="mt-4 border-t border-[#ddd] pt-4">
-      <h4 className="m-0 mb-3 text-sm font-bold">Исключения (фильтры)</h4>
-      <label className="flex items-center gap-2 text-[13px] mb-2">
-        <input
-          type="checkbox"
+    <div className="mt-4 pt-4">
+      <Separator className="mb-4" />
+      <h4 className="mb-3 text-sm font-bold">Исключения (фильтры)</h4>
+      <Label className="mb-2 flex cursor-pointer items-center gap-2 text-sm font-normal">
+        <Checkbox
           checked={form.filterExcludeAnsweringMachine}
-          onChange={(e) =>
+          onCheckedChange={(checked) =>
             setForm((f) => ({
               ...f,
-              filterExcludeAnsweringMachine: e.target.checked,
+              filterExcludeAnsweringMachine: checked === true,
             }))
           }
-        />{" "}
+        />
         Без автоответчиков
-      </label>
-      <div className="flex items-center gap-2">
-        <span className="text-[13px]">Короче (сек):</span>
-        <Input
-          type="number"
-          value={form.filterMinDuration}
-          onChange={(e) =>
-            setForm((f) => ({
-              ...f,
-              filterMinDuration: e.target.value,
-            }))
-          }
-          className="w-[60px] py-1 px-2 border border-[#ddd] rounded"
-        />
-      </div>
-      <div className="flex items-center gap-2 mt-2">
-        <span className="text-[13px]">Мин. реплик:</span>
-        <Input
-          type="number"
-          value={form.filterMinReplicas}
-          onChange={(e) =>
-            setForm((f) => ({
-              ...f,
-              filterMinReplicas: e.target.value,
-            }))
-          }
-          className="w-[60px] py-1 px-2 border border-[#ddd] rounded"
-        />
+      </Label>
+      <div className="flex flex-wrap items-center gap-3">
+        <Field orientation="horizontal" className="items-center gap-2">
+          <Label className="text-sm font-normal">Короче (сек):</Label>
+          <Input
+            type="number"
+            value={form.filterMinDuration}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                filterMinDuration: e.target.value,
+              }))
+            }
+            className="h-8 w-[70px]"
+          />
+        </Field>
+        <Field orientation="horizontal" className="items-center gap-2">
+          <Label className="text-sm font-normal">Мин. реплик:</Label>
+          <Input
+            type="number"
+            value={form.filterMinReplicas}
+            onChange={(e) =>
+              setForm((f) => ({
+                ...f,
+                filterMinReplicas: e.target.value,
+              }))
+            }
+            className="h-8 w-[70px]"
+          />
+        </Field>
       </div>
     </div>
   );

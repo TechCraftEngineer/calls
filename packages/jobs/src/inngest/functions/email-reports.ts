@@ -1,0 +1,221 @@
+/**
+ * Inngest функция: отправка email-отчётов по звонкам.
+ * Запускается каждый час, проверяет настройки времени и отправляет отчёты.
+ */
+
+import {
+  callsService,
+  getEmailReportRecipients,
+  getReportScheduleSettings,
+  getWorkspaceIdsWithEmailReportRecipients,
+  workspaceSettingsRepository,
+  workspacesService,
+} from "@calls/db";
+import { ReportEmail, sendEmail } from "@calls/emails";
+import type { ManagerStats } from "../../reports/format-report";
+import { formatTelegramReport } from "../../reports/format-report";
+import { inngest } from "../client";
+
+const TZ = "Europe/Moscow";
+
+function formatDateInMoscow(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function nowInMoscow(): Date {
+  const now = new Date();
+  return new Date(now.toLocaleString("en-US", { timeZone: TZ }));
+}
+
+function parseTimeHHMM(s: string): { h: number; m: number } {
+  const m = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/.exec(s?.trim() ?? "");
+  if (!m) return { h: 18, m: 0 };
+  return {
+    h: parseInt(m[1] ?? "18", 10),
+    m: parseInt(m[2] ?? "0", 10),
+  };
+}
+
+const WEEKDAY_MAP: Record<string, number> = {
+  sun: 0,
+  mon: 1,
+  tue: 2,
+  wed: 3,
+  thu: 4,
+  fri: 5,
+  sat: 6,
+};
+
+function getLastDayOfMonth(d: Date): number {
+  const next = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  return next.getDate();
+}
+
+export const emailReportsFn = inngest.createFunction(
+  {
+    id: "email-reports",
+    name: "Email отчёты по звонкам",
+    retries: 2,
+    triggers: [{ cron: `TZ=${TZ} */15 * * * *` }],
+  },
+  async ({ step }) => {
+    const workspaceIds = await step.run(
+      "get-workspaces-with-email-reports",
+      async () => {
+        return getWorkspaceIdsWithEmailReportRecipients();
+      },
+    );
+
+    if (workspaceIds.length === 0) {
+      return { skipped: true, reason: "Нет воркспейсов с email-отчётами" };
+    }
+
+    const now = nowInMoscow();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentDay = now.getDay();
+    const currentDate = now.getDate();
+    const lastDay = getLastDayOfMonth(now);
+
+    let sentCount = 0;
+    const errors: string[] = [];
+
+    for (const workspaceId of workspaceIds) {
+      const result = await step.run(
+        `process-workspace-email-${workspaceId}`,
+        async () => {
+          const schedule = await getReportScheduleSettings(
+            workspaceSettingsRepository,
+            workspaceId,
+          );
+
+          const ws = await workspacesService.getById(workspaceId);
+          const workspaceName = ws?.name ?? undefined;
+
+          const reportTypesToRun: Array<"daily" | "weekly" | "monthly"> = [];
+
+          const slot = Math.floor(currentMinute / 15) * 15;
+
+          const dailyTime = parseTimeHHMM(schedule.reportDailyTime);
+          const dailySlot = Math.floor(dailyTime.m / 15) * 15;
+          if (currentHour === dailyTime.h && slot === dailySlot) {
+            reportTypesToRun.push("daily");
+          }
+
+          const weeklyDay = WEEKDAY_MAP[schedule.reportWeeklyDay] ?? 5;
+          const weeklyTime = parseTimeHHMM(schedule.reportWeeklyTime);
+          const weeklySlot = Math.floor(weeklyTime.m / 15) * 15;
+          if (
+            currentDay === weeklyDay &&
+            currentHour === weeklyTime.h &&
+            slot === weeklySlot
+          ) {
+            reportTypesToRun.push("weekly");
+          }
+
+          const monthlyTime = parseTimeHHMM(schedule.reportMonthlyTime);
+          const monthlyDayNum = parseInt(schedule.reportMonthlyDay, 10);
+          const isMonthlyDay =
+            schedule.reportMonthlyDay === "last"
+              ? currentDate === lastDay
+              : !Number.isNaN(monthlyDayNum) && currentDate === monthlyDayNum;
+          const monthlySlot = Math.floor(monthlyTime.m / 15) * 15;
+          if (
+            isMonthlyDay &&
+            currentHour === monthlyTime.h &&
+            slot === monthlySlot
+          ) {
+            reportTypesToRun.push("monthly");
+          }
+
+          if (reportTypesToRun.length === 0) {
+            return { sent: 0, errors: [] as string[] };
+          }
+
+          let sent = 0;
+          const errs: string[] = [];
+
+          for (const reportType of reportTypesToRun) {
+            const recipients = await getEmailReportRecipients(
+              workspaceId,
+              reportType,
+            );
+
+            let dateFrom: string;
+            let dateTo: string;
+
+            if (reportType === "daily") {
+              const d = new Date(now);
+              d.setDate(d.getDate() - 1);
+              dateFrom = formatDateInMoscow(d);
+              dateTo = dateFrom;
+            } else if (reportType === "weekly") {
+              const d = new Date(now);
+              d.setDate(d.getDate() - 7);
+              dateFrom = formatDateInMoscow(d);
+              dateTo = formatDateInMoscow(now);
+            } else {
+              const d = new Date(now);
+              d.setMonth(d.getMonth() - 1);
+              dateFrom = formatDateInMoscow(d);
+              dateTo = formatDateInMoscow(now);
+            }
+
+            const dateFromDb = `${dateFrom} 00:00:00`;
+            const dateToDb = `${dateTo} 23:59:59`;
+
+            for (const r of recipients) {
+              const stats = (await callsService.getEvaluationsStats({
+                workspaceId,
+                dateFrom: dateFromDb,
+                dateTo: dateToDb,
+                internalNumbers: r.internalNumbers ?? undefined,
+              })) as Record<string, ManagerStats>;
+
+              const text = formatTelegramReport({
+                stats,
+                dateFrom,
+                dateTo,
+                reportType,
+                isManagerReport: false,
+                workspaceName,
+              });
+
+              try {
+                await sendEmail({
+                  to: [r.email],
+                  subject: `Отчёт по звонкам: ${dateFrom} — ${dateTo}`,
+                  react: ReportEmail({
+                    reportText: text,
+                    reportType,
+                    username: undefined,
+                  }),
+                });
+                sent++;
+              } catch (e) {
+                errs.push(
+                  `Не удалось отправить на ${r.email}: ${e instanceof Error ? e.message : String(e)}`,
+                );
+              }
+            }
+          }
+
+          return { sent, errors: errs };
+        },
+      );
+
+      sentCount += result.sent;
+      errors.push(...result.errors);
+    }
+
+    return {
+      workspacesProcessed: workspaceIds.length,
+      sent: sentCount,
+      errors,
+      errorsCount: errors.length,
+    };
+  },
+);

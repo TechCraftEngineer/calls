@@ -1,4 +1,4 @@
-import { Input } from "@calls/ui";
+import { Checkbox, Field, FieldLabel, Input, Label } from "@calls/ui";
 import type React from "react";
 import type { ReportSettingsForm } from "../report-settings-types";
 
@@ -9,60 +9,56 @@ interface EmailSectionProps {
 
 export function EmailReportSection({ form, setForm }: EmailSectionProps) {
   return (
-    <div className="p-4 bg-[#f5f7fa] rounded-lg">
-      <h4 className="m-0 mb-3 text-sm font-bold">Email Отчеты</h4>
-      <div className="mb-3">
-        <label className="block mb-1 text-[13px] font-semibold">
-          Email адрес
-        </label>
+    <div className="rounded-lg border bg-card p-4 text-card-foreground">
+      <h4 className="mb-3 text-sm font-bold">Email Отчеты</h4>
+      <Field className="mb-3">
+        <FieldLabel asChild>
+          <Label>Email адрес</Label>
+        </FieldLabel>
         <Input
           type="email"
           value={form.email}
           onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-          className="w-full py-2 px-3 border border-[#ddd] rounded-md"
           placeholder="Ваш Email"
         />
-      </div>
+      </Field>
       <div className="flex flex-col gap-2">
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
+        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+          <Checkbox
             checked={form.emailDailyReport}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               setForm((f) => ({
                 ...f,
-                emailDailyReport: e.target.checked,
+                emailDailyReport: checked === true,
               }))
             }
-          />{" "}
+          />
           Ежедневный отчет
-        </label>
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
+        </Label>
+        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+          <Checkbox
             checked={form.emailWeeklyReport}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               setForm((f) => ({
                 ...f,
-                emailWeeklyReport: e.target.checked,
+                emailWeeklyReport: checked === true,
               }))
             }
-          />{" "}
+          />
           Еженедельный отчет
-        </label>
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
+        </Label>
+        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+          <Checkbox
             checked={form.emailMonthlyReport}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               setForm((f) => ({
                 ...f,
-                emailMonthlyReport: e.target.checked,
+                emailMonthlyReport: checked === true,
               }))
             }
-          />{" "}
+          />
           Ежемесячный отчет
-        </label>
+        </Label>
       </div>
     </div>
   );

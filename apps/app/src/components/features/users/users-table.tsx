@@ -173,8 +173,8 @@ export default function UsersTable({
                     >
                       {formatDate(u.createdAt)}
                     </TableCell>
-                    <TableCell>
-                      <div className="flex gap-3 justify-end items-center">
+                    <TableCell className="align-top pt-3">
+                      <div className="flex gap-3 justify-end items-start">
                         <Button
                           variant="outline"
                           size="sm"

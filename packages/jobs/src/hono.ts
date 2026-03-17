@@ -5,6 +5,7 @@
 
 import { serve } from "inngest/hono";
 import { inngest } from "./inngest/client";
+import { emailReportsFn } from "./inngest/functions/email-reports";
 import { evaluateCallFn } from "./inngest/functions/evaluate-call";
 import { megafonSyncFn } from "./inngest/functions/megafon-sync";
 import { telegramReportsFn } from "./inngest/functions/telegram-reports";
@@ -17,5 +18,6 @@ export const inngestHandler = serve({
     transcribeCallFn,
     evaluateCallFn,
     telegramReportsFn,
+    emailReportsFn,
   ],
 });

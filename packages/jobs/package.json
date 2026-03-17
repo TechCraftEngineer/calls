@@ -19,6 +19,7 @@
     "@calls/ai": "workspace:*",
     "@calls/config": "workspace:*",
     "@calls/db": "workspace:*",
+    "@calls/emails": "workspace:*",
     "@calls/lib": "workspace:*",
     "@calls/shared": "workspace:*",
     "@calls/telegram-bot": "workspace:*",
