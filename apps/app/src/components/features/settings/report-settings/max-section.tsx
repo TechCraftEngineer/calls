@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input } from "@calls/ui";
+import { Button, Checkbox, Field, FieldLabel, Input, Label } from "@calls/ui";
 import type React from "react";
 import type { User } from "@/lib/auth";
 import type { ReportSettingsForm } from "../report-settings-types";
@@ -32,15 +32,15 @@ export function MaxReportSection({
   const hasMax = !!form.maxChatId?.trim();
 
   return (
-    <div className="p-4 bg-[#f5f7fa] rounded-lg">
-      <h4 className="m-0 mb-3 text-sm font-bold">MAX Отчеты</h4>
-      <p className="m-0 mb-3 text-xs text-[#666]">
+    <div className="rounded-lg border bg-card p-4 text-card-foreground">
+      <h4 className="mb-2 text-sm font-bold">MAX Отчеты</h4>
+      <p className="mb-3 text-sm text-muted-foreground">
         Отчёты в мессенджер MAX. Для участников — только свои отчёты.
       </p>
-      <div className="mb-3">
-        <label className="block mb-1 text-[13px] font-semibold">
-          MAX Chat ID
-        </label>
+      <Field className="mb-3">
+        <FieldLabel asChild>
+          <Label>MAX Chat ID</Label>
+        </FieldLabel>
         <div className="flex gap-2">
           <Input
             type="text"
@@ -51,7 +51,7 @@ export function MaxReportSection({
                 maxChatId: e.target.value,
               }))
             }
-            className="flex-1 py-2 px-3 border border-[#ddd] rounded-md"
+            className="flex-1"
             placeholder="Подключите MAX или введите ID чата вручную"
           />
           {hasMax && onDisconnect && (
@@ -61,7 +61,7 @@ export function MaxReportSection({
               size="sm"
               onClick={onDisconnect}
               disabled={disconnectLoading}
-              className="text-[13px] text-[#FF5252] border-[#FF5252] hover:bg-red-50 hover:text-[#FF5252] shrink-0"
+              className="shrink-0 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
               {disconnectLoading ? "…" : "Отвязать"}
             </Button>
@@ -75,41 +75,39 @@ export function MaxReportSection({
               size="sm"
               onClick={onConnect}
               disabled={connectLoading}
-              className="text-[13px] text-[#6f42c1] border-[#6f42c1] hover:bg-purple-50 hover:text-[#6f42c1]"
+              className="border-primary text-primary hover:bg-primary/10 hover:text-primary"
             >
               <span className="text-base">⚡</span> Подключить MAX
             </Button>
           </div>
         )}
-      </div>
+      </Field>
       <div className="flex flex-col gap-2">
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
+        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+          <Checkbox
             checked={form.maxDailyReport}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               setForm((f) => ({
                 ...f,
-                maxDailyReport: e.target.checked,
+                maxDailyReport: checked === true,
               }))
             }
-          />{" "}
+          />
           Получать свои ежедневные отчеты (MAX)
-        </label>
+        </Label>
         {isAdmin && (
-          <label className="flex items-center gap-2 text-[13px]">
-            <input
-              type="checkbox"
+          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+            <Checkbox
               checked={form.maxManagerReport}
-              onChange={(e) =>
+              onCheckedChange={(checked) =>
                 setForm((f) => ({
                   ...f,
-                  maxManagerReport: e.target.checked,
+                  maxManagerReport: checked === true,
                 }))
               }
-            />{" "}
+            />
             Получать отчеты по всем менеджерам (MAX)
-          </label>
+          </Label>
         )}
       </div>
     </div>

@@ -207,6 +207,8 @@ export async function getInternalNumbersForUserIds(
       and(
         inArray(schema.user.id, userIds),
         eq(schema.workspaceMembers.workspaceId, workspaceId),
+        eq(schema.workspaceMembers.status, "active"),
+        isNull(schema.user.deletedAt),
       ),
     );
 

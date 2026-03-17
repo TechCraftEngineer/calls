@@ -1,4 +1,11 @@
-import { Button, Card, CardContent, CardHeader, toast } from "@calls/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  toast,
+} from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
@@ -66,18 +73,23 @@ export default function ReportSettingsFormBody({
   );
 
   const sendTestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sendTestMessageRef = useRef("");
 
   const sendTestMutation = useMutation(
     orpc.reports.sendTestTelegram.mutationOptions({
       onSuccess: () => {
         toast.success("Ежедневный отчёт отправлен в Telegram");
-        setSendTestMessage("Ежедневный отчёт отправлен");
+        const scheduledMsg = "Ежедневный отчёт отправлен";
+        setSendTestMessage(scheduledMsg);
+        sendTestMessageRef.current = scheduledMsg;
         if (sendTestTimeoutRef.current != null)
           clearTimeout(sendTestTimeoutRef.current);
-        sendTestTimeoutRef.current = setTimeout(
-          () => setSendTestMessage(""),
-          4000,
-        );
+        sendTestTimeoutRef.current = setTimeout(() => {
+          if (sendTestMessageRef.current === scheduledMsg) {
+            setSendTestMessage("");
+            sendTestMessageRef.current = "";
+          }
+        }, 4000);
       },
       onError: (err) => {
         const msg =
@@ -86,12 +98,17 @@ export default function ReportSettingsFormBody({
             : "Не удалось отправить. Укажите Telegram Chat ID в настройках отчётов.";
         toast.error(msg);
         setSendTestMessage(msg);
+        sendTestMessageRef.current = msg;
       },
     }),
   );
 
   const [sendTestMessage, setSendTestMessage] = useState("");
   const [checkConnectionLoading, setCheckConnectionLoading] = useState(false);
+
+  useEffect(() => {
+    sendTestMessageRef.current = sendTestMessage;
+  }, [sendTestMessage]);
 
   useEffect(
     () => () => {
@@ -173,11 +190,11 @@ export default function ReportSettingsFormBody({
   };
 
   return (
-    <Card className="card mt-6">
-      <CardHeader className="p-0 pb-0">
-        <h3 className="section-title mb-5">Мои настройки отчетов</h3>
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle>Мои настройки отчетов</CardTitle>
       </CardHeader>
-      <CardContent className="p-0 pt-0">
+      <CardContent>
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6">
             <TelegramReportSection

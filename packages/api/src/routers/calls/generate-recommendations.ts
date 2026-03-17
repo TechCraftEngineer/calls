@@ -1,10 +1,22 @@
 import { createChatBot } from "@calls/ai";
-import type { callsService } from "@calls/db";
+import type { Call, callsService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 
 const DEFAULT_RECOMMENDATIONS_PROMPT = `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
+
+const INJECTION_PATTERNS = [
+  /\bignore\s+(previous|prior|all)\s+(instructions?|prompts?)\b/i,
+  /\bforget\s+(everything|all|your)\b/i,
+  /\bdo\s+not\s+follow\s+(instructions?|prompts?)\b/i,
+  /\bsystem\s+prompt\b/i,
+  /\binstructions?\s*:\s*\w/i,
+  /\byou\s+are\s+[\w\s]+\s+now\b/i,
+  /\bdisregard\s+(previous|prior)\b/i,
+  /\boverride\s+(instructions?|prompts?)\b/i,
+  /\bnew\s+instructions?\s*:\s*\w/i,
+];
 
 function sanitizeCompanyContext(s: string): string {
   const trimmed = s.trim();
@@ -13,13 +25,33 @@ function sanitizeCompanyContext(s: string): string {
     const code = trimmed.charCodeAt(i);
     if (code > 31 && code !== 127) out += trimmed[i];
   }
-  return out.length > 2000 ? out.slice(0, 2000) : out;
+  const lines = out.split(/\n/).filter((line) => {
+    const l = line.trim();
+    if (!l) return true;
+    if (/^>>\s*\w/.test(l) || /^#\s*instruction\b/i.test(l)) return false;
+    if (/^(ignore|forget|disregard|override|you\s+are)\b/i.test(l))
+      return false;
+    return true;
+  });
+  const result = lines.join("\n").trim();
+  return result.length > 2000 ? result.slice(0, 2000) : result;
+}
+
+function hasInjectionPatterns(s: string): boolean {
+  return INJECTION_PATTERNS.some((re) => re.test(s));
 }
 
 const companyContextSchema = z
   .string()
   .transform(sanitizeCompanyContext)
-  .pipe(z.string().max(2000));
+  .pipe(
+    z
+      .string()
+      .max(2000)
+      .refine((s) => !hasInjectionPatterns(s), {
+        message: "Контекст содержит недопустимое содержимое",
+      }),
+  );
 
 function parseRecommendationsJson(text: string): string[] {
   if (!text || typeof text !== "string") {
@@ -59,17 +91,13 @@ function parseRecommendationsJson(text: string): string[] {
 }
 
 export async function generateRecommendations(
-  callId: string,
+  call: Call,
   calls: typeof callsService,
   _workspaceId: string,
   companyContext?: string | null,
 ): Promise<{ recommendations: string[] }> {
+  const callId = call.id;
   try {
-    const call = await calls.getCall(callId);
-    if (!call) {
-      throw new Error(`Звонок с ID ${callId} не найден`);
-    }
-
     const transcript = await calls.getTranscriptByCallId(callId);
     const evaluation = await calls.getEvaluation(callId);
 
@@ -188,15 +216,19 @@ export const generateRecommendationsProcedure = workspaceProcedure
       });
     }
 
-    const companyContextResult = companyContextSchema.safeParse(
-      workspace.description ?? "",
-    );
-    const companyContext = companyContextResult.success
-      ? companyContextResult.data || undefined
-      : undefined;
+    let companyContext: string | undefined;
+    try {
+      companyContext =
+        companyContextSchema.parse(workspace.description ?? "") || undefined;
+    } catch {
+      throw new ORPCError("BAD_REQUEST", {
+        message:
+          "Описание рабочей области содержит недопустимое содержимое. Проверьте и удалите подозрительные инструкции.",
+      });
+    }
 
     return generateRecommendations(
-      input.call_id,
+      call,
       context.callsService,
       context.workspaceId,
       companyContext,

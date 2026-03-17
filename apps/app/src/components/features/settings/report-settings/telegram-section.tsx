@@ -188,7 +188,7 @@ export function TelegramReportSection({
           <span
             className={`ml-3 text-sm ${
               sendTestMessage.includes("отправлен")
-                ? "text-green-600"
+                ? "text-success"
                 : "text-destructive"
             }`}
           >
@@ -216,6 +216,17 @@ const TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => {
   return { value, label: value };
 });
 
+function timeOptionsWithFallback(currentValue: string) {
+  const hasCurrent =
+    currentValue &&
+    /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(currentValue) &&
+    !TIME_OPTIONS.some((o) => o.value === currentValue);
+  if (hasCurrent) {
+    return [{ value: currentValue, label: currentValue }, ...TIME_OPTIONS];
+  }
+  return TIME_OPTIONS;
+}
+
 function ReportTimeSettings({
   form,
   setForm,
@@ -242,7 +253,7 @@ function ReportTimeSettings({
               <SelectValue placeholder="Время" />
             </SelectTrigger>
             <SelectContent>
-              {TIME_OPTIONS.map((item) => (
+              {timeOptionsWithFallback(form.reportDailyTime).map((item) => (
                 <SelectItem key={item.value} value={item.value}>
                   {item.label}
                 </SelectItem>
@@ -282,7 +293,7 @@ function ReportTimeSettings({
               <SelectValue placeholder="Время" />
             </SelectTrigger>
             <SelectContent>
-              {TIME_OPTIONS.map((item) => (
+              {timeOptionsWithFallback(form.reportWeeklyTime).map((item) => (
                 <SelectItem key={item.value} value={item.value}>
                   {item.label}
                 </SelectItem>
@@ -323,7 +334,7 @@ function ReportTimeSettings({
               <SelectValue placeholder="Время" />
             </SelectTrigger>
             <SelectContent>
-              {TIME_OPTIONS.map((item) => (
+              {timeOptionsWithFallback(form.reportMonthlyTime).map((item) => (
                 <SelectItem key={item.value} value={item.value}>
                   {item.label}
                 </SelectItem>
