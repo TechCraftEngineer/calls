@@ -67,7 +67,11 @@ export default function ReportSettingsFormBody({
 
   const sendTestMutation = useMutation(
     orpc.reports.sendTestTelegram.mutationOptions({
-      onSuccess: () => toast.success("Тестовый отчёт отправлен в Telegram"),
+      onSuccess: () => {
+        toast.success("Ежедневный отчёт отправлен в Telegram");
+        setSendTestMessage("Ежедневный отчёт отправлен");
+        setTimeout(() => setSendTestMessage(""), 4000);
+      },
       onError: (err) => {
         const msg =
           err instanceof Error

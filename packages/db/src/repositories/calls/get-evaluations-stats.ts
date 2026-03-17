@@ -1,4 +1,4 @@
-import { and, avg, count, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, avg, count, eq, gte, inArray, lt, lte } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 
@@ -9,19 +9,19 @@ export interface GetEvaluationsStatsParams {
   internalNumbers?: string[];
 }
 
+export interface ManagerStatsRow {
+  name: string;
+  internalNumber: string | null;
+  incoming: { count: number; duration: number };
+  outgoing: { count: number; duration: number };
+  avgManagerScore?: number | null;
+  avgValueScore?: number | null;
+  evaluatedCount?: number;
+}
+
 export async function getEvaluationsStats(
   params: GetEvaluationsStatsParams,
-): Promise<
-  Record<
-    string,
-    {
-      name: string;
-      internalNumber: string | null;
-      incoming: { count: number; duration: number };
-      outgoing: { count: number; duration: number };
-    }
-  >
-> {
+): Promise<Record<string, ManagerStatsRow>> {
   const { workspaceId, dateFrom, dateTo, internalNumbers } = params;
 
   const conditions = [];
@@ -57,15 +57,7 @@ export async function getEvaluationsStats(
   const results =
     conditions.length > 0 ? await query.where(and(...conditions)) : await query;
 
-  const stats: Record<
-    string,
-    {
-      name: string;
-      internalNumber: string | null;
-      incoming: { count: number; duration: number };
-      outgoing: { count: number; duration: number };
-    }
-  > = {};
+  const stats: Record<string, ManagerStatsRow> = {};
 
   for (const row of results) {
     const key = row.managerName ?? row.internalNumber ?? "Unknown";
@@ -88,5 +80,95 @@ export async function getEvaluationsStats(
     target.duration += Number(row.totalDuration ?? 0);
   }
 
+  // Агрегаты оценок по менеджерам (avg rating, avg value, evaluated count)
+  const evalConditions = [...conditions];
+  const evalQuery = db
+    .select({
+      managerName: schema.calls.name,
+      internalNumber: schema.calls.internalNumber,
+      avgManagerScore: avg(schema.callEvaluations.managerScore),
+      avgValueScore: avg(schema.callEvaluations.valueScore),
+      evaluatedCount: count(schema.callEvaluations.id),
+    })
+    .from(schema.calls)
+    .innerJoin(
+      schema.callEvaluations,
+      eq(schema.calls.id, schema.callEvaluations.callId),
+    )
+    .groupBy(schema.calls.name, schema.calls.internalNumber)
+    .$dynamic();
+
+  const evalResults =
+    evalConditions.length > 0
+      ? await evalQuery.where(and(...evalConditions))
+      : await evalQuery;
+
+  for (const row of evalResults) {
+    const key = row.managerName ?? row.internalNumber ?? "Unknown";
+    if (stats[key]) {
+      stats[key].avgManagerScore =
+        row.avgManagerScore != null ? Number(row.avgManagerScore) : null;
+      stats[key].avgValueScore =
+        row.avgValueScore != null ? Number(row.avgValueScore) : null;
+      stats[key].evaluatedCount = Number(row.evaluatedCount ?? 0);
+    }
+  }
+
   return stats;
+}
+
+export interface GetLowRatedCallsParams {
+  workspaceId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  internalNumbers?: string[];
+  maxScore?: number;
+}
+
+/** Количество звонков с низкой оценкой (managerScore < maxScore) по менеджерам */
+export async function getLowRatedCallsCount(
+  params: GetLowRatedCallsParams,
+): Promise<Record<string, number>> {
+  const {
+    workspaceId,
+    dateFrom,
+    dateTo,
+    internalNumbers,
+    maxScore = 3,
+  } = params;
+
+  if (workspaceId == null) return {};
+
+  const conditions = [
+    eq(schema.calls.workspaceId, workspaceId),
+    lt(schema.callEvaluations.managerScore, maxScore),
+  ];
+  if (dateFrom)
+    conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
+  if (dateTo) conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
+  if (internalNumbers?.length) {
+    conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
+  }
+
+  const rows = await db
+    .select({
+      managerName: schema.calls.name,
+      internalNumber: schema.calls.internalNumber,
+      count: count(),
+    })
+    .from(schema.calls)
+    .innerJoin(
+      schema.callEvaluations,
+      eq(schema.calls.id, schema.callEvaluations.callId),
+    )
+    .where(and(...conditions))
+    .groupBy(schema.calls.name, schema.calls.internalNumber);
+
+  const result: Record<string, number> = {};
+  for (const row of rows) {
+    const key = row.managerName ?? row.internalNumber ?? "Unknown";
+    const n = Number(row.count ?? 0);
+    if (n > 0) result[key] = n;
+  }
+  return result;
 }

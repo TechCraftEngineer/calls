@@ -7,14 +7,15 @@ import { canAccessUser } from "./utils";
 export const getForEdit = workspaceProcedure
   .input(z.object({ user_id: z.string() }))
   .handler(async ({ input, context }) => {
+    if (context.workspaceId == null)
+      throw new ORPCError("BAD_REQUEST", {
+        message: "Требуется активное рабочее пространство",
+      });
+
     const userId = (context.user as Record<string, unknown>).id as string;
     if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
-      });
-    if (context.workspaceId == null)
-      throw new ORPCError("BAD_REQUEST", {
-        message: "Требуется активное рабочее пространство",
       });
 
     const data = await usersService.getUserForEdit(

@@ -71,14 +71,16 @@ export const WelcomeEmail = ({
                 {env.APP_URL}
               </Link>
             </Text>
-            <Hr className="mx-0 my-[26px] w-full border border-solid border-[#eaeaea]" />
             {email && (
-              <Text className="text-[12px] leading-[24px] text-[#666666]">
-                Это письмо отправлено на адрес{" "}
-                <span className="text-black">{email}</span>. Если вы не
-                регистрировались в {APP_CONFIG.shortName}, проигнорируйте это
-                письмо или обратитесь в службу поддержки.
-              </Text>
+              <>
+                <Hr className="mx-0 my-[26px] w-full border border-solid border-[#eaeaea]" />
+                <Text className="text-[12px] leading-[24px] text-[#666666]">
+                  Это письмо отправлено на адрес{" "}
+                  <span className="text-black">{email}</span>. Если вы не
+                  регистрировались в {APP_CONFIG.shortName}, проигнорируйте это
+                  письмо или обратитесь в службу поддержки.
+                </Text>
+              </>
             )}
           </Container>
         </Body>

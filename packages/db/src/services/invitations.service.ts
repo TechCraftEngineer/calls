@@ -153,10 +153,12 @@ export class InvitationsService {
     requiresPassword: boolean;
   }> {
     const trimmedEmail = email.toLowerCase().trim();
-    const emailResult = z.string().email().safeParse(trimmedEmail);
+    const emailResult = z
+      .email({ message: "Некорректный email" })
+      .safeParse(trimmedEmail);
     if (!emailResult.success) {
-      const first = emailResult.error.issues[0];
-      throw new Error((first?.message as string) ?? "Некорректный email");
+      const firstIssue = emailResult.error.issues[0];
+      throw new Error(firstIssue?.message ?? "Некорректный email");
     }
     const validatedEmail = emailResult.data;
 

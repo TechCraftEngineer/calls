@@ -1,4 +1,16 @@
-import { Button, Input } from "@calls/ui";
+import {
+  Button,
+  Checkbox,
+  Field,
+  FieldLabel,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@calls/ui";
 import type React from "react";
 import type { User } from "@/lib/auth";
 import type { ReportSettingsForm } from "../report-settings-types";
@@ -38,12 +50,12 @@ export function TelegramReportSection({
   const hasTelegram = !!form.telegramChatId?.trim();
 
   return (
-    <div className="p-4 bg-[#f5f7fa] rounded-lg">
-      <h4 className="m-0 mb-3 text-sm font-bold">Telegram Отчеты</h4>
-      <div className="mb-3">
-        <label className="block mb-1 text-[13px] font-semibold">
-          Telegram Chat ID
-        </label>
+    <div className="rounded-lg border bg-card p-4 text-card-foreground">
+      <h4 className="mb-3 text-sm font-bold">Telegram Отчеты</h4>
+      <Field className="mb-3">
+        <FieldLabel asChild>
+          <Label>Telegram Chat ID</Label>
+        </FieldLabel>
         <div className="flex gap-2">
           <Input
             type="text"
@@ -54,7 +66,7 @@ export function TelegramReportSection({
                 telegramChatId: e.target.value,
               }))
             }
-            className="flex-1 py-2 px-3 border border-[#ddd] rounded-md"
+            className="flex-1"
             placeholder="Нажмите «Подключить Telegram» или введите ID вручную"
           />
           {hasTelegram && onDisconnect && (
@@ -64,7 +76,7 @@ export function TelegramReportSection({
               size="sm"
               onClick={onDisconnect}
               disabled={disconnectLoading}
-              className="text-[13px] text-[#FF5252] border-[#FF5252] hover:bg-red-50 hover:text-[#FF5252] shrink-0"
+              className="shrink-0 text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
             >
               {disconnectLoading ? "…" : "Отвязать"}
             </Button>
@@ -80,24 +92,9 @@ export function TelegramReportSection({
                   size="sm"
                   onClick={onConnect}
                   disabled={connectLoading}
-                  className="text-[13px] text-[#0088cc] border-[#0088cc] hover:bg-blue-50 hover:text-[#0088cc]"
+                  className="text-primary border-primary hover:bg-primary/10 hover:text-primary"
                 >
-                  {connectLoading ? (
-                    "…"
-                  ) : (
-                    <>
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                        className="mr-1 inline"
-                      >
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.48-.94-2.4-1.54-1.06-.7-.37-1.09.23-1.72.16-.16 2.87-2.63 2.92-2.85.01-.03.01-.14-.06-.2-.06-.05-.16-.03-.24-.01-.34.08-5.34 3.45-5.56 3.6-.32.22-.6.33-.85.33-.28-.01-.81-.26-1.2-.56-.48-.38-.86-.58-.82-1.23.02-.34.49-.69 1.28-1.05 5.03-2.18 8.38-3.62 10.04-4.3 2.8-1.16 3.38-1.36 3.76-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .24z" />
-                      </svg>
-                      Подключить Telegram
-                    </>
-                  )}
+                  {connectLoading ? "…" : "Подключить Telegram"}
                 </Button>
                 {onCheckConnection && (
                   <Button
@@ -126,60 +123,56 @@ export function TelegramReportSection({
             )}
           </div>
         )}
-      </div>
+      </Field>
       <div className="flex flex-col gap-2">
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
+        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+          <Checkbox
             checked={form.telegramDailyReport}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               setForm((f) => ({
                 ...f,
-                telegramDailyReport: e.target.checked,
+                telegramDailyReport: checked === true,
               }))
             }
-          />{" "}
+          />
           Ежедневный отчет
-        </label>
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
+        </Label>
+        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+          <Checkbox
             checked={form.telegramWeeklyReport}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               setForm((f) => ({
                 ...f,
-                telegramWeeklyReport: e.target.checked,
+                telegramWeeklyReport: checked === true,
               }))
             }
-          />{" "}
+          />
           Еженедельный отчет
-        </label>
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
+        </Label>
+        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+          <Checkbox
             checked={form.telegramMonthlyReport}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               setForm((f) => ({
                 ...f,
-                telegramMonthlyReport: e.target.checked,
+                telegramMonthlyReport: checked === true,
               }))
             }
-          />{" "}
+          />
           Ежемесячный отчет
-        </label>
-        <label className="flex items-center gap-2 text-[13px]">
-          <input
-            type="checkbox"
+        </Label>
+        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+          <Checkbox
             checked={form.telegramSkipWeekends}
-            onChange={(e) =>
+            onCheckedChange={(checked) =>
               setForm((f) => ({
                 ...f,
-                telegramSkipWeekends: e.target.checked,
+                telegramSkipWeekends: checked === true,
               }))
             }
-          />{" "}
+          />
           Не отправлять отчёты в Telegram в выходные
-        </label>
+        </Label>
       </div>
       <div className="mt-3">
         <Button
@@ -189,14 +182,14 @@ export function TelegramReportSection({
           disabled={!form.telegramChatId?.trim() || sendTestLoading}
           onClick={onSendTest}
         >
-          {sendTestLoading ? "Отправка…" : "Отправить отчёт в Telegram"}
+          {sendTestLoading ? "Отправка…" : "Отправить ежедневный отчёт"}
         </Button>
         {sendTestMessage && (
           <span
-            className={`ml-3 text-[13px] ${
+            className={`ml-3 text-sm ${
               sendTestMessage.includes("отправлен")
-                ? "text-[#4CAF50]"
-                : "text-[#FF5252]"
+                ? "text-green-600"
+                : "text-destructive"
             }`}
           >
             {sendTestMessage}
@@ -208,6 +201,16 @@ export function TelegramReportSection({
   );
 }
 
+const WEEKDAYS = [
+  { value: "mon", label: "Пн" },
+  { value: "tue", label: "Вт" },
+  { value: "wed", label: "Ср" },
+  { value: "thu", label: "Чт" },
+  { value: "fri", label: "Пт" },
+  { value: "sat", label: "Сб" },
+  { value: "sun", label: "Вс" },
+] as const;
+
 function ReportTimeSettings({
   form,
   setForm,
@@ -216,13 +219,11 @@ function ReportTimeSettings({
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
 }) {
   return (
-    <div className="mt-4 border-t border-[#ddd] pt-3">
-      <h4 className="m-0 mb-2 text-[13px] font-bold">
-        Время отправки (для всех)
-      </h4>
-      <div className="flex flex-wrap gap-3 items-center">
-        <label className="text-xs">
-          Ежедневно:{" "}
+    <div className="mt-4 border-t border-border pt-3">
+      <h4 className="mb-2 text-sm font-bold">Время отправки (для всех)</h4>
+      <div className="flex flex-wrap items-center gap-3">
+        <Field orientation="horizontal" className="items-center gap-2">
+          <Label className="text-xs font-normal">Ежедневно:</Label>
           <Input
             type="time"
             value={form.reportDailyTime}
@@ -232,35 +233,28 @@ function ReportTimeSettings({
                 reportDailyTime: e.target.value,
               }))
             }
-            className="py-1 rounded border border-[#ddd]"
+            className="h-8 w-auto"
           />
-        </label>
-        <label className="text-xs">
-          Еженедельно:{" "}
-          <select
+        </Field>
+        <Field orientation="horizontal" className="items-center gap-2">
+          <Label className="text-xs font-normal">Еженедельно:</Label>
+          <Select
             value={form.reportWeeklyDay}
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                reportWeeklyDay: e.target.value,
-              }))
+            onValueChange={(v) =>
+              setForm((f) => ({ ...f, reportWeeklyDay: v }))
             }
-            className="py-1 rounded border border-[#ddd]"
           >
-            {[
-              { value: "mon", label: "Пн" },
-              { value: "tue", label: "Вт" },
-              { value: "wed", label: "Ср" },
-              { value: "thu", label: "Чт" },
-              { value: "fri", label: "Пт" },
-              { value: "sat", label: "Сб" },
-              { value: "sun", label: "Вс" },
-            ].map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>{" "}
+            <SelectTrigger size="sm" className="h-8 w-[70px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {WEEKDAYS.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input
             type="time"
             value={form.reportWeeklyTime}
@@ -270,28 +264,29 @@ function ReportTimeSettings({
                 reportWeeklyTime: e.target.value,
               }))
             }
-            className="py-1 rounded border border-[#ddd]"
+            className="h-8 w-auto"
           />
-        </label>
-        <label className="text-xs">
-          Ежемесячно:{" "}
-          <select
+        </Field>
+        <Field orientation="horizontal" className="items-center gap-2">
+          <Label className="text-xs font-normal">Ежемесячно:</Label>
+          <Select
             value={form.reportMonthlyDay}
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                reportMonthlyDay: e.target.value,
-              }))
+            onValueChange={(v) =>
+              setForm((f) => ({ ...f, reportMonthlyDay: v }))
             }
-            className="py-1 rounded border border-[#ddd]"
           >
-            <option value="last">Последний день</option>
-            {Array.from({ length: 28 }, (_, i) => i + 1).map((n) => (
-              <option key={n} value={String(n)}>
-                {n}
-              </option>
-            ))}
-          </select>{" "}
+            <SelectTrigger size="sm" className="h-8 w-[100px]">
+              <SelectValue placeholder="День" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="last">Последний день</SelectItem>
+              {Array.from({ length: 28 }, (_, i) => i + 1).map((n) => (
+                <SelectItem key={n} value={String(n)}>
+                  {n}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input
             type="time"
             value={form.reportMonthlyTime}
@@ -301,9 +296,9 @@ function ReportTimeSettings({
                 reportMonthlyTime: e.target.value,
               }))
             }
-            className="py-1 rounded border border-[#ddd]"
+            className="h-8 w-auto"
           />
-        </label>
+        </Field>
       </div>
     </div>
   );

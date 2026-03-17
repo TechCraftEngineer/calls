@@ -12,6 +12,11 @@ import type {
 
 export type ReportType = "daily" | "weekly" | "monthly";
 
+export interface ReportSettingsForRecipient {
+  includeAvgRating: boolean;
+  includeAvgValue: boolean;
+}
+
 export interface TelegramReportRecipient {
   userId: string;
   chatId: string;
@@ -21,6 +26,8 @@ export interface TelegramReportRecipient {
   /** internalNumbers для фильтрации (если isManagerReport — из managedUserIds) */
   internalNumbers: string[] | null;
   skipWeekends: boolean;
+  /** Настройки отчёта (только для isManagerReport) */
+  reportSettings?: ReportSettingsForRecipient;
 }
 
 function parseInternalExtensions(ext: string | null): string[] | null {
@@ -109,6 +116,10 @@ export async function getTelegramReportRecipients(
           isManagerReport: true,
           internalNumbers,
           skipWeekends,
+          reportSettings: {
+            includeAvgRating: rs?.includeAvgRating ?? false,
+            includeAvgValue: rs?.includeAvgValue ?? false,
+          },
         });
       }
     } else if (reportType === "weekly") {
@@ -135,6 +146,10 @@ export async function getTelegramReportRecipients(
           isManagerReport: true,
           internalNumbers,
           skipWeekends,
+          reportSettings: {
+            includeAvgRating: rs?.includeAvgRating ?? false,
+            includeAvgValue: rs?.includeAvgValue ?? false,
+          },
         });
       }
     } else if (reportType === "monthly") {
@@ -161,6 +176,10 @@ export async function getTelegramReportRecipients(
           isManagerReport: true,
           internalNumbers,
           skipWeekends,
+          reportSettings: {
+            includeAvgRating: rs?.includeAvgRating ?? false,
+            includeAvgValue: rs?.includeAvgValue ?? false,
+          },
         });
       }
     }
@@ -169,7 +188,7 @@ export async function getTelegramReportRecipients(
   return recipients;
 }
 
-async function getInternalNumbersForUserIds(
+export async function getInternalNumbersForUserIds(
   _workspaceId: string,
   userIds: string[] | null,
 ): Promise<string[] | null> {
