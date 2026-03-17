@@ -7,10 +7,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import KpiTable from "@/components/features/calls/kpi-table";
-import { useSession } from "@/lib/better-auth";
 import ReportSettingsPanel from "@/components/features/settings/report-settings-panel";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
+import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 import { StatisticsFilters } from "../statistics-filters";
 import {
@@ -38,7 +38,7 @@ function StatisticsPageContent() {
   const activeTab = getActiveTab(pathname);
 
   const { data: session, isPending: sessionPending } = useSession();
-  const user = session?.user;
+  const user = session?.user ?? null;
   const userLoading = sessionPending;
   const [filters, setFilters] = useState({
     dateFrom: "",

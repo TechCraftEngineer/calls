@@ -4,8 +4,8 @@ import { getDisplayName } from "@/lib/user-profile";
 interface ManagedUsersSectionProps {
   form: any;
   setForm: React.Dispatch<React.SetStateAction<any>>;
-  user: { id: number };
-  allUsers: Array<{ id: number; email?: string }>;
+  user: { id: number | string };
+  allUsers: Array<{ id: number | string; email?: string }>;
 }
 
 export function ManagedUsersSection({

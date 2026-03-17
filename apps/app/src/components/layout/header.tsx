@@ -23,7 +23,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 function getDisplayRole(
   workspaceRole: string | undefined,
-  globalRole: string | undefined,
+  globalRole: string | undefined | null,
 ): string {
   if (workspaceRole && ROLE_LABELS[workspaceRole]) {
     return ROLE_LABELS[workspaceRole];

@@ -1,8 +1,9 @@
 import type { User } from "@/lib/auth";
 
 // Расширенный тип пользователя с полями управления
-export interface ManagedUser extends Omit<User, "id"> {
+export interface ManagedUser extends Omit<User, "id" | "email"> {
   id: string;
+  email: string;
   userId?: string;
   role?: "owner" | "admin" | "member";
   internalExtensions?: string;
@@ -19,7 +20,6 @@ export interface ManagedUser extends Omit<User, "id"> {
   filter_exclude_answering_machine?: boolean;
   filter_min_duration?: number;
   filter_min_replicas?: number;
-  email?: string;
   email_daily_report?: boolean;
   email_weekly_report?: boolean;
   email_monthly_report?: boolean;

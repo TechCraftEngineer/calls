@@ -28,12 +28,7 @@ export const authClient = createAuthClient({
 });
 
 // Типизированные хуки для работы с аутентификацией
-export const { 
-  useSession, 
-  signIn, 
-  signUp, 
-  signOut 
-} = authClient;
+export const { useSession, signIn, signUp, signOut } = authClient;
 
 /** Маппинг английских сообщений об ошибках аутентификации на русские */
 const AUTH_ERROR_MESSAGES_RU: Record<string, string> = {
@@ -119,7 +114,10 @@ export async function getCurrentUser() {
     };
   } catch (error) {
     // Логируем ошибку для отладки, но не прерываем работу приложения
-    console.error("[getCurrentUser] Error fetching user:", error instanceof Error ? error.message : error);
+    console.error(
+      "[getCurrentUser] Error fetching user:",
+      error instanceof Error ? error.message : error,
+    );
     return null;
   }
 }

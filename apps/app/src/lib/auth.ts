@@ -1,5 +1,6 @@
 /** Authentication utilities. */
 
+import type { authClient } from "./better-auth";
 import {
   getCurrentUser as betterAuthGetCurrentUser,
   isAuthenticated as betterAuthIsAuthenticated,
@@ -7,11 +8,10 @@ import {
   logout as betterAuthLogout,
   signUp as betterAuthSignUp,
 } from "./better-auth";
-import { authClient } from "./better-auth";
 
 // Infer types from Better Auth client
 export type Session = typeof authClient.$Infer.Session;
-export type User = typeof authClient.$Infer.Session["user"];
+export type User = (typeof authClient.$Infer.Session)["user"];
 
 export interface LoginResponse {
   success: boolean;

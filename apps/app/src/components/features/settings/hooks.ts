@@ -45,7 +45,7 @@ export function useSettings() {
         router.push(paths.auth.signin);
         return;
       }
-      setCurrentUser(user);
+      setCurrentUser(user as unknown as User);
 
       const integrations = await queryClient.fetchQuery(
         orpc.settings.getIntegrations.queryOptions(),

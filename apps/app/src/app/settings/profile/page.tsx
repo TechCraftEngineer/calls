@@ -17,15 +17,14 @@ import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useSession } from "@/lib/better-auth";
 import { DeleteAccountDialog } from "@/components/features/settings/delete-account-dialog";
 import SettingsPageShell from "@/components/features/settings/settings-page-shell";
 import type { User } from "@/lib/auth";
 import {
   authClient,
-  getCurrentUser,
   logout,
   toRussianAuthMessage,
+  useSession,
 } from "@/lib/better-auth";
 import {
   type ChangePasswordFormData,
@@ -68,7 +67,7 @@ export default function AccountSettingsPage() {
     }
   }, [accountsLoading, user, router]);
 
-  const updateUser = useCallback((updates: Partial<User>) => {
+  const updateUser = useCallback((_updates: Partial<User>) => {
     // Better Auth автоматически обновит сессию через useSession
     // Дополнительно можно вызвать refetch если нужно
   }, []);

@@ -27,7 +27,7 @@ export interface UserAdditionalFields {
 }
 
 // Пользователь из API ответа
-export interface ApiUser extends Omit<User, 'id'> {
+export interface ApiUser extends Omit<User, "id"> {
   id: number;
   created_at?: string | null;
 }

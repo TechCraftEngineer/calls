@@ -9,7 +9,6 @@ import {
   TableRow,
 } from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { KpiTableSkeleton } from "@/app/statistics/statistics-skeletons";
 import { useORPC } from "@/orpc/react";
 

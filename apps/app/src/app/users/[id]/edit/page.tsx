@@ -6,7 +6,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useSession } from "@/lib/better-auth";
 import {
   BasicInfoBlock,
   CheckboxBlock,
@@ -19,6 +18,7 @@ import type { EditUserForm } from "@/components/features/users/types";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import { useBlockStates } from "@/hooks/use-block-states";
+import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 
 export default function UserEditPage() {
@@ -31,8 +31,8 @@ export default function UserEditPage() {
   const [email, setEmail] = useState<string>("");
 
   const { data: session, isPending: sessionPending } = useSession();
-  const user = session?.user;
-  const userLoading = sessionPending;
+  const user = session?.user ?? null;
+  const _userLoading = sessionPending;
 
   const {
     clearBlockChanges,

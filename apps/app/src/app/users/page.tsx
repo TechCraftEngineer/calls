@@ -5,7 +5,6 @@ import { Button, toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useSession } from "@/lib/better-auth";
 import { ConfirmDialog } from "@/components/features/users/confirm-dialog";
 import type { ManagedUser } from "@/components/features/users/types";
 import UsersTable from "@/components/features/users/users-table";
@@ -15,7 +14,7 @@ import PendingInvitations from "@/components/features/workspaces/pending-invitat
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
-import type { User } from "@/lib/auth";
+import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 
 export default function UsersPage() {
@@ -24,7 +23,7 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
   const { activeWorkspace } = useWorkspace();
   const { data: session, isPending: sessionPending } = useSession();
-  const user = session?.user;
+  const user = session?.user ?? null;
   const userLoading = sessionPending;
 
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -65,10 +64,10 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
-    if (!userLoading && !currentUser) {
+    if (!userLoading && !user) {
       router.push(paths.auth.signin);
     }
-  }, [userLoading, currentUser, router]);
+  }, [userLoading, user, router]);
 
   useEffect(() => {
     if (
@@ -211,7 +210,7 @@ export default function UsersPage() {
   return (
     <div className="app-container">
       <Sidebar />
-      <Header user={currentUser} />
+      <Header user={user} />
 
       <main className="main-content">
         <header className="page-header mb-6 flex justify-between items-start">
@@ -239,7 +238,7 @@ export default function UsersPage() {
 
         <UsersTable
           users={(users ?? []) as ManagedUser[]}
-          currentUser={currentUser}
+          currentUser={user}
           currentUserRole={activeWorkspace?.role ?? null}
           loading={loading}
           onRemoveMember={handleRemoveMember}

@@ -15,16 +15,16 @@ import {
 } from "@calls/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import AudioPlayerModal from "@/components/features/calls/audio-player-modal";
 import { CallListDataGrid } from "@/components/features/calls/call-list/call-list-data-grid";
-import { useSession } from "@/lib/better-auth";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import CustomDropdown from "@/components/ui/custom-dropdown";
 import { SearchInput } from "@/components/ui/search-input";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 
 interface Call {
@@ -73,8 +73,8 @@ export default function HomePage() {
   const orpc = useORPC();
   const queryClient = useQueryClient();
   const { data: session, isPending: sessionPending } = useSession();
-  const user = session?.user;
-  const userLoading = sessionPending;
+  const user = session?.user ?? null;
+  const _userLoading = sessionPending;
   const [pagination, setPagination] = useState<Pagination>({
     total: 0,
     page: 1,
@@ -162,7 +162,7 @@ export default function HomePage() {
   useEffect(() => {
     if (sessionPending) return;
     if (session?.user) return;
-    
+
     router.push(paths.auth.signin);
   }, [sessionPending, session?.user, router]);
 

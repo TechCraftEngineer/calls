@@ -4,10 +4,10 @@ import { paths } from "@calls/config";
 import { cn } from "@calls/ui";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "@/lib/better-auth";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
+import { useSession } from "@/lib/better-auth";
 
 const SETTINGS_NAV = [
   {
@@ -145,8 +145,8 @@ export default function SettingsLayout({
   const pathname = usePathname();
   const { activeWorkspace } = useWorkspace();
   const { data: session, isPending: sessionPending } = useSession();
-  const user = session?.user;
-  const userLoading = sessionPending;
+  const user = session?.user ?? null;
+  const _userLoading = sessionPending;
   const isWorkspaceAdmin =
     activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
