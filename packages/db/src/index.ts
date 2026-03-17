@@ -98,8 +98,8 @@ export {
   usersService,
   workspacesService,
 } from "./services";
-export type { EmailReportRecipient } from "./services/email-reports.service";
 // Email reports
+export type { EmailReportRecipient } from "./services/email-reports.service";
 export {
   getEmailReportRecipients,
   getWorkspaceIdsWithEmailReportRecipients,

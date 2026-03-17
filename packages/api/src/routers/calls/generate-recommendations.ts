@@ -1,8 +1,11 @@
 import { createChatBot } from "@calls/ai";
+import { createLogger } from "@calls/api";
 import type { Call, callsService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
+
+const logger = createLogger("generate-recommendations");
 
 const DEFAULT_RECOMMENDATIONS_PROMPT = `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
 
@@ -55,7 +58,7 @@ const companyContextSchema = z
 
 function parseRecommendationsJson(text: string): string[] {
   if (!text || typeof text !== "string") {
-    console.warn("[recommendations] Empty or invalid text received");
+    logger.warn("Empty or invalid text received");
     return [];
   }
 
@@ -72,10 +75,7 @@ function parseRecommendationsJson(text: string): string[] {
       }
     }
   } catch (error) {
-    console.warn(
-      "[recommendations] Failed to parse JSON, trying fallback parsing:",
-      error,
-    );
+    logger.warn("Failed to parse JSON, trying fallback parsing", { error });
   }
 
   const lines = trimmed
@@ -109,9 +109,11 @@ export async function generateRecommendations(
     }
 
     if (transcriptText.length > 50000) {
-      console.warn(
-        `[recommendations] Transcript too long (${transcriptText.length} chars), truncating`,
-      );
+      logger.warn("Transcript too long, truncating", {
+        callId,
+        workspaceId: _workspaceId,
+        length: transcriptText.length,
+      });
       transcriptText = `${transcriptText.substring(0, 50000)}...`;
     }
 
@@ -150,9 +152,14 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
       systemPrompt,
     });
 
-    console.log(
-      `[recommendations] Generating recommendations for call ${callId}`,
-    );
+    const model = process.env.AI_RECOMMENDATIONS_MODEL ?? "openai/gpt-4o-mini";
+    logger.info("AI recommendations request", {
+      callId,
+      workspaceId: _workspaceId,
+      model,
+      timestamp: new Date().toISOString(),
+      event: "ai.request",
+    });
     const response = await chatBot.sendMessage([
       { id: "1", role: "user", content: userMessage },
     ]);
@@ -161,9 +168,11 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
     const parsed = parseRecommendationsJson(text);
 
     if (parsed.length === 0) {
-      console.warn(
-        `[recommendations] No valid recommendations generated for call ${callId}`,
-      );
+      logger.warn("No valid recommendations generated", {
+        callId,
+        workspaceId: _workspaceId,
+        model,
+      });
       return {
         recommendations: [
           "Не удалось сформировать рекомендации. Попробуйте позже.",
@@ -171,15 +180,24 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
       };
     }
 
-    console.log(
-      `[recommendations] Generated ${parsed.length} recommendations for call ${callId}`,
-    );
+    logger.info("AI recommendations response", {
+      callId,
+      workspaceId: _workspaceId,
+      model,
+      timestamp: new Date().toISOString(),
+      event: "ai.response",
+      recommendationsCount: parsed.length,
+    });
     return { recommendations: parsed };
   } catch (error) {
-    console.error(
-      `[recommendations] Error generating recommendations for call ${callId}:`,
+    logger.error("AI recommendations error", {
+      callId,
+      workspaceId: _workspaceId,
+      model: process.env.AI_RECOMMENDATIONS_MODEL ?? "openai/gpt-4o-mini",
+      timestamp: new Date().toISOString(),
+      event: "ai.error",
       error,
-    );
+    });
     if (error instanceof Error) {
       throw new Error(
         `Не удалось сгенерировать рекомендации: ${error.message}`,

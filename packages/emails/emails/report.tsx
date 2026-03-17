@@ -14,20 +14,22 @@ import {
   Text,
 } from "@react-email/components";
 
+export type ReportType = "daily" | "weekly" | "monthly";
+
 interface ReportEmailProps {
   /** Текст отчёта (plain text, будет отображён с сохранением переносов) */
   reportText: string;
   /** Тип отчёта: daily | weekly | monthly */
-  reportType: "daily" | "weekly" | "monthly";
+  reportType: ReportType;
   /** Имя пользователя для приветствия */
   username?: string;
 }
 
-const reportTypeLabels: Record<string, string> = {
+const reportTypeLabels = {
   daily: "Ежедневный отчёт",
   weekly: "Еженедельный отчёт",
   monthly: "Ежемесячный отчёт",
-};
+} as const satisfies Record<ReportType, string>;
 
 export const ReportEmail = ({
   reportText = "Нет данных за период.",

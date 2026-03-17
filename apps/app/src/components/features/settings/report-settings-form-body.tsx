@@ -106,10 +106,6 @@ export default function ReportSettingsFormBody({
   const [sendTestMessage, setSendTestMessage] = useState("");
   const [checkConnectionLoading, setCheckConnectionLoading] = useState(false);
 
-  useEffect(() => {
-    sendTestMessageRef.current = sendTestMessage;
-  }, [sendTestMessage]);
-
   useEffect(
     () => () => {
       if (sendTestTimeoutRef.current != null) {
@@ -239,7 +235,7 @@ export default function ReportSettingsFormBody({
           </div>
 
           <div className="mt-6 flex items-center gap-4">
-            <Button type="submit" variant="accent" disabled={saving}>
+            <Button type="submit" variant="default" disabled={saving}>
               {saving ? "Сохранение…" : "Сохранить настройки"}
             </Button>
           </div>

@@ -2,16 +2,22 @@ import { callsService, usersService, workspacesService } from "@calls/db";
 import { ReportEmail, sendEmail } from "@calls/emails";
 import { formatTelegramReport, type ManagerStats } from "@calls/jobs";
 import { ORPCError } from "@orpc/server";
+import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 
 const TZ = "Europe/Moscow";
 
-function formatDateInMoscow(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
+const managerStatsSchema = z.object({
+  name: z.string(),
+  internalNumber: z.string().nullable(),
+  incoming: z.object({ count: z.number(), duration: z.number() }),
+  outgoing: z.object({ count: z.number(), duration: z.number() }),
+  avgManagerScore: z.number().nullable().optional(),
+  avgValueScore: z.number().nullable().optional(),
+  evaluatedCount: z.number().optional(),
+});
+
+const statsSchema = z.record(z.string(), managerStatsSchema);
 
 function parseInternalExtensions(ext: string | null): string[] | null {
   if (!ext || String(ext).trim().toLowerCase() === "all") return null;
@@ -28,17 +34,28 @@ export const sendTestEmail = workspaceProcedure.handler(async ({ context }) => {
       message: "Требуется активное рабочее пространство",
     });
 
-  const email = (context.user as Record<string, unknown>).email as string;
+  const email =
+    context.sessionEmail?.trim() ??
+    (context.user &&
+    typeof context.user === "object" &&
+    "email" in context.user &&
+    typeof (context.user as { email?: unknown }).email === "string"
+      ? (context.user as { email: string }).email.trim()
+      : null);
+
+  if (!email)
+    throw new ORPCError("BAD_REQUEST", {
+      message: "Email не указан. Укажите email в настройках.",
+    });
+
   const user = await usersService.getUserByEmail(email);
   if (!user)
     throw new ORPCError("NOT_FOUND", {
       message: "Пользователь не найден",
     });
 
-  const userEmail = (user as Record<string, unknown>).email as
-    | string
-    | undefined;
-  if (!userEmail?.trim())
+  const userEmail = user.email?.trim();
+  if (!userEmail)
     throw new ORPCError("BAD_REQUEST", {
       message: "Email не указан. Укажите email в настройках.",
     });
@@ -53,26 +70,35 @@ export const sendTestEmail = workspaceProcedure.handler(async ({ context }) => {
     userForEdit.internalExtensions ?? null,
   );
 
-  const now = new Date(new Date().toLocaleString("en-US", { timeZone: TZ }));
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const dateFrom = formatDateInMoscow(yesterday);
+  const { subDays } = await import("date-fns");
+  const { formatInTimeZone } = await import("date-fns-tz");
+  const now = new Date();
+  const yesterday = subDays(now, 1);
+  const dateFrom = formatInTimeZone(yesterday, TZ, "yyyy-MM-dd");
   const dateTo = dateFrom;
   const dateFromDb = `${dateFrom} 00:00:00`;
   const dateToDb = `${dateTo} 23:59:59`;
 
-  const stats = await callsService.getEvaluationsStats({
+  const rawStats = await callsService.getEvaluationsStats({
     workspaceId,
     dateFrom: dateFromDb,
     dateTo: dateToDb,
     internalNumbers: internalNumbers ?? undefined,
   });
 
+  const parseResult = statsSchema.safeParse(rawStats);
+  if (!parseResult.success) {
+    throw new ORPCError("INTERNAL_SERVER_ERROR", {
+      message: "Некорректные данные статистики",
+    });
+  }
+  const stats = parseResult.data as Record<string, ManagerStats>;
+
   const ws = await workspacesService.getById(workspaceId);
   const workspaceName = ws?.name ?? undefined;
 
   const text = formatTelegramReport({
-    stats: stats as Record<string, ManagerStats>,
+    stats,
     dateFrom,
     dateTo,
     reportType: "daily",
@@ -82,7 +108,7 @@ export const sendTestEmail = workspaceProcedure.handler(async ({ context }) => {
 
   try {
     await sendEmail({
-      to: [userEmail.trim()],
+      to: [userEmail],
       subject: `Тестовый отчёт по звонкам: ${dateFrom}`,
       react: ReportEmail({
         reportText: text,

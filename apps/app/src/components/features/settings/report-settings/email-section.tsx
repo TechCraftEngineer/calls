@@ -10,7 +10,7 @@ interface EmailSectionProps {
 export function EmailReportSection({ form, setForm }: EmailSectionProps) {
   return (
     <div className="rounded-lg border bg-card p-4 text-card-foreground">
-      <h4 className="mb-3 text-sm font-bold">Email Отчеты</h4>
+      <h4 className="mb-3 text-sm font-bold">Отчёты по электронной почте</h4>
       <Field className="mb-3">
         <FieldLabel asChild>
           <Label>Email адрес</Label>

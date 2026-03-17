@@ -92,6 +92,10 @@ export async function getEmailReportRecipients(
 
 /**
  * Возвращает ID воркспейсов, в которых есть хотя бы один получатель email-отчётов.
+ *
+ * innerJoin на schema.userWorkspaceSettings намерен: нужны только участники
+ * с явно включёнными настройками уведомлений (notificationSettings). Строки
+ * без настроек исключаются, в отличие от getEmailReportRecipients, где используется leftJoin.
  */
 export async function getWorkspaceIdsWithEmailReportRecipients(): Promise<
   string[]
@@ -125,10 +129,7 @@ export async function getWorkspaceIdsWithEmailReportRecipients(): Promise<
       ),
     );
 
-  const workspaceIds: string[] = [];
-  for (const r of rows) {
-    if (r.workspaceId) workspaceIds.push(r.workspaceId);
-  }
-
-  return [...new Set(workspaceIds)];
+  return rows
+    .map((r) => r.workspaceId)
+    .filter((id): id is string => Boolean(id));
 }
