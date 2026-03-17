@@ -32,7 +32,6 @@
     "generate-favicon": "bun run scripts/generate-favicon.mjs"
   },
   "devDependencies": {
-    "@ai-sdk/openai": "^3.0.41",
     "@biomejs/biome": "2.4.7",
     "@turbo/gen": "^2.8.17",
     "ai": "^6.0.116",
