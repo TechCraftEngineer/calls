@@ -173,7 +173,7 @@ function LoginForm() {
               </div>
               <Button
                 type="button"
-                variant="default"
+                variant="outline"
                 onClick={() =>
                   authClient.signIn.social({
                     provider: "google",
