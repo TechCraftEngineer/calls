@@ -1,4 +1,5 @@
 import { workspaceSettingsRepository } from "@calls/db";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { evaluationTemplateSlugSchema } from "../schemas";
@@ -18,7 +19,9 @@ export const updateEvaluationSettings = workspaceAdminProcedure
         context.workspaceId,
       );
       if (!ok) {
-        return { success: false };
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: "Не удалось обновить настройки оценки",
+        });
       }
     }
     return { success: true };

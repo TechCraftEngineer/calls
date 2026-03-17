@@ -41,7 +41,9 @@ export interface BotIntegrationConfig {
   botToken: string;
 }
 
-/** Универсальный конфиг для будущих интеграций */
+/** Универсальный конфиг для будущих интеграций.
+ * Record<string, unknown> оставлен для обратной совместимости;
+ * новые типы интеграций следует явно добавлять в union. */
 export type IntegrationConfig =
   | FtpIntegrationConfig
   | BotIntegrationConfig

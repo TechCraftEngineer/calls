@@ -151,7 +151,9 @@ export default function CallDetailPage() {
       setRestarting(true);
       await restartCallAnalysis({
         callId,
-        transcribe: (input) => transcribeMutation.mutateAsync(input),
+        transcribe: async (input) => {
+          await transcribeMutation.mutateAsync(input);
+        },
         loadData: () => loadData().then(() => {}),
       });
       toast.success("Анализ успешно перезапущен!");

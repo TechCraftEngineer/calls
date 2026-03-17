@@ -6,7 +6,7 @@
 
 export async function restartCallAnalysis(params: {
   callId: string | number;
-  transcribe: (input: { call_id: string }) => Promise<unknown>;
+  transcribe: (input: { call_id: string }) => Promise<void>;
   loadData: () => Promise<void>;
 }): Promise<void> {
   const { callId, transcribe, loadData } = params;

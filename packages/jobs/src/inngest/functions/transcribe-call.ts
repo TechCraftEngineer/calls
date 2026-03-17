@@ -80,16 +80,14 @@ export const transcribeCallFn = inngest.createFunction(
       });
     });
 
-    const { text: finalText, customerName } = await step.run(
-      "identify-speakers",
-      async () => {
-        return identifySpeakersWithLlm(result.normalizedText, {
-          direction: call.direction,
-          managerName: call.name,
-          workspaceId: call.workspaceId,
-        });
-      },
-    );
+    const identifyResult = await step.run("identify-speakers", async () => {
+      return identifySpeakersWithLlm(result.normalizedText, {
+        direction: call.direction,
+        managerName: call.name,
+        workspaceId: call.workspaceId,
+      });
+    });
+    const { text: finalText, customerName, operatorName } = identifyResult;
 
     await step.run("save-transcript", async () => {
       // Безопасная сериализация метаданных
@@ -97,6 +95,9 @@ export const transcribeCallFn = inngest.createFunction(
       try {
         if (result.metadata && typeof result.metadata === "object") {
           serializedMetadata = JSON.parse(JSON.stringify(result.metadata));
+        }
+        if (operatorName != null && operatorName !== "") {
+          serializedMetadata.operatorName = operatorName;
         }
       } catch (error) {
         logger.warn("Ошибка сериализации метаданных", {

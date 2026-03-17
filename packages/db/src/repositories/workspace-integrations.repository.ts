@@ -7,15 +7,18 @@ import { db } from "../client";
 import type { FtpIntegrationConfig, IntegrationType } from "../schema";
 import * as schema from "../schema";
 
+const MIN_BASE64_LENGTH = 20;
+const MIN_DECODED_BYTES = 28; // iv(12) + authTag(16) минимум
+
 /** Проверка формата зашифрованного токена (enc: + base64) */
 function isEncryptedTokenValid(encryptedToken: string): boolean {
   if (!encryptedToken || typeof encryptedToken !== "string") return false;
   if (!encryptedToken.startsWith("enc:")) return false;
   try {
     const base64Part = encryptedToken.slice(4);
-    if (!base64Part || base64Part.length < 20) return false;
+    if (!base64Part || base64Part.length < MIN_BASE64_LENGTH) return false;
     const decoded = Buffer.from(base64Part, "base64");
-    return decoded.length >= 28; // iv(12) + authTag(16) минимум
+    return decoded.length >= MIN_DECODED_BYTES;
   } catch {
     return false;
   }

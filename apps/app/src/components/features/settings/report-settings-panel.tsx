@@ -2,6 +2,7 @@ import { toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { z } from "zod";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import type { User } from "@/lib/auth";
 import {
@@ -157,18 +158,28 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         ? `${m[1].padStart(2, "0")}:${(m[2] || "0").padStart(2, "0")}`
         : s;
     };
+    const managedUserIdSchema = z
+      .string()
+      .min(1, "ID не может быть пустым")
+      .refine((s) => !/^(null|undefined|\[object Object\])$/i.test(s));
+    const managedIdsArraySchema = z.array(managedUserIdSchema);
     let managedIds: string[] = [];
     try {
       const raw = u.report_managed_user_ids;
-      if (Array.isArray(raw))
-        managedIds = raw.map((x) => String(x)).filter(Boolean);
-      else if (typeof raw === "string" && raw.trim()) {
+      let toValidate: unknown[] = [];
+      if (Array.isArray(raw)) {
+        toValidate = raw;
+      } else if (typeof raw === "string" && raw.trim()) {
         const parsed = JSON.parse(raw) as unknown;
-        managedIds = Array.isArray(parsed)
-          ? parsed.map((x) => String(x)).filter(Boolean)
-          : [];
+        toValidate = Array.isArray(parsed) ? parsed : [];
       }
-    } catch (_) {}
+      const result = managedIdsArraySchema.safeParse(
+        toValidate.map((x) => String(x)).filter(Boolean),
+      );
+      managedIds = result.success ? result.data : [];
+    } catch (_) {
+      managedIds = [];
+    }
     setForm((prev) => ({
       ...prev,
       report_managed_user_ids: managedIds,

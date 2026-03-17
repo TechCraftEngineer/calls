@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/features/users/confirm-dialog";
 import type { WorkspaceMemberUser } from "@/components/features/users/types";
 import UsersTable from "@/components/features/users/users-table";
 import ConfigureInvitationSettingsModal from "@/components/features/workspaces/configure-invitation-settings-modal";
+import type { InvitationSettingsPayload } from "@/components/features/workspaces/invitation-settings-types";
 import InviteUserModal from "@/components/features/workspaces/invite-user-modal";
 import PendingInvitations from "@/components/features/workspaces/pending-invitations";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
@@ -30,7 +31,7 @@ export default function UsersPage() {
   const [configureInvitation, setConfigureInvitation] = useState<{
     id: string;
     email: string;
-    settings?: unknown;
+    settings?: InvitationSettingsPayload;
   } | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<{
     userId: string;
@@ -183,19 +184,15 @@ export default function UsersPage() {
     setConfigureInvitation({
       id: invitationId,
       email,
-      settings: invitation?.pendingSettings,
+      settings: invitation?.pendingSettings as
+        | InvitationSettingsPayload
+        | undefined,
     });
   };
 
   const handleSaveInvitationSettings = async (
     invitationId: string,
-    settings: {
-      notificationSettings?: Record<string, unknown>;
-      reportSettings?: Record<string, unknown>;
-      kpiSettings?: Record<string, unknown>;
-      filterSettings?: Record<string, unknown>;
-      evaluationSettings?: Record<string, unknown>;
-    },
+    settings: InvitationSettingsPayload,
   ) => {
     if (!workspaceId) throw new Error("Нет рабочего пространства");
     await updateInvitationSettingsMutation.mutateAsync({
@@ -284,7 +281,7 @@ export default function UsersPage() {
         <ConfigureInvitationSettingsModal
           invitationId={configureInvitation.id}
           email={configureInvitation.email}
-          initialSettings={configureInvitation.settings as never}
+          initialSettings={configureInvitation.settings}
           onClose={() => setConfigureInvitation(null)}
           onSave={handleSaveInvitationSettings}
         />

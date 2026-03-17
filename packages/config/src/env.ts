@@ -33,7 +33,7 @@ export const env = createEnv({
     RESEND_API_KEY: z.string().optional(),
     EMAIL_SANDBOX_ENABLED: z.coerce.boolean().optional().default(false),
     EMAIL_SANDBOX_HOST: z.string().default("localhost"),
-    EMAIL_FROM: z.string().default("QBS Звонки <support@qbsoft.ru>"),
+    EMAIL_FROM: z.string().default("QBS Звонки <info@zvonki.qbsoft.ru>"),
 
     // Auth
     BETTER_AUTH_SECRET: z.string().optional(),

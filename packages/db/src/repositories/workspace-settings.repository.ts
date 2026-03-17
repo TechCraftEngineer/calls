@@ -1,5 +1,5 @@
 /**
- * Репозиторий настроек воркспейса — key-value хранилище настроек
+ * Репозиторий настроек воркспейса — хранилище пар ключ‑значение
  */
 
 import { and, eq, inArray, sql } from "drizzle-orm";
@@ -31,7 +31,7 @@ export const workspaceSettingsRepository = {
       return result[0]?.value ?? null;
     } catch (error) {
       console.error(
-        `Error finding workspace setting: ${key} for workspace: ${workspaceId}`,
+        `Ошибка при поиске настройки рабочей области: ${key} для рабочей области: ${workspaceId}`,
         error,
       );
       return null;
@@ -56,7 +56,7 @@ export const workspaceSettingsRepository = {
       return foundValue ?? defaultValue ?? null;
     } catch (error) {
       console.error(
-        `Error finding workspace setting with default: ${key} for workspace: ${workspaceId}`,
+        `Ошибка при поиске настройки рабочей области с умолчанием: ${key} для рабочей области: ${workspaceId}`,
         error,
       );
       return defaultValue ?? null;
@@ -96,7 +96,7 @@ export const workspaceSettingsRepository = {
         .orderBy(schema.workspaceSettings.key);
     } catch (error) {
       console.error(
-        `Error finding workspace settings by keys for workspace: ${workspaceId}`,
+        `Ошибка при поиске настроек рабочей области по ключам для рабочей области: ${workspaceId}`,
         error,
       );
       return [];
@@ -129,7 +129,7 @@ export const workspaceSettingsRepository = {
         .orderBy(schema.workspaceSettings.key);
     } catch (error) {
       console.error(
-        `Error finding all workspace settings for workspace: ${workspaceId}`,
+        `Ошибка при поиске всех настроек рабочей области для рабочей области: ${workspaceId}`,
         error,
       );
       return [];
@@ -144,7 +144,7 @@ export const workspaceSettingsRepository = {
   ): Promise<boolean> {
     try {
       if (!key?.trim() || !workspaceId?.trim()) {
-        console.error("Invalid parameters provided to upsert:", {
+        console.error("Некорректные параметры для upsert:", {
           key,
           workspaceId,
         });
@@ -152,7 +152,9 @@ export const workspaceSettingsRepository = {
       }
 
       if (typeof value !== "string") {
-        console.error(`Invalid value type for key: ${key}, expected string`);
+        console.error(
+          `Некорректный тип значения для ключа: ${key}, ожидается строка`,
+        );
         return false;
       }
 
@@ -185,7 +187,7 @@ export const workspaceSettingsRepository = {
       return true;
     } catch (error) {
       console.error(
-        `Failed to upsert workspace setting: ${key} for workspace: ${workspaceId}`,
+        `Не удалось обновить настройку рабочей области: ${key} для рабочей области: ${workspaceId}`,
         error,
       );
       return false;

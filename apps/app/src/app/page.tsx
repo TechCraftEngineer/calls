@@ -331,7 +331,7 @@ export default function HomePage() {
                                   managerRecommendations: recommendations,
                                 }
                               : ({
-                                  id: "",
+                                  id: callId,
                                   managerRecommendations: recommendations,
                                 } as (typeof item)["evaluation"]),
                           }

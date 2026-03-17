@@ -70,7 +70,11 @@ export const list = workspaceProcedure
             ? item.call.timestamp.toISOString()
             : item.call.timestamp,
         managerName: item.call.name ?? null,
-        operatorName: item.call.name ?? null,
+        operatorName:
+          (item.transcript?.metadata as { operatorName?: string } | undefined)
+            ?.operatorName ??
+          item.call.name ??
+          null,
       },
     }));
 

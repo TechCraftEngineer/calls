@@ -2,46 +2,17 @@
 
 import { Button, Card, CardContent } from "@calls/ui";
 import { useEffect, useState } from "react";
-
-interface InvitationSettings {
-  notificationSettings?: {
-    email?: {
-      dailyReport?: boolean;
-      weeklyReport?: boolean;
-      monthlyReport?: boolean;
-    };
-    telegram?: {
-      dailyReport?: boolean;
-      managerReport?: boolean;
-      weeklyReport?: boolean;
-      monthlyReport?: boolean;
-      skipWeekends?: boolean;
-    };
-  };
-  reportSettings?: {
-    includeCallSummaries?: boolean;
-    detailed?: boolean;
-    includeAvgValue?: boolean;
-    includeAvgRating?: boolean;
-  };
-  kpiSettings?: {
-    baseSalary?: number;
-    targetBonus?: number;
-    targetTalkTimeMinutes?: number;
-  };
-  filterSettings?: {
-    excludeAnsweringMachine?: boolean;
-    minDuration?: number;
-    minReplicas?: number;
-  };
-}
+import type { InvitationSettingsPayload } from "./invitation-settings-types";
 
 interface ConfigureInvitationSettingsModalProps {
   invitationId: string;
   email: string;
-  initialSettings?: InvitationSettings;
+  initialSettings?: InvitationSettingsPayload;
   onClose: () => void;
-  onSave: (invitationId: string, settings: InvitationSettings) => Promise<void>;
+  onSave: (
+    invitationId: string,
+    settings: InvitationSettingsPayload,
+  ) => Promise<void>;
 }
 
 export default function ConfigureInvitationSettingsModal({
@@ -51,7 +22,7 @@ export default function ConfigureInvitationSettingsModal({
   onClose,
   onSave,
 }: ConfigureInvitationSettingsModalProps) {
-  const [settings, setSettings] = useState<InvitationSettings>(
+  const [settings, setSettings] = useState<InvitationSettingsPayload>(
     initialSettings ?? {},
   );
   const [isSaving, setIsSaving] = useState(false);

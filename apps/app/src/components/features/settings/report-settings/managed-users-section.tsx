@@ -36,9 +36,11 @@ export function ManagedUsersSection({
         {allUsers
           .filter((u) => u.id !== user.id)
           .map((u) => {
-            const name = getDisplayName(u) || u.email || "—";
+            const display = getDisplayName(u) || u.email || "—";
             const checked =
               form.report_managed_user_ids?.includes(u.id) ?? false;
+            const label =
+              display !== u.email ? `${display} (${u.email})` : display;
             return (
               <label key={u.id} className="flex items-center gap-2 text-[13px]">
                 <input
@@ -54,7 +56,7 @@ export function ManagedUsersSection({
                     }));
                   }}
                 />
-                {name} ({u.email})
+                {label}
               </label>
             );
           })}
