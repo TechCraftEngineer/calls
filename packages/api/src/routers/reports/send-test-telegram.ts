@@ -8,6 +8,8 @@ import {
 import { formatTelegramReport, type ManagerStats } from "@calls/jobs";
 import { sendMessage } from "@calls/telegram-bot";
 import { ORPCError } from "@orpc/server";
+import { subDays, subMonths, subWeeks } from "date-fns";
+import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 
@@ -17,10 +19,37 @@ const reportTypeSchema = z.object({
 });
 
 function formatDateInMoscow(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return formatInTimeZone(date, TZ, "yyyy-MM-dd");
+}
+
+function getContextUserEmail(user: unknown): string {
+  if (
+    user &&
+    typeof user === "object" &&
+    "email" in user &&
+    typeof user.email === "string" &&
+    user.email.trim()
+  ) {
+    return user.email.trim();
+  }
+
+  throw new ORPCError("BAD_REQUEST", {
+    message: "Email пользователя не найден в сессии",
+  });
+}
+
+function getTelegramChatId(value: unknown): string {
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  throw new ORPCError("BAD_REQUEST", {
+    message: "Telegram Chat ID не указан. Подключите Telegram в настройках.",
+  });
 }
 
 function parseInternalExtensions(ext: string | null): string[] | null {
@@ -40,21 +69,16 @@ export const sendTestTelegram = workspaceProcedure
         message: "Требуется активное рабочее пространство",
       });
 
-    const email = (context.user as Record<string, unknown>).email as string;
+    const email = getContextUserEmail(context.user);
     const user = await usersService.getUserByEmail(email);
     if (!user)
       throw new ORPCError("NOT_FOUND", {
         message: "Пользователь не найден",
       });
 
-    const chatId = (user as Record<string, unknown>).telegramChatId as
-      | string
-      | undefined;
-    if (!chatId?.trim())
-      throw new ORPCError("BAD_REQUEST", {
-        message:
-          "Telegram Chat ID не указан. Подключите Telegram в настройках.",
-      });
+    const chatId = getTelegramChatId(
+      user && typeof user === "object" ? user.telegramChatId : undefined,
+    );
 
     const token = await settingsService.getDecryptedBotToken(
       "telegram_bot_token",
@@ -88,24 +112,18 @@ export const sendTestTelegram = workspaceProcedure
     }
 
     const { reportType } = input;
-    const now = new Date(new Date().toLocaleString("en-US", { timeZone: TZ }));
+    const now = toZonedTime(new Date(), TZ);
     let dateFrom: string;
     let dateTo: string;
 
     if (reportType === "daily") {
-      const d = new Date(now);
-      d.setDate(d.getDate() - 1);
-      dateFrom = formatDateInMoscow(d);
+      dateFrom = formatDateInMoscow(subDays(now, 1));
       dateTo = dateFrom;
     } else if (reportType === "weekly") {
-      const d = new Date(now);
-      d.setDate(d.getDate() - 7);
-      dateFrom = formatDateInMoscow(d);
+      dateFrom = formatDateInMoscow(subWeeks(now, 1));
       dateTo = formatDateInMoscow(now);
     } else {
-      const d = new Date(now);
-      d.setMonth(d.getMonth() - 1);
-      dateFrom = formatDateInMoscow(d);
+      dateFrom = formatDateInMoscow(subMonths(now, 1));
       dateTo = formatDateInMoscow(now);
     }
     const dateFromDb = `${dateFrom} 00:00:00`;
@@ -151,7 +169,7 @@ export const sendTestTelegram = workspaceProcedure
       lowRatedCalls,
     });
 
-    const success = await sendMessage(token, chatId.trim(), text);
+    const success = await sendMessage(token, chatId, text);
     if (!success) {
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message:

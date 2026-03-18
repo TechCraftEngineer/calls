@@ -1,10 +1,6 @@
 import {
   Button,
   Checkbox,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
   Field,
   FieldLabel,
   Input,
@@ -15,11 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@calls/ui";
-import { ChevronDown } from "lucide-react";
 import type React from "react";
 import type { User } from "@/lib/auth";
 import type { ReportSettingsForm } from "../report-settings-types";
-import type { ReportType } from "../types";
+import { SendTestReportButton } from "../send-test-report-button";
+import { REPORT_TYPE_LABELS, type ReportType } from "../types";
 
 interface TelegramSectionProps {
   form: ReportSettingsForm;
@@ -58,11 +54,7 @@ export function TelegramReportSection({
   const hasTelegram = !!form.telegramChatId?.trim();
   const primaryReportType = sendTestReportType ?? "daily";
   const primaryReportLabel =
-    primaryReportType === "daily"
-      ? "ежедневный"
-      : primaryReportType === "weekly"
-        ? "еженедельный"
-        : "ежемесячный";
+    REPORT_TYPE_LABELS[primaryReportType] ?? REPORT_TYPE_LABELS.daily;
 
   return (
     <div className="rounded-lg border bg-card p-4 text-card-foreground">
@@ -189,45 +181,15 @@ export function TelegramReportSection({
         </Label>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <div className="flex items-center">
-          <Button
-            type="button"
-            variant={canSendTest ? "success" : "default"}
-            size="sm"
-            disabled={!form.telegramChatId?.trim() || sendTestLoading}
-            onClick={() => onSendTest(primaryReportType)}
-            className="rounded-r-none"
-          >
-            {sendTestLoading
-              ? `Отправка ${primaryReportLabel} отчёта…`
-              : `Отправить ${primaryReportLabel} отчёт`}
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant={canSendTest ? "success" : "default"}
-                size="sm"
-                disabled={!form.telegramChatId?.trim() || sendTestLoading}
-                className="rounded-l-none border-l border-primary-foreground/20 px-2"
-                aria-label="Выбрать тип отчёта"
-              >
-                <ChevronDown className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => onSendTest("daily")}>
-                Ежедневный отчёт
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSendTest("weekly")}>
-                Еженедельный отчёт
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onSendTest("monthly")}>
-                Ежемесячный отчёт
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <SendTestReportButton
+          onSendTest={onSendTest}
+          primaryReportType={primaryReportType}
+          primaryReportLabel={primaryReportLabel}
+          sendTestLoading={sendTestLoading}
+          canSendTest={Boolean(form.telegramChatId?.trim())}
+          variant={canSendTest ? "success" : "default"}
+          size="sm"
+        />
         {sendTestMessage && (
           <span
             className={`text-sm ${

@@ -9,7 +9,12 @@ import { useCallback, useState } from "react";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 import { INTEGRATION_KEYS } from "./constants";
-import type { Prompt, ReportType, SettingsState } from "./types";
+import {
+  getReportTypeLabel,
+  type Prompt,
+  type ReportType,
+  type SettingsState,
+} from "./types";
 import {
   validateFtpCredentials,
   validateFtpHost,
@@ -412,12 +417,7 @@ export function useSettings() {
     }));
     try {
       await sendTestTelegramMutation.mutateAsync({ reportType });
-      const reportTypeLabel =
-        reportType === "daily"
-          ? "Ежедневный"
-          : reportType === "weekly"
-            ? "Еженедельный"
-            : "Ежемесячный";
+      const reportTypeLabel = getReportTypeLabel(reportType);
       setState((prev) => ({
         ...prev,
         sendTestMessage: `${reportTypeLabel} отчёт отправлен в Telegram`,

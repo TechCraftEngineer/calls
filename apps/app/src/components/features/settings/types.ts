@@ -12,6 +12,18 @@ export interface FtpConnectionStatus {
   message: string | null;
 }
 
+export type ReportType = "daily" | "weekly" | "monthly";
+
+export const REPORT_TYPE_LABELS = {
+  daily: "Ежедневный",
+  weekly: "Еженедельный",
+  monthly: "Ежемесячный",
+} as const;
+
+export function getReportTypeLabel(reportType: ReportType): string {
+  return REPORT_TYPE_LABELS[reportType];
+}
+
 export interface SettingsState {
   prompts: Record<string, Prompt>;
   loading: boolean;
@@ -28,8 +40,6 @@ export interface SettingsState {
   telegramSaving: boolean;
   maxBotSaving: boolean;
 }
-
-export type ReportType = "daily" | "weekly" | "monthly";
 
 export interface TelegramSectionProps {
   sendTestLoading: boolean;
