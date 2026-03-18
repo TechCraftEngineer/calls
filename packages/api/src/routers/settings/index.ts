@@ -3,6 +3,7 @@ import { evaluationRouter } from "./evaluation";
 import { ftpRouter } from "./ftp";
 import { getModels } from "./get-models";
 import { integrationsRouter } from "./integrations";
+import { pbxRouter } from "./pbx";
 import { promptsRouter } from "./prompts";
 
 export const settingsRouter = {
@@ -15,6 +16,16 @@ export const settingsRouter = {
   backup,
   testFtp: ftpRouter.testFtp,
   checkFtpStatus: ftpRouter.checkFtpStatus,
+  getPbx: pbxRouter.getPbx,
+  updatePbx: pbxRouter.updatePbx,
+  testPbx: pbxRouter.testPbx,
+  syncPbxDirectory: pbxRouter.syncPbxDirectory,
+  syncPbxCalls: pbxRouter.syncPbxCalls,
+  syncPbxRecordings: pbxRouter.syncPbxRecordings,
+  listPbxEmployees: pbxRouter.listPbxEmployees,
+  listPbxNumbers: pbxRouter.listPbxNumbers,
+  linkPbxUser: pbxRouter.linkPbxUser,
+  unlinkPbxUser: pbxRouter.unlinkPbxUser,
   getEvaluationTemplates: evaluationRouter.getEvaluationTemplates,
   getEvaluationTemplate: evaluationRouter.getEvaluationTemplate,
   getEvaluationTemplateBySlug: evaluationRouter.getEvaluationTemplateBySlug,

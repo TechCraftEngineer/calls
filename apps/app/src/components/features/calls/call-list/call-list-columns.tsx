@@ -122,6 +122,7 @@ export function getCallListColumns(
       ),
       cell: ({ row }) => renderStatusCell(row.original.call),
       meta: { headerTitle: "Результат" },
+      enableSorting: false,
     },
     {
       accessorKey: "call.duration",

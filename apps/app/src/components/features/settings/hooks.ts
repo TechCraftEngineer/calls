@@ -11,6 +11,8 @@ import { useORPC } from "@/orpc/react";
 import { INTEGRATION_KEYS } from "./constants";
 import {
   getReportTypeLabel,
+  type PbxEmployeeItem,
+  type PbxNumberItem,
   type Prompt,
   type ReportType,
   type SettingsState,
@@ -41,6 +43,14 @@ export function useSettings() {
     ftpStatusLoading: false,
     telegramSaving: false,
     maxBotSaving: false,
+    megaPbxSaving: false,
+    megaPbxTesting: false,
+    megaPbxSyncing: null,
+    megaPbxTestMessage: "",
+    megaPbxEmployeesLoading: false,
+    megaPbxNumbersLoading: false,
+    megaPbxEmployees: [],
+    megaPbxNumbers: [],
   });
 
   const loadSettings = useCallback(async () => {
@@ -53,9 +63,13 @@ export function useSettings() {
       }
       setCurrentUser(user as unknown as User);
 
-      const integrations = await queryClient.fetchQuery(
-        orpc.settings.getIntegrations.queryOptions(),
-      );
+      const [integrations, megaPbx, megaPbxEmployees, megaPbxNumbers] =
+        await Promise.all([
+          queryClient.fetchQuery(orpc.settings.getIntegrations.queryOptions()),
+          queryClient.fetchQuery(orpc.settings.getPbx.queryOptions()),
+          queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
+          queryClient.fetchQuery(orpc.settings.listPbxNumbers.queryOptions()),
+        ]);
       const promptsMap: Record<string, Prompt> = {};
 
       // Добавляем интеграции (FTP, Telegram, MAX Bot)
@@ -111,6 +125,147 @@ export function useSettings() {
         description: "Токен MAX-бота",
         updated_at: undefined,
       };
+      promptsMap.megapbx_enabled = {
+        key: "megapbx_enabled",
+        value: megaPbx.enabled ? "true" : "false",
+        description: "MegaPBX включён",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_base_url = {
+        key: "megapbx_base_url",
+        value: megaPbx.baseUrl ?? "",
+        description: "Base URL MegaPBX",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_api_key = {
+        key: "megapbx_api_key",
+        value: "",
+        description: "API key MegaPBX",
+        updated_at: undefined,
+        meta: { passwordSet: megaPbx.apiKeySet },
+      };
+      promptsMap.megapbx_auth_scheme = {
+        key: "megapbx_auth_scheme",
+        value: megaPbx.authScheme ?? "bearer",
+        description: "Схема авторизации",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_api_key_header = {
+        key: "megapbx_api_key_header",
+        value: megaPbx.apiKeyHeader ?? "X-API-Key",
+        description: "Имя заголовка для API key",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_employees_path = {
+        key: "megapbx_employees_path",
+        value: megaPbx.employeesPath ?? "",
+        description: "Путь для списка сотрудников",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_employees_result_key = {
+        key: "megapbx_employees_result_key",
+        value: megaPbx.employeesResultKey ?? "",
+        description: "Ключ массива сотрудников",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_numbers_path = {
+        key: "megapbx_numbers_path",
+        value: megaPbx.numbersPath ?? "",
+        description: "Путь для списка номеров",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_numbers_result_key = {
+        key: "megapbx_numbers_result_key",
+        value: megaPbx.numbersResultKey ?? "",
+        description: "Ключ массива номеров",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_calls_path = {
+        key: "megapbx_calls_path",
+        value: megaPbx.callsPath ?? "",
+        description: "Путь для списка звонков",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_calls_result_key = {
+        key: "megapbx_calls_result_key",
+        value: megaPbx.callsResultKey ?? "",
+        description: "Ключ массива звонков",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_recordings_path = {
+        key: "megapbx_recordings_path",
+        value: megaPbx.recordingsPath ?? "",
+        description: "Путь для записей/метаданных записей",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_recordings_result_key = {
+        key: "megapbx_recordings_result_key",
+        value: megaPbx.recordingsResultKey ?? "",
+        description: "Ключ массива записей",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_webhook_path = {
+        key: "megapbx_webhook_path",
+        value: megaPbx.webhookPath ?? "",
+        description: "Путь регистрации вебхука",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_webhook_secret = {
+        key: "megapbx_webhook_secret",
+        value: "",
+        description: "Секрет вебхука",
+        updated_at: undefined,
+        meta: { passwordSet: megaPbx.webhookSecretSet },
+      };
+      promptsMap.megapbx_ftp_host = {
+        key: "megapbx_ftp_host",
+        value: megaPbx.ftpHost ?? "",
+        description: "FTP host для записей",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_ftp_user = {
+        key: "megapbx_ftp_user",
+        value: megaPbx.ftpUser ?? "",
+        description: "FTP user для записей",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_ftp_password = {
+        key: "megapbx_ftp_password",
+        value: "",
+        description: "FTP password для записей",
+        updated_at: undefined,
+        meta: { passwordSet: megaPbx.ftpPasswordSet },
+      };
+      promptsMap.megapbx_sync_employees = {
+        key: "megapbx_sync_employees",
+        value: megaPbx.syncEmployees ? "true" : "false",
+        description: "Синхронизировать сотрудников",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_sync_numbers = {
+        key: "megapbx_sync_numbers",
+        value: megaPbx.syncNumbers ? "true" : "false",
+        description: "Синхронизировать номера",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_sync_calls = {
+        key: "megapbx_sync_calls",
+        value: megaPbx.syncCalls ? "true" : "false",
+        description: "Синхронизировать звонки",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_sync_recordings = {
+        key: "megapbx_sync_recordings",
+        value: megaPbx.syncRecordings ? "true" : "false",
+        description: "Скачивать записи",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_webhooks_enabled = {
+        key: "megapbx_webhooks_enabled",
+        value: megaPbx.webhooksEnabled ? "true" : "false",
+        description: "Включить вебхуки",
+        updated_at: undefined,
+      };
 
       Object.keys(INTEGRATION_KEYS).forEach((key) => {
         if (!promptsMap[key]) {
@@ -132,6 +287,8 @@ export function useSettings() {
         prompts: promptsMap,
         ftpStatusLoading: ftpConfigured,
         ftpConnectionStatus: null,
+        megaPbxEmployees: megaPbxEmployees as PbxEmployeeItem[],
+        megaPbxNumbers: megaPbxNumbers as PbxNumberItem[],
       }));
 
       if (ftpConfigured) {
@@ -197,6 +354,34 @@ export function useSettings() {
   );
 
   const testFtpMutation = useMutation(orpc.settings.testFtp.mutationOptions());
+  const updatePbxMutation = useMutation(
+    orpc.settings.updatePbx.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.getPbx.queryKey(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.getIntegrations.queryKey(),
+        });
+      },
+    }),
+  );
+  const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
+  const syncPbxDirectoryMutation = useMutation(
+    orpc.settings.syncPbxDirectory.mutationOptions(),
+  );
+  const syncPbxCallsMutation = useMutation(
+    orpc.settings.syncPbxCalls.mutationOptions(),
+  );
+  const syncPbxRecordingsMutation = useMutation(
+    orpc.settings.syncPbxRecordings.mutationOptions(),
+  );
+  const linkPbxUserMutation = useMutation(
+    orpc.settings.linkPbxUser.mutationOptions(),
+  );
+  const unlinkPbxUserMutation = useMutation(
+    orpc.settings.unlinkPbxUser.mutationOptions(),
+  );
 
   const backupMutation = useMutation(orpc.settings.backup.mutationOptions());
 
@@ -391,6 +576,122 @@ export function useSettings() {
     }
   };
 
+  const megaPbxPayload = () => ({
+    enabled: state.prompts.megapbx_enabled?.value === "true",
+    baseUrl: state.prompts.megapbx_base_url?.value ?? "",
+    apiKey: state.prompts.megapbx_api_key?.value ?? "",
+    authScheme:
+      (state.prompts.megapbx_auth_scheme?.value as
+        | "bearer"
+        | "x-api-key"
+        | "query") ?? "bearer",
+    apiKeyHeader: state.prompts.megapbx_api_key_header?.value ?? "X-API-Key",
+    employeesPath: state.prompts.megapbx_employees_path?.value ?? "",
+    employeesMethod: "GET" as const,
+    employeesResultKey: state.prompts.megapbx_employees_result_key?.value ?? "",
+    numbersPath: state.prompts.megapbx_numbers_path?.value ?? "",
+    numbersMethod: "GET" as const,
+    numbersResultKey: state.prompts.megapbx_numbers_result_key?.value ?? "",
+    callsPath: state.prompts.megapbx_calls_path?.value ?? "",
+    callsMethod: "GET" as const,
+    callsResultKey: state.prompts.megapbx_calls_result_key?.value ?? "",
+    recordingsPath: state.prompts.megapbx_recordings_path?.value ?? "",
+    recordingsMethod: "GET" as const,
+    recordingsResultKey:
+      state.prompts.megapbx_recordings_result_key?.value ?? "",
+    webhookPath: state.prompts.megapbx_webhook_path?.value ?? "",
+    webhookSecret: state.prompts.megapbx_webhook_secret?.value ?? "",
+    ftpHost: state.prompts.megapbx_ftp_host?.value ?? "",
+    ftpUser: state.prompts.megapbx_ftp_user?.value ?? "",
+    ftpPassword: state.prompts.megapbx_ftp_password?.value ?? "",
+    syncEmployees: state.prompts.megapbx_sync_employees?.value === "true",
+    syncNumbers: state.prompts.megapbx_sync_numbers?.value === "true",
+    syncCalls: state.prompts.megapbx_sync_calls?.value === "true",
+    syncRecordings: state.prompts.megapbx_sync_recordings?.value === "true",
+    webhooksEnabled: state.prompts.megapbx_webhooks_enabled?.value === "true",
+  });
+
+  const handleSavePbx = async () => {
+    try {
+      setState((prev) => ({ ...prev, megaPbxSaving: true }));
+      await updatePbxMutation.mutateAsync(megaPbxPayload());
+      toast.success("MegaPBX настройки сохранены");
+      await loadSettings();
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Не удалось сохранить настройки MegaPBX";
+      toast.error(msg);
+    } finally {
+      setState((prev) => ({ ...prev, megaPbxSaving: false }));
+    }
+  };
+
+  const handleTestPbx = async () => {
+    try {
+      setState((prev) => ({
+        ...prev,
+        megaPbxTesting: true,
+        megaPbxTestMessage: "",
+      }));
+      const result = await testPbxMutation.mutateAsync(megaPbxPayload());
+      setState((prev) => ({
+        ...prev,
+        megaPbxTestMessage: result.success
+          ? "Подключение к MegaPBX успешно"
+          : result.error,
+      }));
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Не удалось проверить подключение к MegaPBX";
+      setState((prev) => ({ ...prev, megaPbxTestMessage: msg }));
+    } finally {
+      setState((prev) => ({ ...prev, megaPbxTesting: false }));
+    }
+  };
+
+  const runPbxSync = async (type: "directory" | "calls" | "recordings") => {
+    try {
+      setState((prev) => ({ ...prev, megaPbxSyncing: type }));
+      if (type === "directory") {
+        await syncPbxDirectoryMutation.mutateAsync(undefined);
+      } else if (type === "calls") {
+        await syncPbxCallsMutation.mutateAsync(undefined);
+      } else {
+        await syncPbxRecordingsMutation.mutateAsync(undefined);
+      }
+      toast.success("Синхронизация MegaPBX завершена");
+      await loadSettings();
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error ? error.message : "Ошибка синхронизации MegaPBX";
+      toast.error(msg);
+    } finally {
+      setState((prev) => ({ ...prev, megaPbxSyncing: null }));
+    }
+  };
+
+  const handleLinkPbxTarget = async (input: {
+    targetType: "employee" | "number";
+    targetExternalId: string;
+    userId?: string | null;
+    invitationId?: string | null;
+  }) => {
+    await linkPbxUserMutation.mutateAsync(input);
+    await loadSettings();
+  };
+
+  const handleUnlinkPbxTarget = async (input: {
+    targetType: "employee" | "number";
+    targetExternalId: string;
+  }) => {
+    await unlinkPbxUserMutation.mutateAsync(input);
+    await loadSettings();
+  };
+
   const handleBackup = async () => {
     if (state.backupLoading) return;
     try {
@@ -491,6 +792,10 @@ export function useSettings() {
     }));
   };
 
+  const setTogglePrompt = (key: string, checked: boolean) => {
+    setPromptValue(key, checked ? "true" : "false");
+  };
+
   return {
     currentUser,
     state,
@@ -499,10 +804,25 @@ export function useSettings() {
     handleSaveMaxBot,
     handleSaveFtp,
     handleTestFtp,
+    handleSavePbx,
+    handleTestPbx,
+    handleSyncPbxDirectory: () => runPbxSync("directory"),
+    handleSyncPbxCalls: () => runPbxSync("calls"),
+    handleSyncPbxRecordings: () => runPbxSync("recordings"),
+    handleLinkPbxTarget,
+    handleUnlinkPbxTarget,
+    handleSaveMegaPbx: handleSavePbx,
+    handleTestMegaPbx: handleTestPbx,
+    handleSyncMegaPbxDirectory: () => runPbxSync("directory"),
+    handleSyncMegaPbxCalls: () => runPbxSync("calls"),
+    handleSyncMegaPbxRecordings: () => runPbxSync("recordings"),
+    handleLinkMegaPbxTarget: handleLinkPbxTarget,
+    handleUnlinkMegaPbxTarget: handleUnlinkPbxTarget,
     handleBackup,
     handleSendTest,
     updatePrompt,
     setPromptValue,
     setFtpEnabled,
+    setTogglePrompt,
   };
 }

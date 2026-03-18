@@ -94,16 +94,11 @@ export function BulkDeleteConfirmModal({
           </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={deleting}>
             {deleting ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Удаление…
-              </>
+              <Loader2 className="size-4 animate-spin" />
             ) : (
-              <>
-                <Trash2 className="size-4" />
-                Удалить
-              </>
+              <Trash2 className="size-4" />
             )}
+            Удалить
           </Button>
         </DialogFooter>
       </DialogContent>

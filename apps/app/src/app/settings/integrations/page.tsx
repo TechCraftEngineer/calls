@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import FtpSection from "@/components/features/settings/ftp-section";
 import { useSettings } from "@/components/features/settings/hooks";
 import IntegrationsSection from "@/components/features/settings/integrations-section";
+import PbxSection from "@/components/features/settings/pbx-section";
 import SettingsPageShell from "@/components/features/settings/settings-page-shell";
 
 export default function SettingsIntegrationsPage() {
@@ -14,9 +15,17 @@ export default function SettingsIntegrationsPage() {
     handleSaveMaxBot,
     handleSaveFtp,
     handleTestFtp,
+    handleSavePbx,
+    handleTestPbx,
+    handleSyncPbxDirectory,
+    handleSyncPbxCalls,
+    handleSyncPbxRecordings,
+    handleLinkPbxTarget,
+    handleUnlinkPbxTarget,
     updatePrompt,
     setPromptValue,
     setFtpEnabled,
+    setTogglePrompt,
   } = useSettings();
 
   useEffect(() => {
@@ -64,6 +73,28 @@ export default function SettingsIntegrationsPage() {
           onSaveMaxBot={handleSaveMaxBot}
           telegramSaving={state.telegramSaving}
           maxBotSaving={state.maxBotSaving}
+        />
+
+        <PbxSection
+          prompts={state.prompts}
+          onPromptChange={updatePrompt}
+          onPromptValueChange={setPromptValue}
+          onToggleChange={setTogglePrompt}
+          onSave={handleSavePbx}
+          onTest={handleTestPbx}
+          onSyncDirectory={handleSyncPbxDirectory}
+          onSyncCalls={handleSyncPbxCalls}
+          onSyncRecordings={handleSyncPbxRecordings}
+          onLink={handleLinkPbxTarget}
+          onUnlink={handleUnlinkPbxTarget}
+          saving={state.megaPbxSaving}
+          testing={state.megaPbxTesting}
+          syncing={state.megaPbxSyncing}
+          testMessage={state.megaPbxTestMessage}
+          employeesLoading={state.megaPbxEmployeesLoading}
+          numbersLoading={state.megaPbxNumbersLoading}
+          employees={state.megaPbxEmployees}
+          numbers={state.megaPbxNumbers}
         />
       </div>
     </SettingsPageShell>

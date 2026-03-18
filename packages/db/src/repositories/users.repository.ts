@@ -178,11 +178,21 @@ export const usersRepository = {
    * Находит пользователя workspace по internal_number звонка.
    * Сопоставление: internal_extensions пользователя (comma-separated) содержит internalNumber.
    */
-  async findUserByInternalNumber(
+  async findUsersByInternalNumbers(
     workspaceId: string,
-    internalNumber: string | null,
-  ): Promise<schema.User | null> {
-    if (!internalNumber?.trim()) return null;
+    internalNumbers: Array<string | null | undefined>,
+  ): Promise<Map<string, schema.User>> {
+    const normalizedNumbers = [
+      ...new Set(
+        internalNumbers
+          .map((value) => value?.trim())
+          .filter((value): value is string => Boolean(value)),
+      ),
+    ];
+
+    if (normalizedNumbers.length === 0) {
+      return new Map();
+    }
 
     const members = await db
       .select({
@@ -200,14 +210,43 @@ export const usersRepository = {
         ),
       );
 
-    const num = internalNumber.trim();
+    const numbersSet = new Set(normalizedNumbers);
+    const usersByInternalNumber = new Map<string, schema.User>();
+
     for (const row of members) {
       const extensions = parseInternalExtensions(row.user.internalExtensions);
-      if (extensions?.includes(num)) {
-        return row.user;
+      if (!extensions) continue;
+
+      for (const extension of extensions) {
+        if (
+          numbersSet.has(extension) &&
+          !usersByInternalNumber.has(extension)
+        ) {
+          usersByInternalNumber.set(extension, row.user);
+        }
       }
     }
-    return null;
+
+    return usersByInternalNumber;
+  },
+
+  /**
+   * Находит пользователя workspace по internal_number звонка.
+   * Сопоставление: internal_extensions пользователя (comma-separated) содержит internalNumber.
+   */
+  async findUserByInternalNumber(
+    workspaceId: string,
+    internalNumber: string | null,
+  ): Promise<schema.User | null> {
+    const normalizedNumber = internalNumber?.trim();
+    if (!normalizedNumber) return null;
+
+    const usersByInternalNumber = await this.findUsersByInternalNumbers(
+      workspaceId,
+      [normalizedNumber],
+    );
+
+    return usersByInternalNumber.get(normalizedNumber) ?? null;
   },
 };
 

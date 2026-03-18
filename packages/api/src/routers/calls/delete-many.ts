@@ -51,10 +51,9 @@ export const deleteManyCalls = workspaceAdminProcedure
 
         deletedIds.push(callId);
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Не удалось удалить звонок";
+        const message = "Не удалось удалить звонок";
         failed.push({ callId, message });
-        logger.error("Ошибка при удалении звонка", { callId, error: message });
+        logger.error("Ошибка при удалении звонка", { callId, error });
       }
     }
 

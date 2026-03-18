@@ -92,9 +92,24 @@ export function CallListDataGrid({
   const deleteManyMutation = useMutation(
     orpc.calls.deleteMany.mutationOptions({
       onSuccess: (result) => {
+        const hasFailures = !result.success || result.failed.length > 0;
+
         setShowBulkDeleteConfirm(false);
-        setRowSelection({});
         onCallsDeleted?.(result.deletedCallIds);
+
+        if (hasFailures) {
+          setRowSelection((prev) => {
+            const next = { ...prev };
+            for (const callId of result.deletedCallIds) {
+              delete next[callId];
+            }
+            return next;
+          });
+          toast.warning(result.message);
+          return;
+        }
+
+        setRowSelection({});
         toast.success(`Удалено звонков: ${result.deletedCount}`);
       },
       onError: (error) => {

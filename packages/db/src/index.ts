@@ -14,6 +14,8 @@ export {
   handleWorkspaceError,
 } from "./lib/workspace-utils";
 export { evaluationTemplatesRepository } from "./repositories/evaluation-templates.repository";
+export { megaPbxRepository } from "./repositories/megapbx.repository";
+export { pbxRepository } from "./repositories/pbx.repository";
 export { systemRepository } from "./repositories/system.repository";
 export { userWorkspaceSettingsRepository } from "./repositories/user-workspace-settings.repository";
 // Repositories
@@ -33,6 +35,9 @@ export type {
   Invitation,
   Invoice,
   KpiSettings,
+  MegaPbxEndpointConfig,
+  MegaPbxIntegrationConfig,
+  MegaPbxWebhookConfig,
   NewActivityLog,
   NewAuditLog,
   NewCall,
@@ -47,7 +52,17 @@ export type {
   NewUserPreferences,
   NewUserWorkspaceSettings,
   NewWorkspace,
+  NewWorkspaceMegaPbxEmployee,
+  NewWorkspaceMegaPbxLink,
+  NewWorkspaceMegaPbxNumber,
+  NewWorkspaceMegaPbxSyncState,
+  NewWorkspaceMegaPbxWebhookEvent,
   NewWorkspaceMember,
+  NewWorkspacePbxEmployee,
+  NewWorkspacePbxLink,
+  NewWorkspacePbxNumber,
+  NewWorkspacePbxSyncState,
+  NewWorkspacePbxWebhookEvent,
   NotificationSettings,
   ReportSettings,
   Session,
@@ -60,7 +75,17 @@ export type {
   Verification,
   Workspace,
   WorkspaceIntegration,
+  WorkspaceMegaPbxEmployee,
+  WorkspaceMegaPbxLink,
+  WorkspaceMegaPbxNumber,
+  WorkspaceMegaPbxSyncState,
+  WorkspaceMegaPbxWebhookEvent,
   WorkspaceMember,
+  WorkspacePbxEmployee,
+  WorkspacePbxLink,
+  WorkspacePbxNumber,
+  WorkspacePbxSyncState,
+  WorkspacePbxWebhookEvent,
 } from "./schema";
 export {
   account,
@@ -84,8 +109,18 @@ export {
   userWorkspaceSettings,
   verification,
   workspaceIntegrations,
+  workspaceMegaPbxEmployees,
+  workspaceMegaPbxLinks,
+  workspaceMegaPbxNumbers,
+  workspaceMegaPbxSyncState,
+  workspaceMegaPbxWebhookEvents,
   workspaceMemberRole,
   workspaceMembers,
+  workspacePbxEmployees,
+  workspacePbxLinks,
+  workspacePbxNumbers,
+  workspacePbxSyncState,
+  workspacePbxWebhookEvents,
   workspaceSettings,
   workspaces,
 } from "./schema";
@@ -94,6 +129,8 @@ export {
   callsService,
   filesService,
   invitationsService,
+  megaPbxService,
+  pbxService,
   settingsService,
   usersService,
   workspacesService,

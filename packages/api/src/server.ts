@@ -144,6 +144,57 @@ export function createBackendApiWithContext(ctx: BackendContext) {
           backendRouter.settings.checkFtpStatus as ProcedureWithCallable,
           ctx,
         ),
+      getPbx: () =>
+        callProc(backendRouter.settings.getPbx as ProcedureWithCallable, ctx),
+      updatePbx: (input: Record<string, unknown>) =>
+        callProc(
+          backendRouter.settings.updatePbx as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      testPbx: (input: Record<string, unknown>) =>
+        callProc(
+          backendRouter.settings.testPbx as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      syncPbxDirectory: () =>
+        callProc(
+          backendRouter.settings.syncPbxDirectory as ProcedureWithCallable,
+          ctx,
+        ),
+      syncPbxCalls: () =>
+        callProc(
+          backendRouter.settings.syncPbxCalls as ProcedureWithCallable,
+          ctx,
+        ),
+      syncPbxRecordings: () =>
+        callProc(
+          backendRouter.settings.syncPbxRecordings as ProcedureWithCallable,
+          ctx,
+        ),
+      listPbxEmployees: () =>
+        callProc(
+          backendRouter.settings.listPbxEmployees as ProcedureWithCallable,
+          ctx,
+        ),
+      listPbxNumbers: () =>
+        callProc(
+          backendRouter.settings.listPbxNumbers as ProcedureWithCallable,
+          ctx,
+        ),
+      linkPbxUser: (input: Record<string, unknown>) =>
+        callProc(
+          backendRouter.settings.linkPbxUser as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
+      unlinkPbxUser: (input: Record<string, unknown>) =>
+        callProc(
+          backendRouter.settings.unlinkPbxUser as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
       updateFtp: (input: {
         enabled: boolean;
         host: string;

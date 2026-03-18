@@ -126,6 +126,31 @@ export const workspaceIntegrationsRepository = {
     };
   },
 
+  async listByType(integrationType: IntegrationType): Promise<
+    Array<{
+      workspaceId: string;
+      enabled: boolean;
+      config: FtpIntegrationConfig | Record<string, unknown>;
+    }>
+  > {
+    const rows = await db
+      .select({
+        workspaceId: schema.workspaceIntegrations.workspaceId,
+        enabled: schema.workspaceIntegrations.enabled,
+        config: schema.workspaceIntegrations.config,
+      })
+      .from(schema.workspaceIntegrations)
+      .where(eq(schema.workspaceIntegrations.integrationType, integrationType));
+
+    return rows.map((row) => ({
+      workspaceId: row.workspaceId,
+      enabled: row.enabled,
+      config: (row.config ?? {}) as
+        | FtpIntegrationConfig
+        | Record<string, unknown>,
+    }));
+  },
+
   async upsert(
     workspaceId: string,
     integrationType: IntegrationType,

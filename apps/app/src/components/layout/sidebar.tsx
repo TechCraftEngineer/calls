@@ -3,12 +3,12 @@
 import { paths } from "@calls/config";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 
 import WorkspaceSwitcher from "./workspace-switcher";
 
-const icons = {
+const ICONS = {
   dashboard: (
     <svg
       width="20"
@@ -116,31 +116,56 @@ export default function Sidebar() {
   const { activeWorkspace } = useWorkspace();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const shouldRestoreFocusRef = useRef(false);
   const isWorkspaceAdmin =
     activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
-  useEffect(() => {
-    if (!pathname) return;
+  const restoreTriggerFocus = useCallback(() => {
+    const trigger = menuTriggerRef.current;
+    if (!trigger || trigger.disabled || trigger.tabIndex === -1) {
+      return;
+    }
+
+    trigger.focus();
+  }, []);
+
+  const closeMobileMenu = useCallback(() => {
+    shouldRestoreFocusRef.current = true;
     setIsMobileMenuOpen(false);
-  }, [pathname]);
+  }, []);
 
   useEffect(() => {
-    if (!isMobileMenuOpen) return;
-    overlayRef.current?.focus();
-  }, [isMobileMenuOpen]);
+    if (!pathname) return;
+    if (isMobileMenuOpen) {
+      closeMobileMenu();
+    }
+  }, [closeMobileMenu, isMobileMenuOpen, pathname]);
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      overlayRef.current?.focus();
+      return;
+    }
+
+    if (shouldRestoreFocusRef.current) {
+      restoreTriggerFocus();
+      shouldRestoreFocusRef.current = false;
+    }
+  }, [isMobileMenuOpen, restoreTriggerFocus]);
 
   const navItems = [
     {
       href: paths.dashboard.root,
       isActive: pathname === paths.dashboard.root,
       title: "Звонки",
-      icon: <div className="icon-bubble bg-orange-50">{icons.dashboard}</div>,
+      icon: <div className="icon-bubble bg-orange-50">{ICONS.dashboard}</div>,
     },
     {
       href: paths.statistics.root,
       isActive: pathname.startsWith(paths.statistics.root),
       title: "Статистика",
-      icon: <div className="icon-bubble bg-blue-50">{icons.statistics}</div>,
+      icon: <div className="icon-bubble bg-blue-50">{ICONS.statistics}</div>,
     },
     ...(isWorkspaceAdmin
       ? [
@@ -148,14 +173,14 @@ export default function Sidebar() {
             href: paths.users.root,
             isActive: pathname === paths.users.root,
             title: "Пользователи",
-            icon: <div className="icon-bubble bg-purple-50">{icons.users}</div>,
+            icon: <div className="icon-bubble bg-purple-50">{ICONS.users}</div>,
           },
           {
             href: paths.settings.root,
             isActive: pathname.startsWith(paths.settings.root),
             title: "Настройки",
             icon: (
-              <div className="icon-bubble bg-gray-50">{icons.settings}</div>
+              <div className="icon-bubble bg-gray-50">{ICONS.settings}</div>
             ),
           },
         ]
@@ -165,11 +190,20 @@ export default function Sidebar() {
   return (
     <>
       <button
+        ref={menuTriggerRef}
         type="button"
         className="mobile-menu-trigger"
         aria-label={isMobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
         aria-expanded={isMobileMenuOpen}
-        onClick={() => setIsMobileMenuOpen((open) => !open)}
+        onClick={() => {
+          if (isMobileMenuOpen) {
+            closeMobileMenu();
+            return;
+          }
+
+          shouldRestoreFocusRef.current = false;
+          setIsMobileMenuOpen(true);
+        }}
       >
         <span />
         <span />
@@ -181,10 +215,10 @@ export default function Sidebar() {
         className={`mobile-sidebar-overlay ${isMobileMenuOpen ? "is-open" : ""}`}
         aria-hidden={!isMobileMenuOpen}
         tabIndex={isMobileMenuOpen ? 0 : -1}
-        onClick={() => setIsMobileMenuOpen(false)}
+        onClick={closeMobileMenu}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
-            setIsMobileMenuOpen(false);
+            closeMobileMenu();
           }
         }}
       />
@@ -202,7 +236,7 @@ export default function Sidebar() {
             type="button"
             className="sidebar-close"
             aria-label="Закрыть меню"
-            onClick={() => setIsMobileMenuOpen(false)}
+            onClick={closeMobileMenu}
           >
             <span />
             <span />
@@ -226,7 +260,7 @@ export default function Sidebar() {
         </nav>
         <div className="mt-auto flex w-full flex-col gap-3 items-center">
           <Link href={paths.auth.signout} className="nav-item" title="Выход">
-            <div className="icon-bubble">{icons.logout}</div>
+            <div className="icon-bubble">{ICONS.logout}</div>
             <span className="nav-item-label">Выход</span>
           </Link>
         </div>
