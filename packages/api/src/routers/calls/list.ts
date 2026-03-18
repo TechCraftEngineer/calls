@@ -155,6 +155,15 @@ export const list = workspaceProcedure
       status: input.status || undefined,
     });
 
+    const internalNumbersToResolve = rawCalls
+      .map((item) => item.call.internalNumber?.trim())
+      .filter((value): value is string => Boolean(value));
+    const usersByInternalNumber =
+      await usersRepository.findUsersByInternalNumbers(
+        workspaceId,
+        internalNumbersToResolve,
+      );
+
     const callsWithTranscripts = await Promise.all(
       rawCalls.map(async (item: CallWithTranscript) => {
         const operatorName = (() => {
@@ -164,17 +173,19 @@ export const list = workspaceProcedure
             ? parsed.data.operatorName.trim() || null
             : null;
         })();
-        const managerFromWorkspace = item.call.internalNumber
-          ? await usersRepository.findUserByInternalNumber(
-              workspaceId,
-              item.call.internalNumber,
-            )
+        const normalizedInternalNumber =
+          item.call.internalNumber?.trim() || null;
+        const managerFromWorkspace = normalizedInternalNumber
+          ? (usersByInternalNumber.get(normalizedInternalNumber) ?? null)
           : null;
+        const trimmedName = item.call.name?.trim();
+        const normalizedCallName =
+          trimmedName === "" ? null : (trimmedName ?? null);
         const managerName =
           (managerFromWorkspace
             ? getDisplayNameFromUser(managerFromWorkspace)
             : null) ??
-          item.call.name?.trim() ??
+          normalizedCallName ??
           operatorName ??
           null;
 
