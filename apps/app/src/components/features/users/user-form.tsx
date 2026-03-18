@@ -285,9 +285,8 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           type="button"
           variant="link"
           onClick={onCancel}
-          className="text-primary"
           disabled={updateMutation.isPending || createMutation.isPending}
-          className="min-w-28"
+          className="text-primary min-w-28"
         >
           Отмена
         </Button>

@@ -10,6 +10,16 @@ export const inngest = new Inngest({
 
 type TranscribeRequestedData = { callId: string };
 type EvaluateRequestedData = { callId: string };
+type PbxSyncRequestedData = {
+  workspaceId: string;
+  syncType: "directory" | "calls";
+  syncRecordings?: boolean;
+  webhookEvent?: {
+    eventId?: string | null;
+    eventType: string;
+    payload: Record<string, unknown>;
+  };
+};
 
 export const transcribeRequested = eventType("call/transcribe.requested", {
   schema: staticSchema<TranscribeRequestedData>(),
@@ -17,4 +27,8 @@ export const transcribeRequested = eventType("call/transcribe.requested", {
 
 export const evaluateRequested = eventType("call/evaluate.requested", {
   schema: staticSchema<EvaluateRequestedData>(),
+});
+
+export const pbxSyncRequested = eventType("pbx/sync.requested", {
+  schema: staticSchema<PbxSyncRequestedData>(),
 });

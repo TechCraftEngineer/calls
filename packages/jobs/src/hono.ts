@@ -8,7 +8,7 @@ import { inngest } from "./inngest/client";
 import { emailReportsFn } from "./inngest/functions/email-reports";
 import { evaluateCallFn } from "./inngest/functions/evaluate-call";
 import { megafonSyncFn } from "./inngest/functions/megafon-sync";
-import { pbxSyncFn } from "./inngest/functions/pbx-sync";
+import { pbxSyncFn, pbxSyncRequestedFn } from "./inngest/functions/pbx-sync";
 import { telegramReportsFn } from "./inngest/functions/telegram-reports";
 import { transcribeCallFn } from "./inngest/functions/transcribe-call";
 
@@ -17,6 +17,7 @@ export const inngestHandler = serve({
   functions: [
     megafonSyncFn,
     pbxSyncFn,
+    pbxSyncRequestedFn,
     transcribeCallFn,
     evaluateCallFn,
     telegramReportsFn,

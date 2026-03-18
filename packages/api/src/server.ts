@@ -12,6 +12,14 @@ type ProcedureWithCallable = {
   }) => (input?: unknown) => Promise<unknown>;
 };
 
+type ProcInput<TProc> = TProc extends {
+  callable: (opts: {
+    context: BackendContext;
+  }) => (input: infer TInput) => unknown;
+}
+  ? TInput
+  : never;
+
 function callProc(
   proc: ProcedureWithCallable,
   ctx: BackendContext,
@@ -146,13 +154,13 @@ export function createBackendApiWithContext(ctx: BackendContext) {
         ),
       getPbx: () =>
         callProc(backendRouter.settings.getPbx as ProcedureWithCallable, ctx),
-      updatePbx: (input: Record<string, unknown>) =>
+      updatePbx: (input: ProcInput<typeof backendRouter.settings.updatePbx>) =>
         callProc(
           backendRouter.settings.updatePbx as ProcedureWithCallable,
           ctx,
           input,
         ),
-      testPbx: (input: Record<string, unknown>) =>
+      testPbx: (input: ProcInput<typeof backendRouter.settings.testPbx>) =>
         callProc(
           backendRouter.settings.testPbx as ProcedureWithCallable,
           ctx,
@@ -183,13 +191,17 @@ export function createBackendApiWithContext(ctx: BackendContext) {
           backendRouter.settings.listPbxNumbers as ProcedureWithCallable,
           ctx,
         ),
-      linkPbxUser: (input: Record<string, unknown>) =>
+      linkPbxUser: (
+        input: ProcInput<typeof backendRouter.settings.linkPbxUser>,
+      ) =>
         callProc(
           backendRouter.settings.linkPbxUser as ProcedureWithCallable,
           ctx,
           input,
         ),
-      unlinkPbxUser: (input: Record<string, unknown>) =>
+      unlinkPbxUser: (
+        input: ProcInput<typeof backendRouter.settings.unlinkPbxUser>,
+      ) =>
         callProc(
           backendRouter.settings.unlinkPbxUser as ProcedureWithCallable,
           ctx,

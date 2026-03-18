@@ -8,6 +8,7 @@ export {
 export {
   evaluateRequested,
   inngest,
+  pbxSyncRequested,
   transcribeRequested,
 } from "./inngest/client";
 export { emailReportsFn } from "./inngest/functions/email-reports";

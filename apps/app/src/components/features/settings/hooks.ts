@@ -663,7 +663,7 @@ export function useSettings() {
       } else {
         await syncPbxRecordingsMutation.mutateAsync(undefined);
       }
-      toast.success("Синхронизация MegaPBX завершена");
+      toast.success("Синхронизация MegaPBX поставлена в очередь");
       await loadSettings();
     } catch (error: unknown) {
       const msg =
