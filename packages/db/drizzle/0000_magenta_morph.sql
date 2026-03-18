@@ -158,16 +158,6 @@ CREATE TABLE "invoices" (
 	CONSTRAINT "invoices_stripe_invoice_id_unique" UNIQUE("stripe_invoice_id")
 );
 --> statement-breakpoint
-CREATE TABLE "prompts" (
-	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
-	"workspace_id" text NOT NULL,
-	"key" text NOT NULL,
-	"value" text NOT NULL,
-	"description" text,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "prompts_key_unique" UNIQUE("key")
-);
---> statement-breakpoint
 CREATE TABLE "sessions" (
 	"id" text PRIMARY KEY NOT NULL,
 	"expires_at" timestamp NOT NULL,
@@ -311,6 +301,90 @@ CREATE TABLE "workspace_integrations" (
 	CONSTRAINT "workspace_integrations_workspace_type_unique" UNIQUE("workspace_id","integration_type")
 );
 --> statement-breakpoint
+CREATE TABLE "workspace_pbx_employees" (
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
+	"workspace_id" text NOT NULL,
+	"provider" text NOT NULL,
+	"external_id" text NOT NULL,
+	"extension" text,
+	"email" text,
+	"first_name" text,
+	"last_name" text,
+	"display_name" text NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"raw_data" jsonb NOT NULL,
+	"synced_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "workspace_pbx_employees_workspace_provider_external_unique" UNIQUE("workspace_id","provider","external_id")
+);
+--> statement-breakpoint
+CREATE TABLE "workspace_pbx_links" (
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
+	"workspace_id" text NOT NULL,
+	"provider" text NOT NULL,
+	"target_type" text NOT NULL,
+	"target_external_id" text NOT NULL,
+	"user_id" text,
+	"invitation_id" uuid,
+	"link_source" text DEFAULT 'manual' NOT NULL,
+	"confidence" integer DEFAULT 100 NOT NULL,
+	"linked_by_user_id" text,
+	"metadata" jsonb,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "workspace_pbx_links_workspace_provider_target_unique" UNIQUE("workspace_id","provider","target_type","target_external_id")
+);
+--> statement-breakpoint
+CREATE TABLE "workspace_pbx_numbers" (
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
+	"workspace_id" text NOT NULL,
+	"provider" text NOT NULL,
+	"external_id" text NOT NULL,
+	"employee_external_id" text,
+	"phone_number" text NOT NULL,
+	"extension" text,
+	"label" text,
+	"line_type" text,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"raw_data" jsonb NOT NULL,
+	"synced_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "workspace_pbx_numbers_workspace_provider_external_unique" UNIQUE("workspace_id","provider","external_id")
+);
+--> statement-breakpoint
+CREATE TABLE "workspace_pbx_sync_state" (
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
+	"workspace_id" text NOT NULL,
+	"provider" text NOT NULL,
+	"sync_type" text NOT NULL,
+	"status" text DEFAULT 'idle' NOT NULL,
+	"cursor" text,
+	"last_started_at" timestamp,
+	"last_completed_at" timestamp,
+	"last_successful_at" timestamp,
+	"last_error" text,
+	"stats" jsonb,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "workspace_pbx_sync_state_workspace_provider_type_unique" UNIQUE("workspace_id","provider","sync_type")
+);
+--> statement-breakpoint
+CREATE TABLE "workspace_pbx_webhook_events" (
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
+	"workspace_id" text NOT NULL,
+	"provider" text NOT NULL,
+	"event_id" text,
+	"event_type" text NOT NULL,
+	"status" text DEFAULT 'received' NOT NULL,
+	"payload" jsonb NOT NULL,
+	"processed_at" timestamp,
+	"error_message" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "workspace_pbx_webhook_events_workspace_provider_event_unique" UNIQUE("workspace_id","provider","event_id")
+);
+--> statement-breakpoint
 CREATE TABLE "workspace_members" (
 	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
 	"workspace_id" text NOT NULL,
@@ -322,6 +396,16 @@ CREATE TABLE "workspace_members" (
 	"invited_by" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "workspace_members_workspace_user_unique" UNIQUE("workspace_id","user_id")
+);
+--> statement-breakpoint
+CREATE TABLE "workspace_settings" (
+	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
+	"workspace_id" text NOT NULL,
+	"key" text NOT NULL,
+	"value" text NOT NULL,
+	"description" text,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "workspace_settings_workspace_key_unique" UNIQUE("workspace_id","key")
 );
 --> statement-breakpoint
 CREATE TABLE "workspaces" (
@@ -348,7 +432,6 @@ ALTER TABLE "invitations" ADD CONSTRAINT "invitations_workspace_id_workspaces_id
 ALTER TABLE "invitations" ADD CONSTRAINT "invitations_invited_by_users_id_fk" FOREIGN KEY ("invited_by") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invitations" ADD CONSTRAINT "invitations_accepted_by_users_id_fk" FOREIGN KEY ("accepted_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invoices" ADD CONSTRAINT "invoices_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "prompts" ADD CONSTRAINT "prompts_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transcripts" ADD CONSTRAINT "transcripts_call_id_calls_id_fk" FOREIGN KEY ("call_id") REFERENCES "public"."calls"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -358,9 +441,18 @@ ALTER TABLE "user_preferences" ADD CONSTRAINT "user_preferences_active_workspace
 ALTER TABLE "user_workspace_settings" ADD CONSTRAINT "user_workspace_settings_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_workspace_settings" ADD CONSTRAINT "user_workspace_settings_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "workspace_integrations" ADD CONSTRAINT "workspace_integrations_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "workspace_pbx_employees" ADD CONSTRAINT "workspace_pbx_employees_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "workspace_pbx_links" ADD CONSTRAINT "workspace_pbx_links_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "workspace_pbx_links" ADD CONSTRAINT "workspace_pbx_links_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "workspace_pbx_links" ADD CONSTRAINT "workspace_pbx_links_invitation_id_invitations_id_fk" FOREIGN KEY ("invitation_id") REFERENCES "public"."invitations"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "workspace_pbx_links" ADD CONSTRAINT "workspace_pbx_links_linked_by_user_id_users_id_fk" FOREIGN KEY ("linked_by_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "workspace_pbx_numbers" ADD CONSTRAINT "workspace_pbx_numbers_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "workspace_pbx_sync_state" ADD CONSTRAINT "workspace_pbx_sync_state_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "workspace_pbx_webhook_events" ADD CONSTRAINT "workspace_pbx_webhook_events_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "workspace_members" ADD CONSTRAINT "workspace_members_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "workspace_members" ADD CONSTRAINT "workspace_members_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "workspace_members" ADD CONSTRAINT "workspace_members_invited_by_users_id_fk" FOREIGN KEY ("invited_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "workspace_settings" ADD CONSTRAINT "workspace_settings_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "activity_log_timestamp_idx" ON "activity_log" USING btree ("timestamp");--> statement-breakpoint
 CREATE INDEX "activity_log_workspace_id_idx" ON "activity_log" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX "activity_log_workspace_timestamp_idx" ON "activity_log" USING btree ("workspace_id","timestamp");--> statement-breakpoint
@@ -381,6 +473,7 @@ CREATE INDEX "calls_workspace_timestamp_idx" ON "calls" USING btree ("workspace_
 CREATE INDEX "calls_workspace_archived_idx" ON "calls" USING btree ("workspace_id","is_archived");--> statement-breakpoint
 CREATE INDEX "calls_number_idx" ON "calls" USING btree ("number");--> statement-breakpoint
 CREATE INDEX "calls_status_idx" ON "calls" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "idx_calls_workspaceId_name_internalNumber" ON "calls" USING btree ("workspace_id","name","internal_number");--> statement-breakpoint
 CREATE INDEX "evaluation_templates_workspace_idx" ON "evaluation_templates" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX "feature_flags_key_idx" ON "feature_flags" USING btree ("key");--> statement-breakpoint
 CREATE INDEX "feature_flags_enabled_idx" ON "feature_flags" USING btree ("enabled");--> statement-breakpoint
@@ -398,9 +491,6 @@ CREATE INDEX "invoices_workspace_idx" ON "invoices" USING btree ("workspace_id")
 CREATE INDEX "invoices_stripe_invoice_idx" ON "invoices" USING btree ("stripe_invoice_id");--> statement-breakpoint
 CREATE INDEX "invoices_status_idx" ON "invoices" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "invoices_period_idx" ON "invoices" USING btree ("period_start","period_end");--> statement-breakpoint
-CREATE INDEX "prompts_key_idx" ON "prompts" USING btree ("key");--> statement-breakpoint
-CREATE INDEX "prompts_workspace_id_idx" ON "prompts" USING btree ("workspace_id");--> statement-breakpoint
-CREATE INDEX "prompts_workspace_key_idx" ON "prompts" USING btree ("workspace_id","key");--> statement-breakpoint
 CREATE INDEX "subscriptions_workspace_idx" ON "subscriptions" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX "subscriptions_status_idx" ON "subscriptions" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "subscriptions_stripe_customer_idx" ON "subscriptions" USING btree ("stripe_customer_id");--> statement-breakpoint
@@ -421,9 +511,30 @@ CREATE INDEX "user_workspace_settings_report_gin_idx" ON "user_workspace_setting
 CREATE INDEX "workspace_integrations_workspace_id_idx" ON "workspace_integrations" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX "workspace_integrations_type_idx" ON "workspace_integrations" USING btree ("integration_type");--> statement-breakpoint
 CREATE INDEX "workspace_integrations_workspace_type_idx" ON "workspace_integrations" USING btree ("workspace_id","integration_type");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_employees_workspace_idx" ON "workspace_pbx_employees" USING btree ("workspace_id");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_employees_provider_idx" ON "workspace_pbx_employees" USING btree ("provider");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_employees_extension_idx" ON "workspace_pbx_employees" USING btree ("extension");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_employees_email_idx" ON "workspace_pbx_employees" USING btree ("email");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_links_workspace_idx" ON "workspace_pbx_links" USING btree ("workspace_id");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_links_provider_idx" ON "workspace_pbx_links" USING btree ("provider");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_links_user_idx" ON "workspace_pbx_links" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_links_invitation_idx" ON "workspace_pbx_links" USING btree ("invitation_id");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_numbers_workspace_idx" ON "workspace_pbx_numbers" USING btree ("workspace_id");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_numbers_provider_idx" ON "workspace_pbx_numbers" USING btree ("provider");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_numbers_phone_idx" ON "workspace_pbx_numbers" USING btree ("phone_number");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_numbers_extension_idx" ON "workspace_pbx_numbers" USING btree ("extension");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_sync_state_workspace_idx" ON "workspace_pbx_sync_state" USING btree ("workspace_id");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_sync_state_provider_idx" ON "workspace_pbx_sync_state" USING btree ("provider");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_sync_state_status_idx" ON "workspace_pbx_sync_state" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_webhook_events_workspace_idx" ON "workspace_pbx_webhook_events" USING btree ("workspace_id");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_webhook_events_provider_idx" ON "workspace_pbx_webhook_events" USING btree ("provider");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_webhook_events_type_idx" ON "workspace_pbx_webhook_events" USING btree ("event_type");--> statement-breakpoint
+CREATE INDEX "workspace_pbx_webhook_events_status_idx" ON "workspace_pbx_webhook_events" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "workspace_members_workspace_id_idx" ON "workspace_members" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX "workspace_members_user_id_idx" ON "workspace_members" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "workspace_members_workspace_user_idx" ON "workspace_members" USING btree ("workspace_id","user_id");--> statement-breakpoint
 CREATE INDEX "workspace_members_status_idx" ON "workspace_members" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "workspace_members_invitation_token_idx" ON "workspace_members" USING btree ("invitation_token");--> statement-breakpoint
+CREATE INDEX "workspace_settings_key_idx" ON "workspace_settings" USING btree ("key");--> statement-breakpoint
+CREATE INDEX "workspace_settings_workspace_idx" ON "workspace_settings" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX "workspaces_slug_idx" ON "workspaces" USING btree ("slug");
