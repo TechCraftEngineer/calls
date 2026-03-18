@@ -57,7 +57,9 @@ export default function SettingsPbxMegafonPage() {
             АТС
           </Link>
           <span aria-hidden>/</span>
-          <span className="font-medium text-foreground">Мегафон</span>
+          <span aria-current="page" className="font-medium text-foreground">
+            Мегафон
+          </span>
         </nav>
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

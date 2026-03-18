@@ -472,13 +472,11 @@ export default function MegaPbxSection({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(STORAGE_KEYS.employeeSearch, employeeSearch);
-  }, [employeeSearch]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+    window.localStorage.setItem(STORAGE_KEYS.tab, activeTab);
+    window.localStorage.setItem(STORAGE_KEYS.employeeSearch, employeeSearch);
     window.localStorage.setItem(STORAGE_KEYS.numberSearch, numberSearch);
-  }, [numberSearch]);
+  }, [activeTab, employeeSearch, numberSearch]);
 
   return (
     <Card className="border-border/60">

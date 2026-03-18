@@ -15,12 +15,18 @@ export const updatePbx = workspaceAdminProcedure
     const username =
       (context.user as Record<string, unknown>)?.email ?? "system";
 
+    const syncFromDate =
+      input.syncFromDate?.trim() &&
+      /^\d{4}-\d{2}-\d{2}$/.test(input.syncFromDate.trim())
+        ? input.syncFromDate.trim()
+        : null;
+
     await pbxService.updateSettings(
       context.workspaceId,
       {
         ...input,
         apiKey: input.apiKey || null,
-        syncFromDate: input.syncFromDate || null,
+        syncFromDate,
         webhookSecret: input.webhookSecret || null,
         ftpHost: input.ftpHost || null,
         ftpUser: input.ftpUser || null,

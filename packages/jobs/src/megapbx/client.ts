@@ -211,11 +211,8 @@ export class MegaPbxClient {
 
   async fetchCalls(cursor?: string | null): Promise<Record<string, unknown>[]> {
     if (!this.config.callsEndpoint?.path) return [];
-    const from = cursor || this.config.syncFromDate || null;
-    const body =
-      cursor || from
-        ? { ...(cursor ? { cursor } : {}), ...(from ? { from } : {}) }
-        : undefined;
+    const from = this.config.syncFromDate || null;
+    const body = cursor ? { cursor } : from ? { from } : undefined;
     const payload = await this.request(this.config.callsEndpoint, body);
     const validated = validateResponse(CallResponseSchema, payload, "звонки");
     return pickArray(validated, this.config.callsEndpoint.resultKey);

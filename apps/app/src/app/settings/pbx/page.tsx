@@ -50,6 +50,16 @@ export default function SettingsPbxProvidersPage() {
     loadSettings();
   }, [loadSettings]);
 
+  if (state.loading) {
+    return (
+      <SettingsPageShell>
+        <div className="flex items-center justify-center py-24">
+          <div className="text-muted-foreground">Загрузка…</div>
+        </div>
+      </SettingsPageShell>
+    );
+  }
+
   const availableProviders = PROVIDERS.filter((provider) => provider.available);
   const plannedProviders = PROVIDERS.filter((provider) => !provider.available);
   const isMegafonEnabled = state.prompts.megapbx_enabled?.value === "true";
