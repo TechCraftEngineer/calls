@@ -1,8 +1,16 @@
-import { type CallWithTranscript, settingsService } from "@calls/db";
+import {
+  type CallWithTranscript,
+  settingsService,
+  usersRepository,
+} from "@calls/db";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 import { calculateAnalysisCostRub } from "./analysis-cost";
-import { getInternalNumbersForUser, getMobileNumbersForUser } from "./utils";
+import {
+  getDisplayNameFromUser,
+  getInternalNumbersForUser,
+  getMobileNumbersForUser,
+} from "./utils";
 
 const transcriptMetadataSchema = z
   .object({ operatorName: z.string().optional() })
@@ -147,37 +155,51 @@ export const list = workspaceProcedure
       status: input.status || undefined,
     });
 
-    const callsWithTranscripts = rawCalls.map((item: CallWithTranscript) => {
-      const operatorName = (() => {
-        const meta = item.transcript?.metadata;
-        const parsed = transcriptMetadataSchema.safeParse(meta);
-        return parsed.success && typeof parsed.data.operatorName === "string"
-          ? parsed.data.operatorName
-          : (item.call.name ?? null);
-      })();
-      const managerName = operatorName ?? item.call.name ?? null;
+    const callsWithTranscripts = await Promise.all(
+      rawCalls.map(async (item: CallWithTranscript) => {
+        const operatorName = (() => {
+          const meta = item.transcript?.metadata;
+          const parsed = transcriptMetadataSchema.safeParse(meta);
+          return parsed.success && typeof parsed.data.operatorName === "string"
+            ? parsed.data.operatorName.trim() || null
+            : null;
+        })();
+        const managerFromWorkspace = item.call.internalNumber
+          ? await usersRepository.findUserByInternalNumber(
+              workspaceId,
+              item.call.internalNumber,
+            )
+          : null;
+        const managerName =
+          (managerFromWorkspace
+            ? getDisplayNameFromUser(managerFromWorkspace)
+            : null) ??
+          item.call.name?.trim() ??
+          operatorName ??
+          null;
 
-      return {
-        ...item,
-        call: {
-          ...item.call,
-          timestamp:
-            item.call.timestamp instanceof Date
-              ? item.call.timestamp.toISOString()
-              : item.call.timestamp,
-          managerName,
-          operatorName,
-          managerId: null,
-        },
-        analysisCostRub: calculateAnalysisCostRub(
-          typeof item.call.duration === "number" && item.call.duration > 0
-            ? item.call.duration
-            : typeof item.transcript?.metadata?.durationInSeconds === "number"
-              ? item.transcript.metadata.durationInSeconds
-              : null,
-        ),
-      };
-    });
+        return {
+          ...item,
+          call: {
+            ...item.call,
+            timestamp:
+              item.call.timestamp instanceof Date
+                ? item.call.timestamp.toISOString()
+                : item.call.timestamp,
+            managerName,
+            operatorName,
+            managerId: managerFromWorkspace?.id ?? null,
+          },
+          analysisCostRub: calculateAnalysisCostRub(
+            typeof item.call.duration === "number" && item.call.duration > 0
+              ? item.call.duration
+              : typeof item.transcript?.metadata?.durationInSeconds === "number"
+                ? item.transcript.metadata.durationInSeconds
+                : null,
+          ),
+        };
+      }),
+    );
 
     return {
       calls: callsWithTranscripts,

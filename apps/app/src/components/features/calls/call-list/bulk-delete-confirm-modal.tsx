@@ -19,6 +19,25 @@ interface BulkDeleteConfirmModalProps {
   onCancel: () => void;
 }
 
+function getRecordsLabel(count: number) {
+  const remainder10 = count % 10;
+  const remainder100 = count % 100;
+
+  if (remainder100 >= 11 && remainder100 <= 14) {
+    return "записей";
+  }
+
+  if (remainder10 === 1) {
+    return "запись";
+  }
+
+  if (remainder10 >= 2 && remainder10 <= 4) {
+    return "записи";
+  }
+
+  return "записей";
+}
+
 export function BulkDeleteConfirmModal({
   calls,
   deleting,
@@ -37,9 +56,8 @@ export function BulkDeleteConfirmModal({
             Удалить выбранные звонки
           </DialogTitle>
           <DialogDescription>
-            Будет удалено {calls.length}{" "}
-            {calls.length === 1 ? "запись" : "записей"}. Это действие нельзя
-            отменить.
+            Будет удалено {calls.length} {getRecordsLabel(calls.length)}. Это
+            действие нельзя отменить.
           </DialogDescription>
         </DialogHeader>
 
@@ -78,7 +96,7 @@ export function BulkDeleteConfirmModal({
             {deleting ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Удаление...
+                Удаление…
               </>
             ) : (
               <>

@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  Skeleton,
 } from "@calls/ui";
 import { LogOut, Settings } from "lucide-react";
 import Link from "next/link";
@@ -37,7 +38,7 @@ interface HeaderProps {
 }
 
 export default function Header({ user }: HeaderProps) {
-  const { activeWorkspace } = useWorkspace();
+  const { activeWorkspace, loading } = useWorkspace();
   const displayRole = getDisplayRole(activeWorkspace?.role, user?.role);
 
   if (!user) return null;
@@ -45,12 +46,21 @@ export default function Header({ user }: HeaderProps) {
   return (
     <header className="sticky top-0 z-900 flex h-16 items-center justify-between overflow-visible border-b border-gray-200 bg-white px-4 pl-16 md:justify-end md:px-8">
       <div className="min-w-0 pr-3 md:hidden">
-        <div className="truncate text-sm font-semibold text-gray-900">
-          {activeWorkspace?.name || "QBS Звонки"}
-        </div>
-        <div className="truncate text-[11px] font-medium uppercase tracking-wide text-gray-500">
-          Рабочее пространство
-        </div>
+        {loading ? (
+          <>
+            <Skeleton className="h-5 w-32 max-w-full" />
+            <Skeleton className="mt-1 h-3 w-28 max-w-full" />
+          </>
+        ) : (
+          <>
+            <div className="truncate text-sm font-semibold text-gray-900">
+              {activeWorkspace?.name}
+            </div>
+            <div className="truncate text-[11px] font-medium uppercase tracking-wide text-gray-500">
+              Рабочее пространство
+            </div>
+          </>
+        )}
       </div>
 
       <DropdownMenu>

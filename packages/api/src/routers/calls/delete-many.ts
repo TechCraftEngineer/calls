@@ -1,6 +1,9 @@
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
+import { createLogger } from "../../logger";
 import { workspaceAdminProcedure } from "../../orpc";
+
+const logger = createLogger("calls-delete-many");
 
 export const deleteManyCalls = workspaceAdminProcedure
   .input(
@@ -32,14 +35,33 @@ export const deleteManyCalls = workspaceAdminProcedure
       }
     }
 
-    for (const callId of uniqueCallIds) {
-      const deleted = await context.callsService.deleteCall(callId);
+    const deletedIds: string[] = [];
+    const failed: Array<{ callId: string; message: string }> = [];
 
-      if (!deleted) {
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: "Не удалось удалить один или несколько звонков",
-        });
+    for (const callId of uniqueCallIds) {
+      try {
+        const deleted = await context.callsService.deleteCall(callId);
+
+        if (!deleted) {
+          const message = "Не удалось удалить звонок";
+          failed.push({ callId, message });
+          logger.warn("Удаление звонка завершилось без результата", { callId });
+          continue;
+        }
+
+        deletedIds.push(callId);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Не удалось удалить звонок";
+        failed.push({ callId, message });
+        logger.error("Ошибка при удалении звонка", { callId, error: message });
       }
+    }
+
+    if (deletedIds.length === 0) {
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Не удалось удалить выбранные звонки",
+      });
     }
 
     const userEmail =
@@ -52,15 +74,19 @@ export const deleteManyCalls = workspaceAdminProcedure
 
     await context.systemRepository.addActivityLog(
       "info",
-      `Deleted ${uniqueCallIds.length} calls`,
+      `Удалено ${deletedIds.length} вызовов`,
       email,
       context.workspaceId,
     );
 
     return {
-      success: true,
-      deletedCount: uniqueCallIds.length,
-      deletedCallIds: uniqueCallIds,
-      message: `Удалено звонков: ${uniqueCallIds.length}`,
+      success: failed.length === 0,
+      deletedCount: deletedIds.length,
+      deletedCallIds: deletedIds,
+      failed,
+      message:
+        failed.length > 0
+          ? `Удалено звонков: ${deletedIds.length}. Ошибок: ${failed.length}`
+          : `Удалено звонков: ${deletedIds.length}`,
     };
   });

@@ -24,6 +24,13 @@ const linkButtonStyle = {
   font: "inherit",
 } as const;
 
+const analysisCostFormatter = new Intl.NumberFormat("ru-RU", {
+  style: "currency",
+  currency: "RUB",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 export function createLinkOrButton(
   onSelectCall: (callId: string) => void,
 ): (
@@ -176,7 +183,7 @@ export function renderAnalysisCostCell(analysisCostRub?: number | null) {
 
   return (
     <span style={{ fontWeight: 600, color: "#444", whiteSpace: "nowrap" }}>
-      {analysisCostRub.toFixed(2)} ₽
+      {analysisCostFormatter.format(analysisCostRub)}
     </span>
   );
 }

@@ -1059,6 +1059,17 @@ textarea.text-input:focus {
     cursor: pointer;
   }
 
+  .sidebar-close:focus-visible,
+  .mobile-menu-trigger:focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.18);
+  }
+
+  .sidebar-close:focus-within span {
+    background: #1d4ed8;
+  }
+
   .sidebar-close span {
     position: absolute;
     width: 18px;
@@ -1080,8 +1091,10 @@ textarea.text-input:focus {
     top: 12px;
     left: 16px;
     z-index: 1201;
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     display: inline-flex;
     flex-direction: column;
     align-items: center;
@@ -1190,6 +1203,26 @@ textarea.text-input:focus {
 
   .transcript-card {
     min-height: 500px;
+  }
+}
+
+@media screen and (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transform: none;
+    transition: none;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .sidebar.is-mobile-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .mobile-sidebar-overlay {
+    transition: none;
   }
 }
 

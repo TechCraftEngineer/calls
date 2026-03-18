@@ -48,6 +48,12 @@ export const env = createEnv({
     // ASR (Speech-to-Text) - at least one required
     ASSEMBLYAI_API_KEY: z.string().optional(),
     YANDEX_SPEECHKIT_API_KEY: z.string().optional(),
+    ASSEMBLYAI_RATE_USD_PER_HOUR: z.coerce.number().positive().default(0.23),
+    RUB_PER_USD: z.coerce.number().positive().default(90),
+    YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE: z.coerce
+      .number()
+      .positive()
+      .default(0.6),
 
     // File processing limits
     MIN_FILE_SIZE_BYTES: z.coerce.number().default(1024), // 1KB
@@ -97,6 +103,10 @@ export const env = createEnv({
     MEGAFON_FTP_PASSWORD: process.env.MEGAFON_FTP_PASSWORD,
     ASSEMBLYAI_API_KEY: process.env.ASSEMBLYAI_API_KEY,
     YANDEX_SPEECHKIT_API_KEY: process.env.YANDEX_SPEECHKIT_API_KEY,
+    ASSEMBLYAI_RATE_USD_PER_HOUR: process.env.ASSEMBLYAI_RATE_USD_PER_HOUR,
+    RUB_PER_USD: process.env.RUB_PER_USD,
+    YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE:
+      process.env.YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE,
     MIN_FILE_SIZE_BYTES: process.env.MIN_FILE_SIZE_BYTES,
     MAX_FILE_SIZE_BYTES: process.env.MAX_FILE_SIZE_BYTES,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,

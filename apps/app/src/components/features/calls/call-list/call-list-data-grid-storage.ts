@@ -1,16 +1,16 @@
-const STORAGE_KEY = "callListDataGrid_columns:v1";
+const STORAGE_KEY = "callListDataGrid_columns:v2";
 
 export const DEFAULT_COLUMN_IDS = [
-  "type",
+  "date",
   "number",
+  "type",
   "manager",
   "status",
-  "date",
+  "duration",
   "score",
   "summary",
-  "analysisCost",
   "record",
-  "duration",
+  "analysisCost",
 ] as const;
 
 export type ColumnSchema = {
@@ -22,7 +22,7 @@ export function getDefaultSchema(): ColumnSchema {
   return {
     columnOrder: [...DEFAULT_COLUMN_IDS],
     columnVisibility: Object.fromEntries(
-      DEFAULT_COLUMN_IDS.map((id) => [id, true]),
+      DEFAULT_COLUMN_IDS.map((id) => [id, id !== "analysisCost"]),
     ),
   };
 }
@@ -39,7 +39,8 @@ function validateAndMerge(
 
   const columnVisibility: Record<string, boolean> = {};
   for (const id of DEFAULT_COLUMN_IDS) {
-    columnVisibility[id] = saved.columnVisibility?.[id] ?? true;
+    columnVisibility[id] =
+      saved.columnVisibility?.[id] ?? id !== "analysisCost";
   }
 
   return { columnOrder, columnVisibility };

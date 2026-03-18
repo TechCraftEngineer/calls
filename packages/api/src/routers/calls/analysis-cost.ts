@@ -1,10 +1,4 @@
-const RUB_PER_USD = 90;
-
-// AssemblyAI Universal-3 Pro + Speaker Diarization.
-const ASSEMBLYAI_RATE_USD_PER_HOUR = 0.21 + 0.02;
-
-// Yandex SpeechKit STT long-running recognition.
-const YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE = 0.6;
+import { env } from "@calls/config";
 
 export function calculateAnalysisCostRub(
   durationInSeconds?: number | null,
@@ -21,8 +15,9 @@ export function calculateAnalysisCostRub(
   const durationMinutes = durationInSeconds / 60;
 
   const assemblyCostRub =
-    durationHours * ASSEMBLYAI_RATE_USD_PER_HOUR * RUB_PER_USD;
-  const yandexCostRub = durationMinutes * YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE;
+    durationHours * env.ASSEMBLYAI_RATE_USD_PER_HOUR * env.RUB_PER_USD;
+  const yandexCostRub =
+    durationMinutes * env.YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE;
 
   return Number((assemblyCostRub + yandexCostRub).toFixed(2));
 }
