@@ -144,6 +144,12 @@ export function useSettings() {
         updated_at: undefined,
         meta: { passwordSet: megaPbx.apiKeySet },
       };
+      promptsMap.megapbx_sync_from_date = {
+        key: "megapbx_sync_from_date",
+        value: megaPbx.syncFromDate ?? "",
+        description: "С какой даты начинать импорт звонков",
+        updated_at: undefined,
+      };
       promptsMap.megapbx_webhook_secret = {
         key: "megapbx_webhook_secret",
         value: "",
@@ -514,6 +520,7 @@ export function useSettings() {
     enabled: state.prompts.megapbx_enabled?.value === "true",
     baseUrl: state.prompts.megapbx_base_url?.value ?? "",
     apiKey: state.prompts.megapbx_api_key?.value ?? "",
+    syncFromDate: state.prompts.megapbx_sync_from_date?.value?.trim() ?? "",
     webhookSecret: state.prompts.megapbx_webhook_secret?.value ?? "",
     ftpHost: state.prompts.megapbx_ftp_host?.value ?? "",
     ftpUser: state.prompts.megapbx_ftp_user?.value ?? "",

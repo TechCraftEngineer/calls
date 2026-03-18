@@ -16,6 +16,7 @@ export const testPbx = workspaceAdminProcedure
     const config = {
       baseUrl: (input.baseUrl?.trim() || saved?.baseUrl || "").trim(),
       apiKey: (input.apiKey?.trim() || saved?.apiKey || "").trim(),
+      syncFromDate: input.syncFromDate?.trim() || saved?.syncFromDate,
       authScheme: "bearer" as const,
       employeesEndpoint: {
         path: "/crm/employees",

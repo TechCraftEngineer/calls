@@ -20,6 +20,7 @@ export default function SettingsPbxMegafonPage() {
     handleLinkPbxTarget,
     handleUnlinkPbxTarget,
     updatePrompt,
+    setPromptValue,
     setTogglePrompt,
   } = useSettings();
 
@@ -81,6 +82,7 @@ export default function SettingsPbxMegafonPage() {
 
       <PbxSection
         prompts={state.prompts}
+        onPromptValueChange={setPromptValue}
         onPromptChange={updatePrompt}
         onToggleChange={setTogglePrompt}
         onSave={handleSavePbx}

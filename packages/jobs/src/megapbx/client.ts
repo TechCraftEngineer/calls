@@ -126,6 +126,12 @@ export class MegaPbxClient {
   ): Promise<unknown> {
     const url = this.buildUrl(endpoint.path);
     const method = endpoint.method ?? "GET";
+    if (method === "GET" && body) {
+      for (const [key, value] of Object.entries(body)) {
+        if (value === undefined || value === null || value === "") continue;
+        url.searchParams.set(key, String(value));
+      }
+    }
     const timeoutMs = this.getRequestTimeoutMs();
     const controllerSignal = AbortSignal.timeout(timeoutMs);
     const response = await fetch(url, {
@@ -205,7 +211,11 @@ export class MegaPbxClient {
 
   async fetchCalls(cursor?: string | null): Promise<Record<string, unknown>[]> {
     if (!this.config.callsEndpoint?.path) return [];
-    const body = cursor ? { cursor, from: cursor } : undefined;
+    const from = cursor || this.config.syncFromDate || null;
+    const body =
+      cursor || from
+        ? { ...(cursor ? { cursor } : {}), ...(from ? { from } : {}) }
+        : undefined;
     const payload = await this.request(this.config.callsEndpoint, body);
     const validated = validateResponse(CallResponseSchema, payload, "звонки");
     return pickArray(validated, this.config.callsEndpoint.resultKey);

@@ -4,6 +4,7 @@ export const pbxSettingsSchema = z.object({
   enabled: z.boolean(),
   baseUrl: z.string().trim(),
   apiKey: z.string().trim(),
+  syncFromDate: z.string().trim().optional().default(""),
   webhookSecret: z.string().trim().optional().default(""),
   ftpHost: z.string().trim().optional().default(""),
   ftpUser: z.string().trim().optional().default(""),

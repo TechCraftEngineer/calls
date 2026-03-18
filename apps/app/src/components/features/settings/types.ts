@@ -124,6 +124,7 @@ export interface IntegrationsSectionProps {
 
 export interface PbxSectionProps {
   prompts: Record<string, Prompt>;
+  onPromptValueChange: (key: string, value: string) => void;
   onPromptChange: (
     key: string,
     field: "value" | "description",

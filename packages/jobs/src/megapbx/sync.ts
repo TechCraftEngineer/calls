@@ -255,7 +255,7 @@ export async function syncMegaPbxCalls(
     provider: PROVIDER,
     syncType: "calls",
     status: "running",
-    cursor: syncState?.cursor ?? null,
+    cursor: syncState?.cursor ?? config.syncFromDate ?? null,
     markStarted: true,
   });
 
@@ -265,7 +265,9 @@ export async function syncMegaPbxCalls(
       PROVIDER,
     );
     const numberMap = await pbxRepository.getNumberMap(workspaceId, PROVIDER);
-    const calls = (await client.fetchCalls(syncState?.cursor ?? null))
+    const calls = (
+      await client.fetchCalls(syncState?.cursor ?? config.syncFromDate ?? null)
+    )
       .map(normalizeCall)
       .filter((item): item is NormalizedCall => Boolean(item))
       .sort((a, b) => a.timestamp.localeCompare(b.timestamp));

@@ -8,6 +8,7 @@ export const INTEGRATION_KEYS = {
   megapbx_enabled: "Включено",
   megapbx_base_url: "Base URL",
   megapbx_api_key: "API key",
+  megapbx_sync_from_date: "Импортировать звонки с даты",
   megapbx_webhook_secret: "Секрет вебхука",
   megapbx_ftp_host: "FTP host",
   megapbx_ftp_user: "FTP user",

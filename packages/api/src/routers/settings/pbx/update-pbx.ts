@@ -20,6 +20,7 @@ export const updatePbx = workspaceAdminProcedure
       {
         ...input,
         apiKey: input.apiKey || null,
+        syncFromDate: input.syncFromDate || null,
         webhookSecret: input.webhookSecret || null,
         ftpHost: input.ftpHost || null,
         ftpUser: input.ftpUser || null,

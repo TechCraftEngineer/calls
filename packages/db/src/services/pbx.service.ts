@@ -17,6 +17,7 @@ type UpdateMegaPbxSettingsInput = {
   enabled: boolean;
   baseUrl: string;
   apiKey: string | null;
+  syncFromDate?: string | null;
   webhookSecret?: string | null;
   ftpHost?: string | null;
   ftpUser?: string | null;
@@ -54,6 +55,11 @@ function buildFixedMegaPbxConfig(
       : existing?.apiKey
         ? encrypt(existing.apiKey)
         : "",
+    syncFromDate:
+      input.syncFromDate?.trim() &&
+      /^\d{4}-\d{2}-\d{2}$/.test(input.syncFromDate.trim())
+        ? input.syncFromDate.trim()
+        : existing?.syncFromDate,
     authScheme: MEGAPBX_AUTH_SCHEME,
     employeesEndpoint: {
       path: MEGAPBX_ENDPOINTS.employees,
@@ -107,6 +113,7 @@ export class PbxService {
       enabled: row?.enabled ?? false,
       baseUrl: config.baseUrl ?? "",
       apiKeySet: Boolean(config.apiKey?.trim()),
+      syncFromDate: config.syncFromDate ?? "",
       authScheme: MEGAPBX_AUTH_SCHEME,
       apiKeyHeader: "",
       employeesPath: MEGAPBX_ENDPOINTS.employees,
@@ -148,6 +155,7 @@ export class PbxService {
       enabled: row.enabled,
       baseUrl: config.baseUrl ?? "",
       apiKey: decryptIfPresent(config.apiKey) ?? "",
+      syncFromDate: config.syncFromDate ?? undefined,
       authScheme: MEGAPBX_AUTH_SCHEME,
       employeesEndpoint: {
         path: MEGAPBX_ENDPOINTS.employees,
@@ -190,6 +198,7 @@ export class PbxService {
           workspaceId: row.workspaceId,
           baseUrl: config.baseUrl ?? "",
           apiKey: decryptIfPresent(config.apiKey) ?? "",
+          syncFromDate: config.syncFromDate ?? undefined,
           authScheme: MEGAPBX_AUTH_SCHEME,
           employeesEndpoint: {
             path: MEGAPBX_ENDPOINTS.employees,

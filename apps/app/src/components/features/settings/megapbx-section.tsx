@@ -13,6 +13,7 @@ import {
   DataGridContainer,
   DataGridPagination,
   DataGridTable,
+  DatePicker,
   Input,
   Label,
   PasswordInput,
@@ -69,7 +70,7 @@ function SummaryTile({
   hint: string;
 }) {
   return (
-    <div className="rounded-xl border bg-muted/30 p-3">
+    <div className="rounded-xl bg-muted/30 p-3">
       <div className="text-xs uppercase tracking-wide text-muted-foreground">
         {label}
       </div>
@@ -89,8 +90,8 @@ function SectionBlock({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border bg-card">
-      <div className="space-y-1 border-b px-5 py-4">
+    <div className="overflow-hidden rounded-xl bg-card">
+      <div className="space-y-1 bg-muted/10 px-5 py-4">
         <h3 className="text-sm font-semibold">{title}</h3>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
@@ -101,6 +102,7 @@ function SectionBlock({
 
 export default function MegaPbxSection({
   prompts,
+  onPromptValueChange,
   onPromptChange,
   onToggleChange,
   onSave,
@@ -494,7 +496,7 @@ export default function MegaPbxSection({
           </div>
           <label
             htmlFor="megapbx-enabled"
-            className="flex cursor-pointer items-center gap-3 rounded-lg border bg-muted/50 px-4 py-3"
+            className="flex cursor-pointer items-center gap-3 rounded-lg bg-muted/50 px-4 py-3"
           >
             <Checkbox
               id="megapbx-enabled"
@@ -539,7 +541,7 @@ export default function MegaPbxSection({
           />
         </div>
 
-        <div className="sticky top-20 z-10 -mx-2 rounded-xl border bg-background/95 px-2 py-2 backdrop-blur supports-backdrop-filter:bg-background/80">
+        <div className="sticky top-20 z-10 -mx-2 rounded-xl bg-background/95 px-2 py-2 backdrop-blur supports-backdrop-filter:bg-background/80">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid h-auto w-full grid-cols-3 rounded-xl bg-muted/50 p-1">
               <TabsTrigger value="overview" className="rounded-lg">
@@ -608,6 +610,27 @@ export default function MegaPbxSection({
                     Ключ хранится в зашифрованном виде.
                   </p>
                 </div>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="megapbx-sync-from-date"
+                    className="text-xs text-muted-foreground"
+                  >
+                    Импорт звонков с даты
+                  </Label>
+                  <DatePicker
+                    id="megapbx-sync-from-date"
+                    value={prompts.megapbx_sync_from_date?.value ?? ""}
+                    onChange={(value) =>
+                      onPromptValueChange("megapbx_sync_from_date", value)
+                    }
+                    placeholder="Выберите дату"
+                    className="h-10"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Используется как стартовая дата для первой загрузки истории
+                    звонков.
+                  </p>
+                </div>
               </div>
             </SectionBlock>
 
@@ -645,7 +668,7 @@ export default function MegaPbxSection({
                 ].map(([key, label, hint]) => (
                   <label
                     key={key}
-                    className="flex min-h-24 cursor-pointer flex-col gap-3 rounded-xl border bg-muted/20 p-4 transition-colors hover:bg-muted/40"
+                    className="flex min-h-24 cursor-pointer flex-col gap-3 rounded-xl bg-muted/20 p-4 transition-colors hover:bg-muted/40"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -699,7 +722,7 @@ export default function MegaPbxSection({
                     className="h-10"
                   />
                 </div>
-                <div className="rounded-xl border bg-muted/20 p-4 text-sm text-muted-foreground">
+                <div className="rounded-xl bg-muted/20 p-4 text-sm text-muted-foreground">
                   Используется для проверки входящих запросов от АТС. Если
                   вебхуки не включены, это поле можно не заполнять.
                 </div>
@@ -707,7 +730,7 @@ export default function MegaPbxSection({
             </SectionBlock>
 
             {testMessage && (
-              <div className="rounded-xl border bg-muted/30 px-4 py-3 text-sm">
+              <div className="rounded-xl bg-muted/30 px-4 py-3 text-sm">
                 {testMessage}
               </div>
             )}
@@ -717,7 +740,7 @@ export default function MegaPbxSection({
               description="Сначала сохраните настройки, затем проверьте доступ и при необходимости вручную запустите синхронизацию."
             >
               <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-5">
-                <div className="rounded-xl border bg-muted/20 p-4 xl:col-span-2">
+                <div className="rounded-xl bg-muted/20 p-4 xl:col-span-2">
                   <div className="text-sm font-medium">
                     Настройки подключения
                   </div>
@@ -738,7 +761,7 @@ export default function MegaPbxSection({
                     </Button>
                   </div>
                 </div>
-                <div className="rounded-xl border bg-muted/20 p-4">
+                <div className="rounded-xl bg-muted/20 p-4">
                   <div className="text-sm font-medium">Справочник</div>
                   <div className="mt-1 text-sm text-muted-foreground">
                     Сотрудники и номера
@@ -753,7 +776,7 @@ export default function MegaPbxSection({
                     {syncing === "directory" ? "Синк…" : "Запустить"}
                   </Button>
                 </div>
-                <div className="rounded-xl border bg-muted/20 p-4">
+                <div className="rounded-xl bg-muted/20 p-4">
                   <div className="text-sm font-medium">Звонки</div>
                   <div className="mt-1 text-sm text-muted-foreground">
                     Импорт истории вызовов
@@ -768,7 +791,7 @@ export default function MegaPbxSection({
                     {syncing === "calls" ? "Синк…" : "Запустить"}
                   </Button>
                 </div>
-                <div className="rounded-xl border bg-muted/20 p-4">
+                <div className="rounded-xl bg-muted/20 p-4">
                   <div className="text-sm font-medium">Записи</div>
                   <div className="mt-1 text-sm text-muted-foreground">
                     Загрузка аудио по звонкам
@@ -812,7 +835,7 @@ export default function MegaPbxSection({
                 />
               </div>
             </div>
-            <div className="overflow-hidden rounded-xl border bg-card">
+            <div className="overflow-hidden rounded-xl bg-card">
               <DataGrid
                 table={employeeTable}
                 recordCount={filteredEmployees.length}
@@ -823,8 +846,8 @@ export default function MegaPbxSection({
                     : "По текущему запросу сотрудники не найдены."
                 }
                 tableLayout={{
-                  rowBorder: true,
-                  headerBorder: true,
+                  rowBorder: false,
+                  headerBorder: false,
                   headerBackground: true,
                 }}
                 tableClassNames={{ base: "op-table" }}
@@ -871,7 +894,7 @@ export default function MegaPbxSection({
                 />
               </div>
             </div>
-            <div className="overflow-hidden rounded-xl border bg-card">
+            <div className="overflow-hidden rounded-xl bg-card">
               <DataGrid
                 table={numberTable}
                 recordCount={filteredNumbers.length}
@@ -882,8 +905,8 @@ export default function MegaPbxSection({
                     : "По текущему запросу номера не найдены."
                 }
                 tableLayout={{
-                  rowBorder: true,
-                  headerBorder: true,
+                  rowBorder: false,
+                  headerBorder: false,
                   headerBackground: true,
                 }}
                 tableClassNames={{ base: "op-table" }}
