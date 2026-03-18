@@ -46,6 +46,8 @@ export const paths = {
     workspace: `${ROOTS.SETTINGS}/workspace`,
     evaluation: `${ROOTS.SETTINGS}/evaluation`,
     integrations: `${ROOTS.SETTINGS}/integrations`,
+    pbx: `${ROOTS.SETTINGS}/pbx`,
+    pbxMegafon: `${ROOTS.SETTINGS}/pbx/megafon`,
     backup: `${ROOTS.SETTINGS}/backup`,
     profile: `${ROOTS.SETTINGS}/profile`,
     appearance: `${ROOTS.SETTINGS}/appearance`,

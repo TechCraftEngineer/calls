@@ -16,65 +16,20 @@ export const testPbx = workspaceAdminProcedure
     const config = {
       baseUrl: (input.baseUrl?.trim() || saved?.baseUrl || "").trim(),
       apiKey: (input.apiKey?.trim() || saved?.apiKey || "").trim(),
-      authScheme: input.authScheme ?? saved?.authScheme ?? "bearer",
-      apiKeyHeader:
-        input.apiKeyHeader?.trim() || saved?.apiKeyHeader || "X-API-Key",
-      employeesEndpoint:
-        input.employeesPath?.trim() || saved?.employeesEndpoint?.path
-          ? {
-              path:
-                input.employeesPath?.trim() ||
-                saved?.employeesEndpoint?.path ||
-                "",
-              method:
-                input.employeesMethod ??
-                saved?.employeesEndpoint?.method ??
-                "GET",
-              resultKey:
-                input.employeesResultKey?.trim() ||
-                saved?.employeesEndpoint?.resultKey,
-            }
-          : undefined,
-      numbersEndpoint:
-        input.numbersPath?.trim() || saved?.numbersEndpoint?.path
-          ? {
-              path:
-                input.numbersPath?.trim() || saved?.numbersEndpoint?.path || "",
-              method:
-                input.numbersMethod ?? saved?.numbersEndpoint?.method ?? "GET",
-              resultKey:
-                input.numbersResultKey?.trim() ||
-                saved?.numbersEndpoint?.resultKey,
-            }
-          : undefined,
-      callsEndpoint:
-        input.callsPath?.trim() || saved?.callsEndpoint?.path
-          ? {
-              path: input.callsPath?.trim() || saved?.callsEndpoint?.path || "",
-              method:
-                input.callsMethod ?? saved?.callsEndpoint?.method ?? "GET",
-              resultKey:
-                input.callsResultKey?.trim() || saved?.callsEndpoint?.resultKey,
-            }
-          : undefined,
-      recordingsEndpoint:
-        input.recordingsPath?.trim() || saved?.recordingsEndpoint?.path
-          ? {
-              path:
-                input.recordingsPath?.trim() ||
-                saved?.recordingsEndpoint?.path ||
-                "",
-              method:
-                input.recordingsMethod ??
-                saved?.recordingsEndpoint?.method ??
-                "GET",
-              resultKey:
-                input.recordingsResultKey?.trim() ||
-                saved?.recordingsEndpoint?.resultKey,
-            }
-          : undefined,
+      authScheme: "bearer" as const,
+      employeesEndpoint: {
+        path: "/crm/employees",
+        method: "GET" as const,
+      },
+      numbersEndpoint: {
+        path: "/crm/numbers",
+        method: "GET" as const,
+      },
+      callsEndpoint: {
+        path: "/crm/calls",
+        method: "GET" as const,
+      },
       webhook: {
-        path: input.webhookPath?.trim() || saved?.webhook?.path,
         secret: input.webhookSecret?.trim() || saved?.webhook?.secret,
       },
       ftpHost: input.ftpHost?.trim() || saved?.ftpHost,

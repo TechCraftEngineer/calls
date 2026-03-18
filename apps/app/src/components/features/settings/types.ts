@@ -128,7 +128,6 @@ export interface PbxSectionProps {
     key: string,
     field: "value" | "description",
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onPromptValueChange: (key: string, value: string) => void;
   onToggleChange: (key: string, checked: boolean) => void;
   onSave: () => Promise<void>;
   onTest: () => Promise<void>;

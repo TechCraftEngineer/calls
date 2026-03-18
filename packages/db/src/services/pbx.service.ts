@@ -6,26 +6,17 @@ import type { MegaPbxIntegrationConfig } from "../schema";
 
 const MEGAPBX_INTEGRATION = "megapbx" as const;
 const MEGAPBX_PROVIDER = "megapbx" as const;
+const MEGAPBX_AUTH_SCHEME = "bearer" as const;
+const MEGAPBX_ENDPOINTS = {
+  employees: "/crm/employees",
+  numbers: "/crm/numbers",
+  calls: "/crm/calls",
+} as const;
 
 type UpdateMegaPbxSettingsInput = {
   enabled: boolean;
   baseUrl: string;
   apiKey: string | null;
-  authScheme?: "bearer" | "x-api-key" | "query";
-  apiKeyHeader?: string;
-  employeesPath?: string | null;
-  employeesMethod?: "GET" | "POST";
-  employeesResultKey?: string | null;
-  numbersPath?: string | null;
-  numbersMethod?: "GET" | "POST";
-  numbersResultKey?: string | null;
-  callsPath?: string | null;
-  callsMethod?: "GET" | "POST";
-  callsResultKey?: string | null;
-  recordingsPath?: string | null;
-  recordingsMethod?: "GET" | "POST";
-  recordingsResultKey?: string | null;
-  webhookPath?: string | null;
   webhookSecret?: string | null;
   ftpHost?: string | null;
   ftpUser?: string | null;
@@ -52,6 +43,52 @@ function decryptIfPresent(value?: string | null): string | null {
   return decrypt(value);
 }
 
+function buildFixedMegaPbxConfig(
+  input: UpdateMegaPbxSettingsInput,
+  existing?: MegaPbxIntegrationConfig & { enabled: boolean },
+): MegaPbxIntegrationConfig {
+  return {
+    baseUrl: ensureUrl(input.baseUrl),
+    apiKey: input.apiKey?.trim()
+      ? encrypt(input.apiKey.trim())
+      : existing?.apiKey
+        ? encrypt(existing.apiKey)
+        : "",
+    authScheme: MEGAPBX_AUTH_SCHEME,
+    employeesEndpoint: {
+      path: MEGAPBX_ENDPOINTS.employees,
+      method: "GET" as const,
+    },
+    numbersEndpoint: {
+      path: MEGAPBX_ENDPOINTS.numbers,
+      method: "GET" as const,
+    },
+    callsEndpoint: {
+      path: MEGAPBX_ENDPOINTS.calls,
+      method: "GET" as const,
+    },
+    webhook: {
+      secret: input.webhookSecret?.trim()
+        ? encrypt(input.webhookSecret.trim())
+        : existing?.webhook?.secret
+          ? encrypt(existing.webhook.secret)
+          : undefined,
+    },
+    ftpHost: input.ftpHost?.trim() || undefined,
+    ftpUser: input.ftpUser?.trim() || undefined,
+    ftpPassword: input.ftpPassword?.trim()
+      ? encrypt(input.ftpPassword.trim())
+      : existing?.ftpPassword
+        ? encrypt(existing.ftpPassword)
+        : undefined,
+    syncEmployees: input.syncEmployees,
+    syncNumbers: input.syncNumbers,
+    syncCalls: input.syncCalls,
+    syncRecordings: input.syncRecordings,
+    webhooksEnabled: input.webhooksEnabled,
+  };
+}
+
 export class PbxService {
   constructor(
     private workspaceIntegrationsRepository: WorkspaceIntegrationsRepository,
@@ -70,21 +107,21 @@ export class PbxService {
       enabled: row?.enabled ?? false,
       baseUrl: config.baseUrl ?? "",
       apiKeySet: Boolean(config.apiKey?.trim()),
-      authScheme: config.authScheme ?? "bearer",
-      apiKeyHeader: config.apiKeyHeader ?? "X-API-Key",
-      employeesPath: config.employeesEndpoint?.path ?? "",
-      employeesMethod: config.employeesEndpoint?.method ?? "GET",
-      employeesResultKey: config.employeesEndpoint?.resultKey ?? "",
-      numbersPath: config.numbersEndpoint?.path ?? "",
-      numbersMethod: config.numbersEndpoint?.method ?? "GET",
-      numbersResultKey: config.numbersEndpoint?.resultKey ?? "",
-      callsPath: config.callsEndpoint?.path ?? "",
-      callsMethod: config.callsEndpoint?.method ?? "GET",
-      callsResultKey: config.callsEndpoint?.resultKey ?? "",
-      recordingsPath: config.recordingsEndpoint?.path ?? "",
-      recordingsMethod: config.recordingsEndpoint?.method ?? "GET",
-      recordingsResultKey: config.recordingsEndpoint?.resultKey ?? "",
-      webhookPath: config.webhook?.path ?? "",
+      authScheme: MEGAPBX_AUTH_SCHEME,
+      apiKeyHeader: "",
+      employeesPath: MEGAPBX_ENDPOINTS.employees,
+      employeesMethod: "GET",
+      employeesResultKey: "",
+      numbersPath: MEGAPBX_ENDPOINTS.numbers,
+      numbersMethod: "GET",
+      numbersResultKey: "",
+      callsPath: MEGAPBX_ENDPOINTS.calls,
+      callsMethod: "GET",
+      callsResultKey: "",
+      recordingsPath: "",
+      recordingsMethod: "GET",
+      recordingsResultKey: "",
+      webhookPath: "",
       webhookSecretSet: Boolean(config.webhook?.secret?.trim()),
       ftpHost: config.ftpHost ?? "",
       ftpUser: config.ftpUser ?? "",
@@ -111,14 +148,20 @@ export class PbxService {
       enabled: row.enabled,
       baseUrl: config.baseUrl ?? "",
       apiKey: decryptIfPresent(config.apiKey) ?? "",
-      authScheme: config.authScheme ?? "bearer",
-      apiKeyHeader: config.apiKeyHeader ?? "X-API-Key",
-      employeesEndpoint: config.employeesEndpoint,
-      numbersEndpoint: config.numbersEndpoint,
-      callsEndpoint: config.callsEndpoint,
-      recordingsEndpoint: config.recordingsEndpoint,
+      authScheme: MEGAPBX_AUTH_SCHEME,
+      employeesEndpoint: {
+        path: MEGAPBX_ENDPOINTS.employees,
+        method: "GET" as const,
+      },
+      numbersEndpoint: {
+        path: MEGAPBX_ENDPOINTS.numbers,
+        method: "GET" as const,
+      },
+      callsEndpoint: {
+        path: MEGAPBX_ENDPOINTS.calls,
+        method: "GET" as const,
+      },
       webhook: {
-        path: config.webhook?.path,
         secret: decryptIfPresent(config.webhook?.secret) ?? undefined,
       },
       ftpHost: config.ftpHost ?? undefined,
@@ -147,14 +190,20 @@ export class PbxService {
           workspaceId: row.workspaceId,
           baseUrl: config.baseUrl ?? "",
           apiKey: decryptIfPresent(config.apiKey) ?? "",
-          authScheme: config.authScheme ?? "bearer",
-          apiKeyHeader: config.apiKeyHeader ?? "X-API-Key",
-          employeesEndpoint: config.employeesEndpoint,
-          numbersEndpoint: config.numbersEndpoint,
-          callsEndpoint: config.callsEndpoint,
-          recordingsEndpoint: config.recordingsEndpoint,
+          authScheme: MEGAPBX_AUTH_SCHEME,
+          employeesEndpoint: {
+            path: MEGAPBX_ENDPOINTS.employees,
+            method: "GET" as const,
+          },
+          numbersEndpoint: {
+            path: MEGAPBX_ENDPOINTS.numbers,
+            method: "GET" as const,
+          },
+          callsEndpoint: {
+            path: MEGAPBX_ENDPOINTS.calls,
+            method: "GET" as const,
+          },
           webhook: {
-            path: config.webhook?.path,
             secret: decryptIfPresent(config.webhook?.secret) ?? undefined,
           },
           ftpHost: config.ftpHost ?? undefined,
@@ -176,65 +225,7 @@ export class PbxService {
     username = "system",
   ): Promise<boolean> {
     const existing = await this.getConfigWithSecrets(workspaceId);
-    const config: MegaPbxIntegrationConfig = {
-      baseUrl: ensureUrl(input.baseUrl),
-      apiKey: input.apiKey?.trim()
-        ? encrypt(input.apiKey.trim())
-        : existing?.apiKey
-          ? encrypt(existing.apiKey)
-          : "",
-      authScheme: input.authScheme ?? existing?.authScheme ?? "bearer",
-      apiKeyHeader:
-        input.apiKeyHeader?.trim() || existing?.apiKeyHeader || "X-API-Key",
-      employeesEndpoint: input.employeesPath?.trim()
-        ? {
-            path: input.employeesPath.trim(),
-            method: input.employeesMethod ?? "GET",
-            resultKey: input.employeesResultKey?.trim() || undefined,
-          }
-        : undefined,
-      numbersEndpoint: input.numbersPath?.trim()
-        ? {
-            path: input.numbersPath.trim(),
-            method: input.numbersMethod ?? "GET",
-            resultKey: input.numbersResultKey?.trim() || undefined,
-          }
-        : undefined,
-      callsEndpoint: input.callsPath?.trim()
-        ? {
-            path: input.callsPath.trim(),
-            method: input.callsMethod ?? "GET",
-            resultKey: input.callsResultKey?.trim() || undefined,
-          }
-        : undefined,
-      recordingsEndpoint: input.recordingsPath?.trim()
-        ? {
-            path: input.recordingsPath.trim(),
-            method: input.recordingsMethod ?? "GET",
-            resultKey: input.recordingsResultKey?.trim() || undefined,
-          }
-        : undefined,
-      webhook: {
-        path: input.webhookPath?.trim() || existing?.webhook?.path,
-        secret: input.webhookSecret?.trim()
-          ? encrypt(input.webhookSecret.trim())
-          : existing?.webhook?.secret
-            ? encrypt(existing.webhook.secret)
-            : undefined,
-      },
-      ftpHost: input.ftpHost?.trim() || undefined,
-      ftpUser: input.ftpUser?.trim() || undefined,
-      ftpPassword: input.ftpPassword?.trim()
-        ? encrypt(input.ftpPassword.trim())
-        : existing?.ftpPassword
-          ? encrypt(existing.ftpPassword)
-          : undefined,
-      syncEmployees: input.syncEmployees,
-      syncNumbers: input.syncNumbers,
-      syncCalls: input.syncCalls,
-      syncRecordings: input.syncRecordings,
-      webhooksEnabled: input.webhooksEnabled,
-    };
+    const config = buildFixedMegaPbxConfig(input, existing ?? undefined);
 
     const result = await this.workspaceIntegrationsRepository.upsert(
       workspaceId,
