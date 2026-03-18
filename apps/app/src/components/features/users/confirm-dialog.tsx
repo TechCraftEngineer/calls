@@ -102,7 +102,7 @@ export function ConfirmDialog({
             variant="link"
             size="touch"
             onClick={onClose}
-            className="text-primary"
+            className="text-foreground"
             aria-label={cancelText}
           >
             {cancelText}

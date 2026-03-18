@@ -14,7 +14,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { SearchInput } from "@/components/ui/search-input";
 import type { PbxEmployeeItem } from "../types";
 import {
@@ -52,6 +52,41 @@ export function EmployeesTab({
   const [selectedLinks, setSelectedLinks] = useState<Record<string, string>>(
     {},
   );
+  const [linkingEmployeeId, setLinkingEmployeeId] = useState<string | null>(
+    null,
+  );
+  const [unlinkingEmployeeId, setUnlinkingEmployeeId] = useState<string | null>(
+    null,
+  );
+
+  const handleLink = useCallback(
+    async (input: {
+      targetType: "employee";
+      targetExternalId: string;
+      userId?: string | null;
+      invitationId?: string | null;
+    }) => {
+      setLinkingEmployeeId(input.targetExternalId);
+      try {
+        await onLink(input);
+      } finally {
+        setLinkingEmployeeId(null);
+      }
+    },
+    [onLink],
+  );
+
+  const handleUnlink = useCallback(
+    async (input: { targetType: "employee"; targetExternalId: string }) => {
+      setUnlinkingEmployeeId(input.targetExternalId);
+      try {
+        await onUnlink(input);
+      } finally {
+        setUnlinkingEmployeeId(null);
+      }
+    },
+    [onUnlink],
+  );
 
   const filteredEmployees = useMemo(() => {
     const query = employeeSearch.trim().toLowerCase();
@@ -77,10 +112,19 @@ export function EmployeesTab({
         employeeLinkOptions,
         selectedLinks,
         setSelectedLinks,
-        onLink,
-        onUnlink,
+        handleLink,
+        handleUnlink,
+        linkingEmployeeId,
+        unlinkingEmployeeId,
       ),
-    [employeeLinkOptions, selectedLinks, onLink, onUnlink],
+    [
+      employeeLinkOptions,
+      selectedLinks,
+      handleLink,
+      handleUnlink,
+      linkingEmployeeId,
+      unlinkingEmployeeId,
+    ],
   );
 
   const employeeTable = useReactTable({
@@ -111,7 +155,7 @@ export function EmployeesTab({
             value={employeeSearch}
             onChange={onEmployeeSearchChange}
             placeholder="Поиск по сотруднику, email, внутреннему номеру…"
-            className="w-full sm:w-90"
+            className="w-full sm:w-96"
           />
         </div>
       </div>

@@ -37,7 +37,9 @@ export default function MegaPbxSection({
   onPromptValueChange,
   onPromptChange,
   onToggleChange,
-  onSave,
+  onSaveAccess,
+  onSaveSyncOptions,
+  onSaveWebhook,
   onTest,
   onSyncDirectory,
   onSyncCalls,
@@ -60,7 +62,7 @@ export default function MegaPbxSection({
 
   const webhookUrl =
     activeWorkspace?.id && getWebhookBaseUrl()
-      ? `${getWebhookBaseUrl()}/api/pbx-webhook/${activeWorkspace.id}`
+      ? `${getWebhookBaseUrl()}/api/megapbx-webhook/${activeWorkspace.id}`
       : "";
 
   const enabled = prompts.megapbx_enabled?.value === "true";
@@ -229,7 +231,9 @@ export default function MegaPbxSection({
             onPromptChange={onPromptChange}
             onPromptValueChange={onPromptValueChange}
             onToggleChange={onToggleChange}
-            onSave={onSave}
+            onSaveAccess={onSaveAccess}
+            onSaveSyncOptions={onSaveSyncOptions}
+            onSaveWebhook={onSaveWebhook}
             onTest={onTest}
             onSyncDirectory={onSyncDirectory}
             onSyncCalls={onSyncCalls}

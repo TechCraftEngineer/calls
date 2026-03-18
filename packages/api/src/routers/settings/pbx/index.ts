@@ -8,10 +8,16 @@ import { syncPbxRecordingsRoute } from "./sync-pbx-recordings";
 import { testPbx } from "./test-pbx";
 import { unlinkPbxUser } from "./unlink-pbx-user";
 import { updatePbx } from "./update-pbx";
+import { updatePbxAccess } from "./update-pbx-access";
+import { updatePbxSyncOptions } from "./update-pbx-sync-options";
+import { updatePbxWebhook } from "./update-pbx-webhook";
 
 export const pbxRouter = {
   getPbx,
   updatePbx,
+  updatePbxAccess,
+  updatePbxSyncOptions,
+  updatePbxWebhook,
   testPbx,
   syncPbxDirectory: syncPbxDirectoryRoute,
   syncPbxCalls: syncPbxCallsRoute,

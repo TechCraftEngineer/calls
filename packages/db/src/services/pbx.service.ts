@@ -241,6 +241,34 @@ export class PbxService {
     return result;
   }
 
+  async updateSettingsPartial(
+    workspaceId: string,
+    partial: Partial<UpdateMegaPbxSettingsInput>,
+    username = "system",
+  ): Promise<boolean> {
+    const existing = await this.getConfigWithSecrets(workspaceId);
+    if (!existing) {
+      return false;
+    }
+    const full: UpdateMegaPbxSettingsInput = {
+      enabled: existing.enabled,
+      baseUrl: existing.baseUrl ?? "",
+      apiKey: existing.apiKey ?? null,
+      syncFromDate: existing.syncFromDate ?? null,
+      webhookSecret: existing.webhook?.secret ?? null,
+      ftpHost: existing.ftpHost ?? null,
+      ftpUser: existing.ftpUser ?? null,
+      ftpPassword: existing.ftpPassword ?? null,
+      syncEmployees: existing.syncEmployees ?? true,
+      syncNumbers: existing.syncNumbers ?? true,
+      syncCalls: existing.syncCalls ?? true,
+      syncRecordings: existing.syncRecordings ?? false,
+      webhooksEnabled: existing.webhooksEnabled ?? false,
+      ...partial,
+    };
+    return this.updateSettings(workspaceId, full, username);
+  }
+
   listEmployees(workspaceId: string) {
     return this.pbxRepository.listEmployees(workspaceId, MEGAPBX_PROVIDER);
   }

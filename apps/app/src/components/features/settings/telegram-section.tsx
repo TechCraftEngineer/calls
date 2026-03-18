@@ -40,7 +40,7 @@ export default function TelegramSection({
           отправлять в выходные» настраиваются на странице{" "}
           <Link
             href={paths.statistics.settings}
-            className="font-medium text-primary underline-offset-4 hover:underline"
+            className="font-medium text-foreground underline-offset-4 hover:underline"
           >
             Статистика
           </Link>{" "}

@@ -291,7 +291,7 @@ export default function AccountSettingsPage() {
                 Чтобы установить пароль, воспользуйтесь{" "}
                 <a
                   href={paths.auth.forgotPassword}
-                  className="text-primary underline hover:no-underline"
+                  className="text-foreground underline hover:no-underline"
                 >
                   восстановлением пароля
                 </a>

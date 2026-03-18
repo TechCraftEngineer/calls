@@ -180,7 +180,7 @@ export default function CreateWorkspaceModal({
               type="button"
               variant="link"
               onClick={onClose}
-              className="text-primary"
+              className="text-foreground"
             >
               Отмена
             </Button>

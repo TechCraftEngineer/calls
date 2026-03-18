@@ -1,18 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
 
 /**
- * Логотипы провайдеров АТС — загружаются из интернета.
- * Источники: Clearbit (приоритет), Google Favicon (fallback), SVG (резерв).
+ * Логотипы провайдеров АТС — локальные файлы из `public/pbx-logos/`.
  */
 
-const PROVIDER_DOMAINS: Record<string, string> = {
-  megafon: "megafon.ru",
-  mango: "mango-office.ru",
-  mts: "mts.ru",
-  beeline: "beeline.ru",
+const LOGO_PATHS: Record<string, string> = {
+  megafon: "/pbx-logos/megafon.png",
+  mango: "/pbx-logos/mango.ico",
+  mts: "/pbx-logos/mts.svg",
+  beeline: "/pbx-logos/beeline.svg",
 };
 
 const FALLBACK_SVG: Record<
@@ -77,47 +75,21 @@ export function PbxProviderLogo({
   className = "",
   muted = false,
 }: PbxProviderLogoProps) {
-  const [clearbitFailed, setClearbitFailed] = useState(false);
-  const [showSvgFallback, setShowSvgFallback] = useState(false);
-  const domain = PROVIDER_DOMAINS[providerId];
+  const logoSrc = LOGO_PATHS[providerId];
   const fallbackSvg = FALLBACK_SVG[providerId];
-
-  useEffect(() => {
-    // Reset per-provider load state when `providerId` changes.
-    setClearbitFailed(false);
-    setShowSvgFallback(false);
-  }, [providerId]);
-
-  const clearbitUrl = domain ? `https://logo.clearbit.com/${domain}` : null;
-  const faviconUrl = domain
-    ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
-    : null;
-
-  const showClearbit = clearbitUrl && !clearbitFailed;
-  const showFavicon = faviconUrl && clearbitFailed && !showSvgFallback;
 
   return (
     <span
       className={`flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border/60 bg-card p-1.5 shadow-sm ${className}`}
       aria-hidden
     >
-      {showClearbit ? (
+      {logoSrc ? (
         <Image
-          src={clearbitUrl}
+          src={logoSrc}
           alt=""
           width={28}
           height={28}
           className={`object-contain ${muted ? "opacity-60" : ""}`}
-          onError={() => setClearbitFailed(true)}
-        />
-      ) : showFavicon ? (
-        <Image
-          src={faviconUrl}
-          alt=""
-          width={28}
-          height={28}
-          className={`object-contain ${muted ? "opacity-60" : ""}`}
-          onError={() => setShowSvgFallback(true)}
         />
       ) : fallbackSvg ? (
         <svg

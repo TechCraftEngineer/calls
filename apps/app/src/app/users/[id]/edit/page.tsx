@@ -312,7 +312,7 @@ export default function UserEditPage() {
             <Button
               variant="link"
               size="sm"
-              className="mt-4 text-primary"
+              className="mt-4 text-foreground"
               asChild
             >
               <Link href={paths.users.root}>← К списку пользователей</Link>
@@ -351,7 +351,7 @@ export default function UserEditPage() {
               Email: {email}
             </p>
           </div>
-          <Button variant="link" size="sm" className="text-primary" asChild>
+          <Button variant="link" size="sm" className="text-foreground" asChild>
             <Link href={paths.users.root}>← К списку пользователей</Link>
           </Button>
         </header>

@@ -294,16 +294,29 @@ export function useSettings() {
   );
 
   const testFtpMutation = useMutation(orpc.settings.testFtp.mutationOptions());
+  const invalidatePbx = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: orpc.settings.getPbx.queryKey(),
+    });
+    queryClient.invalidateQueries({
+      queryKey: orpc.settings.getIntegrations.queryKey(),
+    });
+  }, [queryClient]);
+
   const updatePbxMutation = useMutation(
-    orpc.settings.updatePbx.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpc.settings.getPbx.queryKey(),
-        });
-        queryClient.invalidateQueries({
-          queryKey: orpc.settings.getIntegrations.queryKey(),
-        });
-      },
+    orpc.settings.updatePbx.mutationOptions({ onSuccess: invalidatePbx }),
+  );
+  const updatePbxAccessMutation = useMutation(
+    orpc.settings.updatePbxAccess.mutationOptions({ onSuccess: invalidatePbx }),
+  );
+  const updatePbxSyncOptionsMutation = useMutation(
+    orpc.settings.updatePbxSyncOptions.mutationOptions({
+      onSuccess: invalidatePbx,
+    }),
+  );
+  const updatePbxWebhookMutation = useMutation(
+    orpc.settings.updatePbxWebhook.mutationOptions({
+      onSuccess: invalidatePbx,
     }),
   );
   const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
@@ -549,6 +562,72 @@ export function useSettings() {
     }
   };
 
+  const handleSavePbxAccess = async () => {
+    try {
+      setState((prev) => ({ ...prev, megaPbxSaving: true }));
+      const apiKeyVal = state.prompts.megapbx_api_key?.value?.trim();
+      const payload = {
+        enabled: state.prompts.megapbx_enabled?.value === "true",
+        baseUrl: state.prompts.megapbx_base_url?.value?.trim() ?? "",
+        apiKey: apiKeyVal || undefined,
+        syncFromDate:
+          state.prompts.megapbx_sync_from_date?.value?.trim() || undefined,
+      };
+      await updatePbxAccessMutation.mutateAsync(payload);
+      toast.success("Доступ к API сохранён");
+      await loadSettings();
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Не удалось сохранить доступ к API";
+      toast.error(msg);
+    } finally {
+      setState((prev) => ({ ...prev, megaPbxSaving: false }));
+    }
+  };
+
+  const handleSavePbxSyncOptions = async () => {
+    try {
+      setState((prev) => ({ ...prev, megaPbxSaving: true }));
+      await updatePbxSyncOptionsMutation.mutateAsync({
+        syncEmployees: state.prompts.megapbx_sync_employees?.value === "true",
+        syncNumbers: state.prompts.megapbx_sync_numbers?.value === "true",
+        syncCalls: state.prompts.megapbx_sync_calls?.value === "true",
+        syncRecordings: state.prompts.megapbx_sync_recordings?.value === "true",
+        webhooksEnabled:
+          state.prompts.megapbx_webhooks_enabled?.value === "true",
+      });
+      toast.success("Настройки синхронизации сохранены");
+      await loadSettings();
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Не удалось сохранить настройки синхронизации";
+      toast.error(msg);
+    } finally {
+      setState((prev) => ({ ...prev, megaPbxSaving: false }));
+    }
+  };
+
+  const handleSavePbxWebhook = async () => {
+    try {
+      setState((prev) => ({ ...prev, megaPbxSaving: true }));
+      const webhookSecret =
+        state.prompts.megapbx_webhook_secret?.value?.trim() || undefined;
+      await updatePbxWebhookMutation.mutateAsync({ webhookSecret });
+      toast.success("Webhook сохранён");
+      await loadSettings();
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error ? error.message : "Не удалось сохранить webhook";
+      toast.error(msg);
+    } finally {
+      setState((prev) => ({ ...prev, megaPbxSaving: false }));
+    }
+  };
+
   const handleTestPbx = async () => {
     try {
       setState((prev) => ({
@@ -726,6 +805,9 @@ export function useSettings() {
     handleSaveFtp,
     handleTestFtp,
     handleSavePbx,
+    handleSavePbxAccess,
+    handleSavePbxSyncOptions,
+    handleSavePbxWebhook,
     handleTestPbx,
     handleSyncPbxDirectory: () => runPbxSync("directory"),
     handleSyncPbxCalls: () => runPbxSync("calls"),

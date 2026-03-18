@@ -38,7 +38,7 @@ export function getNumberColumns(
     },
     {
       accessorKey: "extension",
-      header: "Extension",
+      header: "Внутренний номер",
       cell: ({ row }) => row.original.extension ?? "—",
     },
     {

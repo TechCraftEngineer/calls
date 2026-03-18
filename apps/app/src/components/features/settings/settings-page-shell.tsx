@@ -25,7 +25,7 @@ function Footer({ onSave, onCancel, saving }: FooterProps) {
         Выполните изменения и нажмите кнопку сохранения для применения настроек.
       </p>
       <div className="flex gap-3">
-        <Button variant="link" onClick={onCancel} className="text-primary">
+        <Button variant="link" onClick={onCancel} className="text-foreground">
           Отмена
         </Button>
         <Button onClick={onSave} disabled={saving}>

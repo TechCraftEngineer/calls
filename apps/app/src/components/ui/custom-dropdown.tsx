@@ -78,7 +78,7 @@ export default function CustomDropdown({
         <Button
           type="button"
           variant="outline"
-          className="dropdown-toggle w-full justify-between border-primary text-primary hover:bg-primary/10 hover:text-primary"
+          className="dropdown-toggle w-full justify-between border-foreground/30 text-foreground hover:bg-muted"
           onClick={toggle}
         >
           <span className="dropdown-label">{displayLabel}</span>
@@ -145,7 +145,7 @@ export default function CustomDropdown({
         <Button
           type="button"
           variant="outline"
-          className="dropdown-toggle w-full justify-between border-primary text-primary hover:bg-primary/10 hover:text-primary"
+          className="dropdown-toggle w-full justify-between border-foreground/30 text-foreground hover:bg-muted"
           onClick={toggle}
         >
           <span className="dropdown-label">{getDisplayLabel()}</span>
@@ -207,7 +207,7 @@ export default function CustomDropdown({
         <Button
           type="button"
           variant="outline"
-          className="dropdown-toggle w-full justify-between border-primary text-primary hover:bg-primary/10 hover:text-primary"
+          className="dropdown-toggle w-full justify-between border-foreground/30 text-foreground hover:bg-muted"
           onClick={toggle}
         >
           <span className="dropdown-label">{getDisplayLabel()}</span>

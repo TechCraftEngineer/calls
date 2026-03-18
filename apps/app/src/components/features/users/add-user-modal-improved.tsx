@@ -366,7 +366,7 @@ export default function AddUserModal({
               type="button"
               variant="link"
               onClick={onClose}
-              className="min-h-[44px] text-primary"
+              className="min-h-[44px] text-foreground"
               aria-label="Отменить добавление пользователя"
             >
               Отмена

@@ -13,7 +13,9 @@ export default function SettingsPbxMegafonPage() {
   const {
     state,
     loadSettings,
-    handleSavePbx,
+    handleSavePbxAccess,
+    handleSavePbxSyncOptions,
+    handleSavePbxWebhook,
     handleTestPbx,
     handleSyncPbxDirectory,
     handleSyncPbxCalls,
@@ -97,7 +99,9 @@ export default function SettingsPbxMegafonPage() {
         onPromptValueChange={setPromptValue}
         onPromptChange={updatePrompt}
         onToggleChange={setTogglePrompt}
-        onSave={handleSavePbx}
+        onSaveAccess={handleSavePbxAccess}
+        onSaveSyncOptions={handleSavePbxSyncOptions}
+        onSaveWebhook={handleSavePbxWebhook}
         onTest={handleTestPbx}
         onSyncDirectory={handleSyncPbxDirectory}
         onSyncCalls={handleSyncPbxCalls}

@@ -407,7 +407,7 @@ export default function InviteAcceptPage() {
                 <Button
                   onClick={() => router.push(paths.auth.signout)}
                   variant="link"
-                  className="flex-1 min-h-[44px] text-primary"
+                  className="flex-1 min-h-[44px] text-foreground"
                 >
                   Выйти
                 </Button>

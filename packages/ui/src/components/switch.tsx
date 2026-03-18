@@ -6,7 +6,7 @@ import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { cn } from "../lib/utils";
 
 const switchSizeVariants = {
-  sm: "h-4 w-7 [&>span]:size-3 [&>span]:data-[state=checked]:translate-x-4",
+  sm: "h-4 w-7 [&>span]:size-3 [&>span]:data-[state=checked]:translate-x-3",
   default:
     "h-5 w-9 [&>span]:size-4 [&>span]:data-[state=checked]:translate-x-4",
 } as const;
