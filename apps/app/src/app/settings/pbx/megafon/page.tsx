@@ -5,6 +5,7 @@ import { Badge, Button } from "@calls/ui";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useSettings } from "@/components/features/settings/hooks";
+import { PbxProviderLogo } from "@/components/features/settings/pbx-provider-logo";
 import PbxSection from "@/components/features/settings/pbx-section";
 import SettingsPageShell from "@/components/features/settings/settings-page-shell";
 
@@ -45,18 +46,27 @@ export default function SettingsPbxMegafonPage() {
   return (
     <SettingsPageShell>
       <header className="mb-8 flex flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <Link href={paths.settings.pbx} className="hover:text-foreground">
+        <nav
+          className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"
+          aria-label="Хлебные крошки"
+        >
+          <Link
+            href={paths.settings.pbx}
+            className="transition-colors hover:text-foreground"
+          >
             АТС
           </Link>
-          <span>/</span>
-          <span className="text-foreground">Мегафон</span>
-        </div>
+          <span aria-hidden>/</span>
+          <span className="font-medium text-foreground">Мегафон</span>
+        </nav>
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">Мегафон</Badge>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2">
+                <PbxProviderLogo providerId="megafon" />
+                <Badge variant="secondary">Мегафон</Badge>
+              </div>
               <Badge variant={isEnabled ? "default" : "outline"}>
                 {isEnabled ? "Интеграция включена" : "Интеграция выключена"}
               </Badge>
@@ -70,7 +80,7 @@ export default function SettingsPbxMegafonPage() {
             <h1 className="text-2xl font-semibold tracking-tight">
               Настройки АТС Мегафон
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Подключение, синхронизация и привязка данных Мегафона
             </p>
           </div>

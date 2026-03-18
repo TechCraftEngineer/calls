@@ -5,6 +5,7 @@ import { Badge, Card, CardContent } from "@calls/ui";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useSettings } from "@/components/features/settings/hooks";
+import { PbxProviderLogo } from "@/components/features/settings/pbx-provider-logo";
 import SettingsPageShell from "@/components/features/settings/settings-page-shell";
 
 const PROVIDERS = [
@@ -77,17 +78,18 @@ export default function SettingsPbxProvidersPage() {
         <Badge variant="secondary">Скоро: {plannedProviders.length}</Badge>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {PROVIDERS.map((provider) => (
           <div key={provider.id}>
             {provider.available && provider.href ? (
-              <Link href={provider.href} className="block">
-                <Card className="h-full overflow-hidden border-transparent bg-muted/30 shadow-none transition-colors hover:bg-muted/50">
+              <Link
+                href={provider.href}
+                className="block transition-opacity hover:opacity-95"
+              >
+                <Card className="h-full overflow-hidden transition-colors hover:border-primary/30 hover:shadow-md">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-background text-sm">
-                        ☎
-                      </span>
+                      <PbxProviderLogo providerId={provider.id} />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <div className="text-sm font-semibold">
@@ -100,7 +102,7 @@ export default function SettingsPbxProvidersPage() {
                             <Badge
                               key={feature}
                               variant="secondary"
-                              className="bg-background px-2 py-0"
+                              className="bg-muted px-2 py-0"
                             >
                               {feature}
                             </Badge>
@@ -112,15 +114,13 @@ export default function SettingsPbxProvidersPage() {
                 </Card>
               </Link>
             ) : (
-              <Card className="h-full overflow-hidden border-transparent bg-muted/20 shadow-none">
+              <Card className="h-full overflow-hidden border-border/60 bg-muted/30 opacity-90">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-background text-sm text-muted-foreground">
-                      ☎
-                    </span>
+                    <PbxProviderLogo providerId={provider.id} muted />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <div className="text-sm font-semibold">
+                        <div className="text-sm font-semibold text-muted-foreground">
                           {provider.name}
                         </div>
                         <Badge variant="outline">{provider.status}</Badge>
@@ -130,7 +130,7 @@ export default function SettingsPbxProvidersPage() {
                           <Badge
                             key={feature}
                             variant="secondary"
-                            className="bg-background/80 px-2 py-0 text-muted-foreground"
+                            className="bg-muted/80 px-2 py-0 text-muted-foreground"
                           >
                             {feature}
                           </Badge>

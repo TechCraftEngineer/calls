@@ -35,6 +35,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
+import { PbxProviderLogo } from "@/components/features/settings/pbx-provider-logo";
 import { SearchInput } from "@/components/ui/search-input";
 import type { PbxSectionProps } from "./types";
 
@@ -70,13 +71,15 @@ function SummaryTile({
   hint: string;
 }) {
   return (
-    <div className="rounded-xl bg-muted/30 p-3">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">
-        {label}
-      </div>
-      <div className="mt-1 text-lg font-semibold">{value}</div>
-      <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
-    </div>
+    <Card className="overflow-hidden border-border/60">
+      <CardContent className="p-4">
+        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </div>
+        <div className="mt-1.5 text-lg font-semibold">{value}</div>
+        <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -90,13 +93,13 @@ function SectionBlock({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl bg-card">
-      <div className="space-y-1 bg-muted/10 px-5 py-4">
-        <h3 className="text-sm font-semibold">{title}</h3>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
+    <Card className="overflow-hidden border-border/60">
+      <CardHeader className="border-b border-border/60 bg-muted/30 px-6 py-4">
+        <CardTitle className="text-base">{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent className="p-6">{children}</CardContent>
+    </Card>
   );
 }
 
@@ -478,14 +481,12 @@ export default function MegaPbxSection({
   }, [numberSearch]);
 
   return (
-    <Card>
+    <Card className="border-border/60">
       <CardHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <span className="flex size-8 items-center justify-center rounded-md bg-primary/10">
-                ☎
-              </span>
+            <CardTitle className="flex items-center gap-3 text-lg">
+              <PbxProviderLogo providerId="megafon" />
               АТС
             </CardTitle>
             <CardDescription className="mt-1">
@@ -496,7 +497,7 @@ export default function MegaPbxSection({
           </div>
           <label
             htmlFor="megapbx-enabled"
-            className="flex cursor-pointer items-center gap-3 rounded-lg bg-muted/50 px-4 py-3"
+            className="flex cursor-pointer items-center gap-3 rounded-lg border border-border/60 bg-muted/50 px-4 py-3 transition-colors hover:bg-muted has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-ring"
           >
             <Checkbox
               id="megapbx-enabled"
@@ -541,16 +542,16 @@ export default function MegaPbxSection({
           />
         </div>
 
-        <div className="sticky top-20 z-10 -mx-2 rounded-xl bg-background/95 px-2 py-2 backdrop-blur supports-backdrop-filter:bg-background/80">
+        <div className="sticky top-20 z-10 -mx-2 rounded-lg border border-border/60 bg-card px-2 py-2 shadow-sm backdrop-blur supports-backdrop-filter:bg-card/95">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid h-auto w-full grid-cols-3 rounded-xl bg-muted/50 p-1">
-              <TabsTrigger value="overview" className="rounded-lg">
+            <TabsList className="grid h-auto w-full grid-cols-3 rounded-lg border-0 bg-muted/50 p-1">
+              <TabsTrigger value="overview" className="rounded-md">
                 Обзор
               </TabsTrigger>
-              <TabsTrigger value="employees" className="rounded-lg">
+              <TabsTrigger value="employees" className="rounded-md">
                 Сотрудники
               </TabsTrigger>
-              <TabsTrigger value="numbers" className="rounded-lg">
+              <TabsTrigger value="numbers" className="rounded-md">
                 Номера
               </TabsTrigger>
             </TabsList>
@@ -668,7 +669,7 @@ export default function MegaPbxSection({
                 ].map(([key, label, hint]) => (
                   <label
                     key={key}
-                    className="flex min-h-24 cursor-pointer flex-col gap-3 rounded-xl bg-muted/20 p-4 transition-colors hover:bg-muted/40"
+                    className="flex min-h-24 cursor-pointer flex-col gap-3 rounded-lg border border-border/60 bg-card p-4 transition-colors hover:bg-muted/50 has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-ring"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -722,17 +723,21 @@ export default function MegaPbxSection({
                     className="h-10"
                   />
                 </div>
-                <div className="rounded-xl bg-muted/20 p-4 text-sm text-muted-foreground">
-                  Используется для проверки входящих запросов от АТС. Если
-                  вебхуки не включены, это поле можно не заполнять.
-                </div>
+                <Card className="rounded-lg border-border/60">
+                  <CardContent className="p-4 text-sm text-muted-foreground">
+                    Используется для проверки входящих запросов от АТС. Если
+                    вебхуки не включены, это поле можно не заполнять.
+                  </CardContent>
+                </Card>
               </div>
             </SectionBlock>
 
             {testMessage && (
-              <div className="rounded-xl bg-muted/30 px-4 py-3 text-sm">
-                {testMessage}
-              </div>
+              <Card className="rounded-lg border-border/60">
+                <CardContent className="px-4 py-3 text-sm">
+                  {testMessage}
+                </CardContent>
+              </Card>
             )}
 
             <SectionBlock
@@ -740,72 +745,80 @@ export default function MegaPbxSection({
               description="Сначала сохраните настройки, затем проверьте доступ и при необходимости вручную запустите синхронизацию."
             >
               <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-5">
-                <div className="rounded-xl bg-muted/20 p-4 xl:col-span-2">
-                  <div className="text-sm font-medium">
-                    Настройки подключения
-                  </div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    Сохранение и проверка доступа к API Мегафона.
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-3">
+                <Card className="rounded-lg border-border/60 xl:col-span-2">
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium">
+                      Настройки подключения
+                    </div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      Сохранение и проверка доступа к API Мегафона.
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onTest}
+                        disabled={testing || !baseUrl.trim()}
+                      >
+                        {testing ? "Проверка…" : "Проверить API"}
+                      </Button>
+                      <Button type="submit" disabled={saving}>
+                        {saving ? "Сохранение…" : "Сохранить"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="rounded-lg border-border/60">
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium">Справочник</div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      Сотрудники и номера
+                    </div>
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={onTest}
-                      disabled={testing || !baseUrl.trim()}
+                      onClick={onSyncDirectory}
+                      disabled={syncing !== null}
+                      className="mt-4 w-full"
                     >
-                      {testing ? "Проверка…" : "Проверить API"}
+                      {syncing === "directory" ? "Синк…" : "Запустить"}
                     </Button>
-                    <Button type="submit" disabled={saving}>
-                      {saving ? "Сохранение…" : "Сохранить"}
+                  </CardContent>
+                </Card>
+                <Card className="rounded-lg border-border/60">
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium">Звонки</div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      Импорт истории вызовов
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={onSyncCalls}
+                      disabled={syncing !== null}
+                      className="mt-4 w-full"
+                    >
+                      {syncing === "calls" ? "Синк…" : "Запустить"}
                     </Button>
-                  </div>
-                </div>
-                <div className="rounded-xl bg-muted/20 p-4">
-                  <div className="text-sm font-medium">Справочник</div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    Сотрудники и номера
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onSyncDirectory}
-                    disabled={syncing !== null}
-                    className="mt-4 w-full"
-                  >
-                    {syncing === "directory" ? "Синк…" : "Запустить"}
-                  </Button>
-                </div>
-                <div className="rounded-xl bg-muted/20 p-4">
-                  <div className="text-sm font-medium">Звонки</div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    Импорт истории вызовов
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onSyncCalls}
-                    disabled={syncing !== null}
-                    className="mt-4 w-full"
-                  >
-                    {syncing === "calls" ? "Синк…" : "Запустить"}
-                  </Button>
-                </div>
-                <div className="rounded-xl bg-muted/20 p-4">
-                  <div className="text-sm font-medium">Записи</div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    Загрузка аудио по звонкам
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onSyncRecordings}
-                    disabled={syncing !== null}
-                    className="mt-4 w-full"
-                  >
-                    {syncing === "recordings" ? "Синк…" : "Запустить"}
-                  </Button>
-                </div>
+                  </CardContent>
+                </Card>
+                <Card className="rounded-lg border-border/60">
+                  <CardContent className="p-4">
+                    <div className="text-sm font-medium">Записи</div>
+                    <div className="mt-1 text-sm text-muted-foreground">
+                      Загрузка аудио по звонкам
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={onSyncRecordings}
+                      disabled={syncing !== null}
+                      className="mt-4 w-full"
+                    >
+                      {syncing === "recordings" ? "Синк…" : "Запустить"}
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
             </SectionBlock>
           </form>
@@ -835,7 +848,7 @@ export default function MegaPbxSection({
                 />
               </div>
             </div>
-            <div className="overflow-hidden rounded-xl bg-card">
+            <Card className="overflow-hidden border-border/60">
               <DataGrid
                 table={employeeTable}
                 recordCount={filteredEmployees.length}
@@ -868,7 +881,7 @@ export default function MegaPbxSection({
                   </div>
                 </DataGridContainer>
               </DataGrid>
-            </div>
+            </Card>
           </div>
         )}
 
@@ -894,7 +907,7 @@ export default function MegaPbxSection({
                 />
               </div>
             </div>
-            <div className="overflow-hidden rounded-xl bg-card">
+            <Card className="overflow-hidden border-border/60">
               <DataGrid
                 table={numberTable}
                 recordCount={filteredNumbers.length}
@@ -927,7 +940,7 @@ export default function MegaPbxSection({
                   </div>
                 </DataGridContainer>
               </DataGrid>
-            </div>
+            </Card>
           </div>
         )}
       </CardContent>
