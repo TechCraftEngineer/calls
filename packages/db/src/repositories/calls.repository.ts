@@ -2,13 +2,14 @@
  * Calls repository - handles all database operations for calls
  */
 
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNotNull, ne } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 import type {
   CallWithTranscript,
   CreateCallData,
   EvaluationData,
+  GetCallManagersParams,
   GetCallsParams,
 } from "../types/calls.types";
 import { buildCallConditions } from "./calls/build-conditions";
@@ -211,6 +212,58 @@ export const callsRepository = {
         ? await baseQuery.where(and(...conditions))
         : await baseQuery;
     return result[0]?.count ?? 0;
+  },
+
+  async findDistinctManagers(
+    params: GetCallManagersParams = {},
+  ): Promise<string[]> {
+    const {
+      workspaceId,
+      dateFrom,
+      dateTo,
+      internalNumbers,
+      mobileNumbers,
+      excludePhoneNumbers,
+      direction,
+      valueScores,
+      operators,
+      status,
+    } = params;
+
+    const conditions = buildCallConditions({
+      workspaceId,
+      dateFrom,
+      dateTo,
+      internalNumbers,
+      mobileNumbers,
+      excludePhoneNumbers,
+      direction,
+      valueScores,
+      operators,
+      status,
+    });
+
+    conditions.push(isNotNull(schema.calls.name));
+    conditions.push(ne(schema.calls.name, ""));
+
+    const query = db
+      .selectDistinct({ name: schema.calls.name })
+      .from(schema.calls)
+      .leftJoin(
+        schema.callEvaluations,
+        eq(schema.calls.id, schema.callEvaluations.callId),
+      )
+      .orderBy(asc(schema.calls.name))
+      .$dynamic();
+
+    const result =
+      conditions.length > 0
+        ? await query.where(and(...conditions))
+        : await query;
+
+    return result
+      .map((item) => item.name?.trim())
+      .filter((name): name is string => Boolean(name));
   },
 
   async getTranscriptByCallId(

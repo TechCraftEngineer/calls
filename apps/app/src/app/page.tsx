@@ -153,6 +153,12 @@ export default function HomePage() {
   }, [result]);
 
   const calls = (result?.calls ?? []) as CallWithDetails[];
+  const managerOptions = Array.isArray(result?.managers)
+    ? result.managers.filter(
+        (manager): manager is string =>
+          typeof manager === "string" && manager.trim().length > 0,
+      )
+    : [];
   const invalidateCalls = () =>
     queryClient.invalidateQueries({
       queryKey: orpc.calls.list.queryKey({ input: callsListInput }),
@@ -248,6 +254,7 @@ export default function HomePage() {
                     type="manager"
                     label="Выбрать"
                     value={filters.manager}
+                    managerOptions={managerOptions}
                     onChange={(val) =>
                       setFilters({ ...filters, manager: val as string })
                     }
@@ -316,6 +323,7 @@ export default function HomePage() {
               onPaginationChange={handlePaginationChange}
               onPlay={(callId, number) => setActiveAudio({ callId, number })}
               onCallDeleted={() => invalidateCalls()}
+              onCallsDeleted={() => invalidateCalls()}
               onRecommendationsGenerated={(callId, recommendations) => {
                 queryClient.setQueryData(
                   orpc.calls.list.queryKey({ input: callsListInput }),

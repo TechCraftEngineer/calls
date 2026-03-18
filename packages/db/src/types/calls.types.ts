@@ -22,6 +22,9 @@ export interface GetCallsParams {
   q?: string;
 }
 
+export interface GetCallManagersParams
+  extends Omit<GetCallsParams, "limit" | "offset" | "manager" | "q"> {}
+
 export interface CallWithTranscript {
   call: Call;
   transcript: Transcript | null;

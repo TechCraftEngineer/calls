@@ -2,6 +2,7 @@
 
 import {
   Button,
+  Checkbox,
   DataGrid,
   DataGridColumnVisibility,
   DataGridContainer,
@@ -12,8 +13,10 @@ import {
 } from "@calls/ui";
 import { useMutation } from "@tanstack/react-query";
 import {
+  type ColumnDef,
   getCoreRowModel,
   getSortedRowModel,
+  type RowSelectionState,
   useReactTable,
 } from "@tanstack/react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -21,6 +24,7 @@ import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import { useORPC } from "@/orpc/react";
 import CallDetailModal from "../call-detail-modal";
 import RecommendationsModal from "../recommendations-modal";
+import { BulkDeleteConfirmModal } from "./bulk-delete-confirm-modal";
 import { getCallListColumns } from "./call-list-columns";
 import {
   getDefaultSchema,
@@ -45,6 +49,7 @@ export function CallListDataGrid({
   calls,
   onPlay,
   onCallDeleted,
+  onCallsDeleted,
   onRecommendationsGenerated,
   pagination,
   isLoading = false,
@@ -52,6 +57,8 @@ export function CallListDataGrid({
 }: CallListDataGridProps) {
   const orpc = useORPC();
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [recommendationsCallId, setRecommendationsCallId] = useState<
     string | null
   >(null);
@@ -67,6 +74,24 @@ export function CallListDataGrid({
     orpc.calls.transcribe.mutationOptions({
       onSuccess: () => toast.success("Транскрипция запущена"),
       onError: () => toast.error("Не удалось запустить транскрипцию"),
+    }),
+  );
+
+  const deleteManyMutation = useMutation(
+    orpc.calls.deleteMany.mutationOptions({
+      onSuccess: (result) => {
+        setShowBulkDeleteConfirm(false);
+        setRowSelection({});
+        onCallsDeleted?.(result.deletedCallIds);
+        toast.success(`Удалено звонков: ${result.deletedCount}`);
+      },
+      onError: (error) => {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Не удалось удалить выбранные звонки";
+        toast.error(errorMessage);
+      },
     }),
   );
 
@@ -107,9 +132,39 @@ export function CallListDataGrid({
     [transcribeMutation],
   );
 
-  const columns = useMemo(
-    () =>
-      getCallListColumns({
+  const columns = useMemo<ColumnDef<(typeof calls)[0]>[]>(
+    () => [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <Checkbox
+            checked={
+              table.getIsSomePageRowsSelected() &&
+              !table.getIsAllPageRowsSelected()
+                ? "indeterminate"
+                : table.getIsAllPageRowsSelected()
+            }
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            aria-label="Выбрать все звонки на странице"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Выбрать звонок"
+            onClick={(event) => event.stopPropagation()}
+          />
+        ),
+        enableSorting: false,
+        enableHiding: false,
+        enableColumnOrdering: false,
+        size: 44,
+        meta: { headerTitle: "Выбор" },
+      },
+      ...getCallListColumns({
         onSelectCall: setSelectedCallId,
         onGenerateRecommendations: handleGenerateRecommendations,
         onTranscribe: handleTranscribe,
@@ -117,6 +172,7 @@ export function CallListDataGrid({
         isLoadingRecommendations: generateRecommendationsMutation.isPending,
         recommendationsCallId,
       }),
+    ],
     [
       onPlay,
       handleGenerateRecommendations,
@@ -126,10 +182,28 @@ export function CallListDataGrid({
     ],
   );
 
+  const selectedCalls = useMemo(
+    () => calls.filter((call) => rowSelection[call.call.id]),
+    [calls, rowSelection],
+  );
+
+  const selectedCallIds = useMemo(
+    () => selectedCalls.map((item) => item.call.id),
+    [selectedCalls],
+  );
+
   // Use default schema for initial render to avoid hydration mismatch:
   // server always uses default; client would use localStorage and get different order
   const [columnSchema, setColumnSchema] = useState(() => getDefaultSchema());
   const [isHydrated, setIsHydrated] = useState(false);
+
+  const effectiveColumnOrder = useMemo(
+    () => [
+      "select",
+      ...columnSchema.columnOrder.filter((column) => column !== "select"),
+    ],
+    [columnSchema.columnOrder],
+  );
 
   useEffect(() => {
     setColumnSchema(loadColumnSchema());
@@ -175,18 +249,22 @@ export function CallListDataGrid({
   const table = useReactTable({
     data: calls,
     columns,
+    getRowId: (row) => row.call.id,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     manualPagination: true,
     pageCount: pagination.total_pages || 1,
+    enableRowSelection: true,
     state: {
       pagination: {
         pageIndex: pagination.page - 1,
         pageSize: pagination.per_page,
       },
-      columnOrder: columnSchema.columnOrder,
+      columnOrder: effectiveColumnOrder,
       columnVisibility: columnSchema.columnVisibility,
+      rowSelection,
     },
+    onRowSelectionChange: setRowSelection,
     onColumnOrderChange: handleColumnOrderChange,
     onColumnVisibilityChange: handleColumnVisibilityChange,
     onPaginationChange: (updater) => {
@@ -200,6 +278,14 @@ export function CallListDataGrid({
       }
     },
   });
+
+  const handleBulkDelete = useCallback(() => {
+    if (selectedCallIds.length === 0 || deleteManyMutation.isPending) {
+      return;
+    }
+
+    deleteManyMutation.mutate({ call_ids: selectedCallIds });
+  }, [deleteManyMutation, selectedCallIds]);
 
   if (calls.length === 0 && !isLoading) {
     return (
@@ -242,24 +328,41 @@ export function CallListDataGrid({
         tableClassNames={{ base: "op-table" }}
       >
         <div className="flex flex-col">
-          <div className="flex justify-end px-4 pt-3 pb-1">
-            <DataGridColumnVisibility
-              table={table}
-              trigger={
-                <Button variant="outline" size="sm">
-                  <IconPlaceholder
-                    lucide="Settings2Icon"
-                    tabler="IconSettings"
-                    hugeicons="Settings01Icon"
-                    phosphor="GearIcon"
-                    remixicon="RiSettings3Line"
-                    className="size-4"
-                    aria-hidden={true}
-                  />
-                  Колонки
-                </Button>
-              }
-            />
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-3 pb-1">
+            <div className="text-muted-foreground text-sm">
+              {selectedCallIds.length > 0
+                ? `Выбрано: ${selectedCallIds.length}`
+                : "Выберите звонки чекбоксами для удаления"}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={
+                  selectedCallIds.length === 0 || deleteManyMutation.isPending
+                }
+                onClick={() => setShowBulkDeleteConfirm(true)}
+              >
+                Удалить выбранные
+              </Button>
+              <DataGridColumnVisibility
+                table={table}
+                trigger={
+                  <Button variant="outline" size="sm">
+                    <IconPlaceholder
+                      lucide="Settings2Icon"
+                      tabler="IconSettings"
+                      hugeicons="Settings01Icon"
+                      phosphor="GearIcon"
+                      remixicon="RiSettings3Line"
+                      className="size-4"
+                      aria-hidden={true}
+                    />
+                    Колонки
+                  </Button>
+                }
+              />
+            </div>
           </div>
           <DataGridContainer className="border-0">
             <div className="overflow-x-auto">
@@ -296,6 +399,15 @@ export function CallListDataGrid({
         recommendations={recommendations}
         isLoading={generateRecommendationsMutation.isPending}
       />
+
+      {showBulkDeleteConfirm && selectedCalls.length > 0 && (
+        <BulkDeleteConfirmModal
+          calls={selectedCalls}
+          deleting={deleteManyMutation.isPending}
+          onConfirm={handleBulkDelete}
+          onCancel={() => setShowBulkDeleteConfirm(false)}
+        />
+      )}
     </>
   );
 }

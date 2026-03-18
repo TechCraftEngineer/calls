@@ -1,11 +1,7 @@
 import { type CallWithTranscript, settingsService } from "@calls/db";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
-import {
-  buildInternalNumberToManagerMap,
-  getInternalNumbersForUser,
-  getMobileNumbersForUser,
-} from "./utils";
+import { getInternalNumbersForUser, getMobileNumbersForUser } from "./utils";
 
 const transcriptMetadataSchema = z
   .object({ operatorName: z.string().optional() })
@@ -131,14 +127,24 @@ export const list = workspaceProcedure
       workspaceId,
       excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
     );
-    const members = await context.workspacesService.getMembers(workspaceId);
-    const managers = members
-      .map((m: { user?: unknown }) => m.user)
-      .filter(
-        (u: unknown) => u && (u as Record<string, unknown>).internalExtensions,
-      );
-
-    const internalToManager = buildInternalNumberToManagerMap(members);
+    const managers = await callsService.getDistinctManagers({
+      workspaceId,
+      dateFrom,
+      dateTo,
+      internalNumbers,
+      mobileNumbers,
+      excludePhoneNumbers:
+        excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+      direction:
+        input.direction === "incoming" || input.direction === "Входящий"
+          ? "Входящий"
+          : input.direction === "outgoing" || input.direction === "Исходящий"
+            ? "Исходящий"
+            : undefined,
+      valueScores: input.value?.length ? input.value : undefined,
+      operators: input.operator?.length ? input.operator : undefined,
+      status: input.status || undefined,
+    });
 
     const callsWithTranscripts = rawCalls.map((item: CallWithTranscript) => {
       const operatorName = (() => {
@@ -148,14 +154,7 @@ export const list = workspaceProcedure
           ? parsed.data.operatorName
           : (item.call.name ?? null);
       })();
-      const managerFromWorkspace = item.call.internalNumber
-        ? internalToManager.get(item.call.internalNumber)
-        : undefined;
-      const managerName =
-        managerFromWorkspace?.displayName ??
-        operatorName ??
-        item.call.name ??
-        null;
+      const managerName = operatorName ?? item.call.name ?? null;
 
       return {
         ...item,
@@ -167,7 +166,7 @@ export const list = workspaceProcedure
               : item.call.timestamp,
           managerName,
           operatorName,
-          managerId: managerFromWorkspace?.userId ?? null,
+          managerId: null,
         },
       };
     });

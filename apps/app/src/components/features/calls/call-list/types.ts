@@ -37,6 +37,7 @@ export interface CallListProps {
   calls: CallWithDetails[];
   onPlay?: (callId: string, number: string) => void;
   onCallDeleted?: (callId: string) => void;
+  onCallsDeleted?: (callIds: string[]) => void;
   onRecommendationsGenerated?: (
     callId: string,
     recommendations: string[],

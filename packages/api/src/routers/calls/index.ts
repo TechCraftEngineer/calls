@@ -1,4 +1,5 @@
 import { deleteCall } from "./delete";
+import { deleteManyCalls } from "./delete-many";
 import { evaluate } from "./evaluate";
 import { generateRecommendationsProcedure } from "./generate-recommendations";
 import { get } from "./get";
@@ -14,4 +15,5 @@ export const callsRouter = {
   evaluate,
   generateRecommendations: generateRecommendationsProcedure,
   delete: deleteCall,
+  deleteMany: deleteManyCalls,
 };
