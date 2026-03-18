@@ -92,7 +92,35 @@ async function uploadRecordingIfNeeded(
 ): Promise<{ fileId: string | null; sizeBytes: number | null }> {
   if (!recordingUrl) return { fileId: null, sizeBytes: null };
 
-  const response = await fetch(recordingUrl);
+  const downloadTimeoutMsRaw = Number(
+    process.env.MEGAPBX_RECORDING_DOWNLOAD_TIMEOUT_MS,
+  );
+  const downloadTimeoutMs =
+    Number.isFinite(downloadTimeoutMsRaw) && downloadTimeoutMsRaw > 0
+      ? downloadTimeoutMsRaw
+      : 30_000;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), downloadTimeoutMs);
+
+  let response: Response;
+  try {
+    response = await fetch(recordingUrl, { signal: controller.signal });
+  } catch (error) {
+    const isAbortError =
+      controller.signal.aborted ||
+      (error instanceof Error && error.name === "AbortError");
+
+    if (isAbortError) {
+      throw new Error(
+        `Таймаут скачивания записи MegaPBX (${providerCallId}) после ${downloadTimeoutMs}ms`,
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
   if (!response.ok) {
     throw new Error(
       `Не удалось скачать запись ${providerCallId}: ${response.status} ${response.statusText}`,
@@ -343,12 +371,11 @@ export async function syncMegaPbxWorkspace(
   workspaceId: string,
   config: MegaPbxIntegrationConfig,
 ) {
-  const [directory, calls] = await Promise.all([
-    syncMegaPbxDirectory(workspaceId, config),
-    config.syncCalls
-      ? syncMegaPbxCalls(workspaceId, config)
-      : Promise.resolve(null),
-  ]);
+  const directory = await syncMegaPbxDirectory(workspaceId, config);
+
+  const calls = config.syncCalls
+    ? await syncMegaPbxCalls(workspaceId, config)
+    : null;
 
   logger.info("MegaPBX синхронизация завершена", {
     workspaceId,

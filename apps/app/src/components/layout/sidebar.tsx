@@ -3,7 +3,13 @@
 import { paths } from "@calls/config";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 
 import WorkspaceSwitcher from "./workspace-switcher";
@@ -116,10 +122,35 @@ export default function Sidebar() {
   const { activeWorkspace } = useWorkspace();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLElement | null>(null);
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const shouldRestoreFocusRef = useRef(false);
   const isWorkspaceAdmin =
     activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+
+  const getFocusableInMenu = useCallback(() => {
+    const root = menuRef.current;
+    if (!root) return [];
+
+    const selectors = [
+      'a[href]:not([tabindex="-1"])',
+      'button:not([disabled]):not([tabindex="-1"])',
+      'input:not([disabled]):not([tabindex="-1"])',
+      'select:not([disabled]):not([tabindex="-1"])',
+      'textarea:not([disabled]):not([tabindex="-1"])',
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(",");
+
+    return Array.from(root.querySelectorAll<HTMLElement>(selectors)).filter(
+      (el) => {
+        if (el.getAttribute("aria-hidden") === "true") return false;
+        if (el.hasAttribute("hidden")) return false;
+        const style = window.getComputedStyle(el);
+        return style.display !== "none" && style.visibility !== "hidden";
+      },
+    );
+  }, []);
 
   const restoreTriggerFocus = useCallback(() => {
     const trigger = menuTriggerRef.current;
@@ -144,7 +175,12 @@ export default function Sidebar() {
 
   useEffect(() => {
     if (isMobileMenuOpen) {
-      overlayRef.current?.focus();
+      const focusables = getFocusableInMenu();
+      const initial =
+        closeButtonRef.current ??
+        focusables[0] ??
+        (menuRef.current as HTMLElement | null);
+      initial?.focus?.();
       return;
     }
 
@@ -152,7 +188,45 @@ export default function Sidebar() {
       restoreTriggerFocus();
       shouldRestoreFocusRef.current = false;
     }
-  }, [isMobileMenuOpen, restoreTriggerFocus]);
+  }, [getFocusableInMenu, isMobileMenuOpen, restoreTriggerFocus]);
+
+  const onMenuKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (!isMobileMenuOpen) return;
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeMobileMenu();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const focusables = getFocusableInMenu();
+      if (focusables.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey) {
+        if (active === first || !menuRef.current?.contains(active)) {
+          event.preventDefault();
+          last.focus();
+        }
+        return;
+      }
+
+      if (active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    },
+    [closeMobileMenu, getFocusableInMenu, isMobileMenuOpen],
+  );
 
   const navItems = [
     {
@@ -214,16 +288,15 @@ export default function Sidebar() {
         ref={overlayRef}
         className={`mobile-sidebar-overlay ${isMobileMenuOpen ? "is-open" : ""}`}
         aria-hidden={!isMobileMenuOpen}
-        tabIndex={isMobileMenuOpen ? 0 : -1}
+        tabIndex={-1}
         onClick={closeMobileMenu}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            closeMobileMenu();
-          }
-        }}
       />
 
-      <aside className={`sidebar ${isMobileMenuOpen ? "is-mobile-open" : ""}`}>
+      <aside
+        ref={menuRef}
+        className={`sidebar ${isMobileMenuOpen ? "is-mobile-open" : ""}`}
+        onKeyDown={onMenuKeyDown}
+      >
         <div className="sidebar-brand">
           <Link
             href={paths.dashboard.root}
@@ -233,6 +306,7 @@ export default function Sidebar() {
             M
           </Link>
           <button
+            ref={closeButtonRef}
             type="button"
             className="sidebar-close"
             aria-label="Закрыть меню"

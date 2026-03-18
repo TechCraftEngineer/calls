@@ -5,7 +5,7 @@
 import { randomUUID } from "node:crypto";
 import { backendRouter, createBackendContext, createLogger } from "@calls/api";
 import { isValidWorkspaceId, pbxService, settingsService } from "@calls/db";
-import { syncMegaPbxCalls, syncMegaPbxDirectory } from "@calls/jobs";
+import { inngest, pbxSyncRequested } from "@calls/jobs";
 import { createWebhookHandler } from "@calls/telegram-bot";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
@@ -216,6 +216,9 @@ export function createApp() {
     if (!config) {
       return c.json({ error: "MegaPBX integration not configured" }, 404);
     }
+    if (!config.webhooksEnabled) {
+      return c.json({ error: "MegaPBX webhook disabled" }, 409);
+    }
 
     const payload = (await c.req.json().catch(() => null)) as Record<
       string,
@@ -251,41 +254,46 @@ export function createApp() {
       status: "received",
     });
 
-    queueMicrotask(async () => {
-      try {
-        if (
-          eventType.toLowerCase().includes("employee") ||
-          eventType.toLowerCase().includes("number")
-        ) {
-          await syncMegaPbxDirectory(workspaceId, config);
-        } else {
-          await syncMegaPbxCalls(workspaceId, config);
-        }
+    try {
+      await inngest.send(
+        pbxSyncRequested.create({
+          workspaceId,
+          syncType:
+            eventType.toLowerCase().includes("employee") ||
+            eventType.toLowerCase().includes("number")
+              ? "directory"
+              : "calls",
+          webhookEvent: {
+            eventId,
+            eventType,
+            payload,
+          },
+        }),
+      );
+    } catch (error) {
+      await pbxService.recordWebhookEvent({
+        workspaceId,
+        eventId,
+        eventType,
+        payload,
+        status: "error",
+        processedAt: new Date(),
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
+      backendLogger.error("MegaPBX webhook enqueue failed", {
+        workspaceId,
+        eventType,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return c.json({ error: "Webhook processing failed" }, 500);
+    }
 
-        await pbxService.recordWebhookEvent({
-          workspaceId,
-          eventId,
-          eventType,
-          payload,
-          status: "processed",
-          processedAt: new Date(),
-        });
-      } catch (error) {
-        await pbxService.recordWebhookEvent({
-          workspaceId,
-          eventId,
-          eventType,
-          payload,
-          status: "error",
-          processedAt: new Date(),
-          errorMessage: error instanceof Error ? error.message : String(error),
-        });
-        backendLogger.error("MegaPBX webhook processing failed", {
-          workspaceId,
-          eventType,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
+    await pbxService.recordWebhookEvent({
+      workspaceId,
+      eventId,
+      eventType,
+      payload,
+      status: "queued",
     });
 
     return c.json({ success: true });

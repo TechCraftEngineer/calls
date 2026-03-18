@@ -40,8 +40,11 @@ export const pbxLinkSchema = z
     userId: z.string().optional().nullable(),
     invitationId: z.string().optional().nullable(),
   })
-  .refine((value) => value.userId || value.invitationId, {
+  .refine((value) => Boolean(value.userId || value.invitationId), {
     message: "Нужно указать пользователя или приглашение",
+  })
+  .refine((value) => !(value.userId && value.invitationId), {
+    message: "Можно указать только пользователя или приглашение",
   });
 
 export const pbxUnlinkSchema = z.object({
