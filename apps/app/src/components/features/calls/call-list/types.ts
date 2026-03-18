@@ -31,6 +31,7 @@ export interface CallWithDetails {
   call: Call;
   transcript?: Transcript;
   evaluation?: Evaluation;
+  analysisCostRub?: number | null;
 }
 
 export interface CallListProps {
@@ -52,6 +53,7 @@ export type SortKey =
   | "date"
   | "score"
   | "summary"
+  | "analysisCost"
   | "duration";
 
 export type SortOrder = "asc" | "desc";

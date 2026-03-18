@@ -4,6 +4,7 @@ import { createContext, ReactNode, useContext } from "react"
 import {
   ColumnFiltersState,
   RowData,
+  Row,
   SortingState,
   Table,
 } from "@tanstack/react-table"
@@ -58,6 +59,7 @@ export interface DataGridProps<TData extends object> {
   recordCount: number
   children?: ReactNode
   onRowClick?: (row: TData) => void
+  getRowClassName?: (row: TData, rowModel: Row<TData>) => string | undefined
   isLoading?: boolean
   loadingMode?: "skeleton" | "spinner"
   loadingMessage?: ReactNode | string

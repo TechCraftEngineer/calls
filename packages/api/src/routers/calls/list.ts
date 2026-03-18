@@ -1,6 +1,7 @@
 import { type CallWithTranscript, settingsService } from "@calls/db";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
+import { calculateAnalysisCostRub } from "./analysis-cost";
 import { getInternalNumbersForUser, getMobileNumbersForUser } from "./utils";
 
 const transcriptMetadataSchema = z
@@ -168,6 +169,13 @@ export const list = workspaceProcedure
           operatorName,
           managerId: null,
         },
+        analysisCostRub: calculateAnalysisCostRub(
+          typeof item.call.duration === "number" && item.call.duration > 0
+            ? item.call.duration
+            : typeof item.transcript?.metadata?.durationInSeconds === "number"
+              ? item.transcript.metadata.durationInSeconds
+              : null,
+        ),
       };
     });
 

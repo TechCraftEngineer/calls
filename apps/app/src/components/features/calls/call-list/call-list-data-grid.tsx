@@ -21,6 +21,7 @@ import {
 } from "@tanstack/react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
+import { classNames } from "@/lib/utils";
 import { useORPC } from "@/orpc/react";
 import CallDetailModal from "../call-detail-modal";
 import RecommendationsModal from "../recommendations-modal";
@@ -43,6 +44,17 @@ export interface CallListDataGridProps extends CallListProps {
   };
   isLoading?: boolean;
   onPaginationChange: (page: number, perPage: number) => void;
+}
+
+function getLocalDateKey(timestamp?: string | Date | null): string {
+  if (!timestamp) return "";
+
+  const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 export function CallListDataGrid({
@@ -192,6 +204,27 @@ export function CallListDataGrid({
     [selectedCalls],
   );
 
+  const dayToneByDate = useMemo(() => {
+    const todayKey = getLocalDateKey(new Date());
+    const tones = new Map<string, 0 | 1 | 2>();
+    let pastDayIndex = 0;
+
+    for (const item of calls) {
+      const dateKey = getLocalDateKey(item.call.timestamp);
+      if (!dateKey || tones.has(dateKey)) continue;
+
+      if (dateKey === todayKey) {
+        tones.set(dateKey, 0);
+        continue;
+      }
+
+      tones.set(dateKey, pastDayIndex % 2 === 0 ? 1 : 2);
+      pastDayIndex += 1;
+    }
+
+    return tones;
+  }, [calls]);
+
   // Use default schema for initial render to avoid hydration mismatch:
   // server always uses default; client would use localStorage and get different order
   const [columnSchema, setColumnSchema] = useState(() => getDefaultSchema());
@@ -318,6 +351,15 @@ export function CallListDataGrid({
         recordCount={pagination.total}
         isLoading={isLoading}
         emptyMessage={<CallListEmpty />}
+        getRowClassName={(row) => {
+          const dateKey = getLocalDateKey(row.call.timestamp);
+          const tone = dayToneByDate.get(dateKey) ?? 0;
+
+          return classNames(
+            tone === 1 && "bg-muted/35 hover:bg-muted/45",
+            tone === 2 && "bg-muted/55 hover:bg-muted/65",
+          );
+        }}
         tableLayout={{
           columnsVisibility: true,
           columnsDraggable: true,

@@ -58,6 +58,7 @@ interface CallWithDetails {
   call: Call;
   transcript?: Transcript;
   evaluation?: Evaluation;
+  analysisCostRub?: number | null;
 }
 
 interface Pagination {

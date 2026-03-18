@@ -168,3 +168,15 @@ export function renderDurationCell(call: CallWithDetails["call"]) {
     </span>
   );
 }
+
+export function renderAnalysisCostCell(analysisCostRub?: number | null) {
+  if (analysisCostRub == null) {
+    return <span style={{ color: "#ccc" }}>—</span>;
+  }
+
+  return (
+    <span style={{ fontWeight: 600, color: "#444", whiteSpace: "nowrap" }}>
+      {analysisCostRub.toFixed(2)} ₽
+    </span>
+  );
+}
