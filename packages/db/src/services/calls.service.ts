@@ -9,6 +9,7 @@ import type {
   CallWithTranscript,
   CreateCallData,
   EvaluationData,
+  GetCallManagersParams,
   GetCallsParams,
 } from "../types/calls.types";
 
@@ -112,6 +113,12 @@ export class CallsService {
     params: Omit<GetCallsParams, "limit" | "offset"> = {},
   ): Promise<number> {
     return this.callsRepository.countCalls(params);
+  }
+
+  async getDistinctManagers(
+    params: GetCallManagersParams = {},
+  ): Promise<string[]> {
+    return this.callsRepository.findDistinctManagers(params);
   }
 
   async addEvaluation(data: EvaluationData): Promise<string> {

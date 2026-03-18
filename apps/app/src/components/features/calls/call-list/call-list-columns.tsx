@@ -4,6 +4,7 @@ import { DataGridColumnHeader } from "@calls/ui";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   createLinkOrButton,
+  renderAnalysisCostCell,
   renderDateCell,
   renderDirectionCell,
   renderDurationCell,
@@ -144,6 +145,19 @@ export function getCallListColumns(
         headerTitle: "Резюме",
         cellClassName: "max-w-[220px] overflow-hidden",
       },
+    },
+    {
+      accessorKey: "analysisCostRub",
+      id: "analysisCost",
+      header: ({ column }) => (
+        <DataGridColumnHeader
+          column={column}
+          title="Стоимость анализа"
+          visibility={true}
+        />
+      ),
+      cell: ({ row }) => renderAnalysisCostCell(row.original.analysisCostRub),
+      meta: { headerTitle: "Стоимость анализа" },
     },
     {
       id: "record",

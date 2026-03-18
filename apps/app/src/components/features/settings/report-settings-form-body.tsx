@@ -22,7 +22,7 @@ import type {
   ReportSettingsForm,
   ReportSettingsUserOption,
 } from "./report-settings-types";
-import type { ReportType } from "./types";
+import { getReportTypeLabel, type ReportType } from "./types";
 
 interface ReportSettingsFormBodyProps {
   form: ReportSettingsForm;
@@ -82,12 +82,7 @@ export default function ReportSettingsFormBody({
     orpc.reports.sendTestTelegram.mutationOptions({
       onSuccess: (_, variables) => {
         const reportType = variables.reportType;
-        const reportTypeLabel =
-          reportType === "daily"
-            ? "Ежедневный"
-            : reportType === "weekly"
-              ? "Еженедельный"
-              : "Ежемесячный";
+        const reportTypeLabel = getReportTypeLabel(reportType);
         toast.success(`${reportTypeLabel} отчёт отправлен в Telegram`);
         const scheduledMsg = `${reportTypeLabel} отчёт отправлен`;
         setSendTestMessage(scheduledMsg);

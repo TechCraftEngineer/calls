@@ -1,9 +1,7 @@
 "use client";
 
 import { Button } from "@calls/ui";
-import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { useORPC } from "@/orpc/react";
 
 interface Manager {
   id: string;
@@ -15,6 +13,7 @@ interface DropdownProps {
   value: string | number[] | string[];
   onChange: (val: string | number[] | string[]) => void;
   type: "manager" | "value" | "operator";
+  managerOptions?: string[];
 }
 
 // Type guards для правильной типизации
@@ -33,24 +32,17 @@ export default function CustomDropdown({
   value,
   onChange,
   type,
+  managerOptions = [],
 }: DropdownProps) {
-  const orpc = useORPC();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const { data: managersList = [] } = useQuery({
-    ...orpc.users.list.queryOptions(),
-    enabled: type === "manager",
-  });
-
   const managers: Manager[] =
     type === "manager"
-      ? (managersList as { id: string; name?: string; email?: string }[]).map(
-          (u) => ({
-            id: String(u.id),
-            name: u.name || u.email || String(u.id),
-          }),
-        )
+      ? managerOptions.map((name) => ({
+          id: name,
+          name,
+        }))
       : [];
 
   useEffect(() => {
@@ -102,7 +94,7 @@ export default function CustomDropdown({
                 setIsOpen(false);
               }}
             >
-              Все менеджеры
+              Все сотрудники
             </Button>
             {managers.map((m) => (
               <Button

@@ -8,6 +8,7 @@ export const DEFAULT_COLUMN_IDS = [
   "date",
   "score",
   "summary",
+  "analysisCost",
   "record",
   "duration",
 ] as const;

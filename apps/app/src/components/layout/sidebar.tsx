@@ -3,6 +3,7 @@
 import { paths } from "@calls/config";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 
 import WorkspaceSwitcher from "./workspace-switcher";
@@ -10,8 +11,13 @@ import WorkspaceSwitcher from "./workspace-switcher";
 export default function Sidebar() {
   const pathname = usePathname();
   const { activeWorkspace } = useWorkspace();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isWorkspaceAdmin =
     activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   const icons = {
     dashboard: (
@@ -116,57 +122,101 @@ export default function Sidebar() {
     ),
   };
 
-  return (
-    <aside className="sidebar">
-      <Link
-        href={paths.dashboard.root}
-        className="sidebar-logo"
-        title="QBS Звонки"
-      >
-        M
-      </Link>
-
-      <WorkspaceSwitcher />
-
-      <nav className="w-full flex flex-col gap-2">
-        <Link
-          href={paths.dashboard.root}
-          className={`nav-item ${pathname === paths.dashboard.root ? "is-active" : ""}`}
-          title="Звонки"
-        >
-          <div className="icon-bubble bg-orange-50">{icons.dashboard}</div>
-        </Link>
-        <Link
-          href={paths.statistics.root}
-          className={`nav-item ${pathname.startsWith(paths.statistics.root) ? "is-active" : ""}`}
-          title="Статистика"
-        >
-          <div className="icon-bubble bg-blue-50">{icons.statistics}</div>
-        </Link>
-        {isWorkspaceAdmin && (
-          <>
-            <Link
-              href={paths.users.root}
-              className={`nav-item ${pathname === paths.users.root ? "is-active" : ""}`}
-              title="Пользователи"
-            >
-              <div className="icon-bubble bg-purple-50">{icons.users}</div>
-            </Link>
-            <Link
-              href={paths.settings.root}
-              className={`nav-item ${pathname.startsWith(paths.settings.root) ? "is-active" : ""}`}
-              title="Настройки"
-            >
+  const navItems = [
+    {
+      href: paths.dashboard.root,
+      isActive: pathname === paths.dashboard.root,
+      title: "Звонки",
+      icon: <div className="icon-bubble bg-orange-50">{icons.dashboard}</div>,
+    },
+    {
+      href: paths.statistics.root,
+      isActive: pathname.startsWith(paths.statistics.root),
+      title: "Статистика",
+      icon: <div className="icon-bubble bg-blue-50">{icons.statistics}</div>,
+    },
+    ...(isWorkspaceAdmin
+      ? [
+          {
+            href: paths.users.root,
+            isActive: pathname === paths.users.root,
+            title: "Пользователи",
+            icon: <div className="icon-bubble bg-purple-50">{icons.users}</div>,
+          },
+          {
+            href: paths.settings.root,
+            isActive: pathname.startsWith(paths.settings.root),
+            title: "Настройки",
+            icon: (
               <div className="icon-bubble bg-gray-50">{icons.settings}</div>
+            ),
+          },
+        ]
+      : []),
+  ];
+
+  return (
+    <>
+      <button
+        type="button"
+        className="mobile-menu-trigger"
+        aria-label={isMobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
+        aria-expanded={isMobileMenuOpen}
+        onClick={() => setIsMobileMenuOpen((open) => !open)}
+      >
+        <span />
+        <span />
+        <span />
+      </button>
+
+      <div
+        className={`mobile-sidebar-overlay ${isMobileMenuOpen ? "is-open" : ""}`}
+        aria-hidden={!isMobileMenuOpen}
+        onClick={() => setIsMobileMenuOpen(false)}
+      />
+
+      <aside className={`sidebar ${isMobileMenuOpen ? "is-mobile-open" : ""}`}>
+        <div className="sidebar-brand">
+          <Link
+            href={paths.dashboard.root}
+            className="sidebar-logo"
+            title="QBS Звонки"
+          >
+            M
+          </Link>
+          <button
+            type="button"
+            className="sidebar-close"
+            aria-label="Закрыть меню"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <span />
+            <span />
+          </button>
+        </div>
+
+        <WorkspaceSwitcher />
+
+        <nav className="flex w-full flex-col gap-2">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`nav-item ${item.isActive ? "is-active" : ""}`}
+              title={item.title}
+            >
+              {item.icon}
+              <span className="nav-item-label">{item.title}</span>
             </Link>
-          </>
-        )}
-      </nav>
-      <div className="mt-auto flex flex-col gap-3 items-center">
-        <Link href={paths.auth.signout} className="nav-item" title="Выход">
-          <div className="icon-bubble">{icons.logout}</div>
-        </Link>
-      </div>
-    </aside>
+          ))}
+        </nav>
+        <div className="mt-auto flex w-full flex-col gap-3 items-center">
+          <Link href={paths.auth.signout} className="nav-item" title="Выход">
+            <div className="icon-bubble">{icons.logout}</div>
+            <span className="nav-item-label">Выход</span>
+          </Link>
+        </div>
+      </aside>
+    </>
   );
 }

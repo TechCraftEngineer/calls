@@ -121,6 +121,7 @@ export type {
   CallWithTranscript,
   CreateCallData,
   EvaluationData,
+  GetCallManagersParams,
   GetCallsParams,
 } from "./types/calls.types";
 export type {

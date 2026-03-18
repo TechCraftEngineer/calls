@@ -43,15 +43,24 @@ export default function Header({ user }: HeaderProps) {
   if (!user) return null;
 
   return (
-    <header className="sticky top-0 z-900 flex h-16 items-center justify-end overflow-visible border-b border-gray-200 bg-white px-4 md:px-8">
+    <header className="sticky top-0 z-900 flex h-16 items-center justify-between overflow-visible border-b border-gray-200 bg-white px-4 pl-16 md:justify-end md:px-8">
+      <div className="min-w-0 pr-3 md:hidden">
+        <div className="truncate text-sm font-semibold text-gray-900">
+          {activeWorkspace?.name || "QBS Звонки"}
+        </div>
+        <div className="truncate text-[11px] font-medium uppercase tracking-wide text-gray-500">
+          Рабочее пространство
+        </div>
+      </div>
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            className="flex cursor-pointer items-center gap-3 border-none bg-transparent p-0 text-left outline-none hover:opacity-90 focus:opacity-90"
+            className="flex min-w-0 cursor-pointer items-center gap-2 border-none bg-transparent p-0 text-left outline-none hover:opacity-90 focus:opacity-90 sm:gap-3"
             aria-label="Меню пользователя"
           >
-            <div className="mr-1 text-right">
+            <div className="mr-1 hidden min-w-0 text-right sm:block">
               <div className="text-[13px] font-semibold text-gray-800">
                 {user.name || user.email}
               </div>
