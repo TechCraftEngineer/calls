@@ -52,12 +52,12 @@ export function EmployeesTab({
   const [selectedLinks, setSelectedLinks] = useState<Record<string, string>>(
     {},
   );
-  const [linkingEmployeeId, setLinkingEmployeeId] = useState<string | null>(
-    null,
-  );
-  const [unlinkingEmployeeId, setUnlinkingEmployeeId] = useState<string | null>(
-    null,
-  );
+  const [linkingEmployeeIds, setLinkingEmployeeIds] = useState<
+    Record<string, boolean>
+  >({});
+  const [unlinkingEmployeeIds, setUnlinkingEmployeeIds] = useState<
+    Record<string, boolean>
+  >({});
 
   const handleLink = useCallback(
     async (input: {
@@ -66,11 +66,16 @@ export function EmployeesTab({
       userId?: string | null;
       invitationId?: string | null;
     }) => {
-      setLinkingEmployeeId(input.targetExternalId);
+      const id = input.targetExternalId;
+      setLinkingEmployeeIds((prev) => ({ ...prev, [id]: true }));
       try {
         await onLink(input);
       } finally {
-        setLinkingEmployeeId(null);
+        setLinkingEmployeeIds((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
       }
     },
     [onLink],
@@ -78,11 +83,16 @@ export function EmployeesTab({
 
   const handleUnlink = useCallback(
     async (input: { targetType: "employee"; targetExternalId: string }) => {
-      setUnlinkingEmployeeId(input.targetExternalId);
+      const id = input.targetExternalId;
+      setUnlinkingEmployeeIds((prev) => ({ ...prev, [id]: true }));
       try {
         await onUnlink(input);
       } finally {
-        setUnlinkingEmployeeId(null);
+        setUnlinkingEmployeeIds((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
       }
     },
     [onUnlink],
@@ -114,16 +124,16 @@ export function EmployeesTab({
         setSelectedLinks,
         handleLink,
         handleUnlink,
-        linkingEmployeeId,
-        unlinkingEmployeeId,
+        linkingEmployeeIds,
+        unlinkingEmployeeIds,
       ),
     [
       employeeLinkOptions,
       selectedLinks,
       handleLink,
       handleUnlink,
-      linkingEmployeeId,
-      unlinkingEmployeeId,
+      linkingEmployeeIds,
+      unlinkingEmployeeIds,
     ],
   );
 

@@ -1,4 +1,3 @@
-import { ORPCError } from "@orpc/server";
 import { protectedProcedure } from "../../orpc";
 import type { UserLike } from "../../types/user";
 import { extractUserFields } from "../../user-profile";

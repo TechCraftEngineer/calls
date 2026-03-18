@@ -30,7 +30,7 @@ const Switch = React.forwardRef<
   >
     <SwitchPrimitive.Thumb
       data-slot="switch-thumb"
-      className="pointer-events-none block rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
+      className="pointer-events-none block rounded-full bg-background shadow-lg ring-0 transition-transform"
     />
   </SwitchPrimitive.Root>
 ));

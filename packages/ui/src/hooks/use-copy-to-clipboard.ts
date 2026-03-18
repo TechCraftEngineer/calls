@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseCopyToClipboardOptions {
   timeout?: number;
@@ -9,6 +9,15 @@ interface UseCopyToClipboardOptions {
 export function useCopyToClipboard(options: UseCopyToClipboardOptions = {}) {
   const { timeout = 1500 } = options;
   const [isCopied, setIsCopied] = useState(false);
+  const copyTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current != null) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const copyToClipboard = useCallback(
     async (text: string): Promise<boolean> => {
@@ -16,7 +25,13 @@ export function useCopyToClipboard(options: UseCopyToClipboardOptions = {}) {
       try {
         await navigator.clipboard.writeText(text);
         setIsCopied(true);
-        setTimeout(() => setIsCopied(false), timeout);
+        if (copyTimeoutRef.current != null) {
+          clearTimeout(copyTimeoutRef.current);
+        }
+        copyTimeoutRef.current = window.setTimeout(
+          () => setIsCopied(false),
+          timeout,
+        );
         return true;
       } catch {
         return false;

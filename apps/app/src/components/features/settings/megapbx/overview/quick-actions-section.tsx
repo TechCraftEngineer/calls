@@ -59,6 +59,11 @@ export function QuickActionsSection({
                 onClick={handlers[key]}
                 disabled={syncing !== null}
                 className="w-full transition-transform duration-150 active:scale-[0.98]"
+                aria-label={
+                  syncing === key
+                    ? `Синхронизация ${title}…`
+                    : `Синхронизировать ${title}`
+                }
               >
                 {syncing === key ? "Синк…" : "Запустить"}
               </Button>

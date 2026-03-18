@@ -301,7 +301,7 @@ export function useSettings() {
     queryClient.invalidateQueries({
       queryKey: orpc.settings.getIntegrations.queryKey(),
     });
-  }, [queryClient]);
+  }, [orpc, queryClient]);
 
   const updatePbxMutation = useMutation(
     orpc.settings.updatePbx.mutationOptions({ onSuccess: invalidatePbx }),
@@ -566,12 +566,19 @@ export function useSettings() {
     try {
       setState((prev) => ({ ...prev, megaPbxSaving: true }));
       const apiKeyVal = state.prompts.megapbx_api_key?.value?.trim();
+      const rawSyncFromDate =
+        state.prompts.megapbx_sync_from_date?.value?.trim() ?? "";
+      const validatedSyncFromDate =
+        rawSyncFromDate && /^\d{4}-\d{2}-\d{2}$/.test(rawSyncFromDate)
+          ? rawSyncFromDate
+          : undefined;
       const payload = {
         enabled: state.prompts.megapbx_enabled?.value === "true",
         baseUrl: state.prompts.megapbx_base_url?.value?.trim() ?? "",
         apiKey: apiKeyVal || undefined,
-        syncFromDate:
-          state.prompts.megapbx_sync_from_date?.value?.trim() || undefined,
+        ...(validatedSyncFromDate
+          ? { syncFromDate: validatedSyncFromDate }
+          : {}),
       };
       await updatePbxAccessMutation.mutateAsync(payload);
       toast.success("Доступ к API сохранён");

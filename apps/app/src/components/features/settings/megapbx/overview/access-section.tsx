@@ -15,7 +15,6 @@ interface AccessSectionProps {
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onPromptValueChange: (key: string, value: string) => void;
   onTest: () => Promise<void>;
-  onSaveAccess: () => Promise<void>;
 }
 
 export function AccessSection({
@@ -26,7 +25,6 @@ export function AccessSection({
   onPromptChange,
   onPromptValueChange,
   onTest,
-  onSaveAccess,
 }: AccessSectionProps) {
   return (
     <SectionBlock
@@ -46,6 +44,10 @@ export function AccessSection({
             value={baseUrl}
             onChange={onPromptChange("megapbx_base_url", "value")}
             placeholder="https://123456.megapbx.ru"
+            type="url"
+            inputMode="url"
+            name="megapbx_base_url"
+            autoComplete="url"
             className="h-10"
           />
           <p className="text-xs text-muted-foreground">
@@ -63,6 +65,9 @@ export function AccessSection({
             id="megapbx-api-key"
             value={prompts.megapbx_api_key?.value ?? ""}
             onChange={onPromptChange("megapbx_api_key", "value")}
+            name="megapbx_secret"
+            inputMode="text"
+            autoComplete="current-password"
             placeholder={
               prompts.megapbx_api_key?.meta?.passwordSet
                 ? "•••••••• (оставьте пустым, чтобы не менять)"
@@ -104,7 +109,7 @@ export function AccessSection({
         >
           {testing ? "Проверка…" : "Проверить API"}
         </Button>
-        <Button type="button" onClick={onSaveAccess} disabled={saving}>
+        <Button type="submit" disabled={saving}>
           {saving ? "Сохранение…" : "Сохранить"}
         </Button>
       </div>

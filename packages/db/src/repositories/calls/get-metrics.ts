@@ -16,21 +16,21 @@ export async function getCallsMetrics(
       ? [eq(schema.calls.workspaceId, workspaceId)]
       : undefined;
 
-  const excludeConditions =
+  const excludeCondition =
     excludePhoneNumbers?.length && callConditions
-      ? [
-          and(
-            or(
-              isNull(schema.calls.internalNumber),
-              notInArray(schema.calls.internalNumber, excludePhoneNumbers),
-            ),
-            or(
-              isNull(schema.calls.number),
-              notInArray(schema.calls.number, excludePhoneNumbers),
-            ),
-          )!,
-        ]
-      : [];
+      ? and(
+          or(
+            isNull(schema.calls.internalNumber),
+            notInArray(schema.calls.internalNumber, excludePhoneNumbers),
+          ),
+          or(
+            isNull(schema.calls.number),
+            notInArray(schema.calls.number, excludePhoneNumbers),
+          ),
+        )
+      : undefined;
+
+  const excludeConditions = excludeCondition ? [excludeCondition] : [];
   const allConditions =
     callConditions && excludeConditions.length
       ? [...callConditions, ...excludeConditions]

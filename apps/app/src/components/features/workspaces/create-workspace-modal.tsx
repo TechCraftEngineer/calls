@@ -83,7 +83,7 @@ export default function CreateWorkspaceModal({
 
   return (
     <div
-      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       onClick={onClose}
     >
       <div
@@ -190,7 +190,7 @@ export default function CreateWorkspaceModal({
               disabled={createMutation.isPending}
             >
               {createMutation.isPending
-                ? "Создание..."
+                ? "Создание…"
                 : "Создать рабочее пространство"}
             </Button>
           </div>

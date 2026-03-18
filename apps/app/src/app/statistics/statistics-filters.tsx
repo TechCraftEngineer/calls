@@ -29,19 +29,25 @@ export function StatisticsFilters({
       <CardContent className="p-0">
         <div className="flex gap-6 items-end flex-wrap">
           <div className="filter-item min-w-[150px]">
-            <label className="filter-label">ДАТА ОТ</label>
+            <label htmlFor="date-from" className="filter-label">
+              ДАТА ОТ
+            </label>
             <DatePicker
+              id="date-from"
               value={dateFrom}
               onChange={onDateFromChange}
-              placeholder="Выберите дату"
+              placeholder="Выберите дату... (например 31.12.2023)"
             />
           </div>
           <div className="filter-item min-w-[150px]">
-            <label className="filter-label">ДАТА ДО</label>
+            <label htmlFor="date-to" className="filter-label">
+              ДАТА ДО
+            </label>
             <DatePicker
+              id="date-to"
               value={dateTo}
               onChange={onDateToChange}
-              placeholder="Выберите дату"
+              placeholder="Выберите дату... (например ДД.ММ.ГГГГ)"
             />
           </div>
           <div className="flex gap-3">

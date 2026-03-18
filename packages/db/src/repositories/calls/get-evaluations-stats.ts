@@ -53,18 +53,19 @@ export async function getEvaluationsStats(
     conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
   }
   if (excludePhoneNumbers?.length) {
-    conditions.push(
-      and(
-        or(
-          isNull(schema.calls.internalNumber),
-          notInArray(schema.calls.internalNumber, excludePhoneNumbers),
-        ),
-        or(
-          isNull(schema.calls.number),
-          notInArray(schema.calls.number, excludePhoneNumbers),
-        ),
-      )!,
+    const excludeCondition = and(
+      or(
+        isNull(schema.calls.internalNumber),
+        notInArray(schema.calls.internalNumber, excludePhoneNumbers),
+      ),
+      or(
+        isNull(schema.calls.number),
+        notInArray(schema.calls.number, excludePhoneNumbers),
+      ),
     );
+    if (excludeCondition) {
+      conditions.push(excludeCondition);
+    }
   }
 
   const query = db
@@ -185,18 +186,19 @@ export async function getLowRatedCallsCount(
     conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
   }
   if (excludePhoneNumbers?.length) {
-    conditions.push(
-      and(
-        or(
-          isNull(schema.calls.internalNumber),
-          notInArray(schema.calls.internalNumber, excludePhoneNumbers),
-        ),
-        or(
-          isNull(schema.calls.number),
-          notInArray(schema.calls.number, excludePhoneNumbers),
-        ),
-      )!,
+    const excludeCondition = and(
+      or(
+        isNull(schema.calls.internalNumber),
+        notInArray(schema.calls.internalNumber, excludePhoneNumbers),
+      ),
+      or(
+        isNull(schema.calls.number),
+        notInArray(schema.calls.number, excludePhoneNumbers),
+      ),
     );
+    if (excludeCondition) {
+      conditions.push(excludeCondition);
+    }
   }
 
   const rows = await db

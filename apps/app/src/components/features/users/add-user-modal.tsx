@@ -84,7 +84,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
       <div className={modalBoxClasses} onClick={(e) => e.stopPropagation()}>
         <h2 className="m-0 mb-5 text-lg font-bold">Добавить пользователя</h2>
         <form onSubmit={handleSubmit}>
-          {error && <p className="text-[#c00] mb-3 text-sm">{error}</p>}
+          {error && <p className="text-destructive mb-3 text-sm">{error}</p>}
 
           <div className={formFieldWrap}>
             <label className={formLabel}>Email *</label>
@@ -158,7 +158,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           </div>
 
           {/* Telegram Отчеты */}
-          <div className="mb-4 p-4 bg-[#f5f7fa] rounded-lg">
+          <div className="mb-4 p-4 bg-muted/50 rounded-lg">
             <h3 className="m-0 mb-3 text-sm font-bold">Telegram Отчеты</h3>
             <div className={formFieldWrap}>
               <label className={formLabel}>Telegram Chat ID</label>
@@ -171,7 +171,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
                 className={formInput}
                 placeholder="ID чата пользователя"
               />
-              <p className="mt-1 text-[11px] text-[#666]">
+              <p className="mt-1 text-[11px] text-muted-foreground">
                 Чтобы узнать ID, напишите боту.
               </p>
             </div>
@@ -206,7 +206,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           </div>
 
           {/* MAX Отчеты */}
-          <div className="mb-4 p-4 bg-[#f5f7fa] rounded-lg">
+          <div className="mb-4 p-4 bg-muted/50 rounded-lg">
             <h3 className="m-0 mb-3 text-sm font-bold">MAX Отчеты</h3>
             <div className={formFieldWrap}>
               <label className={formLabel}>MAX Chat ID</label>
@@ -219,7 +219,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
                 className={formInput}
                 placeholder="ID чата MAX"
               />
-              <p className="mt-1 text-[11px] text-[#666]">
+              <p className="mt-1 text-[11px] text-muted-foreground">
                 Заполняется автоматически при подключении
               </p>
             </div>

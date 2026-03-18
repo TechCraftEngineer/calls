@@ -31,8 +31,8 @@ export function getEmployeeColumns(
     targetType: "employee";
     targetExternalId: string;
   }) => Promise<void>,
-  linkingEmployeeId: string | null,
-  unlinkingEmployeeId: string | null,
+  linkingEmployeeIds: Record<string, boolean>,
+  unlinkingEmployeeIds: Record<string, boolean>,
 ): ColumnDef<PbxEmployeeItem>[] {
   return [
     {
@@ -107,7 +107,8 @@ export function getEmployeeColumns(
               size="sm"
               disabled={
                 !selectedLinks[employee.externalId] ||
-                linkingEmployeeId === employee.externalId
+                linkingEmployeeIds[employee.externalId] ||
+                unlinkingEmployeeIds[employee.externalId]
               }
               onClick={async () => {
                 const selected = selectedLinks[employee.externalId];
@@ -125,7 +126,7 @@ export function getEmployeeColumns(
                 });
               }}
             >
-              {linkingEmployeeId === employee.externalId
+              {linkingEmployeeIds[employee.externalId]
                 ? "Привязка…"
                 : "Привязать"}
             </Button>
@@ -134,7 +135,10 @@ export function getEmployeeColumns(
                 type="button"
                 variant="ghost"
                 size="sm"
-                disabled={unlinkingEmployeeId === employee.externalId}
+                disabled={
+                  unlinkingEmployeeIds[employee.externalId] ||
+                  linkingEmployeeIds[employee.externalId]
+                }
                 onClick={async () =>
                   onUnlink({
                     targetType: "employee",
@@ -142,7 +146,7 @@ export function getEmployeeColumns(
                   })
                 }
               >
-                {unlinkingEmployeeId === employee.externalId
+                {unlinkingEmployeeIds[employee.externalId]
                   ? "Отвязка…"
                   : "Отвязать"}
               </Button>
