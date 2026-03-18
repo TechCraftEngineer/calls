@@ -8,9 +8,13 @@ import {
 import { formatTelegramReport, type ManagerStats } from "@calls/jobs";
 import { sendMessage } from "@calls/telegram-bot";
 import { ORPCError } from "@orpc/server";
+import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 
 const TZ = "Europe/Moscow";
+const reportTypeSchema = z.object({
+  reportType: z.enum(["daily", "weekly", "monthly"]),
+});
 
 function formatDateInMoscow(date: Date): string {
   const year = date.getFullYear();
@@ -27,8 +31,9 @@ function parseInternalExtensions(ext: string | null): string[] | null {
     .filter(Boolean);
 }
 
-export const sendTestTelegram = workspaceProcedure.handler(
-  async ({ context }) => {
+export const sendTestTelegram = workspaceProcedure
+  .input(reportTypeSchema)
+  .handler(async ({ context, input }) => {
     const { workspaceId, workspaceRole } = context;
     if (!workspaceId)
       throw new ORPCError("BAD_REQUEST", {
@@ -82,11 +87,27 @@ export const sendTestTelegram = workspaceProcedure.handler(
       );
     }
 
+    const { reportType } = input;
     const now = new Date(new Date().toLocaleString("en-US", { timeZone: TZ }));
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const dateFrom = formatDateInMoscow(yesterday);
-    const dateTo = dateFrom;
+    let dateFrom: string;
+    let dateTo: string;
+
+    if (reportType === "daily") {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 1);
+      dateFrom = formatDateInMoscow(d);
+      dateTo = dateFrom;
+    } else if (reportType === "weekly") {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 7);
+      dateFrom = formatDateInMoscow(d);
+      dateTo = formatDateInMoscow(now);
+    } else {
+      const d = new Date(now);
+      d.setMonth(d.getMonth() - 1);
+      dateFrom = formatDateInMoscow(d);
+      dateTo = formatDateInMoscow(now);
+    }
     const dateFromDb = `${dateFrom} 00:00:00`;
     const dateToDb = `${dateTo} 23:59:59`;
 
@@ -122,7 +143,7 @@ export const sendTestTelegram = workspaceProcedure.handler(
       stats: stats as Record<string, ManagerStats>,
       dateFrom,
       dateTo,
-      reportType: "daily",
+      reportType,
       isManagerReport,
       workspaceName,
       includeAvgRating: userForEdit.reportIncludeAvgRating ?? false,
@@ -138,5 +159,4 @@ export const sendTestTelegram = workspaceProcedure.handler(
       });
     }
     return { success: true };
-  },
-);
+  });

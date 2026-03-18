@@ -18,6 +18,7 @@ export interface SettingsState {
   saving: boolean;
   backupLoading: boolean;
   sendTestLoading: boolean;
+  sendTestReportType: ReportType | null;
   sendTestMessage: string;
   ftpSaving: boolean;
   ftpTesting: boolean;
@@ -28,10 +29,13 @@ export interface SettingsState {
   maxBotSaving: boolean;
 }
 
+export type ReportType = "daily" | "weekly" | "monthly";
+
 export interface TelegramSectionProps {
   sendTestLoading: boolean;
+  sendTestReportType: ReportType | null;
   sendTestMessage: string;
-  onSendTest: () => void;
+  onSendTest: (reportType: ReportType) => void;
 }
 
 export interface IntegrationsSectionProps {

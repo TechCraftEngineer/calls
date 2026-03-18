@@ -1,6 +1,10 @@
 import {
   Button,
   Checkbox,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   Field,
   FieldLabel,
   Input,
@@ -11,17 +15,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@calls/ui";
+import { ChevronDown } from "lucide-react";
 import type React from "react";
 import type { User } from "@/lib/auth";
 import type { ReportSettingsForm } from "../report-settings-types";
+import type { ReportType } from "../types";
 
 interface TelegramSectionProps {
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   isAdmin: boolean;
   sendTestLoading: boolean;
+  sendTestReportType: ReportType | null;
   sendTestMessage: string;
-  onSendTest: () => void;
+  onSendTest: (reportType: ReportType) => void;
   user?: User;
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -36,6 +43,7 @@ export function TelegramReportSection({
   setForm,
   isAdmin,
   sendTestLoading,
+  sendTestReportType,
   sendTestMessage,
   onSendTest,
   user,
@@ -48,6 +56,13 @@ export function TelegramReportSection({
 }: TelegramSectionProps) {
   const canSendTest = form.telegramChatId?.trim() && !sendTestLoading;
   const hasTelegram = !!form.telegramChatId?.trim();
+  const primaryReportType = sendTestReportType ?? "daily";
+  const primaryReportLabel =
+    primaryReportType === "daily"
+      ? "ежедневный"
+      : primaryReportType === "weekly"
+        ? "еженедельный"
+        : "ежемесячный";
 
   return (
     <div className="rounded-lg border bg-card p-4 text-card-foreground">
@@ -173,19 +188,49 @@ export function TelegramReportSection({
           Не отправлять отчёты в Telegram в выходные
         </Label>
       </div>
-      <div className="mt-3">
-        <Button
-          type="button"
-          variant={canSendTest ? "success" : "default"}
-          size="sm"
-          disabled={!form.telegramChatId?.trim() || sendTestLoading}
-          onClick={onSendTest}
-        >
-          {sendTestLoading ? "Отправка…" : "Отправить ежедневный отчёт"}
-        </Button>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <div className="flex items-center">
+          <Button
+            type="button"
+            variant={canSendTest ? "success" : "default"}
+            size="sm"
+            disabled={!form.telegramChatId?.trim() || sendTestLoading}
+            onClick={() => onSendTest(primaryReportType)}
+            className="rounded-r-none"
+          >
+            {sendTestLoading
+              ? `Отправка ${primaryReportLabel} отчёта…`
+              : `Отправить ${primaryReportLabel} отчёт`}
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant={canSendTest ? "success" : "default"}
+                size="sm"
+                disabled={!form.telegramChatId?.trim() || sendTestLoading}
+                className="rounded-l-none border-l border-primary-foreground/20 px-2"
+                aria-label="Выбрать тип отчёта"
+              >
+                <ChevronDown className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => onSendTest("daily")}>
+                Ежедневный отчёт
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onSendTest("weekly")}>
+                Еженедельный отчёт
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onSendTest("monthly")}>
+                Ежемесячный отчёт
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         {sendTestMessage && (
           <span
-            className={`ml-3 text-sm ${
+            className={`text-sm ${
               sendTestMessage.includes("отправлен")
                 ? "text-success"
                 : "text-destructive"

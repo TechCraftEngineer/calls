@@ -22,6 +22,7 @@ import type {
   ReportSettingsForm,
   ReportSettingsUserOption,
 } from "./report-settings-types";
+import type { ReportType } from "./types";
 
 interface ReportSettingsFormBodyProps {
   form: ReportSettingsForm;
@@ -74,12 +75,21 @@ export default function ReportSettingsFormBody({
 
   const sendTestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendTestMessageRef = useRef("");
+  const [sendTestReportType, setSendTestReportType] =
+    useState<ReportType | null>(null);
 
   const sendTestMutation = useMutation(
     orpc.reports.sendTestTelegram.mutationOptions({
-      onSuccess: () => {
-        toast.success("Ежедневный отчёт отправлен в Telegram");
-        const scheduledMsg = "Ежедневный отчёт отправлен";
+      onSuccess: (_, variables) => {
+        const reportType = variables.reportType;
+        const reportTypeLabel =
+          reportType === "daily"
+            ? "Ежедневный"
+            : reportType === "weekly"
+              ? "Еженедельный"
+              : "Ежемесячный";
+        toast.success(`${reportTypeLabel} отчёт отправлен в Telegram`);
+        const scheduledMsg = `${reportTypeLabel} отчёт отправлен`;
         setSendTestMessage(scheduledMsg);
         sendTestMessageRef.current = scheduledMsg;
         if (sendTestTimeoutRef.current != null)
@@ -148,9 +158,17 @@ export default function ReportSettingsFormBody({
     }
   };
 
-  const handleSendTest = () => {
+  const handleSendTest = (reportType: ReportType) => {
+    setSendTestReportType(reportType);
     setSendTestMessage("");
-    sendTestMutation.mutate(undefined);
+    sendTestMutation.mutate(
+      { reportType },
+      {
+        onSettled: () => {
+          setSendTestReportType(null);
+        },
+      },
+    );
   };
 
   const maxAuthUrlMutation = useMutation(
@@ -198,6 +216,7 @@ export default function ReportSettingsFormBody({
               setForm={setForm}
               isAdmin={isAdmin}
               sendTestLoading={sendTestMutation.isPending}
+              sendTestReportType={sendTestReportType}
               sendTestMessage={sendTestMessage}
               onSendTest={handleSendTest}
               user={user}

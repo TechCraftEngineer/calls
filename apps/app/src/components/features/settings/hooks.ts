@@ -9,7 +9,7 @@ import { useCallback, useState } from "react";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 import { INTEGRATION_KEYS } from "./constants";
-import type { Prompt, SettingsState } from "./types";
+import type { Prompt, ReportType, SettingsState } from "./types";
 import {
   validateFtpCredentials,
   validateFtpHost,
@@ -27,6 +27,7 @@ export function useSettings() {
     saving: false,
     backupLoading: false,
     sendTestLoading: false,
+    sendTestReportType: null,
     sendTestMessage: "",
     ftpSaving: false,
     ftpTesting: false,
@@ -402,17 +403,24 @@ export function useSettings() {
     }
   };
 
-  const handleSendTest = async () => {
+  const handleSendTest = async (reportType: ReportType) => {
     setState((prev) => ({
       ...prev,
       sendTestMessage: "",
       sendTestLoading: true,
+      sendTestReportType: reportType,
     }));
     try {
-      await sendTestTelegramMutation.mutateAsync(undefined);
+      await sendTestTelegramMutation.mutateAsync({ reportType });
+      const reportTypeLabel =
+        reportType === "daily"
+          ? "Ежедневный"
+          : reportType === "weekly"
+            ? "Еженедельный"
+            : "Ежемесячный";
       setState((prev) => ({
         ...prev,
-        sendTestMessage: "Тестовый отчёт отправлен в Telegram",
+        sendTestMessage: `${reportTypeLabel} отчёт отправлен в Telegram`,
       }));
       setTimeout(() => {
         setState((prev) => ({ ...prev, sendTestMessage: "" }));
@@ -428,7 +436,11 @@ export function useSettings() {
         sendTestMessage: msg,
       }));
     } finally {
-      setState((prev) => ({ ...prev, sendTestLoading: false }));
+      setState((prev) => ({
+        ...prev,
+        sendTestLoading: false,
+        sendTestReportType: null,
+      }));
     }
   };
 
