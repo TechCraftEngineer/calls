@@ -4,6 +4,9 @@ export {
   INTEGRATION_TYPES,
   type IntegrationConfig,
   type IntegrationType,
+  type MegaPbxEndpointConfig,
+  type MegaPbxIntegrationConfig,
+  type MegaPbxWebhookConfig,
   workspaceIntegrations,
 } from "./integrations";
 export {
@@ -13,6 +16,38 @@ export {
   type PendingUserSettings,
 } from "./invitations";
 export { workspaceMembers } from "./members";
+export {
+  type NewWorkspaceMegaPbxEmployee,
+  type NewWorkspaceMegaPbxLink,
+  type NewWorkspaceMegaPbxNumber,
+  type NewWorkspaceMegaPbxSyncState,
+  type NewWorkspaceMegaPbxWebhookEvent,
+  type NewWorkspacePbxEmployee,
+  type NewWorkspacePbxLink,
+  type NewWorkspacePbxNumber,
+  type NewWorkspacePbxSyncState,
+  type NewWorkspacePbxWebhookEvent,
+  type WorkspaceMegaPbxEmployee,
+  type WorkspaceMegaPbxLink,
+  type WorkspaceMegaPbxNumber,
+  type WorkspaceMegaPbxSyncState,
+  type WorkspaceMegaPbxWebhookEvent,
+  type WorkspacePbxEmployee,
+  type WorkspacePbxLink,
+  type WorkspacePbxNumber,
+  type WorkspacePbxSyncState,
+  type WorkspacePbxWebhookEvent,
+  workspaceMegaPbxEmployees,
+  workspaceMegaPbxLinks,
+  workspaceMegaPbxNumbers,
+  workspaceMegaPbxSyncState,
+  workspaceMegaPbxWebhookEvents,
+  workspacePbxEmployees,
+  workspacePbxLinks,
+  workspacePbxNumbers,
+  workspacePbxSyncState,
+  workspacePbxWebhookEvents,
+} from "./pbx";
 export {
   type NewWorkspaceSetting,
   type WorkspaceSetting,

@@ -4,10 +4,12 @@
 
 import { randomUUID } from "node:crypto";
 import { backendRouter, createBackendContext, createLogger } from "@calls/api";
-import { isValidWorkspaceId, settingsService } from "@calls/db";
+import { isValidWorkspaceId, pbxService, settingsService } from "@calls/db";
+import { syncMegaPbxCalls, syncMegaPbxDirectory } from "@calls/jobs";
 import { createWebhookHandler } from "@calls/telegram-bot";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
+import type { Context } from "hono";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
@@ -201,6 +203,99 @@ export function createApp() {
         return c.json({ error: "Webhook processing failed" }, 500);
       }
     },
+  );
+
+  const handlePbxWebhook = async (c: Context) => {
+    // This is invoked by both /api/pbx-webhook and legacy /api/megapbx-webhook
+    const workspaceId = c.req.param("workspaceId");
+    if (!workspaceId || !isValidWorkspaceId(workspaceId)) {
+      return c.json({ error: "Invalid workspace" }, 400);
+    }
+
+    const config = await pbxService.getConfigWithSecrets(workspaceId);
+    if (!config) {
+      return c.json({ error: "MegaPBX integration not configured" }, 404);
+    }
+
+    const payload = (await c.req.json().catch(() => null)) as Record<
+      string,
+      unknown
+    > | null;
+    if (!payload) {
+      return c.json({ error: "Invalid JSON payload" }, 400);
+    }
+
+    const signature =
+      c.req.header("x-megapbx-secret") ?? c.req.header("x-webhook-secret");
+    if (config.webhook?.secret && signature !== config.webhook.secret) {
+      backendLogger.warn("Rejected MegaPBX webhook because of invalid secret", {
+        workspaceId,
+      });
+      return c.json({ error: "Invalid webhook secret" }, 401);
+    }
+
+    const eventType =
+      (typeof payload.eventType === "string" && payload.eventType) ||
+      (typeof payload.type === "string" && payload.type) ||
+      "unknown";
+    const eventId =
+      (typeof payload.eventId === "string" && payload.eventId) ||
+      (typeof payload.id === "string" && payload.id) ||
+      null;
+
+    await pbxService.recordWebhookEvent({
+      workspaceId,
+      eventId,
+      eventType,
+      payload,
+      status: "received",
+    });
+
+    queueMicrotask(async () => {
+      try {
+        if (
+          eventType.toLowerCase().includes("employee") ||
+          eventType.toLowerCase().includes("number")
+        ) {
+          await syncMegaPbxDirectory(workspaceId, config);
+        } else {
+          await syncMegaPbxCalls(workspaceId, config);
+        }
+
+        await pbxService.recordWebhookEvent({
+          workspaceId,
+          eventId,
+          eventType,
+          payload,
+          status: "processed",
+          processedAt: new Date(),
+        });
+      } catch (error) {
+        await pbxService.recordWebhookEvent({
+          workspaceId,
+          eventId,
+          eventType,
+          payload,
+          status: "error",
+          processedAt: new Date(),
+          errorMessage: error instanceof Error ? error.message : String(error),
+        });
+        backendLogger.error("MegaPBX webhook processing failed", {
+          workspaceId,
+          eventType,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    });
+
+    return c.json({ success: true });
+  };
+
+  app.post("/api/pbx-webhook/:workspaceId", webhookRateLimit, handlePbxWebhook);
+  app.post(
+    "/api/megapbx-webhook/:workspaceId",
+    webhookRateLimit,
+    handlePbxWebhook,
   );
 
   // Health

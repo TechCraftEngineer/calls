@@ -21,6 +21,7 @@ export const INTEGRATION_TYPES = [
   "mango",
   "beeline",
   "mts",
+  "megapbx",
   "telegram",
   "max",
 ] as const;
@@ -43,12 +44,44 @@ export interface BotIntegrationConfig {
   botToken: string;
 }
 
+export interface MegaPbxEndpointConfig {
+  path: string;
+  method?: "GET" | "POST";
+  resultKey?: string;
+}
+
+export interface MegaPbxWebhookConfig {
+  path?: string;
+  secret?: string;
+}
+
+export interface MegaPbxIntegrationConfig {
+  baseUrl: string;
+  apiKey: string;
+  authScheme?: "bearer" | "x-api-key" | "query";
+  apiKeyHeader?: string;
+  employeesEndpoint?: MegaPbxEndpointConfig;
+  numbersEndpoint?: MegaPbxEndpointConfig;
+  callsEndpoint?: MegaPbxEndpointConfig;
+  recordingsEndpoint?: MegaPbxEndpointConfig;
+  webhook?: MegaPbxWebhookConfig;
+  ftpHost?: string;
+  ftpUser?: string;
+  ftpPassword?: string;
+  syncEmployees?: boolean;
+  syncNumbers?: boolean;
+  syncCalls?: boolean;
+  syncRecordings?: boolean;
+  webhooksEnabled?: boolean;
+}
+
 /** Универсальный конфиг для будущих интеграций.
  * Record<string, unknown> оставлен для обратной совместимости;
  * новые типы интеграций следует явно добавлять в union. */
 export type IntegrationConfig =
   | FtpIntegrationConfig
   | BotIntegrationConfig
+  | MegaPbxIntegrationConfig
   | Record<string, unknown>;
 
 export const workspaceIntegrations = pgTable(

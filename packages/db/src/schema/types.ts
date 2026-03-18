@@ -5,8 +5,16 @@
 import type { account, session, user, verification } from "./auth";
 import type { callEvaluations, calls, transcripts } from "./calls";
 import type { userPreferences } from "./user/preferences";
-import type { workspaceMembers, workspaces } from "./workspace";
-import type { workspaceIntegrations } from "./workspace/integrations";
+import type {
+  workspaceIntegrations,
+  workspaceMembers,
+  workspacePbxEmployees,
+  workspacePbxLinks,
+  workspacePbxNumbers,
+  workspacePbxSyncState,
+  workspacePbxWebhookEvents,
+  workspaces,
+} from "./workspace";
 
 export type { File, NewFile } from "./files/files";
 
@@ -31,6 +39,29 @@ export type Workspace = typeof workspaces.$inferSelect;
 export type NewWorkspace = typeof workspaces.$inferInsert;
 export type WorkspaceMember = typeof workspaceMembers.$inferSelect;
 export type NewWorkspaceMember = typeof workspaceMembers.$inferInsert;
+export type WorkspacePbxEmployee = typeof workspacePbxEmployees.$inferSelect;
+export type NewWorkspacePbxEmployee = typeof workspacePbxEmployees.$inferInsert;
+export type WorkspacePbxNumber = typeof workspacePbxNumbers.$inferSelect;
+export type NewWorkspacePbxNumber = typeof workspacePbxNumbers.$inferInsert;
+export type WorkspacePbxLink = typeof workspacePbxLinks.$inferSelect;
+export type NewWorkspacePbxLink = typeof workspacePbxLinks.$inferInsert;
+export type WorkspacePbxSyncState = typeof workspacePbxSyncState.$inferSelect;
+export type NewWorkspacePbxSyncState =
+  typeof workspacePbxSyncState.$inferInsert;
+export type WorkspacePbxWebhookEvent =
+  typeof workspacePbxWebhookEvents.$inferSelect;
+export type NewWorkspacePbxWebhookEvent =
+  typeof workspacePbxWebhookEvents.$inferInsert;
+export type WorkspaceMegaPbxEmployee = WorkspacePbxEmployee;
+export type NewWorkspaceMegaPbxEmployee = NewWorkspacePbxEmployee;
+export type WorkspaceMegaPbxNumber = WorkspacePbxNumber;
+export type NewWorkspaceMegaPbxNumber = NewWorkspacePbxNumber;
+export type WorkspaceMegaPbxLink = WorkspacePbxLink;
+export type NewWorkspaceMegaPbxLink = NewWorkspacePbxLink;
+export type WorkspaceMegaPbxSyncState = WorkspacePbxSyncState;
+export type NewWorkspaceMegaPbxSyncState = NewWorkspacePbxSyncState;
+export type WorkspaceMegaPbxWebhookEvent = WorkspacePbxWebhookEvent;
+export type NewWorkspaceMegaPbxWebhookEvent = NewWorkspacePbxWebhookEvent;
 
 // User
 export type UserPreferences = typeof userPreferences.$inferSelect;

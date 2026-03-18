@@ -1,0 +1,17 @@
+export {
+  type NewWorkspacePbxEmployee as NewWorkspaceMegaPbxEmployee,
+  type NewWorkspacePbxLink as NewWorkspaceMegaPbxLink,
+  type NewWorkspacePbxNumber as NewWorkspaceMegaPbxNumber,
+  type NewWorkspacePbxSyncState as NewWorkspaceMegaPbxSyncState,
+  type NewWorkspacePbxWebhookEvent as NewWorkspaceMegaPbxWebhookEvent,
+  type WorkspacePbxEmployee as WorkspaceMegaPbxEmployee,
+  type WorkspacePbxLink as WorkspaceMegaPbxLink,
+  type WorkspacePbxNumber as WorkspaceMegaPbxNumber,
+  type WorkspacePbxSyncState as WorkspaceMegaPbxSyncState,
+  type WorkspacePbxWebhookEvent as WorkspaceMegaPbxWebhookEvent,
+  workspacePbxEmployees as workspaceMegaPbxEmployees,
+  workspacePbxLinks as workspaceMegaPbxLinks,
+  workspacePbxNumbers as workspaceMegaPbxNumbers,
+  workspacePbxSyncState as workspaceMegaPbxSyncState,
+  workspacePbxWebhookEvents as workspaceMegaPbxWebhookEvents,
+} from "./pbx";
