@@ -5,6 +5,10 @@ import {
   Button,
   Card,
   CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
   DatePicker,
   Field,
   FieldContent,
@@ -16,27 +20,32 @@ import {
   Label,
   PasswordInput,
   Switch,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
   toast,
 } from "@calls/ui";
+import { useCopyToClipboard } from "@calls/ui/hooks";
 import {
+  Check,
   Copy,
   Database,
+  Info,
+  KeyRound,
   Mic,
   PhoneCall,
-  RefreshCw,
   Users,
   Webhook,
 } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+import type { Prompt } from "../types";
+import { SectionBlock } from "./section-block";
 
 function generateWebhookSecret(): string {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
-
-import type { Prompt } from "../types";
-import { SectionBlock } from "./section-block";
 
 interface OverviewTabProps {
   prompts: Record<string, Prompt>;
@@ -82,29 +91,31 @@ export function OverviewTab({
   onSyncCalls,
   onSyncRecordings,
 }: OverviewTabProps) {
-  const copyWebhookUrl = useCallback(async () => {
-    if (!webhookUrl) return;
-    try {
-      await navigator.clipboard.writeText(webhookUrl);
-      toast.success("URL скопирован");
-    } catch {
-      toast.error("Не удалось скопировать");
-    }
-  }, [webhookUrl]);
+  const { isCopied: copiedUrl, copyToClipboard: copyUrl } = useCopyToClipboard({
+    timeout: 2000,
+  });
+  const { isCopied: copiedSecret, copyToClipboard: copySecret } =
+    useCopyToClipboard({ timeout: 2000 });
+  const [generated, setGenerated] = useState(false);
 
   const webhookSecretValue = prompts.megapbx_webhook_secret?.value ?? "";
+
+  const copyWebhookUrl = useCallback(async () => {
+    if (!webhookUrl) return;
+    const ok = await copyUrl(webhookUrl);
+    if (ok) toast.success("URL скопирован");
+    else toast.error("Не удалось скопировать");
+  }, [webhookUrl, copyUrl]);
+
   const copyWebhookSecret = useCallback(async () => {
     if (!webhookSecretValue) {
       toast.error("Сначала сгенерируйте или введите секрет");
       return;
     }
-    try {
-      await navigator.clipboard.writeText(webhookSecretValue);
-      toast.success("Секрет скопирован");
-    } catch {
-      toast.error("Не удалось скопировать");
-    }
-  }, [webhookSecretValue]);
+    const ok = await copySecret(webhookSecretValue);
+    if (ok) toast.success("Секрет скопирован");
+    else toast.error("Не удалось скопировать");
+  }, [webhookSecretValue, copySecret]);
 
   const handleGenerateSecret = useCallback(() => {
     const secret = generateWebhookSecret();
@@ -112,7 +123,12 @@ export function OverviewTab({
     toast.success(
       "Секрет сгенерирован. Сохраните настройки и укажите его в админке АТС.",
     );
+    setGenerated(true);
+    setTimeout(() => setGenerated(false), 2000);
   }, [onPromptValueChange]);
+
+  const iconButtonClass =
+    "shrink-0 transition-transform duration-150 active:scale-90";
 
   return (
     <form
@@ -270,22 +286,13 @@ export function OverviewTab({
             </FieldLabel>
           ))}
         </FieldGroup>
-        {configuredFeatures.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {configuredFeatures.map((feature) => (
-              <Badge key={feature} variant="outline">
-                {feature}
-              </Badge>
-            ))}
-          </div>
-        )}
       </SectionBlock>
 
       <SectionBlock
         title="Webhook для АТС"
         description="Укажите наш URL и секрет в админке АТС — АТС будет отправлять события на наш сервер."
       >
-        <div className="grid gap-4 md:grid-cols-[minmax(0,420px)_1fr]">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,560px)_1fr]">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label
@@ -299,22 +306,33 @@ export function OverviewTab({
                   id="megapbx-webhook-url"
                   value={webhookUrl}
                   readOnly
-                  className="h-10 font-mono text-sm"
+                  className="font-mono text-sm"
                   placeholder={
                     webhookUrl ? undefined : "Выберите рабочее пространство"
                   }
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-10 shrink-0"
-                  onClick={copyWebhookUrl}
-                  disabled={!webhookUrl}
-                  aria-label="Скопировать URL"
-                >
-                  <Copy className="size-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className={iconButtonClass}
+                      onClick={copyWebhookUrl}
+                      disabled={!webhookUrl}
+                      aria-label={copiedUrl ? "Скопировано" : "Скопировать URL"}
+                    >
+                      {copiedUrl ? (
+                        <Check className="size-4 text-success" aria-hidden />
+                      ) : (
+                        <Copy className="size-4" aria-hidden />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {copiedUrl ? "Скопировано" : "Скопировать URL"}
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <p className="text-xs text-muted-foreground">
                 Вставьте этот URL в админке АТС в поле «URL вебхука» или
@@ -338,31 +356,55 @@ export function OverviewTab({
                       ? "•••••••• (оставьте пустым, чтобы не менять)"
                       : "Задайте секрет и укажите его в админке АТС"
                   }
-                  className="h-10 min-w-0 flex-1"
+                  className="font-mono text-sm"
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-10 shrink-0"
-                  onClick={handleGenerateSecret}
-                  aria-label="Сгенерировать секрет"
-                  title="Сгенерировать новый секрет"
-                >
-                  <RefreshCw className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-10 shrink-0"
-                  onClick={copyWebhookSecret}
-                  disabled={!webhookSecretValue}
-                  aria-label="Скопировать секрет"
-                  title="Скопировать секрет в буфер"
-                >
-                  <Copy className="size-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className={iconButtonClass}
+                      onClick={handleGenerateSecret}
+                      aria-label={
+                        generated ? "Сгенерировано" : "Сгенерировать секрет"
+                      }
+                    >
+                      {generated ? (
+                        <Check className="size-4 text-success" aria-hidden />
+                      ) : (
+                        <KeyRound className="size-4" aria-hidden />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {generated ? "Сгенерировано" : "Сгенерировать секрет"}
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className={iconButtonClass}
+                      onClick={copyWebhookSecret}
+                      disabled={!webhookSecretValue}
+                      aria-label={
+                        copiedSecret ? "Скопировано" : "Скопировать секрет"
+                      }
+                    >
+                      {copiedSecret ? (
+                        <Check className="size-4 text-success" aria-hidden />
+                      ) : (
+                        <Copy className="size-4" aria-hidden />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {copiedSecret ? "Скопировано" : "Скопировать секрет"}
+                  </TooltipContent>
+                </Tooltip>
               </div>
               <p className="text-xs text-muted-foreground">
                 Задайте секрет здесь, сохраните, затем укажите тот же секрет в
@@ -378,12 +420,16 @@ export function OverviewTab({
               </p>
             </div>
           </div>
-          <Card className="rounded-lg border-border/60">
-            <CardContent className="p-4 text-sm text-muted-foreground">
+          <div
+            role="status"
+            className="flex gap-3 rounded-lg border border-border/60 border-l-4 border-l-primary/50 bg-muted/30 px-4 py-3"
+          >
+            <Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden />
+            <div className="flex flex-col gap-2 text-sm">
               <p className="font-medium text-foreground">
                 Настройка в админке АТС
               </p>
-              <ol className="mt-2 list-decimal space-y-1 pl-4">
+              <ol className="text-muted-foreground list-decimal space-y-1 pl-4">
                 <li>Скопируйте URL вебхука выше и вставьте в настройки АТС.</li>
                 <li>
                   Нажмите «Сгенерировать» или введите свой секрет, сохраните
@@ -394,8 +440,8 @@ export function OverviewTab({
                   проверку подписи).
                 </li>
               </ol>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </SectionBlock>
 
@@ -409,58 +455,67 @@ export function OverviewTab({
         title="Быстрые действия"
         description="Сохраните настройки, затем при необходимости вручную запустите синхронизацию."
       >
-        <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
-          <Card className="rounded-lg border-border/60">
-            <CardContent className="p-4">
-              <div className="text-sm font-medium">Справочник</div>
-              <div className="mt-1 text-sm text-muted-foreground">
-                Сотрудники и номера
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onSyncDirectory}
-                disabled={syncing !== null}
-                className="mt-4 w-full"
-              >
-                {syncing === "directory" ? "Синк…" : "Запустить"}
-              </Button>
-            </CardContent>
-          </Card>
-          <Card className="rounded-lg border-border/60">
-            <CardContent className="p-4">
-              <div className="text-sm font-medium">Звонки</div>
-              <div className="mt-1 text-sm text-muted-foreground">
-                Импорт истории вызовов
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onSyncCalls}
-                disabled={syncing !== null}
-                className="mt-4 w-full"
-              >
-                {syncing === "calls" ? "Синк…" : "Запустить"}
-              </Button>
-            </CardContent>
-          </Card>
-          <Card className="rounded-lg border-border/60">
-            <CardContent className="p-4">
-              <div className="text-sm font-medium">Записи</div>
-              <div className="mt-1 text-sm text-muted-foreground">
-                Загрузка аудио по звонкам
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onSyncRecordings}
-                disabled={syncing !== null}
-                className="mt-4 w-full"
-              >
-                {syncing === "recordings" ? "Синк…" : "Запустить"}
-              </Button>
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {(
+            [
+              [
+                "directory",
+                "Справочник",
+                "Сотрудники и номера",
+                onSyncDirectory,
+                <Database key="dir" className="size-4 text-muted-foreground" />,
+              ],
+              [
+                "calls",
+                "Звонки",
+                "Импорт истории вызовов",
+                onSyncCalls,
+                <PhoneCall
+                  key="calls"
+                  className="size-4 text-muted-foreground"
+                />,
+              ],
+              [
+                "recordings",
+                "Записи",
+                "Загрузка аудио по звонкам",
+                onSyncRecordings,
+                <Mic key="rec" className="size-4 text-muted-foreground" />,
+              ],
+            ] as [
+              "directory" | "calls" | "recordings",
+              string,
+              string,
+              () => void,
+              React.ReactNode,
+            ][]
+          ).map(([key, title, description, onSync, icon]) => (
+            <Card
+              key={key}
+              className="gap-4 py-4 transition-colors hover:border-border hover:bg-muted/30"
+            >
+              <CardHeader className="flex flex-col gap-2 px-4 pb-0">
+                <div className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-lg">
+                  {icon}
+                </div>
+                <CardTitle className="text-base">{title}</CardTitle>
+                <CardDescription className="text-sm">
+                  {description}
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="px-4 pt-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onSync}
+                  disabled={syncing !== null}
+                  className="w-full transition-transform duration-150 active:scale-[0.98]"
+                >
+                  {syncing === key ? "Синк…" : "Запустить"}
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
         </div>
       </SectionBlock>
     </form>

@@ -31,6 +31,8 @@ export function getEmployeeColumns(
     targetType: "employee";
     targetExternalId: string;
   }) => Promise<void>,
+  linkingEmployeeId: string | null,
+  unlinkingEmployeeId: string | null,
 ): ColumnDef<PbxEmployeeItem>[] {
   return [
     {
@@ -103,12 +105,19 @@ export function getEmployeeColumns(
               type="button"
               variant="outline"
               size="sm"
-              disabled={!selectedLinks[employee.externalId]}
-              onClick={() => {
+              disabled={
+                !selectedLinks[employee.externalId] ||
+                linkingEmployeeId === employee.externalId
+              }
+              onClick={async () => {
                 const selected = selectedLinks[employee.externalId];
                 if (!selected) return;
-                const [kind, id] = selected.split(":");
-                void onLink({
+                const colonIdx = selected.indexOf(":");
+                const kind =
+                  colonIdx >= 0 ? selected.slice(0, colonIdx) : "user";
+                const id =
+                  colonIdx >= 0 ? selected.slice(colonIdx + 1) : selected;
+                await onLink({
                   targetType: "employee",
                   targetExternalId: employee.externalId,
                   userId: kind === "user" ? id : null,
@@ -116,21 +125,26 @@ export function getEmployeeColumns(
                 });
               }}
             >
-              Привязать
+              {linkingEmployeeId === employee.externalId
+                ? "Привязка…"
+                : "Привязать"}
             </Button>
             {employee.link && (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() =>
-                  void onUnlink({
+                disabled={unlinkingEmployeeId === employee.externalId}
+                onClick={async () =>
+                  onUnlink({
                     targetType: "employee",
                     targetExternalId: employee.externalId,
                   })
                 }
               >
-                Отвязать
+                {unlinkingEmployeeId === employee.externalId
+                  ? "Отвязка…"
+                  : "Отвязать"}
               </Button>
             )}
           </div>

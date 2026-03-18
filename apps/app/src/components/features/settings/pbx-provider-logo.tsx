@@ -83,7 +83,7 @@ export function PbxProviderLogo({
   const fallbackSvg = FALLBACK_SVG[providerId];
 
   useEffect(() => {
-    // Reset per-provider load state when `providerId` changes.
+    // Сброс состояния загрузки для каждого провайдера при изменении `providerId`.
     setClearbitFailed(false);
     setShowSvgFallback(false);
   }, [providerId]);
