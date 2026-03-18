@@ -35,6 +35,7 @@ export default function SettingsGeneralPage() {
 
       <TelegramSection
         sendTestLoading={state.sendTestLoading}
+        sendTestReportType={state.sendTestReportType}
         sendTestMessage={state.sendTestMessage}
         onSendTest={handleSendTest}
       />
