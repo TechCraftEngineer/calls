@@ -124,6 +124,7 @@ export {
   SelectValue,
 } from "./select";
 export { Separator } from "./separator";
+export { Switch } from "./switch";
 export { Skeleton } from "./skeleton";
 export {
   Sidebar,
