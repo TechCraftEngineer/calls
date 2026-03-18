@@ -15,7 +15,7 @@ interface SearchInputProps {
 export function SearchInput({
   value,
   onChange,
-  placeholder = "По номеру, сотруднику, резюме...",
+  placeholder = "По номеру, сотруднику, резюме…",
   onSearch,
   className,
 }: SearchInputProps) {

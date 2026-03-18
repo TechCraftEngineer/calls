@@ -13,6 +13,23 @@ const MEGAPBX_ENDPOINTS = {
   calls: "/crm/calls",
 } as const;
 
+function buildMegaPbxEndpoints() {
+  return {
+    employeesEndpoint: {
+      path: MEGAPBX_ENDPOINTS.employees,
+      method: "GET" as const,
+    },
+    numbersEndpoint: {
+      path: MEGAPBX_ENDPOINTS.numbers,
+      method: "GET" as const,
+    },
+    callsEndpoint: {
+      path: MEGAPBX_ENDPOINTS.calls,
+      method: "GET" as const,
+    },
+  };
+}
+
 type UpdateMegaPbxSettingsInput = {
   enabled: boolean;
   baseUrl: string;
@@ -56,23 +73,14 @@ function buildFixedMegaPbxConfig(
         ? encrypt(existing.apiKey)
         : "",
     syncFromDate:
-      input.syncFromDate?.trim() &&
-      /^\d{4}-\d{2}-\d{2}$/.test(input.syncFromDate.trim())
-        ? input.syncFromDate.trim()
-        : existing?.syncFromDate,
+      input.syncFromDate === null
+        ? undefined
+        : input.syncFromDate?.trim() &&
+            /^\d{4}-\d{2}-\d{2}$/.test(input.syncFromDate.trim())
+          ? input.syncFromDate.trim()
+          : existing?.syncFromDate,
     authScheme: MEGAPBX_AUTH_SCHEME,
-    employeesEndpoint: {
-      path: MEGAPBX_ENDPOINTS.employees,
-      method: "GET" as const,
-    },
-    numbersEndpoint: {
-      path: MEGAPBX_ENDPOINTS.numbers,
-      method: "GET" as const,
-    },
-    callsEndpoint: {
-      path: MEGAPBX_ENDPOINTS.calls,
-      method: "GET" as const,
-    },
+    ...buildMegaPbxEndpoints(),
     webhook: {
       secret: input.webhookSecret?.trim()
         ? encrypt(input.webhookSecret.trim())
@@ -157,18 +165,7 @@ export class PbxService {
       apiKey: decryptIfPresent(config.apiKey) ?? "",
       syncFromDate: config.syncFromDate ?? undefined,
       authScheme: MEGAPBX_AUTH_SCHEME,
-      employeesEndpoint: {
-        path: MEGAPBX_ENDPOINTS.employees,
-        method: "GET" as const,
-      },
-      numbersEndpoint: {
-        path: MEGAPBX_ENDPOINTS.numbers,
-        method: "GET" as const,
-      },
-      callsEndpoint: {
-        path: MEGAPBX_ENDPOINTS.calls,
-        method: "GET" as const,
-      },
+      ...buildMegaPbxEndpoints(),
       webhook: {
         secret: decryptIfPresent(config.webhook?.secret) ?? undefined,
       },
@@ -200,18 +197,7 @@ export class PbxService {
           apiKey: decryptIfPresent(config.apiKey) ?? "",
           syncFromDate: config.syncFromDate ?? undefined,
           authScheme: MEGAPBX_AUTH_SCHEME,
-          employeesEndpoint: {
-            path: MEGAPBX_ENDPOINTS.employees,
-            method: "GET" as const,
-          },
-          numbersEndpoint: {
-            path: MEGAPBX_ENDPOINTS.numbers,
-            method: "GET" as const,
-          },
-          callsEndpoint: {
-            path: MEGAPBX_ENDPOINTS.calls,
-            method: "GET" as const,
-          },
+          ...buildMegaPbxEndpoints(),
           webhook: {
             secret: decryptIfPresent(config.webhook?.secret) ?? undefined,
           },

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Логотипы провайдеров АТС — загружаются из интернета.
@@ -78,8 +78,15 @@ export function PbxProviderLogo({
   muted = false,
 }: PbxProviderLogoProps) {
   const [clearbitFailed, setClearbitFailed] = useState(false);
+  const [showSvgFallback, setShowSvgFallback] = useState(false);
   const domain = PROVIDER_DOMAINS[providerId];
   const fallbackSvg = FALLBACK_SVG[providerId];
+
+  useEffect(() => {
+    // Reset per-provider load state when `providerId` changes.
+    setClearbitFailed(false);
+    setShowSvgFallback(false);
+  }, [providerId]);
 
   const clearbitUrl = domain ? `https://logo.clearbit.com/${domain}` : null;
   const faviconUrl = domain
@@ -87,7 +94,7 @@ export function PbxProviderLogo({
     : null;
 
   const showClearbit = clearbitUrl && !clearbitFailed;
-  const showFavicon = faviconUrl && clearbitFailed;
+  const showFavicon = faviconUrl && clearbitFailed && !showSvgFallback;
 
   return (
     <span
@@ -110,6 +117,7 @@ export function PbxProviderLogo({
           width={28}
           height={28}
           className={`object-contain ${muted ? "opacity-60" : ""}`}
+          onError={() => setShowSvgFallback(true)}
         />
       ) : fallbackSvg ? (
         <svg

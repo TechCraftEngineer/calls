@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@calls/ui";
-// import ChatWidget from "@/components/features/chat/chat-widget";
+// TODO: ChatWidget временно отключен до 2026-04-15 (план восстановления после стабилизации сценариев чата).
 import { AuthProvider } from "@/components/features/misc/auth-provider";
 import { WorkspaceProvider } from "@/components/features/workspaces/workspace-provider";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -77,7 +77,7 @@ export default function RootLayout({
               <ORPCReactProvider>
                 <WorkspaceProvider>
                   {children}
-                  {/* <ChatWidget /> */}
+                  {/* TODO: ChatWidget временно отключен до 2026-04-15 */}
                 </WorkspaceProvider>
               </ORPCReactProvider>
               <Toaster />
