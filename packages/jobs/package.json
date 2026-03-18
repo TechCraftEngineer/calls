@@ -5,7 +5,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
-    "./hono": "./src/hono.ts"
+    "./hono": "./src/hono.ts",
+    "./pbx/sync": "./src/pbx/sync.ts"
   },
   "scripts": {
     "build": "bun build ./src/server.ts --outdir ./dist --target bun",

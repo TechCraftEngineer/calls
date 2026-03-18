@@ -30,9 +30,13 @@ export const workspacePbxEmployees = pgTable(
     displayName: text("display_name").notNull(),
     isActive: boolean("is_active").notNull().default(true),
     rawData: jsonb("raw_data").$type<Record<string, unknown>>().notNull(),
-    syncedAt: timestamp("synced_at").defaultNow().notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
+    syncedAt: timestamp("synced_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
@@ -66,9 +70,13 @@ export const workspacePbxNumbers = pgTable(
     lineType: text("line_type"),
     isActive: boolean("is_active").notNull().default(true),
     rawData: jsonb("raw_data").$type<Record<string, unknown>>().notNull(),
-    syncedAt: timestamp("synced_at").defaultNow().notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
+    syncedAt: timestamp("synced_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
@@ -108,8 +116,10 @@ export const workspacePbxLinks = pgTable(
       onDelete: "set null",
     }),
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
@@ -139,13 +149,15 @@ export const workspacePbxSyncState = pgTable(
     syncType: text("sync_type").notNull(),
     status: text("status").notNull().default("idle"),
     cursor: text("cursor"),
-    lastStartedAt: timestamp("last_started_at"),
-    lastCompletedAt: timestamp("last_completed_at"),
-    lastSuccessfulAt: timestamp("last_successful_at"),
+    lastStartedAt: timestamp("last_started_at", { withTimezone: true }),
+    lastCompletedAt: timestamp("last_completed_at", { withTimezone: true }),
+    lastSuccessfulAt: timestamp("last_successful_at", { withTimezone: true }),
     lastError: text("last_error"),
     stats: jsonb("stats").$type<Record<string, unknown>>(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
@@ -174,9 +186,11 @@ export const workspacePbxWebhookEvents = pgTable(
     eventType: text("event_type").notNull(),
     status: text("status").notNull().default("received"),
     payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
-    processedAt: timestamp("processed_at"),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
     errorMessage: text("error_message"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
     index("workspace_pbx_webhook_events_workspace_idx").on(table.workspaceId),
