@@ -12,18 +12,6 @@ export default async function createNextConfig(): Promise<NextConfig> {
     /** Enables hot reloading for local packages without a build step */
     ...(process.env.CI === "true" && { output: "standalone" }),
 
-    /** Внешние изображения: логотипы АТС (Clearbit, Google Favicon) */
-    images: {
-      remotePatterns: [
-        { protocol: "https", hostname: "logo.clearbit.com", pathname: "/**" },
-        {
-          protocol: "https",
-          hostname: "www.google.com",
-          pathname: "/s2/favicons",
-        },
-      ],
-    },
-
     /** Exclude packages using Node.js APIs or dynamic require from bundling */
     serverExternalPackages: ["@calls/lib", "cheerio"],
 

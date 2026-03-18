@@ -16,6 +16,25 @@ export const pbxSettingsSchema = z.object({
   webhooksEnabled: z.boolean().default(false),
 });
 
+export const pbxAccessSchema = z.object({
+  enabled: z.boolean(),
+  baseUrl: z.string().trim(),
+  apiKey: z.string().trim().optional(),
+  syncFromDate: z.string().trim().optional(),
+});
+
+export const pbxSyncOptionsSchema = z.object({
+  syncEmployees: z.boolean(),
+  syncNumbers: z.boolean(),
+  syncCalls: z.boolean(),
+  syncRecordings: z.boolean(),
+  webhooksEnabled: z.boolean(),
+});
+
+export const pbxWebhookSchema = z.object({
+  webhookSecret: z.string().trim().optional(),
+});
+
 export const pbxLinkSchema = z
   .object({
     targetType: z.enum(["employee", "number"]),
