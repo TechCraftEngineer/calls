@@ -130,14 +130,16 @@ export function OverviewTab({
   const iconButtonClass =
     "shrink-0 transition-transform duration-150 active:scale-90";
 
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      void onSave();
+    },
+    [onSave],
+  );
+
   return (
-    <form
-      className="space-y-6"
-      onSubmit={(e) => {
-        e.preventDefault();
-        void onSave();
-      }}
-    >
+    <form className="space-y-6" onSubmit={handleSubmit}>
       <SectionBlock
         title="Доступ к API"
         description="Укажите домен АТС и API key. Этого достаточно для проверки соединения и запуска синхронизации."
@@ -214,7 +216,7 @@ export function OverviewTab({
           >
             {testing ? "Проверка…" : "Проверить API"}
           </Button>
-          <Button type="submit" disabled={saving}>
+          <Button type="button" onClick={onSave} disabled={saving}>
             {saving ? "Сохранение…" : "Сохранить"}
           </Button>
         </div>
@@ -347,17 +349,19 @@ export function OverviewTab({
                 Секрет вебхука (наш секрет)
               </Label>
               <div className="flex gap-2">
-                <PasswordInput
-                  id="megapbx-webhook-secret"
-                  value={prompts.megapbx_webhook_secret?.value ?? ""}
-                  onChange={onPromptChange("megapbx_webhook_secret", "value")}
-                  placeholder={
-                    prompts.megapbx_webhook_secret?.meta?.passwordSet
-                      ? "•••••••• (оставьте пустым, чтобы не менять)"
-                      : "Задайте секрет и укажите его в админке АТС"
-                  }
-                  className="font-mono text-sm"
-                />
+                <div className="min-w-0 flex-1">
+                  <PasswordInput
+                    id="megapbx-webhook-secret"
+                    value={prompts.megapbx_webhook_secret?.value ?? ""}
+                    onChange={onPromptChange("megapbx_webhook_secret", "value")}
+                    placeholder={
+                      prompts.megapbx_webhook_secret?.meta?.passwordSet
+                        ? "•••••••• (оставьте пустым, чтобы не менять)"
+                        : "Задайте секрет и укажите его в админке АТС"
+                    }
+                    className="w-full font-mono text-sm"
+                  />
+                </div>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -418,6 +422,11 @@ export function OverviewTab({
                 </code>
                 .
               </p>
+              <div className="pt-2">
+                <Button type="button" onClick={onSave} disabled={saving}>
+                  {saving ? "Сохранение…" : "Сохранить"}
+                </Button>
+              </div>
             </div>
           </div>
           <div

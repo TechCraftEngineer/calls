@@ -293,7 +293,7 @@ export default function EditUserModal({
               type="button"
               variant="link"
               onClick={onClose}
-              className="text-primary"
+              className="text-foreground"
             >
               Отмена
             </Button>

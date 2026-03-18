@@ -34,7 +34,7 @@ export default function GlobalError({
               <Button type="button" onClick={reset}>
                 Попробовать снова
               </Button>
-              <Button asChild variant="link" className="text-primary">
+              <Button asChild variant="link" className="text-foreground">
                 <Link href={paths.root}>На главную</Link>
               </Button>
             </div>

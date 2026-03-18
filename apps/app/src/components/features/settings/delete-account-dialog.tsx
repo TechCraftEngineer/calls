@@ -66,7 +66,7 @@ export function DeleteAccountDialog({
             variant="link"
             onClick={onCancel}
             disabled={deleting}
-            className="text-primary"
+            className="text-foreground"
           >
             Отмена
           </Button>

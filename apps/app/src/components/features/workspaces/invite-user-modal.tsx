@@ -305,7 +305,7 @@ export default function InviteUserModal({
                 setEmail("");
                 setRole("member");
               }}
-              className="flex-1 text-primary"
+              className="flex-1 text-foreground"
             >
               Пригласить ещё
             </Button>
@@ -463,7 +463,7 @@ export default function InviteUserModal({
               variant="link"
               onClick={handleClose}
               disabled={submitting}
-              className="flex-1 text-primary"
+              className="flex-1 text-foreground"
             >
               Отмена
             </Button>

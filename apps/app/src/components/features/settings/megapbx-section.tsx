@@ -60,7 +60,7 @@ export default function MegaPbxSection({
 
   const webhookUrl =
     activeWorkspace?.id && getWebhookBaseUrl()
-      ? `${getWebhookBaseUrl()}/api/pbx-webhook/${activeWorkspace.id}`
+      ? `${getWebhookBaseUrl()}/api/megapbx-webhook/${activeWorkspace.id}`
       : "";
 
   const enabled = prompts.megapbx_enabled?.value === "true";

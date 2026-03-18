@@ -48,7 +48,11 @@ export function StatisticsFilters({
             <Button variant="default" onClick={onApply}>
               Применить
             </Button>
-            <Button variant="link" onClick={onReset} className="text-primary">
+            <Button
+              variant="link"
+              onClick={onReset}
+              className="text-foreground"
+            >
               Сбросить
             </Button>
           </div>
