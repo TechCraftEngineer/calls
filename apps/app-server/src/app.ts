@@ -200,7 +200,7 @@ export function createApp() {
           error: errorMsg,
           stack: error instanceof Error ? error.stack : undefined,
         });
-        return c.json({ error: "Webhook processing failed" }, 500);
+        return c.json({ error: "Обработка webhook не удалась" }, 500);
       }
     },
   );
@@ -217,7 +217,7 @@ export function createApp() {
       return c.json({ error: "MegaPBX integration not configured" }, 404);
     }
     if (!config.webhooksEnabled) {
-      return c.json({ error: "MegaPBX webhook disabled" }, 409);
+      return c.json({ error: "Webhook MegaPBX отключён" }, 409);
     }
 
     const payload = (await c.req.json().catch(() => null)) as Record<
@@ -280,12 +280,12 @@ export function createApp() {
         processedAt: new Date(),
         errorMessage: error instanceof Error ? error.message : String(error),
       });
-      backendLogger.error("MegaPBX webhook enqueue failed", {
+      backendLogger.error("Сбой добавления webhook MegaPBX в очередь", {
         workspaceId,
         eventType,
         error: error instanceof Error ? error.message : String(error),
       });
-      return c.json({ error: "Webhook processing failed" }, 500);
+      return c.json({ error: "Обработка webhook не удалась" }, 500);
     }
 
     await pbxService.recordWebhookEvent({

@@ -122,10 +122,17 @@ export default function Sidebar() {
   const { activeWorkspace } = useWorkspace();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const overlayRef = useRef<HTMLDivElement | null>(null);
-  const menuRef = useRef<HTMLElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const shouldRestoreFocusRef = useRef(false);
+  const hiddenSiblingsRef = useRef<
+    Array<{
+      el: HTMLElement;
+      prevAriaHidden: string | null;
+      prevInert: boolean;
+    }>
+  >([]);
   const isWorkspaceAdmin =
     activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
@@ -174,6 +181,22 @@ export default function Sidebar() {
   }, [closeMobileMenu, isMobileMenuOpen, pathname]);
 
   useEffect(() => {
+    return () => {
+      if (hiddenSiblingsRef.current.length > 0) {
+        for (const item of hiddenSiblingsRef.current) {
+          if (item.prevAriaHidden == null) {
+            item.el.removeAttribute("aria-hidden");
+          } else {
+            item.el.setAttribute("aria-hidden", item.prevAriaHidden);
+          }
+          (item.el as unknown as { inert?: boolean }).inert = item.prevInert;
+        }
+        hiddenSiblingsRef.current = [];
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (isMobileMenuOpen) {
       const focusables = getFocusableInMenu();
       const initial =
@@ -181,12 +204,49 @@ export default function Sidebar() {
         focusables[0] ??
         (menuRef.current as HTMLElement | null);
       initial?.focus?.();
+
+      const container = menuRef.current?.closest(".app-container");
+      if (container) {
+        const toHide = Array.from(container.children).filter((child) => {
+          if (!(child instanceof HTMLElement)) return false;
+          if (child.contains(menuRef.current)) return false;
+          if (overlayRef.current && child.contains(overlayRef.current))
+            return false;
+          if (menuTriggerRef.current && child.contains(menuTriggerRef.current))
+            return false;
+          return true;
+        }) as HTMLElement[];
+
+        hiddenSiblingsRef.current = toHide.map((el) => ({
+          el,
+          prevAriaHidden: el.getAttribute("aria-hidden"),
+          prevInert: (el as unknown as { inert?: boolean }).inert === true,
+        }));
+
+        for (const el of toHide) {
+          el.setAttribute("aria-hidden", "true");
+          // inert ещё не типизирован в TS DOM lib в некоторых окружениях
+          (el as unknown as { inert?: boolean }).inert = true;
+        }
+      }
       return;
     }
 
     if (shouldRestoreFocusRef.current) {
       restoreTriggerFocus();
       shouldRestoreFocusRef.current = false;
+    }
+
+    if (hiddenSiblingsRef.current.length > 0) {
+      for (const item of hiddenSiblingsRef.current) {
+        if (item.prevAriaHidden == null) {
+          item.el.removeAttribute("aria-hidden");
+        } else {
+          item.el.setAttribute("aria-hidden", item.prevAriaHidden);
+        }
+        (item.el as unknown as { inert?: boolean }).inert = item.prevInert;
+      }
+      hiddenSiblingsRef.current = [];
     }
   }, [getFocusableInMenu, isMobileMenuOpen, restoreTriggerFocus]);
 
@@ -292,10 +352,17 @@ export default function Sidebar() {
         onClick={closeMobileMenu}
       />
 
-      <aside
+      <div
         ref={menuRef}
         className={`sidebar ${isMobileMenuOpen ? "is-mobile-open" : ""}`}
         onKeyDown={onMenuKeyDown}
+        role={isMobileMenuOpen ? "dialog" : undefined}
+        {...(isMobileMenuOpen
+          ? ({
+              "aria-modal": "true",
+              "aria-label": "Меню навигации",
+            } as Record<string, string>)
+          : {})}
       >
         <div className="sidebar-brand">
           <Link
@@ -338,7 +405,7 @@ export default function Sidebar() {
             <span className="nav-item-label">Выход</span>
           </Link>
         </div>
-      </aside>
+      </div>
     </>
   );
 }

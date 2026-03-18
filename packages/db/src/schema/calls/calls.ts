@@ -25,7 +25,7 @@ export const calls = pgTable(
       .notNull(),
     filename: text("filename"),
     number: text("number"),
-    timestamp: timestamp("timestamp").notNull(),
+    timestamp: timestamp("timestamp", { withTimezone: true }).notNull(),
     name: text("name"),
     duration: integer("duration"),
     direction: text("direction"),
@@ -39,10 +39,12 @@ export const calls = pgTable(
     customerName: text("customer_name"),
 
     isArchived: boolean("is_archived").default(false).notNull(),
-    archivedAt: timestamp("archived_at"),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
 
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
@@ -65,7 +67,7 @@ export const calls = pgTable(
     ),
     index("calls_number_idx").on(table.number),
     index("calls_status_idx").on(table.status),
-    index("idx_calls_workspaceId_name_internalNumber").on(
+    index("idx_calls_workspace_id_name_internal_number").on(
       table.workspaceId,
       table.name,
       table.internalNumber,

@@ -12,7 +12,7 @@ export const unlinkPbxUser = workspaceAdminProcedure
       input.targetExternalId,
     );
     if (!success) {
-      throw new ORPCError("NOT_FOUND", { message: "PBX link not found" });
+      throw new ORPCError("NOT_FOUND", { message: "Связь с PBX не найдена" });
     }
     return { success };
   });

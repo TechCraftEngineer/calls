@@ -63,7 +63,7 @@ CREATE TABLE "calls" (
 	"workspace_id" text NOT NULL,
 	"filename" text,
 	"number" text,
-	"timestamp" timestamp NOT NULL,
+	"timestamp" timestamp with time zone NOT NULL,
 	"name" text,
 	"duration" integer,
 	"direction" text,
@@ -74,9 +74,9 @@ CREATE TABLE "calls" (
 	"source" text,
 	"customer_name" text,
 	"is_archived" boolean DEFAULT false NOT NULL,
-	"archived_at" timestamp,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"archived_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "calls_workspace_filename_unique" UNIQUE("workspace_id","filename")
 );
 --> statement-breakpoint
@@ -313,9 +313,9 @@ CREATE TABLE "workspace_pbx_employees" (
 	"display_name" text NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"raw_data" jsonb NOT NULL,
-	"synced_at" timestamp DEFAULT now() NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"synced_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "workspace_pbx_employees_workspace_provider_external_unique" UNIQUE("workspace_id","provider","external_id")
 );
 --> statement-breakpoint
@@ -331,8 +331,8 @@ CREATE TABLE "workspace_pbx_links" (
 	"confidence" integer DEFAULT 100 NOT NULL,
 	"linked_by_user_id" text,
 	"metadata" jsonb,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "workspace_pbx_links_workspace_provider_target_unique" UNIQUE("workspace_id","provider","target_type","target_external_id")
 );
 --> statement-breakpoint
@@ -348,9 +348,9 @@ CREATE TABLE "workspace_pbx_numbers" (
 	"line_type" text,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"raw_data" jsonb NOT NULL,
-	"synced_at" timestamp DEFAULT now() NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"synced_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "workspace_pbx_numbers_workspace_provider_external_unique" UNIQUE("workspace_id","provider","external_id")
 );
 --> statement-breakpoint
@@ -361,13 +361,13 @@ CREATE TABLE "workspace_pbx_sync_state" (
 	"sync_type" text NOT NULL,
 	"status" text DEFAULT 'idle' NOT NULL,
 	"cursor" text,
-	"last_started_at" timestamp,
-	"last_completed_at" timestamp,
-	"last_successful_at" timestamp,
+	"last_started_at" timestamp with time zone,
+	"last_completed_at" timestamp with time zone,
+	"last_successful_at" timestamp with time zone,
 	"last_error" text,
 	"stats" jsonb,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "workspace_pbx_sync_state_workspace_provider_type_unique" UNIQUE("workspace_id","provider","sync_type")
 );
 --> statement-breakpoint
@@ -379,9 +379,9 @@ CREATE TABLE "workspace_pbx_webhook_events" (
 	"event_type" text NOT NULL,
 	"status" text DEFAULT 'received' NOT NULL,
 	"payload" jsonb NOT NULL,
-	"processed_at" timestamp,
+	"processed_at" timestamp with time zone,
 	"error_message" text,
-	"created_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "workspace_pbx_webhook_events_workspace_provider_event_unique" UNIQUE("workspace_id","provider","event_id")
 );
 --> statement-breakpoint
@@ -473,7 +473,7 @@ CREATE INDEX "calls_workspace_timestamp_idx" ON "calls" USING btree ("workspace_
 CREATE INDEX "calls_workspace_archived_idx" ON "calls" USING btree ("workspace_id","is_archived");--> statement-breakpoint
 CREATE INDEX "calls_number_idx" ON "calls" USING btree ("number");--> statement-breakpoint
 CREATE INDEX "calls_status_idx" ON "calls" USING btree ("status");--> statement-breakpoint
-CREATE INDEX "idx_calls_workspaceId_name_internalNumber" ON "calls" USING btree ("workspace_id","name","internal_number");--> statement-breakpoint
+CREATE INDEX "idx_calls_workspace_id_name_internal_number" ON "calls" USING btree ("workspace_id","name","internal_number");--> statement-breakpoint
 CREATE INDEX "evaluation_templates_workspace_idx" ON "evaluation_templates" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX "feature_flags_key_idx" ON "feature_flags" USING btree ("key");--> statement-breakpoint
 CREATE INDEX "feature_flags_enabled_idx" ON "feature_flags" USING btree ("enabled");--> statement-breakpoint

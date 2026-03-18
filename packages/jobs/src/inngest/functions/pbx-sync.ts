@@ -1,10 +1,10 @@
 import { pbxService } from "@calls/db";
+import { inngest, pbxSyncRequested } from "@calls/jobs/client";
 import {
   runActivePbxSync,
   syncPbxCalls,
   syncPbxDirectory,
-} from "../../pbx/sync";
-import { inngest, pbxSyncRequested } from "../client";
+} from "@calls/jobs/pbx/sync";
 
 export const pbxSyncFn = inngest.createFunction(
   {
