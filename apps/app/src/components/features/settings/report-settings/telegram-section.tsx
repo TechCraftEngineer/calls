@@ -186,7 +186,7 @@ export function TelegramReportSection({
           primaryReportType={primaryReportType}
           primaryReportLabel={primaryReportLabel}
           sendTestLoading={sendTestLoading}
-          canSendTest={Boolean(form.telegramChatId?.trim())}
+          canSendTest={Boolean(canSendTest)}
           variant={canSendTest ? "success" : "default"}
           size="sm"
         />

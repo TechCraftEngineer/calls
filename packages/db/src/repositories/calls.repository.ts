@@ -2,7 +2,7 @@
  * Calls repository - handles all database operations for calls
  */
 
-import { and, asc, count, desc, eq, isNotNull, ne } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNotNull, ne, sql } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 import type {
@@ -246,14 +246,16 @@ export const callsRepository = {
     conditions.push(isNotNull(schema.calls.name));
     conditions.push(ne(schema.calls.name, ""));
 
+    const trimmedName = sql<string>`trim(${schema.calls.name})`;
+
     const query = db
-      .selectDistinct({ name: schema.calls.name })
+      .selectDistinct({ name: trimmedName })
       .from(schema.calls)
       .leftJoin(
         schema.callEvaluations,
         eq(schema.calls.id, schema.callEvaluations.callId),
       )
-      .orderBy(asc(schema.calls.name))
+      .orderBy(asc(trimmedName))
       .$dynamic();
 
     const result =

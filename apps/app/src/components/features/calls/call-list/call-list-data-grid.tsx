@@ -204,6 +204,11 @@ export function CallListDataGrid({
     [selectedCalls],
   );
 
+  useEffect(() => {
+    if (pagination.page < 1 || pagination.per_page < 1) return;
+    setRowSelection({});
+  }, [pagination.page, pagination.per_page]);
+
   const dayToneByDate = useMemo(() => {
     const todayKey = getLocalDateKey(new Date());
     const tones = new Map<string, 0 | 1 | 2>();
@@ -374,7 +379,7 @@ export function CallListDataGrid({
             <div className="text-muted-foreground text-sm">
               {selectedCallIds.length > 0
                 ? `Выбрано: ${selectedCallIds.length}`
-                : "Выберите звонки чекбоксами для удаления"}
+                : "Выберите звонки галочками для удаления"}
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -385,7 +390,7 @@ export function CallListDataGrid({
                 }
                 onClick={() => setShowBulkDeleteConfirm(true)}
               >
-                Удалить выбранные
+                Удалить выбранные…
               </Button>
               <DataGridColumnVisibility
                 table={table}

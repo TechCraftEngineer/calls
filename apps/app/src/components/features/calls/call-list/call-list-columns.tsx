@@ -47,13 +47,41 @@ export function getCallListColumns(
     status: "Результат звонка (отвечен, пропущен и т.д.)",
     score: "Оценка качества звонка",
     summary: "Краткое резюме разговора",
-    record: "Запись разговора и действия",
+    record: "Быстрые действия по звонку: запись, транскрипция, рекомендации",
   };
 
   return [
     {
+      accessorKey: "call.timestamp",
+      id: "date",
+      size: 156,
+      minSize: 156,
+      header: ({ column }) => (
+        <DataGridColumnHeader
+          column={column}
+          title="Дата и время"
+          visibility={true}
+        />
+      ),
+      cell: ({ row }) => renderDateCell(row.original.call),
+      meta: { headerTitle: "Дата и время" },
+    },
+    {
+      accessorKey: "call.number",
+      id: "number",
+      size: 220,
+      minSize: 180,
+      header: ({ column }) => (
+        <DataGridColumnHeader column={column} title="Номер" visibility={true} />
+      ),
+      cell: ({ row }) => renderNumberCell(row.original, renderLinkOrButton),
+      meta: { headerTitle: "Номер" },
+    },
+    {
       accessorKey: "call.direction",
       id: "type",
+      size: 128,
+      minSize: 116,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
@@ -65,17 +93,10 @@ export function getCallListColumns(
       meta: { headerTitle: "Направление" },
     },
     {
-      accessorKey: "call.number",
-      id: "number",
-      header: ({ column }) => (
-        <DataGridColumnHeader column={column} title="Номер" visibility={true} />
-      ),
-      cell: ({ row }) => renderNumberCell(row.original, renderLinkOrButton),
-      meta: { headerTitle: "Номер" },
-    },
-    {
       accessorKey: "call.managerName",
       id: "manager",
+      size: 168,
+      minSize: 140,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
@@ -89,6 +110,8 @@ export function getCallListColumns(
     {
       accessorKey: "call.duration",
       id: "status",
+      size: 132,
+      minSize: 120,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
@@ -101,21 +124,25 @@ export function getCallListColumns(
       meta: { headerTitle: "Результат" },
     },
     {
-      accessorKey: "call.timestamp",
-      id: "date",
+      accessorKey: "call.duration",
+      id: "duration",
+      size: 112,
+      minSize: 96,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
-          title="Дата и время"
+          title="Длительность"
           visibility={true}
         />
       ),
-      cell: ({ row }) => renderDateCell(row.original.call),
-      meta: { headerTitle: "Дата и время" },
+      cell: ({ row }) => renderDurationCell(row.original.call),
+      meta: { headerTitle: "Длительность" },
     },
     {
       accessorKey: "evaluation.valueScore",
       id: "score",
+      size: 120,
+      minSize: 108,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
@@ -131,6 +158,7 @@ export function getCallListColumns(
       accessorKey: "transcript.summary",
       id: "summary",
       size: 220,
+      minSize: 180,
       maxSize: 220,
       header: ({ column }) => (
         <DataGridColumnHeader
@@ -147,25 +175,14 @@ export function getCallListColumns(
       },
     },
     {
-      accessorKey: "analysisCostRub",
-      id: "analysisCost",
-      header: ({ column }) => (
-        <DataGridColumnHeader
-          column={column}
-          title="Стоимость анализа"
-          visibility={true}
-        />
-      ),
-      cell: ({ row }) => renderAnalysisCostCell(row.original.analysisCostRub),
-      meta: { headerTitle: "Стоимость анализа" },
-    },
-    {
       id: "record",
       accessorFn: (row) => row.call.filename ?? "",
+      size: 128,
+      minSize: 116,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
-          title="Запись"
+          title="Действия"
           tooltip={columnTooltips.record}
           visibility={true}
         />
@@ -180,21 +197,23 @@ export function getCallListColumns(
           recommendationsCallId={recommendationsCallId}
         />
       ),
-      meta: { headerTitle: "Запись" },
+      meta: { headerTitle: "Действия" },
       enableSorting: false,
     },
     {
-      accessorKey: "call.duration",
-      id: "duration",
+      accessorKey: "analysisCostRub",
+      id: "analysisCost",
+      size: 144,
+      minSize: 132,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
-          title="Длительность"
+          title="Стоимость анализа"
           visibility={true}
         />
       ),
-      cell: ({ row }) => renderDurationCell(row.original.call),
-      meta: { headerTitle: "Длительность" },
+      cell: ({ row }) => renderAnalysisCostCell(row.original.analysisCostRub),
+      meta: { headerTitle: "Стоимость анализа" },
     },
   ];
 }

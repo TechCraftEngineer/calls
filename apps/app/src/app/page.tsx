@@ -160,7 +160,7 @@ export default function HomePage() {
           typeof manager === "string" && manager.trim().length > 0,
       )
     : [];
-  const invalidateCalls = () =>
+  const invalidateCalls = (_deletedCallIds?: string[]) =>
     queryClient.invalidateQueries({
       queryKey: orpc.calls.list.queryKey({ input: callsListInput }),
     });
@@ -324,7 +324,9 @@ export default function HomePage() {
               onPaginationChange={handlePaginationChange}
               onPlay={(callId, number) => setActiveAudio({ callId, number })}
               onCallDeleted={() => invalidateCalls()}
-              onCallsDeleted={() => invalidateCalls()}
+              onCallsDeleted={(deletedCallIds) =>
+                invalidateCalls(deletedCallIds)
+              }
               onRecommendationsGenerated={(callId, recommendations) => {
                 queryClient.setQueryData(
                   orpc.calls.list.queryKey({ input: callsListInput }),
