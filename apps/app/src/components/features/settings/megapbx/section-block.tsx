@@ -18,7 +18,7 @@ export function SectionBlock({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="overflow-hidden border-border/60">
+    <Card className="overflow-hidden border-border/60 py-0">
       <CardHeader className="border-b border-border/60 bg-muted/30 px-6 py-4">
         <CardTitle className="text-base">{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
