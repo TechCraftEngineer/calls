@@ -45,7 +45,7 @@ export function SearchInput({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="h-9 min-w-[200px] !pl-10 pr-9 text-input bg-white border-[#eee] sm:min-w-[280px]"
+        className="h-9 min-w-[200px] pl-10 pr-9 sm:min-w-[280px]"
         aria-label="Поиск по звонкам"
       />
       {value && (

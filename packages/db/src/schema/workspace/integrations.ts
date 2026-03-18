@@ -58,6 +58,7 @@ export interface MegaPbxWebhookConfig {
 export interface MegaPbxIntegrationConfig {
   baseUrl: string;
   apiKey: string;
+  syncFromDate?: string;
   authScheme?: "bearer" | "x-api-key" | "query";
   apiKeyHeader?: string;
   employeesEndpoint?: MegaPbxEndpointConfig;

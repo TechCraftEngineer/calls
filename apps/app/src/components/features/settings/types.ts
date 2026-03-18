@@ -124,11 +124,11 @@ export interface IntegrationsSectionProps {
 
 export interface PbxSectionProps {
   prompts: Record<string, Prompt>;
+  onPromptValueChange: (key: string, value: string) => void;
   onPromptChange: (
     key: string,
     field: "value" | "description",
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onPromptValueChange: (key: string, value: string) => void;
   onToggleChange: (key: string, checked: boolean) => void;
   onSave: () => Promise<void>;
   onTest: () => Promise<void>;

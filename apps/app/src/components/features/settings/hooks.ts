@@ -144,70 +144,10 @@ export function useSettings() {
         updated_at: undefined,
         meta: { passwordSet: megaPbx.apiKeySet },
       };
-      promptsMap.megapbx_auth_scheme = {
-        key: "megapbx_auth_scheme",
-        value: megaPbx.authScheme ?? "bearer",
-        description: "Схема авторизации",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_api_key_header = {
-        key: "megapbx_api_key_header",
-        value: megaPbx.apiKeyHeader ?? "X-API-Key",
-        description: "Имя заголовка для API key",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_employees_path = {
-        key: "megapbx_employees_path",
-        value: megaPbx.employeesPath ?? "",
-        description: "Путь для списка сотрудников",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_employees_result_key = {
-        key: "megapbx_employees_result_key",
-        value: megaPbx.employeesResultKey ?? "",
-        description: "Ключ массива сотрудников",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_numbers_path = {
-        key: "megapbx_numbers_path",
-        value: megaPbx.numbersPath ?? "",
-        description: "Путь для списка номеров",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_numbers_result_key = {
-        key: "megapbx_numbers_result_key",
-        value: megaPbx.numbersResultKey ?? "",
-        description: "Ключ массива номеров",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_calls_path = {
-        key: "megapbx_calls_path",
-        value: megaPbx.callsPath ?? "",
-        description: "Путь для списка звонков",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_calls_result_key = {
-        key: "megapbx_calls_result_key",
-        value: megaPbx.callsResultKey ?? "",
-        description: "Ключ массива звонков",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_recordings_path = {
-        key: "megapbx_recordings_path",
-        value: megaPbx.recordingsPath ?? "",
-        description: "Путь для записей/метаданных записей",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_recordings_result_key = {
-        key: "megapbx_recordings_result_key",
-        value: megaPbx.recordingsResultKey ?? "",
-        description: "Ключ массива записей",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_webhook_path = {
-        key: "megapbx_webhook_path",
-        value: megaPbx.webhookPath ?? "",
-        description: "Путь регистрации вебхука",
+      promptsMap.megapbx_sync_from_date = {
+        key: "megapbx_sync_from_date",
+        value: megaPbx.syncFromDate ?? "",
+        description: "С какой даты начинать импорт звонков",
         updated_at: undefined,
       };
       promptsMap.megapbx_webhook_secret = {
@@ -580,26 +520,7 @@ export function useSettings() {
     enabled: state.prompts.megapbx_enabled?.value === "true",
     baseUrl: state.prompts.megapbx_base_url?.value ?? "",
     apiKey: state.prompts.megapbx_api_key?.value ?? "",
-    authScheme:
-      (state.prompts.megapbx_auth_scheme?.value as
-        | "bearer"
-        | "x-api-key"
-        | "query") ?? "bearer",
-    apiKeyHeader: state.prompts.megapbx_api_key_header?.value ?? "X-API-Key",
-    employeesPath: state.prompts.megapbx_employees_path?.value ?? "",
-    employeesMethod: "GET" as const,
-    employeesResultKey: state.prompts.megapbx_employees_result_key?.value ?? "",
-    numbersPath: state.prompts.megapbx_numbers_path?.value ?? "",
-    numbersMethod: "GET" as const,
-    numbersResultKey: state.prompts.megapbx_numbers_result_key?.value ?? "",
-    callsPath: state.prompts.megapbx_calls_path?.value ?? "",
-    callsMethod: "GET" as const,
-    callsResultKey: state.prompts.megapbx_calls_result_key?.value ?? "",
-    recordingsPath: state.prompts.megapbx_recordings_path?.value ?? "",
-    recordingsMethod: "GET" as const,
-    recordingsResultKey:
-      state.prompts.megapbx_recordings_result_key?.value ?? "",
-    webhookPath: state.prompts.megapbx_webhook_path?.value ?? "",
+    syncFromDate: state.prompts.megapbx_sync_from_date?.value?.trim() ?? "",
     webhookSecret: state.prompts.megapbx_webhook_secret?.value ?? "",
     ftpHost: state.prompts.megapbx_ftp_host?.value ?? "",
     ftpUser: state.prompts.megapbx_ftp_user?.value ?? "",
