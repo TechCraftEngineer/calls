@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent } from "@calls/ui";
-import { useCallback } from "react";
 import type { Prompt } from "../types";
 import {
   AccessSection,
@@ -55,22 +54,24 @@ export function OverviewTab({
   onSyncCalls,
   onSyncRecordings,
 }: OverviewTabProps) {
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-  }, []);
-
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
-      <AccessSection
-        prompts={prompts}
-        baseUrl={baseUrl}
-        saving={saving}
-        testing={testing}
-        onPromptChange={onPromptChange}
-        onPromptValueChange={onPromptValueChange}
-        onTest={onTest}
-        onSaveAccess={onSaveAccess}
-      />
+    <div className="space-y-6">
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          await onSaveAccess();
+        }}
+      >
+        <AccessSection
+          prompts={prompts}
+          baseUrl={baseUrl}
+          saving={saving}
+          testing={testing}
+          onPromptChange={onPromptChange}
+          onPromptValueChange={onPromptValueChange}
+          onTest={onTest}
+        />
+      </form>
 
       <SyncOptionsSection
         prompts={prompts}
@@ -79,14 +80,20 @@ export function OverviewTab({
         onSaveSyncOptions={onSaveSyncOptions}
       />
 
-      <WebhookSection
-        prompts={prompts}
-        webhookUrl={webhookUrl}
-        saving={saving}
-        onPromptChange={onPromptChange}
-        onPromptValueChange={onPromptValueChange}
-        onSaveWebhook={onSaveWebhook}
-      />
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          await onSaveWebhook();
+        }}
+      >
+        <WebhookSection
+          prompts={prompts}
+          webhookUrl={webhookUrl}
+          saving={saving}
+          onPromptChange={onPromptChange}
+          onPromptValueChange={onPromptValueChange}
+        />
+      </form>
 
       {testMessage && (
         <Card className="rounded-lg border-border/60">
@@ -100,6 +107,6 @@ export function OverviewTab({
         onSyncCalls={onSyncCalls}
         onSyncRecordings={onSyncRecordings}
       />
-    </form>
+    </div>
   );
 }

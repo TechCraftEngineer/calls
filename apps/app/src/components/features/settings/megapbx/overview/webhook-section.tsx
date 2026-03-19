@@ -29,7 +29,6 @@ interface WebhookSectionProps {
     field: "value" | "description",
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onPromptValueChange: (key: string, value: string) => void;
-  onSaveWebhook: () => Promise<void>;
 }
 
 export function WebhookSection({
@@ -38,7 +37,6 @@ export function WebhookSection({
   saving,
   onPromptChange,
   onPromptValueChange,
-  onSaveWebhook,
 }: WebhookSectionProps) {
   const { isCopied: copiedUrl, copyToClipboard: copyUrl } = useCopyToClipboard({
     timeout: 2000,
@@ -210,16 +208,13 @@ export function WebhookSection({
               .
             </p>
             <div className="pt-2">
-              <Button type="button" onClick={onSaveWebhook} disabled={saving}>
+              <Button type="submit" disabled={saving}>
                 {saving ? "Сохранение…" : "Сохранить"}
               </Button>
             </div>
           </div>
         </div>
-        <div
-          role="status"
-          className="flex gap-3 rounded-lg border border-border/60 border-l-4 border-l-primary/50 bg-muted/30 px-4 py-3"
-        >
+        <div className="flex gap-3 rounded-lg border border-border/60 border-l-4 border-l-primary/50 bg-muted/30 px-4 py-3">
           <Info className="text-primary mt-0.5 size-4 shrink-0" aria-hidden />
           <div className="flex flex-col gap-2 text-sm">
             <p className="font-medium text-foreground">

@@ -25,7 +25,7 @@ export const SYNC_OPTIONS = [
   [
     "megapbx_webhooks_enabled",
     "Вебхуки",
-    "Быстрый запуск синка по событию",
+    "Быстрый запуск синхронизации по событию",
     Webhook,
   ],
 ] as const satisfies readonly [string, string, string, LucideIcon][];

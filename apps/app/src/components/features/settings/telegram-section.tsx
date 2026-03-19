@@ -30,7 +30,10 @@ export default function TelegramSection({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          <span className="flex size-8 items-center justify-center rounded-md bg-primary/10">
+          <span
+            className="flex size-8 items-center justify-center rounded-md bg-primary/10"
+            aria-hidden="true"
+          >
             📊
           </span>
           Отчёты в Telegram

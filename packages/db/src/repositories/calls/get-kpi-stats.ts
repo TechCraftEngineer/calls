@@ -34,18 +34,19 @@ export async function getKpiStats(
     sql`${schema.calls.internalNumber} IS NOT NULL AND TRIM(${schema.calls.internalNumber}) != ''`,
   ];
   if (excludePhoneNumbers?.length) {
-    conditions.push(
-      and(
-        or(
-          isNull(schema.calls.internalNumber),
-          notInArray(schema.calls.internalNumber, excludePhoneNumbers),
-        ),
-        or(
-          isNull(schema.calls.number),
-          notInArray(schema.calls.number, excludePhoneNumbers),
-        ),
-      )!,
+    const excludeCondition = and(
+      or(
+        isNull(schema.calls.internalNumber),
+        notInArray(schema.calls.internalNumber, excludePhoneNumbers),
+      ),
+      or(
+        isNull(schema.calls.number),
+        notInArray(schema.calls.number, excludePhoneNumbers),
+      ),
     );
+    if (excludeCondition) {
+      conditions.push(excludeCondition);
+    }
   }
 
   const results = await db

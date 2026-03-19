@@ -18,7 +18,30 @@ export const pbxSettingsSchema = z.object({
 
 export const pbxAccessSchema = z.object({
   enabled: z.boolean(),
-  baseUrl: z.string().trim(),
+  baseUrl: z
+    .string()
+    .trim()
+    .refine(
+      (value) => {
+        const trimmed = value.trim();
+        if (!trimmed) return true; // проверка "пусто при enabled" — на уровне хендлера
+        const urlCandidate =
+          trimmed.startsWith("http://") || trimmed.startsWith("https://")
+            ? trimmed
+            : `https://${trimmed}`;
+        try {
+          // URL должен быть парсируемым (разрешаем "домен без схемы")
+          // eslint-disable-next-line no-new
+          new URL(urlCandidate);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        message: "Некорректный baseUrl. Укажите корректный URL или домен.",
+      },
+    ),
   apiKey: z.string().trim().optional(),
   syncFromDate: z.string().trim().optional(),
 });

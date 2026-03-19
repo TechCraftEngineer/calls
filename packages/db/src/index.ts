@@ -129,6 +129,7 @@ export {
   callsService,
   filesService,
   invitationsService,
+  MegaPbxConfigNotFoundError,
   megaPbxService,
   pbxService,
   settingsService,

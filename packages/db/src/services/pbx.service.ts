@@ -13,6 +13,13 @@ const MEGAPBX_ENDPOINTS = {
   calls: "/crm/calls",
 } as const;
 
+export class MegaPbxConfigNotFoundError extends Error {
+  constructor(workspaceId: string) {
+    super(`Config for workspace ${workspaceId} not found`);
+    this.name = "MegaPbxConfigNotFoundError";
+  }
+}
+
 function buildMegaPbxEndpoints() {
   return {
     employeesEndpoint: {
@@ -248,7 +255,7 @@ export class PbxService {
   ): Promise<boolean> {
     const existing = await this.getConfigWithSecrets(workspaceId);
     if (!existing) {
-      return false;
+      throw new MegaPbxConfigNotFoundError(workspaceId);
     }
     const full: UpdateMegaPbxSettingsInput = {
       enabled: existing.enabled,

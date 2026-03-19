@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@calls/ui";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 interface Manager {
   id: string;
@@ -36,6 +36,10 @@ export default function CustomDropdown({
 }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const instanceId = useId();
+  const menuId = `${instanceId}-menu`;
 
   const managers: Manager[] =
     type === "manager"
@@ -45,13 +49,18 @@ export default function CustomDropdown({
         }))
       : [];
 
+  const closeMenu = useCallback(() => {
+    setIsOpen(false);
+    requestAnimationFrame(() => toggleRef.current?.focus());
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
       ) {
-        setIsOpen(false);
+        closeMenu();
       }
     };
 
@@ -62,9 +71,65 @@ export default function CustomDropdown({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isOpen]);
+  }, [isOpen, closeMenu]);
 
-  const toggle = () => setIsOpen(!isOpen);
+  const toggle = () => setIsOpen((v) => !v);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const getFocusable = () => {
+      const root = panelRef.current;
+      if (!root) return [] as HTMLElement[];
+
+      const selector =
+        'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+      return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter(
+        (el) =>
+          !el.hasAttribute("disabled") &&
+          el.getAttribute("aria-hidden") !== "true",
+      );
+    };
+
+    // Автофокус первого элемента в меню.
+    const focusables = getFocusable();
+    focusables[0]?.focus();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeMenu();
+        return;
+      }
+
+      if (e.key !== "Tab") return;
+
+      const items = getFocusable();
+      if (items.length === 0) return;
+
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (e.shiftKey) {
+        if (!active || active === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, [isOpen, closeMenu]);
 
   if (type === "manager") {
     const managerValue = typeof value === "string" ? value : "";
@@ -76,22 +141,29 @@ export default function CustomDropdown({
     return (
       <div className="custom-dropdown" ref={dropdownRef}>
         <Button
+          asChild
           type="button"
           variant="outline"
           className="dropdown-toggle w-full justify-between border-foreground/30 text-foreground hover:bg-muted"
           onClick={toggle}
+          aria-expanded={isOpen}
+          aria-controls={menuId}
+          aria-haspopup="menu"
         >
-          <span className="dropdown-label">{displayLabel}</span>
+          <button ref={toggleRef} type="button">
+            <span className="dropdown-label">{displayLabel}</span>
+          </button>
         </Button>
         {isOpen && (
-          <div className="dropdown-menu">
+          <div id={menuId} ref={panelRef} role="menu" className="dropdown-menu">
             <Button
               type="button"
               variant="ghost"
               className="dropdown-option w-full justify-start"
+              role="menuitem"
               onClick={() => {
                 onChange("");
-                setIsOpen(false);
+                closeMenu();
               }}
             >
               Все сотрудники
@@ -102,9 +174,10 @@ export default function CustomDropdown({
                 type="button"
                 variant="ghost"
                 className={`dropdown-option w-full justify-start ${managerValue === m.id.toString() ? "is-active" : ""}`}
+                role="menuitem"
                 onClick={() => {
                   onChange(m.id.toString());
-                  setIsOpen(false);
+                  closeMenu();
                 }}
               >
                 {m.name}
@@ -143,15 +216,21 @@ export default function CustomDropdown({
     return (
       <div className="custom-dropdown" ref={dropdownRef}>
         <Button
+          asChild
           type="button"
           variant="outline"
           className="dropdown-toggle w-full justify-between border-foreground/30 text-foreground hover:bg-muted"
           onClick={toggle}
+          aria-expanded={isOpen}
+          aria-controls={menuId}
+          aria-haspopup="menu"
         >
-          <span className="dropdown-label">{getDisplayLabel()}</span>
+          <button ref={toggleRef} type="button">
+            <span className="dropdown-label">{getDisplayLabel()}</span>
+          </button>
         </Button>
         {isOpen && (
-          <div className="dropdown-menu">
+          <div id={menuId} ref={panelRef} role="menu" className="dropdown-menu">
             {valueOptions.map((val) => (
               <label
                 key={val}
@@ -205,15 +284,21 @@ export default function CustomDropdown({
     return (
       <div className="custom-dropdown" ref={dropdownRef}>
         <Button
+          asChild
           type="button"
           variant="outline"
           className="dropdown-toggle w-full justify-between border-foreground/30 text-foreground hover:bg-muted"
           onClick={toggle}
+          aria-expanded={isOpen}
+          aria-controls={menuId}
+          aria-haspopup="menu"
         >
-          <span className="dropdown-label">{getDisplayLabel()}</span>
+          <button ref={toggleRef} type="button">
+            <span className="dropdown-label">{getDisplayLabel()}</span>
+          </button>
         </Button>
         {isOpen && (
-          <div className="dropdown-menu">
+          <div id={menuId} ref={panelRef} role="menu" className="dropdown-menu">
             {operatorOptions.map((op) => (
               <label
                 key={op.value}
