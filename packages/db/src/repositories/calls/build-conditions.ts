@@ -76,16 +76,21 @@ export function buildCallConditions(params: CallConditionsParams) {
         directions.flatMap((direction) => {
           const d = direction.trim().toLowerCase();
           if (d === "входящий" || d === "incoming" || d === "inbound") {
-            return ["Входящий", "incoming", "inbound"];
+            return ["входящий", "incoming", "inbound"];
           }
           if (d === "исходящий" || d === "outgoing" || d === "outbound") {
-            return ["Исходящий", "outgoing", "outbound"];
+            return ["исходящий", "outgoing", "outbound"];
           }
-          return [direction];
+          return [d];
         }),
       ),
     ];
-    conditions.push(inArray(schema.calls.direction, expandedDirections));
+    conditions.push(
+      inArray(
+        sql<string>`LOWER(COALESCE(${schema.calls.direction}, ''))`,
+        expandedDirections,
+      ),
+    );
   }
   if (statuses?.length) {
     conditions.push(inArray(schema.calls.status, statuses));

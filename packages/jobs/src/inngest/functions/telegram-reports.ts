@@ -20,6 +20,39 @@ import {
 import { inngest } from "../client";
 
 const TZ = "Europe/Moscow";
+const SEND_RETRY_DELAYS_MS = [500, 1000, 2000] as const;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function sendChunkWithRetry(
+  token: string,
+  chatId: string,
+  text: string,
+): Promise<boolean> {
+  for (let attempt = 0; attempt < SEND_RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      const ok = await sendMessage(token, chatId, text, {
+        parseMode: "HTML",
+      });
+      if (ok) {
+        return true;
+      }
+    } catch {
+      // Игнорируем ошибку попытки и повторяем с backoff.
+    }
+
+    const delay = SEND_RETRY_DELAYS_MS[attempt];
+    if (delay != null) {
+      await sleep(delay);
+    }
+  }
+
+  return false;
+}
 
 function formatDateInMoscow(date: Date): string {
   // Используем локальные методы для получения дат в московской таймзоне
@@ -91,6 +124,7 @@ export const telegramReportsFn = inngest.createFunction(
     const lastDay = getLastDayOfMonth(now);
 
     let sentCount = 0;
+    let hasHardFailure = false;
     const errors: string[] = [];
 
     for (const workspaceId of workspaceIds) {
@@ -102,7 +136,7 @@ export const telegramReportsFn = inngest.createFunction(
             workspaceId,
           );
           if (!token?.trim()) {
-            return { sent: 0, errors: [] as string[] };
+            return { sent: 0, errors: [] as string[], failed: false };
           }
 
           const schedule = await getReportScheduleSettings(
@@ -151,10 +185,11 @@ export const telegramReportsFn = inngest.createFunction(
           }
 
           if (reportTypesToRun.length === 0) {
-            return { sent: 0, errors: [] as string[] };
+            return { sent: 0, errors: [] as string[], failed: false };
           }
 
           let sent = 0;
+          let failed = false;
           const errs: string[] = [];
 
           for (const reportType of reportTypesToRun) {
@@ -233,10 +268,14 @@ export const telegramReportsFn = inngest.createFunction(
 
               const chunks = splitTelegramHtmlMessage(text, 4000);
               let allChunksSent = true;
-              for (const chunk of chunks) {
-                const ok = await sendMessage(token, r.chatId, chunk, {
-                  parseMode: "HTML",
-                });
+              const totalChunks = chunks.length;
+              for (const [index, chunk] of chunks.entries()) {
+                const chunkPrefix =
+                  totalChunks > 1
+                    ? `<i>Часть ${index + 1} из ${totalChunks}</i>\n`
+                    : "";
+                const chunkText = `${chunkPrefix}${chunk}`;
+                const ok = await sendChunkWithRetry(token, r.chatId, chunkText);
                 if (!ok) {
                   allChunksSent = false;
                   break;
@@ -245,17 +284,29 @@ export const telegramReportsFn = inngest.createFunction(
               if (allChunksSent) {
                 sent++;
               } else {
-                errs.push(`Не удалось отправить в chat ${r.chatId}`);
+                failed = true;
+                errs.push(
+                  `Не удалось отправить отчёт в chat ${r.chatId}: отправка прервана на одной из частей`,
+                );
               }
             }
           }
 
-          return { sent, errors: errs };
+          return { sent, errors: errs, failed };
         },
       );
 
       sentCount += result.sent;
       errors.push(...result.errors);
+      if (result.failed) {
+        hasHardFailure = true;
+      }
+    }
+
+    if (hasHardFailure) {
+      throw new Error(
+        `Telegram report failed: ${errors.join("; ") || "partial send failure"}`,
+      );
     }
 
     return {
