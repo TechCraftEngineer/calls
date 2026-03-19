@@ -11,12 +11,14 @@ export const registerOrpcRoutes = (app: Hono) => {
   const rpcHandler = new RPCHandler(backendRouter, {
     interceptors: [
       onError((error) => {
+        const requestId = randomUUID();
         const err = error as Error & {
           cause?: unknown;
           code?: string;
           path?: string;
         };
         backendLogger.error("oRPC Error", {
+          requestId,
           message: err.message,
           code: err.code,
           path: err.path,
@@ -47,7 +49,9 @@ export const registerOrpcRoutes = (app: Hono) => {
 
       return result.response;
     } catch (error) {
+      const requestId = randomUUID();
       backendLogger.error("oRPC Handler error", {
+        requestId,
         path: c.req.path,
         method: c.req.method,
         error: error instanceof Error ? error.message : String(error),
@@ -56,8 +60,8 @@ export const registerOrpcRoutes = (app: Hono) => {
 
       const isDev = process.env.NODE_ENV !== "production";
       const errorResponse: Record<string, unknown> = {
-        error: "Internal Server Error",
-        requestId: randomUUID(),
+        error: "Внутренняя ошибка сервера",
+        requestId,
       };
 
       if (isDev && error instanceof Error) {

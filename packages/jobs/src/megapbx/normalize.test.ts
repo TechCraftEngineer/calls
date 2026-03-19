@@ -67,7 +67,7 @@ describe("MegaPBX normalize helpers", () => {
     );
   });
 
-  it("reads recording url from crm history record field", () => {
+  it("читает URL записи из поля истории CRM", () => {
     const result = normalizeCall({
       uid: "NE5O2I5PEC000047",
       start: "2026-03-19T05:40:39Z",

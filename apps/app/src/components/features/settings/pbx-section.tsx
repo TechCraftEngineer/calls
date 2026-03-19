@@ -1,3 +1,3 @@
 "use client";
 
-export { default } from "./megapbx-section";
+export { default } from "./pbx/megapbx-section";

@@ -8,8 +8,8 @@ export const testPbx = workspaceAdminProcedure
   .input(testPbxInputSchema)
   .handler(async ({ input, context }) => {
     const saved = await pbxService.getConfigWithSecrets(context.workspaceId);
-    const baseUrl = (input.baseUrl?.trim() || saved?.baseUrl || "").trim();
-    const apiKey = (input.apiKey?.trim() || saved?.apiKey || "").trim();
+    const baseUrl = (input.baseUrl || saved?.baseUrl || "").trim();
+    const apiKey = (input.apiKey || saved?.apiKey || "").trim();
 
     if (!baseUrl || !apiKey) {
       throw new ORPCError("BAD_REQUEST", {

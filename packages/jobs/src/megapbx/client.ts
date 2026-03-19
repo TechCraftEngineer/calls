@@ -330,6 +330,8 @@ export class MegaPbxClient {
 
   async fetchEmployees(): Promise<Record<string, unknown>[]> {
     const payload = await this.request(MEGAPBX_ENDPOINTS.employees);
+    rejectMegaPbxErrorJsonBody(payload);
+    assertListLikeMegaPbxPayload(payload);
     const validated = validateResponse(
       EmployeeResponseSchema,
       payload,
@@ -340,6 +342,8 @@ export class MegaPbxClient {
 
   async fetchNumbers(): Promise<Record<string, unknown>[]> {
     const payload = await this.request(MEGAPBX_ENDPOINTS.numbers);
+    rejectMegaPbxErrorJsonBody(payload);
+    assertListLikeMegaPbxPayload(payload);
     const validated = validateResponse(NumberResponseSchema, payload, "номера");
     return pickArray(validated);
   }
@@ -349,6 +353,8 @@ export class MegaPbxClient {
     const start = startRaw ? this.toMegaPbxDateTime(startRaw) : null;
     const body = start ? { start } : undefined;
     const payload = await this.request(MEGAPBX_ENDPOINTS.calls, body);
+    rejectMegaPbxErrorJsonBody(payload);
+    assertListLikeMegaPbxPayload(payload);
     const validated = validateResponse(CallResponseSchema, payload, "звонки");
     return pickArray(validated);
   }
@@ -369,11 +375,25 @@ export class MegaPbxClient {
       throw new Error(`Некорректный URL записи MegaPBX: ${recordingUrl}`);
     }
 
+    const rawBaseUrl = this.config.baseUrl.trim();
+    const normalizedBaseUrl =
+      rawBaseUrl.startsWith("http://") || rawBaseUrl.startsWith("https://")
+        ? rawBaseUrl
+        : `https://${rawBaseUrl}`;
+    const baseParsed = new URL(normalizedBaseUrl);
+    const sameHost = parsed.hostname === baseParsed.hostname;
+    const samePort = (parsed.port || "") === (baseParsed.port || "");
+    const isTrustedRecordingUrl =
+      parsed.protocol === "https:" && sameHost && samePort;
+    if (!isTrustedRecordingUrl) {
+      throw new Error(`Запрещён внешний URL записи MegaPBX: ${parsed.origin}.`);
+    }
+
     const timeoutMs = this.getRecordingDownloadTimeoutMs();
     const response = await fetch(parsed, {
       headers: {
         Accept: "audio/*,application/octet-stream",
-        "X-API-KEY": this.config.apiKey,
+        ...(isTrustedRecordingUrl ? { "X-API-KEY": this.config.apiKey } : {}),
       },
       signal: AbortSignal.timeout(timeoutMs),
     });

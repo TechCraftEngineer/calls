@@ -5,8 +5,8 @@ import { Badge, Button } from "@calls/ui";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useSettings } from "@/components/features/settings/hooks";
+import PbxSection from "@/components/features/settings/pbx/megapbx-section";
 import { PbxProviderLogo } from "@/components/features/settings/pbx-provider-logo";
-import PbxSection from "@/components/features/settings/pbx-section";
 import SettingsPageShell from "@/components/features/settings/settings-page-shell";
 
 export default function SettingsPbxMegafonPage() {
@@ -23,7 +23,7 @@ export default function SettingsPbxMegafonPage() {
     handleSyncPbxRecordings,
     handleLinkPbxTarget,
     handleUnlinkPbxTarget,
-    setTogglePrompt,
+    setMegaPbxEnabled,
   } = useSettings();
 
   useEffect(() => {
@@ -40,9 +40,9 @@ export default function SettingsPbxMegafonPage() {
     );
   }
 
-  const isEnabled = state.prompts.megapbx_enabled?.value === "true";
-  const baseUrl = state.prompts.megapbx_base_url?.value?.trim() ?? "";
-  const apiKeySet = Boolean(state.prompts.megapbx_api_key?.meta?.passwordSet);
+  const isEnabled = state.megaPbx.enabled;
+  const baseUrl = state.megaPbx.baseUrl.trim();
+  const apiKeySet = state.megaPbx.apiKeySet;
 
   return (
     <SettingsPageShell>
@@ -94,8 +94,8 @@ export default function SettingsPbxMegafonPage() {
       </header>
 
       <PbxSection
-        prompts={state.prompts}
-        onToggleChange={setTogglePrompt}
+        megaPbx={state.megaPbx}
+        onEnabledChange={setMegaPbxEnabled}
         onSaveAccess={handleSavePbxAccess}
         onSaveSyncOptions={handleSavePbxSyncOptions}
         onSaveExcludedNumbers={handleSavePbxExcludedNumbers}

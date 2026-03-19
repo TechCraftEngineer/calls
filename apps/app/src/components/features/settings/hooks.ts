@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
-import { INTEGRATION_KEYS } from "./constants";
 import type {
   AccessFormData,
   SyncOptionsFormData,
@@ -18,7 +17,6 @@ import {
   getReportTypeLabel,
   type PbxEmployeeItem,
   type PbxNumberItem,
-  type Prompt,
   type ReportType,
   type SettingsState,
 } from "./types";
@@ -34,7 +32,38 @@ export function useSettings() {
   const queryClient = useQueryClient();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [state, setState] = useState<SettingsState>({
-    prompts: {},
+    ftp: {
+      enabled: false,
+      host: "",
+      user: "",
+      password: "",
+      passwordSet: false,
+      syncFromDate: "",
+      excludePhoneNumbers: "",
+    },
+    integrations: {
+      telegramBotToken: "",
+      maxBotToken: "",
+    },
+    megaPbx: {
+      enabled: false,
+      baseUrl: "",
+      apiKey: "",
+      apiKeySet: false,
+      syncFromDate: "",
+      excludePhoneNumbers: "",
+      webhookSecret: "",
+      webhookSecretSet: false,
+      ftpHost: "",
+      ftpUser: "",
+      ftpPassword: "",
+      ftpPasswordSet: false,
+      syncEmployees: false,
+      syncNumbers: false,
+      syncCalls: false,
+      syncRecordings: false,
+      webhooksEnabled: false,
+    },
     loading: true,
     saving: false,
     backupLoading: false,
@@ -79,169 +108,49 @@ export function useSettings() {
           queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
           queryClient.fetchQuery(orpc.settings.listPbxNumbers.queryOptions()),
         ]);
-      const promptsMap: Record<string, Prompt> = {};
-
-      // Добавляем интеграции (FTP, Telegram, MAX Bot)
       const ftp = integrations.ftp;
-      promptsMap.ftp_enabled = {
-        key: "ftp_enabled",
-        value: ftp.enabled ? "true" : "false",
-        description: "FTP включён",
-        updated_at: undefined,
-      };
-      promptsMap.ftp_host = {
-        key: "ftp_host",
-        value: ftp.host ?? "",
-        description: "Хост FTP",
-        updated_at: undefined,
-      };
-      promptsMap.ftp_user = {
-        key: "ftp_user",
-        value: ftp.user ?? "",
-        description: "Пользователь FTP",
-        updated_at: undefined,
-      };
-      promptsMap.ftp_password = {
-        key: "ftp_password",
-        value: "",
-        description: "Пароль FTP",
-        updated_at: undefined,
-        meta: { passwordSet: ftp.passwordSet },
-      };
-      promptsMap.ftp_sync_from_date = {
-        key: "ftp_sync_from_date",
-        value: ftp.syncFromDate ?? "",
-        description: "С какой даты выгружать",
-        updated_at: undefined,
-      };
-      promptsMap.ftp_exclude_phone_numbers = {
-        key: "ftp_exclude_phone_numbers",
-        value: Array.isArray(ftp.excludePhoneNumbers)
-          ? ftp.excludePhoneNumbers.join("\n")
-          : "",
-        description: "Номера, исключённые из загрузки и анализа",
-        updated_at: undefined,
-      };
-      promptsMap.telegram_bot_token = {
-        key: "telegram_bot_token",
-        value: integrations.telegram_bot_token ?? "",
-        description: "Токен Telegram-бота",
-        updated_at: undefined,
-      };
-      promptsMap.max_bot_token = {
-        key: "max_bot_token",
-        value: integrations.max_bot_token ?? "",
-        description: "Токен MAX-бота",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_enabled = {
-        key: "megapbx_enabled",
-        value: megaPbx.enabled ? "true" : "false",
-        description: "MegaPBX включён",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_base_url = {
-        key: "megapbx_base_url",
-        value: megaPbx.baseUrl ?? "",
-        description: "Base URL MegaPBX",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_api_key = {
-        key: "megapbx_api_key",
-        value: "",
-        description: "API key MegaPBX",
-        updated_at: undefined,
-        meta: { passwordSet: megaPbx.apiKeySet },
-      };
-      promptsMap.megapbx_sync_from_date = {
-        key: "megapbx_sync_from_date",
-        value: megaPbx.syncFromDate ?? "",
-        description: "С какой даты начинать импорт звонков",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_exclude_phone_numbers = {
-        key: "megapbx_exclude_phone_numbers",
-        value: Array.isArray(megaPbx.excludePhoneNumbers)
-          ? megaPbx.excludePhoneNumbers.join("\n")
-          : "",
-        description: "Номера, исключённые из импорта звонков и записей",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_webhook_secret = {
-        key: "megapbx_webhook_secret",
-        value: "",
-        description: "Секрет вебхука",
-        updated_at: undefined,
-        meta: { passwordSet: megaPbx.webhookSecretSet },
-      };
-      promptsMap.megapbx_ftp_host = {
-        key: "megapbx_ftp_host",
-        value: megaPbx.ftpHost ?? "",
-        description: "FTP host для записей",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_ftp_user = {
-        key: "megapbx_ftp_user",
-        value: megaPbx.ftpUser ?? "",
-        description: "FTP user для записей",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_ftp_password = {
-        key: "megapbx_ftp_password",
-        value: "",
-        description: "FTP password для записей",
-        updated_at: undefined,
-        meta: { passwordSet: megaPbx.ftpPasswordSet },
-      };
-      promptsMap.megapbx_sync_employees = {
-        key: "megapbx_sync_employees",
-        value: megaPbx.syncEmployees ? "true" : "false",
-        description: "Синхронизировать сотрудников",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_sync_numbers = {
-        key: "megapbx_sync_numbers",
-        value: megaPbx.syncNumbers ? "true" : "false",
-        description: "Синхронизировать номера",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_sync_calls = {
-        key: "megapbx_sync_calls",
-        value: megaPbx.syncCalls ? "true" : "false",
-        description: "Синхронизировать звонки",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_sync_recordings = {
-        key: "megapbx_sync_recordings",
-        value: megaPbx.syncRecordings ? "true" : "false",
-        description: "Скачивать записи",
-        updated_at: undefined,
-      };
-      promptsMap.megapbx_webhooks_enabled = {
-        key: "megapbx_webhooks_enabled",
-        value: megaPbx.webhooksEnabled ? "true" : "false",
-        description: "Включить вебхуки",
-        updated_at: undefined,
-      };
-
-      Object.keys(INTEGRATION_KEYS).forEach((key) => {
-        if (!promptsMap[key]) {
-          promptsMap[key] = {
-            key,
-            value: "",
-            description: "",
-            updated_at: undefined,
-          };
-        }
-      });
-
       const ftpConfigured =
         Boolean(ftp.host?.trim()) &&
         Boolean(ftp.user?.trim()) &&
         ftp.passwordSet;
       setState((prev) => ({
         ...prev,
-        prompts: promptsMap,
+        ftp: {
+          enabled: ftp.enabled,
+          host: ftp.host ?? "",
+          user: ftp.user ?? "",
+          password: "",
+          passwordSet: ftp.passwordSet,
+          syncFromDate: ftp.syncFromDate ?? "",
+          excludePhoneNumbers: Array.isArray(ftp.excludePhoneNumbers)
+            ? ftp.excludePhoneNumbers.join("\n")
+            : "",
+        },
+        integrations: {
+          telegramBotToken: integrations.telegram_bot_token ?? "",
+          maxBotToken: integrations.max_bot_token ?? "",
+        },
+        megaPbx: {
+          enabled: megaPbx.enabled,
+          baseUrl: megaPbx.baseUrl ?? "",
+          apiKey: "",
+          apiKeySet: megaPbx.apiKeySet,
+          syncFromDate: megaPbx.syncFromDate ?? "",
+          excludePhoneNumbers: Array.isArray(megaPbx.excludePhoneNumbers)
+            ? megaPbx.excludePhoneNumbers.join("\n")
+            : "",
+          webhookSecret: "",
+          webhookSecretSet: megaPbx.webhookSecretSet,
+          ftpHost: megaPbx.ftpHost ?? "",
+          ftpUser: megaPbx.ftpUser ?? "",
+          ftpPassword: "",
+          ftpPasswordSet: megaPbx.ftpPasswordSet,
+          syncEmployees: megaPbx.syncEmployees,
+          syncNumbers: megaPbx.syncNumbers,
+          syncCalls: megaPbx.syncCalls,
+          syncRecordings: megaPbx.syncRecordings,
+          webhooksEnabled: megaPbx.webhooksEnabled,
+        },
         ftpStatusLoading: ftpConfigured,
         ftpConnectionStatus: null,
         megaPbxEmployees: megaPbxEmployees as PbxEmployeeItem[],
@@ -402,7 +311,7 @@ export function useSettings() {
   );
 
   const handleSaveTelegram = async () => {
-    const telegramToken = state.prompts.telegram_bot_token?.value?.trim();
+    const telegramToken = state.integrations.telegramBotToken.trim();
     if (telegramToken) {
       const validation = validateTelegramBotToken(telegramToken);
       if (!validation.isValid && validation.error) {
@@ -414,7 +323,7 @@ export function useSettings() {
     try {
       setState((prev) => ({ ...prev, telegramSaving: true }));
       await updateIntegrationsMutation.mutateAsync({
-        telegram_bot_token: state.prompts.telegram_bot_token?.value ?? null,
+        telegram_bot_token: state.integrations.telegramBotToken || null,
       });
       toast.success("Telegram Bot сохранён");
     } catch (error: unknown) {
@@ -433,7 +342,7 @@ export function useSettings() {
     try {
       setState((prev) => ({ ...prev, maxBotSaving: true }));
       await updateIntegrationsMutation.mutateAsync({
-        max_bot_token: state.prompts.max_bot_token?.value ?? null,
+        max_bot_token: state.integrations.maxBotToken || null,
       });
       toast.success("MAX Bot сохранён");
     } catch (error: unknown) {
@@ -451,10 +360,7 @@ export function useSettings() {
   const handleSaveFtp = async () => {
     try {
       setState((prev) => ({ ...prev, ftpSaving: true }));
-      const enabled = state.prompts.ftp_enabled?.value === "true";
-      const host = state.prompts.ftp_host?.value ?? "";
-      const user = state.prompts.ftp_user?.value ?? "";
-      const password = state.prompts.ftp_password?.value ?? "";
+      const { enabled, host, user, password, passwordSet } = state.ftp;
 
       if (host || user || password) {
         if (password.trim()) {
@@ -463,7 +369,7 @@ export function useSettings() {
             toast.error(ftpValidation.errors.join(". "));
             return;
           }
-        } else if (state.prompts.ftp_password?.meta?.passwordSet) {
+        } else if (passwordSet) {
           const hostValidation = validateFtpHost(host);
           const userValidation = validateFtpUser(user);
           const errors = [hostValidation.error, userValidation.error].filter(
@@ -482,9 +388,8 @@ export function useSettings() {
         }
       }
 
-      const syncFromDate = state.prompts.ftp_sync_from_date?.value?.trim();
-      const excludeRaw =
-        state.prompts.ftp_exclude_phone_numbers?.value?.trim() ?? "";
+      const syncFromDate = state.ftp.syncFromDate.trim();
+      const excludeRaw = state.ftp.excludePhoneNumbers.trim();
       const excludePhoneNumbers = excludeRaw
         ? excludeRaw
             .split(/[\n,;]+/)
@@ -522,10 +427,7 @@ export function useSettings() {
         ftpTestMessage: "",
         ftpTesting: true,
       }));
-      const host = state.prompts.ftp_host?.value ?? "";
-      const user = state.prompts.ftp_user?.value ?? "";
-      const password = state.prompts.ftp_password?.value ?? "";
-      const passwordSet = state.prompts.ftp_password?.meta?.passwordSet;
+      const { host, user, password, passwordSet } = state.ftp;
 
       if (passwordSet && !password.trim()) {
         setState((prev) => ({
@@ -586,31 +488,34 @@ export function useSettings() {
   };
 
   const megaPbxPayload = () => ({
-    excludePhoneNumbers: (
-      state.prompts.megapbx_exclude_phone_numbers?.value ?? ""
-    )
+    excludePhoneNumbers: (state.megaPbx.excludePhoneNumbers ?? "")
       .split(/[\n,;]+/)
       .map((value) => value.replace(/\D/g, ""))
       .filter(Boolean),
-    enabled: state.prompts.megapbx_enabled?.value === "true",
-    baseUrl: state.prompts.megapbx_base_url?.value ?? "",
-    apiKey: state.prompts.megapbx_api_key?.value ?? "",
-    syncFromDate: state.prompts.megapbx_sync_from_date?.value?.trim() ?? "",
-    webhookSecret: state.prompts.megapbx_webhook_secret?.value ?? "",
-    ftpHost: state.prompts.megapbx_ftp_host?.value ?? "",
-    ftpUser: state.prompts.megapbx_ftp_user?.value ?? "",
-    ftpPassword: state.prompts.megapbx_ftp_password?.value ?? "",
-    syncEmployees: state.prompts.megapbx_sync_employees?.value === "true",
-    syncNumbers: state.prompts.megapbx_sync_numbers?.value === "true",
-    syncCalls: state.prompts.megapbx_sync_calls?.value === "true",
-    syncRecordings: state.prompts.megapbx_sync_recordings?.value === "true",
-    webhooksEnabled: state.prompts.megapbx_webhooks_enabled?.value === "true",
+    enabled: state.megaPbx.enabled,
+    baseUrl: state.megaPbx.baseUrl,
+    apiKey: state.megaPbx.apiKey,
+    syncFromDate: state.megaPbx.syncFromDate.trim(),
+    webhookSecret: state.megaPbx.webhookSecret,
+    ftpHost: state.megaPbx.ftpHost,
+    ftpUser: state.megaPbx.ftpUser,
+    ftpPassword: state.megaPbx.ftpPassword,
+    syncEmployees: state.megaPbx.syncEmployees,
+    syncNumbers: state.megaPbx.syncNumbers,
+    syncCalls: state.megaPbx.syncCalls,
+    syncRecordings: state.megaPbx.syncRecordings,
+    webhooksEnabled: state.megaPbx.webhooksEnabled,
   });
+
+  const refreshSettingsState = useCallback(async () => {
+    await loadSettings();
+  }, [loadSettings]);
 
   const handleSavePbx = async () => {
     try {
       setState((prev) => ({ ...prev, megaPbxSaving: true }));
       await updatePbxMutation.mutateAsync(megaPbxPayload());
+      await refreshSettingsState();
       toast.success("MegaPBX настройки сохранены");
     } catch (error: unknown) {
       const msg =
@@ -627,11 +532,12 @@ export function useSettings() {
     try {
       setState((prev) => ({ ...prev, megaPbxAccessSaving: true }));
       await updatePbxAccessMutation.mutateAsync({
-        enabled: state.prompts.megapbx_enabled?.value === "true",
+        enabled: state.megaPbx.enabled,
         baseUrl: payload.baseUrl.trim(),
         apiKey: payload.apiKey?.trim() || undefined,
         syncFromDate: payload.syncFromDate?.trim() || undefined,
       });
+      await refreshSettingsState();
       toast.success("Доступ к API сохранён");
     } catch (error: unknown) {
       const msg =
@@ -648,6 +554,7 @@ export function useSettings() {
     try {
       setState((prev) => ({ ...prev, megaPbxSyncOptionsSaving: true }));
       await updatePbxSyncOptionsMutation.mutateAsync(payload);
+      await refreshSettingsState();
       toast.success("Настройки синхронизации сохранены");
     } catch (error: unknown) {
       const msg =
@@ -655,6 +562,7 @@ export function useSettings() {
           ? error.message
           : "Не удалось сохранить настройки синхронизации";
       toast.error(msg);
+      throw error;
     } finally {
       setState((prev) => ({ ...prev, megaPbxSyncOptionsSaving: false }));
     }
@@ -675,7 +583,14 @@ export function useSettings() {
       await updatePbxExcludedNumbersMutation.mutateAsync({
         excludePhoneNumbers: normalized,
       });
-      setPromptValue("megapbx_exclude_phone_numbers", normalized.join("\n"));
+      setState((prev) => ({
+        ...prev,
+        megaPbx: {
+          ...prev.megaPbx,
+          excludePhoneNumbers: normalized.join("\n"),
+        },
+      }));
+      await refreshSettingsState();
       toast.success("Исключённые номера сохранены");
     } catch (error: unknown) {
       const msg =
@@ -695,6 +610,7 @@ export function useSettings() {
       await updatePbxWebhookMutation.mutateAsync(
         trimmedSecret ? { webhookSecret: trimmedSecret } : {},
       );
+      await refreshSettingsState();
       toast.success("Webhook сохранён");
     } catch (error: unknown) {
       const msg =
@@ -706,8 +622,8 @@ export function useSettings() {
   };
 
   const handleTestPbx = async (baseUrl?: string, apiKey?: string) => {
-    const url = baseUrl ?? state.prompts.megapbx_base_url?.value ?? "";
-    const key = apiKey ?? state.prompts.megapbx_api_key?.value ?? "";
+    const url = baseUrl ?? state.megaPbx.baseUrl;
+    const key = apiKey ?? state.megaPbx.apiKey;
     try {
       setState((prev) => ({
         ...prev,
@@ -852,82 +768,78 @@ export function useSettings() {
     }
   };
 
-  const updatePrompt =
-    (key: string, field: "value" | "description") =>
-    (
-      e: React.ChangeEvent<
-        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-      >,
-    ) => {
+  const setTelegramBotToken = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const value = e.target.value;
+    setState((prev) => ({
+      ...prev,
+      integrations: { ...prev.integrations, telegramBotToken: value },
+    }));
+  };
+
+  const setMaxBotToken = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const value = e.target.value;
+    setState((prev) => ({
+      ...prev,
+      integrations: { ...prev.integrations, maxBotToken: value },
+    }));
+  };
+
+  const setFtpField =
+    (key: "host" | "user" | "password" | "excludePhoneNumbers") =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const value = e.target.value;
       setState((prev) => ({
         ...prev,
-        prompts: {
-          ...prev.prompts,
-          [key]: {
-            ...prev.prompts[key],
-            [field]: e.target.value,
-          },
-        },
+        ftp: { ...prev.ftp, [key]: value },
       }));
     };
 
-  const setPromptValue = (key: string, value: string) => {
+  const setFtpSyncFromDate = (value: string) => {
     setState((prev) => ({
       ...prev,
-      prompts: {
-        ...prev.prompts,
-        [key]: {
-          ...prev.prompts[key],
-          key,
-          value,
-          ...(key === "megapbx_sync_from_date" ? { error: undefined } : {}),
-        },
-      },
+      ftp: { ...prev.ftp, syncFromDate: value },
     }));
   };
 
   const setFtpEnabled = (enabled: boolean) => {
     setState((prev) => ({
       ...prev,
-      prompts: {
-        ...prev.prompts,
-        ftp_enabled: {
-          ...prev.prompts.ftp_enabled,
-          key: "ftp_enabled",
-          value: enabled ? "true" : "false",
-        },
-      },
+      ftp: { ...prev.ftp, enabled },
     }));
   };
 
-  const setTogglePrompt = (key: string, checked: boolean) => {
-    if (key === "megapbx_enabled") {
-      setPromptValue(key, checked ? "true" : "false");
-      const runUpdate = async () => {
-        try {
-          setState((prev) => ({ ...prev, megaPbxSaving: true }));
-          await updatePbxMutation.mutateAsync({
-            ...megaPbxPayload(),
-            enabled: checked,
-          });
-          toast.success(
-            checked ? "Интеграция включена" : "Интеграция выключена",
-          );
-        } catch (error) {
-          setPromptValue(key, checked ? "false" : "true");
-          const msg =
-            error instanceof Error
-              ? error.message
-              : "Не удалось обновить интеграцию";
-          toast.error(msg);
-        } finally {
-          setState((prev) => ({ ...prev, megaPbxSaving: false }));
-        }
-      };
-      runUpdate();
-    } else {
-      setPromptValue(key, checked ? "true" : "false");
-    }
+  const setMegaPbxEnabled = (checked: boolean) => {
+    setState((prev) => ({
+      ...prev,
+      megaPbx: { ...prev.megaPbx, enabled: checked },
+    }));
+    const runUpdate = async () => {
+      try {
+        setState((prev) => ({ ...prev, megaPbxSaving: true }));
+        await updatePbxMutation.mutateAsync({
+          ...megaPbxPayload(),
+          enabled: checked,
+        });
+        toast.success(checked ? "Интеграция включена" : "Интеграция выключена");
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          megaPbx: { ...prev.megaPbx, enabled: !checked },
+        }));
+        const msg =
+          error instanceof Error
+            ? error.message
+            : "Не удалось обновить интеграцию";
+        toast.error(msg);
+      } finally {
+        setState((prev) => ({ ...prev, megaPbxSaving: false }));
+      }
+    };
+    runUpdate();
   };
 
   return {
@@ -958,9 +870,11 @@ export function useSettings() {
     handleUnlinkMegaPbxTarget: handleUnlinkPbxTarget,
     handleBackup,
     handleSendTest,
-    updatePrompt,
-    setPromptValue,
+    setTelegramBotToken,
+    setMaxBotToken,
+    setFtpField,
+    setFtpSyncFromDate,
     setFtpEnabled,
-    setTogglePrompt,
+    setMegaPbxEnabled,
   };
 }

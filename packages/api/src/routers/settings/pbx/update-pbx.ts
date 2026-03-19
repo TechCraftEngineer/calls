@@ -1,4 +1,4 @@
-import { pbxService } from "@calls/db";
+import { normalizePhoneNumberList, pbxService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { pbxSettingsSchema } from "./schemas";
@@ -20,9 +20,9 @@ export const updatePbx = workspaceAdminProcedure
       /^\d{4}-\d{2}-\d{2}$/.test(input.syncFromDate.trim())
         ? input.syncFromDate.trim()
         : null;
-    const excludePhoneNumbers = input.excludePhoneNumbers
-      .map((value) => value.replace(/\D/g, ""))
-      .filter(Boolean);
+    const excludePhoneNumbers = normalizePhoneNumberList(
+      input.excludePhoneNumbers,
+    );
 
     await pbxService.updateSettings(
       context.workspaceId,

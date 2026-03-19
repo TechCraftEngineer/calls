@@ -26,7 +26,8 @@ export function getNumberColumns(
   setSelectedLinks: React.Dispatch<
     React.SetStateAction<Record<string, string>>
   >,
-  excludedPhoneNumbers: string[],
+  excludedSet: Set<string>,
+  setExcludedSet: React.Dispatch<React.SetStateAction<Set<string>>>,
   savingExcludedNumbers: boolean,
   onSaveExcludedNumbers: (excludePhoneNumbers: string[]) => Promise<void>,
   onLink: (input: {
@@ -74,10 +75,9 @@ export function getNumberColumns(
         const phone = normalizePhone(number.phoneNumber);
         const extension = normalizePhone(number.extension);
         const keys = [phone, extension].filter(Boolean);
-        const excludedSet = new Set(
-          excludedPhoneNumbers.map((value) => normalizePhone(value)),
-        );
         const isExcluded = keys.some((value) => excludedSet.has(value));
+        const checkboxLabel =
+          number.phoneNumber || number.extension || number.externalId;
 
         return (
           <label
@@ -88,14 +88,18 @@ export function getNumberColumns(
               id={`exclude-number-${number.externalId}`}
               checked={isExcluded}
               disabled={savingExcludedNumbers}
+              aria-label={`Исключить номер ${checkboxLabel}`}
               onCheckedChange={(checked) => {
-                const next = new Set(excludedSet);
-                if (checked === true) {
-                  for (const key of keys) next.add(key);
-                } else {
-                  for (const key of keys) next.delete(key);
-                }
-                void onSaveExcludedNumbers(Array.from(next));
+                setExcludedSet((prev) => {
+                  const next = new Set(prev);
+                  if (checked === true) {
+                    for (const key of keys) next.add(key);
+                  } else {
+                    for (const key of keys) next.delete(key);
+                  }
+                  void onSaveExcludedNumbers(Array.from(next));
+                  return next;
+                });
               }}
             />
             <span className="text-muted-foreground text-xs">

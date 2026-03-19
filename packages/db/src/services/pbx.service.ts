@@ -3,12 +3,13 @@ import type { PbxRepository } from "../repositories/pbx.repository";
 import type { SystemRepository } from "../repositories/system.repository";
 import type { WorkspaceIntegrationsRepository } from "../repositories/workspace-integrations.repository";
 import type { MegaPbxIntegrationConfig } from "../schema";
+import { normalizePhoneNumberList } from "../utils/normalize-phone-number-list";
 
 const MEGAPBX_INTEGRATION = "megapbx" as const;
 const MEGAPBX_PROVIDER = "megapbx" as const;
 const MEGAPBX_ENDPOINTS = {
   employees: "/crmapi/v1/users",
-  numbers: "/crmapi/v1/telnums",
+  numbers: "/crmapi/v1/sims",
   calls: "/crmapi/v1/history/json",
 } as const;
 
@@ -54,11 +55,9 @@ function decryptIfPresent(value?: string | null): string | null {
 function normalizeExcludePhoneNumbers(
   values?: string[] | null,
 ): string[] | undefined {
-  const normalized = (values ?? [])
-    .map((value) => value.replace(/\D/g, ""))
-    .filter(Boolean);
+  const normalized = normalizePhoneNumberList(values);
   if (normalized.length === 0) return undefined;
-  return Array.from(new Set(normalized));
+  return normalized;
 }
 
 function buildFixedMegaPbxConfig(

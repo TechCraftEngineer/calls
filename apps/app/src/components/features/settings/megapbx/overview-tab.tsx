@@ -1,6 +1,6 @@
 "use client";
 
-import type { Prompt } from "../types";
+import type { MegaPbxSettings } from "../types";
 import {
   AccessSection,
   QuickActionsSection,
@@ -14,7 +14,7 @@ import type {
 } from "./schemas";
 
 export interface OverviewTabProps {
-  prompts: Record<string, Prompt>;
+  megaPbx: MegaPbxSettings;
   baseUrl: string;
   apiKeySet: boolean;
   hasConnection: boolean;
@@ -36,7 +36,7 @@ export interface OverviewTabProps {
 }
 
 export function OverviewTab({
-  prompts,
+  megaPbx,
   baseUrl,
   testMessage,
   webhookUrl,
@@ -57,8 +57,8 @@ export function OverviewTab({
     <div className="space-y-6">
       <AccessSection
         baseUrl={baseUrl}
-        apiKeyPasswordSet={Boolean(prompts.megapbx_api_key?.meta?.passwordSet)}
-        syncFromDate={prompts.megapbx_sync_from_date?.value ?? ""}
+        apiKeyPasswordSet={megaPbx.apiKeySet}
+        syncFromDate={megaPbx.syncFromDate}
         saving={savingAccess}
         testing={testing}
         testMessage={testMessage}
@@ -67,16 +67,14 @@ export function OverviewTab({
       />
 
       <SyncOptionsSection
-        prompts={prompts}
+        megaPbx={megaPbx}
         saving={savingSyncOptions}
         onSaveSyncOptions={onSaveSyncOptions}
       />
 
       <WebhookSection
-        webhookSecret={prompts.megapbx_webhook_secret?.value ?? ""}
-        webhookSecretPasswordSet={Boolean(
-          prompts.megapbx_webhook_secret?.meta?.passwordSet,
-        )}
+        webhookSecret={megaPbx.webhookSecret}
+        webhookSecretPasswordSet={megaPbx.webhookSecretSet}
         webhookUrl={webhookUrl}
         saving={savingWebhook}
         onSaveWebhook={onSaveWebhook}

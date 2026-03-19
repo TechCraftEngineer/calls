@@ -42,7 +42,9 @@ function shouldSkipCallByExcludedPhoneNumbers(
   if (!excludePhoneNumbers || excludePhoneNumbers.length === 0) return false;
 
   const excluded = new Set(
-    excludePhoneNumbers.map((value) => normalizePhoneForMatch(value)),
+    excludePhoneNumbers
+      .map((value) => normalizePhoneForMatch(value))
+      .filter(Boolean),
   );
   if (excluded.size === 0) return false;
 
@@ -52,7 +54,14 @@ function shouldSkipCallByExcludedPhoneNumbers(
   for (const value of values) {
     if (excluded.has(value)) return true;
     for (const excludedValue of excluded) {
-      if (value.endsWith(excludedValue)) return true;
+      if (!excludedValue) continue;
+      if (
+        value === excludedValue ||
+        value.endsWith(excludedValue) ||
+        excludedValue.endsWith(value)
+      ) {
+        return true;
+      }
     }
   }
   return false;
@@ -379,12 +388,21 @@ export async function syncMegaPbxCalls(
       stats.latestCursor = call.timestamp;
     }
 
+    const previousCursor = syncState?.cursor ?? config.syncFromDate ?? null;
+    const nextCursor = webhookPayload
+      ? previousCursor
+      : previousCursor && stats.latestCursor
+        ? stats.latestCursor > previousCursor
+          ? stats.latestCursor
+          : previousCursor
+        : (stats.latestCursor ?? previousCursor);
+
     await pbxRepository.updateSyncState({
       workspaceId,
       provider: PROVIDER,
       syncType: "calls",
       status: "success",
-      cursor: stats.latestCursor,
+      cursor: nextCursor,
       stats,
       markCompleted: true,
       markSuccessful: true,

@@ -45,7 +45,11 @@ export const syncOptionsFormSchema = z.object({
 export type SyncOptionsFormData = z.infer<typeof syncOptionsFormSchema>;
 
 export const webhookFormSchema = z.object({
-  webhookSecret: z.string().trim().optional(),
+  webhookSecret: z.preprocess((value) => {
+    if (typeof value !== "string") return value;
+    const trimmed = value.trim();
+    return trimmed === "" ? undefined : trimmed;
+  }, z.string().optional()),
 });
 
 export type WebhookFormData = z.infer<typeof webhookFormSchema>;

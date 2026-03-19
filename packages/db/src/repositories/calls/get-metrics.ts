@@ -20,7 +20,14 @@ export async function getCallsMetrics(
   const excludeCondition = excludePhoneNumbers?.length
     ? buildExcludePhoneCondition(excludePhoneNumbers, schema.calls)
     : undefined;
-  const allConditions = [callConditions?.[0], excludeCondition].filter(Boolean);
+  const allConditions = [callConditions?.[0], excludeCondition].filter(
+    (
+      condition,
+    ): condition is NonNullable<
+      | (typeof callConditions extends Array<infer T> ? T : never)
+      | typeof excludeCondition
+    > => condition != null,
+  );
 
   const totalCallsQuery = db
     .select({ count: count() })

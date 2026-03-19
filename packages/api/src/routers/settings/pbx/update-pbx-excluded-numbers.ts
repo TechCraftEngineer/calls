@@ -1,4 +1,8 @@
-import { MegaPbxConfigNotFoundError, pbxService } from "@calls/db";
+import {
+  MegaPbxConfigNotFoundError,
+  normalizePhoneNumberList,
+  pbxService,
+} from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { getUserEmail } from "./get-user-email";
@@ -8,9 +12,9 @@ export const updatePbxExcludedNumbers = workspaceAdminProcedure
   .input(pbxExcludePhoneNumbersSchema)
   .handler(async ({ input, context }) => {
     const username = getUserEmail(context.user) ?? "system";
-    const excludePhoneNumbers = input.excludePhoneNumbers
-      .map((value) => value.replace(/\D/g, ""))
-      .filter(Boolean);
+    const excludePhoneNumbers = normalizePhoneNumberList(
+      input.excludePhoneNumbers,
+    );
 
     let ok: boolean;
     try {
@@ -31,7 +35,7 @@ export const updatePbxExcludedNumbers = workspaceAdminProcedure
     }
 
     if (!ok) {
-      throw new ORPCError("NOT_FOUND", {
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message: "PBX интеграция не настроена",
       });
     }
