@@ -52,6 +52,7 @@ export interface CreateCallData {
   status?: string | null;
   sizeBytes?: number | null;
   fileId?: string | null;
+  pbxNumberId?: string | null;
   internalNumber?: string | null;
   source?: string | null;
   customerName?: string | null;

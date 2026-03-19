@@ -381,6 +381,7 @@ export async function syncMegaPbxCalls(
         source: employee?.externalId ?? number?.externalId ?? "megapbx",
         name: employee?.displayName ?? number?.label ?? "MegaPBX",
         fileId,
+        pbxNumberId: number?.id ?? null,
         sizeBytes,
       });
 
