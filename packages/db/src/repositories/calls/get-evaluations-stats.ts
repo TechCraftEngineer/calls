@@ -85,9 +85,11 @@ export async function getEvaluationsStats(
       };
     }
 
-    const dir = String(row.direction ?? "").toLowerCase();
+    const dir = String(row.direction ?? "")
+      .trim()
+      .toLowerCase();
     const target =
-      dir === "входящий" || dir === "incoming"
+      dir === "incoming" || dir === "inbound"
         ? stats[key].incoming
         : stats[key].outgoing;
 

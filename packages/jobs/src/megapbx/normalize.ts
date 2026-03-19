@@ -155,6 +155,7 @@ export function normalizeCall(
   raw: Record<string, unknown>,
 ): NormalizedCall | null {
   const externalId =
+    asString(raw.callid) ??
     asString(raw.uid) ??
     asString(raw.id) ??
     asString(raw.callId) ??

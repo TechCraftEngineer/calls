@@ -79,11 +79,11 @@ export function buildCallConditions(params: CallConditionsParams) {
     const expandedDirections = [
       ...new Set(
         normalizedDirections.flatMap((d) => {
-          if (d === "входящий" || d === "incoming" || d === "inbound") {
-            return ["входящий", "incoming", "inbound"];
+          if (d === "incoming" || d === "inbound") {
+            return ["incoming", "inbound"];
           }
-          if (d === "исходящий" || d === "outgoing" || d === "outbound") {
-            return ["исходящий", "outgoing", "outbound"];
+          if (d === "outgoing" || d === "outbound") {
+            return ["outgoing", "outbound"];
           }
           return [d];
         }),

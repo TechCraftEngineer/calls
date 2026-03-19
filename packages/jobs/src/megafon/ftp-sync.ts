@@ -375,8 +375,7 @@ export async function syncFtp(
             number: parsed.externalNumber,
             internalNumber: parsed.internalNumber,
             timestamp: parsed.timestamp,
-            direction:
-              parsed.direction === "incoming" ? "Входящий" : "Исходящий",
+            direction: parsed.direction,
             source: parsed.internalNumber,
             name: parsed.internalNumber,
             sizeBytes: downloadBuffer.length,

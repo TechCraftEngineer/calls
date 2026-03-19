@@ -50,6 +50,10 @@ export class CallsService {
     return this.callsRepository.findByFilename(filename, workspaceId);
   }
 
+  async findLatestContactByPhone(workspaceId: string, phone: string) {
+    return this.callsRepository.findLatestByPhone(workspaceId, phone);
+  }
+
   async createCall(data: CreateCallData): Promise<string> {
     const callId = await this.callsRepository.create(data);
 

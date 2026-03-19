@@ -54,9 +54,9 @@ export async function getKpiStats(
       internalNumber: schema.calls.internalNumber,
       totalDuration: sql<number>`COALESCE(SUM(${schema.calls.duration}), 0)::int`,
       totalCalls: sql<number>`COUNT(*)::int`,
-      incoming: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) IN ('входящий', 'incoming') AND COALESCE(${schema.calls.duration}, 0) > 0)::int`,
-      outgoing: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) IN ('исходящий', 'outgoing'))::int`,
-      missed: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) IN ('входящий', 'incoming') AND COALESCE(${schema.calls.duration}, 0) = 0)::int`,
+      incoming: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) IN ('incoming', 'inbound') AND COALESCE(${schema.calls.duration}, 0) > 0)::int`,
+      outgoing: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) IN ('outgoing', 'outbound'))::int`,
+      missed: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) IN ('incoming', 'inbound') AND COALESCE(${schema.calls.duration}, 0) = 0)::int`,
     })
     .from(schema.calls)
     .where(and(...conditions))
