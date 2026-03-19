@@ -1,18 +1,7 @@
-import {
-  and,
-  avg,
-  count,
-  eq,
-  gte,
-  inArray,
-  isNull,
-  lt,
-  lte,
-  notInArray,
-  or,
-} from "drizzle-orm";
+import { and, avg, count, eq, gte, inArray, lt, lte } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
+import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
 
 export interface GetEvaluationsStatsParams {
   workspaceId?: string;
@@ -52,20 +41,12 @@ export async function getEvaluationsStats(
   if (internalNumbers?.length) {
     conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
   }
-  if (excludePhoneNumbers?.length) {
-    const excludeCondition = and(
-      or(
-        isNull(schema.calls.internalNumber),
-        notInArray(schema.calls.internalNumber, excludePhoneNumbers),
-      ),
-      or(
-        isNull(schema.calls.number),
-        notInArray(schema.calls.number, excludePhoneNumbers),
-      ),
-    );
-    if (excludeCondition) {
-      conditions.push(excludeCondition);
-    }
+  const excludeConditionStats = buildExcludePhoneCondition(
+    excludePhoneNumbers,
+    schema.calls,
+  );
+  if (excludeConditionStats) {
+    conditions.push(excludeConditionStats);
   }
 
   const query = db
@@ -185,20 +166,12 @@ export async function getLowRatedCallsCount(
   if (internalNumbers?.length) {
     conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
   }
-  if (excludePhoneNumbers?.length) {
-    const excludeCondition = and(
-      or(
-        isNull(schema.calls.internalNumber),
-        notInArray(schema.calls.internalNumber, excludePhoneNumbers),
-      ),
-      or(
-        isNull(schema.calls.number),
-        notInArray(schema.calls.number, excludePhoneNumbers),
-      ),
-    );
-    if (excludeCondition) {
-      conditions.push(excludeCondition);
-    }
+  const excludeConditionLowRated = buildExcludePhoneCondition(
+    excludePhoneNumbers,
+    schema.calls,
+  );
+  if (excludeConditionLowRated) {
+    conditions.push(excludeConditionLowRated);
   }
 
   const rows = await db

@@ -36,7 +36,7 @@ export function StatisticsFilters({
               id="date-from"
               value={dateFrom}
               onChange={onDateFromChange}
-              placeholder="Выберите дату... (например 31.12.2023)"
+              placeholder="Выберите дату… (например 31.12.2023)"
             />
           </div>
           <div className="filter-item min-w-[150px]">
@@ -47,7 +47,7 @@ export function StatisticsFilters({
               id="date-to"
               value={dateTo}
               onChange={onDateToChange}
-              placeholder="Выберите дату... (например ДД.ММ.ГГГГ)"
+              placeholder="Выберите дату… (например 31.12.2023)"
             />
           </div>
           <div className="flex gap-3">

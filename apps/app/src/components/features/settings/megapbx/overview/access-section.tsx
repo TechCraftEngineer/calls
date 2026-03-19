@@ -67,7 +67,7 @@ export function AccessSection({
             onChange={onPromptChange("megapbx_api_key", "value")}
             name="megapbx_secret"
             inputMode="text"
-            autoComplete="current-password"
+            autoComplete="off"
             placeholder={
               prompts.megapbx_api_key?.meta?.passwordSet
                 ? "•••••••• (оставьте пустым, чтобы не менять)"
@@ -95,6 +95,11 @@ export function AccessSection({
             placeholder="Выберите дату"
             className="h-10"
           />
+          {prompts.megapbx_sync_from_date?.error ? (
+            <p className="text-destructive text-xs" role="alert">
+              {prompts.megapbx_sync_from_date.error}
+            </p>
+          ) : null}
           <p className="text-xs text-muted-foreground">
             Используется как стартовая дата для первой загрузки истории звонков.
           </p>

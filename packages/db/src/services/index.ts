@@ -44,11 +44,6 @@ export const pbxService = new PbxService(
   pbxRepository,
   systemRepository,
 );
-export const megaPbxService = new PbxService(
-  workspaceIntegrationsRepository,
-  pbxRepository,
-  systemRepository,
-);
 // Export repositories for direct access if needed
 export {
   callsRepository,

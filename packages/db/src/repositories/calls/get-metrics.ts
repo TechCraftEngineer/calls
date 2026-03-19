@@ -1,6 +1,7 @@
-import { and, avg, count, desc, eq, isNull, notInArray, or } from "drizzle-orm";
+import { and, avg, count, desc, eq } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
+import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
 
 export async function getCallsMetrics(
   workspaceId?: string,
@@ -18,23 +19,14 @@ export async function getCallsMetrics(
 
   const excludeCondition =
     excludePhoneNumbers?.length && callConditions
-      ? and(
-          or(
-            isNull(schema.calls.internalNumber),
-            notInArray(schema.calls.internalNumber, excludePhoneNumbers),
-          ),
-          or(
-            isNull(schema.calls.number),
-            notInArray(schema.calls.number, excludePhoneNumbers),
-          ),
-        )
+      ? buildExcludePhoneCondition(excludePhoneNumbers, schema.calls)
       : undefined;
 
-  const excludeConditions = excludeCondition ? [excludeCondition] : [];
-  const allConditions =
-    callConditions && excludeConditions.length
-      ? [...callConditions, ...excludeConditions]
-      : callConditions;
+  const allConditions = callConditions
+    ? excludeCondition
+      ? [...callConditions, excludeCondition]
+      : callConditions
+    : undefined;
 
   const totalCallsQuery = db
     .select({ count: count() })

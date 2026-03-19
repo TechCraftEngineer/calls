@@ -162,7 +162,7 @@ export default function InviteUserModal({
   if (result) {
     return (
       <div
-        className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
         onClick={handleClose}
         role="dialog"
         aria-modal="true"
@@ -325,7 +325,7 @@ export default function InviteUserModal({
 
   return (
     <div
-      className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       onClick={handleClose}
       role="dialog"
       aria-modal="true"

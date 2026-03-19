@@ -1,28 +1,25 @@
 import { MegaPbxConfigNotFoundError, pbxService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { workspaceAdminProcedure } from "../../../orpc";
+import { getUserEmail } from "./get-user-email";
 import { pbxWebhookSchema } from "./schemas";
-
-function getUserEmail(user: unknown): string | undefined {
-  return typeof user === "object" && user
-    ? "email" in user && typeof (user as { email?: unknown }).email === "string"
-      ? (user as { email: string }).email
-      : undefined
-    : undefined;
-}
 
 export const updatePbxWebhook = workspaceAdminProcedure
   .input(pbxWebhookSchema)
   .handler(async ({ input, context }) => {
     const username = getUserEmail(context.user) ?? "system";
 
+    const trimmedSecret = input.webhookSecret?.trim();
+    const partial: { webhookSecret?: string | null } = {};
+    if (trimmedSecret) {
+      partial.webhookSecret = trimmedSecret;
+    }
+
     let ok: boolean;
     try {
       ok = await pbxService.updateSettingsPartial(
         context.workspaceId,
-        {
-          webhookSecret: input.webhookSecret?.trim() || null,
-        },
+        partial,
         String(username),
       );
     } catch (err: unknown) {
@@ -34,7 +31,7 @@ export const updatePbxWebhook = workspaceAdminProcedure
       throw err;
     }
     if (!ok) {
-      throw new ORPCError("NOT_FOUND", {
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message: "PBX интеграция не настроена",
       });
     }

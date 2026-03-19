@@ -72,9 +72,8 @@ export function EmployeesTab({
         await onLink(input);
       } finally {
         setLinkingEmployeeIds((prev) => {
-          const next = { ...prev };
-          delete next[id];
-          return next;
+          const { [id]: _removed, ...rest } = prev;
+          return rest;
         });
       }
     },
@@ -89,9 +88,8 @@ export function EmployeesTab({
         await onUnlink(input);
       } finally {
         setUnlinkingEmployeeIds((prev) => {
-          const next = { ...prev };
-          delete next[id];
-          return next;
+          const { [id]: _removed, ...rest } = prev;
+          return rest;
         });
       }
     },

@@ -1,15 +1,8 @@
 import { MegaPbxConfigNotFoundError, pbxService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { workspaceAdminProcedure } from "../../../orpc";
+import { getUserEmail } from "./get-user-email";
 import { pbxAccessSchema } from "./schemas";
-
-function getUserEmail(user: unknown): string | undefined {
-  return typeof user === "object" && user
-    ? "email" in user && typeof (user as { email?: unknown }).email === "string"
-      ? (user as { email: string }).email
-      : undefined
-    : undefined;
-}
 
 export const updatePbxAccess = workspaceAdminProcedure
   .input(pbxAccessSchema)
@@ -24,15 +17,9 @@ export const updatePbxAccess = workspaceAdminProcedure
 
     const rawSyncFromDate = input.syncFromDate?.trim();
     const syncFromDate =
-      rawSyncFromDate && /^\d{4}-\d{2}-\d{2}$/.test(rawSyncFromDate)
+      rawSyncFromDate && rawSyncFromDate.length > 0
         ? rawSyncFromDate
         : undefined;
-
-    if (rawSyncFromDate && !syncFromDate) {
-      throw new ORPCError("BAD_REQUEST", {
-        message: "Некорректная дата импорта. Используйте формат YYYY-MM-DD.",
-      });
-    }
 
     const partial: {
       enabled: boolean;
