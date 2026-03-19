@@ -20,7 +20,6 @@ import { SectionBlock } from "../section-block";
 
 interface AccessSectionProps {
   baseUrl: string;
-  apiKeyValue: string;
   apiKeyPasswordSet: boolean;
   syncFromDate: string;
   saving: boolean;
@@ -32,7 +31,6 @@ interface AccessSectionProps {
 
 export function AccessSection({
   baseUrl,
-  apiKeyValue,
   apiKeyPasswordSet,
   syncFromDate,
   saving,

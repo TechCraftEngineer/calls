@@ -21,15 +21,11 @@ export interface OverviewTabProps {
   configuredFeatures: string[];
   testMessage: string;
   webhookUrl: string;
-  saving: boolean;
+  savingAccess: boolean;
+  savingSyncOptions: boolean;
+  savingWebhook: boolean;
   testing: boolean;
   syncing: "directory" | "calls" | "recordings" | null;
-  onPromptChange: (
-    key: string,
-    field: "value" | "description",
-  ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onPromptValueChange: (key: string, value: string) => void;
-  onToggleChange: (key: string, checked: boolean) => void;
   onSaveAccess: (data: AccessFormData) => Promise<void>;
   onSaveSyncOptions: (data: SyncOptionsFormData) => Promise<void>;
   onSaveWebhook: (data: WebhookFormData) => Promise<void>;
@@ -44,12 +40,11 @@ export function OverviewTab({
   baseUrl,
   testMessage,
   webhookUrl,
-  saving,
+  savingAccess,
+  savingSyncOptions,
+  savingWebhook,
   testing,
   syncing,
-  onPromptChange,
-  onPromptValueChange,
-  onToggleChange,
   onSaveAccess,
   onSaveSyncOptions,
   onSaveWebhook,
@@ -62,10 +57,9 @@ export function OverviewTab({
     <div className="space-y-6">
       <AccessSection
         baseUrl={baseUrl}
-        apiKeyValue={prompts.megapbx_api_key?.value ?? ""}
         apiKeyPasswordSet={Boolean(prompts.megapbx_api_key?.meta?.passwordSet)}
         syncFromDate={prompts.megapbx_sync_from_date?.value ?? ""}
-        saving={saving}
+        saving={savingAccess}
         testing={testing}
         testMessage={testMessage}
         onTest={onTest}
@@ -74,7 +68,7 @@ export function OverviewTab({
 
       <SyncOptionsSection
         prompts={prompts}
-        saving={saving}
+        saving={savingSyncOptions}
         onSaveSyncOptions={onSaveSyncOptions}
       />
 
@@ -84,7 +78,7 @@ export function OverviewTab({
           prompts.megapbx_webhook_secret?.meta?.passwordSet,
         )}
         webhookUrl={webhookUrl}
-        saving={saving}
+        saving={savingWebhook}
         onSaveWebhook={onSaveWebhook}
       />
 

@@ -49,6 +49,9 @@ export function useSettings() {
     telegramSaving: false,
     maxBotSaving: false,
     megaPbxSaving: false,
+    megaPbxAccessSaving: false,
+    megaPbxSyncOptionsSaving: false,
+    megaPbxWebhookSaving: false,
     megaPbxTesting: false,
     megaPbxSyncing: null,
     megaPbxTestMessage: "",
@@ -326,19 +329,56 @@ export function useSettings() {
   );
   const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
   const syncPbxDirectoryMutation = useMutation(
-    orpc.settings.syncPbxDirectory.mutationOptions(),
+    orpc.settings.syncPbxDirectory.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxNumbers.queryKey(),
+        });
+      },
+    }),
   );
   const syncPbxCallsMutation = useMutation(
-    orpc.settings.syncPbxCalls.mutationOptions(),
+    orpc.settings.syncPbxCalls.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.getPbx.queryKey(),
+        });
+      },
+    }),
   );
   const syncPbxRecordingsMutation = useMutation(
-    orpc.settings.syncPbxRecordings.mutationOptions(),
+    orpc.settings.syncPbxRecordings.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.getPbx.queryKey(),
+        });
+      },
+    }),
   );
+  const refetchPbxLists = useCallback(async () => {
+    const [employees, numbers] = await Promise.all([
+      queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
+      queryClient.fetchQuery(orpc.settings.listPbxNumbers.queryOptions()),
+    ]);
+    setState((prev) => ({
+      ...prev,
+      megaPbxEmployees: employees as PbxEmployeeItem[],
+      megaPbxNumbers: numbers as PbxNumberItem[],
+    }));
+  }, [orpc, queryClient]);
+
   const linkPbxUserMutation = useMutation(
-    orpc.settings.linkPbxUser.mutationOptions(),
+    orpc.settings.linkPbxUser.mutationOptions({
+      onSuccess: refetchPbxLists,
+    }),
   );
   const unlinkPbxUserMutation = useMutation(
-    orpc.settings.unlinkPbxUser.mutationOptions(),
+    orpc.settings.unlinkPbxUser.mutationOptions({
+      onSuccess: refetchPbxLists,
+    }),
   );
 
   const backupMutation = useMutation(orpc.settings.backup.mutationOptions());
@@ -363,7 +403,6 @@ export function useSettings() {
         telegram_bot_token: state.prompts.telegram_bot_token?.value ?? null,
       });
       toast.success("Telegram Bot сохранён");
-      await loadSettings();
     } catch (error: unknown) {
       console.error("Failed to save Telegram:", error);
       const msg =
@@ -383,7 +422,6 @@ export function useSettings() {
         max_bot_token: state.prompts.max_bot_token?.value ?? null,
       });
       toast.success("MAX Bot сохранён");
-      await loadSettings();
     } catch (error: unknown) {
       console.error("Failed to save MAX Bot:", error);
       const msg =
@@ -451,7 +489,6 @@ export function useSettings() {
         excludePhoneNumbers,
       });
       toast.success("Параметры подключения FTP сохранены");
-      await loadSettings();
     } catch (error: unknown) {
       console.error("Failed to save FTP:", error);
       const msg =
@@ -555,7 +592,6 @@ export function useSettings() {
       setState((prev) => ({ ...prev, megaPbxSaving: true }));
       await updatePbxMutation.mutateAsync(megaPbxPayload());
       toast.success("MegaPBX настройки сохранены");
-      await loadSettings();
     } catch (error: unknown) {
       const msg =
         error instanceof Error
@@ -569,7 +605,7 @@ export function useSettings() {
 
   const handleSavePbxAccess = async (payload: AccessFormData) => {
     try {
-      setState((prev) => ({ ...prev, megaPbxSaving: true }));
+      setState((prev) => ({ ...prev, megaPbxAccessSaving: true }));
       await updatePbxAccessMutation.mutateAsync({
         enabled: state.prompts.megapbx_enabled?.value === "true",
         baseUrl: payload.baseUrl.trim(),
@@ -584,13 +620,13 @@ export function useSettings() {
           : "Не удалось сохранить доступ к API";
       toast.error(msg);
     } finally {
-      setState((prev) => ({ ...prev, megaPbxSaving: false }));
+      setState((prev) => ({ ...prev, megaPbxAccessSaving: false }));
     }
   };
 
   const handleSavePbxSyncOptions = async (payload: SyncOptionsFormData) => {
     try {
-      setState((prev) => ({ ...prev, megaPbxSaving: true }));
+      setState((prev) => ({ ...prev, megaPbxSyncOptionsSaving: true }));
       await updatePbxSyncOptionsMutation.mutateAsync(payload);
       toast.success("Настройки синхронизации сохранены");
     } catch (error: unknown) {
@@ -600,13 +636,13 @@ export function useSettings() {
           : "Не удалось сохранить настройки синхронизации";
       toast.error(msg);
     } finally {
-      setState((prev) => ({ ...prev, megaPbxSaving: false }));
+      setState((prev) => ({ ...prev, megaPbxSyncOptionsSaving: false }));
     }
   };
 
   const handleSavePbxWebhook = async (payload: WebhookFormData) => {
     try {
-      setState((prev) => ({ ...prev, megaPbxSaving: true }));
+      setState((prev) => ({ ...prev, megaPbxWebhookSaving: true }));
       const trimmedSecret = payload.webhookSecret?.trim();
       await updatePbxWebhookMutation.mutateAsync(
         trimmedSecret ? { webhookSecret: trimmedSecret } : {},
@@ -617,7 +653,7 @@ export function useSettings() {
         error instanceof Error ? error.message : "Не удалось сохранить webhook";
       toast.error(msg);
     } finally {
-      setState((prev) => ({ ...prev, megaPbxSaving: false }));
+      setState((prev) => ({ ...prev, megaPbxWebhookSaving: false }));
     }
   };
 
@@ -682,7 +718,14 @@ export function useSettings() {
         await syncPbxRecordingsMutation.mutateAsync(undefined);
       }
       toast.success("Синхронизация MegaPBX поставлена в очередь");
-      await loadSettings();
+      // Задача выполняется в Inngest — через 5 сек обновляем сотрудников и номера
+      if (type === "directory") {
+        setTimeout(() => {
+          refetchPbxLists().catch(() => {
+            // Игнорируем — данные обновятся при следующей загрузке
+          });
+        }, 5000);
+      }
     } catch (error: unknown) {
       const msg =
         error instanceof Error ? error.message : "Ошибка синхронизации MegaPBX";
@@ -699,7 +742,6 @@ export function useSettings() {
     invitationId?: string | null;
   }) => {
     await linkPbxUserMutation.mutateAsync(input);
-    await loadSettings();
   };
 
   const handleUnlinkPbxTarget = async (input: {
@@ -707,7 +749,6 @@ export function useSettings() {
     targetExternalId: string;
   }) => {
     await unlinkPbxUserMutation.mutateAsync(input);
-    await loadSettings();
   };
 
   const handleBackup = async () => {

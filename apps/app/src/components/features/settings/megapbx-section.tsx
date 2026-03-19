@@ -34,8 +34,6 @@ function getWebhookBaseUrl(): string {
 
 export default function MegaPbxSection({
   prompts,
-  onPromptValueChange,
-  onPromptChange,
   onToggleChange,
   onSaveAccess,
   onSaveSyncOptions,
@@ -47,6 +45,9 @@ export default function MegaPbxSection({
   onLink,
   onUnlink,
   saving,
+  savingAccess,
+  savingSyncOptions,
+  savingWebhook,
   testing,
   syncing,
   testMessage,
@@ -226,12 +227,11 @@ export default function MegaPbxSection({
             configuredFeatures={configuredFeatures}
             testMessage={testMessage}
             webhookUrl={webhookUrl}
-            saving={saving}
+            savingAccess={savingAccess}
+            savingSyncOptions={savingSyncOptions}
+            savingWebhook={savingWebhook}
             testing={testing}
             syncing={syncing}
-            onPromptChange={onPromptChange}
-            onPromptValueChange={onPromptValueChange}
-            onToggleChange={onToggleChange}
             onSaveAccess={onSaveAccess}
             onSaveSyncOptions={onSaveSyncOptions}
             onSaveWebhook={onSaveWebhook}

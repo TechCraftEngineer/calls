@@ -96,6 +96,9 @@ export interface SettingsState {
   telegramSaving: boolean;
   maxBotSaving: boolean;
   megaPbxSaving: boolean;
+  megaPbxAccessSaving: boolean;
+  megaPbxSyncOptionsSaving: boolean;
+  megaPbxWebhookSaving: boolean;
   megaPbxTesting: boolean;
   megaPbxSyncing: "directory" | "calls" | "recordings" | null;
   megaPbxTestMessage: string;
@@ -126,11 +129,6 @@ export interface IntegrationsSectionProps {
 
 export interface PbxSectionProps {
   prompts: Record<string, Prompt>;
-  onPromptValueChange: (key: string, value: string) => void;
-  onPromptChange: (
-    key: string,
-    field: "value" | "description",
-  ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onToggleChange: (key: string, checked: boolean) => void;
   onSaveAccess: (
     data: import("./megapbx/schemas").AccessFormData,
@@ -156,6 +154,9 @@ export interface PbxSectionProps {
     targetExternalId: string;
   }) => Promise<void>;
   saving: boolean;
+  savingAccess: boolean;
+  savingSyncOptions: boolean;
+  savingWebhook: boolean;
   testing: boolean;
   syncing: "directory" | "calls" | "recordings" | null;
   testMessage: string;

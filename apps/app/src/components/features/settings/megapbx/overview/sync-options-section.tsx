@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Button,
   Field,
   FieldContent,
   FieldDescription,
@@ -67,17 +66,13 @@ export function SyncOptionsSection({
     form,
   ]);
 
-  const onSubmit = async (data: SyncOptionsFormData) => {
-    await onSaveSyncOptions(data);
-  };
-
   return (
     <SectionBlock
       title="Что синхронизировать"
       description="Включите только те данные, которые реально нужны в рабочем пространстве."
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="contents">
+        <div className="contents">
           <FieldGroup className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
             {SYNC_OPTIONS.map(([key, label, hint, Icon]) => {
               const fieldName = KEY_TO_FIELD[key];
@@ -110,7 +105,15 @@ export function SyncOptionsSection({
                             id={key}
                             size="sm"
                             checked={field.value}
-                            onCheckedChange={field.onChange}
+                            disabled={saving}
+                            onCheckedChange={(checked) => {
+                              field.onChange(checked);
+                              const payload: SyncOptionsFormData = {
+                                ...form.getValues(),
+                                [fieldName]: checked,
+                              };
+                              void onSaveSyncOptions(payload);
+                            }}
                           />
                         </FormControl>
                       </Field>
@@ -120,12 +123,7 @@ export function SyncOptionsSection({
               );
             })}
           </FieldGroup>
-          <div className="mt-4">
-            <Button type="submit" disabled={saving}>
-              {saving ? "Сохранение…" : "Сохранить"}
-            </Button>
-          </div>
-        </form>
+        </div>
       </Form>
     </SectionBlock>
   );

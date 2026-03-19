@@ -7,10 +7,11 @@ import type { MegaPbxIntegrationConfig } from "../schema";
 const MEGAPBX_INTEGRATION = "megapbx" as const;
 const MEGAPBX_PROVIDER = "megapbx" as const;
 const MEGAPBX_AUTH_SCHEME = "bearer" as const;
+// api.megapbx.ru CRMAPI v1: https://api.megapbx.ru/#/docs/crmapi/v1/
 const MEGAPBX_ENDPOINTS = {
-  employees: "/crm/employees",
-  numbers: "/crm/numbers",
-  calls: "/crm/calls",
+  employees: "/crmapi/v1/employees",
+  numbers: "/crmapi/v1/telnums",
+  calls: "/crmapi/v1/calls",
 } as const;
 
 export class MegaPbxConfigNotFoundError extends Error {

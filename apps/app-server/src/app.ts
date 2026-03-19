@@ -74,7 +74,7 @@ export function createApp() {
     cors({
       origin: corsOrigin,
       allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowHeaders: ["Content-Type", "Authorization"],
+      allowHeaders: ["Content-Type", "Authorization", "X-Workspace-Id"],
       credentials: true,
     }),
   );

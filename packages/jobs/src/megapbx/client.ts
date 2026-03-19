@@ -66,6 +66,7 @@ function pickArray(
       "employees",
       "numbers",
       "calls",
+      "telnums",
     ];
     for (const key of commonKeys) {
       const nested = (payload as Record<string, unknown>)[key];
@@ -81,7 +82,7 @@ function pickArray(
   return [];
 }
 
-/** Ключи, под которыми MegaPBX CRM обычно отдаёт списки (как в pickArray). */
+/** Ключи, под которыми MegaPBX CRM API отдаёт списки (api.megapbx.ru crmapi/v1). */
 const LIST_RESPONSE_KEYS = [
   "items",
   "data",
@@ -89,6 +90,7 @@ const LIST_RESPONSE_KEYS = [
   "employees",
   "numbers",
   "calls",
+  "telnums",
 ] as const;
 
 /**
@@ -214,10 +216,12 @@ export class MegaPbxClient {
     const base = new URL(normalizedBaseUrl);
     const basePath = base.pathname.replace(/\/+$/, "");
     let endpointPath = path.replace(/^\/+/, "");
-    // Совместимость: если base уже указывает на /crmapi/v1, endpoint "crm/*"
-    // должен идти как "*/", иначе получаем дублирование ".../crmapi/v1/crm/...".
-    if (basePath.endsWith("/crmapi/v1") && endpointPath.startsWith("crm/")) {
-      endpointPath = endpointPath.slice(4);
+    // Совместимость: если base уже указывает на /crmapi/v1, не дублируем путь
+    if (
+      basePath.endsWith("/crmapi/v1") &&
+      endpointPath.startsWith("crmapi/v1/")
+    ) {
+      endpointPath = endpointPath.slice(10);
     }
     base.pathname = `${basePath}/${endpointPath}`.replace(/\/{2,}/g, "/");
     const url = base;
@@ -266,8 +270,35 @@ export class MegaPbxClient {
     });
 
     if (!response.ok) {
+      const bodyText = await response.text();
+      const urlForLog = url.toString().replace(/([?&]apiKey=)[^&]*/gi, "$1***");
+      let detail = "";
+      try {
+        const parsed = JSON.parse(bodyText) as Record<string, unknown>;
+        const msg =
+          typeof parsed.message === "string"
+            ? parsed.message
+            : typeof parsed.error === "string"
+              ? parsed.error
+              : typeof parsed.detail === "string"
+                ? parsed.detail
+                : typeof parsed.reason === "string"
+                  ? parsed.reason
+                  : typeof parsed.description === "string"
+                    ? parsed.description
+                    : undefined;
+        if (msg) detail = ` — ${msg}`;
+      } catch {
+        if (bodyText.trim()) {
+          const preview =
+            bodyText.length > 200 ? bodyText.slice(0, 200) + "…" : bodyText;
+          detail = bodyText.slice(0, 10).startsWith("<")
+            ? " — ответ не JSON (возможно HTML)"
+            : ` — ${preview}`;
+        }
+      }
       throw new Error(
-        `Ошибка MegaPBX API ${response.status}: ${response.statusText}`,
+        `Ошибка MegaPBX API ${response.status}: ${response.statusText}${detail} | URL: ${urlForLog} | endpoint: ${endpoint.path}`,
       );
     }
 
