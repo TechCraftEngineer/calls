@@ -4,7 +4,7 @@ import { z } from "zod";
 /** CRM API v1: https://api.megapbx.ru/#/docs/crmapi/v1/ */
 const MEGAPBX_ENDPOINTS = {
   employees: "/crmapi/v1/users",
-  numbers: "/crmapi/v1/telnums",
+  numbers: "/crmapi/v1/sims",
   calls: "/crmapi/v1/history/json",
 } as const;
 
@@ -202,6 +202,11 @@ export class MegaPbxClient {
     return Number.isFinite(raw) && raw > 0 ? raw : 30_000;
   }
 
+  private getRecordingDownloadTimeoutMs(): number {
+    const raw = Number(process.env.MEGAPBX_RECORDING_DOWNLOAD_TIMEOUT_MS);
+    return Number.isFinite(raw) && raw > 0 ? raw : 30_000;
+  }
+
   private buildUrl(path: string): URL {
     const looksLikeScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(path);
     const isRelativePath =
@@ -284,7 +289,7 @@ export class MegaPbxClient {
       } catch {
         if (bodyText.trim()) {
           const preview =
-            bodyText.length > 200 ? bodyText.slice(0, 200) + "…" : bodyText;
+            bodyText.length > 200 ? `${bodyText.slice(0, 200)}…` : bodyText;
           detail = bodyText.slice(0, 10).startsWith("<")
             ? " — ответ не JSON (возможно HTML)"
             : ` — ${preview}`;
@@ -346,5 +351,63 @@ export class MegaPbxClient {
     const payload = await this.request(MEGAPBX_ENDPOINTS.calls, body);
     const validated = validateResponse(CallResponseSchema, payload, "звонки");
     return pickArray(validated);
+  }
+
+  async downloadRecording(recordingUrl: string): Promise<{
+    buffer: Buffer;
+    extension: string;
+  }> {
+    const normalizedUrl = recordingUrl.trim();
+    if (!normalizedUrl) {
+      throw new Error("Пустой URL записи MegaPBX.");
+    }
+
+    let parsed: URL;
+    try {
+      parsed = new URL(normalizedUrl);
+    } catch {
+      throw new Error(`Некорректный URL записи MegaPBX: ${recordingUrl}`);
+    }
+
+    const timeoutMs = this.getRecordingDownloadTimeoutMs();
+    const response = await fetch(parsed, {
+      headers: {
+        Accept: "audio/*,application/octet-stream",
+        "X-API-KEY": this.config.apiKey,
+      },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+
+    if (!response.ok) {
+      const bodyText = await response.text();
+      const preview = bodyText.trim()
+        ? bodyText.length > 200
+          ? `${bodyText.slice(0, 200)}…`
+          : bodyText
+        : "";
+      throw new Error(
+        `Не удалось скачать запись: ${response.status} ${response.statusText}${preview ? ` — ${preview}` : ""}`,
+      );
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (buffer.length === 0) {
+      return { buffer, extension: "mp3" };
+    }
+
+    const pathname = parsed.pathname.toLowerCase();
+    if (pathname.endsWith(".wav")) return { buffer, extension: "wav" };
+    if (pathname.endsWith(".ogg")) return { buffer, extension: "ogg" };
+    if (pathname.endsWith(".m4a")) return { buffer, extension: "m4a" };
+    if (pathname.endsWith(".mp3")) return { buffer, extension: "mp3" };
+
+    const contentType =
+      response.headers.get("content-type")?.toLowerCase() ?? "";
+    if (contentType.includes("wav")) return { buffer, extension: "wav" };
+    if (contentType.includes("ogg")) return { buffer, extension: "ogg" };
+    if (contentType.includes("m4a") || contentType.includes("mp4")) {
+      return { buffer, extension: "m4a" };
+    }
+    return { buffer, extension: "mp3" };
   }
 }

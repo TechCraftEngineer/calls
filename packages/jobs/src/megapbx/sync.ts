@@ -86,53 +86,17 @@ async function autoLinkEmployees(
 }
 
 async function uploadRecordingIfNeeded(
+  client: MegaPbxClient,
   workspaceId: string,
   providerCallId: string,
   recordingUrl: string | null,
 ): Promise<{ fileId: string | null; sizeBytes: number | null }> {
   if (!recordingUrl) return { fileId: null, sizeBytes: null };
-
-  const downloadTimeoutMsRaw = Number(
-    process.env.MEGAPBX_RECORDING_DOWNLOAD_TIMEOUT_MS,
-  );
-  const downloadTimeoutMs =
-    Number.isFinite(downloadTimeoutMsRaw) && downloadTimeoutMsRaw > 0
-      ? downloadTimeoutMsRaw
-      : 30_000;
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), downloadTimeoutMs);
-
-  let response: Response;
-  try {
-    response = await fetch(recordingUrl, { signal: controller.signal });
-  } catch (error) {
-    const isAbortError =
-      controller.signal.aborted ||
-      (error instanceof Error && error.name === "AbortError");
-
-    if (isAbortError) {
-      throw new Error(
-        `Таймаут скачивания записи MegaPBX (${providerCallId}) после ${downloadTimeoutMs}ms`,
-      );
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      `Не удалось скачать запись ${providerCallId}: ${response.status} ${response.statusText}`,
-    );
-  }
-
-  const buffer = Buffer.from(await response.arrayBuffer());
+  const { buffer, extension } = await client.downloadRecording(recordingUrl);
   if (buffer.length === 0) {
     return { fileId: null, sizeBytes: null };
   }
 
-  const extension = recordingUrl.toLowerCase().endsWith(".wav") ? "wav" : "mp3";
   const filename = `megapbx/${providerCallId}.${extension}`;
   const upload = await filesService.uploadCallRecording(
     workspaceId,
@@ -249,7 +213,13 @@ function extractCallsFromWebhookPayload(
       );
     }
   }
-  if (payload.id || payload.callId || payload.timestamp) {
+  if (
+    payload.uid ||
+    payload.start ||
+    payload.id ||
+    payload.callId ||
+    payload.timestamp
+  ) {
     return [payload];
   }
   return [];
@@ -329,6 +299,7 @@ export async function syncMegaPbxCalls(
       if (config.syncRecordings && call.recordingUrl) {
         try {
           const uploaded = await uploadRecordingIfNeeded(
+            client,
             workspaceId,
             call.externalId,
             call.recordingUrl,
