@@ -14,15 +14,14 @@ import {
   PasswordInput,
   Textarea,
 } from "@calls/ui";
-import type { FtpConnectionStatus, Prompt } from "./types";
+import type { FtpConnectionStatus, FtpSettings } from "./types";
 
 interface FtpSectionProps {
-  prompts: Record<string, Prompt>;
-  onPromptChange: (
-    key: string,
-    field: "value" | "description",
+  settings: FtpSettings;
+  onFieldChange: (
+    key: "host" | "user" | "password" | "excludePhoneNumbers",
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onSyncFromDateChange: (key: string, value: string) => void;
+  onSyncFromDateChange: (value: string) => void;
   onEnabledChange: (enabled: boolean) => void;
   onSave: () => Promise<void>;
   onTest: () => Promise<void>;
@@ -34,8 +33,8 @@ interface FtpSectionProps {
 }
 
 export default function FtpSection({
-  prompts,
-  onPromptChange,
+  settings,
+  onFieldChange,
   onSyncFromDateChange,
   onEnabledChange,
   onSave,
@@ -46,18 +45,13 @@ export default function FtpSection({
   connectionStatus,
   statusLoading,
 }: FtpSectionProps) {
-  const enabled = prompts.ftp_enabled?.value === "true";
-  const host = prompts.ftp_host?.value ?? "";
-  const user = prompts.ftp_user?.value ?? "";
-  const password = prompts.ftp_password?.value ?? "";
-  const passwordSet = prompts.ftp_password?.meta?.passwordSet;
+  const { enabled, host, user, password, passwordSet } = settings;
   const defaultFromDate = (() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
     return d.toISOString().slice(0, 10);
   })();
-  const syncFromDate =
-    prompts.ftp_sync_from_date?.value?.trim() || defaultFromDate;
+  const syncFromDate = settings.syncFromDate.trim() || defaultFromDate;
   const hasValues = host.trim() || user.trim() || password;
 
   return (
@@ -112,7 +106,7 @@ export default function FtpSection({
                 id="ftp-host"
                 type="text"
                 value={host}
-                onChange={onPromptChange("ftp_host", "value")}
+                onChange={onFieldChange("host")}
                 placeholder="ftp.example.com"
                 autoComplete="off"
                 className="h-9"
@@ -129,7 +123,7 @@ export default function FtpSection({
                 id="ftp-user"
                 type="text"
                 value={user}
-                onChange={onPromptChange("ftp_user", "value")}
+                onChange={onFieldChange("user")}
                 placeholder="FTP пользователь"
                 autoComplete="off"
                 className="h-9"
@@ -145,7 +139,7 @@ export default function FtpSection({
               <PasswordInput
                 id="ftp-password"
                 value={password}
-                onChange={onPromptChange("ftp_password", "value")}
+                onChange={onFieldChange("password")}
                 placeholder={
                   passwordSet
                     ? "•••••••• (оставьте пустым, чтобы не менять)"
@@ -167,7 +161,7 @@ export default function FtpSection({
             <DatePicker
               id="ftp-sync-from-date"
               value={syncFromDate}
-              onChange={(v) => onSyncFromDateChange("ftp_sync_from_date", v)}
+              onChange={onSyncFromDateChange}
               placeholder="Выберите дату"
               className="h-9"
             />
@@ -185,8 +179,8 @@ export default function FtpSection({
             </Label>
             <Textarea
               id="ftp-exclude-phone-numbers"
-              value={prompts.ftp_exclude_phone_numbers?.value ?? ""}
-              onChange={onPromptChange("ftp_exclude_phone_numbers", "value")}
+              value={settings.excludePhoneNumbers}
+              onChange={onFieldChange("excludePhoneNumbers")}
               placeholder="79035553973, 9035553973"
               rows={3}
               className="font-mono text-sm"

@@ -14,8 +14,10 @@ export default function SettingsIntegrationsPage() {
     handleSaveMaxBot,
     handleSaveFtp,
     handleTestFtp,
-    updatePrompt,
-    setPromptValue,
+    setTelegramBotToken,
+    setMaxBotToken,
+    setFtpField,
+    setFtpSyncFromDate,
     setFtpEnabled,
   } = useSettings();
 
@@ -44,9 +46,9 @@ export default function SettingsIntegrationsPage() {
 
       <div className="space-y-8">
         <FtpSection
-          prompts={state.prompts}
-          onPromptChange={updatePrompt}
-          onSyncFromDateChange={setPromptValue}
+          settings={state.ftp}
+          onFieldChange={setFtpField}
+          onSyncFromDateChange={setFtpSyncFromDate}
           onEnabledChange={setFtpEnabled}
           onSave={handleSaveFtp}
           onTest={handleTestFtp}
@@ -58,8 +60,9 @@ export default function SettingsIntegrationsPage() {
         />
 
         <IntegrationsSection
-          prompts={state.prompts}
-          onPromptChange={updatePrompt}
+          integrations={state.integrations}
+          onTelegramTokenChange={setTelegramBotToken}
+          onMaxBotTokenChange={setMaxBotToken}
           onSaveTelegram={handleSaveTelegram}
           onSaveMaxBot={handleSaveMaxBot}
           telegramSaving={state.telegramSaving}

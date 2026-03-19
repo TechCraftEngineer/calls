@@ -33,8 +33,8 @@ function getWebhookBaseUrl(): string {
 }
 
 export default function MegaPbxSection({
-  prompts,
-  onToggleChange,
+  megaPbx,
+  onEnabledChange,
   onSaveAccess,
   onSaveSyncOptions,
   onSaveExcludedNumbers,
@@ -68,18 +68,18 @@ export default function MegaPbxSection({
       ? `${getWebhookBaseUrl()}/api/megapbx-webhook/${activeWorkspace.id}`
       : "";
 
-  const enabled = prompts.megapbx_enabled?.value === "true";
-  const baseUrl = prompts.megapbx_base_url?.value ?? "";
-  const apiKeySet = Boolean(prompts.megapbx_api_key?.meta?.passwordSet);
+  const enabled = megaPbx.enabled;
+  const baseUrl = megaPbx.baseUrl;
+  const apiKeySet = megaPbx.apiKeySet;
   const hasConnection = Boolean(baseUrl.trim()) && apiKeySet;
   const linkedEmployees = employees.filter((item) => Boolean(item.link)).length;
   const linkedNumbers = numbers.filter((item) => Boolean(item.link)).length;
   const activeEmployees = employees.filter((item) => item.isActive).length;
   const configuredFeatures = [
-    prompts.megapbx_sync_employees?.value === "true" ? "Сотрудники" : null,
-    prompts.megapbx_sync_numbers?.value === "true" ? "Номера" : null,
-    prompts.megapbx_sync_calls?.value === "true" ? "Звонки и записи" : null,
-    prompts.megapbx_webhooks_enabled?.value === "true" ? "Вебхуки" : null,
+    megaPbx.syncEmployees ? "Сотрудники" : null,
+    megaPbx.syncNumbers ? "Номера" : null,
+    megaPbx.syncCalls ? "Звонки и записи" : null,
+    megaPbx.webhooksEnabled ? "Вебхуки" : null,
   ].filter(Boolean) as string[];
 
   const employeeLinkOptions = useMemo(
@@ -116,12 +116,12 @@ export default function MegaPbxSection({
     [numbers],
   );
   const excludedPhoneNumbers = useMemo(() => {
-    const raw = prompts.megapbx_exclude_phone_numbers?.value ?? "";
+    const raw = megaPbx.excludePhoneNumbers;
     return raw
       .split(/[\n,;]+/)
       .map((value) => value.replace(/\D/g, ""))
       .filter(Boolean);
-  }, [prompts.megapbx_exclude_phone_numbers?.value]);
+  }, [megaPbx.excludePhoneNumbers]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -170,9 +170,7 @@ export default function MegaPbxSection({
               id="megapbx-enabled"
               checked={enabled}
               disabled={saving}
-              onCheckedChange={(checked) =>
-                onToggleChange("megapbx_enabled", checked === true)
-              }
+              onCheckedChange={(checked) => onEnabledChange(checked === true)}
             />
             <span className="text-sm font-semibold">
               {enabled ? "Интеграция включена" : "Интеграция выключена"}
@@ -228,7 +226,7 @@ export default function MegaPbxSection({
 
         {activeTab === "overview" && (
           <OverviewTab
-            prompts={prompts}
+            megaPbx={megaPbx}
             baseUrl={baseUrl}
             apiKeySet={apiKeySet}
             hasConnection={hasConnection}

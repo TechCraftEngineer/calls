@@ -8,6 +8,41 @@ export interface Prompt {
   error?: string;
 }
 
+export interface FtpSettings {
+  enabled: boolean;
+  host: string;
+  user: string;
+  password: string;
+  passwordSet: boolean;
+  syncFromDate: string;
+  excludePhoneNumbers: string;
+}
+
+export interface IntegrationsSettings {
+  telegramBotToken: string;
+  maxBotToken: string;
+}
+
+export interface MegaPbxSettings {
+  enabled: boolean;
+  baseUrl: string;
+  apiKey: string;
+  apiKeySet: boolean;
+  syncFromDate: string;
+  excludePhoneNumbers: string;
+  webhookSecret: string;
+  webhookSecretSet: boolean;
+  ftpHost: string;
+  ftpUser: string;
+  ftpPassword: string;
+  ftpPasswordSet: boolean;
+  syncEmployees: boolean;
+  syncNumbers: boolean;
+  syncCalls: boolean;
+  syncRecordings: boolean;
+  webhooksEnabled: boolean;
+}
+
 export interface FtpConnectionStatus {
   configured: boolean;
   success: boolean | null;
@@ -81,7 +116,9 @@ export function getReportTypeLabel(reportType: ReportType): string {
 }
 
 export interface SettingsState {
-  prompts: Record<string, Prompt>;
+  ftp: FtpSettings;
+  integrations: IntegrationsSettings;
+  megaPbx: MegaPbxSettings;
   loading: boolean;
   saving: boolean;
   backupLoading: boolean;
@@ -117,11 +154,13 @@ export interface TelegramSectionProps {
 }
 
 export interface IntegrationsSectionProps {
-  prompts: Record<string, Prompt>;
-  onPromptChange: (
-    key: string,
-    field: "value" | "description",
-  ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  integrations: IntegrationsSettings;
+  onTelegramTokenChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => void;
+  onMaxBotTokenChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => void;
   onSaveTelegram: () => Promise<void>;
   onSaveMaxBot: () => Promise<void>;
   telegramSaving: boolean;
@@ -129,8 +168,8 @@ export interface IntegrationsSectionProps {
 }
 
 export interface PbxSectionProps {
-  prompts: Record<string, Prompt>;
-  onToggleChange: (key: string, checked: boolean) => void;
+  megaPbx: MegaPbxSettings;
+  onEnabledChange: (checked: boolean) => void;
   onSaveAccess: (
     data: import("./megapbx/schemas").AccessFormData,
   ) => Promise<void>;

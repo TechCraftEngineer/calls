@@ -30,8 +30,9 @@ const MAX_BOTS_CREATE_URL =
   "https://dev.max.ru/docs/chatbots/bots-nocode/create";
 
 export default function IntegrationsSection({
-  prompts,
-  onPromptChange,
+  integrations,
+  onTelegramTokenChange,
+  onMaxBotTokenChange,
   onSaveTelegram,
   onSaveMaxBot,
   telegramSaving,
@@ -39,8 +40,7 @@ export default function IntegrationsSection({
 }: IntegrationsSectionProps) {
   const [telegramError, setTelegramError] = useState<string | null>(null);
 
-  const telegramValue = prompts.telegram_bot_token?.value ?? "";
-  const handleTelegramChange = onPromptChange("telegram_bot_token", "value");
+  const telegramValue = integrations.telegramBotToken;
   const handleTelegramBlur = useCallback(() => {
     if (!telegramValue.trim()) {
       setTelegramError(null);
@@ -127,7 +127,7 @@ export default function IntegrationsSection({
               value={telegramValue}
               onChange={(e) => {
                 setTelegramError(null);
-                handleTelegramChange(e);
+                onTelegramTokenChange(e);
               }}
               onBlur={handleTelegramBlur}
               placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
@@ -206,8 +206,8 @@ export default function IntegrationsSection({
             </Label>
             <PasswordInput
               id="max-bot-token"
-              value={prompts.max_bot_token?.value ?? ""}
-              onChange={onPromptChange("max_bot_token", "value")}
+              value={integrations.maxBotToken}
+              onChange={onMaxBotTokenChange}
               placeholder="AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw"
               autoComplete="off"
               className="h-9"

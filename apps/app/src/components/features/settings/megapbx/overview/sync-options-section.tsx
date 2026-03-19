@@ -20,7 +20,13 @@ import { type SyncOptionsFormData, syncOptionsFormSchema } from "../schemas";
 import { SectionBlock } from "../section-block";
 
 interface SyncOptionsSectionProps {
-  prompts: Record<string, { value?: string }>;
+  megaPbx: {
+    syncEmployees: boolean;
+    syncNumbers: boolean;
+    syncCalls: boolean;
+    syncRecordings: boolean;
+    webhooksEnabled: boolean;
+  };
   saving: boolean;
   onSaveSyncOptions: (data: SyncOptionsFormData) => Promise<void>;
 }
@@ -33,13 +39,12 @@ const KEY_TO_FIELD: Record<string, keyof SyncOptionsFormData> = {
 };
 
 export function SyncOptionsSection({
-  prompts,
+  megaPbx,
   saving,
   onSaveSyncOptions,
 }: SyncOptionsSectionProps) {
-  const syncCallsDefault = prompts.megapbx_sync_calls?.value === "true";
-  const syncRecordingsDefault =
-    syncCallsDefault || prompts.megapbx_sync_recordings?.value === "true";
+  const syncCallsDefault = megaPbx.syncCalls;
+  const syncRecordingsDefault = syncCallsDefault || megaPbx.syncRecordings;
 
   const form = useForm<SyncOptionsFormData>({
     resolver: zodResolver(syncOptionsFormSchema) as never,
@@ -47,30 +52,29 @@ export function SyncOptionsSection({
     // Оставляем поле в payload для совместимости API.
     defaultValues: {
       syncCalls: syncCallsDefault,
-      syncEmployees: prompts.megapbx_sync_employees?.value === "true",
-      syncNumbers: prompts.megapbx_sync_numbers?.value === "true",
+      syncEmployees: megaPbx.syncEmployees,
+      syncNumbers: megaPbx.syncNumbers,
       syncRecordings: syncRecordingsDefault,
-      webhooksEnabled: prompts.megapbx_webhooks_enabled?.value === "true",
+      webhooksEnabled: megaPbx.webhooksEnabled,
     },
   });
 
   useEffect(() => {
-    const syncCalls = prompts.megapbx_sync_calls?.value === "true";
-    const syncRecordings =
-      syncCalls || prompts.megapbx_sync_recordings?.value === "true";
+    const syncCalls = megaPbx.syncCalls;
+    const syncRecordings = syncCalls || megaPbx.syncRecordings;
     form.reset({
-      syncEmployees: prompts.megapbx_sync_employees?.value === "true",
-      syncNumbers: prompts.megapbx_sync_numbers?.value === "true",
+      syncEmployees: megaPbx.syncEmployees,
+      syncNumbers: megaPbx.syncNumbers,
       syncCalls,
       syncRecordings,
-      webhooksEnabled: prompts.megapbx_webhooks_enabled?.value === "true",
+      webhooksEnabled: megaPbx.webhooksEnabled,
     });
   }, [
-    prompts.megapbx_sync_employees?.value,
-    prompts.megapbx_sync_numbers?.value,
-    prompts.megapbx_sync_calls?.value,
-    prompts.megapbx_sync_recordings?.value,
-    prompts.megapbx_webhooks_enabled?.value,
+    megaPbx.syncEmployees,
+    megaPbx.syncNumbers,
+    megaPbx.syncCalls,
+    megaPbx.syncRecordings,
+    megaPbx.webhooksEnabled,
     form,
   ]);
 

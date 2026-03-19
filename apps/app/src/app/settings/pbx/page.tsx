@@ -62,11 +62,9 @@ export default function SettingsPbxProvidersPage() {
 
   const availableProviders = PROVIDERS.filter((provider) => provider.available);
   const plannedProviders = PROVIDERS.filter((provider) => !provider.available);
-  const isMegafonEnabled = state.prompts.megapbx_enabled?.value === "true";
-  const megafonBaseUrl = state.prompts.megapbx_base_url?.value?.trim() ?? "";
-  const megafonApiKeySet = Boolean(
-    state.prompts.megapbx_api_key?.meta?.passwordSet,
-  );
+  const isMegafonEnabled = state.megaPbx.enabled;
+  const megafonBaseUrl = state.megaPbx.baseUrl.trim();
+  const megafonApiKeySet = state.megaPbx.apiKeySet;
   const megafonStatus =
     !megafonBaseUrl || !megafonApiKeySet
       ? "Не настроено"
