@@ -17,8 +17,6 @@ import { FilesService } from "./files.service";
 import { InvitationsService } from "./invitations.service";
 import { PbxService } from "./pbx.service";
 
-export { MegaPbxConfigNotFoundError } from "./pbx.service";
-
 import { SettingsService } from "./settings.service";
 import { UsersService } from "./users.service";
 import { WorkspacesService } from "./workspaces.service";

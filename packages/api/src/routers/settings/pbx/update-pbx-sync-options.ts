@@ -1,4 +1,4 @@
-import { MegaPbxConfigNotFoundError, pbxService } from "@calls/db";
+import { pbxService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { getUserEmail } from "./get-user-email";
@@ -11,7 +11,7 @@ export const updatePbxSyncOptions = workspaceAdminProcedure
 
     let ok: boolean;
     try {
-      ok = await pbxService.updateSettingsPartial(
+      ok = await pbxService.updateSyncOptions(
         context.workspaceId,
         {
           syncEmployees: input.syncEmployees,
@@ -23,16 +23,14 @@ export const updatePbxSyncOptions = workspaceAdminProcedure
         String(username),
       );
     } catch (err: unknown) {
-      if (err instanceof MegaPbxConfigNotFoundError) {
-        throw new ORPCError("NOT_FOUND", {
-          message: "PBX интеграция не настроена",
-        });
-      }
-      throw err;
+      console.error("Failed to update PBX sync options:", err);
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Не удалось обновить настройки синхронизации",
+      });
     }
     if (!ok) {
-      throw new ORPCError("NOT_FOUND", {
-        message: "PBX интеграция не настроена",
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Не удалось обновить настройки синхронизации",
       });
     }
 
