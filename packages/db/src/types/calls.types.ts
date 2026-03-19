@@ -24,11 +24,13 @@ export interface GetCallsParams {
   mobileNumbers?: string[];
   /** Номера телефонов, исключённые из выборки */
   excludePhoneNumbers?: string[];
-  direction?: string;
+  directions?: string[];
   valueScores?: number[];
   operators?: string[];
-  manager?: string;
-  status?: string;
+  managers?: string[];
+  statuses?: string[];
+  /** Internal numbers найденных сотрудников по текстовому поиску q */
+  managerInternalNumbersForQuery?: string[];
   q?: string;
 }
 

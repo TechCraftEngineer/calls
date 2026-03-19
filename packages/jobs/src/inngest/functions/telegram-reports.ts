@@ -13,7 +13,7 @@ import {
 } from "@calls/db";
 import { sendMessage } from "@calls/telegram-bot";
 import type { ManagerStats } from "../../reports/format-report";
-import { formatTelegramReport } from "../../reports/format-report";
+import { formatTelegramReportHtml } from "../../reports/format-report";
 import { inngest } from "../client";
 
 const TZ = "Europe/Moscow";
@@ -216,7 +216,7 @@ export const telegramReportsFn = inngest.createFunction(
                 });
               }
 
-              const text = formatTelegramReport({
+              const text = formatTelegramReportHtml({
                 stats,
                 dateFrom,
                 dateTo,
@@ -228,7 +228,9 @@ export const telegramReportsFn = inngest.createFunction(
                 lowRatedCalls,
               });
 
-              const ok = await sendMessage(token, r.chatId, text);
+              const ok = await sendMessage(token, r.chatId, text, {
+                parseMode: "HTML",
+              });
               if (ok) {
                 sent++;
               } else {

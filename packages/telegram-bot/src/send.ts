@@ -11,6 +11,7 @@ export async function sendMessage(
   token: string,
   chatId: string,
   text: string,
+  options?: { parseMode?: "HTML" | "MarkdownV2" },
 ): Promise<boolean> {
   try {
     if (!token?.trim()) {
@@ -29,7 +30,9 @@ export async function sendMessage(
     }
 
     const bot = new Bot(token);
-    await bot.api.sendMessage(chatId, text);
+    await bot.api.sendMessage(chatId, text, {
+      parse_mode: options?.parseMode,
+    });
     console.log(`[telegram-send] Message sent successfully to chat ${chatId}`);
     return true;
   } catch (error) {

@@ -22,9 +22,9 @@ const listCallsSchema = z.object({
   q: z.string().optional(),
   date_from: z.string().optional(),
   date_to: z.string().optional(),
-  direction: z.string().optional(),
-  manager: z.string().optional(),
-  status: z.string().optional(),
+  direction: z.array(z.string()).optional(),
+  manager: z.array(z.string()).optional(),
+  status: z.array(z.string()).optional(),
   value: z.array(z.number()).optional(),
   operator: z.array(z.string()).optional(),
 });
@@ -39,6 +39,35 @@ export const list = workspaceProcedure
       ? `${input.date_from}T00:00:00`
       : undefined;
     const dateTo = input.date_to ? `${input.date_to}T23:59:59` : undefined;
+    const normalizedStatuses = input.status
+      ?.map((status) =>
+        status === "missed" || status === "Пропущен"
+          ? "ПРОПУЩЕН"
+          : status === "answered" || status === "Принят"
+            ? "ПРИНЯТ"
+            : null,
+      )
+      .filter((status): status is "ПРОПУЩЕН" | "ПРИНЯТ" => status !== null);
+
+    const normalizedDirections = input.direction
+      ?.map((direction) =>
+        direction === "incoming" || direction === "Входящий"
+          ? "Входящий"
+          : direction === "outgoing" || direction === "Исходящий"
+            ? "Исходящий"
+            : null,
+      )
+      .filter(
+        (direction): direction is "Входящий" | "Исходящий" =>
+          direction !== null,
+      );
+    const trimmedQuery = input.q?.trim() || undefined;
+    const managerInternalNumbersForQuery = trimmedQuery
+      ? await usersRepository.findInternalNumbersByNameQuery(
+          workspaceId,
+          trimmedQuery,
+        )
+      : [];
 
     const isAdminOrOwner =
       context.workspaceRole === "admin" || context.workspaceRole === "owner";
@@ -70,9 +99,9 @@ export const list = workspaceProcedure
             query: input.q ?? "",
             date_from: input.date_from ?? "",
             date_to: input.date_to ?? "",
-            direction: input.direction ?? "all",
-            status: input.status ?? "all",
-            manager: input.manager ?? "",
+            direction: input.direction ?? [],
+            status: input.status ?? [],
+            manager: input.manager ?? [],
             value: input.value ?? [],
             operator: input.operator ?? [],
           },
@@ -97,17 +126,18 @@ export const list = workspaceProcedure
       mobileNumbers,
       excludePhoneNumbers:
         excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
-      direction:
-        input.direction === "incoming" || input.direction === "Входящий"
-          ? "Входящий"
-          : input.direction === "outgoing" || input.direction === "Исходящий"
-            ? "Исходящий"
-            : undefined,
+      directions: normalizedDirections?.length
+        ? normalizedDirections
+        : undefined,
       valueScores: input.value?.length ? input.value : undefined,
       operators: input.operator?.length ? input.operator : undefined,
-      manager: input.manager || undefined,
-      status: input.status || undefined,
-      q: input.q?.trim() || undefined,
+      managers: input.manager?.length ? input.manager : undefined,
+      statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
+      managerInternalNumbersForQuery:
+        managerInternalNumbersForQuery.length > 0
+          ? managerInternalNumbersForQuery
+          : undefined,
+      q: trimmedQuery,
     });
 
     const totalItems = await callsService.countCalls({
@@ -118,17 +148,18 @@ export const list = workspaceProcedure
       mobileNumbers,
       excludePhoneNumbers:
         excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
-      direction:
-        input.direction === "incoming" || input.direction === "Входящий"
-          ? "Входящий"
-          : input.direction === "outgoing" || input.direction === "Исходящий"
-            ? "Исходящий"
-            : undefined,
+      directions: normalizedDirections?.length
+        ? normalizedDirections
+        : undefined,
       valueScores: input.value?.length ? input.value : undefined,
       operators: input.operator?.length ? input.operator : undefined,
-      manager: input.manager || undefined,
-      status: input.status || undefined,
-      q: input.q?.trim() || undefined,
+      managers: input.manager?.length ? input.manager : undefined,
+      statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
+      managerInternalNumbersForQuery:
+        managerInternalNumbersForQuery.length > 0
+          ? managerInternalNumbersForQuery
+          : undefined,
+      q: trimmedQuery,
     });
 
     const totalPages = Math.ceil(totalItems / input.per_page) || 1;
@@ -144,15 +175,12 @@ export const list = workspaceProcedure
       mobileNumbers,
       excludePhoneNumbers:
         excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
-      direction:
-        input.direction === "incoming" || input.direction === "Входящий"
-          ? "Входящий"
-          : input.direction === "outgoing" || input.direction === "Исходящий"
-            ? "Исходящий"
-            : undefined,
+      directions: normalizedDirections?.length
+        ? normalizedDirections
+        : undefined,
       valueScores: input.value?.length ? input.value : undefined,
       operators: input.operator?.length ? input.operator : undefined,
-      status: input.status || undefined,
+      statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
     });
 
     const internalNumbersToResolve = rawCalls
@@ -191,6 +219,10 @@ export const list = workspaceProcedure
 
         const { filename: _filename, ...publicCall } = item.call;
 
+        const isLlmProcessed = Boolean(
+          item.transcript?.summary?.trim() || item.evaluation,
+        );
+
         return {
           ...item,
           call: {
@@ -203,13 +235,16 @@ export const list = workspaceProcedure
             operatorName,
             managerId: managerFromWorkspace?.id ?? null,
           },
-          analysisCostRub: calculateAnalysisCostRub(
-            typeof item.call.duration === "number" && item.call.duration > 0
-              ? item.call.duration
-              : typeof item.transcript?.metadata?.durationInSeconds === "number"
-                ? item.transcript.metadata.durationInSeconds
-                : null,
-          ),
+          analysisCostRub: isLlmProcessed
+            ? calculateAnalysisCostRub(
+                typeof item.call.duration === "number" && item.call.duration > 0
+                  ? item.call.duration
+                  : typeof item.transcript?.metadata?.durationInSeconds ===
+                      "number"
+                    ? item.transcript.metadata.durationInSeconds
+                    : null,
+              )
+            : null,
         };
       }),
     );
@@ -228,9 +263,9 @@ export const list = workspaceProcedure
         query: input.q ?? "",
         date_from: input.date_from ?? "",
         date_to: input.date_to ?? "",
-        direction: input.direction ?? "all",
-        status: input.status ?? "all",
-        manager: input.manager ?? "",
+        direction: input.direction ?? [],
+        status: input.status ?? [],
+        manager: input.manager ?? [],
         value: input.value ?? [],
         operator: input.operator ?? [],
       },
