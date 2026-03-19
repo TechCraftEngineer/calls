@@ -32,7 +32,8 @@ export default function CustomDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement | null>(null);
-  const panelRef = useRef<HTMLDivElement | null>(null);
+  const panelDivRef = useRef<HTMLDivElement | null>(null);
+  const panelFieldsetRef = useRef<HTMLFieldSetElement | null>(null);
   const instanceId = useId();
   const panelDomId = `${instanceId}-panel`;
   const triggerLabelId = `${instanceId}-trigger-label`;
@@ -84,7 +85,7 @@ export default function CustomDropdown({
     if (!isOpen) return;
 
     const getFocusable = () => {
-      const root = panelRef.current;
+      const root = panelDivRef.current ?? panelFieldsetRef.current;
       if (!root) return [] as HTMLElement[];
 
       const selector =
@@ -200,7 +201,7 @@ export default function CustomDropdown({
         {isOpen && (
           <div
             id={panelDomId}
-            ref={panelRef}
+            ref={panelDivRef}
             className="dropdown-menu"
             role="listbox"
             aria-labelledby={triggerLabelId}
@@ -285,7 +286,7 @@ export default function CustomDropdown({
         {isOpen && (
           <fieldset
             id={panelDomId}
-            ref={panelRef}
+            ref={panelFieldsetRef}
             className="dropdown-menu"
             aria-labelledby={panelLabelId}
           >
@@ -363,7 +364,7 @@ export default function CustomDropdown({
         {isOpen && (
           <fieldset
             id={panelDomId}
-            ref={panelRef}
+            ref={panelFieldsetRef}
             className="dropdown-menu"
             aria-labelledby={panelLabelId}
           >

@@ -78,8 +78,7 @@ export default function MegaPbxSection({
   const configuredFeatures = [
     prompts.megapbx_sync_employees?.value === "true" ? "Сотрудники" : null,
     prompts.megapbx_sync_numbers?.value === "true" ? "Номера" : null,
-    prompts.megapbx_sync_calls?.value === "true" ? "Звонки" : null,
-    prompts.megapbx_sync_recordings?.value === "true" ? "Записи" : null,
+    prompts.megapbx_sync_calls?.value === "true" ? "Звонки и записи" : null,
     prompts.megapbx_webhooks_enabled?.value === "true" ? "Вебхуки" : null,
   ].filter(Boolean) as string[];
 

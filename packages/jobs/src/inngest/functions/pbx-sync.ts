@@ -5,6 +5,9 @@ import {
   syncPbxCalls,
   syncPbxDirectory,
 } from "@calls/jobs/pbx/sync";
+import { createLogger } from "../../logger";
+
+const logger = createLogger("pbx-sync");
 
 export const pbxSyncFn = inngest.createFunction(
   {
@@ -37,7 +40,7 @@ export const pbxSyncRequestedFn = inngest.createFunction(
       key: "event.data.workspaceId",
     },
   },
-  async ({ event }) => {
+  async ({ event, step }) => {
     const {
       workspaceId,
       syncType,
@@ -48,46 +51,76 @@ export const pbxSyncRequestedFn = inngest.createFunction(
       throw new Error("workspaceId обязателен");
     }
 
-    const config = await pbxService.getConfigWithSecrets(workspaceId);
+    logger.info("Запуск PBX синхронизации по запросу", {
+      workspaceId,
+      syncType,
+      syncRecordings,
+      source: webhookEvent ? "webhook" : "manual",
+      webhookEventType: webhookEvent?.eventType ?? null,
+    });
+
+    const config = await step.run("get-pbx-config", async () => {
+      return pbxService.getConfigWithSecrets(workspaceId);
+    });
     if (!config) {
       throw new Error("PBX интеграция не настроена");
     }
 
     try {
-      const result =
-        syncType === "directory"
-          ? await syncPbxDirectory(workspaceId, config)
-          : await syncPbxCalls(
+      const result = await step.run(`sync-${syncType}`, async () => {
+        return syncType === "directory"
+          ? syncPbxDirectory(workspaceId, config)
+          : syncPbxCalls(
               workspaceId,
               { ...config, syncRecordings },
               webhookEvent?.payload,
             );
+      });
 
       if (webhookEvent) {
-        await pbxService.recordWebhookEvent({
-          workspaceId,
-          eventId: webhookEvent.eventId ?? null,
-          eventType: webhookEvent.eventType,
-          payload: webhookEvent.payload,
-          status: "processed",
-          processedAt: new Date(),
-          errorMessage: null,
+        await step.run("mark-webhook-processed", async () => {
+          await pbxService.recordWebhookEvent({
+            workspaceId,
+            eventId: webhookEvent.eventId ?? null,
+            eventType: webhookEvent.eventType,
+            payload: webhookEvent.payload,
+            status: "processed",
+            processedAt: new Date(),
+            errorMessage: null,
+          });
         });
       }
+
+      logger.info("PBX синхронизация по запросу завершена", {
+        workspaceId,
+        syncType,
+        stats: result,
+      });
 
       return result;
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
       if (webhookEvent) {
-        await pbxService.recordWebhookEvent({
-          workspaceId,
-          eventId: webhookEvent.eventId ?? null,
-          eventType: webhookEvent.eventType,
-          payload: webhookEvent.payload,
-          status: "error",
-          processedAt: new Date(),
-          errorMessage: error instanceof Error ? error.message : String(error),
+        await step.run("mark-webhook-error", async () => {
+          await pbxService.recordWebhookEvent({
+            workspaceId,
+            eventId: webhookEvent.eventId ?? null,
+            eventType: webhookEvent.eventType,
+            payload: webhookEvent.payload,
+            status: "error",
+            processedAt: new Date(),
+            errorMessage,
+          });
         });
       }
+
+      logger.error("PBX синхронизация по запросу завершилась с ошибкой", {
+        workspaceId,
+        syncType,
+        error: errorMessage,
+      });
 
       throw error;
     }

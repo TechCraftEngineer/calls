@@ -29,7 +29,6 @@ const KEY_TO_FIELD: Record<string, keyof SyncOptionsFormData> = {
   megapbx_sync_employees: "syncEmployees",
   megapbx_sync_numbers: "syncNumbers",
   megapbx_sync_calls: "syncCalls",
-  megapbx_sync_recordings: "syncRecordings",
   megapbx_webhooks_enabled: "webhooksEnabled",
 };
 
@@ -40,28 +39,30 @@ export function SyncOptionsSection({
 }: SyncOptionsSectionProps) {
   const form = useForm<SyncOptionsFormData>({
     resolver: zodResolver(syncOptionsFormSchema) as never,
+    // Записи всегда синхронизируются вместе со звонками.
+    // Оставляем поле в payload для совместимости API.
     defaultValues: {
+      syncCalls: prompts.megapbx_sync_calls?.value === "true",
       syncEmployees: prompts.megapbx_sync_employees?.value === "true",
       syncNumbers: prompts.megapbx_sync_numbers?.value === "true",
-      syncCalls: prompts.megapbx_sync_calls?.value === "true",
-      syncRecordings: prompts.megapbx_sync_recordings?.value === "true",
+      syncRecordings: prompts.megapbx_sync_calls?.value === "true",
       webhooksEnabled: prompts.megapbx_webhooks_enabled?.value === "true",
     },
   });
 
   useEffect(() => {
+    const syncCalls = prompts.megapbx_sync_calls?.value === "true";
     form.reset({
       syncEmployees: prompts.megapbx_sync_employees?.value === "true",
       syncNumbers: prompts.megapbx_sync_numbers?.value === "true",
-      syncCalls: prompts.megapbx_sync_calls?.value === "true",
-      syncRecordings: prompts.megapbx_sync_recordings?.value === "true",
+      syncCalls,
+      syncRecordings: syncCalls,
       webhooksEnabled: prompts.megapbx_webhooks_enabled?.value === "true",
     });
   }, [
     prompts.megapbx_sync_employees?.value,
     prompts.megapbx_sync_numbers?.value,
     prompts.megapbx_sync_calls?.value,
-    prompts.megapbx_sync_recordings?.value,
     prompts.megapbx_webhooks_enabled?.value,
     form,
   ]);
@@ -108,9 +109,13 @@ export function SyncOptionsSection({
                             disabled={saving}
                             onCheckedChange={(checked) => {
                               field.onChange(checked);
-                              const payload: SyncOptionsFormData = {
+                              const nextValues: SyncOptionsFormData = {
                                 ...form.getValues(),
                                 [fieldName]: checked,
+                              };
+                              const payload: SyncOptionsFormData = {
+                                ...nextValues,
+                                syncRecordings: nextValues.syncCalls,
                               };
                               void onSaveSyncOptions(payload);
                             }}

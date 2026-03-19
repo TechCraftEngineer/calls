@@ -17,11 +17,10 @@ export const SYNC_OPTIONS = [
   ["megapbx_sync_numbers", "Номера", "Внешние и внутренние номера", Database],
   [
     "megapbx_sync_calls",
-    "Звонки",
-    "Импорт истории звонков в систему",
+    "Звонки и записи",
+    "Импорт истории звонков вместе с аудиозаписями",
     PhoneCall,
   ],
-  ["megapbx_sync_recordings", "Записи", "Загрузка и привязка аудиофайлов", Mic],
   [
     "megapbx_webhooks_enabled",
     "Вебхуки",
