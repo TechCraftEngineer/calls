@@ -38,5 +38,6 @@ export {
 export {
   type FormatReportParams,
   formatTelegramReport,
+  formatTelegramReportHtml,
   type ManagerStats,
 } from "./reports/format-report";

@@ -231,6 +231,54 @@ export const usersRepository = {
   },
 
   /**
+   * Находит внутренние номера сотрудников воркспейса по строке поиска имени.
+   * Поиск выполняется по givenName/familyName/name (без учета регистра).
+   */
+  async findInternalNumbersByNameQuery(
+    workspaceId: string,
+    query: string,
+  ): Promise<string[]> {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return [];
+
+    const members = await db
+      .select({
+        user: schema.user,
+      })
+      .from(schema.workspaceMembers)
+      .innerJoin(
+        schema.user,
+        eq(schema.workspaceMembers.userId, schema.user.id),
+      )
+      .where(
+        and(
+          eq(schema.workspaceMembers.workspaceId, workspaceId),
+          isNull(schema.user.deletedAt),
+        ),
+      );
+
+    const matched = new Set<string>();
+
+    for (const { user } of members) {
+      const haystack = [user.givenName, user.familyName, user.name]
+        .filter((v): v is string => typeof v === "string")
+        .join(" ")
+        .toLowerCase();
+
+      if (!haystack.includes(needle)) continue;
+
+      const extensions = parseInternalExtensions(user.internalExtensions);
+      if (!extensions) continue;
+
+      for (const extension of extensions) {
+        matched.add(extension);
+      }
+    }
+
+    return [...matched];
+  },
+
+  /**
    * Находит пользователя workspace по internal_number звонка.
    * Сопоставление: internal_extensions пользователя (comma-separated) содержит internalNumber.
    */

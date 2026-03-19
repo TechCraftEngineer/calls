@@ -5,7 +5,7 @@ import {
   usersService,
   workspacesService,
 } from "@calls/db";
-import { formatTelegramReport, type ManagerStats } from "@calls/jobs";
+import { formatTelegramReportHtml, type ManagerStats } from "@calls/jobs";
 import { sendMessage } from "@calls/telegram-bot";
 import { ORPCError } from "@orpc/server";
 import { subDays, subMonths, subWeeks } from "date-fns";
@@ -157,7 +157,7 @@ export const sendTestTelegram = workspaceProcedure
     const ws = await workspacesService.getById(workspaceId);
     const workspaceName = ws?.name ?? undefined;
 
-    const text = formatTelegramReport({
+    const text = formatTelegramReportHtml({
       stats: stats as Record<string, ManagerStats>,
       dateFrom,
       dateTo,
@@ -169,7 +169,9 @@ export const sendTestTelegram = workspaceProcedure
       lowRatedCalls,
     });
 
-    const success = await sendMessage(token, chatId, text);
+    const success = await sendMessage(token, chatId, text, {
+      parseMode: "HTML",
+    });
     if (!success) {
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message:

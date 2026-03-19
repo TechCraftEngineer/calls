@@ -1,4 +1,4 @@
-import { eq, gte, inArray, like, lte, or, sql } from "drizzle-orm";
+import { eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
 import * as schema from "../../schema";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
 
@@ -10,11 +10,12 @@ export interface CallConditionsParams {
   mobileNumbers?: string[];
   /** Номера телефонов, исключённые из выборки (внутренние или внешние) */
   excludePhoneNumbers?: string[];
-  direction?: string;
+  directions?: string[];
   valueScores?: number[];
   operators?: string[];
-  manager?: string;
-  status?: string;
+  managers?: string[];
+  statuses?: string[];
+  managerInternalNumbersForQuery?: string[];
   q?: string;
 }
 
@@ -27,11 +28,12 @@ export function buildCallConditions(params: CallConditionsParams) {
     internalNumbers,
     mobileNumbers,
     excludePhoneNumbers,
-    direction,
+    directions,
     valueScores,
     operators,
-    manager,
-    status,
+    managers,
+    statuses,
+    managerInternalNumbersForQuery,
     q,
   } = params;
 
@@ -66,26 +68,29 @@ export function buildCallConditions(params: CallConditionsParams) {
   } else if (mobileNumbers?.length) {
     conditions.push(inArray(schema.calls.number, mobileNumbers));
   }
-  if (direction) {
-    conditions.push(eq(schema.calls.direction, direction));
+  if (directions?.length) {
+    conditions.push(inArray(schema.calls.direction, directions));
   }
-  if (status) {
-    conditions.push(eq(schema.calls.status, status));
+  if (statuses?.length) {
+    conditions.push(inArray(schema.calls.status, statuses));
   }
   if (operators?.length) {
     conditions.push(inArray(schema.calls.source, operators));
   }
-  if (manager) {
-    conditions.push(eq(schema.calls.name, manager));
+  if (managers?.length) {
+    conditions.push(inArray(schema.calls.name, managers));
   }
   if (valueScores?.length) {
     conditions.push(inArray(schema.callEvaluations.valueScore, valueScores));
   }
   if (q) {
     const qCond = or(
-      like(schema.calls.number, `%${q}%`),
-      like(schema.calls.name, `%${q}%`),
-      like(schema.calls.customerName, `%${q}%`),
+      ilike(schema.calls.number, `%${q}%`),
+      ilike(schema.calls.name, `%${q}%`),
+      ilike(schema.calls.customerName, `%${q}%`),
+      managerInternalNumbersForQuery?.length
+        ? inArray(schema.calls.internalNumber, managerInternalNumbersForQuery)
+        : undefined,
     );
     if (qCond) conditions.push(qCond);
   }

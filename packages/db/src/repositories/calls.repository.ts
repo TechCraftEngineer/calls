@@ -109,11 +109,12 @@ export const callsRepository = {
       internalNumbers,
       mobileNumbers,
       excludePhoneNumbers,
-      direction,
+      directions,
       valueScores,
       operators,
-      manager,
-      status,
+      managers,
+      statuses,
+      managerInternalNumbersForQuery,
       q,
     } = params;
 
@@ -124,11 +125,12 @@ export const callsRepository = {
       internalNumbers,
       mobileNumbers,
       excludePhoneNumbers,
-      direction,
+      directions,
       valueScores,
       operators,
-      manager,
-      status,
+      managers,
+      statuses,
+      managerInternalNumbersForQuery,
       q,
     });
 
@@ -174,11 +176,12 @@ export const callsRepository = {
       internalNumbers,
       mobileNumbers,
       excludePhoneNumbers,
-      direction,
+      directions,
       valueScores,
       operators,
-      manager,
-      status,
+      managers,
+      statuses,
+      managerInternalNumbersForQuery,
       q,
     } = params;
 
@@ -189,11 +192,12 @@ export const callsRepository = {
       internalNumbers,
       mobileNumbers,
       excludePhoneNumbers,
-      direction,
+      directions,
       valueScores,
       operators,
-      manager,
-      status,
+      managers,
+      statuses,
+      managerInternalNumbersForQuery,
       q,
     });
 
@@ -225,10 +229,10 @@ export const callsRepository = {
       internalNumbers,
       mobileNumbers,
       excludePhoneNumbers,
-      direction,
+      directions,
       valueScores,
       operators,
-      status,
+      statuses,
     } = params;
 
     const conditions = buildCallConditions({
@@ -238,10 +242,10 @@ export const callsRepository = {
       internalNumbers,
       mobileNumbers,
       excludePhoneNumbers,
-      direction,
+      directions,
       valueScores,
       operators,
-      status,
+      statuses,
     });
 
     conditions.push(isNotNull(schema.calls.name));
