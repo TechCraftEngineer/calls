@@ -37,13 +37,9 @@ export default function CustomDropdown({
   const instanceId = useId();
   const panelDomId = `${instanceId}-panel`;
   const triggerLabelId = `${instanceId}-trigger-label`;
+  const srTriggerLabelId = `${instanceId}-sr-trigger-label`;
   const panelLabelId = `${instanceId}-panel-label`;
-  const popupRole =
-    type === "manager"
-      ? "listbox"
-      : type === "value" || type === "operator"
-        ? "dialog"
-        : "menu";
+  const popupRole = type === "manager" ? "listbox" : undefined;
 
   const managers: Manager[] =
     type === "manager"
@@ -192,7 +188,15 @@ export default function CustomDropdown({
           aria-controls={panelDomId}
           aria-haspopup={popupRole}
         >
-          <button ref={toggleRef} type="button" aria-haspopup={popupRole}>
+          <button
+            ref={toggleRef}
+            type="button"
+            aria-haspopup={popupRole}
+            aria-labelledby={`${srTriggerLabelId} ${triggerLabelId}`}
+          >
+            <span id={srTriggerLabelId} className="sr-only">
+              Фильтр менеджера
+            </span>
             <span id={triggerLabelId} className="dropdown-label">
               {displayLabel || label}
             </span>
@@ -204,7 +208,7 @@ export default function CustomDropdown({
             ref={panelDivRef}
             className="dropdown-menu"
             role="listbox"
-            aria-labelledby={triggerLabelId}
+            aria-labelledby={srTriggerLabelId}
           >
             <Button
               type="button"
@@ -277,7 +281,7 @@ export default function CustomDropdown({
           aria-controls={panelDomId}
           aria-haspopup={popupRole}
         >
-          <button ref={toggleRef} type="button" aria-haspopup={popupRole}>
+          <button ref={toggleRef} type="button">
             <span id={triggerLabelId} className="dropdown-label">
               {getDisplayLabel()}
             </span>
@@ -355,7 +359,7 @@ export default function CustomDropdown({
           aria-controls={panelDomId}
           aria-haspopup={popupRole}
         >
-          <button ref={toggleRef} type="button" aria-haspopup={popupRole}>
+          <button ref={toggleRef} type="button">
             <span id={triggerLabelId} className="dropdown-label">
               {getDisplayLabel()}
             </span>

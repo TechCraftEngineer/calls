@@ -607,10 +607,15 @@ export function useSettings() {
     webhooksEnabled: state.prompts.megapbx_webhooks_enabled?.value === "true",
   });
 
+  const refreshSettingsState = useCallback(async () => {
+    await loadSettings();
+  }, [loadSettings]);
+
   const handleSavePbx = async () => {
     try {
       setState((prev) => ({ ...prev, megaPbxSaving: true }));
       await updatePbxMutation.mutateAsync(megaPbxPayload());
+      await refreshSettingsState();
       toast.success("MegaPBX настройки сохранены");
     } catch (error: unknown) {
       const msg =
@@ -632,6 +637,7 @@ export function useSettings() {
         apiKey: payload.apiKey?.trim() || undefined,
         syncFromDate: payload.syncFromDate?.trim() || undefined,
       });
+      await refreshSettingsState();
       toast.success("Доступ к API сохранён");
     } catch (error: unknown) {
       const msg =
@@ -648,6 +654,7 @@ export function useSettings() {
     try {
       setState((prev) => ({ ...prev, megaPbxSyncOptionsSaving: true }));
       await updatePbxSyncOptionsMutation.mutateAsync(payload);
+      await refreshSettingsState();
       toast.success("Настройки синхронизации сохранены");
     } catch (error: unknown) {
       const msg =
@@ -655,6 +662,7 @@ export function useSettings() {
           ? error.message
           : "Не удалось сохранить настройки синхронизации";
       toast.error(msg);
+      throw error;
     } finally {
       setState((prev) => ({ ...prev, megaPbxSyncOptionsSaving: false }));
     }
@@ -676,6 +684,7 @@ export function useSettings() {
         excludePhoneNumbers: normalized,
       });
       setPromptValue("megapbx_exclude_phone_numbers", normalized.join("\n"));
+      await refreshSettingsState();
       toast.success("Исключённые номера сохранены");
     } catch (error: unknown) {
       const msg =
@@ -695,6 +704,7 @@ export function useSettings() {
       await updatePbxWebhookMutation.mutateAsync(
         trimmedSecret ? { webhookSecret: trimmedSecret } : {},
       );
+      await refreshSettingsState();
       toast.success("Webhook сохранён");
     } catch (error: unknown) {
       const msg =

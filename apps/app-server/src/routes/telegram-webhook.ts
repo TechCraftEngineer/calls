@@ -22,7 +22,7 @@ export const registerTelegramWebhookRoutes = (app: Hono) => {
             c.req.header("x-real-ip") ||
             "unknown",
         });
-        return c.json({ error: "Invalid workspace" }, 400);
+        return c.json({ error: "Некорректное рабочее пространство" }, 400);
       }
 
       const handler = createWebhookHandler(async () => {

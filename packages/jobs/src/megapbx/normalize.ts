@@ -108,14 +108,14 @@ export function normalizeEmployee(
 export function normalizeNumber(
   raw: Record<string, unknown>,
 ): NormalizedNumber | null {
+  const userId = asString(raw.user);
+  const telnum = asString(raw.telnum);
   const externalId =
     asString(raw.id) ??
     asString(raw.numberId) ??
     asString(raw.number_id) ??
-    asString(raw.telnum) ??
-    (asString(raw.user) && asString(raw.telnum)
-      ? `${asString(raw.user)}:${asString(raw.telnum)}`
-      : null);
+    (userId && telnum ? `${userId}:${telnum}` : null) ??
+    telnum;
   const phoneNumber =
     normalizePhone(
       asString(raw.telnum) ??

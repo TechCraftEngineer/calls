@@ -1,5 +1,5 @@
 /**
- * Hono app composition: middleware + route registration.
+ * Составление приложения Hono: middleware и регистрация маршрутов.
  */
 
 import { Hono } from "hono";

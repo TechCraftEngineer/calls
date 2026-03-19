@@ -2,7 +2,7 @@
 
 import { Button, Input, PasswordInput } from "@calls/ui";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   type AddUserForm,
   formFieldWrap,
@@ -58,19 +58,42 @@ export default function AddUserModal({
   const [form, setForm] = useState<AddUserForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [formErrors, setFormErrors] = useState<
+    Partial<Record<"email" | "password" | "givenName", string>>
+  >({});
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
+  const givenNameRef = useRef<HTMLInputElement | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setFormErrors({});
     const trimmedEmail = form.email.trim().toLowerCase();
-    if (!trimmedEmail || !form.password.trim() || !form.givenName.trim()) {
-      setError("Заполните email, пароль и имя.");
+    const nextErrors: Partial<
+      Record<"email" | "password" | "givenName", string>
+    > = {};
+
+    if (!trimmedEmail) nextErrors.email = "Введите email.";
+    if (!form.password.trim()) nextErrors.password = "Введите пароль.";
+    if (!form.givenName.trim()) nextErrors.givenName = "Введите имя.";
+
+    if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      nextErrors.email = "Введите корректный email адрес.";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFormErrors(nextErrors);
+      const firstInvalidField = ["email", "password", "givenName"].find(
+        (key) => nextErrors[key as keyof typeof nextErrors],
+      );
+      if (firstInvalidField === "email") emailRef.current?.focus();
+      if (firstInvalidField === "password") passwordRef.current?.focus();
+      if (firstInvalidField === "givenName") givenNameRef.current?.focus();
+      setError("Исправьте ошибки в форме.");
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      setError("Введите корректный email адрес.");
-      return;
-    }
+
     setSubmitting(true);
     try {
       await onSubmit({ ...form, email: trimmedEmail });
@@ -101,44 +124,86 @@ export default function AddUserModal({
               Email *
             </label>
             <Input
+              ref={emailRef}
               id="add-user-email"
               type="email"
               value={form.email}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, email: e.target.value }))
-              }
+              onChange={(e) => {
+                setForm((f) => ({ ...f, email: e.target.value }));
+                setFormErrors((prev) => ({ ...prev, email: undefined }));
+              }}
               className={formInput}
               placeholder="example@mail.com"
               autoComplete="email"
+              aria-invalid={Boolean(formErrors.email)}
+              aria-describedby={
+                formErrors.email ? "add-user-email-error" : undefined
+              }
             />
+            {formErrors.email ? (
+              <span
+                id="add-user-email-error"
+                className="text-destructive mt-1 text-xs"
+              >
+                {formErrors.email}
+              </span>
+            ) : null}
           </div>
           <div className={formFieldWrap}>
             <label htmlFor="add-user-password" className={formLabel}>
               Пароль *
             </label>
             <PasswordInput
+              ref={passwordRef}
               id="add-user-password"
               value={form.password}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, password: e.target.value }))
-              }
+              onChange={(e) => {
+                setForm((f) => ({ ...f, password: e.target.value }));
+                setFormErrors((prev) => ({ ...prev, password: undefined }));
+              }}
               className={formInput}
               autoComplete="new-password"
+              aria-invalid={Boolean(formErrors.password)}
+              aria-describedby={
+                formErrors.password ? "add-user-password-error" : undefined
+              }
             />
+            {formErrors.password ? (
+              <span
+                id="add-user-password-error"
+                className="text-destructive mt-1 text-xs"
+              >
+                {formErrors.password}
+              </span>
+            ) : null}
           </div>
           <div className={formFieldWrap}>
             <label htmlFor="add-user-given-name" className={formLabel}>
               Имя *
             </label>
             <Input
+              ref={givenNameRef}
               id="add-user-given-name"
               type="text"
               value={form.givenName}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, givenName: e.target.value }))
-              }
+              onChange={(e) => {
+                setForm((f) => ({ ...f, givenName: e.target.value }));
+                setFormErrors((prev) => ({ ...prev, givenName: undefined }));
+              }}
               className={formInput}
+              aria-invalid={Boolean(formErrors.givenName)}
+              aria-describedby={
+                formErrors.givenName ? "add-user-given-name-error" : undefined
+              }
             />
+            {formErrors.givenName ? (
+              <span
+                id="add-user-given-name-error"
+                className="text-destructive mt-1 text-xs"
+              >
+                {formErrors.givenName}
+              </span>
+            ) : null}
           </div>
           <div className={formFieldWrap}>
             <label htmlFor="add-user-family-name" className={formLabel}>

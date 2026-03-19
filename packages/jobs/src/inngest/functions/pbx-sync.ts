@@ -59,14 +59,14 @@ export const pbxSyncRequestedFn = inngest.createFunction(
       webhookEventType: webhookEvent?.eventType ?? null,
     });
 
-    const config = await step.run("get-pbx-config", async () => {
-      return pbxService.getConfigWithSecrets(workspaceId);
-    });
-    if (!config) {
-      throw new Error("PBX интеграция не настроена");
-    }
-
     try {
+      const config = await step.run("get-pbx-config", async () => {
+        return pbxService.getConfigWithSecrets(workspaceId);
+      });
+      if (!config) {
+        throw new Error("PBX интеграция не настроена");
+      }
+
       const result = await step.run(`sync-${syncType}`, async () => {
         return syncType === "directory"
           ? syncPbxDirectory(workspaceId, config)

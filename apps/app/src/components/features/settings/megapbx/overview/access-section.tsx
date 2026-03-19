@@ -13,6 +13,7 @@ import {
   PasswordInput,
 } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { type AccessFormData, accessFormSchema } from "../schemas";
@@ -26,7 +27,7 @@ interface AccessSectionProps {
   testing: boolean;
   testMessage?: string;
   onSaveAccess: (data: AccessFormData) => Promise<void>;
-  onTest: (baseUrl: string, apiKey: string) => Promise<void>;
+  onTest: (baseUrl: string, apiKey?: string) => Promise<void>;
 }
 
 export function AccessSection({
@@ -151,15 +152,31 @@ export function AccessSection({
               type="button"
               variant="outline"
               onClick={() => {
-                const { baseUrl: b, apiKey: k } = form.getValues();
-                void onTest(b ?? "", k ?? "");
+                void (async () => {
+                  const validated = await form.trigger(["baseUrl", "apiKey"]);
+                  if (!validated) return;
+                  const parsed = accessFormSchema.safeParse(form.getValues());
+                  if (!parsed.success) return;
+                  const normalizedBaseUrl = parsed.data.baseUrl?.trim() ?? "";
+                  const normalizedApiKey =
+                    parsed.data.apiKey?.trim() === ""
+                      ? undefined
+                      : parsed.data.apiKey?.trim();
+                  await onTest(normalizedBaseUrl, normalizedApiKey);
+                })();
               }}
               disabled={testing || !form.watch("baseUrl")?.trim()}
             >
-              {testing ? "Проверка…" : "Проверить API"}
+              {testing ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : null}
+              Проверить API
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? "Сохранение…" : "Сохранить"}
+              {saving ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : null}
+              Сохранить
             </Button>
           </div>
         </form>

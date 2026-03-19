@@ -18,7 +18,7 @@ import {
 import { useCopyToClipboard } from "@calls/ui/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Copy, Info, KeyRound, Loader2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { type WebhookFormData, webhookFormSchema } from "../schemas";
 import { SectionBlock } from "../section-block";
@@ -57,6 +57,13 @@ export function WebhookSection({
   });
 
   const webhookSecretValue = form.watch("webhookSecret") ?? "";
+
+  useEffect(() => {
+    form.reset({
+      webhookSecret: webhookSecret || "",
+    });
+    setGenerated(false);
+  }, [form, webhookSecret, webhookSecretPasswordSet]);
 
   const copyWebhookUrl = useCallback(async () => {
     if (!webhookUrl) return;

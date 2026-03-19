@@ -13,10 +13,13 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SearchInput } from "@/components/ui/search-input";
 import type { PbxNumberItem } from "../types";
 import { getNumberColumns, type NumberLinkOption } from "./number-columns";
+
+const normalizePhone = (value: string | null | undefined): string =>
+  (value ?? "").replace(/\D/g, "");
 
 interface NumbersTabProps {
   numbers: PbxNumberItem[];
@@ -53,6 +56,15 @@ export function NumbersTab({
   const [selectedLinks, setSelectedLinks] = useState<Record<string, string>>(
     {},
   );
+  const [excludedSet, setExcludedSet] = useState<Set<string>>(
+    () => new Set(excludedPhoneNumbers.map((value) => normalizePhone(value))),
+  );
+
+  useEffect(() => {
+    setExcludedSet(
+      new Set(excludedPhoneNumbers.map((value) => normalizePhone(value))),
+    );
+  }, [excludedPhoneNumbers]);
 
   const filteredNumbers = useMemo(() => {
     const query = numberSearch.trim().toLowerCase();
@@ -78,7 +90,8 @@ export function NumbersTab({
         numberLinkOptions,
         selectedLinks,
         setSelectedLinks,
-        excludedPhoneNumbers,
+        excludedSet,
+        setExcludedSet,
         savingExcludedNumbers,
         onSaveExcludedNumbers,
         onLink,
@@ -87,13 +100,26 @@ export function NumbersTab({
     [
       numberLinkOptions,
       selectedLinks,
-      excludedPhoneNumbers,
+      excludedSet,
       savingExcludedNumbers,
       onSaveExcludedNumbers,
       onLink,
       onUnlink,
     ],
   );
+
+  const excludedRowsCount = useMemo(() => {
+    let count = 0;
+    for (const number of filteredNumbers) {
+      const phone = normalizePhone(number.phoneNumber);
+      const extension = normalizePhone(number.extension);
+      const keys = [phone, extension].filter(Boolean);
+      if (keys.some((value) => excludedSet.has(value))) {
+        count += 1;
+      }
+    }
+    return count;
+  }, [filteredNumbers, excludedSet]);
 
   const numberTable = useReactTable({
     data: filteredNumbers,
@@ -119,8 +145,7 @@ export function NumbersTab({
         </div>
         <div className="flex flex-col gap-3 sm:items-end">
           <Badge variant="outline">
-            {filteredNumbers.length} записей, исключено:{" "}
-            {new Set(excludedPhoneNumbers).size}
+            {filteredNumbers.length} записей, исключено: {excludedRowsCount}
           </Badge>
           <SearchInput
             value={numberSearch}
