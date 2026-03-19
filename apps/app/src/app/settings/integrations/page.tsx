@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import FtpSection from "@/components/features/settings/ftp-section";
 import { useSettings } from "@/components/features/settings/hooks";
-import IntegrationsSection from "@/components/features/settings/integrations-section";
+import FtpSection from "@/components/features/settings/integrations/ftp-section";
+import IntegrationsSection from "@/components/features/settings/integrations/integrations-section";
 import SettingsPageShell from "@/components/features/settings/settings-page-shell";
 
 export default function SettingsIntegrationsPage() {

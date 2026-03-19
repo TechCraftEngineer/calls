@@ -5,8 +5,8 @@ import { Badge, Button } from "@calls/ui";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useSettings } from "@/components/features/settings/hooks";
+import PbxSection from "@/components/features/settings/pbx/megapbx-section";
 import { PbxProviderLogo } from "@/components/features/settings/pbx-provider-logo";
-import PbxSection from "@/components/features/settings/pbx-section";
 import SettingsPageShell from "@/components/features/settings/settings-page-shell";
 
 export default function SettingsPbxMegafonPage() {
