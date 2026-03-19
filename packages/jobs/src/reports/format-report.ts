@@ -5,8 +5,8 @@
 export interface ManagerStats {
   name: string;
   internalNumber: string | null;
-  incoming: { count: number; duration: number };
-  outgoing: { count: number; duration: number };
+  incoming: { count: number; duration: number; totalDuration?: number };
+  outgoing: { count: number; duration: number; totalDuration?: number };
   avgManagerScore?: number | null;
   avgValueScore?: number | null;
   evaluatedCount?: number;
@@ -95,15 +95,19 @@ function prepareStats(entries: [string, ManagerStats][]): {
     if (!raw || typeof raw !== "object") continue;
     const inCount = raw.incoming?.count ?? 0;
     const outCount = raw.outgoing?.count ?? 0;
-    const inAvgSec = raw.incoming?.duration ?? 0;
-    const outAvgSec = raw.outgoing?.duration ?? 0;
+    const inTotalSec =
+      raw.incoming?.totalDuration ?? (raw.incoming?.duration ?? 0) * inCount;
+    const outTotalSec =
+      raw.outgoing?.totalDuration ?? (raw.outgoing?.duration ?? 0) * outCount;
+    const inAvgSec = inCount > 0 ? inTotalSec / inCount : 0;
+    const outAvgSec = outCount > 0 ? outTotalSec / outCount : 0;
     const total = inCount + outCount;
     const evalCount = raw.evaluatedCount ?? 0;
 
     incomingCount += inCount;
     outgoingCount += outCount;
-    incomingTotalDurationSec += inAvgSec * inCount;
-    outgoingTotalDurationSec += outAvgSec * outCount;
+    incomingTotalDurationSec += inTotalSec;
+    outgoingTotalDurationSec += outTotalSec;
     evaluatedCount += evalCount;
 
     managers.push({
@@ -339,8 +343,6 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
       lines.push(
         `  └ Ср. ценность: ${formatValue(item.avgValueScore ?? NaN)} ₽`,
       );
-    } else {
-      lines.push("  └");
     }
   }
 
@@ -355,4 +357,46 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   }
 
   return lines.join("\n");
+}
+
+export function splitTelegramHtmlMessage(
+  message: string,
+  maxLength = 4000,
+): string[] {
+  if (!message) return [""];
+  if (message.length <= maxLength) return [message];
+
+  const parts: string[] = [];
+  const lines = message.split("\n");
+  let current = "";
+
+  const pushCurrent = () => {
+    if (current.length > 0) {
+      parts.push(current);
+      current = "";
+    }
+  };
+
+  for (const line of lines) {
+    const candidate = current.length > 0 ? `${current}\n${line}` : line;
+    if (candidate.length <= maxLength) {
+      current = candidate;
+      continue;
+    }
+
+    pushCurrent();
+    if (line.length <= maxLength) {
+      current = line;
+      continue;
+    }
+
+    let start = 0;
+    while (start < line.length) {
+      parts.push(line.slice(start, start + maxLength));
+      start += maxLength;
+    }
+  }
+
+  pushCurrent();
+  return parts.length > 0 ? parts : [message.slice(0, maxLength)];
 }
