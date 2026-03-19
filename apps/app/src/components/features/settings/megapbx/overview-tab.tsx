@@ -7,6 +7,11 @@ import {
   SyncOptionsSection,
   WebhookSection,
 } from "./overview";
+import type {
+  AccessFormData,
+  SyncOptionsFormData,
+  WebhookFormData,
+} from "./schemas";
 
 export interface OverviewTabProps {
   prompts: Record<string, Prompt>;
@@ -25,10 +30,10 @@ export interface OverviewTabProps {
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onPromptValueChange: (key: string, value: string) => void;
   onToggleChange: (key: string, checked: boolean) => void;
-  onSaveAccess: () => Promise<void>;
-  onSaveSyncOptions: () => Promise<void>;
-  onSaveWebhook: () => Promise<void>;
-  onTest: () => Promise<void>;
+  onSaveAccess: (data: AccessFormData) => Promise<void>;
+  onSaveSyncOptions: (data: SyncOptionsFormData) => Promise<void>;
+  onSaveWebhook: (data: WebhookFormData) => Promise<void>;
+  onTest: (baseUrl?: string, apiKey?: string) => Promise<void>;
   onSyncDirectory: () => Promise<void>;
   onSyncCalls: () => Promise<void>;
   onSyncRecordings: () => Promise<void>;
@@ -56,13 +61,13 @@ export function OverviewTab({
   return (
     <div className="space-y-6">
       <AccessSection
-        prompts={prompts}
         baseUrl={baseUrl}
+        apiKeyValue={prompts.megapbx_api_key?.value ?? ""}
+        apiKeyPasswordSet={Boolean(prompts.megapbx_api_key?.meta?.passwordSet)}
+        syncFromDate={prompts.megapbx_sync_from_date?.value ?? ""}
         saving={saving}
         testing={testing}
         testMessage={testMessage}
-        onPromptChange={onPromptChange}
-        onPromptValueChange={onPromptValueChange}
         onTest={onTest}
         onSaveAccess={onSaveAccess}
       />
@@ -70,16 +75,16 @@ export function OverviewTab({
       <SyncOptionsSection
         prompts={prompts}
         saving={saving}
-        onToggleChange={onToggleChange}
         onSaveSyncOptions={onSaveSyncOptions}
       />
 
       <WebhookSection
-        prompts={prompts}
+        webhookSecret={prompts.megapbx_webhook_secret?.value ?? ""}
+        webhookSecretPasswordSet={Boolean(
+          prompts.megapbx_webhook_secret?.meta?.passwordSet,
+        )}
         webhookUrl={webhookUrl}
         saving={saving}
-        onPromptChange={onPromptChange}
-        onPromptValueChange={onPromptValueChange}
         onSaveWebhook={onSaveWebhook}
       />
 

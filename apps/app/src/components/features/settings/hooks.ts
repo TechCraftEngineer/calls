@@ -1,10 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
-import {
-  isValidCalendarIsoDate,
-  validateTelegramBotToken,
-} from "@calls/shared";
+import { validateTelegramBotToken } from "@calls/shared";
 import { toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -12,6 +9,11 @@ import { useCallback, useState } from "react";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 import { INTEGRATION_KEYS } from "./constants";
+import type {
+  AccessFormData,
+  SyncOptionsFormData,
+  WebhookFormData,
+} from "./megapbx/schemas";
 import {
   getReportTypeLabel,
   type PbxEmployeeItem,
@@ -565,45 +567,16 @@ export function useSettings() {
     }
   };
 
-  const handleSavePbxAccess = async () => {
-    const apiKeyVal = state.prompts.megapbx_api_key?.value?.trim();
-    const rawSyncFromDate =
-      state.prompts.megapbx_sync_from_date?.value?.trim() ?? "";
-
-    if (rawSyncFromDate && !isValidCalendarIsoDate(rawSyncFromDate)) {
-      setState((prev) => ({
-        ...prev,
-        prompts: {
-          ...prev.prompts,
-          megapbx_sync_from_date: {
-            ...prev.prompts.megapbx_sync_from_date,
-            key: "megapbx_sync_from_date",
-            error:
-              "Некорректная дата. Используйте формат YYYY-MM-DD и реальную дату календаря.",
-          },
-        },
-      }));
-      queueMicrotask(() =>
-        document.getElementById("megapbx-sync-from-date")?.focus(),
-      );
-      return;
-    }
-
-    const validatedSyncFromDate = rawSyncFromDate ? rawSyncFromDate : undefined;
-
+  const handleSavePbxAccess = async (payload: AccessFormData) => {
     try {
       setState((prev) => ({ ...prev, megaPbxSaving: true }));
-      const payload = {
+      await updatePbxAccessMutation.mutateAsync({
         enabled: state.prompts.megapbx_enabled?.value === "true",
-        baseUrl: state.prompts.megapbx_base_url?.value?.trim() ?? "",
-        apiKey: apiKeyVal || undefined,
-        ...(validatedSyncFromDate
-          ? { syncFromDate: validatedSyncFromDate }
-          : {}),
-      };
-      await updatePbxAccessMutation.mutateAsync(payload);
+        baseUrl: payload.baseUrl.trim(),
+        apiKey: payload.apiKey?.trim() || undefined,
+        syncFromDate: payload.syncFromDate?.trim() || undefined,
+      });
       toast.success("Доступ к API сохранён");
-      await loadSettings();
     } catch (error: unknown) {
       const msg =
         error instanceof Error
@@ -615,19 +588,11 @@ export function useSettings() {
     }
   };
 
-  const handleSavePbxSyncOptions = async () => {
+  const handleSavePbxSyncOptions = async (payload: SyncOptionsFormData) => {
     try {
       setState((prev) => ({ ...prev, megaPbxSaving: true }));
-      await updatePbxSyncOptionsMutation.mutateAsync({
-        syncEmployees: state.prompts.megapbx_sync_employees?.value === "true",
-        syncNumbers: state.prompts.megapbx_sync_numbers?.value === "true",
-        syncCalls: state.prompts.megapbx_sync_calls?.value === "true",
-        syncRecordings: state.prompts.megapbx_sync_recordings?.value === "true",
-        webhooksEnabled:
-          state.prompts.megapbx_webhooks_enabled?.value === "true",
-      });
+      await updatePbxSyncOptionsMutation.mutateAsync(payload);
       toast.success("Настройки синхронизации сохранены");
-      await loadSettings();
     } catch (error: unknown) {
       const msg =
         error instanceof Error
@@ -639,16 +604,14 @@ export function useSettings() {
     }
   };
 
-  const handleSavePbxWebhook = async () => {
+  const handleSavePbxWebhook = async (payload: WebhookFormData) => {
     try {
       setState((prev) => ({ ...prev, megaPbxSaving: true }));
-      const trimmedSecret =
-        state.prompts.megapbx_webhook_secret?.value?.trim() ?? "";
+      const trimmedSecret = payload.webhookSecret?.trim();
       await updatePbxWebhookMutation.mutateAsync(
         trimmedSecret ? { webhookSecret: trimmedSecret } : {},
       );
       toast.success("Webhook сохранён");
-      await loadSettings();
     } catch (error: unknown) {
       const msg =
         error instanceof Error ? error.message : "Не удалось сохранить webhook";
@@ -658,7 +621,9 @@ export function useSettings() {
     }
   };
 
-  const handleTestPbx = async () => {
+  const handleTestPbx = async (baseUrl?: string, apiKey?: string) => {
+    const url = baseUrl ?? state.prompts.megapbx_base_url?.value ?? "";
+    const key = apiKey ?? state.prompts.megapbx_api_key?.value ?? "";
     try {
       setState((prev) => ({
         ...prev,
@@ -666,8 +631,8 @@ export function useSettings() {
         megaPbxTestMessage: "",
       }));
       const result = await testPbxMutation.mutateAsync({
-        baseUrl: state.prompts.megapbx_base_url?.value ?? "",
-        apiKey: state.prompts.megapbx_api_key?.value ?? "",
+        baseUrl: url,
+        apiKey: key,
       });
       const ok =
         result !== null &&
@@ -847,7 +812,33 @@ export function useSettings() {
   };
 
   const setTogglePrompt = (key: string, checked: boolean) => {
-    setPromptValue(key, checked ? "true" : "false");
+    if (key === "megapbx_enabled") {
+      setPromptValue(key, checked ? "true" : "false");
+      const runUpdate = async () => {
+        try {
+          setState((prev) => ({ ...prev, megaPbxSaving: true }));
+          await updatePbxMutation.mutateAsync({
+            ...megaPbxPayload(),
+            enabled: checked,
+          });
+          toast.success(
+            checked ? "Интеграция включена" : "Интеграция выключена",
+          );
+        } catch (error) {
+          setPromptValue(key, checked ? "false" : "true");
+          const msg =
+            error instanceof Error
+              ? error.message
+              : "Не удалось обновить интеграцию";
+          toast.error(msg);
+        } finally {
+          setState((prev) => ({ ...prev, megaPbxSaving: false }));
+        }
+      };
+      runUpdate();
+    } else {
+      setPromptValue(key, checked ? "true" : "false");
+    }
   };
 
   return {

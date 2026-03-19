@@ -132,10 +132,16 @@ export interface PbxSectionProps {
     field: "value" | "description",
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onToggleChange: (key: string, checked: boolean) => void;
-  onSaveAccess: () => Promise<void>;
-  onSaveSyncOptions: () => Promise<void>;
-  onSaveWebhook: () => Promise<void>;
-  onTest: () => Promise<void>;
+  onSaveAccess: (
+    data: import("./megapbx/schemas").AccessFormData,
+  ) => Promise<void>;
+  onSaveSyncOptions: (
+    data: import("./megapbx/schemas").SyncOptionsFormData,
+  ) => Promise<void>;
+  onSaveWebhook: (
+    data: import("./megapbx/schemas").WebhookFormData,
+  ) => Promise<void>;
+  onTest: (baseUrl?: string, apiKey?: string) => Promise<void>;
   onSyncDirectory: () => Promise<void>;
   onSyncCalls: () => Promise<void>;
   onSyncRecordings: () => Promise<void>;

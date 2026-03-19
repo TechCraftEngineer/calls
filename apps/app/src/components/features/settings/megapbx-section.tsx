@@ -160,6 +160,7 @@ export default function MegaPbxSection({
             <Checkbox
               id="megapbx-enabled"
               checked={enabled}
+              disabled={saving}
               onCheckedChange={(checked) =>
                 onToggleChange("megapbx_enabled", checked === true)
               }
