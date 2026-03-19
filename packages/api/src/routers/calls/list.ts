@@ -1,20 +1,32 @@
 import {
   type CallWithTranscript,
+  pbxRepository,
   settingsService,
-  usersRepository,
 } from "@calls/db";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 import { calculateAnalysisCostRub } from "./analysis-cost";
-import {
-  getDisplayNameFromUser,
-  getInternalNumbersForUser,
-  getMobileNumbersForUser,
-} from "./utils";
+import { getInternalNumbersForUser, getMobileNumbersForUser } from "./utils";
 
 const transcriptMetadataSchema = z
   .object({ operatorName: z.string().optional() })
   .passthrough();
+const PBX_PROVIDER = "megapbx";
+
+const maybeStringOrArraySchema = z
+  .union([z.string(), z.array(z.string())])
+  .optional();
+
+function toStringArray(input: string | string[] | undefined): string[] {
+  if (typeof input === "string") {
+    const value = input.trim();
+    return value ? [value] : [];
+  }
+  if (Array.isArray(input)) {
+    return input.map((v) => v.trim()).filter(Boolean);
+  }
+  return [];
+}
 
 const listCallsSchema = z.object({
   page: z.number().min(1).default(1),
@@ -22,9 +34,9 @@ const listCallsSchema = z.object({
   q: z.string().optional(),
   date_from: z.string().optional(),
   date_to: z.string().optional(),
-  direction: z.array(z.string()).optional(),
-  manager: z.array(z.string()).optional(),
-  status: z.array(z.string()).optional(),
+  direction: maybeStringOrArraySchema,
+  manager: maybeStringOrArraySchema,
+  status: maybeStringOrArraySchema,
   value: z.array(z.number()).optional(),
   operator: z.array(z.string()).optional(),
 });
@@ -34,12 +46,15 @@ export const list = workspaceProcedure
   .handler(async ({ input, context }) => {
     const { callsService, user, workspaceId } = context;
     const offset = (input.page - 1) * input.per_page;
+    const directionFilters = toStringArray(input.direction);
+    const managerFilters = toStringArray(input.manager);
+    const statusFilters = toStringArray(input.status);
 
     const dateFrom = input.date_from
       ? `${input.date_from}T00:00:00`
       : undefined;
     const dateTo = input.date_to ? `${input.date_to}T23:59:59` : undefined;
-    const normalizedStatuses = input.status
+    const normalizedStatuses = statusFilters
       ?.map((status) =>
         status === "missed" || status === "Пропущен"
           ? "ПРОПУЩЕН"
@@ -49,7 +64,7 @@ export const list = workspaceProcedure
       )
       .filter((status): status is "ПРОПУЩЕН" | "ПРИНЯТ" => status !== null);
 
-    const normalizedDirections = input.direction
+    const normalizedDirections = directionFilters
       ?.map((direction) =>
         direction === "incoming" || direction === "Входящий"
           ? "Входящий"
@@ -62,11 +77,52 @@ export const list = workspaceProcedure
           direction !== null,
       );
     const trimmedQuery = input.q?.trim() || undefined;
+
+    const [pbxEmployees, pbxNumbers] = await Promise.all([
+      pbxRepository.listEmployees(workspaceId, PBX_PROVIDER),
+      pbxRepository.listNumbers(workspaceId, PBX_PROVIDER),
+    ]);
+
+    const employeeByExternalId = new Map(
+      pbxEmployees.map((employee) => [employee.externalId, employee]),
+    );
+    const managerNameByInternalNumber = new Map<string, string>();
+    for (const number of pbxNumbers) {
+      const ext = number.extension?.trim();
+      if (!ext) continue;
+      const employee = number.employeeExternalId
+        ? employeeByExternalId.get(number.employeeExternalId)
+        : null;
+      const managerName =
+        employee?.displayName?.trim() ||
+        number.label?.trim() ||
+        employee?.firstName?.trim() ||
+        null;
+      if (managerName && !managerNameByInternalNumber.has(ext)) {
+        managerNameByInternalNumber.set(ext, managerName);
+      }
+    }
+
     const managerInternalNumbersForQuery = trimmedQuery
-      ? await usersRepository.findInternalNumbersByNameQuery(
-          workspaceId,
-          trimmedQuery,
-        )
+      ? pbxNumbers
+          .filter((number) => {
+            const employee = number.employeeExternalId
+              ? employeeByExternalId.get(number.employeeExternalId)
+              : null;
+            const haystack = [
+              employee?.displayName,
+              employee?.firstName,
+              employee?.lastName,
+              number.label,
+              number.extension,
+            ]
+              .filter((value): value is string => typeof value === "string")
+              .join(" ")
+              .toLowerCase();
+            return haystack.includes(trimmedQuery.toLowerCase());
+          })
+          .map((number) => number.extension?.trim())
+          .filter((value): value is string => Boolean(value))
       : [];
 
     const isAdminOrOwner =
@@ -99,9 +155,9 @@ export const list = workspaceProcedure
             query: input.q ?? "",
             date_from: input.date_from ?? "",
             date_to: input.date_to ?? "",
-            direction: input.direction ?? [],
-            status: input.status ?? [],
-            manager: input.manager ?? [],
+            direction: directionFilters,
+            status: statusFilters,
+            manager: managerFilters,
             value: input.value ?? [],
             operator: input.operator ?? [],
           },
@@ -131,7 +187,7 @@ export const list = workspaceProcedure
         : undefined,
       valueScores: input.value?.length ? input.value : undefined,
       operators: input.operator?.length ? input.operator : undefined,
-      managers: input.manager?.length ? input.manager : undefined,
+      managers: managerFilters.length ? managerFilters : undefined,
       statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
       managerInternalNumbersForQuery:
         managerInternalNumbersForQuery.length > 0
@@ -153,7 +209,7 @@ export const list = workspaceProcedure
         : undefined,
       valueScores: input.value?.length ? input.value : undefined,
       operators: input.operator?.length ? input.operator : undefined,
-      managers: input.manager?.length ? input.manager : undefined,
+      managers: managerFilters.length ? managerFilters : undefined,
       statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
       managerInternalNumbersForQuery:
         managerInternalNumbersForQuery.length > 0
@@ -183,15 +239,6 @@ export const list = workspaceProcedure
       statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
     });
 
-    const internalNumbersToResolve = rawCalls
-      .map((item) => item.call.internalNumber?.trim())
-      .filter((value): value is string => Boolean(value));
-    const usersByInternalNumber =
-      await usersRepository.findUsersByInternalNumbers(
-        workspaceId,
-        internalNumbersToResolve,
-      );
-
     const callsWithTranscripts = await Promise.all(
       rawCalls.map(async (item: CallWithTranscript) => {
         const operatorName = (() => {
@@ -203,19 +250,14 @@ export const list = workspaceProcedure
         })();
         const normalizedInternalNumber =
           item.call.internalNumber?.trim() || null;
-        const managerFromWorkspace = normalizedInternalNumber
-          ? (usersByInternalNumber.get(normalizedInternalNumber) ?? null)
+        const managerFromPbx = normalizedInternalNumber
+          ? (managerNameByInternalNumber.get(normalizedInternalNumber) ?? null)
           : null;
         const trimmedName = item.call.name?.trim();
         const normalizedCallName =
           trimmedName === "" ? null : (trimmedName ?? null);
         const managerName =
-          (managerFromWorkspace
-            ? getDisplayNameFromUser(managerFromWorkspace)
-            : null) ??
-          normalizedCallName ??
-          operatorName ??
-          null;
+          managerFromPbx ?? normalizedCallName ?? operatorName ?? null;
 
         const { filename: _filename, ...publicCall } = item.call;
 
@@ -233,7 +275,7 @@ export const list = workspaceProcedure
                 : item.call.timestamp,
             managerName,
             operatorName,
-            managerId: managerFromWorkspace?.id ?? null,
+            managerId: null,
           },
           analysisCostRub: isLlmProcessed
             ? calculateAnalysisCostRub(
@@ -263,9 +305,9 @@ export const list = workspaceProcedure
         query: input.q ?? "",
         date_from: input.date_from ?? "",
         date_to: input.date_to ?? "",
-        direction: input.direction ?? [],
-        status: input.status ?? [],
-        manager: input.manager ?? [],
+        direction: directionFilters,
+        status: statusFilters,
+        manager: managerFilters,
         value: input.value ?? [],
         operator: input.operator ?? [],
       },
