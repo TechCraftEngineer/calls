@@ -365,7 +365,7 @@ export function splitTelegramHtmlMessage(
 ): string[] {
   if (!message) return [""];
   if (!Number.isFinite(maxLength) || maxLength <= 0) {
-    throw new RangeError("maxLength must be a positive number");
+    throw new RangeError("maxLength должен быть положительным числом");
   }
   if (message.length <= maxLength) return [message];
 

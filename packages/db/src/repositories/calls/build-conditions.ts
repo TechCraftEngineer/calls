@@ -71,10 +71,14 @@ export function buildCallConditions(params: CallConditionsParams) {
     conditions.push(inArray(schema.calls.number, mobileNumbers));
   }
   if (directions?.length) {
+    // Normalize directions first to avoid pushing empty strings (e.g. from whitespace-only input)
+    const normalizedDirections = directions
+      .map((direction) => direction.trim().toLowerCase())
+      .filter((d) => d.length > 0);
+
     const expandedDirections = [
       ...new Set(
-        directions.flatMap((direction) => {
-          const d = direction.trim().toLowerCase();
+        normalizedDirections.flatMap((d) => {
           if (d === "входящий" || d === "incoming" || d === "inbound") {
             return ["входящий", "incoming", "inbound"];
           }
@@ -85,12 +89,16 @@ export function buildCallConditions(params: CallConditionsParams) {
         }),
       ),
     ];
-    conditions.push(
-      inArray(
-        sql<string>`LOWER(COALESCE(${schema.calls.direction}, ''))`,
-        expandedDirections,
-      ),
-    );
+
+    // Only add SQL predicate when we actually have expanded values
+    if (expandedDirections.length > 0) {
+      conditions.push(
+        inArray(
+          sql<string>`LOWER(COALESCE(${schema.calls.direction}, ''))`,
+          expandedDirections,
+        ),
+      );
+    }
   }
   if (statuses?.length) {
     conditions.push(inArray(schema.calls.status, statuses));
