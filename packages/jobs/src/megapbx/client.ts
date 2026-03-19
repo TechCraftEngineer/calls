@@ -81,6 +81,113 @@ function pickArray(
   return [];
 }
 
+/** Ключи, под которыми MegaPBX CRM обычно отдаёт списки (как в pickArray). */
+const LIST_RESPONSE_KEYS = [
+  "items",
+  "data",
+  "result",
+  "employees",
+  "numbers",
+  "calls",
+] as const;
+
+/**
+ * Отсекает типичные JSON-ответы об ошибке при HTTP 200 (неверный ключ, прокси и т.п.).
+ */
+function rejectMegaPbxErrorJsonBody(payload: unknown): void {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return;
+  }
+  const o = payload as Record<string, unknown>;
+
+  if (typeof o.error === "string" && o.error.trim()) {
+    throw new Error(o.error.trim());
+  }
+  if (o.success === false) {
+    const msg =
+      typeof o.message === "string" && o.message.trim()
+        ? o.message.trim()
+        : "Запрос отклонён API";
+    throw new Error(msg);
+  }
+  const code = o.status ?? o.statusCode;
+  if (typeof code === "number" && code >= 400) {
+    const msg =
+      typeof o.message === "string" && o.message.trim()
+        ? o.message.trim()
+        : `Код ошибки ${code}`;
+    throw new Error(msg);
+  }
+}
+
+/**
+ * Требует, чтобы ответ походил на список CRM, а не на произвольный JSON/HTML-обёртку.
+ */
+function assertListLikeMegaPbxPayload(
+  payload: unknown,
+  resultKey?: string,
+): void {
+  if (Array.isArray(payload)) {
+    return;
+  }
+  if (!payload || typeof payload !== "object") {
+    throw new Error("Некорректный ответ API.");
+  }
+  const o = payload as Record<string, unknown>;
+  if (Object.keys(o).length === 0) {
+    throw new Error("Пустой объект в ответе API.");
+  }
+  if (resultKey && Array.isArray(o[resultKey])) {
+    return;
+  }
+  for (const key of LIST_RESPONSE_KEYS) {
+    if (Array.isArray(o[key])) {
+      return;
+    }
+  }
+  for (const v of Object.values(o)) {
+    if (!v || typeof v !== "object" || Array.isArray(v)) {
+      continue;
+    }
+    const inner = v as Record<string, unknown>;
+    if (resultKey && Array.isArray(inner[resultKey])) {
+      return;
+    }
+    for (const key of LIST_RESPONSE_KEYS) {
+      if (Array.isArray(inner[key])) {
+        return;
+      }
+    }
+  }
+  if (typeof o.message === "string" && o.message.trim()) {
+    throw new Error(o.message.trim());
+  }
+  throw new Error(
+    "Ответ не похож на список MegaPBX CRM. Проверьте base URL, API key и доступ к /crm/employees.",
+  );
+}
+
+async function readResponseJsonOrThrow(response: Response): Promise<unknown> {
+  const raw = await response.text();
+  const trimmed = raw.trim();
+  const ct = (response.headers.get("content-type") ?? "").toLowerCase();
+  const looksLikeJson =
+    ct.includes("application/json") ||
+    trimmed.startsWith("{") ||
+    trimmed.startsWith("[");
+
+  if (!looksLikeJson) {
+    throw new Error(
+      "Ответ не в формате JSON. Проверьте base URL — возможно, открылась HTML-страница или не тот хост.",
+    );
+  }
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    throw new Error("Не удалось разобрать JSON в ответе API.");
+  }
+}
+
 export class MegaPbxClient {
   constructor(private config: MegaPbxIntegrationConfig) {}
 
@@ -99,7 +206,21 @@ export class MegaPbxClient {
       );
     }
 
-    const url = new URL(path, `${this.config.baseUrl.replace(/\/$/, "")}/`);
+    const rawBaseUrl = this.config.baseUrl.trim();
+    const normalizedBaseUrl =
+      rawBaseUrl.startsWith("http://") || rawBaseUrl.startsWith("https://")
+        ? rawBaseUrl
+        : `https://${rawBaseUrl}`;
+    const base = new URL(normalizedBaseUrl);
+    const basePath = base.pathname.replace(/\/+$/, "");
+    let endpointPath = path.replace(/^\/+/, "");
+    // Совместимость: если base уже указывает на /crmapi/v1, endpoint "crm/*"
+    // должен идти как "*/", иначе получаем дублирование ".../crmapi/v1/crm/...".
+    if (basePath.endsWith("/crmapi/v1") && endpointPath.startsWith("crm/")) {
+      endpointPath = endpointPath.slice(4);
+    }
+    base.pathname = `${basePath}/${endpointPath}`.replace(/\/{2,}/g, "/");
+    const url = base;
     if (this.config.authScheme === "query") {
       url.searchParams.set("apiKey", this.config.apiKey);
     }
@@ -114,7 +235,7 @@ export class MegaPbxClient {
     if (this.config.authScheme === "bearer") {
       headers.Authorization = `Bearer ${this.config.apiKey}`;
     } else if (this.config.authScheme === "x-api-key") {
-      headers[this.config.apiKeyHeader || "X-API-Key"] = this.config.apiKey;
+      headers[this.config.apiKeyHeader || "X-API-KEY"] = this.config.apiKey;
     }
 
     return headers;
@@ -161,25 +282,44 @@ export class MegaPbxClient {
     { success: true } | { success: false; error: string }
   > {
     try {
-      const endpoint =
-        this.config.employeesEndpoint ??
+      const endpoint = this.config.employeesEndpoint ??
         this.config.numbersEndpoint ??
-        this.config.callsEndpoint;
+        this.config.callsEndpoint ?? {
+          path: "/crm/employees",
+          method: "GET" as const,
+        };
 
-      if (endpoint) {
-        await this.request(endpoint);
-      } else {
+      if (endpoint.path) {
+        const url = this.buildUrl(endpoint.path);
+        const method = endpoint.method ?? "GET";
         const timeoutMs = this.getRequestTimeoutMs();
         const controllerSignal = AbortSignal.timeout(timeoutMs);
-        const response = await fetch(this.buildUrl("/"), {
-          headers: this.buildHeaders(),
+        const response = await fetch(url, {
+          method,
+          headers: {
+            ...this.buildHeaders(),
+            ...(method === "POST"
+              ? { "Content-Type": "application/json" }
+              : {}),
+          },
+          body: method === "POST" ? JSON.stringify({}) : undefined,
           signal: controllerSignal,
         });
+
         if (!response.ok) {
           throw new Error(
             `Ошибка MegaPBX API ${response.status}: ${response.statusText}`,
           );
         }
+
+        const payload = await readResponseJsonOrThrow(response);
+        rejectMegaPbxErrorJsonBody(payload);
+        validateResponse(
+          EmployeeResponseSchema,
+          payload,
+          "проверка API (сотрудники)",
+        );
+        assertListLikeMegaPbxPayload(payload, endpoint.resultKey);
       }
 
       return { success: true };

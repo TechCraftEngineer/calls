@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent } from "@calls/ui";
 import type { Prompt } from "../types";
 import {
   AccessSection,
@@ -56,22 +55,17 @@ export function OverviewTab({
 }: OverviewTabProps) {
   return (
     <div className="space-y-6">
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          await onSaveAccess();
-        }}
-      >
-        <AccessSection
-          prompts={prompts}
-          baseUrl={baseUrl}
-          saving={saving}
-          testing={testing}
-          onPromptChange={onPromptChange}
-          onPromptValueChange={onPromptValueChange}
-          onTest={onTest}
-        />
-      </form>
+      <AccessSection
+        prompts={prompts}
+        baseUrl={baseUrl}
+        saving={saving}
+        testing={testing}
+        testMessage={testMessage}
+        onPromptChange={onPromptChange}
+        onPromptValueChange={onPromptValueChange}
+        onTest={onTest}
+        onSaveAccess={onSaveAccess}
+      />
 
       <SyncOptionsSection
         prompts={prompts}
@@ -80,26 +74,14 @@ export function OverviewTab({
         onSaveSyncOptions={onSaveSyncOptions}
       />
 
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          await onSaveWebhook();
-        }}
-      >
-        <WebhookSection
-          prompts={prompts}
-          webhookUrl={webhookUrl}
-          saving={saving}
-          onPromptChange={onPromptChange}
-          onPromptValueChange={onPromptValueChange}
-        />
-      </form>
-
-      {testMessage && (
-        <Card className="rounded-lg border-border/60">
-          <CardContent className="px-4 py-3 text-sm">{testMessage}</CardContent>
-        </Card>
-      )}
+      <WebhookSection
+        prompts={prompts}
+        webhookUrl={webhookUrl}
+        saving={saving}
+        onPromptChange={onPromptChange}
+        onPromptValueChange={onPromptValueChange}
+        onSaveWebhook={onSaveWebhook}
+      />
 
       <QuickActionsSection
         syncing={syncing}

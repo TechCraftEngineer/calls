@@ -9,12 +9,15 @@ interface AccessSectionProps {
   baseUrl: string;
   saving: boolean;
   testing: boolean;
+  /** Результат последней проверки API (успех или текст ошибки) */
+  testMessage?: string;
   onPromptChange: (
     key: string,
     field: "value" | "description",
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onPromptValueChange: (key: string, value: string) => void;
   onTest: () => Promise<void>;
+  onSaveAccess: () => Promise<void>;
 }
 
 export function AccessSection({
@@ -22,9 +25,11 @@ export function AccessSection({
   baseUrl,
   saving,
   testing,
+  testMessage = "",
   onPromptChange,
   onPromptValueChange,
   onTest,
+  onSaveAccess,
 }: AccessSectionProps) {
   return (
     <SectionBlock
@@ -114,10 +119,23 @@ export function AccessSection({
         >
           {testing ? "Проверка…" : "Проверить API"}
         </Button>
-        <Button type="submit" disabled={saving}>
+        <Button type="button" onClick={onSaveAccess} disabled={saving}>
           {saving ? "Сохранение…" : "Сохранить"}
         </Button>
       </div>
+      {testMessage ? (
+        <div
+          className={`mt-4 rounded-lg border p-3 text-sm ${
+            testMessage.includes("успешно")
+              ? "border-green-200 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-400"
+              : "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400"
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          {testMessage}
+        </div>
+      ) : null}
     </SectionBlock>
   );
 }

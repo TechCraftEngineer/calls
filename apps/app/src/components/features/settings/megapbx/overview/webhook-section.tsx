@@ -29,6 +29,7 @@ interface WebhookSectionProps {
     field: "value" | "description",
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onPromptValueChange: (key: string, value: string) => void;
+  onSaveWebhook: () => Promise<void>;
 }
 
 export function WebhookSection({
@@ -37,6 +38,7 @@ export function WebhookSection({
   saving,
   onPromptChange,
   onPromptValueChange,
+  onSaveWebhook,
 }: WebhookSectionProps) {
   const { isCopied: copiedUrl, copyToClipboard: copyUrl } = useCopyToClipboard({
     timeout: 2000,
@@ -209,7 +211,8 @@ export function WebhookSection({
             </p>
             <div className="pt-2">
               <Button
-                type="submit"
+                type="button"
+                onClick={onSaveWebhook}
                 disabled={saving}
                 aria-busy={saving}
                 aria-live="polite"

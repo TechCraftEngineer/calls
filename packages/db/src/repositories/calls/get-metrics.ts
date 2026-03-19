@@ -17,16 +17,10 @@ export async function getCallsMetrics(
       ? [eq(schema.calls.workspaceId, workspaceId)]
       : undefined;
 
-  const excludeCondition =
-    excludePhoneNumbers?.length && callConditions
-      ? buildExcludePhoneCondition(excludePhoneNumbers, schema.calls)
-      : undefined;
-
-  const allConditions = callConditions
-    ? excludeCondition
-      ? [...callConditions, excludeCondition]
-      : callConditions
+  const excludeCondition = excludePhoneNumbers?.length
+    ? buildExcludePhoneCondition(excludePhoneNumbers, schema.calls)
     : undefined;
+  const allConditions = [callConditions?.[0], excludeCondition].filter(Boolean);
 
   const totalCallsQuery = db
     .select({ count: count() })
@@ -61,13 +55,13 @@ export async function getCallsMetrics(
     avgDurationResult,
     lastSyncResult,
   ] = await Promise.all([
-    allConditions
+    allConditions.length > 0
       ? totalCallsQuery.where(and(...allConditions))
       : totalCallsQuery,
-    allConditions
+    allConditions.length > 0
       ? transcribedQuery.where(and(...allConditions))
       : transcribedQuery,
-    allConditions
+    allConditions.length > 0
       ? avgDurationQuery.where(and(...allConditions))
       : avgDurationQuery,
     lastSyncQuery,

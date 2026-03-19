@@ -31,7 +31,7 @@ export const updatePbxWebhook = workspaceAdminProcedure
       throw err;
     }
     if (!ok) {
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+      throw new ORPCError("NOT_FOUND", {
         message: "PBX интеграция не настроена",
       });
     }

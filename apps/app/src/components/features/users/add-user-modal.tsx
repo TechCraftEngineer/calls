@@ -90,7 +90,11 @@ export default function AddUserModal({
       <div className={modalBoxClasses} onClick={(e) => e.stopPropagation()}>
         <h2 className="m-0 mb-5 text-lg font-bold">Добавить пользователя</h2>
         <form onSubmit={handleSubmit}>
-          {error && <p className="text-destructive mb-3 text-sm">{error}</p>}
+          {error && (
+            <p className="text-destructive mb-3 text-sm" aria-live="polite">
+              {error}
+            </p>
+          )}
 
           <div className={formFieldWrap}>
             <label htmlFor="add-user-email" className={formLabel}>
@@ -283,9 +287,7 @@ export default function AddUserModal({
             </div>
           </div>
 
-          <div
-            style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}
-          >
+          <div className="flex gap-3 justify-end">
             <Button
               type="button"
               variant="link"

@@ -1,7 +1,10 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { validateTelegramBotToken } from "@calls/shared";
+import {
+  isValidCalendarIsoDate,
+  validateTelegramBotToken,
+} from "@calls/shared";
 import { toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -22,19 +25,6 @@ import {
   validateFtpHost,
   validateFtpUser,
 } from "./utils";
-
-function isValidCalendarIsoDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const y = Number(value.slice(0, 4));
-  const m = Number(value.slice(5, 7));
-  const d = Number(value.slice(8, 10));
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  return (
-    dt.getUTCFullYear() === y &&
-    dt.getUTCMonth() === m - 1 &&
-    dt.getUTCDate() === d
-  );
-}
 
 export function useSettings() {
   const router = useRouter();
@@ -675,19 +665,42 @@ export function useSettings() {
         megaPbxTesting: true,
         megaPbxTestMessage: "",
       }));
-      const result = await testPbxMutation.mutateAsync(megaPbxPayload());
-      setState((prev) => ({
-        ...prev,
-        megaPbxTestMessage: result.success
-          ? "Подключение к MegaPBX успешно"
-          : result.error,
-      }));
+      const result = await testPbxMutation.mutateAsync({
+        baseUrl: state.prompts.megapbx_base_url?.value ?? "",
+        apiKey: state.prompts.megapbx_api_key?.value ?? "",
+      });
+      const ok =
+        result !== null &&
+        typeof result === "object" &&
+        "success" in result &&
+        result.success === true;
+      const failText = (() => {
+        if (!result || typeof result !== "object") {
+          return "Неизвестный ответ сервера";
+        }
+        if ("error" in result && typeof result.error === "string") {
+          return result.error.trim() || "Проверка не пройдена";
+        }
+        if (
+          "message" in result &&
+          typeof (result as { message?: unknown }).message === "string"
+        ) {
+          const m = (result as { message: string }).message.trim();
+          return m || "Проверка не пройдена";
+        }
+        return ok ? "" : "Проверка не пройдена";
+      })();
+      const message = ok ? "Подключение к MegaPBX успешно" : failText;
+      setState((prev) => ({ ...prev, megaPbxTestMessage: message }));
+      if (ok) toast.success(message);
+      else toast.error(message);
     } catch (error: unknown) {
       const msg =
         error instanceof Error
           ? error.message
           : "Не удалось проверить подключение к MegaPBX";
       setState((prev) => ({ ...prev, megaPbxTestMessage: msg }));
+      toast.error(msg);
     } finally {
       setState((prev) => ({ ...prev, megaPbxTesting: false }));
     }
