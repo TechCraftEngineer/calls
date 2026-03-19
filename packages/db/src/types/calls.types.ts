@@ -4,6 +4,15 @@
 
 import type { Call, CallEvaluation, Transcript } from "../schema/types";
 
+export const CALL_DIRECTIONS = {
+  INBOUND: "inbound",
+  OUTBOUND: "outbound",
+  INCOMING: "incoming",
+  OUTGOING: "outgoing",
+} as const;
+
+export type CallDirection = typeof CALL_DIRECTIONS[keyof typeof CALL_DIRECTIONS];
+
 export interface GetCallsParams {
   workspaceId?: string;
   limit?: number;

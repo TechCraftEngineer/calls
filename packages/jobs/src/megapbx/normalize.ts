@@ -174,10 +174,10 @@ export function normalizeCall(
   const direction =
     directionRaw?.toLowerCase().includes("out") ||
     directionRaw?.toLowerCase().includes("исх")
-      ? "Исходящий"
+      ? "outbound"
       : directionRaw?.toLowerCase().includes("in") ||
           directionRaw?.toLowerCase().includes("вх")
-        ? "Входящий"
+        ? "inbound"
         : directionRaw;
 
   return {

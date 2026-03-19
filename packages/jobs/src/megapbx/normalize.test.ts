@@ -58,11 +58,33 @@ describe("MegaPBX normalize helpers", () => {
       expect.objectContaining({
         externalId: "call-1",
         timestamp: "2026-03-18T12:00:00Z",
-        direction: "Исходящий",
+        direction: "outbound",
         externalNumber: "79001112233",
         internalNumber: "101",
         duration: 45,
         recordingUrl: "https://example.com/record.mp3",
+      }),
+    );
+  });
+
+  it("normalizes inbound call payload", () => {
+    const result = normalizeCall({
+      call_id: "call-2",
+      started_at: "2026-03-18T13:00:00Z",
+      type: "incoming",
+      clientNumber: "+7 900 222-33-44",
+      internal_number: "102",
+      duration: 30,
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        externalId: "call-2",
+        timestamp: "2026-03-18T13:00:00Z",
+        direction: "inbound",
+        externalNumber: "79002223344",
+        internalNumber: "102",
+        duration: 30,
       }),
     );
   });
@@ -85,7 +107,7 @@ describe("MegaPBX normalize helpers", () => {
       expect.objectContaining({
         externalId: "NE5O2I5PEC000047",
         timestamp: "2026-03-19T05:40:39Z",
-        direction: "Исходящий",
+        direction: "outbound",
         externalNumber: "79263901590",
         internalNumber: "79361326729",
         recordingUrl:

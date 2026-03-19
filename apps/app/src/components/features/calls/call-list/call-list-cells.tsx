@@ -95,10 +95,10 @@ export function renderCallListCell({
 
   const isMissed =
     (call.duration ?? 0) === 0 &&
-    (call.direction === "Входящий" || call.direction === "incoming");
+    (call.direction === "inbound" || call.direction === "incoming");
 
   const directionLabel =
-    call.direction === "incoming" || call.direction === "Входящий"
+    call.direction === "incoming" || call.direction === "inbound"
       ? "ВХОДЯЩИЙ"
       : "ИСХОДЯЩИЙ";
   const directionClass =
