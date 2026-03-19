@@ -63,7 +63,7 @@ export function AccessSection({
   return (
     <SectionBlock
       title="Доступ к API"
-      description="Укажите домен АТС и API key. Этого достаточно для проверки соединения и запуска синхронизации."
+      description="Укажите base URL (например https://vats919602.megapbx.ru/crmapi/v1) и API key из личного кабинета MegaPBX."
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="contents">
@@ -74,21 +74,18 @@ export function AccessSection({
               render={({ field }) => (
                 <FormItem className="space-y-2">
                   <FormLabel className="text-xs text-muted-foreground">
-                    Base URL / домен АТС
+                    Base URL
                   </FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="https://123456.megapbx.ru"
+                      placeholder="https://vats919602.megapbx.ru/crmapi/v1"
                       type="url"
                       inputMode="url"
                       autoComplete="url"
                       className="h-10"
                     />
                   </FormControl>
-                  <p className="text-xs text-muted-foreground">
-                    Можно указать полный URL или только домен.
-                  </p>
                   <FormMessage />
                 </FormItem>
               )}

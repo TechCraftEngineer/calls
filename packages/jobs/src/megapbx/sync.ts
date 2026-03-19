@@ -229,9 +229,36 @@ export async function syncMegaPbxDirectory(
   }
 }
 
+/** Извлекает записи звонков из payload вебхука (формат requests#history: https://api.megapbx.ru/#/docs/crmapi/v1/requests#history) */
+function extractCallsFromWebhookPayload(
+  payload: Record<string, unknown>,
+): Record<string, unknown>[] {
+  if (Array.isArray(payload)) {
+    return payload.filter(
+      (item): item is Record<string, unknown> =>
+        Boolean(item) && typeof item === "object",
+    );
+  }
+  const keys = ["history", "calls", "items", "data", "result"];
+  for (const key of keys) {
+    const nested = payload[key];
+    if (Array.isArray(nested)) {
+      return nested.filter(
+        (item): item is Record<string, unknown> =>
+          Boolean(item) && typeof item === "object",
+      );
+    }
+  }
+  if (payload.id || payload.callId || payload.timestamp) {
+    return [payload];
+  }
+  return [];
+}
+
 export async function syncMegaPbxCalls(
   workspaceId: string,
   config: MegaPbxIntegrationConfig,
+  webhookPayload?: Record<string, unknown>,
 ): Promise<SyncStats> {
   const client = new MegaPbxClient(config);
   const stats: SyncStats = {
@@ -265,9 +292,14 @@ export async function syncMegaPbxCalls(
       PROVIDER,
     );
     const numberMap = await pbxRepository.getNumberMap(workspaceId, PROVIDER);
-    const calls = (
-      await client.fetchCalls(syncState?.cursor ?? config.syncFromDate ?? null)
-    )
+
+    const rawCalls = webhookPayload
+      ? extractCallsFromWebhookPayload(webhookPayload)
+      : await client.fetchCalls(
+          syncState?.cursor ?? config.syncFromDate ?? null,
+        );
+
+    const calls = rawCalls
       .map(normalizeCall)
       .filter((item): item is NormalizedCall => Boolean(item))
       .sort((a, b) => a.timestamp.localeCompare(b.timestamp));

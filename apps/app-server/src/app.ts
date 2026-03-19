@@ -206,7 +206,9 @@ export function createApp() {
   );
 
   const handlePbxWebhook = async (c: Context) => {
-    // This is invoked by both /api/pbx-webhook and legacy /api/megapbx-webhook
+    // Invoked by /api/pbx-webhook and /api/megapbx-webhook.
+    // История звонков приходит от АТС в формате requests#history:
+    // https://api.megapbx.ru/#/docs/crmapi/v1/requests#history
     const workspaceId = c.req.param("workspaceId");
     if (!workspaceId || !isValidWorkspaceId(workspaceId)) {
       return c.json({ error: "Invalid workspace" }, 400);

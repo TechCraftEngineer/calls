@@ -130,8 +130,12 @@ export function normalizeCall(
   raw: Record<string, unknown>,
 ): NormalizedCall | null {
   const externalId =
-    asString(raw.id) ?? asString(raw.callId) ?? asString(raw.call_id);
+    asString(raw.uid) ??
+    asString(raw.id) ??
+    asString(raw.callId) ??
+    asString(raw.call_id);
   const timestamp =
+    asString(raw.start) ??
     asString(raw.timestamp) ??
     asString(raw.startedAt) ??
     asString(raw.started_at) ??
@@ -154,6 +158,7 @@ export function normalizeCall(
   return {
     externalId,
     employeeExternalId:
+      asString(raw.user) ??
       asString(raw.employeeId) ??
       asString(raw.employee_id) ??
       asString(raw.userId) ??
@@ -169,19 +174,22 @@ export function normalizeCall(
     direction,
     externalNumber:
       normalizePhone(
-        asString(raw.clientNumber) ??
+        asString(raw.client) ??
+          asString(raw.clientNumber) ??
           asString(raw.externalNumber) ??
           asString(raw.external_number) ??
           asString(raw.phone),
       ) ?? null,
     internalNumber:
       normalizePhone(
-        asString(raw.extension) ??
+        asString(raw.diversion) ??
+          asString(raw.extension) ??
           asString(raw.internalNumber) ??
           asString(raw.internal_number),
       ) ?? null,
     status: asString(raw.status),
     recordingUrl:
+      asString(raw.record) ??
       asString(raw.recordingUrl) ??
       asString(raw.recording_url) ??
       asString(raw.recordUrl) ??

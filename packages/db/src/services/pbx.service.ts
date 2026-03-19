@@ -6,12 +6,10 @@ import type { MegaPbxIntegrationConfig } from "../schema";
 
 const MEGAPBX_INTEGRATION = "megapbx" as const;
 const MEGAPBX_PROVIDER = "megapbx" as const;
-const MEGAPBX_AUTH_SCHEME = "bearer" as const;
-// api.megapbx.ru CRMAPI v1: https://api.megapbx.ru/#/docs/crmapi/v1/
 const MEGAPBX_ENDPOINTS = {
-  employees: "/crmapi/v1/employees",
+  employees: "/crmapi/v1/users",
   numbers: "/crmapi/v1/telnums",
-  calls: "/crmapi/v1/calls",
+  calls: "/crmapi/v1/history/json",
 } as const;
 
 export class MegaPbxConfigNotFoundError extends Error {
@@ -19,23 +17,6 @@ export class MegaPbxConfigNotFoundError extends Error {
     super(`Config for workspace ${workspaceId} not found`);
     this.name = "MegaPbxConfigNotFoundError";
   }
-}
-
-function buildMegaPbxEndpoints() {
-  return {
-    employeesEndpoint: {
-      path: MEGAPBX_ENDPOINTS.employees,
-      method: "GET" as const,
-    },
-    numbersEndpoint: {
-      path: MEGAPBX_ENDPOINTS.numbers,
-      method: "GET" as const,
-    },
-    callsEndpoint: {
-      path: MEGAPBX_ENDPOINTS.calls,
-      method: "GET" as const,
-    },
-  };
 }
 
 type UpdateMegaPbxSettingsInput = {
@@ -87,8 +68,6 @@ function buildFixedMegaPbxConfig(
             /^\d{4}-\d{2}-\d{2}$/.test(input.syncFromDate.trim())
           ? input.syncFromDate.trim()
           : existing?.syncFromDate,
-    authScheme: MEGAPBX_AUTH_SCHEME,
-    ...buildMegaPbxEndpoints(),
     webhook: {
       secret: input.webhookSecret?.trim()
         ? encrypt(input.webhookSecret.trim())
@@ -127,11 +106,9 @@ export class PbxService {
     const config = (row?.config ?? {}) as Partial<MegaPbxIntegrationConfig>;
     return {
       enabled: row?.enabled ?? false,
-      baseUrl: config.baseUrl ?? "",
+      baseUrl: ensureUrl(config.baseUrl ?? ""),
       apiKeySet: Boolean(config.apiKey?.trim()),
       syncFromDate: config.syncFromDate ?? "",
-      authScheme: MEGAPBX_AUTH_SCHEME,
-      apiKeyHeader: "",
       employeesPath: MEGAPBX_ENDPOINTS.employees,
       employeesMethod: "GET",
       employeesResultKey: "",
@@ -169,11 +146,9 @@ export class PbxService {
     const config = row.config as Partial<MegaPbxIntegrationConfig>;
     return {
       enabled: row.enabled,
-      baseUrl: config.baseUrl ?? "",
+      baseUrl: ensureUrl(config.baseUrl ?? ""),
       apiKey: decryptIfPresent(config.apiKey) ?? "",
       syncFromDate: config.syncFromDate ?? undefined,
-      authScheme: MEGAPBX_AUTH_SCHEME,
-      ...buildMegaPbxEndpoints(),
       webhook: {
         secret: decryptIfPresent(config.webhook?.secret) ?? undefined,
       },
@@ -201,11 +176,9 @@ export class PbxService {
         const config = row.config as Partial<MegaPbxIntegrationConfig>;
         return {
           workspaceId: row.workspaceId,
-          baseUrl: config.baseUrl ?? "",
+          baseUrl: ensureUrl(config.baseUrl ?? ""),
           apiKey: decryptIfPresent(config.apiKey) ?? "",
           syncFromDate: config.syncFromDate ?? undefined,
-          authScheme: MEGAPBX_AUTH_SCHEME,
-          ...buildMegaPbxEndpoints(),
           webhook: {
             secret: decryptIfPresent(config.webhook?.secret) ?? undefined,
           },

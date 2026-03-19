@@ -8,7 +8,6 @@ export const testPbx = workspaceAdminProcedure
   .input(testPbxInputSchema)
   .handler(async ({ input, context }) => {
     const saved = await pbxService.getConfigWithSecrets(context.workspaceId);
-
     const baseUrl = (input.baseUrl?.trim() || saved?.baseUrl || "").trim();
     const apiKey = (input.apiKey?.trim() || saved?.apiKey || "").trim();
 
@@ -21,11 +20,5 @@ export const testPbx = workspaceAdminProcedure
     return testPbxConnection({
       baseUrl,
       apiKey,
-      authScheme: "x-api-key",
-      apiKeyHeader: "X-API-KEY",
-      employeesEndpoint: {
-        path: "/users",
-        method: "GET",
-      },
     });
   });

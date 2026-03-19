@@ -57,10 +57,11 @@ export const pbxSyncRequestedFn = inngest.createFunction(
       const result =
         syncType === "directory"
           ? await syncPbxDirectory(workspaceId, config)
-          : await syncPbxCalls(workspaceId, {
-              ...config,
-              syncRecordings,
-            });
+          : await syncPbxCalls(
+              workspaceId,
+              { ...config, syncRecordings },
+              webhookEvent?.payload,
+            );
 
       if (webhookEvent) {
         await pbxService.recordWebhookEvent({

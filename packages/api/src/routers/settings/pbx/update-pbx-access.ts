@@ -7,7 +7,7 @@ import { pbxAccessSchema } from "./schemas";
 export const updatePbxAccess = workspaceAdminProcedure
   .input(pbxAccessSchema)
   .handler(async ({ input, context }) => {
-    if (!input.baseUrl.trim() && input.enabled) {
+    if (!input.baseUrl?.trim() && input.enabled) {
       throw new ORPCError("BAD_REQUEST", {
         message: "Укажите base URL PBX",
       });
@@ -28,7 +28,7 @@ export const updatePbxAccess = workspaceAdminProcedure
       syncFromDate?: string | null;
     } = {
       enabled: input.enabled,
-      baseUrl: input.baseUrl.trim(),
+      baseUrl: input.baseUrl?.trim() ?? "",
     };
     if (input.apiKey !== undefined) {
       partial.apiKey = input.apiKey?.trim() || null;

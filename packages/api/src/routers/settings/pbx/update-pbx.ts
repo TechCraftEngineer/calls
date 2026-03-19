@@ -6,7 +6,7 @@ import { pbxSettingsSchema } from "./schemas";
 export const updatePbx = workspaceAdminProcedure
   .input(pbxSettingsSchema)
   .handler(async ({ input, context }) => {
-    if (!input.baseUrl.trim() && input.enabled) {
+    if (!input.baseUrl?.trim() && input.enabled) {
       throw new ORPCError("BAD_REQUEST", {
         message: "Укажите base URL PBX",
       });
@@ -25,6 +25,7 @@ export const updatePbx = workspaceAdminProcedure
       context.workspaceId,
       {
         ...input,
+        baseUrl: input.baseUrl?.trim() ?? "",
         apiKey: input.apiKey || null,
         syncFromDate,
         webhookSecret: input.webhookSecret || null,

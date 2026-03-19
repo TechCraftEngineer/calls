@@ -35,7 +35,6 @@ export type {
   Invitation,
   Invoice,
   KpiSettings,
-  MegaPbxEndpointConfig,
   MegaPbxIntegrationConfig,
   MegaPbxWebhookConfig,
   NewActivityLog,
