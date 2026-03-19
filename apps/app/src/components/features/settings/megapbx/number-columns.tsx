@@ -2,6 +2,7 @@
 
 import {
   Button,
+  Checkbox,
   Select,
   SelectContent,
   SelectItem,
@@ -14,12 +15,20 @@ import { LinkStatus } from "./link-status";
 
 export type NumberLinkOption = { value: string; label: string };
 
+function normalizePhone(value: string | null | undefined): string {
+  if (!value) return "";
+  return value.replace(/\D/g, "");
+}
+
 export function getNumberColumns(
   numberLinkOptions: Record<string, NumberLinkOption[]>,
   selectedLinks: Record<string, string>,
   setSelectedLinks: React.Dispatch<
     React.SetStateAction<Record<string, string>>
   >,
+  excludedPhoneNumbers: string[],
+  savingExcludedNumbers: boolean,
+  onSaveExcludedNumbers: (excludePhoneNumbers: string[]) => Promise<void>,
   onLink: (input: {
     targetType: "number";
     targetExternalId: string;
@@ -55,6 +64,46 @@ export function getNumberColumns(
           linkedInvitation={row.original.linkedInvitation}
         />
       ),
+    },
+    {
+      id: "import",
+      header: "Исключить",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const number = row.original;
+        const phone = normalizePhone(number.phoneNumber);
+        const extension = normalizePhone(number.extension);
+        const keys = [phone, extension].filter(Boolean);
+        const excludedSet = new Set(
+          excludedPhoneNumbers.map((value) => normalizePhone(value)),
+        );
+        const isExcluded = keys.some((value) => excludedSet.has(value));
+
+        return (
+          <label
+            htmlFor={`exclude-number-${number.externalId}`}
+            className="flex items-center gap-2"
+          >
+            <Checkbox
+              id={`exclude-number-${number.externalId}`}
+              checked={isExcluded}
+              disabled={savingExcludedNumbers}
+              onCheckedChange={(checked) => {
+                const next = new Set(excludedSet);
+                if (checked === true) {
+                  for (const key of keys) next.add(key);
+                } else {
+                  for (const key of keys) next.delete(key);
+                }
+                void onSaveExcludedNumbers(Array.from(next));
+              }}
+            />
+            <span className="text-muted-foreground text-xs">
+              {isExcluded ? "Да" : "Нет"}
+            </span>
+          </label>
+        );
+      },
     },
     {
       id: "actions",

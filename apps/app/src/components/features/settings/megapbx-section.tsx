@@ -37,6 +37,7 @@ export default function MegaPbxSection({
   onToggleChange,
   onSaveAccess,
   onSaveSyncOptions,
+  onSaveExcludedNumbers,
   onSaveWebhook,
   onTest,
   onSyncDirectory,
@@ -47,6 +48,7 @@ export default function MegaPbxSection({
   saving,
   savingAccess,
   savingSyncOptions,
+  savingExcludedNumbers,
   savingWebhook,
   testing,
   syncing,
@@ -114,6 +116,13 @@ export default function MegaPbxSection({
       ),
     [numbers],
   );
+  const excludedPhoneNumbers = useMemo(() => {
+    const raw = prompts.megapbx_exclude_phone_numbers?.value ?? "";
+    return raw
+      .split(/[\n,;]+/)
+      .map((value) => value.replace(/\D/g, ""))
+      .filter(Boolean);
+  }, [prompts.megapbx_exclude_phone_numbers?.value]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -265,6 +274,9 @@ export default function MegaPbxSection({
             numberLinkOptions={numberLinkOptions}
             onLink={onLink}
             onUnlink={onUnlink}
+            excludedPhoneNumbers={excludedPhoneNumbers}
+            savingExcludedNumbers={savingExcludedNumbers}
+            onSaveExcludedNumbers={onSaveExcludedNumbers}
           />
         )}
       </CardContent>

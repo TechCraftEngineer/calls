@@ -6,6 +6,7 @@ export const pbxSettingsSchema = z.object({
   baseUrl: z.string().trim(),
   apiKey: z.string().trim(),
   syncFromDate: z.string().trim().optional().default(""),
+  excludePhoneNumbers: z.array(z.string()).optional().default([]),
   webhookSecret: z.string().trim().optional().default(""),
   ftpHost: z.string().trim().optional().default(""),
   ftpUser: z.string().trim().optional().default(""),
@@ -55,6 +56,10 @@ export const pbxSyncOptionsSchema = z.object({
   syncCalls: z.boolean(),
   syncRecordings: z.boolean(),
   webhooksEnabled: z.boolean(),
+});
+
+export const pbxExcludePhoneNumbersSchema = z.object({
+  excludePhoneNumbers: z.array(z.string()).default([]),
 });
 
 export const pbxWebhookSchema = z.object({

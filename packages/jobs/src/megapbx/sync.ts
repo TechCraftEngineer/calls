@@ -30,6 +30,34 @@ type SyncStats = {
   latestCursor: string | null;
 };
 
+function normalizePhoneForMatch(value: string | null | undefined): string {
+  if (!value) return "";
+  return value.replace(/\D/g, "");
+}
+
+function shouldSkipCallByExcludedPhoneNumbers(
+  call: NormalizedCall,
+  excludePhoneNumbers: string[] | undefined,
+): boolean {
+  if (!excludePhoneNumbers || excludePhoneNumbers.length === 0) return false;
+
+  const excluded = new Set(
+    excludePhoneNumbers.map((value) => normalizePhoneForMatch(value)),
+  );
+  if (excluded.size === 0) return false;
+
+  const internal = normalizePhoneForMatch(call.internalNumber);
+  const external = normalizePhoneForMatch(call.externalNumber);
+  const values = [internal, external].filter(Boolean);
+  for (const value of values) {
+    if (excluded.has(value)) return true;
+    for (const excludedValue of excluded) {
+      if (value.endsWith(excludedValue)) return true;
+    }
+  }
+  return false;
+}
+
 async function autoLinkEmployees(
   workspaceId: string,
   employees: NormalizedEmployee[],
@@ -273,8 +301,15 @@ export async function syncMegaPbxCalls(
       .map(normalizeCall)
       .filter((item): item is NormalizedCall => Boolean(item))
       .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+    const excludePhoneNumbers = config.excludePhoneNumbers ?? [];
 
     for (const call of calls) {
+      if (shouldSkipCallByExcludedPhoneNumbers(call, excludePhoneNumbers)) {
+        stats.skipped += 1;
+        stats.latestCursor = call.timestamp;
+        continue;
+      }
+
       const filename = `megapbx/${call.externalId}.json`;
       const existing = await callsService.getCallByFilename(
         filename,

@@ -54,6 +54,8 @@ export interface MegaPbxIntegrationConfig {
   baseUrl: string;
   apiKey: string;
   syncFromDate?: string;
+  /** Номера (только цифры), которые не должны импортироваться из истории звонков */
+  excludePhoneNumbers?: string[];
   webhook?: MegaPbxWebhookConfig;
   ftpHost?: string;
   ftpUser?: string;

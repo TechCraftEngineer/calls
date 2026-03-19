@@ -51,6 +51,7 @@ export function useSettings() {
     megaPbxSaving: false,
     megaPbxAccessSaving: false,
     megaPbxSyncOptionsSaving: false,
+    megaPbxExcludedNumbersSaving: false,
     megaPbxWebhookSaving: false,
     megaPbxTesting: false,
     megaPbxSyncing: null,
@@ -156,6 +157,14 @@ export function useSettings() {
         key: "megapbx_sync_from_date",
         value: megaPbx.syncFromDate ?? "",
         description: "С какой даты начинать импорт звонков",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_exclude_phone_numbers = {
+        key: "megapbx_exclude_phone_numbers",
+        value: Array.isArray(megaPbx.excludePhoneNumbers)
+          ? megaPbx.excludePhoneNumbers.join("\n")
+          : "",
+        description: "Номера, исключённые из импорта звонков и записей",
         updated_at: undefined,
       };
       promptsMap.megapbx_webhook_secret = {
@@ -319,6 +328,11 @@ export function useSettings() {
   );
   const updatePbxSyncOptionsMutation = useMutation(
     orpc.settings.updatePbxSyncOptions.mutationOptions({
+      onSuccess: invalidatePbx,
+    }),
+  );
+  const updatePbxExcludedNumbersMutation = useMutation(
+    orpc.settings.updatePbxExcludedNumbers.mutationOptions({
       onSuccess: invalidatePbx,
     }),
   );
@@ -572,6 +586,12 @@ export function useSettings() {
   };
 
   const megaPbxPayload = () => ({
+    excludePhoneNumbers: (
+      state.prompts.megapbx_exclude_phone_numbers?.value ?? ""
+    )
+      .split(/[\n,;]+/)
+      .map((value) => value.replace(/\D/g, ""))
+      .filter(Boolean),
     enabled: state.prompts.megapbx_enabled?.value === "true",
     baseUrl: state.prompts.megapbx_base_url?.value ?? "",
     apiKey: state.prompts.megapbx_api_key?.value ?? "",
@@ -637,6 +657,34 @@ export function useSettings() {
       toast.error(msg);
     } finally {
       setState((prev) => ({ ...prev, megaPbxSyncOptionsSaving: false }));
+    }
+  };
+
+  const handleSavePbxExcludedNumbers = async (
+    excludePhoneNumbers: string[],
+  ) => {
+    try {
+      setState((prev) => ({ ...prev, megaPbxExcludedNumbersSaving: true }));
+      const normalized = Array.from(
+        new Set(
+          excludePhoneNumbers
+            .map((value) => value.replace(/\D/g, ""))
+            .filter(Boolean),
+        ),
+      );
+      await updatePbxExcludedNumbersMutation.mutateAsync({
+        excludePhoneNumbers: normalized,
+      });
+      setPromptValue("megapbx_exclude_phone_numbers", normalized.join("\n"));
+      toast.success("Исключённые номера сохранены");
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Не удалось сохранить исключённые номера";
+      toast.error(msg);
+    } finally {
+      setState((prev) => ({ ...prev, megaPbxExcludedNumbersSaving: false }));
     }
   };
 
@@ -893,6 +941,7 @@ export function useSettings() {
     handleSavePbx,
     handleSavePbxAccess,
     handleSavePbxSyncOptions,
+    handleSavePbxExcludedNumbers,
     handleSavePbxWebhook,
     handleTestPbx,
     handleSyncPbxDirectory: () => runPbxSync("directory"),

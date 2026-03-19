@@ -20,6 +20,9 @@ export const updatePbx = workspaceAdminProcedure
       /^\d{4}-\d{2}-\d{2}$/.test(input.syncFromDate.trim())
         ? input.syncFromDate.trim()
         : null;
+    const excludePhoneNumbers = input.excludePhoneNumbers
+      .map((value) => value.replace(/\D/g, ""))
+      .filter(Boolean);
 
     await pbxService.updateSettings(
       context.workspaceId,
@@ -28,6 +31,7 @@ export const updatePbx = workspaceAdminProcedure
         baseUrl: input.baseUrl?.trim() ?? "",
         apiKey: input.apiKey || null,
         syncFromDate,
+        excludePhoneNumbers,
         webhookSecret: input.webhookSecret || null,
         ftpHost: input.ftpHost || null,
         ftpUser: input.ftpUser || null,

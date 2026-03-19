@@ -98,6 +98,7 @@ export interface SettingsState {
   megaPbxSaving: boolean;
   megaPbxAccessSaving: boolean;
   megaPbxSyncOptionsSaving: boolean;
+  megaPbxExcludedNumbersSaving: boolean;
   megaPbxWebhookSaving: boolean;
   megaPbxTesting: boolean;
   megaPbxSyncing: "directory" | "calls" | "recordings" | null;
@@ -139,6 +140,7 @@ export interface PbxSectionProps {
   onSaveWebhook: (
     data: import("./megapbx/schemas").WebhookFormData,
   ) => Promise<void>;
+  onSaveExcludedNumbers: (excludePhoneNumbers: string[]) => Promise<void>;
   onTest: (baseUrl?: string, apiKey?: string) => Promise<void>;
   onSyncDirectory: () => Promise<void>;
   onSyncCalls: () => Promise<void>;
@@ -156,6 +158,7 @@ export interface PbxSectionProps {
   saving: boolean;
   savingAccess: boolean;
   savingSyncOptions: boolean;
+  savingExcludedNumbers: boolean;
   savingWebhook: boolean;
   testing: boolean;
   syncing: "directory" | "calls" | "recordings" | null;

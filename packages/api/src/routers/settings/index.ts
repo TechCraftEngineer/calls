@@ -19,6 +19,7 @@ export const settingsRouter = {
   getPbx: pbxRouter.getPbx,
   updatePbx: pbxRouter.updatePbx,
   updatePbxAccess: pbxRouter.updatePbxAccess,
+  updatePbxExcludedNumbers: pbxRouter.updatePbxExcludedNumbers,
   updatePbxSyncOptions: pbxRouter.updatePbxSyncOptions,
   updatePbxWebhook: pbxRouter.updatePbxWebhook,
   testPbx: pbxRouter.testPbx,
