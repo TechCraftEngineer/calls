@@ -15,6 +15,7 @@ export default function SettingsPbxMegafonPage() {
     loadSettings,
     handleSavePbxAccess,
     handleSavePbxSyncOptions,
+    handleSavePbxExcludedNumbers,
     handleSavePbxWebhook,
     handleTestPbx,
     handleSyncPbxDirectory,
@@ -22,8 +23,6 @@ export default function SettingsPbxMegafonPage() {
     handleSyncPbxRecordings,
     handleLinkPbxTarget,
     handleUnlinkPbxTarget,
-    updatePrompt,
-    setPromptValue,
     setTogglePrompt,
   } = useSettings();
 
@@ -96,11 +95,10 @@ export default function SettingsPbxMegafonPage() {
 
       <PbxSection
         prompts={state.prompts}
-        onPromptValueChange={setPromptValue}
-        onPromptChange={updatePrompt}
         onToggleChange={setTogglePrompt}
         onSaveAccess={handleSavePbxAccess}
         onSaveSyncOptions={handleSavePbxSyncOptions}
+        onSaveExcludedNumbers={handleSavePbxExcludedNumbers}
         onSaveWebhook={handleSavePbxWebhook}
         onTest={handleTestPbx}
         onSyncDirectory={handleSyncPbxDirectory}
@@ -108,7 +106,15 @@ export default function SettingsPbxMegafonPage() {
         onSyncRecordings={handleSyncPbxRecordings}
         onLink={handleLinkPbxTarget}
         onUnlink={handleUnlinkPbxTarget}
-        saving={state.megaPbxSaving}
+        saving={
+          state.megaPbxAccessSaving ||
+          state.megaPbxSyncOptionsSaving ||
+          state.megaPbxWebhookSaving
+        }
+        savingAccess={state.megaPbxAccessSaving}
+        savingSyncOptions={state.megaPbxSyncOptionsSaving}
+        savingExcludedNumbers={state.megaPbxExcludedNumbersSaving}
+        savingWebhook={state.megaPbxWebhookSaving}
         testing={state.megaPbxTesting}
         syncing={state.megaPbxSyncing}
         testMessage={state.megaPbxTestMessage}

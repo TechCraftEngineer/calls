@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent } from "@calls/ui";
 import type { Prompt } from "../types";
 import {
   AccessSection,
@@ -8,6 +7,11 @@ import {
   SyncOptionsSection,
   WebhookSection,
 } from "./overview";
+import type {
+  AccessFormData,
+  SyncOptionsFormData,
+  WebhookFormData,
+} from "./schemas";
 
 export interface OverviewTabProps {
   prompts: Record<string, Prompt>;
@@ -17,19 +21,15 @@ export interface OverviewTabProps {
   configuredFeatures: string[];
   testMessage: string;
   webhookUrl: string;
-  saving: boolean;
+  savingAccess: boolean;
+  savingSyncOptions: boolean;
+  savingWebhook: boolean;
   testing: boolean;
   syncing: "directory" | "calls" | "recordings" | null;
-  onPromptChange: (
-    key: string,
-    field: "value" | "description",
-  ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onPromptValueChange: (key: string, value: string) => void;
-  onToggleChange: (key: string, checked: boolean) => void;
-  onSaveAccess: () => Promise<void>;
-  onSaveSyncOptions: () => Promise<void>;
-  onSaveWebhook: () => Promise<void>;
-  onTest: () => Promise<void>;
+  onSaveAccess: (data: AccessFormData) => Promise<void>;
+  onSaveSyncOptions: (data: SyncOptionsFormData) => Promise<void>;
+  onSaveWebhook: (data: WebhookFormData) => Promise<void>;
+  onTest: (baseUrl?: string, apiKey?: string) => Promise<void>;
   onSyncDirectory: () => Promise<void>;
   onSyncCalls: () => Promise<void>;
   onSyncRecordings: () => Promise<void>;
@@ -40,12 +40,11 @@ export function OverviewTab({
   baseUrl,
   testMessage,
   webhookUrl,
-  saving,
+  savingAccess,
+  savingSyncOptions,
+  savingWebhook,
   testing,
   syncing,
-  onPromptChange,
-  onPromptValueChange,
-  onToggleChange,
   onSaveAccess,
   onSaveSyncOptions,
   onSaveWebhook,
@@ -56,50 +55,32 @@ export function OverviewTab({
 }: OverviewTabProps) {
   return (
     <div className="space-y-6">
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          await onSaveAccess();
-        }}
-      >
-        <AccessSection
-          prompts={prompts}
-          baseUrl={baseUrl}
-          saving={saving}
-          testing={testing}
-          onPromptChange={onPromptChange}
-          onPromptValueChange={onPromptValueChange}
-          onTest={onTest}
-        />
-      </form>
+      <AccessSection
+        baseUrl={baseUrl}
+        apiKeyPasswordSet={Boolean(prompts.megapbx_api_key?.meta?.passwordSet)}
+        syncFromDate={prompts.megapbx_sync_from_date?.value ?? ""}
+        saving={savingAccess}
+        testing={testing}
+        testMessage={testMessage}
+        onTest={onTest}
+        onSaveAccess={onSaveAccess}
+      />
 
       <SyncOptionsSection
         prompts={prompts}
-        saving={saving}
-        onToggleChange={onToggleChange}
+        saving={savingSyncOptions}
         onSaveSyncOptions={onSaveSyncOptions}
       />
 
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          await onSaveWebhook();
-        }}
-      >
-        <WebhookSection
-          prompts={prompts}
-          webhookUrl={webhookUrl}
-          saving={saving}
-          onPromptChange={onPromptChange}
-          onPromptValueChange={onPromptValueChange}
-        />
-      </form>
-
-      {testMessage && (
-        <Card className="rounded-lg border-border/60">
-          <CardContent className="px-4 py-3 text-sm">{testMessage}</CardContent>
-        </Card>
-      )}
+      <WebhookSection
+        webhookSecret={prompts.megapbx_webhook_secret?.value ?? ""}
+        webhookSecretPasswordSet={Boolean(
+          prompts.megapbx_webhook_secret?.meta?.passwordSet,
+        )}
+        webhookUrl={webhookUrl}
+        saving={savingWebhook}
+        onSaveWebhook={onSaveWebhook}
+      />
 
       <QuickActionsSection
         syncing={syncing}

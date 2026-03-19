@@ -23,7 +23,7 @@ function isNumberArray(value: string | number[] | string[]): value is number[] {
 }
 
 export default function CustomDropdown({
-  label: _label,
+  label,
   value,
   onChange,
   type,
@@ -32,9 +32,18 @@ export default function CustomDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement | null>(null);
-  const panelRef = useRef<HTMLDivElement | null>(null);
+  const panelDivRef = useRef<HTMLDivElement | null>(null);
+  const panelFieldsetRef = useRef<HTMLFieldSetElement | null>(null);
   const instanceId = useId();
   const panelDomId = `${instanceId}-panel`;
+  const triggerLabelId = `${instanceId}-trigger-label`;
+  const panelLabelId = `${instanceId}-panel-label`;
+  const popupRole =
+    type === "manager"
+      ? "listbox"
+      : type === "value" || type === "operator"
+        ? "dialog"
+        : "menu";
 
   const managers: Manager[] =
     type === "manager"
@@ -76,7 +85,7 @@ export default function CustomDropdown({
     if (!isOpen) return;
 
     const getFocusable = () => {
-      const root = panelRef.current;
+      const root = panelDivRef.current ?? panelFieldsetRef.current;
       if (!root) return [] as HTMLElement[];
 
       const selector =
@@ -97,6 +106,42 @@ export default function CustomDropdown({
       if (e.key === "Escape") {
         e.preventDefault();
         closeMenu(true);
+        return;
+      }
+
+      if (
+        e.key === "ArrowDown" ||
+        e.key === "ArrowUp" ||
+        e.key === "Home" ||
+        e.key === "End"
+      ) {
+        const items = getFocusable();
+        if (items.length === 0) return;
+        e.preventDefault();
+        const active = document.activeElement as HTMLElement | null;
+        const currentIndex = active ? items.indexOf(active) : -1;
+
+        if (e.key === "Home") {
+          items[0]?.focus();
+          return;
+        }
+        if (e.key === "End") {
+          items[items.length - 1]?.focus();
+          return;
+        }
+
+        if (e.key === "ArrowDown") {
+          const nextIndex =
+            currentIndex >= 0 ? (currentIndex + 1) % items.length : 0;
+          items[nextIndex]?.focus();
+          return;
+        }
+
+        const prevIndex =
+          currentIndex >= 0
+            ? (currentIndex - 1 + items.length) % items.length
+            : items.length - 1;
+        items[prevIndex]?.focus();
         return;
       }
 
@@ -145,17 +190,28 @@ export default function CustomDropdown({
           onClick={toggle}
           aria-expanded={isOpen}
           aria-controls={panelDomId}
+          aria-haspopup={popupRole}
         >
-          <button ref={toggleRef} type="button">
-            <span className="dropdown-label">{displayLabel}</span>
+          <button ref={toggleRef} type="button" aria-haspopup={popupRole}>
+            <span id={triggerLabelId} className="dropdown-label">
+              {displayLabel || label}
+            </span>
           </button>
         </Button>
         {isOpen && (
-          <div id={panelDomId} ref={panelRef} className="dropdown-menu">
+          <div
+            id={panelDomId}
+            ref={panelDivRef}
+            className="dropdown-menu"
+            role="listbox"
+            aria-labelledby={triggerLabelId}
+          >
             <Button
               type="button"
               variant="ghost"
               className="dropdown-option w-full justify-start"
+              role="option"
+              aria-selected={managerValue === ""}
               onClick={() => {
                 onChange("");
                 closeMenu(true);
@@ -169,6 +225,8 @@ export default function CustomDropdown({
                 type="button"
                 variant="ghost"
                 className={`dropdown-option w-full justify-start ${managerValue === m.id.toString() ? "is-active" : ""}`}
+                role="option"
+                aria-selected={managerValue === m.id.toString()}
                 onClick={() => {
                   onChange(m.id.toString());
                   closeMenu(true);
@@ -217,17 +275,28 @@ export default function CustomDropdown({
           onClick={toggle}
           aria-expanded={isOpen}
           aria-controls={panelDomId}
+          aria-haspopup={popupRole}
         >
-          <button ref={toggleRef} type="button">
-            <span className="dropdown-label">{getDisplayLabel()}</span>
+          <button ref={toggleRef} type="button" aria-haspopup={popupRole}>
+            <span id={triggerLabelId} className="dropdown-label">
+              {getDisplayLabel()}
+            </span>
           </button>
         </Button>
         {isOpen && (
-          <div id={panelDomId} ref={panelRef} className="dropdown-menu">
+          <fieldset
+            id={panelDomId}
+            ref={panelFieldsetRef}
+            className="dropdown-menu"
+            aria-labelledby={panelLabelId}
+          >
+            <legend id={panelLabelId} className="sr-only">
+              {label}
+            </legend>
             {valueOptions.map((val) => (
               <label
                 key={val}
-                className="dropdown-option cursor-pointer flex items-center gap-2"
+                className="dropdown-option cursor-pointer flex min-h-11 items-center gap-2 px-2 py-1.5"
               >
                 <input
                   type="checkbox"
@@ -238,7 +307,7 @@ export default function CustomDropdown({
                 <span>{val}</span>
               </label>
             ))}
-          </div>
+          </fieldset>
         )}
       </div>
     );
@@ -284,17 +353,28 @@ export default function CustomDropdown({
           onClick={toggle}
           aria-expanded={isOpen}
           aria-controls={panelDomId}
+          aria-haspopup={popupRole}
         >
-          <button ref={toggleRef} type="button">
-            <span className="dropdown-label">{getDisplayLabel()}</span>
+          <button ref={toggleRef} type="button" aria-haspopup={popupRole}>
+            <span id={triggerLabelId} className="dropdown-label">
+              {getDisplayLabel()}
+            </span>
           </button>
         </Button>
         {isOpen && (
-          <div id={panelDomId} ref={panelRef} className="dropdown-menu">
+          <fieldset
+            id={panelDomId}
+            ref={panelFieldsetRef}
+            className="dropdown-menu"
+            aria-labelledby={panelLabelId}
+          >
+            <legend id={panelLabelId} className="sr-only">
+              {label}
+            </legend>
             {operatorOptions.map((op) => (
               <label
                 key={op.value}
-                className="dropdown-option cursor-pointer flex items-center gap-2"
+                className="dropdown-option cursor-pointer flex min-h-11 items-center gap-2 px-2 py-1.5"
               >
                 <input
                   type="checkbox"
@@ -307,7 +387,7 @@ export default function CustomDropdown({
                 <span>{op.label}</span>
               </label>
             ))}
-          </div>
+          </fieldset>
         )}
       </div>
     );

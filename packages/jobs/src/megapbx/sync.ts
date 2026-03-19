@@ -30,6 +30,34 @@ type SyncStats = {
   latestCursor: string | null;
 };
 
+function normalizePhoneForMatch(value: string | null | undefined): string {
+  if (!value) return "";
+  return value.replace(/\D/g, "");
+}
+
+function shouldSkipCallByExcludedPhoneNumbers(
+  call: NormalizedCall,
+  excludePhoneNumbers: string[] | undefined,
+): boolean {
+  if (!excludePhoneNumbers || excludePhoneNumbers.length === 0) return false;
+
+  const excluded = new Set(
+    excludePhoneNumbers.map((value) => normalizePhoneForMatch(value)),
+  );
+  if (excluded.size === 0) return false;
+
+  const internal = normalizePhoneForMatch(call.internalNumber);
+  const external = normalizePhoneForMatch(call.externalNumber);
+  const values = [internal, external].filter(Boolean);
+  for (const value of values) {
+    if (excluded.has(value)) return true;
+    for (const excludedValue of excluded) {
+      if (value.endsWith(excludedValue)) return true;
+    }
+  }
+  return false;
+}
+
 async function autoLinkEmployees(
   workspaceId: string,
   employees: NormalizedEmployee[],
@@ -86,53 +114,17 @@ async function autoLinkEmployees(
 }
 
 async function uploadRecordingIfNeeded(
+  client: MegaPbxClient,
   workspaceId: string,
   providerCallId: string,
   recordingUrl: string | null,
 ): Promise<{ fileId: string | null; sizeBytes: number | null }> {
   if (!recordingUrl) return { fileId: null, sizeBytes: null };
-
-  const downloadTimeoutMsRaw = Number(
-    process.env.MEGAPBX_RECORDING_DOWNLOAD_TIMEOUT_MS,
-  );
-  const downloadTimeoutMs =
-    Number.isFinite(downloadTimeoutMsRaw) && downloadTimeoutMsRaw > 0
-      ? downloadTimeoutMsRaw
-      : 30_000;
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), downloadTimeoutMs);
-
-  let response: Response;
-  try {
-    response = await fetch(recordingUrl, { signal: controller.signal });
-  } catch (error) {
-    const isAbortError =
-      controller.signal.aborted ||
-      (error instanceof Error && error.name === "AbortError");
-
-    if (isAbortError) {
-      throw new Error(
-        `Таймаут скачивания записи MegaPBX (${providerCallId}) после ${downloadTimeoutMs}ms`,
-      );
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      `Не удалось скачать запись ${providerCallId}: ${response.status} ${response.statusText}`,
-    );
-  }
-
-  const buffer = Buffer.from(await response.arrayBuffer());
+  const { buffer, extension } = await client.downloadRecording(recordingUrl);
   if (buffer.length === 0) {
     return { fileId: null, sizeBytes: null };
   }
 
-  const extension = recordingUrl.toLowerCase().endsWith(".wav") ? "wav" : "mp3";
   const filename = `megapbx/${providerCallId}.${extension}`;
   const upload = await filesService.uploadCallRecording(
     workspaceId,
@@ -229,9 +221,42 @@ export async function syncMegaPbxDirectory(
   }
 }
 
+/** Извлекает записи звонков из payload вебхука (формат requests#history: https://api.megapbx.ru/#/docs/crmapi/v1/requests#history) */
+function extractCallsFromWebhookPayload(
+  payload: Record<string, unknown>,
+): Record<string, unknown>[] {
+  if (Array.isArray(payload)) {
+    return payload.filter(
+      (item): item is Record<string, unknown> =>
+        Boolean(item) && typeof item === "object",
+    );
+  }
+  const keys = ["history", "calls", "items", "data", "result"];
+  for (const key of keys) {
+    const nested = payload[key];
+    if (Array.isArray(nested)) {
+      return nested.filter(
+        (item): item is Record<string, unknown> =>
+          Boolean(item) && typeof item === "object",
+      );
+    }
+  }
+  if (
+    payload.uid ||
+    payload.start ||
+    payload.id ||
+    payload.callId ||
+    payload.timestamp
+  ) {
+    return [payload];
+  }
+  return [];
+}
+
 export async function syncMegaPbxCalls(
   workspaceId: string,
   config: MegaPbxIntegrationConfig,
+  webhookPayload?: Record<string, unknown>,
 ): Promise<SyncStats> {
   const client = new MegaPbxClient(config);
   const stats: SyncStats = {
@@ -265,14 +290,26 @@ export async function syncMegaPbxCalls(
       PROVIDER,
     );
     const numberMap = await pbxRepository.getNumberMap(workspaceId, PROVIDER);
-    const calls = (
-      await client.fetchCalls(syncState?.cursor ?? config.syncFromDate ?? null)
-    )
+
+    const rawCalls = webhookPayload
+      ? extractCallsFromWebhookPayload(webhookPayload)
+      : await client.fetchCalls(
+          syncState?.cursor ?? config.syncFromDate ?? null,
+        );
+
+    const calls = rawCalls
       .map(normalizeCall)
       .filter((item): item is NormalizedCall => Boolean(item))
       .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+    const excludePhoneNumbers = config.excludePhoneNumbers ?? [];
 
     for (const call of calls) {
+      if (shouldSkipCallByExcludedPhoneNumbers(call, excludePhoneNumbers)) {
+        stats.skipped += 1;
+        stats.latestCursor = call.timestamp;
+        continue;
+      }
+
       const filename = `megapbx/${call.externalId}.json`;
       const existing = await callsService.getCallByFilename(
         filename,
@@ -297,6 +334,7 @@ export async function syncMegaPbxCalls(
       if (config.syncRecordings && call.recordingUrl) {
         try {
           const uploaded = await uploadRecordingIfNeeded(
+            client,
             workspaceId,
             call.externalId,
             call.recordingUrl,

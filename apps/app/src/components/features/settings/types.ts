@@ -96,6 +96,10 @@ export interface SettingsState {
   telegramSaving: boolean;
   maxBotSaving: boolean;
   megaPbxSaving: boolean;
+  megaPbxAccessSaving: boolean;
+  megaPbxSyncOptionsSaving: boolean;
+  megaPbxExcludedNumbersSaving: boolean;
+  megaPbxWebhookSaving: boolean;
   megaPbxTesting: boolean;
   megaPbxSyncing: "directory" | "calls" | "recordings" | null;
   megaPbxTestMessage: string;
@@ -126,16 +130,18 @@ export interface IntegrationsSectionProps {
 
 export interface PbxSectionProps {
   prompts: Record<string, Prompt>;
-  onPromptValueChange: (key: string, value: string) => void;
-  onPromptChange: (
-    key: string,
-    field: "value" | "description",
-  ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onToggleChange: (key: string, checked: boolean) => void;
-  onSaveAccess: () => Promise<void>;
-  onSaveSyncOptions: () => Promise<void>;
-  onSaveWebhook: () => Promise<void>;
-  onTest: () => Promise<void>;
+  onSaveAccess: (
+    data: import("./megapbx/schemas").AccessFormData,
+  ) => Promise<void>;
+  onSaveSyncOptions: (
+    data: import("./megapbx/schemas").SyncOptionsFormData,
+  ) => Promise<void>;
+  onSaveWebhook: (
+    data: import("./megapbx/schemas").WebhookFormData,
+  ) => Promise<void>;
+  onSaveExcludedNumbers: (excludePhoneNumbers: string[]) => Promise<void>;
+  onTest: (baseUrl?: string, apiKey?: string) => Promise<void>;
   onSyncDirectory: () => Promise<void>;
   onSyncCalls: () => Promise<void>;
   onSyncRecordings: () => Promise<void>;
@@ -150,6 +156,10 @@ export interface PbxSectionProps {
     targetExternalId: string;
   }) => Promise<void>;
   saving: boolean;
+  savingAccess: boolean;
+  savingSyncOptions: boolean;
+  savingExcludedNumbers: boolean;
+  savingWebhook: boolean;
   testing: boolean;
   syncing: "directory" | "calls" | "recordings" | null;
   testMessage: string;

@@ -59,10 +59,23 @@ function normalizePhone(value: string | null): string | null {
   return digits || value;
 }
 
+function normalizeTimestamp(value: string | null): string | null {
+  if (!value) return null;
+  const v = value.trim();
+  // MegaPBX format: YYYYmmddTHHMMSSZ -> ISO 8601
+  const m = v.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/);
+  if (m) {
+    const [, y, mo, d, h, mi, s] = m;
+    return `${y}-${mo}-${d}T${h}:${mi}:${s}Z`;
+  }
+  return v;
+}
+
 export function normalizeEmployee(
   raw: Record<string, unknown>,
 ): NormalizedEmployee | null {
   const externalId =
+    asString(raw.login) ??
     asString(raw.id) ??
     asString(raw.employeeId) ??
     asString(raw.employee_id) ??
@@ -79,6 +92,7 @@ export function normalizeEmployee(
   return {
     externalId,
     extension:
+      asString(raw.ext) ??
       asString(raw.extension) ??
       asString(raw.internalNumber) ??
       asString(raw.internal_number),
@@ -95,10 +109,17 @@ export function normalizeNumber(
   raw: Record<string, unknown>,
 ): NormalizedNumber | null {
   const externalId =
-    asString(raw.id) ?? asString(raw.numberId) ?? asString(raw.number_id);
+    asString(raw.id) ??
+    asString(raw.numberId) ??
+    asString(raw.number_id) ??
+    asString(raw.telnum) ??
+    (asString(raw.user) && asString(raw.telnum)
+      ? `${asString(raw.user)}:${asString(raw.telnum)}`
+      : null);
   const phoneNumber =
     normalizePhone(
-      asString(raw.phoneNumber) ??
+      asString(raw.telnum) ??
+        asString(raw.phoneNumber) ??
         asString(raw.phone) ??
         asString(raw.number) ??
         asString(raw.did),
@@ -109,6 +130,7 @@ export function normalizeNumber(
   return {
     externalId,
     employeeExternalId:
+      asString(raw.user) ??
       asString(raw.employeeId) ??
       asString(raw.employee_id) ??
       asString(raw.userId) ??
@@ -118,10 +140,13 @@ export function normalizeNumber(
       asString(raw.extension) ??
       asString(raw.internalNumber) ??
       asString(raw.internal_number),
-    label: asString(raw.label) ?? asString(raw.name),
+    label: asString(raw.user_name) ?? asString(raw.label) ?? asString(raw.name),
     lineType:
       asString(raw.type) ?? asString(raw.lineType) ?? asString(raw.line_type),
-    isActive: asBool(raw.isActive ?? raw.active, true),
+    isActive:
+      typeof raw.disabled === "boolean"
+        ? !raw.disabled
+        : asBool(raw.isActive ?? raw.active, true),
     rawData: raw,
   };
 }
@@ -130,8 +155,12 @@ export function normalizeCall(
   raw: Record<string, unknown>,
 ): NormalizedCall | null {
   const externalId =
-    asString(raw.id) ?? asString(raw.callId) ?? asString(raw.call_id);
+    asString(raw.uid) ??
+    asString(raw.id) ??
+    asString(raw.callId) ??
+    asString(raw.call_id);
   const timestamp =
+    normalizeTimestamp(asString(raw.start)) ??
     asString(raw.timestamp) ??
     asString(raw.startedAt) ??
     asString(raw.started_at) ??
@@ -154,6 +183,7 @@ export function normalizeCall(
   return {
     externalId,
     employeeExternalId:
+      asString(raw.user) ??
       asString(raw.employeeId) ??
       asString(raw.employee_id) ??
       asString(raw.userId) ??
@@ -169,19 +199,22 @@ export function normalizeCall(
     direction,
     externalNumber:
       normalizePhone(
-        asString(raw.clientNumber) ??
+        asString(raw.client) ??
+          asString(raw.clientNumber) ??
           asString(raw.externalNumber) ??
           asString(raw.external_number) ??
           asString(raw.phone),
       ) ?? null,
     internalNumber:
       normalizePhone(
-        asString(raw.extension) ??
+        asString(raw.diversion) ??
+          asString(raw.extension) ??
           asString(raw.internalNumber) ??
           asString(raw.internal_number),
       ) ?? null,
     status: asString(raw.status),
     recordingUrl:
+      asString(raw.record) ??
       asString(raw.recordingUrl) ??
       asString(raw.recording_url) ??
       asString(raw.recordUrl) ??

@@ -66,4 +66,31 @@ describe("MegaPBX normalize helpers", () => {
       }),
     );
   });
+
+  it("reads recording url from crm history record field", () => {
+    const result = normalizeCall({
+      uid: "NE5O2I5PEC000047",
+      start: "2026-03-19T05:40:39Z",
+      type: "out",
+      status: "success",
+      client: "79263901590",
+      diversion: "79361326729",
+      user: "admin",
+      record:
+        "https://vats919602.megapbx.ru/api/v2/call-records/record/2026-03-19/file.mp3",
+      duration: 188,
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        externalId: "NE5O2I5PEC000047",
+        timestamp: "2026-03-19T05:40:39Z",
+        direction: "Исходящий",
+        externalNumber: "79263901590",
+        internalNumber: "79361326729",
+        recordingUrl:
+          "https://vats919602.megapbx.ru/api/v2/call-records/record/2026-03-19/file.mp3",
+      }),
+    );
+  });
 });

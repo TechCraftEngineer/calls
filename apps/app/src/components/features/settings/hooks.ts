@@ -9,6 +9,11 @@ import { useCallback, useState } from "react";
 import { getCurrentUser, type User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 import { INTEGRATION_KEYS } from "./constants";
+import type {
+  AccessFormData,
+  SyncOptionsFormData,
+  WebhookFormData,
+} from "./megapbx/schemas";
 import {
   getReportTypeLabel,
   type PbxEmployeeItem,
@@ -22,19 +27,6 @@ import {
   validateFtpHost,
   validateFtpUser,
 } from "./utils";
-
-function isValidCalendarIsoDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const y = Number(value.slice(0, 4));
-  const m = Number(value.slice(5, 7));
-  const d = Number(value.slice(8, 10));
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  return (
-    dt.getUTCFullYear() === y &&
-    dt.getUTCMonth() === m - 1 &&
-    dt.getUTCDate() === d
-  );
-}
 
 export function useSettings() {
   const router = useRouter();
@@ -57,6 +49,10 @@ export function useSettings() {
     telegramSaving: false,
     maxBotSaving: false,
     megaPbxSaving: false,
+    megaPbxAccessSaving: false,
+    megaPbxSyncOptionsSaving: false,
+    megaPbxExcludedNumbersSaving: false,
+    megaPbxWebhookSaving: false,
     megaPbxTesting: false,
     megaPbxSyncing: null,
     megaPbxTestMessage: "",
@@ -161,6 +157,14 @@ export function useSettings() {
         key: "megapbx_sync_from_date",
         value: megaPbx.syncFromDate ?? "",
         description: "С какой даты начинать импорт звонков",
+        updated_at: undefined,
+      };
+      promptsMap.megapbx_exclude_phone_numbers = {
+        key: "megapbx_exclude_phone_numbers",
+        value: Array.isArray(megaPbx.excludePhoneNumbers)
+          ? megaPbx.excludePhoneNumbers.join("\n")
+          : "",
+        description: "Номера, исключённые из импорта звонков и записей",
         updated_at: undefined,
       };
       promptsMap.megapbx_webhook_secret = {
@@ -327,6 +331,11 @@ export function useSettings() {
       onSuccess: invalidatePbx,
     }),
   );
+  const updatePbxExcludedNumbersMutation = useMutation(
+    orpc.settings.updatePbxExcludedNumbers.mutationOptions({
+      onSuccess: invalidatePbx,
+    }),
+  );
   const updatePbxWebhookMutation = useMutation(
     orpc.settings.updatePbxWebhook.mutationOptions({
       onSuccess: invalidatePbx,
@@ -334,19 +343,56 @@ export function useSettings() {
   );
   const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
   const syncPbxDirectoryMutation = useMutation(
-    orpc.settings.syncPbxDirectory.mutationOptions(),
+    orpc.settings.syncPbxDirectory.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+        });
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxNumbers.queryKey(),
+        });
+      },
+    }),
   );
   const syncPbxCallsMutation = useMutation(
-    orpc.settings.syncPbxCalls.mutationOptions(),
+    orpc.settings.syncPbxCalls.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.getPbx.queryKey(),
+        });
+      },
+    }),
   );
   const syncPbxRecordingsMutation = useMutation(
-    orpc.settings.syncPbxRecordings.mutationOptions(),
+    orpc.settings.syncPbxRecordings.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.getPbx.queryKey(),
+        });
+      },
+    }),
   );
+  const refetchPbxLists = useCallback(async () => {
+    const [employees, numbers] = await Promise.all([
+      queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
+      queryClient.fetchQuery(orpc.settings.listPbxNumbers.queryOptions()),
+    ]);
+    setState((prev) => ({
+      ...prev,
+      megaPbxEmployees: employees as PbxEmployeeItem[],
+      megaPbxNumbers: numbers as PbxNumberItem[],
+    }));
+  }, [orpc, queryClient]);
+
   const linkPbxUserMutation = useMutation(
-    orpc.settings.linkPbxUser.mutationOptions(),
+    orpc.settings.linkPbxUser.mutationOptions({
+      onSuccess: refetchPbxLists,
+    }),
   );
   const unlinkPbxUserMutation = useMutation(
-    orpc.settings.unlinkPbxUser.mutationOptions(),
+    orpc.settings.unlinkPbxUser.mutationOptions({
+      onSuccess: refetchPbxLists,
+    }),
   );
 
   const backupMutation = useMutation(orpc.settings.backup.mutationOptions());
@@ -371,7 +417,6 @@ export function useSettings() {
         telegram_bot_token: state.prompts.telegram_bot_token?.value ?? null,
       });
       toast.success("Telegram Bot сохранён");
-      await loadSettings();
     } catch (error: unknown) {
       console.error("Failed to save Telegram:", error);
       const msg =
@@ -391,7 +436,6 @@ export function useSettings() {
         max_bot_token: state.prompts.max_bot_token?.value ?? null,
       });
       toast.success("MAX Bot сохранён");
-      await loadSettings();
     } catch (error: unknown) {
       console.error("Failed to save MAX Bot:", error);
       const msg =
@@ -459,7 +503,6 @@ export function useSettings() {
         excludePhoneNumbers,
       });
       toast.success("Параметры подключения FTP сохранены");
-      await loadSettings();
     } catch (error: unknown) {
       console.error("Failed to save FTP:", error);
       const msg =
@@ -543,6 +586,12 @@ export function useSettings() {
   };
 
   const megaPbxPayload = () => ({
+    excludePhoneNumbers: (
+      state.prompts.megapbx_exclude_phone_numbers?.value ?? ""
+    )
+      .split(/[\n,;]+/)
+      .map((value) => value.replace(/\D/g, ""))
+      .filter(Boolean),
     enabled: state.prompts.megapbx_enabled?.value === "true",
     baseUrl: state.prompts.megapbx_base_url?.value ?? "",
     apiKey: state.prompts.megapbx_api_key?.value ?? "",
@@ -563,7 +612,6 @@ export function useSettings() {
       setState((prev) => ({ ...prev, megaPbxSaving: true }));
       await updatePbxMutation.mutateAsync(megaPbxPayload());
       toast.success("MegaPBX настройки сохранены");
-      await loadSettings();
     } catch (error: unknown) {
       const msg =
         error instanceof Error
@@ -575,45 +623,16 @@ export function useSettings() {
     }
   };
 
-  const handleSavePbxAccess = async () => {
-    const apiKeyVal = state.prompts.megapbx_api_key?.value?.trim();
-    const rawSyncFromDate =
-      state.prompts.megapbx_sync_from_date?.value?.trim() ?? "";
-
-    if (rawSyncFromDate && !isValidCalendarIsoDate(rawSyncFromDate)) {
-      setState((prev) => ({
-        ...prev,
-        prompts: {
-          ...prev.prompts,
-          megapbx_sync_from_date: {
-            ...prev.prompts.megapbx_sync_from_date,
-            key: "megapbx_sync_from_date",
-            error:
-              "Некорректная дата. Используйте формат YYYY-MM-DD и реальную дату календаря.",
-          },
-        },
-      }));
-      queueMicrotask(() =>
-        document.getElementById("megapbx-sync-from-date")?.focus(),
-      );
-      return;
-    }
-
-    const validatedSyncFromDate = rawSyncFromDate ? rawSyncFromDate : undefined;
-
+  const handleSavePbxAccess = async (payload: AccessFormData) => {
     try {
-      setState((prev) => ({ ...prev, megaPbxSaving: true }));
-      const payload = {
+      setState((prev) => ({ ...prev, megaPbxAccessSaving: true }));
+      await updatePbxAccessMutation.mutateAsync({
         enabled: state.prompts.megapbx_enabled?.value === "true",
-        baseUrl: state.prompts.megapbx_base_url?.value?.trim() ?? "",
-        apiKey: apiKeyVal || undefined,
-        ...(validatedSyncFromDate
-          ? { syncFromDate: validatedSyncFromDate }
-          : {}),
-      };
-      await updatePbxAccessMutation.mutateAsync(payload);
+        baseUrl: payload.baseUrl.trim(),
+        apiKey: payload.apiKey?.trim() || undefined,
+        syncFromDate: payload.syncFromDate?.trim() || undefined,
+      });
       toast.success("Доступ к API сохранён");
-      await loadSettings();
     } catch (error: unknown) {
       const msg =
         error instanceof Error
@@ -621,23 +640,15 @@ export function useSettings() {
           : "Не удалось сохранить доступ к API";
       toast.error(msg);
     } finally {
-      setState((prev) => ({ ...prev, megaPbxSaving: false }));
+      setState((prev) => ({ ...prev, megaPbxAccessSaving: false }));
     }
   };
 
-  const handleSavePbxSyncOptions = async () => {
+  const handleSavePbxSyncOptions = async (payload: SyncOptionsFormData) => {
     try {
-      setState((prev) => ({ ...prev, megaPbxSaving: true }));
-      await updatePbxSyncOptionsMutation.mutateAsync({
-        syncEmployees: state.prompts.megapbx_sync_employees?.value === "true",
-        syncNumbers: state.prompts.megapbx_sync_numbers?.value === "true",
-        syncCalls: state.prompts.megapbx_sync_calls?.value === "true",
-        syncRecordings: state.prompts.megapbx_sync_recordings?.value === "true",
-        webhooksEnabled:
-          state.prompts.megapbx_webhooks_enabled?.value === "true",
-      });
+      setState((prev) => ({ ...prev, megaPbxSyncOptionsSaving: true }));
+      await updatePbxSyncOptionsMutation.mutateAsync(payload);
       toast.success("Настройки синхронизации сохранены");
-      await loadSettings();
     } catch (error: unknown) {
       const msg =
         error instanceof Error
@@ -645,49 +656,100 @@ export function useSettings() {
           : "Не удалось сохранить настройки синхронизации";
       toast.error(msg);
     } finally {
-      setState((prev) => ({ ...prev, megaPbxSaving: false }));
+      setState((prev) => ({ ...prev, megaPbxSyncOptionsSaving: false }));
     }
   };
 
-  const handleSavePbxWebhook = async () => {
+  const handleSavePbxExcludedNumbers = async (
+    excludePhoneNumbers: string[],
+  ) => {
     try {
-      setState((prev) => ({ ...prev, megaPbxSaving: true }));
-      const trimmedSecret =
-        state.prompts.megapbx_webhook_secret?.value?.trim() ?? "";
+      setState((prev) => ({ ...prev, megaPbxExcludedNumbersSaving: true }));
+      const normalized = Array.from(
+        new Set(
+          excludePhoneNumbers
+            .map((value) => value.replace(/\D/g, ""))
+            .filter(Boolean),
+        ),
+      );
+      await updatePbxExcludedNumbersMutation.mutateAsync({
+        excludePhoneNumbers: normalized,
+      });
+      setPromptValue("megapbx_exclude_phone_numbers", normalized.join("\n"));
+      toast.success("Исключённые номера сохранены");
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : "Не удалось сохранить исключённые номера";
+      toast.error(msg);
+    } finally {
+      setState((prev) => ({ ...prev, megaPbxExcludedNumbersSaving: false }));
+    }
+  };
+
+  const handleSavePbxWebhook = async (payload: WebhookFormData) => {
+    try {
+      setState((prev) => ({ ...prev, megaPbxWebhookSaving: true }));
+      const trimmedSecret = payload.webhookSecret?.trim();
       await updatePbxWebhookMutation.mutateAsync(
         trimmedSecret ? { webhookSecret: trimmedSecret } : {},
       );
       toast.success("Webhook сохранён");
-      await loadSettings();
     } catch (error: unknown) {
       const msg =
         error instanceof Error ? error.message : "Не удалось сохранить webhook";
       toast.error(msg);
     } finally {
-      setState((prev) => ({ ...prev, megaPbxSaving: false }));
+      setState((prev) => ({ ...prev, megaPbxWebhookSaving: false }));
     }
   };
 
-  const handleTestPbx = async () => {
+  const handleTestPbx = async (baseUrl?: string, apiKey?: string) => {
+    const url = baseUrl ?? state.prompts.megapbx_base_url?.value ?? "";
+    const key = apiKey ?? state.prompts.megapbx_api_key?.value ?? "";
     try {
       setState((prev) => ({
         ...prev,
         megaPbxTesting: true,
         megaPbxTestMessage: "",
       }));
-      const result = await testPbxMutation.mutateAsync(megaPbxPayload());
-      setState((prev) => ({
-        ...prev,
-        megaPbxTestMessage: result.success
-          ? "Подключение к MegaPBX успешно"
-          : result.error,
-      }));
+      const result = await testPbxMutation.mutateAsync({
+        baseUrl: url,
+        apiKey: key,
+      });
+      const ok =
+        result !== null &&
+        typeof result === "object" &&
+        "success" in result &&
+        result.success === true;
+      const failText = (() => {
+        if (!result || typeof result !== "object") {
+          return "Неизвестный ответ сервера";
+        }
+        if ("error" in result && typeof result.error === "string") {
+          return result.error.trim() || "Проверка не пройдена";
+        }
+        if (
+          "message" in result &&
+          typeof (result as { message?: unknown }).message === "string"
+        ) {
+          const m = (result as { message: string }).message.trim();
+          return m || "Проверка не пройдена";
+        }
+        return ok ? "" : "Проверка не пройдена";
+      })();
+      const message = ok ? "Подключение к MegaPBX успешно" : failText;
+      setState((prev) => ({ ...prev, megaPbxTestMessage: message }));
+      if (ok) toast.success(message);
+      else toast.error(message);
     } catch (error: unknown) {
       const msg =
         error instanceof Error
           ? error.message
           : "Не удалось проверить подключение к MegaPBX";
       setState((prev) => ({ ...prev, megaPbxTestMessage: msg }));
+      toast.error(msg);
     } finally {
       setState((prev) => ({ ...prev, megaPbxTesting: false }));
     }
@@ -704,7 +766,14 @@ export function useSettings() {
         await syncPbxRecordingsMutation.mutateAsync(undefined);
       }
       toast.success("Синхронизация MegaPBX поставлена в очередь");
-      await loadSettings();
+      // Задача выполняется в Inngest — через 5 сек обновляем сотрудников и номера
+      if (type === "directory") {
+        setTimeout(() => {
+          refetchPbxLists().catch(() => {
+            // Игнорируем — данные обновятся при следующей загрузке
+          });
+        }, 5000);
+      }
     } catch (error: unknown) {
       const msg =
         error instanceof Error ? error.message : "Ошибка синхронизации MegaPBX";
@@ -721,7 +790,6 @@ export function useSettings() {
     invitationId?: string | null;
   }) => {
     await linkPbxUserMutation.mutateAsync(input);
-    await loadSettings();
   };
 
   const handleUnlinkPbxTarget = async (input: {
@@ -729,7 +797,6 @@ export function useSettings() {
     targetExternalId: string;
   }) => {
     await unlinkPbxUserMutation.mutateAsync(input);
-    await loadSettings();
   };
 
   const handleBackup = async () => {
@@ -834,7 +901,33 @@ export function useSettings() {
   };
 
   const setTogglePrompt = (key: string, checked: boolean) => {
-    setPromptValue(key, checked ? "true" : "false");
+    if (key === "megapbx_enabled") {
+      setPromptValue(key, checked ? "true" : "false");
+      const runUpdate = async () => {
+        try {
+          setState((prev) => ({ ...prev, megaPbxSaving: true }));
+          await updatePbxMutation.mutateAsync({
+            ...megaPbxPayload(),
+            enabled: checked,
+          });
+          toast.success(
+            checked ? "Интеграция включена" : "Интеграция выключена",
+          );
+        } catch (error) {
+          setPromptValue(key, checked ? "false" : "true");
+          const msg =
+            error instanceof Error
+              ? error.message
+              : "Не удалось обновить интеграцию";
+          toast.error(msg);
+        } finally {
+          setState((prev) => ({ ...prev, megaPbxSaving: false }));
+        }
+      };
+      runUpdate();
+    } else {
+      setPromptValue(key, checked ? "true" : "false");
+    }
   };
 
   return {
@@ -848,6 +941,7 @@ export function useSettings() {
     handleSavePbx,
     handleSavePbxAccess,
     handleSavePbxSyncOptions,
+    handleSavePbxExcludedNumbers,
     handleSavePbxWebhook,
     handleTestPbx,
     handleSyncPbxDirectory: () => runPbxSync("directory"),

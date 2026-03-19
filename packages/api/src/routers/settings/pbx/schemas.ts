@@ -1,24 +1,12 @@
+import { isValidCalendarIsoDate } from "@calls/shared";
 import { z } from "zod";
-
-/** Строка YYYY-MM-DD, соответствующая реальной дате в календаре (UTC). */
-function isValidCalendarIsoDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const y = Number(value.slice(0, 4));
-  const m = Number(value.slice(5, 7));
-  const d = Number(value.slice(8, 10));
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  return (
-    dt.getUTCFullYear() === y &&
-    dt.getUTCMonth() === m - 1 &&
-    dt.getUTCDate() === d
-  );
-}
 
 export const pbxSettingsSchema = z.object({
   enabled: z.boolean(),
   baseUrl: z.string().trim(),
   apiKey: z.string().trim(),
   syncFromDate: z.string().trim().optional().default(""),
+  excludePhoneNumbers: z.array(z.string()).optional().default([]),
   webhookSecret: z.string().trim().optional().default(""),
   ftpHost: z.string().trim().optional().default(""),
   ftpUser: z.string().trim().optional().default(""),
@@ -37,23 +25,19 @@ export const pbxAccessSchema = z.object({
     .trim()
     .refine(
       (value) => {
-        if (!value) return true; // проверка "пусто при enabled" — на уровне хендлера
+        if (!value) return true;
         const urlCandidate =
           value.startsWith("http://") || value.startsWith("https://")
             ? value
             : `https://${value}`;
         try {
-          // URL должен быть парсируемым (разрешаем "домен без схемы")
-          // eslint-disable-next-line no-new
           new URL(urlCandidate);
           return true;
         } catch {
           return false;
         }
       },
-      {
-        message: "Некорректный baseUrl. Укажите корректный URL или домен.",
-      },
+      { message: "Некорректный baseUrl. Укажите корректный URL или домен." },
     ),
   apiKey: z.string().trim().optional(),
   syncFromDate: z
@@ -74,8 +58,18 @@ export const pbxSyncOptionsSchema = z.object({
   webhooksEnabled: z.boolean(),
 });
 
+export const pbxExcludePhoneNumbersSchema = z.object({
+  excludePhoneNumbers: z.array(z.string()).default([]),
+});
+
 export const pbxWebhookSchema = z.object({
   webhookSecret: z.string().trim().optional(),
+});
+
+/** Только то, что нужно для проверки соединения с API (остальное подтягивается из БД). */
+export const testPbxInputSchema = z.object({
+  baseUrl: z.string().trim().optional(),
+  apiKey: z.string().trim().optional(),
 });
 
 export const pbxLinkSchema = z

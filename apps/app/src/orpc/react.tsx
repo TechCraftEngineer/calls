@@ -47,6 +47,7 @@ const getBaseUrl = () => {
 };
 
 // Создаем RPCLink (локально идёт через api/orpc Route Handler с таймаутом 120 сек)
+// workspaceId передаётся через cookie active_workspace_id (устанавливается WorkspaceProvider)
 const link = new RPCLink({
   url: `${getBaseUrl()}/api/orpc`,
 });

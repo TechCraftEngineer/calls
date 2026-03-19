@@ -2,24 +2,23 @@ import { MegaPbxConfigNotFoundError, pbxService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { getUserEmail } from "./get-user-email";
-import { pbxWebhookSchema } from "./schemas";
+import { pbxExcludePhoneNumbersSchema } from "./schemas";
 
-export const updatePbxWebhook = workspaceAdminProcedure
-  .input(pbxWebhookSchema)
+export const updatePbxExcludedNumbers = workspaceAdminProcedure
+  .input(pbxExcludePhoneNumbersSchema)
   .handler(async ({ input, context }) => {
     const username = getUserEmail(context.user) ?? "system";
-
-    const trimmedSecret = input.webhookSecret?.trim();
-    const partial: { webhookSecret?: string | null } = {};
-    if (trimmedSecret) {
-      partial.webhookSecret = trimmedSecret;
-    }
+    const excludePhoneNumbers = input.excludePhoneNumbers
+      .map((value) => value.replace(/\D/g, ""))
+      .filter(Boolean);
 
     let ok: boolean;
     try {
       ok = await pbxService.updateSettingsPartial(
         context.workspaceId,
-        partial,
+        {
+          excludePhoneNumbers,
+        },
         String(username),
       );
     } catch (err: unknown) {
@@ -30,11 +29,12 @@ export const updatePbxWebhook = workspaceAdminProcedure
       }
       throw err;
     }
+
     if (!ok) {
       throw new ORPCError("NOT_FOUND", {
         message: "PBX интеграция не настроена",
       });
     }
 
-    return { success: true, message: "Webhook сохранён" };
+    return { success: true, message: "Исключённые номера сохранены" };
   });

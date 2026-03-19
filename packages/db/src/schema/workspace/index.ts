@@ -4,7 +4,6 @@ export {
   INTEGRATION_TYPES,
   type IntegrationConfig,
   type IntegrationType,
-  type MegaPbxEndpointConfig,
   type MegaPbxIntegrationConfig,
   type MegaPbxWebhookConfig,
   workspaceIntegrations,

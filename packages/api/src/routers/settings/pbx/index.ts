@@ -9,6 +9,7 @@ import { testPbx } from "./test-pbx";
 import { unlinkPbxUser } from "./unlink-pbx-user";
 import { updatePbx } from "./update-pbx";
 import { updatePbxAccess } from "./update-pbx-access";
+import { updatePbxExcludedNumbers } from "./update-pbx-excluded-numbers";
 import { updatePbxSyncOptions } from "./update-pbx-sync-options";
 import { updatePbxWebhook } from "./update-pbx-webhook";
 
@@ -16,6 +17,7 @@ export const pbxRouter = {
   getPbx,
   updatePbx,
   updatePbxAccess,
+  updatePbxExcludedNumbers,
   updatePbxSyncOptions,
   updatePbxWebhook,
   testPbx,

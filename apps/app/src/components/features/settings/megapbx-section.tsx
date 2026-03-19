@@ -34,11 +34,10 @@ function getWebhookBaseUrl(): string {
 
 export default function MegaPbxSection({
   prompts,
-  onPromptValueChange,
-  onPromptChange,
   onToggleChange,
   onSaveAccess,
   onSaveSyncOptions,
+  onSaveExcludedNumbers,
   onSaveWebhook,
   onTest,
   onSyncDirectory,
@@ -47,6 +46,10 @@ export default function MegaPbxSection({
   onLink,
   onUnlink,
   saving,
+  savingAccess,
+  savingSyncOptions,
+  savingExcludedNumbers,
+  savingWebhook,
   testing,
   syncing,
   testMessage,
@@ -75,8 +78,7 @@ export default function MegaPbxSection({
   const configuredFeatures = [
     prompts.megapbx_sync_employees?.value === "true" ? "Сотрудники" : null,
     prompts.megapbx_sync_numbers?.value === "true" ? "Номера" : null,
-    prompts.megapbx_sync_calls?.value === "true" ? "Звонки" : null,
-    prompts.megapbx_sync_recordings?.value === "true" ? "Записи" : null,
+    prompts.megapbx_sync_calls?.value === "true" ? "Звонки и записи" : null,
     prompts.megapbx_webhooks_enabled?.value === "true" ? "Вебхуки" : null,
   ].filter(Boolean) as string[];
 
@@ -113,6 +115,13 @@ export default function MegaPbxSection({
       ),
     [numbers],
   );
+  const excludedPhoneNumbers = useMemo(() => {
+    const raw = prompts.megapbx_exclude_phone_numbers?.value ?? "";
+    return raw
+      .split(/[\n,;]+/)
+      .map((value) => value.replace(/\D/g, ""))
+      .filter(Boolean);
+  }, [prompts.megapbx_exclude_phone_numbers?.value]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -160,6 +169,7 @@ export default function MegaPbxSection({
             <Checkbox
               id="megapbx-enabled"
               checked={enabled}
+              disabled={saving}
               onCheckedChange={(checked) =>
                 onToggleChange("megapbx_enabled", checked === true)
               }
@@ -225,12 +235,11 @@ export default function MegaPbxSection({
             configuredFeatures={configuredFeatures}
             testMessage={testMessage}
             webhookUrl={webhookUrl}
-            saving={saving}
+            savingAccess={savingAccess}
+            savingSyncOptions={savingSyncOptions}
+            savingWebhook={savingWebhook}
             testing={testing}
             syncing={syncing}
-            onPromptChange={onPromptChange}
-            onPromptValueChange={onPromptValueChange}
-            onToggleChange={onToggleChange}
             onSaveAccess={onSaveAccess}
             onSaveSyncOptions={onSaveSyncOptions}
             onSaveWebhook={onSaveWebhook}
@@ -264,6 +273,9 @@ export default function MegaPbxSection({
             numberLinkOptions={numberLinkOptions}
             onLink={onLink}
             onUnlink={onUnlink}
+            excludedPhoneNumbers={excludedPhoneNumbers}
+            savingExcludedNumbers={savingExcludedNumbers}
+            onSaveExcludedNumbers={onSaveExcludedNumbers}
           />
         )}
       </CardContent>

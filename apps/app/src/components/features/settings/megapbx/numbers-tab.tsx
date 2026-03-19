@@ -2,7 +2,6 @@
 
 import {
   Badge,
-  Card,
   DataGrid,
   DataGridContainer,
   DataGridPagination,
@@ -25,6 +24,9 @@ interface NumbersTabProps {
   numberSearch: string;
   onNumberSearchChange: (value: string) => void;
   numberLinkOptions: Record<string, NumberLinkOption[]>;
+  excludedPhoneNumbers: string[];
+  savingExcludedNumbers: boolean;
+  onSaveExcludedNumbers: (excludePhoneNumbers: string[]) => Promise<void>;
   onLink: (input: {
     targetType: "number";
     targetExternalId: string;
@@ -42,6 +44,9 @@ export function NumbersTab({
   numberSearch,
   onNumberSearchChange,
   numberLinkOptions,
+  excludedPhoneNumbers,
+  savingExcludedNumbers,
+  onSaveExcludedNumbers,
   onLink,
   onUnlink,
 }: NumbersTabProps) {
@@ -73,10 +78,21 @@ export function NumbersTab({
         numberLinkOptions,
         selectedLinks,
         setSelectedLinks,
+        excludedPhoneNumbers,
+        savingExcludedNumbers,
+        onSaveExcludedNumbers,
         onLink,
         onUnlink,
       ),
-    [numberLinkOptions, selectedLinks, onLink, onUnlink],
+    [
+      numberLinkOptions,
+      selectedLinks,
+      excludedPhoneNumbers,
+      savingExcludedNumbers,
+      onSaveExcludedNumbers,
+      onLink,
+      onUnlink,
+    ],
   );
 
   const numberTable = useReactTable({
@@ -102,7 +118,10 @@ export function NumbersTab({
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:items-end">
-          <Badge variant="outline">{filteredNumbers.length} записей</Badge>
+          <Badge variant="outline">
+            {filteredNumbers.length} записей, исключено:{" "}
+            {new Set(excludedPhoneNumbers).size}
+          </Badge>
           <SearchInput
             value={numberSearch}
             onChange={onNumberSearchChange}
@@ -111,40 +130,38 @@ export function NumbersTab({
           />
         </div>
       </div>
-      <Card className="overflow-hidden border-border/60">
-        <DataGrid
-          table={numberTable}
-          recordCount={filteredNumbers.length}
-          isLoading={numbersLoading}
-          emptyMessage={
-            numbers.length === 0
-              ? "Номера пока не синхронизированы. Сначала загрузите справочник из АТС."
-              : "По текущему запросу номера не найдены."
-          }
-          tableLayout={{
-            rowBorder: false,
-            headerBorder: false,
-            headerBackground: true,
-          }}
-          tableClassNames={{ base: "op-table" }}
-        >
-          <DataGridContainer className="border-0">
-            <div className="overflow-x-auto">
-              <DataGridTable<PbxNumberItem> />
-            </div>
-            <div className="px-4 py-3">
-              <DataGridPagination
-                sizes={[20, 50, 100]}
-                sizesLabel="Строк на странице"
-                info="{from} - {to} из {count}"
-                rowsPerPageLabel="Строк на странице"
-                previousPageLabel="Предыдущая страница"
-                nextPageLabel="Следующая страница"
-              />
-            </div>
-          </DataGridContainer>
-        </DataGrid>
-      </Card>
+      <DataGrid
+        table={numberTable}
+        recordCount={filteredNumbers.length}
+        isLoading={numbersLoading}
+        emptyMessage={
+          numbers.length === 0
+            ? "Номера пока не синхронизированы. Сначала загрузите справочник из АТС."
+            : "По текущему запросу номера не найдены."
+        }
+        tableLayout={{
+          rowBorder: false,
+          headerBorder: false,
+          headerBackground: true,
+        }}
+        tableClassNames={{ base: "op-table" }}
+      >
+        <DataGridContainer className="border-0">
+          <div className="overflow-x-auto">
+            <DataGridTable<PbxNumberItem> />
+          </div>
+          <div className="px-4 py-3">
+            <DataGridPagination
+              sizes={[20, 50, 100]}
+              sizesLabel="Строк на странице"
+              info="{from} - {to} из {count}"
+              rowsPerPageLabel="Строк на странице"
+              previousPageLabel="Предыдущая страница"
+              nextPageLabel="Следующая страница"
+            />
+          </div>
+        </DataGridContainer>
+      </DataGrid>
     </div>
   );
 }

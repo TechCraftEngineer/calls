@@ -2,7 +2,6 @@
 
 import {
   Badge,
-  Card,
   DataGrid,
   DataGridContainer,
   DataGridPagination,
@@ -167,40 +166,38 @@ export function EmployeesTab({
           />
         </div>
       </div>
-      <Card className="overflow-hidden border-border/60">
-        <DataGrid
-          table={employeeTable}
-          recordCount={filteredEmployees.length}
-          isLoading={employeesLoading}
-          emptyMessage={
-            employees.length === 0
-              ? "Сотрудники пока не синхронизированы. Сначала запустите синхронизацию справочника."
-              : "По текущему запросу сотрудники не найдены."
-          }
-          tableLayout={{
-            rowBorder: false,
-            headerBorder: false,
-            headerBackground: true,
-          }}
-          tableClassNames={{ base: "op-table" }}
-        >
-          <DataGridContainer className="border-0">
-            <div className="overflow-x-auto">
-              <DataGridTable<PbxEmployeeItem> />
-            </div>
-            <div className="px-4 py-3">
-              <DataGridPagination
-                sizes={[20, 50, 100]}
-                sizesLabel="Строк на странице"
-                info="{from} - {to} из {count}"
-                rowsPerPageLabel="Строк на странице"
-                previousPageLabel="Предыдущая страница"
-                nextPageLabel="Следующая страница"
-              />
-            </div>
-          </DataGridContainer>
-        </DataGrid>
-      </Card>
+      <DataGrid
+        table={employeeTable}
+        recordCount={filteredEmployees.length}
+        isLoading={employeesLoading}
+        emptyMessage={
+          employees.length === 0
+            ? "Сотрудники пока не синхронизированы. Сначала запустите синхронизацию справочника."
+            : "По текущему запросу сотрудники не найдены."
+        }
+        tableLayout={{
+          rowBorder: false,
+          headerBorder: false,
+          headerBackground: true,
+        }}
+        tableClassNames={{ base: "op-table" }}
+      >
+        <DataGridContainer className="border-0">
+          <div className="overflow-x-auto">
+            <DataGridTable<PbxEmployeeItem> />
+          </div>
+          <div className="px-4 py-3">
+            <DataGridPagination
+              sizes={[20, 50, 100]}
+              sizesLabel="Строк на странице"
+              info="{from} - {to} из {count}"
+              rowsPerPageLabel="Строк на странице"
+              previousPageLabel="Предыдущая страница"
+              nextPageLabel="Следующая страница"
+            />
+          </div>
+        </DataGridContainer>
+      </DataGrid>
     </div>
   );
 }

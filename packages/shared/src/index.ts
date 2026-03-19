@@ -16,6 +16,7 @@ export {
   isValidWorkspaceId,
   workspaceIdSchema,
 } from "./validation";
+export { isValidCalendarIsoDate } from "./validation/date";
 export {
   validateFtpCredentials,
   validateFtpHost,

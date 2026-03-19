@@ -1,16 +1,6 @@
-import {
-  and,
-  eq,
-  gte,
-  inArray,
-  isNull,
-  like,
-  lte,
-  notInArray,
-  or,
-  sql,
-} from "drizzle-orm";
+import { eq, gte, inArray, like, lte, or, sql } from "drizzle-orm";
 import * as schema from "../../schema";
+import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
 
 export interface CallConditionsParams {
   workspaceId?: string;
@@ -101,15 +91,9 @@ export function buildCallConditions(params: CallConditionsParams) {
   }
 
   if (excludePhoneNumbers?.length) {
-    const excludeCondition = and(
-      or(
-        isNull(schema.calls.internalNumber),
-        notInArray(schema.calls.internalNumber, excludePhoneNumbers),
-      ),
-      or(
-        isNull(schema.calls.number),
-        notInArray(schema.calls.number, excludePhoneNumbers),
-      ),
+    const excludeCondition = buildExcludePhoneCondition(
+      excludePhoneNumbers,
+      schema.calls,
     );
     if (excludeCondition) {
       conditions.push(excludeCondition);

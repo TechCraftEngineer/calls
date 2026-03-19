@@ -103,7 +103,6 @@ export {
   type IntegrationType,
   type Invitation,
   invitations,
-  type MegaPbxEndpointConfig,
   type MegaPbxIntegrationConfig,
   type MegaPbxWebhookConfig,
   type NewInvitation,

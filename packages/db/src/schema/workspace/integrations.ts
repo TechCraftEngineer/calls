@@ -44,27 +44,18 @@ export interface BotIntegrationConfig {
   botToken: string;
 }
 
-export interface MegaPbxEndpointConfig {
-  path: string;
-  method?: "GET" | "POST";
-  resultKey?: string;
-}
-
 export interface MegaPbxWebhookConfig {
   path?: string;
   secret?: string;
 }
 
+/** CRM API v1: https://api.megapbx.ru/#/docs/crmapi/v1/ — baseUrl и endpoints фиксированы */
 export interface MegaPbxIntegrationConfig {
   baseUrl: string;
   apiKey: string;
   syncFromDate?: string;
-  authScheme?: "bearer" | "x-api-key" | "query";
-  apiKeyHeader?: string;
-  employeesEndpoint?: MegaPbxEndpointConfig;
-  numbersEndpoint?: MegaPbxEndpointConfig;
-  callsEndpoint?: MegaPbxEndpointConfig;
-  recordingsEndpoint?: MegaPbxEndpointConfig;
+  /** Номера (только цифры), которые не должны импортироваться из истории звонков */
+  excludePhoneNumbers?: string[];
   webhook?: MegaPbxWebhookConfig;
   ftpHost?: string;
   ftpUser?: string;
