@@ -89,7 +89,7 @@ export async function getEvaluationsStats(
       .trim()
       .toLowerCase();
     const target =
-      dir === "incoming" || dir === "inbound"
+      dir === "incoming" || dir === "inbound" || dir === "входящий"
         ? stats[key].incoming
         : stats[key].outgoing;
 

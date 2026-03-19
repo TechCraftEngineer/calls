@@ -16,8 +16,24 @@ const PBX_PROVIDER = "megapbx";
 const maybeStringOrArraySchema = z
   .union([z.string(), z.array(z.string())])
   .optional();
-const directionSchema = z.enum(["incoming", "outgoing", "inbound", "outbound"]);
-const statusSchema = z.enum(["missed", "answered", "Пропущен", "Принят"]);
+const directionSchema = z.enum([
+  "incoming",
+  "outgoing",
+  "inbound",
+  "outbound",
+  "входящий",
+  "исходящий",
+  "Входящий",
+  "Исходящий",
+]);
+const statusSchema = z.enum([
+  "missed",
+  "answered",
+  "Пропущен",
+  "Принят",
+  "пропущен",
+  "принят",
+]);
 const maybeDirectionOrArraySchema = z
   .union([directionSchema, z.array(directionSchema)])
   .optional();
@@ -34,6 +50,40 @@ function toStringArray(input: string | string[] | undefined): string[] {
     return input.map((v) => v.trim()).filter(Boolean);
   }
   return [];
+}
+
+export function normalizeStatusFilter(
+  status: string,
+): "ПРОПУЩЕН" | "ПРИНЯТ" | null {
+  const normalized = status.trim().toLowerCase();
+  if (normalized === "missed" || normalized === "пропущен") {
+    return "ПРОПУЩЕН";
+  }
+  if (normalized === "answered" || normalized === "принят") {
+    return "ПРИНЯТ";
+  }
+  return null;
+}
+
+export function normalizeDirectionFilter(
+  direction: string,
+): "incoming" | "outgoing" | null {
+  const normalized = direction.trim().toLowerCase();
+  if (
+    normalized === "incoming" ||
+    normalized === "inbound" ||
+    normalized === "входящий"
+  ) {
+    return "incoming";
+  }
+  if (
+    normalized === "outgoing" ||
+    normalized === "outbound" ||
+    normalized === "исходящий"
+  ) {
+    return "outgoing";
+  }
+  return null;
 }
 
 type ManagerOption = {
@@ -68,23 +118,11 @@ export const list = workspaceProcedure
       : undefined;
     const dateTo = input.date_to ? `${input.date_to}T23:59:59` : undefined;
     const normalizedStatuses = statusFilters
-      ?.map((status) =>
-        status === "missed" || status === "Пропущен"
-          ? "ПРОПУЩЕН"
-          : status === "answered" || status === "Принят"
-            ? "ПРИНЯТ"
-            : null,
-      )
+      ?.map(normalizeStatusFilter)
       .filter((status): status is "ПРОПУЩЕН" | "ПРИНЯТ" => status !== null);
 
     const normalizedDirections = directionFilters
-      ?.map((direction) =>
-        direction === "incoming" || direction === "inbound"
-          ? "incoming"
-          : direction === "outgoing" || direction === "outbound"
-            ? "outgoing"
-            : null,
-      )
+      ?.map(normalizeDirectionFilter)
       .filter(
         (direction): direction is "incoming" | "outgoing" => direction !== null,
       );
