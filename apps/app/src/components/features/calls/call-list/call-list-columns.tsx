@@ -24,7 +24,7 @@ export interface CallListColumnsOptions {
     existingRecommendations?: string[],
   ) => void;
   onTranscribe?: (callId: string) => void;
-  onPlay?: (filename: string, number: string) => void;
+  onPlay?: (callId: string, number: string) => void;
   isLoadingRecommendations: boolean;
   recommendationsCallId: string | null;
 }
@@ -177,7 +177,7 @@ export function getCallListColumns(
     },
     {
       id: "record",
-      accessorFn: (row) => row.call.filename ?? "",
+      accessorFn: (row) => row.call.fileId ?? "",
       size: 128,
       minSize: 116,
       header: ({ column }) => (

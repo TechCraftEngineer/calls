@@ -63,7 +63,7 @@ interface CellRendererProps {
     existingRecommendations?: string[],
   ) => void;
   onTranscribe?: (callId: string) => void;
-  onPlay?: (filename: string, number: string) => void;
+  onPlay?: (callId: string, number: string) => void;
   isLoadingRecommendations: boolean;
   recommendationsCallId: string | null;
 }
@@ -95,10 +95,10 @@ export function renderCallListCell({
 
   const isMissed =
     (call.duration ?? 0) === 0 &&
-    (call.direction === "Входящий" || call.direction === "incoming");
+    (call.direction === "inbound" || call.direction === "incoming");
 
   const directionLabel =
-    call.direction === "incoming" || call.direction === "Входящий"
+    call.direction === "incoming" || call.direction === "inbound"
       ? "ВХОДЯЩИЙ"
       : "ИСХОДЯЩИЙ";
   const directionClass =
@@ -229,7 +229,7 @@ export function renderCallListCell({
               flexWrap: "wrap",
             }}
           >
-            {call.filename && (
+            {call.fileId && (
               <>
                 <Button
                   type="button"
@@ -332,7 +332,7 @@ export function renderCallListCell({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (onPlay && call.filename) {
+                    if (onPlay && call.fileId) {
                       onPlay(String(call.id), call.number || "");
                     }
                   }}

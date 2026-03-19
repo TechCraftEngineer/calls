@@ -11,7 +11,7 @@
 // Типы для API (camelCase — соответствует Drizzle/БД)
 export interface Call {
   id: string;
-  filename?: string;
+  fileId?: string | null;
   number?: string;
   timestamp: string;
   name?: string;

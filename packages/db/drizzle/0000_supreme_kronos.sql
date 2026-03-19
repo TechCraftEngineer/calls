@@ -70,6 +70,7 @@ CREATE TABLE "calls" (
 	"status" text,
 	"size_bytes" integer,
 	"file_id" uuid,
+	"pbx_number_id" uuid,
 	"internal_number" text,
 	"source" text,
 	"customer_name" text,
@@ -426,6 +427,7 @@ ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_user_id_users_id_fk" FOREIGN K
 ALTER TABLE "call_evaluations" ADD CONSTRAINT "call_evaluations_call_id_calls_id_fk" FOREIGN KEY ("call_id") REFERENCES "public"."calls"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "calls" ADD CONSTRAINT "calls_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "calls" ADD CONSTRAINT "calls_file_id_files_id_fk" FOREIGN KEY ("file_id") REFERENCES "public"."files"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "calls" ADD CONSTRAINT "calls_pbx_number_id_workspace_pbx_numbers_id_fk" FOREIGN KEY ("pbx_number_id") REFERENCES "public"."workspace_pbx_numbers"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "evaluation_templates" ADD CONSTRAINT "evaluation_templates_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "files" ADD CONSTRAINT "files_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invitations" ADD CONSTRAINT "invitations_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -472,6 +474,7 @@ CREATE INDEX "calls_workspace_id_idx" ON "calls" USING btree ("workspace_id");--
 CREATE INDEX "calls_workspace_timestamp_idx" ON "calls" USING btree ("workspace_id","timestamp");--> statement-breakpoint
 CREATE INDEX "calls_workspace_archived_idx" ON "calls" USING btree ("workspace_id","is_archived");--> statement-breakpoint
 CREATE INDEX "calls_number_idx" ON "calls" USING btree ("number");--> statement-breakpoint
+CREATE INDEX "calls_pbx_number_id_idx" ON "calls" USING btree ("pbx_number_id");--> statement-breakpoint
 CREATE INDEX "calls_status_idx" ON "calls" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "idx_calls_workspace_id_name_internal_number" ON "calls" USING btree ("workspace_id","name","internal_number");--> statement-breakpoint
 CREATE INDEX "evaluation_templates_workspace_idx" ON "evaluation_templates" USING btree ("workspace_id");--> statement-breakpoint

@@ -68,6 +68,7 @@ export const callsRepository = {
         status,
         sizeBytes: data.sizeBytes ?? null,
         fileId: data.fileId ?? null,
+        pbxNumberId: data.pbxNumberId ?? null,
         internalNumber: data.internalNumber ?? null,
         source: data.source ?? null,
         customerName: data.customerName ?? null,

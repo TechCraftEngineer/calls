@@ -256,7 +256,11 @@ export default function CallDetailModal({
                       <Badge variant="secondary" className="font-medium">
                         {call.direction === "incoming"
                           ? "Входящий"
-                          : "Исходящий"}
+                          : call.direction === "inbound"
+                            ? "Входящий"
+                            : call.direction === "outbound"
+                              ? "Исходящий"
+                              : "Исходящий"}
                       </Badge>
                       <Badge
                         variant={

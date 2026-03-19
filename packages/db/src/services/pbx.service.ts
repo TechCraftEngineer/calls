@@ -13,13 +13,31 @@ const MEGAPBX_ENDPOINTS = {
   calls: "/crmapi/v1/history/json",
 } as const;
 
-export class MegaPbxConfigNotFoundError extends Error {
-  constructor(workspaceId: string) {
-    super(`Config for workspace ${workspaceId} not found`);
-    this.name = "MegaPbxConfigNotFoundError";
-  }
-}
+// Типы для разных операций обновления
+type UpdateMegaPbxAccessInput = {
+  enabled: boolean;
+  baseUrl: string;
+  apiKey: string | null;
+  syncFromDate?: string | null;
+};
 
+type UpdateMegaPbxSyncOptionsInput = {
+  syncEmployees: boolean;
+  syncNumbers: boolean;
+  syncCalls: boolean;
+  syncRecordings: boolean;
+  webhooksEnabled: boolean;
+};
+
+type UpdateMegaPbxExcludedNumbersInput = {
+  excludePhoneNumbers?: string[] | null;
+};
+
+type UpdateMegaPbxWebhookInput = {
+  webhookSecret?: string | null;
+};
+
+// Полный тип для всех настроек (используется при создании/полном обновлении)
 type UpdateMegaPbxSettingsInput = {
   enabled: boolean;
   baseUrl: string;
@@ -244,15 +262,36 @@ export class PbxService {
     return result;
   }
 
-  async updateSettingsPartial(
+  private async updateSettingsWithDefaults(
     workspaceId: string,
     partial: Partial<UpdateMegaPbxSettingsInput>,
     username = "system",
   ): Promise<boolean> {
     const existing = await this.getConfigWithSecrets(workspaceId);
+
+    // Если интеграция не существует, создаем её с настройками по умолчанию
     if (!existing) {
-      throw new MegaPbxConfigNotFoundError(workspaceId);
+      const full: UpdateMegaPbxSettingsInput = {
+        enabled: false,
+        baseUrl: "",
+        apiKey: null,
+        syncFromDate: null,
+        excludePhoneNumbers: null,
+        webhookSecret: null,
+        ftpHost: null,
+        ftpUser: null,
+        ftpPassword: null,
+        syncEmployees: true,
+        syncNumbers: true,
+        syncCalls: true,
+        syncRecordings: false,
+        webhooksEnabled: false,
+        ...partial,
+      };
+      return this.updateSettings(workspaceId, full, username);
     }
+
+    // Если интеграция существует, обновляем её
     const full: UpdateMegaPbxSettingsInput = {
       enabled: existing.enabled,
       baseUrl: existing.baseUrl ?? "",
@@ -271,6 +310,46 @@ export class PbxService {
       ...partial,
     };
     return this.updateSettings(workspaceId, full, username);
+  }
+
+  async updateAccess(
+    workspaceId: string,
+    partial: Partial<UpdateMegaPbxAccessInput>,
+    username = "system",
+  ): Promise<boolean> {
+    return this.updateSettingsWithDefaults(workspaceId, partial, username);
+  }
+
+  async updateSyncOptions(
+    workspaceId: string,
+    partial: Partial<UpdateMegaPbxSyncOptionsInput>,
+    username = "system",
+  ): Promise<boolean> {
+    return this.updateSettingsWithDefaults(workspaceId, partial, username);
+  }
+
+  async updateExcludedNumbers(
+    workspaceId: string,
+    partial: Partial<UpdateMegaPbxExcludedNumbersInput>,
+    username = "system",
+  ): Promise<boolean> {
+    return this.updateSettingsWithDefaults(workspaceId, partial, username);
+  }
+
+  async updateWebhook(
+    workspaceId: string,
+    partial: Partial<UpdateMegaPbxWebhookInput>,
+    username = "system",
+  ): Promise<boolean> {
+    return this.updateSettingsWithDefaults(workspaceId, partial, username);
+  }
+
+  async updateSettingsPartial(
+    workspaceId: string,
+    partial: Partial<UpdateMegaPbxSettingsInput>,
+    username = "system",
+  ): Promise<boolean> {
+    return this.updateSettingsWithDefaults(workspaceId, partial, username);
   }
 
   listEmployees(workspaceId: string) {

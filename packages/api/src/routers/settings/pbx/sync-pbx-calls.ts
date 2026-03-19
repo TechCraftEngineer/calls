@@ -15,12 +15,13 @@ export const syncPbxCallsRoute = workspaceAdminProcedure.handler(
       pbxSyncRequested.create({
         workspaceId: context.workspaceId,
         syncType: "calls",
+        syncRecordings: true,
       }),
     );
 
     return {
       success: true,
-      message: "Синхронизация звонков поставлена в очередь",
+      message: "Синхронизация звонков с записями поставлена в очередь",
     };
   },
 );

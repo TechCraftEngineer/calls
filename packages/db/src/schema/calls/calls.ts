@@ -14,6 +14,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { files } from "../files/files";
+import { workspacePbxNumbers } from "../workspace/pbx";
 import { workspaces } from "../workspace/workspaces";
 
 export const calls = pgTable(
@@ -34,6 +35,12 @@ export const calls = pgTable(
     fileId: uuid("file_id").references(() => files.id, {
       onDelete: "set null",
     }),
+    pbxNumberId: uuid("pbx_number_id").references(
+      () => workspacePbxNumbers.id,
+      {
+        onDelete: "set null",
+      },
+    ),
     internalNumber: text("internal_number"),
     source: text("source"),
     customerName: text("customer_name"),
@@ -66,6 +73,7 @@ export const calls = pgTable(
       table.isArchived,
     ),
     index("calls_number_idx").on(table.number),
+    index("calls_pbx_number_id_idx").on(table.pbxNumberId),
     index("calls_status_idx").on(table.status),
     index("idx_calls_workspace_id_name_internal_number").on(
       table.workspaceId,

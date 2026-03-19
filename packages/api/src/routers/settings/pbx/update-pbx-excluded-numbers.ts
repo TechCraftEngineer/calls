@@ -1,8 +1,4 @@
-import {
-  MegaPbxConfigNotFoundError,
-  normalizePhoneNumberList,
-  pbxService,
-} from "@calls/db";
+import { normalizePhoneNumberList, pbxService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { getUserEmail } from "./get-user-email";
@@ -18,7 +14,7 @@ export const updatePbxExcludedNumbers = workspaceAdminProcedure
 
     let ok: boolean;
     try {
-      ok = await pbxService.updateSettingsPartial(
+      ok = await pbxService.updateExcludedNumbers(
         context.workspaceId,
         {
           excludePhoneNumbers,
@@ -26,17 +22,15 @@ export const updatePbxExcludedNumbers = workspaceAdminProcedure
         String(username),
       );
     } catch (err: unknown) {
-      if (err instanceof MegaPbxConfigNotFoundError) {
-        throw new ORPCError("NOT_FOUND", {
-          message: "PBX интеграция не настроена",
-        });
-      }
-      throw err;
+      console.error("Failed to update PBX excluded numbers:", err);
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Не удалось обновить исключённые номера",
+      });
     }
 
     if (!ok) {
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "PBX интеграция не настроена",
+        message: "Не удалось обновить исключённые номера",
       });
     }
 

@@ -138,7 +138,7 @@ export interface SettingsState {
   megaPbxExcludedNumbersSaving: boolean;
   megaPbxWebhookSaving: boolean;
   megaPbxTesting: boolean;
-  megaPbxSyncing: "directory" | "calls" | "recordings" | null;
+  megaPbxSyncing: "directory" | "calls" | null;
   megaPbxTestMessage: string;
   megaPbxEmployeesLoading: boolean;
   megaPbxNumbersLoading: boolean;
@@ -183,7 +183,6 @@ export interface PbxSectionProps {
   onTest: (baseUrl?: string, apiKey?: string) => Promise<void>;
   onSyncDirectory: () => Promise<void>;
   onSyncCalls: () => Promise<void>;
-  onSyncRecordings: () => Promise<void>;
   onLink: (input: {
     targetType: "employee" | "number";
     targetExternalId: string;
@@ -200,7 +199,7 @@ export interface PbxSectionProps {
   savingExcludedNumbers: boolean;
   savingWebhook: boolean;
   testing: boolean;
-  syncing: "directory" | "calls" | "recordings" | null;
+  syncing: "directory" | "calls" | null;
   testMessage: string;
   employeesLoading: boolean;
   numbersLoading: boolean;

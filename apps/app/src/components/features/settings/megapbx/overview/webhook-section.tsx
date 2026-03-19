@@ -63,7 +63,7 @@ export function WebhookSection({
       webhookSecret: webhookSecret || "",
     });
     setGenerated(false);
-  }, [form, webhookSecret, webhookSecretPasswordSet]);
+  }, [form, webhookSecret]);
 
   const copyWebhookUrl = useCallback(async () => {
     if (!webhookUrl) return;
