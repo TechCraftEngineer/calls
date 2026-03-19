@@ -12,8 +12,11 @@ import {
   workspacesService,
 } from "@calls/db";
 import { sendMessage } from "@calls/telegram-bot";
-import type { ManagerStats } from "../../reports/format-report";
-import { formatTelegramReportHtml } from "../../reports/format-report";
+import {
+  formatTelegramReportHtml,
+  type ManagerStats,
+  splitTelegramHtmlMessage,
+} from "../../reports/format-report";
 import { inngest } from "../client";
 
 const TZ = "Europe/Moscow";
@@ -228,10 +231,18 @@ export const telegramReportsFn = inngest.createFunction(
                 lowRatedCalls,
               });
 
-              const ok = await sendMessage(token, r.chatId, text, {
-                parseMode: "HTML",
-              });
-              if (ok) {
+              const chunks = splitTelegramHtmlMessage(text, 4000);
+              let allChunksSent = true;
+              for (const chunk of chunks) {
+                const ok = await sendMessage(token, r.chatId, chunk, {
+                  parseMode: "HTML",
+                });
+                if (!ok) {
+                  allChunksSent = false;
+                  break;
+                }
+              }
+              if (allChunksSent) {
                 sent++;
               } else {
                 errs.push(`Не удалось отправить в chat ${r.chatId}`);

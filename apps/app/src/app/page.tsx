@@ -69,6 +69,13 @@ interface Pagination {
   total_pages: number;
 }
 
+interface ManagerOption {
+  id: string;
+  name: string;
+}
+type DirectionFilter = "incoming" | "outgoing";
+type StatusFilter = "missed" | "answered";
+
 const directionOptions = [
   { value: "all", label: "Все" },
   { value: "incoming", label: "Входящие" },
@@ -106,12 +113,13 @@ export default function HomePage() {
     q: "",
     dateFrom: "",
     dateTo: "",
-    direction: [] as string[],
+    direction: [] as DirectionFilter[],
     manager: [] as string[],
-    status: [] as string[],
+    status: [] as StatusFilter[],
     value: [] as number[],
     operator: [] as string[],
   });
+  const [appliedFilters, setAppliedFilters] = useState(filters);
   const debouncedFilters = useDebounce(
     filters,
     PAGINATION_CONSTANTS.SEARCH_DEBOUNCE_MS,
@@ -124,21 +132,17 @@ export default function HomePage() {
   const callsListInput = {
     page: pagination.page,
     per_page: pagination.per_page,
-    q: debouncedFilters.q || undefined,
-    date_from: debouncedFilters.dateFrom || undefined,
-    date_to: debouncedFilters.dateTo || undefined,
-    direction: debouncedFilters.direction.length
-      ? debouncedFilters.direction
+    q: appliedFilters.q || undefined,
+    date_from: appliedFilters.dateFrom || undefined,
+    date_to: appliedFilters.dateTo || undefined,
+    direction: appliedFilters.direction.length
+      ? appliedFilters.direction
       : undefined,
-    manager: debouncedFilters.manager.length
-      ? debouncedFilters.manager
-      : undefined,
-    status: debouncedFilters.status.length
-      ? debouncedFilters.status
-      : undefined,
-    value: debouncedFilters.value?.length ? debouncedFilters.value : undefined,
-    operator: debouncedFilters.operator?.length
-      ? debouncedFilters.operator
+    manager: appliedFilters.manager.length ? appliedFilters.manager : undefined,
+    status: appliedFilters.status.length ? appliedFilters.status : undefined,
+    value: appliedFilters.value?.length ? appliedFilters.value : undefined,
+    operator: appliedFilters.operator?.length
+      ? appliedFilters.operator
       : undefined,
   };
 
@@ -157,8 +161,24 @@ export default function HomePage() {
 
   const updateFilters = (updater: (prev: typeof filters) => typeof filters) => {
     setFilters((prev) => updater(prev));
-    setPagination((prev) => ({ ...prev, page: 1 }));
   };
+
+  useEffect(() => {
+    setAppliedFilters((prev) => {
+      const changed =
+        prev.q !== debouncedFilters.q ||
+        prev.dateFrom !== debouncedFilters.dateFrom ||
+        prev.dateTo !== debouncedFilters.dateTo ||
+        prev.direction.join("|") !== debouncedFilters.direction.join("|") ||
+        prev.manager.join("|") !== debouncedFilters.manager.join("|") ||
+        prev.status.join("|") !== debouncedFilters.status.join("|") ||
+        prev.value.join("|") !== debouncedFilters.value.join("|") ||
+        prev.operator.join("|") !== debouncedFilters.operator.join("|");
+      if (!changed) return prev;
+      setPagination((p) => ({ ...p, page: 1 }));
+      return debouncedFilters;
+    });
+  }, [debouncedFilters]);
 
   useEffect(() => {
     if (callsError && typeof callsError === "object" && "code" in callsError) {
@@ -181,10 +201,15 @@ export default function HomePage() {
   }, [result]);
 
   const calls = (result?.calls ?? []) as CallWithDetails[];
-  const managerOptions = Array.isArray(result?.managers)
+  const managerOptions: ManagerOption[] = Array.isArray(result?.managers)
     ? result.managers.filter(
-        (manager): manager is string =>
-          typeof manager === "string" && manager.trim().length > 0,
+        (manager): manager is ManagerOption =>
+          typeof manager === "object" &&
+          manager !== null &&
+          typeof manager.id === "string" &&
+          manager.id.trim().length > 0 &&
+          typeof manager.name === "string" &&
+          manager.name.trim().length > 0,
       )
     : [];
   const selectedDirectionLabel =
@@ -274,7 +299,9 @@ export default function HomePage() {
                   <div className="relative w-full max-w-105">
                     <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
                     <Input
+                      id="calls-search"
                       placeholder="Поиск по номеру, сотруднику, клиенту"
+                      aria-label="Поиск по номеру, сотруднику или клиенту"
                       value={filters.q}
                       onChange={(e) =>
                         updateFilters((prev) => ({
@@ -338,6 +365,7 @@ export default function HomePage() {
                                 }));
                                 return;
                               }
+                              if (option.value === "all") return;
                               if (checked === true) {
                                 updateFilters((prev) => ({
                                   ...prev,
@@ -397,6 +425,7 @@ export default function HomePage() {
                                 }));
                                 return;
                               }
+                              if (option.value === "all") return;
                               if (checked === true) {
                                 updateFilters((prev) => ({
                                   ...prev,
@@ -449,29 +478,29 @@ export default function HomePage() {
                         <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
                           {managerOptions.map((manager) => (
                             <div
-                              key={manager}
+                              key={manager.id}
                               className="flex items-center gap-2.5"
                             >
                               <Checkbox
-                                id={`manager-${manager}`}
-                                checked={filters.manager.includes(manager)}
+                                id={`manager-${manager.id}`}
+                                checked={filters.manager.includes(manager.id)}
                                 onCheckedChange={(checked) =>
                                   updateFilters((prev) => ({
                                     ...prev,
                                     manager:
                                       checked === true
-                                        ? [...prev.manager, manager]
+                                        ? [...prev.manager, manager.id]
                                         : prev.manager.filter(
-                                            (v) => v !== manager,
+                                            (v) => v !== manager.id,
                                           ),
                                   }))
                                 }
                               />
                               <Label
-                                htmlFor={`manager-${manager}`}
+                                htmlFor={`manager-${manager.id}`}
                                 className="font-normal"
                               >
-                                {manager}
+                                {manager.name}
                               </Label>
                             </div>
                           ))}

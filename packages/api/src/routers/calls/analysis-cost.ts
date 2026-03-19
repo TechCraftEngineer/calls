@@ -12,12 +12,15 @@ export function calculateAnalysisCostRub(
   }
 
   const durationHours = durationInSeconds / 3600;
-  const durationMinutes = durationInSeconds / 60;
 
   const assemblyCostRub =
     durationHours * env.ASSEMBLYAI_RATE_USD_PER_HOUR * env.RUB_PER_USD;
-  const yandexCostRub =
-    durationMinutes * env.YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE;
+  const yandexRateRubPerSecond =
+    // приоритет — ставка за секунду
+    env.YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND ??
+    // fallback — ставка за минуту (на старых конфигах)
+    env.YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE / 60;
+  const yandexCostRub = durationInSeconds * yandexRateRubPerSecond;
 
   return Number((assemblyCostRub + yandexCostRub).toFixed(2));
 }

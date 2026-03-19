@@ -28,6 +28,8 @@ export interface GetCallsParams {
   valueScores?: number[];
   operators?: string[];
   managers?: string[];
+  /** Internal numbers выбранных менеджеров по их id */
+  managerInternalNumbers?: string[];
   statuses?: string[];
   /** Internal numbers найденных сотрудников по текстовому поиску q */
   managerInternalNumbersForQuery?: string[];

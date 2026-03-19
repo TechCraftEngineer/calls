@@ -84,7 +84,7 @@ export interface CallsResponse {
     transcribed: number;
     avg_duration: number;
   };
-  managers: string[];
+  managers: { id: string; name: string }[];
 }
 
 export interface WorkspaceItem {

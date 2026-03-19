@@ -1,4 +1,4 @@
-import { and, avg, count, eq, gte, inArray, lt, lte } from "drizzle-orm";
+import { and, avg, count, eq, gte, inArray, lt, lte, sum } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
@@ -14,8 +14,8 @@ export interface GetEvaluationsStatsParams {
 export interface ManagerStatsRow {
   name: string;
   internalNumber: string | null;
-  incoming: { count: number; duration: number };
-  outgoing: { count: number; duration: number };
+  incoming: { count: number; duration: number; totalDuration?: number };
+  outgoing: { count: number; duration: number; totalDuration?: number };
   avgManagerScore?: number | null;
   avgValueScore?: number | null;
   evaluatedCount?: number;
@@ -55,7 +55,7 @@ export async function getEvaluationsStats(
       managerName: schema.calls.name,
       direction: schema.calls.direction,
       totalCalls: count(),
-      totalDuration: avg(schema.calls.duration),
+      totalDuration: sum(schema.calls.duration),
     })
     .from(schema.calls)
     .leftJoin(
@@ -80,8 +80,8 @@ export async function getEvaluationsStats(
       stats[key] = {
         name: key,
         internalNumber: row.internalNumber,
-        incoming: { count: 0, duration: 0 },
-        outgoing: { count: 0, duration: 0 },
+        incoming: { count: 0, duration: 0, totalDuration: 0 },
+        outgoing: { count: 0, duration: 0, totalDuration: 0 },
       };
     }
 
@@ -91,8 +91,12 @@ export async function getEvaluationsStats(
         ? stats[key].incoming
         : stats[key].outgoing;
 
-    target.count += Number(row.totalCalls ?? 0);
-    target.duration += Number(row.totalDuration ?? 0);
+    const totalCalls = Number(row.totalCalls ?? 0);
+    const totalDuration = Number(row.totalDuration ?? 0);
+    target.count += totalCalls;
+    target.totalDuration = Number(target.totalDuration ?? 0) + totalDuration;
+    target.duration =
+      target.count > 0 ? Number(target.totalDuration ?? 0) / target.count : 0;
   }
 
   // Агрегаты оценок по менеджерам (avg rating, avg value, evaluated count)

@@ -14,6 +14,7 @@ export interface CallConditionsParams {
   valueScores?: number[];
   operators?: string[];
   managers?: string[];
+  managerInternalNumbers?: string[];
   statuses?: string[];
   managerInternalNumbersForQuery?: string[];
   q?: string;
@@ -32,6 +33,7 @@ export function buildCallConditions(params: CallConditionsParams) {
     valueScores,
     operators,
     managers,
+    managerInternalNumbers,
     statuses,
     managerInternalNumbersForQuery,
     q,
@@ -69,7 +71,21 @@ export function buildCallConditions(params: CallConditionsParams) {
     conditions.push(inArray(schema.calls.number, mobileNumbers));
   }
   if (directions?.length) {
-    conditions.push(inArray(schema.calls.direction, directions));
+    const expandedDirections = [
+      ...new Set(
+        directions.flatMap((direction) => {
+          const d = direction.trim().toLowerCase();
+          if (d === "входящий" || d === "incoming" || d === "inbound") {
+            return ["Входящий", "incoming", "inbound"];
+          }
+          if (d === "исходящий" || d === "outgoing" || d === "outbound") {
+            return ["Исходящий", "outgoing", "outbound"];
+          }
+          return [direction];
+        }),
+      ),
+    ];
+    conditions.push(inArray(schema.calls.direction, expandedDirections));
   }
   if (statuses?.length) {
     conditions.push(inArray(schema.calls.status, statuses));
@@ -80,6 +96,11 @@ export function buildCallConditions(params: CallConditionsParams) {
   if (managers?.length) {
     conditions.push(inArray(schema.calls.name, managers));
   }
+  if (managerInternalNumbers?.length) {
+    conditions.push(
+      inArray(schema.calls.internalNumber, managerInternalNumbers),
+    );
+  }
   if (valueScores?.length) {
     conditions.push(inArray(schema.callEvaluations.valueScore, valueScores));
   }
@@ -88,6 +109,7 @@ export function buildCallConditions(params: CallConditionsParams) {
       ilike(schema.calls.number, `%${q}%`),
       ilike(schema.calls.name, `%${q}%`),
       ilike(schema.calls.customerName, `%${q}%`),
+      ilike(schema.calls.internalNumber, `%${q}%`),
       managerInternalNumbersForQuery?.length
         ? inArray(schema.calls.internalNumber, managerInternalNumbersForQuery)
         : undefined,

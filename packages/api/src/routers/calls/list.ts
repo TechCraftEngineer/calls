@@ -16,6 +16,19 @@ const PBX_PROVIDER = "megapbx";
 const maybeStringOrArraySchema = z
   .union([z.string(), z.array(z.string())])
   .optional();
+const directionSchema = z.enum([
+  "incoming",
+  "outgoing",
+  "Входящий",
+  "Исходящий",
+]);
+const statusSchema = z.enum(["missed", "answered", "Пропущен", "Принят"]);
+const maybeDirectionOrArraySchema = z
+  .union([directionSchema, z.array(directionSchema)])
+  .optional();
+const maybeStatusOrArraySchema = z
+  .union([statusSchema, z.array(statusSchema)])
+  .optional();
 
 function toStringArray(input: string | string[] | undefined): string[] {
   if (typeof input === "string") {
@@ -28,15 +41,20 @@ function toStringArray(input: string | string[] | undefined): string[] {
   return [];
 }
 
+type ManagerOption = {
+  id: string;
+  name: string;
+};
+
 const listCallsSchema = z.object({
   page: z.number().min(1).default(1),
   per_page: z.number().min(1).max(100).default(15),
   q: z.string().optional(),
   date_from: z.string().optional(),
   date_to: z.string().optional(),
-  direction: maybeStringOrArraySchema,
+  direction: maybeDirectionOrArraySchema,
   manager: maybeStringOrArraySchema,
-  status: maybeStringOrArraySchema,
+  status: maybeStatusOrArraySchema,
   value: z.array(z.number()).optional(),
   operator: z.array(z.string()).optional(),
 });
@@ -78,43 +96,63 @@ export const list = workspaceProcedure
       );
     const trimmedQuery = input.q?.trim() || undefined;
 
-    const [pbxEmployees, pbxNumbers] = await Promise.all([
-      pbxRepository.listEmployees(workspaceId, PBX_PROVIDER),
-      pbxRepository.listNumbers(workspaceId, PBX_PROVIDER),
-    ]);
-
-    const employeeByExternalId = new Map(
-      pbxEmployees.map((employee) => [employee.externalId, employee]),
+    const pbxNumbers = await pbxRepository.listNumbers(
+      workspaceId,
+      PBX_PROVIDER,
     );
+    const activePbxNumbers = pbxNumbers.filter((number) => number.isActive);
     const managerNameByInternalNumber = new Map<string, string>();
-    for (const number of pbxNumbers) {
-      const ext = number.extension?.trim();
-      if (!ext) continue;
-      const employee = number.employeeExternalId
-        ? employeeByExternalId.get(number.employeeExternalId)
-        : null;
+    const managerIdByInternalNumber = new Map<string, string>();
+    const managerInternalNumbersById = new Map<string, Set<string>>();
+    const managerDisplayNameById = new Map<string, string>();
+    for (const number of activePbxNumbers) {
+      const managerId = number.id?.trim() || null;
+      if (!managerId) continue;
+
+      const ext = number.extension?.trim() || null;
       const managerName =
-        employee?.displayName?.trim() ||
-        number.label?.trim() ||
-        employee?.firstName?.trim() ||
-        null;
+        number.label?.trim() || ext || number.phoneNumber?.trim() || null;
+
+      // Справочник менеджеров строим по pbx_numbers (даже если extension нет)
+      if (managerName && !managerDisplayNameById.has(managerId)) {
+        managerDisplayNameById.set(managerId, managerName);
+      }
+
+      // Для фильтрации/сопоставления звонков нужен internalNumber <-> extension
+      if (!ext) continue;
       if (managerName && !managerNameByInternalNumber.has(ext)) {
         managerNameByInternalNumber.set(ext, managerName);
       }
+      managerIdByInternalNumber.set(ext, managerId);
+      const managerNumbers = managerInternalNumbersById.get(managerId);
+      if (managerNumbers) {
+        managerNumbers.add(ext);
+      } else {
+        managerInternalNumbersById.set(managerId, new Set([ext]));
+      }
     }
 
+    const managerInternalNumbers = managerFilters.length
+      ? Array.from(
+          new Set(
+            managerFilters.flatMap((managerId) =>
+              Array.from(
+                managerInternalNumbersById.get(managerId.trim()) ??
+                  new Set<string>(),
+              ),
+            ),
+          ),
+        )
+      : [];
+
     const managerInternalNumbersForQuery = trimmedQuery
-      ? pbxNumbers
+      ? activePbxNumbers
           .filter((number) => {
-            const employee = number.employeeExternalId
-              ? employeeByExternalId.get(number.employeeExternalId)
-              : null;
             const haystack = [
-              employee?.displayName,
-              employee?.firstName,
-              employee?.lastName,
               number.label,
               number.extension,
+              number.phoneNumber,
+              number.externalId,
             ]
               .filter((value): value is string => typeof value === "string")
               .join(" ")
@@ -187,7 +225,9 @@ export const list = workspaceProcedure
         : undefined,
       valueScores: input.value?.length ? input.value : undefined,
       operators: input.operator?.length ? input.operator : undefined,
-      managers: managerFilters.length ? managerFilters : undefined,
+      managers: undefined,
+      managerInternalNumbers:
+        managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
       statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
       managerInternalNumbersForQuery:
         managerInternalNumbersForQuery.length > 0
@@ -209,7 +249,9 @@ export const list = workspaceProcedure
         : undefined,
       valueScores: input.value?.length ? input.value : undefined,
       operators: input.operator?.length ? input.operator : undefined,
-      managers: managerFilters.length ? managerFilters : undefined,
+      managers: undefined,
+      managerInternalNumbers:
+        managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
       statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
       managerInternalNumbersForQuery:
         managerInternalNumbersForQuery.length > 0
@@ -223,21 +265,12 @@ export const list = workspaceProcedure
       workspaceId,
       excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
     );
-    const managers = await callsService.getDistinctManagers({
-      workspaceId,
-      dateFrom,
-      dateTo,
-      internalNumbers,
-      mobileNumbers,
-      excludePhoneNumbers:
-        excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
-      directions: normalizedDirections?.length
-        ? normalizedDirections
-        : undefined,
-      valueScores: input.value?.length ? input.value : undefined,
-      operators: input.operator?.length ? input.operator : undefined,
-      statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
-    });
+    const managers: ManagerOption[] = Array.from(
+      managerDisplayNameById.entries(),
+    )
+      .map(([id, name]) => ({ id, name }))
+      .filter((item) => item.name.trim().length > 0)
+      .sort((a, b) => a.name.localeCompare(b.name, "ru"));
 
     const callsWithTranscripts = await Promise.all(
       rawCalls.map(async (item: CallWithTranscript) => {
@@ -275,7 +308,10 @@ export const list = workspaceProcedure
                 : item.call.timestamp,
             managerName,
             operatorName,
-            managerId: null,
+            managerId: normalizedInternalNumber
+              ? (managerIdByInternalNumber.get(normalizedInternalNumber) ??
+                null)
+              : null,
           },
           analysisCostRub: isLlmProcessed
             ? calculateAnalysisCostRub(
