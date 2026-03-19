@@ -63,7 +63,6 @@ export const callsRepository = {
     const normalizedPhone = phone.replace(/\D/g, "");
     if (!normalizedPhone) return null;
 
-    const numberDigits = sql<string>`regexp_replace(coalesce(${schema.calls.number}, ''), '[^0-9]', '', 'g')`;
     const query = db
       .select({
         customerName: schema.calls.customerName,
@@ -75,9 +74,9 @@ export const callsRepository = {
         and(
           eq(schema.calls.workspaceId, workspaceId),
           sql<boolean>`(
-            ${numberDigits} = ${normalizedPhone}
-            OR ${numberDigits} LIKE ${`%${normalizedPhone}`}
-            OR ${normalizedPhone} LIKE ('%' || ${numberDigits})
+            ${schema.calls.number} = ${normalizedPhone}
+            OR ${schema.calls.number} LIKE ${`%${normalizedPhone}`}
+            OR ${normalizedPhone} LIKE ('%' || ${schema.calls.number})
           )`,
         ),
       )

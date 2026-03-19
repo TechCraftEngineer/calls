@@ -3,10 +3,19 @@ import { createLogger } from "@calls/api";
 import { callsService, isValidWorkspaceId, pbxService } from "@calls/db";
 import { inngest, pbxSyncRequested } from "@calls/jobs";
 import type { Context, Hono } from "hono";
+import { z } from "zod";
 import { webhookRateLimit } from "../lib/webhook-rate-limit";
 
 const backendLogger = createLogger("backend-server");
 const SUPPORTED_COMMANDS = new Set(["history", "event", "contact", "rating"]);
+const webhookPayloadSchema = z
+  .object({
+    cmd: z.string().min(1),
+    crm_token: z.string().optional(),
+    type: z.string().optional(),
+    phone: z.string().optional(),
+  })
+  .passthrough();
 
 function isWebhookSecretValid(
   expectedSecret: string | undefined,
@@ -69,21 +78,23 @@ async function parseWebhookPayload(
       : null;
   }
 
-  // Legacy fallback: try JSON first, then urlencoded body.
-  const jsonPayload = (await c.req.json().catch(() => null)) as Record<
-    string,
-    unknown
-  > | null;
+  // Legacy fallback: read body once, then try JSON and urlencoded parsing.
+  const raw = await c.req.text().catch(() => "");
+  if (!raw.trim()) return null;
+  const jsonPayload = (() => {
+    try {
+      return JSON.parse(raw) as unknown;
+    } catch {
+      return null;
+    }
+  })();
   if (
     jsonPayload &&
     typeof jsonPayload === "object" &&
     !Array.isArray(jsonPayload)
   ) {
-    return jsonPayload;
+    return jsonPayload as Record<string, unknown>;
   }
-
-  const raw = await c.req.text().catch(() => "");
-  if (!raw.trim()) return null;
   const params = new URLSearchParams(raw);
   return Object.fromEntries(params.entries());
 }
@@ -116,7 +127,18 @@ const handlePbxWebhook = async (c: Context) => {
     );
   }
 
-  const command = asNonEmptyString(payload.cmd)?.toLowerCase();
+  const parsedPayload = webhookPayloadSchema.safeParse(payload);
+  if (!parsedPayload.success) {
+    return c.json(
+      {
+        error:
+          "Неверный формат тела запроса. Ожидается объект с непустым полем cmd.",
+      },
+      400,
+    );
+  }
+
+  const command = asNonEmptyString(parsedPayload.data.cmd)?.toLowerCase();
   if (!command || !SUPPORTED_COMMANDS.has(command)) {
     return c.json(
       {
@@ -127,7 +149,7 @@ const handlePbxWebhook = async (c: Context) => {
     );
   }
 
-  const crmToken = asNonEmptyString(payload.crm_token);
+  const crmToken = asNonEmptyString(parsedPayload.data.crm_token);
   const signature =
     c.req.header("x-megapbx-secret") ?? c.req.header("x-webhook-secret");
   if (!isAnyWebhookSecretValid(config.webhook?.secret, [crmToken, signature])) {
@@ -138,7 +160,7 @@ const handlePbxWebhook = async (c: Context) => {
     return c.json({ error: "Неверный crm_token или секрет вебхука" }, 401);
   }
 
-  const eventSubtype = asNonEmptyString(payload.type) ?? "unknown";
+  const eventSubtype = asNonEmptyString(parsedPayload.data.type) ?? "unknown";
   const eventType = `${command}:${eventSubtype}`;
   const eventId =
     asNonEmptyString(payload.callid) ??
@@ -158,7 +180,7 @@ const handlePbxWebhook = async (c: Context) => {
   });
 
   if (command === "contact") {
-    const phone = asNonEmptyString(payload.phone);
+    const phone = asNonEmptyString(parsedPayload.data.phone);
     const contact = phone
       ? await callsService.findLatestContactByPhone(workspaceId, phone)
       : null;

@@ -386,6 +386,7 @@ export function CallListDataGrid({
           rowBorder: true,
           headerBorder: true,
           headerBackground: true,
+          headerSticky: true,
         }}
         tableClassNames={{ base: "op-table" }}
       >
@@ -427,7 +428,7 @@ export function CallListDataGrid({
             </div>
           </div>
           <DataGridContainer className="border-0">
-            <div className="overflow-x-auto">
+            <div className="max-h-[70vh] overflow-auto">
               <DataGridTable<(typeof calls)[0]> />
             </div>
             <div className="px-4 py-3">
