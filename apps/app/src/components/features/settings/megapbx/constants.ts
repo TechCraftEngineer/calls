@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Database, Mic, PhoneCall, Users, Webhook } from "lucide-react";
+import { Database, PhoneCall, Users, Webhook } from "lucide-react";
 
 export const STORAGE_KEYS = {
   tab: "settings-pbx-megafon-tab",
@@ -31,7 +31,12 @@ export const SYNC_OPTIONS = [
 
 export const QUICK_ACTIONS = [
   ["directory", "Справочник", "Сотрудники и номера", Database],
-  ["calls", "Звонки и записи", "Импорт истории звонков с аудиофайлами", PhoneCall],
+  [
+    "calls",
+    "Звонки и записи",
+    "Импорт истории звонков с аудиофайлами",
+    PhoneCall,
+  ],
 ] as const satisfies readonly [
   "directory" | "calls",
   string,

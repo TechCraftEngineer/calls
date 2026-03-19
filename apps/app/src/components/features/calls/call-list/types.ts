@@ -4,11 +4,11 @@ export interface Call {
   timestamp: string;
   direction?: string;
   internalNumber?: string;
+  fileId?: string | null;
   managerName?: string | null;
   operatorName?: string | null;
   managerId?: string | null;
   duration?: number | null;
-  filename?: string;
   customerName?: string;
 }
 

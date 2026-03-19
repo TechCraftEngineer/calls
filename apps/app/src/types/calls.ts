@@ -5,10 +5,10 @@ export interface CallDetail {
   duration: number;
   direction: string;
   internalNumber?: string;
+  fileId?: string | null;
   managerName?: string | null;
   operatorName?: string | null;
   managerId?: string | null;
-  filename?: string;
   sizeBytes?: number;
   customerName?: string;
 }

@@ -272,15 +272,6 @@ export function useSettings() {
       },
     }),
   );
-  const syncPbxRecordingsMutation = useMutation(
-    orpc.settings.syncPbxRecordings.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          queryKey: orpc.settings.getPbx.queryKey(),
-        });
-      },
-    }),
-  );
   const refetchPbxLists = useCallback(async () => {
     const [employees, numbers] = await Promise.all([
       queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
@@ -507,18 +498,13 @@ export function useSettings() {
     webhooksEnabled: state.megaPbx.webhooksEnabled,
   });
 
-  const refreshSettingsState = useCallback(async () => {
-    await loadSettings();
-  }, [loadSettings]);
-
   const refreshPbxSettings = useCallback(async () => {
-    const [megaPbx, megaPbxEmployees, megaPbxNumbers] =
-      await Promise.all([
-        queryClient.fetchQuery(orpc.settings.getPbx.queryOptions()),
-        queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
-        queryClient.fetchQuery(orpc.settings.listPbxNumbers.queryOptions()),
-      ]);
-    
+    const [megaPbx, megaPbxEmployees, megaPbxNumbers] = await Promise.all([
+      queryClient.fetchQuery(orpc.settings.getPbx.queryOptions()),
+      queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
+      queryClient.fetchQuery(orpc.settings.listPbxNumbers.queryOptions()),
+    ]);
+
     setState((prev) => ({
       ...prev,
       megaPbx: {
@@ -716,9 +702,10 @@ export function useSettings() {
         // Для "calls" теперь синхронизируем и историю, и записи вместе
         await syncPbxCallsMutation.mutateAsync(undefined);
       }
-      const message = type === "directory" 
-        ? "Синхронизация справочника MegaPBX поставлена в очередь"
-        : "Синхронизация звонков и записей MegaPBX поставлена в очередь";
+      const message =
+        type === "directory"
+          ? "Синхронизация справочника MegaPBX поставлена в очередь"
+          : "Синхронизация звонков и записей MegaPBX поставлена в очередь";
       toast.success(message);
       // Задача выполняется в Inngest — через 5 сек обновляем сотрудников и номера
       if (type === "directory") {

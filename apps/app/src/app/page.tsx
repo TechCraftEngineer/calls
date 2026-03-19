@@ -29,7 +29,7 @@ import { useORPC } from "@/orpc/react";
 
 interface Call {
   id: string;
-  filename?: string;
+  fileId?: string | null;
   number?: string;
   timestamp: string;
   duration?: number | null;

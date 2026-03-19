@@ -268,7 +268,7 @@ export class PbxService {
     username = "system",
   ): Promise<boolean> {
     const existing = await this.getConfigWithSecrets(workspaceId);
-    
+
     // Если интеграция не существует, создаем её с настройками по умолчанию
     if (!existing) {
       const full: UpdateMegaPbxSettingsInput = {
@@ -290,7 +290,7 @@ export class PbxService {
       };
       return this.updateSettings(workspaceId, full, username);
     }
-    
+
     // Если интеграция существует, обновляем её
     const full: UpdateMegaPbxSettingsInput = {
       enabled: existing.enabled,

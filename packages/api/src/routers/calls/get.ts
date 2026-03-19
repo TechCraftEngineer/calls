@@ -55,9 +55,11 @@ export const get = workspaceProcedure
       call.name ??
       null;
 
+    const { filename: _filename, ...publicCall } = call;
+
     return {
       call: {
-        ...call,
+        ...publicCall,
         timestamp:
           call.timestamp instanceof Date
             ? call.timestamp.toISOString()

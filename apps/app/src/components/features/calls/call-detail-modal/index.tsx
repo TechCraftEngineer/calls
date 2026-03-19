@@ -257,10 +257,10 @@ export default function CallDetailModal({
                         {call.direction === "incoming"
                           ? "Входящий"
                           : call.direction === "inbound"
-                          ? "Входящий"
-                          : call.direction === "outbound"
-                          ? "Исходящий"
-                          : "Исходящий"}
+                            ? "Входящий"
+                            : call.direction === "outbound"
+                              ? "Исходящий"
+                              : "Исходящий"}
                       </Badge>
                       <Badge
                         variant={

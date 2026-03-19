@@ -23,7 +23,7 @@ interface EvaluationDetail {
 
 interface CallDetail {
   id: string;
-  filename?: string;
+  fileId?: string | null;
   sizeBytes?: number;
   customerName?: string;
   operatorName?: string | null;

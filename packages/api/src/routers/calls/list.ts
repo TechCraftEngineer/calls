@@ -189,10 +189,12 @@ export const list = workspaceProcedure
           operatorName ??
           null;
 
+        const { filename: _filename, ...publicCall } = item.call;
+
         return {
           ...item,
           call: {
-            ...item.call,
+            ...publicCall,
             timestamp:
               item.call.timestamp instanceof Date
                 ? item.call.timestamp.toISOString()

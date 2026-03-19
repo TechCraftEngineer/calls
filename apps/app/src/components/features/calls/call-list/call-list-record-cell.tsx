@@ -93,7 +93,7 @@ export function RecordColumnCell({
 }: RecordColumnCellProps) {
   const { call, evaluation } = item;
 
-  if (!call.filename) {
+  if (!call.fileId) {
     return (
       <div
         style={{
@@ -177,7 +177,7 @@ export function RecordColumnCell({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (onPlay && call.filename) {
+          if (onPlay && call.fileId) {
             onPlay(String(call.id), call.number || "");
           }
         }}

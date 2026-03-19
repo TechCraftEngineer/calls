@@ -1,7 +1,4 @@
-import {
-  normalizePhoneNumberList,
-  pbxService,
-} from "@calls/db";
+import { normalizePhoneNumberList, pbxService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { getUserEmail } from "./get-user-email";
