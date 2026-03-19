@@ -52,6 +52,42 @@ export const callsRepository = {
     return result[0] ?? null;
   },
 
+  async findLatestByPhone(
+    workspaceId: string,
+    phone: string,
+  ): Promise<{
+    customerName: string | null;
+    internalNumber: string | null;
+    name: string | null;
+  } | null> {
+    const normalizedPhone = phone.replace(/\D/g, "");
+    if (!normalizedPhone) return null;
+
+    const numberDigits = sql<string>`regexp_replace(coalesce(${schema.calls.number}, ''), '[^0-9]', '', 'g')`;
+    const query = db
+      .select({
+        customerName: schema.calls.customerName,
+        internalNumber: schema.calls.internalNumber,
+        name: schema.calls.name,
+      })
+      .from(schema.calls)
+      .where(
+        and(
+          eq(schema.calls.workspaceId, workspaceId),
+          sql<boolean>`(
+            ${numberDigits} = ${normalizedPhone}
+            OR ${numberDigits} LIKE ${`%${normalizedPhone}`}
+            OR ${normalizedPhone} LIKE ('%' || ${numberDigits})
+          )`,
+        ),
+      )
+      .orderBy(desc(schema.calls.timestamp), desc(schema.calls.id))
+      .limit(1);
+
+    const row = (await query)[0];
+    return row ?? null;
+  },
+
   async create(data: CreateCallData): Promise<string> {
     const status =
       data.status ?? computeCallStatus(data.duration, data.direction);

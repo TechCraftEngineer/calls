@@ -237,8 +237,16 @@ export function WebhookSection({
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Задайте секрет здесь, сохраните, затем укажите тот же
-                      секрет в админке АТС. АТС должна передавать его в
-                      заголовке{" "}
+                      секрет в админке АТС. Для MegaPBX рекомендуемый способ:
+                      передавать его в поле{" "}
+                      <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                        crm_token
+                      </code>{" "}
+                      в теле запроса (
+                      <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                        application/x-www-form-urlencoded
+                      </code>
+                      ). Также поддерживаем проверку в заголовке{" "}
                       <code className="rounded bg-muted px-1 py-0.5 text-xs">
                         X-Megapbx-Secret
                       </code>{" "}

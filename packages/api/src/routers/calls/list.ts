@@ -16,12 +16,7 @@ const PBX_PROVIDER = "megapbx";
 const maybeStringOrArraySchema = z
   .union([z.string(), z.array(z.string())])
   .optional();
-const directionSchema = z.enum([
-  "incoming",
-  "outgoing",
-  "Входящий",
-  "Исходящий",
-]);
+const directionSchema = z.enum(["incoming", "outgoing", "inbound", "outbound"]);
 const statusSchema = z.enum(["missed", "answered", "Пропущен", "Принят"]);
 const maybeDirectionOrArraySchema = z
   .union([directionSchema, z.array(directionSchema)])
@@ -84,15 +79,14 @@ export const list = workspaceProcedure
 
     const normalizedDirections = directionFilters
       ?.map((direction) =>
-        direction === "incoming" || direction === "Входящий"
-          ? "Входящий"
-          : direction === "outgoing" || direction === "Исходящий"
-            ? "Исходящий"
+        direction === "incoming" || direction === "inbound"
+          ? "incoming"
+          : direction === "outgoing" || direction === "outbound"
+            ? "outgoing"
             : null,
       )
       .filter(
-        (direction): direction is "Входящий" | "Исходящий" =>
-          direction !== null,
+        (direction): direction is "incoming" | "outgoing" => direction !== null,
       );
     const trimmedQuery = input.q?.trim() || undefined;
 

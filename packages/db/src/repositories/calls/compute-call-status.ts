@@ -11,6 +11,6 @@ export function computeCallStatus(
 ): CallStatus {
   const isMissed =
     (duration ?? 0) === 0 &&
-    (direction === "Входящий" || direction === "incoming");
+    (direction === "incoming" || direction === "inbound");
   return isMissed ? "ПРОПУЩЕН" : "ПРИНЯТ";
 }

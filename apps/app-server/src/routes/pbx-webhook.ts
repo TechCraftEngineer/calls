@@ -1,11 +1,12 @@
 import { timingSafeEqual } from "node:crypto";
 import { createLogger } from "@calls/api";
-import { isValidWorkspaceId, pbxService } from "@calls/db";
+import { callsService, isValidWorkspaceId, pbxService } from "@calls/db";
 import { inngest, pbxSyncRequested } from "@calls/jobs";
 import type { Context, Hono } from "hono";
 import { webhookRateLimit } from "../lib/webhook-rate-limit";
 
 const backendLogger = createLogger("backend-server");
+const SUPPORTED_COMMANDS = new Set(["history", "event", "contact", "rating"]);
 
 function isWebhookSecretValid(
   expectedSecret: string | undefined,
@@ -30,6 +31,63 @@ function isWebhookSecretValid(
   return timingSafeEqual(expectedBuffer, receivedBuffer);
 }
 
+function isAnyWebhookSecretValid(
+  expectedSecret: string | undefined,
+  receivedSecrets: Array<string | null | undefined>,
+): boolean {
+  if (!expectedSecret) return true;
+  for (const secret of receivedSecrets) {
+    if (isWebhookSecretValid(expectedSecret, secret)) return true;
+  }
+  return false;
+}
+
+function asNonEmptyString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+async function parseWebhookPayload(
+  c: Context,
+): Promise<Record<string, unknown> | null> {
+  const contentType = (c.req.header("content-type") ?? "").toLowerCase();
+
+  if (contentType.includes("application/x-www-form-urlencoded")) {
+    const raw = await c.req.text();
+    const params = new URLSearchParams(raw);
+    return Object.fromEntries(params.entries());
+  }
+
+  if (contentType.includes("application/json")) {
+    const payload = (await c.req.json().catch(() => null)) as Record<
+      string,
+      unknown
+    > | null;
+    return payload && typeof payload === "object" && !Array.isArray(payload)
+      ? payload
+      : null;
+  }
+
+  // Legacy fallback: try JSON first, then urlencoded body.
+  const jsonPayload = (await c.req.json().catch(() => null)) as Record<
+    string,
+    unknown
+  > | null;
+  if (
+    jsonPayload &&
+    typeof jsonPayload === "object" &&
+    !Array.isArray(jsonPayload)
+  ) {
+    return jsonPayload;
+  }
+
+  const raw = await c.req.text().catch(() => "");
+  if (!raw.trim()) return null;
+  const params = new URLSearchParams(raw);
+  return Object.fromEntries(params.entries());
+}
+
 const handlePbxWebhook = async (c: Context) => {
   // Invoked by /api/pbx-webhook and /api/megapbx-webhook.
   // История звонков приходит от АТС в формате requests#history:
@@ -47,31 +105,48 @@ const handlePbxWebhook = async (c: Context) => {
     return c.json({ error: "Webhook MegaPBX отключён" }, 409);
   }
 
-  const payload = (await c.req.json().catch(() => null)) as Record<
-    string,
-    unknown
-  > | null;
+  const payload = await parseWebhookPayload(c);
   if (!payload) {
-    return c.json({ error: "Неверный JSON" }, 400);
+    return c.json(
+      {
+        error:
+          "Неверный формат тела запроса. Ожидается JSON или x-www-form-urlencoded.",
+      },
+      400,
+    );
   }
 
+  const command = asNonEmptyString(payload.cmd)?.toLowerCase();
+  if (!command || !SUPPORTED_COMMANDS.has(command)) {
+    return c.json(
+      {
+        error:
+          "Неподдерживаемая команда webhook. Ожидается cmd=history|event|contact|rating.",
+      },
+      400,
+    );
+  }
+
+  const crmToken = asNonEmptyString(payload.crm_token);
   const signature =
     c.req.header("x-megapbx-secret") ?? c.req.header("x-webhook-secret");
-  if (!isWebhookSecretValid(config.webhook?.secret, signature)) {
+  if (!isAnyWebhookSecretValid(config.webhook?.secret, [crmToken, signature])) {
     backendLogger.warn("Rejected MegaPBX webhook because of invalid secret", {
       workspaceId,
+      command,
     });
-    return c.json({ error: "Неверный секрет вебхука" }, 401);
+    return c.json({ error: "Неверный crm_token или секрет вебхука" }, 401);
   }
 
-  const eventType =
-    (typeof payload.eventType === "string" && payload.eventType) ||
-    (typeof payload.type === "string" && payload.type) ||
-    "unknown";
+  const eventSubtype = asNonEmptyString(payload.type) ?? "unknown";
+  const eventType = `${command}:${eventSubtype}`;
   const eventId =
-    (typeof payload.eventId === "string" && payload.eventId) ||
-    (typeof payload.id === "string" && payload.id) ||
-    (typeof payload.uid === "string" && payload.uid) ||
+    asNonEmptyString(payload.callid) ??
+    asNonEmptyString(payload.callId) ??
+    asNonEmptyString(payload.call_id) ??
+    asNonEmptyString(payload.eventId) ??
+    asNonEmptyString(payload.id) ??
+    asNonEmptyString(payload.uid) ??
     null;
 
   await pbxService.recordWebhookEvent({
@@ -82,15 +157,44 @@ const handlePbxWebhook = async (c: Context) => {
     status: "received",
   });
 
+  if (command === "contact") {
+    const phone = asNonEmptyString(payload.phone);
+    const contact = phone
+      ? await callsService.findLatestContactByPhone(workspaceId, phone)
+      : null;
+    const contactName =
+      contact?.customerName?.trim() || (phone ? `Клиент ${phone}` : "");
+    const responsible =
+      contact?.internalNumber?.trim() || contact?.name?.trim() || "";
+
+    await pbxService.recordWebhookEvent({
+      workspaceId,
+      eventId,
+      eventType,
+      payload,
+      status: "processed",
+      processedAt: new Date(),
+    });
+    return c.json({ contact_name: contactName, responsible: responsible });
+  }
+
+  if (command !== "history") {
+    await pbxService.recordWebhookEvent({
+      workspaceId,
+      eventId,
+      eventType,
+      payload,
+      status: "processed",
+      processedAt: new Date(),
+    });
+    return c.json({ success: true });
+  }
+
   try {
     await inngest.send(
       pbxSyncRequested.create({
         workspaceId,
-        syncType:
-          eventType.toLowerCase().includes("employee") ||
-          eventType.toLowerCase().includes("number")
-            ? "directory"
-            : "calls",
+        syncType: "calls",
         webhookEvent: {
           eventId,
           eventType,
@@ -110,6 +214,7 @@ const handlePbxWebhook = async (c: Context) => {
     });
     backendLogger.error("Сбой добавления webhook MegaPBX в очередь", {
       workspaceId,
+      command,
       eventType,
       error: error instanceof Error ? error.message : String(error),
     });
