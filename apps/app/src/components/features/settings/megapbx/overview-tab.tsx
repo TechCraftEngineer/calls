@@ -25,14 +25,13 @@ export interface OverviewTabProps {
   savingSyncOptions: boolean;
   savingWebhook: boolean;
   testing: boolean;
-  syncing: "directory" | "calls" | "recordings" | null;
+  syncing: "directory" | "calls" | null;
   onSaveAccess: (data: AccessFormData) => Promise<void>;
   onSaveSyncOptions: (data: SyncOptionsFormData) => Promise<void>;
   onSaveWebhook: (data: WebhookFormData) => Promise<void>;
   onTest: (baseUrl?: string, apiKey?: string) => Promise<void>;
   onSyncDirectory: () => Promise<void>;
   onSyncCalls: () => Promise<void>;
-  onSyncRecordings: () => Promise<void>;
 }
 
 export function OverviewTab({
@@ -51,7 +50,6 @@ export function OverviewTab({
   onTest,
   onSyncDirectory,
   onSyncCalls,
-  onSyncRecordings,
 }: OverviewTabProps) {
   return (
     <div className="space-y-6">
@@ -84,7 +82,6 @@ export function OverviewTab({
         syncing={syncing}
         onSyncDirectory={onSyncDirectory}
         onSyncCalls={onSyncCalls}
-        onSyncRecordings={onSyncRecordings}
       />
     </div>
   );

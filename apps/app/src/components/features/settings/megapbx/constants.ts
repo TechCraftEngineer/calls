@@ -31,10 +31,9 @@ export const SYNC_OPTIONS = [
 
 export const QUICK_ACTIONS = [
   ["directory", "Справочник", "Сотрудники и номера", Database],
-  ["calls", "Звонки", "Импорт истории вызовов", PhoneCall],
-  ["recordings", "Записи", "Загрузка аудио по звонкам", Mic],
+  ["calls", "Звонки и записи", "Импорт истории звонков с аудиофайлами", PhoneCall],
 ] as const satisfies readonly [
-  "directory" | "calls" | "recordings",
+  "directory" | "calls",
   string,
   string,
   LucideIcon,

@@ -11,25 +11,22 @@ import {
 import { QUICK_ACTIONS } from "../constants";
 import { SectionBlock } from "../section-block";
 
-type SyncingKey = "directory" | "calls" | "recordings";
+type SyncingKey = "directory" | "calls";
 
 interface QuickActionsSectionProps {
   syncing: SyncingKey | null;
   onSyncDirectory: () => Promise<void>;
   onSyncCalls: () => Promise<void>;
-  onSyncRecordings: () => Promise<void>;
 }
 
 export function QuickActionsSection({
   syncing,
   onSyncDirectory,
   onSyncCalls,
-  onSyncRecordings,
 }: QuickActionsSectionProps) {
   const handlers: Record<SyncingKey, () => Promise<void>> = {
     directory: onSyncDirectory,
     calls: onSyncCalls,
-    recordings: onSyncRecordings,
   };
 
   return (

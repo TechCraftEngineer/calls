@@ -42,7 +42,6 @@ export default function MegaPbxSection({
   onTest,
   onSyncDirectory,
   onSyncCalls,
-  onSyncRecordings,
   onLink,
   onUnlink,
   saving,
@@ -244,7 +243,6 @@ export default function MegaPbxSection({
             onTest={onTest}
             onSyncDirectory={onSyncDirectory}
             onSyncCalls={onSyncCalls}
-            onSyncRecordings={onSyncRecordings}
           />
         )}
 

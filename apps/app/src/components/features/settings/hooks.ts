@@ -511,11 +511,47 @@ export function useSettings() {
     await loadSettings();
   }, [loadSettings]);
 
+  const refreshPbxSettings = useCallback(async () => {
+    const [megaPbx, megaPbxEmployees, megaPbxNumbers] =
+      await Promise.all([
+        queryClient.fetchQuery(orpc.settings.getPbx.queryOptions()),
+        queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
+        queryClient.fetchQuery(orpc.settings.listPbxNumbers.queryOptions()),
+      ]);
+    
+    setState((prev) => ({
+      ...prev,
+      megaPbx: {
+        enabled: megaPbx.enabled,
+        baseUrl: megaPbx.baseUrl ?? "",
+        apiKey: "",
+        apiKeySet: megaPbx.apiKeySet,
+        syncFromDate: megaPbx.syncFromDate ?? "",
+        excludePhoneNumbers: Array.isArray(megaPbx.excludePhoneNumbers)
+          ? megaPbx.excludePhoneNumbers.join("\n")
+          : "",
+        webhookSecret: "",
+        webhookSecretSet: megaPbx.webhookSecretSet,
+        ftpHost: megaPbx.ftpHost ?? "",
+        ftpUser: megaPbx.ftpUser ?? "",
+        ftpPassword: "",
+        ftpPasswordSet: megaPbx.ftpPasswordSet,
+        syncEmployees: megaPbx.syncEmployees,
+        syncNumbers: megaPbx.syncNumbers,
+        syncCalls: megaPbx.syncCalls,
+        syncRecordings: megaPbx.syncRecordings,
+        webhooksEnabled: megaPbx.webhooksEnabled,
+      },
+      megaPbxEmployees: megaPbxEmployees as PbxEmployeeItem[],
+      megaPbxNumbers: megaPbxNumbers as PbxNumberItem[],
+    }));
+  }, [orpc, queryClient]);
+
   const handleSavePbx = async () => {
     try {
       setState((prev) => ({ ...prev, megaPbxSaving: true }));
       await updatePbxMutation.mutateAsync(megaPbxPayload());
-      await refreshSettingsState();
+      await refreshPbxSettings();
       toast.success("MegaPBX настройки сохранены");
     } catch (error: unknown) {
       const msg =
@@ -537,7 +573,7 @@ export function useSettings() {
         apiKey: payload.apiKey?.trim() || undefined,
         syncFromDate: payload.syncFromDate?.trim() || undefined,
       });
-      await refreshSettingsState();
+      await refreshPbxSettings();
       toast.success("Доступ к API сохранён");
     } catch (error: unknown) {
       const msg =
@@ -554,7 +590,7 @@ export function useSettings() {
     try {
       setState((prev) => ({ ...prev, megaPbxSyncOptionsSaving: true }));
       await updatePbxSyncOptionsMutation.mutateAsync(payload);
-      await refreshSettingsState();
+      await refreshPbxSettings();
       toast.success("Настройки синхронизации сохранены");
     } catch (error: unknown) {
       const msg =
@@ -590,7 +626,7 @@ export function useSettings() {
           excludePhoneNumbers: normalized.join("\n"),
         },
       }));
-      await refreshSettingsState();
+      await refreshPbxSettings();
       toast.success("Исключённые номера сохранены");
     } catch (error: unknown) {
       const msg =
@@ -610,7 +646,7 @@ export function useSettings() {
       await updatePbxWebhookMutation.mutateAsync(
         trimmedSecret ? { webhookSecret: trimmedSecret } : {},
       );
-      await refreshSettingsState();
+      await refreshPbxSettings();
       toast.success("Webhook сохранён");
     } catch (error: unknown) {
       const msg =
@@ -671,17 +707,19 @@ export function useSettings() {
     }
   };
 
-  const runPbxSync = async (type: "directory" | "calls" | "recordings") => {
+  const runPbxSync = async (type: "directory" | "calls") => {
     try {
       setState((prev) => ({ ...prev, megaPbxSyncing: type }));
       if (type === "directory") {
         await syncPbxDirectoryMutation.mutateAsync(undefined);
-      } else if (type === "calls") {
-        await syncPbxCallsMutation.mutateAsync(undefined);
       } else {
-        await syncPbxRecordingsMutation.mutateAsync(undefined);
+        // Для "calls" теперь синхронизируем и историю, и записи вместе
+        await syncPbxCallsMutation.mutateAsync(undefined);
       }
-      toast.success("Синхронизация MegaPBX поставлена в очередь");
+      const message = type === "directory" 
+        ? "Синхронизация справочника MegaPBX поставлена в очередь"
+        : "Синхронизация звонков и записей MegaPBX поставлена в очередь";
+      toast.success(message);
       // Задача выполняется в Inngest — через 5 сек обновляем сотрудников и номера
       if (type === "directory") {
         setTimeout(() => {
@@ -858,14 +896,12 @@ export function useSettings() {
     handleTestPbx,
     handleSyncPbxDirectory: () => runPbxSync("directory"),
     handleSyncPbxCalls: () => runPbxSync("calls"),
-    handleSyncPbxRecordings: () => runPbxSync("recordings"),
     handleLinkPbxTarget,
     handleUnlinkPbxTarget,
     handleSaveMegaPbx: handleSavePbx,
     handleTestMegaPbx: handleTestPbx,
     handleSyncMegaPbxDirectory: () => runPbxSync("directory"),
     handleSyncMegaPbxCalls: () => runPbxSync("calls"),
-    handleSyncMegaPbxRecordings: () => runPbxSync("recordings"),
     handleLinkMegaPbxTarget: handleLinkPbxTarget,
     handleUnlinkMegaPbxTarget: handleUnlinkPbxTarget,
     handleBackup,
