@@ -1,15 +1,8 @@
 import { MegaPbxConfigNotFoundError, pbxService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { workspaceAdminProcedure } from "../../../orpc";
+import { getUserEmail } from "./get-user-email";
 import { pbxSyncOptionsSchema } from "./schemas";
-
-function getUserEmail(user: unknown): string | undefined {
-  return typeof user === "object" && user
-    ? "email" in user && typeof (user as { email?: unknown }).email === "string"
-      ? (user as { email: string }).email
-      : undefined
-    : undefined;
-}
 
 export const updatePbxSyncOptions = workspaceAdminProcedure
   .input(pbxSyncOptionsSchema)

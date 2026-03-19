@@ -1,5 +1,19 @@
 import { z } from "zod";
 
+/** Строка YYYY-MM-DD, соответствующая реальной дате в календаре (UTC). */
+function isValidCalendarIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const y = Number(value.slice(0, 4));
+  const m = Number(value.slice(5, 7));
+  const d = Number(value.slice(8, 10));
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
+}
+
 export const pbxSettingsSchema = z.object({
   enabled: z.boolean(),
   baseUrl: z.string().trim(),
@@ -23,12 +37,11 @@ export const pbxAccessSchema = z.object({
     .trim()
     .refine(
       (value) => {
-        const trimmed = value.trim();
-        if (!trimmed) return true; // проверка "пусто при enabled" — на уровне хендлера
+        if (!value) return true; // проверка "пусто при enabled" — на уровне хендлера
         const urlCandidate =
-          trimmed.startsWith("http://") || trimmed.startsWith("https://")
-            ? trimmed
-            : `https://${trimmed}`;
+          value.startsWith("http://") || value.startsWith("https://")
+            ? value
+            : `https://${value}`;
         try {
           // URL должен быть парсируемым (разрешаем "домен без схемы")
           // eslint-disable-next-line no-new
@@ -43,7 +56,14 @@ export const pbxAccessSchema = z.object({
       },
     ),
   apiKey: z.string().trim().optional(),
-  syncFromDate: z.string().trim().optional(),
+  syncFromDate: z
+    .string()
+    .trim()
+    .optional()
+    .refine((v) => v === undefined || v === "" || isValidCalendarIsoDate(v), {
+      message:
+        "Некорректная дата импорта. Используйте формат YYYY-MM-DD и реальную дату.",
+    }),
 });
 
 export const pbxSyncOptionsSchema = z.object({

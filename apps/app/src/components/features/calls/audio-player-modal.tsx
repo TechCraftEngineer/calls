@@ -29,7 +29,7 @@ export default function AudioPlayerModal({
 
   const content = (
     <div
-      className="fixed inset-0 z-2000 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 backdrop-blur-sm"
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"

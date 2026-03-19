@@ -11,7 +11,7 @@ import {
   toast,
 } from "@calls/ui";
 import { useCopyToClipboard } from "@calls/ui/hooks";
-import { Check, Copy, Info, KeyRound } from "lucide-react";
+import { Check, Copy, Info, KeyRound, Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import type { Prompt } from "../../types";
 import { SectionBlock } from "../section-block";
@@ -208,8 +208,16 @@ export function WebhookSection({
               .
             </p>
             <div className="pt-2">
-              <Button type="submit" disabled={saving}>
-                {saving ? "Сохранение…" : "Сохранить"}
+              <Button
+                type="submit"
+                disabled={saving}
+                aria-busy={saving}
+                aria-live="polite"
+              >
+                {saving ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : null}
+                Сохранить
               </Button>
             </div>
           </div>

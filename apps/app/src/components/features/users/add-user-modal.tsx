@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, Input, PasswordInput } from "@calls/ui";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import {
   type AddUserForm,
@@ -49,7 +50,11 @@ const defaultForm: AddUserForm = {
   evaluationCustomInstructions: "",
 };
 
-export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
+export default function AddUserModal({
+  onClose,
+  onSubmit,
+  onSuccess,
+}: AddUserModalProps) {
   const [form, setForm] = useState<AddUserForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -69,6 +74,7 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
     setSubmitting(true);
     try {
       await onSubmit({ ...form, email: trimmedEmail });
+      onSuccess();
       onClose();
     } catch (err: unknown) {
       setError(
@@ -87,8 +93,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           {error && <p className="text-destructive mb-3 text-sm">{error}</p>}
 
           <div className={formFieldWrap}>
-            <label className={formLabel}>Email *</label>
+            <label htmlFor="add-user-email" className={formLabel}>
+              Email *
+            </label>
             <Input
+              id="add-user-email"
               type="email"
               value={form.email}
               onChange={(e) =>
@@ -100,8 +109,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
             />
           </div>
           <div className={formFieldWrap}>
-            <label className={formLabel}>Пароль *</label>
+            <label htmlFor="add-user-password" className={formLabel}>
+              Пароль *
+            </label>
             <PasswordInput
+              id="add-user-password"
               value={form.password}
               onChange={(e) =>
                 setForm((f) => ({ ...f, password: e.target.value }))
@@ -111,8 +123,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
             />
           </div>
           <div className={formFieldWrap}>
-            <label className={formLabel}>Имя *</label>
+            <label htmlFor="add-user-given-name" className={formLabel}>
+              Имя *
+            </label>
             <Input
+              id="add-user-given-name"
               type="text"
               value={form.givenName}
               onChange={(e) =>
@@ -122,8 +137,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
             />
           </div>
           <div className={formFieldWrap}>
-            <label className={formLabel}>Фамилия</label>
+            <label htmlFor="add-user-family-name" className={formLabel}>
+              Фамилия
+            </label>
             <Input
+              id="add-user-family-name"
               type="text"
               value={form.familyName}
               onChange={(e) =>
@@ -133,8 +151,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
             />
           </div>
           <div className={formFieldWrap}>
-            <label className={formLabel}>Внутренние номера</label>
+            <label htmlFor="add-user-internal-extensions" className={formLabel}>
+              Внутренние номера
+            </label>
             <Input
+              id="add-user-internal-extensions"
               type="text"
               value={form.internalExtensions}
               onChange={(e) =>
@@ -145,8 +166,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
             />
           </div>
           <div className="mb-4">
-            <label className={formLabel}>Мобильные номера</label>
+            <label htmlFor="add-user-mobile-phones" className={formLabel}>
+              Мобильные номера
+            </label>
             <Input
+              id="add-user-mobile-phones"
               type="text"
               value={form.mobilePhones}
               onChange={(e) =>
@@ -161,8 +185,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           <div className="mb-4 p-4 bg-muted/50 rounded-lg">
             <h3 className="m-0 mb-3 text-sm font-bold">Telegram Отчеты</h3>
             <div className={formFieldWrap}>
-              <label className={formLabel}>Telegram Chat ID</label>
+              <label htmlFor="add-user-telegram-chat-id" className={formLabel}>
+                Telegram Chat ID
+              </label>
               <Input
+                id="add-user-telegram-chat-id"
                 type="text"
                 value={form.telegramChatId}
                 onChange={(e) =>
@@ -209,8 +236,11 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
           <div className="mb-4 p-4 bg-muted/50 rounded-lg">
             <h3 className="m-0 mb-3 text-sm font-bold">MAX Отчеты</h3>
             <div className={formFieldWrap}>
-              <label className={formLabel}>MAX Chat ID</label>
+              <label htmlFor="add-user-max-chat-id" className={formLabel}>
+                MAX Chat ID
+              </label>
               <Input
+                id="add-user-max-chat-id"
                 type="text"
                 value={form.maxChatId}
                 onChange={(e) =>
@@ -264,8 +294,17 @@ export default function AddUserModal({ onClose, onSubmit }: AddUserModalProps) {
             >
               Отмена
             </Button>
-            <Button type="submit" variant="default" disabled={submitting}>
-              {submitting ? "Сохранение…" : "Добавить"}
+            <Button
+              type="submit"
+              variant="default"
+              disabled={submitting}
+              aria-busy={submitting}
+              aria-live="polite"
+            >
+              {submitting ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : null}
+              Добавить
             </Button>
           </div>
         </form>

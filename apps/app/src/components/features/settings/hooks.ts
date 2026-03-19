@@ -23,6 +23,19 @@ import {
   validateFtpUser,
 } from "./utils";
 
+function isValidCalendarIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const y = Number(value.slice(0, 4));
+  const m = Number(value.slice(5, 7));
+  const d = Number(value.slice(8, 10));
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
+}
+
 export function useSettings() {
   const router = useRouter();
   const orpc = useORPC();
@@ -563,15 +576,33 @@ export function useSettings() {
   };
 
   const handleSavePbxAccess = async () => {
+    const apiKeyVal = state.prompts.megapbx_api_key?.value?.trim();
+    const rawSyncFromDate =
+      state.prompts.megapbx_sync_from_date?.value?.trim() ?? "";
+
+    if (rawSyncFromDate && !isValidCalendarIsoDate(rawSyncFromDate)) {
+      setState((prev) => ({
+        ...prev,
+        prompts: {
+          ...prev.prompts,
+          megapbx_sync_from_date: {
+            ...prev.prompts.megapbx_sync_from_date,
+            key: "megapbx_sync_from_date",
+            error:
+              "Некорректная дата. Используйте формат YYYY-MM-DD и реальную дату календаря.",
+          },
+        },
+      }));
+      queueMicrotask(() =>
+        document.getElementById("megapbx-sync-from-date")?.focus(),
+      );
+      return;
+    }
+
+    const validatedSyncFromDate = rawSyncFromDate ? rawSyncFromDate : undefined;
+
     try {
       setState((prev) => ({ ...prev, megaPbxSaving: true }));
-      const apiKeyVal = state.prompts.megapbx_api_key?.value?.trim();
-      const rawSyncFromDate =
-        state.prompts.megapbx_sync_from_date?.value?.trim() ?? "";
-      const validatedSyncFromDate =
-        rawSyncFromDate && /^\d{4}-\d{2}-\d{2}$/.test(rawSyncFromDate)
-          ? rawSyncFromDate
-          : undefined;
       const payload = {
         enabled: state.prompts.megapbx_enabled?.value === "true",
         baseUrl: state.prompts.megapbx_base_url?.value?.trim() ?? "",
@@ -621,9 +652,11 @@ export function useSettings() {
   const handleSavePbxWebhook = async () => {
     try {
       setState((prev) => ({ ...prev, megaPbxSaving: true }));
-      const webhookSecret =
-        state.prompts.megapbx_webhook_secret?.value?.trim() || undefined;
-      await updatePbxWebhookMutation.mutateAsync({ webhookSecret });
+      const trimmedSecret =
+        state.prompts.megapbx_webhook_secret?.value?.trim() ?? "";
+      await updatePbxWebhookMutation.mutateAsync(
+        trimmedSecret ? { webhookSecret: trimmedSecret } : {},
+      );
       toast.success("Webhook сохранён");
       await loadSettings();
     } catch (error: unknown) {
@@ -780,6 +813,7 @@ export function useSettings() {
           ...prev.prompts[key],
           key,
           value,
+          ...(key === "megapbx_sync_from_date" ? { error: undefined } : {}),
         },
       },
     }));

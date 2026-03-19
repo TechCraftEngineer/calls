@@ -4,6 +4,8 @@ export interface Prompt {
   description?: string;
   updated_at?: string;
   meta?: { passwordSet?: boolean };
+  /** Локальная ошибка валидации (не с сервера) */
+  error?: string;
 }
 
 export interface FtpConnectionStatus {
