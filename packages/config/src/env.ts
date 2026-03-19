@@ -53,7 +53,7 @@ export const env = createEnv({
     YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND: z.coerce
       .number()
       .positive()
-      .default(0.01),
+      .optional(),
     YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE: z.coerce
       .number()
       .positive()

@@ -169,11 +169,15 @@ export default function HomePage() {
         prev.q !== debouncedFilters.q ||
         prev.dateFrom !== debouncedFilters.dateFrom ||
         prev.dateTo !== debouncedFilters.dateTo ||
-        prev.direction.join("|") !== debouncedFilters.direction.join("|") ||
-        prev.manager.join("|") !== debouncedFilters.manager.join("|") ||
-        prev.status.join("|") !== debouncedFilters.status.join("|") ||
-        prev.value.join("|") !== debouncedFilters.value.join("|") ||
-        prev.operator.join("|") !== debouncedFilters.operator.join("|");
+        JSON.stringify(prev.direction) !==
+          JSON.stringify(debouncedFilters.direction) ||
+        JSON.stringify(prev.manager) !==
+          JSON.stringify(debouncedFilters.manager) ||
+        JSON.stringify(prev.status) !==
+          JSON.stringify(debouncedFilters.status) ||
+        JSON.stringify(prev.value) !== JSON.stringify(debouncedFilters.value) ||
+        JSON.stringify(prev.operator) !==
+          JSON.stringify(debouncedFilters.operator);
       if (!changed) return prev;
       setPagination((p) => ({ ...p, page: 1 }));
       return debouncedFilters;
