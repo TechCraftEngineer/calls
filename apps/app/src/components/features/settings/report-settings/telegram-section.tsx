@@ -218,24 +218,32 @@ export function TelegramReportSection({
         </div>
         <Separator />
         {onSendTest && (
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <SendTestReportButton
-              onSendTest={onSendTest}
-              primaryReportType={primaryReportType}
-              primaryReportLabel={primaryReportLabel}
-              sendTestLoading={sendTestLoadingSafe}
-              canSendTest={Boolean(canSendTest)}
-              variant={canSendTest ? "success" : "default"}
-              size="sm"
-            />
-            {sendTestMessageSafe && (
-              <span
-                className={`text-sm ${
-                  sendTestSuccessSafe ? "text-success" : "text-destructive"
-                }`}
-              >
-                {sendTestMessageSafe}
-              </span>
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <SendTestReportButton
+                onSendTest={onSendTest}
+                primaryReportType={primaryReportType}
+                primaryReportLabel={primaryReportLabel}
+                sendTestLoading={sendTestLoadingSafe}
+                canSendTest={Boolean(canSendTest)}
+                variant={canSendTest ? "success" : "default"}
+                size="sm"
+              />
+              {sendTestMessageSafe && (
+                <span
+                  className={`text-sm ${
+                    sendTestSuccessSafe ? "text-success" : "text-destructive"
+                  }`}
+                >
+                  {sendTestMessageSafe}
+                </span>
+              )}
+            </div>
+            {!form.telegramChatId?.trim() && (
+              <p className="text-xs text-muted-foreground">
+                Сначала подключите Telegram или укажите Telegram Chat ID, затем
+                можно отправить тестовый отчёт.
+              </p>
             )}
           </div>
         )}
