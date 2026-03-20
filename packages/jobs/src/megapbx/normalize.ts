@@ -215,6 +215,8 @@ export function normalizeCall(
       ) ?? null,
     status: asString(raw.status),
     recordingUrl:
+      asString(raw.link) ??
+      asString(raw.Link) ??
       asString(raw.record) ??
       asString(raw.recordingUrl) ??
       asString(raw.recording_url) ??

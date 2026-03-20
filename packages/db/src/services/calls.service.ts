@@ -103,6 +103,13 @@ export class CallsService {
     await this.callsRepository.updateCustomerName(callId, customerName);
   }
 
+  async updateCallRecording(
+    callId: string,
+    data: { fileId: string | null; sizeBytes: number | null },
+  ): Promise<void> {
+    await this.callsRepository.updateRecording(callId, data);
+  }
+
   async getEvaluation(callId: string): Promise<CallEvaluation | null> {
     return this.callsRepository.getEvaluation(callId);
   }
