@@ -1,5 +1,11 @@
 import {
   Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
   Checkbox,
   Field,
   FieldLabel,
@@ -10,6 +16,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Separator,
 } from "@calls/ui";
 import type React from "react";
 import type { User } from "@/lib/auth";
@@ -21,6 +28,8 @@ interface TelegramSectionProps {
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   isAdmin: boolean;
+  onSave: () => void;
+  saving: boolean;
   sendTestLoading?: boolean;
   sendTestSuccess?: boolean;
   sendTestReportType?: ReportType | null;
@@ -42,6 +51,8 @@ export function TelegramReportSection({
   form,
   setForm,
   isAdmin,
+  onSave,
+  saving,
   sendTestLoading,
   sendTestSuccess,
   sendTestReportType,
@@ -72,52 +83,75 @@ export function TelegramReportSection({
     REPORT_TYPE_LABELS[primaryReportType] ?? REPORT_TYPE_LABELS.daily;
 
   return (
-    <div className="rounded-lg border bg-card p-4 text-card-foreground">
-      <h4 className="mb-3 text-sm font-bold">Telegram Отчеты</h4>
-      <Field className="mb-3">
-        <FieldLabel asChild>
-          <Label>Telegram Chat ID</Label>
-        </FieldLabel>
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            value={form.telegramChatId}
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                telegramChatId: e.target.value,
-              }))
-            }
-            className="flex-1"
-            placeholder="Нажмите «Подключить Telegram» или введите ID вручную"
-          />
-          {hasTelegram && onDisconnect && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onDisconnect}
-              disabled={effectiveDisconnectLoading}
-              className="shrink-0 text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
-            >
-              {effectiveDisconnectLoading ? "…" : "Отвязать"}
-            </Button>
-          )}
-        </div>
-        {user && onConnect && (
-          <div className="mt-2 flex gap-2 flex-wrap">
-            {!hasTelegram ? (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={onConnect}
-                  disabled={effectiveConnectLoading}
-                >
-                  {effectiveConnectLoading ? "…" : "Подключить Telegram"}
-                </Button>
-                {onCheckConnection && (
+    <Card className="border-border/50 bg-card/50">
+      <CardHeader className="px-4 pb-0">
+        <CardTitle className="text-base">Telegram Отчеты</CardTitle>
+        <CardDescription>
+          Настройте куда и как отправлять отчёты в Telegram. Для админов
+          доступно расписание отправки.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Field className="mb-3">
+          <FieldLabel asChild>
+            <Label>Telegram Chat ID</Label>
+          </FieldLabel>
+          <div className="flex gap-2">
+            <Input
+              type="text"
+              value={form.telegramChatId}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  telegramChatId: e.target.value,
+                }))
+              }
+              className="flex-1"
+              placeholder="Нажмите «Подключить Telegram» или введите ID вручную"
+            />
+            {hasTelegram && onDisconnect && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onDisconnect}
+                disabled={effectiveDisconnectLoading}
+                className="shrink-0 text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                {effectiveDisconnectLoading ? "…" : "Отвязать"}
+              </Button>
+            )}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Можно подключить Telegram по кнопке или указать Chat ID вручную.
+          </p>
+          {user && onConnect && (
+            <div className="mt-2 flex gap-2 flex-wrap">
+              {!hasTelegram ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={onConnect}
+                    disabled={effectiveConnectLoading}
+                  >
+                    {effectiveConnectLoading ? "…" : "Подключить Telegram"}
+                  </Button>
+                  {onCheckConnection && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={onCheckConnection}
+                      disabled={checkConnectionLoading}
+                    >
+                      {checkConnectionLoading ? "…" : "Проверить подключение"}
+                    </Button>
+                  )}
+                </>
+              ) : (
+                onCheckConnection && (
                   <Button
                     type="button"
                     variant="outline"
@@ -127,98 +161,98 @@ export function TelegramReportSection({
                   >
                     {checkConnectionLoading ? "…" : "Проверить подключение"}
                   </Button>
-                )}
-              </>
-            ) : (
-              onCheckConnection && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={onCheckConnection}
-                  disabled={checkConnectionLoading}
-                >
-                  {checkConnectionLoading ? "…" : "Проверить подключение"}
-                </Button>
-              )
+                )
+              )}
+            </div>
+          )}
+        </Field>
+        <div className="flex flex-col gap-2">
+          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+            <Checkbox
+              checked={form.telegramDailyReport}
+              onCheckedChange={(checked) =>
+                setForm((f) => ({
+                  ...f,
+                  telegramDailyReport: checked === true,
+                }))
+              }
+            />
+            Ежедневный отчет
+          </Label>
+          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+            <Checkbox
+              checked={form.telegramWeeklyReport}
+              onCheckedChange={(checked) =>
+                setForm((f) => ({
+                  ...f,
+                  telegramWeeklyReport: checked === true,
+                }))
+              }
+            />
+            Еженедельный отчет
+          </Label>
+          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+            <Checkbox
+              checked={form.telegramMonthlyReport}
+              onCheckedChange={(checked) =>
+                setForm((f) => ({
+                  ...f,
+                  telegramMonthlyReport: checked === true,
+                }))
+              }
+            />
+            Ежемесячный отчет
+          </Label>
+          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+            <Checkbox
+              checked={form.telegramSkipWeekends}
+              onCheckedChange={(checked) =>
+                setForm((f) => ({
+                  ...f,
+                  telegramSkipWeekends: checked === true,
+                }))
+              }
+            />
+            Не отправлять отчёты в Telegram в выходные
+          </Label>
+        </div>
+        <Separator />
+        {onSendTest && (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <SendTestReportButton
+              onSendTest={onSendTest}
+              primaryReportType={primaryReportType}
+              primaryReportLabel={primaryReportLabel}
+              sendTestLoading={sendTestLoadingSafe}
+              canSendTest={Boolean(canSendTest)}
+              variant={canSendTest ? "success" : "default"}
+              size="sm"
+            />
+            {sendTestMessageSafe && (
+              <span
+                className={`text-sm ${
+                  sendTestSuccessSafe ? "text-success" : "text-destructive"
+                }`}
+              >
+                {sendTestMessageSafe}
+              </span>
             )}
           </div>
         )}
-      </Field>
-      <div className="flex flex-col gap-2">
-        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-          <Checkbox
-            checked={form.telegramDailyReport}
-            onCheckedChange={(checked) =>
-              setForm((f) => ({
-                ...f,
-                telegramDailyReport: checked === true,
-              }))
-            }
-          />
-          Ежедневный отчет
-        </Label>
-        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-          <Checkbox
-            checked={form.telegramWeeklyReport}
-            onCheckedChange={(checked) =>
-              setForm((f) => ({
-                ...f,
-                telegramWeeklyReport: checked === true,
-              }))
-            }
-          />
-          Еженедельный отчет
-        </Label>
-        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-          <Checkbox
-            checked={form.telegramMonthlyReport}
-            onCheckedChange={(checked) =>
-              setForm((f) => ({
-                ...f,
-                telegramMonthlyReport: checked === true,
-              }))
-            }
-          />
-          Ежемесячный отчет
-        </Label>
-        <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-          <Checkbox
-            checked={form.telegramSkipWeekends}
-            onCheckedChange={(checked) =>
-              setForm((f) => ({
-                ...f,
-                telegramSkipWeekends: checked === true,
-              }))
-            }
-          />
-          Не отправлять отчёты в Telegram в выходные
-        </Label>
-      </div>
-      {onSendTest && (
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <SendTestReportButton
-            onSendTest={onSendTest}
-            primaryReportType={primaryReportType}
-            primaryReportLabel={primaryReportLabel}
-            sendTestLoading={sendTestLoadingSafe}
-            canSendTest={Boolean(canSendTest)}
-            variant={canSendTest ? "success" : "default"}
-            size="sm"
-          />
-          {sendTestMessageSafe && (
-            <span
-              className={`text-sm ${
-                sendTestSuccessSafe ? "text-success" : "text-destructive"
-              }`}
-            >
-              {sendTestMessageSafe}
-            </span>
-          )}
-        </div>
-      )}
-      {isAdmin && <ReportTimeSettings form={form} setForm={setForm} />}
-    </div>
+        {isAdmin && <ReportTimeSettings form={form} setForm={setForm} />}
+      </CardContent>
+      <CardFooter className="px-4 pt-0 flex justify-end">
+        <Button
+          type="button"
+          size="sm"
+          onClick={onSave}
+          disabled={saving}
+          className="w-full sm:w-auto"
+        >
+          {saving ? "Сохранение…" : "Сохранить"}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }
 
@@ -256,8 +290,15 @@ function ReportTimeSettings({
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
 }) {
   return (
-    <div className="mt-4 border-t border-border pt-3">
-      <h4 className="mb-2 text-sm font-bold">Время отправки (для всех)</h4>
+    <div className="mt-4 rounded-lg border bg-muted/30 p-4 space-y-3">
+      <div>
+        <h4 className="text-sm font-bold">Расписание отправки отчётов</h4>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Влияет на ежедневные/еженедельные/ежемесячные рассылки. Изменения
+          применяются при сохранении этой секции.
+        </p>
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
         <Field orientation="horizontal" className="items-center gap-2">
           <Label className="text-xs font-normal">Ежедневно:</Label>
@@ -270,7 +311,7 @@ function ReportTimeSettings({
               }))
             }
           >
-            <SelectTrigger size="sm" className="h-8 w-[90px]">
+            <SelectTrigger size="sm" className="h-8 w-22.5">
               <SelectValue placeholder="Время" />
             </SelectTrigger>
             <SelectContent>
@@ -282,6 +323,7 @@ function ReportTimeSettings({
             </SelectContent>
           </Select>
         </Field>
+
         <Field orientation="horizontal" className="items-center gap-2">
           <Label className="text-xs font-normal">Еженедельно:</Label>
           <Select
@@ -290,7 +332,7 @@ function ReportTimeSettings({
               setForm((f) => ({ ...f, reportWeeklyDay: v }))
             }
           >
-            <SelectTrigger size="sm" className="h-8 w-[70px]">
+            <SelectTrigger size="sm" className="h-8 w-17.5">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -310,7 +352,7 @@ function ReportTimeSettings({
               }))
             }
           >
-            <SelectTrigger size="sm" className="h-8 w-[90px]">
+            <SelectTrigger size="sm" className="h-8 w-22.5">
               <SelectValue placeholder="Время" />
             </SelectTrigger>
             <SelectContent>
@@ -322,6 +364,7 @@ function ReportTimeSettings({
             </SelectContent>
           </Select>
         </Field>
+
         <Field orientation="horizontal" className="items-center gap-2">
           <Label className="text-xs font-normal">Ежемесячно:</Label>
           <Select
@@ -330,12 +373,12 @@ function ReportTimeSettings({
               setForm((f) => ({ ...f, reportMonthlyDay: v }))
             }
           >
-            <SelectTrigger size="sm" className="h-8 w-[100px]">
+            <SelectTrigger size="sm" className="h-8 w-25">
               <SelectValue placeholder="День" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="last">Последний день</SelectItem>
-              {Array.from({ length: 28 }, (_, i) => i + 1).map((n) => (
+              {Array.from({ length: 31 }, (_, i) => i + 1).map((n) => (
                 <SelectItem key={n} value={String(n)}>
                   {n}
                 </SelectItem>
@@ -351,7 +394,7 @@ function ReportTimeSettings({
               }))
             }
           >
-            <SelectTrigger size="sm" className="h-8 w-[90px]">
+            <SelectTrigger size="sm" className="h-8 w-22.5">
               <SelectValue placeholder="Время" />
             </SelectTrigger>
             <SelectContent>

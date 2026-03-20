@@ -2,6 +2,7 @@ import { backup } from "./backup";
 import { evaluationRouter } from "./evaluation";
 import { ftpRouter } from "./ftp";
 import { getModels } from "./get-models";
+import { getReportScheduleSettings } from "./get-report-schedule-settings";
 import { integrationsRouter } from "./integrations";
 import { pbxRouter } from "./pbx";
 import { promptsRouter } from "./prompts";
@@ -38,4 +39,7 @@ export const settingsRouter = {
   createEvaluationTemplate: evaluationRouter.createEvaluationTemplate,
   updateEvaluationTemplate: evaluationRouter.updateEvaluationTemplate,
   deleteEvaluationTemplate: evaluationRouter.deleteEvaluationTemplate,
+
+  // Report schedule for telegram/email (workspace-level settings)
+  getReportScheduleSettings,
 };

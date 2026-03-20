@@ -1,12 +1,5 @@
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  toast,
-} from "@calls/ui";
-import { useMutation } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle, toast } from "@calls/ui";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
 import { useRef, useState } from "react";
 import type { User } from "@/lib/auth";
@@ -27,8 +20,6 @@ import type {
 interface ReportSettingsFormBodyProps {
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
-  handleSubmit: (e: React.FormEvent) => void;
-  saving: boolean;
   user: User;
   isAdmin: boolean;
   allUsers: ReportSettingsUserOption[];
@@ -37,14 +28,30 @@ interface ReportSettingsFormBodyProps {
 export default function ReportSettingsFormBody({
   form,
   setForm,
-  handleSubmit,
-  saving,
   user,
   isAdmin,
   allUsers,
 }: ReportSettingsFormBodyProps) {
   const orpc = useORPC();
   const userId = String(user.id);
+  const queryClient = useQueryClient();
+
+  const invalidateUser = () => {
+    queryClient.invalidateQueries({
+      queryKey: orpc.users.getForEdit.queryKey({ input: { user_id: userId } }),
+    });
+  };
+
+  const invalidateSchedule = () => {
+    queryClient.invalidateQueries({
+      queryKey: orpc.settings.getReportScheduleSettings.queryKey(),
+    });
+  };
+
+  const handleMutationError = (err: unknown, fallback: string) => {
+    const msg = err instanceof Error ? err.message : fallback;
+    toast.error(msg);
+  };
 
   const telegramAuthUrlMutation = useMutation(
     orpc.users.telegramAuthUrl.mutationOptions({
@@ -69,6 +76,65 @@ export default function ReportSettingsFormBody({
         toast.success("Telegram отвязан");
       },
       onError: () => toast.error("Ошибка при отвязке Telegram"),
+    }),
+  );
+
+  const updateEmailMutation = useMutation(
+    orpc.users.updateEmailSettings.mutationOptions({
+      onSuccess: () => {
+        toast.success("Настройки email сохранены");
+        invalidateUser();
+      },
+      onError: (err) =>
+        handleMutationError(err, "Не удалось сохранить настройки email"),
+    }),
+  );
+
+  const updateTelegramMutation = useMutation(
+    orpc.users.updateTelegramSettings.mutationOptions({
+      onSuccess: () => {
+        toast.success("Настройки Telegram сохранены");
+        invalidateUser();
+        invalidateSchedule();
+      },
+      onError: (err) =>
+        handleMutationError(err, "Не удалось сохранить настройки Telegram"),
+    }),
+  );
+
+  const updateMaxMutation = useMutation(
+    orpc.users.updateMaxSettings.mutationOptions({
+      onSuccess: () => {
+        toast.success("Настройки MAX сохранены");
+        invalidateUser();
+      },
+      onError: (err) =>
+        handleMutationError(err, "Не удалось сохранить настройки MAX"),
+    }),
+  );
+
+  const updateReportParamsMutation = useMutation(
+    orpc.users.updateReportParamsSettings.mutationOptions({
+      onSuccess: () => {
+        toast.success("Параметры отчетов сохранены");
+        invalidateUser();
+      },
+      onError: (err) =>
+        handleMutationError(err, "Не удалось сохранить параметры отчетов"),
+    }),
+  );
+
+  const updateReportManagedUsersMutation = useMutation(
+    orpc.users.updateReportManagedUsersSettings.mutationOptions({
+      onSuccess: () => {
+        toast.success("Сводные менеджеры сохранены");
+        invalidateUser();
+      },
+      onError: (err) =>
+        handleMutationError(
+          err,
+          "Не удалось сохранить сводные настройки менеджеров",
+        ),
     }),
   );
 
@@ -115,55 +181,152 @@ export default function ReportSettingsFormBody({
     disconnectTelegramMutation.mutate({ user_id: userId });
   };
 
+  const handleSaveEmail = () => {
+    const email = form.email.trim();
+    updateEmailMutation.mutate({
+      user_id: userId,
+      data: {
+        email: email ? email : null,
+        emailDailyReport: form.emailDailyReport,
+        emailWeeklyReport: form.emailWeeklyReport,
+        emailMonthlyReport: form.emailMonthlyReport,
+      },
+    });
+  };
+
+  const handleSaveTelegram = () => {
+    const telegramChatId = form.telegramChatId.trim();
+    const reportWeeklyDay = form.reportWeeklyDay as
+      | "sun"
+      | "mon"
+      | "tue"
+      | "wed"
+      | "thu"
+      | "fri"
+      | "sat";
+    updateTelegramMutation.mutate({
+      user_id: userId,
+      data: {
+        telegramDailyReport: form.telegramDailyReport,
+        telegramWeeklyReport: form.telegramWeeklyReport,
+        telegramMonthlyReport: form.telegramMonthlyReport,
+        telegramSkipWeekends: form.telegramSkipWeekends,
+        telegramChatId: telegramChatId ? telegramChatId : null,
+        ...(isAdmin
+          ? {
+              reportDailyTime: form.reportDailyTime,
+              reportWeeklyDay,
+              reportWeeklyTime: form.reportWeeklyTime,
+              reportMonthlyDay: form.reportMonthlyDay,
+              reportMonthlyTime: form.reportMonthlyTime,
+            }
+          : {}),
+      },
+    });
+  };
+
+  const handleSaveMax = () => {
+    const maxChatId = form.maxChatId.trim();
+    updateMaxMutation.mutate({
+      user_id: userId,
+      data: {
+        maxChatId: maxChatId ? maxChatId : null,
+        maxDailyReport: form.maxDailyReport,
+        maxManagerReport: form.maxManagerReport,
+      },
+    });
+  };
+
+  const toNonNegInt = (value: string) => {
+    const n = Number(value);
+    if (!Number.isFinite(n) || Number.isNaN(n)) return 0;
+    return Math.max(0, Math.trunc(n));
+  };
+
+  const handleSaveParams = () => {
+    updateReportParamsMutation.mutate({
+      user_id: userId,
+      data: {
+        reportIncludeCallSummaries: form.reportIncludeCallSummaries,
+        reportDetailed: form.reportDetailed,
+        reportIncludeAvgValue: form.reportIncludeAvgValue,
+        reportIncludeAvgRating: form.reportIncludeAvgRating,
+
+        filterExcludeAnsweringMachine: form.filterExcludeAnsweringMachine,
+        filterMinDuration: toNonNegInt(form.filterMinDuration),
+        filterMinReplicas: toNonNegInt(form.filterMinReplicas),
+
+        kpiBaseSalary: toNonNegInt(form.kpiBaseSalary),
+        kpiTargetBonus: toNonNegInt(form.kpiTargetBonus),
+        kpiTargetTalkTimeMinutes: toNonNegInt(form.kpiTargetTalkTimeMinutes),
+      },
+    });
+  };
+
+  const handleSaveManagedUsers = () => {
+    updateReportManagedUsersMutation.mutate({
+      user_id: userId,
+      data: {
+        reportManagedUserIds: form.reportManagedUserIds ?? [],
+      },
+    });
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Настройки отчётов</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <EmailReportSection form={form} setForm={setForm} />
+          <EmailReportSection
+            form={form}
+            setForm={setForm}
+            saving={updateEmailMutation.isPending}
+            onSave={handleSaveEmail}
+          />
           <TelegramReportSection
             form={form}
             setForm={setForm}
             isAdmin={isAdmin}
+            user={user}
             onConnect={handleTelegramConnect}
             onDisconnect={handleTelegramDisconnect}
             connecting={telegramAuthUrlMutation.isPending}
             disconnecting={disconnectTelegramMutation.isPending}
+            saving={updateTelegramMutation.isPending}
+            onSave={handleSaveTelegram}
+            onSendTest={handleSendTest}
+            sendTestLoading={sendTestMutation.isPending}
+            sendTestSuccess={Boolean(sendTestMessage)}
+            sendTestReportType={null}
+            sendTestMessage={sendTestMessage}
           />
-          <MaxReportSection form={form} setForm={setForm} isAdmin={isAdmin} />
-          <ReportParamsSection form={form} setForm={setForm} />
+          <MaxReportSection
+            form={form}
+            setForm={setForm}
+            isAdmin={isAdmin}
+            saving={updateMaxMutation.isPending}
+            onSave={handleSaveMax}
+          />
+          <ReportParamsSection
+            form={form}
+            setForm={setForm}
+            saving={updateReportParamsMutation.isPending}
+            onSave={handleSaveParams}
+          />
           {isAdmin && (
             <ManagedUsersSection
               form={form}
               setForm={setForm}
               user={{ id: String(user.id) }}
               allUsers={allUsers}
+              saving={updateReportManagedUsersMutation.isPending}
+              onSave={handleSaveManagedUsers}
             />
           )}
         </CardContent>
       </Card>
-      <div className="flex items-center gap-4">
-        <Button type="submit" disabled={saving}>
-          {saving ? "Сохранение…" : "Сохранить настройки"}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => handleSendTest("daily")}
-          disabled={sendTestMutation.isPending}
-        >
-          {sendTestMutation.isPending
-            ? "Отправка…"
-            : "Отправить тестовый отчёт"}
-        </Button>
-        {sendTestMessage && (
-          <span className="text-sm text-muted-foreground">
-            {sendTestMessage}
-          </span>
-        )}
-      </div>
-    </form>
+    </div>
   );
 }

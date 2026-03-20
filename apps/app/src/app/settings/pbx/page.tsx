@@ -67,12 +67,8 @@ export default function SettingsPbxProvidersPage() {
   const isMegafonEnabled = state.megaPbx.enabled;
   const megafonBaseUrl = state.megaPbx.baseUrl.trim();
   const megafonApiKeySet = state.megaPbx.apiKeySet;
-  const megafonStatus =
-    !megafonBaseUrl || !megafonApiKeySet
-      ? "Не настроено"
-      : isMegafonEnabled
-        ? "Подключено"
-        : "Настроено";
+  const megafonAtcActive = Boolean(megafonBaseUrl && megafonApiKeySet);
+  const megafonIntegrationActive = megafonAtcActive && isMegafonEnabled;
 
   return (
     <SettingsPageShell>
@@ -105,7 +101,25 @@ export default function SettingsPbxProvidersPage() {
                           <div className="text-sm font-semibold">
                             {provider.name}
                           </div>
-                          <Badge variant="secondary">{megafonStatus}</Badge>
+                          {megafonAtcActive ? (
+                            <Badge variant="outline">АТС активна</Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="text-destructive"
+                            >
+                              АТС не настроена
+                            </Badge>
+                          )}
+                          <Badge
+                            variant={
+                              megafonIntegrationActive ? "default" : "secondary"
+                            }
+                          >
+                            {megafonIntegrationActive
+                              ? "Интеграция активна"
+                              : "Интеграция выключена"}
+                          </Badge>
                         </div>
                         <div className="mt-3 flex flex-wrap gap-1.5">
                           {provider.features.map((feature) => (
