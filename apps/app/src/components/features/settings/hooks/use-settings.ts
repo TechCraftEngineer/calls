@@ -4,8 +4,8 @@ import { paths } from "@calls/config";
 import { toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
-import { getCurrentUser, type User } from "@/lib/auth";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getCurrentUser } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 import type {
   PbxEmployeeItem,
@@ -22,7 +22,10 @@ export function useSettings() {
   const router = useRouter();
   const orpc = useORPC();
   const queryClient = useQueryClient();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  type CurrentUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [state, setState] = useState<SettingsState>({
     ftp: {
       enabled: false,
@@ -83,6 +86,12 @@ export function useSettings() {
     megaPbxNumbers: [],
   });
 
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
   const ftpSettings = useFtpSettings({
     state: {
       ftp: state.ftp,
@@ -131,7 +140,7 @@ export function useSettings() {
         router.push(paths.auth.signin);
         return;
       }
-      setCurrentUser(user as unknown as User);
+      setCurrentUser(user);
 
       const [integrations, megaPbx, megaPbxEmployees, megaPbxNumbers] =
         await Promise.all([
@@ -265,8 +274,10 @@ export function useSettings() {
         ...prev,
         sendTestMessage: `${reportTypeLabel} отчёт отправлен в Telegram`,
       }));
-      setTimeout(() => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
         setState((prev) => ({ ...prev, sendTestMessage: "" }));
+        timeoutRef.current = null;
       }, 4000);
     } catch (err: unknown) {
       const e = err as Error;

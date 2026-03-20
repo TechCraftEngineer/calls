@@ -60,6 +60,44 @@ export const updateTelegramSettingsSchema = z.object({
   telegramManagerReport: z.boolean().optional(),
   telegramWeeklyReport: z.boolean().optional(),
   telegramMonthlyReport: z.boolean().optional(),
+  telegramSkipWeekends: z.boolean().optional(),
+  telegramChatId: z.string().optional().nullable(),
+  /**
+   * Настройки времени отчётов (workspace-level).
+   * UI показывает их только админам, поэтому на уровне роутера будет проверка прав.
+   */
+  reportDailyTime: z
+    .string()
+    .regex(
+      /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
+      "Некорректный формат времени. Ожидается HH:MM",
+    )
+    .optional(),
+  reportWeeklyDay: z
+    .enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"])
+    .optional(),
+  reportWeeklyTime: z
+    .string()
+    .regex(
+      /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
+      "Некорректный формат времени. Ожидается HH:MM",
+    )
+    .optional(),
+  reportMonthlyDay: z
+    .string()
+    .refine((v) => {
+      if (v === "last") return true;
+      const n = Number.parseInt(v, 10);
+      return Number.isFinite(n) && n >= 1 && n <= 31;
+    }, "Некорректный день месяца. Ожидается 'last' или число 1..31")
+    .optional(),
+  reportMonthlyTime: z
+    .string()
+    .regex(
+      /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
+      "Некорректный формат времени. Ожидается HH:MM",
+    )
+    .optional(),
 });
 
 export const updateMaxSettingsSchema = z.object({
@@ -100,4 +138,38 @@ export const updateFilterSettingsSchema = z.object({
     .number()
     .min(0, "Значение не может быть отрицательным")
     .optional(),
+});
+
+export const updateReportParamsSettingsSchema = z.object({
+  reportIncludeCallSummaries: z.boolean().optional(),
+  reportDetailed: z.boolean().optional(),
+  reportIncludeAvgValue: z.boolean().optional(),
+  reportIncludeAvgRating: z.boolean().optional(),
+
+  filterExcludeAnsweringMachine: z.boolean().optional(),
+  filterMinDuration: z
+    .number()
+    .min(0, "Значение не может быть отрицательным")
+    .optional(),
+  filterMinReplicas: z
+    .number()
+    .min(0, "Значение не может быть отрицательным")
+    .optional(),
+
+  kpiBaseSalary: z
+    .number()
+    .min(0, "Значение не может быть отрицательным")
+    .optional(),
+  kpiTargetBonus: z
+    .number()
+    .min(0, "Значение не может быть отрицательным")
+    .optional(),
+  kpiTargetTalkTimeMinutes: z
+    .number()
+    .min(0, "Значение не может быть отрицательным")
+    .optional(),
+});
+
+export const updateReportManagedUsersSettingsSchema = z.object({
+  reportManagedUserIds: z.array(z.string().min(1)),
 });

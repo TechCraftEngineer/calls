@@ -1,6 +1,7 @@
-import { toast } from "@calls/ui";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import type React from "react";
+"use client";
+
+import { Card, CardContent, Skeleton } from "@calls/ui";
+import { skipToken, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import type { User } from "@/lib/auth";
@@ -46,28 +47,24 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const userId = user?.id ? String(user.id) : "";
 
-  const usersQuery = useQuery({
-    ...orpc.users.getForEdit.queryOptions({ input: { user_id: userId } }),
-    enabled: !!userId,
-  });
+  const usersQuery = useQuery(
+    userId
+      ? orpc.users.getForEdit.queryOptions({ input: { user_id: userId } })
+      : (skipToken as any),
+  );
   const userData = usersQuery.data;
 
-  const { data: usersList = [] } = useQuery({
-    ...orpc.users.list.queryOptions(),
-    enabled: !!userId && isWorkspaceAdmin,
-  });
-
-  const updateMutation = useMutation(
-    orpc.users.update.mutationOptions({
-      onError: (err) => {
-        const msg =
-          err instanceof Error
-            ? err.message
-            : "Не удалось сохранить настройки.";
-        toast.error(msg);
-      },
-    }),
+  const usersListQuery = useQuery(
+    userId && isWorkspaceAdmin
+      ? orpc.users.list.queryOptions()
+      : (skipToken as any),
   );
+  const usersList = usersListQuery.data ?? [];
+  const scheduleQuery = useQuery({
+    ...orpc.settings.getReportScheduleSettings.queryOptions(),
+    enabled: Boolean(activeWorkspace?.id),
+  });
+  const schedule = scheduleQuery.data;
 
   const [form, setForm] = useState<ReportSettingsForm>({
     email: "",
@@ -89,11 +86,11 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     kpiBaseSalary: "0",
     kpiTargetBonus: "0",
     kpiTargetTalkTimeMinutes: "0",
-    reportDailyTime: "09:00",
-    reportWeeklyDay: "monday",
-    reportWeeklyTime: "09:00",
-    reportMonthlyDay: "1",
-    reportMonthlyTime: "09:00",
+    reportDailyTime: "18:00",
+    reportWeeklyDay: "fri",
+    reportWeeklyTime: "18:10",
+    reportMonthlyDay: "last",
+    reportMonthlyTime: "18:20",
     reportManagedUserIds: [],
     maxChatId: "",
     maxDailyReport: false,
@@ -103,7 +100,8 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
   useEffect(() => {
     if (!userData) return;
     const d = userData as UserSettingsData;
-    setForm({
+    setForm((prev) => ({
+      ...prev,
       email: d.email ?? "",
       emailDailyReport: d.emailDailyReport ?? false,
       emailWeeklyReport: d.emailWeeklyReport ?? false,
@@ -123,57 +121,24 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       kpiBaseSalary: String(d.kpiBaseSalary ?? 0),
       kpiTargetBonus: String(d.kpiTargetBonus ?? 0),
       kpiTargetTalkTimeMinutes: String(d.kpiTargetTalkTimeMinutes ?? 0),
-      reportDailyTime: "09:00",
-      reportWeeklyDay: "monday",
-      reportWeeklyTime: "09:00",
-      reportMonthlyDay: "1",
-      reportMonthlyTime: "09:00",
       reportManagedUserIds: d.reportManagedUserIds ?? [],
       maxChatId: d.maxChatId ?? "",
       maxDailyReport: d.maxDailyReport ?? false,
       maxManagerReport: d.maxManagerReport ?? false,
-    });
+    }));
   }, [userData]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await updateMutation.mutateAsync({
-        user_id: userId,
-        data: {
-          email: form.email || undefined,
-          emailDailyReport: form.emailDailyReport,
-          emailWeeklyReport: form.emailWeeklyReport,
-          emailMonthlyReport: form.emailMonthlyReport,
-
-          telegramDailyReport: form.telegramDailyReport,
-          telegramWeeklyReport: form.telegramWeeklyReport,
-          telegramMonthlyReport: form.telegramMonthlyReport,
-          telegramSkipWeekends: form.telegramSkipWeekends,
-          telegramManagerReport: form.reportManagedUserIds.length > 0,
-          reportManagedUserIds: JSON.stringify(form.reportManagedUserIds),
-
-          reportIncludeCallSummaries: form.reportIncludeCallSummaries,
-          reportDetailed: form.reportDetailed,
-          reportIncludeAvgValue: form.reportIncludeAvgValue,
-          reportIncludeAvgRating: form.reportIncludeAvgRating,
-
-          filterExcludeAnsweringMachine: form.filterExcludeAnsweringMachine,
-          filterMinDuration: Number(form.filterMinDuration) || 0,
-          filterMinReplicas: Number(form.filterMinReplicas) || 0,
-
-          kpiBaseSalary: Number(form.kpiBaseSalary) || 0,
-          kpiTargetBonus: Number(form.kpiTargetBonus) || 0,
-          kpiTargetTalkTimeMinutes: Number(form.kpiTargetTalkTimeMinutes) || 0,
-        },
-      });
-      toast.success("Настройки сохранены");
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Не удалось сохранить настройки";
-      toast.error(msg);
-    }
-  };
+  useEffect(() => {
+    if (!schedule) return;
+    setForm((f) => ({
+      ...f,
+      reportDailyTime: schedule.reportDailyTime,
+      reportWeeklyDay: schedule.reportWeeklyDay,
+      reportWeeklyTime: schedule.reportWeeklyTime,
+      reportMonthlyDay: schedule.reportMonthlyDay,
+      reportMonthlyTime: schedule.reportMonthlyTime,
+    }));
+  }, [schedule]);
 
   const allUsers = useMemo(
     () =>
@@ -186,14 +151,38 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     [usersList],
   );
 
-  if (!userData) return null;
+  if (!userData) {
+    return (
+      <div aria-busy="true" className="space-y-6 animate-pulse">
+        <Card className="card">
+          <CardContent className="pt-6 space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-56" />
+              <Skeleton className="h-4 w-full max-w-md" />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <ReportSettingsFormBody
       form={form}
       setForm={setForm}
-      handleSubmit={handleSubmit}
-      saving={updateMutation.isPending}
       user={user}
       isAdmin={isWorkspaceAdmin}
       allUsers={allUsers}

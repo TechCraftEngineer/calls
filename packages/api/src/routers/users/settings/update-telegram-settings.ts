@@ -1,7 +1,8 @@
-import { usersService } from "@calls/db";
+import { settingsService, usersService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../../orpc";
+import { REPORT_PROMPTS_CAMEL_TO_SNAKE } from "../../settings/constants";
 import { updateTelegramSettingsSchema } from "../schemas";
 import { canAccessUser, logUpdate } from "../utils";
 
@@ -47,8 +48,102 @@ export const updateTelegramSettings = workspaceProcedure
           telegramManagerReport: input.data.telegramManagerReport,
           telegramWeeklyReport: input.data.telegramWeeklyReport,
           telegramMonthlyReport: input.data.telegramMonthlyReport,
+          telegramSkipWeekends: input.data.telegramSkipWeekends,
         },
       );
+
+      if (input.data.telegramChatId !== undefined) {
+        const trimmed = input.data.telegramChatId?.trim() ?? "";
+        if (trimmed) {
+          await usersService.saveTelegramChatId(input.user_id, trimmed);
+        } else {
+          await usersService.disconnectTelegram(input.user_id);
+        }
+      }
+
+      const canUpdateReportSchedule =
+        context.workspaceRole === "admin" || context.workspaceRole === "owner";
+
+      const scheduleKeys = [
+        "reportDailyTime",
+        "reportWeeklyDay",
+        "reportWeeklyTime",
+        "reportMonthlyDay",
+        "reportMonthlyTime",
+      ] as const;
+
+      const hasScheduleUpdates = scheduleKeys.some(
+        (k) => input.data[k] !== undefined,
+      );
+
+      if (hasScheduleUpdates) {
+        if (!canUpdateReportSchedule) {
+          throw new ORPCError("FORBIDDEN", {
+            message: "Недостаточно прав для изменения расписания отчётов",
+          });
+        }
+
+        const username =
+          authEmail?.trim() ||
+          ((context.user as Record<string, unknown>).email as string) ||
+          "system";
+
+        // Workspace settings use snake_case keys.
+        if (input.data.reportDailyTime !== undefined) {
+          const value = input.data.reportDailyTime!;
+          await settingsService.updateSetting(
+            REPORT_PROMPTS_CAMEL_TO_SNAKE.reportDailyTime!,
+            value,
+            null,
+            context.workspaceId,
+            username,
+          );
+        }
+
+        if (input.data.reportWeeklyDay !== undefined) {
+          const value = input.data.reportWeeklyDay!;
+          await settingsService.updateSetting(
+            REPORT_PROMPTS_CAMEL_TO_SNAKE.reportWeeklyDay!,
+            value,
+            null,
+            context.workspaceId,
+            username,
+          );
+        }
+
+        if (input.data.reportWeeklyTime !== undefined) {
+          const value = input.data.reportWeeklyTime!;
+          await settingsService.updateSetting(
+            REPORT_PROMPTS_CAMEL_TO_SNAKE.reportWeeklyTime!,
+            value,
+            null,
+            context.workspaceId,
+            username,
+          );
+        }
+
+        if (input.data.reportMonthlyDay !== undefined) {
+          const value = input.data.reportMonthlyDay!;
+          await settingsService.updateSetting(
+            REPORT_PROMPTS_CAMEL_TO_SNAKE.reportMonthlyDay!,
+            value,
+            null,
+            context.workspaceId,
+            username,
+          );
+        }
+
+        if (input.data.reportMonthlyTime !== undefined) {
+          const value = input.data.reportMonthlyTime!;
+          await settingsService.updateSetting(
+            REPORT_PROMPTS_CAMEL_TO_SNAKE.reportMonthlyTime!,
+            value,
+            null,
+            context.workspaceId,
+            username,
+          );
+        }
+      }
 
       await logUpdate(
         "telegram settings updated",
