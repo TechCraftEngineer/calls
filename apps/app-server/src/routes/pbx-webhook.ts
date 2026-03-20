@@ -217,6 +217,9 @@ const handlePbxWebhook = async (c: Context) => {
       pbxSyncRequested.create({
         workspaceId,
         syncType: "calls",
+        // В очередь кладем признак загрузки записей, чтобы фоновой синхронизации
+        // реально скачивать recordingUrl и грузить файл в наше хранилище.
+        syncRecordings: config.syncRecordings,
         webhookEvent: {
           eventId,
           eventType,
