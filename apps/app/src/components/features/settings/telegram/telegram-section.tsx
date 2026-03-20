@@ -10,8 +10,8 @@ import {
   CardTitle,
 } from "@calls/ui";
 import Link from "next/link";
+import { getReportTypeLabel, type TelegramSectionProps } from "../types";
 import { SendTestReportButton } from "./send-test-report-button";
-import { getReportTypeLabel, type TelegramSectionProps } from "./types";
 
 export default function TelegramSection({
   sendTestLoading,

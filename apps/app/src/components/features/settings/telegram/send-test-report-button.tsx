@@ -8,8 +8,8 @@ import {
   DropdownMenuTrigger,
 } from "@calls/ui";
 import { ChevronDown } from "lucide-react";
-import type { ReportType } from "./types";
-import { REPORT_TYPE_LABELS } from "./types";
+import type { ReportType } from "../types";
+import { REPORT_TYPE_LABELS } from "../types";
 
 interface SendTestReportButtonProps {
   onSendTest: (reportType: ReportType) => void;

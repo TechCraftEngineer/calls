@@ -13,7 +13,7 @@ import {
   TabsTrigger,
 } from "@calls/ui";
 import { useEffect, useMemo, useState } from "react";
-import { PbxProviderLogo } from "@/components/features/settings/pbx-provider-logo";
+import { PbxProviderLogo } from "@/components/features/settings";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { STORAGE_KEYS } from "../megapbx/constants";
 import { EmployeesTab } from "../megapbx/employees-tab";

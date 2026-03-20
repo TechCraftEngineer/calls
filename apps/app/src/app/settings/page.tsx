@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSettings } from "@/components/features/settings/hooks";
-import SettingsPageShell from "@/components/features/settings/settings-page-shell";
-import TelegramSection from "@/components/features/settings/telegram-section";
+import {
+  SettingsPageShell,
+  TelegramSection,
+  useSettings,
+} from "@/components/features/settings";
 
 export default function SettingsGeneralPage() {
   const { state, loadSettings, handleSendTest } = useSettings();

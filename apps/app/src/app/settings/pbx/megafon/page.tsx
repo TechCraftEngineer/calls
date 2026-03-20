@@ -4,10 +4,12 @@ import { paths } from "@calls/config";
 import { Badge, Button } from "@calls/ui";
 import Link from "next/link";
 import { useEffect } from "react";
-import { useSettings } from "@/components/features/settings/hooks";
-import PbxSection from "@/components/features/settings/pbx/megapbx-section";
-import { PbxProviderLogo } from "@/components/features/settings/pbx-provider-logo";
-import SettingsPageShell from "@/components/features/settings/settings-page-shell";
+import {
+  MegaPbxSection,
+  PbxProviderLogo,
+  SettingsPageShell,
+  useSettings,
+} from "@/components/features/settings";
 
 export default function SettingsPbxMegafonPage() {
   const {
@@ -92,7 +94,7 @@ export default function SettingsPbxMegafonPage() {
         </div>
       </header>
 
-      <PbxSection
+      <MegaPbxSection
         megaPbx={state.megaPbx}
         onEnabledChange={setMegaPbxEnabled}
         onSaveAccess={handleSavePbxAccess}

@@ -3,7 +3,7 @@ import type React from "react";
 import type {
   ReportSettingsForm,
   ReportSettingsUserOption,
-} from "../report-settings-types";
+} from "./report-settings-types";
 
 function getDisplayName(u: ReportSettingsUserOption): string {
   const parts = [u.givenName, u.familyName].filter(Boolean);

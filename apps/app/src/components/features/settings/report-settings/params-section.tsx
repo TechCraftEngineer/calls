@@ -1,10 +1,11 @@
 import { Checkbox, Field, Input, Label, Separator } from "@calls/ui";
 import type React from "react";
-import type { ReportSettingsForm } from "../report-settings-types";
+import type { ReportSettingsForm } from "./report-settings-types";
 
 interface ParamsSectionProps {
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
+  isAdmin?: boolean;
 }
 
 export function ReportParamsSection({ form, setForm }: ParamsSectionProps) {

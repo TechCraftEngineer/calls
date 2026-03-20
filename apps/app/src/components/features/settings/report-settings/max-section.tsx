@@ -3,7 +3,7 @@
 import { Button, Checkbox, Field, FieldLabel, Input, Label } from "@calls/ui";
 import type React from "react";
 import type { User } from "@/lib/auth";
-import type { ReportSettingsForm } from "../report-settings-types";
+import type { ReportSettingsForm } from "./report-settings-types";
 
 interface MaxReportSectionProps {
   form: Pick<
