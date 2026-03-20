@@ -18,8 +18,16 @@ ensureCleanupIntervalStarted();
 
 export function createApp() {
   const app = new Hono();
+  const requestLogger = honoLogger();
 
-  app.use(honoLogger());
+  app.use(async (c, next) => {
+    if (c.req.path === "/health") {
+      await next();
+      return;
+    }
+
+    await requestLogger(c, next);
+  });
   app.use(
     "/*",
     cors({
