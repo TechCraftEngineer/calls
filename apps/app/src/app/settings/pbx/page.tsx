@@ -4,9 +4,11 @@ import { paths } from "@calls/config";
 import { Badge, Card, CardContent } from "@calls/ui";
 import Link from "next/link";
 import { useEffect } from "react";
-import { useSettings } from "@/components/features/settings/hooks";
-import { PbxProviderLogo } from "@/components/features/settings/pbx-provider-logo";
-import SettingsPageShell from "@/components/features/settings/settings-page-shell";
+import {
+  PbxProviderLogo,
+  SettingsPageShell,
+  useSettings,
+} from "@/components/features/settings";
 
 const PROVIDERS = [
   {

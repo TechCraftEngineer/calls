@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@calls/ui";
-import type { BackupSectionProps } from "./types";
+import type { BackupSectionProps } from "../types";
 
 export default function BackupSection({
   backupLoading,

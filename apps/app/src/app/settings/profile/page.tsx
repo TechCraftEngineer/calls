@@ -17,8 +17,10 @@ import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { DeleteAccountDialog } from "@/components/features/settings/delete-account-dialog";
-import SettingsPageShell from "@/components/features/settings/settings-page-shell";
+import {
+  DeleteAccountDialog,
+  SettingsPageShell,
+} from "@/components/features/settings";
 import type { User } from "@/lib/auth";
 import {
   authClient,

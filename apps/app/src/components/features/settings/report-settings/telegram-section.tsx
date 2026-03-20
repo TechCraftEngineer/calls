@@ -13,9 +13,9 @@ import {
 } from "@calls/ui";
 import type React from "react";
 import type { User } from "@/lib/auth";
-import type { ReportSettingsForm } from "../report-settings-types";
-import { SendTestReportButton } from "../send-test-report-button";
+import { SendTestReportButton } from "../telegram/send-test-report-button";
 import { REPORT_TYPE_LABELS, type ReportType } from "../types";
+import type { ReportSettingsForm } from "./report-settings-types";
 
 interface TelegramSectionProps {
   form: ReportSettingsForm;

@@ -171,13 +171,13 @@ export interface PbxSectionProps {
   megaPbx: MegaPbxSettings;
   onEnabledChange: (checked: boolean) => void;
   onSaveAccess: (
-    data: import("./megapbx/schemas").AccessFormData,
+    data: import("../megapbx/schemas").AccessFormData,
   ) => Promise<void>;
   onSaveSyncOptions: (
-    data: import("./megapbx/schemas").SyncOptionsFormData,
+    data: import("../megapbx/schemas").SyncOptionsFormData,
   ) => Promise<void>;
   onSaveWebhook: (
-    data: import("./megapbx/schemas").WebhookFormData,
+    data: import("../megapbx/schemas").WebhookFormData,
   ) => Promise<void>;
   onSaveExcludedNumbers: (excludePhoneNumbers: string[]) => Promise<void>;
   onTest: (baseUrl?: string, apiKey?: string) => Promise<void>;
@@ -206,13 +206,6 @@ export interface PbxSectionProps {
   employees: PbxEmployeeItem[];
   numbers: PbxNumberItem[];
 }
-
-export type MegaPbxCandidateUser = PbxCandidateUser;
-export type MegaPbxCandidateInvitation = PbxCandidateInvitation;
-export type MegaPbxLinkInfo = PbxLinkInfo;
-export type MegaPbxEmployeeItem = PbxEmployeeItem;
-export type MegaPbxNumberItem = PbxNumberItem;
-export type MegaPbxSectionProps = PbxSectionProps;
 
 export interface BackupSectionProps {
   backupLoading: boolean;

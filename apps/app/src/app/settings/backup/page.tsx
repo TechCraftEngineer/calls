@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import BackupSection from "@/components/features/settings/backup-section";
-import { useSettings } from "@/components/features/settings/hooks";
-import SettingsPageShell from "@/components/features/settings/settings-page-shell";
+import {
+  BackupSection,
+  SettingsPageShell,
+  useSettings,
+} from "@/components/features/settings";
 
 export default function SettingsBackupPage() {
   const { state, loadSettings, handleBackup } = useSettings();

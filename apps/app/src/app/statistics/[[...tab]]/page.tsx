@@ -7,7 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import KpiTable from "@/components/features/calls/kpi-table";
-import ReportSettingsPanel from "@/components/features/settings/report-settings-panel";
+import { ReportSettingsPanel } from "@/components/features/settings";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import { useSession } from "@/lib/better-auth";
