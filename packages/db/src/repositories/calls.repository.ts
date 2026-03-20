@@ -132,6 +132,20 @@ export const callsRepository = {
       .where(eq(schema.calls.id, callId));
   },
 
+  async updateRecording(
+    callId: string,
+    data: { fileId: string | null; sizeBytes: number | null },
+  ): Promise<void> {
+    await db
+      .update(schema.calls)
+      .set({
+        fileId: data.fileId,
+        sizeBytes: data.sizeBytes,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.calls.id, callId));
+  },
+
   async findWithTranscriptsAndEvaluations(
     params: GetCallsParams = {},
   ): Promise<CallWithTranscript[]> {

@@ -325,6 +325,32 @@ export async function syncMegaPbxCalls(
         workspaceId,
       );
       if (existing) {
+        if (config.syncRecordings && call.recordingUrl && !existing.fileId) {
+          try {
+            const uploaded = await uploadRecordingIfNeeded(
+              client,
+              workspaceId,
+              call.externalId,
+              call.recordingUrl,
+            );
+            if (uploaded.fileId) {
+              await callsService.updateCallRecording(existing.id, {
+                fileId: uploaded.fileId,
+                sizeBytes: uploaded.sizeBytes,
+              });
+              stats.recordings += 1;
+            }
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : String(error);
+            stats.errors.push(message);
+            logger.warn("Ошибка дозагрузки записи MegaPBX", {
+              workspaceId,
+              callId: call.externalId,
+              error: message,
+            });
+          }
+        }
         stats.skipped += 1;
         stats.latestCursor = call.timestamp;
         continue;

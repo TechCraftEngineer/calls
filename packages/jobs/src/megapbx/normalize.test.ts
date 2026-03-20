@@ -115,4 +115,29 @@ describe("MegaPBX normalize helpers", () => {
       }),
     );
   });
+
+  it("читает URL записи из webhook-поля link", () => {
+    const result = normalizeCall({
+      cmd: "history",
+      type: "out",
+      status: "SUCCESS",
+      phone: "74951904198",
+      user: "admin",
+      start: "20170703T121110Z",
+      duration: 124,
+      link: "https://vats.example.megapbx.ru/records/file.mp3",
+      crm_token: "token",
+      callid: "33274237",
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        externalId: "33274237",
+        timestamp: "2017-07-03T12:11:10Z",
+        direction: "outbound",
+        externalNumber: "74951904198",
+        recordingUrl: "https://vats.example.megapbx.ru/records/file.mp3",
+      }),
+    );
+  });
 });
