@@ -1,14 +1,10 @@
 import { toast } from "@calls/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import type { User } from "@/lib/auth";
-import {
-  getFamilyName,
-  getGivenName,
-  getInternalExtensions,
-} from "@/lib/user-profile";
+import { getFamilyName, getGivenName } from "@/lib/user-profile";
 import { useORPC } from "@/orpc/react";
 import type { UserLike } from "@/types/user";
 import ReportSettingsFormBody from "./report-settings-form-body";
@@ -45,7 +41,6 @@ interface UserSettingsData {
 
 export default function ReportSettingsPanel({ user }: { user: User }) {
   const orpc = useORPC();
-  const queryClient = useQueryClient();
   const { activeWorkspace } = useWorkspace();
   const isWorkspaceAdmin =
     activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
@@ -56,12 +51,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     enabled: !!userId,
   });
   const userData = usersQuery.data;
-
-  const promptsQuery = useQuery({
-    ...orpc.settings.getPrompts.queryOptions(),
-    enabled: !!userId,
-  });
-  const promptsList = promptsQuery.data;
 
   const { data: usersList = [] } = useQuery({
     ...orpc.users.list.queryOptions(),

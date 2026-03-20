@@ -6,9 +6,9 @@ import {
   CardTitle,
   toast,
 } from "@calls/ui";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 import { getReportTypeLabel, type ReportType } from "../types";
@@ -44,7 +44,6 @@ export default function ReportSettingsFormBody({
   allUsers,
 }: ReportSettingsFormBodyProps) {
   const orpc = useORPC();
-  const queryClient = useQueryClient();
   const userId = String(user.id);
 
   const telegramAuthUrlMutation = useMutation(
@@ -75,7 +74,7 @@ export default function ReportSettingsFormBody({
 
   const sendTestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendTestMessageRef = useRef("");
-  const [sendTestReportType, setSendTestReportType] =
+  const [_sendTestReportType, setSendTestReportType] =
     useState<ReportType | null>(null);
 
   const sendTestMutation = useMutation(

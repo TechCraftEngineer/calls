@@ -2,7 +2,6 @@
 
 import { toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
 import { useORPC } from "@/orpc/react";
 import type { FtpConnectionStatus, FtpSettings } from "../types";
 import {

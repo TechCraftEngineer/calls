@@ -1,6 +1,6 @@
 import { Checkbox, Field, FieldLabel, Input, Label } from "@calls/ui";
 import type React from "react";
-import type { ReportSettingsForm } from "../report-settings-types";
+import type { ReportSettingsForm } from "./report-settings-types";
 
 interface EmailSectionProps {
   form: ReportSettingsForm;
