@@ -21,10 +21,10 @@ interface TelegramSectionProps {
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   isAdmin: boolean;
-  sendTestLoading: boolean;
-  sendTestReportType: ReportType | null;
-  sendTestMessage: string;
-  onSendTest: (reportType: ReportType) => void;
+  sendTestLoading?: boolean;
+  sendTestReportType?: ReportType | null;
+  sendTestMessage?: string;
+  onSendTest?: (reportType: ReportType) => void;
   user?: User;
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -55,11 +55,14 @@ export function TelegramReportSection({
   disconnecting,
   checkConnectionLoading,
 }: TelegramSectionProps) {
+  const sendTestLoadingSafe = sendTestLoading ?? false;
+  const sendTestMessageSafe = sendTestMessage ?? "";
+
   const effectiveConnectLoading = connectLoading ?? connecting ?? false;
   const effectiveDisconnectLoading =
     disconnectLoading ?? disconnecting ?? false;
 
-  const canSendTest = form.telegramChatId?.trim() && !sendTestLoading;
+  const canSendTest = form.telegramChatId?.trim() && !sendTestLoadingSafe;
   const hasTelegram = !!form.telegramChatId?.trim();
   const primaryReportType = sendTestReportType ?? "daily";
   const primaryReportLabel =
@@ -189,28 +192,30 @@ export function TelegramReportSection({
           Не отправлять отчёты в Telegram в выходные
         </Label>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <SendTestReportButton
-          onSendTest={onSendTest}
-          primaryReportType={primaryReportType}
-          primaryReportLabel={primaryReportLabel}
-          sendTestLoading={sendTestLoading}
-          canSendTest={Boolean(canSendTest)}
-          variant={canSendTest ? "success" : "default"}
-          size="sm"
-        />
-        {sendTestMessage && (
-          <span
-            className={`text-sm ${
-              sendTestMessage.includes("отправлен")
-                ? "text-success"
-                : "text-destructive"
-            }`}
-          >
-            {sendTestMessage}
-          </span>
-        )}
-      </div>
+      {onSendTest && (
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <SendTestReportButton
+            onSendTest={onSendTest}
+            primaryReportType={primaryReportType}
+            primaryReportLabel={primaryReportLabel}
+            sendTestLoading={sendTestLoadingSafe}
+            canSendTest={Boolean(canSendTest)}
+            variant={canSendTest ? "success" : "default"}
+            size="sm"
+          />
+          {sendTestMessageSafe && (
+            <span
+              className={`text-sm ${
+                sendTestMessageSafe.includes("отправлен")
+                  ? "text-success"
+                  : "text-destructive"
+              }`}
+            >
+              {sendTestMessageSafe}
+            </span>
+          )}
+        </div>
+      )}
       {isAdmin && <ReportTimeSettings form={form} setForm={setForm} />}
     </div>
   );

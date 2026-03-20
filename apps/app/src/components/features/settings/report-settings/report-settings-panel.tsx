@@ -165,10 +165,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
           kpiBaseSalary: Number(form.kpiBaseSalary) || 0,
           kpiTargetBonus: Number(form.kpiTargetBonus) || 0,
           kpiTargetTalkTimeMinutes: Number(form.kpiTargetTalkTimeMinutes) || 0,
-
-          maxChatId: form.maxChatId || null,
-          maxDailyReport: form.maxDailyReport,
-          maxManagerReport: form.maxManagerReport,
         },
       });
       toast.success("Настройки сохранены");
