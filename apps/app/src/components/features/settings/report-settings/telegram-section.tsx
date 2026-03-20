@@ -31,6 +31,9 @@ interface TelegramSectionProps {
   onCheckConnection?: () => void;
   connectLoading?: boolean;
   disconnectLoading?: boolean;
+  // Alias props (used by older call sites)
+  connecting?: boolean;
+  disconnecting?: boolean;
   checkConnectionLoading?: boolean;
 }
 
@@ -48,8 +51,14 @@ export function TelegramReportSection({
   onCheckConnection,
   connectLoading,
   disconnectLoading,
+  connecting,
+  disconnecting,
   checkConnectionLoading,
 }: TelegramSectionProps) {
+  const effectiveConnectLoading = connectLoading ?? connecting ?? false;
+  const effectiveDisconnectLoading =
+    disconnectLoading ?? disconnecting ?? false;
+
   const canSendTest = form.telegramChatId?.trim() && !sendTestLoading;
   const hasTelegram = !!form.telegramChatId?.trim();
   const primaryReportType = sendTestReportType ?? "daily";
@@ -82,10 +91,10 @@ export function TelegramReportSection({
               variant="outline"
               size="sm"
               onClick={onDisconnect}
-              disabled={disconnectLoading}
+              disabled={effectiveDisconnectLoading}
               className="shrink-0 text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
             >
-              {disconnectLoading ? "…" : "Отвязать"}
+              {effectiveDisconnectLoading ? "…" : "Отвязать"}
             </Button>
           )}
         </div>
@@ -98,9 +107,9 @@ export function TelegramReportSection({
                   variant="outline"
                   size="sm"
                   onClick={onConnect}
-                  disabled={connectLoading}
+                  disabled={effectiveConnectLoading}
                 >
-                  {connectLoading ? "…" : "Подключить Telegram"}
+                  {effectiveConnectLoading ? "…" : "Подключить Telegram"}
                 </Button>
                 {onCheckConnection && (
                   <Button

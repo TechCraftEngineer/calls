@@ -145,6 +145,7 @@ export default function ReportSettingsFormBody({
             <ManagedUsersSection
               form={form}
               setForm={setForm}
+              user={{ id: String(user.id) }}
               allUsers={allUsers}
             />
           )}

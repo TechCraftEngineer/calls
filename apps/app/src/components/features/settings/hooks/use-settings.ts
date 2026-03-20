@@ -14,6 +14,9 @@ import type {
   SettingsState,
 } from "../types";
 import { getReportTypeLabel } from "../types";
+import { useFtpSettings } from "./use-ftp";
+import { useMegaPbxSettings } from "./use-megapbx";
+import { useTelegramSettings } from "./use-telegram";
 
 export function useSettings() {
   const router = useRouter();
@@ -78,6 +81,46 @@ export function useSettings() {
     megaPbxNumbersLoading: false,
     megaPbxEmployees: [],
     megaPbxNumbers: [],
+  });
+
+  const ftpSettings = useFtpSettings({
+    state: {
+      ftp: state.ftp,
+      ftpSaving: state.ftpSaving,
+      ftpTesting: state.ftpTesting,
+      ftpTestMessage: state.ftpTestMessage,
+      ftpConnectionStatus: state.ftpConnectionStatus,
+      ftpStatusLoading: state.ftpStatusLoading,
+    },
+    setState,
+  });
+
+  const telegramSettings = useTelegramSettings({
+    state: {
+      integrations: state.integrations,
+      telegramSaving: state.telegramSaving,
+      maxBotSaving: state.maxBotSaving,
+    },
+    setState,
+  });
+
+  const megaPbxSettings = useMegaPbxSettings({
+    state: {
+      megaPbx: state.megaPbx,
+      megaPbxSaving: state.megaPbxSaving,
+      megaPbxAccessSaving: state.megaPbxAccessSaving,
+      megaPbxSyncOptionsSaving: state.megaPbxSyncOptionsSaving,
+      megaPbxExcludedNumbersSaving: state.megaPbxExcludedNumbersSaving,
+      megaPbxWebhookSaving: state.megaPbxWebhookSaving,
+      megaPbxTesting: state.megaPbxTesting,
+      megaPbxSyncing: state.megaPbxSyncing,
+      megaPbxTestMessage: state.megaPbxTestMessage,
+      megaPbxEmployeesLoading: state.megaPbxEmployeesLoading,
+      megaPbxNumbersLoading: state.megaPbxNumbersLoading,
+      megaPbxEmployees: state.megaPbxEmployees,
+      megaPbxNumbers: state.megaPbxNumbers,
+    },
+    setState,
   });
 
   const loadSettings = useCallback(async () => {
@@ -249,6 +292,9 @@ export function useSettings() {
     state,
     setState,
     loadSettings,
+    ...telegramSettings,
+    ...ftpSettings,
+    ...megaPbxSettings,
     handleBackup,
     handleSendTest,
   };

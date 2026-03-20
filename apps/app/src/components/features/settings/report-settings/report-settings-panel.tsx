@@ -140,29 +140,36 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     try {
       await updateMutation.mutateAsync({
         user_id: userId,
-        email: form.email || undefined,
-        emailDailyReport: form.emailDailyReport,
-        emailWeeklyReport: form.emailWeeklyReport,
-        emailMonthlyReport: form.emailMonthlyReport,
-        telegramChatId: form.telegramChatId || undefined,
-        telegramDailyReport: form.telegramDailyReport,
-        telegramWeeklyReport: form.telegramWeeklyReport,
-        telegramMonthlyReport: form.telegramMonthlyReport,
-        telegramSkipWeekends: form.telegramSkipWeekends,
-        reportIncludeCallSummaries: form.reportIncludeCallSummaries,
-        reportDetailed: form.reportDetailed,
-        reportIncludeAvgValue: form.reportIncludeAvgValue,
-        reportIncludeAvgRating: form.reportIncludeAvgRating,
-        filterExcludeAnsweringMachine: form.filterExcludeAnsweringMachine,
-        filterMinDuration: Number(form.filterMinDuration) || 0,
-        filterMinReplicas: Number(form.filterMinReplicas) || 0,
-        kpiBaseSalary: Number(form.kpiBaseSalary) || 0,
-        kpiTargetBonus: Number(form.kpiTargetBonus) || 0,
-        kpiTargetTalkTimeMinutes: Number(form.kpiTargetTalkTimeMinutes) || 0,
-        reportManagedUserIds: form.reportManagedUserIds,
-        maxChatId: form.maxChatId || undefined,
-        maxDailyReport: form.maxDailyReport,
-        maxManagerReport: form.maxManagerReport,
+        data: {
+          email: form.email || undefined,
+          emailDailyReport: form.emailDailyReport,
+          emailWeeklyReport: form.emailWeeklyReport,
+          emailMonthlyReport: form.emailMonthlyReport,
+
+          telegramDailyReport: form.telegramDailyReport,
+          telegramWeeklyReport: form.telegramWeeklyReport,
+          telegramMonthlyReport: form.telegramMonthlyReport,
+          telegramSkipWeekends: form.telegramSkipWeekends,
+          telegramManagerReport: form.reportManagedUserIds.length > 0,
+          reportManagedUserIds: JSON.stringify(form.reportManagedUserIds),
+
+          reportIncludeCallSummaries: form.reportIncludeCallSummaries,
+          reportDetailed: form.reportDetailed,
+          reportIncludeAvgValue: form.reportIncludeAvgValue,
+          reportIncludeAvgRating: form.reportIncludeAvgRating,
+
+          filterExcludeAnsweringMachine: form.filterExcludeAnsweringMachine,
+          filterMinDuration: Number(form.filterMinDuration) || 0,
+          filterMinReplicas: Number(form.filterMinReplicas) || 0,
+
+          kpiBaseSalary: Number(form.kpiBaseSalary) || 0,
+          kpiTargetBonus: Number(form.kpiTargetBonus) || 0,
+          kpiTargetTalkTimeMinutes: Number(form.kpiTargetTalkTimeMinutes) || 0,
+
+          maxChatId: form.maxChatId || null,
+          maxDailyReport: form.maxDailyReport,
+          maxManagerReport: form.maxManagerReport,
+        },
       });
       toast.success("Настройки сохранены");
     } catch (err) {
@@ -176,7 +183,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     () =>
       (usersList as UserLike[]).map((u) => ({
         id: String(u.id),
-        email: u.email ?? "",
+        email: String((u as Record<string, unknown>).email ?? ""),
         givenName: getGivenName(u) ?? "",
         familyName: getFamilyName(u) ?? "",
       })),
