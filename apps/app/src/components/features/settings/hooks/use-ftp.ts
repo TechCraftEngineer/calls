@@ -3,7 +3,7 @@
 import { toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useORPC } from "@/orpc/react";
-import type { FtpConnectionStatus, FtpSettings } from "../types";
+import type { FtpConnectionStatus, FtpSettings, SettingsState } from "../types";
 import {
   validateFtpCredentials,
   validateFtpHost,
@@ -19,7 +19,7 @@ interface UseFtpSettingsProps {
     ftpConnectionStatus: FtpConnectionStatus | null;
     ftpStatusLoading: boolean;
   };
-  setState: React.Dispatch<React.SetStateAction<any>>;
+  setState: React.Dispatch<React.SetStateAction<SettingsState>>;
 }
 
 export function useFtpSettings({ state, setState }: UseFtpSettingsProps) {
@@ -43,7 +43,7 @@ export function useFtpSettings({ state, setState }: UseFtpSettingsProps) {
 
   const handleSaveFtp = async () => {
     try {
-      setState((prev: any) => ({ ...prev, ftpSaving: true }));
+      setState((prev: SettingsState) => ({ ...prev, ftpSaving: true }));
       const { enabled, host, user, password, passwordSet } = state.ftp;
 
       if (host || user || password) {
@@ -100,13 +100,13 @@ export function useFtpSettings({ state, setState }: UseFtpSettingsProps) {
           : "Не удалось сохранить параметры FTP";
       toast.error(msg);
     } finally {
-      setState((prev: any) => ({ ...prev, ftpSaving: false }));
+      setState((prev: SettingsState) => ({ ...prev, ftpSaving: false }));
     }
   };
 
   const handleTestFtp = async () => {
     try {
-      setState((prev: any) => ({
+      setState((prev: SettingsState) => ({
         ...prev,
         ftpTestMessage: "",
         ftpTesting: true,
@@ -114,7 +114,7 @@ export function useFtpSettings({ state, setState }: UseFtpSettingsProps) {
       const { host, user, password, passwordSet } = state.ftp;
 
       if (passwordSet && !password.trim()) {
-        setState((prev: any) => ({
+        setState((prev: SettingsState) => ({
           ...prev,
           ftpTestMessage: "Введите пароль для проверки подключения",
         }));
@@ -123,7 +123,7 @@ export function useFtpSettings({ state, setState }: UseFtpSettingsProps) {
 
       const ftpValidation = validateFtpCredentials(host, user, password);
       if (!ftpValidation.isValid) {
-        setState((prev: any) => ({
+        setState((prev: SettingsState) => ({
           ...prev,
           ftpTestMessage: ftpValidation.errors.join(". "),
         }));
@@ -137,7 +137,7 @@ export function useFtpSettings({ state, setState }: UseFtpSettingsProps) {
       });
 
       if (result.success) {
-        setState((prev: any) => ({
+        setState((prev: SettingsState) => ({
           ...prev,
           ftpTestMessage: "Подключение установлено. Учётные данные корректны.",
           ftpConnectionStatus: {
@@ -147,7 +147,7 @@ export function useFtpSettings({ state, setState }: UseFtpSettingsProps) {
           },
         }));
       } else {
-        setState((prev: any) => ({
+        setState((prev: SettingsState) => ({
           ...prev,
           ftpTestMessage: result.message,
           ftpConnectionStatus: {
@@ -162,12 +162,12 @@ export function useFtpSettings({ state, setState }: UseFtpSettingsProps) {
         error instanceof Error
           ? error.message
           : "Не удалось проверить подключение";
-      setState((prev: any) => ({
+      setState((prev: SettingsState) => ({
         ...prev,
         ftpTestMessage: msg,
       }));
     } finally {
-      setState((prev: any) => ({ ...prev, ftpTesting: false }));
+      setState((prev: SettingsState) => ({ ...prev, ftpTesting: false }));
     }
   };
 
@@ -175,21 +175,21 @@ export function useFtpSettings({ state, setState }: UseFtpSettingsProps) {
     (key: "host" | "user" | "password" | "excludePhoneNumbers") =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const value = e.target.value;
-      setState((prev: any) => ({
+      setState((prev: SettingsState) => ({
         ...prev,
         ftp: { ...prev.ftp, [key]: value },
       }));
     };
 
   const setFtpSyncFromDate = (value: string) => {
-    setState((prev: any) => ({
+    setState((prev: SettingsState) => ({
       ...prev,
       ftp: { ...prev.ftp, syncFromDate: value },
     }));
   };
 
   const setFtpEnabled = (enabled: boolean) => {
-    setState((prev: any) => ({
+    setState((prev: SettingsState) => ({
       ...prev,
       ftp: { ...prev.ftp, enabled },
     }));

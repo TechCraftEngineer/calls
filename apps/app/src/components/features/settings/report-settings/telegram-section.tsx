@@ -22,6 +22,7 @@ interface TelegramSectionProps {
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   isAdmin: boolean;
   sendTestLoading?: boolean;
+  sendTestSuccess?: boolean;
   sendTestReportType?: ReportType | null;
   sendTestMessage?: string;
   onSendTest?: (reportType: ReportType) => void;
@@ -42,6 +43,7 @@ export function TelegramReportSection({
   setForm,
   isAdmin,
   sendTestLoading,
+  sendTestSuccess,
   sendTestReportType,
   sendTestMessage,
   onSendTest,
@@ -57,6 +59,7 @@ export function TelegramReportSection({
 }: TelegramSectionProps) {
   const sendTestLoadingSafe = sendTestLoading ?? false;
   const sendTestMessageSafe = sendTestMessage ?? "";
+  const sendTestSuccessSafe = sendTestSuccess ?? false;
 
   const effectiveConnectLoading = connectLoading ?? connecting ?? false;
   const effectiveDisconnectLoading =
@@ -206,9 +209,7 @@ export function TelegramReportSection({
           {sendTestMessageSafe && (
             <span
               className={`text-sm ${
-                sendTestMessageSafe.includes("отправлен")
-                  ? "text-success"
-                  : "text-destructive"
+                sendTestSuccessSafe ? "text-success" : "text-destructive"
               }`}
             >
               {sendTestMessageSafe}

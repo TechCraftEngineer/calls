@@ -5,7 +5,6 @@ import type { ReportSettingsForm } from "./report-settings-types";
 interface EmailSectionProps {
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
-  isAdmin?: boolean;
 }
 
 export function EmailReportSection({ form, setForm }: EmailSectionProps) {

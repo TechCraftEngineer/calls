@@ -74,8 +74,6 @@ export default function ReportSettingsFormBody({
 
   const sendTestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendTestMessageRef = useRef("");
-  const [_sendTestReportType, setSendTestReportType] =
-    useState<ReportType | null>(null);
 
   const sendTestMutation = useMutation(
     orpc.reports.sendTestTelegram.mutationOptions({
@@ -106,7 +104,6 @@ export default function ReportSettingsFormBody({
   const [sendTestMessage, setSendTestMessage] = useState("");
 
   const handleSendTest = (reportType: ReportType) => {
-    setSendTestReportType(reportType);
     sendTestMutation.mutate({ reportType });
   };
 
@@ -125,7 +122,7 @@ export default function ReportSettingsFormBody({
           <CardTitle>Настройки отчётов</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <EmailReportSection form={form} setForm={setForm} isAdmin={isAdmin} />
+          <EmailReportSection form={form} setForm={setForm} />
           <TelegramReportSection
             form={form}
             setForm={setForm}
@@ -136,11 +133,7 @@ export default function ReportSettingsFormBody({
             disconnecting={disconnectTelegramMutation.isPending}
           />
           <MaxReportSection form={form} setForm={setForm} isAdmin={isAdmin} />
-          <ReportParamsSection
-            form={form}
-            setForm={setForm}
-            isAdmin={isAdmin}
-          />
+          <ReportParamsSection form={form} setForm={setForm} />
           {isAdmin && (
             <ManagedUsersSection
               form={form}

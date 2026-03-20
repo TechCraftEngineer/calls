@@ -4,7 +4,7 @@ import { validateTelegramBotToken } from "@calls/shared";
 import { toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useORPC } from "@/orpc/react";
-import type { IntegrationsSettings } from "../types";
+import type { IntegrationsSettings, SettingsState } from "../types";
 
 interface UseTelegramSettingsProps {
   state: {
@@ -12,7 +12,7 @@ interface UseTelegramSettingsProps {
     telegramSaving: boolean;
     maxBotSaving: boolean;
   };
-  setState: React.Dispatch<React.SetStateAction<any>>;
+  setState: React.Dispatch<React.SetStateAction<SettingsState>>;
 }
 
 export function useTelegramSettings({
@@ -43,7 +43,7 @@ export function useTelegramSettings({
     }
 
     try {
-      setState((prev: any) => ({ ...prev, telegramSaving: true }));
+      setState((prev: SettingsState) => ({ ...prev, telegramSaving: true }));
       await updateIntegrationsMutation.mutateAsync({
         telegram_bot_token: state.integrations.telegramBotToken || null,
       });
@@ -56,13 +56,13 @@ export function useTelegramSettings({
           : "Не удалось сохранить настройки Telegram";
       toast.error(msg);
     } finally {
-      setState((prev: any) => ({ ...prev, telegramSaving: false }));
+      setState((prev: SettingsState) => ({ ...prev, telegramSaving: false }));
     }
   };
 
   const handleSaveMaxBot = async () => {
     try {
-      setState((prev: any) => ({ ...prev, maxBotSaving: true }));
+      setState((prev: SettingsState) => ({ ...prev, maxBotSaving: true }));
       await updateIntegrationsMutation.mutateAsync({
         max_bot_token: state.integrations.maxBotToken || null,
       });
@@ -75,7 +75,7 @@ export function useTelegramSettings({
           : "Не удалось сохранить настройки MAX Bot";
       toast.error(msg);
     } finally {
-      setState((prev: any) => ({ ...prev, maxBotSaving: false }));
+      setState((prev: SettingsState) => ({ ...prev, maxBotSaving: false }));
     }
   };
 
@@ -83,7 +83,7 @@ export function useTelegramSettings({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const value = e.target.value;
-    setState((prev: any) => ({
+    setState((prev: SettingsState) => ({
       ...prev,
       integrations: { ...prev.integrations, telegramBotToken: value },
     }));
@@ -93,7 +93,7 @@ export function useTelegramSettings({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const value = e.target.value;
-    setState((prev: any) => ({
+    setState((prev: SettingsState) => ({
       ...prev,
       integrations: { ...prev.integrations, maxBotToken: value },
     }));

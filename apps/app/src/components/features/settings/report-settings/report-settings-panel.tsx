@@ -1,5 +1,7 @@
-import { toast } from "@calls/ui";
-import { useMutation, useQuery } from "@tanstack/react-query";
+"use client";
+
+import { Card, CardContent, Skeleton, toast } from "@calls/ui";
+import { skipToken, useMutation, useQuery } from "@tanstack/react-query";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
@@ -46,16 +48,19 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const userId = user?.id ? String(user.id) : "";
 
-  const usersQuery = useQuery({
-    ...orpc.users.getForEdit.queryOptions({ input: { user_id: userId } }),
-    enabled: !!userId,
-  });
+  const usersQuery = useQuery(
+    userId
+      ? orpc.users.getForEdit.queryOptions({ input: { user_id: userId } })
+      : (skipToken as any),
+  );
   const userData = usersQuery.data;
 
-  const { data: usersList = [] } = useQuery({
-    ...orpc.users.list.queryOptions(),
-    enabled: !!userId && isWorkspaceAdmin,
-  });
+  const usersListQuery = useQuery(
+    userId && isWorkspaceAdmin
+      ? orpc.users.list.queryOptions()
+      : (skipToken as any),
+  );
+  const usersList = usersListQuery.data ?? [];
 
   const updateMutation = useMutation(
     orpc.users.update.mutationOptions({
@@ -186,7 +191,33 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     [usersList],
   );
 
-  if (!userData) return null;
+  if (!userData) {
+    return (
+      <div aria-busy="true" className="space-y-6 animate-pulse">
+        <Card className="card">
+          <CardContent className="pt-6 space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-56" />
+              <Skeleton className="h-4 w-full max-w-md" />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
+            </div>
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <ReportSettingsFormBody
