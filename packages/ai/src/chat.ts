@@ -1,7 +1,8 @@
 import { openai } from "@ai-sdk/openai";
 import { openrouter } from "@openrouter/ai-sdk-provider";
-import { generateText, streamText } from "ai";
+import { streamText } from "ai";
 import { z } from "zod";
+import { generateWithAi } from "./generate";
 import type { ChatBotConfig, ChatBotResponse, ChatMessage } from "./types";
 
 export function createChatBot(config: ChatBotConfig) {
@@ -43,20 +44,18 @@ export function createChatBot(config: ChatBotConfig) {
       }
 
       try {
-        const response = await generateText({
-          model,
+        const response = await generateWithAi({
+          provider: validatedConfig.provider,
+          model: validatedConfig.model,
           messages: formattedMessages,
           temperature: validatedConfig.temperature,
-          experimental_telemetry: {
-            isEnabled: true,
-            functionId: "chat-message",
-            metadata: {
-              ...(options?.userId && { userId: options.userId }),
-              ...(options?.sessionId && { sessionId: options.sessionId }),
-              ...(options?.tags && { tags: options.tags }),
-              provider: validatedConfig.provider,
-              model: validatedConfig.model,
-            },
+          functionId: "chat-message",
+          metadata: {
+            ...(options?.userId && { userId: options.userId }),
+            ...(options?.sessionId && { sessionId: options.sessionId }),
+            ...(options?.tags && { tags: options.tags }),
+            provider: validatedConfig.provider,
+            model: validatedConfig.model,
           },
         });
 

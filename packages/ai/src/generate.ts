@@ -21,6 +21,11 @@ export interface GetAIModelOptions {
   profile?: AiModelProfile;
 }
 
+interface ModelCandidate {
+  provider: AiProvider;
+  modelId: string;
+}
+
 function normalizeModelId(modelId: string): string {
   const normalized = modelId.trim();
   const slashIndex = normalized.lastIndexOf("/");
@@ -101,6 +106,60 @@ export function getAIModel(options: GetAIModelOptions = {}): LanguageModel {
     default:
       return openai(modelId);
   }
+}
+
+function hasProviderApiKey(provider: AiProvider): boolean {
+  switch (provider) {
+    case "openai":
+      return !!env.OPENAI_API_KEY;
+    case "openrouter":
+      return !!env.OPENROUTER_API_KEY;
+    case "deepseek":
+      return !!env.DEEPSEEK_API_KEY;
+    default:
+      return false;
+  }
+}
+
+function getFallbackProviders(primary: AiProvider): AiProvider[] {
+  const order: AiProvider[] = ["openai", "openrouter", "deepseek"];
+  return [primary, ...order.filter((p) => p !== primary)];
+}
+
+function buildModelCandidates(
+  options: GetAIModelOptions = {},
+): ModelCandidate[] {
+  const primaryProvider = options.provider ?? env.AI_PROVIDER;
+  const providers =
+    getFallbackProviders(primaryProvider).filter(hasProviderApiKey);
+
+  const explicitModel = options.model?.trim();
+  const profileModel = getRawAIModelId(options.profile);
+  const defaultModel = getRawAIModelId("default");
+
+  const candidates: ModelCandidate[] = [];
+  const seen = new Set<string>();
+
+  const pushCandidate = (provider: AiProvider, modelId: string | undefined) => {
+    const prepared = modelId?.trim();
+    if (!prepared) return;
+    const key = `${provider}:${prepared}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    candidates.push({ provider, modelId: prepared });
+  };
+
+  for (const provider of providers) {
+    pushCandidate(provider, explicitModel);
+    if (!explicitModel) {
+      pushCandidate(provider, profileModel);
+      if (profileModel !== defaultModel) {
+        pushCandidate(provider, defaultModel);
+      }
+    }
+  }
+
+  return candidates;
 }
 
 /** Метаданные для Langfuse tracing */
@@ -208,26 +267,6 @@ export async function generateWithAi(
     ...rest
   } = options;
 
-  const model = getAIModel({
-    provider,
-    model: modelOverride,
-    profile: modelProfile,
-  });
-
-  const experimental_telemetry = langfuseTracing
-    ? {
-        ...DEFAULT_TELEMETRY,
-        functionId,
-        metadata: {
-          provider: provider ?? env.AI_PROVIDER,
-          model: normalizeModelId(
-            modelOverride ?? getRawAIModelId(modelProfile),
-          ),
-          ...metadata,
-        },
-      }
-    : undefined;
-
   const { prompt, messages, ...other } = rest;
 
   if (!prompt && !messages) {
@@ -235,11 +274,51 @@ export async function generateWithAi(
   }
 
   const promptOrMessages = prompt ? { prompt } : { messages: messages ?? [] };
-
-  return aiGenerateText({
-    ...other,
-    ...promptOrMessages,
-    model,
-    experimental_telemetry,
+  const candidates = buildModelCandidates({
+    provider,
+    model: modelOverride,
+    profile: modelProfile,
   });
+
+  if (candidates.length === 0) {
+    throw new Error(
+      "generateWithAi: не найдено доступных AI провайдеров (проверьте API ключи)",
+    );
+  }
+
+  let lastError: unknown = null;
+
+  for (const [i, candidate] of candidates.entries()) {
+    const model = getAIModel({
+      provider: candidate.provider,
+      model: candidate.modelId,
+    });
+    const experimental_telemetry = langfuseTracing
+      ? {
+          ...DEFAULT_TELEMETRY,
+          functionId,
+          metadata: {
+            provider: candidate.provider,
+            model: normalizeModelId(candidate.modelId),
+            fallbackAttempt: i,
+            ...metadata,
+          },
+        }
+      : undefined;
+
+    try {
+      return await aiGenerateText({
+        ...other,
+        ...promptOrMessages,
+        model,
+        experimental_telemetry,
+      });
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("generateWithAi: все fallback модели завершились ошибкой");
 }
