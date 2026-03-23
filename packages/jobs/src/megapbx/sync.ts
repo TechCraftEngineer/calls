@@ -365,6 +365,29 @@ export async function syncMegaPbxCalls(
           `Canonical call not found after create (workspaceId=${workspaceId}, provider=${PROVIDER}, externalId=${call.externalId}, filename=${filename})`,
         );
       }
+
+      // На повторных синках запись звонка может уже существовать с пустой PBX-привязкой.
+      // Дозаполняем связь и вспомогательные поля, когда появились данные из directory.
+      if (!createResult.created) {
+        await callsService.updateCallPbxBinding(canonicalCall.id, {
+          pbxNumberId:
+            canonicalCall.pbxNumberId == null
+              ? (number?.id ?? null)
+              : undefined,
+          internalNumber: !canonicalCall.internalNumber?.trim()
+            ? (call.internalNumber ??
+              number?.extension ??
+              employee?.extension ??
+              null)
+            : undefined,
+          source: !canonicalCall.source
+            ? (employee?.externalId ?? number?.externalId ?? "megapbx")
+            : undefined,
+          name: !canonicalCall.name
+            ? (employee?.displayName ?? number?.label ?? "MegaPBX")
+            : undefined,
+        });
+      }
       let recordingFileId: string | null = canonicalCall.fileId;
 
       if (config.syncRecordings && call.recordingUrl && !canonicalCall.fileId) {

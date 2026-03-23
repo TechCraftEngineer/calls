@@ -23,6 +23,7 @@ const DEFAULT_FALLBACK = {
   summary: "",
   sentiment: "Нейтральный",
   title: "Звонок без текста",
+  callType: "Другое",
   callTopic: "Не определена",
 } as const;
 
@@ -33,6 +34,7 @@ export async function summarizeWithLlm(
   summary?: string;
   sentiment?: string;
   title?: string;
+  callType?: string;
   callTopic?: string;
 }> {
   if (!text?.trim() || !hasAiProviderConfigured()) {
@@ -48,7 +50,14 @@ export async function summarizeWithLlm(
 1. summary — краткое содержание (2-3 предложения): что обсуждалось, какие решения приняты
 2. sentiment — эмоциональный тон: Позитивный (клиент доволен), Нейтральный (деловой тон), Негативный (жалобы, недовольство)
 3. title — заголовок звонка (3-7 слов): суть обращения
-4. topic — категория темы: Продажи, Поддержка, Жалоба, Консультация, Технический вопрос и т.д.
+4. callType — тип обращения на верхнем уровне, универсальный для любого бизнеса
+5. topic — конкретная тема/предмет обсуждения внутри типа
+
+ПРАВИЛА ДЛЯ callType:
+• Используй только одно из значений:
+  Продажи | Поддержка | Биллинг | Логистика | Возврат/Рекламация | Жалоба | Консультация | Технический вопрос | Партнерство | Внутренний | Другое
+• Если не уверен или разговор смешанный — выбирай наиболее доминирующий тип.
+• Если невозможно определить доминирующий тип — ставь "Другое".
 
 ВАЖНО ПРИ УПОМИНАНИИ БРЕНДОВ И ТЕРМИНОВ:
 • Используй оригинальное написание из транскрипта
@@ -71,6 +80,9 @@ export async function summarizeWithLlm(
         "Настроение разговора (например: Позитивный, Нейтральный, Негативный)",
       ),
     title: z.string().describe("Краткий заголовок темы звонка"),
+    callType: z
+      .string()
+      .describe("Верхнеуровневый тип обращения из фиксированного списка"),
     topic: z.string().describe("Основная тема обсуждения"),
   });
 
@@ -87,6 +99,7 @@ export async function summarizeWithLlm(
     logger.info("LLM саммаризация завершена", {
       summaryLength: result.summary.length,
       sentiment: result.sentiment,
+      callType: result.callType,
       topic: result.topic,
     });
 
@@ -94,6 +107,7 @@ export async function summarizeWithLlm(
       summary: result.summary,
       sentiment: result.sentiment,
       title: result.title,
+      callType: result.callType,
       callTopic: result.topic,
     };
   } catch (error) {

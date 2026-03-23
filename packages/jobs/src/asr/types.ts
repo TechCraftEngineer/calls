@@ -47,5 +47,6 @@ export interface PipelineResult {
   summary?: string;
   sentiment?: string;
   title?: string;
+  callType?: string;
   callTopic?: string;
 }

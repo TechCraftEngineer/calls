@@ -219,6 +219,32 @@ export const callsRepository = {
       .where(eq(schema.calls.id, callId));
   },
 
+  async updatePbxBinding(
+    callId: string,
+    data: {
+      pbxNumberId?: string | null;
+      internalNumber?: string | null;
+      source?: string | null;
+      name?: string | null;
+    },
+  ): Promise<void> {
+    const patch: {
+      pbxNumberId?: string | null;
+      internalNumber?: string | null;
+      source?: string | null;
+      name?: string | null;
+      updatedAt: Date;
+    } = { updatedAt: new Date() };
+
+    if (data.pbxNumberId !== undefined) patch.pbxNumberId = data.pbxNumberId;
+    if (data.internalNumber !== undefined)
+      patch.internalNumber = data.internalNumber;
+    if (data.source !== undefined) patch.source = data.source;
+    if (data.name !== undefined) patch.name = data.name;
+
+    await db.update(schema.calls).set(patch).where(eq(schema.calls.id, callId));
+  },
+
   async findWithTranscriptsAndEvaluations(
     params: GetCallsParams = {},
   ): Promise<CallWithTranscript[]> {
@@ -418,6 +444,7 @@ export const callsRepository = {
     sentiment?: string | null;
     confidence?: number | null;
     summary?: string | null;
+    callType?: string | null;
     callTopic?: string | null;
     metadata?: Record<string, unknown> | null;
   }): Promise<string> {
@@ -428,6 +455,7 @@ export const callsRepository = {
       sentiment: data.sentiment ?? null,
       confidence: data.confidence ?? null,
       summary: data.summary ?? null,
+      callType: data.callType ?? null,
       callTopic: data.callTopic ?? null,
       metadata: data.metadata ?? null,
     };

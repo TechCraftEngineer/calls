@@ -107,11 +107,11 @@ export function renderSentimentCell(transcript: CallWithDetails["transcript"]) {
 
   const normalized = sentiment.toLowerCase();
   const label =
-    normalized === "positive" || normalized.includes("поз")
+    normalized.includes("pos") || normalized.includes("поз")
       ? "Позитивная"
-      : normalized === "negative" || normalized.includes("нег")
+      : normalized.includes("neg") || normalized.includes("нег")
         ? "Негативная"
-        : normalized === "neutral" || normalized.includes("нейтр")
+        : normalized.includes("neutral") || normalized.includes("нейтр")
           ? "Нейтральная"
           : "Неизвестная тональность";
   const color =

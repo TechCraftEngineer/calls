@@ -48,7 +48,6 @@ export async function getKpiStats(
       conditions.push(excludeCondition);
     }
   }
-
   const results = await db
     .select({
       internalNumber: schema.calls.internalNumber,

@@ -114,6 +114,7 @@ export class CallsService {
     sentiment?: string | null;
     confidence?: number | null;
     summary?: string | null;
+    callType?: string | null;
     callTopic?: string | null;
     metadata?: Record<string, unknown> | null;
   }): Promise<string> {
@@ -139,6 +140,18 @@ export class CallsService {
     data: { fileId: string | null; sizeBytes: number | null },
   ): Promise<void> {
     await this.callsRepository.updateRecording(callId, data);
+  }
+
+  async updateCallPbxBinding(
+    callId: string,
+    data: {
+      pbxNumberId?: string | null;
+      internalNumber?: string | null;
+      source?: string | null;
+      name?: string | null;
+    },
+  ): Promise<void> {
+    await this.callsRepository.updatePbxBinding(callId, data);
   }
 
   async getEvaluation(callId: string): Promise<CallEvaluation | null> {
