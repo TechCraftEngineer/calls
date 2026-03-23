@@ -42,6 +42,8 @@ export const calls = pgTable(
       },
     ),
     internalNumber: text("internal_number"),
+    provider: text("provider"),
+    externalId: text("external_id"),
     source: text("source"),
     customerName: text("customer_name"),
 
@@ -60,6 +62,11 @@ export const calls = pgTable(
     unique("calls_workspace_filename_unique").on(
       table.workspaceId,
       table.filename,
+    ),
+    unique("calls_workspace_provider_external_id_unique").on(
+      table.workspaceId,
+      table.provider,
+      table.externalId,
     ),
     index("calls_timestamp_idx").on(table.timestamp),
     index("calls_internal_number_idx").on(table.internalNumber),

@@ -7,7 +7,6 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
-import { env } from "@calls/config";
 import { Output } from "ai";
 import { z } from "zod";
 import { createLogger } from "../logger";
@@ -102,7 +101,8 @@ export async function evaluateCallWithLlm(
 
   try {
     const { output: result } = await generateWithAi({
-      model: options.model || env.AI_MODEL || "gpt-4o-mini",
+      model: options.model,
+      modelProfile: "premium",
       system: evaluationPrompt,
       prompt: `Оцени следующий телефонный разговор:\n\n${text}`,
       output: Output.object({ schema }),

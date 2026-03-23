@@ -20,15 +20,21 @@ describe("calls list normalization", () => {
 
   describe("normalizeStatusFilter", () => {
     it("normalizes canonical english status values", () => {
-      expect(normalizeStatusFilter("missed")).toBe("ПРОПУЩЕН");
-      expect(normalizeStatusFilter("answered")).toBe("ПРИНЯТ");
+      expect(normalizeStatusFilter("missed")).toBe("missed");
+      expect(normalizeStatusFilter("answered")).toBe("answered");
+      expect(normalizeStatusFilter("accepted")).toBe("answered");
     });
 
     it("normalizes russian status values", () => {
-      expect(normalizeStatusFilter("Пропущен")).toBe("ПРОПУЩЕН");
-      expect(normalizeStatusFilter("пропущен")).toBe("ПРОПУЩЕН");
-      expect(normalizeStatusFilter("Принят")).toBe("ПРИНЯТ");
-      expect(normalizeStatusFilter("принят")).toBe("ПРИНЯТ");
+      expect(normalizeStatusFilter("Пропущен")).toBe("missed");
+      expect(normalizeStatusFilter("пропущен")).toBe("missed");
+      expect(normalizeStatusFilter("Принят")).toBe("answered");
+      expect(normalizeStatusFilter("принят")).toBe("answered");
+    });
+
+    it("normalizes uppercase russian status values", () => {
+      expect(normalizeStatusFilter("ПРОПУЩЕН")).toBe("missed");
+      expect(normalizeStatusFilter("ПРИНЯТ")).toBe("answered");
     });
   });
 });

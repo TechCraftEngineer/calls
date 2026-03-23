@@ -7,6 +7,10 @@ export const env = createEnv({
     OPENROUTER_API_KEY: z.string().optional(),
     DEEPSEEK_API_KEY: z.string().optional(),
     AI_MODEL: z.string().default("gpt-3.5-turbo"),
+    AI_MODEL_PREMIUM: z.string().optional(),
+    AI_MODEL_LONG_CONTEXT: z.string().optional(),
+    AI_MODEL_CHEAP: z.string().optional(),
+    AI_RECOMMENDATIONS_MODEL: z.string().optional(),
     AI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.7),
     AI_MAX_TOKENS: z.coerce.number().min(1).max(4000).default(1000),
     /** openai | openrouter | deepseek */
@@ -83,6 +87,10 @@ export const env = createEnv({
   clientPrefix: "NEXT_PUBLIC_",
   runtimeEnv: {
     AI_MODEL: process.env.AI_MODEL,
+    AI_MODEL_PREMIUM: process.env.AI_MODEL_PREMIUM,
+    AI_MODEL_LONG_CONTEXT: process.env.AI_MODEL_LONG_CONTEXT,
+    AI_MODEL_CHEAP: process.env.AI_MODEL_CHEAP,
+    AI_RECOMMENDATIONS_MODEL: process.env.AI_RECOMMENDATIONS_MODEL,
     AI_PROVIDER: process.env.AI_PROVIDER,
     AI_TEMPERATURE: process.env.AI_TEMPERATURE,
     AI_MAX_TOKENS: process.env.AI_MAX_TOKENS,

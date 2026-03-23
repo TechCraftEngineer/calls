@@ -7,7 +7,6 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
-import { env } from "@calls/config";
 import { Output } from "ai";
 import { z } from "zod";
 import { createLogger } from "../logger";
@@ -77,7 +76,8 @@ export async function summarizeWithLlm(
 
   try {
     const { output: result } = await generateWithAi({
-      model: options.model || env.AI_MODEL || "gpt-4o-mini",
+      model: options.model,
+      modelProfile: "default",
       system: systemPrompt,
       prompt: `Проанализируй следующий разговор:\n\n${text}`,
       output: Output.object({ schema }),

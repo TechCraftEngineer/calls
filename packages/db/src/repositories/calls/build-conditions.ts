@@ -101,7 +101,19 @@ export function buildCallConditions(params: CallConditionsParams) {
     }
   }
   if (statuses?.length) {
-    conditions.push(inArray(schema.calls.status, statuses));
+    const normalizedStatuses = statuses
+      .map((status) => status.trim().toLowerCase())
+      .filter((status) => status.length > 0);
+    if (normalizedStatuses.length > 0) {
+      const canonicalStatus = sql<string>`
+        CASE
+          WHEN LOWER(COALESCE(${schema.calls.status}, '')) IN ('missed', 'unanswered', 'noanswer', 'no answer', 'пропущен', 'не принят', 'не отвечен') THEN 'missed'
+          WHEN LOWER(COALESCE(${schema.calls.status}, '')) IN ('answered', 'accepted', 'completed', 'connected', 'принят') THEN 'answered'
+          ELSE LOWER(COALESCE(${schema.calls.status}, ''))
+        END
+      `;
+      conditions.push(inArray(canonicalStatus, normalizedStatuses));
+    }
   }
   if (operators?.length) {
     conditions.push(inArray(schema.calls.source, operators));

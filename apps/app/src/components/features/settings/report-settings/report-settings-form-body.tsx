@@ -33,7 +33,7 @@ function getReportWeeklyDay(day: string): WeekDay {
   if (WEEK_DAYS.includes(day as WeekDay)) return day as WeekDay;
   if (process.env.NODE_ENV !== "production") {
     console.warn(
-      `[report-settings] getReportWeeklyDay: invalid day "${day}", fallback to "fri"`,
+      `[report-settings] getReportWeeklyDay: некорректное значение дня "${day}", используется значение по умолчанию "fri"`,
     );
   }
   return "fri";

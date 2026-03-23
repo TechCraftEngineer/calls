@@ -4,7 +4,6 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
-import { env } from "@calls/config";
 import { Output } from "ai";
 import { z } from "zod";
 import { createLogger } from "../logger";
@@ -139,7 +138,7 @@ export async function identifySpeakersWithLlm(
 
   try {
     const response = await generateWithAi({
-      model: env.AI_MODEL ?? "gpt-4o-mini",
+      modelProfile: "cheap",
       system: systemPrompt,
       prompt: `Проанализируй разговор и определи роли и имена всех спикеров. Верни JSON со структурой speakers (массив {speakerId, role, name}), operatorName и customerName.
 
@@ -172,7 +171,6 @@ ${normalizedText}
     const operatorName = result.operatorName?.trim() || undefined;
     const customerName = result.customerName?.trim() || undefined;
 
-    // Собираем маппинг из структурированных данных — исключаем "undefined" и прочие артефакты
     const sanitizedMapping: Record<string, string> = {};
     for (const s of result.speakers ?? []) {
       const id = s.speakerId?.trim();

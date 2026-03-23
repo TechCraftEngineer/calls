@@ -1,9 +1,4 @@
-/**
- * Вычисление статуса звонка по длительности и направлению.
- * Логика соответствует renderStatusCell в UI.
- */
-
-export type CallStatus = "ПРОПУЩЕН" | "ПРИНЯТ";
+import { CALL_STATUS, type CallStatus } from "../../utils/call-status";
 
 export function computeCallStatus(
   duration: number | null | undefined,
@@ -12,5 +7,5 @@ export function computeCallStatus(
   const isMissed =
     (duration ?? 0) === 0 &&
     (direction === "incoming" || direction === "inbound");
-  return isMissed ? "ПРОПУЩЕН" : "ПРИНЯТ";
+  return isMissed ? CALL_STATUS.MISSED : CALL_STATUS.ANSWERED;
 }

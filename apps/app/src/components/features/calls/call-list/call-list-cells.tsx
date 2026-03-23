@@ -163,7 +163,7 @@ export function renderCallListCell({
       return (
         <TableCell key={colKey}>
           <span style={{ color: "#555", fontWeight: 500 }}>
-            {call.managerName || call.operatorName || "—"}
+            {call.customerName || "—"}
           </span>
         </TableCell>
       );

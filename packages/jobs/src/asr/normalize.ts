@@ -7,7 +7,6 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
-import { env } from "@calls/config";
 import { createLogger } from "../logger";
 
 const logger = createLogger("asr-normalize");
@@ -49,7 +48,7 @@ export async function normalizeWithLlm(rawText: string): Promise<string> {
   const start = Date.now();
   try {
     const { text } = await generateWithAi({
-      model: env.AI_MODEL ?? "gpt-4o-mini",
+      modelProfile: "cheap",
       system: SYSTEM_PROMPT,
       prompt: `Нормализуй следующий транскрипт:\n\n${rawText}`,
       temperature: 0.2,
