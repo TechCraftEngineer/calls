@@ -93,19 +93,19 @@ export function getCallListColumns(
       meta: { headerTitle: "Направление" },
     },
     {
-      accessorKey: "call.managerName",
+      accessorKey: "call.customerName",
       id: "manager",
       size: 168,
       minSize: 140,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
-          title="Сотрудник"
+          title="Собеседник"
           visibility={true}
         />
       ),
       cell: ({ row }) => renderManagerCell(row.original.call),
-      meta: { headerTitle: "Сотрудник" },
+      meta: { headerTitle: "Собеседник" },
     },
     {
       accessorKey: "call.duration",

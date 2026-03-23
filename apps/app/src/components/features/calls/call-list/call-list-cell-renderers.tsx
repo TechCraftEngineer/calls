@@ -104,7 +104,7 @@ export function renderNumberCell(
 export function renderManagerCell(call: CallWithDetails["call"]) {
   return (
     <span style={{ color: "#555", fontWeight: 500 }}>
-      {call.managerName || call.operatorName || "—"}
+      {call.customerName || "—"}
     </span>
   );
 }

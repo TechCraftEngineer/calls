@@ -3,13 +3,19 @@
  * Получает аудио из S3, запускает ASR pipeline, сохраняет транскрипт.
  */
 
-import { callsService, filesService, workspacesService } from "@calls/db";
+import {
+  callsService,
+  filesService,
+  pbxRepository,
+  workspacesService,
+} from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
 import { identifySpeakersWithLlm, runTranscriptionPipeline } from "../../asr";
 import { createLogger } from "../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../client";
 
 const logger = createLogger("transcribe-call");
+const PBX_PROVIDER = "megapbx";
 
 export const transcribeCallFn = inngest.createFunction(
   {
@@ -70,6 +76,59 @@ export const transcribeCallFn = inngest.createFunction(
       return ws;
     });
 
+    const managerNameFromPbx = await step.run(
+      "resolve-manager-name-from-pbx",
+      async () => {
+        try {
+          const pbxNumbers = await pbxRepository.listNumbers(
+            call.workspaceId,
+            PBX_PROVIDER,
+          );
+          const activePbxNumbers = pbxNumbers.filter(
+            (number) => number.isActive,
+          );
+          const callPbxNumberId = call.pbxNumberId;
+          const normalizedInternalNumber = call.internalNumber?.trim() || null;
+
+          const matchedById = callPbxNumberId
+            ? activePbxNumbers.find((number) => number.id === callPbxNumberId)
+            : undefined;
+          const matchedByInternalNumber =
+            !matchedById && normalizedInternalNumber
+              ? activePbxNumbers.find(
+                  (number) =>
+                    (number.extension?.trim() || null) ===
+                    normalizedInternalNumber,
+                )
+              : undefined;
+
+          const matchedNumber = matchedById ?? matchedByInternalNumber;
+          const managerName =
+            matchedNumber?.label?.trim() ||
+            matchedNumber?.extension?.trim() ||
+            matchedNumber?.phoneNumber?.trim() ||
+            null;
+
+          if (managerName) {
+            logger.info("Менеджер определён из pbx_numbers", {
+              callId,
+              resolutionStrategy: matchedById
+                ? "pbx_number_id"
+                : "internal_number",
+            });
+          }
+
+          return managerName;
+        } catch (error) {
+          logger.warn("Не удалось определить менеджера из pbx_numbers", {
+            callId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return null;
+        }
+      },
+    );
+
     const result = await step.run("transcribe", async () => {
       logger.info("Запуск транскрибации", {
         callId,
@@ -81,9 +140,10 @@ export const transcribeCallFn = inngest.createFunction(
     });
 
     const identifyResult = await step.run("identify-speakers", async () => {
+      const fallbackManagerName = call.name?.trim() || null;
       return identifySpeakersWithLlm(result.normalizedText, {
         direction: call.direction,
-        managerName: call.name,
+        managerName: managerNameFromPbx ?? fallbackManagerName,
         workspaceId: call.workspaceId,
       });
     });
