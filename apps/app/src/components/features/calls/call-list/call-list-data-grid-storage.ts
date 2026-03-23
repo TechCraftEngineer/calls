@@ -6,6 +6,8 @@ export const DEFAULT_COLUMN_IDS = [
   "type",
   "callType",
   "manager",
+  "callTopic",
+  "sentiment",
   "status",
   "duration",
   "score",

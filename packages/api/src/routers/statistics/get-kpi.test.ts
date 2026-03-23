@@ -185,4 +185,99 @@ describe("buildKpiRows", () => {
       }),
     );
   });
+
+  it("сопоставляет extension и internal_number в разных форматах", () => {
+    const rows = buildKpiRows({
+      startDate: "2026-03-01",
+      endDate: "2026-03-31",
+      pbxEmployees: [
+        {
+          externalId: "emp-format-match",
+          extension: "SIP/101, admin",
+          email: "fmt@company.com",
+          firstName: "Формат",
+          lastName: "Тест",
+          displayName: "Формат Тест",
+          isActive: true,
+        },
+      ] as unknown as Parameters<typeof buildKpiRows>[0]["pbxEmployees"],
+      kpiStats: [
+        {
+          internalNumber: "101",
+          totalDurationSeconds: 600,
+          totalCalls: 2,
+          incoming: 1,
+          outgoing: 1,
+          missed: 0,
+        },
+        {
+          internalNumber: "ADMIN",
+          totalDurationSeconds: 300,
+          totalCalls: 1,
+          incoming: 1,
+          outgoing: 0,
+          missed: 0,
+        },
+      ],
+    });
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toEqual(
+      expect.objectContaining({
+        actualTalkTimeMinutes: 15,
+        totalCalls: 3,
+        incoming: 2,
+        outgoing: 1,
+        missed: 0,
+      }),
+    );
+  });
+
+  it("берет extension из pbx numbers, если у сотрудника extension пустой", () => {
+    const rows = buildKpiRows({
+      startDate: "2026-03-01",
+      endDate: "2026-03-31",
+      pbxEmployees: [
+        {
+          externalId: "emp-by-number",
+          extension: null,
+          email: "num@company.com",
+          firstName: "По",
+          lastName: "Номеру",
+          displayName: "По Номеру",
+          isActive: true,
+        },
+      ] as unknown as Parameters<typeof buildKpiRows>[0]["pbxEmployees"],
+      pbxNumbers: [
+        {
+          employeeExternalId: "emp-by-number",
+          extension: "404",
+          isActive: true,
+        },
+      ] as unknown as NonNullable<
+        Parameters<typeof buildKpiRows>[0]["pbxNumbers"]
+      >,
+      kpiStats: [
+        {
+          internalNumber: "404",
+          totalDurationSeconds: 900,
+          totalCalls: 3,
+          incoming: 2,
+          outgoing: 1,
+          missed: 0,
+        },
+      ],
+    });
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toEqual(
+      expect.objectContaining({
+        actualTalkTimeMinutes: 15,
+        totalCalls: 3,
+        incoming: 2,
+        outgoing: 1,
+        missed: 0,
+      }),
+    );
+  });
 });

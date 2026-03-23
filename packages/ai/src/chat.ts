@@ -51,9 +51,12 @@ function isTimeoutError(error: unknown): boolean {
 }
 
 function createTimeoutStreamError(cause: unknown): Error & { code: string } {
-  const timeoutError = new Error("AI streaming timeout", {
-    cause: cause instanceof Error ? cause : undefined,
-  }) as Error & { code: string };
+  const timeoutError = new Error(
+    "Превышено время ожидания потоковой передачи ИИ",
+    {
+      cause: cause instanceof Error ? cause : undefined,
+    },
+  ) as Error & { code: string };
   timeoutError.name = "TimeoutError";
   timeoutError.code = "TIMEOUT";
   return timeoutError;
@@ -150,7 +153,7 @@ export function createChatBot(config: ChatBotConfig) {
         return result;
       } catch (error) {
         console.error("Chat bot error:", error);
-        throw new Error("Failed to generate response");
+        throw new Error("Не удалось сгенерировать ответ");
       }
     },
 
@@ -193,7 +196,9 @@ export function createChatBot(config: ChatBotConfig) {
           }
         }
 
-        throw lastError ?? new Error("No streaming model candidates available");
+        throw (
+          lastError ?? new Error("Нет доступных кандидатов стриминговой модели")
+        );
       } catch (error) {
         console.error("Chat bot streaming error:", error);
         if (
@@ -203,7 +208,7 @@ export function createChatBot(config: ChatBotConfig) {
         ) {
           throw error;
         }
-        throw new Error("Failed to generate streaming response");
+        throw new Error("Не удалось сгенерировать потоковый ответ");
       }
     },
   };

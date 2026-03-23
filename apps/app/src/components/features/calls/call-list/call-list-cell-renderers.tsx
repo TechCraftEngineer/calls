@@ -113,7 +113,7 @@ export function renderSentimentCell(transcript: CallWithDetails["transcript"]) {
         ? "Негативная"
         : normalized === "neutral" || normalized.includes("нейтр")
           ? "Нейтральная"
-          : sentiment;
+          : "Неизвестная тональность";
   const color =
     normalized.includes("neg") || normalized.includes("нег")
       ? "#b42318"

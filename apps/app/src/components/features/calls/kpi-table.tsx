@@ -362,20 +362,6 @@ export default function KpiTable() {
         meta: { headerTitle: "Цель, мин/мес" },
       },
       {
-        id: "periodTargetTalkTimeMinutes",
-        accessorFn: (row) => row.periodTargetTalkTimeMinutes,
-        header: ({ column }) => (
-          <DataGridColumnHeader
-            column={column}
-            title="План, мин"
-            className="min-w-28"
-            tooltip="План по времени разговоров на выбранный период"
-          />
-        ),
-        cell: ({ row }) => row.original.periodTargetTalkTimeMinutes,
-        meta: { headerTitle: "План, мин" },
-      },
-      {
         id: "actualTalkTimeMinutes",
         accessorFn: (row) => row.actualTalkTimeMinutes,
         header: ({ column }) => (
@@ -705,7 +691,7 @@ export default function KpiTable() {
             columnsVisibility: true,
             columnsMovable: true,
             columnsPinnable: true,
-            columnsDraggable: true,
+            columnsDraggable: false,
             rowBorder: true,
             headerBorder: true,
             headerBackground: true,
