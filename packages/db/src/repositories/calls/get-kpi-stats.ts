@@ -71,8 +71,14 @@ export async function getKpiStats(
         or(
           isNull(schema.callEvaluations.callId),
           and(
-            eq(schema.callEvaluations.isQualityAnalyzable, true),
-            sql`LOWER(COALESCE(${schema.callEvaluations.notAnalyzableReason}, '')) != 'autoanswerer'`,
+            or(
+              isNull(schema.callEvaluations.isQualityAnalyzable),
+              eq(schema.callEvaluations.isQualityAnalyzable, true),
+            ),
+            or(
+              isNull(schema.callEvaluations.notAnalyzableReason),
+              sql`${schema.callEvaluations.notAnalyzableReason} NOT ILIKE '%autoanswerer%'`,
+            ),
           ),
         ),
       ),

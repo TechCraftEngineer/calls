@@ -13,10 +13,12 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  type PaginationState,
   useReactTable,
 } from "@tanstack/react-table";
 import { Settings2 } from "lucide-react";
-import { useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getStatisticsColumns } from "./statistics-table-columns";
 
 export interface StatsRow {
@@ -36,6 +38,62 @@ interface StatisticsTableProps {
 }
 
 export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const parseIntegerParam = useCallback(
+    (value: string | null, fallback: number, minValue: number) => {
+      if (!value) return fallback;
+      const parsed = Number.parseInt(value, 10);
+      return Number.isFinite(parsed) && parsed >= minValue ? parsed : fallback;
+    },
+    [],
+  );
+
+  const initialPagination = useMemo<PaginationState>(
+    () => ({
+      pageIndex: parseIntegerParam(searchParams.get("pageIndex"), 0, 0),
+      pageSize: parseIntegerParam(searchParams.get("pageSize"), 8, 1),
+    }),
+    [parseIntegerParam, searchParams],
+  );
+
+  const [pagination, setPagination] =
+    useState<PaginationState>(initialPagination);
+
+  useEffect(() => {
+    setPagination(initialPagination);
+  }, [initialPagination]);
+
+  const updatePaginationSearchParams = useCallback(
+    (nextPagination: PaginationState) => {
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.set("pageIndex", String(nextPagination.pageIndex));
+      nextParams.set("pageSize", String(nextPagination.pageSize));
+      router.push(`${pathname}?${nextParams.toString()}`);
+    },
+    [pathname, router, searchParams],
+  );
+
+  const handlePaginationChange = useCallback(
+    (
+      updater: PaginationState | ((old: PaginationState) => PaginationState),
+    ) => {
+      setPagination((prev) => {
+        const next = typeof updater === "function" ? updater(prev) : updater;
+        if (
+          next.pageIndex !== prev.pageIndex ||
+          next.pageSize !== prev.pageSize
+        ) {
+          updatePaginationSearchParams(next);
+        }
+        return next;
+      });
+    },
+    [updatePaginationSearchParams],
+  );
+
   const totals = useMemo(
     () =>
       stats.reduce(
@@ -73,28 +131,20 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
     [totals],
   );
 
-  const dataWithTotals = useMemo(() => {
-    const count = stats.length;
-    return [
-      {
-        ...totalRow,
-        managerCount: count,
-      },
-      ...stats,
-    ];
-  }, [stats, totalRow]);
+  const managerCount = stats.length;
 
   const columns = useMemo(() => getStatisticsColumns(), []);
 
   const table = useReactTable({
-    data: dataWithTotals,
+    data: stats,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    onPaginationChange: handlePaginationChange,
+    state: { pagination },
     initialState: {
       sorting: [{ id: "name", desc: false }],
-      pagination: { pageSize: 8, pageIndex: 0 },
       columnPinning: { left: ["name"] },
     },
   });
@@ -107,7 +157,7 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
 
       <DataGrid
         table={table}
-        recordCount={dataWithTotals.length}
+        recordCount={stats.length}
         isLoading={loading}
         emptyMessage="Нет данных"
         tableLayout={{
@@ -122,7 +172,7 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
         }}
         tableClassNames={{
           base: "op-table [&_tbody_tr:first-child]:bg-[#F9F9F9]",
-          headerSticky: "sticky top-0 z-30 bg-background/95 backdrop-blur-xs",
+          headerSticky: "sticky top-0 z-30 bg-background/95 backdrop-blur-sm",
         }}
       >
         <div className="flex items-center justify-end gap-2 px-4 pt-3 pb-1">
@@ -138,8 +188,35 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
         </div>
         <DataGridContainer className="border-0">
           <div className="max-h-[70vh] overflow-auto">
-            <div className="min-w-350">
+            <div className="min-w-[350px]">
               <DataGridTable />
+            </div>
+          </div>
+          <div className="px-4 py-3 border-t border-[#EEE] bg-[#F9F9F9]">
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-sm">
+              <div className="font-semibold">
+                Всего
+                {managerCount > 0 && (
+                  <div className="text-[11px] text-[#999] font-normal mt-0.5">
+                    {managerCount}{" "}
+                    {managerCount === 1
+                      ? "менеджер"
+                      : managerCount < 5
+                        ? "менеджера"
+                        : "менеджеров"}
+                  </div>
+                )}
+              </div>
+              <div>Исходящие: {totalRow.outgoing.count}</div>
+              <div>Входящие: {totalRow.incoming.count}</div>
+              <div>
+                Длительность исходящих:{" "}
+                {Math.floor(totalRow.outgoing.duration / 60)} мин
+              </div>
+              <div>
+                Длительность входящих:{" "}
+                {Math.floor(totalRow.incoming.duration / 60)} мин
+              </div>
             </div>
           </div>
           <div className="px-4 py-3 border-t border-[#EEE]">

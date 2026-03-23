@@ -81,6 +81,49 @@ export function renderCallTypeCell(transcript: CallWithDetails["transcript"]) {
   return <span style={{ color: "#555", fontWeight: 500 }}>{callType}</span>;
 }
 
+export function renderManagerNameCell(call: CallWithDetails["call"]) {
+  const managerName = call.managerName?.trim() || call.operatorName?.trim();
+  if (!managerName) {
+    return <span style={{ color: "#ccc" }}>—</span>;
+  }
+
+  return <span style={{ color: "#555", fontWeight: 500 }}>{managerName}</span>;
+}
+
+export function renderCallTopicCell(transcript: CallWithDetails["transcript"]) {
+  const callTopic = transcript?.callTopic?.trim();
+  if (!callTopic) {
+    return <span style={{ color: "#ccc" }}>—</span>;
+  }
+
+  return <span style={{ color: "#555", fontWeight: 500 }}>{callTopic}</span>;
+}
+
+export function renderSentimentCell(transcript: CallWithDetails["transcript"]) {
+  const sentiment = transcript?.sentiment?.trim();
+  if (!sentiment) {
+    return <span style={{ color: "#ccc" }}>—</span>;
+  }
+
+  const normalized = sentiment.toLowerCase();
+  const label =
+    normalized === "positive" || normalized.includes("поз")
+      ? "Позитивная"
+      : normalized === "negative" || normalized.includes("нег")
+        ? "Негативная"
+        : normalized === "neutral" || normalized.includes("нейтр")
+          ? "Нейтральная"
+          : sentiment;
+  const color =
+    normalized.includes("neg") || normalized.includes("нег")
+      ? "#b42318"
+      : normalized.includes("pos") || normalized.includes("поз")
+        ? "#067647"
+        : "#555";
+
+  return <span style={{ color, fontWeight: 600 }}>{label}</span>;
+}
+
 export function renderNumberCell(
   item: CallWithDetails,
   renderLinkOrButton: (
@@ -107,14 +150,6 @@ export function renderNumberCell(
         {call.internalNumber || ""}
       </div>
     </>
-  );
-}
-
-export function renderManagerCell(call: CallWithDetails["call"]) {
-  return (
-    <span style={{ color: "#555", fontWeight: 500 }}>
-      {call.customerName || "—"}
-    </span>
   );
 }
 
