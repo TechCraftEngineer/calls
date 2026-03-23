@@ -5,6 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import {
   createLinkOrButton,
   renderAnalysisCostCell,
+  renderCallTypeCell,
   renderDateCell,
   renderDirectionCell,
   renderDurationCell,
@@ -91,6 +92,21 @@ export function getCallListColumns(
       ),
       cell: ({ row }) => renderDirectionCell(row.original.call),
       meta: { headerTitle: "Направление" },
+    },
+    {
+      accessorKey: "transcript.callType",
+      id: "callType",
+      size: 164,
+      minSize: 140,
+      header: ({ column }) => (
+        <DataGridColumnHeader
+          column={column}
+          title="Тип звонка"
+          visibility={true}
+        />
+      ),
+      cell: ({ row }) => renderCallTypeCell(row.original.transcript),
+      meta: { headerTitle: "Тип звонка" },
     },
     {
       accessorKey: "call.customerName",

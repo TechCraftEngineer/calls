@@ -1,9 +1,33 @@
 import { openai } from "@ai-sdk/openai";
+import { env } from "@calls/config";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import { streamText } from "ai";
 import { z } from "zod";
 import { generateWithAi } from "./generate";
-import type { ChatBotConfig, ChatBotResponse, ChatMessage } from "./types";
+import {
+  type ChatBotConfig,
+  type ChatBotResponse,
+  ChatConversationHistorySchema,
+  type ChatConversationMessage,
+  ChatConversationMessageSchema,
+  type ChatMessage,
+} from "./types";
+
+type ChatProvider = "openai" | "openrouter";
+
+function normalizeConversationMessages(
+  messages: ChatMessage[],
+): ChatConversationMessage[] {
+  const trimmedMessages = messages
+    .map((msg) => ({
+      role: msg.role,
+      content: msg.content.trim().slice(0, 2000),
+      context: msg.context?.trim().slice(0, 2000) || undefined,
+    }))
+    .slice(-20);
+
+  return ChatConversationHistorySchema.parse(trimmedMessages);
+}
 
 export function createChatBot(config: ChatBotConfig) {
   const validatedConfig = z
@@ -17,10 +41,29 @@ export function createChatBot(config: ChatBotConfig) {
     })
     .parse(config);
 
-  const model =
-    validatedConfig.provider === "openrouter"
-      ? openrouter(validatedConfig.model)
-      : openai(validatedConfig.model);
+  const getProviderOrder = (primary: ChatProvider): ChatProvider[] =>
+    primary === "openrouter"
+      ? ["openrouter", "openai"]
+      : ["openai", "openrouter"];
+
+  const buildStreamingCandidates = () => {
+    const rawFallbackModel = env.AI_MODEL?.trim();
+    const fallbackModel =
+      rawFallbackModel && rawFallbackModel !== validatedConfig.model
+        ? rawFallbackModel
+        : undefined;
+    const models = [validatedConfig.model, fallbackModel].filter(
+      (item): item is string => Boolean(item),
+    );
+    const providers = getProviderOrder(validatedConfig.provider);
+
+    return providers.flatMap((provider) =>
+      models.map((modelId) => ({ provider, modelId })),
+    );
+  };
+
+  const getModelInstance = (provider: ChatProvider, modelId: string) =>
+    provider === "openrouter" ? openrouter(modelId) : openai(modelId);
 
   return {
     async sendMessage(
@@ -31,16 +74,15 @@ export function createChatBot(config: ChatBotConfig) {
         tags?: string[];
       },
     ): Promise<ChatBotResponse> {
-      const formattedMessages = messages.map((msg) => ({
-        role: msg.role as "user" | "assistant" | "system",
-        content: msg.content,
-      }));
+      const formattedMessages = normalizeConversationMessages(messages);
 
       if (validatedConfig.systemPrompt) {
-        formattedMessages.unshift({
-          role: "system",
-          content: validatedConfig.systemPrompt,
-        });
+        formattedMessages.unshift(
+          ChatConversationMessageSchema.parse({
+            role: "system",
+            content: validatedConfig.systemPrompt.trim().slice(0, 2000),
+          }),
+        );
       }
 
       try {
@@ -83,26 +125,41 @@ export function createChatBot(config: ChatBotConfig) {
     },
 
     async sendMessageStream(messages: ChatMessage[]) {
-      const formattedMessages = messages.map((msg) => ({
-        role: msg.role as "user" | "assistant" | "system",
-        content: msg.content,
-      }));
+      const formattedMessages = normalizeConversationMessages(messages);
 
       if (validatedConfig.systemPrompt) {
-        formattedMessages.unshift({
-          role: "system",
-          content: validatedConfig.systemPrompt,
-        });
+        formattedMessages.unshift(
+          ChatConversationMessageSchema.parse({
+            role: "system",
+            content: validatedConfig.systemPrompt.trim().slice(0, 2000),
+          }),
+        );
       }
 
       try {
-        const result = await streamText({
-          model,
-          messages: formattedMessages,
-          temperature: validatedConfig.temperature,
-        });
+        const candidates = buildStreamingCandidates();
+        let lastError: unknown = null;
 
-        return result.toTextStreamResponse();
+        for (const candidate of candidates) {
+          try {
+            const result = await streamText({
+              model: getModelInstance(candidate.provider, candidate.modelId),
+              messages: formattedMessages,
+              temperature: validatedConfig.temperature,
+            });
+
+            return result.toTextStreamResponse();
+          } catch (error) {
+            lastError = error;
+            console.error("Chat bot streaming attempt failed:", {
+              provider: candidate.provider,
+              model: candidate.modelId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        }
+
+        throw lastError ?? new Error("No streaming model candidates available");
       } catch (error) {
         console.error("Chat bot streaming error:", error);
         throw new Error("Failed to generate streaming response");

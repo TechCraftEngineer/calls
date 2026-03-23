@@ -4,6 +4,7 @@ export const DEFAULT_COLUMN_IDS = [
   "date",
   "number",
   "type",
+  "callType",
   "manager",
   "status",
   "duration",

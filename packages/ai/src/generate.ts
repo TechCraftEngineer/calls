@@ -19,11 +19,13 @@ export interface GetAIModelOptions {
   provider?: AiProvider;
   model?: string;
   profile?: AiModelProfile;
+  sourceProvider?: AiProvider;
 }
 
 interface ModelCandidate {
   provider: AiProvider;
   modelId: string;
+  sourceProvider: AiProvider;
 }
 
 function normalizeModelId(modelId: string): string {
@@ -35,13 +37,25 @@ function normalizeModelId(modelId: string): string {
 function resolveModelIdForProvider(
   modelId: string,
   provider: AiProvider,
+  sourceProvider?: AiProvider,
 ): string {
+  const trimmedModelId = modelId.trim();
+
   // OpenRouter expects provider-qualified IDs (e.g. "openai/gpt-5-nano").
   if (provider === "openrouter") {
-    return modelId.trim();
+    if (trimmedModelId.includes("/")) {
+      return trimmedModelId;
+    }
+    const fallbackSourceProvider =
+      sourceProvider && sourceProvider !== "openrouter"
+        ? sourceProvider
+        : env.AI_PROVIDER !== "openrouter"
+          ? env.AI_PROVIDER
+          : "openai";
+    return `${fallbackSourceProvider}/${trimmedModelId}`;
   }
 
-  return normalizeModelId(modelId);
+  return normalizeModelId(trimmedModelId);
 }
 
 export function getAIModelId(profile: AiModelProfile = "default"): string {
@@ -74,6 +88,10 @@ function getRawAIModelId(profile: AiModelProfile = "default"): string {
  * Проверяет, настроен ли API ключ для текущего провайдера.
  */
 export function hasAiProviderConfigured(): boolean {
+  if (env.OPENAI_API_KEY || env.OPENROUTER_API_KEY || env.DEEPSEEK_API_KEY) {
+    return true;
+  }
+
   const provider = env.AI_PROVIDER;
   switch (provider) {
     case "openai":
@@ -96,6 +114,7 @@ export function getAIModel(options: GetAIModelOptions = {}): LanguageModel {
   const modelId = resolveModelIdForProvider(
     options.model ?? getRawAIModelId(options.profile),
     provider,
+    options.sourceProvider ?? options.provider,
   );
 
   switch (provider) {
@@ -146,7 +165,11 @@ function buildModelCandidates(
     const key = `${provider}:${prepared}`;
     if (seen.has(key)) return;
     seen.add(key);
-    candidates.push({ provider, modelId: prepared });
+    candidates.push({
+      provider,
+      modelId: prepared,
+      sourceProvider: primaryProvider,
+    });
   };
 
   for (const provider of providers) {
@@ -287,21 +310,46 @@ export async function generateWithAi(
   }
 
   let lastError: unknown = null;
+  const errors: Error[] = [];
+
+  const mapErrorCode = (
+    error: unknown,
+  ): "TIMEOUT" | "ABORTED" | "INTERNAL_SERVER_ERROR" => {
+    if (
+      error instanceof Error &&
+      (error.name === "TimeoutError" ||
+        error.name === "AbortError" ||
+        error.message.includes("TIMEOUT") ||
+        error.message.includes("timed out") ||
+        error.message.includes("AbortError"))
+    ) {
+      return error.name === "AbortError" ? "ABORTED" : "TIMEOUT";
+    }
+
+    return "INTERNAL_SERVER_ERROR";
+  };
 
   for (const [i, candidate] of candidates.entries()) {
     const model = getAIModel({
       provider: candidate.provider,
       model: candidate.modelId,
+      sourceProvider: candidate.sourceProvider,
     });
     const experimental_telemetry = langfuseTracing
       ? {
           ...DEFAULT_TELEMETRY,
           functionId,
           metadata: {
+            ...metadata,
+            ...(typeof metadata.provider === "string"
+              ? { requestedProvider: metadata.provider }
+              : {}),
+            ...(typeof metadata.model === "string"
+              ? { requestedModel: metadata.model }
+              : {}),
             provider: candidate.provider,
             model: normalizeModelId(candidate.modelId),
             fallbackAttempt: i,
-            ...metadata,
           },
         }
       : undefined;
@@ -314,11 +362,33 @@ export async function generateWithAi(
         experimental_telemetry,
       });
     } catch (error) {
-      lastError = error;
+      const mappedCode = mapErrorCode(error);
+      const modelId = normalizeModelId(candidate.modelId);
+      const wrappedError = new Error(
+        `generateWithAi failed (${mappedCode}) on provider=${candidate.provider}, model=${modelId}, fallbackAttempt=${i}`,
+        { cause: error instanceof Error ? error : undefined },
+      ) as Error & { code: string };
+      wrappedError.code = mappedCode;
+
+      errors.push(wrappedError);
+      lastError = wrappedError;
+
+      // Keep a full attempt chain in logs for auditing/debugging.
+      console.error("[generateWithAi] attempt failed", {
+        functionId,
+        provider: candidate.provider,
+        model: modelId,
+        fallbackAttempt: i,
+        code: mappedCode,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
-  throw lastError instanceof Error
-    ? lastError
-    : new Error("generateWithAi: все fallback модели завершились ошибкой");
+  if (lastError instanceof Error) {
+    (lastError as Error & { errors?: Error[] }).errors = errors;
+    throw lastError;
+  }
+
+  throw new Error("generateWithAi: все fallback модели завершились ошибкой");
 }

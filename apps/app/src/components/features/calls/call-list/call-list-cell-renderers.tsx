@@ -72,6 +72,15 @@ export function renderDirectionCell(call: CallWithDetails["call"]) {
   return <span className={`op-badge ${directionClass}`}>{directionLabel}</span>;
 }
 
+export function renderCallTypeCell(transcript: CallWithDetails["transcript"]) {
+  const callType = transcript?.callType?.trim();
+  if (!callType) {
+    return <span style={{ color: "#ccc" }}>—</span>;
+  }
+
+  return <span style={{ color: "#555", fontWeight: 500 }}>{callType}</span>;
+}
+
 export function renderNumberCell(
   item: CallWithDetails,
   renderLinkOrButton: (
