@@ -1,4 +1,5 @@
 import { openai } from "@ai-sdk/openai";
+import { env } from "@calls/config";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import { streamText } from "ai";
 import { z } from "zod";
@@ -11,6 +12,8 @@ import {
   ChatConversationMessageSchema,
   type ChatMessage,
 } from "./types";
+
+type ChatProvider = "openai" | "openrouter";
 
 function normalizeConversationMessages(
   messages: ChatMessage[],
@@ -38,10 +41,29 @@ export function createChatBot(config: ChatBotConfig) {
     })
     .parse(config);
 
-  const model =
-    validatedConfig.provider === "openrouter"
-      ? openrouter(validatedConfig.model)
-      : openai(validatedConfig.model);
+  const getProviderOrder = (primary: ChatProvider): ChatProvider[] =>
+    primary === "openrouter"
+      ? ["openrouter", "openai"]
+      : ["openai", "openrouter"];
+
+  const buildStreamingCandidates = () => {
+    const rawFallbackModel = env.AI_MODEL?.trim();
+    const fallbackModel =
+      rawFallbackModel && rawFallbackModel !== validatedConfig.model
+        ? rawFallbackModel
+        : undefined;
+    const models = [validatedConfig.model, fallbackModel].filter(
+      (item): item is string => Boolean(item),
+    );
+    const providers = getProviderOrder(validatedConfig.provider);
+
+    return providers.flatMap((provider) =>
+      models.map((modelId) => ({ provider, modelId })),
+    );
+  };
+
+  const getModelInstance = (provider: ChatProvider, modelId: string) =>
+    provider === "openrouter" ? openrouter(modelId) : openai(modelId);
 
   return {
     async sendMessage(
@@ -115,13 +137,29 @@ export function createChatBot(config: ChatBotConfig) {
       }
 
       try {
-        const result = await streamText({
-          model,
-          messages: formattedMessages,
-          temperature: validatedConfig.temperature,
-        });
+        const candidates = buildStreamingCandidates();
+        let lastError: unknown = null;
 
-        return result.toTextStreamResponse();
+        for (const candidate of candidates) {
+          try {
+            const result = await streamText({
+              model: getModelInstance(candidate.provider, candidate.modelId),
+              messages: formattedMessages,
+              temperature: validatedConfig.temperature,
+            });
+
+            return result.toTextStreamResponse();
+          } catch (error) {
+            lastError = error;
+            console.error("Chat bot streaming attempt failed:", {
+              provider: candidate.provider,
+              model: candidate.modelId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        }
+
+        throw lastError ?? new Error("No streaming model candidates available");
       } catch (error) {
         console.error("Chat bot streaming error:", error);
         throw new Error("Failed to generate streaming response");

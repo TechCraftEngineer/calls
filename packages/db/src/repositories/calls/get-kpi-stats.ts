@@ -59,7 +59,24 @@ export async function getKpiStats(
       missed: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) IN ('incoming', 'inbound') AND COALESCE(${schema.calls.duration}, 0) = 0)::int`,
     })
     .from(schema.calls)
-    .where(and(...conditions))
+    .leftJoin(
+      schema.callEvaluations,
+      eq(schema.calls.id, schema.callEvaluations.callId),
+    )
+    // Исключаем звонки, отмеченные как автоответчик/неанализируемые.
+    // Звонки без оценки (еще не обработанные) оставляем в KPI.
+    .where(
+      and(
+        ...conditions,
+        or(
+          isNull(schema.callEvaluations.callId),
+          and(
+            eq(schema.callEvaluations.isQualityAnalyzable, true),
+            sql`LOWER(COALESCE(${schema.callEvaluations.notAnalyzableReason}, '')) != 'autoanswerer'`,
+          ),
+        ),
+      ),
+    )
     .groupBy(schema.calls.internalNumber);
 
   return results
