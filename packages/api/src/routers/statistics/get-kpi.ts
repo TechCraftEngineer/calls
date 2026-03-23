@@ -22,6 +22,7 @@ function normalizeInternalIdentifier(
   if (!value) return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
+  if (trimmed.toLowerCase() === "all") return null;
   const digitsOnly = trimmed.replace(/\D/g, "");
   if (digitsOnly.length > 0) return digitsOnly;
   return trimmed.toLowerCase();

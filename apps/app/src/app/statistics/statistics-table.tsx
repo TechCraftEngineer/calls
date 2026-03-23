@@ -104,7 +104,7 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
       const nextParams = new URLSearchParams(searchParams.toString());
       nextParams.set("pageIndex", String(nextPagination.pageIndex));
       nextParams.set("pageSize", String(nextPagination.pageSize));
-      router.push(`${pathname}?${nextParams.toString()}`);
+      router.replace(`${pathname}?${nextParams.toString()}`);
     },
     [pathname, router, searchParams],
   );

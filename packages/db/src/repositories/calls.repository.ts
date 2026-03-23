@@ -233,8 +233,8 @@ export const callsRepository = {
       internalNumber?: string | null;
       source?: string | null;
       name?: string | null;
-      updatedAt: Date;
-    } = { updatedAt: new Date() };
+      updatedAt?: Date;
+    } = {};
 
     if (data.pbxNumberId !== undefined) patch.pbxNumberId = data.pbxNumberId;
     if (data.internalNumber !== undefined)
@@ -242,6 +242,8 @@ export const callsRepository = {
     if (data.source !== undefined) patch.source = data.source;
     if (data.name !== undefined) patch.name = data.name;
 
+    if (Object.keys(patch).length === 0) return;
+    patch.updatedAt = new Date();
     await db.update(schema.calls).set(patch).where(eq(schema.calls.id, callId));
   },
 

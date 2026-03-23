@@ -180,6 +180,7 @@ export const transcribeCallFn = inngest.createFunction(
     const { text: finalText, customerName, operatorName } = identifyResult;
 
     await step.run("save-transcript", async () => {
+      const normalizedCallType = result.callType?.trim() || null;
       // Безопасная сериализация метаданных
       let serializedMetadata: Record<string, unknown> = {};
       try {
@@ -205,7 +206,7 @@ export const transcribeCallFn = inngest.createFunction(
         summary: result.summary,
         sentiment: result.sentiment,
         title: result.title,
-        callType: result.callType ?? null,
+        callType: normalizedCallType,
         callTopic: result.callTopic,
       });
 

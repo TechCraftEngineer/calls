@@ -20,6 +20,13 @@ import {
 const logger = createLogger("megapbx-sync");
 const PROVIDER = "megapbx";
 
+function isEmptyOrMegaPbxPlaceholder(
+  value: string | null | undefined,
+): boolean {
+  const normalized = value?.trim().toLowerCase() ?? "";
+  return normalized.length === 0 || normalized === "megapbx";
+}
+
 type SyncStats = {
   employees: number;
   numbers: number;
@@ -380,10 +387,10 @@ export async function syncMegaPbxCalls(
               employee?.extension ??
               null)
             : undefined,
-          source: !canonicalCall.source
+          source: isEmptyOrMegaPbxPlaceholder(canonicalCall.source)
             ? (employee?.externalId ?? number?.externalId ?? "megapbx")
             : undefined,
-          name: !canonicalCall.name
+          name: isEmptyOrMegaPbxPlaceholder(canonicalCall.name)
             ? (employee?.displayName ?? number?.label ?? "MegaPBX")
             : undefined,
         });
