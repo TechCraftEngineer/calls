@@ -27,6 +27,14 @@ const managerStatsSchema = z.object({
 });
 
 const statsSchema = z.record(z.string(), managerStatsSchema);
+const REPORT_TYPE_LABELS: Record<
+  z.infer<typeof reportTypeSchema>["reportType"],
+  string
+> = {
+  daily: "Ежедневный",
+  weekly: "Еженедельный",
+  monthly: "Ежемесячный",
+};
 
 function parseInternalExtensions(ext: string | null): string[] | null {
   if (!ext || String(ext).trim().toLowerCase() === "all") return null;
@@ -84,6 +92,7 @@ export const sendTestEmail = workspaceProcedure
     const { formatInTimeZone } = await import("date-fns-tz");
     const now = new Date();
     const { reportType } = input;
+    const reportTypeLabel = REPORT_TYPE_LABELS[reportType];
 
     let dateFrom: string;
     let dateTo: string;
@@ -136,7 +145,7 @@ export const sendTestEmail = workspaceProcedure
     try {
       await sendEmail({
         to: [userEmail],
-        subject: `Тестовый отчёт по звонкам (${reportType}): ${dateFrom} — ${dateTo}`,
+        subject: `Тестовый отчёт по звонкам (${reportTypeLabel}): ${dateFrom} — ${dateTo}`,
         react: ReportEmail({
           reportText: text,
           reportType,
@@ -145,11 +154,9 @@ export const sendTestEmail = workspaceProcedure
       });
       return { success: true };
     } catch (e) {
+      console.error("sendTestEmail failed", e);
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message:
-          e instanceof Error
-            ? e.message
-            : "Не удалось отправить email. Проверьте настройки Resend.",
+        message: "Не удалось отправить email. Проверьте настройки Resend.",
       });
     }
   });

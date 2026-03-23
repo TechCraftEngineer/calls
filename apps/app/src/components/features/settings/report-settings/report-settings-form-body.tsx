@@ -80,67 +80,35 @@ export default function ReportSettingsFormBody({
   );
 
   const updateEmailMutation = useMutation(
-    orpc.users.updateEmailSettings.mutationOptions({
-      onSuccess: () => {
-        toast.success("Настройки email сохранены");
-        invalidateUser();
-      },
-      onError: (err) =>
-        handleMutationError(err, "Не удалось сохранить настройки email"),
-    }),
+    orpc.users.updateEmailSettings.mutationOptions(),
   );
 
   const updateTelegramMutation = useMutation(
-    orpc.users.updateTelegramSettings.mutationOptions({
-      onSuccess: () => {
-        toast.success("Настройки Telegram сохранены");
-        invalidateUser();
-        invalidateSchedule();
-      },
-      onError: (err) =>
-        handleMutationError(err, "Не удалось сохранить настройки Telegram"),
-    }),
+    orpc.users.updateTelegramSettings.mutationOptions(),
   );
 
   const updateMaxMutation = useMutation(
-    orpc.users.updateMaxSettings.mutationOptions({
-      onSuccess: () => {
-        toast.success("Настройки MAX сохранены");
-        invalidateUser();
-      },
-      onError: (err) =>
-        handleMutationError(err, "Не удалось сохранить настройки MAX"),
-    }),
+    orpc.users.updateMaxSettings.mutationOptions(),
   );
 
   const updateReportParamsMutation = useMutation(
-    orpc.users.updateReportParamsSettings.mutationOptions({
-      onSuccess: () => {
-        toast.success("Параметры отчетов сохранены");
-        invalidateUser();
-      },
-      onError: (err) =>
-        handleMutationError(err, "Не удалось сохранить параметры отчетов"),
-    }),
+    orpc.users.updateReportParamsSettings.mutationOptions(),
   );
 
   const updateReportManagedUsersMutation = useMutation(
-    orpc.users.updateReportManagedUsersSettings.mutationOptions({
-      onSuccess: () => {
-        toast.success("Сводные менеджеры сохранены");
-        invalidateUser();
-      },
-      onError: (err) =>
-        handleMutationError(
-          err,
-          "Не удалось сохранить сводные настройки менеджеров",
-        ),
-    }),
+    orpc.users.updateReportManagedUsersSettings.mutationOptions(),
   );
 
-  const sendTestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sendTestMessageRef = useRef("");
+  const sendTestTelegramTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+  const sendTestTelegramMessageRef = useRef("");
+  const sendTestEmailTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const sendTestEmailMessageRef = useRef("");
+  const saveOperationKeyRef = useRef("");
+  const [isSavingCombined, setIsSavingCombined] = useState(false);
 
   const sendTestMutation = useMutation(
     orpc.reports.sendTestTelegram.mutationOptions({
@@ -150,13 +118,13 @@ export default function ReportSettingsFormBody({
         toast.success(`${reportTypeLabel} отчёт отправлен в Telegram`);
         const scheduledMsg = `${reportTypeLabel} отчёт отправлен`;
         setSendTestMessage(scheduledMsg);
-        sendTestMessageRef.current = scheduledMsg;
-        if (sendTestTimeoutRef.current != null)
-          clearTimeout(sendTestTimeoutRef.current);
-        sendTestTimeoutRef.current = setTimeout(() => {
-          if (sendTestMessageRef.current === scheduledMsg) {
+        sendTestTelegramMessageRef.current = scheduledMsg;
+        if (sendTestTelegramTimeoutRef.current != null)
+          clearTimeout(sendTestTelegramTimeoutRef.current);
+        sendTestTelegramTimeoutRef.current = setTimeout(() => {
+          if (sendTestTelegramMessageRef.current === scheduledMsg) {
             setSendTestMessage("");
-            sendTestMessageRef.current = "";
+            sendTestTelegramMessageRef.current = "";
           }
         }, 4000);
       },
@@ -179,9 +147,9 @@ export default function ReportSettingsFormBody({
         toast.success(msg);
         setSendTestEmailMessage(msg);
         sendTestEmailMessageRef.current = msg;
-        if (sendTestTimeoutRef.current != null)
-          clearTimeout(sendTestTimeoutRef.current);
-        sendTestTimeoutRef.current = setTimeout(() => {
+        if (sendTestEmailTimeoutRef.current != null)
+          clearTimeout(sendTestEmailTimeoutRef.current);
+        sendTestEmailTimeoutRef.current = setTimeout(() => {
           if (sendTestEmailMessageRef.current === msg) {
             setSendTestEmailMessage("");
             sendTestEmailMessageRef.current = "";
@@ -202,11 +170,6 @@ export default function ReportSettingsFormBody({
   const handleSendTestEmail = (reportType: ReportType) => {
     sendTestEmailMutation.mutate({ reportType });
   };
-  const handleSendTestMax = (_reportType: ReportType) => {
-    toast.error(
-      "Мгновенная отправка в MAX будет доступна после интеграции канала",
-    );
-  };
 
   const handleTelegramConnect = () => {
     telegramAuthUrlMutation.mutate({ user_id: userId });
@@ -216,48 +179,91 @@ export default function ReportSettingsFormBody({
     disconnectTelegramMutation.mutate({ user_id: userId });
   };
 
-  const handleSaveEmail = () => {
-    const email = form.email.trim();
-    updateEmailMutation.mutate({
-      user_id: userId,
-      data: {
-        email: email ? email : null,
-        emailDailyReport: form.emailDailyReport,
-        emailWeeklyReport: form.emailWeeklyReport,
-        emailMonthlyReport: form.emailMonthlyReport,
-      },
-    });
-    updateReportParamsMutation.mutate({
-      user_id: userId,
-      data: {
-        reportIncludeCallSummaries: form.reportIncludeCallSummaries,
-        reportDetailed: form.reportDetailed,
-        reportIncludeAvgValue: form.reportIncludeAvgValue,
-        reportIncludeAvgRating: form.reportIncludeAvgRating,
-      },
-    });
-    if (isAdmin) {
-      updateTelegramMutation.mutate({
-        user_id: userId,
-        data: {
-          reportDailyTime: form.reportDailyTime,
-          reportWeeklyDay: form.reportWeeklyDay as
-            | "sun"
-            | "mon"
-            | "tue"
-            | "wed"
-            | "thu"
-            | "fri"
-            | "sat",
-          reportWeeklyTime: form.reportWeeklyTime,
-          reportMonthlyDay: form.reportMonthlyDay,
-          reportMonthlyTime: form.reportMonthlyTime,
-        },
-      });
+  const performUpdates = async ({
+    run,
+    successMessage,
+    errorMessage,
+    invalidateScheduleAfter = false,
+  }: {
+    run: (operationKey: string) => Promise<void>;
+    successMessage: string;
+    errorMessage: string;
+    invalidateScheduleAfter?: boolean;
+  }) => {
+    const operationKey =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}`;
+    saveOperationKeyRef.current = operationKey;
+    setIsSavingCombined(true);
+    try {
+      await run(operationKey);
+      toast.success(successMessage);
+      invalidateUser();
+      if (invalidateScheduleAfter) invalidateSchedule();
+    } catch (err) {
+      handleMutationError(err, errorMessage);
+    } finally {
+      if (saveOperationKeyRef.current === operationKey) {
+        setIsSavingCombined(false);
+      }
     }
   };
 
-  const handleSaveTelegram = () => {
+  const handleSaveEmail = async () => {
+    const email = form.email.trim();
+    await performUpdates({
+      successMessage: "Настройки email сохранены",
+      errorMessage: "Не удалось сохранить настройки email",
+      invalidateScheduleAfter: isAdmin,
+      run: async () => {
+        const tasks: Promise<unknown>[] = [
+          updateEmailMutation.mutateAsync({
+            user_id: userId,
+            data: {
+              email: email ? email : null,
+              emailDailyReport: form.emailDailyReport,
+              emailWeeklyReport: form.emailWeeklyReport,
+              emailMonthlyReport: form.emailMonthlyReport,
+            },
+          }),
+          updateReportParamsMutation.mutateAsync({
+            user_id: userId,
+            data: {
+              reportIncludeCallSummaries: form.reportIncludeCallSummaries,
+              reportDetailed: form.reportDetailed,
+              reportIncludeAvgValue: form.reportIncludeAvgValue,
+              reportIncludeAvgRating: form.reportIncludeAvgRating,
+            },
+          }),
+        ];
+        if (isAdmin) {
+          tasks.push(
+            updateTelegramMutation.mutateAsync({
+              user_id: userId,
+              data: {
+                reportDailyTime: form.reportDailyTime,
+                reportWeeklyDay: form.reportWeeklyDay as
+                  | "sun"
+                  | "mon"
+                  | "tue"
+                  | "wed"
+                  | "thu"
+                  | "fri"
+                  | "sat",
+                reportWeeklyTime: form.reportWeeklyTime,
+                reportMonthlyDay: form.reportMonthlyDay,
+                reportMonthlyTime: form.reportMonthlyTime,
+              },
+            }),
+          );
+        }
+        await Promise.all(tasks);
+      },
+    });
+  };
+
+  const handleSaveTelegram = async () => {
     const telegramChatId = form.telegramChatId.trim();
     const reportWeeklyDay = form.reportWeeklyDay as
       | "sun"
@@ -267,74 +273,95 @@ export default function ReportSettingsFormBody({
       | "thu"
       | "fri"
       | "sat";
-    updateTelegramMutation.mutate({
-      user_id: userId,
-      data: {
-        telegramDailyReport: form.telegramDailyReport,
-        telegramWeeklyReport: form.telegramWeeklyReport,
-        telegramMonthlyReport: form.telegramMonthlyReport,
-        telegramSkipWeekends: form.telegramSkipWeekends,
-        telegramChatId: telegramChatId ? telegramChatId : null,
-        ...(isAdmin
-          ? {
-              reportDailyTime: form.reportDailyTime,
-              reportWeeklyDay,
-              reportWeeklyTime: form.reportWeeklyTime,
-              reportMonthlyDay: form.reportMonthlyDay,
-              reportMonthlyTime: form.reportMonthlyTime,
-            }
-          : {}),
-      },
-    });
-    updateReportParamsMutation.mutate({
-      user_id: userId,
-      data: {
-        reportIncludeCallSummaries: form.reportIncludeCallSummaries,
-        reportDetailed: form.reportDetailed,
-        reportIncludeAvgValue: form.reportIncludeAvgValue,
-        reportIncludeAvgRating: form.reportIncludeAvgRating,
+    await performUpdates({
+      successMessage: "Настройки Telegram сохранены",
+      errorMessage: "Не удалось сохранить настройки Telegram",
+      invalidateScheduleAfter: isAdmin,
+      run: async () => {
+        await Promise.all([
+          updateTelegramMutation.mutateAsync({
+            user_id: userId,
+            data: {
+              telegramDailyReport: form.telegramDailyReport,
+              telegramWeeklyReport: form.telegramWeeklyReport,
+              telegramMonthlyReport: form.telegramMonthlyReport,
+              telegramSkipWeekends: form.telegramSkipWeekends,
+              telegramChatId: telegramChatId ? telegramChatId : null,
+              ...(isAdmin
+                ? {
+                    reportDailyTime: form.reportDailyTime,
+                    reportWeeklyDay,
+                    reportWeeklyTime: form.reportWeeklyTime,
+                    reportMonthlyDay: form.reportMonthlyDay,
+                    reportMonthlyTime: form.reportMonthlyTime,
+                  }
+                : {}),
+            },
+          }),
+          updateReportParamsMutation.mutateAsync({
+            user_id: userId,
+            data: {
+              reportIncludeCallSummaries: form.reportIncludeCallSummaries,
+              reportDetailed: form.reportDetailed,
+              reportIncludeAvgValue: form.reportIncludeAvgValue,
+              reportIncludeAvgRating: form.reportIncludeAvgRating,
+            },
+          }),
+        ]);
       },
     });
   };
 
-  const handleSaveMax = () => {
+  const handleSaveMax = async () => {
     const maxChatId = form.maxChatId.trim();
-    updateMaxMutation.mutate({
-      user_id: userId,
-      data: {
-        maxChatId: maxChatId ? maxChatId : null,
-        maxDailyReport: form.maxDailyReport,
-        maxManagerReport: form.maxManagerReport,
+    await performUpdates({
+      successMessage: "Настройки MAX сохранены",
+      errorMessage: "Не удалось сохранить настройки MAX",
+      invalidateScheduleAfter: isAdmin,
+      run: async () => {
+        const tasks: Promise<unknown>[] = [
+          updateMaxMutation.mutateAsync({
+            user_id: userId,
+            data: {
+              maxChatId: maxChatId ? maxChatId : null,
+              maxDailyReport: form.maxDailyReport,
+              maxManagerReport: form.maxManagerReport,
+            },
+          }),
+          updateReportParamsMutation.mutateAsync({
+            user_id: userId,
+            data: {
+              reportIncludeCallSummaries: form.reportIncludeCallSummaries,
+              reportDetailed: form.reportDetailed,
+              reportIncludeAvgValue: form.reportIncludeAvgValue,
+              reportIncludeAvgRating: form.reportIncludeAvgRating,
+            },
+          }),
+        ];
+        if (isAdmin) {
+          tasks.push(
+            updateTelegramMutation.mutateAsync({
+              user_id: userId,
+              data: {
+                reportDailyTime: form.reportDailyTime,
+                reportWeeklyDay: form.reportWeeklyDay as
+                  | "sun"
+                  | "mon"
+                  | "tue"
+                  | "wed"
+                  | "thu"
+                  | "fri"
+                  | "sat",
+                reportWeeklyTime: form.reportWeeklyTime,
+                reportMonthlyDay: form.reportMonthlyDay,
+                reportMonthlyTime: form.reportMonthlyTime,
+              },
+            }),
+          );
+        }
+        await Promise.all(tasks);
       },
     });
-    updateReportParamsMutation.mutate({
-      user_id: userId,
-      data: {
-        reportIncludeCallSummaries: form.reportIncludeCallSummaries,
-        reportDetailed: form.reportDetailed,
-        reportIncludeAvgValue: form.reportIncludeAvgValue,
-        reportIncludeAvgRating: form.reportIncludeAvgRating,
-      },
-    });
-    if (isAdmin) {
-      updateTelegramMutation.mutate({
-        user_id: userId,
-        data: {
-          reportDailyTime: form.reportDailyTime,
-          reportWeeklyDay: form.reportWeeklyDay as
-            | "sun"
-            | "mon"
-            | "tue"
-            | "wed"
-            | "thu"
-            | "fri"
-            | "sat",
-          reportWeeklyTime: form.reportWeeklyTime,
-          reportMonthlyDay: form.reportMonthlyDay,
-          reportMonthlyTime: form.reportMonthlyTime,
-        },
-      });
-    }
   };
 
   const toNonNegInt = (value: string) => {
@@ -343,31 +370,45 @@ export default function ReportSettingsFormBody({
     return Math.max(0, Math.trunc(n));
   };
 
-  const handleSaveParams = () => {
-    updateReportParamsMutation.mutate({
-      user_id: userId,
-      data: {
-        reportIncludeCallSummaries: form.reportIncludeCallSummaries,
-        reportDetailed: form.reportDetailed,
-        reportIncludeAvgValue: form.reportIncludeAvgValue,
-        reportIncludeAvgRating: form.reportIncludeAvgRating,
+  const handleSaveParams = async () => {
+    await performUpdates({
+      successMessage: "Параметры отчетов сохранены",
+      errorMessage: "Не удалось сохранить параметры отчетов",
+      run: async () => {
+        await updateReportParamsMutation.mutateAsync({
+          user_id: userId,
+          data: {
+            reportIncludeCallSummaries: form.reportIncludeCallSummaries,
+            reportDetailed: form.reportDetailed,
+            reportIncludeAvgValue: form.reportIncludeAvgValue,
+            reportIncludeAvgRating: form.reportIncludeAvgRating,
 
-        filterExcludeAnsweringMachine: form.filterExcludeAnsweringMachine,
-        filterMinDuration: toNonNegInt(form.filterMinDuration),
-        filterMinReplicas: toNonNegInt(form.filterMinReplicas),
+            filterExcludeAnsweringMachine: form.filterExcludeAnsweringMachine,
+            filterMinDuration: toNonNegInt(form.filterMinDuration),
+            filterMinReplicas: toNonNegInt(form.filterMinReplicas),
 
-        kpiBaseSalary: toNonNegInt(form.kpiBaseSalary),
-        kpiTargetBonus: toNonNegInt(form.kpiTargetBonus),
-        kpiTargetTalkTimeMinutes: toNonNegInt(form.kpiTargetTalkTimeMinutes),
+            kpiBaseSalary: toNonNegInt(form.kpiBaseSalary),
+            kpiTargetBonus: toNonNegInt(form.kpiTargetBonus),
+            kpiTargetTalkTimeMinutes: toNonNegInt(
+              form.kpiTargetTalkTimeMinutes,
+            ),
+          },
+        });
       },
     });
   };
 
-  const handleSaveManagedUsers = () => {
-    updateReportManagedUsersMutation.mutate({
-      user_id: userId,
-      data: {
-        reportManagedUserIds: form.reportManagedUserIds ?? [],
+  const handleSaveManagedUsers = async () => {
+    await performUpdates({
+      successMessage: "Сводные менеджеры сохранены",
+      errorMessage: "Не удалось сохранить сводные настройки менеджеров",
+      run: async () => {
+        await updateReportManagedUsersMutation.mutateAsync({
+          user_id: userId,
+          data: {
+            reportManagedUserIds: form.reportManagedUserIds ?? [],
+          },
+        });
       },
     });
   };
@@ -383,7 +424,7 @@ export default function ReportSettingsFormBody({
             form={form}
             setForm={setForm}
             isAdmin={isAdmin}
-            saving={updateEmailMutation.isPending}
+            saving={isSavingCombined || updateEmailMutation.isPending}
             onSave={handleSaveEmail}
             onSendTest={handleSendTestEmail}
             sendTestLoading={sendTestEmailMutation.isPending}
@@ -400,7 +441,7 @@ export default function ReportSettingsFormBody({
             onDisconnect={handleTelegramDisconnect}
             connecting={telegramAuthUrlMutation.isPending}
             disconnecting={disconnectTelegramMutation.isPending}
-            saving={updateTelegramMutation.isPending}
+            saving={isSavingCombined || updateTelegramMutation.isPending}
             onSave={handleSaveTelegram}
             onSendTest={handleSendTest}
             sendTestLoading={sendTestMutation.isPending}
@@ -412,18 +453,13 @@ export default function ReportSettingsFormBody({
             form={form}
             setForm={setForm}
             isAdmin={isAdmin}
-            saving={updateMaxMutation.isPending}
+            saving={isSavingCombined || updateMaxMutation.isPending}
             onSave={handleSaveMax}
-            onSendTest={handleSendTestMax}
-            sendTestLoading={false}
-            sendTestSuccess={false}
-            sendTestReportType={null}
-            sendTestMessage=""
           />
           <ReportParamsSection
             form={form}
             setForm={setForm}
-            saving={updateReportParamsMutation.isPending}
+            saving={isSavingCombined || updateReportParamsMutation.isPending}
             onSave={handleSaveParams}
           />
           {isAdmin && (
@@ -432,7 +468,9 @@ export default function ReportSettingsFormBody({
               setForm={setForm}
               user={{ id: String(user.id) }}
               allUsers={allUsers}
-              saving={updateReportManagedUsersMutation.isPending}
+              saving={
+                isSavingCombined || updateReportManagedUsersMutation.isPending
+              }
               onSave={handleSaveManagedUsers}
             />
           )}
