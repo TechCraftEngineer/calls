@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, Skeleton } from "@calls/ui";
-import { useQuery } from "@tanstack/react-query";
+import { skipToken, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import type { User } from "@/lib/auth";
@@ -47,21 +47,33 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const userId = user?.id ? String(user.id) : "";
 
-  const usersQuery = useQuery({
-    ...orpc.users.getForEdit.queryOptions({ input: { user_id: userId } }),
-    enabled: Boolean(userId),
-  });
+  const usersQuery = useQuery(
+    userId
+      ? orpc.users.getForEdit.queryOptions({ input: { user_id: userId } })
+      : {
+          queryKey: ["report-settings", "user", "skip"],
+          queryFn: skipToken,
+        },
+  );
   const userData = usersQuery.data;
 
-  const usersListQuery = useQuery({
-    ...orpc.users.list.queryOptions(),
-    enabled: Boolean(userId && isWorkspaceAdmin),
-  });
+  const usersListQuery = useQuery(
+    userId && isWorkspaceAdmin
+      ? orpc.users.list.queryOptions()
+      : {
+          queryKey: ["report-settings", "users-list", "skip"],
+          queryFn: skipToken,
+        },
+  );
   const usersList = usersListQuery.data ?? [];
-  const scheduleQuery = useQuery({
-    ...orpc.settings.getReportScheduleSettings.queryOptions(),
-    enabled: Boolean(activeWorkspace?.id),
-  });
+  const scheduleQuery = useQuery(
+    activeWorkspace?.id
+      ? orpc.settings.getReportScheduleSettings.queryOptions()
+      : {
+          queryKey: ["report-settings", "schedule", "skip"],
+          queryFn: skipToken,
+        },
+  );
   const schedule = scheduleQuery.data;
 
   const [form, setForm] = useState<ReportSettingsForm>({
