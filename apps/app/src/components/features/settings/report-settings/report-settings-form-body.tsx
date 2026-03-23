@@ -30,7 +30,13 @@ type WeekDay = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat";
 const WEEK_DAYS: WeekDay[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
 function getReportWeeklyDay(day: string): WeekDay {
-  return WEEK_DAYS.includes(day as WeekDay) ? (day as WeekDay) : "fri";
+  if (WEEK_DAYS.includes(day as WeekDay)) return day as WeekDay;
+  if (process.env.NODE_ENV !== "production") {
+    console.warn(
+      `[report-settings] getReportWeeklyDay: invalid day "${day}", fallback to "fri"`,
+    );
+  }
+  return "fri";
 }
 
 export default function ReportSettingsFormBody({

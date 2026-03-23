@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -47,6 +48,18 @@ export const workspacePbxEmployees = pgTable(
       .notNull(),
   },
   (table) => [
+    check(
+      "workspace_pbx_employees_kpi_base_salary_non_negative",
+      sql`${table.kpiBaseSalary} >= 0`,
+    ),
+    check(
+      "workspace_pbx_employees_kpi_target_bonus_non_negative",
+      sql`${table.kpiTargetBonus} >= 0`,
+    ),
+    check(
+      "workspace_pbx_employees_kpi_target_talk_time_non_negative",
+      sql`${table.kpiTargetTalkTimeMinutes} >= 0`,
+    ),
     unique("workspace_pbx_employees_workspace_provider_external_unique").on(
       table.workspaceId,
       table.provider,

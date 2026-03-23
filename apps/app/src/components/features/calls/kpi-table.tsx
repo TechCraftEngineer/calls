@@ -19,7 +19,13 @@ import {
   TableRow,
   toast,
 } from "@calls/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  skipToken,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { KpiTableSkeleton } from "@/app/statistics/statistics-skeletons";
 import { useORPC } from "@/orpc/react";
@@ -48,17 +54,71 @@ interface KpiDraft {
   targetTalkTimeMinutes: number;
 }
 
-export default function KpiTable({
-  dateFrom,
-  dateTo,
-}: {
-  dateFrom: string;
-  dateTo: string;
-}) {
+const pad2 = (value: number) => value.toString().padStart(2, "0");
+const toMonthValue = (date: Date) =>
+  `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
+const getCurrentMonthValue = () => toMonthValue(new Date());
+const getMonthRange = (monthValue: string) => {
+  const [yearRaw, monthRaw] = monthValue.split("-");
+  const year = Number.parseInt(yearRaw ?? "", 10);
+  const month = Number.parseInt(monthRaw ?? "", 10);
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    month < 1 ||
+    month > 12
+  ) {
+    const fallback = new Date();
+    const y = fallback.getFullYear();
+    const m = fallback.getMonth();
+    const lastDay = new Date(y, m + 1, 0).getDate();
+    return {
+      startDate: `${y}-${pad2(m + 1)}-01`,
+      endDate: `${y}-${pad2(m + 1)}-${pad2(lastDay)}`,
+      normalizedMonthValue: `${y}-${pad2(m + 1)}`,
+    };
+  }
+  const lastDay = new Date(year, month, 0).getDate();
+  return {
+    startDate: `${year}-${pad2(month)}-01`,
+    endDate: `${year}-${pad2(month)}-${pad2(lastDay)}`,
+    normalizedMonthValue: `${year}-${pad2(month)}`,
+  };
+};
+
+const shiftMonth = (monthValue: string, delta: number) => {
+  const [yearRaw, monthRaw] = monthValue.split("-");
+  const year = Number.parseInt(yearRaw ?? "", 10);
+  const month = Number.parseInt(monthRaw ?? "", 10);
+  if (!Number.isInteger(year) || !Number.isInteger(month)) {
+    return getCurrentMonthValue();
+  }
+  const shifted = new Date(year, month - 1 + delta, 1);
+  return toMonthValue(shifted);
+};
+
+const monthLabel = (monthValue: string) => {
+  const [yearRaw, monthRaw] = monthValue.split("-");
+  const year = Number.parseInt(yearRaw ?? "", 10);
+  const month = Number.parseInt(monthRaw ?? "", 10);
+  if (!Number.isInteger(year) || !Number.isInteger(month))
+    return "Текущий месяц";
+  return new Date(year, month - 1, 1).toLocaleString("ru-RU", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
+export default function KpiTable() {
   const orpc = useORPC();
   const queryClient = useQueryClient();
-  const dFrom = dateFrom || new Date().toISOString().split("T")[0];
-  const dTo = dateTo || new Date().toISOString().split("T")[0];
+  const [selectedMonth, setSelectedMonth] =
+    useState<string>(getCurrentMonthValue);
+  const {
+    startDate: dFrom,
+    endDate: dTo,
+    normalizedMonthValue,
+  } = useMemo(() => getMonthRange(selectedMonth), [selectedMonth]);
   const [draftsByEmployeeId, setDraftsByEmployeeId] = useState<
     Record<string, KpiDraft>
   >({});
@@ -67,12 +127,16 @@ export default function KpiTable({
     null,
   );
 
-  const { data = [], isPending: loading } = useQuery({
-    ...orpc.statistics.getKpi.queryOptions({
-      input: { startDate: dFrom, endDate: dTo },
-    }),
-    enabled: !!dFrom && !!dTo,
-  });
+  const { data = [], isPending: loading } = useQuery(
+    dFrom && dTo
+      ? orpc.statistics.getKpi.queryOptions({
+          input: { startDate: dFrom, endDate: dTo },
+        })
+      : {
+          queryKey: ["statistics", "kpi", "skip"],
+          queryFn: skipToken,
+        },
+  );
 
   const rows = Array.isArray(data) ? (data as KpiRow[]) : [];
   const kpiQueryKey = useMemo(
@@ -104,14 +168,6 @@ export default function KpiTable({
       onSuccess: async () => {
         await queryClient.invalidateQueries({ queryKey: kpiQueryKey });
       },
-      onError: (error) => {
-        const message =
-          error instanceof Error ? error.message : "Не удалось сохранить KPI";
-        toast.error(message);
-      },
-      onSettled: () => {
-        setSavingEmployeeId(null);
-      },
     }),
   );
 
@@ -141,17 +197,37 @@ export default function KpiTable({
     if (!draft) return;
 
     setSavingEmployeeId(row.employeeExternalId);
-    await updateKpiMutation.mutateAsync({
-      employeeExternalId: row.employeeExternalId,
-      data: {
-        kpiBaseSalary: toNonNegativeInt(draft.baseSalary),
-        kpiTargetBonus: toNonNegativeInt(draft.targetBonus),
-        kpiTargetTalkTimeMinutes: toNonNegativeInt(draft.targetTalkTimeMinutes),
-      },
-    });
-    toast.success(`KPI для ${row.name} сохранены`);
-    setEditingEmployeeId(null);
+    try {
+      await updateKpiMutation.mutateAsync({
+        employeeExternalId: row.employeeExternalId,
+        data: {
+          kpiBaseSalary: toNonNegativeInt(draft.baseSalary),
+          kpiTargetBonus: toNonNegativeInt(draft.targetBonus),
+          kpiTargetTalkTimeMinutes: toNonNegativeInt(
+            draft.targetTalkTimeMinutes,
+          ),
+        },
+      });
+      toast.success(`KPI для ${row.name} сохранены`);
+      setEditingEmployeeId(null);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Не удалось сохранить KPI";
+      toast.error(message);
+      console.error("Failed to update KPI by employee", {
+        employeeExternalId: row.employeeExternalId,
+        error,
+      });
+    } finally {
+      setSavingEmployeeId(null);
+    }
   };
+
+  const formatRub = (value: number) =>
+    value.toLocaleString("ru-RU", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
 
   const editingRow =
     editingEmployeeId == null
@@ -170,8 +246,46 @@ export default function KpiTable({
 
   return (
     <Card className="card p-0! overflow-hidden mt-6">
-      <div className="py-5 px-6 border-b border-[#EEE]">
+      <div className="py-5 px-6 border-b border-[#EEE] flex flex-wrap items-center justify-between gap-3">
         <h3 className="section-title m-0">Расчет KPI сотрудников</h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Предыдущий месяц"
+            onClick={() => setSelectedMonth((prev) => shiftMonth(prev, -1))}
+          >
+            <ChevronLeft className="size-4" aria-hidden />
+          </Button>
+          <Input
+            type="month"
+            value={normalizedMonthValue}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="w-[170px]"
+            aria-label="Выбор месяца KPI"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Следующий месяц"
+            onClick={() => setSelectedMonth((prev) => shiftMonth(prev, 1))}
+          >
+            <ChevronRight className="size-4" aria-hidden />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setSelectedMonth(getCurrentMonthValue())}
+            disabled={normalizedMonthValue === getCurrentMonthValue()}
+          >
+            Текущий
+          </Button>
+          <span className="text-sm text-muted-foreground capitalize">
+            {monthLabel(normalizedMonthValue)}
+          </span>
+        </div>
       </div>
       <CardContent className="p-0! overflow-x-auto">
         <Table className="op-table">
@@ -206,8 +320,8 @@ export default function KpiTable({
                     {row.name} <br />
                     <small className="text-[#999]">{row.email}</small>
                   </TableCell>
-                  <TableCell>{row.baseSalary.toLocaleString()} ₽</TableCell>
-                  <TableCell>{row.targetBonus.toLocaleString()} ₽</TableCell>
+                  <TableCell>{formatRub(row.baseSalary)} ₽</TableCell>
+                  <TableCell>{formatRub(row.targetBonus)} ₽</TableCell>
                   <TableCell>{row.targetTalkTimeMinutes}</TableCell>
                   <TableCell>{row.periodTargetTalkTimeMinutes}</TableCell>
                   <TableCell
@@ -225,6 +339,12 @@ export default function KpiTable({
                       <div className="flex-1 bg-[#EEE] h-1.5 rounded overflow-hidden">
                         <div
                           className="h-full"
+                          role="progressbar"
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={row.kpiCompletionPercentage}
+                          aria-valuetext={`${row.kpiCompletionPercentage}% complete`}
+                          aria-label={`Выполнение KPI: ${row.kpiCompletionPercentage}%`}
                           style={{
                             width: `${row.kpiCompletionPercentage}%`,
                             background:
@@ -240,10 +360,10 @@ export default function KpiTable({
                     </div>
                   </TableCell>
                   <TableCell className="font-semibold">
-                    {row.calculatedBonus.toLocaleString()} ₽
+                    {formatRub(row.calculatedBonus)} ₽
                   </TableCell>
                   <TableCell className="font-bold text-(--brand-primary)">
-                    {row.totalCalculatedSalary.toLocaleString()} ₽
+                    {formatRub(row.totalCalculatedSalary)} ₽
                   </TableCell>
                   <TableCell>
                     <div className="space-y-2">
@@ -258,12 +378,18 @@ export default function KpiTable({
                             setEditingEmployeeId(row.employeeExternalId)
                           }
                         >
-                          {rowSaving ? "Сохранение..." : "Настроить"}
+                          {rowSaving && (
+                            <Loader2
+                              className="size-4 animate-spin"
+                              aria-hidden
+                            />
+                          )}
+                          Настроить
                         </Button>
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        Текущие: {draft.baseSalary.toLocaleString()} /{" "}
-                        {draft.targetBonus.toLocaleString()} /{" "}
+                        Текущие: {formatRub(draft.baseSalary)} /{" "}
+                        {formatRub(draft.targetBonus)} /{" "}
                         {draft.targetTalkTimeMinutes} мин
                       </div>
                     </div>
@@ -290,7 +416,7 @@ export default function KpiTable({
           if (!open) setEditingEmployeeId(null);
         }}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Настройки KPI</DialogTitle>
             <DialogDescription>
@@ -305,8 +431,11 @@ export default function KpiTable({
                 <Label htmlFor="kpi-base-salary">Базовый оклад (₽)</Label>
                 <Input
                   id="kpi-base-salary"
+                  name="kpi-base-salary"
                   type="number"
                   min={0}
+                  inputMode="numeric"
+                  autoComplete="off"
                   value={editingDraft.baseSalary}
                   onChange={(e) =>
                     setDraftField(
@@ -321,8 +450,11 @@ export default function KpiTable({
                 <Label htmlFor="kpi-target-bonus">Целевой бонус (₽)</Label>
                 <Input
                   id="kpi-target-bonus"
+                  name="kpi-target-bonus"
                   type="number"
                   min={0}
+                  inputMode="numeric"
+                  autoComplete="off"
                   value={editingDraft.targetBonus}
                   onChange={(e) =>
                     setDraftField(
@@ -339,8 +471,11 @@ export default function KpiTable({
                 </Label>
                 <Input
                   id="kpi-target-talk-time"
+                  name="kpi-target-talk-time"
                   type="number"
                   min={0}
+                  inputMode="numeric"
+                  autoComplete="off"
                   value={editingDraft.targetTalkTimeMinutes}
                   onChange={(e) =>
                     setDraftField(
@@ -372,6 +507,11 @@ export default function KpiTable({
                 if (editingRow) void saveRowKpi(editingRow);
               }}
             >
+              {editingRow &&
+              savingEmployeeId === editingRow.employeeExternalId &&
+              updateKpiMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : null}
               {editingRow &&
               savingEmployeeId === editingRow.employeeExternalId &&
               updateKpiMutation.isPending

@@ -243,6 +243,19 @@ export function createBackendApiWithContext(ctx: BackendContext) {
           ctx,
           input,
         ),
+      updateKpiEmployee: (input: {
+        employeeExternalId: string;
+        data: {
+          kpiBaseSalary: number;
+          kpiTargetBonus: number;
+          kpiTargetTalkTimeMinutes: number;
+        };
+      }) =>
+        callProc(
+          backendRouter.statistics.updateKpiEmployee as ProcedureWithCallable,
+          ctx,
+          input,
+        ),
     },
     reports: {
       sendTestTelegram: () =>

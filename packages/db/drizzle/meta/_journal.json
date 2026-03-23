@@ -8,6 +8,13 @@
       "when": 1773916820360,
       "tag": "0000_supreme_kronos",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774268275921,
+      "tag": "0001_powerful_earthquake",
+      "breakpoints": true
     }
   ]
 }

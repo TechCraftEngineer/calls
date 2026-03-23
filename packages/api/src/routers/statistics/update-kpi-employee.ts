@@ -6,9 +6,9 @@ import { workspaceAdminProcedure } from "../../orpc";
 const updateKpiByEmployeeSchema = z.object({
   employeeExternalId: z.string().min(1),
   data: z.object({
-    kpiBaseSalary: z.number().int().min(0),
-    kpiTargetBonus: z.number().int().min(0),
-    kpiTargetTalkTimeMinutes: z.number().int().min(0),
+    kpiBaseSalary: z.number().int().min(0).max(1_000_000),
+    kpiTargetBonus: z.number().int().min(0).max(1_000_000),
+    kpiTargetTalkTimeMinutes: z.number().int().min(0).max(100_000),
   }),
 });
 
