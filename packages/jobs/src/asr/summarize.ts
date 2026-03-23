@@ -17,6 +17,8 @@ export interface SummarizeOptions {
   summaryPrompt?: string;
   companyContext?: string | null;
   model?: string;
+  maxChars?: number;
+  hardMaxChars?: number;
 }
 
 const DEFAULT_FALLBACK = {
@@ -26,6 +28,32 @@ const DEFAULT_FALLBACK = {
   callType: "Другое",
   callTopic: "Не определена",
 } as const;
+
+const DEFAULT_MAX_CHARS = 40_000;
+const DEFAULT_HARD_MAX_CHARS = 200_000;
+
+const summarizeInputSchema = z.object({
+  text: z.string().trim().min(1),
+  options: z
+    .object({
+      summaryPrompt: z.string().optional(),
+      companyContext: z.string().nullable().optional(),
+      model: z.string().optional(),
+      maxChars: z
+        .number()
+        .int()
+        .positive()
+        .max(DEFAULT_HARD_MAX_CHARS)
+        .optional(),
+      hardMaxChars: z
+        .number()
+        .int()
+        .positive()
+        .max(DEFAULT_HARD_MAX_CHARS)
+        .optional(),
+    })
+    .optional(),
+});
 
 export async function summarizeWithLlm(
   text: string,
@@ -37,12 +65,44 @@ export async function summarizeWithLlm(
   callType?: string;
   callTopic?: string;
 }> {
-  if (!text?.trim() || !hasAiProviderConfigured()) {
+  const parsed = summarizeInputSchema.safeParse({ text, options });
+  if (!parsed.success) {
+    logger.warn("Некорректные параметры summarizeWithLlm", {
+      issues: parsed.error.issues.map((issue) => issue.message),
+    });
     return DEFAULT_FALLBACK;
   }
 
-  const companyBlock = options.companyContext?.trim()
-    ? `КОНТЕКСТ КОМПАНИИ:\n${options.companyContext.trim()}\n\nУчитывай это при определении темы (topic), заголовка (title) и sentiment.\n\n`
+  if (!hasAiProviderConfigured()) {
+    return DEFAULT_FALLBACK;
+  }
+
+  const inputText = parsed.data.text;
+  const inputOptions = parsed.data.options ?? {};
+  const hardMaxChars = inputOptions.hardMaxChars ?? DEFAULT_HARD_MAX_CHARS;
+  const maxChars = Math.min(
+    inputOptions.maxChars ?? DEFAULT_MAX_CHARS,
+    hardMaxChars,
+  );
+
+  if (inputText.length > hardMaxChars) {
+    logger.error(
+      "Текст транскрипта превышает жесткий лимит для summarizeWithLlm",
+      {
+        textLength: inputText.length,
+        hardMaxChars,
+      },
+    );
+    throw new Error(
+      `Transcript text is too large for summarization (length=${inputText.length}, hardMaxChars=${hardMaxChars})`,
+    );
+  }
+
+  const sanitizedText =
+    inputText.length > maxChars ? inputText.slice(0, maxChars) : inputText;
+
+  const companyBlock = inputOptions.companyContext?.trim()
+    ? `КОНТЕКСТ КОМПАНИИ:\n${inputOptions.companyContext.trim()}\n\nУчитывай это при определении темы (topic), заголовка (title) и sentiment.\n\n`
     : "";
 
   const defaultPrompt = `Проанализируй телефонный разговор и извлеки ключевую информацию:
@@ -68,7 +128,8 @@ export async function summarizeWithLlm(
 
 Отвечай только на русском языке. Будь конкретным и лаконичным.`;
 
-  const systemPrompt = companyBlock + (options.summaryPrompt || defaultPrompt);
+  const systemPrompt =
+    companyBlock + (inputOptions.summaryPrompt || defaultPrompt);
 
   const schema = z.object({
     summary: z
@@ -88,10 +149,10 @@ export async function summarizeWithLlm(
 
   try {
     const { output: result } = await generateWithAi({
-      model: options.model,
+      model: inputOptions.model,
       modelProfile: "default",
       system: systemPrompt,
-      prompt: `Проанализируй следующий разговор:\n\n${text}`,
+      prompt: `Проанализируй следующий разговор:\n\n${sanitizedText}`,
       output: Output.object({ schema }),
       functionId: "asr-summarize",
     });

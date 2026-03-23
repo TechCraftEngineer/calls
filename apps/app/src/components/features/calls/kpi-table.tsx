@@ -1,4 +1,5 @@
 import {
+  Badge,
   Button,
   Calendar,
   Card,
@@ -35,11 +36,14 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import {
   CalendarIcon,
+  Check,
   ChevronLeft,
   ChevronRight,
   Download,
   Loader2,
+  Phone,
   Settings2,
+  TrendingUp,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -308,10 +312,18 @@ export default function KpiTable() {
           />
         ),
         cell: ({ row }) => (
-          <div className="font-semibold">
-            {row.original.name}
-            <br />
-            <small className="text-[#999]">{row.original.email}</small>
+          <div className="flex items-start gap-3 py-1">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+              <Phone className="size-5" aria-hidden />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold text-foreground truncate">
+                {row.original.name}
+              </div>
+              <div className="text-sm text-muted-foreground truncate">
+                {row.original.email}
+              </div>
+            </div>
           </div>
         ),
         meta: {
@@ -330,7 +342,11 @@ export default function KpiTable() {
             tooltip="Базовый оклад сотрудника в рублях"
           />
         ),
-        cell: ({ row }) => `${formatRub(row.original.baseSalary)} ₽`,
+        cell: ({ row }) => (
+          <div className="font-medium tabular-nums">
+            {formatRub(row.original.baseSalary)}&nbsp;₽
+          </div>
+        ),
         meta: { headerTitle: "Оклад, ₽" },
       },
       {
@@ -344,7 +360,11 @@ export default function KpiTable() {
             tooltip="Целевой бонус при выполнении KPI"
           />
         ),
-        cell: ({ row }) => `${formatRub(row.original.targetBonus)} ₽`,
+        cell: ({ row }) => (
+          <div className="font-medium tabular-nums text-emerald-600">
+            {formatRub(row.original.targetBonus)}&nbsp;₽
+          </div>
+        ),
         meta: { headerTitle: "Бонус, ₽" },
       },
       {
@@ -358,7 +378,11 @@ export default function KpiTable() {
             tooltip="Целевое время разговоров в минутах за месяц"
           />
         ),
-        cell: ({ row }) => row.original.targetTalkTimeMinutes,
+        cell: ({ row }) => (
+          <div className="tabular-nums text-muted-foreground">
+            {row.original.targetTalkTimeMinutes}
+          </div>
+        ),
         meta: { headerTitle: "Цель, мин/мес" },
       },
       {
@@ -372,18 +396,35 @@ export default function KpiTable() {
             tooltip="Фактическое время разговоров за выбранный период"
           />
         ),
-        cell: ({ row }) => (
-          <span
-            className={
-              row.original.actualTalkTimeMinutes >=
-              row.original.periodTargetTalkTimeMinutes
-                ? "text-(--status-success)"
-                : "text-(--status-warning)"
-            }
-          >
-            {row.original.actualTalkTimeMinutes}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const isOnTarget =
+            row.original.actualTalkTimeMinutes >=
+            row.original.periodTargetTalkTimeMinutes;
+          return (
+            <div className="flex items-center gap-2">
+              <div
+                className={`flex size-6 shrink-0 items-center justify-center rounded-full ${
+                  isOnTarget
+                    ? "bg-emerald-50 text-emerald-600"
+                    : "bg-amber-50 text-amber-600"
+                }`}
+              >
+                {isOnTarget ? (
+                  <Check className="size-3.5" aria-hidden />
+                ) : (
+                  <TrendingUp className="size-3.5" aria-hidden />
+                )}
+              </div>
+              <span
+                className={`font-medium tabular-nums ${
+                  isOnTarget ? "text-emerald-600" : "text-amber-600"
+                }`}
+              >
+                {row.original.actualTalkTimeMinutes}
+              </span>
+            </div>
+          );
+        },
         meta: { headerTitle: "Факт, мин" },
       },
       {
@@ -397,31 +438,49 @@ export default function KpiTable() {
             tooltip="Процент выполнения KPI относительно плана периода"
           />
         ),
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-[#EEE] h-1.5 rounded overflow-hidden">
-              <div
-                className="h-full"
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={row.original.kpiCompletionPercentage}
-                aria-valuetext={`${row.original.kpiCompletionPercentage}% complete`}
-                aria-label={`Выполнение KPI: ${row.original.kpiCompletionPercentage}%`}
-                style={{
-                  width: `${row.original.kpiCompletionPercentage}%`,
-                  background:
-                    row.original.kpiCompletionPercentage >= 100
-                      ? "var(--status-success)"
-                      : "var(--status-warning)",
-                }}
-              />
+        cell: ({ row }) => {
+          const percentage = row.original.kpiCompletionPercentage;
+          const isComplete = percentage >= 100;
+          const isGood = percentage >= 80;
+          return (
+            <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-20">
+                <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${
+                      isComplete
+                        ? "bg-emerald-500"
+                        : isGood
+                          ? "bg-blue-500"
+                          : "bg-amber-500"
+                    }`}
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={percentage}
+                    aria-valuetext={`${percentage}% выполнено`}
+                    aria-label={`Выполнение KPI: ${percentage}%`}
+                    style={{
+                      width: `${Math.min(percentage, 100)}%`,
+                    }}
+                  />
+                </div>
+              </div>
+              <Badge
+                variant={isComplete ? "default" : "secondary"}
+                className={`min-w-14 justify-center tabular-nums ${
+                  isComplete
+                    ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                    : isGood
+                      ? "bg-blue-50 text-blue-700 hover:bg-blue-100"
+                      : "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                }`}
+              >
+                {percentage}%
+              </Badge>
             </div>
-            <span className="text-xs font-semibold">
-              {row.original.kpiCompletionPercentage}%
-            </span>
-          </div>
-        ),
+          );
+        },
         meta: { headerTitle: "Выполнение, %" },
       },
       {
@@ -436,9 +495,9 @@ export default function KpiTable() {
           />
         ),
         cell: ({ row }) => (
-          <span className="font-semibold">
-            {formatRub(row.original.calculatedBonus)} ₽
-          </span>
+          <div className="font-semibold tabular-nums text-emerald-600">
+            +{formatRub(row.original.calculatedBonus)}&nbsp;₽
+          </div>
         ),
         meta: { headerTitle: "Бонус за период, ₽" },
       },
@@ -454,9 +513,9 @@ export default function KpiTable() {
           />
         ),
         cell: ({ row }) => (
-          <span className="font-bold text-(--brand-primary)">
-            {formatRub(row.original.totalCalculatedSalary)} ₽
-          </span>
+          <div className="font-bold tabular-nums text-blue-600">
+            {formatRub(row.original.totalCalculatedSalary)}&nbsp;₽
+          </div>
         ),
         meta: { headerTitle: "Итого, ₽" },
       },
@@ -483,6 +542,7 @@ export default function KpiTable() {
               size="icon"
               variant="outline"
               disabled={rowSaving}
+              className="touch-action-manipulation"
               aria-label={`Открыть настройки KPI для ${row.original.name}`}
               onClick={() =>
                 setEditingEmployeeId(row.original.employeeExternalId)
@@ -585,14 +645,22 @@ export default function KpiTable() {
 
   return (
     <Card className="card p-0! overflow-hidden mt-6">
-      <div className="py-5 px-6 border-b border-[#EEE] flex flex-wrap items-center justify-between gap-3">
-        <h3 className="section-title m-0">Расчет KPI сотрудников</h3>
+      <div className="py-5 px-6 border-b border-border bg-muted/30 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="section-title m-0 flex items-center gap-2">
+            Расчет KPI сотрудников
+          </h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Период: {dFrom} — {dTo}
+          </p>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
             variant="outline"
             size="icon"
             aria-label="Предыдущий месяц"
+            className="touch-action-manipulation"
             onClick={() => setSelectedMonth((prev) => shiftMonth(prev, -1))}
           >
             <ChevronLeft className="size-4" aria-hidden />
@@ -602,14 +670,16 @@ export default function KpiTable() {
               <Button
                 type="button"
                 variant="outline"
-                className="min-w-52 justify-start text-left font-normal"
+                className="min-w-52 justify-start text-left font-normal touch-action-manipulation"
                 aria-label="Выбор месяца KPI"
               >
                 <CalendarIcon
-                  className="size-4 shrink-0 opacity-70"
+                  className="size-4 shrink-0 opacity-70 mr-2"
                   aria-hidden
                 />
-                {monthLabel(normalizedMonthValue)}
+                <span className="truncate">
+                  {monthLabel(normalizedMonthValue)}
+                </span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -645,6 +715,7 @@ export default function KpiTable() {
             variant="outline"
             size="icon"
             aria-label="Следующий месяц"
+            className="touch-action-manipulation"
             onClick={() => setSelectedMonth((prev) => shiftMonth(prev, 1))}
             disabled={!canGoNextMonth}
           >
@@ -653,6 +724,8 @@ export default function KpiTable() {
           <Button
             type="button"
             variant="ghost"
+            size="sm"
+            className="touch-action-manipulation"
             onClick={() => setSelectedMonth(shiftMonth(currentMonthValue, -1))}
           >
             -1 мес
@@ -660,6 +733,8 @@ export default function KpiTable() {
           <Button
             type="button"
             variant="ghost"
+            size="sm"
+            className="touch-action-manipulation hidden md:inline-flex"
             onClick={() => setSelectedMonth(shiftMonth(currentMonthValue, -3))}
           >
             -3 мес
@@ -667,6 +742,8 @@ export default function KpiTable() {
           <Button
             type="button"
             variant="ghost"
+            size="sm"
+            className="touch-action-manipulation hidden lg:inline-flex"
             onClick={() => setSelectedMonth(shiftMonth(currentMonthValue, -6))}
           >
             -6 мес
@@ -674,6 +751,8 @@ export default function KpiTable() {
           <Button
             type="button"
             variant="ghost"
+            size="sm"
+            className="touch-action-manipulation"
             onClick={() => setSelectedMonth(currentMonthValue)}
             disabled={normalizedMonthValue === currentMonthValue}
           >
@@ -701,38 +780,50 @@ export default function KpiTable() {
             headerSticky: "sticky top-0 z-30 bg-background/95 backdrop-blur-xs",
           }}
         >
-          <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-3 pb-1">
-            <div className="text-sm text-muted-foreground">
-              Период: {dFrom} — {dTo}
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4 pb-2">
+            <div className="flex items-center gap-4">
+              <Badge variant="outline" className="text-sm font-normal">
+                <span className="text-muted-foreground">Всего:</span>
+                <span className="ml-1.5 font-semibold">{rows.length}</span>
+              </Badge>
             </div>
             <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
+                className="touch-action-manipulation"
                 onClick={exportCurrentMonthCsv}
+                aria-label={`Экспортировать данные KPI за ${monthLabel(normalizedMonthValue)} в CSV`}
               >
                 <Download className="size-4" aria-hidden />
-                Экспорт CSV
+                <span className="hidden sm:inline">Экспорт CSV</span>
+                <span className="sm:hidden">CSV</span>
               </Button>
               <DataGridColumnVisibility
                 table={table}
                 trigger={
-                  <Button type="button" variant="outline" size="sm">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="touch-action-manipulation"
+                    aria-label="Настроить видимость колонок"
+                  >
                     <Settings2 className="size-4" aria-hidden />
-                    Колонки
+                    <span className="hidden sm:inline">Колонки</span>
                   </Button>
                 }
               />
             </div>
           </div>
           <DataGridContainer className="border-0">
-            <div className="max-h-[70vh] overflow-auto">
+            <div className="max-h-[70vh] overflow-auto overscroll-contain">
               <div className="min-w-350">
                 <DataGridTable<KpiRow> />
               </div>
             </div>
-            <div className="px-4 py-3 border-t border-[#EEE]">
+            <div className="px-4 py-3 border-t border-border bg-muted/20">
               <DataGridPagination />
             </div>
           </DataGridContainer>
@@ -744,19 +835,31 @@ export default function KpiTable() {
           if (!open) setEditingEmployeeId(null);
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Настройки KPI</DialogTitle>
             <DialogDescription>
-              {editingRow
-                ? `Изменение KPI для ${editingRow.name}`
-                : "Изменение KPI сотрудника"}
+              {editingRow ? (
+                <span>
+                  Изменение параметров KPI для{" "}
+                  <span className="font-medium text-foreground">
+                    {editingRow.name}
+                  </span>
+                </span>
+              ) : (
+                "Изменение KPI сотрудника"
+              )}
             </DialogDescription>
           </DialogHeader>
           {editingRow && editingDraft && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="kpi-base-salary">Базовый оклад (₽)</Label>
+                <Label htmlFor="kpi-base-salary">
+                  Базовый оклад (₽)
+                  <span className="ml-2 text-xs text-muted-foreground font-normal">
+                    макс. 1&nbsp;000&nbsp;000
+                  </span>
+                </Label>
                 <Input
                   id="kpi-base-salary"
                   name="kpi-base-salary"
@@ -765,6 +868,7 @@ export default function KpiTable() {
                   max={1_000_000}
                   inputMode="numeric"
                   autoComplete="off"
+                  className="text-base tabular-nums touch-action-manipulation"
                   value={editingDraft.baseSalary}
                   onChange={(e) =>
                     setDraftField(
@@ -773,10 +877,22 @@ export default function KpiTable() {
                       e.target.value,
                     )
                   }
+                  aria-describedby="kpi-base-salary-hint"
                 />
+                <p
+                  id="kpi-base-salary-hint"
+                  className="text-xs text-muted-foreground"
+                >
+                  Ежемесячный базовый оклад сотрудника
+                </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="kpi-target-bonus">Целевой бонус (₽)</Label>
+                <Label htmlFor="kpi-target-bonus">
+                  Целевой бонус (₽)
+                  <span className="ml-2 text-xs text-muted-foreground font-normal">
+                    макс. 1&nbsp;000&nbsp;000
+                  </span>
+                </Label>
                 <Input
                   id="kpi-target-bonus"
                   name="kpi-target-bonus"
@@ -785,6 +901,7 @@ export default function KpiTable() {
                   max={1_000_000}
                   inputMode="numeric"
                   autoComplete="off"
+                  className="text-base tabular-nums touch-action-manipulation"
                   value={editingDraft.targetBonus}
                   onChange={(e) =>
                     setDraftField(
@@ -793,11 +910,21 @@ export default function KpiTable() {
                       e.target.value,
                     )
                   }
+                  aria-describedby="kpi-target-bonus-hint"
                 />
+                <p
+                  id="kpi-target-bonus-hint"
+                  className="text-xs text-muted-foreground"
+                >
+                  Бонус при 100% выполнении KPI
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="kpi-target-talk-time">
                   Целевое время разговоров в месяц (мин)
+                  <span className="ml-2 text-xs text-muted-foreground font-normal">
+                    макс. 100&nbsp;000
+                  </span>
                 </Label>
                 <Input
                   id="kpi-target-talk-time"
@@ -807,6 +934,7 @@ export default function KpiTable() {
                   max={100_000}
                   inputMode="numeric"
                   autoComplete="off"
+                  className="text-base tabular-nums touch-action-manipulation"
                   value={editingDraft.targetTalkTimeMinutes}
                   onChange={(e) =>
                     setDraftField(
@@ -815,15 +943,23 @@ export default function KpiTable() {
                       e.target.value,
                     )
                   }
+                  aria-describedby="kpi-target-talk-time-hint"
                 />
+                <p
+                  id="kpi-target-talk-time-hint"
+                  className="text-xs text-muted-foreground"
+                >
+                  Минимальное время разговоров для получения полного бонуса
+                </p>
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => setEditingEmployeeId(null)}
+              className="touch-action-manipulation"
             >
               Отмена
             </Button>
@@ -834,6 +970,7 @@ export default function KpiTable() {
                 (savingEmployeeId === editingRow.employeeExternalId &&
                   updateKpiMutation.isPending)
               }
+              className="touch-action-manipulation"
               onClick={() => {
                 if (editingRow) void saveRowKpi(editingRow);
               }}
@@ -841,13 +978,13 @@ export default function KpiTable() {
               {editingRow &&
               savingEmployeeId === editingRow.employeeExternalId &&
               updateKpiMutation.isPending ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : null}
-              {editingRow &&
-              savingEmployeeId === editingRow.employeeExternalId &&
-              updateKpiMutation.isPending
-                ? "Сохранение..."
-                : "Сохранить"}
+                <>
+                  <Loader2 className="size-4 animate-spin mr-2" aria-hidden />
+                  Сохранение…
+                </>
+              ) : (
+                "Сохранить"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
