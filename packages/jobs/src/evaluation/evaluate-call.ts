@@ -91,7 +91,7 @@ export async function evaluateCallWithLlm(
     not_analyzable_reason: z
       .string()
       .nullable()
-      .describe('Причина неаналозируемости (например, "autoanswerer")'),
+      .describe('Причина неанализируемости (например, "autoanswerer")'),
     value_score: z
       .number()
       .min(1)
