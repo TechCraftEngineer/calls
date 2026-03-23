@@ -99,7 +99,7 @@
 - `truncate` - для обрезки длинных текстов
 
 ### Цветовая схема
-```
+```text
 Успех (100%+):    emerald-50, emerald-500, emerald-600, emerald-700
 Хорошо (80-99%):  blue-50, blue-500, blue-600, blue-700
 Внимание (<80%):  amber-50, amber-500, amber-600, amber-700
