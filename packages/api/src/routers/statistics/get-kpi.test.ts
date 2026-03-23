@@ -17,7 +17,6 @@ describe("buildKpiRows", () => {
           isActive: true,
         },
       ] as unknown as Parameters<typeof buildKpiRows>[0]["pbxEmployees"],
-      pbxLinks: [],
       kpiStats: [
         {
           internalNumber: "101",
@@ -28,13 +27,12 @@ describe("buildKpiRows", () => {
           missed: 1,
         },
       ],
-      userEditMap: new Map(),
     });
 
     expect(rows).toHaveLength(1);
     expect(rows[0]).toEqual(
       expect.objectContaining({
-        userId: "emp-1",
+        employeeExternalId: "emp-1",
         name: "Иван Петров",
         email: "emp1@company.com",
         actualTalkTimeMinutes: 60,
@@ -53,7 +51,7 @@ describe("buildKpiRows", () => {
     );
   });
 
-  it("подхватывает KPI-настройки только для linked employee user", () => {
+  it("использует KPI-настройки из pbx employee без привязки к user", () => {
     const rows = buildKpiRows({
       startDate: "2026-03-01",
       endDate: "2026-03-31",
@@ -65,6 +63,9 @@ describe("buildKpiRows", () => {
           firstName: "Анна",
           lastName: "Иванова",
           displayName: "Анна Иванова",
+          kpiBaseSalary: 50000,
+          kpiTargetBonus: 20000,
+          kpiTargetTalkTimeMinutes: 180,
           isActive: true,
         },
         {
@@ -74,18 +75,12 @@ describe("buildKpiRows", () => {
           firstName: null,
           lastName: null,
           displayName: "Без привязки",
+          kpiBaseSalary: 0,
+          kpiTargetBonus: 0,
+          kpiTargetTalkTimeMinutes: 0,
           isActive: true,
         },
       ] as unknown as Parameters<typeof buildKpiRows>[0]["pbxEmployees"],
-      pbxLinks: [
-        {
-          link: {
-            targetType: "employee",
-            targetExternalId: "emp-linked",
-          },
-          user: { id: "user-1" },
-        },
-      ] as unknown as Parameters<typeof buildKpiRows>[0]["pbxLinks"],
       kpiStats: [
         {
           internalNumber: "201",
@@ -104,22 +99,14 @@ describe("buildKpiRows", () => {
           missed: 1,
         },
       ],
-      userEditMap: new Map([
-        [
-          "user-1",
-          {
-            kpiBaseSalary: 50000,
-            kpiTargetBonus: 20000,
-            kpiTargetTalkTimeMinutes: 180,
-          },
-        ],
-      ]) as unknown as Parameters<typeof buildKpiRows>[0]["userEditMap"],
     });
 
     expect(rows).toHaveLength(2);
 
-    const linked = rows.find((row) => row.userId === "emp-linked");
-    const unlinked = rows.find((row) => row.userId === "emp-unlinked");
+    const linked = rows.find((row) => row.employeeExternalId === "emp-linked");
+    const unlinked = rows.find(
+      (row) => row.employeeExternalId === "emp-unlinked",
+    );
 
     expect(linked).toEqual(
       expect.objectContaining({
@@ -159,7 +146,6 @@ describe("buildKpiRows", () => {
           isActive: true,
         },
       ] as unknown as Parameters<typeof buildKpiRows>[0]["pbxEmployees"],
-      pbxLinks: [],
       kpiStats: [
         {
           internalNumber: "301",
@@ -186,7 +172,6 @@ describe("buildKpiRows", () => {
           missed: 0,
         },
       ],
-      userEditMap: new Map(),
     });
 
     expect(rows).toHaveLength(1);

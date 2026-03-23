@@ -28,6 +28,11 @@ export const workspacePbxEmployees = pgTable(
     firstName: text("first_name"),
     lastName: text("last_name"),
     displayName: text("display_name").notNull(),
+    kpiBaseSalary: integer("kpi_base_salary").notNull().default(0),
+    kpiTargetBonus: integer("kpi_target_bonus").notNull().default(0),
+    kpiTargetTalkTimeMinutes: integer("kpi_target_talk_time_minutes")
+      .notNull()
+      .default(0),
     isActive: boolean("is_active").notNull().default(true),
     rawData: jsonb("raw_data").$type<Record<string, unknown>>().notNull(),
     syncedAt: timestamp("synced_at", { withTimezone: true })
