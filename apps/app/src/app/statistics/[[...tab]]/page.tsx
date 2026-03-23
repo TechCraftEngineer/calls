@@ -110,7 +110,7 @@ function StatisticsPageContent() {
           </TabsList>
         </Tabs>
 
-        {activeTab !== "settings" && (
+        {activeTab === "statistics" && (
           <StatisticsFilters
             dateFrom={filters.dateFrom}
             dateTo={filters.dateTo}
@@ -129,9 +129,7 @@ function StatisticsPageContent() {
           <StatisticsTable stats={stats} loading={loading} />
         )}
 
-        {activeTab === "kpi" && (
-          <KpiTable dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
-        )}
+        {activeTab === "kpi" && <KpiTable />}
 
         {activeTab === "settings" && userLoading && (
           <StatisticsSettingsSkeleton />

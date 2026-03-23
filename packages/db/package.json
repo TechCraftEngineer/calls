@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
-    "@types/pg": "^8.18.0",
+    "@types/pg": "^8.20.0",
     "@types/ws": "^8.18.1",
     "drizzle-kit": "^0.31.10",
     "typescript": "5.9.3"

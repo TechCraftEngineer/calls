@@ -101,7 +101,10 @@ export function getStatisticsColumns(): ColumnDef<StatsRow>[] {
       id: "outgoingDuration",
       accessorFn: (row) => Math.floor((row.outgoing?.duration ?? 0) / 60),
       header: ({ column }) => (
-        <DataGridColumnHeader column={column} title="Исх (мин)" />
+        <DataGridColumnHeader
+          column={column}
+          title="Длительность исходящих звонков, мин"
+        />
       ),
       cell: ({ row }) => (
         <span className={row.original.isTotalRow ? "font-bold" : ""}>
@@ -109,7 +112,7 @@ export function getStatisticsColumns(): ColumnDef<StatsRow>[] {
         </span>
       ),
       meta: {
-        headerTitle: "Исх (мин)",
+        headerTitle: "Длительность исходящих звонков, мин",
         skeleton: <Skeleton className="h-5 w-14" />,
       },
     },
@@ -117,7 +120,10 @@ export function getStatisticsColumns(): ColumnDef<StatsRow>[] {
       id: "incomingDuration",
       accessorFn: (row) => Math.floor((row.incoming?.duration ?? 0) / 60),
       header: ({ column }) => (
-        <DataGridColumnHeader column={column} title="Вх (мин)" />
+        <DataGridColumnHeader
+          column={column}
+          title="Длительность входящих звонков, мин"
+        />
       ),
       cell: ({ row }) => (
         <span className={row.original.isTotalRow ? "font-bold" : ""}>
@@ -125,7 +131,7 @@ export function getStatisticsColumns(): ColumnDef<StatsRow>[] {
         </span>
       ),
       meta: {
-        headerTitle: "Вх (мин)",
+        headerTitle: "Длительность входящих звонков, мин",
         skeleton: <Skeleton className="h-5 w-14" />,
       },
     },

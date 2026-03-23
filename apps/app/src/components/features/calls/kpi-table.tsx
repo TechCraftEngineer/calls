@@ -1,8 +1,14 @@
 import {
-  Badge,
   Button,
+  Calendar,
   Card,
   CardContent,
+  DataGrid,
+  DataGridColumnHeader,
+  DataGridColumnVisibility,
+  DataGridContainer,
+  DataGridPagination,
+  DataGridTable,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -11,16 +17,37 @@ import {
   DialogTitle,
   Input,
   Label,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Skeleton,
   toast,
 } from "@calls/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import {
+  skipToken,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import { format } from "date-fns";
+import { ru } from "date-fns/locale";
+import {
+  CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Loader2,
+  Settings2,
+} from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { KpiTableSkeleton } from "@/app/statistics/statistics-skeletons";
 import { useORPC } from "@/orpc/react";
 
@@ -48,17 +75,77 @@ interface KpiDraft {
   targetTalkTimeMinutes: number;
 }
 
-export default function KpiTable({
-  dateFrom,
-  dateTo,
-}: {
-  dateFrom: string;
-  dateTo: string;
-}) {
+const pad2 = (value: number) => value.toString().padStart(2, "0");
+const toMonthValue = (date: Date) =>
+  `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
+const getCurrentMonthValue = () => toMonthValue(new Date());
+const getMonthRange = (monthValue: string) => {
+  const [yearRaw, monthRaw] = monthValue.split("-");
+  const year = Number.parseInt(yearRaw ?? "", 10);
+  const month = Number.parseInt(monthRaw ?? "", 10);
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    month < 1 ||
+    month > 12
+  ) {
+    const fallback = new Date();
+    const y = fallback.getFullYear();
+    const m = fallback.getMonth();
+    const lastDay = new Date(y, m + 1, 0).getDate();
+    return {
+      startDate: `${y}-${pad2(m + 1)}-01`,
+      endDate: `${y}-${pad2(m + 1)}-${pad2(lastDay)}`,
+      normalizedMonthValue: `${y}-${pad2(m + 1)}`,
+    };
+  }
+  const lastDay = new Date(year, month, 0).getDate();
+  return {
+    startDate: `${year}-${pad2(month)}-01`,
+    endDate: `${year}-${pad2(month)}-${pad2(lastDay)}`,
+    normalizedMonthValue: `${year}-${pad2(month)}`,
+  };
+};
+
+const shiftMonth = (monthValue: string, delta: number) => {
+  const [yearRaw, monthRaw] = monthValue.split("-");
+  const year = Number.parseInt(yearRaw ?? "", 10);
+  const month = Number.parseInt(monthRaw ?? "", 10);
+  if (!Number.isInteger(year) || !Number.isInteger(month)) {
+    return getCurrentMonthValue();
+  }
+  const shifted = new Date(year, month - 1 + delta, 1);
+  return toMonthValue(shifted);
+};
+
+const monthLabel = (monthValue: string) => {
+  const [yearRaw, monthRaw] = monthValue.split("-");
+  const year = Number.parseInt(yearRaw ?? "", 10);
+  const month = Number.parseInt(monthRaw ?? "", 10);
+  if (!Number.isInteger(year) || !Number.isInteger(month))
+    return "Текущий месяц";
+  return new Date(year, month - 1, 1).toLocaleString("ru-RU", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
+export default function KpiTable() {
   const orpc = useORPC();
   const queryClient = useQueryClient();
-  const dFrom = dateFrom || new Date().toISOString().split("T")[0];
-  const dTo = dateTo || new Date().toISOString().split("T")[0];
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [selectedMonth, setSelectedMonth] =
+    useState<string>(getCurrentMonthValue);
+  const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+  const {
+    startDate: dFrom,
+    endDate: dTo,
+    normalizedMonthValue,
+  } = useMemo(() => getMonthRange(selectedMonth), [selectedMonth]);
+  const currentMonthValue = useMemo(() => getCurrentMonthValue(), []);
+  const canGoNextMonth = normalizedMonthValue < currentMonthValue;
   const [draftsByEmployeeId, setDraftsByEmployeeId] = useState<
     Record<string, KpiDraft>
   >({});
@@ -67,12 +154,16 @@ export default function KpiTable({
     null,
   );
 
-  const { data = [], isPending: loading } = useQuery({
-    ...orpc.statistics.getKpi.queryOptions({
-      input: { startDate: dFrom, endDate: dTo },
-    }),
-    enabled: !!dFrom && !!dTo,
-  });
+  const { data = [], isPending: loading } = useQuery(
+    dFrom && dTo
+      ? orpc.statistics.getKpi.queryOptions({
+          input: { startDate: dFrom, endDate: dTo },
+        })
+      : {
+          queryKey: ["statistics", "kpi", "skip"],
+          queryFn: skipToken,
+        },
+  );
 
   const rows = Array.isArray(data) ? (data as KpiRow[]) : [];
   const kpiQueryKey = useMemo(
@@ -82,6 +173,31 @@ export default function KpiTable({
       }),
     [dFrom, dTo, orpc.statistics.getKpi],
   );
+
+  useEffect(() => {
+    const monthFromUrl = searchParams.get("month");
+    if (!monthFromUrl) return;
+    const { normalizedMonthValue: normalizedFromUrl } =
+      getMonthRange(monthFromUrl);
+    if (normalizedFromUrl !== selectedMonth) {
+      setSelectedMonth(normalizedFromUrl);
+    }
+  }, [searchParams, selectedMonth]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (selectedMonth === currentMonthValue) {
+      params.delete("month");
+    } else {
+      params.set("month", selectedMonth);
+    }
+    const nextQuery = params.toString();
+    const currentQuery = searchParams.toString();
+    if (nextQuery === currentQuery) return;
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+      scroll: false,
+    });
+  }, [currentMonthValue, pathname, router, searchParams, selectedMonth]);
 
   useEffect(() => {
     setDraftsByEmployeeId((prev) => {
@@ -103,14 +219,6 @@ export default function KpiTable({
     orpc.statistics.updateKpiEmployee.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries({ queryKey: kpiQueryKey });
-      },
-      onError: (error) => {
-        const message =
-          error instanceof Error ? error.message : "Не удалось сохранить KPI";
-        toast.error(message);
-      },
-      onSettled: () => {
-        setSavingEmployeeId(null);
       },
     }),
   );
@@ -141,17 +249,329 @@ export default function KpiTable({
     if (!draft) return;
 
     setSavingEmployeeId(row.employeeExternalId);
-    await updateKpiMutation.mutateAsync({
-      employeeExternalId: row.employeeExternalId,
-      data: {
-        kpiBaseSalary: toNonNegativeInt(draft.baseSalary),
-        kpiTargetBonus: toNonNegativeInt(draft.targetBonus),
-        kpiTargetTalkTimeMinutes: toNonNegativeInt(draft.targetTalkTimeMinutes),
-      },
-    });
-    toast.success(`KPI для ${row.name} сохранены`);
-    setEditingEmployeeId(null);
+    try {
+      await updateKpiMutation.mutateAsync({
+        employeeExternalId: row.employeeExternalId,
+        data: {
+          kpiBaseSalary: toNonNegativeInt(draft.baseSalary),
+          kpiTargetBonus: toNonNegativeInt(draft.targetBonus),
+          kpiTargetTalkTimeMinutes: toNonNegativeInt(
+            draft.targetTalkTimeMinutes,
+          ),
+        },
+      });
+      toast.success(`KPI для ${row.name} сохранены`);
+      setEditingEmployeeId(null);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Не удалось сохранить KPI";
+      toast.error(message);
+      console.error("Failed to update KPI by employee", {
+        employeeExternalId: row.employeeExternalId,
+        error,
+      });
+    } finally {
+      setSavingEmployeeId(null);
+    }
   };
+
+  const formatRub = useCallback(
+    (value: number) =>
+      value.toLocaleString("ru-RU", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }),
+    [],
+  );
+
+  const columns = useMemo<ColumnDef<KpiRow>[]>(
+    () => [
+      {
+        id: "employee",
+        accessorKey: "name",
+        size: 340,
+        minSize: 300,
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            column={column}
+            title="Сотрудник"
+            className="min-w-52"
+          />
+        ),
+        cell: ({ row }) => (
+          <div className="font-semibold">
+            {row.original.name}
+            <br />
+            <small className="text-[#999]">{row.original.email}</small>
+          </div>
+        ),
+        meta: {
+          headerTitle: "Сотрудник",
+          skeleton: <Skeleton className="h-5 w-30" />,
+        },
+      },
+      {
+        id: "baseSalary",
+        accessorFn: (row) => row.baseSalary,
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            column={column}
+            title="Оклад, ₽"
+            className="min-w-28"
+            tooltip="Базовый оклад сотрудника в рублях"
+          />
+        ),
+        cell: ({ row }) => `${formatRub(row.original.baseSalary)} ₽`,
+        meta: { headerTitle: "Оклад, ₽" },
+      },
+      {
+        id: "targetBonus",
+        accessorFn: (row) => row.targetBonus,
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            column={column}
+            title="Бонус, ₽"
+            className="min-w-28"
+            tooltip="Целевой бонус при выполнении KPI"
+          />
+        ),
+        cell: ({ row }) => `${formatRub(row.original.targetBonus)} ₽`,
+        meta: { headerTitle: "Бонус, ₽" },
+      },
+      {
+        id: "targetTalkTimeMonthly",
+        accessorFn: (row) => row.targetTalkTimeMinutes,
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            column={column}
+            title="Цель, мин/мес"
+            className="min-w-30"
+            tooltip="Целевое время разговоров в минутах за месяц"
+          />
+        ),
+        cell: ({ row }) => row.original.targetTalkTimeMinutes,
+        meta: { headerTitle: "Цель, мин/мес" },
+      },
+      {
+        id: "periodTargetTalkTimeMinutes",
+        accessorFn: (row) => row.periodTargetTalkTimeMinutes,
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            column={column}
+            title="План, мин"
+            className="min-w-28"
+            tooltip="План по времени разговоров на выбранный период"
+          />
+        ),
+        cell: ({ row }) => row.original.periodTargetTalkTimeMinutes,
+        meta: { headerTitle: "План, мин" },
+      },
+      {
+        id: "actualTalkTimeMinutes",
+        accessorFn: (row) => row.actualTalkTimeMinutes,
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            column={column}
+            title="Факт, мин"
+            className="min-w-28"
+            tooltip="Фактическое время разговоров за выбранный период"
+          />
+        ),
+        cell: ({ row }) => (
+          <span
+            className={
+              row.original.actualTalkTimeMinutes >=
+              row.original.periodTargetTalkTimeMinutes
+                ? "text-(--status-success)"
+                : "text-(--status-warning)"
+            }
+          >
+            {row.original.actualTalkTimeMinutes}
+          </span>
+        ),
+        meta: { headerTitle: "Факт, мин" },
+      },
+      {
+        id: "kpiCompletion",
+        accessorFn: (row) => row.kpiCompletionPercentage,
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            column={column}
+            title="Выполнение, %"
+            className="min-w-36"
+            tooltip="Процент выполнения KPI относительно плана периода"
+          />
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <div className="flex-1 bg-[#EEE] h-1.5 rounded overflow-hidden">
+              <div
+                className="h-full"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={row.original.kpiCompletionPercentage}
+                aria-valuetext={`${row.original.kpiCompletionPercentage}% complete`}
+                aria-label={`Выполнение KPI: ${row.original.kpiCompletionPercentage}%`}
+                style={{
+                  width: `${row.original.kpiCompletionPercentage}%`,
+                  background:
+                    row.original.kpiCompletionPercentage >= 100
+                      ? "var(--status-success)"
+                      : "var(--status-warning)",
+                }}
+              />
+            </div>
+            <span className="text-xs font-semibold">
+              {row.original.kpiCompletionPercentage}%
+            </span>
+          </div>
+        ),
+        meta: { headerTitle: "Выполнение, %" },
+      },
+      {
+        id: "calculatedBonus",
+        accessorFn: (row) => row.calculatedBonus,
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            column={column}
+            title="Бонус за период, ₽"
+            className="min-w-40"
+            tooltip="Рассчитанный бонус за выбранный период"
+          />
+        ),
+        cell: ({ row }) => (
+          <span className="font-semibold">
+            {formatRub(row.original.calculatedBonus)} ₽
+          </span>
+        ),
+        meta: { headerTitle: "Бонус за период, ₽" },
+      },
+      {
+        id: "totalCalculatedSalary",
+        accessorFn: (row) => row.totalCalculatedSalary,
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            column={column}
+            title="Итого, ₽"
+            className="min-w-28"
+            tooltip="Сумма оклада и бонуса за период"
+          />
+        ),
+        cell: ({ row }) => (
+          <span className="font-bold text-(--brand-primary)">
+            {formatRub(row.original.totalCalculatedSalary)} ₽
+          </span>
+        ),
+        meta: { headerTitle: "Итого, ₽" },
+      },
+      {
+        id: "kpiSettings",
+        accessorKey: "employeeExternalId",
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            column={column}
+            title="Настройки"
+            className="min-w-36"
+            tooltip="Редактирование KPI сотрудника"
+            visibility={false}
+          />
+        ),
+        enableSorting: false,
+        cell: ({ row }) => {
+          const rowSaving =
+            savingEmployeeId === row.original.employeeExternalId &&
+            updateKpiMutation.isPending;
+          return (
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              disabled={rowSaving}
+              aria-label={`Открыть настройки KPI для ${row.original.name}`}
+              onClick={() =>
+                setEditingEmployeeId(row.original.employeeExternalId)
+              }
+            >
+              {rowSaving ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <Settings2 className="size-4" aria-hidden />
+              )}
+            </Button>
+          );
+        },
+        meta: { headerTitle: "Настройки" },
+      },
+    ],
+    [formatRub, savingEmployeeId, updateKpiMutation.isPending],
+  );
+
+  const table = useReactTable({
+    data: rows,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      sorting: [{ id: "employee", desc: false }],
+      pagination: { pageSize: 10, pageIndex: 0 },
+      columnPinning: { left: ["employee"] },
+    },
+  });
+
+  const exportCurrentMonthCsv = useCallback(() => {
+    if (rows.length === 0) {
+      toast.error("Нет данных для экспорта");
+      return;
+    }
+
+    const header = [
+      "Сотрудник",
+      "Email",
+      "Базовый оклад, ₽",
+      "Целевой бонус, ₽",
+      "Цель по времени разговоров, мин/месяц",
+      "План по времени на выбранный период, мин",
+      "Фактическое время разговоров, мин",
+      "Выполнение KPI, %",
+      "Рассчитанный бонус, ₽",
+      "Итоговая выплата, ₽",
+    ];
+
+    const lines = rows.map((row) => [
+      row.name,
+      row.email,
+      String(row.baseSalary),
+      String(row.targetBonus),
+      String(row.targetTalkTimeMinutes),
+      String(row.periodTargetTalkTimeMinutes),
+      String(row.actualTalkTimeMinutes),
+      String(row.kpiCompletionPercentage),
+      String(row.calculatedBonus),
+      String(row.totalCalculatedSalary),
+    ]);
+
+    const escapeCsvValue = (value: string) => {
+      const normalized = value.replaceAll('"', '""');
+      return `"${normalized}"`;
+    };
+
+    const csv = [header, ...lines]
+      .map((row) => row.map(escapeCsvValue).join(";"))
+      .join("\n");
+    const blob = new Blob([`\uFEFF${csv}`], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `kpi-${normalizedMonthValue}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, [normalizedMonthValue, rows]);
 
   const editingRow =
     editingEmployeeId == null
@@ -170,119 +590,159 @@ export default function KpiTable({
 
   return (
     <Card className="card p-0! overflow-hidden mt-6">
-      <div className="py-5 px-6 border-b border-[#EEE]">
+      <div className="py-5 px-6 border-b border-[#EEE] flex flex-wrap items-center justify-between gap-3">
         <h3 className="section-title m-0">Расчет KPI сотрудников</h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Предыдущий месяц"
+            onClick={() => setSelectedMonth((prev) => shiftMonth(prev, -1))}
+          >
+            <ChevronLeft className="size-4" aria-hidden />
+          </Button>
+          <Popover open={isMonthPickerOpen} onOpenChange={setIsMonthPickerOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="min-w-52 justify-start text-left font-normal"
+                aria-label="Выбор месяца KPI"
+              >
+                <CalendarIcon
+                  className="size-4 shrink-0 opacity-70"
+                  aria-hidden
+                />
+                {monthLabel(normalizedMonthValue)}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                captionLayout="dropdown"
+                selected={new Date(`${normalizedMonthValue}-01T00:00:00`)}
+                defaultMonth={new Date(`${normalizedMonthValue}-01T00:00:00`)}
+                startMonth={new Date(2020, 0, 1)}
+                endMonth={
+                  new Date(
+                    Number.parseInt(currentMonthValue.split("-")[0] ?? "0", 10),
+                    Number.parseInt(
+                      currentMonthValue.split("-")[1] ?? "1",
+                      10,
+                    ) - 1,
+                    1,
+                  )
+                }
+                onSelect={(date) => {
+                  if (!date) return;
+                  setSelectedMonth(toMonthValue(date));
+                  setIsMonthPickerOpen(false);
+                }}
+                formatters={{
+                  formatCaption: (date) =>
+                    format(date, "LLLL yyyy", { locale: ru }),
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            aria-label="Следующий месяц"
+            onClick={() => setSelectedMonth((prev) => shiftMonth(prev, 1))}
+            disabled={!canGoNextMonth}
+          >
+            <ChevronRight className="size-4" aria-hidden />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setSelectedMonth(shiftMonth(currentMonthValue, -1))}
+          >
+            -1 мес
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setSelectedMonth(shiftMonth(currentMonthValue, -3))}
+          >
+            -3 мес
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setSelectedMonth(shiftMonth(currentMonthValue, -6))}
+          >
+            -6 мес
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setSelectedMonth(currentMonthValue)}
+            disabled={normalizedMonthValue === currentMonthValue}
+          >
+            Текущий
+          </Button>
+        </div>
       </div>
-      <CardContent className="p-0! overflow-x-auto">
-        <Table className="op-table">
-          <TableHeader>
-            <TableRow className="border-none">
-              <TableHead>Сотрудник</TableHead>
-              <TableHead>Оклад (руб)</TableHead>
-              <TableHead>Бонус (руб)</TableHead>
-              <TableHead>Цель (мин) / Мес.</TableHead>
-              <TableHead>План (мин) / Пер.</TableHead>
-              <TableHead>Факт (мин)</TableHead>
-              <TableHead>Выполнение (%)</TableHead>
-              <TableHead>Бонус за период</TableHead>
-              <TableHead>ИТОГО Выплата</TableHead>
-              <TableHead className="w-55">Настройки KPI</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((row) => {
-              const draft = draftsByEmployeeId[row.employeeExternalId] ?? {
-                baseSalary: row.baseSalary,
-                targetBonus: row.targetBonus,
-                targetTalkTimeMinutes: row.targetTalkTimeMinutes,
-              };
-              const rowSaving =
-                savingEmployeeId === row.employeeExternalId &&
-                updateKpiMutation.isPending;
-
-              return (
-                <TableRow key={row.employeeExternalId}>
-                  <TableCell className="font-semibold">
-                    {row.name} <br />
-                    <small className="text-[#999]">{row.email}</small>
-                  </TableCell>
-                  <TableCell>{row.baseSalary.toLocaleString()} ₽</TableCell>
-                  <TableCell>{row.targetBonus.toLocaleString()} ₽</TableCell>
-                  <TableCell>{row.targetTalkTimeMinutes}</TableCell>
-                  <TableCell>{row.periodTargetTalkTimeMinutes}</TableCell>
-                  <TableCell
-                    className={
-                      row.actualTalkTimeMinutes >=
-                      row.periodTargetTalkTimeMinutes
-                        ? "text-(--status-success)"
-                        : "text-(--status-warning)"
-                    }
-                  >
-                    {row.actualTalkTimeMinutes}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-[#EEE] h-1.5 rounded overflow-hidden">
-                        <div
-                          className="h-full"
-                          style={{
-                            width: `${row.kpiCompletionPercentage}%`,
-                            background:
-                              row.kpiCompletionPercentage >= 100
-                                ? "var(--status-success)"
-                                : "var(--status-warning)",
-                          }}
-                        />
-                      </div>
-                      <span className="text-xs font-semibold">
-                        {row.kpiCompletionPercentage}%
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-semibold">
-                    {row.calculatedBonus.toLocaleString()} ₽
-                  </TableCell>
-                  <TableCell className="font-bold text-(--brand-primary)">
-                    {row.totalCalculatedSalary.toLocaleString()} ₽
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-2">
-                      <Badge variant="secondary">Сотрудник PBX</Badge>
-                      <div>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          disabled={rowSaving}
-                          onClick={() =>
-                            setEditingEmployeeId(row.employeeExternalId)
-                          }
-                        >
-                          {rowSaving ? "Сохранение..." : "Настроить"}
-                        </Button>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Текущие: {draft.baseSalary.toLocaleString()} /{" "}
-                        {draft.targetBonus.toLocaleString()} /{" "}
-                        {draft.targetTalkTimeMinutes} мин
-                      </div>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-            {rows.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={10}
-                  className="text-center py-8 text-[#888]"
-                >
-                  Нет данных для отображения
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+      <CardContent className="p-0!">
+        <DataGrid
+          table={table}
+          recordCount={rows.length}
+          isLoading={loading}
+          emptyMessage="Нет данных для отображения"
+          tableLayout={{
+            columnsVisibility: true,
+            columnsMovable: true,
+            columnsPinnable: true,
+            columnsDraggable: true,
+            rowBorder: true,
+            headerBorder: true,
+            headerBackground: true,
+            headerSticky: true,
+          }}
+          tableClassNames={{
+            headerSticky: "sticky top-0 z-30 bg-background/95 backdrop-blur-xs",
+          }}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-3 pb-1">
+            <div className="text-sm text-muted-foreground">
+              Период: {dFrom} — {dTo}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={exportCurrentMonthCsv}
+              >
+                <Download className="size-4" aria-hidden />
+                Экспорт CSV
+              </Button>
+              <DataGridColumnVisibility
+                table={table}
+                trigger={
+                  <Button type="button" variant="outline" size="sm">
+                    <Settings2 className="size-4" aria-hidden />
+                    Колонки
+                  </Button>
+                }
+              />
+            </div>
+          </div>
+          <DataGridContainer className="border-0">
+            <div className="max-h-[70vh] overflow-auto">
+              <div className="min-w-350">
+                <DataGridTable<KpiRow> />
+              </div>
+            </div>
+            <div className="px-4 py-3 border-t border-[#EEE]">
+              <DataGridPagination />
+            </div>
+          </DataGridContainer>
+        </DataGrid>
       </CardContent>
       <Dialog
         open={Boolean(editingRow)}
@@ -290,7 +750,7 @@ export default function KpiTable({
           if (!open) setEditingEmployeeId(null);
         }}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Настройки KPI</DialogTitle>
             <DialogDescription>
@@ -305,8 +765,11 @@ export default function KpiTable({
                 <Label htmlFor="kpi-base-salary">Базовый оклад (₽)</Label>
                 <Input
                   id="kpi-base-salary"
+                  name="kpi-base-salary"
                   type="number"
                   min={0}
+                  inputMode="numeric"
+                  autoComplete="off"
                   value={editingDraft.baseSalary}
                   onChange={(e) =>
                     setDraftField(
@@ -321,8 +784,11 @@ export default function KpiTable({
                 <Label htmlFor="kpi-target-bonus">Целевой бонус (₽)</Label>
                 <Input
                   id="kpi-target-bonus"
+                  name="kpi-target-bonus"
                   type="number"
                   min={0}
+                  inputMode="numeric"
+                  autoComplete="off"
                   value={editingDraft.targetBonus}
                   onChange={(e) =>
                     setDraftField(
@@ -339,8 +805,11 @@ export default function KpiTable({
                 </Label>
                 <Input
                   id="kpi-target-talk-time"
+                  name="kpi-target-talk-time"
                   type="number"
                   min={0}
+                  inputMode="numeric"
+                  autoComplete="off"
                   value={editingDraft.targetTalkTimeMinutes}
                   onChange={(e) =>
                     setDraftField(
@@ -372,6 +841,11 @@ export default function KpiTable({
                 if (editingRow) void saveRowKpi(editingRow);
               }}
             >
+              {editingRow &&
+              savingEmployeeId === editingRow.employeeExternalId &&
+              updateKpiMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : null}
               {editingRow &&
               savingEmployeeId === editingRow.employeeExternalId &&
               updateKpiMutation.isPending
