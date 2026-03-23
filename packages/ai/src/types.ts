@@ -4,10 +4,25 @@ export const ChatMessageSchema = z.object({
   id: z.string(),
   role: z.enum(["user", "assistant", "system"]),
   content: z.string(),
+  context: z.string().optional(),
   timestamp: z.date().optional(),
 });
 
 export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+
+export const ChatConversationMessageSchema = z.object({
+  role: z.enum(["user", "assistant", "system"]),
+  content: z.string().trim().min(1).max(2000),
+  context: z.string().trim().min(1).max(2000).optional(),
+});
+
+export const ChatConversationHistorySchema = z
+  .array(ChatConversationMessageSchema)
+  .max(20);
+
+export type ChatConversationMessage = z.infer<
+  typeof ChatConversationMessageSchema
+>;
 
 export const ChatBotConfigSchema = z.object({
   provider: z.enum(["openai", "openrouter"]).default("openai"),

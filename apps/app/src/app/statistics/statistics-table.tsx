@@ -1,11 +1,21 @@
 "use client";
 
-import { Card, DataGrid, DataGridContainer, DataGridTable } from "@calls/ui";
+import {
+  Button,
+  Card,
+  DataGrid,
+  DataGridColumnVisibility,
+  DataGridContainer,
+  DataGridPagination,
+  DataGridTable,
+} from "@calls/ui";
 import {
   getCoreRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { Settings2 } from "lucide-react";
 import { useMemo } from "react";
 import { getStatisticsColumns } from "./statistics-table-columns";
 
@@ -81,9 +91,11 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     initialState: {
       sorting: [{ id: "name", desc: false }],
       pagination: { pageSize: 8, pageIndex: 0 },
+      columnPinning: { left: ["name"] },
     },
   });
 
@@ -99,17 +111,39 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
         isLoading={loading}
         emptyMessage="Нет данных"
         tableLayout={{
+          columnsVisibility: true,
+          columnsMovable: true,
+          columnsPinnable: true,
+          columnsDraggable: true,
           rowBorder: true,
           headerBorder: true,
           headerBackground: true,
+          headerSticky: true,
         }}
         tableClassNames={{
           base: "op-table [&_tbody_tr:first-child]:bg-[#F9F9F9]",
+          headerSticky: "sticky top-0 z-30 bg-background/95 backdrop-blur-xs",
         }}
       >
+        <div className="flex items-center justify-end gap-2 px-4 pt-3 pb-1">
+          <DataGridColumnVisibility
+            table={table}
+            trigger={
+              <Button type="button" variant="outline" size="sm">
+                <Settings2 className="size-4" aria-hidden />
+                Колонки
+              </Button>
+            }
+          />
+        </div>
         <DataGridContainer className="border-0">
-          <div className="overflow-x-auto">
-            <DataGridTable />
+          <div className="max-h-[70vh] overflow-auto">
+            <div className="min-w-350">
+              <DataGridTable />
+            </div>
+          </div>
+          <div className="px-4 py-3 border-t border-[#EEE]">
+            <DataGridPagination />
           </div>
         </DataGridContainer>
       </DataGrid>

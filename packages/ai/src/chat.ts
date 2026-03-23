@@ -3,7 +3,28 @@ import { openrouter } from "@openrouter/ai-sdk-provider";
 import { streamText } from "ai";
 import { z } from "zod";
 import { generateWithAi } from "./generate";
-import type { ChatBotConfig, ChatBotResponse, ChatMessage } from "./types";
+import {
+  type ChatBotConfig,
+  type ChatBotResponse,
+  ChatConversationHistorySchema,
+  type ChatConversationMessage,
+  ChatConversationMessageSchema,
+  type ChatMessage,
+} from "./types";
+
+function normalizeConversationMessages(
+  messages: ChatMessage[],
+): ChatConversationMessage[] {
+  const trimmedMessages = messages
+    .map((msg) => ({
+      role: msg.role,
+      content: msg.content.trim().slice(0, 2000),
+      context: msg.context?.trim().slice(0, 2000) || undefined,
+    }))
+    .slice(-20);
+
+  return ChatConversationHistorySchema.parse(trimmedMessages);
+}
 
 export function createChatBot(config: ChatBotConfig) {
   const validatedConfig = z
@@ -31,16 +52,15 @@ export function createChatBot(config: ChatBotConfig) {
         tags?: string[];
       },
     ): Promise<ChatBotResponse> {
-      const formattedMessages = messages.map((msg) => ({
-        role: msg.role as "user" | "assistant" | "system",
-        content: msg.content,
-      }));
+      const formattedMessages = normalizeConversationMessages(messages);
 
       if (validatedConfig.systemPrompt) {
-        formattedMessages.unshift({
-          role: "system",
-          content: validatedConfig.systemPrompt,
-        });
+        formattedMessages.unshift(
+          ChatConversationMessageSchema.parse({
+            role: "system",
+            content: validatedConfig.systemPrompt.trim().slice(0, 2000),
+          }),
+        );
       }
 
       try {
@@ -83,16 +103,15 @@ export function createChatBot(config: ChatBotConfig) {
     },
 
     async sendMessageStream(messages: ChatMessage[]) {
-      const formattedMessages = messages.map((msg) => ({
-        role: msg.role as "user" | "assistant" | "system",
-        content: msg.content,
-      }));
+      const formattedMessages = normalizeConversationMessages(messages);
 
       if (validatedConfig.systemPrompt) {
-        formattedMessages.unshift({
-          role: "system",
-          content: validatedConfig.systemPrompt,
-        });
+        formattedMessages.unshift(
+          ChatConversationMessageSchema.parse({
+            role: "system",
+            content: validatedConfig.systemPrompt.trim().slice(0, 2000),
+          }),
+        );
       }
 
       try {
