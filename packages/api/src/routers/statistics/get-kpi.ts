@@ -3,6 +3,7 @@ import {
   pbxService,
   settingsService,
   type WorkspacePbxEmployee,
+  type WorkspacePbxNumber,
 } from "@calls/db";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../orpc";
@@ -13,6 +14,17 @@ function parseInternalExtensions(s: string | null | undefined): string[] {
     .split(/[,;\s]+/)
     .map((x) => x.trim())
     .filter(Boolean);
+}
+
+function normalizeInternalIdentifier(
+  value: string | null | undefined,
+): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const digitsOnly = trimmed.replace(/\D/g, "");
+  if (digitsOnly.length > 0) return digitsOnly;
+  return trimmed.toLowerCase();
 }
 
 function validateDate(dateString: string): boolean {
@@ -61,15 +73,53 @@ export function buildKpiRows(params: {
   startDate: string;
   endDate: string;
   pbxEmployees: WorkspacePbxEmployee[];
+  pbxNumbers?: WorkspacePbxNumber[];
   kpiStats: KpiStatsByInternalNumber[];
 }): KpiRow[] {
-  const { startDate, endDate, pbxEmployees, kpiStats } = params;
-  const statsByInternal = new Map(kpiStats.map((s) => [s.internalNumber, s]));
+  const {
+    startDate,
+    endDate,
+    pbxEmployees,
+    pbxNumbers = [],
+    kpiStats,
+  } = params;
+  const statsByInternal = new Map<string, KpiStatsByInternalNumber>();
+  for (const stat of kpiStats) {
+    const normalized = normalizeInternalIdentifier(stat.internalNumber);
+    if (!normalized) continue;
+    const prev = statsByInternal.get(normalized);
+    if (prev) {
+      prev.totalDurationSeconds += stat.totalDurationSeconds;
+      prev.totalCalls += stat.totalCalls;
+      prev.incoming += stat.incoming;
+      prev.outgoing += stat.outgoing;
+      prev.missed += stat.missed;
+      continue;
+    }
+    statsByInternal.set(normalized, { ...stat });
+  }
 
   const rows: KpiRow[] = [];
   const daysInPeriod = calculateDaysInPeriod(startDate, endDate);
   const start = new Date(startDate);
   const daysInMonth = getDaysInMonth(start.getFullYear(), start.getMonth());
+  const employeeExtensionsByExternalId = new Map<string, Set<string>>();
+
+  for (const employee of pbxEmployees) {
+    const parsed = parseInternalExtensions(employee.extension);
+    employeeExtensionsByExternalId.set(employee.externalId, new Set(parsed));
+  }
+
+  for (const number of pbxNumbers) {
+    if (!number.isActive || !number.employeeExternalId) continue;
+    const extension = number.extension?.trim();
+    if (!extension) continue;
+    const existing =
+      employeeExtensionsByExternalId.get(number.employeeExternalId) ??
+      new Set<string>();
+    existing.add(extension);
+    employeeExtensionsByExternalId.set(number.employeeExternalId, existing);
+  }
 
   for (const employee of pbxEmployees) {
     if (!employee.isActive) continue;
@@ -77,7 +127,10 @@ export function buildKpiRows(params: {
     const targetBonus = employee.kpiTargetBonus ?? 0;
     const targetTalkTime = employee.kpiTargetTalkTimeMinutes ?? 0;
 
-    const extensions = parseInternalExtensions(employee.extension);
+    const extensions = Array.from(
+      employeeExtensionsByExternalId.get(employee.externalId) ??
+        new Set<string>(),
+    );
     let actualTalkTime = 0;
     let totalCalls = 0;
     let incoming = 0;
@@ -85,7 +138,9 @@ export function buildKpiRows(params: {
     let missed = 0;
 
     for (const ext of extensions) {
-      const stat = statsByInternal.get(ext);
+      const normalizedExt = normalizeInternalIdentifier(ext);
+      if (!normalizedExt) continue;
+      const stat = statsByInternal.get(normalizedExt);
       if (stat) {
         actualTalkTime += stat.totalDurationSeconds / 60;
         totalCalls += stat.totalCalls;
@@ -165,8 +220,9 @@ export const getKpi = workspaceAdminProcedure
     const ftpSettings = await settingsService.getFtpSettings(workspaceId);
     const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
 
-    const [pbxEmployees, kpiStats] = await Promise.all([
+    const [pbxEmployees, pbxNumbers, kpiStats] = await Promise.all([
       pbxService.listEmployees(workspaceId),
+      pbxService.listNumbers(workspaceId),
       callsService.getKpiStats({
         workspaceId,
         dateFrom,
@@ -180,6 +236,7 @@ export const getKpi = workspaceAdminProcedure
       startDate,
       endDate,
       pbxEmployees,
+      pbxNumbers,
       kpiStats,
     });
   });

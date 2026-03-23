@@ -120,8 +120,9 @@ export function getCallListColumns(
       meta: { headerTitle: "Тип звонка" },
     },
     {
-      accessorKey: "call.managerName",
       id: "manager",
+      accessorFn: (row) =>
+        row.call.managerName?.trim() || row.call.operatorName?.trim() || "",
       size: 164,
       minSize: 140,
       header: ({ column }) => (

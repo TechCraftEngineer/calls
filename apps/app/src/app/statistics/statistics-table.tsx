@@ -32,6 +32,26 @@ export interface StatsRow {
   managerCount?: number;
 }
 
+function getRussianPlural(
+  count: number,
+  forms: [string, string, string],
+): string {
+  const absCount = Math.abs(count);
+  const mod100 = absCount % 100;
+  if (mod100 >= 11 && mod100 <= 14) {
+    return forms[2];
+  }
+
+  const mod10 = absCount % 10;
+  if (mod10 === 1) {
+    return forms[0];
+  }
+  if (mod10 >= 2 && mod10 <= 4) {
+    return forms[1];
+  }
+  return forms[2];
+}
+
 interface StatisticsTableProps {
   stats: StatsRow[];
   loading: boolean;
@@ -63,15 +83,20 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
     useState<PaginationState>(initialPagination);
 
   useEffect(() => {
-    setPagination(initialPagination);
-  }, [initialPagination]);
+    if (
+      pagination.pageIndex !== initialPagination.pageIndex ||
+      pagination.pageSize !== initialPagination.pageSize
+    ) {
+      setPagination(initialPagination);
+    }
+  }, [initialPagination, pagination]);
 
   const updatePaginationSearchParams = useCallback(
     (nextPagination: PaginationState) => {
       const nextParams = new URLSearchParams(searchParams.toString());
       nextParams.set("pageIndex", String(nextPagination.pageIndex));
       nextParams.set("pageSize", String(nextPagination.pageSize));
-      router.push(`${pathname}?${nextParams.toString()}`);
+      router.replace(`${pathname}?${nextParams.toString()}`);
     },
     [pathname, router, searchParams],
   );
@@ -192,18 +217,25 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
               <DataGridTable />
             </div>
           </div>
-          <div className="px-4 py-3 border-t border-[#EEE] bg-[#F9F9F9]">
+          <section
+            className="px-4 py-3 border-t border-[#EEE] bg-[#F9F9F9]"
+            aria-labelledby="statistics-totals-heading"
+            aria-live="polite"
+          >
+            <h4 id="statistics-totals-heading" className="sr-only">
+              Итоги
+            </h4>
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 text-sm">
               <div className="font-semibold">
                 Всего
                 {managerCount > 0 && (
                   <div className="text-[11px] text-[#999] font-normal mt-0.5">
                     {managerCount}{" "}
-                    {managerCount === 1
-                      ? "менеджер"
-                      : managerCount < 5
-                        ? "менеджера"
-                        : "менеджеров"}
+                    {getRussianPlural(managerCount, [
+                      "менеджер",
+                      "менеджера",
+                      "менеджеров",
+                    ])}
                   </div>
                 )}
               </div>
@@ -218,7 +250,7 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
                 {Math.floor(totalRow.incoming.duration / 60)} мин
               </div>
             </div>
-          </div>
+          </section>
           <div className="px-4 py-3 border-t border-[#EEE]">
             <DataGridPagination />
           </div>
