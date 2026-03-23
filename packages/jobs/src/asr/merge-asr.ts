@@ -5,7 +5,6 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
-import { env } from "@calls/config";
 import { createLogger } from "../logger";
 
 const logger = createLogger("asr-merge");
@@ -123,7 +122,7 @@ export async function mergeAsrWithLlm(input: {
   const start = Date.now();
   try {
     const { text } = await generateWithAi({
-      model: env.AI_MODEL ?? "gpt-4o-mini",
+      modelProfile: "longContext",
       system: SYSTEM_PROMPT,
       prompt: `Объедини два транскрипта одного разговора в один.
 

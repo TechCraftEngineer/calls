@@ -23,12 +23,7 @@ import {
   Skeleton,
   toast,
 } from "@calls/ui";
-import {
-  skipToken,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -155,14 +150,9 @@ export default function KpiTable() {
   );
 
   const { data = [], isPending: loading } = useQuery(
-    dFrom && dTo
-      ? orpc.statistics.getKpi.queryOptions({
-          input: { startDate: dFrom, endDate: dTo },
-        })
-      : {
-          queryKey: ["statistics", "kpi", "skip"],
-          queryFn: skipToken,
-        },
+    orpc.statistics.getKpi.queryOptions({
+      input: { startDate: dFrom, endDate: dTo },
+    }),
   );
 
   const rows = Array.isArray(data) ? (data as KpiRow[]) : [];
@@ -179,10 +169,10 @@ export default function KpiTable() {
     if (!monthFromUrl) return;
     const { normalizedMonthValue: normalizedFromUrl } =
       getMonthRange(monthFromUrl);
-    if (normalizedFromUrl !== selectedMonth) {
-      setSelectedMonth(normalizedFromUrl);
-    }
-  }, [searchParams, selectedMonth]);
+    setSelectedMonth((prev) =>
+      prev === normalizedFromUrl ? prev : normalizedFromUrl,
+    );
+  }, [searchParams]);
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -619,9 +609,8 @@ export default function KpiTable() {
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
-                mode="single"
                 captionLayout="dropdown"
-                selected={new Date(`${normalizedMonthValue}-01T00:00:00`)}
+                month={new Date(`${normalizedMonthValue}-01T00:00:00`)}
                 defaultMonth={new Date(`${normalizedMonthValue}-01T00:00:00`)}
                 startMonth={new Date(2020, 0, 1)}
                 endMonth={
@@ -634,14 +623,16 @@ export default function KpiTable() {
                     1,
                   )
                 }
-                onSelect={(date) => {
-                  if (!date) return;
-                  setSelectedMonth(toMonthValue(date));
+                onMonthChange={(month) => {
+                  setSelectedMonth(toMonthValue(month));
                   setIsMonthPickerOpen(false);
                 }}
                 formatters={{
                   formatCaption: (date) =>
                     format(date, "LLLL yyyy", { locale: ru }),
+                }}
+                classNames={{
+                  day_button: "pointer-events-none opacity-40",
                 }}
               />
             </PopoverContent>
@@ -768,6 +759,7 @@ export default function KpiTable() {
                   name="kpi-base-salary"
                   type="number"
                   min={0}
+                  max={1_000_000}
                   inputMode="numeric"
                   autoComplete="off"
                   value={editingDraft.baseSalary}
@@ -787,6 +779,7 @@ export default function KpiTable() {
                   name="kpi-target-bonus"
                   type="number"
                   min={0}
+                  max={1_000_000}
                   inputMode="numeric"
                   autoComplete="off"
                   value={editingDraft.targetBonus}
@@ -808,6 +801,7 @@ export default function KpiTable() {
                   name="kpi-target-talk-time"
                   type="number"
                   min={0}
+                  max={100_000}
                   inputMode="numeric"
                   autoComplete="off"
                   value={editingDraft.targetTalkTimeMinutes}

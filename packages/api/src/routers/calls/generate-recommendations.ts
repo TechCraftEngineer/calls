@@ -6,6 +6,11 @@ import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 
 const logger = createLogger("generate-recommendations");
+const DEFAULT_RECOMMENDATIONS_MODEL =
+  process.env.AI_RECOMMENDATIONS_MODEL ??
+  process.env.AI_MODEL_PREMIUM ??
+  process.env.AI_MODEL ??
+  "anthropic/claude-sonnet-4.6";
 
 const DEFAULT_RECOMMENDATIONS_PROMPT = `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
 
@@ -145,14 +150,14 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
 
     const chatBot = createChatBot({
       provider: "openrouter",
-      model: process.env.AI_RECOMMENDATIONS_MODEL ?? "openai/gpt-4o-mini",
+      model: DEFAULT_RECOMMENDATIONS_MODEL,
       apiKey,
       temperature: 0.3,
       maxTokens: 1000,
       systemPrompt,
     });
 
-    const model = process.env.AI_RECOMMENDATIONS_MODEL ?? "openai/gpt-4o-mini";
+    const model = DEFAULT_RECOMMENDATIONS_MODEL;
     logger.info("AI recommendations request", {
       callId,
       workspaceId: _workspaceId,
@@ -193,7 +198,7 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
     logger.error("AI recommendations error", {
       callId,
       workspaceId: _workspaceId,
-      model: process.env.AI_RECOMMENDATIONS_MODEL ?? "openai/gpt-4o-mini",
+      model: DEFAULT_RECOMMENDATIONS_MODEL,
       timestamp: new Date().toISOString(),
       event: "ai.error",
       error,

@@ -57,7 +57,7 @@ function StatisticsPageContent() {
     refetch: loadStats,
   } = useQuery({
     ...orpc.statistics.getStatistics.queryOptions({ input: statsInput }),
-    enabled: activeTab !== "settings",
+    enabled: activeTab === "statistics",
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     staleTime: 10 * 60 * 1000,

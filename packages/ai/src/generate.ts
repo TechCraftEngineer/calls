@@ -12,11 +12,26 @@ import { generateText as aiGenerateText } from "ai";
 
 /** Провайдер AI: openai | openrouter | deepseek */
 export type AiProvider = "openai" | "openrouter" | "deepseek";
+export type AiModelProfile = "default" | "premium" | "longContext" | "cheap";
 
 /** Опции для getAIModel */
 export interface GetAIModelOptions {
   provider?: AiProvider;
   model?: string;
+  profile?: AiModelProfile;
+}
+
+export function getAIModelId(profile: AiModelProfile = "default"): string {
+  switch (profile) {
+    case "premium":
+      return env.AI_MODEL_PREMIUM || env.AI_MODEL;
+    case "longContext":
+      return env.AI_MODEL_LONG_CONTEXT || env.AI_MODEL;
+    case "cheap":
+      return env.AI_MODEL_CHEAP || env.AI_MODEL;
+    default:
+      return env.AI_MODEL;
+  }
 }
 
 /**
@@ -42,7 +57,7 @@ export function hasAiProviderConfigured(): boolean {
  */
 export function getAIModel(options: GetAIModelOptions = {}): LanguageModel {
   const provider = options.provider ?? env.AI_PROVIDER;
-  const modelId = options.model ?? env.AI_MODEL;
+  const modelId = options.model ?? getAIModelId(options.profile);
 
   switch (provider) {
     case "openrouter":
@@ -72,6 +87,8 @@ interface GenerateWithAiBaseOptions {
   model?: string;
   /** Провайдер (переопределяет env.AI_PROVIDER) */
   provider?: AiProvider;
+  /** Профиль модели (default | premium | longContext | cheap) */
+  modelProfile?: AiModelProfile;
   /** Температура (0–2) */
   temperature?: number;
   /** Макс. токенов на выход */
@@ -149,6 +166,7 @@ export async function generateWithAi(
 ): ReturnType<typeof aiGenerateText> {
   const {
     model: modelOverride,
+    modelProfile,
     provider,
     functionId = "generate-with-ai",
     metadata = {},
@@ -159,6 +177,7 @@ export async function generateWithAi(
   const model = getAIModel({
     provider,
     model: modelOverride,
+    profile: modelProfile,
   });
 
   const experimental_telemetry = langfuseTracing
@@ -167,7 +186,7 @@ export async function generateWithAi(
         functionId,
         metadata: {
           provider: provider ?? env.AI_PROVIDER,
-          model: modelOverride ?? env.AI_MODEL,
+          model: modelOverride ?? getAIModelId(modelProfile),
           ...metadata,
         },
       }
