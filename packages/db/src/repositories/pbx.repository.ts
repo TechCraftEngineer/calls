@@ -123,6 +123,33 @@ export const pbxRepository = {
       );
   },
 
+  async updateEmployeeKpiSettings(input: {
+    workspaceId: string;
+    provider: string;
+    externalId: string;
+    kpiBaseSalary: number;
+    kpiTargetBonus: number;
+    kpiTargetTalkTimeMinutes: number;
+  }) {
+    const rows = await db
+      .update(schema.workspacePbxEmployees)
+      .set({
+        kpiBaseSalary: input.kpiBaseSalary,
+        kpiTargetBonus: input.kpiTargetBonus,
+        kpiTargetTalkTimeMinutes: input.kpiTargetTalkTimeMinutes,
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(schema.workspacePbxEmployees.workspaceId, input.workspaceId),
+          eq(schema.workspacePbxEmployees.provider, input.provider),
+          eq(schema.workspacePbxEmployees.externalId, input.externalId),
+        ),
+      )
+      .returning();
+    return rows[0] ?? null;
+  },
+
   async listNumbers(workspaceId: string, provider: string) {
     return db
       .select()

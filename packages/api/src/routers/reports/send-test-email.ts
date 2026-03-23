@@ -27,14 +27,14 @@ const managerStatsSchema = z.object({
 });
 
 const statsSchema = z.record(z.string(), managerStatsSchema);
-const REPORT_TYPE_LABELS: Record<
-  z.infer<typeof reportTypeSchema>["reportType"],
-  string
-> = {
+const REPORT_TYPE_LABELS = {
   daily: "Ежедневный",
   weekly: "Еженедельный",
   monthly: "Ежемесячный",
-};
+} as const satisfies Record<
+  z.infer<typeof reportTypeSchema>["reportType"],
+  string
+>;
 
 function parseInternalExtensions(ext: string | null): string[] | null {
   if (!ext || String(ext).trim().toLowerCase() === "all") return null;

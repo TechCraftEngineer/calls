@@ -398,6 +398,23 @@ export class PbxService {
     );
   }
 
+  async updateEmployeeKpiSettings(input: {
+    workspaceId: string;
+    externalId: string;
+    kpiBaseSalary: number;
+    kpiTargetBonus: number;
+    kpiTargetTalkTimeMinutes: number;
+  }) {
+    return this.pbxRepository.updateEmployeeKpiSettings({
+      workspaceId: input.workspaceId,
+      provider: MEGAPBX_PROVIDER,
+      externalId: input.externalId,
+      kpiBaseSalary: input.kpiBaseSalary,
+      kpiTargetBonus: input.kpiTargetBonus,
+      kpiTargetTalkTimeMinutes: input.kpiTargetTalkTimeMinutes,
+    });
+  }
+
   async recordWebhookEvent(input: {
     workspaceId: string;
     eventId?: string | null;

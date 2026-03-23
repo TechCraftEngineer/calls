@@ -2,7 +2,6 @@ import {
   callsService,
   pbxService,
   settingsService,
-  usersService,
   type WorkspacePbxEmployee,
 } from "@calls/db";
 import { z } from "zod";
@@ -36,18 +35,12 @@ function calculateDaysInPeriod(startDate: string, endDate: string): number {
   return diffDays + 1; // Включаем оба дня
 }
 
-type PbxEmployeeLinkWithUser = Awaited<
-  ReturnType<typeof pbxService.listLinks>
->[number];
 type KpiStatsByInternalNumber = Awaited<
   ReturnType<typeof callsService.getKpiStats>
 >[number];
-type UserForEdit = NonNullable<
-  Awaited<ReturnType<typeof usersService.getUserForEdit>>
->;
 
 export interface KpiRow {
-  userId: string;
+  employeeExternalId: string;
   name: string;
   email: string;
   baseSalary: number;
@@ -68,20 +61,10 @@ export function buildKpiRows(params: {
   startDate: string;
   endDate: string;
   pbxEmployees: WorkspacePbxEmployee[];
-  pbxLinks: PbxEmployeeLinkWithUser[];
   kpiStats: KpiStatsByInternalNumber[];
-  userEditMap: Map<string, UserForEdit>;
 }): KpiRow[] {
-  const { startDate, endDate, pbxEmployees, pbxLinks, kpiStats, userEditMap } =
-    params;
+  const { startDate, endDate, pbxEmployees, kpiStats } = params;
   const statsByInternal = new Map(kpiStats.map((s) => [s.internalNumber, s]));
-
-  const employeeLinkMap = new Map<string, string>();
-  for (const item of pbxLinks) {
-    if (item.link.targetType !== "employee") continue;
-    if (!item.link.targetExternalId || !item.user?.id) continue;
-    employeeLinkMap.set(item.link.targetExternalId, item.user.id);
-  }
 
   const rows: KpiRow[] = [];
   const daysInPeriod = calculateDaysInPeriod(startDate, endDate);
@@ -90,15 +73,9 @@ export function buildKpiRows(params: {
 
   for (const employee of pbxEmployees) {
     if (!employee.isActive) continue;
-
-    const linkedUserId = employeeLinkMap.get(employee.externalId);
-    const userForEdit = linkedUserId
-      ? userEditMap.get(linkedUserId)
-      : undefined;
-
-    const baseSalary = userForEdit?.kpiBaseSalary ?? 0;
-    const targetBonus = userForEdit?.kpiTargetBonus ?? 0;
-    const targetTalkTime = userForEdit?.kpiTargetTalkTimeMinutes ?? 0;
+    const baseSalary = employee.kpiBaseSalary ?? 0;
+    const targetBonus = employee.kpiTargetBonus ?? 0;
+    const targetTalkTime = employee.kpiTargetTalkTimeMinutes ?? 0;
 
     const extensions = parseInternalExtensions(employee.extension);
     let actualTalkTime = 0;
@@ -142,7 +119,7 @@ export function buildKpiRows(params: {
     const email = employee.email ?? "";
 
     rows.push({
-      userId: employee.externalId,
+      employeeExternalId: employee.externalId,
       name,
       email,
       baseSalary,
@@ -168,10 +145,10 @@ export const getKpi = workspaceAdminProcedure
     z
       .object({
         startDate: z.string().refine((date) => validateDate(date), {
-          message: "Некорректный формат даты. Ожиждается YYYY-MM-DD",
+          message: "Некорректный формат даты. Ожидается YYYY-MM-DD",
         }),
         endDate: z.string().refine((date) => validateDate(date), {
-          message: "Некорректный формат даты. Ожиждается YYYY-MM-DD",
+          message: "Некорректный формат даты. Ожидается YYYY-MM-DD",
         }),
       })
       .refine((data) => data.startDate <= data.endDate, {
@@ -188,9 +165,8 @@ export const getKpi = workspaceAdminProcedure
     const ftpSettings = await settingsService.getFtpSettings(workspaceId);
     const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
 
-    const [pbxEmployees, pbxLinks, kpiStats] = await Promise.all([
+    const [pbxEmployees, kpiStats] = await Promise.all([
       pbxService.listEmployees(workspaceId),
-      pbxService.listLinks(workspaceId),
       callsService.getKpiStats({
         workspaceId,
         dateFrom,
@@ -200,36 +176,10 @@ export const getKpi = workspaceAdminProcedure
       }),
     ]);
 
-    const employeeLinkMap = new Map<string, string>();
-    for (const item of pbxLinks) {
-      if (item.link.targetType !== "employee") continue;
-      if (!item.link.targetExternalId || !item.user?.id) continue;
-      employeeLinkMap.set(item.link.targetExternalId, item.user.id);
-    }
-    const linkedUserIds = [...new Set(employeeLinkMap.values())];
-    const linkedUsersForEdit = await Promise.all(
-      linkedUserIds.map((userId) =>
-        usersService.getUserForEdit(userId, workspaceId),
-      ),
-    );
-
-    const userEditMap = new Map<
-      string,
-      NonNullable<(typeof linkedUsersForEdit)[number]>
-    >();
-    linkedUsersForEdit.forEach((userEdit, index) => {
-      const userId = linkedUserIds[index];
-      if (userEdit !== null && userId !== undefined) {
-        userEditMap.set(userId, userEdit);
-      }
-    });
-
     return buildKpiRows({
       startDate,
       endDate,
       pbxEmployees,
-      pbxLinks,
       kpiStats,
-      userEditMap,
     });
   });

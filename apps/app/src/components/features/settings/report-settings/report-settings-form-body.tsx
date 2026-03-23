@@ -25,6 +25,14 @@ interface ReportSettingsFormBodyProps {
   allUsers: ReportSettingsUserOption[];
 }
 
+type WeekDay = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat";
+
+const WEEK_DAYS: WeekDay[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
+function getReportWeeklyDay(day: string): WeekDay {
+  return WEEK_DAYS.includes(day as WeekDay) ? (day as WeekDay) : "fri";
+}
+
 export default function ReportSettingsFormBody({
   form,
   setForm,
@@ -185,7 +193,7 @@ export default function ReportSettingsFormBody({
     errorMessage,
     invalidateScheduleAfter = false,
   }: {
-    run: (operationKey: string) => Promise<void>;
+    run: () => Promise<void>;
     successMessage: string;
     errorMessage: string;
     invalidateScheduleAfter?: boolean;
@@ -197,7 +205,7 @@ export default function ReportSettingsFormBody({
     saveOperationKeyRef.current = operationKey;
     setIsSavingCombined(true);
     try {
-      await run(operationKey);
+      await run();
       toast.success(successMessage);
       invalidateUser();
       if (invalidateScheduleAfter) invalidateSchedule();
@@ -243,14 +251,7 @@ export default function ReportSettingsFormBody({
               user_id: userId,
               data: {
                 reportDailyTime: form.reportDailyTime,
-                reportWeeklyDay: form.reportWeeklyDay as
-                  | "sun"
-                  | "mon"
-                  | "tue"
-                  | "wed"
-                  | "thu"
-                  | "fri"
-                  | "sat",
+                reportWeeklyDay: getReportWeeklyDay(form.reportWeeklyDay),
                 reportWeeklyTime: form.reportWeeklyTime,
                 reportMonthlyDay: form.reportMonthlyDay,
                 reportMonthlyTime: form.reportMonthlyTime,
@@ -265,14 +266,7 @@ export default function ReportSettingsFormBody({
 
   const handleSaveTelegram = async () => {
     const telegramChatId = form.telegramChatId.trim();
-    const reportWeeklyDay = form.reportWeeklyDay as
-      | "sun"
-      | "mon"
-      | "tue"
-      | "wed"
-      | "thu"
-      | "fri"
-      | "sat";
+    const reportWeeklyDay = getReportWeeklyDay(form.reportWeeklyDay);
     await performUpdates({
       successMessage: "Настройки Telegram сохранены",
       errorMessage: "Не удалось сохранить настройки Telegram",
@@ -344,14 +338,7 @@ export default function ReportSettingsFormBody({
               user_id: userId,
               data: {
                 reportDailyTime: form.reportDailyTime,
-                reportWeeklyDay: form.reportWeeklyDay as
-                  | "sun"
-                  | "mon"
-                  | "tue"
-                  | "wed"
-                  | "thu"
-                  | "fri"
-                  | "sat",
+                reportWeeklyDay: getReportWeeklyDay(form.reportWeeklyDay),
                 reportWeeklyTime: form.reportWeeklyTime,
                 reportMonthlyDay: form.reportMonthlyDay,
                 reportMonthlyTime: form.reportMonthlyTime,
