@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { z } from "zod";
 import { KpiTableSkeleton } from "@/app/statistics/statistics-skeletons";
 import { useORPC } from "@/orpc/react";
 
@@ -69,6 +70,18 @@ interface KpiDraft {
   targetBonus: number;
   targetTalkTimeMinutes: number;
 }
+
+const KPI_FIELD_LIMITS: Record<keyof KpiDraft, number> = {
+  baseSalary: 1_000_000,
+  targetBonus: 1_000_000,
+  targetTalkTimeMinutes: 100_000,
+};
+
+const kpiDraftSchema = z.object({
+  baseSalary: z.number().int().min(0).max(1_000_000),
+  targetBonus: z.number().int().min(0).max(1_000_000),
+  targetTalkTimeMinutes: z.number().int().min(0).max(100_000),
+});
 
 const pad2 = (value: number) => value.toString().padStart(2, "0");
 const toMonthValue = (date: Date) =>
@@ -223,8 +236,11 @@ export default function KpiTable() {
     field: keyof KpiDraft,
     value: string,
   ) => {
-    const parsed = Number.parseInt(value, 10);
-    const safeValue = Number.isNaN(parsed) ? 0 : toNonNegativeInt(parsed);
+    const parsed = Number(value);
+    const safeValue =
+      value.trim() === "" || Number.isNaN(parsed)
+        ? 0
+        : Math.min(toNonNegativeInt(parsed), KPI_FIELD_LIMITS[field]);
     setDraftsByEmployeeId((prev) => ({
       ...prev,
       [employeeExternalId]: {
@@ -237,17 +253,20 @@ export default function KpiTable() {
   const saveRowKpi = async (row: KpiRow) => {
     const draft = draftsByEmployeeId[row.employeeExternalId];
     if (!draft) return;
+    const parsedDraft = kpiDraftSchema.safeParse(draft);
+    if (!parsedDraft.success) {
+      toast.error("Проверьте значения KPI: есть недопустимые поля");
+      return;
+    }
 
     setSavingEmployeeId(row.employeeExternalId);
     try {
       await updateKpiMutation.mutateAsync({
         employeeExternalId: row.employeeExternalId,
         data: {
-          kpiBaseSalary: toNonNegativeInt(draft.baseSalary),
-          kpiTargetBonus: toNonNegativeInt(draft.targetBonus),
-          kpiTargetTalkTimeMinutes: toNonNegativeInt(
-            draft.targetTalkTimeMinutes,
-          ),
+          kpiBaseSalary: parsedDraft.data.baseSalary,
+          kpiTargetBonus: parsedDraft.data.targetBonus,
+          kpiTargetTalkTimeMinutes: parsedDraft.data.targetTalkTimeMinutes,
         },
       });
       toast.success(`KPI для ${row.name} сохранены`);
@@ -627,12 +646,10 @@ export default function KpiTable() {
                   setSelectedMonth(toMonthValue(month));
                   setIsMonthPickerOpen(false);
                 }}
+                disabled={() => true}
                 formatters={{
                   formatCaption: (date) =>
                     format(date, "LLLL yyyy", { locale: ru }),
-                }}
-                classNames={{
-                  day_button: "pointer-events-none opacity-40",
                 }}
               />
             </PopoverContent>

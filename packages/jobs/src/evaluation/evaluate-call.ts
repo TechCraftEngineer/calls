@@ -20,13 +20,17 @@ export interface EvaluateCallOptions {
 }
 
 export interface CallEvaluationResult {
-  valueScore: number;
+  isQualityAnalyzable: boolean;
+  notAnalyzableReason: string | null;
+  valueScore: number | null;
   valueExplanation: string;
-  managerScore: number;
+  managerScore: number | null;
   managerFeedback: string;
 }
 
 const DEFAULT_FALLBACK: CallEvaluationResult = {
+  isQualityAnalyzable: true,
+  notAnalyzableReason: null,
   valueScore: 3,
   valueExplanation:
     "Оценка недоступна — недостаточно данных или AI не настроен",
@@ -56,7 +60,14 @@ value_explanation — 1–2 предложения на русском: поче
 
 manager_feedback — 1–2 предложения: что сделано хорошо, что улучшить.
 
-Если разговор слишком короткий или неразборчивый — ставь 3 и укажи в explanation/feedback причину.
+Если это автоответчик/голосовое меню/робот или в разговоре нет содержательного диалога менеджера с клиентом:
+- is_quality_analyzable = false
+- not_analyzable_reason = "autoanswerer"
+- value_score = null
+- manager_score = null
+- value_explanation и manager_feedback кратко объясняют, что звонок не подлежит оценке качества менеджера.
+
+Если разговор слишком короткий или неразборчивый (но это не автоответчик) — ставь 3 и укажи в explanation/feedback причину.
 Отвечай только на русском.`;
 
 export async function evaluateCallWithLlm(
@@ -74,10 +85,18 @@ export async function evaluateCallWithLlm(
   }
 
   const schema = z.object({
+    is_quality_analyzable: z
+      .boolean()
+      .describe("Можно ли оценивать качество менеджера по звонку"),
+    not_analyzable_reason: z
+      .string()
+      .nullable()
+      .describe('Причина неанализируемости (например, "autoanswerer")'),
     value_score: z
       .number()
       .min(1)
       .max(5)
+      .nullable()
       .describe("Ценность звонка для бизнеса (1–5)"),
     value_explanation: z
       .string()
@@ -86,6 +105,7 @@ export async function evaluateCallWithLlm(
       .number()
       .min(1)
       .max(5)
+      .nullable()
       .describe("Качество работы менеджера (1–5)"),
     manager_feedback: z
       .string()
@@ -109,19 +129,30 @@ export async function evaluateCallWithLlm(
       functionId: "evaluation-evaluate-call",
     });
 
-    const valueScore = Math.min(5, Math.max(1, Math.round(result.value_score)));
-    const managerScore = Math.min(
-      5,
-      Math.max(1, Math.round(result.manager_score)),
-    );
+    const isQualityAnalyzable = result.is_quality_analyzable !== false;
+    const valueScore =
+      typeof result.value_score === "number"
+        ? Math.min(5, Math.max(1, Math.round(result.value_score)))
+        : null;
+    const managerScore =
+      typeof result.manager_score === "number"
+        ? Math.min(5, Math.max(1, Math.round(result.manager_score)))
+        : null;
+    const notAnalyzableReason = isQualityAnalyzable
+      ? null
+      : result.not_analyzable_reason?.trim() || "autoanswerer";
 
     logger.info("LLM оценка завершена", {
+      isQualityAnalyzable,
+      notAnalyzableReason,
       valueScore,
       managerScore,
       valueExplanationLength: result.value_explanation.length,
     });
 
     return {
+      isQualityAnalyzable,
+      notAnalyzableReason,
       valueScore,
       valueExplanation: result.value_explanation.trim(),
       managerScore,

@@ -35,7 +35,6 @@ export default function CallDetailModal({
   const [evaluation, setEvaluation] = useState<EvaluationDetail | null>(null);
   const [restarting, setRestarting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showRaw, setShowRaw] = useState(false);
 
   // Валидация UUID v7 формата
   const isValidCallId = (id: string | number): boolean => {
@@ -76,11 +75,6 @@ export default function CallDetailModal({
   useEffect(() => {
     setEvaluation((result?.evaluation ?? null) as EvaluationDetail | null);
   }, [result?.evaluation]);
-
-  useEffect(() => {
-    const t = result?.transcript as TranscriptDetail | null;
-    if (!t?.rawText) setShowRaw(false);
-  }, [result?.transcript]);
 
   const transcribeMutation = useMutation(
     orpc.calls.transcribe.mutationOptions(),
@@ -314,8 +308,6 @@ export default function CallDetailModal({
               <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-[1fr_340px]">
                 <TranscriptSection
                   transcript={transcript}
-                  showRaw={showRaw}
-                  onShowRawChange={setShowRaw}
                   onDownloadTxt={handleDownloadTxt}
                   managerName={
                     call.managerName ?? call.operatorName ?? undefined

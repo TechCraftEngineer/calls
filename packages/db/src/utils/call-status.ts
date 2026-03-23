@@ -5,19 +5,31 @@ export const CALL_STATUS = {
 
 export type CallStatus = (typeof CALL_STATUS)[keyof typeof CALL_STATUS];
 
+export const MISSED_ALIASES = [
+  "missed",
+  "unanswered",
+  "noanswer",
+  "no answer",
+  "пропущен",
+  "не принят",
+  "не отвечен",
+] as const;
+
+export const ANSWERED_ALIASES = [
+  "answered",
+  "accepted",
+  "completed",
+  "connected",
+  "принят",
+] as const;
+
 const STATUS_ALIASES: Record<string, CallStatus> = {
-  missed: CALL_STATUS.MISSED,
-  unanswered: CALL_STATUS.MISSED,
-  noanswer: CALL_STATUS.MISSED,
-  "no answer": CALL_STATUS.MISSED,
-  пропущен: CALL_STATUS.MISSED,
-  "не принят": CALL_STATUS.MISSED,
-  "не отвечен": CALL_STATUS.MISSED,
-  answered: CALL_STATUS.ANSWERED,
-  accepted: CALL_STATUS.ANSWERED,
-  completed: CALL_STATUS.ANSWERED,
-  connected: CALL_STATUS.ANSWERED,
-  принят: CALL_STATUS.ANSWERED,
+  ...Object.fromEntries(
+    MISSED_ALIASES.map((alias) => [alias, CALL_STATUS.MISSED]),
+  ),
+  ...Object.fromEntries(
+    ANSWERED_ALIASES.map((alias) => [alias, CALL_STATUS.ANSWERED]),
+  ),
 };
 
 /**

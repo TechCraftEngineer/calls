@@ -107,7 +107,9 @@ export const callsRepository = {
     return row ?? null;
   },
 
-  async create(data: CreateCallData): Promise<string> {
+  async createWithResult(
+    data: CreateCallData,
+  ): Promise<{ id: string; created: boolean }> {
     const status =
       normalizeCallStatus(data.status) ??
       computeCallStatus(data.duration, data.direction);
@@ -151,7 +153,9 @@ export const callsRepository = {
             })
             .returning({ id: schema.calls.id });
 
-    if (result[0]?.id) return result[0].id;
+    if (result[0]?.id) {
+      return { id: result[0].id, created: true };
+    }
 
     if (data.provider && data.externalId) {
       const existing = await this.findByExternalId(
@@ -159,11 +163,26 @@ export const callsRepository = {
         data.provider,
         data.externalId,
       );
-      return existing?.id ?? "";
+      if (existing?.id) {
+        return { id: existing.id, created: false };
+      }
+      throw new Error(
+        `Call create failed: insert returned no id and no existing call found by external id (workspaceId=${data.workspaceId}, provider=${data.provider}, externalId=${data.externalId})`,
+      );
     }
 
     const existing = await this.findByFilename(data.filename, data.workspaceId);
-    return existing?.id ?? "";
+    if (existing?.id) {
+      return { id: existing.id, created: false };
+    }
+    throw new Error(
+      `Call create failed: insert returned no id and no existing call found by filename (workspaceId=${data.workspaceId}, filename=${data.filename})`,
+    );
+  },
+
+  async create(data: CreateCallData): Promise<string> {
+    const created = await this.createWithResult(data);
+    return created.id;
   },
 
   async updateDuration(callId: string, durationSeconds: number): Promise<void> {

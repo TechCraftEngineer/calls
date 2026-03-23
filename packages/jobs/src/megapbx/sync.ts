@@ -5,6 +5,7 @@ import {
   pbxRepository,
   pbxService,
 } from "@calls/db";
+import { inngest, transcribeRequested } from "../inngest/client";
 import { createLogger } from "../logger";
 import { MegaPbxClient } from "./client";
 import {
@@ -25,6 +26,7 @@ type SyncStats = {
   autoLinked: number;
   calls: number;
   recordings: number;
+  transcriptionsQueued: number;
   skipped: number;
   errors: string[];
   latestCursor: string | null;
@@ -166,6 +168,7 @@ export async function syncMegaPbxDirectory(
     autoLinked: 0,
     calls: 0,
     recordings: 0,
+    transcriptionsQueued: 0,
     skipped: 0,
     errors: [],
     latestCursor: null,
@@ -274,6 +277,7 @@ export async function syncMegaPbxCalls(
     autoLinked: 0,
     calls: 0,
     recordings: 0,
+    transcriptionsQueued: 0,
     skipped: 0,
     errors: [],
     latestCursor: null,
@@ -320,44 +324,6 @@ export async function syncMegaPbxCalls(
       }
 
       const filename = `megapbx/${call.externalId}.json`;
-      const existing =
-        (await callsService.getCallByExternalId(
-          workspaceId,
-          PROVIDER,
-          call.externalId,
-        )) ?? (await callsService.getCallByFilename(filename, workspaceId));
-      if (existing) {
-        if (config.syncRecordings && call.recordingUrl && !existing.fileId) {
-          try {
-            const uploaded = await uploadRecordingIfNeeded(
-              client,
-              workspaceId,
-              call.externalId,
-              call.recordingUrl,
-            );
-            if (uploaded.fileId) {
-              await callsService.updateCallRecording(existing.id, {
-                fileId: uploaded.fileId,
-                sizeBytes: uploaded.sizeBytes,
-              });
-              stats.recordings += 1;
-            }
-          } catch (error) {
-            const message =
-              error instanceof Error ? error.message : String(error);
-            stats.errors.push(message);
-            logger.warn("Ошибка дозагрузки записи MegaPBX", {
-              workspaceId,
-              callId: call.externalId,
-              error: message,
-            });
-          }
-        }
-        stats.skipped += 1;
-        stats.latestCursor = call.timestamp;
-        continue;
-      }
-
       const employee = call.employeeExternalId
         ? employeeMap.get(call.employeeExternalId)
         : undefined;
@@ -365,35 +331,7 @@ export async function syncMegaPbxCalls(
         ? numberMap.get(call.numberExternalId)
         : undefined;
 
-      let fileId: string | null = null;
-      let sizeBytes: number | null = null;
-
-      if (config.syncRecordings && call.recordingUrl) {
-        try {
-          const uploaded = await uploadRecordingIfNeeded(
-            client,
-            workspaceId,
-            call.externalId,
-            call.recordingUrl,
-          );
-          fileId = uploaded.fileId;
-          sizeBytes = uploaded.sizeBytes;
-          if (fileId) {
-            stats.recordings += 1;
-          }
-        } catch (error) {
-          const message =
-            error instanceof Error ? error.message : String(error);
-          stats.errors.push(message);
-          logger.warn("Ошибка загрузки записи MegaPBX", {
-            workspaceId,
-            callId: call.externalId,
-            error: message,
-          });
-        }
-      }
-
-      await callsService.createCall({
+      const createResult = await callsService.createCallWithResult({
         workspaceId,
         filename,
         provider: PROVIDER,
@@ -410,12 +348,67 @@ export async function syncMegaPbxCalls(
         status: call.status,
         source: employee?.externalId ?? number?.externalId ?? "megapbx",
         name: employee?.displayName ?? number?.label ?? "MegaPBX",
-        fileId,
+        fileId: null,
         pbxNumberId: number?.id ?? null,
-        sizeBytes,
+        sizeBytes: null,
       });
 
-      stats.calls += 1;
+      const canonicalCall =
+        (await callsService.getCallByExternalId(
+          workspaceId,
+          PROVIDER,
+          call.externalId,
+        )) ?? (await callsService.getCallByFilename(filename, workspaceId));
+
+      if (!canonicalCall) {
+        throw new Error(
+          `Canonical call not found after create (workspaceId=${workspaceId}, provider=${PROVIDER}, externalId=${call.externalId}, filename=${filename})`,
+        );
+      }
+      let recordingFileId: string | null = canonicalCall.fileId;
+
+      if (config.syncRecordings && call.recordingUrl && !canonicalCall.fileId) {
+        try {
+          const uploaded = await uploadRecordingIfNeeded(
+            client,
+            workspaceId,
+            call.externalId,
+            call.recordingUrl,
+          );
+          if (uploaded.fileId) {
+            await callsService.updateCallRecording(canonicalCall.id, {
+              fileId: uploaded.fileId,
+              sizeBytes: uploaded.sizeBytes,
+            });
+            recordingFileId = uploaded.fileId;
+            stats.recordings += 1;
+          }
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : String(error);
+          stats.errors.push(message);
+          logger.warn("Ошибка загрузки записи MegaPBX", {
+            workspaceId,
+            callId: call.externalId,
+            callRecordId: canonicalCall.id,
+            createResultId: createResult.id,
+            error: message,
+          });
+        }
+      }
+
+      if (createResult.created && recordingFileId) {
+        await inngest.send(
+          transcribeRequested.create({ callId: canonicalCall.id }),
+        );
+        stats.transcriptionsQueued += 1;
+      }
+
+      if (createResult.created) {
+        stats.calls += 1;
+      } else {
+        stats.skipped += 1;
+      }
       stats.latestCursor = call.timestamp;
     }
 

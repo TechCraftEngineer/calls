@@ -23,6 +23,8 @@ describe("calls list normalization", () => {
       expect(normalizeStatusFilter("missed")).toBe("missed");
       expect(normalizeStatusFilter("answered")).toBe("answered");
       expect(normalizeStatusFilter("accepted")).toBe("answered");
+      expect(normalizeStatusFilter("completed")).toBe("answered");
+      expect(normalizeStatusFilter("connected")).toBe("answered");
     });
 
     it("normalizes russian status values", () => {

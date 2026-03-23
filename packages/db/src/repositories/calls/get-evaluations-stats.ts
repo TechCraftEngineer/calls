@@ -103,13 +103,14 @@ export async function getEvaluationsStats(
 
   // Агрегаты оценок по менеджерам (avg rating, avg value, evaluated count)
   const evalConditions = [...conditions];
+  evalConditions.push(eq(schema.callEvaluations.isQualityAnalyzable, true));
   const evalQuery = db
     .select({
       managerName: schema.calls.name,
       internalNumber: schema.calls.internalNumber,
       avgManagerScore: avg(schema.callEvaluations.managerScore),
       avgValueScore: avg(schema.callEvaluations.valueScore),
-      evaluatedCount: count(schema.callEvaluations.id),
+      evaluatedCount: count(schema.callEvaluations.managerScore),
     })
     .from(schema.calls)
     .innerJoin(
@@ -165,6 +166,7 @@ export async function getLowRatedCallsCount(
   const conditions = [
     eq(schema.calls.workspaceId, workspaceId),
     lt(schema.callEvaluations.managerScore, maxScore),
+    eq(schema.callEvaluations.isQualityAnalyzable, true),
   ];
   if (dateFrom)
     conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));

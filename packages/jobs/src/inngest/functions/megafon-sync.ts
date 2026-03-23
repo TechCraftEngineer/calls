@@ -52,16 +52,17 @@ export const megafonSyncFn = inngest.createFunction(
         allErrors.push(...result.errors);
       }
 
-      // Запускаем транскрибацию для каждого нового звонка с аудио
-      // if (allCreatedCallIds.length > 0) {
-      //   await step.sendEvent(
-      //     "trigger-transcriptions",
-      //     allCreatedCallIds.map((callId) => ({
-      //       name: "call/transcribe.requested",
-      //       data: { callId },
-      //     })),
-      //   );
-      // }
+      // Запускаем транскрибацию для каждого нового звонка с аудио.
+      // Дальше evaluate запустится автоматически из transcribe-call.
+      if (allCreatedCallIds.length > 0) {
+        await step.sendEvent(
+          "trigger-transcriptions",
+          allCreatedCallIds.map((callId) => ({
+            name: "call/transcribe.requested",
+            data: { callId },
+          })),
+        );
+      }
 
       return {
         workspacesProcessed: integrations.length,

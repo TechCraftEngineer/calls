@@ -21,7 +21,38 @@ export interface GetAIModelOptions {
   profile?: AiModelProfile;
 }
 
+function normalizeModelId(modelId: string): string {
+  const normalized = modelId.trim();
+  const slashIndex = normalized.lastIndexOf("/");
+  return slashIndex >= 0 ? normalized.slice(slashIndex + 1) : normalized;
+}
+
+function resolveModelIdForProvider(
+  modelId: string,
+  provider: AiProvider,
+): string {
+  // OpenRouter expects provider-qualified IDs (e.g. "openai/gpt-5-nano").
+  if (provider === "openrouter") {
+    return modelId.trim();
+  }
+
+  return normalizeModelId(modelId);
+}
+
 export function getAIModelId(profile: AiModelProfile = "default"): string {
+  const modelId =
+    profile === "premium"
+      ? env.AI_MODEL_PREMIUM || env.AI_MODEL
+      : profile === "longContext"
+        ? env.AI_MODEL_LONG_CONTEXT || env.AI_MODEL
+        : profile === "cheap"
+          ? env.AI_MODEL_CHEAP || env.AI_MODEL
+          : env.AI_MODEL;
+
+  return normalizeModelId(modelId);
+}
+
+function getRawAIModelId(profile: AiModelProfile = "default"): string {
   switch (profile) {
     case "premium":
       return env.AI_MODEL_PREMIUM || env.AI_MODEL;
@@ -57,7 +88,10 @@ export function hasAiProviderConfigured(): boolean {
  */
 export function getAIModel(options: GetAIModelOptions = {}): LanguageModel {
   const provider = options.provider ?? env.AI_PROVIDER;
-  const modelId = options.model ?? getAIModelId(options.profile);
+  const modelId = resolveModelIdForProvider(
+    options.model ?? getRawAIModelId(options.profile),
+    provider,
+  );
 
   switch (provider) {
     case "openrouter":
@@ -186,7 +220,9 @@ export async function generateWithAi(
         functionId,
         metadata: {
           provider: provider ?? env.AI_PROVIDER,
-          model: modelOverride ?? getAIModelId(modelProfile),
+          model: normalizeModelId(
+            modelOverride ?? getRawAIModelId(modelProfile),
+          ),
           ...metadata,
         },
       }
