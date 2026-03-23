@@ -19,14 +19,44 @@ function normalizeConversationMessages(
   messages: ChatMessage[],
 ): ChatConversationMessage[] {
   const trimmedMessages = messages
-    .map((msg) => ({
-      role: msg.role,
-      content: msg.content.trim().slice(0, 2000),
-      context: msg.context?.trim().slice(0, 2000) || undefined,
-    }))
+    .map((msg) => {
+      const baseContent = msg.content.trim();
+      const context = msg.context?.trim();
+      const mergedContent = context
+        ? `${baseContent}\n\nContext: ${context}`
+        : baseContent;
+
+      return {
+        role: msg.role,
+        content: mergedContent.slice(0, 2000),
+      };
+    })
     .slice(-20);
 
   return ChatConversationHistorySchema.parse(trimmedMessages);
+}
+
+function isTimeoutError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
+  const code = Reflect.get(error, "code");
+  return (
+    error.name === "TimeoutError" ||
+    error.name === "AbortError" ||
+    code === "TIMEOUT" ||
+    code === "ETIMEDOUT" ||
+    error.message.toLowerCase().includes("timeout") ||
+    error.message.toLowerCase().includes("timed out")
+  );
+}
+
+function createTimeoutStreamError(cause: unknown): Error & { code: string } {
+  const timeoutError = new Error("AI streaming timeout", {
+    cause: cause instanceof Error ? cause : undefined,
+  }) as Error & { code: string };
+  timeoutError.name = "TimeoutError";
+  timeoutError.code = "TIMEOUT";
+  return timeoutError;
 }
 
 export function createChatBot(config: ChatBotConfig) {
@@ -156,12 +186,23 @@ export function createChatBot(config: ChatBotConfig) {
               model: candidate.modelId,
               error: error instanceof Error ? error.message : String(error),
             });
+
+            if (isTimeoutError(error)) {
+              throw createTimeoutStreamError(error);
+            }
           }
         }
 
         throw lastError ?? new Error("No streaming model candidates available");
       } catch (error) {
         console.error("Chat bot streaming error:", error);
+        if (
+          error instanceof Error &&
+          (error.name === "TimeoutError" ||
+            Reflect.get(error, "code") === "TIMEOUT")
+        ) {
+          throw error;
+        }
         throw new Error("Failed to generate streaming response");
       }
     },

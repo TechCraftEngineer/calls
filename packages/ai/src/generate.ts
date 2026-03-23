@@ -85,24 +85,13 @@ function getRawAIModelId(profile: AiModelProfile = "default"): string {
 }
 
 /**
- * Проверяет, настроен ли API ключ для текущего провайдера.
+ * Проверяет, настроен ли API ключ хотя бы для одного провайдера
+ * (openai/openrouter/deepseek).
  */
 export function hasAiProviderConfigured(): boolean {
-  if (env.OPENAI_API_KEY || env.OPENROUTER_API_KEY || env.DEEPSEEK_API_KEY) {
-    return true;
-  }
-
-  const provider = env.AI_PROVIDER;
-  switch (provider) {
-    case "openai":
-      return !!env.OPENAI_API_KEY;
-    case "openrouter":
-      return !!env.OPENROUTER_API_KEY;
-    case "deepseek":
-      return !!env.DEEPSEEK_API_KEY;
-    default:
-      return false;
-  }
+  return Boolean(
+    env.OPENAI_API_KEY || env.OPENROUTER_API_KEY || env.DEEPSEEK_API_KEY,
+  );
 }
 
 /**

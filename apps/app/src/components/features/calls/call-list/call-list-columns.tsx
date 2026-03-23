@@ -5,13 +5,15 @@ import type { ColumnDef } from "@tanstack/react-table";
 import {
   createLinkOrButton,
   renderAnalysisCostCell,
+  renderCallTopicCell,
   renderCallTypeCell,
   renderDateCell,
   renderDirectionCell,
   renderDurationCell,
-  renderManagerCell,
+  renderManagerNameCell,
   renderNumberCell,
   renderScoreCell,
+  renderSentimentCell,
   renderStatusCell,
   renderSummaryCell,
 } from "./call-list-cell-renderers";
@@ -50,6 +52,8 @@ export function getCallListColumns(
     summary: "Краткое резюме разговора",
     record: "Быстрые действия по звонку: запись, транскрипция, рекомендации",
   };
+  const headerClassName =
+    "h-auto min-h-6 py-1 text-left leading-tight whitespace-normal";
 
   return [
     {
@@ -61,6 +65,7 @@ export function getCallListColumns(
         <DataGridColumnHeader
           column={column}
           title="Дата и время"
+          className={headerClassName}
           visibility={true}
         />
       ),
@@ -73,7 +78,12 @@ export function getCallListColumns(
       size: 220,
       minSize: 180,
       header: ({ column }) => (
-        <DataGridColumnHeader column={column} title="Номер" visibility={true} />
+        <DataGridColumnHeader
+          column={column}
+          title="Номер"
+          className={headerClassName}
+          visibility={true}
+        />
       ),
       cell: ({ row }) => renderNumberCell(row.original, renderLinkOrButton),
       meta: { headerTitle: "Номер" },
@@ -81,12 +91,12 @@ export function getCallListColumns(
     {
       accessorKey: "call.direction",
       id: "type",
-      size: 128,
       minSize: 116,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
           title="Направление"
+          className={headerClassName}
           visibility={true}
         />
       ),
@@ -102,6 +112,7 @@ export function getCallListColumns(
         <DataGridColumnHeader
           column={column}
           title="Тип звонка"
+          className={headerClassName}
           visibility={true}
         />
       ),
@@ -109,29 +120,62 @@ export function getCallListColumns(
       meta: { headerTitle: "Тип звонка" },
     },
     {
-      accessorKey: "call.customerName",
+      accessorKey: "call.managerName",
       id: "manager",
-      size: 168,
+      size: 164,
       minSize: 140,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
-          title="Собеседник"
+          title="Менеджер"
+          className={headerClassName}
           visibility={true}
         />
       ),
-      cell: ({ row }) => renderManagerCell(row.original.call),
-      meta: { headerTitle: "Собеседник" },
+      cell: ({ row }) => renderManagerNameCell(row.original.call),
+      meta: { headerTitle: "Менеджер" },
+    },
+    {
+      accessorKey: "transcript.callTopic",
+      id: "callTopic",
+      size: 180,
+      minSize: 150,
+      header: ({ column }) => (
+        <DataGridColumnHeader
+          column={column}
+          title="Тема звонка"
+          className={headerClassName}
+          visibility={true}
+        />
+      ),
+      cell: ({ row }) => renderCallTopicCell(row.original.transcript),
+      meta: { headerTitle: "Тема звонка" },
+    },
+    {
+      accessorKey: "transcript.sentiment",
+      id: "sentiment",
+      size: 136,
+      minSize: 120,
+      header: ({ column }) => (
+        <DataGridColumnHeader
+          column={column}
+          title="Тональность"
+          className={headerClassName}
+          visibility={true}
+        />
+      ),
+      cell: ({ row }) => renderSentimentCell(row.original.transcript),
+      meta: { headerTitle: "Тональность" },
     },
     {
       accessorKey: "call.duration",
       id: "status",
-      size: 132,
       minSize: 120,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
           title="Результат"
+          className={headerClassName}
           tooltip={columnTooltips.status}
           visibility={true}
         />
@@ -143,12 +187,12 @@ export function getCallListColumns(
     {
       accessorKey: "call.duration",
       id: "duration",
-      size: 112,
       minSize: 96,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
           title="Длительность"
+          className={headerClassName}
           visibility={true}
         />
       ),
@@ -158,12 +202,12 @@ export function getCallListColumns(
     {
       accessorKey: "evaluation.valueScore",
       id: "score",
-      size: 120,
       minSize: 108,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
           title="Оценка"
+          className={headerClassName}
           tooltip={columnTooltips.score}
           visibility={true}
         />
@@ -181,6 +225,7 @@ export function getCallListColumns(
         <DataGridColumnHeader
           column={column}
           title="Резюме"
+          className={headerClassName}
           tooltip={columnTooltips.summary}
           visibility={true}
         />
@@ -194,12 +239,12 @@ export function getCallListColumns(
     {
       id: "record",
       accessorFn: (row) => row.call.fileId ?? "",
-      size: 128,
       minSize: 116,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
           title="Действия"
+          className={headerClassName}
           tooltip={columnTooltips.record}
           visibility={true}
         />
@@ -226,6 +271,7 @@ export function getCallListColumns(
         <DataGridColumnHeader
           column={column}
           title="Стоимость анализа"
+          className={headerClassName}
           visibility={true}
         />
       ),

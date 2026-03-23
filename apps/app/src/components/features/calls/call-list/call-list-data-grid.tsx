@@ -164,31 +164,36 @@ export function CallListDataGrid({
       {
         id: "select",
         header: ({ table }) => (
-          <Checkbox
-            checked={
-              table.getIsSomePageRowsSelected() &&
-              !table.getIsAllPageRowsSelected()
-                ? "indeterminate"
-                : table.getIsAllPageRowsSelected()
-            }
-            onCheckedChange={(value) =>
-              table.toggleAllPageRowsSelected(!!value)
-            }
-            aria-label="Выбрать все звонки на странице"
-          />
+          <div className="flex h-full w-full items-center justify-center ps-1">
+            <Checkbox
+              checked={
+                table.getIsSomePageRowsSelected() &&
+                !table.getIsAllPageRowsSelected()
+                  ? "indeterminate"
+                  : table.getIsAllPageRowsSelected()
+              }
+              onCheckedChange={(value) =>
+                table.toggleAllPageRowsSelected(!!value)
+              }
+              aria-label="Выбрать все звонки на странице"
+            />
+          </div>
         ),
         cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Выбрать звонок"
-            onClick={(event) => event.stopPropagation()}
-          />
+          <div className="flex h-full w-full items-center justify-center ps-1">
+            <Checkbox
+              checked={row.getIsSelected()}
+              onCheckedChange={(value) => row.toggleSelected(!!value)}
+              aria-label="Выбрать звонок"
+              onClick={(event) => event.stopPropagation()}
+            />
+          </div>
         ),
         enableSorting: false,
         enableHiding: false,
         enableColumnOrdering: false,
-        size: 44,
+        enableResizing: false,
+        size: 60,
         meta: { headerTitle: "Выбор" },
       },
       ...getCallListColumns({
@@ -308,6 +313,8 @@ export function CallListDataGrid({
     manualPagination: true,
     pageCount: pagination.total_pages || 1,
     enableRowSelection: true,
+    enableColumnResizing: true,
+    columnResizeMode: "onChange",
     state: {
       pagination: {
         pageIndex: pagination.page - 1,
@@ -382,6 +389,7 @@ export function CallListDataGrid({
         }}
         tableLayout={{
           columnsVisibility: true,
+          columnsResizable: true,
           columnsDraggable: true,
           rowBorder: true,
           headerBorder: true,
