@@ -2,7 +2,7 @@
 
 import { paths } from "@calls/config";
 import { Tabs, TabsList, TabsTrigger } from "@calls/ui";
-import { useQuery } from "@tanstack/react-query";
+import { skipToken, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -56,8 +56,12 @@ function StatisticsPageContent() {
     error: statsError,
     refetch: loadStats,
   } = useQuery({
-    ...orpc.statistics.getStatistics.queryOptions({ input: statsInput }),
-    enabled: activeTab === "statistics",
+    ...(activeTab === "statistics"
+      ? orpc.statistics.getStatistics.queryOptions({ input: statsInput })
+      : {
+          queryKey: ["statistics", "list", "skip"],
+          queryFn: skipToken,
+        }),
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     staleTime: 10 * 60 * 1000,

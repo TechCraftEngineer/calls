@@ -26,20 +26,15 @@ interface Message {
 
 interface TranscriptSectionProps {
   transcript: TranscriptDetail | null;
-  showRaw: boolean;
-  onShowRawChange: (show: boolean) => void;
   onDownloadTxt: () => void;
   managerName?: string;
 }
 
 function parseMessages(
   transcript: TranscriptDetail | null,
-  showRaw: boolean,
   managerName?: string,
 ): Message[] {
-  const sourceText = showRaw
-    ? transcript?.rawText || transcript?.text
-    : transcript?.text;
+  const sourceText = transcript?.text;
   if (!sourceText) return [];
 
   return sourceText
@@ -72,12 +67,10 @@ function parseMessages(
 
 export default function TranscriptSection({
   transcript,
-  showRaw,
-  onShowRawChange,
   onDownloadTxt,
   managerName,
 }: TranscriptSectionProps) {
-  const messages = parseMessages(transcript, showRaw, managerName);
+  const messages = parseMessages(transcript, managerName);
 
   return (
     <Card className="flex min-h-[600px] max-h-[800px] flex-col overflow-hidden border-border/60">
@@ -87,26 +80,6 @@ export default function TranscriptSection({
             <MessageSquare className="text-muted-foreground size-4" />
             Расшифровка
           </CardTitle>
-          {transcript?.rawText && (
-            <div className="bg-muted/50 flex rounded-md p-0.5">
-              <Button
-                variant={showRaw ? "ghost" : "secondary"}
-                size="sm"
-                className="h-7 px-2.5 text-xs"
-                onClick={() => onShowRawChange(false)}
-              >
-                Обработка
-              </Button>
-              <Button
-                variant={showRaw ? "secondary" : "ghost"}
-                size="sm"
-                className="h-7 px-2.5 text-xs"
-                onClick={() => onShowRawChange(true)}
-              >
-                Оригинал
-              </Button>
-            </div>
-          )}
         </div>
         <Button
           type="button"

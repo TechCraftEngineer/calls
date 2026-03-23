@@ -7,6 +7,7 @@ import {
   callsService,
   filesService,
   pbxRepository,
+  workspaceIntegrationsRepository,
   workspacesService,
 } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
@@ -15,7 +16,6 @@ import { createLogger } from "../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../client";
 
 const logger = createLogger("transcribe-call");
-const PBX_PROVIDER = "megapbx";
 
 export const transcribeCallFn = inngest.createFunction(
   {
@@ -80,9 +80,39 @@ export const transcribeCallFn = inngest.createFunction(
       "resolve-manager-name-from-pbx",
       async () => {
         try {
+          const pbxIntegration =
+            await workspaceIntegrationsRepository.getByWorkspaceAndType(
+              call.workspaceId,
+              "megapbx",
+            );
+
+          if (!pbxIntegration?.enabled) {
+            logger.info("PBX integration not enabled for workspace", {
+              callId,
+              workspaceId: call.workspaceId,
+            });
+            return null;
+          }
+
+          const rawProvider =
+            typeof pbxIntegration.config === "object" &&
+            pbxIntegration.config !== null &&
+            "provider" in pbxIntegration.config
+              ? pbxIntegration.config.provider
+              : undefined;
+          const integrationProvider =
+            typeof rawProvider === "string" ? rawProvider.trim() : "megapbx";
+          if (!integrationProvider) {
+            logger.warn("PBX integration provider is missing", {
+              callId,
+              workspaceId: call.workspaceId,
+            });
+            return null;
+          }
+
           const pbxNumbers = await pbxRepository.listNumbers(
             call.workspaceId,
-            PBX_PROVIDER,
+            integrationProvider,
           );
           const activePbxNumbers = pbxNumbers.filter(
             (number) => number.isActive,

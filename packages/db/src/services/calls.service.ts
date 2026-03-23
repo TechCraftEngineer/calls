@@ -83,6 +83,25 @@ export class CallsService {
     return callId;
   }
 
+  async createCallWithResult(
+    data: CreateCallData,
+  ): Promise<{ id: string; created: boolean }> {
+    const result = await this.callsRepository.createWithResult(data);
+
+    try {
+      await this.systemRepository.addActivityLog(
+        "INFO",
+        `Call ${result.id} ${result.created ? "created" : "resolved"} from file: ${data.filename}`,
+        "system",
+        data.workspaceId,
+      );
+    } catch {
+      // Игнорируем ошибки логирования
+    }
+
+    return result;
+  }
+
   async getTranscriptByCallId(callId: string): Promise<Transcript | null> {
     return this.callsRepository.getTranscriptByCallId(callId);
   }

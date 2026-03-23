@@ -1,5 +1,11 @@
 import { createChatBot } from "@calls/ai";
 import { createLogger } from "@calls/api";
+import {
+  AI_MODEL,
+  AI_MODEL_PREMIUM,
+  AI_RECOMMENDATIONS_MODEL,
+  OPENROUTER_API_KEY,
+} from "@calls/config";
 import type { Call, callsService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
@@ -7,9 +13,9 @@ import { workspaceProcedure } from "../../orpc";
 
 const logger = createLogger("generate-recommendations");
 const DEFAULT_RECOMMENDATIONS_MODEL =
-  process.env.AI_RECOMMENDATIONS_MODEL ??
-  process.env.AI_MODEL_PREMIUM ??
-  process.env.AI_MODEL ??
+  AI_RECOMMENDATIONS_MODEL ??
+  AI_MODEL_PREMIUM ??
+  AI_MODEL ??
   "anthropic/claude-sonnet-4.6";
 
 const DEFAULT_RECOMMENDATIONS_PROMPT = `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
@@ -127,7 +133,7 @@ export async function generateRecommendations(
       : "";
     const systemPrompt = companyBlock + DEFAULT_RECOMMENDATIONS_PROMPT;
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = OPENROUTER_API_KEY;
     if (!apiKey) {
       throw new Error(
         "OPENROUTER_API_KEY не задан — настрой переменную окружения для генерации рекомендаций",

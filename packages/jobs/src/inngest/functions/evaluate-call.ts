@@ -121,6 +121,8 @@ export const evaluateCallFn = inngest.createFunction(
     await step.run("save-evaluation", async () => {
       await callsService.addEvaluation({
         callId,
+        isQualityAnalyzable: evaluation.isQualityAnalyzable,
+        notAnalyzableReason: evaluation.notAnalyzableReason,
         valueScore: evaluation.valueScore,
         valueExplanation: evaluation.valueExplanation,
         managerScore: evaluation.managerScore,
@@ -128,6 +130,8 @@ export const evaluateCallFn = inngest.createFunction(
       });
       logger.info("Оценка сохранена", {
         callId,
+        isQualityAnalyzable: evaluation.isQualityAnalyzable,
+        notAnalyzableReason: evaluation.notAnalyzableReason,
         valueScore: evaluation.valueScore,
         managerScore: evaluation.managerScore,
       });

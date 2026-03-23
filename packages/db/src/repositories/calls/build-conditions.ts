@@ -1,5 +1,6 @@
 import { eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
 import * as schema from "../../schema";
+import { ANSWERED_ALIASES, MISSED_ALIASES } from "../../utils/call-status";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
 
 export interface CallConditionsParams {
@@ -105,11 +106,20 @@ export function buildCallConditions(params: CallConditionsParams) {
       .map((status) => status.trim().toLowerCase())
       .filter((status) => status.length > 0);
     if (normalizedStatuses.length > 0) {
+      const statusValue = sql<string>`LOWER(COALESCE(${schema.calls.status}, ''))`;
+      const missedAliasesSql = sql.join(
+        MISSED_ALIASES.map((alias) => sql`${alias}`),
+        sql`, `,
+      );
+      const answeredAliasesSql = sql.join(
+        ANSWERED_ALIASES.map((alias) => sql`${alias}`),
+        sql`, `,
+      );
       const canonicalStatus = sql<string>`
         CASE
-          WHEN LOWER(COALESCE(${schema.calls.status}, '')) IN ('missed', 'unanswered', 'noanswer', 'no answer', 'пропущен', 'не принят', 'не отвечен') THEN 'missed'
-          WHEN LOWER(COALESCE(${schema.calls.status}, '')) IN ('answered', 'accepted', 'completed', 'connected', 'принят') THEN 'answered'
-          ELSE LOWER(COALESCE(${schema.calls.status}, ''))
+          WHEN ${statusValue} IN (${missedAliasesSql}) THEN 'missed'
+          WHEN ${statusValue} IN (${answeredAliasesSql}) THEN 'answered'
+          ELSE ${statusValue}
         END
       `;
       conditions.push(inArray(canonicalStatus, normalizedStatuses));
