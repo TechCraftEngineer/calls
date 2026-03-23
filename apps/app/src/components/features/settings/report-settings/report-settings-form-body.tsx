@@ -140,6 +140,7 @@ export default function ReportSettingsFormBody({
 
   const sendTestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendTestMessageRef = useRef("");
+  const sendTestEmailMessageRef = useRef("");
 
   const sendTestMutation = useMutation(
     orpc.reports.sendTestTelegram.mutationOptions({
@@ -168,9 +169,43 @@ export default function ReportSettingsFormBody({
   );
 
   const [sendTestMessage, setSendTestMessage] = useState("");
+  const [sendTestEmailMessage, setSendTestEmailMessage] = useState("");
+
+  const sendTestEmailMutation = useMutation(
+    orpc.reports.sendTestEmail.mutationOptions({
+      onSuccess: (_, variables) => {
+        const reportTypeLabel = getReportTypeLabel(variables.reportType);
+        const msg = `${reportTypeLabel} отчёт отправлен на email`;
+        toast.success(msg);
+        setSendTestEmailMessage(msg);
+        sendTestEmailMessageRef.current = msg;
+        if (sendTestTimeoutRef.current != null)
+          clearTimeout(sendTestTimeoutRef.current);
+        sendTestTimeoutRef.current = setTimeout(() => {
+          if (sendTestEmailMessageRef.current === msg) {
+            setSendTestEmailMessage("");
+            sendTestEmailMessageRef.current = "";
+          }
+        }, 4000);
+      },
+      onError: (err) => {
+        const msg =
+          err instanceof Error ? err.message : "Не удалось отправить отчёт";
+        toast.error(msg);
+      },
+    }),
+  );
 
   const handleSendTest = (reportType: ReportType) => {
     sendTestMutation.mutate({ reportType });
+  };
+  const handleSendTestEmail = (reportType: ReportType) => {
+    sendTestEmailMutation.mutate({ reportType });
+  };
+  const handleSendTestMax = (_reportType: ReportType) => {
+    toast.error(
+      "Мгновенная отправка в MAX будет доступна после интеграции канала",
+    );
   };
 
   const handleTelegramConnect = () => {
@@ -192,6 +227,34 @@ export default function ReportSettingsFormBody({
         emailMonthlyReport: form.emailMonthlyReport,
       },
     });
+    updateReportParamsMutation.mutate({
+      user_id: userId,
+      data: {
+        reportIncludeCallSummaries: form.reportIncludeCallSummaries,
+        reportDetailed: form.reportDetailed,
+        reportIncludeAvgValue: form.reportIncludeAvgValue,
+        reportIncludeAvgRating: form.reportIncludeAvgRating,
+      },
+    });
+    if (isAdmin) {
+      updateTelegramMutation.mutate({
+        user_id: userId,
+        data: {
+          reportDailyTime: form.reportDailyTime,
+          reportWeeklyDay: form.reportWeeklyDay as
+            | "sun"
+            | "mon"
+            | "tue"
+            | "wed"
+            | "thu"
+            | "fri"
+            | "sat",
+          reportWeeklyTime: form.reportWeeklyTime,
+          reportMonthlyDay: form.reportMonthlyDay,
+          reportMonthlyTime: form.reportMonthlyTime,
+        },
+      });
+    }
   };
 
   const handleSaveTelegram = () => {
@@ -223,6 +286,15 @@ export default function ReportSettingsFormBody({
           : {}),
       },
     });
+    updateReportParamsMutation.mutate({
+      user_id: userId,
+      data: {
+        reportIncludeCallSummaries: form.reportIncludeCallSummaries,
+        reportDetailed: form.reportDetailed,
+        reportIncludeAvgValue: form.reportIncludeAvgValue,
+        reportIncludeAvgRating: form.reportIncludeAvgRating,
+      },
+    });
   };
 
   const handleSaveMax = () => {
@@ -235,6 +307,34 @@ export default function ReportSettingsFormBody({
         maxManagerReport: form.maxManagerReport,
       },
     });
+    updateReportParamsMutation.mutate({
+      user_id: userId,
+      data: {
+        reportIncludeCallSummaries: form.reportIncludeCallSummaries,
+        reportDetailed: form.reportDetailed,
+        reportIncludeAvgValue: form.reportIncludeAvgValue,
+        reportIncludeAvgRating: form.reportIncludeAvgRating,
+      },
+    });
+    if (isAdmin) {
+      updateTelegramMutation.mutate({
+        user_id: userId,
+        data: {
+          reportDailyTime: form.reportDailyTime,
+          reportWeeklyDay: form.reportWeeklyDay as
+            | "sun"
+            | "mon"
+            | "tue"
+            | "wed"
+            | "thu"
+            | "fri"
+            | "sat",
+          reportWeeklyTime: form.reportWeeklyTime,
+          reportMonthlyDay: form.reportMonthlyDay,
+          reportMonthlyTime: form.reportMonthlyTime,
+        },
+      });
+    }
   };
 
   const toNonNegInt = (value: string) => {
@@ -282,8 +382,14 @@ export default function ReportSettingsFormBody({
           <EmailReportSection
             form={form}
             setForm={setForm}
+            isAdmin={isAdmin}
             saving={updateEmailMutation.isPending}
             onSave={handleSaveEmail}
+            onSendTest={handleSendTestEmail}
+            sendTestLoading={sendTestEmailMutation.isPending}
+            sendTestSuccess={Boolean(sendTestEmailMessage)}
+            sendTestReportType={null}
+            sendTestMessage={sendTestEmailMessage}
           />
           <TelegramReportSection
             form={form}
@@ -308,6 +414,11 @@ export default function ReportSettingsFormBody({
             isAdmin={isAdmin}
             saving={updateMaxMutation.isPending}
             onSave={handleSaveMax}
+            onSendTest={handleSendTestMax}
+            sendTestLoading={false}
+            sendTestSuccess={false}
+            sendTestReportType={null}
+            sendTestMessage=""
           />
           <ReportParamsSection
             form={form}

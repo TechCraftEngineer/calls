@@ -6,16 +6,10 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-  Checkbox,
   Field,
   FieldLabel,
   Input,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Separator,
 } from "@calls/ui";
 import type React from "react";
@@ -23,6 +17,11 @@ import type { User } from "@/lib/auth";
 import { SendTestReportButton } from "../telegram/send-test-report-button";
 import { REPORT_TYPE_LABELS, type ReportType } from "../types";
 import type { ReportSettingsForm } from "./report-settings-types";
+import {
+  ReportDeliveryFrequency,
+  ReportFormatSettings,
+  ReportTimeSettings,
+} from "./shared-report-controls";
 
 interface TelegramSectionProps {
   form: ReportSettingsForm;
@@ -87,8 +86,8 @@ export function TelegramReportSection({
       <CardHeader className="px-4 pb-0">
         <CardTitle className="text-base">Telegram Отчеты</CardTitle>
         <CardDescription>
-          Настройте куда и как отправлять отчёты в Telegram. Для админов
-          доступно расписание отправки.
+          Полные настройки Telegram-отчетов: периодичность, расписание, формат и
+          мгновенная отправка выбранного типа.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -166,56 +165,12 @@ export function TelegramReportSection({
             </div>
           )}
         </Field>
-        <div className="flex flex-col gap-2">
-          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-            <Checkbox
-              checked={form.telegramDailyReport}
-              onCheckedChange={(checked) =>
-                setForm((f) => ({
-                  ...f,
-                  telegramDailyReport: checked === true,
-                }))
-              }
-            />
-            Ежедневный отчет
-          </Label>
-          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-            <Checkbox
-              checked={form.telegramWeeklyReport}
-              onCheckedChange={(checked) =>
-                setForm((f) => ({
-                  ...f,
-                  telegramWeeklyReport: checked === true,
-                }))
-              }
-            />
-            Еженедельный отчет
-          </Label>
-          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-            <Checkbox
-              checked={form.telegramMonthlyReport}
-              onCheckedChange={(checked) =>
-                setForm((f) => ({
-                  ...f,
-                  telegramMonthlyReport: checked === true,
-                }))
-              }
-            />
-            Ежемесячный отчет
-          </Label>
-          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-            <Checkbox
-              checked={form.telegramSkipWeekends}
-              onCheckedChange={(checked) =>
-                setForm((f) => ({
-                  ...f,
-                  telegramSkipWeekends: checked === true,
-                }))
-              }
-            />
-            Не отправлять отчёты в Telegram в выходные
-          </Label>
-        </div>
+        <ReportDeliveryFrequency
+          form={form}
+          setForm={setForm}
+          channel="telegram"
+        />
+        <ReportFormatSettings form={form} setForm={setForm} />
         <Separator />
         {onSendTest && (
           <div className="mt-3 space-y-2">
@@ -261,160 +216,5 @@ export function TelegramReportSection({
         </Button>
       </CardFooter>
     </Card>
-  );
-}
-
-const WEEKDAYS = [
-  { value: "mon", label: "Пн" },
-  { value: "tue", label: "Вт" },
-  { value: "wed", label: "Ср" },
-  { value: "thu", label: "Чт" },
-  { value: "fri", label: "Пт" },
-  { value: "sat", label: "Сб" },
-  { value: "sun", label: "Вс" },
-] as const;
-
-const TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => {
-  const value = `${hour.toString().padStart(2, "0")}:00`;
-  return { value, label: value };
-});
-
-function timeOptionsWithFallback(currentValue: string) {
-  const hasCurrent =
-    currentValue &&
-    /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(currentValue) &&
-    !TIME_OPTIONS.some((o) => o.value === currentValue);
-  if (hasCurrent) {
-    return [{ value: currentValue, label: currentValue }, ...TIME_OPTIONS];
-  }
-  return TIME_OPTIONS;
-}
-
-function ReportTimeSettings({
-  form,
-  setForm,
-}: {
-  form: ReportSettingsForm;
-  setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
-}) {
-  return (
-    <div className="mt-4 rounded-lg border bg-muted/30 p-4 space-y-3">
-      <div>
-        <h4 className="text-sm font-bold">Расписание отправки отчётов</h4>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Влияет на ежедневные/еженедельные/ежемесячные рассылки. Изменения
-          применяются при сохранении этой секции.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3">
-        <Field orientation="horizontal" className="items-center gap-2">
-          <Label className="text-xs font-normal">Ежедневно:</Label>
-          <Select
-            value={form.reportDailyTime}
-            onValueChange={(v) =>
-              setForm((f) => ({
-                ...f,
-                reportDailyTime: v,
-              }))
-            }
-          >
-            <SelectTrigger size="sm" className="h-8 w-22.5">
-              <SelectValue placeholder="Время" />
-            </SelectTrigger>
-            <SelectContent>
-              {timeOptionsWithFallback(form.reportDailyTime).map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-
-        <Field orientation="horizontal" className="items-center gap-2">
-          <Label className="text-xs font-normal">Еженедельно:</Label>
-          <Select
-            value={form.reportWeeklyDay}
-            onValueChange={(v) =>
-              setForm((f) => ({ ...f, reportWeeklyDay: v }))
-            }
-          >
-            <SelectTrigger size="sm" className="h-8 w-17.5">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {WEEKDAYS.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={form.reportWeeklyTime}
-            onValueChange={(v) =>
-              setForm((f) => ({
-                ...f,
-                reportWeeklyTime: v,
-              }))
-            }
-          >
-            <SelectTrigger size="sm" className="h-8 w-22.5">
-              <SelectValue placeholder="Время" />
-            </SelectTrigger>
-            <SelectContent>
-              {timeOptionsWithFallback(form.reportWeeklyTime).map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-
-        <Field orientation="horizontal" className="items-center gap-2">
-          <Label className="text-xs font-normal">Ежемесячно:</Label>
-          <Select
-            value={form.reportMonthlyDay}
-            onValueChange={(v) =>
-              setForm((f) => ({ ...f, reportMonthlyDay: v }))
-            }
-          >
-            <SelectTrigger size="sm" className="h-8 w-25">
-              <SelectValue placeholder="День" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="last">Последний день</SelectItem>
-              {Array.from({ length: 31 }, (_, i) => i + 1).map((n) => (
-                <SelectItem key={n} value={String(n)}>
-                  {n}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={form.reportMonthlyTime}
-            onValueChange={(v) =>
-              setForm((f) => ({
-                ...f,
-                reportMonthlyTime: v,
-              }))
-            }
-          >
-            <SelectTrigger size="sm" className="h-8 w-22.5">
-              <SelectValue placeholder="Время" />
-            </SelectTrigger>
-            <SelectContent>
-              {timeOptionsWithFallback(form.reportMonthlyTime).map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-      </div>
-    </div>
   );
 }

@@ -16,17 +16,26 @@ import {
 } from "@calls/ui";
 import type React from "react";
 import type { User } from "@/lib/auth";
+import { SendTestReportButton } from "../telegram/send-test-report-button";
+import { REPORT_TYPE_LABELS, type ReportType } from "../types";
 import type { ReportSettingsForm } from "./report-settings-types";
+import {
+  ReportDeliveryFrequency,
+  ReportFormatSettings,
+  ReportTimeSettings,
+} from "./shared-report-controls";
 
 interface MaxReportSectionProps {
-  form: Pick<
-    ReportSettingsForm,
-    "maxChatId" | "maxDailyReport" | "maxManagerReport"
-  >;
+  form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   isAdmin: boolean;
   onSave: () => void;
   saving: boolean;
+  onSendTest?: (reportType: ReportType) => void;
+  sendTestLoading?: boolean;
+  sendTestMessage?: string;
+  sendTestSuccess?: boolean;
+  sendTestReportType?: ReportType | null;
   user?: User;
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -40,6 +49,11 @@ export function MaxReportSection({
   isAdmin,
   onSave,
   saving,
+  onSendTest,
+  sendTestLoading = false,
+  sendTestMessage = "",
+  sendTestSuccess = false,
+  sendTestReportType,
   user,
   onConnect,
   onDisconnect,
@@ -47,15 +61,18 @@ export function MaxReportSection({
   disconnectLoading,
 }: MaxReportSectionProps) {
   const hasMax = !!form.maxChatId?.trim();
+  const canSendTest = hasMax && !sendTestLoading;
+  const primaryReportType = sendTestReportType ?? "daily";
+  const primaryReportLabel =
+    REPORT_TYPE_LABELS[primaryReportType] ?? REPORT_TYPE_LABELS.daily;
 
   return (
     <Card className="border-border/50 bg-card/50">
       <CardHeader className="px-4 pb-0">
         <CardTitle className="text-base">MAX Отчеты</CardTitle>
         <CardDescription>
-          Настройки отправки отчётов в MAX. Для админов доступен режим “по всем
-          менеджерам”. Время отправки задаётся в секции Telegram (только для
-          админов).
+          Полные настройки MAX-отчетов: периодичность, расписание, формат и
+          мгновенная отправка выбранного типа.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -107,20 +124,13 @@ export function MaxReportSection({
           )}
         </Field>
         <div className="flex flex-col gap-2">
-          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-            <Checkbox
-              checked={form.maxDailyReport}
-              onCheckedChange={(checked) =>
-                setForm((f) => ({
-                  ...f,
-                  maxDailyReport: checked === true,
-                }))
-              }
-            />
-            Получать свои ежедневные отчеты (MAX)
-          </Label>
+          <ReportDeliveryFrequency
+            form={form}
+            setForm={setForm}
+            channel="max"
+          />
           {isAdmin && (
-            <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
+            <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal px-3">
               <Checkbox
                 checked={form.maxManagerReport}
                 onCheckedChange={(checked) =>
@@ -134,6 +144,38 @@ export function MaxReportSection({
             </Label>
           )}
         </div>
+        <ReportFormatSettings form={form} setForm={setForm} />
+        {isAdmin && <ReportTimeSettings form={form} setForm={setForm} />}
+
+        {onSendTest && (
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <SendTestReportButton
+                onSendTest={onSendTest}
+                primaryReportType={primaryReportType}
+                primaryReportLabel={primaryReportLabel}
+                sendTestLoading={sendTestLoading}
+                canSendTest={canSendTest}
+                variant={canSendTest ? "success" : "default"}
+                size="sm"
+              />
+              {sendTestMessage && (
+                <span
+                  className={`text-sm ${
+                    sendTestSuccess ? "text-success" : "text-destructive"
+                  }`}
+                >
+                  {sendTestMessage}
+                </span>
+              )}
+            </div>
+            {!hasMax && (
+              <p className="text-xs text-muted-foreground">
+                Сначала укажите MAX Chat ID, чтобы отправить тестовый отчет.
+              </p>
+            )}
+          </div>
+        )}
       </CardContent>
       <CardFooter className="px-4 pt-0 flex justify-end">
         <Button
