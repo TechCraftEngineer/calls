@@ -13,29 +13,52 @@ import {
   Label,
 } from "@calls/ui";
 import type React from "react";
+import { SendTestReportButton } from "../telegram/send-test-report-button";
+import { REPORT_TYPE_LABELS, type ReportType } from "../types";
 import type { ReportSettingsForm } from "./report-settings-types";
+import {
+  ReportDeliveryFrequency,
+  ReportFormatSettings,
+  ReportTimeSettings,
+} from "./shared-report-controls";
 
 interface EmailSectionProps {
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
+  isAdmin: boolean;
   onSave: () => void;
   saving: boolean;
+  onSendTest?: (reportType: ReportType) => void;
+  sendTestLoading?: boolean;
+  sendTestMessage?: string;
+  sendTestSuccess?: boolean;
+  sendTestReportType?: ReportType | null;
 }
 
 export function EmailReportSection({
   form,
   setForm,
+  isAdmin,
   onSave,
   saving,
+  onSendTest,
+  sendTestLoading = false,
+  sendTestMessage = "",
+  sendTestSuccess = false,
+  sendTestReportType,
 }: EmailSectionProps) {
+  const canSendTest = Boolean(form.email.trim()) && !sendTestLoading;
+  const primaryReportType = sendTestReportType ?? "daily";
+  const primaryReportLabel =
+    REPORT_TYPE_LABELS[primaryReportType] ?? REPORT_TYPE_LABELS.daily;
+
   return (
     <Card className="border-border/50 bg-card/50">
       <CardHeader className="px-4 pb-0">
         <CardTitle className="text-base">Отчёты по электронной почте</CardTitle>
         <CardDescription>
-          Укажите email и включите периодичность. Время отправки задаётся в
-          секции Telegram (только для админов). Изменения применяются после
-          нажатия кнопки «Сохранить».
+          Полные настройки email-отчетов: периодичность, расписание, формат и
+          мгновенная отправка выбранного типа.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -50,44 +73,43 @@ export function EmailReportSection({
             placeholder="Ваш Email"
           />
         </Field>
-        <div className="rounded-lg border bg-muted/30 p-3 flex flex-col gap-2">
-          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-            <Checkbox
-              checked={form.emailDailyReport}
-              onCheckedChange={(checked) =>
-                setForm((f) => ({
-                  ...f,
-                  emailDailyReport: checked === true,
-                }))
-              }
-            />
-            Ежедневный отчет
-          </Label>
-          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-            <Checkbox
-              checked={form.emailWeeklyReport}
-              onCheckedChange={(checked) =>
-                setForm((f) => ({
-                  ...f,
-                  emailWeeklyReport: checked === true,
-                }))
-              }
-            />
-            Еженедельный отчет
-          </Label>
-          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-            <Checkbox
-              checked={form.emailMonthlyReport}
-              onCheckedChange={(checked) =>
-                setForm((f) => ({
-                  ...f,
-                  emailMonthlyReport: checked === true,
-                }))
-              }
-            />
-            Ежемесячный отчет
-          </Label>
-        </div>
+        <ReportDeliveryFrequency
+          form={form}
+          setForm={setForm}
+          channel="email"
+        />
+        <ReportFormatSettings form={form} setForm={setForm} />
+        {isAdmin && <ReportTimeSettings form={form} setForm={setForm} />}
+
+        {onSendTest && (
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <SendTestReportButton
+                onSendTest={onSendTest}
+                primaryReportType={primaryReportType}
+                primaryReportLabel={primaryReportLabel}
+                sendTestLoading={sendTestLoading}
+                canSendTest={canSendTest}
+                variant={canSendTest ? "success" : "default"}
+                size="sm"
+              />
+              {sendTestMessage && (
+                <span
+                  className={`text-sm ${
+                    sendTestSuccess ? "text-success" : "text-destructive"
+                  }`}
+                >
+                  {sendTestMessage}
+                </span>
+              )}
+            </div>
+            {!form.email.trim() && (
+              <p className="text-xs text-muted-foreground">
+                Укажите email, чтобы отправить тестовый отчет.
+              </p>
+            )}
+          </div>
+        )}
       </CardContent>
       <CardFooter className="px-4 pt-0 flex justify-end">
         <Button

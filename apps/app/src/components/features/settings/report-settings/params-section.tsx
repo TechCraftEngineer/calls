@@ -33,61 +33,10 @@ export function ReportParamsSection({
       <CardHeader className="px-4 pb-0">
         <CardTitle className="text-base">Параметры отчетов</CardTitle>
         <CardDescription>
-          Формат отчёта + KPI и фильтры. После изменений нажмите «Сохранить».
+          Дополнительные параметры KPI и фильтров для расчетов в отчетах.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-col gap-2">
-          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-            <Checkbox
-              checked={form.reportDetailed}
-              onCheckedChange={(checked) =>
-                setForm((f) => ({
-                  ...f,
-                  reportDetailed: checked === true,
-                }))
-              }
-            />
-            Подробный формат
-          </Label>
-          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-            <Checkbox
-              checked={form.reportIncludeCallSummaries}
-              onCheckedChange={(checked) =>
-                setForm((f) => ({
-                  ...f,
-                  reportIncludeCallSummaries: checked === true,
-                }))
-              }
-            />
-            ИИ-саммари вызовов (Email)
-          </Label>
-          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-            <Checkbox
-              checked={form.reportIncludeAvgValue}
-              onCheckedChange={(checked) =>
-                setForm((f) => ({
-                  ...f,
-                  reportIncludeAvgValue: checked === true,
-                }))
-              }
-            />
-            Средняя сумма сделки
-          </Label>
-          <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-            <Checkbox
-              checked={form.reportIncludeAvgRating}
-              onCheckedChange={(checked) =>
-                setForm((f) => ({
-                  ...f,
-                  reportIncludeAvgRating: checked === true,
-                }))
-              }
-            />
-            Средняя оценка качества
-          </Label>
-        </div>
-
         <KpiSettings form={form} setForm={setForm} />
         <FilterExclusions form={form} setForm={setForm} />
       </CardContent>
