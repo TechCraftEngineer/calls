@@ -64,9 +64,7 @@ export function createLinkOrButton(
 
 export function renderDirectionCell(call: CallWithDetails["call"]) {
   const directionLabel =
-    call.direction === "incoming" || call.direction === "inbound"
-      ? "ВХОДЯЩИЙ"
-      : "ИСХОДЯЩИЙ";
+    call.direction === "inbound" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ";
   const directionClass =
     directionLabel === "ВХОДЯЩИЙ" ? "badge-yellow-op" : "badge-black-op";
   return <span className={`op-badge ${directionClass}`}>{directionLabel}</span>;
@@ -154,9 +152,7 @@ export function renderNumberCell(
 }
 
 export function renderStatusCell(call: CallWithDetails["call"]) {
-  const isMissed =
-    (call.duration ?? 0) === 0 &&
-    (call.direction === "inbound" || call.direction === "incoming");
+  const isMissed = (call.duration ?? 0) === 0 && call.direction === "inbound";
   return (
     <span
       className={`op-badge ${isMissed ? "badge-red-op" : "badge-green-op"}`}

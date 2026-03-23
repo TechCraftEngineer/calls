@@ -4,17 +4,15 @@ import { normalizeDirectionFilter, normalizeStatusFilter } from "./list";
 describe("calls list normalization", () => {
   describe("normalizeDirectionFilter", () => {
     it("normalizes canonical english direction values", () => {
-      expect(normalizeDirectionFilter("incoming")).toBe("incoming");
-      expect(normalizeDirectionFilter("inbound")).toBe("incoming");
-      expect(normalizeDirectionFilter("outgoing")).toBe("outgoing");
-      expect(normalizeDirectionFilter("outbound")).toBe("outgoing");
+      expect(normalizeDirectionFilter("inbound")).toBe("inbound");
+      expect(normalizeDirectionFilter("outbound")).toBe("outbound");
     });
 
     it("normalizes russian direction values", () => {
-      expect(normalizeDirectionFilter("входящий")).toBe("incoming");
-      expect(normalizeDirectionFilter("Входящий")).toBe("incoming");
-      expect(normalizeDirectionFilter("исходящий")).toBe("outgoing");
-      expect(normalizeDirectionFilter("Исходящий")).toBe("outgoing");
+      expect(normalizeDirectionFilter("входящий")).toBe("inbound");
+      expect(normalizeDirectionFilter("Входящий")).toBe("inbound");
+      expect(normalizeDirectionFilter("исходящий")).toBe("outbound");
+      expect(normalizeDirectionFilter("Исходящий")).toBe("outbound");
     });
   });
 

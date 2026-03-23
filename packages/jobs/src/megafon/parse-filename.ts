@@ -6,7 +6,7 @@
  */
 
 export interface ParsedMegafonFilename {
-  direction: "incoming" | "outgoing";
+  direction: "inbound" | "outbound";
   internalNumber: string;
   externalNumber: string;
   timestamp: string;
@@ -27,7 +27,7 @@ export function parseMegafonFilename(
   if (match) {
     const [, internal, number, y, m, d, h, min, s] = match;
     return {
-      direction: "outgoing",
+      direction: "outbound",
       internalNumber: internal ?? "",
       externalNumber: number ?? "",
       timestamp: `${y}-${m}-${d}T${h}:${min}:${s}`,
@@ -39,7 +39,7 @@ export function parseMegafonFilename(
   if (match) {
     const [, internal, number, y, m, d, h, min, s] = match;
     return {
-      direction: "incoming",
+      direction: "inbound",
       internalNumber: internal ?? "",
       externalNumber: number ?? "",
       timestamp: `${y}-${m}-${d}T${h}:${min}:${s}`,

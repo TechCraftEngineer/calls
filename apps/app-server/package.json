@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun with-env --watch src/index.ts",
+    "dev": "bunx nodemon --watch src --watch ../../packages/api/src --ext ts,tsx,json --exec \"bun with-env src/index.ts\"",
     "start": "bun with-env dist/index.js",
     "build": "bun build ./src/index.ts --outdir ./dist --target bun",
     "typecheck": "tsc --noEmit",

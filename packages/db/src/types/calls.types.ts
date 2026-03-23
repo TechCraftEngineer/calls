@@ -8,8 +8,6 @@ import type { CallStatus } from "../utils/call-status";
 export const CALL_DIRECTIONS = {
   INBOUND: "inbound",
   OUTBOUND: "outbound",
-  INCOMING: "incoming",
-  OUTGOING: "outgoing",
 } as const;
 
 export type CallDirection =

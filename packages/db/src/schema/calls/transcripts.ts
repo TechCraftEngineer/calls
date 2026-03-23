@@ -3,15 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import {
-  index,
-  integer,
-  jsonb,
-  pgTable,
-  real,
-  text,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { index, jsonb, pgTable, real, text, uuid } from "drizzle-orm/pg-core";
 import { calls } from "./calls";
 
 export const transcripts = pgTable(
@@ -28,7 +20,6 @@ export const transcripts = pgTable(
     sentiment: text("sentiment"),
     confidence: real("confidence"),
     summary: text("summary"),
-    sizeKb: integer("size_kb"),
     callerName: text("caller_name"),
     callType: text("call_type"),
     callTopic: text("call_topic"),

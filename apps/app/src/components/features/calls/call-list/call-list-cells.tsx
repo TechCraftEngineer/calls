@@ -93,14 +93,10 @@ export function renderCallListCell({
 
   if (!visibleColumns.includes(colKey)) return null;
 
-  const isMissed =
-    (call.duration ?? 0) === 0 &&
-    (call.direction === "inbound" || call.direction === "incoming");
+  const isMissed = (call.duration ?? 0) === 0 && call.direction === "inbound";
 
   const directionLabel =
-    call.direction === "incoming" || call.direction === "inbound"
-      ? "ВХОДЯЩИЙ"
-      : "ИСХОДЯЩИЙ";
+    call.direction === "inbound" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ";
   const directionClass =
     directionLabel === "ВХОДЯЩИЙ" ? "badge-yellow-op" : "badge-black-op";
 
