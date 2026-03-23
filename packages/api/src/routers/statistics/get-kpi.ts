@@ -106,18 +106,28 @@ export function buildKpiRows(params: {
   const employeeExtensionsByExternalId = new Map<string, Set<string>>();
 
   for (const employee of pbxEmployees) {
-    const parsed = parseInternalExtensions(employee.extension);
+    const parsed = parseInternalExtensions(employee.extension)
+      .map((ext) => normalizeInternalIdentifier(ext))
+      .filter((ext): ext is string => Boolean(ext));
     employeeExtensionsByExternalId.set(employee.externalId, new Set(parsed));
   }
 
   for (const number of pbxNumbers) {
     if (!number.isActive || !number.employeeExternalId) continue;
-    const extension = number.extension?.trim();
-    if (!extension) continue;
+    const parsedExtensions = parseInternalExtensions(number.extension)
+      .map((ext) => normalizeInternalIdentifier(ext))
+      .filter((ext): ext is string => Boolean(ext));
+    const parsedPhoneNumber = normalizeInternalIdentifier(number.phoneNumber);
+    if (parsedExtensions.length === 0 && !parsedPhoneNumber) continue;
     const existing =
       employeeExtensionsByExternalId.get(number.employeeExternalId) ??
       new Set<string>();
-    existing.add(extension);
+    for (const ext of parsedExtensions) {
+      existing.add(ext);
+    }
+    if (parsedPhoneNumber) {
+      existing.add(parsedPhoneNumber);
+    }
     employeeExtensionsByExternalId.set(number.employeeExternalId, existing);
   }
 
@@ -138,9 +148,7 @@ export function buildKpiRows(params: {
     let missed = 0;
 
     for (const ext of extensions) {
-      const normalizedExt = normalizeInternalIdentifier(ext);
-      if (!normalizedExt) continue;
-      const stat = statsByInternal.get(normalizedExt);
+      const stat = statsByInternal.get(ext);
       if (stat) {
         actualTalkTime += stat.totalDurationSeconds / 60;
         totalCalls += stat.totalCalls;
@@ -191,7 +199,6 @@ export function buildKpiRows(params: {
       missed,
     });
   }
-
   return rows;
 }
 
@@ -231,7 +238,6 @@ export const getKpi = workspaceAdminProcedure
           excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
       }),
     ]);
-
     return buildKpiRows({
       startDate,
       endDate,

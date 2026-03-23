@@ -205,6 +205,7 @@ export const transcribeCallFn = inngest.createFunction(
         summary: result.summary,
         sentiment: result.sentiment,
         title: result.title,
+        callType: result.callType ?? null,
         callTopic: result.callTopic,
       });
 

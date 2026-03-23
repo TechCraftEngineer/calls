@@ -18,7 +18,7 @@ export default function CallMetaHeader({ call }: Props) {
           variant="secondary"
           className="bg-[#F5F5F7] text-[#888] border-0 font-bold text-[11px] uppercase tracking-wider px-3 py-1 rounded"
         >
-          {call.direction === "incoming" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ"}
+          {call.direction === "inbound" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ"}
         </Badge>
         <Badge
           variant={isCompleted ? "default" : "destructive"}

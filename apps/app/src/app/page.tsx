@@ -73,13 +73,13 @@ interface ManagerOption {
   id: string;
   name: string;
 }
-type DirectionFilter = "incoming" | "outgoing";
+type DirectionFilter = "inbound" | "outbound";
 type StatusFilter = "missed" | "answered";
 
 const directionOptions = [
   { value: "all", label: "Все" },
-  { value: "incoming", label: "Входящие" },
-  { value: "outgoing", label: "Исходящие" },
+  { value: "inbound", label: "Входящие" },
+  { value: "outbound", label: "Исходящие" },
 ] as const;
 
 const statusOptions = [

@@ -36,7 +36,6 @@ export interface Transcript {
   sentiment?: string;
   confidence?: number;
   summary?: string;
-  sizeKb?: number;
   callerName?: string;
   callType?: string;
   callTopic?: string;

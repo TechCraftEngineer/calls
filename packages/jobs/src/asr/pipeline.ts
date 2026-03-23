@@ -123,6 +123,7 @@ export async function runTranscriptionPipeline(
   let summary: string | undefined;
   let sentiment: string | undefined;
   let title: string | undefined;
+  let callType: string | undefined = "Другое";
   let callTopic: string | undefined = defaultTopic;
 
   if (normalizedText.trim().length > 0) {
@@ -133,6 +134,7 @@ export async function runTranscriptionPipeline(
     summary = analysis.summary;
     sentiment = analysis.sentiment;
     title = analysis.title;
+    callType = analysis.callType ?? "Другое";
     callTopic = analysis.callTopic ?? defaultTopic;
   }
 
@@ -153,6 +155,7 @@ export async function runTranscriptionPipeline(
     summary,
     sentiment,
     title,
+    callType,
     callTopic,
   };
 }

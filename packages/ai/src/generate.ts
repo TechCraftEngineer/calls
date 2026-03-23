@@ -85,6 +85,10 @@ function getRawAIModelId(profile: AiModelProfile = "default"): string {
 }
 
 export function hasAiProviderConfigured(): boolean {
+  const hasAnyProviderKey = Boolean(
+    env.OPENAI_API_KEY || env.OPENROUTER_API_KEY || env.DEEPSEEK_API_KEY,
+  );
+
   switch (env.AI_PROVIDER) {
     case "openai":
       return Boolean(env.OPENAI_API_KEY);
@@ -93,7 +97,7 @@ export function hasAiProviderConfigured(): boolean {
     case "deepseek":
       return Boolean(env.DEEPSEEK_API_KEY);
     default:
-      return false;
+      return hasAnyProviderKey;
   }
 }
 

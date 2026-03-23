@@ -19,8 +19,6 @@ const maybeStringOrArraySchema = z
   .union([z.string(), z.array(z.string())])
   .optional();
 const directionSchema = z.enum([
-  "incoming",
-  "outgoing",
   "inbound",
   "outbound",
   "входящий",
@@ -67,22 +65,11 @@ export function normalizeStatusFilter(status: string): CallStatus | null {
 
 export function normalizeDirectionFilter(
   direction: string,
-): "incoming" | "outgoing" | null {
+): "inbound" | "outbound" | null {
   const normalized = direction.trim().toLowerCase();
-  if (
-    normalized === "incoming" ||
-    normalized === "inbound" ||
-    normalized === "входящий"
-  ) {
-    return "incoming";
-  }
-  if (
-    normalized === "outgoing" ||
-    normalized === "outbound" ||
-    normalized === "исходящий"
-  ) {
-    return "outgoing";
-  }
+  if (normalized === "inbound" || normalized === "входящий") return "inbound";
+  if (normalized === "outbound" || normalized === "исходящий")
+    return "outbound";
   return null;
 }
 
@@ -124,7 +111,7 @@ export const list = workspaceProcedure
     const normalizedDirections = directionFilters
       ?.map(normalizeDirectionFilter)
       .filter(
-        (direction): direction is "incoming" | "outgoing" => direction !== null,
+        (direction): direction is "inbound" | "outbound" => direction !== null,
       );
     const trimmedQuery = input.q?.trim() || undefined;
 

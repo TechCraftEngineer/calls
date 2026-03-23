@@ -89,9 +89,7 @@ export async function getEvaluationsStats(
       .trim()
       .toLowerCase();
     const target =
-      dir === "incoming" || dir === "inbound" || dir === "входящий"
-        ? stats[key].incoming
-        : stats[key].outgoing;
+      dir === "inbound" ? stats[key].incoming : stats[key].outgoing;
 
     const totalCalls = Number(row.totalCalls ?? 0);
     const totalDuration = Number(row.totalDuration ?? 0);

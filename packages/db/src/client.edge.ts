@@ -14,6 +14,7 @@ const db = drizzle({
   client: sql,
   schema,
   casing: "snake_case",
+  logger: true,
 });
 
 export default db;

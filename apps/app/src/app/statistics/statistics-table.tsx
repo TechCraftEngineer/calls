@@ -83,20 +83,28 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
     useState<PaginationState>(initialPagination);
 
   useEffect(() => {
-    if (
-      pagination.pageIndex !== initialPagination.pageIndex ||
-      pagination.pageSize !== initialPagination.pageSize
-    ) {
-      setPagination(initialPagination);
-    }
-  }, [initialPagination, pagination]);
+    setPagination((prev) => {
+      if (
+        prev.pageIndex === initialPagination.pageIndex &&
+        prev.pageSize === initialPagination.pageSize
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        pageIndex: initialPagination.pageIndex,
+        pageSize: initialPagination.pageSize,
+      };
+    });
+  }, [initialPagination]);
 
   const updatePaginationSearchParams = useCallback(
     (nextPagination: PaginationState) => {
       const nextParams = new URLSearchParams(searchParams.toString());
       nextParams.set("pageIndex", String(nextPagination.pageIndex));
       nextParams.set("pageSize", String(nextPagination.pageSize));
-      router.replace(`${pathname}?${nextParams.toString()}`);
+      router.push(`${pathname}?${nextParams.toString()}`);
     },
     [pathname, router, searchParams],
   );

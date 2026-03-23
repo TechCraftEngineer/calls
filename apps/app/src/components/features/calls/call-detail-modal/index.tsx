@@ -248,13 +248,9 @@ export default function CallDetailModal({
                     </DialogTitle>
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="secondary" className="font-medium">
-                        {call.direction === "incoming"
+                        {call.direction === "inbound"
                           ? "Входящий"
-                          : call.direction === "inbound"
-                            ? "Входящий"
-                            : call.direction === "outbound"
-                              ? "Исходящий"
-                              : "Исходящий"}
+                          : "Исходящий"}
                       </Badge>
                       <Badge
                         variant={

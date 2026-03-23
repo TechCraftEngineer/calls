@@ -47,7 +47,7 @@ describe("MegaPBX normalize helpers", () => {
     const result = normalizeCall({
       call_id: "call-1",
       started_at: "2026-03-18T12:00:00Z",
-      type: "outgoing",
+      type: "outbound",
       clientNumber: "+7 900 111-22-33",
       internal_number: "101",
       duration: 45,
@@ -71,7 +71,7 @@ describe("MegaPBX normalize helpers", () => {
     const result = normalizeCall({
       call_id: "call-2",
       started_at: "2026-03-18T13:00:00Z",
-      type: "incoming",
+      type: "inbound",
       clientNumber: "+7 900 222-33-44",
       internal_number: "102",
       duration: 30,
