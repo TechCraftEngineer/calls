@@ -1,5 +1,7 @@
 import {
+  type CallStatus,
   type CallWithTranscript,
+  normalizeCallStatus,
   pbxRepository,
   settingsService,
 } from "@calls/db";
@@ -29,10 +31,15 @@ const directionSchema = z.enum([
 const statusSchema = z.enum([
   "missed",
   "answered",
+  "accepted",
+  "completed",
+  "connected",
   "Пропущен",
   "Принят",
   "пропущен",
   "принят",
+  "ПРОПУЩЕН",
+  "ПРИНЯТ",
 ]);
 const maybeDirectionOrArraySchema = z
   .union([directionSchema, z.array(directionSchema)])
@@ -52,16 +59,9 @@ function toStringArray(input: string | string[] | undefined): string[] {
   return [];
 }
 
-export function normalizeStatusFilter(
-  status: string,
-): "ПРОПУЩЕН" | "ПРИНЯТ" | null {
-  const normalized = status.trim().toLowerCase();
-  if (normalized === "missed" || normalized === "пропущен") {
-    return "ПРОПУЩЕН";
-  }
-  if (normalized === "answered" || normalized === "принят") {
-    return "ПРИНЯТ";
-  }
+export function normalizeStatusFilter(status: string): CallStatus | null {
+  const normalized = normalizeCallStatus(status);
+  if (normalized) return normalized;
   return null;
 }
 
@@ -119,7 +119,7 @@ export const list = workspaceProcedure
     const dateTo = input.date_to ? `${input.date_to}T23:59:59` : undefined;
     const normalizedStatuses = statusFilters
       ?.map(normalizeStatusFilter)
-      .filter((status): status is "ПРОПУЩЕН" | "ПРИНЯТ" => status !== null);
+      .filter((status): status is CallStatus => status !== null);
 
     const normalizedDirections = directionFilters
       ?.map(normalizeDirectionFilter)

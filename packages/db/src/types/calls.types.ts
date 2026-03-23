@@ -3,6 +3,7 @@
  */
 
 import type { Call, CallEvaluation, Transcript } from "../schema/types";
+import type { CallStatus } from "../utils/call-status";
 
 export const CALL_DIRECTIONS = {
   INBOUND: "inbound",
@@ -48,12 +49,14 @@ export interface CallWithTranscript {
 export interface CreateCallData {
   workspaceId: string;
   filename: string;
+  provider?: string | null;
+  externalId?: string | null;
   number?: string | null;
   timestamp: string;
   name?: string | null;
   duration?: number | null;
   direction?: string | null;
-  status?: string | null;
+  status?: CallStatus | string | null;
   sizeBytes?: number | null;
   fileId?: string | null;
   pbxNumberId?: string | null;

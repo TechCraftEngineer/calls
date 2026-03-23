@@ -50,6 +50,18 @@ export class CallsService {
     return this.callsRepository.findByFilename(filename, workspaceId);
   }
 
+  async getCallByExternalId(
+    workspaceId: string,
+    provider: string,
+    externalId: string,
+  ): Promise<Call | null> {
+    return this.callsRepository.findByExternalId(
+      workspaceId,
+      provider,
+      externalId,
+    );
+  }
+
   async findLatestContactByPhone(workspaceId: string, phone: string) {
     return this.callsRepository.findLatestByPhone(workspaceId, phone);
   }

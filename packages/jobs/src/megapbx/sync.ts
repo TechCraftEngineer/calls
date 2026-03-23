@@ -320,10 +320,12 @@ export async function syncMegaPbxCalls(
       }
 
       const filename = `megapbx/${call.externalId}.json`;
-      const existing = await callsService.getCallByFilename(
-        filename,
-        workspaceId,
-      );
+      const existing =
+        (await callsService.getCallByExternalId(
+          workspaceId,
+          PROVIDER,
+          call.externalId,
+        )) ?? (await callsService.getCallByFilename(filename, workspaceId));
       if (existing) {
         if (config.syncRecordings && call.recordingUrl && !existing.fileId) {
           try {
@@ -394,6 +396,8 @@ export async function syncMegaPbxCalls(
       await callsService.createCall({
         workspaceId,
         filename,
+        provider: PROVIDER,
+        externalId: call.externalId,
         timestamp: call.timestamp,
         number: call.externalNumber,
         internalNumber:

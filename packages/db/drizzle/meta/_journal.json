@@ -15,6 +15,13 @@
       "when": 1774268275921,
       "tag": "0001_powerful_earthquake",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774272948516,
+      "tag": "0002_naive_thor_girl",
+      "breakpoints": true
     }
   ]
 }

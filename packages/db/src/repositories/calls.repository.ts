@@ -12,6 +12,7 @@ import type {
   GetCallManagersParams,
   GetCallsParams,
 } from "../types/calls.types";
+import { normalizeCallStatus } from "../utils/call-status";
 import { buildCallConditions } from "./calls/build-conditions";
 import { computeCallStatus } from "./calls/compute-call-status";
 import {
@@ -48,6 +49,25 @@ export const callsRepository = {
       .select()
       .from(schema.calls)
       .where(and(...conditions))
+      .limit(1);
+    return result[0] ?? null;
+  },
+
+  async findByExternalId(
+    workspaceId: string,
+    provider: string,
+    externalId: string,
+  ): Promise<schema.Call | null> {
+    const result = await db
+      .select()
+      .from(schema.calls)
+      .where(
+        and(
+          eq(schema.calls.workspaceId, workspaceId),
+          eq(schema.calls.provider, provider),
+          eq(schema.calls.externalId, externalId),
+        ),
+      )
       .limit(1);
     return result[0] ?? null;
   },
@@ -89,27 +109,61 @@ export const callsRepository = {
 
   async create(data: CreateCallData): Promise<string> {
     const status =
-      data.status ?? computeCallStatus(data.duration, data.direction);
-    const result = await db
-      .insert(schema.calls)
-      .values({
-        workspaceId: data.workspaceId,
-        filename: data.filename,
-        number: data.number ?? null,
-        timestamp: new Date(data.timestamp),
-        name: data.name ?? null,
-        duration: data.duration ?? null,
-        direction: data.direction ?? null,
-        status,
-        sizeBytes: data.sizeBytes ?? null,
-        fileId: data.fileId ?? null,
-        pbxNumberId: data.pbxNumberId ?? null,
-        internalNumber: data.internalNumber ?? null,
-        source: data.source ?? null,
-        customerName: data.customerName ?? null,
-      })
-      .returning({ id: schema.calls.id });
-    return result[0]?.id ?? "";
+      normalizeCallStatus(data.status) ??
+      computeCallStatus(data.duration, data.direction);
+    const values = {
+      workspaceId: data.workspaceId,
+      filename: data.filename,
+      provider: data.provider ?? null,
+      externalId: data.externalId ?? null,
+      number: data.number ?? null,
+      timestamp: new Date(data.timestamp),
+      name: data.name ?? null,
+      duration: data.duration ?? null,
+      direction: data.direction ?? null,
+      status,
+      sizeBytes: data.sizeBytes ?? null,
+      fileId: data.fileId ?? null,
+      pbxNumberId: data.pbxNumberId ?? null,
+      internalNumber: data.internalNumber ?? null,
+      source: data.source ?? null,
+      customerName: data.customerName ?? null,
+    };
+
+    const result =
+      data.provider && data.externalId
+        ? await db
+            .insert(schema.calls)
+            .values(values)
+            .onConflictDoNothing({
+              target: [
+                schema.calls.workspaceId,
+                schema.calls.provider,
+                schema.calls.externalId,
+              ],
+            })
+            .returning({ id: schema.calls.id })
+        : await db
+            .insert(schema.calls)
+            .values(values)
+            .onConflictDoNothing({
+              target: [schema.calls.workspaceId, schema.calls.filename],
+            })
+            .returning({ id: schema.calls.id });
+
+    if (result[0]?.id) return result[0].id;
+
+    if (data.provider && data.externalId) {
+      const existing = await this.findByExternalId(
+        data.workspaceId,
+        data.provider,
+        data.externalId,
+      );
+      return existing?.id ?? "";
+    }
+
+    const existing = await this.findByFilename(data.filename, data.workspaceId);
+    return existing?.id ?? "";
   },
 
   async updateDuration(callId: string, durationSeconds: number): Promise<void> {

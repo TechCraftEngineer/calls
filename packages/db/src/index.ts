@@ -166,6 +166,11 @@ export type {
 } from "./types/users.types";
 // Utilities
 export { batchInsert, batchInsertTransaction } from "./utils/batch";
+export {
+  CALL_STATUS,
+  type CallStatus,
+  normalizeCallStatus,
+} from "./utils/call-status";
 export { normalizePhoneNumberList } from "./utils/normalize-phone-number-list";
 export { isValidWorkspaceId } from "./utils/workspace-id-generator";
 // Validators
