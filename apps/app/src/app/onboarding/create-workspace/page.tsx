@@ -4,6 +4,7 @@ import { paths } from "@calls/config";
 import { Button, Input, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect } from "react";
@@ -126,7 +127,7 @@ function CreateWorkspaceForm() {
   const createMutation = useMutation(
     orpc.workspaces.create.mutationOptions({
       onSuccess: async (workspace) => {
-        toast.success("Рабочее пространство создано");
+        toast.success("Компания создана");
         // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
         document.cookie = `active_workspace_id=${workspace.id}; path=/; max-age=31536000; SameSite=Lax`;
         await queryClient.invalidateQueries({
@@ -136,9 +137,7 @@ function CreateWorkspaceForm() {
       },
       onError: (err) => {
         const msg =
-          err instanceof Error
-            ? err.message
-            : "Не удалось создать рабочее пространство";
+          err instanceof Error ? err.message : "Не удалось создать компанию";
         setError("root", { message: msg });
         toast.error(msg);
       },
@@ -172,11 +171,10 @@ function CreateWorkspaceForm() {
             M
           </div>
           <h1 className="mb-2 text-[24px] font-bold text-[#111]">
-            Создайте рабочее пространство
+            Создайте компанию
           </h1>
           <p className="m-0 text-[14px] text-[#888]">
-            Рабочее пространство объединяет команду и данные. Начните с
-            названия.
+            Компания объединяет команду и данные. Начните с названия.
           </p>
         </div>
 
@@ -203,7 +201,7 @@ function CreateWorkspaceForm() {
                   ? "border-red-500 bg-red-50 focus:border-red-500"
                   : ""
               }`}
-              placeholder="Моё рабочее пространство"
+              placeholder="Например: Маркетинг…"
               autoComplete="organization"
               aria-invalid={!!errors.name}
               {...register("name")}
@@ -221,10 +219,13 @@ function CreateWorkspaceForm() {
             size="touch"
             className="mt-2 w-full"
             disabled={createMutation.isPending}
+            aria-busy={createMutation.isPending}
+            aria-disabled={createMutation.isPending}
           >
-            {createMutation.isPending
-              ? "Создание…"
-              : "Создать рабочее пространство"}
+            {createMutation.isPending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : null}
+            Создать компанию
           </Button>
         </form>
 

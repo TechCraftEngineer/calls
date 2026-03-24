@@ -16,6 +16,20 @@ import type { AsrSource, PipelineResult, TranscriptMetadata } from "./types";
 import { transcribeWithYandex } from "./yandex";
 
 const logger = createLogger("asr-pipeline");
+const ASR_LOG_TEXT_MAX_LENGTH = 500;
+const ASR_LOG_ERROR_MAX_LENGTH = 300;
+
+function truncateForLog(
+  value: string | undefined,
+  maxLength: number,
+): string | undefined {
+  if (!value) return undefined;
+  const normalized = value.trim();
+  if (!normalized) return undefined;
+  return normalized.length > maxLength
+    ? `${normalized.slice(0, maxLength)}…`
+    : normalized;
+}
 
 export async function runTranscriptionPipeline(
   audioUrl: string,
@@ -183,21 +197,21 @@ export async function runTranscriptionPipeline(
         provider: "assemblyai",
         success: !!assemblyai,
         processingTimeMs: assemblyai?.processingTimeMs,
-        text: assemblyaiText || undefined,
+        text: truncateForLog(assemblyaiText, ASR_LOG_TEXT_MAX_LENGTH),
         confidence: assemblyai?.confidence,
-        utterances: assemblyai?.utterances,
-        raw: assemblyai?.raw,
-        error: assemblyaiError,
+        utterances: undefined,
+        raw: undefined,
+        error: truncateForLog(assemblyaiError, ASR_LOG_ERROR_MAX_LENGTH),
       },
       {
         provider: "yandex",
         success: !!yandex,
         processingTimeMs: yandex?.processingTimeMs,
-        text: yandexText || undefined,
+        text: truncateForLog(yandexText, ASR_LOG_TEXT_MAX_LENGTH),
         confidence: yandex?.confidence,
-        utterances: yandex?.utterances,
-        raw: yandex?.raw,
-        error: yandexError,
+        utterances: undefined,
+        raw: undefined,
+        error: truncateForLog(yandexError, ASR_LOG_ERROR_MAX_LENGTH),
       },
       {
         provider: "huggingface",
@@ -205,17 +219,34 @@ export async function runTranscriptionPipeline(
         processingTimeMs: huggingFaceBest?.processingTimeMs,
         text:
           huggingFaceTexts.length > 0
-            ? huggingFaceTexts.join("\n\n---\n\n")
+            ? truncateForLog(
+                huggingFaceTexts.join("\n\n---\n\n"),
+                ASR_LOG_TEXT_MAX_LENGTH,
+              )
             : undefined,
         confidence: huggingFaceBest?.confidence,
-        utterances: huggingFaceBest?.utterances,
+        utterances: undefined,
         raw: {
-          models: huggingFaceSuccessful.map((result) => result.raw),
-          errors: huggingFaceErrors,
-        } as Record<string, unknown>,
+          modelCount: huggingFaceSuccessful.length,
+          models: huggingFaceSuccessful.map((result) => {
+            const raw = result.raw as
+              | { model?: string; revision?: string }
+              | undefined;
+            return {
+              model: raw?.model,
+              revision: raw?.revision,
+              processingTimeMs: result.processingTimeMs,
+              textLength: result.text.length,
+            };
+          }),
+          errorCount: huggingFaceErrors.length,
+        },
         error:
           huggingFaceErrors.length > 0
-            ? huggingFaceErrors.join(" | ")
+            ? truncateForLog(
+                huggingFaceErrors.join(" | "),
+                ASR_LOG_ERROR_MAX_LENGTH,
+              )
             : undefined,
       },
     ],

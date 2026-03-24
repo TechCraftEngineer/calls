@@ -253,8 +253,8 @@ export default function InviteAcceptPage() {
                 ? userHasPassword === null
                   ? "Проверка данных..."
                   : userHasPassword
-                    ? "Присоединиться к рабочему пространству"
-                    : "Создайте пароль для входа в рабочее пространство"
+                    ? "Присоединиться к компании"
+                    : "Создайте пароль для входа в компанию"
                 : "Несоответствие email"}
             </h1>
             <p className="text-sm text-gray-600 mb-1">
@@ -270,7 +270,7 @@ export default function InviteAcceptPage() {
               <p className="text-sm text-blue-600 mt-2">
                 {userHasPassword
                   ? "У вас уже есть пароль. Нажмите кнопку ниже для присоединения."
-                  : "У вас еще нет пароля. Создайте его, чтобы войти в систему и присоединиться к рабочему пространству."}
+                  : "У вас еще нет пароля. Создайте его, чтобы войти в систему и присоединиться к компании."}
               </p>
             )}
           </div>
@@ -302,14 +302,14 @@ export default function InviteAcceptPage() {
                 <div className="bg-green-50 rounded-lg p-4 border border-green-100">
                   <p className="text-sm text-green-900 m-0">
                     У вас уже есть пароль. Нажмите кнопку ниже, чтобы
-                    присоединиться к рабочему пространству.
+                    присоединиться к компании.
                   </p>
                 </div>
               ) : (
                 <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
                   <p className="text-sm text-blue-900 m-0">
                     Создайте пароль для вашего аккаунта. После этого вы сможете
-                    войти в систему и присоединиться к рабочему пространству.
+                    войти в систему и присоединиться к компании.
                   </p>
                 </div>
               )}
@@ -321,9 +321,7 @@ export default function InviteAcceptPage() {
                   className="w-full min-h-[48px] text-base font-semibold"
                   disabled={submitting || checkingPasswordQuery}
                 >
-                  {submitting
-                    ? "Присоединение…"
-                    : "Присоединиться к рабочему пространству"}
+                  {submitting ? "Присоединение…" : "Присоединиться к компании"}
                 </Button>
               ) : (
                 <Form {...form}>
@@ -463,7 +461,7 @@ export default function InviteAcceptPage() {
             </svg>
           </div>
           <h1 className="mb-2 text-2xl font-bold text-gray-900">
-            Присоединяйтесь к рабочему пространству
+            Присоединяйтесь к компании
           </h1>
           <p className="text-sm text-gray-600 mb-1">
             Вас пригласили в «<strong>{invitation.workspaceName}</strong>»

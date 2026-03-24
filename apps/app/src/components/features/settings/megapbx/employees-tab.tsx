@@ -153,7 +153,7 @@ export function EmployeesTab({
           <h4 className="font-semibold">Привязка сотрудников</h4>
           <p className="text-sm text-muted-foreground">
             Сопоставьте сотрудников АТС с пользователями и приглашениями в
-            рабочем пространстве.
+            компании.
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:items-end">

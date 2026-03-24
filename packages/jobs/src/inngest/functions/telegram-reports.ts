@@ -144,9 +144,9 @@ export const telegramReportsFn = inngest.createFunction(
             return {
               sent: 0,
               errors: [
-                `Не настроен Telegram bot token для рабочего пространства "${workspaceName}" (${workspaceId})`,
+                `Не настроен токен Telegram-бота для рабочего пространства "${workspaceName}" (${workspaceId})`,
               ] as string[],
-              failed: true,
+              failed: false,
             };
           }
 
