@@ -1,5 +1,9 @@
 export { transcribeWithAssemblyAi } from "./assemblyai";
 export { getAudioDurationFromBuffer } from "./get-audio-duration";
+export {
+  getHuggingFaceAsrModels,
+  transcribeWithHuggingFace,
+} from "./huggingface";
 export { identifySpeakersWithLlm } from "./identify-speakers";
 export { mergeAsrWithLlm } from "./merge-asr";
 export { normalizeWithLlm } from "./normalize";

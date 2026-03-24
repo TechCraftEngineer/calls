@@ -135,10 +135,19 @@ export const telegramReportsFn = inngest.createFunction(
       const result = await step.run(
         `process-workspace-${workspaceId}`,
         async () => {
+          const ws = await workspacesService.getById(workspaceId);
+          const workspaceName = ws?.name ?? workspaceId;
+
           const { token } =
             await settingsService.getEffectiveTelegramBotToken(workspaceId);
           if (!token?.trim()) {
-            return { sent: 0, errors: [] as string[], failed: false };
+            return {
+              sent: 0,
+              errors: [
+                `Не настроен Telegram bot token для рабочего пространства "${workspaceName}" (${workspaceId})`,
+              ] as string[],
+              failed: true,
+            };
           }
 
           const schedule = await getReportScheduleSettings(
@@ -146,8 +155,7 @@ export const telegramReportsFn = inngest.createFunction(
             workspaceId,
           );
 
-          const ws = await workspacesService.getById(workspaceId);
-          const workspaceName = ws?.name ?? undefined;
+          const reportWorkspaceName = ws?.name ?? undefined;
 
           const reportTypesToRun: Array<"daily" | "weekly" | "monthly"> = [];
 
@@ -262,7 +270,7 @@ export const telegramReportsFn = inngest.createFunction(
                 dateTo,
                 reportType,
                 isManagerReport: r.isManagerReport,
-                workspaceName,
+                workspaceName: reportWorkspaceName,
                 includeAvgRating: r.reportSettings?.includeAvgRating ?? false,
                 includeAvgValue: r.reportSettings?.includeAvgValue ?? false,
                 lowRatedCalls,

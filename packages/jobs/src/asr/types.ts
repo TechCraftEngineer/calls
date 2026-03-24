@@ -2,7 +2,7 @@
  * Типы для ASR (Automatic Speech Recognition) pipeline
  */
 
-export type AsrSource = "assemblyai" | "yandex" | "merged";
+export type AsrSource = "assemblyai" | "yandex" | "huggingface" | "merged";
 
 export interface Utterance {
   speaker: string;
@@ -27,6 +27,17 @@ export interface AsrProviderMeta {
   processingTimeMs?: number;
 }
 
+export interface AsrExecutionLog {
+  provider: "assemblyai" | "yandex" | "huggingface";
+  success: boolean;
+  processingTimeMs?: number;
+  text?: string;
+  confidence?: number;
+  utterances?: Utterance[];
+  raw?: Record<string, unknown>;
+  error?: string;
+}
+
 export interface TranscriptMetadata {
   asrSource: AsrSource;
   processingTimeMs: number;
@@ -38,6 +49,12 @@ export interface TranscriptMetadata {
   asrAssemblyai?: AsrProviderMeta;
   /** Полный текст и метрики от Yandex */
   asrYandex?: AsrProviderMeta;
+  /** Полный текст и метрики от Hugging Face */
+  asrHuggingFace?: AsrProviderMeta;
+  /** Детальные логи каждого ASR провайдера (ответы/ошибки) */
+  asrLogs?: AsrExecutionLog[];
+  /** Логи шага диаризации/идентификации спикеров */
+  diarization?: Record<string, unknown>;
 }
 
 export interface PipelineResult {

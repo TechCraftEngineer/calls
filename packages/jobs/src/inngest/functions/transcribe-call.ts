@@ -190,6 +190,12 @@ export const transcribeCallFn = inngest.createFunction(
         if (operatorName != null && operatorName !== "") {
           serializedMetadata.operatorName = operatorName;
         }
+        if (
+          identifyResult.metadata &&
+          typeof identifyResult.metadata === "object"
+        ) {
+          serializedMetadata.diarization = identifyResult.metadata;
+        }
       } catch (error) {
         logger.warn("Ошибка сериализации метаданных", {
           callId,

@@ -10,7 +10,6 @@ export { db as dbEdge } from "./client.ws";
 export {
   createWorkspaceErrorResponse,
   createWorkspaceNullResponse,
-  getDefaultWorkspace,
   handleWorkspaceError,
 } from "./lib/workspace-utils";
 export { evaluationTemplatesRepository } from "./repositories/evaluation-templates.repository";

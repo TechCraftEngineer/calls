@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@ai-sdk/assemblyai": "2.0.24",
+    "@ai-sdk/huggingface": "^1.0.39",
     "@ai-sdk/openai": "3.0.41",
     "@calls/ai": "workspace:*",
     "@calls/config": "workspace:*",

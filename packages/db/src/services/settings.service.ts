@@ -17,6 +17,10 @@ const BOT_KEY_TO_TYPE: Record<string, "telegram" | "max"> = {
   max_bot_token: "max",
 };
 
+function isValidTelegramToken(token: string): boolean {
+  return /^\d+:[A-Za-z0-9_-]{35,}$/.test(token);
+}
+
 export class SettingsService {
   constructor(
     private workspaceSettingsRepository: WorkspaceSettingsRepository,
@@ -167,7 +171,7 @@ export class SettingsService {
     }
 
     const systemToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
-    if (systemToken) {
+    if (systemToken && isValidTelegramToken(systemToken)) {
       return { token: systemToken, source: "system" };
     }
 

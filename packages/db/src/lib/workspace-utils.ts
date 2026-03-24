@@ -2,14 +2,6 @@
  * Workspace utilities for consistent error handling and lookup patterns
  */
 
-import type { WorkspacesService } from "../services/workspaces.service";
-
-export async function getDefaultWorkspace(
-  _workspacesService: WorkspacesService,
-) {
-  return null;
-}
-
 export function createWorkspaceErrorResponse(reason: string) {
   return {
     skipped: true,

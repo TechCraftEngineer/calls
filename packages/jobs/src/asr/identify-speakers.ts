@@ -97,6 +97,7 @@ export interface IdentifySpeakersResult {
   text: string;
   operatorName?: string;
   customerName?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export async function identifySpeakersWithLlm(
@@ -104,12 +105,24 @@ export async function identifySpeakersWithLlm(
   options: IdentifySpeakersOptions,
 ): Promise<IdentifySpeakersResult> {
   if (!normalizedText?.trim()) {
-    return { text: normalizedText };
+    return {
+      text: normalizedText,
+      metadata: {
+        success: false,
+        reason: "empty_input",
+      },
+    };
   }
 
   if (!hasAiProviderConfigured()) {
     logger.warn("API ключ AI не задан, пропускаем анализ спикеров");
-    return { text: normalizedText };
+    return {
+      text: normalizedText,
+      metadata: {
+        success: false,
+        reason: "ai_provider_not_configured",
+      },
+    };
   }
 
   const systemPrompt = `${DEFAULT_SYSTEM_PROMPT}${options.managerName ? `\n\nПодсказка: оператор может представляться как ${options.managerName}.` : ""}`;
@@ -199,7 +212,19 @@ ${analysisText}
 
     if (Object.keys(sanitizedMapping).length === 0) {
       logger.info("Маппинг спикеров пуст, возвращаем исходный текст");
-      return { text: normalizedText, operatorName, customerName };
+      return {
+        text: normalizedText,
+        operatorName,
+        customerName,
+        metadata: {
+          success: true,
+          mapping: sanitizedMapping,
+          speakers: result.speakers,
+          operatorName: operatorName ?? null,
+          customerName: customerName ?? null,
+          truncatedForAnalysis: normalizedText.length > analysisText.length,
+        },
+      };
     }
 
     let resultText = normalizedText;
@@ -218,12 +243,31 @@ ${analysisText}
       customerName: customerName ?? null,
     });
 
-    return { text: resultText.trim(), operatorName, customerName };
+    return {
+      text: resultText.trim(),
+      operatorName,
+      customerName,
+      metadata: {
+        success: true,
+        mapping: sanitizedMapping,
+        speakers: result.speakers,
+        operatorName: operatorName ?? null,
+        customerName: customerName ?? null,
+        truncatedForAnalysis: normalizedText.length > analysisText.length,
+      },
+    };
   } catch (error) {
     logger.error("Ошибка анализа спикеров", {
       error: error instanceof Error ? error.message : String(error),
     });
-    return { text: normalizedText };
+    return {
+      text: normalizedText,
+      metadata: {
+        success: false,
+        reason: "error",
+        error: error instanceof Error ? error.message : String(error),
+      },
+    };
   }
 }
 

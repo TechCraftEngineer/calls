@@ -56,12 +56,12 @@ export default function IntegrationsSection({
           <span className="flex size-8 items-center justify-center rounded-md bg-primary/10">
             🔌
           </span>
-          Интеграции компании
+          Интеграции рабочего пространства
         </CardTitle>
         <CardDescription>
           Настройки подключений к Telegram и MAX Bot. Токены хранятся в базе в
-          зашифрованном виде. Для Telegram можно использовать либо свой бот
-          workspace, либо системный бот по умолчанию.
+          зашифрованном виде. Для Telegram можно использовать либо собственного
+          бота рабочего пространства, либо системного бота по умолчанию.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -77,7 +77,7 @@ export default function IntegrationsSection({
 
           {integrations.telegramUsesDefault && (
             <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-900 dark:text-emerald-200">
-              Сейчас используется системный Telegram-бот (fallback).
+              Сейчас используется системный Telegram-бот по умолчанию.
             </div>
           )}
 

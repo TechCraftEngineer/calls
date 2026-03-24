@@ -45,11 +45,11 @@ export function useTelegramSettings({
     try {
       setState((prev: SettingsState) => ({ ...prev, telegramSaving: true }));
       await updateIntegrationsMutation.mutateAsync({
-        telegram_bot_token: state.integrations.telegramBotToken || null,
+        telegram_bot_token: telegramToken || null,
       });
       toast.success(
         telegramToken
-          ? "Telegram Bot workspace сохранён"
+          ? "Telegram Bot рабочего пространства сохранён"
           : "Включено использование системного Telegram-бота",
       );
     } catch (error: unknown) {
