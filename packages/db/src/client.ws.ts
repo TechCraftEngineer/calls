@@ -2,7 +2,6 @@ import { neonConfig, Pool } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import ws from "ws";
 
-import { isDbLoggingEnabled } from "./db-logger";
 import * as schema from "./schema";
 
 neonConfig.webSocketConstructor = ws;
@@ -13,5 +12,4 @@ export const db = drizzle({
   client: pool,
   schema,
   casing: "snake_case",
-  logger: isDbLoggingEnabled(),
 });
