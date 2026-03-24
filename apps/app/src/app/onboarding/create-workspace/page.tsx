@@ -1,7 +1,6 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { generateWorkspaceSlug } from "@calls/shared";
 import { Button, Input, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,14 +14,6 @@ import { useORPC } from "@/orpc/react";
 
 const createWorkspaceSchema = z.object({
   name: z.string().min(1, "Введите название").max(100, "Не более 100 символов"),
-  slug: z
-    .string()
-    .min(1, "Введите идентификатор")
-    .max(50, "Не более 50 символов")
-    .regex(
-      /^[a-z0-9-]+$/,
-      "Только латинские буквы, цифры и дефис (например: my-company)",
-    ),
 });
 
 type CreateWorkspaceFormData = z.infer<typeof createWorkspaceSchema>;
@@ -36,16 +27,12 @@ function CreateWorkspaceForm() {
     register,
     handleSubmit,
     setError,
-    setValue,
-    watch,
-    formState: { errors, dirtyFields },
+    formState: { errors },
   } = useForm<CreateWorkspaceFormData>({
     resolver: zodResolver(createWorkspaceSchema),
     mode: "onBlur",
-    defaultValues: { name: "", slug: "" },
+    defaultValues: { name: "" },
   });
-
-  const nameValue = watch("name");
 
   const {
     data: workspacesData,
@@ -139,7 +126,7 @@ function CreateWorkspaceForm() {
   const createMutation = useMutation(
     orpc.workspaces.create.mutationOptions({
       onSuccess: async (workspace) => {
-        toast.success("Рабочее пространство создано");
+        toast.success("Компания создана");
         // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
         document.cookie = `active_workspace_id=${workspace.id}; path=/; max-age=31536000; SameSite=Lax`;
         await queryClient.invalidateQueries({
@@ -149,28 +136,15 @@ function CreateWorkspaceForm() {
       },
       onError: (err) => {
         const msg =
-          err instanceof Error
-            ? err.message
-            : "Не удалось создать рабочее пространство";
-        const isSlugError =
-          typeof msg === "string" &&
-          (msg.includes("slug") || msg.includes("идентификатор"));
-        setError(isSlugError ? "slug" : "root", { message: msg });
+          err instanceof Error ? err.message : "Не удалось создать компанию";
+        setError("root", { message: msg });
         toast.error(msg);
       },
     }),
   );
 
-  useEffect(() => {
-    if (nameValue && !dirtyFields.slug) {
-      setValue("slug", generateWorkspaceSlug(nameValue), {
-        shouldValidate: true,
-      });
-    }
-  }, [nameValue, setValue, dirtyFields.slug]);
-
   const onSubmit = (data: CreateWorkspaceFormData) => {
-    createMutation.mutate({ name: data.name, slug: data.slug });
+    createMutation.mutate({ name: data.name });
   };
 
   if (checking) {
@@ -191,11 +165,10 @@ function CreateWorkspaceForm() {
             M
           </div>
           <h1 className="mb-2 text-[24px] font-bold text-[#111]">
-            Создайте рабочее пространство
+            Создайте компанию
           </h1>
           <p className="m-0 text-[14px] text-[#888]">
-            Рабочее пространство — это пространство для вашей команды. Начните с
-            названия компании или проекта.
+            Компания объединяет команду и данные. Начните с названия.
           </p>
         </div>
 
@@ -234,36 +207,6 @@ function CreateWorkspaceForm() {
             )}
           </div>
 
-          <div className="mb-5">
-            <label
-              htmlFor="slug"
-              className="mb-2 block text-[13px] font-semibold text-[#333]"
-            >
-              Идентификатор
-            </label>
-            <Input
-              id="slug"
-              type="text"
-              className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
-                errors.slug
-                  ? "border-red-500 bg-red-50 focus:border-red-500"
-                  : ""
-              }`}
-              placeholder="my-company"
-              autoComplete="off"
-              aria-invalid={!!errors.slug}
-              {...register("slug")}
-            />
-            <p className="mt-1 text-[11px] text-[#888]">
-              Только латинские буквы, цифры и дефис
-            </p>
-            {errors.slug && (
-              <div className="mt-1 text-xs leading-tight text-red-600">
-                {errors.slug.message}
-              </div>
-            )}
-          </div>
-
           <Button
             type="submit"
             variant="dark"
@@ -271,9 +214,7 @@ function CreateWorkspaceForm() {
             className="mt-2 w-full"
             disabled={createMutation.isPending}
           >
-            {createMutation.isPending
-              ? "Создание…"
-              : "Создать рабочее пространство"}
+            {createMutation.isPending ? "Создание…" : "Создать компанию"}
           </Button>
         </form>
 

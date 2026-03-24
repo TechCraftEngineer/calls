@@ -47,7 +47,11 @@ export function useTelegramSettings({
       await updateIntegrationsMutation.mutateAsync({
         telegram_bot_token: state.integrations.telegramBotToken || null,
       });
-      toast.success("Telegram Bot сохранён");
+      toast.success(
+        telegramToken
+          ? "Telegram Bot workspace сохранён"
+          : "Включено использование системного Telegram-бота",
+      );
     } catch (error: unknown) {
       console.error("Failed to save Telegram:", error);
       const msg =

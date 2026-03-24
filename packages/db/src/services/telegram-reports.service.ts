@@ -2,7 +2,7 @@
  * Telegram reports service - получатели отчётов и настройки времени
  */
 
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 import type {
@@ -186,6 +186,50 @@ export async function getTelegramReportRecipients(
   }
 
   return recipients;
+}
+
+/**
+ * Возвращает ID воркспейсов, где есть хотя бы один получатель Telegram-отчётов.
+ */
+export async function getWorkspaceIdsWithTelegramReportRecipients(): Promise<
+  string[]
+> {
+  const rows = await db
+    .selectDistinct({
+      workspaceId: schema.workspaceMembers.workspaceId,
+    })
+    .from(schema.workspaceMembers)
+    .innerJoin(schema.user, eq(schema.workspaceMembers.userId, schema.user.id))
+    .innerJoin(
+      schema.userWorkspaceSettings,
+      and(
+        eq(schema.workspaceMembers.userId, schema.userWorkspaceSettings.userId),
+        eq(
+          schema.workspaceMembers.workspaceId,
+          schema.userWorkspaceSettings.workspaceId,
+        ),
+      ),
+    )
+    .where(
+      and(
+        eq(schema.workspaceMembers.status, "active"),
+        isNull(schema.user.deletedAt),
+        sql`${schema.user.telegramChatId} IS NOT NULL AND trim(${schema.user.telegramChatId}) != ''`,
+        sql`(
+          COALESCE((${schema.userWorkspaceSettings.notificationSettings}->'telegram'->>'dailyReport')::boolean, false) = true OR
+          COALESCE((${schema.userWorkspaceSettings.notificationSettings}->'telegram'->>'weeklyReport')::boolean, false) = true OR
+          COALESCE((${schema.userWorkspaceSettings.notificationSettings}->'telegram'->>'monthlyReport')::boolean, false) = true OR
+          (
+            COALESCE((${schema.userWorkspaceSettings.notificationSettings}->'telegram'->>'managerReport')::boolean, false) = true AND
+            ${schema.workspaceMembers.role} IN ('owner', 'admin')
+          )
+        )`,
+      ),
+    );
+
+  return rows
+    .map((r) => r.workspaceId)
+    .filter((id): id is string => Boolean(id));
 }
 
 export async function getInternalNumbersForUserIds(

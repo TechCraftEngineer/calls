@@ -10,7 +10,6 @@ export type WorkspaceMemberRole = "owner" | "admin" | "member";
 
 export interface CreateWorkspaceData {
   name: string;
-  slug: string;
   metadata?: Record<string, unknown> | null;
 }
 
@@ -54,7 +53,6 @@ export const workspacesRepository = {
       .insert(schema.workspaces)
       .values({
         name: data.name,
-        slug: data.slug,
         metadata: data.metadata ?? null,
       })
       .returning({ id: schema.workspaces.id });
@@ -72,22 +70,10 @@ export const workspacesRepository = {
     return result[0] ?? null;
   },
 
-  async getBySlug(
-    slug: string,
-  ): Promise<typeof schema.workspaces.$inferSelect | null> {
-    const result = await db
-      .select()
-      .from(schema.workspaces)
-      .where(eq(schema.workspaces.slug, slug))
-      .limit(1);
-    return result[0] ?? null;
-  },
-
   async update(
     id: string,
     data: {
       name?: string;
-      slug?: string;
       description?: string | null;
       metadata?: Record<string, unknown> | null;
     },

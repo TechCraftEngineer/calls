@@ -89,7 +89,6 @@ export interface CallsResponse {
 export interface WorkspaceItem {
   id: string;
   name: string;
-  slug: string;
   role: string;
   memberSince?: string;
 }

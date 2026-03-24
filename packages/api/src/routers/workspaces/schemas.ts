@@ -1,15 +1,8 @@
 import { isValidUuid, workspaceIdSchema } from "@calls/shared";
 import { z } from "zod";
 
-export const slugSchema = z
-  .string()
-  .min(1, "Slug обязателен")
-  .max(50)
-  .regex(/^[a-z0-9-]+$/, "Slug: только буквы, цифры и дефис");
-
 export const createWorkspaceSchema = z.object({
   name: z.string().min(1, "Название обязательно").max(100),
-  slug: slugSchema,
 });
 
 export const workspaceIdInputSchema = z.object({
@@ -19,7 +12,6 @@ export const workspaceIdInputSchema = z.object({
 export const updateWorkspaceSchema = z.object({
   workspaceId: workspaceIdSchema,
   name: z.string().min(1).max(100).optional(),
-  slug: slugSchema.optional(),
   description: z
     .string()
     .max(2000, "Не более 2000 символов")

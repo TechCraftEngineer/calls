@@ -40,7 +40,35 @@ export async function setupTelegramWebhooks(): Promise<SetupTelegramWebhooksResu
   const workspaceIds = await settingsService.getWorkspaceIdsWithTelegramBot();
   if (workspaceIds.length === 0) {
     logger.info("No workspaces with Telegram bot configured");
-    return { success: true, results: [] };
+    const systemToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+    if (!systemToken) {
+      return { success: true, results: [] };
+    }
+
+    try {
+      await setTelegramWebhook(
+        systemToken,
+        `${baseUrl}/api/telegram-webhook-default`,
+      );
+      logger.info("Default Telegram webhook set successfully");
+      return { success: true, results: [] };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      logger.error("Failed to set default Telegram webhook", {
+        error: errorMsg,
+      });
+      return {
+        success: false,
+        results: [
+          {
+            workspaceId: "default",
+            success: false,
+            error: errorMsg,
+            skipped: false,
+          },
+        ],
+      };
+    }
   }
 
   logger.info("Setting up Telegram webhooks", {
@@ -109,7 +137,30 @@ export async function setupTelegramWebhooks(): Promise<SetupTelegramWebhooksResu
   }
   const allSuccess = results.every((r) => r.success || r.skipped);
 
-  if (!allSuccess) {
+  const systemToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+  let defaultWebhookSuccess = true;
+  if (systemToken) {
+    try {
+      await setTelegramWebhook(
+        systemToken,
+        `${baseUrl}/api/telegram-webhook-default`,
+      );
+      logger.info("Default Telegram webhook set successfully");
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      defaultWebhookSuccess = false;
+      logger.error("Failed to set default Telegram webhook", {
+        error: errorMsg,
+      });
+      results.push({
+        workspaceId: "default",
+        success: false,
+        error: errorMsg,
+      });
+    }
+  }
+
+  if (!allSuccess || !defaultWebhookSuccess) {
     const failedWorkspaces = results.filter((r) => !r.success && !r.skipped);
     logger.error("Failed to set Telegram webhook for some workspaces", {
       failedCount: failedWorkspaces.length,

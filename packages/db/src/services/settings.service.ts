@@ -150,6 +150,30 @@ export class SettingsService {
     return this.workspaceIntegrationsRepository.findWorkspaceIdsWithTelegramBot();
   }
 
+  /**
+   * Возвращает Telegram-токен для workspace с fallback на системный токен.
+   * Приоритет: 1) токен workspace, 2) process.env.TELEGRAM_BOT_TOKEN.
+   */
+  async getEffectiveTelegramBotToken(workspaceId: string): Promise<{
+    token: string | null;
+    source: "workspace" | "system" | "none";
+  }> {
+    const workspaceToken = await this.getDecryptedBotToken(
+      "telegram_bot_token",
+      workspaceId,
+    );
+    if (workspaceToken?.trim()) {
+      return { token: workspaceToken.trim(), source: "workspace" };
+    }
+
+    const systemToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+    if (systemToken) {
+      return { token: systemToken, source: "system" };
+    }
+
+    return { token: null, source: "none" };
+  }
+
   /** Список активных интеграций FTP по всем workspace */
   async getActiveFtpIntegrations(): Promise<
     Array<{

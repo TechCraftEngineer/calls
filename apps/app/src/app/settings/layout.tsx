@@ -52,7 +52,7 @@ const SETTINGS_NAV = [
   },
   {
     href: paths.settings.workspace,
-    label: "Рабочее пространство",
+    label: "Компания",
     description: "Название и параметры",
     icon: (
       <svg

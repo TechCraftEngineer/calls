@@ -3,14 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import {
-  index,
-  jsonb,
-  pgEnum,
-  pgTable,
-  text,
-  timestamp,
-} from "drizzle-orm/pg-core";
+import { jsonb, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 export const workspaceMemberRole = pgEnum("workspace_member_role", [
   "owner",
@@ -23,7 +16,6 @@ export const workspaces = pgTable(
   {
     id: text("id").primaryKey().default(sql`workspace_id_generate()`),
     name: text("name").notNull(),
-    slug: text("slug").notNull().unique(),
     description: text("description"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -32,5 +24,5 @@ export const workspaces = pgTable(
       .$onUpdate(() => new Date())
       .notNull(),
   },
-  (table) => [index("workspaces_slug_idx").on(table.slug)],
+  () => [],
 );

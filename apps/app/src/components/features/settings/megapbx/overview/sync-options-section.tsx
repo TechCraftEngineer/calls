@@ -81,7 +81,7 @@ export function SyncOptionsSection({
   return (
     <SectionBlock
       title="Что синхронизировать"
-      description="Включите только те данные, которые реально нужны в рабочем пространстве."
+      description="Включите только те данные, которые реально нужны в компании."
     >
       <Form {...form}>
         <div className="contents">

@@ -1,24 +1,14 @@
 "use client";
 
-import { generateWorkspaceSlug } from "@calls/shared";
 import { Button, Input, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useORPC } from "@/orpc/react";
 
 const createWorkspaceSchema = z.object({
   name: z.string().min(1, "Введите название").max(100, "Не более 100 символов"),
-  slug: z
-    .string()
-    .min(1, "Введите идентификатор")
-    .max(50, "Не более 50 символов")
-    .regex(
-      /^[a-z0-9-]+$/,
-      "Только латинские буквы, цифры и дефис (например: my-company)",
-    ),
 });
 
 type CreateWorkspaceFormData = z.infer<typeof createWorkspaceSchema>;
@@ -37,48 +27,30 @@ export default function CreateWorkspaceModal({
     register,
     handleSubmit,
     setError,
-    setValue,
-    watch,
-    formState: { errors, dirtyFields },
+    formState: { errors },
   } = useForm<CreateWorkspaceFormData>({
     resolver: zodResolver(createWorkspaceSchema),
     mode: "onBlur",
-    defaultValues: { name: "", slug: "" },
+    defaultValues: { name: "" },
   });
-
-  const nameValue = watch("name");
-
-  useEffect(() => {
-    // Обновляем slug только если пользователь еще не редактировал его вручную
-    if (nameValue && !dirtyFields.slug) {
-      setValue("slug", generateWorkspaceSlug(nameValue), {
-        shouldValidate: true,
-      });
-    }
-  }, [nameValue, setValue, dirtyFields.slug]);
 
   const createMutation = useMutation(
     orpc.workspaces.create.mutationOptions({
       onSuccess: (workspace) => {
-        toast.success("Рабочее пространство создано");
+        toast.success("Компания создана");
         onSuccess(workspace.id);
       },
       onError: (err) => {
         const msg =
-          err instanceof Error
-            ? err.message
-            : "Не удалось создать рабочее пространство";
-        const isSlugError =
-          typeof msg === "string" &&
-          (msg.includes("slug") || msg.includes("идентификатор"));
-        setError(isSlugError ? "slug" : "root", { message: msg });
+          err instanceof Error ? err.message : "Не удалось создать компанию";
+        setError("root", { message: msg });
         toast.error(msg);
       },
     }),
   );
 
   const onSubmit = (data: CreateWorkspaceFormData) => {
-    createMutation.mutate({ name: data.name, slug: data.slug });
+    createMutation.mutate({ name: data.name });
   };
 
   return (
@@ -96,7 +68,7 @@ export default function CreateWorkspaceModal({
               M
             </div>
             <h2 className="text-xl font-bold text-gray-900 m-0">
-              Создать рабочее пространство
+              Создать компанию
             </h2>
           </div>
           <Button
@@ -110,8 +82,8 @@ export default function CreateWorkspaceModal({
         </div>
 
         <p className="text-sm text-gray-500 m-0 leading-relaxed">
-          Рабочее пространство объединяет команду и данные. Укажите название
-          компании или проекта.
+          Компания объединяет команду и данные. Укажите название компании или
+          проекта.
         </p>
 
         {errors.root && (
@@ -146,35 +118,6 @@ export default function CreateWorkspaceModal({
             )}
           </div>
 
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="slug"
-              className="text-[13px] font-semibold text-gray-700"
-            >
-              Идентификатор
-            </label>
-            <Input
-              id="slug"
-              type="text"
-              className={`w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:border-[#FFD600] focus:ring-4 focus:ring-[#FFD600]/10 focus:outline-none transition-all ${
-                errors.slug ? "border-red-500 bg-red-50" : ""
-              }`}
-              placeholder="my-company"
-              aria-invalid={!!errors.slug}
-              {...register("slug")}
-            />
-            <div className="flex flex-col gap-1">
-              <span className="text-[11px] text-gray-400">
-                Только латинские буквы, цифры и дефис
-              </span>
-              {errors.slug && (
-                <span className="text-xs text-red-500">
-                  {errors.slug.message}
-                </span>
-              )}
-            </div>
-          </div>
-
           <div className="flex gap-3 mt-2">
             <Button
               type="button"
@@ -189,9 +132,7 @@ export default function CreateWorkspaceModal({
               variant="dark"
               disabled={createMutation.isPending}
             >
-              {createMutation.isPending
-                ? "Создание…"
-                : "Создать рабочее пространство"}
+              {createMutation.isPending ? "Создание…" : "Создать компанию"}
             </Button>
           </div>
         </form>

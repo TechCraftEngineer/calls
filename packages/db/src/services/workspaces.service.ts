@@ -28,7 +28,6 @@ export class WorkspacesService {
         .insert(this.workspacesRepository.table)
         .values({
           name: data.name,
-          slug: data.slug,
           metadata: data.metadata ?? null,
         })
         .returning({ id: this.workspacesRepository.table.id });
@@ -58,44 +57,18 @@ export class WorkspacesService {
     return this.workspacesRepository.getById(id);
   }
 
-  async getBySlug(slug: string) {
-    const cacheKey = workspaceCache.createBySlugKey(slug);
-    const cached =
-      workspaceCache.get<
-        Awaited<ReturnType<typeof this.workspacesRepository.getBySlug>>
-      >(cacheKey);
-    if (cached) return cached;
-
-    const result = await this.workspacesRepository.getBySlug(slug);
-    if (result) {
-      workspaceCache.set(cacheKey, result);
-    }
-    return result;
-  }
-
   async update(
     id: string,
     data: {
       name?: string;
-      slug?: string;
       description?: string | null;
       metadata?: Record<string, unknown> | null;
     },
   ) {
-    // Get current workspace to check if slug is changing
-    const currentWs = await this.workspacesRepository.getById(id);
-    const oldSlug = currentWs?.slug;
-
     const result = await this.workspacesRepository.update(id, data);
 
     // Invalidate cache for this workspace
     workspaceCache.invalidateWorkspace(id);
-
-    // If slug changed, invalidate old slug cache
-    if (oldSlug && data.slug && oldSlug !== data.slug) {
-      const oldSlugKey = workspaceCache.createBySlugKey(oldSlug);
-      workspaceCache.delete(oldSlugKey);
-    }
 
     return result;
   }

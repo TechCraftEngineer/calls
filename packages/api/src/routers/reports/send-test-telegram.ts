@@ -80,13 +80,12 @@ export const sendTestTelegram = workspaceProcedure
       user && typeof user === "object" ? user.telegramChatId : undefined,
     );
 
-    const token = await settingsService.getDecryptedBotToken(
-      "telegram_bot_token",
-      workspaceId,
-    );
+    const { token } =
+      await settingsService.getEffectiveTelegramBotToken(workspaceId);
     if (!token?.trim())
       throw new ORPCError("BAD_REQUEST", {
-        message: "Telegram Bot Token не настроен. Укажите токен в Настройках.",
+        message:
+          "Telegram-бот не настроен. Укажите токен бота в интеграциях или настройте системный TELEGRAM_BOT_TOKEN.",
       });
 
     const userForEdit = await usersService.getUserForEdit(user.id, workspaceId);

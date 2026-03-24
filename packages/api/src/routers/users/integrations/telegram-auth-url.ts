@@ -29,10 +29,8 @@ export const telegramAuthUrl = workspaceProcedure
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message: "Не удалось сохранить токен",
       });
-    const botToken = await settingsService.getDecryptedBotToken(
-      "telegram_bot_token",
-      workspaceId,
-    );
+    const { token: botToken } =
+      await settingsService.getEffectiveTelegramBotToken(workspaceId);
     const botUsername = botToken?.trim()
       ? await getBotUsername(botToken)
       : "mango_react_bot";

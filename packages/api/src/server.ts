@@ -276,13 +276,17 @@ export function createBackendApiWithContext(ctx: BackendContext) {
           ctx,
           input,
         ),
-      create: (input: { name: string; slug: string }) =>
+      create: (input: { name: string }) =>
         callProc(
           backendRouter.workspaces.create as ProcedureWithCallable,
           ctx,
           input,
         ),
-      update: (input: { workspaceId: string; name?: string; slug?: string }) =>
+      update: (input: {
+        workspaceId: string;
+        name?: string;
+        description?: string | null;
+      }) =>
         callProc(
           backendRouter.workspaces.update as ProcedureWithCallable,
           ctx,
