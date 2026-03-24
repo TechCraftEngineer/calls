@@ -13,6 +13,12 @@ export interface FormValidationError {
 const optionalEmailSchema = z
   .union([z.string().email(), z.literal("")])
   .optional();
+const reportFiltersValidationSchema = editUserFormSchema.pick({
+  givenName: true,
+  email: true,
+  filterMinDuration: true,
+  filterMinReplicas: true,
+});
 
 export function useUserFormValidation() {
   const [errors, setErrors] = useState<FormValidationError[]>([]);
@@ -23,14 +29,11 @@ export function useUserFormValidation() {
 
   const validateForm = useCallback(
     (form: EditUserForm): FormValidationError[] => {
-      const result = editUserFormSchema.safeParse({
+      const result = reportFiltersValidationSchema.safeParse({
         givenName: form.givenName,
         email: form.email ?? "",
         filterMinDuration: form.filterMinDuration,
         filterMinReplicas: form.filterMinReplicas,
-        kpiBaseSalary: form.kpiBaseSalary,
-        kpiTargetBonus: form.kpiTargetBonus,
-        kpiTargetTalkTimeMinutes: form.kpiTargetTalkTimeMinutes,
       });
       if (result.success) return [];
       return result.error.issues.map((e) => ({

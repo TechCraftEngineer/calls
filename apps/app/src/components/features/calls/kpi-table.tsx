@@ -46,7 +46,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { KpiTableSkeleton } from "@/app/statistics/statistics-skeletons";
 import { useORPC } from "@/orpc/react";
@@ -75,7 +75,13 @@ interface KpiDraft {
   targetTalkTimeMinutes: number;
 }
 
-const KPI_FIELD_LIMITS: Record<keyof KpiDraft, number> = {
+interface BulkKpiDraft {
+  baseSalary: string;
+  targetBonus: string;
+  targetTalkTimeMinutes: string;
+}
+
+const KPI_FIELD_LIMITS: Record<keyof KpiDraft | keyof BulkKpiDraft, number> = {
   baseSalary: 1_000_000,
   targetBonus: 1_000_000,
   targetTalkTimeMinutes: 100_000,
@@ -167,11 +173,12 @@ export default function KpiTable() {
   );
   const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
   const [isApplyingBulkKpi, setIsApplyingBulkKpi] = useState(false);
-  const [bulkDraft, setBulkDraft] = useState<KpiDraft>({
-    baseSalary: 0,
-    targetBonus: 0,
-    targetTalkTimeMinutes: 0,
+  const [bulkDraft, setBulkDraft] = useState<BulkKpiDraft>({
+    baseSalary: "",
+    targetBonus: "",
+    targetTalkTimeMinutes: "",
   });
+  const skipInvalidateOnSuccessRef = useRef(false);
 
   const { data = [], isPending: loading } = useQuery(
     orpc.statistics.getKpi.queryOptions({
@@ -232,6 +239,7 @@ export default function KpiTable() {
   const updateKpiMutation = useMutation(
     orpc.statistics.updateKpiEmployee.mutationOptions({
       onSuccess: async () => {
+        if (skipInvalidateOnSuccessRef.current) return;
         await queryClient.invalidateQueries({ queryKey: kpiQueryKey });
       },
     }),
@@ -296,8 +304,27 @@ export default function KpiTable() {
   };
 
   const applyKpiToAllEmployees = async () => {
-    const parsedDraft = kpiDraftSchema.safeParse(bulkDraft);
-    if (!parsedDraft.success) {
+    const normalizeBulkDraft = (): KpiDraft | null => {
+      const normalized: KpiDraft = {
+        baseSalary: Math.min(
+          toNonNegativeInt(Number(bulkDraft.baseSalary)),
+          KPI_FIELD_LIMITS.baseSalary,
+        ),
+        targetBonus: Math.min(
+          toNonNegativeInt(Number(bulkDraft.targetBonus)),
+          KPI_FIELD_LIMITS.targetBonus,
+        ),
+        targetTalkTimeMinutes: Math.min(
+          toNonNegativeInt(Number(bulkDraft.targetTalkTimeMinutes)),
+          KPI_FIELD_LIMITS.targetTalkTimeMinutes,
+        ),
+      };
+      const parsed = kpiDraftSchema.safeParse(normalized);
+      return parsed.success ? parsed.data : null;
+    };
+
+    const parsedDraft = normalizeBulkDraft();
+    if (!parsedDraft) {
       toast.error("Проверьте значения KPI: есть недопустимые поля");
       return;
     }
@@ -307,19 +334,38 @@ export default function KpiTable() {
     }
 
     setIsApplyingBulkKpi(true);
+    skipInvalidateOnSuccessRef.current = true;
     try {
       const updates = await Promise.allSettled(
         rows.map((row) =>
           updateKpiMutation.mutateAsync({
             employeeExternalId: row.employeeExternalId,
             data: {
-              kpiBaseSalary: parsedDraft.data.baseSalary,
-              kpiTargetBonus: parsedDraft.data.targetBonus,
-              kpiTargetTalkTimeMinutes: parsedDraft.data.targetTalkTimeMinutes,
+              kpiBaseSalary: parsedDraft.baseSalary,
+              kpiTargetBonus: parsedDraft.targetBonus,
+              kpiTargetTalkTimeMinutes: parsedDraft.targetTalkTimeMinutes,
             },
           }),
         ),
       );
+      const successEmployeeIds = rows
+        .filter((_, idx) => updates[idx]?.status === "fulfilled")
+        .map((row) => row.employeeExternalId);
+      if (successEmployeeIds.length > 0) {
+        setDraftsByEmployeeId((prev) => {
+          const next = { ...prev };
+          for (const employeeId of successEmployeeIds) {
+            next[employeeId] = {
+              baseSalary: parsedDraft.baseSalary,
+              targetBonus: parsedDraft.targetBonus,
+              targetTalkTimeMinutes: parsedDraft.targetTalkTimeMinutes,
+            };
+          }
+          return next;
+        });
+      }
+
+      await queryClient.invalidateQueries({ queryKey: kpiQueryKey });
       const failedCount = updates.filter(
         (result) => result.status === "rejected",
       ).length;
@@ -339,8 +385,9 @@ export default function KpiTable() {
           ? error.message
           : "Не удалось применить KPI всем сотрудникам";
       toast.error(message);
-      console.error("Failed to apply KPI for all employees", { error });
+      console.error("Не удалось применить KPI ко всем сотрудникам", { error });
     } finally {
+      skipInvalidateOnSuccessRef.current = false;
       setIsApplyingBulkKpi(false);
     }
   };
@@ -719,7 +766,10 @@ export default function KpiTable() {
             className="touch-action-manipulation"
             disabled={rows.length === 0 || isApplyingBulkKpi}
           >
-            {isApplyingBulkKpi ? "Применение…" : "Применить KPI всем"}
+            {isApplyingBulkKpi && (
+              <Loader2 className="size-4 animate-spin mr-2" aria-hidden />
+            )}
+            Применить KPI всем
           </Button>
           <Button
             type="button"
@@ -1084,10 +1134,7 @@ export default function KpiTable() {
                 onChange={(e) =>
                   setBulkDraft((prev) => ({
                     ...prev,
-                    baseSalary: Math.min(
-                      toNonNegativeInt(Number(e.target.value)),
-                      KPI_FIELD_LIMITS.baseSalary,
-                    ),
+                    baseSalary: e.target.value,
                   }))
                 }
               />
@@ -1111,10 +1158,7 @@ export default function KpiTable() {
                 onChange={(e) =>
                   setBulkDraft((prev) => ({
                     ...prev,
-                    targetBonus: Math.min(
-                      toNonNegativeInt(Number(e.target.value)),
-                      KPI_FIELD_LIMITS.targetBonus,
-                    ),
+                    targetBonus: e.target.value,
                   }))
                 }
               />
@@ -1138,10 +1182,7 @@ export default function KpiTable() {
                 onChange={(e) =>
                   setBulkDraft((prev) => ({
                     ...prev,
-                    targetTalkTimeMinutes: Math.min(
-                      toNonNegativeInt(Number(e.target.value)),
-                      KPI_FIELD_LIMITS.targetTalkTimeMinutes,
-                    ),
+                    targetTalkTimeMinutes: e.target.value,
                   }))
                 }
               />
@@ -1163,14 +1204,10 @@ export default function KpiTable() {
               disabled={isApplyingBulkKpi}
               className="touch-action-manipulation"
             >
-              {isApplyingBulkKpi ? (
-                <>
-                  <Loader2 className="size-4 animate-spin mr-2" aria-hidden />
-                  Применение…
-                </>
-              ) : (
-                "Применить всем"
+              {isApplyingBulkKpi && (
+                <Loader2 className="size-4 animate-spin mr-2" aria-hidden />
               )}
+              Применить всем
             </Button>
           </DialogFooter>
         </DialogContent>
