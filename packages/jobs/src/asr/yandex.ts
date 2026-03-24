@@ -56,6 +56,11 @@ async function pollUntilDone(operationId: string): Promise<{
 export async function transcribeWithYandex(
   audioUrl: string,
 ): Promise<AsrResult | null> {
+  if (!env.YANDEX_SPEECHKIT_ENABLED) {
+    logger.info("YANDEX_SPEECHKIT_ENABLED=false, пропускаем Yandex SpeechKit");
+    return null;
+  }
+
   const apiKey = env.YANDEX_SPEECHKIT_API_KEY;
   if (!apiKey) {
     logger.warn(

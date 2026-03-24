@@ -32,10 +32,11 @@ const DEFAULT_FALLBACK = {
 const DEFAULT_MAX_CHARS = 40_000;
 const DEFAULT_HARD_MAX_CHARS = 200_000;
 const REQUEST_FIELD_MAX_CHARS = 2_000;
+const TEXT_INPUT_MAX_CHARS = DEFAULT_HARD_MAX_CHARS;
 
 const summarizeInputSchema = z
   .object({
-    text: z.string().trim().min(1).max(REQUEST_FIELD_MAX_CHARS),
+    text: z.string().trim().min(1).max(TEXT_INPUT_MAX_CHARS),
     options: z
       .object({
         summaryPrompt: z

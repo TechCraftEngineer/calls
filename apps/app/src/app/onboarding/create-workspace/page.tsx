@@ -7,14 +7,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 
 const createWorkspaceSchema = z.object({
-  name: z.string().min(1, "Введите название").max(100, "Не более 100 символов"),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Введите название")
+    .max(100, "Не более 100 символов"),
 });
 
 type CreateWorkspaceFormData = z.infer<typeof createWorkspaceSchema>;
@@ -53,6 +57,11 @@ function CreateWorkspaceForm() {
   const validateTokenMutation = useMutation(
     orpc.workspaces.validateInvitationToken.mutationOptions(),
   );
+  const validateTokenMutationRef = useRef(validateTokenMutation);
+
+  useEffect(() => {
+    validateTokenMutationRef.current = validateTokenMutation;
+  }, [validateTokenMutation]);
 
   useEffect(() => {
     getCurrentUser().then((user) => {
@@ -86,7 +95,7 @@ function CreateWorkspaceForm() {
       const firstInvitation = invitations[0];
 
       // Валидируем токен перед редиректом
-      validateTokenMutation.mutate(
+      validateTokenMutationRef.current.mutate(
         { token: firstInvitation.token },
         {
           onSuccess: (result) => {
@@ -116,13 +125,7 @@ function CreateWorkspaceForm() {
     if (workspacesData?.workspaces?.length) {
       router.replace(paths.root);
     }
-  }, [
-    checking,
-    workspacesData,
-    pendingInvitationsData,
-    router,
-    validateTokenMutation,
-  ]);
+  }, [checking, workspacesData, pendingInvitationsData, router]);
 
   const createMutation = useMutation(
     orpc.workspaces.create.mutationOptions({
@@ -145,12 +148,7 @@ function CreateWorkspaceForm() {
   );
 
   const onSubmit = (data: CreateWorkspaceFormData) => {
-    const normalizedName = data.name?.trim();
-    if (!normalizedName) {
-      setError("name", { message: "Введите название" });
-      return;
-    }
-    createMutation.mutate({ name: normalizedName });
+    createMutation.mutate({ name: data.name });
   };
 
   if (checking) {

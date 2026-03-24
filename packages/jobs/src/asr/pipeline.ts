@@ -31,6 +31,17 @@ function truncateForLog(
     : normalized;
 }
 
+function parseHuggingFaceRaw(
+  raw: unknown,
+): { model?: string; revision?: string } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const parsed = raw as Record<string, unknown>;
+  const model = typeof parsed.model === "string" ? parsed.model : undefined;
+  const revision =
+    typeof parsed.revision === "string" ? parsed.revision : undefined;
+  return { model, revision };
+}
+
 export async function runTranscriptionPipeline(
   audioUrl: string,
   options?: {
@@ -229,9 +240,7 @@ export async function runTranscriptionPipeline(
         raw: {
           modelCount: huggingFaceSuccessful.length,
           models: huggingFaceSuccessful.map((result) => {
-            const raw = result.raw as
-              | { model?: string; revision?: string }
-              | undefined;
+            const raw = parseHuggingFaceRaw(result.raw);
             return {
               model: raw?.model,
               revision: raw?.revision,

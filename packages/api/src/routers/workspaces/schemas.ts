@@ -2,7 +2,11 @@ import { isValidUuid, workspaceIdSchema } from "@calls/shared";
 import { z } from "zod";
 
 export const createWorkspaceSchema = z.object({
-  name: z.string().min(1, "Название обязательно").max(100),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Название обязательно")
+    .max(100, "Не более 100 символов"),
 });
 
 export const workspaceIdInputSchema = z.object({

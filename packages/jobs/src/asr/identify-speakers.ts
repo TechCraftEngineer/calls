@@ -100,7 +100,7 @@ export interface IdentifySpeakersResult {
   metadata?: IdentifySpeakersMetadata;
 }
 
-interface IdentifySpeakersMetadata {
+export interface IdentifySpeakersMetadata {
   success: boolean;
   reason?: "empty_input" | "ai_provider_not_configured" | "error";
   error?: string;

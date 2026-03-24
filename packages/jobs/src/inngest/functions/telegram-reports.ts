@@ -115,7 +115,7 @@ export const telegramReportsFn = inngest.createFunction(
     if (workspaceIds.length === 0) {
       return {
         skipped: true,
-        reason: "Нет воркспейсов с получателями Telegram-отчётов",
+        reason: "Нет компаний с получателями Telegram-отчётов",
       };
     }
 
@@ -144,7 +144,7 @@ export const telegramReportsFn = inngest.createFunction(
             return {
               sent: 0,
               errors: [
-                `Не настроен токен Telegram-бота для рабочего пространства "${workspaceName}" (${workspaceId})`,
+                `Не настроен токен Telegram-бота для компании "${workspaceName}" (${workspaceId})`,
               ] as string[],
               failed: false,
             };

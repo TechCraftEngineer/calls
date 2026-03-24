@@ -116,12 +116,21 @@ export async function mergeAsrWithLlm(input: {
   } = input;
   const a = assemblyaiText.trim();
   const y = yandexText.trim();
-  const hCandidates = [
+  const hCandidatesPreDedup = [
     ...huggingFaceTexts.map((t) => t.trim()).filter(Boolean),
     huggingFaceText.trim(),
-  ].filter(
+  ];
+  const hCandidates = hCandidatesPreDedup.filter(
     (value, index, arr) => Boolean(value) && arr.indexOf(value) === index,
   );
+  const removedDuplicates = hCandidatesPreDedup.length - hCandidates.length;
+  if (removedDuplicates > 0) {
+    logger.info("Удалены дубликаты транскриптов Hugging Face", {
+      beforeCount: hCandidatesPreDedup.length,
+      afterCount: hCandidates.length,
+      removedDuplicates,
+    });
+  }
   const texts = [a, y, ...hCandidates].filter(Boolean);
 
   if (texts.length === 0) return "";
