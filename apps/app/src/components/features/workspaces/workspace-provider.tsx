@@ -62,7 +62,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           queryKey: orpc.workspaces.list.queryKey(),
         });
         router.refresh();
-        toast.success("Компания успешно выбрана");
+        toast.success("Компания выбрана");
       },
       onError: () => {
         toast.error("Не удалось переключить компанию. Повторите попытку.");

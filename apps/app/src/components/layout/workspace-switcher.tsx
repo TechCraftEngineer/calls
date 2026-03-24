@@ -65,7 +65,7 @@ export default function WorkspaceSwitcher() {
           aria-label={
             activeWorkspace?.name
               ? `Выбрать компанию: ${activeWorkspace.name}`
-              : "Выбрать компанию: не выбрано"
+              : "Компания не выбрана"
           }
         >
           <div className="workspace-icon" aria-hidden="true">
