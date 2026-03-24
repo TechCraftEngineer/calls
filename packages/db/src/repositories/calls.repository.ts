@@ -219,6 +219,19 @@ export const callsRepository = {
       .where(eq(schema.calls.id, callId));
   },
 
+  async updateEnhancedAudio(
+    callId: string,
+    enhancedAudioFileId: string,
+  ): Promise<void> {
+    await db
+      .update(schema.calls)
+      .set({
+        enhancedAudioFileId,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.calls.id, callId));
+  },
+
   async updatePbxBinding(
     callId: string,
     data: {

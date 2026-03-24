@@ -142,6 +142,13 @@ export class CallsService {
     await this.callsRepository.updateRecording(callId, data);
   }
 
+  async updateEnhancedAudio(
+    callId: string,
+    enhancedAudioFileId: string,
+  ): Promise<void> {
+    await this.callsRepository.updateEnhancedAudio(callId, enhancedAudioFileId);
+  }
+
   async updateCallPbxBinding(
     callId: string,
     data: {

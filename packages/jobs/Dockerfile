@@ -1,6 +1,6 @@
 FROM oven/bun:1.3.11-alpine AS base
 RUN apk update
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat ffmpeg
 
 WORKDIR /app
 

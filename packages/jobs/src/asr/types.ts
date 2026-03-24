@@ -66,4 +66,8 @@ export interface PipelineResult {
   title?: string;
   callType?: string;
   callTopic?: string;
+  /** Улучшенное аудио (если была предобработка) */
+  enhancedAudioBuffer?: Buffer;
+  /** Имя файла улучшенного аудио */
+  enhancedAudioFilename?: string;
 }

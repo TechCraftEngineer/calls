@@ -85,8 +85,12 @@ export const updateTelegramSettings = workspaceProcedure
 
         const username =
           authEmail?.trim() ||
-          ((context.user as Record<string, unknown>).email as string) ||
-          "system";
+          (typeof context.user === "object" &&
+          context.user &&
+          "email" in context.user &&
+          typeof context.user.email === "string"
+            ? context.user.email
+            : "system");
         const reportDailyTimeKey =
           REPORT_PROMPTS_CAMEL_TO_SNAKE.reportDailyTime;
         const reportWeeklyDayKey =
@@ -100,11 +104,26 @@ export const updateTelegramSettings = workspaceProcedure
 
         // Workspace settings use snake_case keys.
         const scheduleUpdates = [
-          { key: reportDailyTimeKey!, value: input.data.reportDailyTime },
-          { key: reportWeeklyDayKey!, value: input.data.reportWeeklyDay },
-          { key: reportWeeklyTimeKey!, value: input.data.reportWeeklyTime },
-          { key: reportMonthlyDayKey!, value: input.data.reportMonthlyDay },
-          { key: reportMonthlyTimeKey!, value: input.data.reportMonthlyTime },
+          {
+            key: reportDailyTimeKey || "report_daily_time",
+            value: input.data.reportDailyTime,
+          },
+          {
+            key: reportWeeklyDayKey || "report_weekly_day",
+            value: input.data.reportWeeklyDay,
+          },
+          {
+            key: reportWeeklyTimeKey || "report_weekly_time",
+            value: input.data.reportWeeklyTime,
+          },
+          {
+            key: reportMonthlyDayKey || "report_monthly_day",
+            value: input.data.reportMonthlyDay,
+          },
+          {
+            key: reportMonthlyTimeKey || "report_monthly_time",
+            value: input.data.reportMonthlyTime,
+          },
         ];
         for (const { key, value } of scheduleUpdates) {
           if (value !== undefined) {

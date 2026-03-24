@@ -1,4 +1,11 @@
 export { transcribeWithAssemblyAi } from "./assemblyai";
+export {
+  cleanupPreprocessing,
+  preprocessAudio,
+  type PreprocessingOptions,
+  type PreprocessingResult,
+} from "./audio-preprocessing";
+export { correctWithContext } from "./context-correction";
 export { getAudioDurationFromBuffer } from "./get-audio-duration";
 export {
   getHuggingFaceAsrModels,

@@ -53,7 +53,7 @@ export async function createPresignedUrl(key: string): Promise<string> {
 }
 
 /** Источник загрузки файла */
-export type FileSource = "ftp" | "manual" | "api";
+export type FileSource = "ftp" | "manual" | "api" | "asr-preprocessing";
 
 /**
  * Формирует S3 ключ: {workspace_id}/{source}/{file_type}/{date}/{unique}.{ext}
