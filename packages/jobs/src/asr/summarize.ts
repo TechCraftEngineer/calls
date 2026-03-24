@@ -31,29 +31,69 @@ const DEFAULT_FALLBACK = {
 
 const DEFAULT_MAX_CHARS = 40_000;
 const DEFAULT_HARD_MAX_CHARS = 200_000;
+const REQUEST_FIELD_MAX_CHARS = 2_000;
 
-const summarizeInputSchema = z.object({
-  text: z.string().trim().min(1),
-  options: z
-    .object({
-      summaryPrompt: z.string().optional(),
-      companyContext: z.string().nullable().optional(),
-      model: z.string().optional(),
-      maxChars: z
-        .number()
-        .int()
-        .positive()
-        .max(DEFAULT_HARD_MAX_CHARS)
-        .optional(),
-      hardMaxChars: z
-        .number()
-        .int()
-        .positive()
-        .max(DEFAULT_HARD_MAX_CHARS)
-        .optional(),
-    })
-    .optional(),
-});
+const summarizeInputSchema = z
+  .object({
+    text: z.string().trim().min(1).max(REQUEST_FIELD_MAX_CHARS),
+    options: z
+      .object({
+        summaryPrompt: z
+          .string()
+          .trim()
+          .max(REQUEST_FIELD_MAX_CHARS)
+          .optional(),
+        companyContext: z
+          .string()
+          .trim()
+          .max(REQUEST_FIELD_MAX_CHARS)
+          .nullable()
+          .optional(),
+        model: z.string().optional(),
+        maxChars: z
+          .number()
+          .int()
+          .positive()
+          .max(DEFAULT_HARD_MAX_CHARS)
+          .optional(),
+        hardMaxChars: z
+          .number()
+          .int()
+          .positive()
+          .max(DEFAULT_HARD_MAX_CHARS)
+          .optional(),
+      })
+      .optional(),
+  })
+  .superRefine((data, ctx) => {
+    const options = data.options ?? {};
+    const hardMaxChars = options.hardMaxChars ?? DEFAULT_HARD_MAX_CHARS;
+    const maxChars = Math.min(
+      options.maxChars ?? DEFAULT_MAX_CHARS,
+      hardMaxChars,
+    );
+    const summaryLength = options.summaryPrompt?.length ?? 0;
+    const companyContextLength = options.companyContext?.length ?? 0;
+    const totalRequestChars =
+      data.text.length + summaryLength + companyContextLength;
+
+    if (totalRequestChars > hardMaxChars) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["options"],
+        message: `Combined request length (${totalRequestChars}) exceeds hardMaxChars (${hardMaxChars})`,
+      });
+      return;
+    }
+
+    if (totalRequestChars > maxChars) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["options"],
+        message: `Combined request length (${totalRequestChars}) exceeds maxChars (${maxChars})`,
+      });
+    }
+  });
 
 export async function summarizeWithLlm(
   text: string,
@@ -86,20 +126,21 @@ export async function summarizeWithLlm(
   );
 
   if (inputText.length > hardMaxChars) {
-    logger.error(
+    logger.warn(
       "Текст транскрипта превышает жесткий лимит для summarizeWithLlm",
       {
         textLength: inputText.length,
         hardMaxChars,
       },
     );
-    throw new Error(
-      `Transcript text is too large for summarization (length=${inputText.length}, hardMaxChars=${hardMaxChars})`,
-    );
+    return DEFAULT_FALLBACK;
   }
 
   const sanitizedText =
     inputText.length > maxChars ? inputText.slice(0, maxChars) : inputText;
+  const normalizedSummaryPrompt =
+    inputOptions.summaryPrompt?.trim() || undefined;
+  const normalizedModel = inputOptions.model?.trim() || undefined;
 
   const companyBlock = inputOptions.companyContext?.trim()
     ? `КОНТЕКСТ КОМПАНИИ:\n${inputOptions.companyContext.trim()}\n\nУчитывай это при определении темы (topic), заголовка (title) и sentiment.\n\n`
@@ -129,7 +170,7 @@ export async function summarizeWithLlm(
 Отвечай только на русском языке. Будь конкретным и лаконичным.`;
 
   const systemPrompt =
-    companyBlock + (inputOptions.summaryPrompt || defaultPrompt);
+    companyBlock + (normalizedSummaryPrompt || defaultPrompt);
 
   const schema = z.object({
     summary: z
@@ -149,7 +190,7 @@ export async function summarizeWithLlm(
 
   try {
     const { output: result } = await generateWithAi({
-      model: inputOptions.model,
+      model: normalizedModel,
       modelProfile: "default",
       system: systemPrompt,
       prompt: `Проанализируй следующий разговор:\n\n${sanitizedText}`,
