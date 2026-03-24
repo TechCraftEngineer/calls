@@ -94,7 +94,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     async (workspaceId: string) => {
       const ws = workspaces.find((w: Workspace) => w.id === workspaceId);
       if (!ws) {
-        toast.error("Компания не найдена");
+        toast.error("Компания не найдена.");
         return;
       }
       if (activeWorkspace?.id === workspaceId) return;

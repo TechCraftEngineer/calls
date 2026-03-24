@@ -52,6 +52,7 @@ export const env = createEnv({
     // ASR (Speech-to-Text) - at least one required
     ASSEMBLYAI_API_KEY: z.string().optional(),
     YANDEX_SPEECHKIT_API_KEY: z.string().optional(),
+    YANDEX_SPEECHKIT_ENABLED: z.stringbool().default(true),
     HUGGINGFACE_API_KEY: z.string().optional(),
     HUGGINGFACE_ASR_MODEL: z.string().optional(),
     HUGGINGFACE_ASR_MODELS: z.string().optional(),
@@ -119,6 +120,7 @@ export const env = createEnv({
     MEGAFON_FTP_PASSWORD: process.env.MEGAFON_FTP_PASSWORD,
     ASSEMBLYAI_API_KEY: process.env.ASSEMBLYAI_API_KEY,
     YANDEX_SPEECHKIT_API_KEY: process.env.YANDEX_SPEECHKIT_API_KEY,
+    YANDEX_SPEECHKIT_ENABLED: process.env.YANDEX_SPEECHKIT_ENABLED,
     HUGGINGFACE_API_KEY: process.env.HUGGINGFACE_API_KEY,
     HUGGINGFACE_ASR_MODEL: process.env.HUGGINGFACE_ASR_MODEL,
     HUGGINGFACE_ASR_MODELS: process.env.HUGGINGFACE_ASR_MODELS,
