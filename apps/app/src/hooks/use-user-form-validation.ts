@@ -2,7 +2,6 @@
 
 import { useCallback, useState } from "react";
 import { z } from "zod";
-import type { EditUserForm } from "@/components/features/users/types";
 import { editUserFormSchema } from "@/lib/validations";
 
 export interface FormValidationError {
@@ -19,6 +18,9 @@ const reportFiltersValidationSchema = editUserFormSchema.pick({
   filterMinDuration: true,
   filterMinReplicas: true,
 });
+type ReportFiltersValidationInput = z.input<
+  typeof reportFiltersValidationSchema
+>;
 
 export function useUserFormValidation() {
   const [errors, setErrors] = useState<FormValidationError[]>([]);
@@ -28,7 +30,7 @@ export function useUserFormValidation() {
   }, []);
 
   const validateForm = useCallback(
-    (form: EditUserForm): FormValidationError[] => {
+    (form: ReportFiltersValidationInput): FormValidationError[] => {
       const result = reportFiltersValidationSchema.safeParse({
         givenName: form.givenName,
         email: form.email ?? "",
