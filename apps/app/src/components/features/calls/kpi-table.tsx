@@ -172,7 +172,6 @@ export default function KpiTable() {
     null,
   );
   const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
-  const [isApplyingBulkKpi, setIsApplyingBulkKpi] = useState(false);
   const [bulkDraft, setBulkDraft] = useState<BulkKpiDraft>({
     baseSalary: "",
     targetBonus: "",
@@ -239,11 +238,19 @@ export default function KpiTable() {
   const updateKpiMutation = useMutation(
     orpc.statistics.updateKpiEmployee.mutationOptions({
       onSuccess: async () => {
+        await queryClient.invalidateQueries({ queryKey: kpiQueryKey });
+      },
+    }),
+  );
+  const bulkUpdateKpiMutation = useMutation(
+    orpc.statistics.updateKpiEmployee.mutationOptions({
+      onSuccess: async () => {
         if (skipInvalidateOnSuccessRef.current) return;
         await queryClient.invalidateQueries({ queryKey: kpiQueryKey });
       },
     }),
   );
+  const isApplyingBulkKpi = bulkUpdateKpiMutation.isPending;
 
   const toNonNegativeInt = (value: number): number => {
     if (!Number.isFinite(value) || Number.isNaN(value)) return 0;
@@ -305,19 +312,38 @@ export default function KpiTable() {
 
   const applyKpiToAllEmployees = async () => {
     const normalizeBulkDraft = (): KpiDraft | null => {
+      const parseBulkField = (
+        value: string,
+        limit: number,
+      ): number | undefined => {
+        if (value.trim() === "") return undefined;
+        const parsed = Number(value);
+        if (Number.isNaN(parsed)) return undefined;
+        return Math.min(toNonNegativeInt(parsed), limit);
+      };
+      const baseSalary = parseBulkField(
+        bulkDraft.baseSalary,
+        KPI_FIELD_LIMITS.baseSalary,
+      );
+      const targetBonus = parseBulkField(
+        bulkDraft.targetBonus,
+        KPI_FIELD_LIMITS.targetBonus,
+      );
+      const targetTalkTimeMinutes = parseBulkField(
+        bulkDraft.targetTalkTimeMinutes,
+        KPI_FIELD_LIMITS.targetTalkTimeMinutes,
+      );
+      if (
+        baseSalary == null ||
+        targetBonus == null ||
+        targetTalkTimeMinutes == null
+      ) {
+        return null;
+      }
       const normalized: KpiDraft = {
-        baseSalary: Math.min(
-          toNonNegativeInt(Number(bulkDraft.baseSalary)),
-          KPI_FIELD_LIMITS.baseSalary,
-        ),
-        targetBonus: Math.min(
-          toNonNegativeInt(Number(bulkDraft.targetBonus)),
-          KPI_FIELD_LIMITS.targetBonus,
-        ),
-        targetTalkTimeMinutes: Math.min(
-          toNonNegativeInt(Number(bulkDraft.targetTalkTimeMinutes)),
-          KPI_FIELD_LIMITS.targetTalkTimeMinutes,
-        ),
+        baseSalary,
+        targetBonus,
+        targetTalkTimeMinutes,
       };
       const parsed = kpiDraftSchema.safeParse(normalized);
       return parsed.success ? parsed.data : null;
@@ -333,12 +359,11 @@ export default function KpiTable() {
       return;
     }
 
-    setIsApplyingBulkKpi(true);
     skipInvalidateOnSuccessRef.current = true;
     try {
       const updates = await Promise.allSettled(
         rows.map((row) =>
-          updateKpiMutation.mutateAsync({
+          bulkUpdateKpiMutation.mutateAsync({
             employeeExternalId: row.employeeExternalId,
             data: {
               kpiBaseSalary: parsedDraft.baseSalary,
@@ -388,7 +413,6 @@ export default function KpiTable() {
       console.error("Не удалось применить KPI ко всем сотрудникам", { error });
     } finally {
       skipInvalidateOnSuccessRef.current = false;
-      setIsApplyingBulkKpi(false);
     }
   };
 
@@ -645,7 +669,7 @@ export default function KpiTable() {
               type="button"
               size="icon"
               variant="outline"
-              disabled={rowSaving}
+              disabled={rowSaving || isApplyingBulkKpi}
               className="touch-action-manipulation"
               aria-label={`Открыть настройки KPI для ${row.original.name}`}
               onClick={() =>
@@ -663,7 +687,12 @@ export default function KpiTable() {
         meta: { headerTitle: "Настройки" },
       },
     ],
-    [formatRub, savingEmployeeId, updateKpiMutation.isPending],
+    [
+      formatRub,
+      isApplyingBulkKpi,
+      savingEmployeeId,
+      updateKpiMutation.isPending,
+    ],
   );
 
   const table = useReactTable({
@@ -1083,6 +1112,7 @@ export default function KpiTable() {
               type="button"
               disabled={
                 !editingRow ||
+                isApplyingBulkKpi ||
                 (savingEmployeeId === editingRow.employeeExternalId &&
                   updateKpiMutation.isPending)
               }
