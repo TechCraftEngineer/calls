@@ -1,6 +1,5 @@
 "use client";
 
-import { generateWorkspaceSlug } from "@calls/shared";
 import {
   Button,
   Card,
@@ -10,20 +9,11 @@ import {
   Textarea,
 } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 const workspaceGeneralSchema = z.object({
   name: z.string().min(1, "Введите название").max(100, "Не более 100 символов"),
-  slug: z
-    .string()
-    .min(1, "Введите идентификатор")
-    .max(50, "Не более 50 символов")
-    .regex(
-      /^[a-z0-9-]+$/,
-      "Только латинские буквы, цифры и дефис (например: my-company)",
-    ),
   description: z.string().max(2000, "Не более 2000 символов").default(""),
 });
 
@@ -31,7 +21,6 @@ export type WorkspaceGeneralFormData = z.infer<typeof workspaceGeneralSchema>;
 
 interface WorkspaceGeneralFormProps {
   name: string;
-  slug: string;
   description?: string | null;
   onSave: (data: WorkspaceGeneralFormData) => Promise<void>;
   saving?: boolean;
@@ -39,7 +28,6 @@ interface WorkspaceGeneralFormProps {
 
 export default function WorkspaceGeneralForm({
   name,
-  slug,
   description,
   onSave,
   saving = false,
@@ -48,24 +36,12 @@ export default function WorkspaceGeneralForm({
     register,
     handleSubmit,
     setError,
-    setValue,
-    watch,
-    formState: { errors, dirtyFields },
+    formState: { errors },
   } = useForm<WorkspaceGeneralFormData>({
     resolver: zodResolver(workspaceGeneralSchema) as never,
     mode: "onBlur",
-    defaultValues: { name, slug, description: description ?? "" },
+    defaultValues: { name, description: description ?? "" },
   });
-
-  const nameValue = watch("name");
-
-  useEffect(() => {
-    if (nameValue && !dirtyFields.slug) {
-      setValue("slug", generateWorkspaceSlug(nameValue), {
-        shouldValidate: true,
-      });
-    }
-  }, [nameValue, setValue, dirtyFields.slug]);
 
   const onSubmit = async (data: WorkspaceGeneralFormData) => {
     try {
@@ -73,10 +49,7 @@ export default function WorkspaceGeneralForm({
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Не удалось сохранить настройки";
-      const isSlugError =
-        typeof msg === "string" &&
-        (msg.includes("slug") || msg.includes("идентификатор"));
-      setError(isSlugError ? "slug" : "root", { message: msg });
+      setError("root", { message: msg });
     }
   };
 
@@ -103,7 +76,7 @@ export default function WorkspaceGeneralForm({
 
           <div className="filter-item">
             <label className="filter-label" htmlFor="ws-name">
-              Название рабочего пространства
+              Название компании
             </label>
             <Input
               id="ws-name"
@@ -116,28 +89,6 @@ export default function WorkspaceGeneralForm({
             {errors.name && (
               <span className="text-xs text-red-500 mt-1 block">
                 {errors.name.message}
-              </span>
-            )}
-          </div>
-
-          <div className="filter-item">
-            <label className="filter-label" htmlFor="ws-slug">
-              Идентификатор (slug)
-            </label>
-            <Input
-              id="ws-slug"
-              type="text"
-              className={`text-input ${errors.slug ? "border-red-500 bg-red-50" : ""}`}
-              placeholder="my-company"
-              aria-invalid={!!errors.slug}
-              {...register("slug")}
-            />
-            <span className="text-[11px] text-gray-400 mt-1 block">
-              Только латинские буквы, цифры и дефис
-            </span>
-            {errors.slug && (
-              <span className="text-xs text-red-500 mt-1 block">
-                {errors.slug.message}
               </span>
             )}
           </div>

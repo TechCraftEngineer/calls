@@ -27,13 +27,11 @@ export const registerTelegramWebhookRoutes = (app: Hono) => {
 
       const handler = createWebhookHandler(async () => {
         try {
-          const botToken = await settingsService.getDecryptedBotToken(
-            "telegram_bot_token",
-            workspaceId,
-          );
+          const { token: botToken } =
+            await settingsService.getEffectiveTelegramBotToken(workspaceId);
           if (!botToken) {
             backendLogger.warn(
-              "No Telegram bot token configured for workspace",
+              "No Telegram bot token configured for workspace or system fallback",
               {
                 workspaceId,
               },
@@ -66,4 +64,29 @@ export const registerTelegramWebhookRoutes = (app: Hono) => {
       }
     },
   );
+
+  // Общий webhook для системного Telegram-бота (fallback, если у workspace нет своего токена)
+  app.post("/api/telegram-webhook-default", webhookRateLimit, async (c) => {
+    const handler = createWebhookHandler(async () => {
+      const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
+      if (!token) {
+        backendLogger.warn(
+          "No TELEGRAM_BOT_TOKEN configured for default webhook",
+        );
+        return null;
+      }
+      return token;
+    });
+
+    try {
+      return await handler(c);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      backendLogger.error("Default Telegram webhook handler failed", {
+        error: errorMsg,
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      return c.json({ error: "Обработка webhook не удалась" }, 500);
+    }
+  });
 };

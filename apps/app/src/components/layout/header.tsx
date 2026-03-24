@@ -57,7 +57,7 @@ export default function Header({ user }: HeaderProps) {
               {activeWorkspace?.name}
             </div>
             <div className="truncate text-[11px] font-medium uppercase tracking-wide text-gray-500">
-              Рабочее пространство
+              Компания
             </div>
           </>
         )}

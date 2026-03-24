@@ -56,23 +56,30 @@ export default function IntegrationsSection({
           <span className="flex size-8 items-center justify-center rounded-md bg-primary/10">
             🔌
           </span>
-          Интеграции рабочего пространства
+          Интеграции компании
         </CardTitle>
         <CardDescription>
           Настройки подключений к Telegram и MAX Bot. Токены хранятся в базе в
-          зашифрованном виде.
+          зашифрованном виде. Для Telegram можно использовать либо свой бот
+          workspace, либо системный бот по умолчанию.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-4">
           <div>
             <h4 className="font-semibold text-sm">
-              Telegram Bot (для отчётов)
+              Telegram Bot (для отчётов и уведомлений)
             </h4>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Отправка отчётов и уведомлений пользователям в Telegram
+              Если поле токена пустое, используется системный Telegram-бот.
             </p>
           </div>
+
+          {integrations.telegramUsesDefault && (
+            <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-900 dark:text-emerald-200">
+              Сейчас используется системный Telegram-бот (fallback).
+            </div>
+          )}
 
           <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
             <p className="font-medium text-foreground mb-2">
@@ -145,6 +152,10 @@ export default function IntegrationsSection({
                 {telegramError}
               </p>
             )}
+            <p className="text-[11px] text-muted-foreground">
+              Поле не обязательное: оставьте пустым, чтобы использовать
+              системный бот.
+            </p>
             <p className="text-[11px] text-muted-foreground">
               <a
                 href={TELEGRAM_BOT_DOCS_URL}

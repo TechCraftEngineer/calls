@@ -61,7 +61,7 @@ export default function WorkspaceSwitcher() {
           variant="ghost"
           className="workspace-toggle"
           onClick={() => setIsOpen(!isOpen)}
-          title={activeWorkspace?.name || "Выберите рабочее пространство"}
+          title={activeWorkspace?.name || "Выберите компанию"}
         >
           <div className="workspace-icon">
             {activeWorkspace?.name?.charAt(0).toUpperCase() || "W"}
@@ -70,7 +70,7 @@ export default function WorkspaceSwitcher() {
 
         {isOpen && (
           <div className="workspace-menu">
-            <div className="workspace-menu-header">Рабочие пространства</div>
+            <div className="workspace-menu-header">Компании</div>
             <div className="workspace-list">
               {workspaces.map((ws) => (
                 <Button
@@ -104,7 +104,7 @@ export default function WorkspaceSwitcher() {
                   setShowCreateModal(true);
                 }}
               >
-                + Создать рабочее пространство
+                + Создать компанию
               </Button>
             </div>
           </div>

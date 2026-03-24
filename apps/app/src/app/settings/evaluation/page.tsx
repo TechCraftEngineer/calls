@@ -364,7 +364,7 @@ export default function EvaluationSettingsPage() {
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-10">
                     <p className="text-muted-foreground">
-                      Нет участников в рабочем пространстве
+                      Нет участников в компании
                     </p>
                   </TableCell>
                 </TableRow>

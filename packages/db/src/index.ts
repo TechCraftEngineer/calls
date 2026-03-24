@@ -150,6 +150,7 @@ export {
   getInternalNumbersForUserIds,
   getReportScheduleSettings,
   getTelegramReportRecipients,
+  getWorkspaceIdsWithTelegramReportRecipients,
 } from "./services/telegram-reports.service";
 export { UsersService } from "./services/users.service";
 // Types

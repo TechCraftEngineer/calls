@@ -7,6 +7,7 @@ import {
   callsService,
   getReportScheduleSettings,
   getTelegramReportRecipients,
+  getWorkspaceIdsWithTelegramReportRecipients,
   settingsService,
   workspaceSettingsRepository,
   workspacesService,
@@ -105,14 +106,17 @@ export const telegramReportsFn = inngest.createFunction(
   },
   async ({ step }) => {
     const workspaceIds = await step.run(
-      "get-workspaces-with-telegram",
+      "get-workspaces-with-telegram-recipients",
       async () => {
-        return settingsService.getWorkspaceIdsWithTelegramBot();
+        return getWorkspaceIdsWithTelegramReportRecipients();
       },
     );
 
     if (workspaceIds.length === 0) {
-      return { skipped: true, reason: "Нет воркспейсов с Telegram ботом" };
+      return {
+        skipped: true,
+        reason: "Нет воркспейсов с получателями Telegram-отчётов",
+      };
     }
 
     const now = nowInMoscow();
@@ -131,10 +135,8 @@ export const telegramReportsFn = inngest.createFunction(
       const result = await step.run(
         `process-workspace-${workspaceId}`,
         async () => {
-          const token = await settingsService.getDecryptedBotToken(
-            "telegram_bot_token",
-            workspaceId,
-          );
+          const { token } =
+            await settingsService.getEffectiveTelegramBotToken(workspaceId);
           if (!token?.trim()) {
             return { sent: 0, errors: [] as string[], failed: false };
           }

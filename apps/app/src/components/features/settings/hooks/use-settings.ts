@@ -38,6 +38,7 @@ export function useSettings() {
     },
     integrations: {
       telegramBotToken: "",
+      telegramUsesDefault: false,
       maxBotToken: "",
     },
     megaPbx: {
@@ -169,6 +170,7 @@ export function useSettings() {
         },
         integrations: {
           telegramBotToken: integrations.telegram_bot_token ?? "",
+          telegramUsesDefault: Boolean(integrations.telegram_uses_default),
           maxBotToken: integrations.max_bot_token ?? "",
         },
         megaPbx: {

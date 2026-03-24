@@ -20,6 +20,7 @@ export interface FtpSettings {
 
 export interface IntegrationsSettings {
   telegramBotToken: string;
+  telegramUsesDefault: boolean;
   maxBotToken: string;
 }
 

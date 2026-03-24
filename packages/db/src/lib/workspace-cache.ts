@@ -15,7 +15,6 @@ class WorkspaceCache {
   // Cache key constants to prevent collisions
   private readonly KEY_PREFIXES = {
     DEFAULT_WORKSPACE: "workspace:default",
-    BY_SLUG: "workspace:by_slug:",
     BY_ID: "workspace:by_id:",
     ACTIVE_WORKSPACE: "workspace:active:",
     USER_WORKSPACES: "workspace:user:",
@@ -54,7 +53,6 @@ class WorkspaceCache {
     const keysToDelete = Array.from(this.cache.keys()).filter(
       (key) =>
         key === this.KEY_PREFIXES.BY_ID + workspaceId ||
-        key.startsWith(this.KEY_PREFIXES.BY_SLUG + workspaceId) ||
         key === this.KEY_PREFIXES.DEFAULT_WORKSPACE,
     );
     for (const key of keysToDelete) {
@@ -65,10 +63,6 @@ class WorkspaceCache {
   // Helper methods for creating cache keys
   createDefaultWorkspaceKey(): string {
     return this.KEY_PREFIXES.DEFAULT_WORKSPACE;
-  }
-
-  createBySlugKey(slug: string): string {
-    return this.KEY_PREFIXES.BY_SLUG + slug;
   }
 
   createByIdKey(workspaceId: string): string {

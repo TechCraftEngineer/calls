@@ -138,7 +138,7 @@ export default function UsersPage() {
     email: string,
     role: "admin" | "member",
   ) => {
-    if (!workspaceId) throw new Error("Нет рабочего пространства");
+    if (!workspaceId) throw new Error("Нет компании");
     return createInvitationMutation.mutateAsync({
       workspaceId,
       email,
@@ -245,7 +245,7 @@ export default function UsersPage() {
           }
         }}
         title="Исключить участника?"
-        message={`Исключить ${confirmRemove?.email} из рабочего пространства?`}
+        message={`Исключить ${confirmRemove?.email} из компании?`}
       />
     </div>
   );

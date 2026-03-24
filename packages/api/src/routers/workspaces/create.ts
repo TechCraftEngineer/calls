@@ -11,12 +11,6 @@ export const create = protectedProcedure
         message: "Требуется авторизация через Better Auth",
       });
     }
-    const existing = await context.workspacesService.getBySlug(input.slug);
-    if (existing) {
-      throw new ORPCError("BAD_REQUEST", {
-        message: "Рабочее пространство с таким идентификатором уже существует",
-      });
-    }
     const id = await context.workspacesService.create(input, authUserId);
     const ws = await context.workspacesService.getById(id);
     if (!ws)

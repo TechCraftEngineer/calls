@@ -31,7 +31,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
-  admin: "Может управлять участниками и настройками рабочего пространства",
+  admin: "Может управлять участниками и настройками компании",
   member: "Может просматривать и работать с контентом",
 };
 
@@ -290,9 +290,9 @@ export default function InviteUserModal({
           <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
             <p className="text-sm text-blue-900 m-0">
               <strong>Что дальше?</strong> Получатель перейдёт по ссылке,
-              создаст аккаунт и автоматически получит доступ к рабочему
-              пространству. Вы также можете скопировать ссылку и отправить её
-              любым удобным способом.
+              создаст аккаунт и автоматически получит доступ к компании. Вы
+              также можете скопировать ссылку и отправить её любым удобным
+              способом.
             </p>
           </div>
 
@@ -367,7 +367,7 @@ export default function InviteUserModal({
 
         <p className="text-sm text-gray-600 m-0">
           Отправьте приглашение по email. Получатель создаст аккаунт и
-          автоматически присоединится к рабочему пространству.
+          автоматически присоединится к компании.
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">

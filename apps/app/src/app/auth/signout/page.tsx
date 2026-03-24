@@ -18,7 +18,7 @@ export default function SignOutPage() {
         await logout();
         if (isMounted) {
           setIsLoggingOut(false);
-          // Очищаем куку рабочего пространства при выходе
+          // Очищаем куку активной компании при выходе
           // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
           document.cookie =
             "active_workspace_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
