@@ -19,6 +19,9 @@ interface ParamsSectionProps {
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   onSave: () => void;
+  onApplyKpiToAll: () => void;
+  canApplyKpiToAll: boolean;
+  applyKpiToAllLoading: boolean;
   saving: boolean;
 }
 
@@ -26,6 +29,9 @@ export function ReportParamsSection({
   form,
   setForm,
   onSave,
+  onApplyKpiToAll,
+  canApplyKpiToAll,
+  applyKpiToAllLoading,
   saving,
 }: ParamsSectionProps) {
   return (
@@ -41,15 +47,31 @@ export function ReportParamsSection({
         <FilterExclusions form={form} setForm={setForm} />
       </CardContent>
       <CardFooter className="px-4 pt-0 flex justify-end">
-        <Button
-          type="button"
-          size="sm"
-          onClick={onSave}
-          disabled={saving}
-          className="w-full sm:w-auto"
-        >
-          {saving ? "Сохранение…" : "Сохранить"}
-        </Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          {canApplyKpiToAll && (
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              onClick={onApplyKpiToAll}
+              disabled={saving || applyKpiToAllLoading}
+              className="w-full sm:w-auto"
+            >
+              {applyKpiToAllLoading
+                ? "Применение…"
+                : "Применить KPI всем сотрудникам"}
+            </Button>
+          )}
+          <Button
+            type="button"
+            size="sm"
+            onClick={onSave}
+            disabled={saving || applyKpiToAllLoading}
+            className="w-full sm:w-auto"
+          >
+            {saving ? "Сохранение…" : "Сохранить"}
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );

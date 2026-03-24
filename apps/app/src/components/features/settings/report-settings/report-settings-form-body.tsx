@@ -108,6 +108,9 @@ export default function ReportSettingsFormBody({
   const updateReportParamsMutation = useMutation(
     orpc.users.updateReportParamsSettings.mutationOptions(),
   );
+  const updateKpiMutation = useMutation(
+    orpc.users.updateKpiSettings.mutationOptions(),
+  );
 
   const updateReportManagedUsersMutation = useMutation(
     orpc.users.updateReportManagedUsersSettings.mutationOptions(),
@@ -391,6 +394,40 @@ export default function ReportSettingsFormBody({
     });
   };
 
+  const handleApplyKpiToAll = async () => {
+    await performUpdates({
+      successMessage: "KPI применён всем сотрудникам",
+      errorMessage: "Не удалось применить KPI всем сотрудникам",
+      run: async () => {
+        const payload = {
+          kpiBaseSalary: toNonNegInt(form.kpiBaseSalary),
+          kpiTargetBonus: toNonNegInt(form.kpiTargetBonus),
+          kpiTargetTalkTimeMinutes: toNonNegInt(form.kpiTargetTalkTimeMinutes),
+        };
+
+        const updates = await Promise.allSettled(
+          allUsers.map((employee) =>
+            updateKpiMutation.mutateAsync({
+              user_id: employee.id,
+              data: payload,
+            }),
+          ),
+        );
+
+        const failedCount = updates.filter(
+          (result) => result.status === "rejected",
+        ).length;
+        if (failedCount > 0) {
+          throw new Error(
+            failedCount === allUsers.length
+              ? "Не удалось обновить KPI ни одному сотруднику"
+              : `KPI обновлён не для всех сотрудников: ошибок ${failedCount}`,
+          );
+        }
+      },
+    });
+  };
+
   const handleSaveManagedUsers = async () => {
     await performUpdates({
       successMessage: "Сводные менеджеры сохранены",
@@ -452,6 +489,11 @@ export default function ReportSettingsFormBody({
           <ReportParamsSection
             form={form}
             setForm={setForm}
+            onApplyKpiToAll={handleApplyKpiToAll}
+            canApplyKpiToAll={isAdmin && allUsers.length > 0}
+            applyKpiToAllLoading={
+              isSavingCombined || updateKpiMutation.isPending
+            }
             saving={isSavingCombined || updateReportParamsMutation.isPending}
             onSave={handleSaveParams}
           />

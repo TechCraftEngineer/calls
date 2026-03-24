@@ -87,12 +87,22 @@ export const updateTelegramSettings = workspaceProcedure
           authEmail?.trim() ||
           ((context.user as Record<string, unknown>).email as string) ||
           "system";
+        const reportDailyTimeKey =
+          REPORT_PROMPTS_CAMEL_TO_SNAKE.reportDailyTime;
+        const reportWeeklyDayKey =
+          REPORT_PROMPTS_CAMEL_TO_SNAKE.reportWeeklyDay;
+        const reportWeeklyTimeKey =
+          REPORT_PROMPTS_CAMEL_TO_SNAKE.reportWeeklyTime;
+        const reportMonthlyDayKey =
+          REPORT_PROMPTS_CAMEL_TO_SNAKE.reportMonthlyDay;
+        const reportMonthlyTimeKey =
+          REPORT_PROMPTS_CAMEL_TO_SNAKE.reportMonthlyTime;
 
         // Workspace settings use snake_case keys.
-        if (input.data.reportDailyTime !== undefined) {
-          const value = input.data.reportDailyTime!;
+        if (reportDailyTimeKey && input.data.reportDailyTime !== undefined) {
+          const value = input.data.reportDailyTime;
           await settingsService.updateSetting(
-            REPORT_PROMPTS_CAMEL_TO_SNAKE.reportDailyTime!,
+            reportDailyTimeKey,
             value,
             null,
             context.workspaceId,
@@ -100,10 +110,10 @@ export const updateTelegramSettings = workspaceProcedure
           );
         }
 
-        if (input.data.reportWeeklyDay !== undefined) {
-          const value = input.data.reportWeeklyDay!;
+        if (reportWeeklyDayKey && input.data.reportWeeklyDay !== undefined) {
+          const value = input.data.reportWeeklyDay;
           await settingsService.updateSetting(
-            REPORT_PROMPTS_CAMEL_TO_SNAKE.reportWeeklyDay!,
+            reportWeeklyDayKey,
             value,
             null,
             context.workspaceId,
@@ -111,10 +121,10 @@ export const updateTelegramSettings = workspaceProcedure
           );
         }
 
-        if (input.data.reportWeeklyTime !== undefined) {
-          const value = input.data.reportWeeklyTime!;
+        if (reportWeeklyTimeKey && input.data.reportWeeklyTime !== undefined) {
+          const value = input.data.reportWeeklyTime;
           await settingsService.updateSetting(
-            REPORT_PROMPTS_CAMEL_TO_SNAKE.reportWeeklyTime!,
+            reportWeeklyTimeKey,
             value,
             null,
             context.workspaceId,
@@ -122,10 +132,10 @@ export const updateTelegramSettings = workspaceProcedure
           );
         }
 
-        if (input.data.reportMonthlyDay !== undefined) {
-          const value = input.data.reportMonthlyDay!;
+        if (reportMonthlyDayKey && input.data.reportMonthlyDay !== undefined) {
+          const value = input.data.reportMonthlyDay;
           await settingsService.updateSetting(
-            REPORT_PROMPTS_CAMEL_TO_SNAKE.reportMonthlyDay!,
+            reportMonthlyDayKey,
             value,
             null,
             context.workspaceId,
@@ -133,10 +143,13 @@ export const updateTelegramSettings = workspaceProcedure
           );
         }
 
-        if (input.data.reportMonthlyTime !== undefined) {
-          const value = input.data.reportMonthlyTime!;
+        if (
+          reportMonthlyTimeKey &&
+          input.data.reportMonthlyTime !== undefined
+        ) {
+          const value = input.data.reportMonthlyTime;
           await settingsService.updateSetting(
-            REPORT_PROMPTS_CAMEL_TO_SNAKE.reportMonthlyTime!,
+            reportMonthlyTimeKey,
             value,
             null,
             context.workspaceId,

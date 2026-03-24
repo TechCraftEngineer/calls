@@ -29,7 +29,6 @@ export const env = createEnv({
 
     // Database
     POSTGRES_URL: z.url(),
-    DB_LOGGER: z.coerce.boolean().optional().default(false),
 
     // App
     APP_URL: z.string().default("http://localhost:3000"),
@@ -103,7 +102,6 @@ export const env = createEnv({
     VERCEL_URL: process.env.VERCEL_URL,
     VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
     POSTGRES_URL: process.env.POSTGRES_URL,
-    DB_LOGGER: process.env.DB_LOGGER,
     APP_URL: process.env.APP_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_SANDBOX_ENABLED: process.env.EMAIL_SANDBOX_ENABLED === "true",
