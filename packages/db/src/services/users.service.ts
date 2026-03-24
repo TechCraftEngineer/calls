@@ -507,6 +507,14 @@ export class UsersService {
     return this.usersRepository.findById(settings.userId);
   }
 
+  async getWorkspaceIdByTelegramConnectToken(
+    token: string,
+  ): Promise<string | null> {
+    const settings =
+      await userWorkspaceSettingsRepository.findByTelegramConnectToken(token);
+    return settings?.workspaceId ?? null;
+  }
+
   async saveTelegramChatId(userId: string, chatId: string): Promise<boolean> {
     const result = await this.usersRepository.saveTelegramChatId(
       userId,

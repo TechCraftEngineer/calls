@@ -62,10 +62,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           queryKey: orpc.workspaces.list.queryKey(),
         });
         router.refresh();
-        toast.success("Компания успешно переключена");
+        toast.success("Рабочее пространство успешно переключено");
       },
       onError: () => {
-        toast.error("Не удалось переключить компанию. Повторите попытку.");
+        toast.error(
+          "Не удалось переключить рабочее пространство. Повторите попытку.",
+        );
       },
     }),
   );
@@ -94,7 +96,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     async (workspaceId: string) => {
       const ws = workspaces.find((w: Workspace) => w.id === workspaceId);
       if (!ws) {
-        toast.error("Компания не найдена");
+        toast.error("Рабочее пространство не найдено");
         return;
       }
       if (activeWorkspace?.id === workspaceId) return;

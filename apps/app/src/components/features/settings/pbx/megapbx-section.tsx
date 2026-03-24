@@ -158,7 +158,7 @@ export default function MegaPbxSection({
             <CardDescription className="mt-1">
               Подключение провайдера телефонии, синхронизация сотрудников,
               номеров и звонков, а также ручная привязка к пользователям
-              компании.
+              рабочего пространства.
             </CardDescription>
           </div>
           <label

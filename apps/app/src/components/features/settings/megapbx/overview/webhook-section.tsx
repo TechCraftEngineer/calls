@@ -119,7 +119,9 @@ export function WebhookSection({
                     value={webhookUrl}
                     readOnly
                     className="font-mono text-sm"
-                    placeholder={webhookUrl ? undefined : "Выберите компанию"}
+                    placeholder={
+                      webhookUrl ? undefined : "Выберите рабочее пространство"
+                    }
                   />
                   <Tooltip>
                     <TooltipTrigger asChild>

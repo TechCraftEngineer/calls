@@ -160,7 +160,9 @@ export async function setupTelegramWebhooks(): Promise<SetupTelegramWebhooksResu
     }
   }
 
-  if (!allSuccess || !defaultWebhookSuccess) {
+  const overallSuccess = allSuccess && defaultWebhookSuccess;
+
+  if (!overallSuccess) {
     const failedWorkspaces = results.filter((r) => !r.success && !r.skipped);
     logger.error("Failed to set Telegram webhook for some workspaces", {
       failedCount: failedWorkspaces.length,
@@ -172,5 +174,5 @@ export async function setupTelegramWebhooks(): Promise<SetupTelegramWebhooksResu
     });
   }
 
-  return { success: allSuccess, results };
+  return { success: overallSuccess, results };
 }
