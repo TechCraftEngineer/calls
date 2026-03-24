@@ -35,9 +35,6 @@ interface UserSettingsData {
   filterExcludeAnsweringMachine?: boolean;
   filterMinDuration?: number;
   filterMinReplicas?: number;
-  kpiBaseSalary?: number;
-  kpiTargetBonus?: number;
-  kpiTargetTalkTimeMinutes?: number;
 }
 
 export default function ReportSettingsPanel({ user }: { user: User }) {
@@ -93,9 +90,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     filterExcludeAnsweringMachine: false,
     filterMinDuration: "0",
     filterMinReplicas: "0",
-    kpiBaseSalary: "0",
-    kpiTargetBonus: "0",
-    kpiTargetTalkTimeMinutes: "0",
     reportDailyTime: "18:00",
     reportWeeklyDay: "fri",
     reportWeeklyTime: "18:10",
@@ -128,9 +122,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       filterExcludeAnsweringMachine: d.filterExcludeAnsweringMachine ?? false,
       filterMinDuration: String(d.filterMinDuration ?? 0),
       filterMinReplicas: String(d.filterMinReplicas ?? 0),
-      kpiBaseSalary: String(d.kpiBaseSalary ?? 0),
-      kpiTargetBonus: String(d.kpiTargetBonus ?? 0),
-      kpiTargetTalkTimeMinutes: String(d.kpiTargetTalkTimeMinutes ?? 0),
       reportManagedUserIds: d.reportManagedUserIds ?? [],
       maxChatId: d.maxChatId ?? "",
       maxDailyReport: d.maxDailyReport ?? false,

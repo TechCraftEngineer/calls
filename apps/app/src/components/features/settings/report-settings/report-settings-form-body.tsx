@@ -379,12 +379,6 @@ export default function ReportSettingsFormBody({
             filterExcludeAnsweringMachine: form.filterExcludeAnsweringMachine,
             filterMinDuration: toNonNegInt(form.filterMinDuration),
             filterMinReplicas: toNonNegInt(form.filterMinReplicas),
-
-            kpiBaseSalary: toNonNegInt(form.kpiBaseSalary),
-            kpiTargetBonus: toNonNegInt(form.kpiTargetBonus),
-            kpiTargetTalkTimeMinutes: toNonNegInt(
-              form.kpiTargetTalkTimeMinutes,
-            ),
           },
         });
       },

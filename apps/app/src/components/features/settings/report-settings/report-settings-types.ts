@@ -17,9 +17,6 @@ export interface ReportSettingsForm {
   filterExcludeAnsweringMachine: boolean;
   filterMinDuration: string;
   filterMinReplicas: string;
-  kpiBaseSalary: string;
-  kpiTargetBonus: string;
-  kpiTargetTalkTimeMinutes: string;
   reportDailyTime: string;
   reportWeeklyDay: string;
   reportWeeklyTime: string;

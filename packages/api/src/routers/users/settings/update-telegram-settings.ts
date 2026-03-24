@@ -99,62 +99,23 @@ export const updateTelegramSettings = workspaceProcedure
           REPORT_PROMPTS_CAMEL_TO_SNAKE.reportMonthlyTime;
 
         // Workspace settings use snake_case keys.
-        if (reportDailyTimeKey && input.data.reportDailyTime !== undefined) {
-          const value = input.data.reportDailyTime;
-          await settingsService.updateSetting(
-            reportDailyTimeKey,
-            value,
-            null,
-            context.workspaceId,
-            username,
-          );
-        }
-
-        if (reportWeeklyDayKey && input.data.reportWeeklyDay !== undefined) {
-          const value = input.data.reportWeeklyDay;
-          await settingsService.updateSetting(
-            reportWeeklyDayKey,
-            value,
-            null,
-            context.workspaceId,
-            username,
-          );
-        }
-
-        if (reportWeeklyTimeKey && input.data.reportWeeklyTime !== undefined) {
-          const value = input.data.reportWeeklyTime;
-          await settingsService.updateSetting(
-            reportWeeklyTimeKey,
-            value,
-            null,
-            context.workspaceId,
-            username,
-          );
-        }
-
-        if (reportMonthlyDayKey && input.data.reportMonthlyDay !== undefined) {
-          const value = input.data.reportMonthlyDay;
-          await settingsService.updateSetting(
-            reportMonthlyDayKey,
-            value,
-            null,
-            context.workspaceId,
-            username,
-          );
-        }
-
-        if (
-          reportMonthlyTimeKey &&
-          input.data.reportMonthlyTime !== undefined
-        ) {
-          const value = input.data.reportMonthlyTime;
-          await settingsService.updateSetting(
-            reportMonthlyTimeKey,
-            value,
-            null,
-            context.workspaceId,
-            username,
-          );
+        const scheduleUpdates = [
+          { key: reportDailyTimeKey!, value: input.data.reportDailyTime },
+          { key: reportWeeklyDayKey!, value: input.data.reportWeeklyDay },
+          { key: reportWeeklyTimeKey!, value: input.data.reportWeeklyTime },
+          { key: reportMonthlyDayKey!, value: input.data.reportMonthlyDay },
+          { key: reportMonthlyTimeKey!, value: input.data.reportMonthlyTime },
+        ];
+        for (const { key, value } of scheduleUpdates) {
+          if (value !== undefined) {
+            await settingsService.updateSetting(
+              key,
+              value,
+              null,
+              context.workspaceId,
+              username,
+            );
+          }
         }
       }
 
