@@ -14,9 +14,9 @@
     "check": "biome check ."
   },
   "dependencies": {
-    "@tailwindcss/postcss": "4.2.1",
+    "@tailwindcss/postcss": "4.2.2",
     "postcss": "^8.5.8",
-    "tailwindcss": "4.2.1"
+    "tailwindcss": "4.2.2"
   },
   "devDependencies": {
     "@calls/tsconfig": "*",
