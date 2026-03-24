@@ -1,12 +1,11 @@
 import { isValidUuid, workspaceIdSchema } from "@calls/shared";
+import { workspaceNameSchema } from "@calls/validators";
 import { z } from "zod";
 
+export { workspaceNameSchema } from "@calls/validators";
+
 export const createWorkspaceSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, "Название обязательно")
-    .max(100, "Не более 100 символов"),
+  name: workspaceNameSchema,
 });
 
 export const workspaceIdInputSchema = z.object({
@@ -15,7 +14,7 @@ export const workspaceIdInputSchema = z.object({
 
 export const updateWorkspaceSchema = z.object({
   workspaceId: workspaceIdSchema,
-  name: z.string().min(1).max(100).optional(),
+  name: workspaceNameSchema.optional(),
   description: z
     .string()
     .max(2000, "Не более 2000 символов")

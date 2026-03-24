@@ -24,3 +24,4 @@ export {
   type ProfileFormValues,
   profileFormSchema,
 } from "./profile";
+export { workspaceNameSchema } from "./workspace";

@@ -2,6 +2,7 @@
 
 import { paths } from "@calls/config";
 import { Button, Input, toast } from "@calls/ui";
+import { workspaceNameSchema } from "@calls/validators";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -14,11 +15,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 
 const createWorkspaceSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, "Введите название")
-    .max(100, "Не более 100 символов"),
+  name: workspaceNameSchema,
 });
 
 type CreateWorkspaceFormData = z.infer<typeof createWorkspaceSchema>;

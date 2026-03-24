@@ -63,6 +63,15 @@ function isTransientNetworkError(error: unknown): boolean {
   );
 }
 
+function isProviderHttpError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("http error occurred when requesting the provider") ||
+    message.includes("failed to perform inference")
+  );
+}
+
 function getHttpStatus(error: unknown): number | undefined {
   if (!error || typeof error !== "object") return undefined;
   const candidate = error as {
@@ -162,12 +171,18 @@ async function withOperationTimeout<T>(
   timeoutMessage: string,
   timeoutMs: number,
 ): Promise<T> {
-  return await Promise.race([
-    operation,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs),
-    ),
-  ]);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([operation, timeoutPromise]);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  }
 }
 
 export async function transcribeWithHuggingFace(
@@ -232,10 +247,9 @@ export async function transcribeWithHuggingFace(
               model,
               issues: parsedPayload.error.issues.map((issue) => issue.message),
             });
-            payload = { text: "" };
-          } else {
-            payload = parsedPayload.data;
+            continue;
           }
+          payload = parsedPayload.data;
           usedEndpoint = endpoint;
           break;
         } catch (error) {
@@ -249,6 +263,17 @@ export async function transcribeWithHuggingFace(
                 endpoint,
                 model,
                 status,
+                error: errorMessage,
+              },
+            );
+            continue;
+          }
+          if (isProviderHttpError(error)) {
+            logger.warn(
+              "Hugging Face ASR provider вернул HTTP ошибку, пробуем fallback",
+              {
+                endpoint,
+                model,
                 error: errorMessage,
               },
             );
