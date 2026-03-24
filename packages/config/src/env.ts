@@ -156,7 +156,7 @@ export const env = createEnv({
 // Валидация: хотя бы один ASR провайдер должен быть настроен
 const hasAnyAsrProvider = !!(
   env.ASSEMBLYAI_API_KEY ||
-  env.YANDEX_SPEECHKIT_API_KEY ||
+  (env.YANDEX_SPEECHKIT_ENABLED && env.YANDEX_SPEECHKIT_API_KEY) ||
   env.HUGGINGFACE_API_KEY
 );
 const skipValidation =

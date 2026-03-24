@@ -100,7 +100,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       if (activeWorkspace?.id === workspaceId) return;
       if (setActiveMutation.isPending) return;
 
-      setActiveMutation.mutate({ workspaceId });
+      await setActiveMutation.mutateAsync({ workspaceId });
     },
     [workspaces, activeWorkspace?.id, setActiveMutation],
   );
