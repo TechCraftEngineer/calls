@@ -76,13 +76,13 @@ export default function WorkspaceGeneralForm({
 
           <div className="filter-item">
             <label className="filter-label" htmlFor="ws-name">
-              Название рабочего пространства
+              Название компании
             </label>
             <Input
               id="ws-name"
               type="text"
               className={`text-input ${errors.name ? "border-red-500 bg-red-50" : ""}`}
-              placeholder="Моё рабочее пространство"
+              placeholder="Моя компания…"
               aria-invalid={!!errors.name}
               {...register("name")}
             />
@@ -95,7 +95,7 @@ export default function WorkspaceGeneralForm({
 
           <div className="filter-item">
             <label className="filter-label" htmlFor="ws-description">
-              Описание рабочего пространства
+              Описание компании
             </label>
             <Textarea
               id="ws-description"

@@ -43,7 +43,7 @@ export default function WorkspaceSettingsPage() {
       onSuccess: () => {
         refreshWorkspaces();
         invalidateWorkspaceQueries();
-        toast.success("Настройки рабочего пространства сохранены");
+        toast.success("Настройки компании сохранены");
       },
       onError: (err) => {
         const msg =
@@ -57,14 +57,12 @@ export default function WorkspaceSettingsPage() {
     orpc.workspaces.delete.mutationOptions({
       onSuccess: async () => {
         await refreshWorkspaces();
-        toast.success("Рабочее пространство удалено");
+        toast.success("Компания удалена");
         router.replace(paths.onboarding.createWorkspace);
       },
       onError: (err) => {
         toast.error(
-          err instanceof Error
-            ? err.message
-            : "Не удалось удалить рабочее пространство",
+          err instanceof Error ? err.message : "Не удалось удалить компанию",
         );
       },
     }),
@@ -107,7 +105,7 @@ export default function WorkspaceSettingsPage() {
     if (!workspaceId) return;
     if (
       !confirm(
-        `Вы уверены, что хотите удалить рабочее пространство "${activeWorkspace.name}"? Это действие нельзя отменить.`,
+        `Вы уверены, что хотите удалить компанию "${activeWorkspace.name}"? Это действие нельзя отменить.`,
       )
     )
       return;
@@ -118,7 +116,7 @@ export default function WorkspaceSettingsPage() {
     <div className="space-y-8">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Настройки рабочего пространства
+          Настройки компании
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {activeWorkspace.name}
@@ -141,8 +139,8 @@ export default function WorkspaceSettingsPage() {
               Опасная зона
             </h3>
             <p className="text-sm text-red-700 dark:text-red-300 mb-4">
-              Удаление рабочего пространства необратимо. Все данные (звонки,
-              настройки, участники) будут удалены.
+              Удаление компании необратимо. Все данные (звонки, настройки,
+              участники) будут удалены.
             </p>
             <Button
               variant="outline"
@@ -150,9 +148,7 @@ export default function WorkspaceSettingsPage() {
               onClick={handleDeleteWorkspace}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending
-                ? "Удаление…"
-                : "Удалить рабочее пространство"}
+              {deleteMutation.isPending ? "Удаление…" : "Удалить компанию"}
             </Button>
           </CardContent>
         </Card>

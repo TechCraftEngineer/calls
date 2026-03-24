@@ -97,7 +97,18 @@ export interface IdentifySpeakersResult {
   text: string;
   operatorName?: string;
   customerName?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: IdentifySpeakersMetadata;
+}
+
+interface IdentifySpeakersMetadata {
+  success: boolean;
+  reason?: "empty_input" | "ai_provider_not_configured" | "error";
+  error?: string;
+  mapping?: Record<string, string>;
+  speakers?: z.infer<typeof speakerSchema>[];
+  operatorName?: string | null;
+  customerName?: string | null;
+  truncatedForAnalysis?: boolean;
 }
 
 export async function identifySpeakersWithLlm(

@@ -3,6 +3,7 @@
 import { Button, Input, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useORPC } from "@/orpc/react";
@@ -41,14 +42,12 @@ export default function CreateWorkspaceModal({
   const createMutation = useMutation(
     orpc.workspaces.create.mutationOptions({
       onSuccess: (workspace) => {
-        toast.success("Рабочее пространство создано");
+        toast.success("Компания создана");
         onSuccess(workspace.id);
       },
       onError: (err) => {
         const msg =
-          err instanceof Error
-            ? err.message
-            : "Не удалось создать рабочее пространство";
+          err instanceof Error ? err.message : "Не удалось создать компанию";
         setError("root", { message: msg });
         toast.error(msg);
       },
@@ -56,7 +55,7 @@ export default function CreateWorkspaceModal({
   );
 
   const onSubmit = (data: CreateWorkspaceFormData) => {
-    createMutation.mutate({ name: data.name.trim() });
+    createMutation.mutate({ name: data.name });
   };
 
   return (
@@ -74,7 +73,7 @@ export default function CreateWorkspaceModal({
               M
             </div>
             <h2 className="text-xl font-bold text-gray-900 m-0">
-              Создать рабочее пространство
+              Создать компанию
             </h2>
           </div>
           <Button
@@ -88,8 +87,8 @@ export default function CreateWorkspaceModal({
         </div>
 
         <p className="text-sm text-gray-500 m-0 leading-relaxed">
-          Рабочее пространство объединяет команду и данные. Укажите название
-          рабочего пространства или проекта.
+          Компания объединяет команду и данные. Укажите название компании или
+          проекта.
         </p>
 
         {errors.root && (
@@ -113,7 +112,7 @@ export default function CreateWorkspaceModal({
               className={`w-full h-11 px-4 rounded-lg border border-gray-200 text-sm focus:border-[#FFD600] focus:ring-4 focus:ring-[#FFD600]/10 focus:outline-none transition-all ${
                 errors.name ? "border-red-500 bg-red-50" : ""
               }`}
-              placeholder="Моё рабочее пространство"
+              placeholder="Моя компания… (напр. Команда Марии)"
               aria-invalid={!!errors.name}
               {...register("name")}
             />
@@ -137,10 +136,13 @@ export default function CreateWorkspaceModal({
               type="submit"
               variant="dark"
               disabled={createMutation.isPending}
+              aria-busy={createMutation.isPending}
+              aria-disabled={createMutation.isPending}
             >
-              {createMutation.isPending
-                ? "Создание…"
-                : "Создать рабочее пространство"}
+              {createMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : null}
+              Создать компанию
             </Button>
           </div>
         </form>

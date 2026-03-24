@@ -56,12 +56,12 @@ export default function IntegrationsSection({
           <span className="flex size-8 items-center justify-center rounded-md bg-primary/10">
             🔌
           </span>
-          Интеграции рабочего пространства
+          Интеграции компании
         </CardTitle>
         <CardDescription>
           Настройки подключений к Telegram и MAX Bot. Токены хранятся в базе в
           зашифрованном виде. Для Telegram можно использовать либо собственного
-          бота рабочего пространства, либо системного бота по умолчанию.
+          бота компании, либо системного бота по умолчанию.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

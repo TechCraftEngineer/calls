@@ -49,7 +49,7 @@ export function useTelegramSettings({
       });
       toast.success(
         telegramToken
-          ? "Telegram Bot рабочего пространства сохранён"
+          ? "Telegram Bot компании сохранён"
           : "Включено использование системного Telegram-бота",
       );
     } catch (error: unknown) {

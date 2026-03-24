@@ -25,14 +25,14 @@
     "@calls/lib": "workspace:*",
     "@calls/shared": "workspace:*",
     "@calls/telegram-bot": "workspace:*",
-    "@orpc/client": "^1.13.8",
-    "@orpc/server": "^1.13.8",
+    "@orpc/client": "^1.13.9",
+    "@orpc/server": "^1.13.9",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "zod": "4.3.6"
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
-    "typescript": "5.9.3"
+    "typescript": "6.0.2"
   }
 }

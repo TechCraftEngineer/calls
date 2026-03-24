@@ -13,10 +13,10 @@
   "dependencies": {
     "@calls/db": "workspace:*",
     "grammy": "1.41.1",
-    "hono": "4.12.8"
+    "hono": "4.12.9"
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
-    "typescript": "5.9.3"
+    "typescript": "6.0.2"
   }
 }

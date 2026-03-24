@@ -119,7 +119,9 @@ export async function mergeAsrWithLlm(input: {
   const hCandidates = [
     ...huggingFaceTexts.map((t) => t.trim()).filter(Boolean),
     huggingFaceText.trim(),
-  ].filter(Boolean);
+  ].filter(
+    (value, index, arr) => Boolean(value) && arr.indexOf(value) === index,
+  );
   const texts = [a, y, ...hCandidates].filter(Boolean);
 
   if (texts.length === 0) return "";

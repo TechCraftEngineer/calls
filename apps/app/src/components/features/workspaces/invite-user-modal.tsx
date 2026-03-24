@@ -31,7 +31,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
-  admin: "Может управлять участниками и настройками рабочего пространства",
+  admin: "Может управлять участниками и настройками компании",
   member: "Может просматривать и работать с контентом",
 };
 

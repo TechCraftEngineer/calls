@@ -162,12 +162,13 @@ export class SettingsService {
     token: string | null;
     source: "workspace" | "system" | "none";
   }> {
-    const workspaceToken = await this.getDecryptedBotToken(
+    const workspaceTokenRaw = await this.getDecryptedBotToken(
       "telegram_bot_token",
       workspaceId,
     );
-    if (workspaceToken?.trim()) {
-      return { token: workspaceToken.trim(), source: "workspace" };
+    const workspaceToken = workspaceTokenRaw?.trim();
+    if (workspaceToken && isValidTelegramToken(workspaceToken)) {
+      return { token: workspaceToken, source: "workspace" };
     }
 
     const systemToken = process.env.TELEGRAM_BOT_TOKEN?.trim();

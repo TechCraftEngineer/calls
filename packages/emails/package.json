@@ -32,25 +32,25 @@
     "@calls/config": "workspace:*",
     "@calls/tsconfig": "workspace:*",
     "@radix-ui/colors": "3.0.0",
-    "@react-email/components": "1.0.9",
+    "@react-email/components": "1.0.10",
     "@tailwindcss/typography": "0.5.19",
-    "nodemailer": "^8.0.2",
+    "nodemailer": "^8.0.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "react-email": "5.2.9",
-    "resend": "^6.9.3",
+    "react-email": "5.2.10",
+    "resend": "^6.9.4",
     "sharp": "^0.34.5",
-    "tailwindcss": "4.2.1",
+    "tailwindcss": "4.2.2",
     "tailwindcss-animate": "1.0.7",
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@react-email/preview-server": "5.2.9",
+    "@react-email/preview-server": "5.2.10",
     "@types/node": "25.5.0",
     "@types/nodemailer": "^7.0.11",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "tsdown": "^0.21.4",
-    "typescript": "5.9.3"
+    "typescript": "6.0.2"
   }
 }
