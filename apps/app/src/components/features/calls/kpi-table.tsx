@@ -165,6 +165,13 @@ export default function KpiTable() {
   const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(
     null,
   );
+  const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
+  const [isApplyingBulkKpi, setIsApplyingBulkKpi] = useState(false);
+  const [bulkDraft, setBulkDraft] = useState<KpiDraft>({
+    baseSalary: 0,
+    targetBonus: 0,
+    targetTalkTimeMinutes: 0,
+  });
 
   const { data = [], isPending: loading } = useQuery(
     orpc.statistics.getKpi.queryOptions({
@@ -285,6 +292,56 @@ export default function KpiTable() {
       });
     } finally {
       setSavingEmployeeId(null);
+    }
+  };
+
+  const applyKpiToAllEmployees = async () => {
+    const parsedDraft = kpiDraftSchema.safeParse(bulkDraft);
+    if (!parsedDraft.success) {
+      toast.error("Проверьте значения KPI: есть недопустимые поля");
+      return;
+    }
+    if (rows.length === 0) {
+      toast.error("Нет сотрудников для обновления");
+      return;
+    }
+
+    setIsApplyingBulkKpi(true);
+    try {
+      const updates = await Promise.allSettled(
+        rows.map((row) =>
+          updateKpiMutation.mutateAsync({
+            employeeExternalId: row.employeeExternalId,
+            data: {
+              kpiBaseSalary: parsedDraft.data.baseSalary,
+              kpiTargetBonus: parsedDraft.data.targetBonus,
+              kpiTargetTalkTimeMinutes: parsedDraft.data.targetTalkTimeMinutes,
+            },
+          }),
+        ),
+      );
+      const failedCount = updates.filter(
+        (result) => result.status === "rejected",
+      ).length;
+      if (failedCount > 0) {
+        throw new Error(
+          failedCount === rows.length
+            ? "Не удалось обновить KPI ни одному сотруднику"
+            : `KPI обновлён не для всех сотрудников: ошибок ${failedCount}`,
+        );
+      }
+
+      toast.success("KPI применен всем сотрудникам");
+      setIsBulkEditOpen(false);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Не удалось применить KPI всем сотрудникам";
+      toast.error(message);
+      console.error("Failed to apply KPI for all employees", { error });
+    } finally {
+      setIsApplyingBulkKpi(false);
     }
   };
 
@@ -657,6 +714,15 @@ export default function KpiTable() {
         <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
+            size="sm"
+            onClick={() => setIsBulkEditOpen(true)}
+            className="touch-action-manipulation"
+            disabled={rows.length === 0 || isApplyingBulkKpi}
+          >
+            {isApplyingBulkKpi ? "Применение…" : "Применить KPI всем"}
+          </Button>
+          <Button
+            type="button"
             variant="outline"
             size="icon"
             aria-label="Предыдущий месяц"
@@ -984,6 +1050,126 @@ export default function KpiTable() {
                 </>
               ) : (
                 "Сохранить"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isBulkEditOpen} onOpenChange={setIsBulkEditOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Применить KPI всем сотрудникам</DialogTitle>
+            <DialogDescription>
+              Значения будут установлены одинаковыми для всех сотрудников из
+              текущей таблицы.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="bulk-kpi-base-salary">
+                Базовый оклад (₽)
+                <span className="ml-2 text-xs text-muted-foreground font-normal">
+                  макс. 1&nbsp;000&nbsp;000
+                </span>
+              </Label>
+              <Input
+                id="bulk-kpi-base-salary"
+                type="number"
+                min={0}
+                max={1_000_000}
+                inputMode="numeric"
+                autoComplete="off"
+                className="text-base tabular-nums touch-action-manipulation"
+                value={bulkDraft.baseSalary}
+                onChange={(e) =>
+                  setBulkDraft((prev) => ({
+                    ...prev,
+                    baseSalary: Math.min(
+                      toNonNegativeInt(Number(e.target.value)),
+                      KPI_FIELD_LIMITS.baseSalary,
+                    ),
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bulk-kpi-target-bonus">
+                Целевой бонус (₽)
+                <span className="ml-2 text-xs text-muted-foreground font-normal">
+                  макс. 1&nbsp;000&nbsp;000
+                </span>
+              </Label>
+              <Input
+                id="bulk-kpi-target-bonus"
+                type="number"
+                min={0}
+                max={1_000_000}
+                inputMode="numeric"
+                autoComplete="off"
+                className="text-base tabular-nums touch-action-manipulation"
+                value={bulkDraft.targetBonus}
+                onChange={(e) =>
+                  setBulkDraft((prev) => ({
+                    ...prev,
+                    targetBonus: Math.min(
+                      toNonNegativeInt(Number(e.target.value)),
+                      KPI_FIELD_LIMITS.targetBonus,
+                    ),
+                  }))
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bulk-kpi-target-talk-time">
+                Целевое время разговоров в месяц (мин)
+                <span className="ml-2 text-xs text-muted-foreground font-normal">
+                  макс. 100&nbsp;000
+                </span>
+              </Label>
+              <Input
+                id="bulk-kpi-target-talk-time"
+                type="number"
+                min={0}
+                max={100_000}
+                inputMode="numeric"
+                autoComplete="off"
+                className="text-base tabular-nums touch-action-manipulation"
+                value={bulkDraft.targetTalkTimeMinutes}
+                onChange={(e) =>
+                  setBulkDraft((prev) => ({
+                    ...prev,
+                    targetTalkTimeMinutes: Math.min(
+                      toNonNegativeInt(Number(e.target.value)),
+                      KPI_FIELD_LIMITS.targetTalkTimeMinutes,
+                    ),
+                  }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsBulkEditOpen(false)}
+              disabled={isApplyingBulkKpi}
+              className="touch-action-manipulation"
+            >
+              Отмена
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void applyKpiToAllEmployees()}
+              disabled={isApplyingBulkKpi}
+              className="touch-action-manipulation"
+            >
+              {isApplyingBulkKpi ? (
+                <>
+                  <Loader2 className="size-4 animate-spin mr-2" aria-hidden />
+                  Применение…
+                </>
+              ) : (
+                "Применить всем"
               )}
             </Button>
           </DialogFooter>

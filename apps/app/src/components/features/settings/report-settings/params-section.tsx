@@ -19,9 +19,6 @@ interface ParamsSectionProps {
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   onSave: () => void;
-  onApplyKpiToAll: () => void;
-  canApplyKpiToAll: boolean;
-  applyKpiToAllLoading: boolean;
   saving: boolean;
 }
 
@@ -29,9 +26,6 @@ export function ReportParamsSection({
   form,
   setForm,
   onSave,
-  onApplyKpiToAll,
-  canApplyKpiToAll,
-  applyKpiToAllLoading,
   saving,
 }: ParamsSectionProps) {
   return (
@@ -39,111 +33,24 @@ export function ReportParamsSection({
       <CardHeader className="px-4 pb-0">
         <CardTitle className="text-base">Параметры отчетов</CardTitle>
         <CardDescription>
-          Дополнительные параметры KPI и фильтров для расчетов в отчетах.
+          Дополнительные параметры фильтров для расчетов в отчетах.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <KpiSettings form={form} setForm={setForm} />
         <FilterExclusions form={form} setForm={setForm} />
       </CardContent>
       <CardFooter className="px-4 pt-0 flex justify-end">
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          {canApplyKpiToAll && (
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              onClick={onApplyKpiToAll}
-              disabled={saving || applyKpiToAllLoading}
-              className="w-full sm:w-auto"
-            >
-              {applyKpiToAllLoading
-                ? "Применение…"
-                : "Применить KPI всем сотрудникам"}
-            </Button>
-          )}
-          <Button
-            type="button"
-            size="sm"
-            onClick={onSave}
-            disabled={saving || applyKpiToAllLoading}
-            className="w-full sm:w-auto"
-          >
-            {saving ? "Сохранение…" : "Сохранить"}
-          </Button>
-        </div>
+        <Button
+          type="button"
+          size="sm"
+          onClick={onSave}
+          disabled={saving}
+          className="w-full sm:w-auto"
+        >
+          {saving ? "Сохранение…" : "Сохранить"}
+        </Button>
       </CardFooter>
     </Card>
-  );
-}
-
-function KpiSettings({
-  form,
-  setForm,
-}: {
-  form: ReportSettingsForm;
-  setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
-}) {
-  return (
-    <div className="mt-4 pt-4">
-      <Separator className="mb-4" />
-      <h4 className="mb-3 text-sm font-bold">Настройки KPI</h4>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div>
-          <Label className="mb-1 block text-sm font-normal">
-            Базовый оклад (₽)
-          </Label>
-          <Input
-            type="number"
-            min={0}
-            value={form.kpiBaseSalary}
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                kpiBaseSalary: e.target.value,
-              }))
-            }
-            className="h-8 tabular-nums"
-          />
-        </div>
-
-        <div>
-          <Label className="mb-1 block text-sm font-normal">
-            Целевой бонус (₽)
-          </Label>
-          <Input
-            type="number"
-            min={0}
-            value={form.kpiTargetBonus}
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                kpiTargetBonus: e.target.value,
-              }))
-            }
-            className="h-8 tabular-nums"
-          />
-        </div>
-
-        <div className="sm:col-span-2 lg:col-span-1">
-          <Label className="mb-1 block text-sm font-normal">
-            Целевое время разговоров в месяц (мин)
-          </Label>
-          <Input
-            type="number"
-            min={0}
-            value={form.kpiTargetTalkTimeMinutes}
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                kpiTargetTalkTimeMinutes: e.target.value,
-              }))
-            }
-            className="h-8 tabular-nums"
-          />
-        </div>
-      </div>
-    </div>
   );
 }
 
