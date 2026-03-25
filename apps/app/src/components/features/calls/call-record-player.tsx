@@ -44,5 +44,11 @@ export function CallRecordPlayer({ callId, className }: CallRecordPlayerProps) {
     );
   }
 
-  return <AudioPlayer src={data.url} className={className} />;
+  return (
+    <AudioPlayer
+      src={data.url}
+      className={className}
+      durationSeconds={data.duration ?? undefined}
+    />
+  );
 }

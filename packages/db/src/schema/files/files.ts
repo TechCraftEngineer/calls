@@ -8,6 +8,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  real,
   text,
   timestamp,
   uuid,
@@ -39,6 +40,12 @@ export const files = pgTable(
     fileType: text("file_type").notNull(),
     storageKey: text("storage_key").notNull().unique(),
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+    /**
+     * Длительность аудио в секундах (для call_recording).
+     * Храним здесь, чтобы корректно показывать duration для конкретного файла,
+     * включая улучшенные версии.
+     */
+    durationSeconds: real("duration_seconds"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },

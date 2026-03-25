@@ -15,6 +15,8 @@ export interface CreateFileData {
   fileType: FileType;
   storageKey: string;
   metadata?: Record<string, unknown> | null;
+  /** Длительность аудио в секундах (опционально; обычно для call_recording). */
+  durationSeconds?: number | null;
 }
 
 export interface GetFilesParams {

@@ -75,7 +75,10 @@ export function AudioComparisonPlayer({
           <Volume2 className="size-4" />
           Запись звонка
         </div>
-        <AudioPlayer src={originalData.url} />
+        <AudioPlayer
+          src={originalData.url}
+          durationSeconds={originalData.duration ?? undefined}
+        />
       </div>
     );
   }

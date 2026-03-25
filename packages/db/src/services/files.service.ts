@@ -33,6 +33,7 @@ export class FilesService {
       fileType: FileType;
       metadata?: Record<string, unknown>;
       source?: FileSource;
+      durationSeconds?: number | null;
     },
   ): Promise<{
     id: string;
@@ -62,6 +63,7 @@ export class FilesService {
       fileType: fileData.fileType,
       storageKey,
       metadata: fileData.metadata ?? null,
+      durationSeconds: fileData.durationSeconds ?? null,
     });
 
     if (!fileRecord) {
@@ -93,6 +95,7 @@ export class FilesService {
     originalName: string,
     buffer: Buffer | Uint8Array,
     source: FileSource = "manual",
+    durationSeconds?: number | null,
   ): Promise<{
     id: string;
     storageKey: string;
@@ -105,6 +108,7 @@ export class FilesService {
       mimeType: "audio/mpeg",
       fileType: "call_recording",
       source,
+      durationSeconds: durationSeconds ?? null,
     });
   }
 

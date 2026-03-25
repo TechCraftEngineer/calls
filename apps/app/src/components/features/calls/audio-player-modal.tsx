@@ -29,14 +29,14 @@ export default function AudioPlayerModal({
 
   const content = (
     <div
-      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-2000 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="audio-modal-title"
     >
       <Card
-        className="mx-4 w-full max-w-[440px] border-border/60 shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
+        className="mx-4 w-full max-w-110 border-border/60 shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <CardHeader className="flex flex-row items-center justify-between gap-4 pb-4">
@@ -71,7 +71,13 @@ export default function AudioPlayerModal({
               {error?.message ?? "Не удалось загрузить запись"}
             </p>
           )}
-          {data?.url && <AudioPlayer src={data.url} autoPlay={true} />}
+          {data?.url && (
+            <AudioPlayer
+              src={data.url}
+              autoPlay={true}
+              durationSeconds={data.duration ?? undefined}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

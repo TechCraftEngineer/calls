@@ -7,7 +7,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsndfile1 \
     wget \
+    curl \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
+
+# Установка Rust для компиляции deepfilterlib
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
 
 RUN groupadd -r audio_user && useradd -r -g audio_user -d /home/audio_user -m audio_user
 
@@ -29,4 +35,4 @@ EXPOSE 7860
 
 USER audio_user
 
-CMD ["python", "app.py"]
+CMD ["python", "main.py"]

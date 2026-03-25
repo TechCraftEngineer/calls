@@ -321,6 +321,26 @@ export async function syncFtp(
             continue;
           }
 
+          // Длительность определяем по уже скачанному буферу.
+          // fileDurationSeconds храним в `files`, а callDurationSeconds (округлённая) - в `calls`.
+          let fileDurationSeconds: number | null = null;
+          let callDurationSeconds: number | null = null;
+          try {
+            const duration = await getAudioDurationFromBuffer(downloadBuffer);
+            if (typeof duration === "number" && duration > 0) {
+              fileDurationSeconds = duration;
+              callDurationSeconds = Math.round(duration);
+            }
+          } catch (durationErr) {
+            logger.warn("Не удалось определить длительность записи", {
+              filename: relativePath,
+              error:
+                durationErr instanceof Error
+                  ? durationErr.message
+                  : String(durationErr),
+            });
+          }
+
           // Загрузка файла в S3 через FilesService
           let fileId: string | null = null;
           let storageKey: string | null = null;
@@ -330,6 +350,7 @@ export async function syncFtp(
               relativePath,
               downloadBuffer,
               "ftp",
+              fileDurationSeconds,
             );
             fileId = uploadResult.id;
             storageKey = uploadResult.storageKey;
@@ -352,23 +373,6 @@ export async function syncFtp(
             continue;
           }
 
-          // Длительность определяем сразу после загрузки в S3 по уже имеющемуся буферу
-          let durationSeconds: number | null = null;
-          try {
-            const duration = await getAudioDurationFromBuffer(downloadBuffer);
-            if (typeof duration === "number" && duration > 0) {
-              durationSeconds = Math.round(duration);
-            }
-          } catch (durationErr) {
-            logger.warn("Не удалось определить длительность записи", {
-              filename: relativePath,
-              error:
-                durationErr instanceof Error
-                  ? durationErr.message
-                  : String(durationErr),
-            });
-          }
-
           const callId = await callsService.createCall({
             workspaceId,
             filename: relativePath,
@@ -380,7 +384,7 @@ export async function syncFtp(
             name: parsed.internalNumber,
             sizeBytes: downloadBuffer.length,
             fileId: fileId ?? null,
-            duration: durationSeconds,
+            duration: callDurationSeconds,
           });
 
           result.downloaded++;

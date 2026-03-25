@@ -28,5 +28,5 @@ export const getPlaybackUrl = workspaceProcedure
       });
     }
     const url = await getDownloadUrl(file.storageKey);
-    return { url };
+    return { url, duration: file.durationSeconds ?? null };
   });

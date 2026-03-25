@@ -50,8 +50,31 @@ export default function AudioPlayer({
       }
     };
     const updateDuration = () => {
-      if (resolvedDurationOverride != null) return;
-      setDuration(audio.duration);
+      const browserDuration = audio.duration;
+
+      // Если override не передан — доверяем браузеру.
+      if (resolvedDurationOverride == null) {
+        setDuration(browserDuration || 0);
+        return;
+      }
+
+      // Если браузер не смог прочитать длительность — используем override.
+      if (
+        !(typeof browserDuration === "number") ||
+        !Number.isFinite(browserDuration) ||
+        browserDuration <= 0
+      ) {
+        setDuration(resolvedDurationOverride);
+        return;
+      }
+
+      // Браузер часто читает WAV корректно, но оставляем override как fallback.
+      // Если разница небольшая (округление/погрешности контейнера) — берем браузер.
+      const diffSeconds = Math.abs(browserDuration - resolvedDurationOverride);
+      const relDiff = diffSeconds / browserDuration;
+      const preferBrowser = diffSeconds <= 2 || relDiff <= 0.05;
+
+      setDuration(preferBrowser ? browserDuration : resolvedDurationOverride);
     };
     const onEnded = () => setIsPlaying(false);
     const onCanPlay = () => setIsLoading(false);

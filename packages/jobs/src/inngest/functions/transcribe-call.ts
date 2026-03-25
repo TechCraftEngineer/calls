@@ -12,6 +12,7 @@ import {
 } from "@calls/db";
 import { deleteObjectFromS3, getDownloadUrlForAsr } from "@calls/lib";
 import type { PreprocessingResult } from "../../asr/audio/audio-preprocessing";
+import { getAudioDurationFromBuffer } from "../../asr/audio/get-audio-duration";
 import { identifySpeakersWithLlm } from "../../asr/llm/identify-speakers";
 import { prepareAudioForAsr } from "../../asr/pipeline/prepare-audio";
 import { runTranscriptionPipelineFromAsrAudio } from "../../asr/pipeline/run-transcription-pipeline";
@@ -192,6 +193,22 @@ export const transcribeCallFn = inngest.createFunction(
           enhancedBuffer.length > 0 &&
           enhancedFilename
         ) {
+          let enhancedDurationSeconds: number | null = null;
+          try {
+            const duration = await getAudioDurationFromBuffer(enhancedBuffer);
+            if (typeof duration === "number" && duration > 0) {
+              enhancedDurationSeconds = duration;
+            }
+          } catch (durationErr) {
+            logger.warn("Не удалось определить длительность enhanced-аудио", {
+              callId,
+              error:
+                durationErr instanceof Error
+                  ? durationErr.message
+                  : String(durationErr),
+            });
+          }
+
           const enhancedFilenameLower = enhancedFilename.toLowerCase();
           const normalizedFilename = enhancedFilenameLower.endsWith(".wav")
             ? enhancedFilename
@@ -212,6 +229,7 @@ export const transcribeCallFn = inngest.createFunction(
                 mimeType: "audio/wav",
                 fileType: "call_recording",
                 source: "asr-preprocessing",
+                durationSeconds: enhancedDurationSeconds,
               },
             );
 
