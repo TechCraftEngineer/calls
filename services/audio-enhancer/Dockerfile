@@ -10,6 +10,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN groupadd -r audio_user && useradd -r -g audio_user -d /home/audio_user -m audio_user
 
+# Numba may fail when it tries to create a compilation cache inside containers.
+# Disabling cache avoids startup-time RuntimeError from librosa/noisereduce.
+RUN mkdir -p /tmp/numba_cache && chown -R audio_user:audio_user /tmp/numba_cache
+ENV NUMBA_DISABLE_CACHE=1
+ENV NUMBA_CACHE_DIR=/tmp/numba_cache
+
 COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
