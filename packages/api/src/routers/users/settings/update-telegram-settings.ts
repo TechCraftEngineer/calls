@@ -21,7 +21,9 @@ export const updateTelegramSettings = workspaceProcedure
       typeof authUser === "object" &&
       typeof authUser.email === "string"
         ? authUser.email
-        : "unknown";
+        : "";
+    const actorUsername =
+      authEmail.trim() || context.sessionEmail?.trim() || "system";
     if (!userId)
       throw new ORPCError("UNAUTHORIZED", {
         message: "Не удалось определить пользователя",
@@ -83,7 +85,7 @@ export const updateTelegramSettings = workspaceProcedure
           });
         }
 
-        const username = authEmail?.trim() || "system";
+        const username = actorUsername;
         const reportDailyTimeKey =
           REPORT_PROMPTS_CAMEL_TO_SNAKE.reportDailyTime;
         const reportWeeklyDayKey =
@@ -134,7 +136,7 @@ export const updateTelegramSettings = workspaceProcedure
       await logUpdate(
         "telegram settings updated",
         user.email ?? "unknown",
-        authEmail,
+        actorUsername,
         undefined,
         context.workspaceId,
       );
@@ -144,7 +146,7 @@ export const updateTelegramSettings = workspaceProcedure
       await logUpdate(
         "update user telegram settings",
         user.email ?? "unknown",
-        authEmail,
+        actorUsername,
         error,
         context.workspaceId,
       );

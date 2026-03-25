@@ -5,11 +5,22 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
+import { z } from "zod/v4";
 import { createLogger } from "~/logger";
 
 const logger = createLogger("asr-context-correction");
 
 const CONTEXT_CORRECTED_MAX_LENGTH = 500_000;
+const INPUT_MAX_LENGTH = 2_000;
+
+const AsrCorrectionInputSchema = z.object({
+  message: z.string().trim().min(1).max(INPUT_MAX_LENGTH),
+  context: z.string().trim().max(INPUT_MAX_LENGTH).optional(),
+});
+
+const CORRECTED_TEXT_SCHEMA = z.object({
+  text: z.string().trim().min(1).max(CONTEXT_CORRECTED_MAX_LENGTH),
+});
 
 const SYSTEM_PROMPT = `Ты эксперт по исправлению ошибок автоматического распознавания речи (ASR).
 
@@ -95,6 +106,21 @@ export async function correctWithContext(
 
   const start = Date.now();
   try {
+    const parsedInput = AsrCorrectionInputSchema.safeParse({
+      message: text,
+      context: options?.companyContext ?? undefined,
+    });
+    if (!parsedInput.success) {
+      logger.warn(
+        "Входные данные контекстной коррекции не прошли валидацию, оставляем исходный текст",
+        {
+          functionId: "asr-context-correction",
+          issues: parsedInput.error.issues,
+        },
+      );
+      return text;
+    }
+
     const contextInfo = options?.companyContext
       ? `\n\nКОНТЕКСТ КОМПАНИИ:\n${options.companyContext}\n\nИспользуй эту информацию для лучшего понимания предметной области и терминологии.`
       : "";
@@ -114,27 +140,22 @@ ${text}
       functionId: "asr-context-correction",
     });
 
-    const correctedText =
-      typeof correctedTextRaw === "string" &&
-      correctedTextRaw.trim().length > 0 &&
-      correctedTextRaw.length <= CONTEXT_CORRECTED_MAX_LENGTH
-        ? correctedTextRaw
-        : null;
-
-    if (!correctedText) {
+    // Если generateWithAi начнет возвращать метаданные вместе с текстом,
+    // нужно синхронно обновить эту схему и shape ответа в @calls/ai.
+    const parsedResponse = CORRECTED_TEXT_SCHEMA.safeParse({
+      text: correctedTextRaw,
+    });
+    if (!parsedResponse.success) {
       logger.warn(
         "Ответ AI для контекстной коррекции отклонён (пусто или слишком длинно), оставляем исходный текст",
         {
           functionId: "asr-context-correction",
-          type: typeof correctedTextRaw,
-          length:
-            typeof correctedTextRaw === "string"
-              ? correctedTextRaw.length
-              : undefined,
+          issues: parsedResponse.error.issues,
         },
       );
       return text;
     }
+    const correctedText = parsedResponse.data.text;
 
     const hasChanges = correctedText.trim() !== text.trim();
 

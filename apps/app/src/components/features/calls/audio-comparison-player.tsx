@@ -29,30 +29,27 @@ export function AudioComparisonPlayer({
 }: AudioComparisonPlayerProps) {
   const orpc = useORPC();
   const id = callId?.trim() ?? "";
+  const fallbackCallId = "__skip__";
+  const originalQueryOptions = orpc.calls.getPlaybackUrl.queryOptions({
+    input: { call_id: id || fallbackCallId },
+  });
+  const enhancedQueryOptions = orpc.calls.getEnhancedPlaybackUrl.queryOptions({
+    input: { call_id: id || fallbackCallId },
+  });
 
   const {
     data: originalData,
     isPending: originalPending,
     isError: originalError,
-  } = useQuery(
-    id
-      ? orpc.calls.getPlaybackUrl.queryOptions({ input: { call_id: id } })
-      : {
-          queryKey: ["calls", "playback", "skip"],
-          queryFn: skipToken,
-        },
-  );
+  } = useQuery({
+    ...originalQueryOptions,
+    queryFn: id ? originalQueryOptions.queryFn : skipToken,
+  });
 
-  const { data: enhancedData, isPending: enhancedPending } = useQuery(
-    id
-      ? orpc.calls.getEnhancedPlaybackUrl.queryOptions({
-          input: { call_id: id },
-        })
-      : {
-          queryKey: ["calls", "enhanced-playback", "skip"],
-          queryFn: skipToken,
-        },
-  );
+  const { data: enhancedData, isPending: enhancedPending } = useQuery({
+    ...enhancedQueryOptions,
+    queryFn: id ? enhancedQueryOptions.queryFn : skipToken,
+  });
 
   if (!id) {
     return (

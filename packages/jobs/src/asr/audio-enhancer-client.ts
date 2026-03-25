@@ -61,6 +61,57 @@ export async function enhanceAudioWithPython(
   }
 
   try {
+    const healthCheckStartedAt = Date.now();
+    const healthCheckController = new AbortController();
+    const healthCheckTimeout = setTimeout(() => {
+      healthCheckController.abort();
+    }, 2_000);
+    let healthUrl = "";
+    try {
+      healthUrl = new URL("/health", serviceUrl).toString();
+      const healthResponse = await fetch(healthUrl, {
+        method: "GET",
+        signal: healthCheckController.signal,
+      });
+      if (!healthResponse.ok) {
+        logger.warn(
+          "Python enhancer недоступен на health-check, пропускаем обработку",
+          {
+            serviceUrl,
+            healthUrl,
+            status: healthResponse.status,
+            statusText: healthResponse.statusText,
+            functionId: "enhanceAudioWithPython",
+          },
+        );
+        return {
+          audioBuffer,
+          wasProcessed: false,
+          processingTimeMs: Date.now() - healthCheckStartedAt,
+        };
+      }
+    } catch (healthError) {
+      logger.warn(
+        "Python enhancer не прошёл быстрый health-check, пропускаем обработку",
+        {
+          serviceUrl,
+          healthUrl,
+          functionId: "enhanceAudioWithPython",
+          error:
+            healthError instanceof Error
+              ? healthError.message
+              : String(healthError),
+        },
+      );
+      return {
+        audioBuffer,
+        wasProcessed: false,
+        processingTimeMs: Date.now() - healthCheckStartedAt,
+      };
+    } finally {
+      clearTimeout(healthCheckTimeout);
+    }
+
     const formData = new FormData();
     const blob = new Blob([audioBuffer as unknown as BlobPart], {
       type: "audio/wav",
