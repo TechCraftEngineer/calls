@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd -r audio_user && useradd -r -g audio_user audio_user
+RUN groupadd -r audio_user && useradd -r -g audio_user -d /home/audio_user -m audio_user
 
 COPY requirements.txt .
 

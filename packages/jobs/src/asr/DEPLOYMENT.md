@@ -103,7 +103,7 @@ services:
       context: ./services/audio-enhancer
     # Порт 8080 доступен только внутри сети compose (без проброса на хост)
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
 ```
 
 **Использование:**

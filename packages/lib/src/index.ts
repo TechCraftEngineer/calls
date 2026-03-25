@@ -4,6 +4,7 @@ export type { FileSource } from "./s3";
 export {
   buildStorageKey,
   createPresignedUrl,
+  deleteObjectFromS3,
   generateS3Key,
   getDownloadUrl,
   getDownloadUrlForAsr,

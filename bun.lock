@@ -39,6 +39,7 @@
         "@calls/shared": "workspace:*",
         "@calls/tailwind-config": "workspace:*",
         "@calls/ui": "workspace:*",
+        "@calls/validators": "workspace:*",
         "@hookform/resolvers": "5.2.2",
         "@orpc/client": "^1.13.10",
         "@orpc/tanstack-query": "^1.13.10",
