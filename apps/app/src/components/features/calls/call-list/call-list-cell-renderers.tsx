@@ -3,6 +3,9 @@
 import { paths } from "@calls/config";
 import {
   Button,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Rating,
   Tooltip,
   TooltipContent,
@@ -94,7 +97,23 @@ export function renderCallTopicCell(transcript: CallWithDetails["transcript"]) {
     return <span style={{ color: "#ccc" }}>—</span>;
   }
 
-  return <span style={{ color: "#555", fontWeight: 500 }}>{callTopic}</span>;
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <span
+          onClick={(e) => e.stopPropagation()}
+          className="block min-w-0 max-w-full truncate cursor-default text-[#555] font-medium"
+          title={callTopic}
+        >
+          {callTopic}
+        </span>
+      </PopoverTrigger>
+      <PopoverContent className="max-w-md whitespace-pre-wrap text-left">
+        <div className="font-medium mb-1">Тема звонка</div>
+        {callTopic}
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export function renderSentimentCell(transcript: CallWithDetails["transcript"]) {
@@ -193,7 +212,7 @@ export function renderSummaryCell(transcript: CallWithDetails["transcript"]) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="block min-w-0 max-w-[220px] truncate cursor-default text-[#666]">
+        <span className="block min-w-0 max-w-55 truncate cursor-default text-[#666]">
           {transcript.summary}
         </span>
       </TooltipTrigger>

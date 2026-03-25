@@ -11,9 +11,9 @@ import type { FetchFunction } from "@ai-sdk/provider-utils";
 import { env } from "@calls/config";
 import { experimental_transcribe as transcribe } from "ai";
 import { fetch as undiciFetch } from "undici";
-import { createLogger } from "../logger";
-import { withRetry } from "./retry";
-import type { AsrResult, Utterance } from "./types";
+import { createLogger } from "../../logger";
+import type { AsrResult, Utterance } from "../types";
+import { withRetry } from "../utils/retry";
 
 const logger = createLogger("asr-assemblyai");
 

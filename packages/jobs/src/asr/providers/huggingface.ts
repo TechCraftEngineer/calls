@@ -6,9 +6,9 @@
 import { env } from "@calls/config";
 import { InferenceClient } from "@huggingface/inference";
 import { z } from "zod";
-import { createLogger } from "../logger";
-import { withRetry } from "./retry";
-import type { AsrResult } from "./types";
+import { createLogger } from "../../logger";
+import type { AsrResult } from "../types";
+import { withRetry } from "../utils/retry";
 
 const logger = createLogger("asr-huggingface");
 

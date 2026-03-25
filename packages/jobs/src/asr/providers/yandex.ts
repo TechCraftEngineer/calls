@@ -7,9 +7,9 @@
  */
 
 import { env } from "@calls/config";
-import { createLogger } from "../logger";
-import { withRetry } from "./retry";
-import type { AsrResult } from "./types";
+import { createLogger } from "../../logger";
+import type { AsrResult } from "../types";
+import { withRetry } from "../utils/retry";
 
 const logger = createLogger("asr-yandex");
 
