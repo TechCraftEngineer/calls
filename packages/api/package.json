@@ -33,6 +33,7 @@
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
+    "@types/bun": "^1.3.11",
     "typescript": "6.0.2"
   }
 }

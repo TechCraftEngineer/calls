@@ -2,6 +2,7 @@
   "extends": "@calls/tsconfig/base.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "types": ["node", "bun"],
     "paths": {
       "~/*": ["./src/*"]
     }

@@ -8,13 +8,13 @@ import {
   getDownloadUrlForAsr,
   uploadBufferToS3,
 } from "@calls/lib";
+import { createLogger } from "../logger";
+import { transcribeWithAssemblyAi } from "./assemblyai";
 import {
   type PreprocessingOptions,
   preprocessAudio,
   safeAudioUrlParts,
-} from "~/asr/audio-preprocessing";
-import { createLogger } from "../logger";
-import { transcribeWithAssemblyAi } from "./assemblyai";
+} from "./audio-preprocessing";
 import { correctWithContext } from "./context-correction";
 import { getAudioDurationFromUrl } from "./get-audio-duration";
 import {
