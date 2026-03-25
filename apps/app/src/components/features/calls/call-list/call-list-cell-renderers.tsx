@@ -100,13 +100,25 @@ export function renderCallTopicCell(transcript: CallWithDetails["transcript"]) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <span
+        <button
+          type="button"
           onClick={(e) => e.stopPropagation()}
-          className="block min-w-0 max-w-full truncate cursor-default text-[#555] font-medium"
-          title={callTopic}
+          tabIndex={0}
+          aria-haspopup="dialog"
+          aria-label={callTopic}
+          className="block min-w-0 max-w-full truncate cursor-pointer bg-transparent border-0 p-0 text-[#555] font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              e.stopPropagation();
+              // Radix attaches click handlers to the trigger child when using `asChild`,
+              // so we forward Enter/Space via a synthetic click.
+              e.currentTarget.click();
+            }
+          }}
         >
           {callTopic}
-        </span>
+        </button>
       </PopoverTrigger>
       <PopoverContent className="max-w-md whitespace-pre-wrap text-left">
         <div className="font-medium mb-1">Тема звонка</div>

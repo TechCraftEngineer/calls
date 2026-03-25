@@ -4,6 +4,10 @@
   "exclude": ["node_modules"],
   "compilerOptions": {
     "rootDir": "src",
-    "types": ["node", "bun"]
+    "types": ["node", "bun"],
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["../jobs/src/*"]
+    }
   }
 }

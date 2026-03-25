@@ -1,10 +1,14 @@
+import { z } from "zod";
+
+const huggingFaceRawSchema = z.object({
+  model: z.string().optional(),
+  revision: z.string().optional(),
+});
+
 export function parseHuggingFaceRaw(
   raw: unknown,
 ): { model?: string; revision?: string } | null {
-  if (!raw || typeof raw !== "object") return null;
-  const parsed = raw as Record<string, unknown>;
-  const model = typeof parsed.model === "string" ? parsed.model : undefined;
-  const revision =
-    typeof parsed.revision === "string" ? parsed.revision : undefined;
-  return { model, revision };
+  const parsed = huggingFaceRawSchema.safeParse(raw);
+  if (!parsed.success) return null;
+  return parsed.data;
 }

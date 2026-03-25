@@ -172,6 +172,53 @@ export const transcribeCallFn = inngest.createFunction(
       });
     });
 
+    await step.run("persist/enhanced-audio:save", async () => {
+      // Если предобработка не выполнялась или улучшенный буфер пустой — ничего не сохраняем
+      if (call.enhancedAudioFileId) {
+        return;
+      }
+
+      const enhancedBufferRaw = result.enhancedAudioBuffer as unknown;
+      // Inngest сериализует Buffer между шагами, поэтому часто приходит
+      // вид { type: "Buffer", data: number[] }. Превращаем обратно в Buffer.
+      const enhancedBuffer = Buffer.isBuffer(enhancedBufferRaw)
+        ? enhancedBufferRaw
+        : enhancedBufferRaw &&
+            typeof enhancedBufferRaw === "object" &&
+            (enhancedBufferRaw as { type?: unknown }).type === "Buffer" &&
+            Array.isArray((enhancedBufferRaw as { data?: unknown }).data)
+          ? Buffer.from((enhancedBufferRaw as { data: number[] }).data)
+          : null;
+      const enhancedFilename = result.enhancedAudioFilename;
+
+      if (!enhancedBuffer || enhancedBuffer.length === 0 || !enhancedFilename) {
+        return;
+      }
+
+      // Буфер всегда в формате WAV (см. uploadBufferToS3 в asr-пайплайне)
+      const normalizedFilename = enhancedFilename.toLowerCase().endsWith(".wav")
+        ? enhancedFilename
+        : enhancedFilename.replace(/\.[^.]+$/, ".wav");
+
+      try {
+        const enhancedFile = await filesService.uploadFile(call.workspaceId, {
+          originalName: normalizedFilename,
+          buffer: enhancedBuffer,
+          mimeType: "audio/wav",
+          fileType: "call_recording",
+          source: "asr-preprocessing",
+        });
+
+        await callsService.updateEnhancedAudio(callId, enhancedFile.id);
+      } catch (error) {
+        logger.warn("Не удалось сохранить улучшенное аудио", {
+          callId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // Не прерываем обработку: транскрипт уже будет сохранен ниже
+      }
+    });
+
     const identifyResult = await step.run("llm/diarize", async () => {
       const fallbackManagerName = call.name?.trim() || null;
       return identifySpeakersWithLlm(result.normalizedText, {

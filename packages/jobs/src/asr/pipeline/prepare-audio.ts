@@ -1,4 +1,5 @@
 import {
+  deleteObjectFromS3,
   generateS3Key,
   getDownloadUrlForAsr,
   uploadBufferToS3,
@@ -70,6 +71,21 @@ export async function prepareAudioForAsr(
             error: err instanceof Error ? err.message : String(err),
           },
         );
+        if (tempKey) {
+          try {
+            await deleteObjectFromS3(tempKey);
+          } catch (deleteError) {
+            logger.warn("Ошибка удаления временного объекта S3", {
+              storageKey: tempKey,
+              error:
+                deleteError instanceof Error
+                  ? deleteError.message
+                  : String(deleteError),
+            });
+          } finally {
+            tempKey = null;
+          }
+        }
         processedAudioUrl = preprocessingResult.audioUrl;
       }
     }

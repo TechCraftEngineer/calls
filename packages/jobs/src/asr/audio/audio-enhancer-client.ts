@@ -5,7 +5,7 @@
  */
 
 import { env } from "@calls/config";
-import { createLogger } from "../../logger";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("audio-enhancer-client");
 

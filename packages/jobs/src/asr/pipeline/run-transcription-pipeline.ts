@@ -105,8 +105,7 @@ export async function runTranscriptionPipeline(
       huggingFaceModelCount: asr.huggingFaceModelCount,
       huggingFaceSuccessCount: asr.huggingFaceSuccessCount,
       contextCorrectionApplied:
-        !options?.skipContextCorrection &&
-        post.contextCorrectedText !== rawText,
+        !options?.skipContextCorrection && post.contextCorrectionApplied,
       audioPreprocessed: preprocessingResult?.wasProcessed ?? false,
       hasEnhancedAudio: !!preprocessingResult?.enhancedAudioBuffer,
     });

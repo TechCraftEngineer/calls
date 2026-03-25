@@ -61,9 +61,18 @@ export async function runAsrProviders(
   );
   const huggingFaceBest =
     huggingFaceSuccessful.length > 0
-      ? huggingFaceSuccessful.reduce((best, current) =>
-          current.text.length > best.text.length ? current : best,
-        )
+      ? huggingFaceSuccessful.reduce((best, current) => {
+          // AssemblyAI может отдавать confidence; HuggingFace — пока нет.
+          // Поэтому при равном/отсутствующем confidence используем length как эвристику.
+          const bestConfidence = best.confidence ?? -Infinity;
+          const currentConfidence = current.confidence ?? -Infinity;
+
+          if (currentConfidence !== bestConfidence) {
+            return currentConfidence > bestConfidence ? current : best;
+          }
+
+          return current.text.length > best.text.length ? current : best;
+        })
       : null;
 
   const assemblyaiError =

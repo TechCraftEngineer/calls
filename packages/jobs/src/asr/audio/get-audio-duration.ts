@@ -5,7 +5,7 @@
  */
 
 import { parseBuffer } from "music-metadata";
-import { createLogger } from "../../logger";
+import { createLogger } from "~/logger";
 import { safeAudioUrlParts } from "./audio-preprocessing";
 
 const logger = createLogger("asr-audio-duration");

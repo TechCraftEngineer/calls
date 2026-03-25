@@ -7,9 +7,9 @@
  */
 
 import { env } from "@calls/config";
-import { createLogger } from "../../logger";
-import type { AsrResult } from "../types";
-import { withRetry } from "../utils/retry";
+import type { AsrResult } from "~/asr/types";
+import { withRetry } from "~/asr/utils/retry";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("asr-yandex");
 
@@ -203,7 +203,7 @@ export async function transcribeWithYandex(
     {
       maxAttempts: 2,
       baseDelayMs: 5000,
-      onRetry: (attempt, error) =>
+      onRetry: (attempt: number, error: unknown) =>
         logger.warn("Повторная попытка Yandex SpeechKit", {
           attempt,
           error: error instanceof Error ? error.message : String(error),

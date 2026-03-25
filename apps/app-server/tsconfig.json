@@ -3,7 +3,11 @@
   "compilerOptions": {
     "noEmit": true,
     "module": "ESNext",
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["../../packages/jobs/src/*"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules"]

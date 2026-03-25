@@ -5,7 +5,7 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
-import { createLogger } from "../../logger";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("asr-merge");
 

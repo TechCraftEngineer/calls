@@ -13,6 +13,7 @@ export async function postProcessText(input: {
   };
 }): Promise<{
   contextCorrectedText: string;
+  contextCorrectionApplied: boolean;
   processingTimeMs: number;
   normalizedText: string;
   summary?: string;
@@ -25,13 +26,13 @@ export async function postProcessText(input: {
 
   // Контекстная коррекция: исправляем ошибки ASR с учетом контекста разговора
   let contextCorrectedText = rawText;
+  let contextCorrectionApplied = false;
   if (!options?.skipContextCorrection && rawText.trim().length > 0) {
+    contextCorrectionApplied = true;
     contextCorrectedText = await correctWithContext(rawText, {
       companyContext: options?.companyContext,
     });
   }
-
-  const processingTimeMs = Date.now() - startTs;
 
   // LLM нормализация
   let normalizedText = contextCorrectedText;
@@ -58,8 +59,11 @@ export async function postProcessText(input: {
     callTopic = analysis.callTopic ?? defaultTopic;
   }
 
+  const processingTimeMs = Date.now() - startTs;
+
   return {
     contextCorrectedText,
+    contextCorrectionApplied,
     processingTimeMs,
     normalizedText,
     summary,

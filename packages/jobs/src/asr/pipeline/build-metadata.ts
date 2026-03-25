@@ -59,7 +59,14 @@ export function buildTranscriptMetadata(input: {
     asrSource,
     processingTimeMs,
     confidence: assemblyai?.confidence ?? yandex?.confidence,
-    speakerCount: assemblyai?.utterances?.length,
+    speakerCount: assemblyai?.utterances
+      ? new Set(
+          assemblyai.utterances
+            .map((u) => u.speaker)
+            // Защита на случай неожиданных пустых значений
+            .filter(Boolean),
+        ).size
+      : 0,
     durationInSeconds:
       typeof durationInSeconds === "number" ? durationInSeconds : undefined,
     asrAssemblyai: assemblyai
