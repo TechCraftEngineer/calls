@@ -28,10 +28,12 @@ export async function postProcessText(input: {
   let contextCorrectedText = rawText;
   let contextCorrectionApplied = false;
   if (!options?.skipContextCorrection && rawText.trim().length > 0) {
+    const rawTrimmed = rawText.trim();
     contextCorrectedText = await correctWithContext(rawText, {
       companyContext: options?.companyContext,
     });
-    contextCorrectionApplied = true;
+    // Флаг должен отражать фактическое изменение текста (без учета пробелов по краям)
+    contextCorrectionApplied = contextCorrectedText.trim() !== rawTrimmed;
   }
 
   // LLM нормализация

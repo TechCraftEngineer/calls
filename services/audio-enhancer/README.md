@@ -1,6 +1,30 @@
+---
+title: Audio Enhancer v2.0
+emoji: 🎵
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+---
+
 # 🎵 Audio Enhancer v2.0
 
 Продвинутый микросервис для улучшения качества аудио перед распознаванием речи (ASR/STT).
+
+![Build](https://img.shields.io/github/actions/workflow/status/TechCraftEngineer/calls/jobs.yml?branch=main)
+![Coverage](https://img.shields.io/badge/coverage-NA-lightgrey)
+![PyPI/version](https://img.shields.io/badge/PyPI%2Fversion-NA-lightgrey)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](../../LICENSE)
+
+## Участие в разработке
+
+1. Сделайте `fork` репозитория.
+2. Создайте ветку: `feature/<name>` или `fix/<name>`.
+3. Внесите изменения и сделайте коммит.
+4. Запушьте ветку в свой fork.
+5. Откройте Pull Request в `main`.
+
+Смотрите `../../CONTRIBUTING.md` для деталей по процессу и требованиям к PR.
 
 ## 🚀 Современные технологии
 
@@ -10,29 +34,38 @@
   - Превосходит классические методы на 30-40%
   - Работает с частотой 48kHz
   - Удаляет шум без искажения речи
+  - Автоматический fallback на классическое шумоподавление при недоступности
 
 - **Silero VAD** - Нейросетевая детекция речи
   - Точное определение речевых сегментов
   - Удаление длинных пауз
   - Минимальная длительность речи: 250ms
+  - Минимальная длительность паузы: 1000ms
 
 ### Профессиональная обработка
 
 - **Pedalboard** (Spotify) - Студийное качество обработки
-  - High-pass/Low-pass фильтры
-  - Динамическая компрессия
+  - High-pass фильтр (80 Hz) - удаление низких частот
+  - Low-pass фильтр (8000 Hz) - удаление высоких частот
+  - Динамическая компрессия (threshold: -20dB, ratio: 4:1)
   - Профессиональные эффекты
 
 - **LUFS нормализация** - Перцептивная громкость
   - Стандарт вещания (EBU R128)
-  - Целевая громкость: -16 LUFS
+  - Целевая громкость: -16 LUFS (оптимально для речи)
   - Лучше чем RMS/Peak нормализация
+  - Автоматический fallback на RMS при ошибке
 
 ### Дополнительные улучшения
 
 - **Спектральный гейтинг** - Адаптивная очистка от шума
-- **Pre-emphasis** - Усиление высоких частот речи
-- **Частотное усиление** - Оптимизация речевого диапазона (300-3400 Hz)
+  - Мягкий гейтинг с квадратичной маской
+  - Порог шума: нижние 10% энергии
+- **Pre-emphasis** - Усиление высоких частот речи (коэффициент 0.97)
+- **Частотное усиление** - Оптимизация речевого диапазона
+  - Речевой диапазон: 300-3400 Hz (усиление 1.3x)
+  - Критичный диапазон: 1000-3000 Hz (усиление 1.5x)
+  - Подавление нерелевантных частот (0.4x)
 - **Kaiser-best ресемплинг** - Высококачественное изменение частоты
 
 ## 📦 Установка
@@ -50,11 +83,30 @@ pip install -r requirements.txt
 python main.py
 ```
 
-API доступен на http://localhost:8080
+API доступен на <http://localhost:8080>
 
-Документация: http://localhost:8080/docs
+Документация: <http://localhost:8080/docs>
 
 ### API endpoints
+
+#### GET /health
+
+Проверка здоровья сервиса:
+
+```bash
+curl http://localhost:8080/health
+```
+
+Ответ:
+
+```json
+{
+  "status": "healthy",
+  "silero_vad_loaded": true,
+  "deepfilter_loaded": true,
+  "version": "2.0.0"
+}
+```
 
 #### POST /enhance
 
@@ -75,7 +127,7 @@ curl -X POST "http://localhost:8080/enhance" \
 
 #### POST /denoise
 
-Только шумоподавление:
+Только классическое шумоподавление (быстрый endpoint):
 
 ```bash
 curl -X POST "http://localhost:8080/denoise" \
@@ -85,18 +137,23 @@ curl -X POST "http://localhost:8080/denoise" \
   -o denoised.wav
 ```
 
+Параметры:
+
+- `stationary` (bool, default: true) - Стационарный шум (true) или нестационарный (false)
+- `prop_decrease` (float, 0-1, default: 0.8) - Агрессивность шумоподавления
+
 ## ⚙️ Параметры обработки
 
 | Параметр | Тип | По умолчанию | Описание |
 |----------|-----|--------------|----------|
-| `use_deepfilter` | bool | true | DeepFilterNet (AI шумоподавление) |
-| `spectral_gating` | bool | true | Спектральный гейтинг |
-| `noise_reduction` | bool | false | Классическое шумоподавление |
-| `enhance_speech` | bool | true | Усиление речевых частот |
-| `use_compressor` | bool | true | Динамическая компрессия |
-| `normalize_volume` | bool | true | LUFS нормализация |
-| `remove_silence` | bool | false | Удаление пауз (VAD) |
-| `target_sample_rate` | int | 16000 | Частота дискретизации (Hz) |
+| `use_deepfilter` | bool | true | DeepFilterNet (AI шумоподавление, 48kHz) |
+| `spectral_gating` | bool | true | Спектральный гейтинг (мягкая маска) |
+| `noise_reduction` | bool | true | Классическое шумоподавление (fallback) |
+| `enhance_speech` | bool | true | Усиление речевых частот (300-3400 Hz) |
+| `use_compressor` | bool | true | Динамическая компрессия (-20dB, 4:1) |
+| `normalize_volume` | bool | true | LUFS нормализация (-16 LUFS) |
+| `remove_silence` | bool | false | Удаление пауз (Silero VAD) |
+| `target_sample_rate` | int | 16000 | Частота дискретизации (800-192000 Hz) |
 
 ## 🎛️ Рекомендуемые настройки
 
@@ -152,22 +209,27 @@ curl -X POST "http://localhost:8080/denoise" \
 
 ### Pipeline обработки
 
-1. **Загрузка** - Декодирование в mono, любая частота
-2. **DeepFilterNet** - Нейросетевое шумоподавление (48kHz)
-3. **Классическое шумоподавление** - Fallback если DeepFilterNet недоступен
-4. **Спектральный гейтинг** - Дополнительная очистка
-5. **Усиление речи** - Фильтры + частотное усиление
-6. **Динамическая компрессия** - Выравнивание динамического диапазона
-7. **LUFS нормализация** - Перцептивная громкость
-8. **Удаление пауз** - Silero VAD (опционально)
+1. **Загрузка** - Декодирование в mono через librosa, любая частота
+2. **DeepFilterNet** - Нейросетевое шумоподавление (48kHz, автоматический ресемплинг)
+3. **Классическое шумоподавление** - Fallback если DeepFilterNet недоступен (noisereduce, stationary=True, prop_decrease=0.8)
+4. **Спектральный гейтинг** - Дополнительная очистка (порог: 10% перцентиль, квадратичная маска)
+5. **Усиление речи**:
+   - High-pass фильтр (80 Hz)
+   - Low-pass фильтр (8000 Hz)
+   - Pre-emphasis (коэффициент 0.97)
+   - Частотное усиление (300-3400 Hz: 1.3x, 1000-3000 Hz: 1.5x)
+6. **Динамическая компрессия** - Выравнивание динамического диапазона (threshold: -20dB, ratio: 4:1, attack: 5ms, release: 50ms)
+7. **LUFS нормализация** - Перцептивная громкость (-16 LUFS, с пиковым ограничением 0.95)
+8. **Удаление пауз** - Silero VAD (опционально, min_speech: 250ms, min_silence: 1000ms, threshold: 0.5)
 9. **Ресемплинг** - Kaiser-best качество
 
 ### Производительность
 
 - Обработка в памяти (без временных файлов)
-- Максимальный размер: 80MB
-- Максимальная длительность: 4 часа
+- Максимальный размер загрузки: 80MB (до декодирования)
+- Максимальная длительность: 4 часа (после декодирования)
 - Скорость: ~10-20x realtime (зависит от CPU/GPU)
+- Защита от OOM: проверка размера до и после декодирования
 
 ### Требования
 
@@ -175,6 +237,7 @@ curl -X POST "http://localhost:8080/denoise" \
 - CPU: 4+ cores рекомендуется
 - RAM: 4GB+ рекомендуется
 - GPU: опционально (ускоряет DeepFilterNet)
+- Зависимости: librosa, noisereduce, pyloudnorm, soundfile, torch, pedalboard, scipy
 
 ## 🐳 Docker
 
