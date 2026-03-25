@@ -55,6 +55,28 @@ function hasInjectionPatterns(s: string): boolean {
   return INJECTION_PATTERNS.some((re) => re.test(s));
 }
 
+function buildCompanyContext(workspace: {
+  name?: string | null;
+  description?: string | null;
+}): string | undefined {
+  const parts: string[] = [];
+  const companyName = workspace.name?.trim();
+  const companyDescription = workspace.description?.trim();
+
+  if (companyName) {
+    parts.push(`Название компании: ${companyName}`);
+  }
+  if (companyDescription) {
+    parts.push(`Описание компании: ${companyDescription}`);
+  }
+
+  if (parts.length === 0) {
+    return undefined;
+  }
+
+  return companyContextSchema.parse(parts.join("\n"));
+}
+
 const companyContextSchema = z
   .string()
   .transform(sanitizeCompanyContext)
@@ -247,8 +269,7 @@ export const generateRecommendationsProcedure = workspaceProcedure
 
     let companyContext: string | undefined;
     try {
-      companyContext =
-        companyContextSchema.parse(workspace.description ?? "") || undefined;
+      companyContext = buildCompanyContext(workspace);
     } catch {
       throw new ORPCError("BAD_REQUEST", {
         message:

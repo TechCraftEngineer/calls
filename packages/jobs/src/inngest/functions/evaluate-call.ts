@@ -17,6 +17,24 @@ import { evaluateRequested, inngest } from "../client";
 
 const logger = createLogger("evaluate-call");
 
+function buildCompanyContext(workspace: {
+  name?: string | null;
+  description?: string | null;
+}): string | undefined {
+  const parts: string[] = [];
+  const companyName = workspace.name?.trim();
+  const companyDescription = workspace.description?.trim();
+
+  if (companyName) {
+    parts.push(`Название компании: ${companyName}`);
+  }
+  if (companyDescription) {
+    parts.push(`Описание компании: ${companyDescription}`);
+  }
+
+  return parts.length > 0 ? parts.join("\n") : undefined;
+}
+
 const DEFAULT_TEMPLATE = "general";
 
 export const evaluateCallFn = inngest.createFunction(
@@ -114,7 +132,7 @@ export const evaluateCallFn = inngest.createFunction(
     const evaluation = await step.run("evaluate", async () => {
       return evaluateCallWithLlm(transcriptText, {
         evaluationPrompt,
-        companyContext: workspace.description ?? undefined,
+        companyContext: buildCompanyContext(workspace),
       });
     });
 
