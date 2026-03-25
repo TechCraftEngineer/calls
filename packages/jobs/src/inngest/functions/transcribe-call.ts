@@ -11,8 +11,10 @@ import {
   workspacesService,
 } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
+import type { PreprocessingResult } from "../../asr/audio/audio-preprocessing";
 import { identifySpeakersWithLlm } from "../../asr/llm/identify-speakers";
-import { runTranscriptionPipeline } from "../../asr/pipeline/run-transcription-pipeline";
+import { prepareAudioForAsr } from "../../asr/pipeline/prepare-audio";
+import { runTranscriptionPipelineFromAsrAudio } from "../../asr/pipeline/run-transcription-pipeline";
 import { createLogger } from "../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../client";
 
@@ -167,56 +169,76 @@ export const transcribeCallFn = inngest.createFunction(
         callId,
         audioUrlLength: audioUrl.length,
       });
-      return runTranscriptionPipeline(audioUrl, {
-        companyContext: workspace.description ?? undefined,
-      });
-    });
 
-    await step.run("persist/enhanced-audio:save", async () => {
-      // Если предобработка не выполнялась или улучшенный буфер пустой — ничего не сохраняем
+      // Вариант 2: улучшенное аудио сохраняем один раз и используем для ASR.
+      // Temp-объекты в S3 не создаём.
+      let preprocessingResult: PreprocessingResult | null = null;
+
+      let asrAudioUrl = audioUrl;
+      let yandexUseLinear16PcmForYandex = false;
+
       if (call.enhancedAudioFileId) {
-        return;
-      }
-
-      const enhancedBufferRaw = result.enhancedAudioBuffer as unknown;
-      // Inngest сериализует Buffer между шагами, поэтому часто приходит
-      // вид { type: "Buffer", data: number[] }. Превращаем обратно в Buffer.
-      const enhancedBuffer = Buffer.isBuffer(enhancedBufferRaw)
-        ? enhancedBufferRaw
-        : enhancedBufferRaw &&
-            typeof enhancedBufferRaw === "object" &&
-            (enhancedBufferRaw as { type?: unknown }).type === "Buffer" &&
-            Array.isArray((enhancedBufferRaw as { data?: unknown }).data)
-          ? Buffer.from((enhancedBufferRaw as { data: number[] }).data)
-          : null;
-      const enhancedFilename = result.enhancedAudioFilename;
-
-      if (!enhancedBuffer || enhancedBuffer.length === 0 || !enhancedFilename) {
-        return;
-      }
-
-      // Буфер всегда в формате WAV (см. uploadBufferToS3 в asr-пайплайне)
-      const normalizedFilename = enhancedFilename.toLowerCase().endsWith(".wav")
-        ? enhancedFilename
-        : enhancedFilename.replace(/\.[^.]+$/, ".wav");
-
-      try {
-        const enhancedFile = await filesService.uploadFile(call.workspaceId, {
-          originalName: normalizedFilename,
-          buffer: enhancedBuffer,
-          mimeType: "audio/wav",
-          fileType: "call_recording",
-          source: "asr-preprocessing",
+        const enhancedFile = await filesService.getFileById(
+          call.enhancedAudioFileId,
+        );
+        if (enhancedFile) {
+          asrAudioUrl = await getDownloadUrlForAsr(enhancedFile.storageKey);
+          yandexUseLinear16PcmForYandex = true;
+        }
+      } else {
+        const prepared = await prepareAudioForAsr(audioUrl, {
+          audioPreprocessing: undefined,
         });
+        preprocessingResult = prepared.preprocessingResult;
 
-        await callsService.updateEnhancedAudio(callId, enhancedFile.id);
-      } catch (error) {
-        logger.warn("Не удалось сохранить улучшенное аудио", {
-          callId,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        // Не прерываем обработку: транскрипт уже будет сохранен ниже
+        const enhancedBuffer = preprocessingResult?.enhancedAudioBuffer;
+        const enhancedFilename = preprocessingResult?.enhancedAudioFilename;
+
+        if (
+          preprocessingResult?.wasProcessed &&
+          enhancedBuffer &&
+          enhancedBuffer.length > 0 &&
+          enhancedFilename
+        ) {
+          const normalizedFilename = enhancedFilename
+            .toLowerCase()
+            .endsWith(".wav")
+            ? enhancedFilename
+            : enhancedFilename.replace(/\.[^.]+$/, ".wav");
+
+          try {
+            const enhancedFile = await filesService.uploadFile(
+              call.workspaceId,
+              {
+                originalName: normalizedFilename,
+                buffer: enhancedBuffer,
+                mimeType: "audio/wav",
+                fileType: "call_recording",
+                source: "asr-preprocessing",
+              },
+            );
+
+            await callsService.updateEnhancedAudio(callId, enhancedFile.id);
+
+            asrAudioUrl = await getDownloadUrlForAsr(enhancedFile.storageKey);
+            yandexUseLinear16PcmForYandex = true;
+          } catch (error) {
+            logger.warn("Не удалось сохранить улучшенное аудио", {
+              callId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        }
       }
+
+      return runTranscriptionPipelineFromAsrAudio(
+        asrAudioUrl,
+        preprocessingResult,
+        {
+          companyContext: workspace.description ?? undefined,
+        },
+        yandexUseLinear16PcmForYandex,
+      );
     });
 
     const identifyResult = await step.run("llm/diarize", async () => {

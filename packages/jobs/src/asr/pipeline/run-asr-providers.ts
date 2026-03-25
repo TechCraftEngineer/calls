@@ -12,8 +12,14 @@ const logger = createLogger("asr-pipeline-run-asr");
 
 export async function runAsrProviders(
   processedAudioUrl: string,
-  tempKey: string | null,
-  yandexSampleRateHertz: number,
+  options: {
+    /**
+     * Если true — считаем, что аудио по URL является LINEAR16_PCM (wav 16-bit).
+     * Это нужно только Yandex, т.к. он иначе ожидает MP3.
+     */
+    useLinear16PcmForYandex: boolean;
+    yandexSampleRateHertz: number;
+  },
 ): Promise<{
   assemblyai: AsrResult | null;
   yandex: AsrResult | null;
@@ -33,10 +39,10 @@ export async function runAsrProviders(
       transcribeWithAssemblyAi(processedAudioUrl),
       transcribeWithYandex(
         processedAudioUrl,
-        tempKey
+        options.useLinear16PcmForYandex
           ? {
               audioEncoding: "LINEAR16_PCM",
-              sampleRateHertz: yandexSampleRateHertz,
+              sampleRateHertz: options.yandexSampleRateHertz,
             }
           : undefined,
       ),

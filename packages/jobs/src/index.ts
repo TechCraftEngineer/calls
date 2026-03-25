@@ -1,4 +1,4 @@
-export { runTranscriptionPipeline } from "./asr/pipeline/run-transcription-pipeline";
+export { runTranscriptionPipelineFromAsrAudio } from "./asr/pipeline/run-transcription-pipeline";
 export type { EvaluationTemplateSlug } from "./evaluation";
 export {
   EVALUATION_TEMPLATES,
