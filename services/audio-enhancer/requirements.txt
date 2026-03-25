@@ -1,7 +1,7 @@
 # FastAPI для REST API
-fastapi==0.115.0
+fastapi==0.120.0
 uvicorn[standard]==0.32.0
-python-multipart==0.0.12
+python-multipart==0.0.22
 
 # Аудио обработка
 librosa==0.10.2
@@ -9,13 +9,9 @@ soundfile==0.12.1
 noisereduce==3.0.2
 pydub==0.25.1
 
-# Продвинутое шумоподавление (опционально, тяжелое)
-# deepfilternet==0.5.6
-# torch==2.5.1
-
 # Silero VAD для детекции речи
-torch==2.5.1
-torchaudio==2.5.1
+torch==2.7.0
+torchaudio==2.7.0
 
 # Утилиты
 numpy==1.26.4

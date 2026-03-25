@@ -2,11 +2,17 @@
  * Конвейер обработки аудио: ASR (параллельно) → LLM объединение → LLM нормализация
  */
 
+import {
+  generateS3Key,
+  getDownloadUrlForAsr,
+  uploadBufferToS3,
+} from "@calls/lib";
 import { createLogger } from "../logger";
 import { transcribeWithAssemblyAi } from "./assemblyai";
 import {
-  preprocessAudio,
   type PreprocessingOptions,
+  preprocessAudio,
+  safeAudioUrlParts,
 } from "./audio-preprocessing";
 import { correctWithContext } from "./context-correction";
 import { getAudioDurationFromUrl } from "./get-audio-duration";
@@ -59,8 +65,10 @@ export async function runTranscriptionPipeline(
   },
 ): Promise<PipelineResult> {
   const start = Date.now();
+  const safeIn = safeAudioUrlParts(audioUrl);
   logger.info("Запуск конвейера распознавания", {
-    audioUrl: audioUrl.slice(0, 80),
+    host: safeIn.host,
+    basename: safeIn.basename,
   });
 
   // Предобработка аудио (автоматический fallback: Python ML → FFmpeg → без обработки)
@@ -79,6 +87,35 @@ export async function runTranscriptionPipeline(
         ...options?.audioPreprocessing,
       });
       processedAudioUrl = preprocessingResult.audioUrl;
+      if (
+        preprocessingResult.wasProcessed &&
+        preprocessingResult.enhancedAudioBuffer &&
+        preprocessingResult.enhancedAudioBuffer.length > 0
+      ) {
+        try {
+          const tempKey = generateS3Key(
+            preprocessingResult.enhancedAudioFilename ?? "enhanced-audio.wav",
+            true,
+          );
+          await uploadBufferToS3(
+            tempKey,
+            preprocessingResult.enhancedAudioBuffer,
+            "audio/wav",
+          );
+          processedAudioUrl = await getDownloadUrlForAsr(tempKey);
+          logger.info("Для ASR используется временный URL улучшенного аудио", {
+            storageKey: tempKey,
+          });
+        } catch (err) {
+          logger.warn(
+            "Не удалось выгрузить улучшенное аудио для ASR, используем исходный URL",
+            {
+              error: err instanceof Error ? err.message : String(err),
+            },
+          );
+          processedAudioUrl = preprocessingResult.audioUrl;
+        }
+      }
       if (preprocessingResult.wasProcessed) {
         logger.info("Аудио предобработано", {
           appliedFilters: preprocessingResult.appliedFilters,

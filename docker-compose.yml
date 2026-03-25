@@ -111,7 +111,7 @@ services:
     container_name: jobs
     restart: always
     ports:
-      - 8000:8000
+      - 8001:8000
     depends_on:
       postgres:
         condition: service_healthy
@@ -142,8 +142,6 @@ services:
       dockerfile: Dockerfile
     container_name: audio-enhancer
     restart: always
-    ports:
-      - 8080:8080
     environment:
       LOG_LEVEL: INFO
     healthcheck:

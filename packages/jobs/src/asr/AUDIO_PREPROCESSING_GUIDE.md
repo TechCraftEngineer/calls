@@ -87,7 +87,7 @@ audioPreprocessing: {
   normalizeVolume: true,    // ✅ Всегда
   enhanceSpeech: true,      // ✅ Всегда
   noiseReduction: false,    // ❌ Осторожно
-  removesilence: false,     // ❌ Редко нужно
+  removeSilence: false,     // ❌ Редко нужно
 }
 ```
 
@@ -109,7 +109,7 @@ audioPreprocessing: {
   normalizeVolume: true,
   enhanceSpeech: true,
   noiseReduction: true,     // ⚠️ ML шумоподавление (если Python доступен)
-  removesilence: false,
+  removeSilence: false,
 }
 ```
 
@@ -231,14 +231,14 @@ const result = await runTranscriptionPipeline(audioUrl, {
 ### Логи автоматического fallback
 
 **Python ML успешно:**
-```
+```text
 [asr-audio-preprocessing] Попытка использовать Python ML сервис для обработки аудио
 [asr-audio-preprocessing] Python ML обработка успешна
 [asr-pipeline] Аудио предобработано
 ```
 
 **Python недоступен → FFmpeg:**
-```
+```text
 [asr-audio-preprocessing] Попытка использовать Python ML сервис для обработки аудио
 [asr-audio-preprocessing] Python сервис недоступен, используем FFmpeg fallback
 [asr-audio-preprocessing] Используем FFmpeg для обработки аудио
@@ -246,13 +246,13 @@ const result = await runTranscriptionPipeline(audioUrl, {
 ```
 
 **FFmpeg недоступен → без обработки:**
-```
+```text
 [asr-audio-preprocessing] Python сервис недоступен, используем FFmpeg fallback
 [asr-audio-preprocessing] FFmpeg не найден, пропускаем предобработку аудио
 ```
 
 **Ошибка:**
-```
+```text
 [asr-audio-preprocessing] Ошибка предобработки аудио
 ```
 

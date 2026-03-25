@@ -22,10 +22,10 @@ enhancedAudioFileId: uuid("enhanced_audio_file_id").references(() => files.id, {
 ### 2. Backend
 
 **Repository:** `packages/db/src/repositories/calls.repository.ts`
-- Метод `updateEnhancedAudio(callId, enhancedAudioFileId)` для сохранения ID файла
+- Метод `updateEnhancedAudio(callId, enhancedAudioFileId: string | null)` — сохранение ID файла или сброс ссылки (`null`)
 
 **Service:** `packages/db/src/services/calls.service.ts`
-- Метод `updateEnhancedAudio(callId, enhancedAudioFileId)` для обновления звонка
+- Метод `updateEnhancedAudio(callId, enhancedAudioFileId: string | null)` для обновления звонка
 
 **FileSource:** `packages/lib/src/s3.ts`
 - Добавлен новый источник `"asr-preprocessing"` для улучшенных файлов

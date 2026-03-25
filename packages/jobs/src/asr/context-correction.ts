@@ -5,9 +5,11 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
-import { createLogger } from "../logger";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("asr-context-correction");
+
+const CONTEXT_CORRECTED_MAX_LENGTH = 500_000;
 
 const SYSTEM_PROMPT = `Ты эксперт по исправлению ошибок автоматического распознавания речи (ASR).
 
@@ -97,7 +99,7 @@ export async function correctWithContext(
       ? `\n\nКОНТЕКСТ КОМПАНИИ:\n${options.companyContext}\n\nИспользуй эту информацию для лучшего понимания предметной области и терминологии.`
       : "";
 
-    const { text: correctedText } = await generateWithAi({
+    const { text: correctedTextRaw } = await generateWithAi({
       modelProfile: "premium",
       system: SYSTEM_PROMPT,
       prompt: `Проанализируй транскрипт и исправь ошибки ASR, используя контекст разговора:${contextInfo}
@@ -111,6 +113,28 @@ ${text}
       abortSignal: AbortSignal.timeout(60_000),
       functionId: "asr-context-correction",
     });
+
+    const correctedText =
+      typeof correctedTextRaw === "string" &&
+      correctedTextRaw.trim().length > 0 &&
+      correctedTextRaw.length <= CONTEXT_CORRECTED_MAX_LENGTH
+        ? correctedTextRaw
+        : null;
+
+    if (!correctedText) {
+      logger.warn(
+        "Ответ AI для контекстной коррекции отклонён (пусто или слишком длинно), оставляем исходный текст",
+        {
+          functionId: "asr-context-correction",
+          type: typeof correctedTextRaw,
+          length:
+            typeof correctedTextRaw === "string"
+              ? correctedTextRaw.length
+              : undefined,
+        },
+      );
+      return text;
+    }
 
     const hasChanges = correctedText.trim() !== text.trim();
 
