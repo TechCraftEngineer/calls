@@ -30,11 +30,13 @@ export const transcribeCallFn = inngest.createFunction(
   },
   async ({ event, step }) => {
     const { callId } = event.data;
-    if (!callId) {
-      throw new Error("callId обязателен");
-    }
+    await step.run("validate/input", async () => {
+      if (!callId) {
+        throw new Error("callId обязателен");
+      }
+    });
 
-    const call = await step.run("get-call", async () => {
+    const call = await step.run("db/calls:get", async () => {
       const c = await callsService.getCall(callId);
       if (!c) throw new Error(`Звонок не найден: ${callId}`);
       if (!c.fileId)
@@ -43,7 +45,7 @@ export const transcribeCallFn = inngest.createFunction(
     });
 
     const fileId = call.fileId;
-    const audioUrl = await step.run("get-audio-url", async () => {
+    const audioUrl = await step.run("audio/url:resolve", async () => {
       if (!fileId) throw new Error(`У звонка ${callId} нет привязанного файла`);
       const file = await filesService.getFileById(fileId);
       if (!file) throw new Error(`Файл не найден: ${fileId}`);
@@ -64,7 +66,7 @@ export const transcribeCallFn = inngest.createFunction(
       return url;
     });
 
-    const workspace = await step.run("get-workspace", async () => {
+    const workspace = await step.run("db/workspaces:get", async () => {
       const ws = await workspacesService.getById(call.workspaceId);
       if (!ws) {
         logger.warn("Workspace not found for call transcription", {
@@ -77,7 +79,7 @@ export const transcribeCallFn = inngest.createFunction(
     });
 
     const managerNameFromPbx = await step.run(
-      "resolve-manager-name-from-pbx",
+      "pbx/manager:resolve",
       async () => {
         try {
           const pbxIntegration =
@@ -159,7 +161,7 @@ export const transcribeCallFn = inngest.createFunction(
       },
     );
 
-    const result = await step.run("transcribe", async () => {
+    const result = await step.run("asr/transcribe", async () => {
       logger.info("Запуск транскрибации", {
         callId,
         audioUrlLength: audioUrl.length,
@@ -169,7 +171,7 @@ export const transcribeCallFn = inngest.createFunction(
       });
     });
 
-    const identifyResult = await step.run("identify-speakers", async () => {
+    const identifyResult = await step.run("llm/diarize", async () => {
       const fallbackManagerName = call.name?.trim() || null;
       return identifySpeakersWithLlm(result.normalizedText, {
         direction: call.direction,
@@ -179,7 +181,7 @@ export const transcribeCallFn = inngest.createFunction(
     });
     const { text: finalText, customerName, operatorName } = identifyResult;
 
-    await step.run("save-transcript", async () => {
+    await step.run("persist/transcript:upsert", async () => {
       const normalizedCallType = result.callType?.trim() || null;
       // Безопасная сериализация метаданных
       let serializedMetadata: Record<string, unknown> = {};
@@ -238,7 +240,7 @@ export const transcribeCallFn = inngest.createFunction(
     });
 
     await step.sendEvent(
-      "trigger-evaluation",
+      "event/call.evaluate.requested",
       evaluateRequested.create({ callId }),
     );
 

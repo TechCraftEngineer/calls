@@ -1,6 +1,6 @@
 import { settingsService } from "@calls/db";
 import { syncFtp } from "../../megafon/ftp-sync";
-import { inngest } from "../client";
+import { inngest, transcribeRequested } from "../client";
 
 export const megafonSyncFn = inngest.createFunction(
   {
@@ -57,10 +57,11 @@ export const megafonSyncFn = inngest.createFunction(
       if (allCreatedCallIds.length > 0) {
         await step.sendEvent(
           "trigger-transcriptions",
-          allCreatedCallIds.map((callId) => ({
-            name: "call/transcribe.requested",
-            data: { callId },
-          })),
+          allCreatedCallIds.map((callId) =>
+            // Используем eventType.create, чтобы Inngest видел корректную схему события
+            // и валидировал payload.
+            transcribeRequested.create({ callId }),
+          ),
         );
       }
 
