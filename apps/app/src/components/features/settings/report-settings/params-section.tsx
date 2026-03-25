@@ -5,7 +5,6 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle,
   Checkbox,
   Field,
   Input,
@@ -31,7 +30,6 @@ export function ReportParamsSection({
   return (
     <Card className="border-border/50 bg-card/50">
       <CardHeader className="px-4 pb-0">
-        <CardTitle className="text-base">Параметры отчетов</CardTitle>
         <CardDescription>
           Дополнительные параметры фильтров для расчетов в отчетах.
         </CardDescription>
