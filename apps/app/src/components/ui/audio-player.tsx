@@ -72,7 +72,7 @@ export default function AudioPlayer({
       // Если разница небольшая (округление/погрешности контейнера) — берем браузер.
       const diffSeconds = Math.abs(browserDuration - resolvedDurationOverride);
       const relDiff = diffSeconds / browserDuration;
-      const preferBrowser = diffSeconds <= 2 || relDiff <= 0.05;
+      const preferBrowser = diffSeconds <= 2 && relDiff <= 0.05;
 
       setDuration(preferBrowser ? browserDuration : resolvedDurationOverride);
     };

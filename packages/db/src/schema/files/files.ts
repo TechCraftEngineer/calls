@@ -4,6 +4,7 @@
 
 import { sql } from "drizzle-orm";
 import {
+  check,
   index,
   integer,
   jsonb,
@@ -50,6 +51,10 @@ export const files = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => [
+    check(
+      "chk_files_duration_seconds_finite_positive",
+      sql`${table.durationSeconds} IS NULL OR (isfinite(${table.durationSeconds}) AND ${table.durationSeconds} > 0)`,
+    ),
     index("files_workspace_id_idx").on(table.workspaceId),
     index("files_file_type_idx").on(table.fileType),
     index("files_storage_key_idx").on(table.storageKey),

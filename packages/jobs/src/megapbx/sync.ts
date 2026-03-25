@@ -5,7 +5,7 @@ import {
   pbxRepository,
   pbxService,
 } from "@calls/db";
-import { getAudioDurationFromBuffer } from "../asr/audio/get-audio-duration";
+import { getAudioDurationFromBuffer } from "~/asr/audio/get-audio-duration";
 import { inngest, transcribeRequested } from "../inngest/client";
 import { createLogger } from "../logger";
 import { MegaPbxClient } from "./client";
@@ -146,18 +146,17 @@ async function uploadRecordingIfNeeded(
 
   const filename = `megapbx/${providerCallId}.${extension}`;
   let fileDurationSeconds: number | null = null;
-  try {
-    const duration = await getAudioDurationFromBuffer(buffer);
-    if (typeof duration === "number" && duration > 0) {
-      fileDurationSeconds = duration;
-    }
-  } catch (durationErr) {
+  const duration = await getAudioDurationFromBuffer(buffer);
+  if (
+    typeof duration === "number" &&
+    Number.isFinite(duration) &&
+    duration > 0
+  ) {
+    fileDurationSeconds = duration;
+  } else {
     logger.warn("Не удалось определить длительность записи", {
       providerCallId,
-      error:
-        durationErr instanceof Error
-          ? durationErr.message
-          : String(durationErr),
+      duration,
     });
   }
 

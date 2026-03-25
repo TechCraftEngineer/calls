@@ -325,19 +325,19 @@ export async function syncFtp(
           // fileDurationSeconds храним в `files`, а callDurationSeconds (округлённая) - в `calls`.
           let fileDurationSeconds: number | null = null;
           let callDurationSeconds: number | null = null;
-          try {
-            const duration = await getAudioDurationFromBuffer(downloadBuffer);
-            if (typeof duration === "number" && duration > 0) {
-              fileDurationSeconds = duration;
-              callDurationSeconds = Math.round(duration);
-            }
-          } catch (durationErr) {
+
+          const duration = await getAudioDurationFromBuffer(downloadBuffer);
+          if (
+            typeof duration === "number" &&
+            Number.isFinite(duration) &&
+            duration > 0
+          ) {
+            fileDurationSeconds = duration;
+            callDurationSeconds = Math.round(duration);
+          } else {
             logger.warn("Не удалось определить длительность записи", {
               filename: relativePath,
-              error:
-                durationErr instanceof Error
-                  ? durationErr.message
-                  : String(durationErr),
+              duration,
             });
           }
 

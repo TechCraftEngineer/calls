@@ -11,15 +11,98 @@ import {
   workspacesService,
 } from "@calls/db";
 import { deleteObjectFromS3, getDownloadUrlForAsr } from "@calls/lib";
-import type { PreprocessingResult } from "../../asr/audio/audio-preprocessing";
-import { getAudioDurationFromBuffer } from "../../asr/audio/get-audio-duration";
-import { identifySpeakersWithLlm } from "../../asr/llm/identify-speakers";
-import { prepareAudioForAsr } from "../../asr/pipeline/prepare-audio";
-import { runTranscriptionPipelineFromAsrAudio } from "../../asr/pipeline/run-transcription-pipeline";
+import type { PreprocessingResult } from "~/asr/audio/audio-preprocessing";
+import { getAudioDurationFromBuffer } from "~/asr/audio/get-audio-duration";
+import { identifySpeakersWithLlm } from "~/asr/llm/identify-speakers";
+import { prepareAudioForAsr } from "~/asr/pipeline/prepare-audio";
+import { runTranscriptionPipelineFromAsrAudio } from "~/asr/pipeline/run-transcription-pipeline";
 import { createLogger } from "../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../client";
 
 const logger = createLogger("transcribe-call");
+
+type ValidatedPcm16Wav =
+  | {
+      valid: true;
+      fmt: {
+        audioFormat: number;
+        numChannels: number;
+        sampleRate: number;
+        bitsPerSample: number;
+      };
+    }
+  | { valid: false; reason: string };
+
+function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
+  if (buffer.length < 12) {
+    return { valid: false, reason: "Buffer is too small for RIFF/WAVE" };
+  }
+
+  const riff = buffer.toString("ascii", 0, 4);
+  const wave = buffer.toString("ascii", 8, 12);
+  if (riff !== "RIFF" || wave !== "WAVE") {
+    return {
+      valid: false,
+      reason: `Invalid magic bytes (riff=${riff}, wave=${wave})`,
+    };
+  }
+
+  // WAV structure:
+  // RIFF header (12 bytes) -> sequence of chunks (4-char id + 4-byte size) until EOF.
+  let offset = 12;
+  while (offset + 8 <= buffer.length) {
+    const chunkId = buffer.toString("ascii", offset, offset + 4);
+    const chunkSize = buffer.readUInt32LE(offset + 4);
+    offset += 8;
+
+    if (chunkSize > buffer.length - offset) {
+      return {
+        valid: false,
+        reason: `Chunk ${chunkId} size (${chunkSize}) exceeds buffer`,
+      };
+    }
+
+    if (chunkId === "fmt ") {
+      // PCM fmt chunk must be at least 16 bytes.
+      if (chunkSize < 16 || offset + 16 > buffer.length) {
+        return {
+          valid: false,
+          reason: `Invalid fmt chunk (size=${chunkSize})`,
+        };
+      }
+
+      const audioFormat = buffer.readUInt16LE(offset);
+      const numChannels = buffer.readUInt16LE(offset + 2);
+      const sampleRate = buffer.readUInt32LE(offset + 4);
+      const bitsPerSample = buffer.readUInt16LE(offset + 14);
+
+      if (audioFormat !== 1) {
+        return {
+          valid: false,
+          reason: `Expected PCM (audioFormat=1), got ${audioFormat}`,
+        };
+      }
+
+      if (bitsPerSample !== 16) {
+        return {
+          valid: false,
+          reason: `Expected 16-bit samples (bitsPerSample=16), got ${bitsPerSample}`,
+        };
+      }
+
+      return {
+        valid: true,
+        fmt: { audioFormat, numChannels, sampleRate, bitsPerSample },
+      };
+    }
+
+    // Chunks are padded to even byte boundaries.
+    offset += chunkSize;
+    if (chunkSize % 2 === 1) offset += 1;
+  }
+
+  return { valid: false, reason: "Missing fmt chunk" };
+}
 
 export const transcribeCallFn = inngest.createFunction(
   {
@@ -193,6 +276,22 @@ export const transcribeCallFn = inngest.createFunction(
           enhancedBuffer.length > 0 &&
           enhancedFilename
         ) {
+          const wavValidation = validatePcm16WavBuffer(enhancedBuffer);
+          if (!wavValidation.valid) {
+            logger.error(
+              "enhanced-аудио не является корректным 16-bit PCM WAV",
+              {
+                callId,
+                enhancedFilename,
+                bufferLength: enhancedBuffer.length,
+                reason: wavValidation.reason,
+              },
+            );
+            throw new Error(
+              `Invalid enhanced WAV buffer: ${wavValidation.reason}`,
+            );
+          }
+
           let enhancedDurationSeconds: number | null = null;
           try {
             const duration = await getAudioDurationFromBuffer(enhancedBuffer);

@@ -11,10 +11,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Установка Rust для компиляции deepfilterlib
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH="/root/.cargo/bin:${PATH}"
-
 RUN groupadd -r audio_user && useradd -r -g audio_user -d /home/audio_user -m audio_user
 
 # Numba may fail when it tries to create a compilation cache inside containers.

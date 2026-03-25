@@ -114,7 +114,10 @@ export function AudioComparisonPlayer({
         </TabsContent>
         <TabsContent value="original" className="mt-0">
           <div className="space-y-2">
-            <AudioPlayer src={originalData.url} />
+            <AudioPlayer
+              src={originalData.url}
+              durationSeconds={originalData.duration ?? undefined}
+            />
             <p className="text-muted-foreground text-xs">
               Оригинальная запись без обработки
             </p>
