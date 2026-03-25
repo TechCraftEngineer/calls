@@ -31,5 +31,5 @@ export const getEnhancedPlaybackUrl = workspaceProcedure
       });
     }
     const url = await getDownloadUrl(file.storageKey);
-    return { url };
+    return { url, duration: call.duration ?? null };
   });

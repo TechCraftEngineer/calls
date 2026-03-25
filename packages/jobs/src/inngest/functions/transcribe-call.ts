@@ -10,7 +10,7 @@ import {
   workspaceIntegrationsRepository,
   workspacesService,
 } from "@calls/db";
-import { getDownloadUrlForAsr } from "@calls/lib";
+import { deleteObjectFromS3, getDownloadUrlForAsr } from "@calls/lib";
 import type { PreprocessingResult } from "../../asr/audio/audio-preprocessing";
 import { identifySpeakersWithLlm } from "../../asr/llm/identify-speakers";
 import { prepareAudioForAsr } from "../../asr/pipeline/prepare-audio";
@@ -275,6 +275,31 @@ export const transcribeCallFn = inngest.createFunction(
               // Не бросаем ошибку: ASR уже использует `asrAudioUrl`.
               // Если ссылку сохранить не удалось, загруженный файл может стать orphaned.
               try {
+                try {
+                  await deleteObjectFromS3(uploadedEnhancedFile.storageKey);
+                  logger.info(
+                    "S3 enhanced-аудиофайл удалён после ошибки updateEnhancedAudio",
+                    {
+                      callId,
+                      enhancedFileId: uploadedEnhancedFile.id,
+                      storageKey: uploadedEnhancedFile.storageKey,
+                    },
+                  );
+                } catch (s3DeleteError) {
+                  logger.warn(
+                    "Не удалось удалить orphaned S3 объект после ошибки updateEnhancedAudio",
+                    {
+                      callId,
+                      enhancedFileId: uploadedEnhancedFile.id,
+                      storageKey: uploadedEnhancedFile.storageKey,
+                      deleteError:
+                        s3DeleteError instanceof Error
+                          ? s3DeleteError.message
+                          : String(s3DeleteError),
+                    },
+                  );
+                }
+
                 const deleted = await filesService.deleteFile(
                   uploadedEnhancedFile.storageKey,
                 );

@@ -144,9 +144,9 @@ async def enhance_audio(
                         audio_48k = audio
                     
                     # Применяем DeepFilterNet
-                    audio_tensor = torch.from_numpy(audio_48k).unsqueeze(0)
+                    audio_tensor = torch.from_numpy(audio_48k).float()
                     enhanced = df_enhance(deepfilter_model, df_state, audio_tensor)
-                    audio_48k = enhanced.squeeze().numpy()
+                    audio_48k = enhanced.numpy()
                     
                     # Возвращаем к исходной частоте
                     if sr != 48000:
@@ -209,10 +209,13 @@ async def enhance_audio(
                 # Критичный диапазон: 1000-3000 Hz (разборчивость)
                 speech_mask = (frequencies >= 300) & (frequencies <= 3400)
                 critical_mask = (frequencies >= 1000) & (frequencies <= 3000)
-                
-                fft[speech_mask] *= 1.3
-                fft[critical_mask] *= 1.5  # Максимальное усиление критичного диапазона
-                fft[~speech_mask] *= 0.4   # Сильнее подавляем нерелевантные частоты
+
+                # Применяем усиления за один проход, чтобы диапазоны не умножались дважды.
+                gain = np.ones_like(frequencies, dtype=np.float32)
+                gain[critical_mask] = 1.5  # Максимальное усиление критичного диапазона
+                gain[speech_mask & ~critical_mask] = 1.3  # Усиление речевого диапазона (кроме критичного)
+                gain[~speech_mask] = 0.4  # Сильнее подавляем нерелевантные частоты
+                fft *= gain
 
                 audio = np.fft.irfft(fft, n=len(audio))
 

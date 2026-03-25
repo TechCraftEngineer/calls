@@ -8,21 +8,37 @@ interface AudioPlayerProps {
   src: string;
   autoPlay?: boolean;
   className?: string;
+  /**
+   * Если передано, используем это значение вместо `HTMLAudioElement.duration`.
+   * Полезно, когда браузер неверно читает метаданные для конкретного формата/кодека.
+   */
+  durationSeconds?: number | null;
 }
 
 export default function AudioPlayer({
   src,
   autoPlay = false,
   className,
+  durationSeconds,
 }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const seekSliderRef = useRef<HTMLInputElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const resolvedDurationOverride =
+    typeof durationSeconds === "number" && durationSeconds > 0
+      ? durationSeconds
+      : null;
+  const [duration, setDuration] = useState(resolvedDurationOverride ?? 0);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (resolvedDurationOverride != null) {
+      setDuration(resolvedDurationOverride);
+    }
+  }, [resolvedDurationOverride]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -33,7 +49,10 @@ export default function AudioPlayer({
         setCurrentTime(audio.currentTime);
       }
     };
-    const updateDuration = () => setDuration(audio.duration);
+    const updateDuration = () => {
+      if (resolvedDurationOverride != null) return;
+      setDuration(audio.duration);
+    };
     const onEnded = () => setIsPlaying(false);
     const onCanPlay = () => setIsLoading(false);
     const onWaiting = () => setIsLoading(true);
@@ -66,7 +85,7 @@ export default function AudioPlayer({
       audio.removeEventListener("waiting", onWaiting);
       audio.removeEventListener("playing", onPlaying);
     };
-  }, [autoPlay, isDragging]);
+  }, [autoPlay, isDragging, resolvedDurationOverride]);
 
   const togglePlay = () => {
     if (audioRef.current) {
@@ -153,9 +172,9 @@ export default function AudioPlayer({
             title={isMuted ? "Включить звук" : "Выключить звук"}
           >
             {isMuted ? (
-              <VolumeX className="size-[18px]" />
+              <VolumeX className="size-4.5" />
             ) : (
-              <Volume2 className="size-[18px]" />
+              <Volume2 className="size-4.5" />
             )}
           </Button>
           <Button

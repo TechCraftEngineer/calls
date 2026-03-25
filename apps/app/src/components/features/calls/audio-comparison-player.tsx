@@ -100,7 +100,10 @@ export function AudioComparisonPlayer({
         </TabsList>
         <TabsContent value="enhanced" className="mt-0">
           <div className="space-y-2">
-            <AudioPlayer src={enhancedData.url} />
+            <AudioPlayer
+              src={enhancedData.url}
+              durationSeconds={enhancedData.duration ?? undefined}
+            />
             <p className="text-muted-foreground text-xs">
               Аудио обработано с помощью ML для улучшения качества распознавания
             </p>
