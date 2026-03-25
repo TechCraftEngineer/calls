@@ -30,11 +30,13 @@ export const transcribeCallFn = inngest.createFunction(
   },
   async ({ event, step }) => {
     const { callId } = event.data;
-    if (!callId) {
-      throw new Error("callId обязателен");
-    }
+    await step.run("validate/input", async () => {
+      if (!callId) {
+        throw new Error("callId обязателен");
+      }
+    });
 
-    const call = await step.run("get-call", async () => {
+    const call = await step.run("db/calls:get", async () => {
       const c = await callsService.getCall(callId);
       if (!c) throw new Error(`Звонок не найден: ${callId}`);
       if (!c.fileId)
@@ -43,7 +45,7 @@ export const transcribeCallFn = inngest.createFunction(
     });
 
     const fileId = call.fileId;
-    const audioUrl = await step.run("get-audio-url", async () => {
+    const audioUrl = await step.run("audio/url:resolve", async () => {
       if (!fileId) throw new Error(`У звонка ${callId} нет привязанного файла`);
       const file = await filesService.getFileById(fileId);
       if (!file) throw new Error(`Файл не найден: ${fileId}`);
@@ -64,7 +66,7 @@ export const transcribeCallFn = inngest.createFunction(
       return url;
     });
 
-    const workspace = await step.run("get-workspace", async () => {
+    const workspace = await step.run("db/workspaces:get", async () => {
       const ws = await workspacesService.getById(call.workspaceId);
       if (!ws) {
         logger.warn("Workspace not found for call transcription", {
@@ -77,7 +79,7 @@ export const transcribeCallFn = inngest.createFunction(
     });
 
     const managerNameFromPbx = await step.run(
-      "resolve-manager-name-from-pbx",
+      "pbx/manager:resolve",
       async () => {
         try {
           const pbxIntegration =
@@ -159,7 +161,7 @@ export const transcribeCallFn = inngest.createFunction(
       },
     );
 
-    const result = await step.run("transcribe", async () => {
+    const result = await step.run("asr/transcribe", async () => {
       logger.info("Запуск транскрибации", {
         callId,
         audioUrlLength: audioUrl.length,
@@ -169,54 +171,7 @@ export const transcribeCallFn = inngest.createFunction(
       });
     });
 
-    await step.run("save-enhanced-audio", async () => {
-      const enhancedBufferRaw = result.enhancedAudioBuffer;
-      const enhancedBuffer = Buffer.isBuffer(enhancedBufferRaw)
-        ? enhancedBufferRaw
-        : enhancedBufferRaw &&
-            typeof enhancedBufferRaw === "object" &&
-            "type" in enhancedBufferRaw &&
-            (enhancedBufferRaw as { type?: unknown }).type === "Buffer" &&
-            "data" in enhancedBufferRaw &&
-            Array.isArray((enhancedBufferRaw as { data?: unknown }).data)
-          ? Buffer.from((enhancedBufferRaw as { data: number[] }).data)
-          : null;
-
-      if (!enhancedBuffer || enhancedBuffer.length === 0) return;
-
-      try {
-        const datePrefix = new Date(call.timestamp).toISOString().slice(0, 10);
-        const originalName = `${datePrefix}/${result.enhancedAudioFilename ?? `call-${callId}-enhanced.wav`}`;
-        const uploaded = await filesService.uploadFile(call.workspaceId, {
-          originalName,
-          buffer: enhancedBuffer,
-          mimeType: "audio/wav",
-          fileType: "call_recording",
-          source: "asr-preprocessing",
-          metadata: {
-            originalCallId: callId,
-            preprocessed: true,
-          },
-        });
-
-        await callsService.updateEnhancedAudio(callId, uploaded.id);
-
-        logger.info("Улучшенное аудио сохранено", {
-          callId,
-          enhancedAudioFileId: uploaded.id,
-          storageKey: uploaded.storageKey,
-          sizeBytes: uploaded.sizeBytes,
-        });
-      } catch (error) {
-        // Graceful handling: транскрипцию не блокируем, если сохранить улучшенное аудио не удалось
-        logger.warn("Не удалось сохранить улучшенное аудио", {
-          callId,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    });
-
-    const identifyResult = await step.run("identify-speakers", async () => {
+    const identifyResult = await step.run("llm/diarize", async () => {
       const fallbackManagerName = call.name?.trim() || null;
       return identifySpeakersWithLlm(result.normalizedText, {
         direction: call.direction,
@@ -226,7 +181,7 @@ export const transcribeCallFn = inngest.createFunction(
     });
     const { text: finalText, customerName, operatorName } = identifyResult;
 
-    await step.run("save-transcript", async () => {
+    await step.run("persist/transcript:upsert", async () => {
       const normalizedCallType = result.callType?.trim() || null;
       // Безопасная сериализация метаданных
       let serializedMetadata: Record<string, unknown> = {};
@@ -285,7 +240,7 @@ export const transcribeCallFn = inngest.createFunction(
     });
 
     await step.sendEvent(
-      "trigger-evaluation",
+      "event/call.evaluate.requested",
       evaluateRequested.create({ callId }),
     );
 

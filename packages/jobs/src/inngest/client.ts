@@ -1,7 +1,7 @@
 import { eventType, Inngest, staticSchema } from "inngest";
 
 export const inngest = new Inngest({
-  id: "calls-sync-service",
+  id: "calls-sync-and-transcribe",
   name: "QBS Звонки",
   checkpointing: {
     maxRuntime: "50s",
