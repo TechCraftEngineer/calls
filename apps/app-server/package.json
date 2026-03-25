@@ -17,6 +17,7 @@
     "@calls/emails": "workspace:*",
     "@calls/jobs": "workspace:*",
     "@calls/telegram-bot": "workspace:*",
+    "@calls/validators": "workspace:*",
     "@orpc/server": "^1.13.10",
     "better-auth": "1.5.6",
     "grammy": "1.41.1",
