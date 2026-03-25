@@ -1,10 +1,10 @@
-import type { AsrResult, AsrSource, TranscriptMetadata } from "../types";
-import { parseHuggingFaceRaw } from "./huggingface-raw";
+import { parseHuggingFaceRaw } from "~/asr/pipeline/huggingface-raw";
 import {
   ASR_LOG_ERROR_MAX_LENGTH,
   ASR_LOG_TEXT_MAX_LENGTH,
   truncateForLog,
-} from "./log-utils";
+} from "~/asr/pipeline/log-utils";
+import type { AsrResult, AsrSource, TranscriptMetadata } from "~/asr/types";
 
 export function buildTranscriptMetadata(input: {
   assemblyai: AsrResult | null;

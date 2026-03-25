@@ -177,15 +177,7 @@ export const transcribeCallFn = inngest.createFunction(
       let asrAudioUrl = audioUrl;
       let yandexUseLinear16PcmForYandex = false;
 
-      if (call.enhancedAudioFileId) {
-        const enhancedFile = await filesService.getFileById(
-          call.enhancedAudioFileId,
-        );
-        if (enhancedFile) {
-          asrAudioUrl = await getDownloadUrlForAsr(enhancedFile.storageKey);
-          yandexUseLinear16PcmForYandex = true;
-        }
-      } else {
+      const prepareAndMaybeUseEnhancedAudio = async () => {
         const prepared = await prepareAudioForAsr(audioUrl, {
           audioPreprocessing: undefined,
         });
@@ -200,14 +192,19 @@ export const transcribeCallFn = inngest.createFunction(
           enhancedBuffer.length > 0 &&
           enhancedFilename
         ) {
-          const normalizedFilename = enhancedFilename
-            .toLowerCase()
-            .endsWith(".wav")
+          const enhancedFilenameLower = enhancedFilename.toLowerCase();
+          const normalizedFilename = enhancedFilenameLower.endsWith(".wav")
             ? enhancedFilename
-            : enhancedFilename.replace(/\.[^.]+$/, ".wav");
+            : enhancedFilenameLower.includes(".")
+              ? enhancedFilename.replace(/\.[^.]+$/, ".wav")
+              : `${enhancedFilename}.wav`;
+
+          let uploadedEnhancedFile: Awaited<
+            ReturnType<typeof filesService.uploadFile>
+          > | null = null;
 
           try {
-            const enhancedFile = await filesService.uploadFile(
+            uploadedEnhancedFile = await filesService.uploadFile(
               call.workspaceId,
               {
                 originalName: normalizedFilename,
@@ -218,17 +215,86 @@ export const transcribeCallFn = inngest.createFunction(
               },
             );
 
-            await callsService.updateEnhancedAudio(callId, enhancedFile.id);
-
-            asrAudioUrl = await getDownloadUrlForAsr(enhancedFile.storageKey);
+            // Важно: обновление `calls.enhanced_audio_file_id` может не
+            // пройти, но ASR при этом должен идти по уже загруженному WAV.
+            asrAudioUrl = await getDownloadUrlForAsr(
+              uploadedEnhancedFile.storageKey,
+            );
             yandexUseLinear16PcmForYandex = true;
           } catch (error) {
             logger.warn("Не удалось сохранить улучшенное аудио", {
               callId,
               error: error instanceof Error ? error.message : String(error),
             });
+
+            if (uploadedEnhancedFile) {
+              try {
+                const deleted = await filesService.deleteFile(
+                  uploadedEnhancedFile.storageKey,
+                );
+                if (deleted) {
+                  logger.info("Загруженный enhanced-аудиофайл удалён", {
+                    callId,
+                    enhancedFileId: uploadedEnhancedFile.id,
+                  });
+                } else {
+                  logger.warn(
+                    "Не удалось удалить загруженный enhanced-аудиофайл",
+                    {
+                      callId,
+                      enhancedFileId: uploadedEnhancedFile.id,
+                      storageKey: uploadedEnhancedFile.storageKey,
+                    },
+                  );
+                }
+              } catch (deleteError) {
+                logger.warn("Ошибка при удалении orphaned файла", {
+                  callId,
+                  enhancedFileId: uploadedEnhancedFile.id,
+                  deleteError:
+                    deleteError instanceof Error
+                      ? deleteError.message
+                      : String(deleteError),
+                });
+              }
+            }
+          }
+
+          if (uploadedEnhancedFile) {
+            try {
+              await callsService.updateEnhancedAudio(
+                callId,
+                uploadedEnhancedFile.id,
+              );
+            } catch (error) {
+              logger.warn("Не удалось обновить enhanced-аудио в calls", {
+                callId,
+                enhancedFileId: uploadedEnhancedFile.id,
+                error: error instanceof Error ? error.message : String(error),
+              });
+              // Не бросаем ошибку: ASR уже использует `asrAudioUrl`.
+            }
           }
         }
+      };
+
+      if (call.enhancedAudioFileId) {
+        const enhancedFile = await filesService.getFileById(
+          call.enhancedAudioFileId,
+        );
+
+        if (enhancedFile) {
+          asrAudioUrl = await getDownloadUrlForAsr(enhancedFile.storageKey);
+          yandexUseLinear16PcmForYandex = true;
+        } else {
+          logger.warn("enhancedAudioFileId задан, но файл не найден", {
+            callId,
+            enhancedAudioFileId: call.enhancedAudioFileId,
+          });
+          await prepareAndMaybeUseEnhancedAudio();
+        }
+      } else {
+        await prepareAndMaybeUseEnhancedAudio();
       }
 
       return runTranscriptionPipelineFromAsrAudio(

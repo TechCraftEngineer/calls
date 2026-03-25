@@ -1,4 +1,4 @@
-import { createLogger } from "../../logger";
+import { createLogger } from "~/logger";
 import {
   type PreprocessingOptions,
   type PreprocessingResult,
@@ -90,8 +90,7 @@ export async function runTranscriptionPipelineFromAsrAudio(
     hasHuggingFace: asr.huggingFaceSuccessful.length > 0,
     huggingFaceModelCount: asr.huggingFaceModelCount,
     huggingFaceSuccessCount: asr.huggingFaceSuccessCount,
-    contextCorrectionApplied:
-      !options?.skipContextCorrection && post.contextCorrectionApplied,
+    contextCorrectionApplied: post.contextCorrectionApplied,
     audioPreprocessed: preprocessingResult?.wasProcessed ?? false,
     hasEnhancedAudio: !!preprocessingResult?.enhancedAudioBuffer,
   });

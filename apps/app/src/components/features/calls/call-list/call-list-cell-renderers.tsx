@@ -109,11 +109,8 @@ export function renderCallTopicCell(transcript: CallWithDetails["transcript"]) {
           className="block min-w-0 max-w-full truncate cursor-pointer bg-transparent border-0 p-0 text-[#555] font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              e.stopPropagation();
-              // Radix attaches click handlers to the trigger child when using `asChild`,
-              // so we forward Enter/Space via a synthetic click.
-              e.currentTarget.click();
+              // `PopoverTrigger` с `asChild` (через `composeEventHandlers`) вешает обработчики клика
+              // на дочерний элемент, поэтому для Enter/Space полагаемся на нативную активацию кнопки.
             }
           }}
         >

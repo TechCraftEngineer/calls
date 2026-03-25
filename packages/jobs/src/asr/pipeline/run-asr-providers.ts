@@ -1,4 +1,4 @@
-import { createLogger } from "../../logger";
+import { createLogger } from "~/logger";
 import { getAudioDurationFromUrl } from "../audio/get-audio-duration";
 import { transcribeWithAssemblyAi } from "../providers/assemblyai";
 import {

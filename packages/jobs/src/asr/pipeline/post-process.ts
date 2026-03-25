@@ -28,10 +28,10 @@ export async function postProcessText(input: {
   let contextCorrectedText = rawText;
   let contextCorrectionApplied = false;
   if (!options?.skipContextCorrection && rawText.trim().length > 0) {
-    contextCorrectionApplied = true;
     contextCorrectedText = await correctWithContext(rawText, {
       companyContext: options?.companyContext,
     });
+    contextCorrectionApplied = true;
   }
 
   // LLM нормализация
