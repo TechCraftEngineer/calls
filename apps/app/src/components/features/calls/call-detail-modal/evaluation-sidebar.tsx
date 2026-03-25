@@ -11,7 +11,6 @@ import {
 import {
   BarChart3,
   Briefcase,
-  FileAudio,
   Lightbulb,
   Loader2,
   RefreshCw,
@@ -19,13 +18,8 @@ import {
   User,
   UserCheck,
 } from "lucide-react";
-import { CallRecordPlayer } from "../call-record-player";
+import { AudioComparisonPlayer } from "../audio-comparison-player";
 import type { CallDetail, EvaluationDetail, TranscriptDetail } from "./types";
-
-function formatFileSize(bytes?: number): string {
-  if (!bytes) return "0.00 MB";
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
 
 interface EvaluationSidebarProps {
   call: CallDetail;
@@ -59,17 +53,8 @@ export default function EvaluationSidebar({
   return (
     <div className="flex min-w-0 flex-col gap-4 sm:gap-6">
       <Card className="border-border/60">
-        <CardHeader className="px-4 pb-2 sm:px-6 sm:pb-3">
-          <CardTitle className="text-muted-foreground flex items-center gap-2 text-xs font-medium uppercase tracking-wider">
-            <FileAudio className="size-3.5 shrink-0" />
-            Запись звонка
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 px-4 pb-4 sm:px-6 sm:pb-6">
-          <CallRecordPlayer callId={call.id} />
-          <p className="text-muted-foreground text-xs">
-            Размер: {formatFileSize(call.sizeBytes)}
-          </p>
+        <CardContent className="px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-6">
+          <AudioComparisonPlayer callId={call.id} />
         </CardContent>
       </Card>
 

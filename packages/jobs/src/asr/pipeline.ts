@@ -4,6 +4,11 @@
 
 import { createLogger } from "../logger";
 import { transcribeWithAssemblyAi } from "./assemblyai";
+import {
+  preprocessAudio,
+  type PreprocessingOptions,
+} from "./audio-preprocessing";
+import { correctWithContext } from "./context-correction";
 import { getAudioDurationFromUrl } from "./get-audio-duration";
 import {
   getHuggingFaceAsrModels,
@@ -46,6 +51,9 @@ export async function runTranscriptionPipeline(
   audioUrl: string,
   options?: {
     skipNormalization?: boolean;
+    skipContextCorrection?: boolean;
+    skipAudioPreprocessing?: boolean;
+    audioPreprocessing?: PreprocessingOptions;
     summaryPrompt?: string;
     companyContext?: string | null;
   },
@@ -55,18 +63,49 @@ export async function runTranscriptionPipeline(
     audioUrl: audioUrl.slice(0, 80),
   });
 
+  // Предобработка аудио (автоматический fallback: Python ML → FFmpeg → без обработки)
+  let processedAudioUrl = audioUrl;
+  let preprocessingResult: Awaited<ReturnType<typeof preprocessAudio>> | null =
+    null;
+  if (!options?.skipAudioPreprocessing) {
+    try {
+      preprocessingResult = await preprocessAudio(audioUrl, {
+        // По умолчанию пытаемся использовать Python ML (если доступен)
+        // Если недоступен - автоматически fallback на FFmpeg
+        // Если FFmpeg недоступен - без обработки
+        normalizeVolume: true, // КРИТИЧНО для тихих слов
+        enhanceSpeech: true, // Усиление речевых частот
+        noiseReduction: false, // Осторожно, может искажать
+        ...options?.audioPreprocessing,
+      });
+      processedAudioUrl = preprocessingResult.audioUrl;
+      if (preprocessingResult.wasProcessed) {
+        logger.info("Аудио предобработано", {
+          appliedFilters: preprocessingResult.appliedFilters,
+          processingTimeMs: preprocessingResult.processingTimeMs,
+        });
+      }
+    } catch (error) {
+      logger.warn("Предобработка аудио не удалась, используем оригинал", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Fallback на оригинальный аудио
+      preprocessingResult = null;
+      processedAudioUrl = audioUrl;
+    }
+  }
   // Параллельно: ASR + извлечение длительности (music-metadata, без зависимости от ASR)
   const huggingFaceModels = getHuggingFaceAsrModels();
   const [assemblyaiResult, yandexResult, huggingFaceResults, durationResult] =
     await Promise.allSettled([
-      transcribeWithAssemblyAi(audioUrl),
-      transcribeWithYandex(audioUrl),
+      transcribeWithAssemblyAi(processedAudioUrl),
+      transcribeWithYandex(processedAudioUrl),
       Promise.allSettled(
         huggingFaceModels.map((model) =>
-          transcribeWithHuggingFace(audioUrl, model),
+          transcribeWithHuggingFace(processedAudioUrl, model),
         ),
       ),
-      getAudioDurationFromUrl(audioUrl),
+      getAudioDurationFromUrl(processedAudioUrl),
     ]);
 
   const assemblyai =
@@ -151,6 +190,14 @@ export async function runTranscriptionPipeline(
     huggingFaceText: huggingFaceText || undefined,
     huggingFaceTexts,
   });
+
+  // Контекстная коррекция: исправляем ошибки ASR с учетом контекста разговора
+  let contextCorrectedText = rawText;
+  if (!options?.skipContextCorrection && rawText.trim().length > 0) {
+    contextCorrectedText = await correctWithContext(rawText, {
+      companyContext: options?.companyContext,
+    });
+  }
 
   const processingTimeMs = Date.now() - start;
 
@@ -261,9 +308,9 @@ export async function runTranscriptionPipeline(
     ],
   };
 
-  let normalizedText = rawText;
-  if (!options?.skipNormalization && rawText.trim().length > 0) {
-    normalizedText = await normalizeWithLlm(rawText);
+  let normalizedText = contextCorrectedText;
+  if (!options?.skipNormalization && contextCorrectedText.trim().length > 0) {
+    normalizedText = await normalizeWithLlm(contextCorrectedText);
   }
 
   const defaultTopic = "Не определена";
@@ -289,6 +336,7 @@ export async function runTranscriptionPipeline(
     processingTimeMs,
     asrSource,
     rawLength: rawText.length,
+    contextCorrectedLength: contextCorrectedText.length,
     normalizedLength: normalizedText.length,
     hasSummary: !!summary,
     hasAssemblyai: !!assemblyai,
@@ -296,6 +344,10 @@ export async function runTranscriptionPipeline(
     hasHuggingFace: huggingFaceSuccessful.length > 0,
     huggingFaceModelCount: huggingFaceModels.length,
     huggingFaceSuccessCount: huggingFaceSuccessful.length,
+    contextCorrectionApplied:
+      !options?.skipContextCorrection && contextCorrectedText !== rawText,
+    audioPreprocessed: preprocessingResult?.wasProcessed ?? false,
+    hasEnhancedAudio: !!preprocessingResult?.enhancedAudioBuffer,
   });
 
   return {
@@ -307,5 +359,7 @@ export async function runTranscriptionPipeline(
     title,
     callType,
     callTopic,
+    enhancedAudioBuffer: preprocessingResult?.enhancedAudioBuffer,
+    enhancedAudioFilename: preprocessingResult?.enhancedAudioFilename,
   };
 }

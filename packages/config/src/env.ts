@@ -68,6 +68,21 @@ export const env = createEnv({
       .positive()
       .default(0.6),
 
+    // Audio preprocessing (optional Python service)
+    AUDIO_ENHANCER_URL: z
+      .string()
+      .optional()
+      .refine(
+        (val) => {
+          if (!val) return true; // optional
+          // Базовая проверка URL формата
+          return /^https?:\/\/.+/.test(val);
+        },
+        {
+          message: "AUDIO_ENHANCER_URL должен быть валидным HTTP/HTTPS URL",
+        },
+      ),
+
     // File processing limits
     MIN_FILE_SIZE_BYTES: z.coerce.number().default(1024), // 1KB
     MAX_FILE_SIZE_BYTES: z.coerce.number().default(100 * 1024 * 1024), // 100MB
@@ -131,6 +146,7 @@ export const env = createEnv({
       process.env.YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND,
     YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE:
       process.env.YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE,
+    AUDIO_ENHANCER_URL: process.env.AUDIO_ENHANCER_URL,
     MIN_FILE_SIZE_BYTES: process.env.MIN_FILE_SIZE_BYTES,
     MAX_FILE_SIZE_BYTES: process.env.MAX_FILE_SIZE_BYTES,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,

@@ -35,6 +35,12 @@ export const calls = pgTable(
     fileId: uuid("file_id").references(() => files.id, {
       onDelete: "set null",
     }),
+    enhancedAudioFileId: uuid("enhanced_audio_file_id").references(
+      () => files.id,
+      {
+        onDelete: "set null",
+      },
+    ),
     pbxNumberId: uuid("pbx_number_id").references(
       () => workspacePbxNumbers.id,
       {
@@ -81,6 +87,7 @@ export const calls = pgTable(
     ),
     index("calls_number_idx").on(table.number),
     index("calls_pbx_number_id_idx").on(table.pbxNumberId),
+    index("calls_enhanced_audio_file_id_idx").on(table.enhancedAudioFileId),
     index("calls_status_idx").on(table.status),
     index("idx_calls_workspace_id_name_internal_number").on(
       table.workspaceId,

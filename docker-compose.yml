@@ -73,7 +73,6 @@ services:
     environment:
       POSTGRES_URL: postgres://postgres:password@postgres:5432/acme
     command: ["bun", "run", "db:migrate"]
-    profiles: ["migration"]
 
   # New backend server (TypeScript + Hono + oRPC)
   backend-server:
@@ -103,7 +102,6 @@ services:
       - ./apps/backend/data:/app/data
       - ./records:/app/records
       - ./logs:/app/logs
-    profiles: ["backend"]
 
   # Inngest jobs worker (Megafon FTP sync и др.)
   jobs:
@@ -119,6 +117,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
+      audio-enhancer:
+        condition: service_started
     environment:
       POSTGRES_URL: postgres://postgres:password@postgres:5432/acme
       JOBS_PORT: 8000
@@ -131,6 +131,24 @@ services:
       MEGAFON_FTP_HOST: ${MEGAFON_FTP_HOST:-}
       MEGAFON_FTP_USER: ${MEGAFON_FTP_USER:-}
       MEGAFON_FTP_PASSWORD: ${MEGAFON_FTP_PASSWORD:-}
+      AUDIO_ENHANCER_URL: http://audio-enhancer:8080
     volumes:
       - ./records:/app/records
-    profiles: ["jobs"]
+
+  # Python микросервис для продвинутой обработки аудио
+  audio-enhancer:
+    build:
+      context: ./services/audio-enhancer
+      dockerfile: Dockerfile
+    container_name: audio-enhancer
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      LOG_LEVEL: INFO
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
