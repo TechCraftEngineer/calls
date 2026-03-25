@@ -115,27 +115,27 @@ const SYSTEM_PROMPT = `Ты эксперт по объединению тран�
 export async function mergeAsrWithLlm(input: {
   assemblyaiText?: string;
   yandexText?: string;
-  huggingFaceText?: string;
-  huggingFaceTexts?: string[];
+  gigaAmText?: string;
+  gigaAmTexts?: string[];
 }): Promise<string> {
   const {
     assemblyaiText = "",
     yandexText = "",
-    huggingFaceText = "",
-    huggingFaceTexts = [],
+    gigaAmText = "",
+    gigaAmTexts = [],
   } = input;
   const a = assemblyaiText.trim();
   const y = yandexText.trim();
   const hCandidatesPreDedup = [
-    ...huggingFaceTexts.map((t) => t.trim()).filter(Boolean),
-    huggingFaceText.trim(),
+    ...gigaAmTexts.map((t) => t.trim()).filter(Boolean),
+    gigaAmText.trim(),
   ];
   const hCandidates = hCandidatesPreDedup.filter(
     (value, index, arr) => Boolean(value) && arr.indexOf(value) === index,
   );
   const removedDuplicates = hCandidatesPreDedup.length - hCandidates.length;
   if (removedDuplicates > 0) {
-    logger.info("Удалены дубликаты транскриптов Hugging Face", {
+    logger.info("Удалены дубликаты транскриптов Giga AM", {
       beforeCount: hCandidatesPreDedup.length,
       afterCount: hCandidates.length,
       removedDuplicates,
@@ -158,7 +158,7 @@ export async function mergeAsrWithLlm(input: {
     y && `--- Транскрипт 2 (Yandex) ---\n${y}`,
     ...hCandidates.map(
       (text, index) =>
-        `--- Транскрипт ${3 + index} (Hugging Face ${index + 1}) ---\n${text}`,
+        `--- Транскрипт ${3 + index} (Giga AM ${index + 1}) ---\n${text}`,
     ),
   ]
     .filter(Boolean)
@@ -184,10 +184,7 @@ ${transcriptBlocks}
       processingTimeMs: Date.now() - start,
       assemblyaiLength: a.length,
       yandexLength: y.length,
-      huggingFaceLength: hCandidates.reduce(
-        (sum, item) => sum + item.length,
-        0,
-      ),
+      gigaAmLength: hCandidates.reduce((sum, item) => sum + item.length, 0),
       mergedLength: text.length,
     });
 

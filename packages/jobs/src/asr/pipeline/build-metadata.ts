@@ -1,4 +1,4 @@
-import { parseHuggingFaceRaw } from "~/asr/pipeline/huggingface-raw";
+import { parseGigaAmRaw } from "~/asr/pipeline/gigaam-raw";
 import {
   ASR_LOG_ERROR_MAX_LENGTH,
   ASR_LOG_TEXT_MAX_LENGTH,
@@ -9,32 +9,32 @@ import type { AsrResult, AsrSource, TranscriptMetadata } from "~/asr/types";
 export function buildTranscriptMetadata(input: {
   assemblyai: AsrResult | null;
   yandex: AsrResult | null;
-  huggingFaceSuccessful: AsrResult[];
-  huggingFaceBest: AsrResult | null;
+  gigaAmSuccessful: AsrResult[];
+  gigaAmBest: AsrResult | null;
   assemblyaiError?: string;
   yandexError?: string;
-  huggingFaceErrors: string[];
+  gigaAmErrors: string[];
   durationFromUrl?: number;
   processingTimeMs: number;
 }): TranscriptMetadata {
   const {
     assemblyai,
     yandex,
-    huggingFaceSuccessful,
-    huggingFaceBest,
+    gigaAmSuccessful,
+    gigaAmBest,
     assemblyaiError,
     yandexError,
-    huggingFaceErrors,
+    gigaAmErrors,
     durationFromUrl,
     processingTimeMs,
   } = input;
 
   const assemblyaiText = assemblyai?.text?.trim() ?? "";
   const yandexText = yandex?.text?.trim() ?? "";
-  const huggingFaceTexts = huggingFaceSuccessful
+  const gigaAmTexts = gigaAmSuccessful
     .map((result) => result.text.trim())
     .filter(Boolean);
-  const huggingFaceText = huggingFaceBest?.text?.trim() ?? "";
+  const gigaAmText = gigaAmBest?.text?.trim() ?? "";
 
   const durationFromMetadata = durationFromUrl;
   const durationFromAssemblyai = assemblyai?.raw
@@ -48,7 +48,7 @@ export function buildTranscriptMetadata(input: {
   const successfulProviders: AsrSource[] = [];
   if (assemblyaiText) successfulProviders.push("assemblyai");
   if (yandexText) successfulProviders.push("yandex");
-  if (huggingFaceTexts.length > 0) successfulProviders.push("huggingface");
+  if (gigaAmTexts.length > 0) successfulProviders.push("gigaam");
 
   const asrSource: AsrSource =
     successfulProviders.length > 1
@@ -83,12 +83,12 @@ export function buildTranscriptMetadata(input: {
           processingTimeMs: yandex.processingTimeMs,
         }
       : undefined,
-    asrHuggingFace: huggingFaceBest
+    asrGigaAm: gigaAmBest
       ? {
-          text: huggingFaceText || undefined,
-          confidence: huggingFaceBest.confidence,
-          hasUtterances: !!huggingFaceBest.utterances?.length,
-          processingTimeMs: huggingFaceBest.processingTimeMs,
+          text: gigaAmText || undefined,
+          confidence: gigaAmBest.confidence,
+          hasUtterances: !!gigaAmBest.utterances?.length,
+          processingTimeMs: gigaAmBest.processingTimeMs,
         }
       : undefined,
     asrLogs: [
@@ -113,37 +113,34 @@ export function buildTranscriptMetadata(input: {
         error: truncateForLog(yandexError, ASR_LOG_ERROR_MAX_LENGTH),
       },
       {
-        provider: "huggingface",
-        success: huggingFaceSuccessful.length > 0,
-        processingTimeMs: huggingFaceBest?.processingTimeMs,
+        provider: "gigaam",
+        success: gigaAmSuccessful.length > 0,
+        processingTimeMs: gigaAmBest?.processingTimeMs,
         text:
-          huggingFaceTexts.length > 0
+          gigaAmTexts.length > 0
             ? truncateForLog(
-                huggingFaceTexts.join("\n\n---\n\n"),
+                gigaAmTexts.join("\n\n---\n\n"),
                 ASR_LOG_TEXT_MAX_LENGTH,
               )
             : undefined,
-        confidence: huggingFaceBest?.confidence,
+        confidence: gigaAmBest?.confidence,
         utterances: undefined,
         raw: {
-          modelCount: huggingFaceSuccessful.length,
-          models: huggingFaceSuccessful.map((result) => {
-            const raw = parseHuggingFaceRaw(result.raw);
+          runs: gigaAmSuccessful.length,
+          details: gigaAmSuccessful.map((result) => {
+            const raw = parseGigaAmRaw(result.raw);
             return {
-              model: raw?.model,
-              revision: raw?.revision,
+              endpoint: raw?.endpoint,
+              segmentCount: raw?.segmentCount,
               processingTimeMs: result.processingTimeMs,
               textLength: result.text.length,
             };
           }),
-          errorCount: huggingFaceErrors.length,
+          errorCount: gigaAmErrors.length,
         },
         error:
-          huggingFaceErrors.length > 0
-            ? truncateForLog(
-                huggingFaceErrors.join(" | "),
-                ASR_LOG_ERROR_MAX_LENGTH,
-              )
+          gigaAmErrors.length > 0
+            ? truncateForLog(gigaAmErrors.join(" | "), ASR_LOG_ERROR_MAX_LENGTH)
             : undefined,
       },
     ],

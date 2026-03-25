@@ -42,17 +42,17 @@ export async function runTranscriptionPipelineFromAsrAudio(
 
   const assemblyaiText = asr.assemblyai?.text?.trim() ?? "";
   const yandexText = asr.yandex?.text?.trim() ?? "";
-  const huggingFaceTexts = asr.huggingFaceSuccessful
+  const gigaAmTexts = asr.gigaAmSuccessful
     .map((result) => result.text.trim())
     .filter(Boolean);
-  const huggingFaceText = asr.huggingFaceBest?.text?.trim() ?? "";
+  const gigaAmText = asr.gigaAmBest?.text?.trim() ?? "";
 
   // LLM объединяет оба транскрипта (или возвращает единственный)
   const rawText = await mergeAsrWithLlm({
     assemblyaiText: assemblyaiText || undefined,
     yandexText: yandexText || undefined,
-    huggingFaceText: huggingFaceText || undefined,
-    huggingFaceTexts,
+    gigaAmText: gigaAmText || undefined,
+    gigaAmTexts,
   });
 
   const post = await postProcessText({
@@ -69,11 +69,11 @@ export async function runTranscriptionPipelineFromAsrAudio(
   const metadata = buildTranscriptMetadata({
     assemblyai: asr.assemblyai,
     yandex: asr.yandex,
-    huggingFaceSuccessful: asr.huggingFaceSuccessful,
-    huggingFaceBest: asr.huggingFaceBest,
+    gigaAmSuccessful: asr.gigaAmSuccessful,
+    gigaAmBest: asr.gigaAmBest,
     assemblyaiError: asr.assemblyaiError,
     yandexError: asr.yandexError,
-    huggingFaceErrors: asr.huggingFaceErrors,
+    gigaAmErrors: asr.gigaAmErrors,
     durationFromUrl: asr.durationFromUrl,
     processingTimeMs: post.processingTimeMs,
   });
@@ -87,9 +87,9 @@ export async function runTranscriptionPipelineFromAsrAudio(
     hasSummary: !!post.summary,
     hasAssemblyai: !!asr.assemblyai,
     hasYandex: !!asr.yandex,
-    hasHuggingFace: asr.huggingFaceSuccessful.length > 0,
-    huggingFaceModelCount: asr.huggingFaceModelCount,
-    huggingFaceSuccessCount: asr.huggingFaceSuccessCount,
+    hasGigaAm: asr.gigaAmSuccessful.length > 0,
+    gigaAmProviderCount: asr.gigaAmProviderCount,
+    gigaAmSuccessCount: asr.gigaAmSuccessCount,
     contextCorrectionApplied: post.contextCorrectionApplied,
     audioPreprocessed: preprocessingResult?.wasProcessed ?? false,
     hasEnhancedAudio: !!preprocessingResult?.enhancedAudioBuffer,

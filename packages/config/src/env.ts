@@ -53,10 +53,12 @@ export const env = createEnv({
     ASSEMBLYAI_API_KEY: z.string().optional(),
     YANDEX_SPEECHKIT_API_KEY: z.string().optional(),
     YANDEX_SPEECHKIT_ENABLED: z.stringbool().default(true),
-    HUGGINGFACE_API_KEY: z.string().optional(),
-    HUGGINGFACE_ASR_MODEL: z.string().optional(),
-    HUGGINGFACE_ASR_MODELS: z.string().optional(),
-    HUGGINGFACE_ASR_REVISION: z.string().optional(),
+    /** Giga AM (HTTP), по умолчанию Space kodermax/giga-am */
+    GIGA_AM_TRANSCRIBE_URL: z
+      .string()
+      .url()
+      .default("https://kodermax-giga-am.hf.space/api/transcribe"),
+    GIGA_AM_ENABLED: z.stringbool().default(true),
     ASSEMBLYAI_RATE_USD_PER_HOUR: z.coerce.number().positive().default(0.23),
     RUB_PER_USD: z.coerce.number().positive().default(90),
     YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND: z.coerce
@@ -136,10 +138,8 @@ export const env = createEnv({
     ASSEMBLYAI_API_KEY: process.env.ASSEMBLYAI_API_KEY,
     YANDEX_SPEECHKIT_API_KEY: process.env.YANDEX_SPEECHKIT_API_KEY,
     YANDEX_SPEECHKIT_ENABLED: process.env.YANDEX_SPEECHKIT_ENABLED,
-    HUGGINGFACE_API_KEY: process.env.HUGGINGFACE_API_KEY,
-    HUGGINGFACE_ASR_MODEL: process.env.HUGGINGFACE_ASR_MODEL,
-    HUGGINGFACE_ASR_MODELS: process.env.HUGGINGFACE_ASR_MODELS,
-    HUGGINGFACE_ASR_REVISION: process.env.HUGGINGFACE_ASR_REVISION,
+    GIGA_AM_TRANSCRIBE_URL: process.env.GIGA_AM_TRANSCRIBE_URL,
+    GIGA_AM_ENABLED: process.env.GIGA_AM_ENABLED,
     ASSEMBLYAI_RATE_USD_PER_HOUR: process.env.ASSEMBLYAI_RATE_USD_PER_HOUR,
     RUB_PER_USD: process.env.RUB_PER_USD,
     YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND:
@@ -173,7 +173,7 @@ export const env = createEnv({
 const hasAnyAsrProvider = !!(
   env.ASSEMBLYAI_API_KEY ||
   (env.YANDEX_SPEECHKIT_ENABLED && env.YANDEX_SPEECHKIT_API_KEY) ||
-  env.HUGGINGFACE_API_KEY
+  (env.GIGA_AM_ENABLED && env.GIGA_AM_TRANSCRIBE_URL)
 );
 const skipValidation =
   !!process.env.CI ||
@@ -183,6 +183,6 @@ const skipValidation =
 
 if (!hasAnyAsrProvider && process.env.NODE_ENV !== "test" && !skipValidation) {
   console.warn(
-    "Внимание: Настройте хотя бы один ASR провайдер: ASSEMBLYAI_API_KEY, YANDEX_SPEECHKIT_API_KEY или HUGGINGFACE_API_KEY",
+    "Внимание: Настройте хотя бы один ASR провайдер: ASSEMBLYAI_API_KEY, YANDEX_SPEECHKIT_API_KEY или включите Giga AM (GIGA_AM_ENABLED + GIGA_AM_TRANSCRIBE_URL)",
   );
 }
