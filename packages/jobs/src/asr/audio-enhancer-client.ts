@@ -63,9 +63,11 @@ export async function enhanceAudioWithPython(
   try {
     const healthCheckStartedAt = Date.now();
     const healthCheckController = new AbortController();
+    let timedOut = false;
     const healthCheckTimeout = setTimeout(() => {
+      timedOut = true;
       healthCheckController.abort();
-    }, 2_000);
+    }, 6_000);
     let healthUrl = "";
     try {
       healthUrl = new URL("/health", serviceUrl).toString();
@@ -91,23 +93,38 @@ export async function enhanceAudioWithPython(
         };
       }
     } catch (healthError) {
-      logger.warn(
-        "Python enhancer не прошёл быстрый health-check, пропускаем обработку",
-        {
-          serviceUrl,
-          healthUrl,
-          functionId: "enhanceAudioWithPython",
-          error:
-            healthError instanceof Error
-              ? healthError.message
-              : String(healthError),
-        },
-      );
-      return {
-        audioBuffer,
-        wasProcessed: false,
-        processingTimeMs: Date.now() - healthCheckStartedAt,
-      };
+      if (timedOut) {
+        logger.warn(
+          "Python enhancer: health-check тайм-аут, пробуем `/enhance`",
+          {
+            serviceUrl,
+            healthUrl,
+            functionId: "enhanceAudioWithPython",
+            error:
+              healthError instanceof Error
+                ? healthError.message
+                : String(healthError),
+          },
+        );
+      } else {
+        logger.warn(
+          "Python enhancer не прошёл быстрый health-check, пропускаем обработку",
+          {
+            serviceUrl,
+            healthUrl,
+            functionId: "enhanceAudioWithPython",
+            error:
+              healthError instanceof Error
+                ? healthError.message
+                : String(healthError),
+          },
+        );
+        return {
+          audioBuffer,
+          wasProcessed: false,
+          processingTimeMs: Date.now() - healthCheckStartedAt,
+        };
+      }
     } finally {
       clearTimeout(healthCheckTimeout);
     }

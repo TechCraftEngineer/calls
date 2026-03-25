@@ -6,6 +6,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsndfile1 \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd -r audio_user && useradd -r -g audio_user -d /home/audio_user -m audio_user
