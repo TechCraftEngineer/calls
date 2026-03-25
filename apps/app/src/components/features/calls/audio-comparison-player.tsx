@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@calls/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@calls/ui";
 import { skipToken, useQuery } from "@tanstack/react-query";
 import { Radio, Volume2 } from "lucide-react";
 import AudioPlayer from "@/components/ui/audio-player";
@@ -79,60 +70,51 @@ export function AudioComparisonPlayer({
   // Если нет улучшенного аудио, показываем только оригинал
   if (!hasEnhancedAudio) {
     return (
-      <Card className={className}>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Volume2 className="size-4" />
-            Запись звонка
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AudioPlayer src={originalData.url} />
-        </CardContent>
-      </Card>
+      <div className={className}>
+        <div className="mb-3 flex items-center gap-2 text-base font-medium">
+          <Volume2 className="size-4" />
+          Запись звонка
+        </div>
+        <AudioPlayer src={originalData.url} />
+      </div>
     );
   }
 
   // Если есть улучшенное аудио, показываем табы для сравнения
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Volume2 className="size-4" />
-          Запись звонка
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="enhanced" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="enhanced" className="gap-2">
-              <Radio className="size-3.5" />
-              Улучшенное
-            </TabsTrigger>
-            <TabsTrigger value="original" className="gap-2">
-              <Volume2 className="size-3.5" />
-              Оригинал
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="enhanced" className="mt-0">
-            <div className="space-y-2">
-              <AudioPlayer src={enhancedData.url} />
-              <p className="text-muted-foreground text-xs">
-                Аудио обработано с помощью ML для улучшения качества
-                распознавания
-              </p>
-            </div>
-          </TabsContent>
-          <TabsContent value="original" className="mt-0">
-            <div className="space-y-2">
-              <AudioPlayer src={originalData.url} />
-              <p className="text-muted-foreground text-xs">
-                Оригинальная запись без обработки
-              </p>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+    <div className={className}>
+      <div className="mb-3 flex items-center gap-2 text-base font-medium">
+        <Volume2 className="size-4" />
+        Запись звонка
+      </div>
+      <Tabs defaultValue="enhanced" className="w-full">
+        <TabsList className="mb-4 grid w-full grid-cols-2">
+          <TabsTrigger value="enhanced" className="gap-2">
+            <Radio className="size-3.5" />
+            Улучшенное
+          </TabsTrigger>
+          <TabsTrigger value="original" className="gap-2">
+            <Volume2 className="size-3.5" />
+            Оригинал
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="enhanced" className="mt-0">
+          <div className="space-y-2">
+            <AudioPlayer src={enhancedData.url} />
+            <p className="text-muted-foreground text-xs">
+              Аудио обработано с помощью ML для улучшения качества распознавания
+            </p>
+          </div>
+        </TabsContent>
+        <TabsContent value="original" className="mt-0">
+          <div className="space-y-2">
+            <AudioPlayer src={originalData.url} />
+            <p className="text-muted-foreground text-xs">
+              Оригинальная запись без обработки
+            </p>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

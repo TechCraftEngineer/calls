@@ -169,6 +169,53 @@ export const transcribeCallFn = inngest.createFunction(
       });
     });
 
+    await step.run("save-enhanced-audio", async () => {
+      const enhancedBufferRaw = result.enhancedAudioBuffer;
+      const enhancedBuffer = Buffer.isBuffer(enhancedBufferRaw)
+        ? enhancedBufferRaw
+        : enhancedBufferRaw &&
+            typeof enhancedBufferRaw === "object" &&
+            "type" in enhancedBufferRaw &&
+            (enhancedBufferRaw as { type?: unknown }).type === "Buffer" &&
+            "data" in enhancedBufferRaw &&
+            Array.isArray((enhancedBufferRaw as { data?: unknown }).data)
+          ? Buffer.from((enhancedBufferRaw as { data: number[] }).data)
+          : null;
+
+      if (!enhancedBuffer || enhancedBuffer.length === 0) return;
+
+      try {
+        const datePrefix = new Date(call.timestamp).toISOString().slice(0, 10);
+        const originalName = `${datePrefix}/${result.enhancedAudioFilename ?? `call-${callId}-enhanced.wav`}`;
+        const uploaded = await filesService.uploadFile(call.workspaceId, {
+          originalName,
+          buffer: enhancedBuffer,
+          mimeType: "audio/wav",
+          fileType: "call_recording",
+          source: "asr-preprocessing",
+          metadata: {
+            originalCallId: callId,
+            preprocessed: true,
+          },
+        });
+
+        await callsService.updateEnhancedAudio(callId, uploaded.id);
+
+        logger.info("Улучшенное аудио сохранено", {
+          callId,
+          enhancedAudioFileId: uploaded.id,
+          storageKey: uploaded.storageKey,
+          sizeBytes: uploaded.sizeBytes,
+        });
+      } catch (error) {
+        // Graceful handling: транскрипцию не блокируем, если сохранить улучшенное аудио не удалось
+        logger.warn("Не удалось сохранить улучшенное аудио", {
+          callId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    });
+
     const identifyResult = await step.run("identify-speakers", async () => {
       const fallbackManagerName = call.name?.trim() || null;
       return identifySpeakersWithLlm(result.normalizedText, {
