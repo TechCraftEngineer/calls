@@ -25,8 +25,8 @@ COPY . .
 
 RUN chown -R audio_user:audio_user /app
 
-EXPOSE 8080
+EXPOSE 7860
 
 USER audio_user
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python", "app.py"]
