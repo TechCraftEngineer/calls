@@ -1,7 +1,7 @@
+import { env } from "@calls/config";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
-import { env } from "@calls/config";
 
 if (!env.POSTGRES_URL) {
   throw new Error("Missing POSTGRES_URL");

@@ -341,6 +341,9 @@ export async function transcribeWithHuggingFace(
 }
 
 export function getHuggingFaceAsrModels(): string[] {
+  // Если ключ не задан — отключаем провайдер полностью и не создаём задачи.
+  if (!env.HUGGINGFACE_API_KEY) return [];
+
   const configuredList = env.HUGGINGFACE_ASR_MODELS?.split(",")
     .map((item) => item.trim())
     .filter(Boolean);
