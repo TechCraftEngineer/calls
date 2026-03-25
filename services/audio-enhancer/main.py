@@ -43,15 +43,6 @@ except Exception as e:
     logger.warning(f"Не удалось загрузить Silero VAD: {e}")
     vad_model = None
 
-# Загрузка DeepFilterNet (state-of-the-art шумоподавление)
-deepfilter_model = None
-try:
-    from df.enhance import enhance as df_enhance, init_df
-    deepfilter_model, df_state, _ = init_df()
-    logger.info("✓ DeepFilterNet модель загружена")
-except Exception as e:
-    logger.warning(f"DeepFilterNet недоступен: {e}")
-
 # Loudness meter для нормализации
 loudness_meter = pyln.Meter(16000)
 
@@ -86,7 +77,6 @@ async def health_check():
     return {
         "status": "healthy",
         "silero_vad_loaded": vad_model is not None,
-        "deepfilter_loaded": deepfilter_model is not None,
         "version": "2.0.0",
     }
 
@@ -99,7 +89,6 @@ async def enhance_audio(
     enhance_speech: bool = Form(True),
     remove_silence: bool = Form(False),
     target_sample_rate: int = Form(16000, ge=800, le=192000),
-    use_deepfilter: bool = Form(True),
     use_compressor: bool = Form(True),
     spectral_gating: bool = Form(True),
 ):
@@ -113,7 +102,6 @@ async def enhance_audio(
         enhance_speech: Усилить речевые частоты
         remove_silence: Удалить длинные паузы (Silero VAD)
         target_sample_rate: Целевая частота дискретизации
-        use_deepfilter: Использовать DeepFilterNet (нейросетевое шумоподавление)
         use_compressor: Применить динамическую компрессию
         spectral_gating: Применить спектральный гейтинг
 
@@ -133,34 +121,8 @@ async def enhance_audio(
                 )
             logger.info(f"Загружено аудио: {len(audio)} samples, {sr} Hz")
 
-            # 1. DeepFilterNet (нейросетевое шумоподавление) - самое эффективное
-            if use_deepfilter and deepfilter_model is not None:
-                logger.info("Применяем DeepFilterNet (нейросетевое шумоподавление)...")
-                try:
-                    # DeepFilterNet работает с 48kHz
-                    if sr != 48000:
-                        audio_48k = librosa.resample(audio, orig_sr=sr, target_sr=48000)
-                    else:
-                        audio_48k = audio
-                    
-                    # Применяем DeepFilterNet
-                    audio_tensor = torch.from_numpy(audio_48k).float()
-                    enhanced = df_enhance(deepfilter_model, df_state, audio_tensor)
-                    audio_48k = enhanced.numpy()
-                    
-                    # Возвращаем к исходной частоте
-                    if sr != 48000:
-                        audio = librosa.resample(audio_48k, orig_sr=48000, target_sr=sr)
-                    else:
-                        audio = audio_48k
-                    
-                    logger.info("✓ DeepFilterNet применен")
-                except Exception as e:
-                    logger.warning(f"DeepFilterNet ошибка: {e}, используем fallback")
-                    use_deepfilter = False
-
-            # 2. Классическое шумоподавление (если DeepFilterNet недоступен или отключен)
-            if noise_reduction and not use_deepfilter:
+            # 1. Классическое шумоподавление
+            if noise_reduction:
                 logger.info("Применяем классическое шумоподавление...")
                 audio = nr.reduce_noise(
                     y=audio,
@@ -169,7 +131,7 @@ async def enhance_audio(
                     prop_decrease=0.8,
                 )
 
-            # 3. Спектральный гейтинг (дополнительная очистка)
+            # 2. Спектральный гейтинг (дополнительная очистка)
             if spectral_gating:
                 logger.info("Применяем спектральный гейтинг...")
                 # Вычисляем STFT
@@ -187,7 +149,7 @@ async def enhance_audio(
                 D_filtered = D * mask
                 audio = librosa.istft(D_filtered, length=len(audio))
 
-            # 4. Улучшение речевых частот
+            # 3. Улучшение речевых частот
             if enhance_speech:
                 logger.info("Усиливаем речевые частоты...")
                 
@@ -219,7 +181,7 @@ async def enhance_audio(
 
                 audio = np.fft.irfft(fft, n=len(audio))
 
-            # 5. Динамическая компрессия (улучшает разборчивость тихих участков)
+            # 4. Динамическая компрессия (улучшает разборчивость тихих участков)
             if use_compressor:
                 logger.info("Применяем динамическую компрессию...")
                 compressor = Pedalboard([
@@ -232,7 +194,7 @@ async def enhance_audio(
                 ])
                 audio = compressor(audio, sr)
 
-            # 6. Нормализация громкости (LUFS-based, профессиональный стандарт)
+            # 5. Нормализация громкости (LUFS-based, профессиональный стандарт)
             if normalize_volume:
                 logger.info("Нормализуем громкость (LUFS)...")
                 
@@ -268,7 +230,7 @@ async def enhance_audio(
                 # Финальное ограничение
                 audio = np.clip(audio, -1.0, 1.0)
 
-            # 7. Удаление пауз (Silero VAD)
+            # 6. Удаление пауз (Silero VAD)
             if remove_silence and vad_model is not None:
                 logger.info("Удаляем длинные паузы (Silero VAD)...")
 
@@ -299,7 +261,7 @@ async def enhance_audio(
                         audio = np.concatenate(speech_chunks)
                         logger.info(f"✓ Удалено пауз: {len(speech_timestamps)}")
 
-            # 8. Финальный ресемплинг (высококачественный)
+            # 7. Финальный ресемплинг (высококачественный)
             if sr != target_sample_rate:
                 logger.info(f"Ресемплинг {sr} Hz -> {target_sample_rate} Hz...")
                 audio = librosa.resample(
