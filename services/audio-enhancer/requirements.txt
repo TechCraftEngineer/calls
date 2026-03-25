@@ -10,7 +10,7 @@ noisereduce==3.0.2
 pydub==0.25.1
 
 # Продвинутое шумоподавление
-deepfilternet>=0.5.6
+deepfilternet==0.5.6
 
 # Улучшение речи
 resemble-enhance>=0.0.1
