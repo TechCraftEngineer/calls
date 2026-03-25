@@ -25,5 +25,7 @@ const port = Number(process.env.JOBS_PORT) || 8000;
 
 export default {
   port,
-  fetch: app.fetch,
+  // Hono's `fetch` is a method that relies on its `this` context.
+  // Without binding, Inngest may use a misconfigured custom fetch.
+  fetch: app.fetch.bind(app),
 };
