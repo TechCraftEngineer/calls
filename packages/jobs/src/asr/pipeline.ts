@@ -72,6 +72,10 @@ export async function runTranscriptionPipeline(
     basename: safeIn.basename,
   });
 
+  // Используется только если мы отправляем в Yandex PCM (LINEAR16_PCM).
+  const yandexSampleRateHertz =
+    options?.audioPreprocessing?.targetSampleRate ?? 16000;
+
   // Предобработка аудио (автоматический fallback: Python ML → FFmpeg → без обработки)
   let processedAudioUrl = audioUrl;
   let tempKey: string | null = null;
@@ -139,7 +143,15 @@ export async function runTranscriptionPipeline(
     const [assemblyaiResult, yandexResult, huggingFaceResults, durationResult] =
       await Promise.allSettled([
         transcribeWithAssemblyAi(processedAudioUrl),
-        transcribeWithYandex(processedAudioUrl),
+        transcribeWithYandex(
+          processedAudioUrl,
+          tempKey
+            ? {
+                audioEncoding: "LINEAR16_PCM",
+                sampleRateHertz: yandexSampleRateHertz,
+              }
+            : undefined,
+        ),
         Promise.allSettled(
           huggingFaceModels.map((model) =>
             transcribeWithHuggingFace(processedAudioUrl, model),

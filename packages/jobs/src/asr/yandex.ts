@@ -55,6 +55,17 @@ async function pollUntilDone(operationId: string): Promise<{
 
 export async function transcribeWithYandex(
   audioUrl: string,
+  options?: {
+    /**
+     * Формат аудио, который фактически лежит по `audioUrl`.
+     * По умолчанию считаем, что это MP3 (как ожидает SpeechKit).
+     */
+    audioEncoding?: "MP3" | "LINEAR16_PCM";
+    /**
+     * Нужен для `LINEAR16_PCM` (pcm_s16le, 16-bit signed little-endian).
+     */
+    sampleRateHertz?: number;
+  },
 ): Promise<AsrResult | null> {
   if (!env.YANDEX_SPEECHKIT_ENABLED) {
     logger.info("YANDEX_SPEECHKIT_ENABLED=false, пропускаем Yandex SpeechKit");
@@ -73,6 +84,12 @@ export async function transcribeWithYandex(
 
   return withRetry(
     async () => {
+      const audioEncoding = options?.audioEncoding ?? "MP3";
+      const sampleRateHertz = options?.sampleRateHertz ?? 16000;
+      if (audioEncoding === "LINEAR16_PCM" && !sampleRateHertz) {
+        throw new Error("Yandex: sampleRateHertz обязателен при LINEAR16_PCM");
+      }
+
       // Создаём задачу распознавания
       const createRes = await fetch(YANDEX_TRANSCRIBE_URL, {
         method: "POST",
@@ -84,7 +101,10 @@ export async function transcribeWithYandex(
           config: {
             specification: {
               languageCode: "ru-RU",
-              audioEncoding: "MP3",
+              audioEncoding,
+              ...(audioEncoding === "LINEAR16_PCM" && {
+                sampleRateHertz: String(sampleRateHertz),
+              }),
             },
           },
           audio: {
