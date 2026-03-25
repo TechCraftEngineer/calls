@@ -10,13 +10,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@calls/ui";
-import { useQuery } from "@tanstack/react-query";
-import { Volume2, Radio } from "lucide-react";
+import { skipToken, useQuery } from "@tanstack/react-query";
+import { Radio, Volume2 } from "lucide-react";
 import AudioPlayer from "@/components/ui/audio-player";
 import { useORPC } from "@/orpc/react";
 
 interface AudioComparisonPlayerProps {
-  callId: string;
+  callId?: string | null;
   className?: string;
 }
 
@@ -28,32 +28,39 @@ export function AudioComparisonPlayer({
   className,
 }: AudioComparisonPlayerProps) {
   const orpc = useORPC();
+  const id = callId?.trim() ?? "";
 
   const {
     data: originalData,
     isPending: originalPending,
     isError: originalError,
-  } = useQuery({
-    ...orpc.calls.getPlaybackUrl.queryOptions({
-      input: { call_id: callId },
-    }),
-    enabled: !!callId,
-  });
+  } = useQuery(
+    id
+      ? orpc.calls.getPlaybackUrl.queryOptions({ input: { call_id: id } })
+      : {
+          queryKey: ["calls", "playback", "skip"],
+          queryFn: skipToken,
+        },
+  );
 
-  const { data: enhancedData, isPending: enhancedPending } = useQuery({
-    ...orpc.calls.getEnhancedPlaybackUrl.queryOptions({
-      input: { call_id: callId },
-    }),
-    enabled: !!callId,
-  });
+  const { data: enhancedData, isPending: enhancedPending } = useQuery(
+    id
+      ? orpc.calls.getEnhancedPlaybackUrl.queryOptions({
+          input: { call_id: id },
+        })
+      : {
+          queryKey: ["calls", "enhanced-playback", "skip"],
+          queryFn: skipToken,
+        },
+  );
 
-  const hasEnhancedAudio = enhancedData?.url != null;
-
-  if (!callId) {
+  if (!id) {
     return (
       <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>
     );
   }
+
+  const hasEnhancedAudio = enhancedData?.url != null;
 
   if (originalPending || enhancedPending) {
     return (

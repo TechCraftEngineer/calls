@@ -9,6 +9,16 @@ import { createLogger } from "../logger";
 
 const logger = createLogger("audio-enhancer-client");
 
+let loggedMissingEnhancerUrl = false;
+
+function logMissingEnhancerUrlOnce(): void {
+  if (loggedMissingEnhancerUrl) return;
+  loggedMissingEnhancerUrl = true;
+  logger.info(
+    "AUDIO_ENHANCER_URL не задан — продвинутая Python-обработка отключена (режим только FFmpeg или без enhancer).",
+  );
+}
+
 export interface EnhancerOptions {
   /** Применить ML-based шумоподавление (noisereduce) */
   noiseReduction?: boolean;
@@ -32,25 +42,6 @@ export interface EnhancerResult {
 }
 
 /**
- * Проверяет доступность Python микросервиса
- */
-async function checkEnhancerAvailable(): Promise<boolean> {
-  const serviceUrl = env.AUDIO_ENHANCER_URL;
-  if (!serviceUrl) {
-    return false;
-  }
-
-  try {
-    const response = await fetch(`${serviceUrl}/health`, {
-      signal: AbortSignal.timeout(5000),
-    });
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Улучшает аудио с помощью Python микросервиса
  */
 export async function enhanceAudioWithPython(
@@ -61,23 +52,7 @@ export async function enhanceAudioWithPython(
   const serviceUrl = env.AUDIO_ENHANCER_URL;
 
   if (!serviceUrl) {
-    logger.warn(
-      "AUDIO_ENHANCER_URL не задан, пропускаем Python обработку. " +
-        "Установите переменную окружения для использования продвинутого шумоподавления.",
-    );
-    return {
-      audioBuffer,
-      wasProcessed: false,
-      processingTimeMs: Date.now() - start,
-    };
-  }
-
-  // Проверяем доступность сервиса
-  const isAvailable = await checkEnhancerAvailable();
-  if (!isAvailable) {
-    logger.warn(
-      `Python audio enhancer недоступен по адресу ${serviceUrl}, пропускаем обработку`,
-    );
+    logMissingEnhancerUrlOnce();
     return {
       audioBuffer,
       wasProcessed: false,
@@ -86,14 +61,12 @@ export async function enhanceAudioWithPython(
   }
 
   try {
-    // Создаем FormData для отправки файла
     const formData = new FormData();
     const blob = new Blob([audioBuffer as unknown as BlobPart], {
       type: "audio/wav",
     });
     formData.append("file", blob, "audio.wav");
 
-    // Добавляем опции
     formData.append("noise_reduction", String(options.noiseReduction ?? true));
     formData.append(
       "normalize_volume",
@@ -112,11 +85,10 @@ export async function enhanceAudioWithPython(
       options,
     });
 
-    // Отправляем запрос
     const response = await fetch(`${serviceUrl}/enhance`, {
       method: "POST",
       body: formData,
-      signal: AbortSignal.timeout(60_000), // 60 секунд таймаут
+      signal: AbortSignal.timeout(60_000),
     });
 
     if (!response.ok) {
@@ -125,7 +97,6 @@ export async function enhanceAudioWithPython(
       );
     }
 
-    // Получаем обработанное аудио
     const enhancedBuffer = Buffer.from(await response.arrayBuffer());
     const processingTimeMs = Date.now() - start;
 
@@ -144,7 +115,6 @@ export async function enhanceAudioWithPython(
     logger.error("Ошибка Python обработки аудио", {
       error: error instanceof Error ? error.message : String(error),
     });
-    // При ошибке возвращаем исходное аудио
     return {
       audioBuffer,
       wasProcessed: false,
@@ -167,6 +137,7 @@ export async function denoiseAudioWithPython(
   const serviceUrl = env.AUDIO_ENHANCER_URL;
 
   if (!serviceUrl) {
+    logMissingEnhancerUrlOnce();
     return {
       audioBuffer,
       wasProcessed: false,

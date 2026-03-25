@@ -83,14 +83,7 @@ export const updateTelegramSettings = workspaceProcedure
           });
         }
 
-        const username =
-          authEmail?.trim() ||
-          (typeof context.user === "object" &&
-          context.user &&
-          "email" in context.user &&
-          typeof context.user.email === "string"
-            ? context.user.email
-            : "system");
+        const username = authEmail?.trim() || "system";
         const reportDailyTimeKey =
           REPORT_PROMPTS_CAMEL_TO_SNAKE.reportDailyTime;
         const reportWeeklyDayKey =

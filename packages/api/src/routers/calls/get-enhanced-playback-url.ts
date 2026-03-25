@@ -4,19 +4,10 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 
-// Вспомогательная функция для валидации UUID
-function isValidUuid(value: string): boolean {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(value);
-}
-
 export const getEnhancedPlaybackUrl = workspaceProcedure
   .input(
     z.object({
-      call_id: z.string().refine((val) => isValidUuid(val), {
-        message: "Некорректный формат ID звонка",
-      }),
+      call_id: z.string().uuid(),
     }),
   )
   .handler(async ({ input, context }) => {
@@ -31,13 +22,6 @@ export const getEnhancedPlaybackUrl = workspaceProcedure
     }
     if (!call.enhancedAudioFileId) {
       return { url: null }; // Улучшенное аудио отсутствует
-    }
-
-    // Валидация enhancedAudioFileId
-    if (!isValidUuid(call.enhancedAudioFileId)) {
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Некорректный ID файла улучшенного аудио",
-      });
     }
 
     const file = await filesService.getFileById(call.enhancedAudioFileId);

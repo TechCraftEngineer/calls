@@ -144,7 +144,7 @@ export class CallsService {
 
   async updateEnhancedAudio(
     callId: string,
-    enhancedAudioFileId: string,
+    enhancedAudioFileId: string | null,
   ): Promise<void> {
     await this.callsRepository.updateEnhancedAudio(callId, enhancedAudioFileId);
   }

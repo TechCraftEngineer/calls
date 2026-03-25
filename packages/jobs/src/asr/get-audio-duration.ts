@@ -6,6 +6,7 @@
 
 import { parseBuffer } from "music-metadata";
 import { createLogger } from "../logger";
+import { safeAudioUrlParts } from "./audio-preprocessing";
 
 const logger = createLogger("asr-audio-duration");
 
@@ -46,8 +47,10 @@ export async function getAudioDurationFromUrl(
       signal: AbortSignal.timeout(30_000),
     });
     if (!res.ok) {
+      const safe = safeAudioUrlParts(audioUrl);
       logger.warn("Не удалось загрузить аудио для определения длительности", {
-        url: audioUrl.slice(0, 80),
+        host: safe.host,
+        basename: safe.basename,
         status: res.status,
       });
       return undefined;
@@ -62,8 +65,10 @@ export async function getAudioDurationFromUrl(
     }
     return undefined;
   } catch (err) {
+    const safe = safeAudioUrlParts(audioUrl);
     logger.warn("Ошибка при определении длительности аудио", {
-      url: audioUrl.slice(0, 80),
+      host: safe.host,
+      basename: safe.basename,
       error: err instanceof Error ? err.message : String(err),
     });
     return undefined;

@@ -221,7 +221,7 @@ export const callsRepository = {
 
   async updateEnhancedAudio(
     callId: string,
-    enhancedAudioFileId: string,
+    enhancedAudioFileId: string | null,
   ): Promise<void> {
     await db
       .update(schema.calls)

@@ -5,13 +5,18 @@
  * Работает полностью в памяти без временных файлов.
  */
 
-import { exec } from "node:child_process";
+import { exec, spawn } from "node:child_process";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import { promisify } from "node:util";
-import { enhanceAudioWithPython } from "./audio-enhancer-client";
 import { createLogger } from "../logger";
+import { enhanceAudioWithPython } from "./audio-enhancer-client";
 
 const execAsync = promisify(exec);
 const logger = createLogger("asr-audio-preprocessing");
+
+/** Таймаут скачивания исходного аудио (медленный источник не должен висеть бесконечно) */
+const DEFAULT_AUDIO_DOWNLOAD_TIMEOUT_MS = 120_000;
 
 export interface PreprocessingOptions {
   /** Применить нормализацию громкости (рекомендуется) */
@@ -25,13 +30,18 @@ export interface PreprocessingOptions {
   /** Применить эквализацию для усиления речевых частот */
   enhanceSpeech?: boolean;
   /** Удалить длинные паузы (Voice Activity Detection) */
-  removesilence?: boolean;
+  removeSilence?: boolean;
   /** Использовать Python микросервис для продвинутой обработки (ML-based) */
   usePythonEnhancer?: boolean;
+  /** Таймаут загрузки аудио по URL (мс) */
+  downloadTimeoutMs?: number;
 }
 
 export interface PreprocessingResult {
-  /** URL обработанного аудио (всегда исходный URL, т.к. работаем в памяти) */
+  /**
+   * Исходный URL входного файла (без изменений).
+   * Для распознавания по улучшенному файлу см. загрузку временного URL в pipeline.
+   */
   audioUrl: string;
   /** Был ли файл обработан */
   wasProcessed: boolean;
@@ -43,6 +53,36 @@ export interface PreprocessingResult {
   enhancedAudioBuffer?: Buffer;
   /** Имя файла улучшенного аудио */
   enhancedAudioFilename?: string;
+}
+
+/**
+ * Для логов: только host и имя файла из пути, без query/fragment (подписи URL не попадают в логи).
+ */
+export function safeAudioUrlParts(urlString: string): {
+  host: string;
+  basename: string;
+} {
+  try {
+    const u = new URL(urlString);
+    const segments = u.pathname.split("/").filter(Boolean);
+    const basename = segments.at(-1) ?? "(no path)";
+    return { host: u.host, basename };
+  } catch {
+    return { host: "(invalid-url)", basename: "(invalid-url)" };
+  }
+}
+
+async function fetchAudioBuffer(
+  audioUrl: string,
+  timeoutMs: number,
+): Promise<Buffer> {
+  const response = await fetch(audioUrl, {
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  if (!response.ok) {
+    throw new Error(`Не удалось скачать аудио: ${response.statusText}`);
+  }
+  return Buffer.from(await response.arrayBuffer());
 }
 
 /**
@@ -86,7 +126,7 @@ function buildFFmpegFilters(options: PreprocessingOptions): string[] {
   }
 
   // Удаление длинных пауз (VAD)
-  if (options.removesilence) {
+  if (options.removeSilence) {
     // Удаляет тишину длиннее 1 секунды
     filters.push(
       "silenceremove=start_periods=1:start_duration=1:start_threshold=-50dB:detection=peak,silenceremove=stop_periods=-1:stop_duration=1:stop_threshold=-50dB:detection=peak",
@@ -94,6 +134,47 @@ function buildFFmpegFilters(options: PreprocessingOptions): string[] {
   }
 
   return filters;
+}
+
+function runFfmpegWithBuffer(
+  args: string[],
+  inputBuffer: Buffer,
+): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const child = spawn("ffmpeg", args, {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    const chunks: Buffer[] = [];
+    let stderr = "";
+
+    child.stdout.on("data", (chunk: Buffer) => {
+      chunks.push(chunk);
+    });
+    child.stderr.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString();
+    });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code !== 0) {
+        reject(
+          new Error(
+            `FFmpeg завершился с кодом ${code}: ${stderr.slice(0, 2000)}`,
+          ),
+        );
+        return;
+      }
+      resolve(Buffer.concat(chunks));
+    });
+
+    const stdin = child.stdin;
+    if (!stdin) {
+      reject(new Error("FFmpeg: stdin недоступен"));
+      return;
+    }
+
+    stdin.on("error", reject);
+    void pipeline(Readable.from(inputBuffer), stdin).catch(reject);
+  });
 }
 
 /**
@@ -107,38 +188,37 @@ export async function preprocessAudio(
 ): Promise<PreprocessingResult> {
   const start = Date.now();
   const appliedFilters: string[] = [];
+  const downloadTimeoutMs =
+    options.downloadTimeoutMs ?? DEFAULT_AUDIO_DOWNLOAD_TIMEOUT_MS;
 
   // Настройки по умолчанию (оптимальные для ASR)
-  const config: Required<PreprocessingOptions> = {
+  const config: Required<Omit<PreprocessingOptions, "downloadTimeoutMs">> & {
+    downloadTimeoutMs: number;
+  } = {
     normalizeVolume: options.normalizeVolume ?? true,
     noiseReduction: options.noiseReduction ?? false,
     targetSampleRate: options.targetSampleRate ?? 16000,
     convertToMono: options.convertToMono ?? true,
     enhanceSpeech: options.enhanceSpeech ?? true,
-    removesilence: options.removesilence ?? false,
+    removeSilence: options.removeSilence ?? false,
     usePythonEnhancer: options.usePythonEnhancer ?? true,
+    downloadTimeoutMs,
   };
+
+  let downloadedBuffer: Buffer | undefined;
 
   // Приоритет 1: Пытаемся использовать Python ML сервис (если доступен)
   if (config.usePythonEnhancer) {
     logger.info("Попытка использовать Python ML сервис для обработки аудио");
 
     try {
-      // Скачиваем аудио в память
-      const audioResponse = await fetch(audioUrl);
-      if (!audioResponse.ok) {
-        throw new Error(
-          `Не удалось скачать аудио: ${audioResponse.statusText}`,
-        );
-      }
-      const audioBuffer = Buffer.from(await audioResponse.arrayBuffer());
+      downloadedBuffer = await fetchAudioBuffer(audioUrl, downloadTimeoutMs);
 
-      // Отправляем в Python сервис
-      const result = await enhanceAudioWithPython(audioBuffer, {
+      const result = await enhanceAudioWithPython(downloadedBuffer, {
         noiseReduction: config.noiseReduction,
         normalizeVolume: config.normalizeVolume,
         enhanceSpeech: config.enhanceSpeech,
-        removeSilence: config.removesilence,
+        removeSilence: config.removeSilence,
         targetSampleRate: config.targetSampleRate,
       });
 
@@ -147,20 +227,19 @@ export async function preprocessAudio(
         if (config.noiseReduction) appliedFilters.push("ml-noise-reduction");
         if (config.normalizeVolume) appliedFilters.push("ml-normalize");
         if (config.enhanceSpeech) appliedFilters.push("ml-speech-enhance");
-        if (config.removesilence) appliedFilters.push("silero-vad");
+        if (config.removeSilence) appliedFilters.push("silero-vad");
 
         logger.info("Python ML обработка успешна", {
           appliedFilters,
           processingTimeMs: result.processingTimeMs,
         });
 
-        // Извлекаем имя файла из URL для сохранения
         const urlParts = audioUrl.split("/");
         const originalFilename = urlParts[urlParts.length - 1] || "audio.wav";
         const enhancedFilename = `enhanced_${originalFilename}`;
 
         return {
-          audioUrl, // Возвращаем исходный URL, т.к. работаем в памяти
+          audioUrl,
           wasProcessed: true,
           appliedFilters,
           processingTimeMs: result.processingTimeMs,
@@ -169,7 +248,6 @@ export async function preprocessAudio(
         };
       }
 
-      // Python сервис недоступен, fallback на FFmpeg
       logger.info("Python сервис недоступен, используем FFmpeg fallback");
     } catch (error) {
       logger.warn("Ошибка Python обработки, используем FFmpeg fallback", {
@@ -196,48 +274,38 @@ export async function preprocessAudio(
   logger.info("Используем FFmpeg для обработки аудио");
 
   try {
-    // Скачиваем аудио в память
+    const safe = safeAudioUrlParts(audioUrl);
     logger.info("Скачивание аудио для предобработки", {
-      audioUrl: audioUrl.slice(0, 100),
+      host: safe.host,
+      basename: safe.basename,
     });
-    const audioResponse = await fetch(audioUrl);
-    if (!audioResponse.ok) {
-      throw new Error(`Не удалось скачать аудио: ${audioResponse.statusText}`);
-    }
-    const audioBuffer = Buffer.from(await audioResponse.arrayBuffer());
 
-    // Создаем FFmpeg команду для обработки в памяти
+    if (!downloadedBuffer) {
+      downloadedBuffer = await fetchAudioBuffer(audioUrl, downloadTimeoutMs);
+    }
+    const audioBuffer = downloadedBuffer;
+
     const filters = buildFFmpegFilters(config);
 
-    let ffmpegCmd = "ffmpeg -i pipe:0 -y";
-
-    // Аудио фильтры
+    const ffmpegArgs = ["-i", "pipe:0", "-y"];
     if (filters.length > 0) {
-      ffmpegCmd += ` -af "${filters.join(",")}"`;
+      ffmpegArgs.push("-af", filters.join(","));
       appliedFilters.push(...filters);
     }
-
-    // Формат вывода (оптимизирован для ASR)
     if (config.convertToMono) {
-      ffmpegCmd += " -ac 1"; // Mono
+      ffmpegArgs.push("-ac", "1");
       appliedFilters.push("mono");
     }
-    ffmpegCmd += ` -ar ${config.targetSampleRate}`; // Sample rate
+    ffmpegArgs.push("-ar", String(config.targetSampleRate));
     appliedFilters.push(`${config.targetSampleRate}Hz`);
-    ffmpegCmd += " -acodec pcm_s16le"; // 16-bit PCM
-    ffmpegCmd += " -f wav pipe:1"; // Вывод в pipe
+    ffmpegArgs.push("-acodec", "pcm_s16le", "-f", "wav", "pipe:1");
 
     logger.info("Запуск FFmpeg предобработки", {
       filters: appliedFilters,
-      command: ffmpegCmd.slice(0, 200),
+      argsSample: ffmpegArgs.slice(0, 12),
     });
 
-    // Выполняем FFmpeg с pipe
-    const { stdout } = await execAsync(ffmpegCmd, {
-      encoding: null, // Получаем Buffer
-      maxBuffer: 100 * 1024 * 1024, // 100MB лимит
-      input: audioBuffer,
-    });
+    const stdout = await runFfmpegWithBuffer(ffmpegArgs, audioBuffer);
 
     const processingTimeMs = Date.now() - start;
     logger.info("Предобработка аудио завершена", {
@@ -245,24 +313,22 @@ export async function preprocessAudio(
       appliedFilters,
     });
 
-    // Извлекаем имя файла из URL для сохранения
     const urlParts = audioUrl.split("/");
     const originalFilename = urlParts[urlParts.length - 1] || "audio.wav";
     const enhancedFilename = `enhanced_${originalFilename}`;
 
     return {
-      audioUrl, // Возвращаем исходный URL, т.к. работаем в памяти
+      audioUrl,
       wasProcessed: true,
       appliedFilters,
       processingTimeMs,
-      enhancedAudioBuffer: stdout as Buffer,
+      enhancedAudioBuffer: stdout,
       enhancedAudioFilename: enhancedFilename,
     };
   } catch (error) {
     logger.error("Ошибка предобработки аудио", {
       error: error instanceof Error ? error.message : String(error),
     });
-    // При ошибке возвращаем исходный URL
     return {
       audioUrl,
       wasProcessed: false,

@@ -2,7 +2,7 @@
 
 ## Архитектура
 
-```
+```text
 ┌─────────────┐
 │   Client    │
 └──────┬──────┘
@@ -101,8 +101,7 @@ services:
   audio-enhancer:
     build:
       context: ./services/audio-enhancer
-    ports:
-      - 8080:8080
+    # Порт 8080 доступен только внутри сети compose (без проброса на хост)
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
 ```
@@ -176,10 +175,10 @@ docker-compose --profile jobs up -d
 
 ```bash
 # Проверка FFmpeg
-docker exec jobs ffmpeg -version
+docker compose exec jobs ffmpeg -version
 
-# Проверка Python сервиса (если используется)
-curl http://localhost:8080/health
+# Проверка Python-сервиса из контейнера (порт 8080 только внутри сети compose)
+docker compose exec audio-enhancer wget -qO- http://127.0.0.1:8080/health
 ```
 
 ## Мониторинг
@@ -188,10 +187,10 @@ curl http://localhost:8080/health
 
 ```bash
 # FFmpeg обработка
-docker logs jobs | grep "asr-audio-preprocessing"
+docker compose logs jobs | grep "asr-audio-preprocessing"
 
 # Python обработка
-docker logs audio-enhancer | grep "INFO"
+docker compose logs audio-enhancer | grep "INFO"
 ```
 
 ### Метрики
@@ -203,7 +202,7 @@ docker logs audio-enhancer | grep "INFO"
 - Успешность обработки
 
 Пример лога:
-```
+```text
 [asr-audio-preprocessing] Предобработка аудио завершена
   processingTimeMs: 2341
   appliedFilters: ["dynaudnorm", "equalizer", "16000Hz", "mono"]
@@ -217,30 +216,30 @@ docker logs audio-enhancer | grep "INFO"
 ### FFmpeg не найден
 
 **Симптом:**
-```
+```text
 FFmpeg не найден, пропускаем предобработку аудио
 ```
 
 **Решение:**
 1. Пересобрать Docker образ: `docker-compose build jobs`
-2. Проверить: `docker exec jobs ffmpeg -version`
+2. Проверить: `docker compose exec jobs ffmpeg -version`
 
 ### Python сервис недоступен
 
 **Симптом:**
-```
+```text
 Python enhancer недоступен по адресу http://audio-enhancer:8080
 ```
 
 **Решение:**
-1. Проверить статус: `docker ps | grep audio-enhancer`
-2. Проверить логи: `docker logs audio-enhancer`
-3. Проверить health: `curl http://localhost:8080/health`
+1. Проверить статус: `docker compose ps audio-enhancer`
+2. Проверить логи: `docker compose logs audio-enhancer`
+3. Проверить health из контейнера: `docker compose exec audio-enhancer wget -qO- http://127.0.0.1:8080/health`
 
 ### Out of memory (Python)
 
 **Симптом:**
-```
+```text
 Killed (OOM)
 ```
 
