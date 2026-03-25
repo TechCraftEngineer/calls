@@ -13,6 +13,37 @@ const logger = createLogger("asr-context-correction");
 const CONTEXT_CORRECTED_MAX_LENGTH = 500_000;
 const INPUT_MAX_LENGTH = 2_000;
 
+function chunkTextPreferNewline(text: string, maxLen: number): string[] {
+  if (text.length <= maxLen) {
+    return [text];
+  }
+
+  const chunks: string[] = [];
+  let start = 0;
+
+  while (start < text.length) {
+    const rawEnd = Math.min(start + maxLen, text.length);
+    let end = rawEnd;
+
+    // Пытаемся резать по последнему '\n' в пределах чанка,
+    // чтобы не ломать разметку спикеров/строки.
+    if (rawEnd < text.length) {
+      const slice = text.slice(start, rawEnd);
+      const lastNewlineIdx = slice.lastIndexOf("\n");
+
+      // Не режем слишком близко к началу, иначе будет много микрочанков.
+      if (lastNewlineIdx > Math.floor(slice.length * 0.6)) {
+        end = start + lastNewlineIdx + 1; // включая '\n'
+      }
+    }
+
+    chunks.push(text.slice(start, end));
+    start = end;
+  }
+
+  return chunks;
+}
+
 const AsrCorrectionInputSchema = z.object({
   message: z.string().trim().min(1).max(INPUT_MAX_LENGTH),
   context: z.string().trim().max(INPUT_MAX_LENGTH).optional(),
@@ -106,68 +137,107 @@ export async function correctWithContext(
 
   const start = Date.now();
   try {
-    const parsedInput = AsrCorrectionInputSchema.safeParse({
-      message: text,
-      context: options?.companyContext ?? undefined,
-    });
-    if (!parsedInput.success) {
-      logger.warn(
-        "Входные данные контекстной коррекции не прошли валидацию, оставляем исходный текст",
-        {
-          functionId: "asr-context-correction",
-          issues: parsedInput.error.issues,
-        },
-      );
-      return text;
+    const normalizedText = text.trim();
+    const normalizedCompanyContext =
+      options?.companyContext?.trim() ?? undefined;
+
+    // Если контекст компании слишком длинный — обрезаем, чтобы не ломать контракт схемы.
+    // Это лучше, чем полностью отключать коррекцию контекста.
+    const companyContext =
+      normalizedCompanyContext &&
+      normalizedCompanyContext.length > INPUT_MAX_LENGTH
+        ? (() => {
+            logger.warn("Контекст компании слишком длинный, обрезаем", {
+              functionId: "asr-context-correction",
+              inputLength: normalizedCompanyContext.length,
+              maxLength: INPUT_MAX_LENGTH,
+            });
+            return normalizedCompanyContext.slice(0, INPUT_MAX_LENGTH);
+          })()
+        : normalizedCompanyContext;
+
+    const chunks = chunkTextPreferNewline(normalizedText, INPUT_MAX_LENGTH);
+
+    if (chunks.length > 1) {
+      logger.info("Контекстная коррекция: текст режется на чанки", {
+        functionId: "asr-context-correction",
+        chunkCount: chunks.length,
+        inputLength: normalizedText.length,
+        maxChunkLength: INPUT_MAX_LENGTH,
+      });
     }
 
-    const contextInfo = options?.companyContext
-      ? `\n\nКОНТЕКСТ КОМПАНИИ:\n${options.companyContext}\n\nИспользуй эту информацию для лучшего понимания предметной области и терминологии.`
+    const contextInfo = companyContext
+      ? `\n\nКОНТЕКСТ КОМПАНИИ:\n${companyContext}\n\nИспользуй эту информацию для лучшего понимания предметной области и терминологии.`
       : "";
 
-    const { text: correctedTextRaw } = await generateWithAi({
-      modelProfile: "premium",
-      system: SYSTEM_PROMPT,
-      prompt: `Проанализируй транскрипт и исправь ошибки ASR, используя контекст разговора:${contextInfo}
+    const correctedChunks: string[] = [];
+
+    for (const chunk of chunks) {
+      const parsedInput = AsrCorrectionInputSchema.safeParse({
+        message: chunk,
+        context: companyContext,
+      });
+
+      if (!parsedInput.success) {
+        logger.warn(
+          "Входные данные контекстной коррекции не прошли валидацию, оставляем исходный текст",
+          {
+            functionId: "asr-context-correction",
+            issues: parsedInput.error.issues,
+          },
+        );
+        return text;
+      }
+
+      const { text: correctedTextRaw } = await generateWithAi({
+        modelProfile: "premium",
+        system: SYSTEM_PROMPT,
+        prompt: `Проанализируй транскрипт и исправь ошибки ASR, используя контекст разговора:${contextInfo}
 
 --- ТРАНСКРИПТ ---
-${text}
+${chunk}
 
 --- ИСПРАВЛЕННЫЙ ТРАНСКРИПТ ---`,
-      temperature: 0.1, // Низкая температура для консервативных исправлений
-      maxRetries: 2,
-      abortSignal: AbortSignal.timeout(60_000),
-      functionId: "asr-context-correction",
-    });
+        temperature: 0.1, // Низкая температура для консервативных исправлений
+        maxRetries: 2,
+        abortSignal: AbortSignal.timeout(60_000),
+        functionId: "asr-context-correction",
+      });
 
-    // Если generateWithAi начнет возвращать метаданные вместе с текстом,
-    // нужно синхронно обновить эту схему и shape ответа в @calls/ai.
-    const parsedResponse = CORRECTED_TEXT_SCHEMA.safeParse({
-      text: correctedTextRaw,
-    });
-    if (!parsedResponse.success) {
-      logger.warn(
-        "Ответ AI для контекстной коррекции отклонён (пусто или слишком длинно), оставляем исходный текст",
-        {
-          functionId: "asr-context-correction",
-          issues: parsedResponse.error.issues,
-        },
-      );
-      return text;
+      // Если generateWithAi начнет возвращать метаданные вместе с текстом,
+      // нужно синхронно обновить эту схему и shape ответа в @calls/ai.
+      const parsedResponse = CORRECTED_TEXT_SCHEMA.safeParse({
+        text: correctedTextRaw,
+      });
+
+      if (!parsedResponse.success) {
+        logger.warn(
+          "Ответ AI для контекстной коррекции отклонён (пусто или слишком длинно), оставляем исходный текст",
+          {
+            functionId: "asr-context-correction",
+            issues: parsedResponse.error.issues,
+          },
+        );
+        return text;
+      }
+
+      correctedChunks.push(parsedResponse.data.text);
     }
-    const correctedText = parsedResponse.data.text;
 
-    const hasChanges = correctedText.trim() !== text.trim();
+    const correctedText = correctedChunks.join("").trim();
+    const hasChanges = correctedText !== normalizedText;
 
     logger.info("Контекстная коррекция завершена", {
       processingTimeMs: Date.now() - start,
-      inputLength: text.length,
+      inputLength: normalizedText.length,
       outputLength: correctedText.length,
       hasChanges,
-      hasCompanyContext: !!options?.companyContext,
+      hasCompanyContext: !!companyContext,
+      chunkCount: chunks.length,
     });
 
-    return correctedText.trim();
+    return correctedText;
   } catch (error) {
     logger.error("Ошибка контекстной коррекции", {
       error: error instanceof Error ? error.message : String(error),
