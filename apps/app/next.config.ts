@@ -13,7 +13,7 @@ export default async function createNextConfig(): Promise<NextConfig> {
     ...(process.env.CI === "true" && { output: "standalone" }),
 
     /** Exclude packages using Node.js APIs or dynamic require from bundling */
-    serverExternalPackages: ["@calls/lib", "cheerio"],
+    serverExternalPackages: ["@calls/lib"],
 
     /** Build optimizations */
     experimental: {
