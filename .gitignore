@@ -54,3 +54,4 @@ dist/
 
 # tanstack
 .tanstack
+__pycache__

@@ -1,0 +1,270 @@
+import logging
+import os
+import tempfile
+
+import requests
+from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Request
+from fastapi.responses import JSONResponse
+import uvicorn
+
+from config import settings
+from services.job_models import JobStatus
+from services.job_orchestrator import job_orchestrator
+from services.transcription_service import transcription_service
+from utils.file_validation import FileValidator
+from utils.logger import setup_logging
+
+logger = logging.getLogger(__name__)
+
+# Создание FastAPI приложения
+app = FastAPI(
+    title=settings.app_name,
+    description="API для распознавания русской речи на базе GigaAM",
+    version=settings.app_version
+)
+
+
+def _job_payload(job) -> dict:
+    eta_seconds = job_orchestrator.estimate_eta_seconds(job)
+    payload = {
+        "job_id": job.job_id,
+        "status": job.status.value,
+        "progress": job.progress,
+        "eta_seconds": eta_seconds,
+        "created_at": job.created_at,
+        "updated_at": job.updated_at,
+        "error": job.error,
+        "attempt": int(job.metadata.get("attempt", 0)),
+        "stages": [stage.__dict__ for stage in job.stages],
+    }
+    if job.result:
+        payload["result"] = job.result
+    return payload
+
+@app.post("/api/transcribe")
+async def api_transcribe(request: Request, file: UploadFile = File(...)):
+    """
+    Распознавание речи из аудиофайла
+    
+    - **file**: Аудиофайл для распознавания
+    - **return**: JSON с результатом распознавания
+    
+    Поддерживаемые форматы: MP3, WAV, FLAC, M4A, AAC, OGG, WEBM
+    Максимальный размер файла: 100MB
+    """
+    try:
+        content_length = request.headers.get("content-length")
+        if content_length:
+            try:
+                content_length = int(content_length)
+            except ValueError:
+                content_length = None
+        
+        FileValidator.validate_audio_file(file, content_length)
+        
+        file_info = FileValidator.get_file_info(file)
+        logger.info(f"Получен файл: {os.path.basename(file_info['filename'])} ({file_info['size']} bytes)")
+        
+        file_extension = file_info["extension"] or ".tmp"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp:
+            content = await file.read()
+            
+            if len(content) > settings.max_file_size:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"Размер файла превышает лимит {settings.max_file_size // (1024*1024)}MB"
+                )
+            
+            tmp.write(content)
+            tmp_path = tmp.name
+        
+        try:
+            result = transcription_service.transcribe_audio(tmp_path)
+            
+            if result["success"]:
+                logger.info(f"Успешное распознавание файла {os.path.basename(file.filename)}")
+                return JSONResponse(content=result)
+            else:
+                logger.error(f"Ошибка распознавания: {result.get('error')}")
+                raise HTTPException(status_code=500, detail=result.get('error'))
+                
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Внутренняя ошибка сервера: {e}")
+        raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
+
+
+@app.post("/api/jobs")
+async def create_job(
+    request: Request,
+    file: UploadFile | None = File(default=None),
+    source_url: str | None = Form(default=None),
+    callback_url: str | None = Form(default=None),
+):
+    """Создает асинхронную задачу Ultra-SOTA pipeline."""
+    try:
+        if (file is None and not source_url) or (file is not None and source_url):
+            raise HTTPException(
+                status_code=400,
+                detail="Передайте либо file, либо source_url",
+            )
+
+        if file is not None:
+            content_length = request.headers.get("content-length")
+            if content_length:
+                try:
+                    content_length = int(content_length)
+                except ValueError:
+                    content_length = None
+
+            FileValidator.validate_audio_file(file, content_length)
+            file_info = FileValidator.get_file_info(file)
+            file_extension = file_info["extension"] or ".tmp"
+            with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp:
+                content = await file.read()
+                if len(content) > settings.max_file_size:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"Размер файла превышает лимит {settings.max_file_size // (1024*1024)}MB",
+                    )
+                tmp.write(content)
+                tmp_path = tmp.name
+            original_filename = file.filename
+        else:
+            try:
+                response = requests.get(
+                    source_url,
+                    stream=True,
+                    timeout=settings.source_download_timeout,
+                )
+                response.raise_for_status()
+                suffix = os.path.splitext(source_url)[1].lower() or ".tmp"
+                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                    total = 0
+                    for chunk in response.iter_content(chunk_size=1024 * 1024):
+                        if not chunk:
+                            continue
+                        total += len(chunk)
+                        if total > settings.max_file_size:
+                            raise HTTPException(
+                                status_code=413,
+                                detail=f"Размер файла превышает лимит {settings.max_file_size // (1024*1024)}MB",
+                            )
+                        tmp.write(chunk)
+                    tmp_path = tmp.name
+                original_filename = os.path.basename(source_url) or "remote_audio"
+            except HTTPException:
+                raise
+            except Exception as exc:
+                raise HTTPException(status_code=400, detail=f"Не удалось загрузить source_url: {exc}") from exc
+
+        job = job_orchestrator.create_job(
+            tmp_path,
+            original_filename,
+            callback_url=callback_url,
+        )
+        return JSONResponse(
+            content={
+                "job_id": job.job_id,
+                "status": job.status.value,
+                "progress": job.progress,
+                "eta_seconds": None,
+                "created_at": job.created_at,
+                "input": {
+                    "filename": original_filename,
+                    "source_url": source_url,
+                    "callback_url": callback_url,
+                },
+                "stages": [stage.__dict__ for stage in job.stages],
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Ошибка создания job: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Не удалось создать задачу") from e
+
+
+@app.get("/api/jobs/{job_id}")
+async def get_job(job_id: str):
+    """Возвращает статус асинхронной задачи."""
+    job = job_orchestrator.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    return JSONResponse(content=_job_payload(job))
+
+
+@app.get("/api/jobs")
+async def list_jobs(
+    limit: int = 20,
+    offset: int = 0,
+    status: str | None = None,
+):
+    """Возвращает список задач (новые сверху)."""
+    status_enum = None
+    if status:
+        try:
+            status_enum = JobStatus(status)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid status filter") from exc
+    jobs = job_orchestrator.list_jobs(limit=limit, offset=offset, status=status_enum)
+    return {"items": [_job_payload(job) for job in jobs], "count": len(jobs), "offset": offset}
+
+
+@app.post("/api/jobs/{job_id}/cancel")
+async def cancel_job(job_id: str):
+    """Помечает задачу как отмененную (best effort)."""
+    if not job_orchestrator.cancel_job(job_id):
+        raise HTTPException(status_code=404, detail="Job not found or already completed")
+    return {"job_id": job_id, "status": "cancelled"}
+
+@app.get("/api/health")
+async def health_check():
+    """Проверка работоспособности API"""
+    model_health = transcription_service.health_check()
+    return {
+        "status": "ok",
+        "app_name": settings.app_name,
+        "version": settings.app_version,
+        "model": model_health
+    }
+
+@app.get("/api/info")
+async def app_info():
+    """Получение информации о приложении"""
+    return {
+        "app_name": settings.app_name,
+        "version": settings.app_version,
+        "description": "API для распознавания русской речи на базе GigaAM",
+        "supported_formats": settings.allowed_audio_formats,
+        "max_file_size_mb": settings.max_file_size // (1024 * 1024),
+        "endpoints": {
+            "/api/transcribe": "POST - Распознавание речи из аудиофайла",
+            "/api/jobs": "POST - Создать async pipeline job",
+            "/api/jobs?limit=20&offset=0&status=done": "GET - Список async jobs",
+            "/api/jobs/{id}": "GET - Статус и результат async job",
+            "/api/health": "GET - Проверка работоспособности",
+            "/api/info": "GET - Информация о приложении"
+        }
+    }
+
+@app.get("/")
+async def root():
+    """Корневой эндпоинт"""
+    return {
+        "message": "GigaAM API для распознавания русской речи",
+        "version": settings.app_version,
+        "docs": "/docs",
+        "health": "/api/health"
+    }
+
+if __name__ == "__main__":
+    logger.info(f"Запуск приложения {settings.app_name} v{settings.app_version}")
+    logger.info(f"Сервер будет запущен на {settings.host}:{settings.port}")
+    uvicorn.run(app, host=settings.host, port=settings.port, log_level=settings.log_level.lower())
