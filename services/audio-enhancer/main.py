@@ -853,5 +853,5 @@ async def diarize_audio(
 if __name__ == "__main__":
     import uvicorn
 
-    port = _parse_int_env("PORT", 7860)
+    port = _parse_int_env("PORT", 7861)
     uvicorn.run(app, host=HOST, port=port, log_level=LOG_LEVEL.lower())

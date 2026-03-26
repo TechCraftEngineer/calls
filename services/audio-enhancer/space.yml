@@ -6,7 +6,7 @@ colorTo: "purple"
 sdk: "docker"
 pinned: false
 license: "mit"
-app_port: 7860
+app_port: 7861
 sleep_time: 900
 
 # Pro-ориентированные рекомендации
