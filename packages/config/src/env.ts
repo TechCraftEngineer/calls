@@ -56,7 +56,7 @@ export const env = createEnv({
     /** Giga AM (HTTP), по умолчанию async pipeline endpoint */
     GIGA_AM_TRANSCRIBE_URL: z
       .url()
-      .default("https://kodermax-giga-am.hf.space/api/jobs"),
+      .default("https://vnggncb-giga-am.hf.space/api/jobs"),
     GIGA_AM_ENABLED: z.stringbool().default(true),
     ASSEMBLYAI_RATE_USD_PER_HOUR: z.coerce.number().positive().default(0.23),
     RUB_PER_USD: z.coerce.number().positive().default(90),

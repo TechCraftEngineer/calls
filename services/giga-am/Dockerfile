@@ -11,7 +11,7 @@ ENV PYTHONUNBUFFERED=1 \
     JOBS_DIR=/home/user/app/temp/jobs \
     AUDIO_ENHANCER_URL=""
 
-ARG GIGAAM_REV
+ARG GIGAAM_REV=main
 
 # Создание пользователя для HF Spaces
 RUN useradd -m -u 1000 user
