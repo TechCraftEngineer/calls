@@ -72,10 +72,9 @@ export const env = createEnv({
     // Audio preprocessing (optional Python service)
     AUDIO_ENHANCER_URL: z
       .string()
-      .optional()
+      .default("https://vnggncb-audio-enhancer.hf.space/")
       .refine(
         (val) => {
-          if (!val) return true; // optional
           // Базовая проверка URL формата
           return /^https?:\/\/.+/.test(val);
         },
