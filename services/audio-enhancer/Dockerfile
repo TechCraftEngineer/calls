@@ -15,7 +15,9 @@ ENV PYTHONUNBUFFERED=1 \
     HF_TOKEN=""
 
 # HF Spaces ожидает пользователя user (uid 1000) и /home/user
-RUN useradd -m -u 1000 user
+RUN mkdir -p /home/user && \
+    useradd -u 1000 -d /home/user -s /bin/bash user && \
+    chown -R user:user /home/user
 
 WORKDIR /home/user/app
 
@@ -30,7 +32,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Установка Rust через rustup (для DeepFilterNet)
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
+    . $HOME/.cargo/env && \
+    rustc --version
 
 # Создание директорий для кэша
 RUN mkdir -p /tmp/numba_cache /tmp/torch_cache /tmp/transformers_cache && \
@@ -38,7 +42,7 @@ RUN mkdir -p /tmp/numba_cache /tmp/torch_cache /tmp/transformers_cache && \
 
 # Копирование и установка зависимостей
 COPY --chown=user:user requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN . $HOME/.cargo/env && pip install --no-cache-dir -r requirements.txt
 
 # Предзагрузка Silero VAD модели (чтобы не загружать при каждом запуске)
 RUN python -c "import torch; torch.hub.load(repo_or_dir='snakers4/silero-vad', model='silero_vad', force_reload=False, onnx=False, trust_repo=True)" || true
@@ -49,7 +53,7 @@ COPY --chown=user:user . .
 # Переключение на пользователя
 USER user
 
-EXPOSE 7861
+EXPOSE 7860
 
 # Запуск uvicorn напрямую для лучшей производительности
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7861", "--workers", "1"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860", "--workers", "1"]

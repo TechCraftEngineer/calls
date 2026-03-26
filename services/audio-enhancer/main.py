@@ -142,14 +142,8 @@ if PYANNOTE_AVAILABLE:
         hf_token = os.getenv("HF_TOKEN")
         if hf_token:
             model_id = "pyannote/speaker-diarization-3.1"
-            try:
-                # Новый API huggingface_hub / pyannote
-                pyannote_pipeline = Pipeline.from_pretrained(model_id, token=hf_token)
-            except TypeError:
-                # Совместимость со старыми версиями API
-                pyannote_pipeline = Pipeline.from_pretrained(
-                    model_id, use_auth_token=hf_token
-                )
+            # Используем только новый API с параметром token
+            pyannote_pipeline = Pipeline.from_pretrained(model_id, token=hf_token)
             logger.info("✓ Pyannote диаризация загружена")
         else:
             logger.warning("HF_TOKEN не установлен, pyannote недоступен")
@@ -848,10 +842,3 @@ async def diarize_audio(
             status_code=500,
             detail="Diarization failed",
         ) from e
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    port = _parse_int_env("PORT", 7861)
-    uvicorn.run(app, host=HOST, port=port, log_level=LOG_LEVEL.lower())

@@ -5,8 +5,8 @@ from typing import Dict, Any
 
 # Базовый URL API
 # Для локальной разработки: http://localhost:7860
-# Для HuggingFace Space: https://vnggncb-giga-am.hf.space
-BASE_URL = "https://vnggncb-giga-am.hf.space"
+# Для HuggingFace Space: https://kodermax-giga-am.hf.space
+BASE_URL = "https://kodermax-giga-am.hf.space"
 API_URL = f"{BASE_URL}/api/transcribe"
 HEALTH_URL = f"{BASE_URL}/api/health"
 INFO_URL = f"{BASE_URL}/api/info"
