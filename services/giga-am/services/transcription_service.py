@@ -5,6 +5,8 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any
 import gigaam
+import torch
+import torchaudio
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -26,6 +28,7 @@ class TranscriptionService:
                 
             try:
                 logger.info(f"Загрузка модели {self.model_name}...")
+                self._log_runtime_versions()
                 
                 # Установка HF токена из настроек или переменной окружения
                 hf_token = settings.hf_token or os.getenv("HF_TOKEN")
@@ -47,6 +50,16 @@ class TranscriptionService:
                 logger.error(f"Ошибка при загрузке модели: {e}")
                 self._model_initialized = False
                 raise
+
+    def _log_runtime_versions(self):
+        """Логирует версии ключевых библиотек для диагностики окружения."""
+        logger.info(
+            "Runtime versions: python=%s, gigaam=%s, torch=%s, torchaudio=%s",
+            os.sys.version.split(" ")[0],
+            getattr(gigaam, "__version__", "unknown"),
+            getattr(torch, "__version__", "unknown"),
+            getattr(torchaudio, "__version__", "unknown"),
+        )
 
     def _preload_pyannote_model(self):
         """Предзагрузка pyannote модели для проверки доступа"""

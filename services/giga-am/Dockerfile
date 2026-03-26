@@ -1,10 +1,10 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
-# Установка переменных окружения для HF Spaces
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_REQUIRE_HASHES=0 \
     DEBIAN_FRONTEND=noninteractive \
     HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH \
@@ -29,17 +29,12 @@ RUN pip install --upgrade pip setuptools wheel
 
 # Копирование и установка зависимостей Python
 COPY --chown=user:user requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Ревизия GigaAM (tag/branch/commit) передается как build-arg.
-ARG GIGAAM_REV=main
-
-# Установка GigaAM из GitHub репозитория (фиксированная ревизия)
-RUN git clone https://github.com/salute-developers/GigaAM.git /tmp/GigaAM && \
-    cd /tmp/GigaAM && \
-    git checkout "$GIGAAM_REV" && \
-    pip install --no-cache-dir . && \
-    rm -rf /tmp/GigaAM
+RUN python -c "from pathlib import Path; p=Path('requirements.txt'); lines=p.read_text().splitlines(); p.with_name('requirements.base.txt').write_text('\n'.join([l for l in lines if l.strip() and not l.strip().startswith('gigaam @')]) + '\n')" && \
+    pip install --no-cache-dir \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r requirements.base.txt && \
+    pip install --no-cache-dir --no-deps \
+    "gigaam @ git+https://github.com/salute-developers/GigaAM.git"
 
 # Копирование исходного кода
 COPY --chown=user:user . .

@@ -5,7 +5,11 @@ colorFrom: blue
 colorTo: purple
 sdk: docker
 app_port: 7860
+sleep_time: 900
 pinned: false
+suggested_hardware: t4-small
+suggested_storage: small
+startup_duration_timeout: 1h
 ---
 
 # 🎵 Audio Enhancer v2.0
