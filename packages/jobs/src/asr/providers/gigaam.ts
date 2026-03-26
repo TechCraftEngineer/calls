@@ -15,6 +15,7 @@ const GIGA_AM_HTTP_TIMEOUT_MS = 120_000;
 const GIGA_AM_JOB_TIMEOUT_MS = 20 * 60_000;
 const GIGA_AM_JOB_POLL_INTERVAL_MS = 5000;
 const MAX_AUDIO_BYTES = 100 * 1024 * 1024;
+const NON_RETRYABLE_HTTP_STATUSES = new Set([400, 401, 403, 404]);
 
 const gigaAmSegmentSchema = z.object({
   text: z.string(),
@@ -217,7 +218,7 @@ export async function transcribeWithGigaAm(
         async (audioResponse, signal) => {
           if (!audioResponse.ok) {
             const msg = `Не удалось скачать аудио: ${audioResponse.status} ${audioResponse.statusText}`;
-            if (audioResponse.status < 500) {
+            if (NON_RETRYABLE_HTTP_STATUSES.has(audioResponse.status)) {
               throw new NonRetryableError(msg);
             }
             throw new Error(msg);
@@ -275,7 +276,7 @@ export async function transcribeWithGigaAm(
                 ? (rawJson as { detail: string }).detail
                 : response.statusText;
             const msg = `Giga AM HTTP ${response.status}: ${detail}`;
-            if (response.status < 500) {
+            if (NON_RETRYABLE_HTTP_STATUSES.has(response.status)) {
               throw new NonRetryableError(msg);
             }
             throw new Error(msg);
@@ -366,9 +367,11 @@ export async function transcribeWithGigaAm(
             break;
           }
           if (status === "failed" || status === "cancelled") {
-            throw new Error(
+            const detail =
               jobStatusRaw.error ||
-                `Giga AM job завершился со статусом ${status}`,
+              `Giga AM job завершился со статусом ${status}`;
+            throw new NonRetryableError(
+              `Giga AM job ${apiResponse.job_id} terminal status=${status}: ${detail}`,
             );
           }
           await sleep(GIGA_AM_JOB_POLL_INTERVAL_MS);

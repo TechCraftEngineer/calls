@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.simple
+      args:
+        GIGAAM_REV: ${GIGAAM_REV:-}
     container_name: giga-am-api
     ports:
       - "7860:7860"
