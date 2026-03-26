@@ -19,6 +19,10 @@ RUN mkdir -p /tmp/numba_cache && chown -R audio_user:audio_user /tmp/numba_cache
 ENV NUMBA_DISABLE_CACHE=1
 ENV NUMBA_CACHE_DIR=/tmp/numba_cache
 
+# Trust Silero VAD repository for torch.hub
+ENV TORCH_HOME=/tmp/torch_cache
+RUN mkdir -p /tmp/torch_cache && chown -R audio_user:audio_user /tmp/torch_cache
+
 COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt

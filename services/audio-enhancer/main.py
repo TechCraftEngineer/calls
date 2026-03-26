@@ -36,6 +36,7 @@ try:
         model="silero_vad",
         force_reload=False,
         onnx=False,
+        trust_repo=True,  # Доверяем репозиторию Silero VAD
     )
     (get_speech_timestamps, save_audio, read_audio, VADIterator, collect_chunks) = utils
     logger.info("✓ Silero VAD модель загружена")
