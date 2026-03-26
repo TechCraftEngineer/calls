@@ -14,6 +14,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import warnings
 
 import librosa
 import noisereduce as nr
@@ -85,6 +86,15 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title=APP_NAME, version="2.0.0", debug=DEBUG)
 
+# Подавляем известный warning внутри стороннего df.checkpoint (DeepFilterNet).
+# Это не наш прямой torch.load-вызов и не влияет на безопасность нашего кода.
+warnings.filterwarnings(
+    "ignore",
+    message=r".*torch\.load.*weights_only=False.*",
+    category=FutureWarning,
+    module=r"df\.checkpoint",
+)
+
 # Обработка сигналов для корректного завершения
 def signal_handler(sig, frame):
     logger.info("Получен сигнал завершения, останавливаем сервис...")
@@ -131,10 +141,15 @@ if PYANNOTE_AVAILABLE:
         # Требуется HuggingFace токен для загрузки
         hf_token = os.getenv("HF_TOKEN")
         if hf_token:
-            pyannote_pipeline = Pipeline.from_pretrained(
-                "pyannote/speaker-diarization-3.1",
-                use_auth_token=hf_token
-            )
+            model_id = "pyannote/speaker-diarization-3.1"
+            try:
+                # Новый API huggingface_hub / pyannote
+                pyannote_pipeline = Pipeline.from_pretrained(model_id, token=hf_token)
+            except TypeError:
+                # Совместимость со старыми версиями API
+                pyannote_pipeline = Pipeline.from_pretrained(
+                    model_id, use_auth_token=hf_token
+                )
             logger.info("✓ Pyannote диаризация загружена")
         else:
             logger.warning("HF_TOKEN не установлен, pyannote недоступен")
