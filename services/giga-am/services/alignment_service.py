@@ -6,13 +6,24 @@ from typing import Any
 class AlignmentService:
     """Легковесный forced-alignment слой на базе сегментов ASR."""
 
+    @staticmethod
+    def _extract_words(text: str) -> list[str]:
+        return [w for w in text.strip().split() if w]
+
     def align_segments(self, segments: list[dict[str, Any]]) -> list[dict[str, Any]]:
         aligned: list[dict[str, Any]] = []
         for segment in segments:
             text = (segment.get("text") or "").strip()
             start = float(segment.get("start", 0.0))
             end = float(segment.get("end", start))
-            words = [w for w in text.split() if w]
+            words = self._extract_words(text)
+            if not words:
+                segment["words"] = []
+                aligned.append(segment)
+                continue
+
+            # Берем актуальный текст из сегмента перед таймингами, чтобы не получить desync.
+            words = self._extract_words(segment.get("text") or "")
             if not words:
                 segment["words"] = []
                 aligned.append(segment)

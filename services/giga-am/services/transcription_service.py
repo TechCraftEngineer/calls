@@ -61,7 +61,7 @@ class TranscriptionService:
             logger.info("Проверка доступа к pyannote/segmentation-3.0...")
             model = Model.from_pretrained(
                 "pyannote/segmentation-3.0",
-                use_auth_token=hf_token
+                token=hf_token
             )
             logger.info("Pyannote модель успешно загружена")
         except Exception as e:

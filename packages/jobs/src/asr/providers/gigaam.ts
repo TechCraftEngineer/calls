@@ -12,6 +12,8 @@ const logger = createLogger("asr-gigaam");
 
 const FETCH_TIMEOUT_MS = 30_000;
 const GIGA_AM_HTTP_TIMEOUT_MS = 120_000;
+const GIGA_AM_JOB_TIMEOUT_MS = 20 * 60_000;
+const GIGA_AM_JOB_POLL_INTERVAL_MS = 5000;
 const MAX_AUDIO_BYTES = 100 * 1024 * 1024;
 
 const gigaAmSegmentSchema = z.object({
@@ -27,6 +29,23 @@ const gigaAmSuccessResponseSchema = z.object({
   success: z.literal(true),
   segments: z.array(gigaAmSegmentSchema),
   total_duration: z.number().optional(),
+});
+
+const gigaAmJobCreateResponseSchema = z.object({
+  job_id: z.string(),
+  status: z.string(),
+});
+
+const gigaAmJobResultSchema = z.object({
+  status: z.string(),
+  result: z
+    .object({
+      segments: z.array(gigaAmSegmentSchema).optional(),
+      final_transcript: z.string().optional(),
+      total_duration: z.number().optional(),
+    })
+    .optional(),
+  error: z.string().optional().nullable(),
 });
 
 function toErrorMessage(error: unknown): string {
@@ -167,6 +186,10 @@ function segmentsToUtterances(
   }));
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export function isGigaAmTranscribeConfigured(): boolean {
   return env.GIGA_AM_ENABLED && Boolean(env.GIGA_AM_TRANSCRIBE_URL?.trim());
 }
@@ -247,27 +270,97 @@ export async function transcribeWithGigaAm(
             throw new Error(msg);
           }
 
-          const parsed = gigaAmSuccessResponseSchema.safeParse(rawJson);
-          if (!parsed.success) {
-            logger.warn("Некорректный формат ответа Giga AM", {
-              issues: parsed.error.issues.map((i) => i.message),
-            });
-            throw new NonRetryableError("Giga AM: некорректный JSON ответа");
+          const parsedSync = gigaAmSuccessResponseSchema.safeParse(rawJson);
+          if (parsedSync.success) {
+            return parsedSync.data;
           }
-
-          return parsed.data;
+          const parsedJob = gigaAmJobCreateResponseSchema.safeParse(rawJson);
+          if (parsedJob.success) {
+            return parsedJob.data;
+          }
+          logger.warn("Некорректный формат ответа Giga AM", {
+            syncIssues: parsedSync.success
+              ? []
+              : parsedSync.error.issues.map((i) => i.message),
+            jobIssues: parsedJob.success
+              ? []
+              : parsedJob.error.issues.map((i) => i.message),
+          });
+          throw new NonRetryableError("Giga AM: некорректный JSON ответа");
         },
       );
 
-      const data = apiResponse;
-      const text = segmentsToText(data.segments);
-      const utterances = segmentsToUtterances(data.segments);
+      let segments: z.infer<typeof gigaAmSegmentSchema>[] = [];
+      let totalDuration: number | undefined;
+      let finalTranscript: string | undefined;
+
+      if ("success" in apiResponse) {
+        segments = apiResponse.segments;
+        totalDuration = apiResponse.total_duration;
+      } else {
+        const baseUrl = transcribeUrl.replace(/\/$/, "");
+        const isJobsEndpoint = /\/api\/jobs$/i.test(baseUrl);
+        const jobStatusUrl = isJobsEndpoint
+          ? `${baseUrl}/${apiResponse.job_id}`
+          : `${baseUrl}/api/jobs/${apiResponse.job_id}`;
+
+        const jobStart = Date.now();
+        while (Date.now() - jobStart < GIGA_AM_JOB_TIMEOUT_MS) {
+          const jobStatusRaw = await fetchWithTimeout(
+            jobStatusUrl,
+            { method: "GET" },
+            "TIMEOUT_GIGA_AM_JOB: Превышено время ожидания завершения Giga AM job",
+            GIGA_AM_HTTP_TIMEOUT_MS,
+            async (response, signal) => {
+              const raw: unknown = await abortable(
+                signal,
+                response.json().catch(() => null),
+              );
+              if (!response.ok) {
+                const msg = `Giga AM job HTTP ${response.status}: ${response.statusText}`;
+                if (response.status < 500) {
+                  throw new NonRetryableError(msg);
+                }
+                throw new Error(msg);
+              }
+              const parsed = gigaAmJobResultSchema.safeParse(raw);
+              if (!parsed.success) {
+                throw new NonRetryableError(
+                  "Giga AM job: некорректный JSON ответа",
+                );
+              }
+              return parsed.data;
+            },
+          );
+
+          const status = (jobStatusRaw.status || "").toLowerCase();
+          if (status === "done") {
+            segments = jobStatusRaw.result?.segments ?? [];
+            totalDuration = jobStatusRaw.result?.total_duration;
+            finalTranscript = jobStatusRaw.result?.final_transcript;
+            break;
+          }
+          if (status === "failed" || status === "cancelled") {
+            throw new Error(
+              jobStatusRaw.error ||
+                `Giga AM job завершился со статусом ${status}`,
+            );
+          }
+          await sleep(GIGA_AM_JOB_POLL_INTERVAL_MS);
+        }
+        if (!segments.length && !finalTranscript) {
+          throw new Error("TIMEOUT_GIGA_AM_JOB: Не дождались завершения job");
+        }
+      }
+
+      const text = finalTranscript?.trim() || segmentsToText(segments);
+      const utterances = segmentsToUtterances(segments);
       const processingTimeMs = Date.now() - start;
 
       logger.info("Giga AM распознавание завершено", {
         processingTimeMs,
         textLength: text.length,
-        segmentCount: data.segments.length,
+        segmentCount: segments.length,
       });
 
       return {
@@ -277,8 +370,9 @@ export async function transcribeWithGigaAm(
         processingTimeMs,
         raw: {
           endpoint: transcribeUrl,
-          totalDuration: data.total_duration,
-          segmentCount: data.segments.length,
+          totalDuration,
+          segmentCount: segments.length,
+          mode: "success" in apiResponse ? "sync" : "async-job",
         },
       };
     },

@@ -94,6 +94,23 @@ class PostprocessService:
             fixed_text, llm_conf = self.correct_text(segment.get("text", ""))
             segment["raw_text"] = segment.get("text", "")
             segment["text"] = fixed_text
+            words = [w for w in fixed_text.strip().split() if w]
+            if words:
+                start = float(segment.get("start", 0.0))
+                end = float(segment.get("end", start))
+                duration = max(0.001, end - start)
+                step = duration / len(words)
+                segment["words"] = [
+                    {
+                        "word": word,
+                        "start": round(start + idx * step, 3),
+                        "end": round(start + (idx + 1) * step, 3),
+                        "confidence": 0.8,
+                    }
+                    for idx, word in enumerate(words)
+                ]
+            else:
+                segment["words"] = []
             segment["llm_confidence"] = llm_conf
             segment["confidence"] = round(
                 (float(segment.get("confidence", 0.7)) + llm_conf) / 2.0, 3

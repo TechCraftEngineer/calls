@@ -5,10 +5,15 @@
 """
 
 import io
+import asyncio
 import base64
+import json
 import logging
+import os
 import signal
+import subprocess
 import sys
+import tempfile
 
 import librosa
 import noisereduce as nr
@@ -45,13 +50,39 @@ except ImportError:
     PYANNOTE_AVAILABLE = False
 
 # Настройка логирования
+def _parse_bool_env(value: str | None, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _parse_int_env(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        parsed = int(raw)
+    except ValueError:
+        logger.warning("Некорректное значение %s=%r, используем %d", name, raw, default)
+        return default
+    if parsed <= 0:
+        logger.warning("Значение %s=%d должно быть > 0, используем %d", name, parsed, default)
+        return default
+    return parsed
+
+
+APP_NAME = os.getenv("APP_NAME", "Audio Enhancer Service")
+DEBUG = _parse_bool_env(os.getenv("DEBUG"), default=False)
+HOST = os.getenv("HOST", "0.0.0.0")
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
 logging.basicConfig(
-    level=logging.INFO,
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Audio Enhancer Service", version="2.0.0")
+app = FastAPI(title=APP_NAME, version="2.0.0", debug=DEBUG)
 
 # Обработка сигналов для корректного завершения
 def signal_handler(sig, frame):
@@ -62,9 +93,9 @@ signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
 # Лимит загрузки до декодирования (защита от OOM)
-MAX_UPLOAD_BYTES = 80 * 1024 * 1024
+MAX_UPLOAD_BYTES = _parse_int_env("MAX_FILE_SIZE", 80 * 1024 * 1024)
 # Верхняя оценка длительности после декодирования (подстраховка)
-MAX_AUDIO_SECONDS = 4 * 3600
+MAX_AUDIO_SECONDS = _parse_int_env("MAX_AUDIO_SECONDS", 4 * 3600)
 
 # Загрузка DeepFilterNet модели
 deepfilter_model = None
@@ -97,8 +128,7 @@ pyannote_pipeline = None
 if PYANNOTE_AVAILABLE:
     try:
         # Требуется HuggingFace токен для загрузки
-        import os
-        hf_token = os.environ.get("HF_TOKEN")
+        hf_token = os.getenv("HF_TOKEN")
         if hf_token:
             pyannote_pipeline = Pipeline.from_pretrained(
                 "pyannote/speaker-diarization-3.1",
@@ -232,6 +262,411 @@ async def read_upload_bytes_capped(upload: UploadFile, max_bytes: int) -> bytes:
     return b"".join(chunks)
 
 
+def _load_audio_with_duration_check(audio_bytes: bytes) -> tuple[np.ndarray, int]:
+    duration = _probe_audio_duration_seconds(audio_bytes)
+    if duration is not None and duration > MAX_AUDIO_SECONDS:
+        raise HTTPException(status_code=413, detail="Audio too long")
+
+    with io.BytesIO(audio_bytes) as audio_stream:
+        audio, sr = librosa.load(audio_stream, sr=None, mono=True)
+
+    # Fallback-проверка на случай, если ffprobe недоступен или не смог распарсить формат.
+    decoded_duration = float(len(audio)) / float(sr) if sr else 0.0
+    if decoded_duration > MAX_AUDIO_SECONDS:
+        raise HTTPException(status_code=413, detail="Audio too long")
+    return audio, sr
+
+
+def _probe_audio_duration_seconds(audio_bytes: bytes) -> float | None:
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".audio", delete=False) as temp_file:
+            temp_file.write(audio_bytes)
+            temp_path = temp_file.name
+
+        command = [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "json",
+            temp_path,
+        ]
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            logger.warning("ffprobe завершился с ошибкой: %s", result.stderr.strip())
+            return None
+
+        payload = json.loads(result.stdout or "{}")
+        duration_raw = payload.get("format", {}).get("duration")
+        if duration_raw is None:
+            return None
+        duration = float(duration_raw)
+        if duration < 0:
+            return None
+        return duration
+    except FileNotFoundError:
+        logger.warning("ffprobe не найден, используем проверку длительности после декодирования")
+        return None
+    except (ValueError, json.JSONDecodeError) as exc:
+        logger.warning("Не удалось распарсить длительность через ffprobe: %s", exc)
+        return None
+    except Exception as exc:
+        logger.warning("Ошибка ffprobe duration probe: %s", exc)
+        return None
+    finally:
+        if temp_path:
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+
+
+def _run_diarization(audio: np.ndarray, sr: int) -> dict:
+    with io.BytesIO() as temp_audio:
+        sf.write(temp_audio, audio, sr, format="WAV")
+        temp_audio.seek(0)
+        diarization = pyannote_pipeline({"audio": temp_audio})
+
+    segments = []
+    speaker_changes = []
+    overlaps = []
+
+    prev_speaker = None
+    for turn, _, speaker in diarization.itertracks(yield_label=True):
+        segment_info = {
+            "start": turn.start,
+            "end": turn.end,
+            "duration": turn.end - turn.start,
+            "speaker": speaker,
+        }
+        segments.append(segment_info)
+        if prev_speaker is not None and prev_speaker != speaker:
+            speaker_changes.append(
+                {
+                    "time": turn.start,
+                    "from_speaker": prev_speaker,
+                    "to_speaker": speaker,
+                }
+            )
+        prev_speaker = speaker
+
+    track_list = list(diarization.itertracks(yield_label=True))
+    for i in range(len(track_list) - 1):
+        s1, _, spk1 = track_list[i]
+        s2, _, spk2 = track_list[i + 1]
+        if s1.end > s2.start and spk1 != spk2:
+            overlaps.append(
+                {
+                    "start": s2.start,
+                    "end": min(s1.end, s2.end),
+                    "duration": min(s1.end, s2.end) - s2.start,
+                    "speakers": [spk1, spk2],
+                }
+            )
+
+    result = {
+        "segments": segments,
+        "speaker_changes": speaker_changes,
+        "overlaps": overlaps,
+        "num_speakers": len(set(s["speaker"] for s in segments)),
+        "total_duration": audio.shape[0] / sr,
+    }
+    logger.info(
+        "✓ Диаризация: %d сегментов, %d смен спикера, %d перекрытий",
+        len(segments),
+        len(speaker_changes),
+        len(overlaps),
+    )
+    return result
+
+
+def process_enhance(
+    audio_bytes: bytes,
+    *,
+    use_deepfilter: bool,
+    use_wpe: bool,
+    noise_reduction: bool,
+    normalize_volume: bool,
+    enhance_speech: bool,
+    remove_silence: bool,
+    target_sample_rate: int,
+    use_compressor: bool,
+    spectral_gating: bool,
+    enable_diarization: bool,
+):
+    audio, sr = _load_audio_with_duration_check(audio_bytes)
+    logger.info(f"Загружено аудио: {len(audio)} samples, {sr} Hz")
+
+    original_audio = audio.copy()
+    original_sr = sr
+
+    if use_deepfilter and DEEPFILTER_AVAILABLE and deepfilter_model is not None:
+        logger.info("Применяем DeepFilterNet шумоподавление...")
+        try:
+            if sr != 48000:
+                audio_48k = librosa.resample(audio, orig_sr=sr, target_sr=48000)
+            else:
+                audio_48k = audio
+            audio_48k_tensor = torch.from_numpy(audio_48k).unsqueeze(0)
+            enhanced = enhance(deepfilter_model, deepfilter_df_state, audio_48k_tensor)
+            audio_48k = enhanced.squeeze(0).numpy()
+            if sr != 48000:
+                audio = librosa.resample(audio_48k, orig_sr=48000, target_sr=sr)
+            else:
+                audio = audio_48k
+            logger.info("✓ DeepFilterNet применен")
+        except Exception as e:
+            logger.warning(f"DeepFilterNet не удался: {e}, используем fallback")
+            use_deepfilter = False
+
+    if use_wpe and WPE_AVAILABLE:
+        logger.info("Применяем WPE дереверберацию...")
+        try:
+            stft = librosa.stft(audio, n_fft=512, hop_length=128)
+            stft_wpe = wpe(stft[np.newaxis, :, :], taps=10, delay=3, iterations=3)
+            audio = librosa.istft(stft_wpe[0], hop_length=128, length=len(audio))
+            logger.info("✓ WPE дереверберация применена")
+        except Exception as e:
+            logger.warning(f"WPE не удался: {e}")
+
+    if noise_reduction and (not use_deepfilter or not DEEPFILTER_AVAILABLE):
+        logger.info("Применяем классическое шумоподавление...")
+        audio = nr.reduce_noise(y=audio, sr=sr, stationary=True, prop_decrease=0.8)
+
+    if spectral_gating:
+        logger.info("Применяем спектральный гейтинг...")
+        D = librosa.stft(audio)
+        magnitude = np.abs(D)
+        noise_threshold = np.percentile(magnitude, 10)
+        mask = np.maximum(0, 1 - (noise_threshold / (magnitude + 1e-10)))
+        mask = np.power(mask, 2)
+        D_filtered = D * mask
+        audio = librosa.istft(D_filtered, length=len(audio))
+
+    if enhance_speech:
+        logger.info("Усиливаем речевые частоты...")
+        board = Pedalboard(
+            [
+                HighpassFilter(cutoff_frequency_hz=80),
+                LowpassFilter(cutoff_frequency_hz=8000),
+            ]
+        )
+        audio = board(audio, sr)
+        audio = librosa.effects.preemphasis(audio, coef=0.97)
+        fft = np.fft.rfft(audio)
+        frequencies = np.fft.rfftfreq(len(audio), 1 / sr)
+        speech_mask = (frequencies >= 300) & (frequencies <= 3400)
+        critical_mask = (frequencies >= 1000) & (frequencies <= 3000)
+        gain = np.ones_like(frequencies, dtype=np.float32)
+        gain[critical_mask] = 1.5
+        gain[speech_mask & ~critical_mask] = 1.3
+        gain[~speech_mask] = 0.4
+        fft *= gain
+        audio = np.fft.irfft(fft, n=len(audio))
+
+    if use_compressor:
+        logger.info("Применяем динамическую компрессию...")
+        compressor = Pedalboard(
+            [Compressor(threshold_db=-20, ratio=4, attack_ms=5, release_ms=50)]
+        )
+        audio = compressor(audio, sr)
+
+    if normalize_volume:
+        logger.info("Нормализуем громкость (LUFS)...")
+        peak = np.abs(audio).max()
+        if peak > 0:
+            audio = audio / peak * 0.95
+        try:
+            if sr != 16000:
+                audio_16k = librosa.resample(audio, orig_sr=sr, target_sr=16000)
+                loudness = loudness_meter.integrated_loudness(audio_16k)
+            else:
+                loudness = loudness_meter.integrated_loudness(audio)
+            target_loudness = -16.0
+            loudness_delta = target_loudness - loudness
+            gain = np.power(10.0, loudness_delta / 20.0)
+            audio = audio * gain
+            logger.info(f"Громкость: {loudness:.1f} LUFS -> {target_loudness} LUFS")
+        except Exception as e:
+            logger.warning(f"LUFS нормализация не удалась: {e}, используем RMS")
+            rms = np.sqrt(np.mean(audio**2))
+            target_rms = 0.1
+            if rms > 0:
+                audio = audio * (target_rms / rms)
+        audio = np.clip(audio, -1.0, 1.0)
+
+    if remove_silence and vad_model is not None:
+        logger.info("Удаляем длинные паузы (Silero VAD)...")
+        if sr != 16000:
+            audio_16k = librosa.resample(audio, orig_sr=sr, target_sr=16000)
+        else:
+            audio_16k = audio
+        audio_tensor = torch.from_numpy(audio_16k).float()
+        speech_timestamps = get_speech_timestamps(
+            audio_tensor,
+            vad_model,
+            sampling_rate=16000,
+            threshold=0.5,
+            min_speech_duration_ms=250,
+            min_silence_duration_ms=1000,
+        )
+        if speech_timestamps:
+            speech_chunks = []
+            for timestamp in speech_timestamps:
+                start = int(timestamp["start"] * sr / 16000)
+                end = int(timestamp["end"] * sr / 16000)
+                speech_chunks.append(audio[start:end])
+            if speech_chunks:
+                audio = np.concatenate(speech_chunks)
+                logger.info(f"✓ Удалено пауз: {len(speech_timestamps)}")
+
+    if sr != target_sample_rate:
+        logger.info(f"Ресемплинг {sr} Hz -> {target_sample_rate} Hz...")
+        audio = librosa.resample(
+            audio, orig_sr=sr, target_sr=target_sample_rate, res_type="kaiser_best"
+        )
+
+    diarization_result = None
+    if enable_diarization and PYANNOTE_AVAILABLE and pyannote_pipeline is not None:
+        logger.info("Выполняем диаризацию (pyannote)...")
+        try:
+            diarization_result = _run_diarization(original_audio, original_sr)
+        except Exception as e:
+            logger.warning(f"Диаризация не удалась: {e}")
+
+    with io.BytesIO() as output_stream:
+        sf.write(
+            output_stream,
+            audio,
+            target_sample_rate,
+            subtype="PCM_16",
+            format="WAV",
+        )
+        output_bytes = output_stream.getvalue()
+
+    if diarization_result is not None:
+        return {
+            "audio_base64": base64.b64encode(output_bytes).decode(),
+            "sample_rate": target_sample_rate,
+            "duration": len(audio) / target_sample_rate,
+            "diarization": diarization_result,
+        }
+
+    logger.info(f"Обработка завершена: {len(audio)} samples, {target_sample_rate} Hz")
+    return Response(
+        content=output_bytes,
+        media_type="audio/wav",
+        headers={"Content-Disposition": "attachment; filename=enhanced.wav"},
+    )
+
+
+def process_denoise(audio_bytes: bytes, stationary: bool, prop_decrease: float) -> Response:
+    audio, sr = _load_audio_with_duration_check(audio_bytes)
+    audio_denoised = nr.reduce_noise(
+        y=audio, sr=sr, stationary=stationary, prop_decrease=prop_decrease
+    )
+    with io.BytesIO() as output_stream:
+        sf.write(
+            output_stream,
+            audio_denoised,
+            sr,
+            subtype="PCM_16",
+            format="WAV",
+        )
+        output_bytes = output_stream.getvalue()
+    return Response(content=output_bytes, media_type="audio/wav")
+
+
+def process_preprocess(
+    audio_bytes: bytes, target_sample_rate: int, return_audio_base64: bool
+) -> dict:
+    audio, sr = _load_audio_with_duration_check(audio_bytes)
+
+    if sr != 16000:
+        audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
+        sr = 16000
+
+    peak = np.abs(audio).max()
+    if peak > 0:
+        audio = audio / peak * 0.95
+    try:
+        loudness = loudness_meter.integrated_loudness(audio)
+        loudness_delta = -16.0 - loudness
+        gain = np.power(10.0, loudness_delta / 20.0)
+        audio = np.clip(audio * gain, -1.0, 1.0)
+    except Exception:
+        pass
+
+    if DEEPFILTER_AVAILABLE and deepfilter_model is not None:
+        try:
+            audio_48k = librosa.resample(audio, orig_sr=16000, target_sr=48000)
+            enhanced = enhance(
+                deepfilter_model,
+                deepfilter_df_state,
+                torch.from_numpy(audio_48k).unsqueeze(0),
+            )
+            audio = librosa.resample(
+                enhanced.squeeze(0).numpy(), orig_sr=48000, target_sr=16000
+            )
+        except Exception:
+            pass
+    if WPE_AVAILABLE:
+        try:
+            stft = librosa.stft(audio, n_fft=512, hop_length=128)
+            stft_wpe = wpe(stft[np.newaxis, :, :], taps=10, delay=3, iterations=3)
+            audio = librosa.istft(stft_wpe[0], hop_length=128, length=len(audio))
+        except Exception:
+            pass
+
+    board = Pedalboard(
+        [HighpassFilter(cutoff_frequency_hz=80), LowpassFilter(cutoff_frequency_hz=8000)]
+    )
+    audio = board(audio, 16000)
+
+    preprocess_metadata = _collect_preprocess_metadata(audio, 16000)
+
+    if target_sample_rate != 16000:
+        audio = librosa.resample(
+            audio,
+            orig_sr=16000,
+            target_sr=target_sample_rate,
+            res_type="kaiser_best",
+        )
+
+    with io.BytesIO() as output_stream:
+        sf.write(
+            output_stream,
+            audio,
+            target_sample_rate,
+            subtype="PCM_16",
+            format="WAV",
+        )
+        output_bytes = output_stream.getvalue()
+
+    response = {
+        "sample_rate": target_sample_rate,
+        "duration": len(audio) / target_sample_rate,
+        "preprocess_metadata": preprocess_metadata,
+    }
+    if return_audio_base64:
+        response["audio_base64"] = base64.b64encode(output_bytes).decode()
+    return response
+
+
+def process_diarize(audio_bytes: bytes) -> dict:
+    audio, sr = _load_audio_with_duration_check(audio_bytes)
+    logger.info(f"Диаризация аудио: {len(audio)} samples, {sr} Hz")
+    return _run_diarization(audio, sr)
+
+
 @app.get("/")
 async def root():
     """Корневой endpoint для проверки работоспособности"""
@@ -291,318 +726,20 @@ async def enhance_audio(
     """
     try:
         audio_bytes = await read_upload_bytes_capped(file, MAX_UPLOAD_BYTES)
-
-        with io.BytesIO(audio_bytes) as audio_stream:
-            audio, sr = librosa.load(audio_stream, sr=None, mono=True)
-            duration = float(len(audio)) / float(sr) if sr else 0.0
-            if duration > MAX_AUDIO_SECONDS:
-                raise HTTPException(
-                    status_code=413,
-                    detail="Audio too long",
-                )
-            logger.info(f"Загружено аудио: {len(audio)} samples, {sr} Hz")
-
-            # Сохраняем оригинал для диаризации
-            original_audio = audio.copy()
-            original_sr = sr
-
-            # 1. DeepFilterNet шумоподавление (работает на 48kHz)
-            if use_deepfilter and DEEPFILTER_AVAILABLE and deepfilter_model is not None:
-                logger.info("Применяем DeepFilterNet шумоподавление...")
-                try:
-                    # Ресемплируем в 48kHz для DeepFilterNet
-                    if sr != 48000:
-                        audio_48k = librosa.resample(audio, orig_sr=sr, target_sr=48000)
-                    else:
-                        audio_48k = audio
-                    
-                    # Применяем DeepFilterNet
-                    audio_48k_tensor = torch.from_numpy(audio_48k).unsqueeze(0)
-                    enhanced = enhance(deepfilter_model, deepfilter_df_state, audio_48k_tensor)
-                    audio_48k = enhanced.squeeze(0).numpy()
-                    
-                    # Возвращаем к исходной частоте
-                    if sr != 48000:
-                        audio = librosa.resample(audio_48k, orig_sr=48000, target_sr=sr)
-                    else:
-                        audio = audio_48k
-                    
-                    logger.info("✓ DeepFilterNet применен")
-                except Exception as e:
-                    logger.warning(f"DeepFilterNet не удался: {e}, используем fallback")
-                    use_deepfilter = False
-
-            # 2. WPE дереверберация (удаление эха)
-            if use_wpe and WPE_AVAILABLE:
-                logger.info("Применяем WPE дереверберацию...")
-                try:
-                    # WPE работает с STFT
-                    stft = librosa.stft(audio, n_fft=512, hop_length=128)
-                    
-                    # Применяем WPE (требует shape: [channels, freq, time])
-                    stft_wpe = wpe(stft[np.newaxis, :, :], taps=10, delay=3, iterations=3)
-                    
-                    # Обратное преобразование
-                    audio = librosa.istft(stft_wpe[0], hop_length=128, length=len(audio))
-                    logger.info("✓ WPE дереверберация применена")
-                except Exception as e:
-                    logger.warning(f"WPE не удался: {e}")
-
-            # 3. Классическое шумоподавление (fallback или дополнительная очистка)
-            if noise_reduction and (not use_deepfilter or not DEEPFILTER_AVAILABLE):
-                logger.info("Применяем классическое шумоподавление...")
-                audio = nr.reduce_noise(
-                    y=audio,
-                    sr=sr,
-                    stationary=True,
-                    prop_decrease=0.8,
-                )
-
-            # 4. Спектральный гейтинг (дополнительная очистка)
-            if spectral_gating:
-                logger.info("Применяем спектральный гейтинг...")
-                # Вычисляем STFT
-                D = librosa.stft(audio)
-                magnitude = np.abs(D)
-                
-                # Оцениваем шумовой порог (нижние 10% энергии)
-                noise_threshold = np.percentile(magnitude, 10)
-                
-                # Создаем маску (мягкий гейтинг)
-                mask = np.maximum(0, 1 - (noise_threshold / (magnitude + 1e-10)))
-                mask = np.power(mask, 2)  # Квадратичная маска для плавности
-                
-                # Применяем маску
-                D_filtered = D * mask
-                audio = librosa.istft(D_filtered, length=len(audio))
-
-            # 5. Улучшение речевых частот
-            if enhance_speech:
-                logger.info("Усиливаем речевые частоты...")
-                
-                # Применяем фильтры через Pedalboard (профессиональное качество)
-                board = Pedalboard([
-                    HighpassFilter(cutoff_frequency_hz=80),  # Убираем низкие частоты
-                    LowpassFilter(cutoff_frequency_hz=8000),  # Убираем высокие частоты
-                ])
-                audio = board(audio, sr)
-                
-                # Pre-emphasis для усиления высоких частот речи
-                audio = librosa.effects.preemphasis(audio, coef=0.97)
-
-                # Частотное усиление (оптимизировано для речи)
-                fft = np.fft.rfft(audio)
-                frequencies = np.fft.rfftfreq(len(audio), 1 / sr)
-
-                # Речевой диапазон: 300-3400 Hz (телефонное качество)
-                # Критичный диапазон: 1000-3000 Hz (разборчивость)
-                speech_mask = (frequencies >= 300) & (frequencies <= 3400)
-                critical_mask = (frequencies >= 1000) & (frequencies <= 3000)
-
-                # Применяем усиления за один проход, чтобы диапазоны не умножались дважды.
-                gain = np.ones_like(frequencies, dtype=np.float32)
-                gain[critical_mask] = 1.5  # Максимальное усиление критичного диапазона
-                gain[speech_mask & ~critical_mask] = 1.3  # Усиление речевого диапазона (кроме критичного)
-                gain[~speech_mask] = 0.4  # Сильнее подавляем нерелевантные частоты
-                fft *= gain
-
-                audio = np.fft.irfft(fft, n=len(audio))
-
-            # 6. Динамическая компрессия (улучшает разборчивость тихих участков)
-            if use_compressor:
-                logger.info("Применяем динамическую компрессию...")
-                compressor = Pedalboard([
-                    Compressor(
-                        threshold_db=-20,
-                        ratio=4,
-                        attack_ms=5,
-                        release_ms=50,
-                    )
-                ])
-                audio = compressor(audio, sr)
-
-            # 7. Нормализация громкости (LUFS-based, профессиональный стандарт)
-            if normalize_volume:
-                logger.info("Нормализуем громкость (LUFS)...")
-                
-                # Пиковая нормализация (предотвращение клиппинга)
-                peak = np.abs(audio).max()
-                if peak > 0:
-                    audio = audio / peak * 0.95
-
-                # LUFS нормализация (перцептивная громкость)
-                try:
-                    # Ресемплируем для loudness meter если нужно
-                    if sr != 16000:
-                        audio_16k = librosa.resample(audio, orig_sr=sr, target_sr=16000)
-                        loudness = loudness_meter.integrated_loudness(audio_16k)
-                    else:
-                        loudness = loudness_meter.integrated_loudness(audio)
-                    
-                    # Целевая громкость: -16 LUFS (оптимально для речи)
-                    target_loudness = -16.0
-                    loudness_delta = target_loudness - loudness
-                    gain = np.power(10.0, loudness_delta / 20.0)
-                    audio = audio * gain
-                    
-                    logger.info(f"Громкость: {loudness:.1f} LUFS -> {target_loudness} LUFS")
-                except Exception as e:
-                    logger.warning(f"LUFS нормализация не удалась: {e}, используем RMS")
-                    # Fallback: RMS нормализация
-                    rms = np.sqrt(np.mean(audio**2))
-                    target_rms = 0.1
-                    if rms > 0:
-                        audio = audio * (target_rms / rms)
-
-                # Финальное ограничение
-                audio = np.clip(audio, -1.0, 1.0)
-
-            # 8. Удаление пауз (Silero VAD)
-            if remove_silence and vad_model is not None:
-                logger.info("Удаляем длинные паузы (Silero VAD)...")
-
-                if sr != 16000:
-                    audio_16k = librosa.resample(audio, orig_sr=sr, target_sr=16000)
-                else:
-                    audio_16k = audio
-
-                audio_tensor = torch.from_numpy(audio_16k).float()
-
-                speech_timestamps = get_speech_timestamps(
-                    audio_tensor,
-                    vad_model,
-                    sampling_rate=16000,
-                    threshold=0.5,
-                    min_speech_duration_ms=250,
-                    min_silence_duration_ms=1000,
-                )
-
-                if speech_timestamps:
-                    speech_chunks = []
-                    for timestamp in speech_timestamps:
-                        start = int(timestamp["start"] * sr / 16000)
-                        end = int(timestamp["end"] * sr / 16000)
-                        speech_chunks.append(audio[start:end])
-
-                    if speech_chunks:
-                        audio = np.concatenate(speech_chunks)
-                        logger.info(f"✓ Удалено пауз: {len(speech_timestamps)}")
-
-            # 9. Финальный ресемплинг (высококачественный)
-            if sr != target_sample_rate:
-                logger.info(f"Ресемплинг {sr} Hz -> {target_sample_rate} Hz...")
-                audio = librosa.resample(
-                    audio, 
-                    orig_sr=sr, 
-                    target_sr=target_sample_rate,
-                    res_type='kaiser_best'  # Лучшее качество
-                )
-
-            # 10. Диаризация (опционально, возвращает JSON с сегментами)
-            diarization_result = None
-            if enable_diarization and PYANNOTE_AVAILABLE and pyannote_pipeline is not None:
-                logger.info("Выполняем диаризацию (pyannote)...")
-                try:
-                    # Сохраняем во временный буфер для pyannote
-                    with io.BytesIO() as temp_audio:
-                        sf.write(temp_audio, original_audio, original_sr, format='WAV')
-                        temp_audio.seek(0)
-                        
-                        # Применяем диаризацию
-                        diarization = pyannote_pipeline({"audio": temp_audio})
-                        
-                        # Извлекаем результаты
-                        segments = []
-                        speaker_changes = []
-                        overlaps = []
-                        
-                        prev_speaker = None
-                        for turn, _, speaker in diarization.itertracks(yield_label=True):
-                            segment_info = {
-                                "start": turn.start,
-                                "end": turn.end,
-                                "duration": turn.end - turn.start,
-                                "speaker": speaker
-                            }
-                            segments.append(segment_info)
-                            
-                            # Детекция смены спикера
-                            if prev_speaker is not None and prev_speaker != speaker:
-                                speaker_changes.append({
-                                    "time": turn.start,
-                                    "from_speaker": prev_speaker,
-                                    "to_speaker": speaker
-                                })
-                            prev_speaker = speaker
-                        
-                        # Детекция перекрытий (overlap detection)
-                        for (s1, t1, spk1), (s2, t2, spk2) in zip(
-                            list(diarization.itertracks(yield_label=True))[:-1],
-                            list(diarization.itertracks(yield_label=True))[1:]
-                        ):
-                            if t1.end > t2.start and spk1 != spk2:
-                                overlaps.append({
-                                    "start": t2.start,
-                                    "end": min(t1.end, t2.end),
-                                    "duration": min(t1.end, t2.end) - t2.start,
-                                    "speakers": [spk1, spk2]
-                                })
-                        
-                        diarization_result = {
-                            "segments": segments,
-                            "speaker_changes": speaker_changes,
-                            "overlaps": overlaps,
-                            "num_speakers": len(set(s["speaker"] for s in segments)),
-                            "total_duration": original_audio.shape[0] / original_sr
-                        }
-                        
-                        logger.info(f"✓ Диаризация: {len(segments)} сегментов, "
-                                  f"{len(speaker_changes)} смен спикера, "
-                                  f"{len(overlaps)} перекрытий")
-                except Exception as e:
-                    logger.warning(f"Диаризация не удалась: {e}")
-
-            # Если включена диаризация, возвращаем JSON с аудио и метаданными
-            if diarization_result is not None:
-                with io.BytesIO() as output_stream:
-                    sf.write(
-                        output_stream,
-                        audio,
-                        target_sample_rate,
-                        subtype="PCM_16",
-                        format="WAV",
-                    )
-                    audio_base64 = __import__('base64').b64encode(output_stream.getvalue()).decode()
-                
-                return {
-                    "audio_base64": audio_base64,
-                    "sample_rate": target_sample_rate,
-                    "duration": len(audio) / target_sample_rate,
-                    "diarization": diarization_result
-                }
-
-            # Обычный возврат аудио файла
-            with io.BytesIO() as output_stream:
-                sf.write(
-                    output_stream,
-                    audio,
-                    target_sample_rate,
-                    subtype="PCM_16",
-                    format="WAV",
-                )
-                output_bytes = output_stream.getvalue()
-
-            logger.info(
-                f"Обработка завершена: {len(audio)} samples, {target_sample_rate} Hz"
-            )
-
-            return Response(
-                content=output_bytes,
-                media_type="audio/wav",
-                headers={
-                    "Content-Disposition": "attachment; filename=enhanced.wav",
-                },
-            )
+        return await asyncio.to_thread(
+            process_enhance,
+            audio_bytes,
+            use_deepfilter=use_deepfilter,
+            use_wpe=use_wpe,
+            noise_reduction=noise_reduction,
+            normalize_volume=normalize_volume,
+            enhance_speech=enhance_speech,
+            remove_silence=remove_silence,
+            target_sample_rate=target_sample_rate,
+            use_compressor=use_compressor,
+            spectral_gating=spectral_gating,
+            enable_diarization=enable_diarization,
+        )
 
     except HTTPException:
         raise
@@ -630,37 +767,7 @@ async def denoise_only(
     """
     try:
         audio_bytes = await read_upload_bytes_capped(file, MAX_UPLOAD_BYTES)
-
-        with io.BytesIO(audio_bytes) as audio_stream:
-            audio, sr = librosa.load(audio_stream, sr=None, mono=True)
-            duration = float(len(audio)) / float(sr) if sr else 0.0
-            if duration > MAX_AUDIO_SECONDS:
-                raise HTTPException(
-                    status_code=413,
-                    detail="Audio too long",
-                )
-
-            audio_denoised = nr.reduce_noise(
-                y=audio,
-                sr=sr,
-                stationary=stationary,
-                prop_decrease=prop_decrease,
-            )
-
-            with io.BytesIO() as output_stream:
-                sf.write(
-                    output_stream,
-                    audio_denoised,
-                    sr,
-                    subtype="PCM_16",
-                    format="WAV",
-                )
-                output_bytes = output_stream.getvalue()
-
-            return Response(
-                content=output_bytes,
-                media_type="audio/wav",
-            )
+        return await asyncio.to_thread(process_denoise, audio_bytes, stationary, prop_decrease)
 
     except HTTPException:
         raise
@@ -684,84 +791,9 @@ async def preprocess_audio(
     """
     try:
         audio_bytes = await read_upload_bytes_capped(file, MAX_UPLOAD_BYTES)
-        with io.BytesIO(audio_bytes) as audio_stream:
-            audio, sr = librosa.load(audio_stream, sr=None, mono=True)
-            duration = float(len(audio)) / float(sr) if sr else 0.0
-            if duration > MAX_AUDIO_SECONDS:
-                raise HTTPException(status_code=413, detail="Audio too long")
-
-        # Конвертация в 16k mono для унифицированного пайплайна
-        if sr != 16000:
-            audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
-            sr = 16000
-
-        # Loudness normalization to -16 LUFS
-        peak = np.abs(audio).max()
-        if peak > 0:
-            audio = audio / peak * 0.95
-        try:
-            loudness = loudness_meter.integrated_loudness(audio)
-            loudness_delta = -16.0 - loudness
-            gain = np.power(10.0, loudness_delta / 20.0)
-            audio = np.clip(audio * gain, -1.0, 1.0)
-        except Exception:
-            pass
-
-        # speech enhancement + dereverb + bandpass через reuse основного endpoint logic (кратко)
-        if DEEPFILTER_AVAILABLE and deepfilter_model is not None:
-            try:
-                audio_48k = librosa.resample(audio, orig_sr=16000, target_sr=48000)
-                enhanced = enhance(
-                    deepfilter_model,
-                    deepfilter_df_state,
-                    torch.from_numpy(audio_48k).unsqueeze(0),
-                )
-                audio = librosa.resample(
-                    enhanced.squeeze(0).numpy(), orig_sr=48000, target_sr=16000
-                )
-            except Exception:
-                pass
-        if WPE_AVAILABLE:
-            try:
-                stft = librosa.stft(audio, n_fft=512, hop_length=128)
-                stft_wpe = wpe(stft[np.newaxis, :, :], taps=10, delay=3, iterations=3)
-                audio = librosa.istft(stft_wpe[0], hop_length=128, length=len(audio))
-            except Exception:
-                pass
-
-        board = Pedalboard(
-            [HighpassFilter(cutoff_frequency_hz=80), LowpassFilter(cutoff_frequency_hz=8000)]
+        return await asyncio.to_thread(
+            process_preprocess, audio_bytes, target_sample_rate, return_audio_base64
         )
-        audio = board(audio, 16000)
-
-        preprocess_metadata = _collect_preprocess_metadata(audio, 16000)
-
-        if target_sample_rate != 16000:
-            audio = librosa.resample(
-                audio,
-                orig_sr=16000,
-                target_sr=target_sample_rate,
-                res_type="kaiser_best",
-            )
-
-        with io.BytesIO() as output_stream:
-            sf.write(
-                output_stream,
-                audio,
-                target_sample_rate,
-                subtype="PCM_16",
-                format="WAV",
-            )
-            output_bytes = output_stream.getvalue()
-
-        response = {
-            "sample_rate": target_sample_rate,
-            "duration": len(audio) / target_sample_rate,
-            "preprocess_metadata": preprocess_metadata,
-        }
-        if return_audio_base64:
-            response["audio_base64"] = base64.b64encode(output_bytes).decode()
-        return response
     except HTTPException:
         raise
     except Exception as e:
@@ -790,77 +822,7 @@ async def diarize_audio(
 
     try:
         audio_bytes = await read_upload_bytes_capped(file, MAX_UPLOAD_BYTES)
-
-        with io.BytesIO(audio_bytes) as audio_stream:
-            audio, sr = librosa.load(audio_stream, sr=None, mono=True)
-            duration = float(len(audio)) / float(sr) if sr else 0.0
-            if duration > MAX_AUDIO_SECONDS:
-                raise HTTPException(
-                    status_code=413,
-                    detail="Audio too long",
-                )
-
-            logger.info(f"Диаризация аудио: {len(audio)} samples, {sr} Hz")
-
-            # Сохраняем во временный буфер для pyannote
-            with io.BytesIO() as temp_audio:
-                sf.write(temp_audio, audio, sr, format='WAV')
-                temp_audio.seek(0)
-                
-                # Применяем диаризацию
-                diarization = pyannote_pipeline({"audio": temp_audio})
-                
-                # Извлекаем результаты
-                segments = []
-                speaker_changes = []
-                overlaps = []
-                
-                prev_speaker = None
-                for turn, _, speaker in diarization.itertracks(yield_label=True):
-                    segment_info = {
-                        "start": turn.start,
-                        "end": turn.end,
-                        "duration": turn.end - turn.start,
-                        "speaker": speaker
-                    }
-                    segments.append(segment_info)
-                    
-                    # Детекция смены спикера
-                    if prev_speaker is not None and prev_speaker != speaker:
-                        speaker_changes.append({
-                            "time": turn.start,
-                            "from_speaker": prev_speaker,
-                            "to_speaker": speaker
-                        })
-                    prev_speaker = speaker
-                
-                # Детекция перекрытий (overlap detection)
-                track_list = list(diarization.itertracks(yield_label=True))
-                for i in range(len(track_list) - 1):
-                    s1, t1, spk1 = track_list[i]
-                    s2, t2, spk2 = track_list[i + 1]
-                    
-                    if t1.end > t2.start and spk1 != spk2:
-                        overlaps.append({
-                            "start": t2.start,
-                            "end": min(t1.end, t2.end),
-                            "duration": min(t1.end, t2.end) - t2.start,
-                            "speakers": [spk1, spk2]
-                        })
-                
-                result = {
-                    "segments": segments,
-                    "speaker_changes": speaker_changes,
-                    "overlaps": overlaps,
-                    "num_speakers": len(set(s["speaker"] for s in segments)),
-                    "total_duration": audio.shape[0] / sr
-                }
-                
-                logger.info(f"✓ Диаризация: {len(segments)} сегментов, "
-                          f"{len(speaker_changes)} смен спикера, "
-                          f"{len(overlaps)} перекрытий")
-                
-                return result
+        return await asyncio.to_thread(process_diarize, audio_bytes)
 
     except HTTPException:
         raise
@@ -874,7 +836,6 @@ async def diarize_audio(
 
 if __name__ == "__main__":
     import uvicorn
-    import os
-    
-    port = int(os.environ.get("PORT", 7860))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+
+    port = _parse_int_env("PORT", 7860)
+    uvicorn.run(app, host=HOST, port=port, log_level=LOG_LEVEL.lower())
