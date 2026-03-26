@@ -1,13 +1,12 @@
 /**
  * Giga AM ASR через HTTP API (например Hugging Face Space).
- * @see https://kodermax-giga-am.hf.space/api/transcribe
  */
 
 import { env } from "@calls/config";
 import { z } from "zod";
-import { createLogger } from "../../logger";
-import type { AsrResult, Utterance } from "../types";
-import { withRetry } from "../utils/retry";
+import type { AsrResult, Utterance } from "~/asr/types";
+import { NonRetryableError, withRetry } from "~/asr/utils/retry";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("asr-gigaam");
 
@@ -34,6 +33,19 @@ function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function abortable<T>(signal: AbortSignal, promise: Promise<T>): Promise<T> {
+  if (signal.aborted) {
+    return Promise.reject(new DOMException("Aborted", "AbortError"));
+  }
+  return new Promise((resolve, reject) => {
+    const onAbort = () => reject(new DOMException("Aborted", "AbortError"));
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise.then(resolve, reject).finally(() => {
+      signal.removeEventListener("abort", onAbort);
+    });
+  });
+}
+
 function guessAudioFilename(audioUrl: string, contentType: string): string {
   try {
     const u = new URL(audioUrl);
@@ -54,21 +66,32 @@ function guessAudioFilename(audioUrl: string, contentType: string): string {
   return "audio.wav";
 }
 
-async function fetchWithTimeout(
+/**
+ * Таймер сбрасывается только после полного завершения `consume` (включая чтение тела ответа).
+ */
+async function fetchWithTimeout<T>(
   input: string,
   init: RequestInit,
   timeoutMessage: string,
   timeoutMs: number,
-): Promise<Response> {
+  consume: (response: Response, signal: AbortSignal) => Promise<T>,
+): Promise<T> {
   const controller = new AbortController();
+  const { signal } = controller;
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    return await fetch(input, {
+    const response = await fetch(input, {
       ...init,
-      signal: controller.signal,
+      signal,
     });
+    return await consume(response, signal);
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
+    const aborted =
+      (error instanceof Error && error.name === "AbortError") ||
+      (typeof DOMException !== "undefined" &&
+        error instanceof DOMException &&
+        error.name === "AbortError");
+    if (aborted) {
       throw new Error(timeoutMessage);
     }
     throw error;
@@ -77,7 +100,10 @@ async function fetchWithTimeout(
   }
 }
 
-async function readAudioWithLimit(response: Response): Promise<ArrayBuffer> {
+async function readAudioWithLimit(
+  response: Response,
+  signal?: AbortSignal,
+): Promise<ArrayBuffer> {
   const contentLengthHeader = response.headers.get("content-length");
   const contentLength = contentLengthHeader ? Number(contentLengthHeader) : NaN;
   if (Number.isFinite(contentLength) && contentLength > MAX_AUDIO_BYTES) {
@@ -88,13 +114,18 @@ async function readAudioWithLimit(response: Response): Promise<ArrayBuffer> {
 
   const reader = response.body?.getReader();
   if (!reader) {
-    return response.arrayBuffer();
+    return await (signal
+      ? abortable(signal, response.arrayBuffer())
+      : response.arrayBuffer());
   }
 
   let total = 0;
   const chunks: Uint8Array[] = [];
 
   while (true) {
+    if (signal?.aborted) {
+      throw new DOMException("Aborted", "AbortError");
+    }
     const { done, value } = await reader.read();
     if (done) break;
     if (!value) continue;
@@ -148,26 +179,36 @@ export async function transcribeWithGigaAm(
     return null;
   }
 
-  const transcribeUrl = env.GIGA_AM_TRANSCRIBE_URL.trim();
+  const transcribeUrl = env.GIGA_AM_TRANSCRIBE_URL?.trim();
+  if (!transcribeUrl) {
+    return null;
+  }
   const start = Date.now();
 
   return withRetry(
     async () => {
-      const audioResponse = await fetchWithTimeout(
+      const { buffer: audioBuffer, contentType } = await fetchWithTimeout(
         audioUrl,
         {},
         "TIMEOUT_AUDIO_DOWNLOAD: Превышено время ожидания скачивания аудио",
         FETCH_TIMEOUT_MS,
-      );
-      if (!audioResponse.ok) {
-        throw new Error(
-          `Не удалось скачать аудио: ${audioResponse.status} ${audioResponse.statusText}`,
-        );
-      }
+        async (audioResponse, signal) => {
+          if (!audioResponse.ok) {
+            const msg = `Не удалось скачать аудио: ${audioResponse.status} ${audioResponse.statusText}`;
+            if (audioResponse.status < 500) {
+              throw new NonRetryableError(msg);
+            }
+            throw new Error(msg);
+          }
 
-      const contentType =
-        audioResponse.headers.get("content-type") ?? "application/octet-stream";
-      const audioBuffer = await readAudioWithLimit(audioResponse);
+          const ct =
+            audioResponse.headers.get("content-type") ??
+            "application/octet-stream";
+          const buffer = await readAudioWithLimit(audioResponse, signal);
+          return { buffer, contentType: ct };
+        },
+      );
+
       const filename = guessAudioFilename(audioUrl, contentType);
 
       const formData = new FormData();
@@ -185,30 +226,40 @@ export async function transcribeWithGigaAm(
         },
         "TIMEOUT_GIGA_AM: Превышено время ожидания ответа Giga AM",
         GIGA_AM_HTTP_TIMEOUT_MS,
+        async (response, signal) => {
+          const rawJson: unknown = await abortable(
+            signal,
+            response.json().catch(() => null),
+          );
+
+          if (!response.ok) {
+            const detail =
+              rawJson &&
+              typeof rawJson === "object" &&
+              "detail" in rawJson &&
+              typeof (rawJson as { detail?: unknown }).detail === "string"
+                ? (rawJson as { detail: string }).detail
+                : response.statusText;
+            const msg = `Giga AM HTTP ${response.status}: ${detail}`;
+            if (response.status < 500) {
+              throw new NonRetryableError(msg);
+            }
+            throw new Error(msg);
+          }
+
+          const parsed = gigaAmSuccessResponseSchema.safeParse(rawJson);
+          if (!parsed.success) {
+            logger.warn("Некорректный формат ответа Giga AM", {
+              issues: parsed.error.issues.map((i) => i.message),
+            });
+            throw new NonRetryableError("Giga AM: некорректный JSON ответа");
+          }
+
+          return parsed.data;
+        },
       );
 
-      const rawJson: unknown = await apiResponse.json().catch(() => null);
-
-      if (!apiResponse.ok) {
-        const detail =
-          rawJson &&
-          typeof rawJson === "object" &&
-          "detail" in rawJson &&
-          typeof (rawJson as { detail?: unknown }).detail === "string"
-            ? (rawJson as { detail: string }).detail
-            : apiResponse.statusText;
-        throw new Error(`Giga AM HTTP ${apiResponse.status}: ${detail}`);
-      }
-
-      const parsed = gigaAmSuccessResponseSchema.safeParse(rawJson);
-      if (!parsed.success) {
-        logger.warn("Некорректный формат ответа Giga AM", {
-          issues: parsed.error.issues.map((i) => i.message),
-        });
-        throw new Error("Giga AM: некорректный JSON ответа");
-      }
-
-      const data = parsed.data;
+      const data = apiResponse;
       const text = segmentsToText(data.segments);
       const utterances = segmentsToUtterances(data.segments);
       const processingTimeMs = Date.now() - start;

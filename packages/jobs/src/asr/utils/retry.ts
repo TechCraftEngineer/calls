@@ -2,6 +2,10 @@
  * Утилита повторных попыток с экспоненциальной задержкой
  */
 
+export class NonRetryableError extends Error {
+  override readonly name = "NonRetryableError";
+}
+
 export async function withRetry<T>(
   fn: () => Promise<T>,
   options: {
@@ -17,6 +21,9 @@ export async function withRetry<T>(
       return await fn();
     } catch (error) {
       lastError = error;
+      if (error instanceof NonRetryableError) {
+        throw error;
+      }
       onRetry?.(attempt, error);
       if (attempt < maxAttempts) {
         const delay = baseDelayMs * 2 ** (attempt - 1);

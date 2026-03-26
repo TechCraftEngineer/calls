@@ -55,7 +55,6 @@ export const env = createEnv({
     YANDEX_SPEECHKIT_ENABLED: z.stringbool().default(true),
     /** Giga AM (HTTP), по умолчанию Space kodermax/giga-am */
     GIGA_AM_TRANSCRIBE_URL: z
-      .string()
       .url()
       .default("https://kodermax-giga-am.hf.space/api/transcribe"),
     GIGA_AM_ENABLED: z.stringbool().default(true),
@@ -168,6 +167,19 @@ export const env = createEnv({
   skipValidation:
     !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });
+
+const serverEnvSkip =
+  !!process.env.CI || process.env.npm_lifecycle_event === "lint";
+
+if (
+  !serverEnvSkip &&
+  env.GIGA_AM_ENABLED &&
+  !env.GIGA_AM_TRANSCRIBE_URL?.trim()
+) {
+  throw new Error(
+    "При GIGA_AM_ENABLED=true задайте GIGA_AM_TRANSCRIBE_URL (валидный HTTP/HTTPS URL).",
+  );
+}
 
 // Валидация: хотя бы один ASR провайдер должен быть настроен
 const hasAnyAsrProvider = !!(
