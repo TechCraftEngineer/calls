@@ -31,12 +31,13 @@ RUN pip install --upgrade pip setuptools wheel
 COPY --chown=user:user requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Ревизия GigaAM (tag/branch/commit) передается как build-arg.
-ARG GIGAAM_REV=main
+# Ревизия GigaAM (tag/commit) должна быть передана явно как build-arg.
+ARG GIGAAM_REV
 
 # Установка GigaAM из GitHub репозитория (фиксированная ревизия)
 RUN git clone https://github.com/salute-developers/GigaAM.git /tmp/GigaAM && \
     cd /tmp/GigaAM && \
+    test -n "$GIGAAM_REV" && \
     git checkout "$GIGAAM_REV" && \
     pip install --no-cache-dir . && \
     rm -rf /tmp/GigaAM

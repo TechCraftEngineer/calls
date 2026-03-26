@@ -207,24 +207,37 @@ export async function transcribeWithGigaAm(
     return null;
   }
   const start = Date.now();
-  const { buffer: audioBuffer, contentType } = await fetchWithTimeout(
-    audioUrl,
-    {},
-    "TIMEOUT_AUDIO_DOWNLOAD: Превышено время ожидания скачивания аудио",
-    FETCH_TIMEOUT_MS,
-    async (audioResponse, signal) => {
-      if (!audioResponse.ok) {
-        const msg = `Не удалось скачать аудио: ${audioResponse.status} ${audioResponse.statusText}`;
-        if (audioResponse.status < 500) {
-          throw new NonRetryableError(msg);
-        }
-        throw new Error(msg);
-      }
+  const { buffer: audioBuffer, contentType } = await withRetry(
+    () =>
+      fetchWithTimeout(
+        audioUrl,
+        {},
+        "TIMEOUT_AUDIO_DOWNLOAD: Превышено время ожидания скачивания аудио",
+        FETCH_TIMEOUT_MS,
+        async (audioResponse, signal) => {
+          if (!audioResponse.ok) {
+            const msg = `Не удалось скачать аудио: ${audioResponse.status} ${audioResponse.statusText}`;
+            if (audioResponse.status < 500) {
+              throw new NonRetryableError(msg);
+            }
+            throw new Error(msg);
+          }
 
-      const ct =
-        audioResponse.headers.get("content-type") ?? "application/octet-stream";
-      const buffer = await readAudioWithLimit(audioResponse, signal);
-      return { buffer, contentType: ct };
+          const ct =
+            audioResponse.headers.get("content-type") ??
+            "application/octet-stream";
+          const buffer = await readAudioWithLimit(audioResponse, signal);
+          return { buffer, contentType: ct };
+        },
+      ),
+    {
+      maxAttempts: 3,
+      baseDelayMs: 1500,
+      onRetry: (attempt, error) =>
+        logger.warn("Повторная попытка скачивания аудио Giga AM", {
+          attempt,
+          error: toErrorMessage(error),
+        }),
     },
   );
 
@@ -237,52 +250,64 @@ export async function transcribeWithGigaAm(
     filename,
   );
 
-  const apiResponse = await fetchWithTimeout(
-    transcribeUrl,
+  const apiResponse = await withRetry(
+    () =>
+      fetchWithTimeout(
+        transcribeUrl,
+        {
+          method: "POST",
+          body: formData,
+        },
+        "TIMEOUT_GIGA_AM: Превышено время ожидания ответа Giga AM",
+        GIGA_AM_HTTP_TIMEOUT_MS,
+        async (response, signal) => {
+          const rawJson: unknown = await abortable(
+            signal,
+            response.json().catch(() => null),
+          );
+
+          if (!response.ok) {
+            const detail =
+              rawJson &&
+              typeof rawJson === "object" &&
+              "detail" in rawJson &&
+              typeof (rawJson as { detail?: unknown }).detail === "string"
+                ? (rawJson as { detail: string }).detail
+                : response.statusText;
+            const msg = `Giga AM HTTP ${response.status}: ${detail}`;
+            if (response.status < 500) {
+              throw new NonRetryableError(msg);
+            }
+            throw new Error(msg);
+          }
+
+          const parsedSync = gigaAmSuccessResponseSchema.safeParse(rawJson);
+          if (parsedSync.success) {
+            return parsedSync.data;
+          }
+          const parsedJob = gigaAmJobCreateResponseSchema.safeParse(rawJson);
+          if (parsedJob.success) {
+            return parsedJob.data;
+          }
+          logger.warn("Некорректный формат ответа Giga AM", {
+            syncIssues: parsedSync.success
+              ? []
+              : parsedSync.error.issues.map((i) => i.message),
+            jobIssues: parsedJob.success
+              ? []
+              : parsedJob.error.issues.map((i) => i.message),
+          });
+          throw new NonRetryableError("Giga AM: некорректный JSON ответа");
+        },
+      ),
     {
-      method: "POST",
-      body: formData,
-    },
-    "TIMEOUT_GIGA_AM: Превышено время ожидания ответа Giga AM",
-    GIGA_AM_HTTP_TIMEOUT_MS,
-    async (response, signal) => {
-      const rawJson: unknown = await abortable(
-        signal,
-        response.json().catch(() => null),
-      );
-
-      if (!response.ok) {
-        const detail =
-          rawJson &&
-          typeof rawJson === "object" &&
-          "detail" in rawJson &&
-          typeof (rawJson as { detail?: unknown }).detail === "string"
-            ? (rawJson as { detail: string }).detail
-            : response.statusText;
-        const msg = `Giga AM HTTP ${response.status}: ${detail}`;
-        if (response.status < 500) {
-          throw new NonRetryableError(msg);
-        }
-        throw new Error(msg);
-      }
-
-      const parsedSync = gigaAmSuccessResponseSchema.safeParse(rawJson);
-      if (parsedSync.success) {
-        return parsedSync.data;
-      }
-      const parsedJob = gigaAmJobCreateResponseSchema.safeParse(rawJson);
-      if (parsedJob.success) {
-        return parsedJob.data;
-      }
-      logger.warn("Некорректный формат ответа Giga AM", {
-        syncIssues: parsedSync.success
-          ? []
-          : parsedSync.error.issues.map((i) => i.message),
-        jobIssues: parsedJob.success
-          ? []
-          : parsedJob.error.issues.map((i) => i.message),
-      });
-      throw new NonRetryableError("Giga AM: некорректный JSON ответа");
+      maxAttempts: 3,
+      baseDelayMs: 2000,
+      onRetry: (attempt, error) =>
+        logger.warn("Повторная попытка POST запроса в Giga AM", {
+          attempt,
+          error: toErrorMessage(error),
+        }),
     },
   );
 
@@ -300,11 +325,11 @@ export async function transcribeWithGigaAm(
       ? `${baseUrl}/${apiResponse.job_id}`
       : `${baseUrl}/api/jobs/${apiResponse.job_id}`;
 
+    const jobDeadline = Date.now() + GIGA_AM_JOB_TIMEOUT_MS;
+    let jobCompleted = false;
     await withRetry(
       async () => {
-        const jobStart = Date.now();
-        let jobCompleted = false;
-        while (Date.now() - jobStart < GIGA_AM_JOB_TIMEOUT_MS) {
+        while (Date.now() < jobDeadline) {
           const jobStatusRaw = await fetchWithTimeout(
             jobStatusUrl,
             { method: "GET" },

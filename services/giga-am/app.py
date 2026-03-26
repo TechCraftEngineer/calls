@@ -1,6 +1,9 @@
 import logging
 import os
+import ipaddress
+import socket
 import tempfile
+from urllib.parse import urlparse
 
 import requests
 from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Request
@@ -44,12 +47,47 @@ def _job_payload(job) -> dict:
 
 
 def _download_remote_file(source_url: str, settings_obj) -> tuple[str, str]:
+    parsed_url = urlparse(source_url)
+    if parsed_url.scheme not in {"http", "https"}:
+        raise HTTPException(status_code=400, detail="source_url должен использовать http/https")
+    if parsed_url.username or parsed_url.password:
+        raise HTTPException(status_code=400, detail="source_url с username/password запрещен")
+    if not parsed_url.hostname:
+        raise HTTPException(status_code=400, detail="Некорректный source_url")
+
+    try:
+        addr_infos = socket.getaddrinfo(parsed_url.hostname, parsed_url.port or (443 if parsed_url.scheme == "https" else 80))
+    except socket.gaierror as exc:
+        raise HTTPException(status_code=400, detail=f"Не удалось разрешить host source_url: {exc}") from exc
+
+    for _, _, _, _, sockaddr in addr_infos:
+        host_ip = sockaddr[0]
+        try:
+            parsed_ip = ipaddress.ip_address(host_ip)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Некорректный IP source_url: {host_ip}") from exc
+
+        if (
+            parsed_ip.is_loopback
+            or parsed_ip.is_private
+            or parsed_ip.is_link_local
+            or parsed_ip.is_multicast
+            or parsed_ip.is_reserved
+            or parsed_ip.is_unspecified
+            or host_ip == "169.254.169.254"
+        ):
+            raise HTTPException(status_code=400, detail="source_url указывает на запрещенный адрес")
+
+    tmp_path = None
     try:
         response = requests.get(
             source_url,
             stream=True,
             timeout=settings_obj.source_download_timeout,
+            allow_redirects=False,
         )
+        if 300 <= response.status_code < 400:
+            raise HTTPException(status_code=400, detail="Редиректы для source_url запрещены")
         response.raise_for_status()
         suffix = os.path.splitext(source_url)[1].lower() or ".tmp"
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
@@ -68,8 +106,18 @@ def _download_remote_file(source_url: str, settings_obj) -> tuple[str, str]:
         original_filename = os.path.basename(source_url) or "remote_audio"
         return tmp_path, original_filename
     except HTTPException:
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except Exception as cleanup_error:
+                logger.warning("Не удалось удалить временный файл %s: %s", tmp_path, cleanup_error)
         raise
     except Exception as exc:
+        if tmp_path and os.path.exists(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except Exception as cleanup_error:
+                logger.warning("Не удалось удалить временный файл %s: %s", tmp_path, cleanup_error)
         raise HTTPException(status_code=400, detail=f"Не удалось загрузить source_url: {exc}") from exc
 
 @app.post("/api/transcribe")
