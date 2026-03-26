@@ -34,10 +34,6 @@ class EmbeddingService:
             )
 
     def build_hybrid_embedding(self, segment: dict[str, Any]) -> list[float]:
-        if self._warn_in_production:
-            logger.warning(
-                "Используется hash-эмбеддинг в production: возможна деградация diarization/speaker assignment."
-            )
         source = f"{segment.get('text','')}|{segment.get('start',0)}|{segment.get('end',0)}"
         digest = hashlib.sha256(source.encode("utf-8")).digest()
         values = []

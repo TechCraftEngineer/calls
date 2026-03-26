@@ -57,16 +57,17 @@ def _parse_bool_env(value: str | None, default: bool = False) -> bool:
 
 
 def _parse_int_env(name: str, default: int) -> int:
+    env_logger = logging.getLogger(__name__)
     raw = os.getenv(name)
     if raw is None:
         return default
     try:
         parsed = int(raw)
     except ValueError:
-        logger.warning("Некорректное значение %s=%r, используем %d", name, raw, default)
+        env_logger.warning("Некорректное значение %s=%r, используем %d", name, raw, default)
         return default
     if parsed <= 0:
-        logger.warning("Значение %s=%d должно быть > 0, используем %d", name, parsed, default)
+        env_logger.warning("Значение %s=%d должно быть > 0, используем %d", name, parsed, default)
         return default
     return parsed
 
@@ -401,7 +402,7 @@ def process_enhance(
     use_compressor: bool,
     spectral_gating: bool,
     enable_diarization: bool,
-):
+) -> dict | Response:
     audio, sr = _load_audio_with_duration_check(audio_bytes)
     logger.info(f"Загружено аудио: {len(audio)} samples, {sr} Hz")
 
@@ -603,7 +604,7 @@ def process_preprocess(
         gain = np.power(10.0, loudness_delta / 20.0)
         audio = np.clip(audio * gain, -1.0, 1.0)
     except Exception:
-        pass
+        logger.debug("LUFS нормализация в preprocess не удалась", exc_info=True)
 
     if DEEPFILTER_AVAILABLE and deepfilter_model is not None:
         try:
@@ -617,14 +618,14 @@ def process_preprocess(
                 enhanced.squeeze(0).numpy(), orig_sr=48000, target_sr=16000
             )
         except Exception:
-            pass
+            logger.debug("DeepFilter enhancement в preprocess не удался", exc_info=True)
     if WPE_AVAILABLE:
         try:
             stft = librosa.stft(audio, n_fft=512, hop_length=128)
             stft_wpe = wpe(stft[np.newaxis, :, :], taps=10, delay=3, iterations=3)
             audio = librosa.istft(stft_wpe[0], hop_length=128, length=len(audio))
         except Exception:
-            pass
+            logger.debug("WPE в preprocess не удался", exc_info=True)
 
     board = Pedalboard(
         [HighpassFilter(cutoff_frequency_hz=80), LowpassFilter(cutoff_frequency_hz=8000)]

@@ -22,13 +22,6 @@ class AlignmentService:
                 aligned.append(segment)
                 continue
 
-            # Берем актуальный текст из сегмента перед таймингами, чтобы не получить desync.
-            words = self._extract_words(segment.get("text") or "")
-            if not words:
-                segment["words"] = []
-                aligned.append(segment)
-                continue
-
             duration = max(0.001, end - start)
             step = duration / len(words)
             word_items = []

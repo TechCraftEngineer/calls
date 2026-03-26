@@ -42,6 +42,36 @@ def _job_payload(job) -> dict:
         payload["result"] = job.result
     return payload
 
+
+def _download_remote_file(source_url: str, settings_obj) -> tuple[str, str]:
+    try:
+        response = requests.get(
+            source_url,
+            stream=True,
+            timeout=settings_obj.source_download_timeout,
+        )
+        response.raise_for_status()
+        suffix = os.path.splitext(source_url)[1].lower() or ".tmp"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp_path = tmp.name
+            total = 0
+            for chunk in response.iter_content(chunk_size=1024 * 1024):
+                if not chunk:
+                    continue
+                total += len(chunk)
+                if total > settings_obj.max_file_size:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"Размер файла превышает лимит {settings_obj.max_file_size // (1024*1024)}MB",
+                    )
+                tmp.write(chunk)
+        original_filename = os.path.basename(source_url) or "remote_audio"
+        return tmp_path, original_filename
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Не удалось загрузить source_url: {exc}") from exc
+
 @app.post("/api/transcribe")
 async def api_transcribe(request: Request, file: UploadFile = File(...)):
     """
@@ -93,10 +123,13 @@ async def api_transcribe(request: Request, file: UploadFile = File(...)):
         raise
     except Exception as e:
         logger.exception("Внутренняя ошибка сервера: %s", e)
-        raise HTTPException(status_code=500, detail="Внутренняя ошибка сервера")
+        raise HTTPException(status_code=500, detail="Внутренняя ошибка сервера") from e
     finally:
         if tmp_path and os.path.exists(tmp_path):
-            os.unlink(tmp_path)
+            try:
+                os.unlink(tmp_path)
+            except Exception as cleanup_error:
+                logger.warning("Не удалось удалить временный файл %s: %s", tmp_path, cleanup_error)
 
 
 @app.post("/api/jobs")
@@ -138,32 +171,11 @@ async def create_job(
                 tmp.write(content)
             original_filename = file.filename
         else:
-            try:
-                response = requests.get(
-                    source_url,
-                    stream=True,
-                    timeout=settings.source_download_timeout,
-                )
-                response.raise_for_status()
-                suffix = os.path.splitext(source_url)[1].lower() or ".tmp"
-                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-                    tmp_path = tmp.name
-                    total = 0
-                    for chunk in response.iter_content(chunk_size=1024 * 1024):
-                        if not chunk:
-                            continue
-                        total += len(chunk)
-                        if total > settings.max_file_size:
-                            raise HTTPException(
-                                status_code=413,
-                                detail=f"Размер файла превышает лимит {settings.max_file_size // (1024*1024)}MB",
-                            )
-                        tmp.write(chunk)
-                original_filename = os.path.basename(source_url) or "remote_audio"
-            except HTTPException:
-                raise
-            except Exception as exc:
-                raise HTTPException(status_code=400, detail=f"Не удалось загрузить source_url: {exc}") from exc
+            tmp_path, original_filename = await run_in_threadpool(
+                _download_remote_file,
+                source_url,
+                settings,
+            )
 
         job = job_orchestrator.create_job(
             tmp_path,
@@ -193,7 +205,10 @@ async def create_job(
         raise HTTPException(status_code=500, detail="Не удалось создать задачу") from e
     finally:
         if should_cleanup_tmp and tmp_path and os.path.exists(tmp_path):
-            os.unlink(tmp_path)
+            try:
+                os.unlink(tmp_path)
+            except Exception as cleanup_error:
+                logger.warning("Не удалось удалить временный файл %s: %s", tmp_path, cleanup_error)
 
 
 @app.get("/api/jobs/{job_id}")
