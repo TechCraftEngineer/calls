@@ -11,6 +11,8 @@ ENV PYTHONUNBUFFERED=1 \
     JOBS_DIR=/home/user/app/temp/jobs \
     AUDIO_ENHANCER_URL=""
 
+ARG GIGAAM_REV
+
 # Создание пользователя для HF Spaces
 RUN useradd -m -u 1000 user
 
@@ -29,12 +31,13 @@ RUN pip install --upgrade pip setuptools wheel
 
 # Копирование и установка зависимостей Python
 COPY --chown=user:user requirements.txt .
-RUN python -c "from pathlib import Path; p=Path('requirements.txt'); lines=p.read_text().splitlines(); p.with_name('requirements.base.txt').write_text('\n'.join([l for l in lines if l.strip() and not l.strip().startswith('gigaam @')]) + '\n')" && \
+RUN test -n "$GIGAAM_REV" && \
+    python -c "from pathlib import Path; p=Path('requirements.txt'); lines=p.read_text().splitlines(); p.with_name('requirements.base.txt').write_text('\n'.join([l for l in lines if l.strip() and not l.strip().startswith('gigaam @')]) + '\n')" && \
     pip install --no-cache-dir \
     --extra-index-url https://download.pytorch.org/whl/cpu \
     -r requirements.base.txt && \
     pip install --no-cache-dir --no-deps \
-    "gigaam @ git+https://github.com/salute-developers/GigaAM.git"
+    "gigaam @ git+https://github.com/salute-developers/GigaAM.git@${GIGAAM_REV}"
 
 # Копирование исходного кода
 COPY --chown=user:user . .

@@ -56,10 +56,19 @@ def _download_remote_file(source_url: str, settings_obj) -> tuple[str, str]:
         raise HTTPException(status_code=400, detail="Некорректный source_url")
 
     try:
-        addr_infos = socket.getaddrinfo(parsed_url.hostname, parsed_url.port or (443 if parsed_url.scheme == "https" else 80))
+        parsed_port = parsed_url.port
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=f"Некорректный порт source_url: {exc}") from exc
+
+    try:
+        addr_infos = socket.getaddrinfo(
+            parsed_url.hostname,
+            parsed_port or (443 if parsed_url.scheme == "https" else 80),
+        )
     except socket.gaierror as exc:
         raise HTTPException(status_code=400, detail=f"Не удалось разрешить host source_url: {exc}") from exc
 
+    verified_host_ip = None
     for _, _, _, _, sockaddr in addr_infos:
         host_ip = sockaddr[0]
         try:
@@ -77,11 +86,28 @@ def _download_remote_file(source_url: str, settings_obj) -> tuple[str, str]:
             or host_ip == "169.254.169.254"
         ):
             raise HTTPException(status_code=400, detail="source_url указывает на запрещенный адрес")
+        if verified_host_ip is None:
+            verified_host_ip = host_ip
+
+    if not verified_host_ip:
+        raise HTTPException(status_code=400, detail="Не удалось определить IP для source_url")
+
+    # Выполняем запрос по уже проверенному IP, чтобы исключить повторный DNS lookup.
+    host_for_url = f"[{verified_host_ip}]" if ":" in verified_host_ip else verified_host_ip
+    url_port = f":{parsed_port}" if parsed_port else ""
+    path = parsed_url.path or "/"
+    if parsed_url.query:
+        path = f"{path}?{parsed_url.query}"
+    resolved_source_url = f"{parsed_url.scheme}://{host_for_url}{url_port}{path}"
+    host_header = parsed_url.hostname
+    if parsed_port:
+        host_header = f"{host_header}:{parsed_port}"
 
     tmp_path = None
     try:
         response = requests.get(
-            source_url,
+            resolved_source_url,
+            headers={"Host": host_header},
             stream=True,
             timeout=settings_obj.source_download_timeout,
             allow_redirects=False,
