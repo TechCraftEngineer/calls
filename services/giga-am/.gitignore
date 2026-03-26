@@ -2,3 +2,4 @@ venv
 demo.mp3
 .env
 logs
+__pycache__
