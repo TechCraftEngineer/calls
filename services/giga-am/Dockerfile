@@ -34,7 +34,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Установка GigaAM из GitHub репозитория
 RUN git clone https://github.com/salute-developers/GigaAM.git /tmp/GigaAM && \
     cd /tmp/GigaAM && \
-    pip install --no-cache-dir -e . && \
+    pip install --no-cache-dir . && \
     rm -rf /tmp/GigaAM
 
 # Копирование исходного кода

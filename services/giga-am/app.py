@@ -4,6 +4,7 @@ import tempfile
 
 import requests
 from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 import uvicorn
 
@@ -52,6 +53,7 @@ async def api_transcribe(request: Request, file: UploadFile = File(...)):
     Поддерживаемые форматы: MP3, WAV, FLAC, M4A, AAC, OGG, WEBM
     Максимальный размер файла: 100MB
     """
+    tmp_path = None
     try:
         content_length = request.headers.get("content-length")
         if content_length:
@@ -67,6 +69,7 @@ async def api_transcribe(request: Request, file: UploadFile = File(...)):
         
         file_extension = file_info["extension"] or ".tmp"
         with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp:
+            tmp_path = tmp.name
             content = await file.read()
             
             if len(content) > settings.max_file_size:
@@ -76,27 +79,24 @@ async def api_transcribe(request: Request, file: UploadFile = File(...)):
                 )
             
             tmp.write(content)
-            tmp_path = tmp.name
         
-        try:
-            result = transcription_service.transcribe_audio(tmp_path)
-            
-            if result["success"]:
-                logger.info(f"Успешное распознавание файла {os.path.basename(file.filename)}")
-                return JSONResponse(content=result)
-            else:
-                logger.error(f"Ошибка распознавания: {result.get('error')}")
-                raise HTTPException(status_code=500, detail=result.get('error'))
-                
-        finally:
-            if os.path.exists(tmp_path):
-                os.unlink(tmp_path)
+        result = await run_in_threadpool(transcription_service.transcribe_audio, tmp_path)
+        
+        if result["success"]:
+            logger.info(f"Успешное распознавание файла {os.path.basename(file.filename)}")
+            return JSONResponse(content=result)
+        else:
+            logger.error(f"Ошибка распознавания: {result.get('error')}")
+            raise HTTPException(status_code=500, detail=result.get('error'))
                 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Внутренняя ошибка сервера: {e}")
-        raise HTTPException(status_code=500, detail=f"Внутренняя ошибка сервера: {str(e)}")
+        logger.exception("Внутренняя ошибка сервера: %s", e)
+        raise HTTPException(status_code=500, detail="Внутренняя ошибка сервера")
+    finally:
+        if tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 
 @app.post("/api/jobs")
@@ -107,6 +107,8 @@ async def create_job(
     callback_url: str | None = Form(default=None),
 ):
     """Создает асинхронную задачу Ultra-SOTA pipeline."""
+    tmp_path = None
+    should_cleanup_tmp = True
     try:
         if (file is None and not source_url) or (file is not None and source_url):
             raise HTTPException(
@@ -126,6 +128,7 @@ async def create_job(
             file_info = FileValidator.get_file_info(file)
             file_extension = file_info["extension"] or ".tmp"
             with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp:
+                tmp_path = tmp.name
                 content = await file.read()
                 if len(content) > settings.max_file_size:
                     raise HTTPException(
@@ -133,7 +136,6 @@ async def create_job(
                         detail=f"Размер файла превышает лимит {settings.max_file_size // (1024*1024)}MB",
                     )
                 tmp.write(content)
-                tmp_path = tmp.name
             original_filename = file.filename
         else:
             try:
@@ -145,6 +147,7 @@ async def create_job(
                 response.raise_for_status()
                 suffix = os.path.splitext(source_url)[1].lower() or ".tmp"
                 with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                    tmp_path = tmp.name
                     total = 0
                     for chunk in response.iter_content(chunk_size=1024 * 1024):
                         if not chunk:
@@ -156,7 +159,6 @@ async def create_job(
                                 detail=f"Размер файла превышает лимит {settings.max_file_size // (1024*1024)}MB",
                             )
                         tmp.write(chunk)
-                    tmp_path = tmp.name
                 original_filename = os.path.basename(source_url) or "remote_audio"
             except HTTPException:
                 raise
@@ -168,6 +170,7 @@ async def create_job(
             original_filename,
             callback_url=callback_url,
         )
+        should_cleanup_tmp = False
         return JSONResponse(
             content={
                 "job_id": job.job_id,
@@ -188,6 +191,9 @@ async def create_job(
     except Exception as e:
         logger.error("Ошибка создания job: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail="Не удалось создать задачу") from e
+    finally:
+        if should_cleanup_tmp and tmp_path and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
 
 @app.get("/api/jobs/{job_id}")
