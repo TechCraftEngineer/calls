@@ -70,9 +70,9 @@ class JobOrchestrator:
             metadata=metadata,
         )
         with self._lock:
+            self._persist_job(job)
             self.jobs[job_id] = job
             self._queue.put(job_id)
-            self._persist_job(job)
         return job
 
     def get_job(self, job_id: str) -> JobRecord | None:
