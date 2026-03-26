@@ -14,7 +14,7 @@ WORKDIR /app
 # что ломает установку плавающих зависимостей из requirements.txt.
 ENV PIP_REQUIRE_HASHES=0
 
-ARG GIGAAM_REV
+ARG GIGAAM_REV=main
 
 # Копирование зависимостей
 COPY requirements.txt .
