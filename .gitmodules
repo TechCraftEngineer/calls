@@ -1,3 +1,0 @@
-[submodule "services/giga-am"]
-	path = services/giga-am
-	url = https://huggingface.co/spaces/kodermax/giga-am
