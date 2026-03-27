@@ -53,11 +53,13 @@ export const env = createEnv({
     ASSEMBLYAI_API_KEY: z.string().optional(),
     YANDEX_SPEECHKIT_API_KEY: z.string().optional(),
     YANDEX_SPEECHKIT_ENABLED: z.stringbool().default(true),
-    /** Giga AM (HTTP), по умолчанию async pipeline endpoint */
+    /** Giga AM (HTTP) sync endpoint */
     GIGA_AM_TRANSCRIBE_URL: z
       .url()
-      .default("https://vnggncb-giga-am.hf.space/api/jobs"),
+      .default("https://vnggncb-giga-am.hf.space/api/transcribe"),
     GIGA_AM_ENABLED: z.stringbool().default(true),
+    /** Оценка себестоимости ASR (руб/сек) для расчёта в UI */
+    GIGA_AM_RATE_RUB_PER_SECOND: z.coerce.number().positive().default(0.01),
     ASSEMBLYAI_RATE_USD_PER_HOUR: z.coerce.number().positive().default(0.23),
     RUB_PER_USD: z.coerce.number().positive().default(90),
     YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND: z.coerce
@@ -138,6 +140,7 @@ export const env = createEnv({
     YANDEX_SPEECHKIT_ENABLED: process.env.YANDEX_SPEECHKIT_ENABLED,
     GIGA_AM_TRANSCRIBE_URL: process.env.GIGA_AM_TRANSCRIBE_URL,
     GIGA_AM_ENABLED: process.env.GIGA_AM_ENABLED,
+    GIGA_AM_RATE_RUB_PER_SECOND: process.env.GIGA_AM_RATE_RUB_PER_SECOND,
     ASSEMBLYAI_RATE_USD_PER_HOUR: process.env.ASSEMBLYAI_RATE_USD_PER_HOUR,
     RUB_PER_USD: process.env.RUB_PER_USD,
     YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND:
@@ -180,12 +183,8 @@ if (
   );
 }
 
-// Валидация: хотя бы один ASR провайдер должен быть настроен
-const hasAnyAsrProvider = !!(
-  env.ASSEMBLYAI_API_KEY ||
-  (env.YANDEX_SPEECHKIT_ENABLED && env.YANDEX_SPEECHKIT_API_KEY) ||
-  (env.GIGA_AM_ENABLED && env.GIGA_AM_TRANSCRIBE_URL)
-);
+// Валидация: Giga AM — основной ASR
+const hasAnyAsrProvider = !!(env.GIGA_AM_ENABLED && env.GIGA_AM_TRANSCRIBE_URL);
 const skipValidation =
   !!process.env.CI ||
   process.env.npm_lifecycle_event === "lint" ||
@@ -194,6 +193,6 @@ const skipValidation =
 
 if (!hasAnyAsrProvider && process.env.NODE_ENV !== "test" && !skipValidation) {
   console.warn(
-    "Внимание: Настройте хотя бы один ASR провайдер: ASSEMBLYAI_API_KEY, YANDEX_SPEECHKIT_API_KEY или включите Giga AM (GIGA_AM_ENABLED + GIGA_AM_TRANSCRIBE_URL)",
+    "Внимание: Для транскрибации задайте Giga AM (GIGA_AM_ENABLED + GIGA_AM_TRANSCRIBE_URL).",
   );
 }

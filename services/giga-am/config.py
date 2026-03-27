@@ -35,8 +35,6 @@ class Settings(BaseSettings):
     jobs_dir: str = "temp/jobs"
     max_parallel_jobs: int = 1
     job_ttl_hours: int = 24
-    audio_enhancer_url: str = os.getenv("AUDIO_ENHANCER_URL", "")
-    audio_enhancer_timeout: int = 900
     source_download_timeout: int = 120
     max_job_retries: int = 2
     llm_correction_enabled: bool = True

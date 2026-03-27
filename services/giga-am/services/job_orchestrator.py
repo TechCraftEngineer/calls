@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-import base64
 import json
 import logging
-import os
 import queue
-import tempfile
 import threading
 import uuid
 from dataclasses import asdict
@@ -58,11 +55,14 @@ class JobOrchestrator:
         input_path: str,
         original_filename: str,
         callback_url: str | None = None,
+        preprocess_metadata: dict[str, Any] | None = None,
     ) -> JobRecord:
         job_id = str(uuid.uuid4())
         metadata: dict[str, Any] = {"pipeline_version": "ultra-sota-2026", "attempt": 0}
         if callback_url:
             metadata["callback_url"] = callback_url
+        if preprocess_metadata is not None:
+            metadata["preprocess_metadata"] = preprocess_metadata
         job = JobRecord(
             job_id=job_id,
             input_path=input_path,
@@ -178,26 +178,17 @@ class JobOrchestrator:
                 self._queue.task_done()
 
     def _process_job(self, job: JobRecord) -> None:
-        # 1) preprocessing
-        with self._lock:
-            job.status = JobStatus.preprocessing
-            job.progress = 0.1
-            job.updated_at = datetime.now(timezone.utc).isoformat()
-            self._set_stage(job, "preprocessing", "running")
-            self._persist_job(job)
+        # Препроцесс (audio-enhancer) выполняется во внешнем оркестраторе (Inngest); метаданные — в job.metadata
+        prep: dict[str, Any] = {
+            "audio_path": job.input_path,
+            "metadata": job.metadata.get("preprocess_metadata") or {},
+        }
 
-        prep = self._preprocess_audio(job.input_path)
-        if job.status == JobStatus.cancelled:
-            self._safe_unlink(prep.get("audio_path"))
-            return
-        with self._lock:
-            self._set_stage(job, "preprocessing", "done", {"metadata": prep.get("metadata", {})})
-            job.progress = 0.3
-            self._persist_job(job)
-
-        # 2) asr
+        # 1) ASR
         with self._lock:
             job.status = JobStatus.asr
+            job.progress = 0.2
+            job.updated_at = datetime.now(timezone.utc).isoformat()
             self._set_stage(job, "asr", "running")
             self._persist_job(job)
         asr_result = transcription_service.transcribe_audio(prep["audio_path"])
@@ -209,7 +200,7 @@ class JobOrchestrator:
             job.progress = 0.5
             self._persist_job(job)
 
-        # 3) alignment
+        # 2) alignment
         with self._lock:
             job.status = JobStatus.alignment
             self._set_stage(job, "alignment", "running")
@@ -220,7 +211,7 @@ class JobOrchestrator:
             job.progress = 0.65
             self._persist_job(job)
 
-        # 4) diarization / clustering
+        # 3) diarization / clustering
         with self._lock:
             job.status = JobStatus.diarization
             self._set_stage(job, "diarization", "running")
@@ -235,7 +226,7 @@ class JobOrchestrator:
             job.progress = 0.82
             self._persist_job(job)
 
-        # 5) postprocess
+        # 4) postprocess
         with self._lock:
             job.status = JobStatus.postprocess
             self._set_stage(job, "postprocess", "running")
@@ -261,7 +252,6 @@ class JobOrchestrator:
             }
             self._persist_job(job)
             self._send_callback(job)
-        self._safe_unlink(prep.get("audio_path"))
         self._safe_unlink(job.input_path)
 
     def estimate_eta_seconds(self, job: JobRecord) -> float | None:
@@ -278,31 +268,6 @@ class JobOrchestrator:
             return round(remaining, 1)
         except Exception:
             return None
-
-    def _preprocess_audio(self, input_path: str) -> dict[str, Any]:
-        enhancer_url = settings.audio_enhancer_url.strip()
-        if not enhancer_url:
-            # fallback: no remote enhancer, just pass-through
-            return {"audio_path": input_path, "metadata": {"mode": "passthrough"}}
-
-        url = enhancer_url.rstrip("/") + "/preprocess"
-        with open(input_path, "rb") as f:
-            response = requests.post(
-                url,
-                files={"file": (os.path.basename(input_path), f, "application/octet-stream")},
-                data={
-                    "target_sample_rate": 16000,
-                    "return_audio_base64": "true",
-                },
-                timeout=settings.audio_enhancer_timeout,
-            )
-        response.raise_for_status()
-        payload = response.json()
-        raw = base64.b64decode(payload["audio_base64"])
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
-            tmp.write(raw)
-            output_path = tmp.name
-        return {"audio_path": output_path, "metadata": payload.get("preprocess_metadata", {})}
 
     def _send_callback(self, job: JobRecord) -> None:
         callback_url = (job.metadata.get("callback_url") or "").strip()

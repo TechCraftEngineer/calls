@@ -18,9 +18,9 @@ python benchmark_pipeline.py \
 
 ## A/B режим
 
-- Baseline: `POST /api/transcribe`.
-- Ultra pipeline: `POST /api/jobs` + `GET /api/jobs/{id}`.
-- Сравнивайте на одном и том же датасете, фиксируя версии моделей/кода.
+- Baseline: `POST /api/transcribe` (без внешнего preprocess).
+- Inngest pipeline: `audio-enhancer /preprocess` -> `giga-am /api/transcribe`.
+- Сравнивайте на одном и том же датасете, фиксируя версии моделей/кода и конфиг preprocess.
 
 ## Regression check (рекомендуемый порог)
 
