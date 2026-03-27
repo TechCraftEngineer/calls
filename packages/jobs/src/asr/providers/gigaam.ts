@@ -329,7 +329,10 @@ export async function transcribeWithGigaAm(
       totalDuration,
       segmentCount: segments.length,
       mode: "sync",
-      ultraPipeline: apiResponse.pipeline === "ultra-sync-2026",
+      ultraPipeline:
+        apiResponse.pipeline === "ultra-sync-2026" ||
+        Boolean(apiResponse.final_transcript),
+      final_transcript: apiResponse.final_transcript,
       speakerTimelineCount: apiResponse.speaker_timeline?.length,
       pipelineStages: apiResponse.stages,
     },

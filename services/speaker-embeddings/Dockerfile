@@ -1,7 +1,11 @@
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    HOME=/home/appuser \
+    TORCH_HOME=/home/appuser/.cache/torch \
+    TRANSFORMERS_CACHE=/home/appuser/.cache/huggingface/transformers \
+    HF_HOME=/home/appuser/.cache/huggingface
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
@@ -14,8 +18,11 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY app.py /app/app.py
-RUN adduser --disabled-password --gecos "" --home /home/appuser --shell /usr/sbin/nologin appuser \
-    && chown -R appuser:appuser /app
+RUN mkdir -p /home/appuser \
+    && adduser --disabled-password --gecos "" --home /home/appuser --shell /usr/sbin/nologin appuser \
+    && mkdir -p /home/appuser/.cache/torch \
+    && mkdir -p /home/appuser/.cache/huggingface/transformers \
+    && chown -R appuser:appuser /home/appuser /app
 
 EXPOSE 7861
 

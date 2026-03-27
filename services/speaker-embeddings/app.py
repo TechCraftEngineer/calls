@@ -1,6 +1,7 @@
 import io
 import json
 import logging
+import threading
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -19,13 +20,15 @@ logging.basicConfig(
 logger = logging.getLogger("speaker-embeddings")
 
 model: "HybridEmbeddingModel | None" = None
+model_lock = threading.Lock()
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     global model
-    if model is None:
-        model = await run_in_threadpool(HybridEmbeddingModel)
+    with model_lock:
+        if model is None:
+            model = await run_in_threadpool(HybridEmbeddingModel)
     yield
 
 
@@ -127,8 +130,13 @@ class HybridEmbeddingModel:
     ) -> list[list[float]]:
         out: list[list[float]] = []
         for seg in segments:
-            start = float(seg.get("start", 0.0))
-            end = float(seg.get("end", start))
+            if not isinstance(seg, dict):
+                raise ValueError("Each segment must be an object")
+            try:
+                start = float(seg.get("start", 0.0))
+                end = float(seg.get("end", start))
+            except (TypeError, ValueError) as exc:
+                raise ValueError("Segment start/end must be numeric") from exc
             if end <= start:
                 out.append([0.0] * 222)
                 continue
@@ -142,8 +150,9 @@ class HybridEmbeddingModel:
 
 def _get_model() -> HybridEmbeddingModel:
     global model
-    if model is None:
-        model = HybridEmbeddingModel()
+    with model_lock:
+        if model is None:
+            model = HybridEmbeddingModel()
     return model
 
 
@@ -153,9 +162,38 @@ def _process_embed_batch(audio_bytes: bytes, segments_json: str) -> dict[str, An
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=400, detail=f"Invalid segments_json: {exc}") from exc
 
-    segments = payload.get("segments", [])
+    if isinstance(payload, list):
+        segments = payload
+    elif isinstance(payload, dict):
+        segments = payload.get("segments", [])
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="segments_json must be a list or an object with 'segments' list",
+        )
+
     if not isinstance(segments, list):
         raise HTTPException(status_code=400, detail="segments_json.segments must be a list")
+
+    normalized_segments: list[dict[str, Any]] = []
+    for idx, seg in enumerate(segments):
+        if not isinstance(seg, dict):
+            raise HTTPException(status_code=400, detail=f"segments[{idx}] must be an object")
+        try:
+            start = float(seg.get("start", 0.0))
+            end = float(seg.get("end", start))
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"segments[{idx}] start/end must be numeric",
+            ) from exc
+        normalized_segments.append(
+            {
+                **seg,
+                "start": start,
+                "end": end,
+            }
+        )
 
     with io.BytesIO(audio_bytes) as buf:
         audio, sr = sf.read(buf, dtype="float32")
@@ -167,7 +205,10 @@ def _process_embed_batch(audio_bytes: bytes, segments_json: str) -> dict[str, An
         audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
         sr = 16000
 
-    embeddings = _get_model().embed_segments(audio, sr, segments)
+    try:
+        embeddings = _get_model().embed_segments(audio, sr, normalized_segments)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {
         "success": True,
         "embedding_dim": len(embeddings[0]) if embeddings else 0,

@@ -28,7 +28,7 @@
   - Ответ:
 
     ```json
-    { "status": "healthy" }
+    { "status": "healthy", "pyannote_loaded": true }
     ```
 
 ## Интеграция
