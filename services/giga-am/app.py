@@ -6,6 +6,7 @@ from typing import Any
 
 import librosa
 import numpy as np
+import soundfile
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
@@ -61,7 +62,12 @@ def _run_ultra_pipeline(
     if settings.diarization_enabled:
         try:
             audio_np, audio_sr = librosa.load(audio_path, sr=16000, mono=True)
-        except Exception:
+        except (
+            librosa.util.exceptions.ParameterError,
+            FileNotFoundError,
+            OSError,
+            soundfile.SoundFileError,
+        ):
             audio_np = np.array([], dtype=np.float32)
             audio_sr = 16000
 

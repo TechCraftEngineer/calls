@@ -1,9 +1,12 @@
+import io
 import json
 import logging
+from contextlib import asynccontextmanager
 from typing import Any
 
 import librosa
 import numpy as np
+import soundfile as sf
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 import uvicorn
@@ -15,10 +18,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger("speaker-embeddings")
 
+model: "HybridEmbeddingModel | None" = None
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    global model
+    if model is None:
+        model = await run_in_threadpool(HybridEmbeddingModel)
+    yield
+
+
 app = FastAPI(
     title="Speaker Embeddings API",
     description="Batch speaker embeddings for Titanet/WeSpeaker-like clustering.",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 
@@ -41,6 +56,10 @@ class HybridEmbeddingModel:
         except Exception as exc:
             self._pyannote_embedder = None
             logger.warning("pyannote embedder unavailable: %s", exc)
+
+    @property
+    def is_pyannote_loaded(self) -> bool:
+        return self._pyannote_embedder is not None
 
     @staticmethod
     def _l2_normalize(vec: np.ndarray) -> np.ndarray:
@@ -70,7 +89,7 @@ class HybridEmbeddingModel:
     @staticmethod
     def _acoustic_vector(audio_slice: np.ndarray, sr: int) -> np.ndarray:
         if audio_slice.size < max(400, sr // 40):
-            return np.zeros(32, dtype=np.float32)
+            return np.zeros(30, dtype=np.float32)
         try:
             mfcc = librosa.feature.mfcc(y=audio_slice, sr=sr, n_mfcc=13)
             mfcc_mean = np.mean(mfcc, axis=1)
@@ -98,7 +117,7 @@ class HybridEmbeddingModel:
             ).astype(np.float32)
             return vec
         except Exception:
-            return np.zeros(32, dtype=np.float32)
+            return np.zeros(30, dtype=np.float32)
 
     def embed_segments(
         self,
@@ -111,7 +130,7 @@ class HybridEmbeddingModel:
             start = float(seg.get("start", 0.0))
             end = float(seg.get("end", start))
             if end <= start:
-                out.append([0.0] * 224)
+                out.append([0.0] * 222)
                 continue
             audio_slice = self._slice(audio, sr, start, end)
             p = self._pyannote_vector(audio_slice, sr)
@@ -121,7 +140,11 @@ class HybridEmbeddingModel:
         return out
 
 
-model = HybridEmbeddingModel()
+def _get_model() -> HybridEmbeddingModel:
+    global model
+    if model is None:
+        model = HybridEmbeddingModel()
+    return model
 
 
 def _process_embed_batch(audio_bytes: bytes, segments_json: str) -> dict[str, Any]:
@@ -134,9 +157,6 @@ def _process_embed_batch(audio_bytes: bytes, segments_json: str) -> dict[str, An
     if not isinstance(segments, list):
         raise HTTPException(status_code=400, detail="segments_json.segments must be a list")
 
-    import io
-    import soundfile as sf
-
     with io.BytesIO(audio_bytes) as buf:
         audio, sr = sf.read(buf, dtype="float32")
         if audio.ndim > 1:
@@ -147,7 +167,7 @@ def _process_embed_batch(audio_bytes: bytes, segments_json: str) -> dict[str, An
         audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
         sr = 16000
 
-    embeddings = model.embed_segments(audio, sr, segments)
+    embeddings = _get_model().embed_segments(audio, sr, segments)
     return {
         "success": True,
         "embedding_dim": len(embeddings[0]) if embeddings else 0,
@@ -173,7 +193,11 @@ async def embed_batch(
 
 @app.get("/health")
 async def health() -> dict[str, Any]:
-    return {"status": "ok", "pyannote_loaded": model._pyannote_embedder is not None}
+    current_model = model
+    return {
+        "status": "healthy",
+        "pyannote_loaded": current_model.is_pyannote_loaded if current_model else False,
+    }
 
 
 if __name__ == "__main__":

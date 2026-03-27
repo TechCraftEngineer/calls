@@ -14,7 +14,7 @@ class ClusteringService:
         dot = 0.0
         na = 0.0
         nb = 0.0
-        for ai, bi in zip(a, b):
+        for ai, bi in zip(a, b, strict=True):
             dot += ai * bi
             na += ai * ai
             nb += bi * bi
@@ -29,13 +29,16 @@ class ClusteringService:
             return []
         dim = len(vectors[0])
         acc = [0.0] * dim
+        processed_count = 0
         for vec in vectors:
             if len(vec) != dim:
                 continue
+            processed_count += 1
             for i, value in enumerate(vec):
                 acc[i] += value
-        count = max(1, len(vectors))
-        return [v / count for v in acc]
+        if processed_count == 0:
+            return []
+        return [v / processed_count for v in acc]
 
     def assign_speakers(
         self,
@@ -49,7 +52,7 @@ class ClusteringService:
         clusters: list[dict[str, Any]] = []
         base_threshold = 0.35
 
-        for idx, seg in enumerate(segments):
+        for seg in segments:
             start = float(seg.get("start", 0.0))
             end = float(seg.get("end", start))
             seg_embedding = seg.get("embedding")
@@ -79,7 +82,7 @@ class ClusteringService:
 
                 # Чуть строже при коротких сегментах
                 segment_duration = max(0.0, end - start)
-                threshold = base_threshold - 0.05 if segment_duration > 3.0 else base_threshold
+                threshold = base_threshold - 0.05 if segment_duration < 3.0 else base_threshold
 
                 best_distance, best_cluster = candidates[0]
                 if best_distance <= threshold:
@@ -104,5 +107,14 @@ class ClusteringService:
                 for item in overlap_spans
             )
             seg["clustered"] = True
-            seg["cluster_index"] = idx
+            assigned_speaker = seg.get("speaker")
+            cluster_index = next(
+                (
+                    cluster_idx
+                    for cluster_idx, cluster in enumerate(clusters)
+                    if cluster.get("speaker") == assigned_speaker
+                ),
+                -1,
+            )
+            seg["cluster_index"] = cluster_index
         return segments

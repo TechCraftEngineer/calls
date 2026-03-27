@@ -13,6 +13,7 @@ import soundfile as sf
 from config import settings
 
 logger = logging.getLogger(__name__)
+HYBRID_EMBEDDING_DIM = 222
 
 
 class EmbeddingService:
@@ -53,7 +54,11 @@ class EmbeddingService:
             logger.info("Pyannote speaker embedder загружен")
         except Exception as exc:
             self._pyannote_embedder = None
-            logger.warning("Pyannote speaker embedder недоступен: %s", exc)
+            logger.warning(
+                "Pyannote speaker embedder недоступен (%s): %s",
+                type(exc).__name__,
+                exc,
+            )
 
     def _try_remote_embeddings(
         self,
@@ -97,10 +102,18 @@ class EmbeddingService:
                 return None
             parsed: list[list[float]] = []
             for emb in embeddings:
-                if isinstance(emb, list):
-                    parsed.append([float(v) for v in emb])
-                else:
-                    parsed.append([])
+                if not isinstance(emb, list):
+                    logger.warning("Remote embedding has invalid type: %s", type(emb).__name__)
+                    return None
+                parsed_emb = [float(v) for v in emb]
+                if len(parsed_emb) != HYBRID_EMBEDDING_DIM:
+                    logger.warning(
+                        "Remote embedding dimension mismatch: %s != %s",
+                        len(parsed_emb),
+                        HYBRID_EMBEDDING_DIM,
+                    )
+                    return None
+                parsed.append(parsed_emb)
             if len(parsed) != len(segments):
                 logger.warning("Remote embedding size mismatch: %s != %s", len(parsed), len(segments))
                 return None
@@ -145,7 +158,7 @@ class EmbeddingService:
     @staticmethod
     def _acoustic_vector(audio_slice: np.ndarray, sr: int) -> np.ndarray:
         if audio_slice.size < max(400, sr // 40):
-            return np.zeros(32, dtype=np.float32)
+            return np.zeros(30, dtype=np.float32)
         try:
             mfcc = librosa.feature.mfcc(y=audio_slice, sr=sr, n_mfcc=13)
             mfcc_mean = np.mean(mfcc, axis=1)
@@ -184,7 +197,7 @@ class EmbeddingService:
             ).astype(np.float32)
             return vec
         except Exception:
-            return np.zeros(32, dtype=np.float32)
+            return np.zeros(30, dtype=np.float32)
 
     def build_hybrid_embedding(
         self,
@@ -201,7 +214,7 @@ class EmbeddingService:
             or audio.size == 0
             or end <= start
         ):
-            return [0.0] * 224
+            return [0.0] * HYBRID_EMBEDDING_DIM
 
         audio_slice = self._extract_audio_slice(audio, sample_rate, start, end)
         pyannote_vec = self._pyannote_vector(audio_slice, sample_rate)
