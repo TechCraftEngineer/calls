@@ -7,17 +7,28 @@
 - `POST /api/embed-batch`
   - `file`: audio file
   - `segments_json`: JSON string вида:
+
     ```json
     { "segments": [ { "start": 0.0, "end": 1.2, "text": "..." } ] }
     ```
+
   - Ответ:
+
     ```json
     {
       "success": true,
-      "embedding_dim": 224,
+      "embedding_dim": 222,
       "count": 1,
       "embeddings": [[...]]
     }
+    ```
+
+- `GET /health`
+  - Проверка работоспособности сервиса.
+  - Ответ:
+
+    ```json
+    { "status": "healthy" }
     ```
 
 ## Интеграция

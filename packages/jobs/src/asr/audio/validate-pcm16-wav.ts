@@ -6,6 +6,7 @@ export type ValidatedPcm16Wav =
         numChannels: number;
         sampleRate: number;
         bitsPerSample: number;
+        blockAlign: number;
       };
       data: {
         size: number;
@@ -16,7 +17,7 @@ export type ValidatedPcm16Wav =
 
 export function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
   if (buffer.length < 12) {
-    return { valid: false, reason: "Buffer is too small for RIFF/WAVE" };
+    return { valid: false, reason: "Буфер слишком мал для RIFF/WAVE" };
   }
 
   const riff = buffer.toString("ascii", 0, 4);
@@ -24,7 +25,7 @@ export function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
   if (riff !== "RIFF" || wave !== "WAVE") {
     return {
       valid: false,
-      reason: `Invalid magic bytes (riff=${riff}, wave=${wave})`,
+      reason: `Некорректные сигнатуры RIFF/WAVE (riff=${riff}, wave=${wave})`,
     };
   }
 
@@ -34,6 +35,7 @@ export function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
     numChannels: number;
     sampleRate: number;
     bitsPerSample: number;
+    blockAlign: number;
   } | null = null;
   while (offset + 8 <= buffer.length) {
     const chunkId = buffer.toString("ascii", offset, offset + 4);
@@ -43,7 +45,7 @@ export function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
     if (chunkSize > buffer.length - offset) {
       return {
         valid: false,
-        reason: `Chunk ${chunkId} size (${chunkSize}) exceeds buffer`,
+        reason: `Размер фрагмента ${chunkId} (${chunkSize}) превышает размер буфера`,
       };
     }
 
@@ -51,50 +53,76 @@ export function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
       if (chunkSize < 16 || offset + 16 > buffer.length) {
         return {
           valid: false,
-          reason: `Invalid fmt chunk (size=${chunkSize})`,
+          reason: `Некорректный fmt-фрагмент (size=${chunkSize})`,
         };
       }
 
       const audioFormat = buffer.readUInt16LE(offset);
       const numChannels = buffer.readUInt16LE(offset + 2);
       const sampleRate = buffer.readUInt32LE(offset + 4);
+      const blockAlign = buffer.readUInt16LE(offset + 12);
       const bitsPerSample = buffer.readUInt16LE(offset + 14);
 
       if (audioFormat !== 1) {
         return {
           valid: false,
-          reason: `Expected PCM (audioFormat=1), got ${audioFormat}`,
+          reason: `Ожидался PCM (audioFormat=1), получено ${audioFormat}`,
         };
       }
 
       if (bitsPerSample !== 16) {
         return {
           valid: false,
-          reason: `Expected 16-bit samples (bitsPerSample=16), got ${bitsPerSample}`,
+          reason: `Ожидались 16-битные сэмплы (bitsPerSample=16), получено ${bitsPerSample}`,
         };
       }
 
-      fmt = { audioFormat, numChannels, sampleRate, bitsPerSample };
+      if (sampleRate <= 0) {
+        return {
+          valid: false,
+          reason: `Некорректная частота дискретизации (sampleRate=${sampleRate})`,
+        };
+      }
+
+      const expectedBlockAlign = (numChannels * bitsPerSample) / 8;
+      if (!Number.isInteger(expectedBlockAlign) || expectedBlockAlign <= 0) {
+        return {
+          valid: false,
+          reason: `Неверный blockAlign, вычисленный из fmt (значение: ${expectedBlockAlign})`,
+        };
+      }
+
+      if (blockAlign !== expectedBlockAlign) {
+        return {
+          valid: false,
+          reason: `Размер блока выравнивания в fmt (${blockAlign}) не совпадает с ожидаемым (${expectedBlockAlign})`,
+        };
+      }
+
+      fmt = { audioFormat, numChannels, sampleRate, bitsPerSample, blockAlign };
     }
 
     if (chunkId === "data") {
       if (!fmt) {
-        return { valid: false, reason: "Missing fmt chunk before data chunk" };
+        return {
+          valid: false,
+          reason: "Отсутствует fmt-фрагмент перед data-фрагментом",
+        };
       }
-      const blockAlign = (fmt.numChannels * fmt.bitsPerSample) / 8;
+      const blockAlign = fmt.blockAlign;
       if (!Number.isInteger(blockAlign) || blockAlign <= 0) {
         return {
           valid: false,
-          reason: `Invalid block align derived from fmt (${blockAlign})`,
+          reason: `Неверный blockAlign, вычисленный из fmt (значение: ${blockAlign})`,
         };
       }
       if (chunkSize <= 0) {
-        return { valid: false, reason: "Data chunk is empty" };
+        return { valid: false, reason: "Фрагмент данных пуст" };
       }
       if (chunkSize % blockAlign !== 0) {
         return {
           valid: false,
-          reason: `Data chunk size (${chunkSize}) is not aligned to blockAlign (${blockAlign})`,
+          reason: `Размер фрагмента данных (${chunkSize}) не выровнен по blockAlign (${blockAlign})`,
         };
       }
       return {
@@ -112,7 +140,7 @@ export function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
   }
 
   if (!fmt) {
-    return { valid: false, reason: "Missing fmt chunk" };
+    return { valid: false, reason: "Отсутствует fmt-фрагмент" };
   }
-  return { valid: false, reason: "Missing data chunk" };
+  return { valid: false, reason: "Отсутствует data-фрагмент" };
 }

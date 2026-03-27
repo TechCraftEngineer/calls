@@ -22,6 +22,15 @@ const gigaAmSegmentSchema = z.object({
   start_formatted: z.string().optional(),
   end_formatted: z.string().optional(),
   duration: z.number().optional(),
+  speaker: z.string().optional(),
+});
+
+const gigaAmSpeakerTimelineEntrySchema = z.object({
+  speaker: z.string(),
+  start: z.number(),
+  end: z.number(),
+  text: z.string(),
+  overlap: z.boolean().optional(),
 });
 
 const gigaAmSuccessResponseSchema = z.object({
@@ -29,7 +38,7 @@ const gigaAmSuccessResponseSchema = z.object({
   segments: z.array(gigaAmSegmentSchema),
   total_duration: z.number().optional(),
   final_transcript: z.string().optional(),
-  speaker_timeline: z.array(z.record(z.string(), z.unknown())).optional(),
+  speaker_timeline: z.array(gigaAmSpeakerTimelineEntrySchema).optional(),
   pipeline: z.string().optional(),
   stages: z.array(z.string()).optional(),
 });
@@ -165,12 +174,7 @@ function segmentsToUtterances(
   segments: z.infer<typeof gigaAmSegmentSchema>[],
 ): Utterance[] {
   return segments.map((s, i) => ({
-    // Рантайм может вернуть speaker в расширенном payload ultra-pipeline.
-    // В базовой схеме поля нет, поэтому читаем через безопасный generic record.
-    speaker:
-      typeof (s as unknown as Record<string, unknown>).speaker === "string"
-        ? String((s as unknown as Record<string, unknown>).speaker)
-        : `Сегмент ${i + 1}`,
+    speaker: typeof s.speaker === "string" ? s.speaker : `Сегмент ${i + 1}`,
     text: s.text.trim(),
     start: s.start,
     end: s.end,
@@ -325,8 +329,7 @@ export async function transcribeWithGigaAm(
       totalDuration,
       segmentCount: segments.length,
       mode: "sync",
-      ultraPipeline:
-        apiResponse.pipeline === "ultra-sync-2026" || Boolean(finalTranscript),
+      ultraPipeline: apiResponse.pipeline === "ultra-sync-2026",
       speakerTimelineCount: apiResponse.speaker_timeline?.length,
       pipelineStages: apiResponse.stages,
     },
