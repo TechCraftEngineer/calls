@@ -12,8 +12,6 @@ const logger = createLogger("asr-gigaam");
 
 const FETCH_TIMEOUT_MS = 30_000;
 const GIGA_AM_HTTP_TIMEOUT_MS = 120_000;
-const GIGA_AM_JOB_TIMEOUT_MS = 20 * 60_000;
-const GIGA_AM_JOB_POLL_INTERVAL_MS = 5000;
 const MAX_AUDIO_BYTES = 100 * 1024 * 1024;
 const NON_RETRYABLE_HTTP_STATUSES = new Set([400, 401, 403, 404]);
 
@@ -30,23 +28,6 @@ const gigaAmSuccessResponseSchema = z.object({
   success: z.literal(true),
   segments: z.array(gigaAmSegmentSchema),
   total_duration: z.number().optional(),
-});
-
-const gigaAmJobCreateResponseSchema = z.object({
-  job_id: z.string(),
-  status: z.string(),
-});
-
-const gigaAmJobResultSchema = z.object({
-  status: z.string(),
-  result: z
-    .object({
-      segments: z.array(gigaAmSegmentSchema).optional(),
-      final_transcript: z.string().optional(),
-      total_duration: z.number().optional(),
-    })
-    .optional(),
-  error: z.string().optional().nullable(),
 });
 
 function toErrorMessage(error: unknown): string {
@@ -187,18 +168,14 @@ function segmentsToUtterances(
   }));
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export function isGigaAmTranscribeConfigured(): boolean {
   return env.GIGA_AM_ENABLED && Boolean(env.GIGA_AM_TRANSCRIBE_URL?.trim());
 }
 
 export async function transcribeWithGigaAm(
   audioUrl: string,
-  options?: {
-    /** Метаданные из audio-enhancer `/preprocess` — передаются в giga-am job без вызова enhancer из giga-am */
+  _options?: {
+    /** legacy: не используется в sync API */
     preprocessMetadata?: Record<string, unknown> | null;
   },
 ): Promise<AsrResult | null> {
@@ -254,20 +231,6 @@ export async function transcribeWithGigaAm(
     new Blob([audioBuffer], { type: contentType }),
     filename,
   );
-  const jobsSubmitUrl = transcribeUrl.replace(/\/$/, "");
-  const isJobsSubmit =
-    /\/api\/jobs$/i.test(jobsSubmitUrl) || jobsSubmitUrl.endsWith("/api/jobs");
-  if (
-    isJobsSubmit &&
-    options?.preprocessMetadata &&
-    Object.keys(options.preprocessMetadata).length > 0
-  ) {
-    formData.append(
-      "preprocess_metadata_json",
-      JSON.stringify(options.preprocessMetadata),
-    );
-  }
-
   const apiResponse = await withRetry(
     () =>
       fetchWithTimeout(
@@ -300,22 +263,15 @@ export async function transcribeWithGigaAm(
           }
 
           const parsedSync = gigaAmSuccessResponseSchema.safeParse(rawJson);
-          if (parsedSync.success) {
-            return parsedSync.data;
+          if (!parsedSync.success) {
+            logger.warn("Некорректный формат sync-ответа Giga AM", {
+              issues: parsedSync.error.issues.map((i) => i.message),
+            });
+            throw new NonRetryableError(
+              "Giga AM: некорректный JSON sync-ответа",
+            );
           }
-          const parsedJob = gigaAmJobCreateResponseSchema.safeParse(rawJson);
-          if (parsedJob.success) {
-            return parsedJob.data;
-          }
-          logger.warn("Некорректный формат ответа Giga AM", {
-            syncIssues: parsedSync.success
-              ? []
-              : parsedSync.error.issues.map((i) => i.message),
-            jobIssues: parsedJob.success
-              ? []
-              : parsedJob.error.issues.map((i) => i.message),
-          });
-          throw new NonRetryableError("Giga AM: некорректный JSON ответа");
+          return parsedSync.data;
         },
       ),
     {
@@ -329,87 +285,9 @@ export async function transcribeWithGigaAm(
     },
   );
 
-  let segments: z.infer<typeof gigaAmSegmentSchema>[] = [];
-  let totalDuration: number | undefined;
-  let finalTranscript: string | undefined;
-
-  if ("success" in apiResponse) {
-    segments = apiResponse.segments;
-    totalDuration = apiResponse.total_duration;
-  } else {
-    const baseUrl = transcribeUrl.replace(/\/$/, "");
-    const isJobsEndpoint = /\/api\/jobs$/i.test(baseUrl);
-    const jobStatusUrl = isJobsEndpoint
-      ? `${baseUrl}/${apiResponse.job_id}`
-      : `${baseUrl}/api/jobs/${apiResponse.job_id}`;
-
-    const jobDeadline = Date.now() + GIGA_AM_JOB_TIMEOUT_MS;
-    let jobCompleted = false;
-    await withRetry(
-      async () => {
-        while (Date.now() < jobDeadline) {
-          const jobStatusRaw = await fetchWithTimeout(
-            jobStatusUrl,
-            { method: "GET" },
-            "TIMEOUT_GIGA_AM_JOB: Превышено время ожидания завершения Giga AM job",
-            GIGA_AM_HTTP_TIMEOUT_MS,
-            async (response, signal) => {
-              const raw: unknown = await abortable(
-                signal,
-                response.json().catch(() => null),
-              );
-              if (!response.ok) {
-                const msg = `Giga AM job HTTP ${response.status}: ${response.statusText}`;
-                if (response.status < 500) {
-                  throw new NonRetryableError(msg);
-                }
-                throw new Error(msg);
-              }
-              const parsed = gigaAmJobResultSchema.safeParse(raw);
-              if (!parsed.success) {
-                throw new NonRetryableError(
-                  "Giga AM job: некорректный JSON ответа",
-                );
-              }
-              return parsed.data;
-            },
-          );
-
-          const status = (jobStatusRaw.status || "").toLowerCase();
-          if (status === "done") {
-            segments = jobStatusRaw.result?.segments ?? [];
-            totalDuration = jobStatusRaw.result?.total_duration;
-            finalTranscript = jobStatusRaw.result?.final_transcript;
-            jobCompleted = true;
-            break;
-          }
-          if (status === "failed" || status === "cancelled") {
-            const detail =
-              jobStatusRaw.error ||
-              `Giga AM job завершился со статусом ${status}`;
-            throw new NonRetryableError(
-              `Giga AM job ${apiResponse.job_id} terminal status=${status}: ${detail}`,
-            );
-          }
-          await sleep(GIGA_AM_JOB_POLL_INTERVAL_MS);
-        }
-        if (!jobCompleted) {
-          throw new Error("TIMEOUT_GIGA_AM_JOB: Не дождались завершения job");
-        }
-      },
-      {
-        maxAttempts: 3,
-        baseDelayMs: 2500,
-        onRetry: (attempt, error) =>
-          logger.warn("Повторная попытка Giga AM job polling", {
-            attempt,
-            error: toErrorMessage(error),
-          }),
-      },
-    );
-  }
-
-  const text = finalTranscript?.trim() || segmentsToText(segments);
+  const segments = apiResponse.segments;
+  const totalDuration = apiResponse.total_duration;
+  const text = segmentsToText(segments);
   const utterances = segmentsToUtterances(segments);
   const processingTimeMs = Date.now() - start;
 
@@ -428,7 +306,7 @@ export async function transcribeWithGigaAm(
       endpoint: transcribeUrl,
       totalDuration,
       segmentCount: segments.length,
-      mode: "success" in apiResponse ? "sync" : "async-job",
+      mode: "sync",
     },
   };
 }

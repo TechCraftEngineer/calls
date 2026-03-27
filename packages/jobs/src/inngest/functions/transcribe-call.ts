@@ -44,7 +44,7 @@ export const transcribeCallFn = inngest.createFunction(
     retries: 2,
     concurrency: {
       limit: 1,
-      key: "event.data.callId",
+      key: "'call-transcribe-global-pipeline'",
     },
     triggers: [transcribeRequested],
   },

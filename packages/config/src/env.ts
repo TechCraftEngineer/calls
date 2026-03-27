@@ -53,10 +53,10 @@ export const env = createEnv({
     ASSEMBLYAI_API_KEY: z.string().optional(),
     YANDEX_SPEECHKIT_API_KEY: z.string().optional(),
     YANDEX_SPEECHKIT_ENABLED: z.stringbool().default(true),
-    /** Giga AM (HTTP), по умолчанию async pipeline endpoint */
+    /** Giga AM (HTTP) sync endpoint */
     GIGA_AM_TRANSCRIBE_URL: z
       .url()
-      .default("https://vnggncb-giga-am.hf.space/api/jobs"),
+      .default("https://vnggncb-giga-am.hf.space/api/transcribe"),
     GIGA_AM_ENABLED: z.stringbool().default(true),
     /** Оценка себестоимости ASR (руб/сек) для расчёта в UI */
     GIGA_AM_RATE_RUB_PER_SECOND: z.coerce.number().positive().default(0.01),

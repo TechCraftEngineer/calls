@@ -10,23 +10,18 @@ import requests
 
 
 def run_job(base_url: str, audio_path: Path, timeout_sec: int = 3600) -> dict:
+    started = time.time()
     with open(audio_path, "rb") as f:
-        resp = requests.post(f"{base_url.rstrip('/')}/api/jobs", files={"file": f}, timeout=120)
+        resp = requests.post(
+            f"{base_url.rstrip('/')}/api/transcribe",
+            files={"file": f},
+            timeout=timeout_sec,
+        )
     resp.raise_for_status()
     data = resp.json()
-    job_id = data["job_id"]
-    started = time.time()
-
-    while True:
-        status_resp = requests.get(f"{base_url.rstrip('/')}/api/jobs/{job_id}", timeout=60)
-        status_resp.raise_for_status()
-        status_data = status_resp.json()
-        if status_data["status"] in {"done", "failed", "cancelled"}:
-            status_data["latency_sec"] = round(time.time() - started, 3)
-            return status_data
-        if time.time() - started > timeout_sec:
-            raise TimeoutError(f"Job timeout for {audio_path.name}")
-        time.sleep(5)
+    data["latency_sec"] = round(time.time() - started, 3)
+    data["status"] = "done" if data.get("success") else "failed"
+    return data
 
 
 def main() -> None:
