@@ -28,34 +28,7 @@ export function formatDuration(seconds?: number): string {
   return `${min.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
 }
 
-export function getDayBackgroundIndex(
-  sortedCalls: CallWithDetails[],
-): Map<string, number> {
-  const map = new Map<string, number>();
-  let index = 0;
-  for (const item of sortedCalls) {
-    const ts = item.call.timestamp;
-    if (!ts) continue;
-    const dateKey = new Date(ts).toISOString().slice(0, 10);
-    if (!map.has(dateKey)) {
-      map.set(dateKey, index % 2);
-      index++;
-    }
-  }
-  return map;
-}
-
-export function getRowBackground(
-  dateKey: string,
-  /**
-   * @deprecated Временный параметр совместимости. Будет удален в следующем релизе.
-   * TODO(ISSUE-CALLS-DAY-BG-REMOVE): Удалить параметр из сигнатуры и всех вызовов.
-   */
-  dayBackgroundIndex: Map<string, number>,
-): string {
-  // Оставлено для обратной совместимости с текущими вызовами.
-  void dayBackgroundIndex;
-
+export function getRowBackground(dateKey: string): string {
   const todayKey = new Date().toISOString().slice(0, 10);
   return dateKey === todayKey ? TODAY_ROW_BG : OTHER_DAYS_ROW_BG;
 }

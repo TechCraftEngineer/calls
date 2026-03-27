@@ -80,12 +80,16 @@ export default function IntegrationsSection({
             className={`rounded-md border p-3 text-xs ${
               hasCustomTelegramToken
                 ? "border-primary/30 bg-primary/10 text-foreground"
-                : "border-emerald-500/30 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200"
+                : integrations.telegramUsesDefault
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200"
+                  : "border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200"
             }`}
           >
             {hasCustomTelegramToken
               ? "Режим: используется Telegram-бот компании (ваш токен)."
-              : "Режим: используется системный Telegram-бот по умолчанию."}
+              : integrations.telegramUsesDefault
+                ? "Режим: используется системный Telegram-бот по умолчанию."
+                : "Режим: Telegram отключен или токен не настроен."}
           </div>
 
           <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
