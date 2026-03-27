@@ -383,8 +383,8 @@ export function CallListDataGrid({
           const tone = dayToneByDate.get(dateKey) ?? 0;
 
           return classNames(
-            tone === 1 && "bg-muted/35 hover:bg-muted/45",
-            tone === 2 && "bg-muted/55 hover:bg-muted/65",
+            tone !== 0 &&
+              "bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/20 dark:hover:bg-sky-950/30",
           );
         }}
         tableLayout={{

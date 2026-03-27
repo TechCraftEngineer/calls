@@ -106,8 +106,7 @@ export default function CallList(props: CallListProps) {
             const dateKey = call.timestamp
               ? new Date(call.timestamp).toISOString().slice(0, 10)
               : "";
-            // TODO(ISSUE-CALLS-DAY-BG-REMOVE): Удалить второй аргумент после чистки API getRowBackground.
-            const rowBg = getRowBackground(dateKey, state.dayBackgroundIndex);
+            const rowBg = getRowBackground(dateKey);
 
             return (
               <TableRow key={call.id} style={{ backgroundColor: rowBg }}>

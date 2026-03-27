@@ -398,30 +398,36 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     lines.push("👥 <b>Детализация по менеджерам</b>");
     for (const item of managers) {
       lines.push(`• <b>${escapeHtml(item.name)}</b>`);
-      lines.push(
-        `  ├ Входящие: ${item.incomingCount} (ср. ${item.incomingCount > 0 ? formatDuration(item.incomingAvgDurationSec) : "—"})`,
+      const managerSubLines: string[] = [];
+      managerSubLines.push(
+        `Входящие: ${item.incomingCount} (ср. ${item.incomingCount > 0 ? formatDuration(item.incomingAvgDurationSec) : "—"})`,
       );
-      lines.push(
-        `  ├ Исходящие: ${item.outgoingCount} (ср. ${item.outgoingCount > 0 ? formatDuration(item.outgoingAvgDurationSec) : "—"})`,
+      managerSubLines.push(
+        `Исходящие: ${item.outgoingCount} (ср. ${item.outgoingCount > 0 ? formatDuration(item.outgoingAvgDurationSec) : "—"})`,
       );
-      if (includeAvgRating) {
-        lines.push(
-          `  ├ Ср. оценка качества: ${formatScore(item.avgManagerScore)} ⭐`,
+      if (includeAvgRating && item.avgManagerScore != null) {
+        managerSubLines.push(
+          `Ср. оценка качества: ${formatScore(item.avgManagerScore)} ⭐`,
         );
       }
-      if (includeAvgValue) {
-        lines.push(
-          `  └ Ср. ценность: ${formatValue(item.avgValueScore ?? NaN)} ₽`,
+      if (includeAvgValue && item.avgValueScore != null) {
+        managerSubLines.push(
+          `Ср. ценность: ${formatValue(item.avgValueScore)} ₽`,
         );
       }
       if (includeCallSummaries) {
         const summaries = callSummariesByManager[item.name] ?? [];
         if (summaries.length > 0) {
-          lines.push("  ├ ИИ-саммари:");
+          managerSubLines.push("ИИ-саммари:");
           for (const summary of summaries.slice(0, 2)) {
-            lines.push(`  • ${escapeHtml(summary)}`);
+            managerSubLines.push(`• ${escapeHtml(summary)}`);
           }
         }
+      }
+
+      for (const [idx, line] of managerSubLines.entries()) {
+        const branch = idx === managerSubLines.length - 1 ? "└" : "├";
+        lines.push(`  ${branch} ${line}`);
       }
     }
   } else {

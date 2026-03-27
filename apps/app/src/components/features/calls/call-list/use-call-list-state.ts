@@ -4,7 +4,6 @@ import { toast } from "@calls/ui";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useORPC } from "@/orpc/react";
-import { getDayBackgroundIndex } from "./call-list-cells";
 import { loadColumnOrder, saveColumnOrder } from "./column-storage";
 import {
   COLUMN_ORDER_STORAGE_KEY,
@@ -62,12 +61,6 @@ export function useCallListState(props: CallListProps) {
   const sortedCalls = useMemo(
     () => sortCalls(props.calls, sortConfig),
     [props.calls, sortConfig],
-  );
-
-  // TODO(ISSUE-CALLS-DAY-BG-REMOVE): Удалить вычисление после удаления deprecated-аргумента dayBackgroundIndex.
-  const dayBackgroundIndex = useMemo(
-    () => getDayBackgroundIndex(sortedCalls),
-    [sortedCalls],
   );
 
   useEffect(() => {
@@ -184,7 +177,6 @@ export function useCallListState(props: CallListProps) {
   return {
     calls: props.calls,
     sortedCalls,
-    dayBackgroundIndex,
     columnOrder,
     visibleColumns,
     orderedColumns,

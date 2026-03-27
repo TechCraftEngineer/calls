@@ -1,5 +1,6 @@
 import {
   and,
+  asc,
   avg,
   count,
   desc,
@@ -9,7 +10,7 @@ import {
   isNotNull,
   lt,
   lte,
-  ne,
+  sql,
   sum,
 } from "drizzle-orm";
 import { db } from "../../client";
@@ -203,13 +204,17 @@ export async function getCallSummariesByManager(
     conditions.push(excludeCondition);
   }
   conditions.push(isNotNull(schema.transcripts.summary));
-  conditions.push(ne(schema.transcripts.summary, ""));
+  conditions.push(sql`trim(${schema.transcripts.summary}) != ''`);
 
-  const rows = await db
+  const rankedSummaries = db
     .select({
       managerName: schema.calls.name,
       internalNumber: schema.calls.internalNumber,
       summary: schema.transcripts.summary,
+      rn: sql<number>`row_number() over (
+        partition by coalesce(${schema.calls.name}, ${schema.calls.internalNumber}, 'Unknown')
+        order by ${schema.calls.timestamp} desc, ${schema.calls.id} desc
+      )`,
     })
     .from(schema.calls)
     .innerJoin(
@@ -217,7 +222,22 @@ export async function getCallSummariesByManager(
       eq(schema.calls.id, schema.transcripts.callId),
     )
     .where(and(...conditions))
-    .orderBy(desc(schema.calls.timestamp), desc(schema.calls.id));
+    .as("ranked_summaries");
+
+  const rows = await db
+    .select({
+      managerName: rankedSummaries.managerName,
+      internalNumber: rankedSummaries.internalNumber,
+      summary: rankedSummaries.summary,
+    })
+    .from(rankedSummaries)
+    .where(lte(rankedSummaries.rn, safeLimitPerManager))
+    .orderBy(
+      asc(
+        sql`coalesce(${rankedSummaries.managerName}, ${rankedSummaries.internalNumber}, 'Unknown')`,
+      ),
+      asc(rankedSummaries.rn),
+    );
 
   const result: Record<string, string[]> = {};
   for (const row of rows) {
@@ -227,7 +247,6 @@ export async function getCallSummariesByManager(
     if (!result[key]) {
       result[key] = [];
     }
-    if (result[key].length >= safeLimitPerManager) continue;
     if (!result[key].includes(summary)) {
       result[key].push(summary);
     }

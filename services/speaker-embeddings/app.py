@@ -2,8 +2,8 @@ import io
 import json
 import logging
 import os
-import asyncio
 import threading
+import warnings
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -22,16 +22,12 @@ logging.basicConfig(
 logger = logging.getLogger("speaker-embeddings")
 
 model: "HybridEmbeddingModel | None" = None
-model_lock = asyncio.Lock()
-thread_model_lock = threading.Lock()
+model_lock = threading.Lock()
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    global model
-    async with model_lock:
-        if model is None:
-            model = await run_in_threadpool(HybridEmbeddingModel)
+    await run_in_threadpool(_ensure_model_initialized_sync)
     yield
 
 
@@ -49,19 +45,48 @@ class HybridEmbeddingModel:
         self._load_pyannote_embedder()
 
     def _load_pyannote_embedder(self) -> None:
+        if os.getenv("ENABLE_PYANNOTE", "1").strip().lower() in {"0", "false", "no"}:
+            logger.info("pyannote disabled by ENABLE_PYANNOTE")
+            self._pyannote_embedder = None
+            return
+
         try:
+            os.environ.setdefault("TORCHCODEC_DISABLE", "1")
+            warnings.filterwarnings(
+                "ignore",
+                message=r".*libtorchcodec loading traceback.*",
+            )
+            warnings.filterwarnings(
+                "ignore",
+                module=r"torchcodec\..*",
+            )
             from pyannote.audio import Inference
-            import os
 
             token = os.getenv("HF_TOKEN", "").strip() or None
-            self._pyannote_embedder = Inference(
-                "pyannote/embedding",
-                use_auth_token=token,
-            )
-            logger.info("pyannote/embedding loaded")
+            model_name = os.getenv("PYANNOTE_MODEL", "pyannote/embedding").strip() or "pyannote/embedding"
+            last_exc: Exception | None = None
+
+            # pyannote versions differ: some accept `token`, older versions use `use_auth_token`.
+            init_kwargs_candidates: list[dict[str, Any]] = [{}]
+            if token:
+                init_kwargs_candidates = [{"token": token}, {"use_auth_token": token}, {}]
+
+            for kwargs in init_kwargs_candidates:
+                try:
+                    self._pyannote_embedder = Inference(model_name, **kwargs)
+                    logger.info("pyannote embedder loaded: model=%s", model_name)
+                    return
+                except TypeError as exc:
+                    last_exc = exc
+                    continue
+                except Exception as exc:
+                    last_exc = exc
+                    break
+
+            raise RuntimeError(f"Failed to initialize pyannote inference: {last_exc}")
         except Exception as exc:
             self._pyannote_embedder = None
-            logger.warning("pyannote embedder unavailable: %s", exc)
+            logger.info("pyannote embedder unavailable, using acoustic fallback: %s", exc)
 
     @property
     def is_pyannote_loaded(self) -> bool:
@@ -151,12 +176,16 @@ class HybridEmbeddingModel:
         return out
 
 
-def _get_model() -> HybridEmbeddingModel:
+def _ensure_model_initialized_sync() -> "HybridEmbeddingModel":
     global model
-    with thread_model_lock:
+    with model_lock:
         if model is None:
             model = HybridEmbeddingModel()
     return model
+
+
+def _get_model() -> HybridEmbeddingModel:
+    return _ensure_model_initialized_sync()
 
 
 def _process_embed_batch(audio_bytes: bytes, segments_json: str) -> dict[str, Any]:
@@ -237,7 +266,7 @@ async def embed_batch(
 
 @app.get("/health")
 async def health() -> dict[str, Any]:
-    current_model = model
+    current_model = await run_in_threadpool(_ensure_model_initialized_sync)
     return {
         "status": "healthy",
         "pyannote_loaded": current_model.is_pyannote_loaded if current_model else False,

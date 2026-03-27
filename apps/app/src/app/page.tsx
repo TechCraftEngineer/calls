@@ -1,26 +1,18 @@
 "use client";
 
 import { paths } from "@calls/config";
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Checkbox,
-  DatePicker,
-  Input,
-  Label,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@calls/ui";
+import { Button, Card, CardContent, CardHeader } from "@calls/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Funnel, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import AudioPlayerModal from "@/components/features/calls/audio-player-modal";
 import { CallListDataGrid } from "@/components/features/calls/call-list/call-list-data-grid";
+import type { CallWithDetails } from "@/components/features/calls/call-list/types";
+import {
+  CallsFilters,
+  type CallsFiltersState,
+  type ManagerOption,
+} from "@/components/features/calls/calls-filters";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
@@ -28,72 +20,12 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 
-interface Call {
-  id: string;
-  fileId?: string | null;
-  number?: string;
-  timestamp: string;
-  duration?: number | null;
-  direction?: string;
-  internalNumber?: string;
-  operatorName?: string | null;
-  managerName?: string | null;
-}
-
-interface Transcript {
-  id: string;
-  summary?: string;
-  callType?: string;
-  callTopic?: string;
-  sentiment?: string;
-}
-
-interface Evaluation {
-  id?: string;
-  valueScore?: number;
-  valueExplanation?: string;
-  managerRecommendations?: string[];
-}
-
-interface CallWithDetails {
-  call: Call;
-  transcript?: Transcript;
-  evaluation?: Evaluation;
-  analysisCostRub?: number | null;
-}
-
 interface Pagination {
   total: number;
   page: number;
   per_page: number;
   total_pages: number;
 }
-
-interface ManagerOption {
-  id: string;
-  name: string;
-}
-type DirectionFilter = "inbound" | "outbound";
-type StatusFilter = "missed" | "answered";
-
-const directionOptions = [
-  { value: "all", label: "Все" },
-  { value: "inbound", label: "Входящие" },
-  { value: "outbound", label: "Исходящие" },
-] as const;
-
-const statusOptions = [
-  { value: "all", label: "Все" },
-  { value: "missed", label: "Не принятые" },
-  { value: "answered", label: "Принятые" },
-] as const;
-
-const operatorOptions = [
-  { value: "mango", label: "Манго" },
-  { value: "megafon", label: "Мегафон" },
-] as const;
-
-const valueOptions = [1, 2, 3, 4, 5] as const;
 
 /** Главная страница — список звонков. Доступна только авторизованным. */
 export default function HomePage() {
@@ -109,15 +41,15 @@ export default function HomePage() {
     per_page: PAGINATION_CONSTANTS.DEFAULT_PER_PAGE,
     total_pages: 0,
   });
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<CallsFiltersState>({
     q: "",
     dateFrom: "",
     dateTo: "",
-    direction: [] as DirectionFilter[],
-    manager: [] as string[],
-    status: [] as StatusFilter[],
-    value: [] as number[],
-    operator: [] as string[],
+    direction: [],
+    manager: [],
+    status: [],
+    value: [],
+    operator: [],
   });
   const [appliedFilters, setAppliedFilters] = useState(filters);
   const debouncedFilters = useDebounce(
@@ -216,24 +148,6 @@ export default function HomePage() {
           manager.name.trim().length > 0,
       )
     : [];
-  const selectedDirectionLabel =
-    filters.direction.length === 0
-      ? "Все"
-      : filters.direction
-          .map(
-            (value) => directionOptions.find((o) => o.value === value)?.label,
-          )
-          .filter(Boolean)
-          .join(", ");
-  const selectedStatusLabel =
-    filters.status.length === 0
-      ? "Все"
-      : filters.status
-          .map((value) => statusOptions.find((o) => o.value === value)?.label)
-          .filter(Boolean)
-          .join(", ");
-  const selectedValueCount = filters.value.length;
-  const selectedOperatorCount = filters.operator.length;
   const invalidateCalls = () =>
     queryClient.invalidateQueries({
       queryKey: orpc.calls.list.queryKey({ input: callsListInput }),
@@ -298,359 +212,13 @@ export default function HomePage() {
               </div>
             </CardHeader>
             <CardContent className="px-6 pb-6">
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="relative w-full max-w-105">
-                    <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
-                    <Input
-                      id="calls-search"
-                      placeholder="Поиск по номеру, сотруднику, клиенту"
-                      aria-label="Поиск по номеру, сотруднику или клиенту"
-                      value={filters.q}
-                      onChange={(e) =>
-                        updateFilters((prev) => ({
-                          ...prev,
-                          q: e.target.value,
-                        }))
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          setPagination((p) => ({ ...p, page: 1 }));
-                        }
-                      }}
-                      className="h-9 pl-9 pr-9"
-                    />
-                    {filters.q.length > 0 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-1 top-1 size-7"
-                        onClick={() =>
-                          updateFilters((prev) => ({ ...prev, q: "" }))
-                        }
-                        aria-label="Очистить поиск"
-                      >
-                        <X className="size-4" />
-                      </Button>
-                    )}
-                  </div>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="h-9">
-                        <Funnel className="size-4" />
-                        Направление: {selectedDirectionLabel}
-                        {filters.direction.length > 0 && (
-                          <Badge variant="secondary">
-                            {filters.direction.length}
-                          </Badge>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" className="w-56 space-y-3">
-                      {directionOptions.map((option) => (
-                        <div
-                          key={option.value}
-                          className="flex items-center gap-2.5"
-                        >
-                          <Checkbox
-                            id={`direction-${option.value}`}
-                            checked={
-                              option.value === "all"
-                                ? filters.direction.length === 0
-                                : filters.direction.includes(option.value)
-                            }
-                            onCheckedChange={(checked) => {
-                              if (option.value === "all" && checked === true) {
-                                updateFilters((prev) => ({
-                                  ...prev,
-                                  direction: [],
-                                }));
-                                return;
-                              }
-                              if (option.value === "all") return;
-                              if (checked === true) {
-                                updateFilters((prev) => ({
-                                  ...prev,
-                                  direction: [...prev.direction, option.value],
-                                }));
-                              } else {
-                                updateFilters((prev) => ({
-                                  ...prev,
-                                  direction: prev.direction.filter(
-                                    (v) => v !== option.value,
-                                  ),
-                                }));
-                              }
-                            }}
-                          />
-                          <Label
-                            htmlFor={`direction-${option.value}`}
-                            className="font-normal"
-                          >
-                            {option.label}
-                          </Label>
-                        </div>
-                      ))}
-                    </PopoverContent>
-                  </Popover>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="h-9">
-                        <Funnel className="size-4" />
-                        Статус: {selectedStatusLabel}
-                        {filters.status.length > 0 && (
-                          <Badge variant="secondary">
-                            {filters.status.length}
-                          </Badge>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" className="w-56 space-y-3">
-                      {statusOptions.map((option) => (
-                        <div
-                          key={option.value}
-                          className="flex items-center gap-2.5"
-                        >
-                          <Checkbox
-                            id={`status-${option.value}`}
-                            checked={
-                              option.value === "all"
-                                ? filters.status.length === 0
-                                : filters.status.includes(option.value)
-                            }
-                            onCheckedChange={(checked) => {
-                              if (option.value === "all" && checked === true) {
-                                updateFilters((prev) => ({
-                                  ...prev,
-                                  status: [],
-                                }));
-                                return;
-                              }
-                              if (option.value === "all") return;
-                              if (checked === true) {
-                                updateFilters((prev) => ({
-                                  ...prev,
-                                  status: [...prev.status, option.value],
-                                }));
-                              } else {
-                                updateFilters((prev) => ({
-                                  ...prev,
-                                  status: prev.status.filter(
-                                    (v) => v !== option.value,
-                                  ),
-                                }));
-                              }
-                            }}
-                          />
-                          <Label
-                            htmlFor={`status-${option.value}`}
-                            className="font-normal"
-                          >
-                            {option.label}
-                          </Label>
-                        </div>
-                      ))}
-                    </PopoverContent>
-                  </Popover>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="h-9">
-                        <Funnel className="size-4" />
-                        Сотрудники
-                        {filters.manager.length > 0 && (
-                          <Badge variant="secondary">
-                            {filters.manager.length}
-                          </Badge>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" className="w-72">
-                      <div className="space-y-3">
-                        <Button
-                          variant="ghost"
-                          className="h-8 w-full justify-start px-2"
-                          onClick={() =>
-                            updateFilters((prev) => ({ ...prev, manager: [] }))
-                          }
-                        >
-                          Все сотрудники
-                        </Button>
-                        <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
-                          {managerOptions.map((manager) => (
-                            <div
-                              key={manager.id}
-                              className="flex items-center gap-2.5"
-                            >
-                              <Checkbox
-                                id={`manager-${manager.id}`}
-                                checked={filters.manager.includes(manager.id)}
-                                onCheckedChange={(checked) =>
-                                  updateFilters((prev) => ({
-                                    ...prev,
-                                    manager:
-                                      checked === true
-                                        ? [...prev.manager, manager.id]
-                                        : prev.manager.filter(
-                                            (v) => v !== manager.id,
-                                          ),
-                                  }))
-                                }
-                              />
-                              <Label
-                                htmlFor={`manager-${manager.id}`}
-                                className="font-normal"
-                              >
-                                {manager.name}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="h-9">
-                        <Funnel className="size-4" />
-                        Ценность
-                        {selectedValueCount > 0 && (
-                          <Badge variant="secondary">
-                            {selectedValueCount}
-                          </Badge>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" className="w-48 space-y-3">
-                      {valueOptions.map((value) => (
-                        <div key={value} className="flex items-center gap-2.5">
-                          <Checkbox
-                            id={`value-${value}`}
-                            checked={filters.value.includes(value)}
-                            onCheckedChange={(checked) =>
-                              updateFilters((prev) => ({
-                                ...prev,
-                                value:
-                                  checked === true
-                                    ? [...prev.value, value]
-                                    : prev.value.filter((v) => v !== value),
-                              }))
-                            }
-                          />
-                          <Label
-                            htmlFor={`value-${value}`}
-                            className="font-normal"
-                          >
-                            {value}
-                          </Label>
-                        </div>
-                      ))}
-                    </PopoverContent>
-                  </Popover>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="h-9">
-                        <Funnel className="size-4" />
-                        Оператор
-                        {selectedOperatorCount > 0 && (
-                          <Badge variant="secondary">
-                            {selectedOperatorCount}
-                          </Badge>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" className="w-56 space-y-3">
-                      {operatorOptions.map((operator) => (
-                        <div
-                          key={operator.value}
-                          className="flex items-center gap-2.5"
-                        >
-                          <Checkbox
-                            id={`operator-${operator.value}`}
-                            checked={filters.operator.includes(operator.value)}
-                            onCheckedChange={(checked) =>
-                              updateFilters((prev) => ({
-                                ...prev,
-                                operator:
-                                  checked === true
-                                    ? [...prev.operator, operator.value]
-                                    : prev.operator.filter(
-                                        (v) => v !== operator.value,
-                                      ),
-                              }))
-                            }
-                          />
-                          <Label
-                            htmlFor={`operator-${operator.value}`}
-                            className="font-normal"
-                          >
-                            {operator.label}
-                          </Label>
-                        </div>
-                      ))}
-                    </PopoverContent>
-                  </Popover>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="h-9">
-                        <Funnel className="size-4" />
-                        Период
-                        {(filters.dateFrom || filters.dateTo) && (
-                          <Badge variant="secondary">1</Badge>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" className="w-72 space-y-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">
-                          Дата от
-                        </Label>
-                        <DatePicker
-                          value={filters.dateFrom}
-                          onChange={(v) =>
-                            updateFilters((prev) => ({ ...prev, dateFrom: v }))
-                          }
-                          placeholder="Выберите дату"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">
-                          Дата до
-                        </Label>
-                        <DatePicker
-                          value={filters.dateTo}
-                          onChange={(v) =>
-                            updateFilters((prev) => ({ ...prev, dateTo: v }))
-                          }
-                          placeholder="Выберите дату"
-                        />
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-
-                  <div className="ml-auto flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={resetFilters}
-                      className="h-9"
-                    >
-                      Сбросить
-                    </Button>
-                    <Button
-                      className="h-9"
-                      onClick={() => setPagination((p) => ({ ...p, page: 1 }))}
-                    >
-                      Найти
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <CallsFilters
+                filters={filters}
+                managerOptions={managerOptions}
+                updateFilters={updateFilters}
+                onReset={resetFilters}
+                onSubmit={() => setPagination((p) => ({ ...p, page: 1 }))}
+              />
             </CardContent>
           </Card>
 

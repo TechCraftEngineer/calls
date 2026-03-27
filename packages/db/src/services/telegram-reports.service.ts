@@ -40,6 +40,15 @@ function parseInternalExtensions(ext: string | null): string[] | null {
     .filter(Boolean);
 }
 
+function buildReportSettings(rs: ReportSettings): ReportSettingsForRecipient {
+  return {
+    includeCallSummaries: rs?.includeCallSummaries ?? false,
+    detailed: rs?.detailed ?? false,
+    includeAvgRating: rs?.includeAvgRating ?? false,
+    includeAvgValue: rs?.includeAvgValue ?? false,
+  };
+}
+
 /**
  * Возвращает пользователей воркспейса, которым нужно отправить отчёт указанного типа.
  */
@@ -103,12 +112,7 @@ export async function getTelegramReportRecipients(
           isManagerReport: false,
           internalNumbers: parseInternalExtensions(m.internalExtensions),
           skipWeekends,
-          reportSettings: {
-            includeCallSummaries: rs?.includeCallSummaries ?? false,
-            detailed: rs?.detailed ?? false,
-            includeAvgRating: rs?.includeAvgRating ?? false,
-            includeAvgValue: rs?.includeAvgValue ?? false,
-          },
+          reportSettings: buildReportSettings(rs),
         });
       }
       if (managerEnabled && isAdmin) {
@@ -124,12 +128,7 @@ export async function getTelegramReportRecipients(
           isManagerReport: true,
           internalNumbers,
           skipWeekends,
-          reportSettings: {
-            includeCallSummaries: rs?.includeCallSummaries ?? false,
-            detailed: rs?.detailed ?? false,
-            includeAvgRating: rs?.includeAvgRating ?? false,
-            includeAvgValue: rs?.includeAvgValue ?? false,
-          },
+          reportSettings: buildReportSettings(rs),
         });
       }
     } else if (reportType === "weekly") {
@@ -141,12 +140,7 @@ export async function getTelegramReportRecipients(
           isManagerReport: false,
           internalNumbers: parseInternalExtensions(m.internalExtensions),
           skipWeekends,
-          reportSettings: {
-            includeCallSummaries: rs?.includeCallSummaries ?? false,
-            detailed: rs?.detailed ?? false,
-            includeAvgRating: rs?.includeAvgRating ?? false,
-            includeAvgValue: rs?.includeAvgValue ?? false,
-          },
+          reportSettings: buildReportSettings(rs),
         });
       }
       if (managerEnabled && isAdmin) {
@@ -162,12 +156,7 @@ export async function getTelegramReportRecipients(
           isManagerReport: true,
           internalNumbers,
           skipWeekends,
-          reportSettings: {
-            includeCallSummaries: rs?.includeCallSummaries ?? false,
-            detailed: rs?.detailed ?? false,
-            includeAvgRating: rs?.includeAvgRating ?? false,
-            includeAvgValue: rs?.includeAvgValue ?? false,
-          },
+          reportSettings: buildReportSettings(rs),
         });
       }
     } else if (reportType === "monthly") {
@@ -179,12 +168,7 @@ export async function getTelegramReportRecipients(
           isManagerReport: false,
           internalNumbers: parseInternalExtensions(m.internalExtensions),
           skipWeekends,
-          reportSettings: {
-            includeCallSummaries: rs?.includeCallSummaries ?? false,
-            detailed: rs?.detailed ?? false,
-            includeAvgRating: rs?.includeAvgRating ?? false,
-            includeAvgValue: rs?.includeAvgValue ?? false,
-          },
+          reportSettings: buildReportSettings(rs),
         });
       }
       if (managerEnabled && isAdmin) {
@@ -200,12 +184,7 @@ export async function getTelegramReportRecipients(
           isManagerReport: true,
           internalNumbers,
           skipWeekends,
-          reportSettings: {
-            includeCallSummaries: rs?.includeCallSummaries ?? false,
-            detailed: rs?.detailed ?? false,
-            includeAvgRating: rs?.includeAvgRating ?? false,
-            includeAvgValue: rs?.includeAvgValue ?? false,
-          },
+          reportSettings: buildReportSettings(rs),
         });
       }
     }
