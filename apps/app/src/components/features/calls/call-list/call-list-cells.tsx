@@ -7,8 +7,8 @@ import type { ReactNode } from "react";
 import { isMobileDevice } from "@/lib/utils";
 import type { CallWithDetails } from "./types";
 
-const ROW_BG_LIGHT = "#ffffff";
-const ROW_BG_DARK = "#F1F1F3";
+const TODAY_ROW_BG = "#ffffff";
+const OTHER_DAYS_ROW_BG = "#EAF4FF";
 
 export function formatTimestamp(ts: string): string {
   if (!ts) return "—";
@@ -49,8 +49,11 @@ export function getRowBackground(
   dateKey: string,
   dayBackgroundIndex: Map<string, number>,
 ): string {
-  const dayIndex = dateKey ? dayBackgroundIndex.get(dateKey) : 0;
-  return dayIndex === 1 ? ROW_BG_DARK : ROW_BG_LIGHT;
+  // Kept for compatibility with existing callers.
+  void dayBackgroundIndex;
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  return dateKey === todayKey ? TODAY_ROW_BG : OTHER_DAYS_ROW_BG;
 }
 
 interface CellRendererProps {

@@ -77,7 +77,7 @@ export function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
         };
       }
 
-      if (sampleRate <= 0) {
+      if (sampleRate === 0) {
         return {
           valid: false,
           reason: `Некорректная частота дискретизации (sampleRate=${sampleRate})`,
@@ -110,12 +110,6 @@ export function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
         };
       }
       const blockAlign = fmt.blockAlign;
-      if (!Number.isInteger(blockAlign) || blockAlign <= 0) {
-        return {
-          valid: false,
-          reason: `Неверный blockAlign, вычисленный из fmt (значение: ${blockAlign})`,
-        };
-      }
       if (chunkSize <= 0) {
         return { valid: false, reason: "Фрагмент данных пуст" };
       }
