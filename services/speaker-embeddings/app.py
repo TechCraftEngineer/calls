@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import os
+import asyncio
 import threading
 from contextlib import asynccontextmanager
 from typing import Any
@@ -21,13 +22,14 @@ logging.basicConfig(
 logger = logging.getLogger("speaker-embeddings")
 
 model: "HybridEmbeddingModel | None" = None
-model_lock = threading.Lock()
+model_lock = asyncio.Lock()
+thread_model_lock = threading.Lock()
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     global model
-    with model_lock:
+    async with model_lock:
         if model is None:
             model = await run_in_threadpool(HybridEmbeddingModel)
     yield
@@ -151,7 +153,7 @@ class HybridEmbeddingModel:
 
 def _get_model() -> HybridEmbeddingModel:
     global model
-    with model_lock:
+    with thread_model_lock:
         if model is None:
             model = HybridEmbeddingModel()
     return model

@@ -47,9 +47,13 @@ export function getDayBackgroundIndex(
 
 export function getRowBackground(
   dateKey: string,
+  /**
+   * @deprecated Временный параметр совместимости. Будет удален в следующем релизе.
+   * TODO(ISSUE-CALLS-DAY-BG-REMOVE): Удалить параметр из сигнатуры и всех вызовов.
+   */
   dayBackgroundIndex: Map<string, number>,
 ): string {
-  // Kept for compatibility with existing callers.
+  // Оставлено для обратной совместимости с текущими вызовами.
   void dayBackgroundIndex;
 
   const todayKey = new Date().toISOString().slice(0, 10);

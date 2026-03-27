@@ -32,6 +32,7 @@ export const env = createEnv({
 
     // App
     APP_URL: z.string().default("http://localhost:3000"),
+    TELEGRAM_BOT_TOKEN: z.string().optional(),
 
     // Email
     RESEND_API_KEY: z.string().optional(),
@@ -125,6 +126,7 @@ export const env = createEnv({
     VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
     POSTGRES_URL: process.env.POSTGRES_URL,
     APP_URL: process.env.APP_URL,
+    TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_SANDBOX_ENABLED: process.env.EMAIL_SANDBOX_ENABLED === "true",
     EMAIL_SANDBOX_HOST: process.env.EMAIL_SANDBOX_HOST,

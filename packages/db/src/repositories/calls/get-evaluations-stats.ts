@@ -1,4 +1,17 @@
-import { and, avg, count, eq, gte, inArray, lt, lte, sum } from "drizzle-orm";
+import {
+  and,
+  avg,
+  count,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  lt,
+  lte,
+  ne,
+  sum,
+} from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
@@ -144,6 +157,83 @@ export interface GetLowRatedCallsParams {
   internalNumbers?: string[];
   excludePhoneNumbers?: string[];
   maxScore?: number;
+}
+
+export interface GetCallSummariesParams {
+  workspaceId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  internalNumbers?: string[];
+  excludePhoneNumbers?: string[];
+  limitPerManager?: number;
+}
+
+/** Последние AI-саммари звонков по менеджерам */
+export async function getCallSummariesByManager(
+  params: GetCallSummariesParams,
+): Promise<Record<string, string[]>> {
+  const {
+    workspaceId,
+    dateFrom,
+    dateTo,
+    internalNumbers,
+    excludePhoneNumbers,
+    limitPerManager = 3,
+  } = params;
+
+  const safeLimitPerManager =
+    Number.isFinite(limitPerManager) && limitPerManager > 0
+      ? Math.floor(limitPerManager)
+      : 3;
+
+  const conditions = [];
+  if (workspaceId != null)
+    conditions.push(eq(schema.calls.workspaceId, workspaceId));
+  if (dateFrom)
+    conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
+  if (dateTo) conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
+  if (internalNumbers?.length) {
+    conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
+  }
+  const excludeCondition = buildExcludePhoneCondition(
+    excludePhoneNumbers,
+    schema.calls,
+  );
+  if (excludeCondition) {
+    conditions.push(excludeCondition);
+  }
+  conditions.push(isNotNull(schema.transcripts.summary));
+  conditions.push(ne(schema.transcripts.summary, ""));
+
+  const rows = await db
+    .select({
+      managerName: schema.calls.name,
+      internalNumber: schema.calls.internalNumber,
+      summary: schema.transcripts.summary,
+    })
+    .from(schema.calls)
+    .innerJoin(
+      schema.transcripts,
+      eq(schema.calls.id, schema.transcripts.callId),
+    )
+    .where(and(...conditions))
+    .orderBy(desc(schema.calls.timestamp), desc(schema.calls.id));
+
+  const result: Record<string, string[]> = {};
+  for (const row of rows) {
+    const summary = row.summary?.trim();
+    if (!summary) continue;
+    const key = row.managerName ?? row.internalNumber ?? "Unknown";
+    if (!result[key]) {
+      result[key] = [];
+    }
+    if (result[key].length >= safeLimitPerManager) continue;
+    if (!result[key].includes(summary)) {
+      result[key].push(summary);
+    }
+  }
+
+  return result;
 }
 
 /** Количество звонков с низкой оценкой (managerScore < maxScore) по менеджерам */

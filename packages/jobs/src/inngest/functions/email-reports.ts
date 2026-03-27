@@ -204,6 +204,22 @@ export const emailReportsFn = inngest.createFunction(
                     : undefined,
               })) as Record<string, ManagerStats>;
 
+              let callSummariesByManager: Record<string, string[]> = {};
+              if (r.reportSettings.includeCallSummaries) {
+                callSummariesByManager =
+                  await callsService.getCallSummariesByManager({
+                    workspaceId,
+                    dateFrom: dateFromDb,
+                    dateTo: dateToDb,
+                    internalNumbers: r.internalNumbers ?? undefined,
+                    excludePhoneNumbers:
+                      excludePhoneNumbers.length > 0
+                        ? excludePhoneNumbers
+                        : undefined,
+                    limitPerManager: 2,
+                  });
+              }
+
               const text = formatTelegramReport({
                 stats,
                 dateFrom,
@@ -211,6 +227,11 @@ export const emailReportsFn = inngest.createFunction(
                 reportType,
                 isManagerReport: false,
                 workspaceName,
+                detailed: r.reportSettings.detailed,
+                includeCallSummaries: r.reportSettings.includeCallSummaries,
+                includeAvgRating: r.reportSettings.includeAvgRating,
+                includeAvgValue: r.reportSettings.includeAvgValue,
+                callSummariesByManager,
               });
 
               try {

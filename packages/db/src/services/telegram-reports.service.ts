@@ -13,6 +13,8 @@ import type {
 export type ReportType = "daily" | "weekly" | "monthly";
 
 export interface ReportSettingsForRecipient {
+  includeCallSummaries: boolean;
+  detailed: boolean;
   includeAvgRating: boolean;
   includeAvgValue: boolean;
 }
@@ -101,6 +103,12 @@ export async function getTelegramReportRecipients(
           isManagerReport: false,
           internalNumbers: parseInternalExtensions(m.internalExtensions),
           skipWeekends,
+          reportSettings: {
+            includeCallSummaries: rs?.includeCallSummaries ?? false,
+            detailed: rs?.detailed ?? false,
+            includeAvgRating: rs?.includeAvgRating ?? false,
+            includeAvgValue: rs?.includeAvgValue ?? false,
+          },
         });
       }
       if (managerEnabled && isAdmin) {
@@ -117,6 +125,8 @@ export async function getTelegramReportRecipients(
           internalNumbers,
           skipWeekends,
           reportSettings: {
+            includeCallSummaries: rs?.includeCallSummaries ?? false,
+            detailed: rs?.detailed ?? false,
             includeAvgRating: rs?.includeAvgRating ?? false,
             includeAvgValue: rs?.includeAvgValue ?? false,
           },
@@ -131,6 +141,12 @@ export async function getTelegramReportRecipients(
           isManagerReport: false,
           internalNumbers: parseInternalExtensions(m.internalExtensions),
           skipWeekends,
+          reportSettings: {
+            includeCallSummaries: rs?.includeCallSummaries ?? false,
+            detailed: rs?.detailed ?? false,
+            includeAvgRating: rs?.includeAvgRating ?? false,
+            includeAvgValue: rs?.includeAvgValue ?? false,
+          },
         });
       }
       if (managerEnabled && isAdmin) {
@@ -147,6 +163,8 @@ export async function getTelegramReportRecipients(
           internalNumbers,
           skipWeekends,
           reportSettings: {
+            includeCallSummaries: rs?.includeCallSummaries ?? false,
+            detailed: rs?.detailed ?? false,
             includeAvgRating: rs?.includeAvgRating ?? false,
             includeAvgValue: rs?.includeAvgValue ?? false,
           },
@@ -161,6 +179,12 @@ export async function getTelegramReportRecipients(
           isManagerReport: false,
           internalNumbers: parseInternalExtensions(m.internalExtensions),
           skipWeekends,
+          reportSettings: {
+            includeCallSummaries: rs?.includeCallSummaries ?? false,
+            detailed: rs?.detailed ?? false,
+            includeAvgRating: rs?.includeAvgRating ?? false,
+            includeAvgValue: rs?.includeAvgValue ?? false,
+          },
         });
       }
       if (managerEnabled && isAdmin) {
@@ -177,6 +201,8 @@ export async function getTelegramReportRecipients(
           internalNumbers,
           skipWeekends,
           reportSettings: {
+            includeCallSummaries: rs?.includeCallSummaries ?? false,
+            detailed: rs?.detailed ?? false,
             includeAvgRating: rs?.includeAvgRating ?? false,
             includeAvgValue: rs?.includeAvgValue ?? false,
           },

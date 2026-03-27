@@ -9,6 +9,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
+    git \
     libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -18,8 +19,7 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY app.py /app/app.py
-RUN mkdir -p /home/appuser \
-    && adduser --disabled-password --gecos "" --home /home/appuser --shell /usr/sbin/nologin appuser \
+RUN adduser --disabled-password --gecos "" --home /home/appuser --shell /usr/sbin/nologin appuser \
     && mkdir -p /home/appuser/.cache/torch \
     && mkdir -p /home/appuser/.cache/huggingface/transformers \
     && chown -R appuser:appuser /home/appuser /app

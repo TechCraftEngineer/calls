@@ -2,6 +2,7 @@
  * Settings service - handles business logic for application settings
  */
 
+import { env } from "@calls/config";
 import { decrypt, encrypt } from "../lib/encryption";
 import type { SystemRepository } from "../repositories/system.repository";
 import type { WorkspaceIntegrationsRepository } from "../repositories/workspace-integrations.repository";
@@ -156,7 +157,7 @@ export class SettingsService {
 
   /**
    * Возвращает Telegram-токен для workspace с fallback на системный токен.
-   * Приоритет: 1) токен workspace, 2) process.env.TELEGRAM_BOT_TOKEN.
+   * Приоритет: 1) токен workspace, 2) env.TELEGRAM_BOT_TOKEN.
    */
   async getEffectiveTelegramBotToken(workspaceId: string): Promise<{
     token: string | null;
@@ -171,7 +172,7 @@ export class SettingsService {
       return { token: workspaceToken, source: "workspace" };
     }
 
-    const systemToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+    const systemToken = env.TELEGRAM_BOT_TOKEN?.trim();
     if (systemToken && isValidTelegramToken(systemToken)) {
       return { token: systemToken, source: "system" };
     }

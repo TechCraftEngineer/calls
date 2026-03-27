@@ -40,6 +40,7 @@ export default function IntegrationsSection({
   const [telegramError, setTelegramError] = useState<string | null>(null);
 
   const telegramValue = integrations.telegramBotToken;
+  const hasCustomTelegramToken = telegramValue.trim().length > 0;
   const handleTelegramBlur = useCallback(() => {
     if (!telegramValue.trim()) {
       setTelegramError(null);
@@ -75,11 +76,17 @@ export default function IntegrationsSection({
             </p>
           </div>
 
-          {integrations.telegramUsesDefault && (
-            <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-900 dark:text-emerald-200">
-              Сейчас используется системный Telegram-бот по умолчанию.
-            </div>
-          )}
+          <div
+            className={`rounded-md border p-3 text-xs ${
+              hasCustomTelegramToken
+                ? "border-primary/30 bg-primary/10 text-foreground"
+                : "border-emerald-500/30 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200"
+            }`}
+          >
+            {hasCustomTelegramToken
+              ? "Режим: используется Telegram-бот компании (ваш токен)."
+              : "Режим: используется системный Telegram-бот по умолчанию."}
+          </div>
 
           <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
             <p className="font-medium text-foreground mb-2">
@@ -156,6 +163,11 @@ export default function IntegrationsSection({
               Поле не обязательное: оставьте пустым, чтобы использовать
               системный бот.
             </p>
+            {integrations.telegramUsesDefault && !hasCustomTelegramToken && (
+              <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
+                Сейчас активен системный бот по умолчанию.
+              </p>
+            )}
             <p className="text-[11px] text-muted-foreground">
               <a
                 href={TELEGRAM_BOT_DOCS_URL}
