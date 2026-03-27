@@ -1,3 +1,15 @@
+---
+title: Speaker Embeddings Service
+emoji: "🎙️"
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+sdk_version: "1.0.0"
+python_version: "3.11"
+app_file: app.py
+pinned: false
+---
+
 # Speaker Embeddings Service
 
 Отдельный сервис для батч-вычисления speaker embeddings (HF-friendly).
