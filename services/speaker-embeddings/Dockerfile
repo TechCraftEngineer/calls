@@ -24,7 +24,7 @@ RUN mkdir -p /home/appuser \
     && mkdir -p /home/appuser/.cache/huggingface/transformers \
     && chown -R appuser:appuser /home/appuser /app
 
-EXPOSE 7861
+EXPOSE 7860
 
 USER appuser
 

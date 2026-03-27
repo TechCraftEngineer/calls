@@ -1,6 +1,7 @@
 import io
 import json
 import logging
+import os
 import threading
 from contextlib import asynccontextmanager
 from typing import Any
@@ -242,4 +243,5 @@ async def health() -> dict[str, Any]:
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=7861, log_level="info")
+    port = int(os.getenv("PORT", "7860"))
+    uvicorn.run(app, host="0.0.0.0", port=port, log_level="info")

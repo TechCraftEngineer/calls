@@ -2,6 +2,28 @@
 
 Отдельный сервис для батч-вычисления speaker embeddings (HF-friendly).
 
+## Hugging Face Space (Docker)
+
+- Рекомендуемый `SDK`: `Docker`
+- Сервис слушает `PORT` из окружения (по умолчанию `7860`)
+- Для приватных моделей pyannote добавьте секрет Space:
+  - `HF_TOKEN=<your_hf_token>`
+
+### Быстрый чек-лист деплоя
+
+- Создайте новый Space с `SDK = Docker`.
+- Загрузите содержимое папки `services/speaker-embeddings` в корень Space.
+- В `Settings -> Variables and secrets` добавьте:
+  - `Secret`: `HF_TOKEN` (если используете `pyannote/embedding` с доступом по токену).
+- Убедитесь, что Space собрался без ошибок (статус `Running`).
+- Проверьте здоровье сервиса:
+  - `GET /health` должен вернуть `{"status":"healthy", ...}`.
+- Проверьте основной endpoint:
+  - `POST /api/embed-batch` с `multipart/form-data` (`file` + `segments_json`).
+- В `giga-am` установите:
+  - `SPEAKER_EMBEDDINGS_URL=https://<your-space>.hf.space`
+  - `SPEAKER_EMBEDDINGS_TIMEOUT=60`
+
 ## Endpoint
 
 - `POST /api/embed-batch`
