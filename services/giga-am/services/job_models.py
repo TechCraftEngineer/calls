@@ -45,7 +45,6 @@ class JobRecord:
     metadata: dict[str, Any] = field(default_factory=dict)
     stages: list[PipelineStage] = field(
         default_factory=lambda: [
-            PipelineStage(name="preprocessing"),
             PipelineStage(name="asr"),
             PipelineStage(name="alignment"),
             PipelineStage(name="diarization"),

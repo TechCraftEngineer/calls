@@ -14,13 +14,21 @@ const logger = createLogger("asr-pipeline");
 
 export async function runTranscriptionPipelineFromAsrAudio(
   asrAudioUrl: string,
-  preprocessingResult: PreprocessingResult | null,
+  preprocessingResult:
+    | PreprocessingResult
+    | Pick<
+        PreprocessingResult,
+        "audioUrl" | "wasProcessed" | "appliedFilters" | "processingTimeMs"
+      >
+    | null,
   options?: {
     skipNormalization?: boolean;
     skipContextCorrection?: boolean;
     audioPreprocessing?: PreprocessingOptions;
     summaryPrompt?: string;
     companyContext?: string | null;
+    /** Метаданные audio-enhancer для giga-am job (overlap_candidates и т.д.) */
+    gigaPreprocessMetadata?: Record<string, unknown> | null;
   },
 ): Promise<PipelineResult> {
   const start = Date.now();
@@ -30,7 +38,9 @@ export async function runTranscriptionPipelineFromAsrAudio(
     basename: safeIn.basename,
   });
 
-  const asr = await runAsrProviders(asrAudioUrl);
+  const asr = await runAsrProviders(asrAudioUrl, {
+    gigaPreprocessMetadata: options?.gigaPreprocessMetadata,
+  });
 
   const gigaAmTexts = asr.gigaAmSuccessful
     .map((result) => result.text.trim())
@@ -73,7 +83,7 @@ export async function runTranscriptionPipelineFromAsrAudio(
     gigaAmSuccessCount: asr.gigaAmSuccessCount,
     contextCorrectionApplied: post.contextCorrectionApplied,
     audioPreprocessed: preprocessingResult?.wasProcessed ?? false,
-    hasEnhancedAudio: !!preprocessingResult?.enhancedAudioBuffer,
+    hasEnhancedAudio: !!preprocessingResult?.wasProcessed,
   });
 
   return {

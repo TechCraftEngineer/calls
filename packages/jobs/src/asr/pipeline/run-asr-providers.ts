@@ -5,7 +5,12 @@ import type { AsrResult } from "../types";
 
 const logger = createLogger("asr-pipeline-run-asr");
 
-export async function runAsrProviders(processedAudioUrl: string): Promise<{
+export async function runAsrProviders(
+  processedAudioUrl: string,
+  options?: {
+    gigaPreprocessMetadata?: Record<string, unknown> | null;
+  },
+): Promise<{
   gigaAmSuccessful: AsrResult[];
   gigaAmBest: AsrResult | null;
   gigaAmErrors: string[];
@@ -14,7 +19,9 @@ export async function runAsrProviders(processedAudioUrl: string): Promise<{
   durationFromUrl?: number;
 }> {
   const [gigaAmResult, durationResult] = await Promise.allSettled([
-    transcribeWithGigaAm(processedAudioUrl),
+    transcribeWithGigaAm(processedAudioUrl, {
+      preprocessMetadata: options?.gigaPreprocessMetadata ?? undefined,
+    }),
     getAudioDurationFromUrl(processedAudioUrl),
   ]);
 

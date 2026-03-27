@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import ipaddress
@@ -212,6 +213,7 @@ async def create_job(
     file: UploadFile | None = File(default=None),
     source_url: str | None = Form(default=None),
     callback_url: str | None = Form(default=None),
+    preprocess_metadata_json: str | None = Form(default=None),
 ):
     """Создает асинхронную задачу Ultra-SOTA pipeline."""
     tmp_path = None
@@ -251,10 +253,23 @@ async def create_job(
                 settings,
             )
 
+        preprocess_metadata = None
+        if preprocess_metadata_json and preprocess_metadata_json.strip():
+            try:
+                preprocess_metadata = json.loads(preprocess_metadata_json)
+                if not isinstance(preprocess_metadata, dict):
+                    raise ValueError("preprocess_metadata must be a JSON object")
+            except (json.JSONDecodeError, ValueError) as exc:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"preprocess_metadata_json: {exc}",
+                ) from exc
+
         job = job_orchestrator.create_job(
             tmp_path,
             original_filename,
             callback_url=callback_url,
+            preprocess_metadata=preprocess_metadata,
         )
         should_cleanup_tmp = False
         return JSONResponse(

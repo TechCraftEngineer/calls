@@ -70,11 +70,10 @@ MP3, WAV, FLAC, M4A, AAC, OGG, WEBM (макс. 100MB)
 1. Получите токен: https://huggingface.co/settings/tokens
 2. Примите условия: https://huggingface.co/pyannote/segmentation-3.0
 3. Добавьте токен в Secrets как `HF_TOKEN`
-4. Добавьте URL второго Space (audio-enhancer): `AUDIO_ENHANCER_URL`
+4. Препроцесс аудио выполняется **вне** giga-am (оркестратор Inngest вызывает audio-enhancer `/preprocess`, затем передаёт WAV и `preprocess_metadata_json` в `POST /api/jobs`). Секрет `AUDIO_ENHANCER_URL` в **giga-am не нужен**.
 
 Пример:
 
-- `AUDIO_ENHANCER_URL=https://your-audio-enhancer.hf.space`
 - `JOBS_DIR=/home/user/app/temp/jobs`
 - `MAX_JOB_RETRIES=2`
 - `SOURCE_DOWNLOAD_TIMEOUT=120`

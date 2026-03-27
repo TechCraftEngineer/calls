@@ -192,6 +192,93 @@ export async function enhanceAudioWithPython(
 }
 
 /**
+ * Пайплайн `/preprocess` (16 kHz, LUFS, DeepFilter, WPE, bandpass, метаданные VAD/overlap).
+ * Используется Inngest-оркестратором; giga-am не вызывает audio-enhancer напрямую.
+ */
+export async function preprocessAudioWithPython(
+  audioBuffer: Buffer,
+  options: { targetSampleRate?: number } = {},
+): Promise<{
+  audioBuffer: Buffer;
+  preprocessMetadata: Record<string, unknown> | null;
+  wasProcessed: boolean;
+  processingTimeMs: number;
+}> {
+  const start = Date.now();
+  const serviceUrl = env.AUDIO_ENHANCER_URL;
+
+  if (!serviceUrl) {
+    logMissingEnhancerUrlOnce();
+    return {
+      audioBuffer,
+      preprocessMetadata: null,
+      wasProcessed: false,
+      processingTimeMs: Date.now() - start,
+    };
+  }
+
+  try {
+    const formData = new FormData();
+    const blob = new Blob([audioBuffer as unknown as BlobPart], {
+      type: "audio/wav",
+    });
+    formData.append("file", blob, "audio.wav");
+    formData.append(
+      "target_sample_rate",
+      String(options.targetSampleRate ?? 16000),
+    );
+    formData.append("return_audio_base64", "true");
+
+    const response = await fetch(
+      `${serviceUrl.replace(/\/$/, "")}/preprocess`,
+      {
+        method: "POST",
+        body: formData,
+        signal: AbortSignal.timeout(120_000),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`preprocess: ${response.status} ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as {
+      audio_base64?: string;
+      preprocess_metadata?: Record<string, unknown>;
+      sample_rate?: number;
+    };
+
+    if (!data.audio_base64) {
+      throw new Error("preprocess: нет audio_base64 в ответе");
+    }
+
+    const out = Buffer.from(data.audio_base64, "base64");
+    logger.info("preprocess завершён", {
+      serviceUrl,
+      inputSize: audioBuffer.length,
+      outputSize: out.length,
+    });
+
+    return {
+      audioBuffer: out,
+      preprocessMetadata: data.preprocess_metadata ?? null,
+      wasProcessed: true,
+      processingTimeMs: Date.now() - start,
+    };
+  } catch (error) {
+    logger.warn("preprocess недоступен", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return {
+      audioBuffer,
+      preprocessMetadata: null,
+      wasProcessed: false,
+      processingTimeMs: Date.now() - start,
+    };
+  }
+}
+
+/**
  * Только шумоподавление (быстрый метод)
  */
 export async function denoiseAudioWithPython(

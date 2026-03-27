@@ -10,12 +10,10 @@ import {
   workspaceIntegrationsRepository,
   workspacesService,
 } from "@calls/db";
-import { deleteObjectFromS3, getDownloadUrlForAsr } from "@calls/lib";
-import type { PreprocessingResult } from "~/asr/audio/audio-preprocessing";
-import { getAudioDurationFromBuffer } from "~/asr/audio/get-audio-duration";
+import { getDownloadUrlForAsr } from "@calls/lib";
 import { identifySpeakersWithLlm } from "~/asr/llm/identify-speakers";
-import { prepareAudioForAsr } from "~/asr/pipeline/prepare-audio";
 import { runTranscriptionPipelineFromAsrAudio } from "~/asr/pipeline/run-transcription-pipeline";
+import { runPipelineAudioPreprocess } from "~/asr/pipeline/transcribe-pipeline-audio";
 import { createLogger } from "../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../client";
 
@@ -39,93 +37,10 @@ function buildCompanyContext(workspace: {
   return parts.length > 0 ? parts.join("\n") : undefined;
 }
 
-type ValidatedPcm16Wav =
-  | {
-      valid: true;
-      fmt: {
-        audioFormat: number;
-        numChannels: number;
-        sampleRate: number;
-        bitsPerSample: number;
-      };
-    }
-  | { valid: false; reason: string };
-
-function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
-  if (buffer.length < 12) {
-    return { valid: false, reason: "Buffer is too small for RIFF/WAVE" };
-  }
-
-  const riff = buffer.toString("ascii", 0, 4);
-  const wave = buffer.toString("ascii", 8, 12);
-  if (riff !== "RIFF" || wave !== "WAVE") {
-    return {
-      valid: false,
-      reason: `Invalid magic bytes (riff=${riff}, wave=${wave})`,
-    };
-  }
-
-  // WAV structure:
-  // RIFF header (12 bytes) -> sequence of chunks (4-char id + 4-byte size) until EOF.
-  let offset = 12;
-  while (offset + 8 <= buffer.length) {
-    const chunkId = buffer.toString("ascii", offset, offset + 4);
-    const chunkSize = buffer.readUInt32LE(offset + 4);
-    offset += 8;
-
-    if (chunkSize > buffer.length - offset) {
-      return {
-        valid: false,
-        reason: `Chunk ${chunkId} size (${chunkSize}) exceeds buffer`,
-      };
-    }
-
-    if (chunkId === "fmt ") {
-      // PCM fmt chunk must be at least 16 bytes.
-      if (chunkSize < 16 || offset + 16 > buffer.length) {
-        return {
-          valid: false,
-          reason: `Invalid fmt chunk (size=${chunkSize})`,
-        };
-      }
-
-      const audioFormat = buffer.readUInt16LE(offset);
-      const numChannels = buffer.readUInt16LE(offset + 2);
-      const sampleRate = buffer.readUInt32LE(offset + 4);
-      const bitsPerSample = buffer.readUInt16LE(offset + 14);
-
-      if (audioFormat !== 1) {
-        return {
-          valid: false,
-          reason: `Expected PCM (audioFormat=1), got ${audioFormat}`,
-        };
-      }
-
-      if (bitsPerSample !== 16) {
-        return {
-          valid: false,
-          reason: `Expected 16-bit samples (bitsPerSample=16), got ${bitsPerSample}`,
-        };
-      }
-
-      return {
-        valid: true,
-        fmt: { audioFormat, numChannels, sampleRate, bitsPerSample },
-      };
-    }
-
-    // Chunks are padded to even byte boundaries.
-    offset += chunkSize;
-    if (chunkSize % 2 === 1) offset += 1;
-  }
-
-  return { valid: false, reason: "Missing fmt chunk" };
-}
-
 export const transcribeCallFn = inngest.createFunction(
   {
     id: "transcribe-call",
-    name: "Транскрибация звонка (ASR + LLM нормализация)",
+    name: "Транскрибация: Inngest → audio-enhancer → giga-am → LLM",
     retries: 2,
     concurrency: {
       limit: 1,
@@ -147,28 +62,6 @@ export const transcribeCallFn = inngest.createFunction(
       if (!c.fileId)
         throw new Error(`У звонка ${callId} нет привязанного файла`);
       return c;
-    });
-
-    const fileId = call.fileId;
-    const audioUrl = await step.run("audio/url:resolve", async () => {
-      if (!fileId) throw new Error(`У звонка ${callId} нет привязанного файла`);
-      const file = await filesService.getFileById(fileId);
-      if (!file) throw new Error(`Файл не найден: ${fileId}`);
-      const url = await getDownloadUrlForAsr(file.storageKey);
-      // Диагностика: проверка доступности pre-signed URL (403 при недоступном объекте)
-      const headRes = await fetch(url, { method: "HEAD" });
-      if (!headRes.ok) {
-        logger.warn(
-          "Pre-signed URL недоступен — проверьте права S3 ключа и bucket",
-          {
-            callId,
-            storageKey: file.storageKey,
-            status: headRes.status,
-            statusText: headRes.statusText,
-          },
-        );
-      }
-      return url;
     });
 
     const workspace = await step.run("db/workspaces:get", async () => {
@@ -266,247 +159,44 @@ export const transcribeCallFn = inngest.createFunction(
       },
     );
 
-    const result = await step.run("asr/transcribe", async () => {
-      logger.info("Запуск транскрибации", {
-        callId,
-        audioUrlLength: audioUrl.length,
-      });
-
-      // Вариант 2: улучшенное аудио сохраняем один раз и используем для ASR.
-      // Temp-объекты в S3 не создаём.
-      let preprocessingResult: PreprocessingResult | null = null;
-
-      let asrAudioUrl = audioUrl;
-
-      const prepareAndMaybeUseEnhancedAudio = async () => {
-        const prepared = await prepareAudioForAsr(audioUrl, {
-          audioPreprocessing: undefined,
+    const pipelineAudio = await step.run(
+      "pipeline/audio:preprocess",
+      async () => {
+        logger.info("Inngest: audio-enhancer /preprocess", { callId });
+        const c = await callsService.getCall(callId);
+        if (!c?.fileId) {
+          throw new Error(`У звонка ${callId} нет привязанного файла`);
+        }
+        const f = await filesService.getFileById(c.fileId);
+        if (!f) {
+          throw new Error(`Файл не найден: ${c.fileId}`);
+        }
+        return runPipelineAudioPreprocess({
+          callId,
+          workspaceId: c.workspaceId,
+          originalFileId: c.fileId,
+          originalStorageKey: f.storageKey,
         });
-        preprocessingResult = prepared.preprocessingResult;
+      },
+    );
 
-        const enhancedBuffer = preprocessingResult?.enhancedAudioBuffer;
-        const enhancedFilename = preprocessingResult?.enhancedAudioFilename;
-
-        if (
-          preprocessingResult?.wasProcessed &&
-          enhancedBuffer &&
-          enhancedBuffer.length > 0 &&
-          enhancedFilename
-        ) {
-          const wavValidation = validatePcm16WavBuffer(enhancedBuffer);
-          if (!wavValidation.valid) {
-            logger.error(
-              "enhanced-аудио не является корректным 16-bit PCM WAV",
-              {
-                callId,
-                enhancedFilename,
-                bufferLength: enhancedBuffer.length,
-                reason: wavValidation.reason,
-              },
-            );
-            throw new Error(
-              `Invalid enhanced WAV buffer: ${wavValidation.reason}`,
-            );
-          }
-
-          let enhancedDurationSeconds: number | null = null;
-          try {
-            const duration = await getAudioDurationFromBuffer(enhancedBuffer);
-            if (typeof duration === "number" && duration > 0) {
-              enhancedDurationSeconds = duration;
-            }
-          } catch (durationErr) {
-            logger.warn("Не удалось определить длительность enhanced-аудио", {
-              callId,
-              error:
-                durationErr instanceof Error
-                  ? durationErr.message
-                  : String(durationErr),
-            });
-          }
-
-          const enhancedFilenameLower = enhancedFilename.toLowerCase();
-          const normalizedFilename = enhancedFilenameLower.endsWith(".wav")
-            ? enhancedFilename
-            : enhancedFilenameLower.includes(".")
-              ? enhancedFilename.replace(/\.[^.]+$/, ".wav")
-              : `${enhancedFilename}.wav`;
-
-          let uploadedEnhancedFile: Awaited<
-            ReturnType<typeof filesService.uploadFile>
-          > | null = null;
-
-          try {
-            uploadedEnhancedFile = await filesService.uploadFile(
-              call.workspaceId,
-              {
-                originalName: normalizedFilename,
-                buffer: enhancedBuffer,
-                mimeType: "audio/wav",
-                fileType: "call_recording",
-                source: "asr-preprocessing",
-                durationSeconds: enhancedDurationSeconds,
-              },
-            );
-
-            // Важно: обновление `calls.enhanced_audio_file_id` может не
-            // пройти, но ASR при этом должен идти по уже загруженному WAV.
-            asrAudioUrl = await getDownloadUrlForAsr(
-              uploadedEnhancedFile.storageKey,
-            );
-          } catch (error) {
-            logger.warn("Не удалось сохранить улучшенное аудио", {
-              callId,
-              error: error instanceof Error ? error.message : String(error),
-            });
-
-            if (uploadedEnhancedFile) {
-              try {
-                const deleted = await filesService.deleteFile(
-                  uploadedEnhancedFile.storageKey,
-                );
-                if (deleted) {
-                  logger.info("Загруженный enhanced-аудиофайл удалён", {
-                    callId,
-                    enhancedFileId: uploadedEnhancedFile.id,
-                  });
-                } else {
-                  logger.warn(
-                    "Не удалось удалить загруженный enhanced-аудиофайл",
-                    {
-                      callId,
-                      enhancedFileId: uploadedEnhancedFile.id,
-                      storageKey: uploadedEnhancedFile.storageKey,
-                    },
-                  );
-                }
-              } catch (deleteError) {
-                logger.warn("Ошибка при удалении orphaned файла", {
-                  callId,
-                  enhancedFileId: uploadedEnhancedFile.id,
-                  deleteError:
-                    deleteError instanceof Error
-                      ? deleteError.message
-                      : String(deleteError),
-                });
-              }
-            }
-          }
-
-          if (uploadedEnhancedFile) {
-            try {
-              await callsService.updateEnhancedAudio(
-                callId,
-                uploadedEnhancedFile.id,
-              );
-            } catch (error) {
-              logger.warn("Не удалось обновить enhanced-аудио в calls", {
-                callId,
-                enhancedFileId: uploadedEnhancedFile.id,
-                error: error instanceof Error ? error.message : String(error),
-              });
-              // Не бросаем ошибку: ASR уже использует `asrAudioUrl`.
-              // Если ссылку сохранить не удалось, загруженный файл может стать orphaned.
-              try {
-                try {
-                  await deleteObjectFromS3(uploadedEnhancedFile.storageKey);
-                  logger.info(
-                    "S3 enhanced-аудиофайл удалён после ошибки updateEnhancedAudio",
-                    {
-                      callId,
-                      enhancedFileId: uploadedEnhancedFile.id,
-                      storageKey: uploadedEnhancedFile.storageKey,
-                    },
-                  );
-                } catch (s3DeleteError) {
-                  logger.warn(
-                    "Не удалось удалить orphaned S3 объект после ошибки updateEnhancedAudio",
-                    {
-                      callId,
-                      enhancedFileId: uploadedEnhancedFile.id,
-                      storageKey: uploadedEnhancedFile.storageKey,
-                      deleteError:
-                        s3DeleteError instanceof Error
-                          ? s3DeleteError.message
-                          : String(s3DeleteError),
-                    },
-                  );
-                }
-
-                const deleted = await filesService.deleteFile(
-                  uploadedEnhancedFile.storageKey,
-                );
-
-                if (deleted) {
-                  logger.info(
-                    "Загруженный enhanced-аудиофайл удалён после ошибки updateEnhancedAudio",
-                    {
-                      callId,
-                      enhancedFileId: uploadedEnhancedFile.id,
-                    },
-                  );
-                } else {
-                  logger.warn(
-                    "Не удалось удалить загруженный enhanced-аудиофайл после ошибки updateEnhancedAudio",
-                    {
-                      callId,
-                      enhancedFileId: uploadedEnhancedFile.id,
-                      storageKey: uploadedEnhancedFile.storageKey,
-                    },
-                  );
-                }
-              } catch (deleteError) {
-                logger.warn(
-                  "Ошибка при удалении orphaned файла после updateEnhancedAudio",
-                  {
-                    callId,
-                    enhancedFileId: uploadedEnhancedFile.id,
-                    deleteError:
-                      deleteError instanceof Error
-                        ? deleteError.message
-                        : String(deleteError),
-                  },
-                );
-              }
-            }
-          }
-        }
-      };
-
-      if (call.enhancedAudioFileId) {
-        const enhancedFile = await filesService.getFileById(
-          call.enhancedAudioFileId,
+    const result = await step.run("pipeline/asr:transcribe", async () => {
+      logger.info("Inngest: giga-am ASR pipeline", { callId });
+      const f = await filesService.getFileById(
+        pipelineAudio.preprocessedFileId,
+      );
+      if (!f) {
+        throw new Error(
+          `Файл после preprocess не найден: ${pipelineAudio.preprocessedFileId}`,
         );
-
-        if (enhancedFile) {
-          try {
-            asrAudioUrl = await getDownloadUrlForAsr(enhancedFile.storageKey);
-          } catch (error) {
-            logger.error("Не удалось получить URL enhanced-аудио", {
-              callId,
-              enhancedAudioFileId: call.enhancedAudioFileId,
-              error: error instanceof Error ? error.message : String(error),
-            });
-
-            // Фолбэк: используем ту же механику, что и prepareAndMaybeUseEnhancedAudio
-            await prepareAndMaybeUseEnhancedAudio();
-          }
-        } else {
-          logger.warn("enhancedAudioFileId задан, но файл не найден", {
-            callId,
-            enhancedAudioFileId: call.enhancedAudioFileId,
-          });
-          await prepareAndMaybeUseEnhancedAudio();
-        }
-      } else {
-        await prepareAndMaybeUseEnhancedAudio();
       }
-
+      const asrAudioUrl = await getDownloadUrlForAsr(f.storageKey);
       return runTranscriptionPipelineFromAsrAudio(
         asrAudioUrl,
-        preprocessingResult,
+        pipelineAudio.preprocessingResult,
         {
           companyContext: buildCompanyContext(workspace),
+          gigaPreprocessMetadata: pipelineAudio.preprocessMetadata,
         },
       );
     });

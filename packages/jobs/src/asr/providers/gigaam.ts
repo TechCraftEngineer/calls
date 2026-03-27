@@ -197,6 +197,10 @@ export function isGigaAmTranscribeConfigured(): boolean {
 
 export async function transcribeWithGigaAm(
   audioUrl: string,
+  options?: {
+    /** Метаданные из audio-enhancer `/preprocess` — передаются в giga-am job без вызова enhancer из giga-am */
+    preprocessMetadata?: Record<string, unknown> | null;
+  },
 ): Promise<AsrResult | null> {
   if (!isGigaAmTranscribeConfigured()) {
     logger.info("Giga AM отключён или URL не задан, пропускаем");
@@ -250,6 +254,19 @@ export async function transcribeWithGigaAm(
     new Blob([audioBuffer], { type: contentType }),
     filename,
   );
+  const jobsSubmitUrl = transcribeUrl.replace(/\/$/, "");
+  const isJobsSubmit =
+    /\/api\/jobs$/i.test(jobsSubmitUrl) || jobsSubmitUrl.endsWith("/api/jobs");
+  if (
+    isJobsSubmit &&
+    options?.preprocessMetadata &&
+    Object.keys(options.preprocessMetadata).length > 0
+  ) {
+    formData.append(
+      "preprocess_metadata_json",
+      JSON.stringify(options.preprocessMetadata),
+    );
+  }
 
   const apiResponse = await withRetry(
     () =>
