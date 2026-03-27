@@ -155,7 +155,7 @@ export const transcribeCallFn = inngest.createFunction(
       const file = await filesService.getFileById(fileId);
       if (!file) throw new Error(`Файл не найден: ${fileId}`);
       const url = await getDownloadUrlForAsr(file.storageKey);
-      // Диагностика: проверка доступности URL (Yandex SpeechKit получает 403 при недоступном URL)
+      // Диагностика: проверка доступности pre-signed URL (403 при недоступном объекте)
       const headRes = await fetch(url, { method: "HEAD" });
       if (!headRes.ok) {
         logger.warn(
@@ -277,7 +277,6 @@ export const transcribeCallFn = inngest.createFunction(
       let preprocessingResult: PreprocessingResult | null = null;
 
       let asrAudioUrl = audioUrl;
-      let yandexUseLinear16PcmForYandex = false;
 
       const prepareAndMaybeUseEnhancedAudio = async () => {
         const prepared = await prepareAudioForAsr(audioUrl, {
@@ -355,7 +354,6 @@ export const transcribeCallFn = inngest.createFunction(
             asrAudioUrl = await getDownloadUrlForAsr(
               uploadedEnhancedFile.storageKey,
             );
-            yandexUseLinear16PcmForYandex = true;
           } catch (error) {
             logger.warn("Не удалось сохранить улучшенное аудио", {
               callId,
@@ -483,7 +481,6 @@ export const transcribeCallFn = inngest.createFunction(
         if (enhancedFile) {
           try {
             asrAudioUrl = await getDownloadUrlForAsr(enhancedFile.storageKey);
-            yandexUseLinear16PcmForYandex = true;
           } catch (error) {
             logger.error("Не удалось получить URL enhanced-аудио", {
               callId,
@@ -511,7 +508,6 @@ export const transcribeCallFn = inngest.createFunction(
         {
           companyContext: buildCompanyContext(workspace),
         },
-        yandexUseLinear16PcmForYandex,
       );
     });
 

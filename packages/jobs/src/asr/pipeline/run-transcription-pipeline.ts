@@ -22,7 +22,6 @@ export async function runTranscriptionPipelineFromAsrAudio(
     summaryPrompt?: string;
     companyContext?: string | null;
   },
-  yandexUseLinear16PcmForYandex = false,
 ): Promise<PipelineResult> {
   const start = Date.now();
   const safeIn = safeAudioUrlParts(asrAudioUrl);
@@ -31,26 +30,14 @@ export async function runTranscriptionPipelineFromAsrAudio(
     basename: safeIn.basename,
   });
 
-  // Используется только если мы отправляем в Yandex PCM (LINEAR16_PCM).
-  const yandexSampleRateHertz =
-    options?.audioPreprocessing?.targetSampleRate ?? 16000;
+  const asr = await runAsrProviders(asrAudioUrl);
 
-  const asr = await runAsrProviders(asrAudioUrl, {
-    useLinear16PcmForYandex: yandexUseLinear16PcmForYandex,
-    yandexSampleRateHertz,
-  });
-
-  const assemblyaiText = asr.assemblyai?.text?.trim() ?? "";
-  const yandexText = asr.yandex?.text?.trim() ?? "";
   const gigaAmTexts = asr.gigaAmSuccessful
     .map((result) => result.text.trim())
     .filter(Boolean);
   const gigaAmText = asr.gigaAmBest?.text?.trim() ?? "";
 
-  // LLM объединяет оба транскрипта (или возвращает единственный)
   const rawText = await mergeAsrWithLlm({
-    assemblyaiText: assemblyaiText || undefined,
-    yandexText: yandexText || undefined,
     gigaAmText: gigaAmText || undefined,
     gigaAmTexts,
   });
@@ -67,12 +54,8 @@ export async function runTranscriptionPipelineFromAsrAudio(
   });
 
   const metadata = buildTranscriptMetadata({
-    assemblyai: asr.assemblyai,
-    yandex: asr.yandex,
     gigaAmSuccessful: asr.gigaAmSuccessful,
     gigaAmBest: asr.gigaAmBest,
-    assemblyaiError: asr.assemblyaiError,
-    yandexError: asr.yandexError,
     gigaAmErrors: asr.gigaAmErrors,
     durationFromUrl: asr.durationFromUrl,
     processingTimeMs: post.processingTimeMs,
@@ -85,8 +68,6 @@ export async function runTranscriptionPipelineFromAsrAudio(
     contextCorrectedLength: post.contextCorrectedText.length,
     normalizedLength: post.normalizedText.length,
     hasSummary: !!post.summary,
-    hasAssemblyai: !!asr.assemblyai,
-    hasYandex: !!asr.yandex,
     hasGigaAm: asr.gigaAmSuccessful.length > 0,
     gigaAmProviderCount: asr.gigaAmProviderCount,
     gigaAmSuccessCount: asr.gigaAmSuccessCount,

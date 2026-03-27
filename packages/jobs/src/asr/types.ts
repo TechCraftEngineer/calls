@@ -2,6 +2,7 @@
  * Типы для ASR (Automatic Speech Recognition) pipeline
  */
 
+/** Источник ASR; legacy-значения встречаются в старых метаданных транскриптов */
 export type AsrSource = "assemblyai" | "yandex" | "gigaam" | "merged";
 
 export interface Utterance {
@@ -28,7 +29,7 @@ export interface AsrProviderMeta {
 }
 
 export interface AsrExecutionLog {
-  provider: "assemblyai" | "yandex" | "gigaam";
+  provider: "assemblyai" | "yandex" | "gigaam"; // assemblyai/yandex — только в старых записях
   success: boolean;
   processingTimeMs?: number;
   text?: string;
@@ -43,11 +44,11 @@ export interface TranscriptMetadata {
   processingTimeMs: number;
   confidence?: number;
   speakerCount?: number;
-  /** Длительность аудио в секундах (из AssemblyAI) */
+  /** Длительность аудио в секундах (URL / Giga AM) */
   durationInSeconds?: number;
-  /** Полный текст и метрики от AssemblyAI */
+  /** Legacy: AssemblyAI */
   asrAssemblyai?: AsrProviderMeta;
-  /** Полный текст и метрики от Yandex */
+  /** Legacy: Yandex SpeechKit */
   asrYandex?: AsrProviderMeta;
   /** Полный текст и метрики от Giga AM */
   asrGigaAm?: AsrProviderMeta;

@@ -215,7 +215,6 @@
     "packages/jobs": {
       "name": "@calls/jobs",
       "dependencies": {
-        "@ai-sdk/assemblyai": "2.0.26",
         "@ai-sdk/openai": "3.0.48",
         "@calls/ai": "workspace:*",
         "@calls/config": "workspace:*",
@@ -356,8 +355,6 @@
     },
   },
   "packages": {
-    "@ai-sdk/assemblyai": ["@ai-sdk/assemblyai@2.0.26", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.21" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-ntIilbLrAwM1gyT+5QuDTAeP68FVstba1ZvCg4RhcPZ6HxsZuoX5xcj+enpohWcKPpmhCkpholz1yhMoXKDgDQ=="],
-
     "@ai-sdk/deepseek": ["@ai-sdk/deepseek@2.0.26", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.21" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-62bi03K+Uc6fBiS3sIrkHnJI+gOKENO95ldSIv5NkX+yjG449dU5gxhyoZR/eILZ83vwYHcQP+kX5UnhbWT87g=="],
 
     "@ai-sdk/gateway": ["@ai-sdk/gateway@3.0.79", "", { "dependencies": { "@ai-sdk/provider": "3.0.8", "@ai-sdk/provider-utils": "4.0.21", "@vercel/oidc": "3.1.0" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-Wk2QJpqd0em5YcR49uoMCy9msyANAYgjXdlRcqqRt2fz4rNLnMMrKOlLwAXoFzR1ElR3bj4e/k6hscRfjpzSGA=="],
