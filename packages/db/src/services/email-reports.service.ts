@@ -5,7 +5,10 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
-import type { NotificationSettings } from "../schema/user/workspace-settings";
+import type {
+  NotificationSettings,
+  ReportSettings,
+} from "../schema/user/workspace-settings";
 
 export type ReportType = "daily" | "weekly" | "monthly";
 
@@ -14,6 +17,12 @@ export interface EmailReportRecipient {
   email: string;
   reportType: ReportType;
   internalNumbers: string[] | null;
+  reportSettings: {
+    includeCallSummaries: boolean;
+    detailed: boolean;
+    includeAvgValue: boolean;
+    includeAvgRating: boolean;
+  };
 }
 
 function parseInternalExtensions(ext: string | null): string[] | null {
@@ -36,6 +45,7 @@ export async function getEmailReportRecipients(
       userId: schema.workspaceMembers.userId,
       email: schema.user.email,
       notificationSettings: schema.userWorkspaceSettings.notificationSettings,
+      reportSettings: schema.userWorkspaceSettings.reportSettings,
       internalExtensions: schema.user.internalExtensions,
     })
     .from(schema.workspaceMembers)
@@ -66,6 +76,7 @@ export async function getEmailReportRecipients(
     if (!email) continue;
 
     const ns = (m.notificationSettings ?? {}) as NotificationSettings;
+    const rs = (m.reportSettings ?? {}) as ReportSettings;
     const em = ns?.email ?? {};
 
     const dailyEnabled = em.dailyReport ?? false;
@@ -83,6 +94,12 @@ export async function getEmailReportRecipients(
         email,
         reportType,
         internalNumbers: parseInternalExtensions(m.internalExtensions),
+        reportSettings: {
+          includeCallSummaries: rs?.includeCallSummaries ?? false,
+          detailed: rs?.detailed ?? false,
+          includeAvgValue: rs?.includeAvgValue ?? false,
+          includeAvgRating: rs?.includeAvgRating ?? false,
+        },
       });
     }
   }

@@ -64,6 +64,7 @@ export function useCallListState(props: CallListProps) {
     [props.calls, sortConfig],
   );
 
+  // TODO(ISSUE-CALLS-DAY-BG-REMOVE): Удалить вычисление после удаления deprecated-аргумента dayBackgroundIndex.
   const dayBackgroundIndex = useMemo(
     () => getDayBackgroundIndex(sortedCalls),
     [sortedCalls],

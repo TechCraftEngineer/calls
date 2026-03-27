@@ -77,7 +77,7 @@ export function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
         };
       }
 
-      if (sampleRate === 0) {
+      if (sampleRate <= 0 || sampleRate > 192000) {
         return {
           valid: false,
           reason: `Некорректная частота дискретизации (sampleRate=${sampleRate})`,

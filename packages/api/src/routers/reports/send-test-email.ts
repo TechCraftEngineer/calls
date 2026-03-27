@@ -130,6 +130,19 @@ export const sendTestEmail = workspaceProcedure
     }
     const stats = parseResult.data as Record<string, ManagerStats>;
 
+    let callSummariesByManager: Record<string, string[]> = {};
+    if (userForEdit.reportIncludeCallSummaries) {
+      callSummariesByManager = await callsService.getCallSummariesByManager({
+        workspaceId,
+        dateFrom: dateFromDb,
+        dateTo: dateToDb,
+        internalNumbers: internalNumbers ?? undefined,
+        excludePhoneNumbers:
+          excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+        limitPerManager: 2,
+      });
+    }
+
     const ws = await workspacesService.getById(workspaceId);
     const workspaceName = ws?.name ?? undefined;
 
@@ -140,6 +153,11 @@ export const sendTestEmail = workspaceProcedure
       reportType,
       isManagerReport: false,
       workspaceName,
+      detailed: userForEdit.reportDetailed ?? false,
+      includeCallSummaries: userForEdit.reportIncludeCallSummaries ?? false,
+      includeAvgRating: userForEdit.reportIncludeAvgRating ?? false,
+      includeAvgValue: userForEdit.reportIncludeAvgValue ?? false,
+      callSummariesByManager,
     });
 
     try {

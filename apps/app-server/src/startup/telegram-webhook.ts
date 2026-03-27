@@ -4,6 +4,7 @@
  */
 
 import { createLogger } from "@calls/api";
+import { env } from "@calls/config";
 import { settingsService } from "@calls/db";
 import { setTelegramWebhook } from "@calls/telegram-bot";
 
@@ -40,7 +41,7 @@ export async function setupTelegramWebhooks(): Promise<SetupTelegramWebhooksResu
   const workspaceIds = await settingsService.getWorkspaceIdsWithTelegramBot();
   if (workspaceIds.length === 0) {
     logger.info("No workspaces with Telegram bot configured");
-    const systemToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+    const systemToken = env.TELEGRAM_BOT_TOKEN?.trim();
     if (!systemToken) {
       return { success: true, results: [] };
     }
@@ -137,7 +138,7 @@ export async function setupTelegramWebhooks(): Promise<SetupTelegramWebhooksResu
   }
   const allSuccess = results.every((r) => r.success || r.skipped);
 
-  const systemToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+  const systemToken = env.TELEGRAM_BOT_TOKEN?.trim();
   let defaultWebhookSuccess = true;
   if (systemToken) {
     try {

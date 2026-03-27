@@ -1,4 +1,5 @@
 import { createLogger } from "@calls/api";
+import { env } from "@calls/config";
 import { isValidWorkspaceId, settingsService, usersService } from "@calls/db";
 import { createWebhookHandler } from "@calls/telegram-bot";
 import type { Hono } from "hono";
@@ -99,7 +100,7 @@ export const registerTelegramWebhookRoutes = (app: Hono) => {
         }
       }
 
-      const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
+      const token = env.TELEGRAM_BOT_TOKEN?.trim();
       if (!token) {
         backendLogger.warn(
           "No TELEGRAM_BOT_TOKEN configured for default webhook",

@@ -1,4 +1,5 @@
 import { createLogger } from "@calls/api";
+import { env } from "@calls/config";
 import { settingsService } from "@calls/db";
 import { deleteTelegramWebhook, setTelegramWebhook } from "@calls/telegram-bot";
 import { workspaceAdminProcedure } from "../../../orpc";
@@ -84,7 +85,7 @@ export const updateIntegrations = workspaceAdminProcedure
           }
         }
 
-        const systemToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
+        const systemToken = env.TELEGRAM_BOT_TOKEN?.trim();
         if (systemToken && baseUrl) {
           try {
             await setTelegramWebhook(

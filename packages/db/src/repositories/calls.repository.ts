@@ -16,6 +16,7 @@ import { normalizeCallStatus } from "../utils/call-status";
 import { buildCallConditions } from "./calls/build-conditions";
 import { computeCallStatus } from "./calls/compute-call-status";
 import {
+  getCallSummariesByManager as getCallSummariesByManagerFn,
   getEvaluationsStats as getEvaluationsStatsFn,
   getLowRatedCallsCount as getLowRatedCallsCountFn,
 } from "./calls/get-evaluations-stats";
@@ -578,6 +579,17 @@ export const callsRepository = {
     maxScore?: number;
   }) {
     return getLowRatedCallsCountFn(params);
+  },
+
+  async getCallSummariesByManager(params: {
+    workspaceId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    internalNumbers?: string[];
+    excludePhoneNumbers?: string[];
+    limitPerManager?: number;
+  }) {
+    return getCallSummariesByManagerFn(params);
   },
 
   async getKpiStats(params: {

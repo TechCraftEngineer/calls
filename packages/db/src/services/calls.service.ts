@@ -236,6 +236,17 @@ export class CallsService {
     return this.callsRepository.getLowRatedCallsCount(params);
   }
 
+  async getCallSummariesByManager(params: {
+    workspaceId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    internalNumbers?: string[];
+    excludePhoneNumbers?: string[];
+    limitPerManager?: number;
+  }): Promise<Record<string, string[]>> {
+    return this.callsRepository.getCallSummariesByManager(params);
+  }
+
   async getKpiStats(params: {
     workspaceId: string;
     dateFrom: string;

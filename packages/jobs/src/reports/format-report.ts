@@ -20,8 +20,11 @@ export interface FormatReportParams {
   isManagerReport: boolean;
   workspaceName?: string;
   /** Показывать среднюю оценку и сумму (только для админ-отчёта) */
+  detailed?: boolean;
+  includeCallSummaries?: boolean;
   includeAvgRating?: boolean;
   includeAvgValue?: boolean;
+  callSummariesByManager?: Record<string, string[]>;
   /** Звонки с низкой оценкой по менеджерам (managerScore < 3) */
   lowRatedCalls?: Record<string, number>;
 }
@@ -140,6 +143,34 @@ function prepareStats(entries: [string, ManagerStats][]): {
   };
 }
 
+function computeOverallAverages(managers: PreparedStats[]): {
+  avgManagerScore: number | null;
+  avgValueScore: number | null;
+} {
+  let scoreWeightedSum = 0;
+  let valueWeightedSum = 0;
+  let scoreWeight = 0;
+  let valueWeight = 0;
+
+  for (const item of managers) {
+    const weight = item.evaluatedCount ?? 0;
+    if (weight <= 0) continue;
+    if (typeof item.avgManagerScore === "number") {
+      scoreWeightedSum += item.avgManagerScore * weight;
+      scoreWeight += weight;
+    }
+    if (typeof item.avgValueScore === "number") {
+      valueWeightedSum += item.avgValueScore * weight;
+      valueWeight += weight;
+    }
+  }
+
+  return {
+    avgManagerScore: scoreWeight > 0 ? scoreWeightedSum / scoreWeight : null,
+    avgValueScore: valueWeight > 0 ? valueWeightedSum / valueWeight : null,
+  };
+}
+
 export function formatTelegramReport(params: FormatReportParams): string {
   const {
     stats,
@@ -150,6 +181,9 @@ export function formatTelegramReport(params: FormatReportParams): string {
     workspaceName,
     includeAvgRating = false,
     includeAvgValue = false,
+    detailed = false,
+    includeCallSummaries = false,
+    callSummariesByManager = {},
     lowRatedCalls = {},
   } = params;
 
@@ -189,6 +223,7 @@ export function formatTelegramReport(params: FormatReportParams): string {
   }
 
   const { managers, totals } = prepareStats(entries);
+  const overall = computeOverallAverages(managers);
   for (const s of managers) {
     const inDurStr =
       s.incomingCount > 0 ? formatDuration(s.incomingAvgDurationSec) : "—";
@@ -197,12 +232,19 @@ export function formatTelegramReport(params: FormatReportParams): string {
     lines.push(`👤 ${s.name}`);
     lines.push(`   Входящие: ${s.incomingCount} (${inDurStr})`);
     lines.push(`   Исходящие: ${s.outgoingCount} (${outDurStr})`);
-    if (isManagerReport) {
-      if (includeAvgRating && s.avgManagerScore != null) {
-        lines.push(`   ⭐ Ср. оценка: ${formatScore(s.avgManagerScore)}`);
-      }
-      if (includeAvgValue && s.avgValueScore != null) {
-        lines.push(`   💰 Ср. сумма: ${formatValue(s.avgValueScore)} ₽`);
+    if (includeAvgRating && s.avgManagerScore != null) {
+      lines.push(`   ⭐ Ср. оценка: ${formatScore(s.avgManagerScore)}`);
+    }
+    if (includeAvgValue && s.avgValueScore != null) {
+      lines.push(`   💰 Ср. сумма: ${formatValue(s.avgValueScore)} ₽`);
+    }
+    if (includeCallSummaries) {
+      const summaries = callSummariesByManager[s.name] ?? [];
+      if (summaries.length > 0) {
+        lines.push("   🧠 ИИ-саммари:");
+        for (const summary of summaries.slice(0, 2)) {
+          lines.push(`   • ${summary}`);
+        }
       }
     }
     lines.push("");
@@ -218,6 +260,14 @@ export function formatTelegramReport(params: FormatReportParams): string {
       `Оценено: ${totals.evaluatedCount} из ${totals.totalCount} звонков`,
     );
   }
+  if (includeAvgRating && overall.avgManagerScore != null) {
+    lines.push(
+      `Ср. оценка качества: ${formatScore(overall.avgManagerScore)} ⭐`,
+    );
+  }
+  if (includeAvgValue && overall.avgValueScore != null) {
+    lines.push(`Ср. сумма сделки: ${formatValue(overall.avgValueScore)} ₽`);
+  }
 
   const lowRatedEntries = Object.entries(lowRatedCalls).filter(
     ([, n]) => n > 0,
@@ -228,6 +278,11 @@ export function formatTelegramReport(params: FormatReportParams): string {
     for (const [manager, count] of lowRatedEntries) {
       lines.push(`• ${manager}: ${count} ${pluralizeCalls(count)}`);
     }
+  }
+
+  if (!detailed) {
+    lines.push("");
+    lines.push("ℹ️ Краткий формат отчёта");
   }
 
   return lines.join("\n");
@@ -243,6 +298,9 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     workspaceName,
     includeAvgRating = false,
     includeAvgValue = false,
+    detailed = false,
+    includeCallSummaries = false,
+    callSummariesByManager = {},
     lowRatedCalls = {},
   } = params;
 
@@ -265,6 +323,7 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
 
   const entries = Object.entries(stats);
   const { managers, totals } = prepareStats(entries);
+  const overall = computeOverallAverages(managers);
   if (managers.length === 0) {
     return [
       `📊 <b>${typeLabel} отчёт по звонкам</b>`,
@@ -314,6 +373,16 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
       `• Оценено: <b>${totals.evaluatedCount}/${totals.totalCount}</b>`,
     );
   }
+  if (includeAvgRating && overall.avgManagerScore != null) {
+    lines.push(
+      `• Ср. оценка качества: <b>${formatScore(overall.avgManagerScore)}</b> ⭐`,
+    );
+  }
+  if (includeAvgValue && overall.avgValueScore != null) {
+    lines.push(
+      `• Ср. сумма сделки: <b>${formatValue(overall.avgValueScore)} ₽</b>`,
+    );
+  }
   lines.push("");
 
   lines.push("🏆 <b>Топ менеджеров по количеству звонков</b>");
@@ -325,25 +394,38 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   }
   lines.push("");
 
-  lines.push("👥 <b>Детализация по менеджерам</b>");
-  for (const item of managers) {
-    lines.push(`• <b>${escapeHtml(item.name)}</b>`);
-    lines.push(
-      `  ├ Входящие: ${item.incomingCount} (ср. ${item.incomingCount > 0 ? formatDuration(item.incomingAvgDurationSec) : "—"})`,
-    );
-    lines.push(
-      `  ├ Исходящие: ${item.outgoingCount} (ср. ${item.outgoingCount > 0 ? formatDuration(item.outgoingAvgDurationSec) : "—"})`,
-    );
-    if (isManagerReport && includeAvgRating) {
+  if (detailed) {
+    lines.push("👥 <b>Детализация по менеджерам</b>");
+    for (const item of managers) {
+      lines.push(`• <b>${escapeHtml(item.name)}</b>`);
       lines.push(
-        `  ├ Ср. оценка качества: ${formatScore(item.avgManagerScore)} ⭐`,
+        `  ├ Входящие: ${item.incomingCount} (ср. ${item.incomingCount > 0 ? formatDuration(item.incomingAvgDurationSec) : "—"})`,
       );
-    }
-    if (isManagerReport && includeAvgValue) {
       lines.push(
-        `  └ Ср. ценность: ${formatValue(item.avgValueScore ?? NaN)} ₽`,
+        `  ├ Исходящие: ${item.outgoingCount} (ср. ${item.outgoingCount > 0 ? formatDuration(item.outgoingAvgDurationSec) : "—"})`,
       );
+      if (includeAvgRating) {
+        lines.push(
+          `  ├ Ср. оценка качества: ${formatScore(item.avgManagerScore)} ⭐`,
+        );
+      }
+      if (includeAvgValue) {
+        lines.push(
+          `  └ Ср. ценность: ${formatValue(item.avgValueScore ?? NaN)} ₽`,
+        );
+      }
+      if (includeCallSummaries) {
+        const summaries = callSummariesByManager[item.name] ?? [];
+        if (summaries.length > 0) {
+          lines.push("  ├ ИИ-саммари:");
+          for (const summary of summaries.slice(0, 2)) {
+            lines.push(`  • ${escapeHtml(summary)}`);
+          }
+        }
+      }
     }
+  } else {
+    lines.push("ℹ️ <i>Краткий формат отчёта</i>");
   }
 
   if (isManagerReport && lowRatedEntries.length > 0) {

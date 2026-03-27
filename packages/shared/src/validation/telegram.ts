@@ -4,7 +4,9 @@
  * @see https://core.telegram.org/bots/features#creating-a-new-bot
  */
 
-const TELEGRAM_BOT_TOKEN_REGEX = /^\d{8,10}:[A-Za-z0-9_-]{35}$/;
+// Telegram токены не всегда строго 10 цифр до ":" и 35 символов после него.
+// Делаем валидацию совместимой с серверной (settingsService.isValidTelegramToken).
+const TELEGRAM_BOT_TOKEN_REGEX = /^\d+:[A-Za-z0-9_-]{35,}$/;
 
 export function validateTelegramBotToken(token?: string | null): {
   isValid: boolean;
@@ -20,7 +22,7 @@ export function validateTelegramBotToken(token?: string | null): {
     return {
       isValid: false,
       error:
-        "Неверный формат токена. Ожидается вид: 1234567890:ABCdefGHIjklMNOpqrsTUVwxyz",
+        "Неверный формат токена. Ожидается вид: <числа>:<строка_из_букв_цифр_-_или_>.",
     };
   }
 
