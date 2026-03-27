@@ -55,15 +55,21 @@ export async function runPipelineAudioPreprocess(params: {
   const start = Date.now();
   const originalUrl = await getDownloadUrlForAsr(params.originalStorageKey);
   try {
-    const headRes = await fetch(originalUrl, { method: "HEAD" });
+    const headRes = await fetch(originalUrl, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(4_000),
+    });
     if (!headRes.ok) {
       logger.warn("Pre-signed URL недоступен (HEAD)", {
         callId: params.callId,
         status: headRes.status,
       });
     }
-  } catch {
-    /* ignore */
+  } catch (error) {
+    logger.warn("Pre-signed URL HEAD check failed", {
+      callId: params.callId,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
   const originalBuffer = await fetchAudioBuffer(
     originalUrl,
@@ -119,6 +125,7 @@ export async function runPipelineAudioPreprocess(params: {
     source: "asr-preprocessing",
     durationSeconds,
   });
+  const preprocessedAudioUrl = await getDownloadUrlForAsr(uploaded.storageKey);
 
   try {
     await callsService.updateEnhancedAudio(params.callId, uploaded.id);
@@ -130,7 +137,7 @@ export async function runPipelineAudioPreprocess(params: {
   }
 
   const preprocessingResult: PipelinePreprocessSnapshot = {
-    audioUrl: originalUrl,
+    audioUrl: preprocessedAudioUrl,
     wasProcessed: true,
     appliedFilters: ["audio-enhancer-preprocess"],
     processingTimeMs: Date.now() - start,

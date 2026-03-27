@@ -790,6 +790,7 @@ async def denoise_only(
 
 
 @app.post("/preprocess")
+@app.post("/api/preprocess")
 async def preprocess_audio(
     file: UploadFile = File(...),
     target_sample_rate: int = Form(16000, ge=800, le=192000),

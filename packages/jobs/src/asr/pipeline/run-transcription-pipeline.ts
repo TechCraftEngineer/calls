@@ -1,6 +1,5 @@
 import { createLogger } from "~/logger";
 import {
-  type PreprocessingOptions,
   type PreprocessingResult,
   safeAudioUrlParts,
 } from "../audio/audio-preprocessing";
@@ -24,10 +23,8 @@ export async function runTranscriptionPipelineFromAsrAudio(
   options?: {
     skipNormalization?: boolean;
     skipContextCorrection?: boolean;
-    audioPreprocessing?: PreprocessingOptions;
     summaryPrompt?: string;
     companyContext?: string | null;
-    /** Метаданные audio-enhancer для giga-am job (overlap_candidates и т.д.) */
     gigaPreprocessMetadata?: Record<string, unknown> | null;
   },
 ): Promise<PipelineResult> {
@@ -47,17 +44,24 @@ export async function runTranscriptionPipelineFromAsrAudio(
     .filter(Boolean);
   const gigaAmText = asr.gigaAmBest?.text?.trim() ?? "";
 
-  const rawText = await mergeAsrWithLlm({
-    gigaAmText: gigaAmText || undefined,
-    gigaAmTexts,
-  });
+  const gigaRaw = asr.gigaAmBest?.raw as
+    | { ultraPipeline?: boolean }
+    | undefined;
+  const isUltraPipeline = Boolean(gigaRaw?.ultraPipeline);
+
+  const rawText = isUltraPipeline
+    ? gigaAmText
+    : await mergeAsrWithLlm({
+        gigaAmText: gigaAmText || undefined,
+        gigaAmTexts,
+      });
 
   const post = await postProcessText({
     rawText,
     startTs: start,
     options: {
-      skipNormalization: options?.skipNormalization,
-      skipContextCorrection: options?.skipContextCorrection,
+      skipNormalization: isUltraPipeline || options?.skipNormalization,
+      skipContextCorrection: isUltraPipeline || options?.skipContextCorrection,
       summaryPrompt: options?.summaryPrompt,
       companyContext: options?.companyContext,
     },

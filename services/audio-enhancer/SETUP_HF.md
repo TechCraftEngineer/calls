@@ -160,8 +160,8 @@ Hugging Face автоматически собирает:
 
 1. Разверните `audio-enhancer` как отдельный Space.
 2. Разверните `giga-am` как sync ASR Space.
-3. В **jobs** (Inngest) задайте `AUDIO_ENHANCER_URL=https://<audio-enhancer>.hf.space` — giga-am этот URL не использует.
-4. Оркестрацию выполняет Inngest: сначала вызывайте `audio-enhancer /preprocess`, затем отправляйте результат в `giga-am /api/transcribe`.
+3. В **jobs** (Inngest) задайте `AUDIO_ENHANCER_URL=https://<audio-enhancer>.hf.space/api` — giga-am этот URL не использует.
+4. Оркестрацию выполняет Inngest: jobs-клиент вызывает `${AUDIO_ENHANCER_URL}/preprocess` (то есть `/api/preprocess`), затем отправляет результат в `giga-am /api/transcribe`.
 
 ### Python
 

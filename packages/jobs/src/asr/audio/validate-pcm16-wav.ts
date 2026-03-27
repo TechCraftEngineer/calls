@@ -7,6 +7,10 @@ export type ValidatedPcm16Wav =
         sampleRate: number;
         bitsPerSample: number;
       };
+      data: {
+        size: number;
+        blockAlign: number;
+      };
     }
   | { valid: false; reason: string };
 
@@ -25,6 +29,12 @@ export function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
   }
 
   let offset = 12;
+  let fmt: {
+    audioFormat: number;
+    numChannels: number;
+    sampleRate: number;
+    bitsPerSample: number;
+  } | null = null;
   while (offset + 8 <= buffer.length) {
     const chunkId = buffer.toString("ascii", offset, offset + 4);
     const chunkSize = buffer.readUInt32LE(offset + 4);
@@ -64,9 +74,36 @@ export function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
         };
       }
 
+      fmt = { audioFormat, numChannels, sampleRate, bitsPerSample };
+    }
+
+    if (chunkId === "data") {
+      if (!fmt) {
+        return { valid: false, reason: "Missing fmt chunk before data chunk" };
+      }
+      const blockAlign = (fmt.numChannels * fmt.bitsPerSample) / 8;
+      if (!Number.isInteger(blockAlign) || blockAlign <= 0) {
+        return {
+          valid: false,
+          reason: `Invalid block align derived from fmt (${blockAlign})`,
+        };
+      }
+      if (chunkSize <= 0) {
+        return { valid: false, reason: "Data chunk is empty" };
+      }
+      if (chunkSize % blockAlign !== 0) {
+        return {
+          valid: false,
+          reason: `Data chunk size (${chunkSize}) is not aligned to blockAlign (${blockAlign})`,
+        };
+      }
       return {
         valid: true,
-        fmt: { audioFormat, numChannels, sampleRate, bitsPerSample },
+        fmt,
+        data: {
+          size: chunkSize,
+          blockAlign,
+        },
       };
     }
 
@@ -74,5 +111,8 @@ export function validatePcm16WavBuffer(buffer: Buffer): ValidatedPcm16Wav {
     if (chunkSize % 2 === 1) offset += 1;
   }
 
-  return { valid: false, reason: "Missing fmt chunk" };
+  if (!fmt) {
+    return { valid: false, reason: "Missing fmt chunk" };
+  }
+  return { valid: false, reason: "Missing data chunk" };
 }

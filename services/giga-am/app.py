@@ -1,13 +1,20 @@
+import json
 import logging
 import os
 import tempfile
+from typing import Any
 
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 import uvicorn
 
 from config import settings
+from services.alignment_service import AlignmentService
+from services.attribution_service import AttributionService
+from services.clustering_service import ClusteringService
+from services.embedding_service import EmbeddingService
+from services.postprocess_service import PostprocessService
 from services.transcription_service import transcription_service
 from utils.file_validation import FileValidator
 from utils.logger import setup_logging
@@ -20,9 +27,72 @@ app = FastAPI(
     version=settings.app_version,
 )
 
+alignment_service = AlignmentService()
+embedding_service = EmbeddingService()
+clustering_service = ClusteringService()
+attribution_service = AttributionService()
+postprocess_service = PostprocessService()
+
+
+def _run_ultra_pipeline(
+    audio_path: str,
+    preprocess_metadata: dict[str, Any] | None,
+) -> dict[str, Any]:
+    asr_result = transcription_service.transcribe_audio(audio_path)
+    if not asr_result.get("success"):
+        return asr_result
+
+    base_segments = asr_result.get("segments", []) or []
+    aligned_segments = (
+        alignment_service.align_segments(base_segments)
+        if settings.alignment_enabled
+        else base_segments
+    )
+
+    overlap_spans = []
+    if isinstance(preprocess_metadata, dict):
+        raw_overlap = preprocess_metadata.get("overlap_candidates", [])
+        if isinstance(raw_overlap, list):
+            overlap_spans = raw_overlap
+
+    diarized_segments = aligned_segments
+    if settings.diarization_enabled:
+        for segment in aligned_segments:
+            segment["embedding"] = embedding_service.build_hybrid_embedding(segment)
+        diarized_segments = clustering_service.assign_speakers(
+            aligned_segments,
+            overlap_spans=overlap_spans,
+        )
+
+    speaker_timeline = attribution_service.build_speaker_timeline(diarized_segments)
+    final_segments = postprocess_service.apply_to_segments(diarized_segments)
+    final_transcript = postprocess_service.build_final_transcript(final_segments)
+
+    return {
+        "success": True,
+        "segments": final_segments,
+        "speaker_timeline": speaker_timeline,
+        "final_transcript": final_transcript,
+        "total_duration": asr_result.get("total_duration", 0),
+        "pipeline": "ultra-sync-2026",
+        "stages": [
+            "asr",
+            "alignment" if settings.alignment_enabled else "alignment:disabled",
+            "embedding+clustering"
+            if settings.diarization_enabled
+            else "embedding+clustering:disabled",
+            "attribution",
+            "postprocess",
+        ],
+    }
+
 
 @app.post("/api/transcribe")
-async def api_transcribe(request: Request, file: UploadFile = File(...)):
+async def api_transcribe(
+    request: Request,
+    file: UploadFile = File(...),
+    preprocess_metadata_json: str | None = Form(default=None),
+):
     """
     Синхронное распознавание речи из аудиофайла.
 
@@ -60,7 +130,27 @@ async def api_transcribe(request: Request, file: UploadFile = File(...)):
                 )
             tmp.write(content)
 
-        result = await run_in_threadpool(transcription_service.transcribe_audio, tmp_path)
+        preprocess_metadata: dict[str, Any] | None = None
+        if preprocess_metadata_json and preprocess_metadata_json.strip():
+            try:
+                parsed = json.loads(preprocess_metadata_json)
+            except json.JSONDecodeError as exc:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Некорректный preprocess_metadata_json: {exc}",
+                ) from exc
+            if not isinstance(parsed, dict):
+                raise HTTPException(
+                    status_code=400,
+                    detail="preprocess_metadata_json должен быть JSON объектом",
+                )
+            preprocess_metadata = parsed
+
+        result = await run_in_threadpool(
+            _run_ultra_pipeline,
+            tmp_path,
+            preprocess_metadata,
+        )
         if result.get("success"):
             logger.info("Успешное распознавание файла %s", os.path.basename(file.filename))
             return JSONResponse(content=result)
