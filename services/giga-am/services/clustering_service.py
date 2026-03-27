@@ -1,10 +1,41 @@
 from __future__ import annotations
 
+import math
 from typing import Any
 
 
 class ClusteringService:
-    """Dynamic clustering с overlap support (эвристический baseline)."""
+    """Dynamic clustering с overlap support на основе cosine distance."""
+
+    @staticmethod
+    def _cosine_distance(a: list[float], b: list[float]) -> float:
+        if not a or not b or len(a) != len(b):
+            return 1.0
+        dot = 0.0
+        na = 0.0
+        nb = 0.0
+        for ai, bi in zip(a, b):
+            dot += ai * bi
+            na += ai * ai
+            nb += bi * bi
+        if na <= 1e-12 or nb <= 1e-12:
+            return 1.0
+        cosine = dot / (math.sqrt(na) * math.sqrt(nb))
+        return 1.0 - max(-1.0, min(1.0, cosine))
+
+    @staticmethod
+    def _mean_vector(vectors: list[list[float]]) -> list[float]:
+        if not vectors:
+            return []
+        dim = len(vectors[0])
+        acc = [0.0] * dim
+        for vec in vectors:
+            if len(vec) != dim:
+                continue
+            for i, value in enumerate(vec):
+                acc[i] += value
+        count = max(1, len(vectors))
+        return [v / count for v in acc]
 
     def assign_speakers(
         self,
@@ -15,23 +46,63 @@ class ClusteringService:
             return segments
 
         overlap_spans = overlap_spans or []
-        current = 1
-        prev_end = 0.0
+        clusters: list[dict[str, Any]] = []
+        base_threshold = 0.35
+
         for idx, seg in enumerate(segments):
             start = float(seg.get("start", 0.0))
             end = float(seg.get("end", start))
-            if idx == 0:
+            seg_embedding = seg.get("embedding")
+            emb = (
+                seg_embedding
+                if isinstance(seg_embedding, list)
+                and all(isinstance(v, (int, float)) for v in seg_embedding)
+                else []
+            )
+
+            if not clusters:
+                clusters.append(
+                    {
+                        "speaker": "SPEAKER_01",
+                        "vectors": [emb] if emb else [],
+                        "centroid": emb or [],
+                    }
+                )
                 seg["speaker"] = "SPEAKER_01"
             else:
-                gap = start - prev_end
-                if gap > 1.2:
-                    current = 1 if current == 2 else 2
-                seg["speaker"] = f"SPEAKER_{current:02d}"
-            prev_end = end
+                candidates = []
+                for cluster in clusters:
+                    centroid = cluster.get("centroid") or []
+                    distance = self._cosine_distance(emb, centroid) if emb else 1.0
+                    candidates.append((distance, cluster))
+                candidates.sort(key=lambda x: x[0])
+
+                # Чуть строже при коротких сегментах
+                segment_duration = max(0.0, end - start)
+                threshold = base_threshold - 0.05 if segment_duration > 3.0 else base_threshold
+
+                best_distance, best_cluster = candidates[0]
+                if best_distance <= threshold:
+                    seg["speaker"] = best_cluster["speaker"]
+                    if emb:
+                        best_cluster["vectors"].append(emb)
+                        best_cluster["centroid"] = self._mean_vector(best_cluster["vectors"])
+                else:
+                    new_speaker = f"SPEAKER_{len(clusters) + 1:02d}"
+                    clusters.append(
+                        {
+                            "speaker": new_speaker,
+                            "vectors": [emb] if emb else [],
+                            "centroid": emb or [],
+                        }
+                    )
+                    seg["speaker"] = new_speaker
 
             seg["overlap"] = any(
                 start < float(item.get("end", 0.0))
                 and end > float(item.get("start", 0.0))
                 for item in overlap_spans
             )
+            seg["clustered"] = True
+            seg["cluster_index"] = idx
         return segments

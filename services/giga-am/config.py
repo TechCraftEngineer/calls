@@ -46,6 +46,8 @@ class Settings(BaseSettings):
     callback_timeout: int = 20
     diarization_enabled: bool = True
     alignment_enabled: bool = True
+    speaker_embeddings_url: str = os.getenv("SPEAKER_EMBEDDINGS_URL", "")
+    speaker_embeddings_timeout: int = 60
     
     model_config = {
         "env_file": ".env",

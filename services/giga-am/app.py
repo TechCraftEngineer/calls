@@ -4,6 +4,8 @@ import os
 import tempfile
 from typing import Any
 
+import librosa
+import numpy as np
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
@@ -57,8 +59,21 @@ def _run_ultra_pipeline(
 
     diarized_segments = aligned_segments
     if settings.diarization_enabled:
-        for segment in aligned_segments:
-            segment["embedding"] = embedding_service.build_hybrid_embedding(segment)
+        try:
+            audio_np, audio_sr = librosa.load(audio_path, sr=16000, mono=True)
+        except Exception:
+            audio_np = np.array([], dtype=np.float32)
+            audio_sr = 16000
+
+        batch_embeddings = embedding_service.build_batch_hybrid_embeddings(
+            aligned_segments,
+            audio=audio_np,
+            sample_rate=audio_sr,
+        )
+        for idx, segment in enumerate(aligned_segments):
+            segment["embedding"] = (
+                batch_embeddings[idx] if idx < len(batch_embeddings) else []
+            )
         diarized_segments = clustering_service.assign_speakers(
             aligned_segments,
             overlap_spans=overlap_spans,

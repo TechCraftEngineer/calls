@@ -54,3 +54,5 @@ MP3, WAV, FLAC, M4A, AAC, OGG, WEBM (макс. 100MB)
 Пример:
 
 - `TRANSCRIPTION_TIMEOUT=300`
+- `SPEAKER_EMBEDDINGS_URL=https://<your-speaker-embeddings-space>.hf.space` (опционально)
+- `SPEAKER_EMBEDDINGS_TIMEOUT=60`
