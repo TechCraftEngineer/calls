@@ -1,22 +1,26 @@
 from __future__ import annotations
 
-import hashlib
+import io
+import json
 import logging
 import os
 from typing import Any
+
+import librosa
+import numpy as np
+import requests
+import soundfile as sf
+from config import settings
 
 logger = logging.getLogger(__name__)
 
 
 class EmbeddingService:
     """
-    Hybrid Titanet+WeSpeaker заглушка:
-    детерминированный эмбеддинг на основе текста/времени.
-
-    TODO: Заменить заглушку на реальные audio-эмбеддинги (Titanet/WeSpeaker).
-    Текущие hash-векторы не используют акустические признаки и могут давать
-    нестабильный speaker assignment в assign_speakers (job_orchestrator.py),
-    особенно при коротких/похожих текстовых сегментах.
+    Hybrid Titanet+WeSpeaker-style эмбеддинг:
+    - primary: pyannote speaker embedding (как замена Titanet-подобного пространства),
+    - secondary: MFCC+pitch статистики (как легковесный WeSpeaker-style бэкап),
+    - output: L2-normalized concatenation.
     """
 
     def __init__(self) -> None:
@@ -27,17 +31,203 @@ class EmbeddingService:
             or ""
         ).strip().lower()
         self._warn_in_production = env in {"prod", "production"}
-        if self._warn_in_production:
+        self._pyannote_embedder = None
+        self._remote_url = settings.speaker_embeddings_url.strip().rstrip("/")
+        self._remote_timeout = settings.speaker_embeddings_timeout
+        self._load_pyannote_embedder()
+        if self._warn_in_production and self._pyannote_embedder is None:
             logger.warning(
-                "EmbeddingService работает в production на hash-заглушке: "
-                "эмбеддинги не основаны на аудио и могут ломать assign_speakers."
+                "EmbeddingService работает без pyannote embedding модели; "
+                "качество speaker clustering будет ниже."
             )
 
-    def build_hybrid_embedding(self, segment: dict[str, Any]) -> list[float]:
-        source = f"{segment.get('text','')}|{segment.get('start',0)}|{segment.get('end',0)}"
-        digest = hashlib.sha256(source.encode("utf-8")).digest()
-        values = []
-        for i in range(0, 32, 2):
-            raw = int.from_bytes(digest[i : i + 2], "big")
-            values.append((raw / 65535.0) * 2.0 - 1.0)
-        return values
+    def _load_pyannote_embedder(self) -> None:
+        try:
+            from pyannote.audio import Inference
+
+            token = os.getenv("HF_TOKEN", "").strip() or None
+            self._pyannote_embedder = Inference(
+                "pyannote/embedding",
+                use_auth_token=token,
+            )
+            logger.info("Pyannote speaker embedder загружен")
+        except Exception as exc:
+            self._pyannote_embedder = None
+            logger.warning("Pyannote speaker embedder недоступен: %s", exc)
+
+    def _try_remote_embeddings(
+        self,
+        segments: list[dict[str, Any]],
+        audio: np.ndarray,
+        sample_rate: int,
+    ) -> list[list[float]] | None:
+        if not self._remote_url:
+            return None
+        try:
+            payload = {
+                "segments": [
+                    {
+                        "start": float(seg.get("start", 0.0)),
+                        "end": float(seg.get("end", seg.get("start", 0.0))),
+                        "text": str(seg.get("text", "")),
+                    }
+                    for seg in segments
+                ]
+            }
+            with io.BytesIO() as wav_buffer:
+                sf.write(
+                    wav_buffer,
+                    audio.astype(np.float32),
+                    sample_rate,
+                    format="WAV",
+                    subtype="PCM_16",
+                )
+                wav_bytes = wav_buffer.getvalue()
+
+            response = requests.post(
+                f"{self._remote_url}/api/embed-batch",
+                files={"file": ("audio.wav", wav_bytes, "audio/wav")},
+                data={"segments_json": json.dumps(payload, ensure_ascii=False)},
+                timeout=self._remote_timeout,
+            )
+            response.raise_for_status()
+            data = response.json()
+            embeddings = data.get("embeddings")
+            if not isinstance(embeddings, list):
+                return None
+            parsed: list[list[float]] = []
+            for emb in embeddings:
+                if isinstance(emb, list):
+                    parsed.append([float(v) for v in emb])
+                else:
+                    parsed.append([])
+            if len(parsed) != len(segments):
+                logger.warning("Remote embedding size mismatch: %s != %s", len(parsed), len(segments))
+                return None
+            return parsed
+        except Exception as exc:
+            logger.warning("Remote embeddings unavailable, fallback to local: %s", exc)
+            return None
+
+    @staticmethod
+    def _l2_normalize(vec: np.ndarray) -> np.ndarray:
+        norm = float(np.linalg.norm(vec))
+        if norm <= 1e-8:
+            return vec
+        return vec / norm
+
+    @staticmethod
+    def _extract_audio_slice(
+        audio: np.ndarray,
+        sr: int,
+        start: float,
+        end: float,
+    ) -> np.ndarray:
+        if sr <= 0:
+            return np.array([], dtype=np.float32)
+        start_idx = max(0, int(start * sr))
+        end_idx = max(start_idx + 1, int(end * sr))
+        end_idx = min(end_idx, audio.shape[0])
+        return audio[start_idx:end_idx].astype(np.float32, copy=False)
+
+    def _pyannote_vector(self, audio_slice: np.ndarray, sr: int) -> np.ndarray:
+        if self._pyannote_embedder is None or audio_slice.size < max(400, sr // 40):
+            return np.zeros(192, dtype=np.float32)
+        try:
+            emb = self._pyannote_embedder(
+                {"waveform": audio_slice[None, :], "sample_rate": sr}
+            )
+            emb_np = np.asarray(emb, dtype=np.float32).reshape(-1)
+            return self._l2_normalize(emb_np)
+        except Exception:
+            return np.zeros(192, dtype=np.float32)
+
+    @staticmethod
+    def _acoustic_vector(audio_slice: np.ndarray, sr: int) -> np.ndarray:
+        if audio_slice.size < max(400, sr // 40):
+            return np.zeros(32, dtype=np.float32)
+        try:
+            mfcc = librosa.feature.mfcc(y=audio_slice, sr=sr, n_mfcc=13)
+            mfcc_mean = np.mean(mfcc, axis=1)
+            mfcc_std = np.std(mfcc, axis=1)
+            try:
+                f0 = librosa.yin(
+                    audio_slice,
+                    fmin=70,
+                    fmax=350,
+                    sr=sr,
+                )
+                voiced = f0[np.isfinite(f0)]
+                pitch_mean = np.array(
+                    [float(np.mean(voiced)) if voiced.size else 0.0],
+                    dtype=np.float32,
+                )
+                pitch_std = np.array(
+                    [float(np.std(voiced)) if voiced.size else 0.0],
+                    dtype=np.float32,
+                )
+            except Exception:
+                pitch_mean = np.array([0.0], dtype=np.float32)
+                pitch_std = np.array([0.0], dtype=np.float32)
+
+            spectral_centroid = librosa.feature.spectral_centroid(
+                y=audio_slice, sr=sr
+            )
+            centroid_mean = np.array(
+                [float(np.mean(spectral_centroid))], dtype=np.float32
+            )
+            rms = librosa.feature.rms(y=audio_slice)
+            rms_mean = np.array([float(np.mean(rms))], dtype=np.float32)
+
+            vec = np.concatenate(
+                [mfcc_mean, mfcc_std, pitch_mean, pitch_std, centroid_mean, rms_mean]
+            ).astype(np.float32)
+            return vec
+        except Exception:
+            return np.zeros(32, dtype=np.float32)
+
+    def build_hybrid_embedding(
+        self,
+        segment: dict[str, Any],
+        audio: np.ndarray | None = None,
+        sample_rate: int | None = None,
+    ) -> list[float]:
+        start = float(segment.get("start", 0.0))
+        end = float(segment.get("end", start))
+        if (
+            audio is None
+            or sample_rate is None
+            or sample_rate <= 0
+            or audio.size == 0
+            or end <= start
+        ):
+            return [0.0] * 224
+
+        audio_slice = self._extract_audio_slice(audio, sample_rate, start, end)
+        pyannote_vec = self._pyannote_vector(audio_slice, sample_rate)
+        acoustic_vec = self._acoustic_vector(audio_slice, sample_rate)
+        merged = np.concatenate([pyannote_vec, acoustic_vec]).astype(np.float32)
+        merged = self._l2_normalize(merged)
+        return merged.tolist()
+
+    def build_batch_hybrid_embeddings(
+        self,
+        segments: list[dict[str, Any]],
+        audio: np.ndarray,
+        sample_rate: int,
+    ) -> list[list[float]]:
+        if not segments:
+            return []
+
+        remote_embeddings = self._try_remote_embeddings(segments, audio, sample_rate)
+        if remote_embeddings is not None:
+            return remote_embeddings
+
+        return [
+            self.build_hybrid_embedding(
+                segment,
+                audio=audio,
+                sample_rate=sample_rate,
+            )
+            for segment in segments
+        ]

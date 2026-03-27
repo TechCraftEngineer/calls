@@ -28,6 +28,10 @@ const gigaAmSuccessResponseSchema = z.object({
   success: z.literal(true),
   segments: z.array(gigaAmSegmentSchema),
   total_duration: z.number().optional(),
+  final_transcript: z.string().optional(),
+  speaker_timeline: z.array(z.record(z.string(), z.unknown())).optional(),
+  pipeline: z.string().optional(),
+  stages: z.array(z.string()).optional(),
 });
 
 function toErrorMessage(error: unknown): string {
@@ -161,7 +165,12 @@ function segmentsToUtterances(
   segments: z.infer<typeof gigaAmSegmentSchema>[],
 ): Utterance[] {
   return segments.map((s, i) => ({
-    speaker: `Сегмент ${i + 1}`,
+    // Рантайм может вернуть speaker в расширенном payload ultra-pipeline.
+    // В базовой схеме поля нет, поэтому читаем через безопасный generic record.
+    speaker:
+      typeof (s as unknown as Record<string, unknown>).speaker === "string"
+        ? String((s as unknown as Record<string, unknown>).speaker)
+        : `Сегмент ${i + 1}`,
     text: s.text.trim(),
     start: s.start,
     end: s.end,
@@ -174,8 +183,7 @@ export function isGigaAmTranscribeConfigured(): boolean {
 
 export async function transcribeWithGigaAm(
   audioUrl: string,
-  _options?: {
-    /** legacy: не используется в sync API */
+  options?: {
     preprocessMetadata?: Record<string, unknown> | null;
   },
 ): Promise<AsrResult | null> {
@@ -231,6 +239,15 @@ export async function transcribeWithGigaAm(
     new Blob([audioBuffer], { type: contentType }),
     filename,
   );
+  if (
+    options?.preprocessMetadata &&
+    Object.keys(options.preprocessMetadata).length > 0
+  ) {
+    formData.append(
+      "preprocess_metadata_json",
+      JSON.stringify(options.preprocessMetadata),
+    );
+  }
   const apiResponse = await withRetry(
     () =>
       fetchWithTimeout(
@@ -287,7 +304,8 @@ export async function transcribeWithGigaAm(
 
   const segments = apiResponse.segments;
   const totalDuration = apiResponse.total_duration;
-  const text = segmentsToText(segments);
+  const finalTranscript = apiResponse.final_transcript?.trim() ?? "";
+  const text = finalTranscript || segmentsToText(segments);
   const utterances = segmentsToUtterances(segments);
   const processingTimeMs = Date.now() - start;
 
@@ -307,6 +325,10 @@ export async function transcribeWithGigaAm(
       totalDuration,
       segmentCount: segments.length,
       mode: "sync",
+      ultraPipeline:
+        apiResponse.pipeline === "ultra-sync-2026" || Boolean(finalTranscript),
+      speakerTimelineCount: apiResponse.speaker_timeline?.length,
+      pipelineStages: apiResponse.stages,
     },
   };
 }

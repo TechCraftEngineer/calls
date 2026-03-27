@@ -59,8 +59,12 @@ export async function mergeAsrWithLlm(input: {
     );
   }
 
+  const singleProvider = hCandidates.length === 1;
   const transcriptBlocks = hCandidates
-    .map((text, index) => `--- Транскрипт ${index + 1} (Giga AM) ---\n${text}`)
+    .map((text, index) => {
+      const providerSuffix = singleProvider ? "" : " (Giga AM)";
+      return `--- Транскрипт ${index + 1}${providerSuffix} ---\n${text}`;
+    })
     .join("\n\n");
 
   const start = Date.now();

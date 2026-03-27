@@ -45,7 +45,7 @@ export function buildTranscriptMetadata(input: {
     speakerCount: gigaAmBest?.utterances
       ? new Set(gigaAmBest.utterances.map((u) => u.speaker).filter(Boolean))
           .size
-      : 0,
+      : undefined,
     durationInSeconds:
       typeof durationInSeconds === "number" ? durationInSeconds : undefined,
     asrGigaAm: gigaAmBest

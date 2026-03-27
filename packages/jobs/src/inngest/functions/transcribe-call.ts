@@ -43,8 +43,8 @@ export const transcribeCallFn = inngest.createFunction(
     name: "Транскрибация: Inngest → audio-enhancer → giga-am → LLM",
     retries: 2,
     concurrency: {
-      limit: 1,
-      key: "'call-transcribe-global-pipeline'",
+      limit: 5,
+      key: "event.data.callId",
     },
     triggers: [transcribeRequested],
   },
@@ -163,18 +163,18 @@ export const transcribeCallFn = inngest.createFunction(
       "pipeline/audio:preprocess",
       async () => {
         logger.info("Inngest: audio-enhancer /preprocess", { callId });
-        const c = await callsService.getCall(callId);
-        if (!c?.fileId) {
+        const originalFileId = call.fileId;
+        if (!originalFileId) {
           throw new Error(`У звонка ${callId} нет привязанного файла`);
         }
-        const f = await filesService.getFileById(c.fileId);
+        const f = await filesService.getFileById(originalFileId);
         if (!f) {
-          throw new Error(`Файл не найден: ${c.fileId}`);
+          throw new Error(`Файл не найден: ${originalFileId}`);
         }
         return runPipelineAudioPreprocess({
           callId,
-          workspaceId: c.workspaceId,
-          originalFileId: c.fileId,
+          workspaceId: call.workspaceId,
+          originalFileId,
           originalStorageKey: f.storageKey,
         });
       },

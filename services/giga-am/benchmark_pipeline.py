@@ -41,11 +41,7 @@ def main() -> None:
             result = run_job(args.base_url, audio_path)
             item["status"] = result.get("status")
             item["latency_sec"] = result.get("latency_sec")
-            item["total_duration"] = (
-                result.get("result", {}).get("total_duration", 0.0)
-                if result.get("result")
-                else 0.0
-            )
+            item["total_duration"] = result.get("total_duration", 0.0)
         except Exception as exc:
             item["status"] = "error"
             item["error"] = str(exc)

@@ -20,7 +20,7 @@ export async function runAsrProviders(
 }> {
   const [gigaAmResult, durationResult] = await Promise.allSettled([
     transcribeWithGigaAm(processedAudioUrl, {
-      preprocessMetadata: options?.gigaPreprocessMetadata ?? undefined,
+      preprocessMetadata: options?.gigaPreprocessMetadata,
     }),
     getAudioDurationFromUrl(processedAudioUrl),
   ]);

@@ -4,7 +4,7 @@ from typing import Any
 
 
 class AlignmentService:
-    """Легковесный forced-alignment слой на базе сегментов ASR."""
+    """Forced-alignment approximation на базе сегментов ASR."""
 
     @staticmethod
     def _extract_words(text: str) -> list[str]:
@@ -23,19 +23,26 @@ class AlignmentService:
                 continue
 
             duration = max(0.001, end - start)
-            step = duration / len(words)
+            # Взвешенное распределение длительности по словам (длиннее слово -> больше времени).
+            weights = [max(1, len(word)) for word in words]
+            total_weight = sum(weights) or len(words)
             word_items = []
+            cursor = start
             for idx, word in enumerate(words):
-                w_start = start + idx * step
-                w_end = start + (idx + 1) * step
+                ratio = weights[idx] / total_weight
+                w_start = cursor
+                w_end = min(end, cursor + duration * ratio)
+                cursor = w_end
                 word_items.append(
                     {
                         "word": word,
                         "start": round(w_start, 3),
                         "end": round(w_end, 3),
-                        "confidence": 0.8,
+                        "confidence": 0.82,
                     }
                 )
+            if word_items:
+                word_items[-1]["end"] = round(end, 3)
             segment["words"] = word_items
             aligned.append(segment)
         return aligned
