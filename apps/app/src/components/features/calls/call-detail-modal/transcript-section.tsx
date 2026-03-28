@@ -16,6 +16,7 @@ import {
 } from "@calls/ui";
 import { Download, MessageSquare } from "lucide-react";
 import sanitizeHtml from "sanitize-html";
+import { CallWaveformPlayer } from "../call-waveform-player";
 import type { TranscriptDetail } from "./types";
 
 interface Message {
@@ -25,6 +26,7 @@ interface Message {
 }
 
 interface TranscriptSectionProps {
+  callId: string;
   transcript: TranscriptDetail | null;
   onDownloadTxt: () => void;
   managerName?: string;
@@ -66,6 +68,7 @@ function parseMessages(
 }
 
 export default function TranscriptSection({
+  callId,
   transcript,
   onDownloadTxt,
   managerName,
@@ -92,6 +95,9 @@ export default function TranscriptSection({
           Скачать .txt
         </Button>
       </CardHeader>
+      <div className="border-b border-border/60 px-6 py-4">
+        <CallWaveformPlayer callId={callId} />
+      </div>
       <CardContent className="flex flex-1 flex-col gap-5 overflow-y-auto p-6">
         {messages.length > 0 ? (
           messages.map((m, i) => (

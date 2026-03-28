@@ -303,6 +303,7 @@ export default function CallDetailModal({
               <Separator />
               <div className="grid grid-cols-1 gap-6 p-6 lg:grid-cols-[1fr_340px]">
                 <TranscriptSection
+                  callId={callIdStr}
                   transcript={transcript}
                   onDownloadTxt={handleDownloadTxt}
                   managerName={

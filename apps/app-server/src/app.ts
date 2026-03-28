@@ -7,6 +7,7 @@ import { cors } from "hono/cors";
 import { logger as honoLogger } from "hono/logger";
 import { corsOrigin } from "./config";
 import { registerAuthRoutes } from "./routes/auth";
+import { registerCallPlaybackRoutes } from "./routes/call-playback";
 import { registerHealthRoutes } from "./routes/health";
 import { registerOrpcRoutes } from "./routes/orpc";
 import { registerPbxWebhookRoutes } from "./routes/pbx-webhook";
@@ -39,6 +40,7 @@ export function createApp() {
   );
 
   registerOrpcRoutes(app);
+  registerCallPlaybackRoutes(app);
   registerAuthRoutes(app);
   registerTelegramWebhookRoutes(app);
   registerPbxWebhookRoutes(app);
