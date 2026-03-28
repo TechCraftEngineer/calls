@@ -16,7 +16,7 @@ import {
 } from "@calls/ui";
 import { Download, MessageSquare } from "lucide-react";
 import sanitizeHtml from "sanitize-html";
-import { CallWaveformPlayer } from "../call-waveform-player";
+import { AudioComparisonWaveformPlayer } from "../audio-comparison-waveform-player";
 import type { TranscriptDetail } from "./types";
 
 interface Message {
@@ -77,6 +77,9 @@ export default function TranscriptSection({
 
   return (
     <Card className="flex min-h-[600px] max-h-[800px] flex-col overflow-hidden border-border/60">
+      <div className="border-b border-border/60 px-6 py-4">
+        <AudioComparisonWaveformPlayer callId={callId} />
+      </div>
       <CardHeader className="flex flex-row items-center justify-between gap-4 border-b border-border/60 px-6 py-4">
         <div className="flex items-center gap-3">
           <CardTitle className="mb-0 flex items-center gap-2 text-base font-semibold">
@@ -95,9 +98,7 @@ export default function TranscriptSection({
           Скачать .txt
         </Button>
       </CardHeader>
-      <div className="border-b border-border/60 px-6 py-4">
-        <CallWaveformPlayer callId={callId} />
-      </div>
+
       <CardContent className="flex flex-1 flex-col gap-5 overflow-y-auto p-6">
         {messages.length > 0 ? (
           messages.map((m, i) => (

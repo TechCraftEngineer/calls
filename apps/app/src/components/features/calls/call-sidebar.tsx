@@ -8,7 +8,7 @@ import {
   CardTitle,
   Separator,
 } from "@calls/ui";
-import { CallRecordPlayer } from "./call-record-player";
+import { CallWaveformPlayer } from "./call-waveform-player";
 
 interface EvaluationDetail {
   id: string;
@@ -79,9 +79,7 @@ export default function CallSidebar({
           <CardTitle className="sidebar-card-title">🎵 ЗАПИСЬ ЗВОНКА</CardTitle>
         </CardHeader>
         <CardContent className="px-6 pb-6 pt-4">
-          <div className="audio-player-container">
-            <CallRecordPlayer callId={call.id} />
-          </div>
+          <CallWaveformPlayer callId={call.id} />
           <div className="mt-3 text-xs text-[#999]">
             Размер файла: {formatFileSize(call.sizeBytes)}
           </div>

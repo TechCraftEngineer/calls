@@ -36,6 +36,7 @@ function readWaveColors() {
 interface CallWaveformPlayerProps {
   callId: string;
   className?: string;
+  enhanced?: boolean;
 }
 
 /**
@@ -44,6 +45,7 @@ interface CallWaveformPlayerProps {
 export function CallWaveformPlayer({
   callId,
   className,
+  enhanced = false,
 }: CallWaveformPlayerProps) {
   const orpc = useORPC();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -53,10 +55,16 @@ export function CallWaveformPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
+  const queryOptions = enhanced
+    ? orpc.calls.getEnhancedPlaybackUrl.queryOptions({
+        input: { call_id: callId },
+      })
+    : orpc.calls.getPlaybackUrl.queryOptions({
+        input: { call_id: callId },
+      });
+
   const { data, isPending, isError, isSuccess } = useQuery({
-    ...orpc.calls.getPlaybackUrl.queryOptions({
-      input: { call_id: callId },
-    }),
+    ...queryOptions,
     enabled: !!callId,
   });
 
@@ -64,8 +72,8 @@ export function CallWaveformPlayer({
     const el = containerRef.current;
     if (!el || !isSuccess || !data || typeof window === "undefined") return;
 
-    // Same-origin URL: сервер проксирует S3, иначе fetch/WebAudio в wavesurfer блокируется CORS бакета.
-    const url = `${window.location.origin}/api/calls/${encodeURIComponent(callId)}/playback`;
+    // Прямой presigned URL из Yandex S3 (CORS настроен)
+    const url = data.url;
     const durationSeconds = data.duration;
 
     let cancelled = false;
@@ -137,7 +145,7 @@ export function CallWaveformPlayer({
       setCurrentTime(0);
       setDuration(0);
     };
-  }, [callId, isSuccess, data]);
+  }, [isSuccess, data]);
 
   const togglePlay = () => {
     void wavesurferRef.current?.playPause();
