@@ -54,6 +54,7 @@ export function CallWaveformPlayer({
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const queryOptions = enhanced
     ? orpc.calls.getEnhancedPlaybackUrl.queryOptions({
@@ -74,6 +75,7 @@ export function CallWaveformPlayer({
 
     // Прямой presigned URL из Yandex S3 (CORS настроен)
     const url = data.url;
+    if (!url) return;
     const durationSeconds = data.duration;
 
     let cancelled = false;
@@ -132,6 +134,9 @@ export function CallWaveformPlayer({
       ws.on("error", (err) => {
         console.error("WaveSurfer error:", err);
         setReady(false);
+        setLoadError(
+          err instanceof Error ? err.message : "Ошибка загрузки аудио",
+        );
       });
     });
 
@@ -144,6 +149,7 @@ export function CallWaveformPlayer({
       setPlaying(false);
       setCurrentTime(0);
       setDuration(0);
+      setLoadError(null);
     };
   }, [isSuccess, data]);
 
@@ -174,6 +180,10 @@ export function CallWaveformPlayer({
         Файл записи не найден или недоступен
       </p>
     );
+  }
+
+  if (loadError) {
+    return <p className="text-destructive text-sm">Ошибка: {loadError}</p>;
   }
 
   return (
@@ -210,7 +220,7 @@ export function CallWaveformPlayer({
           className="size-9 shrink-0 rounded-full"
           disabled={!ready}
           onClick={togglePlay}
-          title={playing ? "Пауза" : "Воспроизвести"}
+          aria-label={playing ? "Пауза" : "Воспроизвести"}
         >
           {playing ? (
             <Pause className="size-4" />
