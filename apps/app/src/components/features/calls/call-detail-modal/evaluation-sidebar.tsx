@@ -18,7 +18,6 @@ import {
   User,
   UserCheck,
 } from "lucide-react";
-import { AudioComparisonPlayer } from "../audio-comparison-player";
 import type { CallDetail, EvaluationDetail, TranscriptDetail } from "./types";
 
 interface EvaluationSidebarProps {
@@ -52,12 +51,6 @@ export default function EvaluationSidebar({
 
   return (
     <div className="flex min-w-0 flex-col gap-4 sm:gap-6">
-      <Card className="border-border/60">
-        <CardContent className="px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-6">
-          <AudioComparisonPlayer callId={call.id} />
-        </CardContent>
-      </Card>
-
       <Card className="border-border/60">
         <CardContent className="px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-6">
           <p

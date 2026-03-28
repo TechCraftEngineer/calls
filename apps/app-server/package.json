@@ -16,6 +16,7 @@
     "@calls/db": "workspace:*",
     "@calls/emails": "workspace:*",
     "@calls/jobs": "workspace:*",
+    "@calls/lib": "workspace:*",
     "@calls/telegram-bot": "workspace:*",
     "@calls/validators": "workspace:*",
     "@orpc/server": "^1.13.10",

@@ -54,9 +54,6 @@ export class SettingsService {
       );
 
       if (!raw?.trim()) {
-        console.debug(
-          `No bot token found for key: ${key}, workspace: ${workspaceId}`,
-        );
         return null;
       }
 

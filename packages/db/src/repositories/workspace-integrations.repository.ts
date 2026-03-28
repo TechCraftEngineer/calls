@@ -240,16 +240,6 @@ export const workspaceIntegrationsRepository = {
       const cfg = row[0]?.config as { botToken?: string } | undefined;
       const token = cfg?.botToken?.trim() || null;
 
-      if (token) {
-        console.debug(
-          `Найден токен бота для ${integrationType} в workspace ${workspaceId}`,
-        );
-      } else {
-        console.debug(
-          `Токен бота не найден для ${integrationType} в workspace ${workspaceId}`,
-        );
-      }
-
       return token;
     } catch (error) {
       console.error(
