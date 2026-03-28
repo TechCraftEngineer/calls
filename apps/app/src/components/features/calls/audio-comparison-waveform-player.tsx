@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@calls/ui";
-import { skipToken, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Radio, Volume2 } from "lucide-react";
 import { CallWaveformPlayer } from "./call-waveform-player";
 import { useORPC } from "@/orpc/react";
@@ -20,26 +20,23 @@ export function AudioComparisonWaveformPlayer({
 }: AudioComparisonWaveformPlayerProps) {
   const orpc = useORPC();
   const id = callId?.trim() ?? "";
-  const fallbackCallId = "__skip__";
-  const originalQueryOptions = orpc.calls.getPlaybackUrl.queryOptions({
-    input: { call_id: id || fallbackCallId },
-  });
-  const enhancedQueryOptions = orpc.calls.getEnhancedPlaybackUrl.queryOptions({
-    input: { call_id: id || fallbackCallId },
-  });
 
   const {
     data: originalData,
     isPending: originalPending,
     isError: originalError,
   } = useQuery({
-    ...originalQueryOptions,
-    queryFn: id ? originalQueryOptions.queryFn : skipToken,
+    ...orpc.calls.getPlaybackUrl.queryOptions({
+      input: { call_id: id },
+    }),
+    enabled: !!id,
   });
 
   const { data: enhancedData, isPending: enhancedPending } = useQuery({
-    ...enhancedQueryOptions,
-    queryFn: id ? enhancedQueryOptions.queryFn : skipToken,
+    ...orpc.calls.getEnhancedPlaybackUrl.queryOptions({
+      input: { call_id: id },
+    }),
+    enabled: !!id,
   });
 
   if (!id) {
@@ -53,9 +50,12 @@ export function AudioComparisonWaveformPlayer({
   if (originalPending || enhancedPending) {
     return (
       <div className="flex items-center justify-center py-6">
+        <span className="sr-only" role="status" aria-live="polite">
+          Загрузка аудио
+        </span>
         <div
           className="size-6 animate-spin rounded-full border-2 border-muted border-t-primary"
-          aria-hidden
+          aria-hidden="true"
         />
       </div>
     );

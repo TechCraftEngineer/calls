@@ -24,6 +24,14 @@ export function registerCallPlaybackRoutes(app: Hono) {
     }
 
     const callId = c.req.param("callId");
+
+    // Валидация UUID
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(callId)) {
+      return c.json({ error: "Некорректный формат ID звонка" }, 400);
+    }
+
     const call = await context.callsService.getCall(callId);
     if (!call) {
       return c.json({ error: "Звонок не найден" }, 404);
@@ -43,9 +51,25 @@ export function registerCallPlaybackRoutes(app: Hono) {
     const url = await getDownloadUrl(file.storageKey);
     const range = c.req.header("Range") ?? undefined;
 
-    const upstream = await fetch(url, {
-      headers: range ? { Range: range } : undefined,
-    });
+    // Fetch с timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 секунд
+
+    let upstream: Response;
+    try {
+      upstream = await fetch(url, {
+        headers: range ? { Range: range } : undefined,
+        signal: controller.signal,
+      });
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === "AbortError") {
+        return c.json({ error: "Timeout при получении записи" }, 504);
+      }
+      return c.json({ error: "Не удалось получить запись" }, 502);
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!upstream.ok && upstream.status !== 206) {
       return c.json({ error: "Не удалось получить запись" }, 502);
@@ -60,6 +84,9 @@ export function registerCallPlaybackRoutes(app: Hono) {
     if (acceptRanges) headers.set("Accept-Ranges", acceptRanges);
     const contentRange = upstream.headers.get("Content-Range");
     if (contentRange) headers.set("Content-Range", contentRange);
+
+    // Cache control для аудио
+    headers.set("Cache-Control", "public, max-age=31536000, immutable");
 
     return new Response(upstream.body, {
       status: upstream.status,

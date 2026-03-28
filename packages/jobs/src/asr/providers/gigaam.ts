@@ -164,7 +164,29 @@ function segmentsToText(
   segments: z.infer<typeof gigaAmSegmentSchema>[],
 ): string {
   return segments
-    .map((s) => s.text.trim())
+    .map((s) => {
+      const text = s.text.trim();
+      if (!text) return "";
+
+      const speaker = typeof s.speaker === "string" ? s.speaker : "Спикер";
+      return `${speaker}: ${text}`;
+    })
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
+function speakerTimelineToText(
+  timeline: z.infer<typeof gigaAmSpeakerTimelineEntrySchema>[],
+): string {
+  return timeline
+    .map((entry) => {
+      const text = entry.text.trim();
+      if (!text) return "";
+
+      const speaker = entry.speaker || "Спикер";
+      return `${speaker}: ${text}`;
+    })
     .filter(Boolean)
     .join("\n")
     .trim();
@@ -307,9 +329,16 @@ export async function transcribeWithGigaAm(
   );
 
   const segments = apiResponse.segments;
+  const speakerTimeline = apiResponse.speaker_timeline;
   const totalDuration = apiResponse.total_duration;
   const finalTranscript = apiResponse.final_transcript?.trim() ?? "";
-  const text = finalTranscript || segmentsToText(segments);
+
+  // Приоритет: speaker_timeline > final_transcript > segments
+  const text =
+    speakerTimeline && speakerTimeline.length > 0
+      ? speakerTimelineToText(speakerTimeline)
+      : finalTranscript || segmentsToText(segments);
+
   const utterances = segmentsToUtterances(segments);
   const processingTimeMs = Date.now() - start;
 
