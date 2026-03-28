@@ -62,7 +62,6 @@ export function registerCallPlaybackRoutes(app: Hono) {
         signal: controller.signal,
       });
     } catch (error) {
-      clearTimeout(timeoutId);
       if (error instanceof Error && error.name === "AbortError") {
         return c.json({ error: "Timeout при получении записи" }, 504);
       }
