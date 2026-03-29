@@ -66,6 +66,9 @@ export const get = workspaceProcedure
           call.timestamp instanceof Date
             ? call.timestamp.toISOString()
             : call.timestamp,
+        duration: (durationSeconds === undefined ? null : durationSeconds) as
+          | number
+          | null,
         sizeBytes: (sizeBytes === undefined ? null : sizeBytes) as
           | number
           | null,
