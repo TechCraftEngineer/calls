@@ -112,13 +112,19 @@ export async function runPipelineAudioPreprocess(params: {
   let durationSeconds: number | null = null;
 
   // Используем длительность из Python сервиса, если доступна (более точная)
-  if (typeof prep.durationSeconds === "number" && prep.durationSeconds > 0) {
+  if (
+    typeof prep.durationSeconds === "number" &&
+    Number.isFinite(prep.durationSeconds) &&
+    prep.durationSeconds > 0
+  ) {
     durationSeconds = prep.durationSeconds;
   } else {
     // Fallback: рассчитываем через music-metadata
     try {
       const d = await getAudioDurationFromBuffer(prep.audioBuffer);
-      if (typeof d === "number" && d > 0) durationSeconds = d;
+      if (typeof d === "number" && Number.isFinite(d) && d > 0) {
+        durationSeconds = d;
+      }
     } catch {
       /* ignore */
     }

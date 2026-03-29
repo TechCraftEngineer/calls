@@ -24,6 +24,7 @@ export const workspacesRouter = {
   listUsersAvailableToAdd: membersRouter.listUsersAvailableToAdd,
 
   createInvitation: invitationsRouter.createInvitation,
+  createLinkInvitation: invitationsRouter.createLinkInvitation,
   listInvitations: invitationsRouter.listInvitations,
   revokeInvitation: invitationsRouter.revokeInvitation,
   updateInvitationSettings: invitationsRouter.updateInvitationSettings,

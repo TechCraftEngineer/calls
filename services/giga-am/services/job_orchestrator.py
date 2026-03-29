@@ -217,9 +217,47 @@ class JobOrchestrator:
             self._set_stage(job, "diarization", "running")
             self._persist_job(job)
         overlap_spans = prep.get("metadata", {}).get("overlap_candidates", [])
-        for seg in aligned_segments:
-            seg["embedding"] = self.embedding.build_hybrid_embedding(seg)
+        
+        # Загружаем аудио для построения эмбеддингов спикеров
+        try:
+            import librosa
+            import numpy as np
+            audio_np, audio_sr = librosa.load(prep["audio_path"], sr=16000, mono=True)
+            logger.info(
+                "Аудио загружено для диаризации: %d samples, %d Hz",
+                len(audio_np),
+                audio_sr,
+            )
+        except Exception as exc:
+            logger.warning("Не удалось загрузить аудио для диаризации: %s", exc)
+            audio_np = np.array([], dtype=np.float32)
+            audio_sr = 16000
+        
+        # Строим эмбеддинги батчем (эффективнее и правильнее)
+        batch_embeddings = self.embedding.build_batch_hybrid_embeddings(
+            aligned_segments,
+            audio=audio_np,
+            sample_rate=audio_sr,
+        )
+        logger.info(
+            "Построено %d эмбеддингов для %d сегментов",
+            len(batch_embeddings),
+            len(aligned_segments),
+        )
+        
+        for idx, seg in enumerate(aligned_segments):
+            seg["embedding"] = batch_embeddings[idx] if idx < len(batch_embeddings) else []
+        
         diarized = self.clustering.assign_speakers(aligned_segments, overlap_spans=overlap_spans)
+        
+        # Логируем результаты кластеризации
+        unique_speakers = set(seg.get("speaker") for seg in diarized if seg.get("speaker"))
+        logger.info(
+            "Диаризация завершена: обнаружено %d спикеров (%s)",
+            len(unique_speakers),
+            ", ".join(sorted(unique_speakers)),
+        )
+        
         timeline = self.attribution.build_speaker_timeline(diarized)
         with self._lock:
             self._set_stage(job, "diarization", "done", {"overlap_spans": len(overlap_spans)})

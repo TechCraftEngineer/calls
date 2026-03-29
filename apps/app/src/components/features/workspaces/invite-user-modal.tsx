@@ -41,20 +41,26 @@ interface InviteUserModalProps {
     email: string,
     role: "admin" | "member",
   ) => Promise<{ token: string; inviteUrl: string; expiresAt: Date }>;
+  onCreateLink: (
+    role: "admin" | "member",
+  ) => Promise<{ token: string; inviteUrl: string; expiresAt: Date }>;
 }
 
 export default function InviteUserModal({
   onClose,
   onSubmit,
+  onCreateLink,
 }: InviteUserModalProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "member">("member");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [inviteMode, setInviteMode] = useState<"email" | "link">("email");
   const [result, setResult] = useState<{
-    email: string;
+    email?: string;
     inviteUrl: string;
     expiresAt: Date;
+    isLinkInvite: boolean;
   } | null>(null);
   const [copied, setCopied] = useState(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
@@ -77,6 +83,27 @@ export default function InviteUserModal({
     e.preventDefault();
     setError("");
 
+    if (inviteMode === "link") {
+      setSubmitting(true);
+      try {
+        const inviteResult = await onCreateLink(role);
+        setResult({
+          inviteUrl: getInviteUrl(inviteResult.inviteUrl, inviteResult.token),
+          expiresAt: inviteResult.expiresAt,
+          isLinkInvite: true,
+        });
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Не удалось создать ссылку-приглашение. Попробуйте позже.",
+        );
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
     const trimmed = email.trim().toLowerCase();
     if (!trimmed) {
       setError("Введите email получателя");
@@ -94,6 +121,7 @@ export default function InviteUserModal({
         email: trimmed,
         inviteUrl: getInviteUrl(inviteResult.inviteUrl, inviteResult.token),
         expiresAt: inviteResult.expiresAt,
+        isLinkInvite: false,
       });
     } catch (err) {
       setError(
@@ -200,10 +228,18 @@ export default function InviteUserModal({
                   id="invite-success-title"
                   className="text-xl font-bold text-gray-900 m-0"
                 >
-                  Приглашение отправлено
+                  {result.isLinkInvite
+                    ? "Ссылка-приглашение создана"
+                    : "Приглашение отправлено"}
                 </h2>
                 <p className="text-sm text-gray-600 mt-1 m-0">
-                  Email отправлен на <strong>{result.email}</strong>
+                  {result.isLinkInvite ? (
+                    "Любой, у кого есть эта ссылка, сможет присоединиться"
+                  ) : (
+                    <>
+                      Email отправлен на <strong>{result.email}</strong>
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -289,10 +325,20 @@ export default function InviteUserModal({
 
           <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
             <p className="text-sm text-blue-900 m-0">
-              <strong>Что дальше?</strong> Получатель перейдёт по ссылке,
-              создаст аккаунт и автоматически получит доступ к компании. Вы
-              также можете скопировать ссылку и отправить её любым удобным
-              способом.
+              {result.isLinkInvite ? (
+                <>
+                  <strong>Что дальше?</strong> Любой, у кого есть эта ссылка,
+                  сможет создать аккаунт и присоединиться к компании. Будьте
+                  осторожны при распространении ссылки.
+                </>
+              ) : (
+                <>
+                  <strong>Что дальше?</strong> Получатель перейдёт по ссылке,
+                  создаст аккаунт и автоматически получит доступ к компании. Вы
+                  также можете скопировать ссылку и отправить её любым удобным
+                  способом.
+                </>
+              )}
             </p>
           </div>
 
@@ -304,6 +350,7 @@ export default function InviteUserModal({
                 setResult(null);
                 setEmail("");
                 setRole("member");
+                setInviteMode("email");
               }}
               className="flex-1 text-foreground"
             >
@@ -366,9 +413,37 @@ export default function InviteUserModal({
         </div>
 
         <p className="text-sm text-gray-600 m-0">
-          Отправьте приглашение по email. Получатель создаст аккаунт и
-          автоматически присоединится к компании.
+          {inviteMode === "email"
+            ? "Отправьте приглашение по email. Получатель создаст аккаунт и автоматически присоединится к компании."
+            : "Создайте ссылку-приглашение, которую можно отправить любым способом. Любой, у кого есть ссылка, сможет присоединиться."}
         </p>
+
+        <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+          <button
+            type="button"
+            onClick={() => setInviteMode("email")}
+            disabled={submitting}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              inviteMode === "email"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            По email
+          </button>
+          <button
+            type="button"
+            onClick={() => setInviteMode("link")}
+            disabled={submitting}
+            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              inviteMode === "link"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            По ссылке
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {error && (
@@ -392,29 +467,31 @@ export default function InviteUserModal({
             </div>
           )}
 
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="invite-email"
-              className="text-sm font-semibold text-gray-700"
-            >
-              Email адрес
-            </label>
-            <Input
-              ref={emailInputRef}
-              id="invite-email"
-              type="email"
-              name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="colleague@company.com"
-              autoComplete="email"
-              spellCheck={false}
-              required
-              disabled={submitting}
-              aria-describedby={error ? "email-error" : undefined}
-              className="text-base"
-            />
-          </div>
+          {inviteMode === "email" && (
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="invite-email"
+                className="text-sm font-semibold text-gray-700"
+              >
+                Email адрес
+              </label>
+              <Input
+                ref={emailInputRef}
+                id="invite-email"
+                type="email"
+                name="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="colleague@company.com"
+                autoComplete="email"
+                spellCheck={false}
+                required
+                disabled={submitting}
+                aria-describedby={error ? "email-error" : undefined}
+                className="text-base"
+              />
+            </div>
+          )}
 
           <div className="flex flex-col gap-2">
             <span className="text-sm font-semibold text-gray-700">Роль</span>
@@ -473,7 +550,13 @@ export default function InviteUserModal({
               disabled={submitting}
               className="flex-1"
             >
-              {submitting ? "Отправка…" : "Отправить приглашение"}
+              {submitting
+                ? inviteMode === "link"
+                  ? "Создание ссылки…"
+                  : "Отправка…"
+                : inviteMode === "link"
+                  ? "Создать ссылку-приглашение"
+                  : "Отправить приглашение"}
             </Button>
           </div>
         </form>
