@@ -410,13 +410,14 @@ export class InvitationsService {
   async listAllPendingForWorkspace(workspaceId: string): Promise<
     Array<{
       id: string;
-      email: string;
+      email: string | null;
       role: string;
       token: string | null;
       expiresAt: Date | null;
       createdAt: Date;
       invitedBy: string | null;
       pendingSettings?: Record<string, unknown>;
+      invitationType: "email" | "link";
     }>
   > {
     const [members, invRows] = await Promise.all([
@@ -432,17 +433,19 @@ export class InvitationsService {
       expiresAt: r.invitationExpiresAt,
       createdAt: r.createdAt,
       invitedBy: r.invitedBy,
+      invitationType: "email" as const,
       pendingSettings: r.pendingSettings as Record<string, unknown> | undefined,
     }));
 
     const fromInvitations = invRows.map((inv) => ({
       id: inv.id,
-      email: inv.email ?? "",
+      email: inv.email ?? null,
       role: inv.role,
       token: inv.token,
       expiresAt: inv.expiresAt,
       createdAt: inv.createdAt,
       invitedBy: inv.invitedBy,
+      invitationType: (inv.email ? "email" : "link") as "email" | "link",
       pendingSettings: inv.pendingSettings as
         | Record<string, unknown>
         | undefined,
@@ -584,14 +587,14 @@ export class InvitationsService {
         );
       }
 
-      const token = generateInviteToken();
+      const newToken = generateInviteToken();
       const expiresAt = getDefaultExpiresAt();
 
       await this.workspacesService.addPendingMember({
         workspaceId: inv.workspaceId,
         userId: existingUser.id,
         role: inv.role as "owner" | "admin" | "member",
-        invitationToken: token,
+        invitationToken: newToken,
         invitationExpiresAt: expiresAt,
         invitedBy: inv.invitedBy,
       });

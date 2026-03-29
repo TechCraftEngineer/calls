@@ -3,6 +3,20 @@
 import { Button, Card, CardContent } from "@calls/ui";
 import { useState } from "react";
 
+// Функция для русской множественной формы
+const formatRussianPlural = (
+  count: number,
+  forms: [string, string, string],
+): string => {
+  const tens = Math.floor((count % 100) / 10);
+  const ones = count % 10;
+
+  if (tens === 1) return forms[2]; // 11-14
+  if (ones === 1) return forms[0]; // 1
+  if (ones >= 2 && ones <= 4) return forms[1]; // 2-4
+  return forms[2]; // 5-9, 0
+};
+
 interface PendingInvitation {
   id: string;
   email: string | null;
@@ -63,7 +77,11 @@ export default function PendingInvitations({
           </h3>
           <span className="text-sm text-gray-500">
             {invitations.length}{" "}
-            {invitations.length === 1 ? "приглашение" : "приглашений"}
+            {formatRussianPlural(invitations.length, [
+              "приглашение",
+              "приглашения",
+              "приглашений",
+            ])}
           </span>
         </div>
 

@@ -331,7 +331,10 @@ export const list = workspaceProcedure
               ? (managerIdByInternalNumber.get(normalizedInternalNumber) ??
                 null)
               : null,
-            duration: item.fileDuration ?? null,
+            duration:
+              item.fileDuration ??
+              item.transcript?.metadata?.durationInSeconds ??
+              null,
           },
           analysisCostRub: isLlmProcessed
             ? calculateAnalysisCostRub(

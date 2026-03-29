@@ -120,7 +120,7 @@ export async function correctWithContext(
     }
 
     const contextInfo = companyContext
-      ? `\n\nКОНТЕКСТ КОМПАНИИ:\n${companyContext}\n\nИспользуй эту информацию для лучшего понимания предметной области и терминологии.`
+      ? `\n\nКОНТЕКСТ КОМПАНИИ:\n${companyContext}\n\nКРИТИЧЕСКИ ВАЖНО: Используй ТОЧНО это название компании. НЕ изменяй написание, НЕ транслитерируй, НЕ переводи. Используй эту информацию для лучшего понимания предметной области и терминологии.`
       : "";
 
     const { text: correctedTextRaw } = await generateWithAi({

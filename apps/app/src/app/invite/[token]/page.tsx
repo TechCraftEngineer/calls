@@ -41,10 +41,31 @@ export default function InviteAcceptPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [userHasPassword, setUserHasPassword] = useState<boolean | null>(null);
   const [isLinkInvitation, setIsLinkInvitation] = useState(false);
+
+  // Валидатор для проверки доступности приглашения
+  const isInvitationEnabled = (
+    currentUser: { id: string | number; email: string } | null,
+    invitation: any,
+  ): boolean => {
+    if (!currentUser || !invitation) return false;
+    if (!currentUser.email) return false;
+
+    // Для link-приглашений любой авторизованный пользователь может принять
+    if (invitation.invitationType === "link") return true;
+
+    // Для email-приглашений проверяем совпадение email
+    return invitation.email
+      ? currentUser.email.toLowerCase() === invitation.email.toLowerCase()
+      : false;
+  };
+
+  // Create dynamic schema based on invitation type
+  const createInviteSchema = (isLink: boolean) => {
+    return isLink ? inviteAcceptLinkSchema : inviteAcceptSchema;
+  };
+
   const form = useForm<InviteAcceptData>({
-    resolver: zodResolver(
-      isLinkInvitation ? inviteAcceptLinkSchema : inviteAcceptSchema,
-    ),
+    resolver: zodResolver(createInviteSchema(isLinkInvitation)),
     defaultValues: {
       name: "",
       password: "",
@@ -66,6 +87,20 @@ export default function InviteAcceptPage() {
     setIsLinkInvitation(invitation?.invitationType === "link");
   }, [invitation]);
 
+  // Update form resolver when isLinkInvitation changes
+  useEffect(() => {
+    form.reset({
+      name: "",
+      password: "",
+      email: "",
+    });
+  }, [form]);
+
+  // Update form resolver when invitation type changes
+  useEffect(() => {
+    form.setValue("email", "");
+  }, [isLinkInvitation, form]);
+
   // Проверяем наличие пароля у пользователя, если он авторизован и email совпадает (или это link-приглашение)
   const { data: passwordCheck, isLoading: checkingPasswordQuery } = useQuery<{
     hasPassword: boolean;
@@ -75,16 +110,7 @@ export default function InviteAcceptPage() {
     ...orpc.workspaces.checkUserPassword.queryOptions({
       input: { email: currentUser?.email || "" },
     }),
-    enabled: Boolean(
-      currentUser &&
-        invitation &&
-        currentUser.email &&
-        (!!invitation.email || invitation.invitationType === "link") &&
-        (invitation.invitationType === "link" ||
-          (invitation.email &&
-            currentUser.email.toLowerCase() ===
-              invitation.email.toLowerCase())),
-    ),
+    enabled: isInvitationEnabled(currentUser, invitation),
   });
 
   useEffect(() => {

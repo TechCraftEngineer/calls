@@ -1,13 +1,10 @@
 import { pbxService } from "@calls/db";
+import { WEBHOOK_SECRET_MIN_LENGTH } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { getUserEmail } from "./get-user-email";
 import { pbxWebhookSchema } from "./schemas";
-
-const WEBHOOK_SECRET_BYTES = 32;
-
-const WEBHOOK_SECRET_MIN_LENGTH = WEBHOOK_SECRET_BYTES * 2;
 
 export const updatePbxWebhook = workspaceAdminProcedure
   .input(pbxWebhookSchema)
