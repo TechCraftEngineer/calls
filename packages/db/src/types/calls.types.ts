@@ -42,6 +42,8 @@ export interface CallWithTranscript {
   call: Call;
   transcript: Transcript | null;
   evaluation: CallEvaluation | null;
+  fileDuration: number | null;
+  fileSizeBytes: number | null;
 }
 
 export interface CreateCallData {
@@ -52,10 +54,8 @@ export interface CreateCallData {
   number?: string | null;
   timestamp: string;
   name?: string | null;
-  duration?: number | null;
   direction?: string | null;
   status?: CallStatus | string | null;
-  sizeBytes?: number | null;
   fileId?: string | null;
   pbxNumberId?: string | null;
   internalNumber?: string | null;

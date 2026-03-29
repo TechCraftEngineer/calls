@@ -21,12 +21,14 @@ export const get = workspaceProcedure
       context.callsService.getEvaluation(input.call_id),
     ]);
 
-    // Размер: из call или из связанного файла
-    let sizeBytes: number | null | undefined = call.sizeBytes;
-    if (sizeBytes == null && call.fileId) {
+    // Размер и длительность: из связанного файла
+    let sizeBytes: number | null | undefined;
+    let durationSeconds: number | null | undefined;
+    if (call.fileId) {
       try {
         const file = await filesService.getFileById(call.fileId);
         sizeBytes = file?.sizeBytes ?? undefined;
+        durationSeconds = file?.durationSeconds ?? undefined;
       } catch (error) {
         console.warn(`File not found for call ${input.call_id}:`, error);
       }

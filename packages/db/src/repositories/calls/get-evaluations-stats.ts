@@ -3,7 +3,6 @@ import {
   asc,
   avg,
   count,
-  desc,
   eq,
   gte,
   inArray,
@@ -69,9 +68,10 @@ export async function getEvaluationsStats(
       managerName: schema.calls.name,
       direction: schema.calls.direction,
       totalCalls: count(),
-      totalDuration: sum(schema.calls.duration),
+      totalDuration: sum(schema.files.durationSeconds),
     })
     .from(schema.calls)
+    .leftJoin(schema.files, eq(schema.calls.fileId, schema.files.id))
     .leftJoin(
       schema.callEvaluations,
       eq(schema.calls.id, schema.callEvaluations.callId),
@@ -214,7 +214,7 @@ export async function getCallSummariesByManager(
       rn: sql<number>`row_number() over (
         partition by coalesce(${schema.calls.name}, ${schema.calls.internalNumber}, 'Unknown')
         order by ${schema.calls.timestamp} desc, ${schema.calls.id} desc
-      )`,
+      )`.as("rn"),
     })
     .from(schema.calls)
     .innerJoin(

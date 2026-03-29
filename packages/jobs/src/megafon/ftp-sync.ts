@@ -322,9 +322,8 @@ export async function syncFtp(
           }
 
           // Длительность определяем по уже скачанному буферу.
-          // fileDurationSeconds храним в `files`, а callDurationSeconds (округлённая) - в `calls`.
+          // fileDurationSeconds храним в `files`.
           let fileDurationSeconds: number | null = null;
-          let callDurationSeconds: number | null = null;
 
           const duration = await getAudioDurationFromBuffer(downloadBuffer);
           if (
@@ -333,7 +332,6 @@ export async function syncFtp(
             duration > 0
           ) {
             fileDurationSeconds = duration;
-            callDurationSeconds = Math.round(duration);
           } else {
             logger.warn("Не удалось определить длительность записи", {
               filename: relativePath,
@@ -382,9 +380,7 @@ export async function syncFtp(
             direction: parsed.direction,
             source: parsed.internalNumber,
             name: parsed.internalNumber,
-            sizeBytes: downloadBuffer.length,
             fileId: fileId ?? null,
-            duration: callDurationSeconds,
           });
 
           result.downloaded++;

@@ -39,8 +39,9 @@ export async function getCallsMetrics(
     .innerJoin(schema.calls, eq(schema.transcripts.callId, schema.calls.id))
     .$dynamic();
   const avgDurationQuery = db
-    .select({ avg: avg(schema.calls.duration) })
+    .select({ avg: avg(schema.files.durationSeconds) })
     .from(schema.calls)
+    .leftJoin(schema.files, eq(schema.calls.fileId, schema.files.id))
     .$dynamic();
   const lastSyncQuery =
     workspaceId != null

@@ -6,7 +6,6 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
-  integer,
   pgTable,
   text,
   timestamp,
@@ -28,10 +27,8 @@ export const calls = pgTable(
     number: text("number"),
     timestamp: timestamp("timestamp", { withTimezone: true }).notNull(),
     name: text("name"),
-    duration: integer("duration"),
     direction: text("direction"),
     status: text("status"),
-    sizeBytes: integer("size_bytes"),
     fileId: uuid("file_id").references(() => files.id, {
       onDelete: "set null",
     }),
