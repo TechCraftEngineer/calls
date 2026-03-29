@@ -183,7 +183,11 @@ export function CallWaveformPlayer({
   }
 
   if (loadError) {
-    return <p className="text-destructive text-sm">Ошибка: {loadError}</p>;
+    return (
+      <p className="text-destructive text-sm" aria-live="polite">
+        Ошибка: {loadError}
+      </p>
+    );
   }
 
   return (

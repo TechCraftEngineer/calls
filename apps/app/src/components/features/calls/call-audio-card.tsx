@@ -1,5 +1,3 @@
-"use client";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@calls/ui";
 import type { CallDetail } from "@/types/calls";
 import { CallWaveformPlayer } from "./call-waveform-player";

@@ -168,7 +168,10 @@ function segmentsToText(
       const text = s.text.trim();
       if (!text) return "";
 
-      const speaker = typeof s.speaker === "string" ? s.speaker : "Спикер";
+      const speaker =
+        typeof s.speaker === "string" && s.speaker.trim()
+          ? s.speaker.trim()
+          : "Спикер";
       return `${speaker}: ${text}`;
     })
     .filter(Boolean)
@@ -184,7 +187,7 @@ function speakerTimelineToText(
       const text = entry.text.trim();
       if (!text) return "";
 
-      const speaker = entry.speaker || "Спикер";
+      const speaker = entry.speaker?.trim() || "Спикер";
       return `${speaker}: ${text}`;
     })
     .filter(Boolean)
@@ -334,10 +337,11 @@ export async function transcribeWithGigaAm(
   const finalTranscript = apiResponse.final_transcript?.trim() ?? "";
 
   // Приоритет: speaker_timeline > final_transcript > segments
-  const text =
+  const speakerText =
     speakerTimeline && speakerTimeline.length > 0
       ? speakerTimelineToText(speakerTimeline)
-      : finalTranscript || segmentsToText(segments);
+      : "";
+  const text = speakerText || finalTranscript || segmentsToText(segments);
 
   const utterances = segmentsToUtterances(segments);
   const processingTimeMs = Date.now() - start;
