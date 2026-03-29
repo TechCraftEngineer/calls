@@ -1,6 +1,5 @@
 import {
   isValidCalendarIsoDate,
-  WEBHOOK_SECRET_BYTES,
   WEBHOOK_SECRET_MIN_LENGTH,
 } from "@calls/shared";
 import { z } from "zod";

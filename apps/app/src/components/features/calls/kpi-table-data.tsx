@@ -1,6 +1,38 @@
-import { Badge, Button, DataGrid, DataGridColumnHeader, DataGridColumnVisibility, DataGridContainer, DataGridPagination, DataGridTable, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Label, Skeleton } from "@calls/ui";
-import { type ColumnDef, getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
-import { Check, Download, Loader2, Phone, Settings2, TrendingUp } from "lucide-react";
+import {
+  Badge,
+  Button,
+  DataGrid,
+  DataGridColumnHeader,
+  DataGridColumnVisibility,
+  DataGridContainer,
+  DataGridPagination,
+  DataGridTable,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  Skeleton,
+} from "@calls/ui";
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  flexRender,
+} from "@tanstack/react-table";
+import {
+  Check,
+  Download,
+  Loader2,
+  Phone,
+  Settings2,
+  TrendingUp,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 
 export interface KpiRow {
@@ -30,7 +62,11 @@ export interface KpiTableDataProps {
   onEditEmployee: (employeeId: string) => void;
   onSaveRow: (row: KpiRow) => void;
   onCancelEdit: () => void;
-  onDraftFieldChange: (employeeId: string, field: keyof KpiRow, value: string) => void;
+  onDraftFieldChange: (
+    employeeId: string,
+    field: keyof KpiRow,
+    value: string,
+  ) => void;
   onExportCsv: () => void;
 }
 
@@ -90,9 +126,7 @@ function KpiEditDialog({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Редактирование KPI</DialogTitle>
-          <DialogDescription>
-            Настройте KPI для {row.name}
-          </DialogDescription>
+          <DialogDescription>Настройте KPI для {row.name}</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
@@ -129,7 +163,9 @@ function KpiEditDialog({
               id="targetTalkTimeMinutes"
               type="number"
               value={draft.targetTalkTimeMinutes ?? ""}
-              onChange={(e) => onFieldChange("targetTalkTimeMinutes", e.target.value)}
+              onChange={(e) =>
+                onFieldChange("targetTalkTimeMinutes", e.target.value)
+              }
               className="col-span-3"
               placeholder="0"
             />
@@ -163,173 +199,206 @@ export default function KpiTableData({
 }: KpiTableDataProps) {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
 
-  const columns = useMemo<ColumnDef<KpiRow>[]>(() => [
-    {
-      accessorKey: "name",
-      header: "Сотрудник",
-      cell: ({ row }) => {
-        const employee = row.original;
-        return (
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col">
-              <span className="font-medium">{employee.name}</span>
-              {employee.internalNumber && (
-                <span className="text-sm text-gray-500">
-                  Внутр. номер: {employee.internalNumber}
-                </span>
-              )}
+  const columns = useMemo<ColumnDef<KpiRow>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Сотрудник",
+        cell: ({ row }) => {
+          const employee = row.original;
+          return (
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col">
+                <span className="font-medium">{employee.name}</span>
+                {employee.internalNumber && (
+                  <span className="text-sm text-gray-500">
+                    Внутр. номер: {employee.internalNumber}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "baseSalary",
-      header: "Базовая зарплата",
-      cell: ({ row }) => {
-        const employee = row.original;
-        const draft = draftsByEmployeeId[employee.employeeExternalId];
-        const isEditing = editingEmployeeId === employee.employeeExternalId;
-        const isSaving = savingEmployeeId === employee.employeeExternalId;
-
-        if (isEditing) {
-          return (
-            <Input
-              type="number"
-              value={draft?.baseSalary ?? employee.baseSalary}
-              onChange={(e) => onDraftFieldChange(employee.employeeExternalId, "baseSalary", e.target.value)}
-              placeholder="0"
-              disabled={isSaving}
-            />
           );
-        }
-
-        return (
-          <div className="flex items-center gap-2">
-            <span>{formatCurrency(employee.baseSalary)}</span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onEditEmployee(employee.employeeExternalId)}
-              disabled={isSaving}
-            >
-              <Settings2 className="h-4 w-4" />
-            </Button>
-          </div>
-        );
+        },
       },
-    },
-    {
-      accessorKey: "targetBonus",
-      header: "Целевой бонус",
-      cell: ({ row }) => {
-        const employee = row.original;
-        const draft = draftsByEmployeeId[employee.employeeExternalId];
-        const isEditing = editingEmployeeId === employee.employeeExternalId;
-        const isSaving = savingEmployeeId === employee.employeeExternalId;
+      {
+        accessorKey: "baseSalary",
+        header: "Базовая зарплата",
+        cell: ({ row }) => {
+          const employee = row.original;
+          const draft = draftsByEmployeeId[employee.employeeExternalId];
+          const isEditing = editingEmployeeId === employee.employeeExternalId;
+          const isSaving = savingEmployeeId === employee.employeeExternalId;
 
-        if (isEditing) {
+          if (isEditing) {
+            return (
+              <Input
+                type="number"
+                value={draft?.baseSalary ?? employee.baseSalary}
+                onChange={(e) =>
+                  onDraftFieldChange(
+                    employee.employeeExternalId,
+                    "baseSalary",
+                    e.target.value,
+                  )
+                }
+                placeholder="0"
+                disabled={isSaving}
+              />
+            );
+          }
+
           return (
-            <Input
-              type="number"
-              value={draft?.targetBonus ?? employee.targetBonus}
-              onChange={(e) => onDraftFieldChange(employee.employeeExternalId, "targetBonus", e.target.value)}
-              placeholder="0"
-              disabled={isSaving}
-            />
+            <div className="flex items-center gap-2">
+              <span>{formatCurrency(employee.baseSalary)}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => onEditEmployee(employee.employeeExternalId)}
+                disabled={isSaving}
+                aria-label={`Редактировать KPI для ${employee.name}`}
+              >
+                <Settings2 className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </div>
           );
-        }
-
-        return <span>{formatCurrency(employee.targetBonus)}</span>;
+        },
       },
-    },
-    {
-      accessorKey: "targetTalkTimeMinutes",
-      header: "Целевое время",
-      cell: ({ row }) => {
-        const employee = row.original;
-        const draft = draftsByEmployeeId[employee.employeeExternalId];
-        const isEditing = editingEmployeeId === employee.employeeExternalId;
-        const isSaving = savingEmployeeId === employee.employeeExternalId;
+      {
+        accessorKey: "targetBonus",
+        header: "Целевой бонус",
+        cell: ({ row }) => {
+          const employee = row.original;
+          const draft = draftsByEmployeeId[employee.employeeExternalId];
+          const isEditing = editingEmployeeId === employee.employeeExternalId;
+          const isSaving = savingEmployeeId === employee.employeeExternalId;
 
-        if (isEditing) {
+          if (isEditing) {
+            return (
+              <Input
+                type="number"
+                value={draft?.targetBonus ?? employee.targetBonus}
+                onChange={(e) =>
+                  onDraftFieldChange(
+                    employee.employeeExternalId,
+                    "targetBonus",
+                    e.target.value,
+                  )
+                }
+                placeholder="0"
+                disabled={isSaving}
+              />
+            );
+          }
+
+          return <span>{formatCurrency(employee.targetBonus)}</span>;
+        },
+      },
+      {
+        accessorKey: "targetTalkTimeMinutes",
+        header: "Целевое время",
+        cell: ({ row }) => {
+          const employee = row.original;
+          const draft = draftsByEmployeeId[employee.employeeExternalId];
+          const isEditing = editingEmployeeId === employee.employeeExternalId;
+          const isSaving = savingEmployeeId === employee.employeeExternalId;
+
+          if (isEditing) {
+            return (
+              <Input
+                type="number"
+                value={
+                  draft?.targetTalkTimeMinutes ?? employee.targetTalkTimeMinutes
+                }
+                onChange={(e) =>
+                  onDraftFieldChange(
+                    employee.employeeExternalId,
+                    "targetTalkTimeMinutes",
+                    e.target.value,
+                  )
+                }
+                placeholder="0"
+                disabled={isSaving}
+              />
+            );
+          }
+
+          return <span>{formatMinutes(employee.targetTalkTimeMinutes)}</span>;
+        },
+      },
+      {
+        accessorKey: "totalCalls",
+        header: "Всего звонков",
+        cell: ({ row }) => {
+          const value = row.original.totalCalls;
+          return value != null && Number.isFinite(value)
+            ? value.toString()
+            : "—";
+        },
+      },
+      {
+        accessorKey: "totalTalkTimeMinutes",
+        header: "Время разговора",
+        cell: ({ row }) => formatMinutes(row.original.totalTalkTimeMinutes),
+      },
+      {
+        accessorKey: "averageValueScore",
+        header: "Средняя оценка",
+        cell: ({ row }) => {
+          const value = row.original.averageValueScore;
+          if (value == null || !Number.isFinite(value)) return "—";
+
+          let variant: "default" | "secondary" | "destructive" | "outline" =
+            "default";
+          if (value >= 4.5) variant = "default";
+          else if (value >= 3.5) variant = "secondary";
+          else if (value >= 2.5) variant = "outline";
+          else variant = "destructive";
+
+          return <Badge variant={variant}>{formatScore(value)}</Badge>;
+        },
+      },
+      {
+        accessorKey: "conversionRate",
+        header: "Конверсия",
+        cell: ({ row }) => formatPercentage(row.original.conversionRate),
+      },
+      {
+        accessorKey: "totalRevenue",
+        header: "Выручка",
+        cell: ({ row }) => formatCurrency(row.original.totalRevenue),
+      },
+      {
+        accessorKey: "calculatedSalary",
+        header: "Начислено зарплата",
+        cell: ({ row }) => formatCurrency(row.original.calculatedSalary),
+      },
+      {
+        accessorKey: "calculatedBonus",
+        header: "Начислено бонус",
+        cell: ({ row }) => formatCurrency(row.original.calculatedBonus),
+      },
+      {
+        accessorKey: "calculatedTotal",
+        header: "Итого начислено",
+        cell: ({ row }) => {
+          const value = row.original.calculatedTotal;
           return (
-            <Input
-              type="number"
-              value={draft?.targetTalkTimeMinutes ?? employee.targetTalkTimeMinutes}
-              onChange={(e) => onDraftFieldChange(employee.employeeExternalId, "targetTalkTimeMinutes", e.target.value)}
-              placeholder="0"
-              disabled={isSaving}
-            />
+            <span className="font-semibold text-green-600">
+              {formatCurrency(value)}
+            </span>
           );
-        }
-
-        return <span>{formatMinutes(employee.targetTalkTimeMinutes)}</span>;
+        },
       },
-    },
-    {
-      accessorKey: "totalCalls",
-      header: "Всего звонков",
-      cell: ({ row }) => {
-        const value = row.original.totalCalls;
-        return value != null && Number.isFinite(value) ? value.toString() : "—";
-      },
-    },
-    {
-      accessorKey: "totalTalkTimeMinutes",
-      header: "Время разговора",
-      cell: ({ row }) => formatMinutes(row.original.totalTalkTimeMinutes),
-    },
-    {
-      accessorKey: "averageValueScore",
-      header: "Средняя оценка",
-      cell: ({ row }) => {
-        const value = row.original.averageValueScore;
-        if (value == null || !Number.isFinite(value)) return "—";
-        
-        let variant: "default" | "secondary" | "destructive" | "outline" = "default";
-        if (value >= 4.5) variant = "default";
-        else if (value >= 3.5) variant = "secondary";
-        else if (value >= 2.5) variant = "outline";
-        else variant = "destructive";
-
-        return <Badge variant={variant}>{formatScore(value)}</Badge>;
-      },
-    },
-    {
-      accessorKey: "conversionRate",
-      header: "Конверсия",
-      cell: ({ row }) => formatPercentage(row.original.conversionRate),
-    },
-    {
-      accessorKey: "totalRevenue",
-      header: "Выручка",
-      cell: ({ row }) => formatCurrency(row.original.totalRevenue),
-    },
-    {
-      accessorKey: "calculatedSalary",
-      header: "Начислено зарплата",
-      cell: ({ row }) => formatCurrency(row.original.calculatedSalary),
-    },
-    {
-      accessorKey: "calculatedBonus",
-      header: "Начислено бонус",
-      cell: ({ row }) => formatCurrency(row.original.calculatedBonus),
-    },
-    {
-      accessorKey: "calculatedTotal",
-      header: "Итого начислено",
-      cell: ({ row }) => {
-        const value = row.original.calculatedTotal;
-        return (
-          <span className="font-semibold text-green-600">
-            {formatCurrency(value)}
-          </span>
-        );
-      },
-    },
-  ], [editingEmployeeId, savingEmployeeId, draftsByEmployeeId, onEditEmployee, onDraftFieldChange]);
+    ],
+    [
+      editingEmployeeId,
+      savingEmployeeId,
+      draftsByEmployeeId,
+      onEditEmployee,
+      onDraftFieldChange,
+    ],
+  );
 
   const table = useReactTable({
     data: rows,
@@ -348,8 +417,8 @@ export default function KpiTableData({
     },
   });
 
-  const editingRow = editingEmployeeId 
-    ? rows.find(row => row.employeeExternalId === editingEmployeeId)
+  const editingRow = editingEmployeeId
+    ? rows.find((row) => row.employeeExternalId === editingEmployeeId)
     : null;
 
   if (isLoading) {
@@ -410,7 +479,10 @@ export default function KpiTableData({
                 <tr key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-4 py-2">
-                      {cell.renderValue()}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -430,7 +502,9 @@ export default function KpiTableData({
           isLoading={savingEmployeeId === editingRow.employeeExternalId}
           onSave={() => onSaveRow(editingRow)}
           onCancel={onCancelEdit}
-          onFieldChange={(field, value) => onDraftFieldChange(editingRow.employeeExternalId, field, value)}
+          onFieldChange={(field, value) =>
+            onDraftFieldChange(editingRow.employeeExternalId, field, value)
+          }
         />
       )}
     </div>

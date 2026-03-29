@@ -17,7 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { getCurrentUser } from "@/lib/auth";
 import {
@@ -26,6 +26,12 @@ import {
   inviteAcceptLinkSchema,
 } from "@/lib/validations";
 import { useORPC } from "@/orpc/react";
+
+interface Invitation {
+  invitationType: "link" | "email";
+  email?: string;
+  workspaceName: string;
+}
 
 export default function InviteAcceptPage() {
   const router = useRouter();
@@ -45,7 +51,7 @@ export default function InviteAcceptPage() {
   // Валидатор для проверки доступности приглашения
   const isInvitationEnabled = (
     currentUser: { id: string | number; email: string } | null,
-    invitation: any,
+    invitation: Invitation | null,
   ): boolean => {
     if (!currentUser || !invitation) return false;
     if (!currentUser.email) return false;
@@ -64,8 +70,13 @@ export default function InviteAcceptPage() {
     return isLink ? inviteAcceptLinkSchema : inviteAcceptSchema;
   };
 
+  const resolver = useMemo(
+    () => zodResolver(createInviteSchema(isLinkInvitation)),
+    [isLinkInvitation],
+  );
+
   const form = useForm<InviteAcceptData>({
-    resolver: zodResolver(createInviteSchema(isLinkInvitation)),
+    resolver,
     defaultValues: {
       name: "",
       password: "",

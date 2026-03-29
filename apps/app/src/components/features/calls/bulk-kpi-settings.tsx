@@ -1,18 +1,33 @@
-import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, Input, Label, toast } from "@calls/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  toast,
+} from "@calls/ui";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
 interface BulkKpiSettingsProps {
   isOpen: boolean;
   onClose: () => void;
-  onApply: (settings: BulkKpiSettings) => Promise<void>;
+  onApply: (settings: {
+    baseSalary: number;
+    targetBonus: number;
+    targetTalkTimeMinutes: number;
+  }) => Promise<void>;
   isLoading: boolean;
 }
 
 export interface BulkKpiSettings {
-  baseSalary: number;
-  targetBonus: number;
-  targetTalkTimeMinutes: number;
+  baseSalary: string;
+  targetBonus: string;
+  targetTalkTimeMinutes: string;
 }
 
 const KPI_FIELD_LIMITS = {
@@ -28,9 +43,9 @@ export default function BulkKpiSettings({
   isLoading,
 }: BulkKpiSettingsProps) {
   const [settings, setSettings] = useState<BulkKpiSettings>({
-    baseSalary: 0,
-    targetBonus: 0,
-    targetTalkTimeMinutes: 0,
+    baseSalary: "",
+    targetBonus: "",
+    targetTalkTimeMinutes: "",
   });
 
   const toNonNegativeInt = (value: number): number => {
@@ -39,24 +54,48 @@ export default function BulkKpiSettings({
   };
 
   const handleFieldChange = (field: keyof BulkKpiSettings, value: string) => {
-    const parsed = Number(value);
-    const safeValue =
-      value.trim() === "" || Number.isNaN(parsed)
-        ? 0
-        : Math.min(toNonNegativeInt(parsed), KPI_FIELD_LIMITS[field]);
-    
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
-      [field]: safeValue,
+      [field]: value,
     }));
   };
 
   const handleApply = async () => {
     try {
-      await onApply(settings);
+      // Валидация и преобразование строк в числа с ограничениями
+      const baseSalaryNum = toNonNegativeInt(Number(settings.baseSalary));
+      const targetBonusNum = toNonNegativeInt(Number(settings.targetBonus));
+      const targetTalkTimeMinutesNum = toNonNegativeInt(
+        Number(settings.targetTalkTimeMinutes),
+      );
+
+      // Проверка на пустые значения
+      if (
+        settings.baseSalary.trim() === "" ||
+        settings.targetBonus.trim() === "" ||
+        settings.targetTalkTimeMinutes.trim() === ""
+      ) {
+        toast.error("Все поля должны быть заполнены");
+        return;
+      }
+
+      const validatedSettings = {
+        baseSalary: Math.min(baseSalaryNum, KPI_FIELD_LIMITS.baseSalary),
+        targetBonus: Math.min(targetBonusNum, KPI_FIELD_LIMITS.targetBonus),
+        targetTalkTimeMinutes: Math.min(
+          targetTalkTimeMinutesNum,
+          KPI_FIELD_LIMITS.targetTalkTimeMinutes,
+        ),
+      };
+
+      await onApply(validatedSettings);
       toast.success("KPI применены ко всем сотрудникам");
       onClose();
-      setSettings({ baseSalary: 0, targetBonus: 0, targetTalkTimeMinutes: 0 });
+      setSettings({
+        baseSalary: "",
+        targetBonus: "",
+        targetTalkTimeMinutes: "",
+      });
     } catch (error) {
       toast.error("Не удалось применить KPI");
     }
@@ -65,7 +104,11 @@ export default function BulkKpiSettings({
   const handleClose = () => {
     if (!isLoading) {
       onClose();
-      setSettings({ baseSalary: 0, targetBonus: 0, targetTalkTimeMinutes: 0 });
+      setSettings({
+        baseSalary: "",
+        targetBonus: "",
+        targetTalkTimeMinutes: "",
+      });
     }
   };
 
@@ -115,7 +158,9 @@ export default function BulkKpiSettings({
               id="bulkTargetTalkTimeMinutes"
               type="number"
               value={settings.targetTalkTimeMinutes || ""}
-              onChange={(e) => handleFieldChange("targetTalkTimeMinutes", e.target.value)}
+              onChange={(e) =>
+                handleFieldChange("targetTalkTimeMinutes", e.target.value)
+              }
               className="col-span-3"
               placeholder="0"
               disabled={isLoading}
@@ -123,7 +168,12 @@ export default function BulkKpiSettings({
           </div>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            disabled={isLoading}
+          >
             Отмена
           </Button>
           <Button type="button" onClick={handleApply} disabled={isLoading}>
