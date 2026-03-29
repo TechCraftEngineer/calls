@@ -65,20 +65,22 @@ CREATE TABLE "calls" (
 	"number" text,
 	"timestamp" timestamp with time zone NOT NULL,
 	"name" text,
-	"duration" integer,
 	"direction" text,
 	"status" text,
-	"size_bytes" integer,
 	"file_id" uuid,
+	"enhanced_audio_file_id" uuid,
 	"pbx_number_id" uuid,
 	"internal_number" text,
+	"provider" text,
+	"external_id" text,
 	"source" text,
 	"customer_name" text,
 	"is_archived" boolean DEFAULT false NOT NULL,
 	"archived_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "calls_workspace_filename_unique" UNIQUE("workspace_id","filename")
+	CONSTRAINT "calls_workspace_filename_unique" UNIQUE("workspace_id","filename"),
+	CONSTRAINT "calls_workspace_provider_external_id_unique" UNIQUE("workspace_id","provider","external_id")
 );
 --> statement-breakpoint
 CREATE TABLE "evaluation_templates" (
@@ -119,9 +121,11 @@ CREATE TABLE "files" (
 	"file_type" text NOT NULL,
 	"storage_key" text NOT NULL,
 	"metadata" jsonb,
+	"duration_seconds" real,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "files_storage_key_unique" UNIQUE("storage_key")
+	CONSTRAINT "files_storage_key_unique" UNIQUE("storage_key"),
+	CONSTRAINT "chk_files_duration_seconds_finite_positive" CHECK ("files"."duration_seconds" IS NULL OR (isfinite("files"."duration_seconds") AND "files"."duration_seconds" > 0))
 );
 --> statement-breakpoint
 CREATE TABLE "invitations" (
@@ -201,7 +205,6 @@ CREATE TABLE "transcripts" (
 	"sentiment" text,
 	"confidence" real,
 	"summary" text,
-	"size_kb" integer,
 	"caller_name" text,
 	"call_type" text,
 	"call_topic" text,
@@ -312,12 +315,18 @@ CREATE TABLE "workspace_pbx_employees" (
 	"first_name" text,
 	"last_name" text,
 	"display_name" text NOT NULL,
+	"kpi_base_salary" integer DEFAULT 0 NOT NULL,
+	"kpi_target_bonus" integer DEFAULT 0 NOT NULL,
+	"kpi_target_talk_time_minutes" integer DEFAULT 0 NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"raw_data" jsonb NOT NULL,
 	"synced_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "workspace_pbx_employees_workspace_provider_external_unique" UNIQUE("workspace_id","provider","external_id")
+	CONSTRAINT "workspace_pbx_employees_workspace_provider_external_unique" UNIQUE("workspace_id","provider","external_id"),
+	CONSTRAINT "workspace_pbx_employees_kpi_base_salary_non_negative" CHECK ("workspace_pbx_employees"."kpi_base_salary" >= 0),
+	CONSTRAINT "workspace_pbx_employees_kpi_target_bonus_non_negative" CHECK ("workspace_pbx_employees"."kpi_target_bonus" >= 0),
+	CONSTRAINT "workspace_pbx_employees_kpi_target_talk_time_non_negative" CHECK ("workspace_pbx_employees"."kpi_target_talk_time_minutes" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "workspace_pbx_links" (
@@ -412,12 +421,10 @@ CREATE TABLE "workspace_settings" (
 CREATE TABLE "workspaces" (
 	"id" text PRIMARY KEY DEFAULT workspace_id_generate() NOT NULL,
 	"name" text NOT NULL,
-	"slug" text NOT NULL,
 	"description" text,
 	"metadata" jsonb,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "workspaces_slug_unique" UNIQUE("slug")
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -427,6 +434,7 @@ ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_user_id_users_id_fk" FOREIGN K
 ALTER TABLE "call_evaluations" ADD CONSTRAINT "call_evaluations_call_id_calls_id_fk" FOREIGN KEY ("call_id") REFERENCES "public"."calls"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "calls" ADD CONSTRAINT "calls_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "calls" ADD CONSTRAINT "calls_file_id_files_id_fk" FOREIGN KEY ("file_id") REFERENCES "public"."files"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "calls" ADD CONSTRAINT "calls_enhanced_audio_file_id_files_id_fk" FOREIGN KEY ("enhanced_audio_file_id") REFERENCES "public"."files"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "calls" ADD CONSTRAINT "calls_pbx_number_id_workspace_pbx_numbers_id_fk" FOREIGN KEY ("pbx_number_id") REFERENCES "public"."workspace_pbx_numbers"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "evaluation_templates" ADD CONSTRAINT "evaluation_templates_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "files" ADD CONSTRAINT "files_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -475,6 +483,7 @@ CREATE INDEX "calls_workspace_timestamp_idx" ON "calls" USING btree ("workspace_
 CREATE INDEX "calls_workspace_archived_idx" ON "calls" USING btree ("workspace_id","is_archived");--> statement-breakpoint
 CREATE INDEX "calls_number_idx" ON "calls" USING btree ("number");--> statement-breakpoint
 CREATE INDEX "calls_pbx_number_id_idx" ON "calls" USING btree ("pbx_number_id");--> statement-breakpoint
+CREATE INDEX "calls_enhanced_audio_file_id_idx" ON "calls" USING btree ("enhanced_audio_file_id");--> statement-breakpoint
 CREATE INDEX "calls_status_idx" ON "calls" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "idx_calls_workspace_id_name_internal_number" ON "calls" USING btree ("workspace_id","name","internal_number");--> statement-breakpoint
 CREATE INDEX "evaluation_templates_workspace_idx" ON "evaluation_templates" USING btree ("workspace_id");--> statement-breakpoint
@@ -539,5 +548,4 @@ CREATE INDEX "workspace_members_workspace_user_idx" ON "workspace_members" USING
 CREATE INDEX "workspace_members_status_idx" ON "workspace_members" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "workspace_members_invitation_token_idx" ON "workspace_members" USING btree ("invitation_token");--> statement-breakpoint
 CREATE INDEX "workspace_settings_key_idx" ON "workspace_settings" USING btree ("key");--> statement-breakpoint
-CREATE INDEX "workspace_settings_workspace_idx" ON "workspace_settings" USING btree ("workspace_id");--> statement-breakpoint
-CREATE INDEX "workspaces_slug_idx" ON "workspaces" USING btree ("slug");
+CREATE INDEX "workspace_settings_workspace_idx" ON "workspace_settings" USING btree ("workspace_id");

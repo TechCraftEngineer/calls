@@ -5,50 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1773916820360,
-      "tag": "0000_supreme_kronos",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1774268275921,
-      "tag": "0001_powerful_earthquake",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1774272948516,
-      "tag": "0002_naive_thor_girl",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1774419002308,
-      "tag": "0003_round_lila_cheney",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1774445441683,
-      "tag": "0004_keen_umar",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1774766209589,
-      "tag": "0005_remove_duration_from_calls",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1774766577482,
-      "tag": "0006_remove_size_bytes_from_calls",
+      "when": 1774781204815,
+      "tag": "0000_familiar_synch",
       "breakpoints": true
     }
   ]
