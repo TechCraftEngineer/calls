@@ -16,6 +16,7 @@ const inputSchema = z.object({
   token: z.string().min(1, "Токен приглашения обязателен"),
   password: z.string().min(8, "Пароль должен быть не менее 8 символов"),
   name: z.string().optional(),
+  email: z.string().email("Некорректный email").optional(),
 });
 
 type AuthWithContext = {
@@ -51,7 +52,7 @@ type AuthWithContext = {
 export const acceptInvitation = publicProcedure
   .input(inputSchema)
   .handler(async ({ input, context }) => {
-    const { token, password, name } = input;
+    const { token, password, name, email } = input;
     const auth = context.auth as AuthWithContext | undefined;
 
     if (!auth?.$context) {
@@ -197,6 +198,7 @@ export const acceptInvitation = publicProcedure
         token,
         password,
         name,
+        email,
         createUserFn,
         setPasswordFn,
       );

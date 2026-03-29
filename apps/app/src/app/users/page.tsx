@@ -118,6 +118,22 @@ export default function UsersPage() {
     }),
   );
 
+  const createLinkInvitationMutation = useMutation(
+    orpc.workspaces.createLinkInvitation.mutationOptions({
+      onSuccess: () => {
+        invalidateQueries();
+        toast.success("Ссылка-приглашение создана");
+      },
+      onError: (err) => {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Не удалось создать ссылку-приглашение",
+        );
+      },
+    }),
+  );
+
   const revokeInvitationMutation = useMutation(
     orpc.workspaces.revokeInvitation.mutationOptions({
       onSuccess: () => {
@@ -142,6 +158,14 @@ export default function UsersPage() {
     return createInvitationMutation.mutateAsync({
       workspaceId,
       email,
+      role,
+    });
+  };
+
+  const handleCreateLinkInvitation = async (role: "admin" | "member") => {
+    if (!workspaceId) throw new Error("Нет компании");
+    return createLinkInvitationMutation.mutateAsync({
+      workspaceId,
       role,
     });
   };
@@ -229,6 +253,7 @@ export default function UsersPage() {
         <InviteUserModal
           onClose={() => setShowInviteModal(false)}
           onSubmit={handleInviteSubmit}
+          onCreateLink={handleCreateLinkInvitation}
         />
       )}
 

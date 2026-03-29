@@ -137,6 +137,34 @@ export class InvitationsService {
   }
 
   /**
+   * Create link-based invitation - anyone with the link can join
+   */
+  async createLinkInvitation(
+    workspaceId: string,
+    role: "owner" | "admin" | "member",
+    invitedBy: string,
+  ): Promise<{
+    token: string;
+    expiresAt: Date;
+  }> {
+    const token = generateInviteToken();
+    const expiresAt = getDefaultExpiresAt();
+
+    await this.invitationsRepository.createLinkInvitation({
+      workspaceId,
+      role,
+      token,
+      invitedBy,
+      expiresAt,
+    });
+
+    return {
+      token,
+      expiresAt,
+    };
+  }
+
+  /**
    * Create invitation - for existing users adds to workspace_members with pending,
    * for new users stores in invitations table (user created only when they accept).
    */
@@ -236,12 +264,13 @@ export class InvitationsService {
    * Checks workspace_members (existing users) first, then invitations table (new users).
    */
   async getByToken(token: string): Promise<{
-    email: string;
+    email: string | null;
     role: "owner" | "admin" | "member";
     expiresAt: Date;
     workspaceId: string;
     workspaceName: string;
     userExists: boolean;
+    invitationType: "email" | "link";
   } | null> {
     // 1. Check workspace_members (existing users)
     const member =
@@ -264,6 +293,7 @@ export class InvitationsService {
             workspaceId: member.workspaceId,
             workspaceName: workspace.name,
             userExists: true,
+            invitationType: "email",
           };
         }
       }
@@ -277,12 +307,13 @@ export class InvitationsService {
     if (!workspace) return null;
 
     return {
-      email: inv.email,
+      email: inv.email ?? null,
       role: inv.role as "owner" | "admin" | "member",
       expiresAt: inv.expiresAt,
       workspaceId: inv.workspaceId,
       workspaceName: workspace.name,
       userExists: false,
+      invitationType: (inv.invitationType as "email" | "link") ?? "email",
     };
   }
 
@@ -426,11 +457,13 @@ export class InvitationsService {
   /**
    * Accept invitation - for workspace_members: set password if needed, activate;
    * for invitations table: create user via Better Auth, add to workspace, mark accepted.
+   * For link-based invitations, email must be provided.
    */
   async acceptInvitation(
     token: string,
     password?: string,
     name?: string,
+    email?: string,
     createUserFn?: (opts: {
       email: string;
       password: string;
@@ -515,9 +548,36 @@ export class InvitationsService {
       throw new Error("Приглашение уже принято");
     }
 
-    const displayName = name?.trim() || inv.email.split("@")[0] || "User";
+    // For link-based invitations, email must be provided
+    const invitationEmail =
+      inv.invitationType === "link"
+        ? email?.toLowerCase().trim()
+        : inv.email?.toLowerCase().trim();
+
+    if (!invitationEmail) {
+      throw new Error("Email обязателен для принятия приглашения");
+    }
+
+    // Validate email format
+    const emailResult = z
+      .email({ message: "Некорректный email" })
+      .safeParse(invitationEmail);
+    if (!emailResult.success) {
+      throw new Error("Некорректный email");
+    }
+
+    // Check if user with this email already exists
+    const existingUser =
+      await this.usersService.getUserByEmail(invitationEmail);
+    if (existingUser) {
+      throw new Error(
+        "Пользователь с таким email уже существует. Войдите в систему, чтобы принять приглашение.",
+      );
+    }
+
+    const displayName = name?.trim() || invitationEmail.split("@")[0] || "User";
     const { id: userId } = await createUserFn({
-      email: inv.email,
+      email: invitationEmail,
       password,
       name: displayName,
       givenName: displayName,

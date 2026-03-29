@@ -54,6 +54,21 @@ export default function InviteAcceptPage() {
     enabled: !!token,
   });
 
+  const isLinkInvitation = invitation?.invitationType === "link";
+
+  // Динамически обновляем форму в зависимости от типа приглашения
+  useEffect(() => {
+    if (invitation) {
+      form.clearErrors();
+      // Пересоздаем форму с новой схемой
+      const currentValues = form.getValues();
+      form.reset(currentValues, {
+        keepValues: true,
+        keepErrors: false,
+      });
+    }
+  }, [isLinkInvitation, invitation, form]);
+
   // Проверяем наличие пароля у пользователя, если он авторизован и email совпадает
   const { data: passwordCheck, isLoading: checkingPasswordQuery } = useQuery({
     ...orpc.workspaces.checkUserPassword.queryOptions({
@@ -62,6 +77,7 @@ export default function InviteAcceptPage() {
     enabled:
       !!currentUser &&
       !!invitation &&
+      !!invitation.email &&
       currentUser.email.toLowerCase() === invitation.email.toLowerCase(),
   });
 
@@ -100,8 +116,11 @@ export default function InviteAcceptPage() {
   const acceptInvitationMutation = useMutation(
     orpc.workspaces.acceptInvitation.mutationOptions({
       onSuccess: () => {
+        const emailForRedirect = isLinkInvitation
+          ? form.getValues("email")
+          : invitation?.email;
         router.push(
-          `${paths.auth.signin}?message=invite_accepted&email=${encodeURIComponent(invitation?.email ?? "")}`,
+          `${paths.auth.signin}?message=invite_accepted&email=${encodeURIComponent(emailForRedirect ?? "")}`,
         );
       },
       onError: (err) => {
@@ -120,7 +139,12 @@ export default function InviteAcceptPage() {
   const handleAcceptForExistingUser = async () => {
     if (!currentUser || !invitation) return;
 
-    if (currentUser.email.toLowerCase() !== invitation.email.toLowerCase()) {
+    // For link-based invitations, any user can accept
+    if (
+      !isLinkInvitation &&
+      invitation.email &&
+      currentUser.email.toLowerCase() !== invitation.email.toLowerCase()
+    ) {
       setError(
         `Это приглашение предназначено для ${invitation.email}. Вы вошли как ${currentUser.email}. Пожалуйста, выйдите и войдите с правильным аккаунтом.`,
       );
@@ -137,6 +161,7 @@ export default function InviteAcceptPage() {
       token,
       password: data.password,
       name: data.name?.trim() || undefined,
+      email: isLinkInvitation ? data.email?.trim() : undefined,
     });
   };
 
@@ -227,8 +252,12 @@ export default function InviteAcceptPage() {
   }
 
   if (currentUser && invitation) {
+    // For link-based invitations, any authenticated user can accept
+    // For email-based invitations, check email match
     const isCorrectEmail =
-      currentUser.email.toLowerCase() === invitation.email.toLowerCase();
+      isLinkInvitation ||
+      (invitation.email &&
+        currentUser.email.toLowerCase() === invitation.email.toLowerCase());
 
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-[#F8F9FB] p-4">
@@ -260,8 +289,10 @@ export default function InviteAcceptPage() {
             <p className="text-sm text-gray-600 mb-1">
               Приглашение в «<strong>{invitation.workspaceName}</strong>»
             </p>
-            <p className="text-sm text-gray-500">Для: {invitation.email}</p>
-            {!isCorrectEmail && (
+            {!isLinkInvitation && invitation.email && (
+              <p className="text-sm text-gray-500">Для: {invitation.email}</p>
+            )}
+            {!isCorrectEmail && !isLinkInvitation && invitation.email && (
               <p className="text-sm text-amber-600 mt-2">
                 Вы вошли как: {currentUser.email}
               </p>
@@ -395,9 +426,9 @@ export default function InviteAcceptPage() {
             <div className="space-y-6">
               <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
                 <p className="text-sm text-amber-900 m-0">
-                  Это приглашение предназначено для другого email адреса.
-                  Пожалуйста, выйдите и войдите с правильным аккаунтом или
-                  создайте новый.
+                  {isLinkInvitation
+                    ? "Это приглашение нельзя принять с текущим аккаунтом."
+                    : "Это приглашение предназначено для другого email адреса. Пожалуйста, выйдите и войдите с правильным аккаунтом или создайте новый."}
                 </p>
               </div>
 
@@ -409,17 +440,22 @@ export default function InviteAcceptPage() {
                 >
                   Выйти
                 </Button>
-                <Button
-                  onClick={() =>
-                    router.push(
-                      `${paths.auth.signin}?email=${encodeURIComponent(invitation.email)}`,
-                    )
-                  }
-                  variant="dark"
-                  className="flex-1 min-h-[44px]"
-                >
-                  Войти как {invitation.email.split("@")[0]}
-                </Button>
+                {!isLinkInvitation && invitation.email && (
+                  <Button
+                    onClick={() => {
+                      const email = invitation.email;
+                      if (email) {
+                        router.push(
+                          `${paths.auth.signin}?email=${encodeURIComponent(email)}`,
+                        );
+                      }
+                    }}
+                    variant="dark"
+                    className="flex-1 min-h-[44px]"
+                  >
+                    Войти как {invitation.email.split("@")[0]}
+                  </Button>
+                )}
               </div>
             </div>
           )}
@@ -466,7 +502,9 @@ export default function InviteAcceptPage() {
           <p className="text-sm text-gray-600 mb-1">
             Вас пригласили в «<strong>{invitation.workspaceName}</strong>»
           </p>
-          <p className="text-sm text-gray-500">{invitation.email}</p>
+          {!isLinkInvitation && invitation.email && (
+            <p className="text-sm text-gray-500">{invitation.email}</p>
+          )}
         </div>
 
         {error && (
@@ -495,6 +533,35 @@ export default function InviteAcceptPage() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="flex flex-col gap-5"
           >
+            {isLinkInvitation && (
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700">
+                      Email <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="your@email.com"
+                        className="w-full text-base"
+                        autoComplete="email"
+                        spellCheck={false}
+                        disabled={submitting}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-gray-500">
+                      Введите ваш email адрес
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
             <FormField
               control={form.control}
               name="name"

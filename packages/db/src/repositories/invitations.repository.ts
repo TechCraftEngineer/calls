@@ -37,6 +37,7 @@ export const invitationsRepository = {
       .insert(schema.invitations)
       .values({
         workspaceId: data.workspaceId,
+        invitationType: "email",
         email: data.email.toLowerCase().trim(),
         role: data.role,
         token: data.token,
@@ -45,6 +46,31 @@ export const invitationsRepository = {
       })
       .returning({ id: schema.invitations.id });
     return result[0]?.id ?? null;
+  },
+
+  async createLinkInvitation(data: {
+    workspaceId: string;
+    role: "owner" | "admin" | "member";
+    token: string;
+    invitedBy: string;
+    expiresAt: Date;
+  }) {
+    const result = await db
+      .insert(schema.invitations)
+      .values({
+        workspaceId: data.workspaceId,
+        invitationType: "link",
+        email: null,
+        role: data.role,
+        token: data.token,
+        invitedBy: data.invitedBy,
+        expiresAt: data.expiresAt,
+      })
+      .returning({
+        id: schema.invitations.id,
+        token: schema.invitations.token,
+      });
+    return result[0] ?? null;
   },
 
   async findByToken(token: string) {

@@ -165,8 +165,8 @@ export function WebhookSection({
                           onChange={field.onChange}
                           placeholder={
                             webhookSecretPasswordSet
-                              ? "•••••••• (оставьте пустым, чтобы не менять)"
-                              : "Задайте секрет и укажите его в админке АТС"
+                              ? "•••••••• (оставьте пустым, чтобы не менять)…"
+                              : "Например: a1b2c3d4e5f6…"
                           }
                           className="w-full font-mono text-sm"
                         />

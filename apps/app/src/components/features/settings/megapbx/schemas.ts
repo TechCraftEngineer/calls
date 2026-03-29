@@ -1,5 +1,8 @@
 import { isValidCalendarIsoDate } from "@calls/shared";
 import { z } from "zod";
+import { WEBHOOK_SECRET_BYTES } from "./utils";
+
+const WEBHOOK_SECRET_MIN_LENGTH = WEBHOOK_SECRET_BYTES * 2; // hex encoding doubles the length
 
 export const accessFormSchema = z.object({
   baseUrl: z
@@ -49,7 +52,13 @@ export const webhookFormSchema = z.object({
     if (typeof value !== "string") return value;
     const trimmed = value.trim();
     return trimmed === "" ? undefined : trimmed;
-  }, z.string().optional()),
+  }, z
+    .string()
+    .min(
+      WEBHOOK_SECRET_MIN_LENGTH,
+      `Секрет должен содержать минимум ${WEBHOOK_SECRET_MIN_LENGTH} символов`,
+    )
+    .optional()),
 });
 
 export type WebhookFormData = z.infer<typeof webhookFormSchema>;

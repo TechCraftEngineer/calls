@@ -113,8 +113,20 @@ export type ReportSettingsData = z.infer<typeof reportSettingsSchema>;
 // Схема для принятия приглашения (создание аккаунта по ссылке)
 export const inviteAcceptSchema = z.object({
   name: z.string().optional(),
+  email: z.string().email("Введите корректный email").optional(),
   password: passwordValidation,
 });
+
+// Динамическая схема для link-based приглашений (email обязателен)
+export const inviteAcceptLinkSchema = z.object({
+  name: z.string().optional(),
+  email: z
+    .string()
+    .min(1, "Email обязателен")
+    .email("Введите корректный email"),
+  password: passwordValidation,
+});
+
 export type InviteAcceptData = z.infer<typeof inviteAcceptSchema>;
 
 // Схема валидации формы редактирования пользователя (подмножество полей)

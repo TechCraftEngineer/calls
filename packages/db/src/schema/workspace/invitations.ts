@@ -37,7 +37,8 @@ export const invitations = pgTable(
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
 
-    email: text("email").notNull(),
+    invitationType: text("invitation_type").notNull().default("email"),
+    email: text("email"),
     role: workspaceMemberRole("role").notNull().default("member"),
     token: text("token").notNull().unique(),
 
@@ -60,6 +61,7 @@ export const invitations = pgTable(
     index("invitations_email_idx").on(table.email),
     index("invitations_token_idx").on(table.token),
     index("invitations_expires_at_idx").on(table.expiresAt),
+    index("invitations_type_idx").on(table.invitationType),
     index("invitations_workspace_email_idx").on(table.workspaceId, table.email),
   ],
 );
