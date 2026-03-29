@@ -203,6 +203,7 @@ export async function preprocessAudioWithPython(
   preprocessMetadata: Record<string, unknown> | null;
   wasProcessed: boolean;
   processingTimeMs: number;
+  durationSeconds?: number;
 }> {
   const start = Date.now();
   const serviceUrl = env.AUDIO_ENHANCER_URL;
@@ -246,6 +247,7 @@ export async function preprocessAudioWithPython(
       audio_base64?: string;
       preprocess_metadata?: Record<string, unknown>;
       sample_rate?: number;
+      duration?: number;
     };
 
     if (!data.audio_base64) {
@@ -264,6 +266,7 @@ export async function preprocessAudioWithPython(
       preprocessMetadata: data.preprocess_metadata ?? null,
       wasProcessed: true,
       processingTimeMs: Date.now() - start,
+      durationSeconds: data.duration,
     };
   } catch (error) {
     logger.warn("preprocess недоступен", {
