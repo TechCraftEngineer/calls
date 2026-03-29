@@ -137,11 +137,11 @@ async function uploadRecordingIfNeeded(
   workspaceId: string,
   providerCallId: string,
   recordingUrl: string | null,
-): Promise<{ fileId: string | null; sizeBytes: number | null }> {
-  if (!recordingUrl) return { fileId: null, sizeBytes: null };
+): Promise<{ fileId: string | null }> {
+  if (!recordingUrl) return { fileId: null };
   const { buffer, extension } = await client.downloadRecording(recordingUrl);
   if (buffer.length === 0) {
-    return { fileId: null, sizeBytes: null };
+    return { fileId: null };
   }
 
   const filename = `megapbx/${providerCallId}.${extension}`;
@@ -170,7 +170,6 @@ async function uploadRecordingIfNeeded(
 
   return {
     fileId: upload.id,
-    sizeBytes: buffer.length,
   };
 }
 
@@ -368,13 +367,11 @@ export async function syncMegaPbxCalls(
           employee?.extension ??
           null,
         direction: call.direction,
-        duration: call.duration,
         status: call.status,
         source: employee?.externalId ?? number?.externalId ?? "megapbx",
         name: employee?.displayName ?? number?.label ?? "MegaPBX",
         fileId: null,
         pbxNumberId: number?.id ?? null,
-        sizeBytes: null,
       });
 
       const canonicalCall =
@@ -425,7 +422,6 @@ export async function syncMegaPbxCalls(
           if (uploaded.fileId) {
             await callsService.updateCallRecording(canonicalCall.id, {
               fileId: uploaded.fileId,
-              sizeBytes: uploaded.sizeBytes,
             });
             recordingFileId = uploaded.fileId;
             stats.recordings += 1;

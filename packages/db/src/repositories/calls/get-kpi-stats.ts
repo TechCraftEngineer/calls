@@ -20,7 +20,7 @@ export interface KpiStatsByInternalNumber {
 
 /**
  * Возвращает статистику звонков по internal_number за период.
- * duration в calls — секунды.
+ * duration берётся из files.durationSeconds.
  */
 export async function getKpiStats(
   params: GetKpiStatsParams,
@@ -51,13 +51,14 @@ export async function getKpiStats(
   const results = await db
     .select({
       internalNumber: schema.calls.internalNumber,
-      totalDuration: sql<number>`COALESCE(SUM(${schema.calls.duration}), 0)::int`,
+      totalDuration: sql<number>`COALESCE(SUM(${schema.files.durationSeconds}), 0)::int`,
       totalCalls: sql<number>`COUNT(*)::int`,
-      incoming: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) IN ('inbound', 'incoming') AND COALESCE(${schema.calls.duration}, 0) > 0)::int`,
+      incoming: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) IN ('inbound', 'incoming') AND COALESCE(${schema.files.durationSeconds}, 0) > 0)::int`,
       outgoing: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) IN ('outbound', 'outgoing'))::int`,
-      missed: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) IN ('inbound', 'incoming') AND COALESCE(${schema.calls.duration}, 0) = 0)::int`,
+      missed: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) IN ('inbound', 'incoming') AND COALESCE(${schema.files.durationSeconds}, 0) = 0)::int`,
     })
     .from(schema.calls)
+    .leftJoin(schema.files, eq(schema.calls.fileId, schema.files.id))
     .leftJoin(
       schema.callEvaluations,
       eq(schema.calls.id, schema.callEvaluations.callId),

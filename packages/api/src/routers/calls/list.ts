@@ -334,8 +334,8 @@ export const list = workspaceProcedure
           },
           analysisCostRub: isLlmProcessed
             ? calculateAnalysisCostRub(
-                typeof item.call.duration === "number" && item.call.duration > 0
-                  ? item.call.duration
+                typeof item.fileDuration === "number" && item.fileDuration > 0
+                  ? item.fileDuration
                   : typeof item.transcript?.metadata?.durationInSeconds ===
                       "number"
                     ? item.transcript.metadata.durationInSeconds

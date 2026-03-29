@@ -121,13 +121,6 @@ export class CallsService {
     return this.callsRepository.upsertTranscript(data);
   }
 
-  async updateCallDuration(
-    callId: string,
-    durationSeconds: number,
-  ): Promise<void> {
-    await this.callsRepository.updateDuration(callId, durationSeconds);
-  }
-
   async updateCustomerName(
     callId: string,
     customerName: string | null,
@@ -137,7 +130,7 @@ export class CallsService {
 
   async updateCallRecording(
     callId: string,
-    data: { fileId: string | null; sizeBytes: number | null },
+    data: { fileId: string | null },
   ): Promise<void> {
     await this.callsRepository.updateRecording(callId, data);
   }

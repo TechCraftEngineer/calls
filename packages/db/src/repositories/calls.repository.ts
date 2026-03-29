@@ -14,7 +14,6 @@ import type {
 } from "../types/calls.types";
 import { normalizeCallStatus } from "../utils/call-status";
 import { buildCallConditions } from "./calls/build-conditions";
-import { computeCallStatus } from "./calls/compute-call-status";
 import {
   getCallSummariesByManager as getCallSummariesByManagerFn,
   getEvaluationsStats as getEvaluationsStatsFn,
@@ -111,9 +110,7 @@ export const callsRepository = {
   async createWithResult(
     data: CreateCallData,
   ): Promise<{ id: string; created: boolean }> {
-    const status =
-      normalizeCallStatus(data.status) ??
-      computeCallStatus(data.duration, data.direction);
+    const status = normalizeCallStatus(data.status) ?? null;
     const values = {
       workspaceId: data.workspaceId,
       filename: data.filename,
@@ -122,10 +119,8 @@ export const callsRepository = {
       number: data.number ?? null,
       timestamp: new Date(data.timestamp),
       name: data.name ?? null,
-      duration: data.duration ?? null,
       direction: data.direction ?? null,
       status,
-      sizeBytes: data.sizeBytes ?? null,
       fileId: data.fileId ?? null,
       pbxNumberId: data.pbxNumberId ?? null,
       internalNumber: data.internalNumber ?? null,
@@ -186,16 +181,6 @@ export const callsRepository = {
     return created.id;
   },
 
-  async updateDuration(callId: string, durationSeconds: number): Promise<void> {
-    const call = await this.findById(callId);
-    const newDuration = Math.round(durationSeconds);
-    const status = call ? computeCallStatus(newDuration, call.direction) : null;
-    await db
-      .update(schema.calls)
-      .set({ duration: newDuration, ...(status != null && { status }) })
-      .where(eq(schema.calls.id, callId));
-  },
-
   async updateCustomerName(
     callId: string,
     customerName: string | null,
@@ -208,13 +193,12 @@ export const callsRepository = {
 
   async updateRecording(
     callId: string,
-    data: { fileId: string | null; sizeBytes: number | null },
+    data: { fileId: string | null },
   ): Promise<void> {
     await db
       .update(schema.calls)
       .set({
         fileId: data.fileId,
-        sizeBytes: data.sizeBytes,
         updatedAt: new Date(),
       })
       .where(eq(schema.calls.id, callId));
@@ -305,8 +289,11 @@ export const callsRepository = {
         call: schema.calls,
         transcript: schema.transcripts,
         evaluation: schema.callEvaluations,
+        fileDuration: schema.files.durationSeconds,
+        fileSizeBytes: schema.files.sizeBytes,
       })
       .from(schema.calls)
+      .leftJoin(schema.files, eq(schema.calls.fileId, schema.files.id))
       .leftJoin(
         schema.transcripts,
         eq(schema.calls.id, schema.transcripts.callId),
@@ -329,6 +316,8 @@ export const callsRepository = {
       call: row.call,
       transcript: row.transcript,
       evaluation: row.evaluation,
+      fileDuration: row.fileDuration,
+      fileSizeBytes: row.fileSizeBytes,
     }));
   },
 

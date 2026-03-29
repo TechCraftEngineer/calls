@@ -1,0 +1,2 @@
+ALTER TABLE "calls" DROP COLUMN "duration";--> statement-breakpoint
+ALTER TABLE "files" ADD CONSTRAINT "chk_files_duration_seconds_finite_positive" CHECK ("files"."duration_seconds" IS NULL OR (isfinite("files"."duration_seconds") AND "files"."duration_seconds" > 0));
