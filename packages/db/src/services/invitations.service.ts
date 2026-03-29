@@ -437,7 +437,7 @@ export class InvitationsService {
 
     const fromInvitations = invRows.map((inv) => ({
       id: inv.id,
-      email: inv.email,
+      email: inv.email ?? "",
       role: inv.role,
       token: inv.token,
       expiresAt: inv.expiresAt,
@@ -569,20 +569,52 @@ export class InvitationsService {
     // Check if user with this email already exists
     const existingUser =
       await this.usersService.getUserByEmail(invitationEmail);
+    let userId: string;
+
     if (existingUser) {
-      throw new Error(
-        "Пользователь с таким email уже существует. Войдите в систему, чтобы принять приглашение.",
+      // Existing user: add to workspace_members with pending status instead of throwing
+      // This allows the user to accept the link invitation after authentication
+      const member = await this.workspacesService.getMemberWithRole(
+        inv.workspaceId,
+        existingUser.id,
       );
+      if (member) {
+        throw new Error(
+          "Пользователь уже является участником рабочего пространства",
+        );
+      }
+
+      const token = generateInviteToken();
+      const expiresAt = getDefaultExpiresAt();
+
+      await this.workspacesService.addPendingMember({
+        workspaceId: inv.workspaceId,
+        userId: existingUser.id,
+        role: inv.role as "owner" | "admin" | "member",
+        invitationToken: token,
+        invitationExpiresAt: expiresAt,
+        invitedBy: inv.invitedBy,
+      });
+
+      // Mark the invitation as accepted since we've linked it to the existing user
+      await this.invitationsRepository.markAccepted(inv.id, existingUser.id);
+
+      return {
+        userId: existingUser.id,
+        workspaceId: inv.workspaceId,
+      };
     }
 
     const displayName = name?.trim() || invitationEmail.split("@")[0] || "User";
-    const { id: userId } = await createUserFn({
+    const createdUser = await createUserFn({
       email: invitationEmail,
       password,
       name: displayName,
       givenName: displayName,
       familyName: "",
     });
+
+    userId = createdUser.id;
 
     await this.workspacesService.addMember({
       workspaceId: inv.workspaceId,

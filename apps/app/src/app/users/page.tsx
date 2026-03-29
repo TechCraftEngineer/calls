@@ -229,11 +229,12 @@ export default function UsersPage() {
             invitations={
               invitations as Array<{
                 id: string;
-                email: string;
+                email: string | null;
                 role: string;
                 createdAt?: Date;
                 expiresAt?: Date;
                 pendingSettings?: unknown;
+                invitationType?: "email" | "link";
               }>
             }
             onRevoke={(invitationId) => {

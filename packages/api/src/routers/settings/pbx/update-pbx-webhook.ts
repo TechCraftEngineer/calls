@@ -1,8 +1,13 @@
 import { pbxService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
+import { z } from "zod";
 import { workspaceAdminProcedure } from "../../../orpc";
 import { getUserEmail } from "./get-user-email";
 import { pbxWebhookSchema } from "./schemas";
+
+const WEBHOOK_SECRET_BYTES = 32;
+
+const WEBHOOK_SECRET_MIN_LENGTH = WEBHOOK_SECRET_BYTES * 2;
 
 export const updatePbxWebhook = workspaceAdminProcedure
   .input(pbxWebhookSchema)
@@ -10,6 +15,25 @@ export const updatePbxWebhook = workspaceAdminProcedure
     const username = getUserEmail(context.user) ?? "system";
 
     const trimmedSecret = input.webhookSecret?.trim();
+
+    // Server-side validation for webhook secret min length
+    if (trimmedSecret !== undefined && trimmedSecret !== "") {
+      const secretValidation = z
+        .string()
+        .min(
+          WEBHOOK_SECRET_MIN_LENGTH,
+          `Секрет должен содержать минимум ${WEBHOOK_SECRET_MIN_LENGTH} символов`,
+        )
+        .safeParse(trimmedSecret);
+
+      if (!secretValidation.success) {
+        const firstIssue = secretValidation.error.issues[0];
+        throw new ORPCError("BAD_REQUEST", {
+          message: firstIssue?.message ?? "Некорректный секрет",
+        });
+      }
+    }
+
     const partial: { webhookSecret?: string | null } = {};
     if (trimmedSecret) {
       partial.webhookSecret = trimmedSecret;

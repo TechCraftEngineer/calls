@@ -190,7 +190,7 @@ export default function InviteUserModal({
   if (result) {
     return (
       <div
-        className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
         onClick={handleClose}
         role="dialog"
         aria-modal="true"
@@ -372,7 +372,7 @@ export default function InviteUserModal({
 
   return (
     <div
-      className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-2000 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       onClick={handleClose}
       role="dialog"
       aria-modal="true"
@@ -418,11 +418,15 @@ export default function InviteUserModal({
             : "Создайте ссылку-приглашение, которую можно отправить любым способом. Любой, у кого есть ссылка, сможет присоединиться."}
         </p>
 
-        <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+        <fieldset
+          className="flex gap-2 p-1 bg-gray-100 rounded-lg border-0"
+          aria-label="Способ приглашения"
+        >
           <button
             type="button"
             onClick={() => setInviteMode("email")}
             disabled={submitting}
+            aria-pressed={inviteMode === "email"}
             className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
               inviteMode === "email"
                 ? "bg-white text-gray-900 shadow-sm"
@@ -435,6 +439,7 @@ export default function InviteUserModal({
             type="button"
             onClick={() => setInviteMode("link")}
             disabled={submitting}
+            aria-pressed={inviteMode === "link"}
             className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
               inviteMode === "link"
                 ? "bg-white text-gray-900 shadow-sm"
@@ -443,7 +448,7 @@ export default function InviteUserModal({
           >
             По ссылке
           </button>
-        </div>
+        </fieldset>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {error && (
