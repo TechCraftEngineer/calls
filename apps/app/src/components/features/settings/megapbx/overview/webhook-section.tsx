@@ -17,7 +17,7 @@ import {
 } from "@calls/ui";
 import { useCopyToClipboard } from "@calls/ui/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Copy, Info, KeyRound, Loader2 } from "lucide-react";
+import { Check, Copy, KeyRound, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { type WebhookFormData, webhookFormSchema } from "../schemas";

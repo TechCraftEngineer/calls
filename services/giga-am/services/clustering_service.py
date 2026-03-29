@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import logging
 import math
 from typing import Any
-
-logger = logging.getLogger(__name__)
 
 
 class ClusteringService:
@@ -53,7 +50,7 @@ class ClusteringService:
 
         overlap_spans = overlap_spans or []
         clusters: list[dict[str, Any]] = []
-        base_threshold = 0.40  # Увеличен с 0.35 для лучшего разделения спикеров
+        base_threshold = 0.40  # Увеличен с 0.35 для большего объединения похожих спикеров
 
         for seg in segments:
             start = float(seg.get("start", 0.0))
@@ -96,13 +93,6 @@ class ClusteringService:
                 else:
                     new_speaker = f"SPEAKER_{len(clusters) + 1:02d}"
                     clusters.append(
-                        {
-                            "speaker": new_speaker,
-                            "vectors": [emb] if emb else [],
-                            "centroid": emb or [],
-                        }
-                    )
-                    seg["speaker"] = new_speaker
                         {
                             "speaker": new_speaker,
                             "vectors": [emb] if emb else [],

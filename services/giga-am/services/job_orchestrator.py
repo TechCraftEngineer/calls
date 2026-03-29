@@ -10,6 +10,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+import librosa
+import numpy as np
 import requests
 from config import settings
 from services.alignment_service import AlignmentService
@@ -220,18 +222,27 @@ class JobOrchestrator:
         
         # Загружаем аудио для построения эмбеддингов спикеров
         try:
-            import librosa
-            import numpy as np
             audio_np, audio_sr = librosa.load(prep["audio_path"], sr=16000, mono=True)
             logger.info(
                 "Аудио загружено для диаризации: %d samples, %d Hz",
                 len(audio_np),
                 audio_sr,
             )
+        except (FileNotFoundError, OSError, librosa.LibrosaError) as exc:
+            logger.error(
+                "Не удалось загрузить аудио файл %s для диаризации: %s", 
+                prep["audio_path"], 
+                exc
+            )
+            # Вместо пустого массива, прерываем обработку или помечаем все сегменты как одного спикера
+            raise RuntimeError(f"Аудио файл не найден или поврежден: {prep['audio_path']}") from exc
         except Exception as exc:
-            logger.warning("Не удалось загрузить аудио для диаризации: %s", exc)
-            audio_np = np.array([], dtype=np.float32)
-            audio_sr = 16000
+            logger.error(
+                "Неожиданная ошибка при загрузке аудио %s: %s", 
+                prep["audio_path"], 
+                exc
+            )
+            raise RuntimeError(f"Ошибка загрузки аудио: {exc}") from exc
         
         # Строим эмбеддинги батчем (эффективнее и правильнее)
         batch_embeddings = self.embedding.build_batch_hybrid_embeddings(

@@ -9,11 +9,11 @@ ALTER TABLE "invitations" ADD COLUMN "invitation_type" text DEFAULT 'email' NOT 
 ALTER TABLE "invitations" ALTER COLUMN "email" DROP NOT NULL;
 --> statement-breakpoint
 
--- Add check constraint to ensure email is provided for email-type invitations
+-- Add check constraint to ensure email is provided for email-type invitations and NULL for link-type
 ALTER TABLE "invitations" ADD CONSTRAINT "invitations_email_required_for_email_type" 
   CHECK (
     (invitation_type = 'email' AND email IS NOT NULL) OR 
-    (invitation_type = 'link')
+    (invitation_type = 'link' AND email IS NULL)
   );
 --> statement-breakpoint
 

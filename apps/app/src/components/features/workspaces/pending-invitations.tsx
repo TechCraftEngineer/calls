@@ -5,11 +5,12 @@ import { useState } from "react";
 
 interface PendingInvitation {
   id: string;
-  email: string;
+  email: string | null;
   role: string;
   createdAt?: Date;
   expiresAt?: Date;
   pendingSettings?: unknown;
+  invitationType?: "email" | "link";
 }
 
 interface PendingInvitationsProps {
@@ -75,8 +76,13 @@ export default function PendingInvitations({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <p className="text-sm font-medium text-gray-900 truncate m-0">
-                    {inv.email}
+                    {inv.email ?? "Ссылка-приглашение"}
                   </p>
+                  {inv.invitationType === "link" && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                      По ссылке
+                    </span>
+                  )}
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
                     {ROLE_LABELS[inv.role] ?? inv.role}
                   </span>
@@ -139,7 +145,7 @@ export default function PendingInvitations({
                     size="sm"
                     onClick={() => setConfirmRevoke(inv.id)}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50 min-h-[36px]"
-                    aria-label={`Отменить приглашение для ${inv.email}`}
+                    aria-label={`Отменить приглашение для ${inv.email ?? "ссылки"}`}
                   >
                     Отменить
                   </Button>

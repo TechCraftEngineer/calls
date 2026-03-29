@@ -20,7 +20,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { getCurrentUser } from "@/lib/auth";
-import { type InviteAcceptData, inviteAcceptSchema } from "@/lib/validations";
+import {
+  type InviteAcceptData,
+  inviteAcceptSchema,
+  inviteAcceptLinkSchema,
+} from "@/lib/validations";
 import { useORPC } from "@/orpc/react";
 
 export default function InviteAcceptPage() {
@@ -36,11 +40,15 @@ export default function InviteAcceptPage() {
   } | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [userHasPassword, setUserHasPassword] = useState<boolean | null>(null);
+  const [isLinkInvitation, setIsLinkInvitation] = useState(false);
   const form = useForm<InviteAcceptData>({
-    resolver: zodResolver(inviteAcceptSchema),
+    resolver: zodResolver(
+      isLinkInvitation ? inviteAcceptLinkSchema : inviteAcceptSchema,
+    ),
     defaultValues: {
       name: "",
       password: "",
+      email: "",
     },
     mode: "onBlur",
   });
@@ -54,31 +62,29 @@ export default function InviteAcceptPage() {
     enabled: !!token,
   });
 
-  const isLinkInvitation = invitation?.invitationType === "link";
-
-  // Динамически обновляем форму в зависимости от типа приглашения
   useEffect(() => {
-    if (invitation) {
-      form.clearErrors();
-      // Пересоздаем форму с новой схемой
-      const currentValues = form.getValues();
-      form.reset(currentValues, {
-        keepValues: true,
-        keepErrors: false,
-      });
-    }
-  }, [isLinkInvitation, invitation, form]);
+    setIsLinkInvitation(invitation?.invitationType === "link");
+  }, [invitation]);
 
-  // Проверяем наличие пароля у пользователя, если он авторизован и email совпадает
-  const { data: passwordCheck, isLoading: checkingPasswordQuery } = useQuery({
+  // Проверяем наличие пароля у пользователя, если он авторизован и email совпадает (или это link-приглашение)
+  const { data: passwordCheck, isLoading: checkingPasswordQuery } = useQuery<{
+    hasPassword: boolean;
+    exists: boolean;
+    userId?: string;
+  }>({
     ...orpc.workspaces.checkUserPassword.queryOptions({
       input: { email: currentUser?.email || "" },
     }),
-    enabled:
-      !!currentUser &&
-      !!invitation &&
-      !!invitation.email &&
-      currentUser.email.toLowerCase() === invitation.email.toLowerCase(),
+    enabled: Boolean(
+      currentUser &&
+        invitation &&
+        currentUser.email &&
+        (!!invitation.email || invitation.invitationType === "link") &&
+        (invitation.invitationType === "link" ||
+          (invitation.email &&
+            currentUser.email.toLowerCase() ===
+              invitation.email.toLowerCase())),
+    ),
   });
 
   useEffect(() => {
@@ -89,7 +95,11 @@ export default function InviteAcceptPage() {
   }, []);
 
   useEffect(() => {
-    if (passwordCheck) {
+    if (
+      passwordCheck &&
+      typeof passwordCheck === "object" &&
+      "hasPassword" in passwordCheck
+    ) {
       setUserHasPassword(passwordCheck.hasPassword);
     }
   }, [passwordCheck]);

@@ -1,4 +1,4 @@
-import { APP_CONFIG, env, paths } from "@calls/config";
+import { env, paths } from "@calls/config";
 import { invitationsService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
@@ -13,7 +13,7 @@ export const createLinkInvitation = workspaceAdminProcedure
   .input(createLinkInvitationSchema)
   .handler(async ({ input, context }) => {
     if (!context.authUserId) {
-      throw new ORPCError("UNAUTHORIZED");
+      throw new ORPCError("UNAUTHORIZED", { message: "Требуется авторизация" });
     }
     try {
       const result = await invitationsService.createLinkInvitation(
@@ -29,11 +29,13 @@ export const createLinkInvitation = workspaceAdminProcedure
         inviteUrl: inviteLink,
       };
     } catch (err) {
-      const rawMsg =
-        err instanceof Error
-          ? err.message
-          : "Ошибка создания ссылки-приглашения";
-
-      throw new ORPCError("BAD_REQUEST", { message: rawMsg });
+      // Rethrow ORPCError to preserve the original error code and message
+      if (err instanceof ORPCError) {
+        throw err;
+      }
+      // Wrap other errors as INTERNAL_SERVER_ERROR to avoid leaking internal details
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Внутренняя ошибка сервера",
+      });
     }
   });

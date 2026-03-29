@@ -5,7 +5,7 @@ RUN apk add --no-cache libc6-compat ffmpeg
 WORKDIR /app
 
 FROM base AS prepare
-RUN bun add -g turbo@2.8.20
+RUN bun add -g turbo@2.8.21
 COPY . .
 RUN turbo prune @calls/jobs --docker
 
