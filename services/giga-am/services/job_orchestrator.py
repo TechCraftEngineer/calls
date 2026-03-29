@@ -182,6 +182,9 @@ class JobOrchestrator:
                 self._safe_unlink(input_path)
             except Exception as exc:
                 logger.exception("Job failed: %s", job.job_id)
+                job_copy = None
+                input_path = None
+                retried = False
                 with self._lock:
                     current_attempt = int(job.metadata.get("attempt", 0))
                     if current_attempt < settings.max_job_retries and job.status != JobStatus.cancelled:
@@ -191,6 +194,7 @@ class JobOrchestrator:
                         job.updated_at = datetime.now(timezone.utc).isoformat()
                         self._persist_job(job)
                         self._queue.put(job.job_id)
+                        retried = True
                     else:
                         job.status = JobStatus.failed
                         job.error = str(exc)
@@ -199,9 +203,10 @@ class JobOrchestrator:
                         # Копируем данные для callback перед выходом из блокировки
                         job_copy = asdict(job)
                         input_path = job.input_path
-                # Вызываем callback и удаляем файл вне блокировки
-                self._send_callback(JobRecord(**job_copy))
-                self._safe_unlink(input_path)
+                # Вызываем callback и удаляем файл вне блокировки, только если не было retry
+                if not retried and job_copy is not None and input_path is not None:
+                    self._send_callback(JobRecord(**job_copy))
+                    self._safe_unlink(input_path)
             finally:
                 self._queue.task_done()
 
@@ -308,25 +313,35 @@ class JobOrchestrator:
             self._persist_job(job)
         final_segments = self.postprocess.apply_to_segments(diarized)
         final_text = self.postprocess.build_final_transcript(final_segments)
-        result = {
-            "job_id": job.job_id,
-            "pipeline": "ultra-sota-2026",
-            "status": "done",
-            "original_filename": job.original_filename,
-            "stages": [asdict(stage) for stage in job.stages],
-            "preprocess_metadata": prep.get("metadata", {}),
-            "segments": final_segments,
-            "speaker_timeline": timeline,
-            "final_transcript": final_text,
-            "total_duration": asr_result.get("total_duration", 0),
-        }
-        # Сохраняем результат и вызываем callback вне блокировки
+        
+        # Финализация в критической секции
         with self._lock:
-            job.result = result
-            job.progress = 100
+            # Отмечаем postprocess как выполненный
+            self._set_stage(job, "postprocess", "done")
+            
+            # Устанавливаем финальный прогресс и статус
+            job.progress = 1.0
             job.status = JobStatus.done
             job.updated_at = datetime.now(timezone.utc).isoformat()
+            
+            # Строим результат после обновления статусов
+            result = {
+                "job_id": job.job_id,
+                "pipeline": "ultra-sota-2026",
+                "status": "done",
+                "original_filename": job.original_filename,
+                "stages": [asdict(stage) for stage in job.stages],
+                "preprocess_metadata": prep.get("metadata", {}),
+                "segments": final_segments,
+                "speaker_timeline": timeline,
+                "final_transcript": final_text,
+                "total_duration": asr_result.get("total_duration", 0),
+            }
+            
+            # Сохраняем результат
+            job.result = result
             self._persist_job(job)
+            
             # Копируем данные для callback перед выходом из блокировки
             job_copy = asdict(job)
             input_path = job.input_path

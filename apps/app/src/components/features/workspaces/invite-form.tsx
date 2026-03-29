@@ -163,7 +163,7 @@ export default function InviteForm({
           className="flex-1"
         >
           {isLoading
-            ? "Создание..."
+            ? "Создание…"
             : inviteType === "email"
               ? "Отправить приглашение"
               : "Создать ссылку"}

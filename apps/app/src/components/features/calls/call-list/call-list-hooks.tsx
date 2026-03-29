@@ -55,11 +55,7 @@ export function useDayToneByDate(calls: CallListProps["calls"]) {
     ).filter(Boolean);
 
     // Сортируем даты по времени (от новых к старым)
-    uniqueDates.sort((a, b) => {
-      const dateA = new Date(a);
-      const dateB = new Date(b);
-      return dateB.getTime() - dateA.getTime();
-    });
+    uniqueDates.sort((a, b) => b.localeCompare(a));
 
     // Назначаем тоны в отсортированном порядке
     let pastDayIndex = 0;

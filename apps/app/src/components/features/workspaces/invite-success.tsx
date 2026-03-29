@@ -23,7 +23,7 @@ export default function InviteSuccess({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error("Failed to copy link:", error);
+      console.error("Не удалось скопировать ссылку:", error);
       toast.error("Не удалось скопировать ссылку");
     }
   };

@@ -62,13 +62,6 @@ export default function BulkKpiSettings({
 
   const handleApply = async () => {
     try {
-      // Валидация и преобразование строк в числа с ограничениями
-      const baseSalaryNum = toNonNegativeInt(Number(settings.baseSalary));
-      const targetBonusNum = toNonNegativeInt(Number(settings.targetBonus));
-      const targetTalkTimeMinutesNum = toNonNegativeInt(
-        Number(settings.targetTalkTimeMinutes),
-      );
-
       // Проверка на пустые значения
       if (
         settings.baseSalary.trim() === "" ||
@@ -78,6 +71,13 @@ export default function BulkKpiSettings({
         toast.error("Все поля должны быть заполнены");
         return;
       }
+
+      // Валидация и преобразование строк в числа с ограничениями
+      const baseSalaryNum = toNonNegativeInt(Number(settings.baseSalary));
+      const targetBonusNum = toNonNegativeInt(Number(settings.targetBonus));
+      const targetTalkTimeMinutesNum = toNonNegativeInt(
+        Number(settings.targetTalkTimeMinutes),
+      );
 
       const validatedSettings = {
         baseSalary: Math.min(baseSalaryNum, KPI_FIELD_LIMITS.baseSalary),
@@ -96,7 +96,7 @@ export default function BulkKpiSettings({
         targetBonus: "",
         targetTalkTimeMinutes: "",
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error("Не удалось применить KPI");
     }
   };
@@ -129,6 +129,9 @@ export default function BulkKpiSettings({
             <Input
               id="bulkBaseSalary"
               type="number"
+              name="bulkBaseSalary"
+              inputMode="numeric"
+              autoComplete="off"
               value={settings.baseSalary || ""}
               onChange={(e) => handleFieldChange("baseSalary", e.target.value)}
               className="col-span-3"
@@ -143,6 +146,9 @@ export default function BulkKpiSettings({
             <Input
               id="bulkTargetBonus"
               type="number"
+              name="bulkTargetBonus"
+              inputMode="numeric"
+              autoComplete="off"
               value={settings.targetBonus || ""}
               onChange={(e) => handleFieldChange("targetBonus", e.target.value)}
               className="col-span-3"
@@ -157,6 +163,9 @@ export default function BulkKpiSettings({
             <Input
               id="bulkTargetTalkTimeMinutes"
               type="number"
+              name="bulkTargetTalkTimeMinutes"
+              inputMode="numeric"
+              autoComplete="off"
               value={settings.targetTalkTimeMinutes || ""}
               onChange={(e) =>
                 handleFieldChange("targetTalkTimeMinutes", e.target.value)

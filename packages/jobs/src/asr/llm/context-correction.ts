@@ -10,15 +10,6 @@ import { createLogger } from "../../logger";
 
 const logger = createLogger("asr-context-correction");
 
-const AsrCorrectionInputSchema = z.object({
-  message: z.string().trim().min(1),
-  context: z
-    .string()
-    .trim()
-    .max(1000, "Контекст не должен превышать 1000 символов")
-    .optional(),
-});
-
 const CORRECTED_TEXT_SCHEMA = z.object({
   text: z.string().trim().min(1),
 });
@@ -107,24 +98,37 @@ export async function correctWithContext(
     const normalizedText = text.trim();
     const companyContext = options?.companyContext?.trim() ?? undefined;
 
-    const parsedInput = AsrCorrectionInputSchema.safeParse({
-      message: normalizedText,
-      context: companyContext,
-    });
-
-    if (!parsedInput.success) {
-      logger.warn(
-        "Входные данные контекстной коррекции не прошли валидацию, оставляем исходный текст",
-        {
-          functionId: "asr-context-correction",
-          issues: parsedInput.error.issues,
-        },
-      );
+    // Валидируем обязательное поле message отдельно
+    const messageValidation = z
+      .string()
+      .trim()
+      .min(1)
+      .max(2000, "Сообщение не должно превышать 2000 символов")
+      .safeParse(normalizedText);
+    if (!messageValidation.success) {
+      logger.warn("Текст не прошел валидацию, оставляем исходный текст", {
+        functionId: "asr-context-correction",
+        issues: messageValidation.error.issues,
+      });
       return text;
     }
 
-    const contextInfo = companyContext
-      ? `\n\nКОНТЕКСТ КОМПАНИИ:\n${companyContext}\n\nКРИТИЧЕСКИ ВАЖНО: Используй ТОЧНО это название компании. НЕ изменяй написание, НЕ транслитерируй, НЕ переводи. Используй эту информацию для лучшего понимания предметной области и терминологии.`
+    // Нормализуем опциональный контекст
+    let normalizedContext;
+    if (companyContext) {
+      const contextValidation = z
+        .string()
+        .trim()
+        .max(1000, "Контекст не должен превышать 1000 символов")
+        .safeParse(companyContext);
+      if (contextValidation.success) {
+        normalizedContext = contextValidation.data;
+      }
+      // Если контент слишком длинный, просто отбрасываем его, не прерываем коррекцию
+    }
+
+    const contextInfo = normalizedContext
+      ? `\n\nКОНТЕКСТ КОМПАНИИ:\n${normalizedContext}\n\nКРИТИЧЕСКИ ВАЖНО: Используй ТОЧНО это название компании. НЕ изменяй написание, НЕ транслитерируй, НЕ переводи. Используй эту информацию для лучшего понимания предметной области и терминологии.`
       : "";
 
     const { text: correctedTextRaw } = await generateWithAi({
