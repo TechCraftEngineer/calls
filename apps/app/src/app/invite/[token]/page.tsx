@@ -29,7 +29,7 @@ import { useORPC } from "@/orpc/react";
 
 interface Invitation {
   invitationType: "link" | "email";
-  email?: string;
+  email: string | null;
   workspaceName: string;
 }
 
@@ -121,7 +121,7 @@ export default function InviteAcceptPage() {
     ...orpc.workspaces.checkUserPassword.queryOptions({
       input: { email: currentUser?.email || "" },
     }),
-    enabled: isInvitationEnabled(currentUser, invitation),
+    enabled: isInvitationEnabled(currentUser, invitation || null),
   });
 
   useEffect(() => {
