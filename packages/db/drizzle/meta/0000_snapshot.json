@@ -1,5 +1,5 @@
 {
-  "id": "df84c94f-e08f-427c-9d12-ed2868ea5e97",
+  "id": "9fdc8108-83af-4a6b-b1eb-4837dc190cc2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1428,7 +1428,7 @@
       "checkConstraints": {
         "chk_files_duration_seconds_finite_positive": {
           "name": "chk_files_duration_seconds_finite_positive",
-          "value": "\"files\".\"duration_seconds\" IS NULL OR (isfinite(\"files\".\"duration_seconds\") AND \"files\".\"duration_seconds\" > 0)"
+          "value": "\"files\".\"duration_seconds\" IS NULL OR (\"files\".\"duration_seconds\" > 0 AND \"files\".\"duration_seconds\" < 'Infinity'::real)"
         }
       },
       "isRLSEnabled": false

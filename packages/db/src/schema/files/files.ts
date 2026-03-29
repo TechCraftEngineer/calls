@@ -53,7 +53,7 @@ export const files = pgTable(
   (table) => [
     check(
       "chk_files_duration_seconds_finite_positive",
-      sql`${table.durationSeconds} IS NULL OR (isfinite(${table.durationSeconds}) AND ${table.durationSeconds} > 0)`,
+      sql`${table.durationSeconds} IS NULL OR (${table.durationSeconds} > 0 AND ${table.durationSeconds} < 'Infinity'::real)`,
     ),
     index("files_workspace_id_idx").on(table.workspaceId),
     index("files_file_type_idx").on(table.fileType),

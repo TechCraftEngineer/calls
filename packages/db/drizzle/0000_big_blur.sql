@@ -125,7 +125,7 @@ CREATE TABLE "files" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "files_storage_key_unique" UNIQUE("storage_key"),
-	CONSTRAINT "chk_files_duration_seconds_finite_positive" CHECK ("files"."duration_seconds" IS NULL OR (isfinite("files"."duration_seconds") AND "files"."duration_seconds" > 0))
+	CONSTRAINT "chk_files_duration_seconds_finite_positive" CHECK ("files"."duration_seconds" IS NULL OR ("files"."duration_seconds" > 0 AND "files"."duration_seconds" < 'Infinity'::real))
 );
 --> statement-breakpoint
 CREATE TABLE "invitations" (
