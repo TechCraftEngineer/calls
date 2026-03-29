@@ -73,11 +73,38 @@ export default function BulkKpiSettings({
       }
 
       // Валидация и преобразование строк в числа с ограничениями
-      const baseSalaryNum = toNonNegativeInt(Number(settings.baseSalary));
-      const targetBonusNum = toNonNegativeInt(Number(settings.targetBonus));
-      const targetTalkTimeMinutesNum = toNonNegativeInt(
-        Number(settings.targetTalkTimeMinutes),
+      const validateNumericField = (
+        value: string,
+        fieldName: string,
+      ): number | null => {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed)) {
+          toast.error(`Поле "${fieldName}" должно содержать корректное число`);
+          return null;
+        }
+        return toNonNegativeInt(parsed);
+      };
+
+      const baseSalaryNum = validateNumericField(
+        settings.baseSalary,
+        "Базовая зарплата",
       );
+      const targetBonusNum = validateNumericField(
+        settings.targetBonus,
+        "Целевой бонус",
+      );
+      const targetTalkTimeMinutesNum = validateNumericField(
+        settings.targetTalkTimeMinutes,
+        "Целевое время разговора",
+      );
+
+      if (
+        baseSalaryNum === null ||
+        targetBonusNum === null ||
+        targetTalkTimeMinutesNum === null
+      ) {
+        return;
+      }
 
       const validatedSettings = {
         baseSalary: Math.min(baseSalaryNum, KPI_FIELD_LIMITS.baseSalary),
@@ -96,7 +123,8 @@ export default function BulkKpiSettings({
         targetBonus: "",
         targetTalkTimeMinutes: "",
       });
-    } catch (_error) {
+    } catch (error) {
+      console.error("Failed to apply KPI", error);
       toast.error("Не удалось применить KPI");
     }
   };

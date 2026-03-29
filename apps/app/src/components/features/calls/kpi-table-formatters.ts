@@ -18,7 +18,11 @@ export const formatMinutes = (value: number | null | undefined): string => {
 
 export const formatPercentage = (value: number | null | undefined): string => {
   if (value == null || !Number.isFinite(value)) return "—";
-  return `${(value * 100).toFixed(1)}%`;
+  return new Intl.NumberFormat(undefined, {
+    style: "percent",
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(value);
 };
 
 export const formatNumber = (value: number | null | undefined): string => {

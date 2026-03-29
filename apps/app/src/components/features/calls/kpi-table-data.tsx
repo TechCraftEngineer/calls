@@ -1,5 +1,4 @@
 import {
-  Badge,
   Button,
   DataGrid,
   DataGridColumnVisibility,
@@ -26,6 +25,7 @@ export default function KpiTableData({
   isLoading,
   editingEmployeeId,
   savingEmployeeId,
+  isApplyingBulkKpi = false,
   draftsByEmployeeId,
   onEditEmployee,
   onSaveRow,
@@ -34,8 +34,13 @@ export default function KpiTableData({
   onExportCsv,
 }: KpiTableDataProps) {
   const columns = useMemo(
-    () => createKpiTableColumns(onEditEmployee, savingEmployeeId, false),
-    [onEditEmployee, savingEmployeeId]
+    () =>
+      createKpiTableColumns(
+        onEditEmployee,
+        savingEmployeeId,
+        isApplyingBulkKpi,
+      ),
+    [onEditEmployee, savingEmployeeId, isApplyingBulkKpi],
   );
 
   const table = useReactTable({
@@ -80,7 +85,7 @@ export default function KpiTableData({
       </div>
 
       <DataGridContainer>
-        <DataGrid 
+        <DataGrid
           table={table}
           recordCount={rows.length}
           isLoading={isLoading}
@@ -89,8 +94,8 @@ export default function KpiTableData({
           <DataGridTable />
           <DataGridPagination />
         </DataGrid>
-        <DataGridColumnVisibility 
-          table={table} 
+        <DataGridColumnVisibility
+          table={table}
           trigger={
             <Button variant="outline" size="sm">
               Настройки колонок
@@ -126,7 +131,7 @@ function KpiTableDataSkeleton() {
         </div>
         <Skeleton className="h-9 w-24" />
       </div>
-      
+
       <div className="border rounded-lg">
         <div className="p-4">
           <Skeleton className="h-8 w-full mb-4" />

@@ -1,19 +1,20 @@
 export interface KpiRow {
   employeeExternalId: string;
   name: string;
-  internalNumber?: string | null;
+  email: string;
   baseSalary: number;
   targetBonus: number;
   targetTalkTimeMinutes: number;
-  totalCalls?: number | null;
-  totalTalkTimeMinutes?: number | null;
-  averageValueScore?: number | null;
-  completedCallsCount?: number | null;
-  conversionRate?: number | null;
-  totalRevenue?: number | null;
-  calculatedSalary?: number | null;
-  calculatedBonus?: number | null;
-  calculatedTotal?: number | null;
+  periodTargetTalkTimeMinutes: number;
+  actualTalkTimeMinutes: number;
+  kpiCompletionPercentage: number;
+  calculatedBonus: number;
+  totalCalculatedSalary: number;
+  totalCalls: number;
+  incoming: number;
+  outgoing: number;
+  missed: number;
+  internalNumber?: string | null;
 }
 
 export interface KpiTableDataProps {
@@ -21,6 +22,7 @@ export interface KpiTableDataProps {
   isLoading: boolean;
   editingEmployeeId: string | null;
   savingEmployeeId: string | null;
+  isApplyingBulkKpi?: boolean;
   draftsByEmployeeId: Record<string, Partial<KpiRow>>;
   onEditEmployee: (employeeId: string) => void;
   onSaveRow: (row: KpiRow) => void;
