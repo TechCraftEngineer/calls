@@ -25,6 +25,11 @@ from services.transcription_service import transcription_service
 logger = logging.getLogger(__name__)
 
 
+class PermanentAudioError(Exception):
+    """Non-retryable error for missing/corrupt audio files."""
+    pass
+
+
 class JobOrchestrator:
     def __init__(self) -> None:
         self.jobs: dict[str, JobRecord] = {}
@@ -158,6 +163,16 @@ class JobOrchestrator:
 
             try:
                 self._process_job(job)
+            except PermanentAudioError as exc:
+                # Non-retryable error - fail immediately
+                logger.error("Permanent audio error, failing job: %s", job.job_id)
+                with self._lock:
+                    job.status = JobStatus.failed
+                    job.error = str(exc)
+                    job.updated_at = datetime.now(timezone.utc).isoformat()
+                    self._persist_job(job)
+                    self._send_callback(job)
+                    self._safe_unlink(job.input_path)
             except Exception as exc:
                 logger.exception("Job failed: %s", job.job_id)
                 with self._lock:
@@ -228,14 +243,14 @@ class JobOrchestrator:
                 len(audio_np),
                 audio_sr,
             )
-        except (FileNotFoundError, OSError, librosa.LibrosaError) as exc:
+        except (FileNotFoundError, OSError, librosa.util.exceptions.ParameterError) as exc:
             logger.error(
                 "Не удалось загрузить аудио файл %s для диаризации: %s", 
                 prep["audio_path"], 
                 exc
             )
-            # Вместо пустого массива, прерываем обработку или помечаем все сегменты как одного спикера
-            raise RuntimeError(f"Аудио файл не найден или поврежден: {prep['audio_path']}") from exc
+            # Instead of empty array, raise non-retryable error for missing/corrupt audio
+            raise PermanentAudioError(f"Аудио файл не найден или поврежден: {prep['audio_path']}") from exc
         except Exception as exc:
             logger.error(
                 "Неожиданная ошибка при загрузке аудио %s: %s", 

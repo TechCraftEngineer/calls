@@ -50,7 +50,7 @@ class ClusteringService:
 
         overlap_spans = overlap_spans or []
         clusters: list[dict[str, Any]] = []
-        base_threshold = 0.40  # Увеличен с 0.35 для большего объединения похожих спикеров
+        base_threshold = 0.40  # Increased from 0.35 for more merging of similar speakers
 
         for seg in segments:
             start = float(seg.get("start", 0.0))

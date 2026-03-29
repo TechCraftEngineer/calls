@@ -1,8 +1,9 @@
-import { isValidCalendarIsoDate } from "@calls/shared";
+import {
+  isValidCalendarIsoDate,
+  WEBHOOK_SECRET_BYTES,
+  WEBHOOK_SECRET_MIN_LENGTH,
+} from "@calls/shared";
 import { z } from "zod";
-import { WEBHOOK_SECRET_BYTES } from "./utils";
-
-const WEBHOOK_SECRET_MIN_LENGTH = WEBHOOK_SECRET_BYTES * 2; // hex encoding doubles the length
 
 export const accessFormSchema = z.object({
   baseUrl: z

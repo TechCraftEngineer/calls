@@ -1,4 +1,4 @@
-export const WEBHOOK_SECRET_BYTES = 32;
+import { WEBHOOK_SECRET_BYTES } from "@calls/shared";
 
 export function generateWebhookSecret(): string {
   const bytes = new Uint8Array(WEBHOOK_SECRET_BYTES);

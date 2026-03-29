@@ -4,13 +4,14 @@ import { workspaceIdInputSchema } from "../schemas";
 
 type ListInvitationItem = {
   id: string;
-  email: string;
+  email: string | null;
   role: string;
   token: string | null;
   expiresAt: Date | null;
   createdAt: Date;
   invitedBy: string | null;
   pendingSettings?: Record<string, unknown>;
+  invitationType?: "email" | "link";
 };
 
 export const listInvitations = workspaceAdminProcedure
