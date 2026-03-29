@@ -1,11 +1,27 @@
-import { Button, Field, FieldContent, FieldDescription, FieldLabel, Input, RadioGroup, RadioGroupItem } from "@calls/ui";
+import {
+  Button,
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+  Input,
+  RadioGroup,
+  RadioGroupItem,
+} from "@calls/ui";
 import { useState } from "react";
+import { z } from "zod";
 
 interface InviteFormProps {
   onSubmit: (email: string, role: "admin" | "member") => void;
   onCreateLink: (role: "admin" | "member") => void;
+  onClose: () => void;
   isLoading: boolean;
 }
+
+const emailSchema = z
+  .string()
+  .min(1, "Email обязателен")
+  .email("Неверный формат email");
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Администратор",
@@ -17,14 +33,19 @@ const ROLE_DESCRIPTIONS: Record<string, string> = {
   member: "Может просматривать и работать с контентом",
 };
 
-export default function InviteForm({ onSubmit, onCreateLink, isLoading }: InviteFormProps) {
+export default function InviteForm({
+  onSubmit,
+  onCreateLink,
+  onClose,
+  isLoading,
+}: InviteFormProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "member">("member");
   const [inviteType, setInviteType] = useState<"email" | "link">("email");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (inviteType === "email" && email.trim()) {
       onSubmit(email.trim(), role);
     } else if (inviteType === "link") {
@@ -32,7 +53,7 @@ export default function InviteForm({ onSubmit, onCreateLink, isLoading }: Invite
     }
   };
 
-  const isEmailValid = email.trim() !== "" && email.includes("@");
+  const isEmailValid = emailSchema.safeParse(email.trim()).success;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
@@ -105,9 +126,7 @@ export default function InviteForm({ onSubmit, onCreateLink, isLoading }: Invite
                 <FieldLabel htmlFor="role-member" className="font-normal">
                   {ROLE_LABELS.member}
                 </FieldLabel>
-                <FieldDescription>
-                  {ROLE_DESCRIPTIONS.member}
-                </FieldDescription>
+                <FieldDescription>{ROLE_DESCRIPTIONS.member}</FieldDescription>
               </FieldContent>
             </div>
             <div className="flex items-center space-x-2">
@@ -116,9 +135,7 @@ export default function InviteForm({ onSubmit, onCreateLink, isLoading }: Invite
                 <FieldLabel htmlFor="role-admin" className="font-normal">
                   {ROLE_LABELS.admin}
                 </FieldLabel>
-                <FieldDescription>
-                  {ROLE_DESCRIPTIONS.admin}
-                </FieldDescription>
+                <FieldDescription>{ROLE_DESCRIPTIONS.admin}</FieldDescription>
               </FieldContent>
             </div>
           </RadioGroup>
@@ -133,6 +150,7 @@ export default function InviteForm({ onSubmit, onCreateLink, isLoading }: Invite
             setEmail("");
             setRole("member");
             setInviteType("email");
+            onClose();
           }}
           disabled={isLoading}
           className="flex-1"
@@ -144,7 +162,11 @@ export default function InviteForm({ onSubmit, onCreateLink, isLoading }: Invite
           disabled={isLoading || (inviteType === "email" && !isEmailValid)}
           className="flex-1"
         >
-          {isLoading ? "Создание..." : inviteType === "email" ? "Отправить приглашение" : "Создать ссылку"}
+          {isLoading
+            ? "Создание..."
+            : inviteType === "email"
+              ? "Отправить приглашение"
+              : "Создать ссылку"}
         </Button>
       </div>
     </form>

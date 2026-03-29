@@ -1,4 +1,4 @@
-import { Button, Input } from "@calls/ui";
+import { Button, Input, toast } from "@calls/ui";
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 
@@ -24,6 +24,7 @@ export default function InviteSuccess({
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Failed to copy link:", error);
+      toast.error("Не удалось скопировать ссылку");
     }
   };
 

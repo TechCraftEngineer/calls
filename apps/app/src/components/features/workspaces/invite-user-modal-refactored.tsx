@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "@calls/ui";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 import InviteForm from "./invite-form";
@@ -30,9 +30,9 @@ export default function InviteUserModal({
   onSubmit,
   onCreateLink,
 }: InviteUserModalProps) {
-  const modalRef = useRef<HTMLDivElement>(null);
   const [result, setResult] = useState<InviteResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const modalRef = useFocusTrap<HTMLDivElement>(true);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -44,12 +44,6 @@ export default function InviteUserModal({
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [onClose]);
-
-  useEffect(() => {
-    if (modalRef.current) {
-      useFocusTrap(modalRef.current);
-    }
-  }, []);
 
   const handleClose = () => {
     if (!isLoading) {
@@ -71,7 +65,9 @@ export default function InviteUserModal({
       toast.success("Приглашение отправлено");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось отправить приглашение"
+        error instanceof Error
+          ? error.message
+          : "Не удалось отправить приглашение",
       );
     } finally {
       setIsLoading(false);
@@ -90,7 +86,7 @@ export default function InviteUserModal({
       toast.success("Ссылка-приглашение создана");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Не удалось создать ссылку"
+        error instanceof Error ? error.message : "Не удалось создать ссылку",
       );
     } finally {
       setIsLoading(false);
@@ -98,7 +94,14 @@ export default function InviteUserModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+      aria-describedby="modal-description"
+      onClick={handleClose}
+    >
       <div
         ref={modalRef}
         className="w-full max-w-[520px] bg-white rounded-2xl shadow-2xl p-8 border border-gray-100"
@@ -115,11 +118,18 @@ export default function InviteUserModal({
           <div className="flex flex-col gap-6">
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-xl font-bold text-gray-900 m-0">
+                <h1
+                  id="modal-title"
+                  className="text-xl font-bold text-gray-900 m-0"
+                >
                   Пригласить в компанию
                 </h1>
-                <p className="text-sm text-gray-600 mt-1 m-0">
-                  Добавьте нового участника или создайте ссылку для присоединения
+                <p
+                  id="modal-description"
+                  className="text-sm text-gray-600 mt-1 m-0"
+                >
+                  Добавьте нового участника или создайте ссылку для
+                  присоединения
                 </p>
               </div>
               <button
@@ -145,6 +155,7 @@ export default function InviteUserModal({
             <InviteForm
               onSubmit={handleEmailSubmit}
               onCreateLink={handleLinkCreate}
+              onClose={handleClose}
               isLoading={isLoading}
             />
           </div>

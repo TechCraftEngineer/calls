@@ -1,4 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle, toast } from "@calls/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  toast,
+} from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -10,20 +17,25 @@ import { useORPC } from "@/orpc/react";
 
 import KpiMonthPicker, { useKpiMonthUtils } from "./kpi-month-picker";
 import KpiTableData from "./kpi-table-data";
-import BulkKpiSettings, { type BulkKpiSettings } from "./bulk-kpi-settings";
+import BulkKpiSettings, {
+  type BulkKpiSettings as BulkKpiSettingsType,
+} from "./bulk-kpi-settings";
 
 const KPI_QUERY_KEY = ["statistics", "kpi"] as const;
 
 const KPI_FIELD_LIMITS = {
-  baseSalary: 999999,
-  targetBonus: 999999,
-  targetTalkTimeMinutes: 9999,
+  baseSalary: 1000000,
+  targetBonus: 1000000,
+  targetTalkTimeMinutes: 100000,
 } as const;
 
 const kpiDraftSchema = z.object({
   baseSalary: z.number().min(0).max(KPI_FIELD_LIMITS.baseSalary),
   targetBonus: z.number().min(0).max(KPI_FIELD_LIMITS.targetBonus),
-  targetTalkTimeMinutes: z.number().min(0).max(KPI_FIELD_LIMITS.targetTalkTimeMinutes),
+  targetTalkTimeMinutes: z
+    .number()
+    .min(0)
+    .max(KPI_FIELD_LIMITS.targetTalkTimeMinutes),
 });
 
 type KpiDraft = z.infer<typeof kpiDraftSchema>;
@@ -46,8 +58,22 @@ interface KpiRow {
   calculatedTotal?: number | null;
 }
 
+const monthValueSchema = z
+  .string()
+  .regex(
+    /^\d{4}-(0[1-9]|1[0-2])$/,
+    "Неверный формат месяца. Используйте ГГГГ-ММ",
+  );
+
 function getMonthRange(monthValue: string): { normalizedMonthValue: string } {
-  const [year, month] = monthValue.split("-").map(Number);
+  const result = monthValueSchema.safeParse(monthValue);
+  if (!result.success) {
+    // Если парсинг не удался, используем текущий месяц
+    const currentMonth = getCurrentMonthValue();
+    return { normalizedMonthValue: currentMonth };
+  }
+
+  const [year, month] = result.data.split("-").map(Number);
   return { normalizedMonthValue: `${year}-${String(month).padStart(2, "0")}` };
 }
 
@@ -64,20 +90,23 @@ export default function KpiTable() {
 
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthValue());
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
-  const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
+  const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(
+    null,
+  );
   const [savingEmployeeId, setSavingEmployeeId] = useState<string | null>(null);
-  const [draftsByEmployeeId, setDraftsByEmployeeId] = useState<Record<string, Partial<KpiRow>>>({});
+  const [draftsByEmployeeId, setDraftsByEmployeeId] = useState<
+    Record<string, Partial<KpiRow>>
+  >({});
   const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
-  
+
   const currentMonthValue = getCurrentMonthValue();
-  const { shiftMonth, monthLabel, canGoNextMonth: canGoNextMonthUtil } = useKpiMonthUtils();
+  const {
+    shiftMonth,
+    monthLabel,
+    canGoNextMonth: canGoNextMonthUtil,
+  } = useKpiMonthUtils();
   const canGoNextMonth = canGoNextMonthUtil(selectedMonth, currentMonthValue);
   const skipInvalidateOnSuccessRef = useRef(false);
-
-  const kpiQueryKey = useMemo(
-    () => [...KPI_QUERY_KEY, { month: selectedMonth }],
-    [selectedMonth],
-  );
 
   const {
     data: rows = [],
@@ -119,13 +148,12 @@ export default function KpiTable() {
     setDraftsByEmployeeId((prev) => {
       const next = { ...prev };
       for (const row of rows) {
-        if (!next[row.employeeExternalId]) {
-          next[row.employeeExternalId] = {
-            baseSalary: row.baseSalary,
-            targetBonus: row.targetBonus,
-            targetTalkTimeMinutes: row.targetTalkTimeMinutes,
-          };
-        }
+        // Перезаписываем существующие drafts значениями из rows
+        next[row.employeeExternalId] = {
+          baseSalary: row.baseSalary,
+          targetBonus: row.targetBonus,
+          targetTalkTimeMinutes: row.targetTalkTimeMinutes,
+        };
       }
       return next;
     });
@@ -134,7 +162,11 @@ export default function KpiTable() {
   const updateKpiMutation = useMutation(
     orpc.statistics.updateKpiEmployee.mutationOptions({
       onSuccess: async () => {
-        await queryClient.invalidateQueries({ queryKey: kpiQueryKey });
+        await queryClient.invalidateQueries({
+          queryKey: orpc.statistics.getKpiEmployees.queryKey({
+            input: { month: selectedMonth },
+          }),
+        });
       },
     }),
   );
@@ -143,7 +175,11 @@ export default function KpiTable() {
     orpc.statistics.updateKpiEmployee.mutationOptions({
       onSuccess: async () => {
         if (skipInvalidateOnSuccessRef.current) return;
-        await queryClient.invalidateQueries({ queryKey: kpiQueryKey });
+        await queryClient.invalidateQueries({
+          queryKey: orpc.statistics.getKpiEmployees.queryKey({
+            input: { month: selectedMonth },
+          }),
+        });
       },
     }),
   );
@@ -202,7 +238,7 @@ export default function KpiTable() {
     }
   };
 
-  const applyKpiToAllEmployees = async (settings: BulkKpiSettings) => {
+  const applyKpiToAllEmployees = async (settings: BulkKpiSettingsType) => {
     if (rows.length === 0) {
       toast.error("Нет сотрудников для применения KPI");
       return;
@@ -221,9 +257,27 @@ export default function KpiTable() {
         }),
       );
 
-      await Promise.all(promises);
-      toast.success(`KPI применены ко всем ${rows.length} сотрудникам`);
+      const results = await Promise.allSettled(promises);
+
+      const successful = results.filter((r) => r.status === "fulfilled").length;
+      const failed = results.filter((r) => r.status === "rejected").length;
+
+      if (failed > 0) {
+        toast.error(
+          `KPI применены к ${successful} из ${rows.length} сотрудников. ${failed} завершились с ошибкой.`,
+        );
+        // Пробрасываем ошибку дальше чтобы вызывающий код не закрыл диалог
+        throw new Error(
+          `Частичное применение KPI: ${successful} успешных, ${failed} неудачных`,
+        );
+      } else {
+        toast.success(`KPI применены ко всем ${successful} сотрудникам`);
+      }
     } catch (error) {
+      if (error.message.includes("Частичное применение")) {
+        // Пробрасываем дальше для обработки в вызывающем коде
+        throw error;
+      }
       toast.error("Не удалось применить KPI ко всем сотрудникам");
     }
   };
@@ -327,7 +381,9 @@ export default function KpiTable() {
               isMonthPickerOpen={isMonthPickerOpen}
               setIsMonthPickerOpen={setIsMonthPickerOpen}
               onMonthChange={setSelectedMonth}
-              onShiftMonth={(direction) => setSelectedMonth(shiftMonth(selectedMonth, direction))}
+              onShiftMonth={(direction) =>
+                setSelectedMonth(shiftMonth(selectedMonth, direction))
+              }
             />
           </div>
         </div>

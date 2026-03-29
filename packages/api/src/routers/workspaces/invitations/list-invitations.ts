@@ -11,7 +11,7 @@ type ListInvitationItem = {
   createdAt: Date;
   invitedBy: string | null;
   pendingSettings?: Record<string, unknown>;
-  invitationType?: "email" | "link";
+  invitationType: "email" | "link";
 };
 
 export const listInvitations = workspaceAdminProcedure

@@ -12,7 +12,11 @@ const logger = createLogger("asr-context-correction");
 
 const AsrCorrectionInputSchema = z.object({
   message: z.string().trim().min(1),
-  context: z.string().trim().optional(),
+  context: z
+    .string()
+    .trim()
+    .max(1000, "Контекст не должен превышать 1000 символов")
+    .optional(),
 });
 
 const CORRECTED_TEXT_SCHEMA = z.object({

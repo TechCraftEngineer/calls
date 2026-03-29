@@ -9,6 +9,12 @@ import type { CallListProps } from "./types";
 export function getLocalDateKey(timestamp?: string | Date | null): string {
   if (!timestamp) return "";
   const date = new Date(timestamp);
+
+  // Проверяем валидность даты
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
@@ -42,19 +48,28 @@ export function useDayToneByDate(calls: CallListProps["calls"]) {
   return useMemo(() => {
     const todayKey = getLocalDateKey(new Date());
     const tones = new Map<string, 0 | 1 | 2>();
+
+    // Получаем уникальные даты и сортируем их
+    const uniqueDates = Array.from(
+      new Set(calls.map((item) => getLocalDateKey(item.call.timestamp))),
+    ).filter(Boolean);
+
+    // Сортируем даты по времени (от новых к старым)
+    uniqueDates.sort((a, b) => {
+      const dateA = new Date(a);
+      const dateB = new Date(b);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    // Назначаем тоны в отсортированном порядке
     let pastDayIndex = 0;
-
-    for (const item of calls) {
-      const dateKey = getLocalDateKey(item.call.timestamp);
-      if (!dateKey || tones.has(dateKey)) continue;
-
+    for (const dateKey of uniqueDates) {
       if (dateKey === todayKey) {
         tones.set(dateKey, 0);
-        continue;
+      } else {
+        tones.set(dateKey, pastDayIndex % 2 === 0 ? 1 : 2);
+        pastDayIndex += 1;
       }
-
-      tones.set(dateKey, pastDayIndex % 2 === 0 ? 1 : 2);
-      pastDayIndex += 1;
     }
 
     return tones;
