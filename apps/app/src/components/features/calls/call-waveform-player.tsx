@@ -221,15 +221,15 @@ export function CallWaveformPlayer({
           type="button"
           size="icon"
           variant="secondary"
-          className="size-9 shrink-0 rounded-full"
+          className="size-10 shrink-0 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border-0 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100"
           disabled={!ready}
           onClick={togglePlay}
           aria-label={playing ? "Пауза" : "Воспроизвести"}
         >
           {playing ? (
-            <Pause className="size-4" />
+            <Pause className="size-5" />
           ) : (
-            <Play className="size-4 pl-0.5" />
+            <Play className="size-5 pl-0.5" />
           )}
         </Button>
         <div className="text-muted-foreground flex items-center gap-2 text-xs tabular-nums">

@@ -71,10 +71,6 @@ export function AudioComparisonWaveformPlayer({
   if (!hasEnhancedAudio) {
     return (
       <div className={className}>
-        <div className="mb-3 flex items-center gap-2 text-base font-medium">
-          <Volume2 className="size-4" />
-          Запись звонка
-        </div>
         <CallWaveformPlayer callId={id} />
       </div>
     );
@@ -83,10 +79,6 @@ export function AudioComparisonWaveformPlayer({
   // Если есть улучшенное аудио, показываем табы для сравнения
   return (
     <div className={className}>
-      <div className="mb-3 flex items-center gap-2 text-base font-medium">
-        <Volume2 className="size-4" />
-        Запись звонка
-      </div>
       <Tabs defaultValue="enhanced" className="w-full">
         <TabsList className="mb-4 grid w-full grid-cols-2">
           <TabsTrigger value="enhanced" className="gap-2">

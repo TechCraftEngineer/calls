@@ -1,4 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@calls/ui";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@calls/ui";
+import { Radio, Volume2 } from "lucide-react";
 import type { CallDetail } from "@/types/calls";
 import { CallWaveformPlayer } from "./call-waveform-player";
 
@@ -18,7 +20,34 @@ export function CallAudioCard({ call }: Props) {
         <CardTitle className="sidebar-card-title">🎵 ЗАПИСЬ ЗВОНКА</CardTitle>
       </CardHeader>
       <CardContent className="px-6 pb-6 pt-4">
-        <CallWaveformPlayer callId={call.id} />
+        <Tabs defaultValue="enhanced" className="w-full">
+          <TabsList className="mb-4 grid w-full grid-cols-2">
+            <TabsTrigger value="enhanced" className="gap-2">
+              <Radio className="size-3.5" />
+              Улучшенное
+            </TabsTrigger>
+            <TabsTrigger value="original" className="gap-2">
+              <Volume2 className="size-3.5" />
+              Оригинал
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="enhanced" className="mt-0">
+            <div className="space-y-2">
+              <CallWaveformPlayer callId={call.id} enhanced={true} />
+              <p className="text-muted-foreground text-xs">
+                Аудио обработано с помощью ML для улучшения качества распознавания
+              </p>
+            </div>
+          </TabsContent>
+          <TabsContent value="original" className="mt-0">
+            <div className="space-y-2">
+              <CallWaveformPlayer callId={call.id} enhanced={false} />
+              <p className="text-muted-foreground text-xs">
+                Оригинальная запись без обработки
+              </p>
+            </div>
+          </TabsContent>
+        </Tabs>
         <div className="mt-3 text-xs text-[#999]">
           Размер файла: {formatFileSize(call.sizeBytes)}
         </div>

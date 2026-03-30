@@ -173,7 +173,7 @@ export function RecordColumnCell({
         type="button"
         variant="ghost"
         size="icon"
-        className="record-btn"
+        className="record-btn size-7 min-w-7 bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();

@@ -203,18 +203,18 @@ export default function AudioPlayer({
           <Button
             size="icon"
             className={cn(
-              "size-12 rounded-full bg-[#FFD600] text-black shadow-md hover:scale-105 active:scale-95 hover:bg-[#FFD600] hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed disabled:bg-muted disabled:shadow-none disabled:hover:scale-100",
+              "size-14 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:scale-105 active:scale-95 hover:from-green-600 hover:to-emerald-700 hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed disabled:bg-muted disabled:shadow-none disabled:hover:scale-100 border-0 transition-all duration-200",
             )}
             onClick={togglePlay}
             disabled={isLoading}
             title={isPlaying ? "Пауза" : "Воспроизвести"}
           >
             {isLoading ? (
-              <Loader2 className="size-5 animate-spin" />
+              <Loader2 className="size-6 animate-spin" />
             ) : isPlaying ? (
-              <Pause className="size-5" />
+              <Pause className="size-6" />
             ) : (
-              <Play className="size-5 ml-0.5" />
+              <Play className="size-6 ml-1" />
             )}
           </Button>
           <div className="w-8" />
@@ -240,7 +240,7 @@ export default function AudioPlayer({
               className="w-full h-full appearance-none bg-muted rounded-sm outline-none cursor-pointer relative z-2 m-0 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-transform [&:hover::-webkit-slider-thumb]:scale-110"
             />
             <div
-              className="absolute left-0 top-0 h-full bg-[#FFD600] rounded-sm z-1 pointer-events-none"
+              className="absolute left-0 top-0 h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-sm z-1 pointer-events-none"
               style={{ width: `${(currentTime / (duration || 1)) * 100}%` }}
             />
           </div>

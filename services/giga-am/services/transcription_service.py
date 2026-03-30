@@ -31,6 +31,8 @@ class TranscriptionService:
     
     def _initialize_model_async(self):
         """Асинхронная инициализация модели в фоновом потоке"""
+        # Устанавливаем флаг загрузки перед запуском потока
+        self._model_loading = True
         try:
             self._initialize_model()
         except Exception as e:
@@ -38,6 +40,7 @@ class TranscriptionService:
             self._model_error = e
         finally:
             self._initialization_event.set()
+            self._model_loading = False
     
     def _ensure_model_loaded(self):
         """Гарантирует, что модель загружена"""
@@ -187,7 +190,10 @@ class TranscriptionService:
             if not self._model_initialized or self.model is None:
                 return {
                     "success": False,
-                    "error": "Модель не инициализирована"
+                    "error": {
+                        "code": "MODEL_LOAD_ERROR",
+                        "message": "Модель не инициализирована"
+                    }
                 }
             
             # Используем ThreadPoolExecutor для thread-safe доступа к модели
@@ -200,7 +206,10 @@ class TranscriptionService:
                 future.cancel()  # Отменяем задачу при таймауте
                 return {
                     "success": False,
-                    "error": f"Превышено время распознавания ({settings.transcription_timeout} секунд)"
+                    "error": {
+                        "code": "TIMEOUT_ERROR",
+                        "message": f"Превышено время распознавания ({settings.transcription_timeout} секунд)"
+                    }
                 }
             
             result = {
@@ -225,12 +234,10 @@ class TranscriptionService:
             logger.info(f"Распознавание завершено. Сегментов: {len(result['segments'])}")
             return result
             
-        except (ModelLoadError, TimeoutError) as e:
-            logger.error(f"Ошибка при распознавании аудио: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+        except (ModelLoadError, GigaTimeoutError) as e:
+            # Re-raise domain exceptions to propagate to HTTP layer
+            logger.error(f"Domain exception during transcription: {e}")
+            raise
         except Exception as e:
             logger.error(f"Ошибка при распознавании аудио: {e}")
             return {

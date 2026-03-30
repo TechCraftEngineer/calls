@@ -8,9 +8,10 @@ from typing import Any
 import librosa
 import numpy as np
 import soundfile
-from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile, Depends
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import uvicorn
 
 from config import settings
@@ -29,13 +30,48 @@ from utils.exceptions import (
     FileSizeError,
     UnsupportedFormatError,
     ServiceUnavailableError,
-    GigaTimeoutError
+    GigaTimeoutError,
+    GigaAMException,
+    ModelLoadError
 )
 from utils.error_handlers import setup_exception_handlers
 from utils.metrics import metrics, RequestTracker
 from utils.cache import cache, setup_cache_cleanup
 
 logger = logging.getLogger(__name__)
+
+# Security setup for admin endpoints
+security = HTTPBearer(auto_error=False)
+
+def admin_required(credentials: HTTPAuthorizationCredentials = Depends(security)) -> None:
+    """Validate admin token for protected endpoints"""
+    # Check feature flag first
+    if not getattr(settings, 'enable_cache_clear', False):
+        logger.warning("Cache clear endpoint is disabled")
+        raise HTTPException(
+            status_code=403,
+            detail="Cache clearing is disabled",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    # Validate admin token
+    admin_token = getattr(settings, 'admin_token', None)
+    if not admin_token:
+        logger.error("Admin token not configured")
+        raise HTTPException(
+            status_code=500,
+            detail="Admin authentication not configured"
+        )
+    
+    if not credentials or credentials.credentials != admin_token:
+        logger.warning("Unauthorized access attempt to admin endpoint")
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid admin token",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    logger.info("Admin access granted")
 
 app = FastAPI(
     title=settings.app_name,
@@ -294,9 +330,12 @@ async def api_transcribe(
             # Check if result contains domain error
             error_msg = result.get("error", "Неизвестная ошибка распознавания")
             if isinstance(error_msg, dict) and error_msg.get("code") in ["MODEL_LOAD_ERROR", "TIMEOUT_ERROR"]:
-                # Propagate domain errors
+                # Propagate domain errors with proper exception instances
                 logger.error("Ошибка распознавания: %s", error_msg)
-                raise
+                if error_msg.get("code") == "MODEL_LOAD_ERROR":
+                    raise ModelLoadError(error_msg.get("message", "Model load error"))
+                elif error_msg.get("code") == "TIMEOUT_ERROR":
+                    raise GigaTimeoutError(error_msg.get("message", "Timeout error"))
                 
             logger.error("Ошибка распознавания: %s", error_msg)
             raise TranscriptionError(
@@ -356,12 +395,19 @@ async def get_metrics():
 
 
 @app.post("/api/cache/clear")
-async def clear_cache():
+async def clear_cache(_admin_auth: None = Depends(admin_required)):
     """Очистка кэша (только для администрирования)"""
-    # TODO: Add admin authentication/authorization
-    # For now, this endpoint should be protected by reverse proxy or API gateway
-    cache.cleanup()
-    return {"message": "Кэш успешно очищен"}
+    logger.info("Cache clear requested by admin")
+    try:
+        cache.cleanup()
+        logger.info("Cache successfully cleared")
+        return {"message": "Кэш успешно очищен"}
+    except Exception as e:
+        logger.error(f"Error clearing cache: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to clear cache"
+        )
 
 
 @app.get("/api/cache/stats")
