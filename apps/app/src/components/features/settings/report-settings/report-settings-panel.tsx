@@ -88,7 +88,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     telegramSkipWeekends: false,
     reportIncludeCallSummaries: false,
     reportDetailed: false,
-    reportIncludeAvgValue: false,
     reportIncludeAvgRating: false,
     filterExcludeAnsweringMachine: false,
     filterMinDuration: "0",

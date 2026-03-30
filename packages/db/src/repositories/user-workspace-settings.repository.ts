@@ -137,6 +137,7 @@ export const userWorkspaceSettingsRepository = {
       detailed: false,
       includeAvgValue: false,
       includeAvgRating: false,
+      kpi: false,
       managedUserIds: [],
     };
     const defaultKpi: KpiSettings = {

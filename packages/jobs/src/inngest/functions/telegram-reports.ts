@@ -19,6 +19,7 @@ import {
   splitTelegramHtmlMessage,
 } from "../../reports/format-report";
 import { inngest } from "../client";
+import { subMonths } from "date-fns";
 
 const TZ = "Europe/Moscow";
 const SEND_RETRY_DELAYS_MS = [500, 1000, 2000] as const;
@@ -227,8 +228,7 @@ export const telegramReportsFn = inngest.createFunction(
               dateFromString = formatDateInMoscow(dateFrom);
               dateToString = formatDateInMoscow(dateTo);
             } else {
-              dateFrom = new Date(now);
-              dateFrom.setMonth(dateFrom.getMonth() - 1);
+              dateFrom = subMonths(new Date(now), 1);
               dateTo = new Date(now);
               dateFromString = formatDateInMoscow(dateFrom);
               dateToString = formatDateInMoscow(dateTo);

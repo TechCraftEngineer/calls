@@ -69,7 +69,7 @@ export class UsersService {
     reportDetailed: boolean;
     reportIncludeCallSummaries: boolean;
     reportIncludeAvgRating: boolean;
-    reportIncludeAvgValue: boolean;
+    reportIncludeKpi: boolean;
   } | null> {
     const user = await this.usersRepository.findById(userId);
     if (!user) return null;
@@ -167,7 +167,7 @@ export class UsersService {
       reportDetailed: rs?.detailed ?? false,
       reportIncludeCallSummaries: rs?.includeCallSummaries ?? false,
       reportIncludeAvgRating: rs?.includeAvgRating ?? false,
-      reportIncludeAvgValue: rs?.includeAvgValue ?? false,
+      reportIncludeKpi: rs?.kpi ?? false,
     };
   }
 

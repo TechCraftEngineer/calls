@@ -263,12 +263,12 @@ class TranscriptionService:
                 result = self.model.transcribe_longform(audio_path)
                 logger.info(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
                 return result
-        except (FileNotFoundError, PermissionError, OSError) as path_error:
-            # Только для ошибок доступа к файлу используем fallback с librosa
-            logger.warning(f"Не удалось распознать по пути к файлу (ошибка доступа): {path_error}")
+        except (RuntimeError, ValueError) as model_error:
+            # Для ошибок модели/обработки используем fallback с librosa
+            logger.warning(f"Не удалось распознать по пути к файлу (ошибка модели): {model_error}")
             logger.info("Пробуем загрузить аудиоданные и передать их в модель")
             
-            # Загружаем аудиоданные с помощью libros ВНЕ блокировки
+            # Загружаем аудиоданные с помощью librosa ВНЕ блокировки
             import librosa
             audio_data, sample_rate = librosa.load(audio_path, sr=16000, mono=True)
             logger.info(f"Аудиоданные загружены: длина={len(audio_data)}, sample_rate={sample_rate}")

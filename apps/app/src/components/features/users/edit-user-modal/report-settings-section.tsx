@@ -91,8 +91,8 @@ export function ReportSettingsSection({
                 "reportIncludeCallSummaries",
                 "Включать ИИ-саммари звонков (Email)",
               ],
-              ["reportIncludeAvgValue", "Средняя сумма сделки"],
               ["reportIncludeAvgRating", "Средняя оценка качества"],
+              ["reportIncludeKpi", "Включать KPI данные (оклад, бонус)"],
             ] as const
           ).map(([key, label]) => (
             <label

@@ -5,7 +5,7 @@
 ### 1. Предупреждение torchaudio об устаревшем импорте
 
 **Проблема:**
-```
+```text
 /usr/local/lib/python3.12/site-packages/df/io.py:9: UserWarning: `torchaudio.backend.common.AudioMetaData` has been moved to `torchaudio.AudioMetaData`. Please update the import path.
 ```
 
@@ -16,7 +16,7 @@
 ### 2. Ошибка Pyannote с параметром token
 
 **Проблема:**
-```
+```text
 Не удалось загрузить Pyannote: Pipeline.from_pretrained() got an unexpected keyword argument 'token'
 ```
 

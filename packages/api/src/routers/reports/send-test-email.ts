@@ -22,7 +22,6 @@ const managerStatsSchema = z.object({
   incoming: z.object({ count: z.number(), duration: z.number() }),
   outgoing: z.object({ count: z.number(), duration: z.number() }),
   avgManagerScore: z.number().nullable().optional(),
-  avgValueScore: z.number().nullable().optional(),
   evaluatedCount: z.number().optional(),
 });
 
