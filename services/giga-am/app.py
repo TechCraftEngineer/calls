@@ -305,7 +305,7 @@ async def api_transcribe(
                         stage="pipeline_execution"
                     ) from e
                 
-            if result.get("success"):
+                if result.get("success"):
                     # Сохраняем результат в кэш
                     cache.put(file_hash, result, audio_metadata)
                     

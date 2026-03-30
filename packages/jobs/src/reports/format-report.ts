@@ -12,23 +12,35 @@ export interface ManagerStats {
   evaluatedCount?: number;
 }
 
+export interface PreparedStats {
+  name: string;
+  incomingCount: number;
+  outgoingCount: number;
+  totalCount: number;
+  incomingAvgDurationSec: number;
+  outgoingAvgDurationSec: number;
+  avgManagerScore?: number | null;
+  avgValueScore?: number | null;
+  evaluatedCount: number;
+}
+
 export interface FormatReportParams {
-  stats: Record<string, ManagerStats>;
-  dateFrom: string;
-  dateTo: string;
+  stats: PreparedStats;
+  dateFrom: Date;
+  dateTo: Date;
   reportType: "daily" | "weekly" | "monthly";
   isManagerReport: boolean;
   workspaceName?: string;
   detailed?: boolean;
-  includeCallSummaries?: boolean;
+  _includeCallSummaries?: boolean;
   includeAvgRating?: boolean;
   includeAvgValue?: boolean;
-  callSummariesByManager?: Record<string, string[]>;
+  _callSummariesByManager?: Record<string, string[]>;
   /** Звонки с низкой оценкой по менеджерам (managerScore < 3) */
   lowRatedCalls?: Record<string, number>;
 }
 
-function formatDuration(seconds: number): string {
+function _formatDuration(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds <= 0) return "0 мин";
   const m = Math.floor(seconds / 60);
   const s = Math.round(seconds % 60);
@@ -61,18 +73,6 @@ function pluralizeCalls(n: number): string {
   if (mod10 === 1) return "звонок";
   if (mod10 >= 2 && mod10 <= 4) return "звонка";
   return "звонков";
-}
-
-interface PreparedStats {
-  name: string;
-  incomingCount: number;
-  outgoingCount: number;
-  totalCount: number;
-  incomingAvgDurationSec: number;
-  outgoingAvgDurationSec: number;
-  avgManagerScore?: number | null;
-  avgValueScore?: number | null;
-  evaluatedCount: number;
 }
 
 function prepareStats(entries: [string, ManagerStats][]): {
@@ -178,8 +178,8 @@ export function formatTelegramReport(params: FormatReportParams): string {
     reportType,
     isManagerReport,
     workspaceName,
-    includeCallSummaries = false,
-    callSummariesByManager = {},
+    _includeCallSummaries = false,
+    _callSummariesByManager = {},
     lowRatedCalls = {},
   } = params;
 
@@ -206,7 +206,7 @@ export function formatTelegramReport(params: FormatReportParams): string {
 
   const lines: string[] = [];
   lines.push(`📊 ${typeLabel} отчёт по звонкам${scopeLabel}`);
-  lines.push(`📅 ${dateFrom} — ${dateTo}`);
+  lines.push(`📅 ${dateFrom.toLocaleDateString('ru-RU')} — ${dateTo.toLocaleDateString('ru-RU')}`);
   if (workspaceName) {
     lines.push(`🏢 ${workspaceName}`);
   }
@@ -297,8 +297,8 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     reportType,
     isManagerReport,
     workspaceName,
-    includeCallSummaries = false,
-    callSummariesByManager = {},
+    _includeCallSummaries = false,
+    _callSummariesByManager = {},
     lowRatedCalls = {},
   } = params;
 
@@ -325,7 +325,7 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   if (managers.length === 0) {
     return [
       `📊 <b>${typeLabel} отчёт по звонкам</b>`,
-      `📅 <b>Период:</b> ${escapeHtml(dateFrom)} — ${escapeHtml(dateTo)}`,
+      `📅 <b>Период:</b> ${escapeHtml(dateFrom.toLocaleDateString('ru-RU'))} — ${escapeHtml(dateTo.toLocaleDateString('ru-RU'))}`,
       workspaceName ? `🏢 <b>Компания:</b> ${escapeHtml(workspaceName)}` : "",
       "",
       "За выбранный период звонков не найдено.",
@@ -345,19 +345,16 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   const lines: string[] = [];
   lines.push(`📊 <b>${typeLabel} отчёт по звонкам</b>`);
   lines.push(
-    `📅 <b>Период:</b> ${escapeHtml(dateFrom)} — ${escapeHtml(dateTo)}`,
+    `📅 <b>Период:</b> ${escapeHtml(dateFrom.toLocaleDateString('ru-RU'))} — ${escapeHtml(dateTo.toLocaleDateString('ru-RU'))}`,
   );
   if (workspaceName) {
     lines.push(`🏢 <b>Компания:</b> ${escapeHtml(workspaceName)}`);
   }
   lines.push("");
 
-  // Таблица KPI сотрудников
+  // Таблица KPI сотрудников - простой текст без HTML тегов
   lines.push("📈 <b>KPI сотрудников:</b>");
   lines.push("");
-  
-  // Preformatted текст для таблицы
-  lines.push("<pre>");
   
   // Заголовок таблицы
   const header = "│ Менеджер           │ Звонки │ Минуты │ Оценка │ Сумма   │";
@@ -387,7 +384,6 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   }
   
   lines.push(separator);
-  lines.push("</pre>");
   lines.push("");
 
   // Итоги по всем
