@@ -248,4 +248,11 @@ export class CallsService {
   }) {
     return this.callsRepository.getKpiStats(params);
   }
+
+  async enrichStatsWithKpi(
+    stats: Record<string, any>,
+    workspaceId: string,
+  ): Promise<Record<string, any>> {
+    return this.callsRepository.enrichStatsWithKpi(stats, workspaceId);
+  }
 }

@@ -58,14 +58,6 @@ export interface FormatReportParams {
   _callSummariesByManager?: Record<string, string[]>;
 }
 
-function _formatDuration(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) return "0 мин";
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  if (s > 0) return `${m} мин ${s} сек`;
-  return `${m} мин`;
-}
-
 function formatValue(value: number): string {
   if (!Number.isFinite(value)) return "—";
   return new Intl.NumberFormat("ru-RU").format(Math.round(value));

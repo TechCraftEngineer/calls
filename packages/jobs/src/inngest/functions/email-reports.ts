@@ -10,11 +10,10 @@ import {
   getWorkspaceIdsWithEmailReportRecipients,
   settingsService,
   workspaceSettingsRepository,
-  workspacesService,
 } from "@calls/db";
 import { ReportEmail, sendEmail, type ManagerStats } from "@calls/emails";
 import { toZonedTime } from "date-fns-tz";
-import { subDays, subMonths, subWeeks } from "date-fns";
+import { subMonths } from "date-fns";
 import { inngest } from "../client";
 
 const TZ = "Europe/Moscow";
@@ -112,8 +111,6 @@ export const emailReportsFn = inngest.createFunction(
             workspaceId,
           );
 
-          const ws = await workspacesService.getById(workspaceId);
-
           const reportTypesToRun: Array<"daily" | "weekly" | "monthly"> = [];
 
           const slot = Math.floor(currentMinute / 15) * 15;
@@ -207,6 +204,8 @@ export const emailReportsFn = inngest.createFunction(
                     : undefined,
               })) as Record<string, ManagerStats>;
 
+              const enrichedStats = await callsService.enrichStatsWithKpi(stats, workspaceId);
+
               try {
                 await sendEmail({
                   to: [r.email],
@@ -214,7 +213,8 @@ export const emailReportsFn = inngest.createFunction(
                   react: ReportEmail({
                     reportType,
                     username: undefined,
-                    stats,
+                    stats: enrichedStats,
+                    includeKpi: r.reportSettings.kpi,
                   }),
                 });
                 sent++;

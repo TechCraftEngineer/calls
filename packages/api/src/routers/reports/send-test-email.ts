@@ -2,7 +2,6 @@ import {
   callsService,
   settingsService,
   usersService,
-  workspacesService,
 } from "@calls/db";
 import { ReportEmail, sendEmail, type ManagerStats } from "@calls/emails";
 import { ORPCError } from "@orpc/server";
@@ -136,6 +135,7 @@ export const sendTestEmail = workspaceProcedure
       });
     }
     const stats = parseResult.data as Record<string, ManagerStats>;
+    const enrichedStats = await callsService.enrichStatsWithKpi(stats, workspaceId);
 
     try {
       await sendEmail({
@@ -144,7 +144,8 @@ export const sendTestEmail = workspaceProcedure
         react: ReportEmail({
           reportType,
           username: userForEdit.givenName ?? undefined,
-          stats,
+          stats: enrichedStats,
+          includeKpi: true,
         }),
       });
       return { success: true };

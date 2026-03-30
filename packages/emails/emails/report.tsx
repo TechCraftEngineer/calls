@@ -253,11 +253,11 @@ export const ReportEmail = ({
                       <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Менеджер</th>
                       <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Звонки</th>
                       <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Минуты</th>
-                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Оценка</th>
                       {includeKpi && (
                         <>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Оклад + Бонус</th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">%KPI</th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Оклад</th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Бонус</th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">% выполнения</th>
                         </>
                       )}
                     </tr>
@@ -267,17 +267,16 @@ export const ReportEmail = ({
                       const totalMinutes = Math.round(
                         (manager.incomingAvgDurationSec * manager.incomingCount + manager.outgoingAvgDurationSec * manager.outgoingCount) / 60
                       );
-                      const rating = formatScore(manager.avgManagerScore);
                       
                       return (
                         <tr key={manager.id}>
                           <td className="border border-gray-300 px-3 py-2 text-sm">{manager.name}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">{manager.totalCount}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">{totalMinutes}</td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">{rating}</td>
                           {includeKpi && (
                             <>
-                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue((manager.kpiBaseSalary ?? 0) + (manager.kpiCalculatedBonus ?? 0))} ₽</td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(manager.kpiBaseSalary ?? 0)} ₽</td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(manager.kpiCalculatedBonus ?? 0)} ₽</td>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center">{manager.kpiCompletionPercentage ?? 0}%</td>
                             </>
                           )}
@@ -290,12 +289,10 @@ export const ReportEmail = ({
                       <td className="border border-gray-300 px-3 py-2 text-sm text-center">
                         {Math.round((kpiTable.totals.incomingTotalDurationSec + kpiTable.totals.outgoingTotalDurationSec) / 60)}
                       </td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                        {formatScore(kpiTable.overallAvgManagerScore)}
-                      </td>
                       {includeKpi && (
                         <>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(kpiTable.totals.totalBaseSalary + kpiTable.totals.totalCalculatedBonus)} ₽</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(kpiTable.totals.totalBaseSalary)} ₽</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(kpiTable.totals.totalCalculatedBonus)} ₽</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">-</td>
                         </>
                       )}

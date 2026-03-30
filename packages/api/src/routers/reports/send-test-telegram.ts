@@ -28,22 +28,6 @@ const reportTypeSchema = z.object({
   reportType: z.enum(["daily", "weekly", "monthly"]),
 });
 
-function _getContextUserEmail(user: unknown): string {
-  if (
-    user &&
-    typeof user === "object" &&
-    "email" in user &&
-    typeof user.email === "string" &&
-    user.email.trim()
-  ) {
-    return user.email.trim();
-  }
-
-  throw new ORPCError("BAD_REQUEST", {
-    message: "Email пользователя не найден в сессии",
-  });
-}
-
 function getTelegramChatId(value: unknown): string {
   if (typeof value === "string" && value.trim()) {
     return value.trim();
