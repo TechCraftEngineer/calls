@@ -161,7 +161,7 @@ export const createKpiTableColumns = (
       const formatted = formatCurrency(value);
       return (
         <div className="font-semibold tabular-nums text-emerald-600">
-          {value != null && value !== 0 && formatted !== "—"
+          {value != null && value !== 0
             ? `+${formatted}`
             : formatted}
         </div>

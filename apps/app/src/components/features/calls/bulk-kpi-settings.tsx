@@ -76,41 +76,43 @@ export default function BulkKpiSettings({
       const validateNumericField = (
         value: string,
         fieldName: string,
-      ): number | null => {
+      ): { value: number; error?: string } => {
         const parsed = Number(value);
         if (!Number.isFinite(parsed)) {
-          toast.error(`Поле "${fieldName}" должно содержать корректное число`);
-          return null;
+          return { value: 0, error: `Поле "${fieldName}" должно содержать корректное число` };
         }
-        return toNonNegativeInt(parsed);
+        return { value: toNonNegativeInt(parsed) };
       };
 
-      const baseSalaryNum = validateNumericField(
+      const baseSalaryResult = validateNumericField(
         settings.baseSalary,
         "Базовая зарплата",
       );
-      const targetBonusNum = validateNumericField(
+      const targetBonusResult = validateNumericField(
         settings.targetBonus,
         "Целевой бонус",
       );
-      const targetTalkTimeMinutesNum = validateNumericField(
+      const targetTalkTimeMinutesResult = validateNumericField(
         settings.targetTalkTimeMinutes,
         "Целевое время разговора",
       );
 
-      if (
-        baseSalaryNum === null ||
-        targetBonusNum === null ||
-        targetTalkTimeMinutesNum === null
-      ) {
+      const errors = [
+        baseSalaryResult.error,
+        targetBonusResult.error,
+        targetTalkTimeMinutesResult.error,
+      ].filter(Boolean);
+
+      if (errors.length > 0) {
+        toast.error(errors[0]);
         return;
       }
 
       const validatedSettings = {
-        baseSalary: Math.min(baseSalaryNum, KPI_FIELD_LIMITS.baseSalary),
-        targetBonus: Math.min(targetBonusNum, KPI_FIELD_LIMITS.targetBonus),
+        baseSalary: Math.min(baseSalaryResult.value, KPI_FIELD_LIMITS.baseSalary),
+        targetBonus: Math.min(targetBonusResult.value, KPI_FIELD_LIMITS.targetBonus),
         targetTalkTimeMinutes: Math.min(
-          targetTalkTimeMinutesNum,
+          targetTalkTimeMinutesResult.value,
           KPI_FIELD_LIMITS.targetTalkTimeMinutes,
         ),
       };

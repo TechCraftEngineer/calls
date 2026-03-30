@@ -34,7 +34,7 @@ function splitTextIntoChunks(text: string, maxLength: number): string[] {
       }
     }
 
-    chunks.push(text.slice(start, end).trim());
+    chunks.push(text.slice(start, end));
     start = end;
   }
 
@@ -172,7 +172,6 @@ export async function correctWithContext(
       .string()
       .trim()
       .min(1)
-      .max(2000, "Сообщение не должно превышать 2000 символов")
       .safeParse(normalizedText);
     if (!messageValidation.success) {
       logger.warn("Текст не прошел валидацию, оставляем исходный текст", {
@@ -220,7 +219,7 @@ export async function correctWithContext(
         }
       }
 
-      const finalText = correctedChunks.join(" ").trim();
+      const finalText = correctedChunks.join("");
       logger.info("Chunked обработка завершена", {
         functionId: "asr-context-correction",
         processingTimeMs: Date.now() - start,
@@ -247,7 +246,7 @@ export async function correctWithContext(
       } else {
         // Если контент слишком длинный, выводим предупреждение с полезной информацией
         const isTooLong = contextValidation.error.issues.some(
-          (issue) => issue.code === "too_big" && issue.path.includes("string"),
+          (issue) => issue.code === "too_big" && (issue.path.length === 0 || issue.path.includes("string") || issue.path.includes("companyContext")),
         );
         if (isTooLong) {
           logger.warn(
