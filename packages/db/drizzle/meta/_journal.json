@@ -8,6 +8,13 @@
       "when": 1774781360496,
       "tag": "0000_big_blur",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774871543627,
+      "tag": "0001_wealthy_kat_farrell",
+      "breakpoints": true
     }
   ]
 }
