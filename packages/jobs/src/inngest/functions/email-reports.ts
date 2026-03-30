@@ -10,12 +10,10 @@ import {
   getWorkspaceIdsWithEmailReportRecipients,
   settingsService,
   workspaceSettingsRepository,
-  workspacesService,
 } from "@calls/db";
 import { ReportEmail, sendEmail, type ManagerStats } from "@calls/emails";
 import { toZonedTime } from "date-fns-tz";
-import { subDays, subMonths, subWeeks } from "date-fns";
-import { formatTelegramReport } from "../../reports/format-report";
+import { subMonths } from "date-fns";
 import { inngest } from "../client";
 
 const TZ = "Europe/Moscow";
@@ -113,9 +111,6 @@ export const emailReportsFn = inngest.createFunction(
             workspaceId,
           );
 
-          const ws = await workspacesService.getById(workspaceId);
-          const workspaceName = ws?.name ?? undefined;
-
           const reportTypesToRun: Array<"daily" | "weekly" | "monthly"> = [];
 
           const slot = Math.floor(currentMinute / 15) * 15;
@@ -209,45 +204,17 @@ export const emailReportsFn = inngest.createFunction(
                     : undefined,
               })) as Record<string, ManagerStats>;
 
-              let callSummariesByManager: Record<string, string[]> = {};
-              if (r.reportSettings.includeCallSummaries) {
-                callSummariesByManager =
-                  await callsService.getCallSummariesByManager({
-                    workspaceId,
-                    dateFrom: dateFromDb,
-                    dateTo: dateToDb,
-                    internalNumbers: r.internalNumbers ?? undefined,
-                    excludePhoneNumbers:
-                      excludePhoneNumbers.length > 0
-                        ? excludePhoneNumbers
-                        : undefined,
-                    limitPerManager: 2,
-                  });
-              }
-
-              const text = formatTelegramReport({
-                stats,
-                dateFrom,
-                dateTo,
-                reportType,
-                isManagerReport: false,
-                workspaceName,
-                detailed: r.reportSettings.detailed,
-                _includeCallSummaries: r.reportSettings.includeCallSummaries,
-                includeAvgRating: r.reportSettings.includeAvgRating,
-                includeAvgValue: r.reportSettings.includeAvgValue,
-                _callSummariesByManager: callSummariesByManager,
-              });
+              const enrichedStats = await callsService.enrichStatsWithKpi(stats, workspaceId);
 
               try {
                 await sendEmail({
                   to: [r.email],
                   subject: `Отчёт по звонкам: ${dateFromString} — ${dateToString}`,
                   react: ReportEmail({
-                    reportText: text,
                     reportType,
                     username: undefined,
-                    stats,
+                    stats: enrichedStats,
+                    includeKpi: r.reportSettings.kpi,
                   }),
                 });
                 sent++;

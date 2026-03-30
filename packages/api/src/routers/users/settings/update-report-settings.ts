@@ -27,7 +27,7 @@ export const updateReportSettings = workspaceProcedure
       await usersService.updateUserReportKpiSettings(
         input.user_id,
         context.workspaceId,
-        {},
+        input.data,
       );
 
       await logUpdate(

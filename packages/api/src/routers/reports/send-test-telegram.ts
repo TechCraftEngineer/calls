@@ -9,34 +9,24 @@ import { formatTelegramReportHtml, type ManagerStats } from "@calls/jobs";
 import { sendMessage } from "@calls/telegram-bot";
 import { ORPCError } from "@orpc/server";
 import { subDays, subMonths, subWeeks } from "date-fns";
-import { formatInTimeZone, toZonedTime } from "date-fns-tz";
+import { formatInTimeZone } from "date-fns-tz";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 
 const TZ = "Europe/Moscow";
-const reportTypeSchema = z.object({
-  reportType: z.enum(["daily", "weekly", "monthly"]),
-});
+
+function nowInMoscow(): Date {
+  const now = new Date();
+  return new Date(now.toLocaleString("en-US", { timeZone: TZ }));
+}
 
 function formatDateInMoscow(date: Date): string {
   return formatInTimeZone(date, TZ, "yyyy-MM-dd");
 }
 
-function _getContextUserEmail(user: unknown): string {
-  if (
-    user &&
-    typeof user === "object" &&
-    "email" in user &&
-    typeof user.email === "string" &&
-    user.email.trim()
-  ) {
-    return user.email.trim();
-  }
-
-  throw new ORPCError("BAD_REQUEST", {
-    message: "Email пользователя не найден в сессии",
-  });
-}
+const reportTypeSchema = z.object({
+  reportType: z.enum(["daily", "weekly", "monthly"]),
+});
 
 function getTelegramChatId(value: unknown): string {
   if (typeof value === "string" && value.trim()) {
@@ -69,14 +59,19 @@ export const sendTestTelegram = workspaceProcedure
         message: "Требуется активное рабочее пространство",
       });
 
-    const userForEdit = await usersService.getUserForEdit(context.user.id as string, workspaceId);
+    const userForEdit = await usersService.getUserForEdit(
+      context.user.id as string,
+      workspaceId,
+    );
     if (!userForEdit)
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message: "Не удалось загрузить настройки",
       });
 
     const chatId = getTelegramChatId(
-      userForEdit && typeof userForEdit === "object" ? userForEdit.telegramChatId : undefined,
+      userForEdit && typeof userForEdit === "object"
+        ? userForEdit.telegramChatId
+        : undefined,
     );
 
     const { token } =
@@ -103,7 +98,7 @@ export const sendTestTelegram = workspaceProcedure
     }
 
     const { reportType } = input;
-    const now = new Date();
+    const now = nowInMoscow();
     let dateFrom: Date;
     let dateTo: Date;
     let dateFromString: string;
@@ -153,7 +148,7 @@ export const sendTestTelegram = workspaceProcedure
       });
     }
 
-    let callSummariesByManager: Record<string, string[]> = {};
+    const callSummariesByManager: Record<string, string[]> = {};
     // ИИ-саммари отключены, всегда пустые
 
     const ws = await workspacesService.getById(workspaceId);
@@ -168,6 +163,7 @@ export const sendTestTelegram = workspaceProcedure
       workspaceName,
       _callSummariesByManager: callSummariesByManager,
       lowRatedCalls,
+      includeKpi: userForEdit.reportIncludeKpi ?? false,
     });
 
     const success = await sendMessage(token, chatId, text, {

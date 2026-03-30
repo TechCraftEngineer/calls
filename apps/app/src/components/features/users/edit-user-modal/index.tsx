@@ -75,6 +75,7 @@ function buildEditForm(u: WorkspaceMemberUser): EditUserForm {
     reportIncludeAvgRating: toBool(
       u.reportIncludeAvgRating ?? ext.report_include_avg_rating,
     ),
+    reportIncludeKpi: toBool(u.reportIncludeKpi ?? ext.report_include_kpi),
     kpiBaseSalary: toNum(u.kpiBaseSalary ?? ext.kpi_base_salary),
     kpiTargetBonus: toNum(u.kpiTargetBonus ?? ext.kpi_target_bonus),
     kpiTargetTalkTimeMinutes: toNum(

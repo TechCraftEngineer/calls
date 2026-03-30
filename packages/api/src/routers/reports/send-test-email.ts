@@ -2,10 +2,8 @@ import {
   callsService,
   settingsService,
   usersService,
-  workspacesService,
 } from "@calls/db";
 import { ReportEmail, sendEmail, type ManagerStats } from "@calls/emails";
-import { formatTelegramReport } from "@calls/jobs";
 import { ORPCError } from "@orpc/server";
 import { subDays, subMonths, subWeeks } from "date-fns";
 import { z } from "zod";
@@ -137,32 +135,17 @@ export const sendTestEmail = workspaceProcedure
       });
     }
     const stats = parseResult.data as Record<string, ManagerStats>;
-
-    let callSummariesByManager: Record<string, string[]> = {};
-    // ИИ-саммари отключены, всегда пустые
-
-    const ws = await workspacesService.getById(workspaceId);
-    const workspaceName = ws?.name ?? undefined;
-
-    const text = formatTelegramReport({
-      stats,
-      dateFrom,
-      dateTo,
-      reportType,
-      isManagerReport: false,
-      workspaceName,
-      _callSummariesByManager: callSummariesByManager,
-    });
+    const enrichedStats = await callsService.enrichStatsWithKpi(stats, workspaceId);
 
     try {
       await sendEmail({
         to: [userEmail],
         subject: `Отчёт по звонкам (${reportTypeLabel}): ${dateFromString} — ${dateToString}`,
         react: ReportEmail({
-          reportText: text,
           reportType,
           username: userForEdit.givenName ?? undefined,
-          stats,
+          stats: enrichedStats,
+          includeKpi: true,
         }),
       });
       return { success: true };

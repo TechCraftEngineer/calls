@@ -22,6 +22,7 @@ export interface EmailReportRecipient {
     detailed: boolean;
     includeAvgValue: boolean;
     includeAvgRating: boolean;
+    kpi: boolean;
   };
 }
 
@@ -99,6 +100,7 @@ export async function getEmailReportRecipients(
           detailed: rs?.detailed ?? false,
           includeAvgValue: rs?.includeAvgValue ?? false,
           includeAvgRating: rs?.includeAvgRating ?? false,
+          kpi: rs?.kpi ?? false,
         },
       });
     }

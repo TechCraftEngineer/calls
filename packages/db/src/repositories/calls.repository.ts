@@ -589,6 +589,85 @@ export const callsRepository = {
   }) {
     return getKpiStatsFn(params);
   },
+
+  async enrichStatsWithKpi(
+    stats: Record<string, any>,
+    workspaceId: string,
+  ): Promise<Record<string, any>> {
+    // Получаем KPI данные сотрудников
+    const employees = await db
+      .select({
+        internalNumber: schema.workspacePbxEmployees.extension,
+        kpiBaseSalary: schema.workspacePbxEmployees.kpiBaseSalary,
+        kpiTargetBonus: schema.workspacePbxEmployees.kpiTargetBonus,
+        kpiTargetTalkTimeMinutes: schema.workspacePbxEmployees.kpiTargetTalkTimeMinutes,
+      })
+      .from(schema.workspacePbxEmployees)
+      .where(
+        and(
+          eq(schema.workspacePbxEmployees.workspaceId, workspaceId),
+          eq(schema.workspacePbxEmployees.isActive, true),
+        ),
+      );
+
+    console.log('KPI Employees from DB:', employees);
+    console.log('Stats to enrich:', Object.entries(stats).map(([name, stat]) => ({ name, internalNumber: stat.internalNumber })));
+
+    // Создаем映射 internalNumber -> KPI данные и имя -> KPI данные
+    const kpiMapByNumber = new Map();
+    const kpiMapByName = new Map();
+    for (const emp of employees) {
+      if (emp.internalNumber) {
+        const cleanNumber = String(emp.internalNumber).trim();
+        kpiMapByNumber.set(cleanNumber, {
+          kpiBaseSalary: emp.kpiBaseSalary,
+          kpiTargetBonus: emp.kpiTargetBonus,
+          kpiTargetTalkTimeMinutes: emp.kpiTargetTalkTimeMinutes,
+        });
+      }
+    }
+
+    console.log('KPI Map by number created:', Array.from(kpiMapByNumber.entries()));
+
+    // Обогащаем статистику KPI данными
+    const enrichedStats: Record<string, any> = {};
+    for (const [name, stat] of Object.entries(stats)) {
+      const cleanInternalNumber = stat.internalNumber ? String(stat.internalNumber).trim() : null;
+      let kpiData = cleanInternalNumber ? kpiMapByNumber.get(cleanInternalNumber) : null;
+      
+      console.log(`Processing manager: ${name}, internalNumber: ${cleanInternalNumber}, kpiData:`, kpiData);
+      
+      // Вычисляем KPI метрики
+      const totalMinutes = Math.round(
+        ((stat.incoming?.totalDuration ?? 0) + (stat.outgoing?.totalDuration ?? 0)) / 60
+      );
+      
+      const targetTalkTimeMinutes = kpiData?.kpiTargetTalkTimeMinutes ?? 0;
+      const completionPercentage = targetTalkTimeMinutes > 0 
+        ? Math.min(100, Math.round((totalMinutes / targetTalkTimeMinutes) * 100))
+        : 0;
+      
+      const calculatedBonus = targetTalkTimeMinutes > 0 && completionPercentage > 0
+        ? Math.round((kpiData?.kpiTargetBonus ?? 0) * (completionPercentage / 100))
+        : 0;
+      
+      const totalSalary = (kpiData?.kpiBaseSalary ?? 0) + calculatedBonus;
+
+      enrichedStats[name] = {
+        ...stat,
+        kpiBaseSalary: kpiData?.kpiBaseSalary,
+        kpiTargetBonus: kpiData?.kpiTargetBonus,
+        kpiTargetTalkTimeMinutes: targetTalkTimeMinutes,
+        kpiActualTalkTimeMinutes: totalMinutes,
+        kpiCompletionPercentage: completionPercentage,
+        kpiCalculatedBonus: calculatedBonus,
+        kpiTotalSalary: totalSalary,
+      };
+    }
+
+    console.log('Enriched stats:', enrichedStats);
+    return enrichedStats;
+  },
 };
 
 export type CallsRepository = typeof callsRepository;

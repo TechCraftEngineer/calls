@@ -15,6 +15,13 @@
       "when": 1774871543627,
       "tag": "0001_wealthy_kat_farrell",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774890233690,
+      "tag": "0002_jazzy_wind_dancer",
+      "breakpoints": true
     }
   ]
 }
