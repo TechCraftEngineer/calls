@@ -1,0 +1,99 @@
+# Audio Enhancer v2.0 - Оптимизированный Dockerfile
+# Многостадийная сборка для уменьшения размера образа
+
+# --- Стадия 1: Builder ---
+FROM python:3.12-slim as builder
+
+# Переменные окружения для сборки
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    HOME=/home/user \
+    PATH=/home/user/.local/bin:/root/.cargo/bin:$PATH \
+    NUMBA_DISABLE_CACHE=1 \
+    NUMBA_CACHE_DIR=/tmp/numba_cache \
+    TORCH_HOME=/tmp/torch_cache \
+    TRANSFORMERS_CACHE=/tmp/transformers_cache
+
+# Установка системных зависимостей для сборки
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    wget \
+    curl \
+    git \
+    ffmpeg \
+    libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка Rust для DeepFilterNet
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
+    . $HOME/.cargo/env && \
+    rustc --version
+
+# Создание пользователя
+RUN mkdir -p /home/user && \
+    useradd -u 1000 -d /home/user -s /bin/bash user && \
+    chown -R user:user /home/user
+
+WORKDIR /home/user/app
+
+# Копирование и установка Python зависимостей
+COPY --chown=user:user requirements.txt .
+RUN . $HOME/.cargo/env && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Предзагрузка моделей (опционально)
+RUN . $HOME/.cargo/env && \
+    python -c "import torch; torch.hub.load(repo_or_dir='snakers4/silero-vad', model='silero_vad', force_reload=False, onnx=False, trust_repo=True)" || true
+
+# --- Стадия 2: Runtime ---
+FROM python:3.12-slim as runtime
+
+# Переменные окружения для runtime
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH \
+    NUMBA_DISABLE_CACHE=1 \
+    NUMBA_CACHE_DIR=/tmp/numba_cache \
+    TORCH_HOME=/tmp/torch_cache \
+    TRANSFORMERS_CACHE=/tmp/transformers_cache \
+    HF_TOKEN=""
+
+# Установка только runtime зависимостей
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libsndfile1 \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Создание пользователя
+RUN mkdir -p /home/user && \
+    useradd -u 1000 -d /home/user -s /bin/bash user && \
+    chown -R user:user /home/user
+
+# Копирование из builder стадии
+COPY --from=builder --chown=user:user /home/user/.local /home/user/.local
+COPY --from=builder --chown=user:user /home/user/app /home/user/app
+
+# Создание директорий для кэша
+RUN mkdir -p /tmp/numba_cache /tmp/torch_cache /tmp/transformers_cache && \
+    chown -R user:user /tmp/numba_cache /tmp/torch_cache /tmp/transformers_cache
+
+WORKDIR /home/user/app
+
+# Переключение на пользователя
+USER user
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:7860/health || exit 1
+
+EXPOSE 7860
+
+# Запуск с оптимизациями
+CMD ["python", "main_new.py"]
