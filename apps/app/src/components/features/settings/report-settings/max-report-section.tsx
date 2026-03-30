@@ -17,33 +17,30 @@ export default function MaxReportSection({
 }: MaxReportSectionProps) {
   return (
     <div className="space-y-2">
-      <Label htmlFor="max-daily-report">Максимальное количество отчетов</Label>
-      <Input
-        id="max-daily-report"
-        name="maxDailyReport"
-        type="number"
-        min="1"
-        max="100"
-        value={form.maxDailyReport ? "1" : "0"}
-        onChange={(e) =>
-          setForm((prev) => ({
-            ...prev,
-            maxDailyReport: e.target.value === "1",
-          }))
-        }
-        placeholder="10"
-        autoComplete="off"
-        inputMode="numeric"
-        disabled={!isAdmin || saving}
-        aria-describedby="max-daily-report-help max-daily-report-error"
-      />
+      <Label htmlFor="max-daily-report">
+        <input
+          id="max-daily-report"
+          name="maxDailyReport"
+          type="checkbox"
+          checked={form.maxDailyReport}
+          onChange={(e) =>
+            setForm((prev) => ({
+              ...prev,
+              maxDailyReport: e.target.checked,
+            }))
+          }
+          disabled={!isAdmin || saving}
+          className="mr-2"
+        />
+        Максимальное количество отчетов
+      </Label>
       <p id="max-daily-report-help" className="text-sm text-muted-foreground">
         Укажите максимальное количество отчетов, которые могут быть
         сгенерированы
       </p>
       {!isAdmin && (
         <p id="max-daily-report-error" className="text-sm text-destructive">
-          Только администраторы могут изменять это setting
+          Только администраторы могут изменять эту настройку
         </p>
       )}
     </div>

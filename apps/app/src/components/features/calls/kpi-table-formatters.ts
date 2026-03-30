@@ -18,7 +18,7 @@ export const formatMinutes = (value: number | null | undefined): string => {
 
 export const formatPercentage = (value: number | null | undefined): string => {
   if (value == null || !Number.isFinite(value)) return "—";
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat("ru-RU", {
     style: "percent",
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
