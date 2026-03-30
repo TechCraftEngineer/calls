@@ -1,8 +1,19 @@
 import os
 import logging
-from typing import Optional
+import hashlib
+import tempfile
+import mimetypes
+from pathlib import Path
+from typing import Optional, Dict, Any
+from contextlib import contextmanager
 from fastapi import UploadFile, HTTPException, Request
 from config import settings
+from utils.exceptions import (
+    ValidationError,
+    AudioProcessingError,
+    FileSizeError,
+    UnsupportedFormatError
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,38 +35,42 @@ class FileValidator:
         """
         # Проверка наличия файла
         if not file or not file.filename:
-            raise HTTPException(status_code=400, detail="Файл не загружен")
+            raise ValidationError("Файл не загружен", field="file")
         
         # Проверка безопасности имени файла
         if not FileValidator.is_safe_filename(file.filename):
-            raise HTTPException(
-                status_code=400, 
-                detail="Небезопасное имя файла"
+            raise ValidationError(
+                "Небезопасное имя файла", 
+                field="filename",
+                filename=file.filename
             )
         
         # Проверка размера файла через Content-Length (приоритет)
         if content_length and content_length > settings.max_file_size:
-            raise HTTPException(
-                status_code=413, 
-                detail=f"Размер файла превышает лимит {settings.max_file_size // (1024*1024)}MB"
+            raise FileSizeError(
+                f"Размер файла превышает лимит {settings.max_file_size // (1024*1024)}MB",
+                file_size=content_length,
+                max_size=settings.max_file_size
             )
         
         # Проверка размера файла через атрибут size (fallback)
         if hasattr(file, 'size') and file.size and file.size > settings.max_file_size:
-            raise HTTPException(
-                status_code=413, 
-                detail=f"Размер файла превышает лимит {settings.max_file_size // (1024*1024)}MB"
+            raise FileSizeError(
+                f"Размер файла превышает лимит {settings.max_file_size // (1024*1024)}MB",
+                file_size=file.size,
+                max_size=settings.max_file_size
             )
         
         # Проверка расширения файла
         file_extension = os.path.splitext(file.filename)[1].lower()
         if file_extension not in settings.allowed_audio_formats:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Неподдерживаемый формат файла. Разрешенные форматы: {', '.join(settings.allowed_audio_formats)}"
+            raise UnsupportedFormatError(
+                f"Неподдерживаемый формат файла",
+                file_format=file_extension,
+                supported_formats=settings.allowed_audio_formats
             )
         
-        # Проверка MIME типа
+        # Строгая проверка MIME типа
         allowed_mime_types = {
             '.mp3': ['audio/mpeg', 'audio/mp3'],
             '.wav': ['audio/wav', 'audio/x-wav', 'audio/wave'],
@@ -69,9 +84,163 @@ class FileValidator:
         if file.content_type:
             expected_mimes = allowed_mime_types.get(file_extension, [])
             if expected_mimes and file.content_type not in expected_mimes:
-                logger.warning(f"MIME тип {file.content_type} не соответствует расширению {file_extension}")
+                logger.error(f"MIME тип {file.content_type} не соответствует расширению {file_extension}")
+                raise ValidationError(
+                    f"MIME тип {file.content_type} не соответствует расширению {file_extension}. Ожидалось: {', '.join(expected_mimes)}",
+                    field="content_type",
+                    actual_mime=file.content_type,
+                    expected_mimes=expected_mimes
+                )
+        else:
+            logger.warning(f"MIME тип отсутствует для файла {file.filename}")
+            # Попытка определить MIME тип из данных файла
+            try:
+                # Читаем первые 512 байт для определения MIME типа
+                file.file.seek(0)
+                header = file.file.read(512)
+                file.file.seek(0)  # Возвращаем указатель в начало
+                
+                import magic
+                detected_mime = magic.from_buffer(header, mime=True)
+                expected_mimes = allowed_mime_types.get(file_extension, [])
+                if expected_mimes and detected_mime not in expected_mimes:
+                    logger.error(f"Обнаруженный MIME тип {detected_mime} не соответствует расширению {file_extension}")
+                    raise ValidationError(
+                        f"Обнаруженный MIME тип {detected_mime} не соответствует расширению {file_extension}",
+                        field="content_type",
+                        actual_mime=detected_mime,
+                        expected_mimes=expected_mimes
+                    )
+            except ImportError:
+                logger.warning("python-magic не установлен, пропускаем глубокую проверку MIME")
+            except Exception as e:
+                logger.warning(f"Ошибка при определении MIME типа: {e}")
         
         return True
+    
+    @staticmethod
+    def calculate_file_hash(file_path: str) -> str:
+        """
+        Вычисление SHA256 хеша файла
+        
+        Args:
+            file_path: Путь к файлу
+            
+        Returns:
+            SHA256 хеш файла
+        """
+        hash_sha256 = hashlib.sha256()
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_sha256.update(chunk)
+        return hash_sha256.hexdigest()
+    
+    @staticmethod
+    @contextmanager
+    def secure_temp_file(file: UploadFile, suffix: str = ".tmp"):
+        """
+        Безопасное создание и очистка временного файла
+        
+        Args:
+            file: Загруженный файл
+            suffix: Расширение временного файла
+            
+        Yields:
+            Путь к временному файлу
+        """
+        temp_path = None
+        try:
+            # Создаем временный файл с безопасным именем
+            file_extension = os.path.splitext(file.filename)[1].lower() if file.filename else suffix
+            with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp:
+                temp_path = tmp.name
+                
+                # Читаем и записываем данные по частям для экономии памяти
+                file.file.seek(0)
+                while True:
+                    chunk = file.file.read(8192)  # 8KB chunks
+                    if not chunk:
+                        break
+                    tmp.write(chunk)
+                
+                tmp.flush()
+                os.fsync(tmp.fileno())  # Гарантируем запись на диск
+                
+            yield temp_path
+            
+        except Exception as e:
+            logger.error(f"Ошибка при обработке временного файла: {e}")
+            raise
+        finally:
+            # Безопасная очистка временного файла
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    # Перезаписываем файл случайными данными перед удалением
+                    with open(temp_path, "wb") as f:
+                        f.write(os.urandom(os.path.getsize(temp_path)))
+                    os.unlink(temp_path)
+                    logger.debug(f"Временный файл {temp_path} безопасно удален")
+                except Exception as cleanup_error:
+                    logger.warning(f"Не удалось безопасно удалить временный файл {temp_path}: {cleanup_error}")
+                    # Пытаемся удалить обычным способом
+                    try:
+                        os.unlink(temp_path)
+                    except Exception:
+                        logger.error(f"Не удалось удалить временный файл {temp_path}")
+    
+    @staticmethod
+    def validate_audio_content(file_path: str) -> Dict[str, Any]:
+        """
+        Валидация содержимого аудиофайла
+        
+        Args:
+            file_path: Путь к файлу
+            
+        Returns:
+            Словарь с информацией о файле
+            
+        Raises:
+            HTTPException: Если файл невалидный
+        """
+        try:
+            import librosa
+            import soundfile
+            
+            # Проверяем, что файл действительно является аудио
+            try:
+                duration = librosa.get_duration(filename=file_path)
+                if duration <= 0:
+                    raise AudioProcessingError(
+                        "Файл не содержит аудиоданных или имеет нулевую длительность",
+                        audio_file=file_path,
+                        duration=duration
+                    )
+            except Exception as e:
+                logger.error(f"Ошибка при проверке аудиофайла {file_path}: {e}")
+                raise AudioProcessingError(
+                    "Файл не является корректным аудиофайлом",
+                    audio_file=file_path,
+                    original_error=str(e)
+                ) from e
+            
+            # Получаем метаданные
+            try:
+                info = soundfile.info(file_path)
+                return {
+                    "duration": duration,
+                    "sample_rate": info.samplerate,
+                    "channels": info.channels,
+                    "frames": info.frames,
+                    "format": info.format,
+                    "subtype": info.subtype
+                }
+            except Exception as e:
+                logger.warning(f"Не удалось получить метаданные аудиофайла: {e}")
+                return {"duration": duration}
+                
+        except ImportError:
+            logger.warning("librosa или soundfile не установлены, пропускаем глубокую проверку аудио")
+            return {}
     
     @staticmethod
     def get_file_info(file: UploadFile) -> dict:

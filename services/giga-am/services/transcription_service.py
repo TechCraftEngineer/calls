@@ -1,13 +1,15 @@
 import logging
 import os
 import threading
+import asyncio
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, Any
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, Any, Optional
 import gigaam
 import torch
 import torchaudio
 from config import settings
+from utils.exceptions import ModelLoadError, TimeoutError
 
 logger = logging.getLogger(__name__)
 
@@ -16,9 +18,70 @@ class TranscriptionService:
         self.model = None
         self.model_name = settings.model_name
         self._model_lock = threading.RLock()  # Reentrant lock для thread safety
-        self._executor = ThreadPoolExecutor(max_workers=1)  # Один поток для модели
+        self._loading_lock = threading.Lock()  # Для предотвращения параллельной загрузки
         self._model_initialized = False
-        self._initialize_model()
+        self._model_loading = False
+        self._model_error = None
+        self._executor = ThreadPoolExecutor(max_workers=2)  # Увеличим для лучшей производительности
+        self._initialization_event = threading.Event()
+        
+        # Запускаем инициализацию в фоновом потоке
+        self._init_thread = threading.Thread(target=self._initialize_model_async, daemon=True)
+        self._init_thread.start()
+    
+    def _initialize_model_async(self):
+        """Асинхронная инициализация модели в фоновом потоке"""
+        try:
+            self._initialize_model()
+        except Exception as e:
+            logger.error(f"Ошибка при фоновой загрузке модели: {e}")
+            self._model_error = e
+        finally:
+            self._initialization_event.set()
+    
+    def _ensure_model_loaded(self):
+        """Гарантирует, что модель загружена"""
+        # Если модель уже загружена, возвращаемся сразу
+        if self._model_initialized and self.model is not None:
+            return
+        
+        # Если есть ошибка загрузки, бросаем исключение
+        if self._model_error:
+            raise ModelLoadError(
+                f"Ошибка загрузки модели: {self._model_error}",
+                model_name=self.model_name
+            )
+        
+        # Если модель сейчас загружается, ждем завершения
+        if self._model_loading:
+            logger.info("Модель загружается в другом потоке, ждем завершения...")
+            if not self._initialization_event.wait(timeout=300):  # 5 минут таймаут
+                raise TimeoutError(
+                    "Превышено время ожидания загрузки модели",
+                    timeout_seconds=300,
+                    operation="model_loading"
+                )
+            
+            # Проверяем результат загрузки
+            if self._model_error:
+                raise ModelLoadError(
+                    f"Ошибка загрузки модели: {self._model_error}",
+                    model_name=self.model_name
+                )
+            return
+        
+        # Если дошли сюда, значит нужно загрузить модель синхронно
+        with self._loading_lock:
+            # Двойная проверка после получения лока
+            if self._model_initialized or self._model_loading:
+                return
+            
+            self._model_loading = True
+            try:
+                self._initialize_model()
+            finally:
+                self._model_loading = False
+                self._initialization_event.set()
     
     def _initialize_model(self):
         """Инициализация модели GigaAM"""
@@ -45,10 +108,12 @@ class TranscriptionService:
                 
                 self.model = self._load_model_with_recovery()
                 self._model_initialized = True
+                self._model_error = None
                 logger.info("Модель успешно загружена")
             except Exception as e:
                 logger.error(f"Ошибка при загрузке модели: {e}")
                 self._model_initialized = False
+                self._model_error = e
                 raise
 
     def _log_runtime_versions(self):
@@ -116,7 +181,9 @@ class TranscriptionService:
         try:
             logger.info(f"Начало распознавания файла: {os.path.basename(audio_path)}")
             
-            # Проверяем, что модель инициализирована
+            # Гарантируем, что модель загружена
+            self._ensure_model_loaded()
+            
             if not self._model_initialized or self.model is None:
                 return {
                     "success": False,
@@ -158,6 +225,12 @@ class TranscriptionService:
             logger.info(f"Распознавание завершено. Сегментов: {len(result['segments'])}")
             return result
             
+        except (ModelLoadError, TimeoutError) as e:
+            logger.error(f"Ошибка при распознавании аудио: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
         except Exception as e:
             logger.error(f"Ошибка при распознавании аудио: {e}")
             return {
@@ -211,7 +284,19 @@ class TranscriptionService:
         return {
             "model_loaded": self._model_initialized and self.model is not None,
             "model_name": self.model_name,
-            "thread_pool_active": not self._executor._shutdown
+            "model_loading": self._model_loading,
+            "model_error": str(self._model_error) if self._model_error else None,
+            "thread_pool_active": not self._executor._shutdown,
+            "initialization_complete": self._initialization_event.is_set()
+        }
+    
+    def get_loading_status(self) -> Dict[str, Any]:
+        """Получение детального статуса загрузки модели"""
+        return {
+            "initialized": self._model_initialized,
+            "loading": self._model_loading,
+            "error": str(self._model_error) if self._model_error else None,
+            "waiting_for_init": not self._initialization_event.is_set()
         }
 
 # Глобальный экземпляр сервиса
