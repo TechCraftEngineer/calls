@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  audio-enhancer:
+    build:
+      context: .
+      dockerfile: Dockerfile.optimized
+      target: runtime
+    ports:
+      - "7860:7860"
+    environment:
+      - APP_NAME=Audio Enhancer Service
+      - DEBUG=false
+      - HOST=0.0.0.0
+      - PORT=7860
+      - LOG_LEVEL=INFO
+      - MAX_FILE_SIZE=83886080  # 80MB
+      - MAX_AUDIO_SECONDS=14400  # 4 часа
+      - ENABLE_CACHE=true
+      - CACHE_TTL_SECONDS=3600
+      - ENABLE_METRICS=true
+      - MAX_WORKERS=1
+      - HF_TOKEN=${HF_TOKEN:-}  # Токен для pyannote диаризации
+    volumes:
+      - ./logs:/home/user/app/logs
+      - tmp-cache:/tmp  # Кэш моделей и временные файлы
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2'
+        reservations:
+          memory: 2G
+          cpus: '1'
+    networks:
+      - audio-network
+
+  # Опционально: Redis для кэширования
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    networks:
+      - audio-network
+
+  # Опционально: Prometheus для метрик
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    networks:
+      - audio-network
+
+volumes:
+  tmp-cache:
+    driver: local
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+
+networks:
+  audio-network:
+    driver: bridge
