@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Button,
   Dialog,
@@ -41,7 +43,7 @@ export default function KpiEditDialog({
             Настройте KPI для сотрудника: {row.name}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="baseSalary" className="text-right">
@@ -55,9 +57,10 @@ export default function KpiEditDialog({
               className="col-span-3"
               max={KPI_FIELD_LIMITS.baseSalary}
               min="0"
+              autoComplete="off"
             />
           </div>
-          
+
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="targetBonus" className="text-right">
               Бонус, ₽
@@ -70,9 +73,10 @@ export default function KpiEditDialog({
               className="col-span-3"
               max={KPI_FIELD_LIMITS.targetBonus}
               min="0"
+              autoComplete="off"
             />
           </div>
-          
+
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="targetTalkTimeMinutes" className="text-right">
               Цель, мин/мес
@@ -81,14 +85,17 @@ export default function KpiEditDialog({
               id="targetTalkTimeMinutes"
               type="number"
               value={draft.targetTalkTimeMinutes ?? ""}
-              onChange={(e) => onFieldChange("targetTalkTimeMinutes", e.target.value)}
+              onChange={(e) =>
+                onFieldChange("targetTalkTimeMinutes", e.target.value)
+              }
               className="col-span-3"
               max={KPI_FIELD_LIMITS.targetTalkTimeMinutes}
               min="0"
+              autoComplete="off"
             />
           </div>
         </div>
-        
+
         <DialogFooter>
           <Button variant="outline" onClick={onCancel} disabled={isLoading}>
             Отмена

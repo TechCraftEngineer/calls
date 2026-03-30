@@ -3,39 +3,49 @@ import type React from "react";
 import type { ReportSettingsForm } from "./report-settings-types";
 
 interface MaxReportSectionProps {
-  maxReports: string;
-  onChange: (maxReports: string) => void;
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   isAdmin: boolean;
   saving: boolean;
-  onSave: () => Promise<void>;
 }
 
 export default function MaxReportSection({
-  maxReports,
-  onChange,
   form,
   setForm,
   isAdmin,
   saving,
-  onSave,
 }: MaxReportSectionProps) {
   return (
     <div className="space-y-2">
-      <Label htmlFor="max-reports">Максимальное количество отчетов</Label>
+      <Label htmlFor="max-daily-report">Максимальное количество отчетов</Label>
       <Input
-        id="max-reports"
-        name="maxReports"
+        id="max-daily-report"
+        name="maxDailyReport"
         type="number"
         min="1"
         max="100"
-        value={maxReports}
-        onChange={(e) => onChange(e.target.value)}
+        value={form.maxDailyReport ? "1" : "0"}
+        onChange={(e) =>
+          setForm((prev) => ({
+            ...prev,
+            maxDailyReport: e.target.value === "1",
+          }))
+        }
         placeholder="10"
         autoComplete="off"
         inputMode="numeric"
+        disabled={!isAdmin || saving}
+        aria-describedby="max-daily-report-help max-daily-report-error"
       />
+      <p id="max-daily-report-help" className="text-sm text-muted-foreground">
+        Укажите максимальное количество отчетов, которые могут быть
+        сгенерированы
+      </p>
+      {!isAdmin && (
+        <p id="max-daily-report-error" className="text-sm text-destructive">
+          Только администраторы могут изменять это setting
+        </p>
+      )}
     </div>
   );
 }

@@ -98,7 +98,8 @@ export default function InviteUserModal({
       className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
       role="dialog"
       aria-modal="true"
-      aria-label="Пригласить пользователя"
+      aria-labelledby="modal-title"
+      aria-describedby="modal-description"
       onClick={handleClose}
     >
       <div

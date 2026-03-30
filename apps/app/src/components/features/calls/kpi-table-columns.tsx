@@ -2,11 +2,7 @@ import { Badge } from "@calls/ui";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Check, Loader2, Phone, Settings2, TrendingUp } from "lucide-react";
 import { Button } from "@calls/ui";
-import {
-  formatCurrency,
-  formatMinutes,
-  formatPercentage,
-} from "./kpi-table-formatters";
+import { formatCurrency, formatMinutes } from "./kpi-table-formatters";
 import type { KpiRow } from "./kpi-table-types";
 
 export const createKpiTableColumns = (
@@ -68,12 +64,11 @@ export const createKpiTableColumns = (
   },
   {
     id: "totalTalkTimeMinutes",
-    accessorFn: (row) => row.totalTalkTimeMinutes,
+    accessorFn: (row) => row.actualTalkTimeMinutes,
     header: "Факт, мин",
     cell: ({ row }) => {
-      const targetMinutes = row.getValue("targetTalkTimeMinutes") as number;
-      const actualMinutes =
-        (row.getValue("totalTalkTimeMinutes") as number) || 0;
+      const targetMinutes = row.original.targetTalkTimeMinutes;
+      const actualMinutes = row.original.actualTalkTimeMinutes || 0;
       const isOnTarget = actualMinutes >= targetMinutes;
 
       return (
@@ -106,13 +101,13 @@ export const createKpiTableColumns = (
     id: "completionRate",
     accessorFn: (row) => {
       const target = row.targetTalkTimeMinutes;
-      const actual = row.totalTalkTimeMinutes || 0;
+      const actual = row.actualTalkTimeMinutes || 0;
       return target > 0 ? actual / target : 0;
     },
     header: "Выполнение, %",
     cell: ({ row }) => {
-      const target = row.getValue("targetTalkTimeMinutes") as number;
-      const actual = (row.getValue("totalTalkTimeMinutes") as number) || 0;
+      const target = row.original.targetTalkTimeMinutes;
+      const actual = row.original.actualTalkTimeMinutes || 0;
       const percentage = target > 0 ? (actual / target) * 100 : 0;
       const isComplete = percentage >= 100;
       const isGood = percentage >= 80;
@@ -161,19 +156,25 @@ export const createKpiTableColumns = (
     id: "calculatedBonus",
     accessorFn: (row) => row.calculatedBonus,
     header: "Бонус за период, ₽",
-    cell: ({ row }) => (
-      <div className="font-semibold tabular-nums text-emerald-600">
-        +{formatCurrency(row.getValue("calculatedBonus"))}
-      </div>
-    ),
+    cell: ({ row }) => {
+      const value = row.original.calculatedBonus;
+      const formatted = formatCurrency(value);
+      return (
+        <div className="font-semibold tabular-nums text-emerald-600">
+          {value != null && value !== 0 && formatted !== "—"
+            ? `+${formatted}`
+            : formatted}
+        </div>
+      );
+    },
   },
   {
     id: "calculatedTotal",
-    accessorFn: (row) => row.calculatedTotal,
+    accessorFn: (row) => row.totalCalculatedSalary,
     header: "Итого, ₽",
     cell: ({ row }) => (
       <div className="font-bold tabular-nums text-blue-600">
-        {formatCurrency(row.getValue("calculatedTotal"))}
+        {formatCurrency(row.original.totalCalculatedSalary)}
       </div>
     ),
   },
