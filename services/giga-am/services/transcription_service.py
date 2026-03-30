@@ -263,7 +263,7 @@ class TranscriptionService:
                 result = self.model.transcribe_longform(audio_path)
                 logger.info(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
                 return result
-        except (RuntimeError, ValueError) as model_error:
+        except (RuntimeError, ValueError, OSError) as model_error:
             # Для ошибок модели/обработки используем fallback с librosa
             logger.warning(f"Не удалось распознать по пути к файлу (ошибка модели): {model_error}")
             logger.info("Пробуем загрузить аудиоданные и передать их в модель")

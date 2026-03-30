@@ -18,6 +18,10 @@ export interface UserUpdateData {
   emailWeeklyReport?: boolean;
   emailMonthlyReport?: boolean;
   reportManagedUserIds?: string | null;
+  reportDetailed?: boolean;
+  reportIncludeCallSummaries?: boolean;
+  reportIncludeAvgRating?: boolean;
+  reportIncludeKpi?: boolean;
   kpiBaseSalary?: number;
   kpiTargetBonus?: number;
   kpiTargetTalkTimeMinutes?: number;

@@ -17,6 +17,7 @@ export interface ReportSettingsForRecipient {
   detailed: boolean;
   includeAvgRating: boolean;
   includeAvgValue: boolean;
+  kpi: boolean;
 }
 
 export interface TelegramReportRecipient {
@@ -46,6 +47,7 @@ function buildReportSettings(rs: ReportSettings): ReportSettingsForRecipient {
     detailed: rs?.detailed ?? false,
     includeAvgRating: rs?.includeAvgRating ?? false,
     includeAvgValue: rs?.includeAvgValue ?? false,
+    kpi: rs?.kpi ?? false,
   };
 }
 

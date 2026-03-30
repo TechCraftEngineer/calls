@@ -298,6 +298,7 @@ export const telegramReportsFn = inngest.createFunction(
                   r.reportSettings?.includeCallSummaries ?? false,
                 includeAvgRating: r.reportSettings?.includeAvgRating ?? false,
                 includeAvgValue: r.reportSettings?.includeAvgValue ?? false,
+                includeKpi: r.reportSettings?.kpi ?? false,
                 _callSummariesByManager: callSummariesByManager,
                 lowRatedCalls,
               });

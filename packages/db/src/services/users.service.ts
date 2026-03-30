@@ -114,6 +114,7 @@ export class UsersService {
           detailed?: boolean;
           includeAvgValue?: boolean;
           includeAvgRating?: boolean;
+          kpi?: boolean;
           managedUserIds?: string[];
         }
       | undefined;
@@ -286,6 +287,7 @@ export class UsersService {
       detailed: boolean;
       includeAvgValue: boolean;
       includeAvgRating: boolean;
+      kpi: boolean;
       managedUserIds: string[];
     }> = {};
     const kpiSettings: Partial<{
@@ -373,6 +375,16 @@ export class UsersService {
             })()
           : [];
     }
+
+    if (data.reportIncludeKpi !== undefined)
+      reportSettings.kpi = data.reportIncludeKpi;
+
+    if (data.reportDetailed !== undefined)
+      reportSettings.detailed = data.reportDetailed;
+    if (data.reportIncludeCallSummaries !== undefined)
+      reportSettings.includeCallSummaries = data.reportIncludeCallSummaries;
+    if (data.reportIncludeAvgRating !== undefined)
+      reportSettings.includeAvgRating = data.reportIncludeAvgRating;
 
     if (data.kpiBaseSalary !== undefined)
       kpiSettings.baseSalary = data.kpiBaseSalary;

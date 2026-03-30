@@ -11,9 +11,15 @@ def run_command(cmd, capture_output=True):
     """Выполняет команду и возвращает результат."""
     try:
         result = subprocess.run(cmd, capture_output=capture_output, text=True, check=True)
-        return result.stdout.strip()
+        if result.stdout is not None:
+            return result.stdout.strip()
+        else:
+            return ""
     except subprocess.CalledProcessError as e:
-        return f"Error: {e.stderr.strip()}" if e.stderr else f"Error: {e}"
+        if e.stderr is not None:
+            return f"Error: {e.stderr.strip()}"
+        else:
+            return f"Error: {e}"
 
 def check_python_version():
     """Проверяет версию Python."""
@@ -97,7 +103,7 @@ def check_hf_token():
 def install_requirements():
     """Устанавливает требования."""
     print("\n📦 Установка зависимостей...")
-    result = run_command(["pip", "install", "-r", "requirements.txt"])
+    result = run_command([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
     print(result)
     return "Error" not in result
 

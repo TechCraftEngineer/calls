@@ -52,6 +52,10 @@ export interface FormatReportParams {
   lowRatedCalls?: Record<string, number>;
   /** Включать KPI данные в отчет */
   includeKpi?: boolean;
+  /** Включать саммари звонков (внутреннее поле) */
+  _includeCallSummaries?: boolean;
+  /** Саммари по менеджерам (внутреннее поле) */
+  _callSummariesByManager?: Record<string, string[]>;
 }
 
 function _formatDuration(seconds: number): string {
@@ -135,7 +139,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
     incomingTotalDurationSec += inTotalSec;
     outgoingTotalDurationSec += outTotalSec;
     evaluatedCount += evalCount;
-    
+
     // KPI итоги
     totalBaseSalary += raw.kpiBaseSalary ?? 0;
     totalTargetBonus += raw.kpiTargetBonus ?? 0;
@@ -239,7 +243,9 @@ export function formatTelegramReport(params: FormatReportParams): string {
 
   const lines: string[] = [];
   lines.push(`📊 ${typeLabel} отчёт по звонкам${scopeLabel}`);
-  lines.push(`📅 ${dateFrom.toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' })} — ${dateTo.toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' })}`);
+  lines.push(
+    `📅 ${dateFrom.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" })} — ${dateTo.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" })}`,
+  );
   if (workspaceName) {
     lines.push(`🏢 ${workspaceName}`);
   }
@@ -257,86 +263,106 @@ export function formatTelegramReport(params: FormatReportParams): string {
   // Таблица KPI сотрудников
   lines.push("📈 KPI сотрудников:");
   lines.push("");
-  
+
   if (includeKpi) {
-    // Расширенная таблица с KPI данными
-    const header = "│ Менеджер │ Звонки │ Минуты │ Оценка │ Оклад │ Бонус │ %KPI │ Итого │";
-    const separator = "│─────────│────────│────────│────────│───────│───────│───────│───────│";
+    // Расширенная таблица с KPI данными - полный феншуй
+    const header =
+      "│ Менеджер        │ Звонки │ Минуты │ Оценка │ Оклад    │ Бонус    │ %KPI │ Итого    │";
+    const separator =
+      "│─────────────────│────────│────────│────────│─────────│─────────│──────│─────────│";
     lines.push(header);
     lines.push(separator);
-    
+
     // Данные по менеджерам с KPI
     for (const s of managers) {
       const totalMinutes = Math.round(
-        (s.incomingAvgDurationSec * s.incomingCount + s.outgoingAvgDurationSec * s.outgoingCount) / 60
+        (s.incomingAvgDurationSec * s.incomingCount +
+          s.outgoingAvgDurationSec * s.outgoingCount) /
+          60,
       );
-      const rating = s.avgManagerScore != null 
-        ? formatScore(s.avgManagerScore) 
-        : "—";
-      
-      const name = s.name.length > 9 ? s.name.substring(0, 8) + "…" : s.name;
-      const nameCol = name.padEnd(9, " ");
-      const callsCol = String(s.totalCount).padEnd(8, " ");
-      const minutesCol = String(totalMinutes).padEnd(8, " ");
-      const ratingCol = rating.padEnd(8, " ");
-      const salaryCol = formatValue(s.kpiBaseSalary ?? 0).padEnd(7, " ");
-      const bonusCol = formatValue(s.kpiCalculatedBonus ?? 0).padEnd(7, " ");
-      const kpiCol = String(s.kpiCompletionPercentage ?? 0).padEnd(7, " ");
-      const totalCol = formatValue(s.kpiTotalSalary ?? 0).padEnd(7, " ");
-      
-      lines.push(`│${nameCol}│${callsCol}│${minutesCol}│${ratingCol}│${salaryCol}│${bonusCol}│${kpiCol}│${totalCol}│`);
+      const rating =
+        s.avgManagerScore != null ? formatScore(s.avgManagerScore) : "—";
+
+      const name = s.name.length > 15 ? `${s.name.substring(0, 14)}…` : s.name;
+      const nameCol = name.padEnd(15, " ");
+      const callsCol = String(s.totalCount).padStart(6, " ").padEnd(8, " ");
+      const minutesCol = String(totalMinutes).padStart(6, " ").padEnd(8, " ");
+      const ratingCol = rating.padStart(6, " ").padEnd(8, " ");
+      const salaryCol = formatValue(s.kpiBaseSalary ?? 0)
+        .padStart(7, " ")
+        .padEnd(9, " ");
+      const bonusCol = formatValue(s.kpiCalculatedBonus ?? 0)
+        .padStart(7, " ")
+        .padEnd(9, " ");
+      const kpiCol = String(s.kpiCompletionPercentage ?? 0)
+        .padStart(4, " ")
+        .padEnd(6, " ");
+      const totalCol = formatValue(s.kpiTotalSalary ?? 0)
+        .padStart(7, " ")
+        .padEnd(9, " ");
+
+      lines.push(
+        `│ ${nameCol} │${callsCol}│${minutesCol}│${ratingCol}│ ${salaryCol} │ ${bonusCol} │${kpiCol}│ ${totalCol} │`,
+      );
     }
-    
+
     lines.push(separator);
   } else {
-    // Стандартная таблица без KPI
-    const header = "│ Менеджер │ Звонки │ Минуты │ Оценка │";
-    const separator = "│─────────│────────│────────│────────│";
+    // Стандартная таблица без KPI - полный феншуй
+    const header = "│ Менеджер          │ Звонки │ Минуты │ Оценка │";
+    const separator = "│──────────────────│────────│────────│────────│";
     lines.push(header);
     lines.push(separator);
-    
+
     // Данные по менеджерам
     for (const s of managers) {
       const totalMinutes = Math.round(
-        (s.incomingAvgDurationSec * s.incomingCount + s.outgoingAvgDurationSec * s.outgoingCount) / 60
+        (s.incomingAvgDurationSec * s.incomingCount +
+          s.outgoingAvgDurationSec * s.outgoingCount) /
+          60,
       );
-      const rating = s.avgManagerScore != null 
-        ? formatScore(s.avgManagerScore) 
-        : "—";
-      
-      const name = s.name.length > 15 ? s.name.substring(0, 14) + "…" : s.name;
-      const nameCol = name.padEnd(15, " ");
-      const callsCol = String(s.totalCount).padEnd(8, " ");
-      const minutesCol = String(totalMinutes).padEnd(8, " ");
-      const ratingCol = rating.padEnd(8, " ");
-      
-      lines.push(`│${nameCol}│${callsCol}│${minutesCol}│${ratingCol}│`);
+      const rating =
+        s.avgManagerScore != null ? formatScore(s.avgManagerScore) : "—";
+
+      const name = s.name.length > 16 ? `${s.name.substring(0, 15)}…` : s.name;
+      const nameCol = name.padEnd(16, " ");
+      const callsCol = String(s.totalCount).padStart(6, " ").padEnd(8, " ");
+      const minutesCol = String(totalMinutes).padStart(6, " ").padEnd(8, " ");
+      const ratingCol = rating.padStart(6, " ").padEnd(8, " ");
+
+      lines.push(`│ ${nameCol} │${callsCol}│${minutesCol}│${ratingCol}│`);
     }
-    
+
     lines.push(separator);
   }
   lines.push("");
 
   // Итоги по всем
   const totalMinutes = Math.round(
-    (totals.incomingTotalDurationSec + totals.outgoingTotalDurationSec) / 60
+    (totals.incomingTotalDurationSec + totals.outgoingTotalDurationSec) / 60,
   );
   lines.push(`📊 **Итоги по всем сотрудникам:**`);
   lines.push(`• Всего звонков: ${totals.totalCount}`);
   lines.push(`• Всего минут: ${totalMinutes}`);
-  
+
   if (isManagerReport && totals.totalCount > 0) {
-    lines.push(`• Оценено: ${totals.evaluatedCount} из ${totals.totalCount} звонков`);
+    lines.push(
+      `• Оценено: ${totals.evaluatedCount} из ${totals.totalCount} звонков`,
+    );
   }
   if (overall.avgManagerScore != null) {
-    lines.push(`• Средняя оценка качества: ${formatScore(overall.avgManagerScore)} ⭐`);
+    lines.push(
+      `• Средняя оценка качества: ${formatScore(overall.avgManagerScore)} ⭐`,
+    );
   }
 
   // KPI итоги
   if (includeKpi) {
     lines.push(`• Общий оклад: ${formatValue(totals.totalBaseSalary)} ₽`);
     lines.push(`• Целевой бонус: ${formatValue(totals.totalTargetBonus)} ₽`);
-    lines.push(`• Начисленный бонус: ${formatValue(totals.totalCalculatedBonus)} ₽`);
+    lines.push(
+      `• Начисленный бонус: ${formatValue(totals.totalCalculatedBonus)} ₽`,
+    );
     lines.push(`• Итого к выплате: ${formatValue(totals.totalSalary)} ₽`);
   }
 
@@ -390,7 +416,7 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   if (managers.length === 0) {
     return [
       `📊 <b>${typeLabel} отчёт по звонкам</b>`,
-      `📅 <b>Период:</b> ${escapeHtml(dateFrom.toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' }))} — ${escapeHtml(dateTo.toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' }))}`,
+      `📅 <b>Период:</b> ${escapeHtml(dateFrom.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" }))} — ${escapeHtml(dateTo.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" }))}`,
       workspaceName ? `🏢 <b>Компания:</b> ${escapeHtml(workspaceName)}` : "",
       "",
       "За выбранный период звонков не найдено.",
@@ -400,7 +426,7 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   }
 
   const totalMinutes = Math.round(
-    (totals.incomingTotalDurationSec + totals.outgoingTotalDurationSec) / 60
+    (totals.incomingTotalDurationSec + totals.outgoingTotalDurationSec) / 60,
   );
 
   const lowRatedEntries = Object.entries(lowRatedCalls)
@@ -410,7 +436,7 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   const lines: string[] = [];
   lines.push(`📊 <b>${typeLabel} отчёт по звонкам</b>`);
   lines.push(
-    `📅 <b>Период:</b> ${escapeHtml(dateFrom.toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' }))} — ${escapeHtml(dateTo.toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' }))}`,
+    `📅 <b>Период:</b> ${escapeHtml(dateFrom.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" }))} — ${escapeHtml(dateTo.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" }))}`,
   );
   if (workspaceName) {
     lines.push(`🏢 <b>Компания:</b> ${escapeHtml(workspaceName)}`);
@@ -420,70 +446,88 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   // Таблица KPI сотрудников - простой текст без HTML тегов
   lines.push("📈 <b>KPI сотрудников:</b>");
   lines.push("");
-  
+
   if (includeKpi) {
-    // Расширенная таблица с KPI данными
-    const header = "│ Менеджер       │ Звонки │ Минуты │ Оценка │ Оклад   │ Бонус   │ %KPI  │ Итого  │";
-    const separator = "│────────────────│────────│────────│────────│─────────│─────────│───────│─────────│";
+    // Расширенная таблица с KPI данными - полный феншуй
+    const header =
+      "│ Менеджер        │ Звонки │ Минуты │ Оценка │ Оклад    │ Бонус    │ %KPI │ Итого    │";
+    const separator =
+      "│─────────────────│────────│────────│────────│─────────│─────────│──────│─────────│";
     lines.push(header);
     lines.push(separator);
-    
+
     // Данные по менеджерам с KPI
     for (const s of managers) {
       const totalMinutes = Math.round(
-        (s.incomingAvgDurationSec * s.incomingCount + s.outgoingAvgDurationSec * s.outgoingCount) / 60
+        (s.incomingAvgDurationSec * s.incomingCount +
+          s.outgoingAvgDurationSec * s.outgoingCount) /
+          60,
       );
-      const rating = s.avgManagerScore != null 
-        ? formatScore(s.avgManagerScore) 
-        : "—";
-      
-      const name = (s.name.length > 14 ? s.name.substring(0, 13) + "…" : s.name).padEnd(14, " ");
-      const callsCol = String(s.totalCount).padEnd(8, " ");
-      const minutesCol = String(totalMinutes).padEnd(8, " ");
-      const ratingCol = rating.padEnd(8, " ");
-      const salaryCol = formatValue(s.kpiBaseSalary ?? 0).padEnd(9, " ");
-      const bonusCol = formatValue(s.kpiCalculatedBonus ?? 0).padEnd(9, " ");
-      const kpiCol = String(s.kpiCompletionPercentage ?? 0).padEnd(7, " ");
-      const totalCol = formatValue(s.kpiTotalSalary ?? 0).padEnd(9, " ");
-      
-      lines.push(`│${name}│${callsCol}│${minutesCol}│${ratingCol}│${salaryCol}│${bonusCol}│${kpiCol}│${totalCol}│`);
+      const rating =
+        s.avgManagerScore != null ? formatScore(s.avgManagerScore) : "—";
+
+      const name = (
+        s.name.length > 15 ? `${s.name.substring(0, 14)}…` : s.name
+      ).padEnd(15, " ");
+      const callsCol = String(s.totalCount).padStart(6, " ").padEnd(8, " ");
+      const minutesCol = String(totalMinutes).padStart(6, " ").padEnd(8, " ");
+      const ratingCol = rating.padStart(6, " ").padEnd(8, " ");
+      const salaryCol = formatValue(s.kpiBaseSalary ?? 0)
+        .padStart(7, " ")
+        .padEnd(9, " ");
+      const bonusCol = formatValue(s.kpiCalculatedBonus ?? 0)
+        .padStart(7, " ")
+        .padEnd(9, " ");
+      const kpiCol = String(s.kpiCompletionPercentage ?? 0)
+        .padStart(4, " ")
+        .padEnd(6, " ");
+      const totalCol = formatValue(s.kpiTotalSalary ?? 0)
+        .padStart(7, " ")
+        .padEnd(9, " ");
+
+      lines.push(
+        `│ ${name} │${callsCol}│${minutesCol}│${ratingCol}│ ${salaryCol} │ ${bonusCol} │${kpiCol}│ ${totalCol} │`,
+      );
     }
-    
+
     lines.push(separator);
   } else {
-    // Стандартная таблица без KPI
-    const header = "│ Менеджер           │ Звонки │ Минуты │ Оценка │";
-    const separator = "│────────────────────│────────│────────│────────│";
+    // Стандартная таблица без KPI - полный феншуй
+    const header = "│ Менеджер          │ Звонки │ Минуты │ Оценка │";
+    const separator = "│──────────────────│────────│────────│────────│";
     lines.push(header);
     lines.push(separator);
-    
+
     // Данные по менеджерам
     for (const s of managers) {
       const totalMinutes = Math.round(
-        (s.incomingAvgDurationSec * s.incomingCount + s.outgoingAvgDurationSec * s.outgoingCount) / 60
+        (s.incomingAvgDurationSec * s.incomingCount +
+          s.outgoingAvgDurationSec * s.outgoingCount) /
+          60,
       );
-      const rating = s.avgManagerScore != null 
-        ? formatScore(s.avgManagerScore) 
-        : "—";
-      
-      const name = (s.name.length > 18 ? s.name.substring(0, 17) + "…" : s.name).padEnd(18, " ");
-      const callsCol = String(s.totalCount).padEnd(8, " ");
-      const minutesCol = String(totalMinutes).padEnd(8, " ");
-      const ratingCol = rating.padEnd(8, " ");
-      
-      lines.push(`│${name}│${callsCol}│${minutesCol}│${ratingCol}│`);
+      const rating =
+        s.avgManagerScore != null ? formatScore(s.avgManagerScore) : "—";
+
+      const name = (
+        s.name.length > 16 ? `${s.name.substring(0, 15)}…` : s.name
+      ).padEnd(16, " ");
+      const callsCol = String(s.totalCount).padStart(6, " ").padEnd(8, " ");
+      const minutesCol = String(totalMinutes).padStart(6, " ").padEnd(8, " ");
+      const ratingCol = rating.padStart(6, " ").padEnd(8, " ");
+
+      lines.push(`│ ${name} │${callsCol}│${minutesCol}│${ratingCol}│`);
     }
-    
+
     lines.push(separator);
   }
-  
+
   lines.push("");
 
   // Итоги по всем
   lines.push("📊 <b>Итоги по всем сотрудникам:</b>");
   lines.push(`• Всего звонков: <b>${totals.totalCount}</b>`);
   lines.push(`• Всего минут: <b>${totalMinutes}</b>`);
-  
+
   if (isManagerReport && totals.totalCount > 0) {
     lines.push(
       `• Оценено: <b>${totals.evaluatedCount}/${totals.totalCount}</b>`,
@@ -497,10 +541,18 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
 
   // KPI итоги
   if (includeKpi) {
-    lines.push(`• Общий оклад: <b>${formatValue(totals.totalBaseSalary)} ₽</b>`);
-    lines.push(`• Целевой бонус: <b>${formatValue(totals.totalTargetBonus)} ₽</b>`);
-    lines.push(`• Начисленный бонус: <b>${formatValue(totals.totalCalculatedBonus)} ₽</b>`);
-    lines.push(`• Итого к выплате: <b>${formatValue(totals.totalSalary)} ₽</b>`);
+    lines.push(
+      `• Общий оклад: <b>${formatValue(totals.totalBaseSalary)} ₽</b>`,
+    );
+    lines.push(
+      `• Целевой бонус: <b>${formatValue(totals.totalTargetBonus)} ₽</b>`,
+    );
+    lines.push(
+      `• Начисленный бонус: <b>${formatValue(totals.totalCalculatedBonus)} ₽</b>`,
+    );
+    lines.push(
+      `• Итого к выплате: <b>${formatValue(totals.totalSalary)} ₽</b>`,
+    );
   }
 
   if (isManagerReport && lowRatedEntries.length > 0) {
