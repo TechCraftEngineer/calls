@@ -22,7 +22,7 @@
   ],
   "scripts": {
     "clean": "rm -rf *.tsbuildinfo .turbo dist",
-    "dev": "bun with-env email dev -p 3002",
+    "dev": "bun with-env email dev -p 3003",
     "with-env": "bun run --env-file ../../.env",
     "typecheck": "tsc --noEmit",
     "build": "tsdown",
