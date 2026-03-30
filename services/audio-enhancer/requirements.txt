@@ -21,7 +21,7 @@ deepfilternet>=0.5.6
 nara_wpe>=0.0.9
 
 # Pyannote для диаризации
-pyannote.audio>=3.1.0
+pyannote.audio>=3.0.0,<3.2.0
 pyannote.core>=5.0.0
 
 # Дополнительная обработка

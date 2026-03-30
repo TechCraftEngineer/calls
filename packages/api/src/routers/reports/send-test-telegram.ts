@@ -104,21 +104,29 @@ export const sendTestTelegram = workspaceProcedure
 
     const { reportType } = input;
     const now = toZonedTime(new Date(), TZ);
-    let dateFrom: string;
-    let dateTo: string;
+    let dateFrom: Date;
+    let dateTo: Date;
+    let dateFromString: string;
+    let dateToString: string;
 
     if (reportType === "daily") {
-      dateFrom = formatDateInMoscow(subDays(now, 1));
+      dateFrom = subDays(now, 1);
       dateTo = dateFrom;
+      dateFromString = formatDateInMoscow(dateFrom);
+      dateToString = dateFromString;
     } else if (reportType === "weekly") {
-      dateFrom = formatDateInMoscow(subWeeks(now, 1));
-      dateTo = formatDateInMoscow(now);
+      dateFrom = subWeeks(now, 1);
+      dateTo = now;
+      dateFromString = formatDateInMoscow(dateFrom);
+      dateToString = formatDateInMoscow(dateTo);
     } else {
-      dateFrom = formatDateInMoscow(subMonths(now, 1));
-      dateTo = formatDateInMoscow(now);
+      dateFrom = subMonths(now, 1);
+      dateTo = now;
+      dateFromString = formatDateInMoscow(dateFrom);
+      dateToString = formatDateInMoscow(dateTo);
     }
-    const dateFromDb = `${dateFrom} 00:00:00`;
-    const dateToDb = `${dateTo} 23:59:59`;
+    const dateFromDb = `${dateFromString} 00:00:00`;
+    const dateToDb = `${dateToString} 23:59:59`;
 
     const ftpSettings = await settingsService.getFtpSettings(workspaceId);
     const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
@@ -158,7 +166,7 @@ export const sendTestTelegram = workspaceProcedure
       reportType,
       isManagerReport,
       workspaceName,
-      callSummariesByManager,
+      _callSummariesByManager: callSummariesByManager,
       lowRatedCalls,
     });
 

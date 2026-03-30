@@ -208,28 +208,34 @@ export const telegramReportsFn = inngest.createFunction(
               reportType,
             );
 
-            let dateFrom: string;
-            let dateTo: string;
+            let dateFrom: Date;
+            let dateTo: Date;
+            let dateFromString: string;
+            let dateToString: string;
 
             if (reportType === "daily") {
               const d = new Date(now);
               d.setDate(d.getDate() - 1);
-              dateFrom = formatDateInMoscow(d);
-              dateTo = dateFrom;
+              dateFrom = d;
+              dateTo = d;
+              dateFromString = formatDateInMoscow(d);
+              dateToString = dateFromString;
             } else if (reportType === "weekly") {
-              const d = new Date(now);
-              d.setDate(d.getDate() - 7);
-              dateFrom = formatDateInMoscow(d);
-              dateTo = formatDateInMoscow(now);
+              dateFrom = new Date(now);
+              dateFrom.setDate(dateFrom.getDate() - 7);
+              dateTo = new Date(now);
+              dateFromString = formatDateInMoscow(dateFrom);
+              dateToString = formatDateInMoscow(dateTo);
             } else {
-              const d = new Date(now);
-              d.setMonth(d.getMonth() - 1);
-              dateFrom = formatDateInMoscow(d);
-              dateTo = formatDateInMoscow(now);
+              dateFrom = new Date(now);
+              dateFrom.setMonth(dateFrom.getMonth() - 1);
+              dateTo = new Date(now);
+              dateFromString = formatDateInMoscow(dateFrom);
+              dateToString = formatDateInMoscow(dateTo);
             }
 
-            const dateFromDb = `${dateFrom} 00:00:00`;
-            const dateToDb = `${dateTo} 23:59:59`;
+            const dateFromDb = `${dateFromString} 00:00:00`;
+            const dateToDb = `${dateToString} 23:59:59`;
 
             const ftpSettings =
               await settingsService.getFtpSettings(workspaceId);

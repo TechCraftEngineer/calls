@@ -25,7 +25,7 @@ export interface PreparedStats {
 }
 
 export interface FormatReportParams {
-  stats: PreparedStats;
+  stats: Record<string, ManagerStats>;
   dateFrom: Date;
   dateTo: Date;
   reportType: "daily" | "weekly" | "monthly";
