@@ -36,8 +36,6 @@ export interface ManagerStats {
 }
 
 export interface ReportEmailProps {
-  /** Текст отчёта (plain text, будет отображён с сохранением переносов) */
-  reportText: string;
   /** Тип отчёта: daily | weekly | monthly */
   reportType: ReportType;
   /** Имя пользователя для приветствия */
@@ -187,7 +185,6 @@ function prepareStats(entries: [string, ManagerStats][]): {
 }
 
 export const ReportEmail = ({
-  reportText = "Нет данных за период.",
   reportType = "daily",
   username,
   stats,
@@ -259,10 +256,8 @@ export const ReportEmail = ({
                       <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Оценка</th>
                       {includeKpi && (
                         <>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Оклад</th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Бонус</th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Оклад + Бонус</th>
                           <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">%KPI</th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Итого</th>
                         </>
                       )}
                     </tr>
@@ -282,10 +277,8 @@ export const ReportEmail = ({
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">{rating}</td>
                           {includeKpi && (
                             <>
-                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(manager.kpiBaseSalary ?? 0)} ₽</td>
-                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(manager.kpiCalculatedBonus ?? 0)} ₽</td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue((manager.kpiBaseSalary ?? 0) + (manager.kpiCalculatedBonus ?? 0))} ₽</td>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center">{manager.kpiCompletionPercentage ?? 0}%</td>
-                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(manager.kpiTotalSalary ?? 0)} ₽</td>
                             </>
                           )}
                         </tr>
@@ -302,10 +295,8 @@ export const ReportEmail = ({
                       </td>
                       {includeKpi && (
                         <>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(kpiTable.totals.totalBaseSalary)} ₽</td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(kpiTable.totals.totalTargetBonus)} ₽</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(kpiTable.totals.totalBaseSalary + kpiTable.totals.totalCalculatedBonus)} ₽</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">-</td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(kpiTable.totals.totalSalary)} ₽</td>
                         </>
                       )}
                     </tr>
@@ -316,10 +307,6 @@ export const ReportEmail = ({
                   Нет данных для отображения KPI
                 </Text>
               )}
-            </Section>
-
-            <Section className="my-[24px] rounded bg-[#f9fafb] p-[16px] font-mono text-[13px] leading-[20px] text-black whitespace-pre-wrap">
-              {reportText}
             </Section>
 
             <Hr className="mx-0 my-[26px] w-full border border-solid border-[#eaeaea]" />
@@ -341,7 +328,6 @@ export const ReportEmail = ({
 
 Object.assign(ReportEmail, {
   PreviewProps: {
-    reportText: "📊 **Итоги по всем сотрудникам:**\n• Всего звонков: 0\n• Всего минут: 0\n• Оценено: 0 из 0 звонков\n• Средняя оценка качества: — ⭐",
     reportType: "daily" as const,
     username: "Иван",
     stats: {},
