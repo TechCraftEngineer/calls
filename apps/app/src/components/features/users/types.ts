@@ -29,10 +29,6 @@ export interface WorkspaceMemberUser {
   emailMonthlyReport?: boolean;
   telegramWeeklyReport?: boolean;
   telegramMonthlyReport?: boolean;
-  reportIncludeCallSummaries?: boolean;
-  reportDetailed?: boolean;
-  reportIncludeAvgValue?: boolean;
-  reportIncludeAvgRating?: boolean;
   kpiBaseSalary?: number;
   kpiTargetBonus?: number;
   kpiTargetTalkTimeMinutes?: number;
@@ -64,10 +60,6 @@ export interface ManagedUser extends Omit<User, "id" | "email" | "createdAt"> {
   emailMonthlyReport?: boolean;
   telegramWeeklyReport?: boolean;
   telegramMonthlyReport?: boolean;
-  reportIncludeCallSummaries?: boolean;
-  reportDetailed?: boolean;
-  reportIncludeAvgValue?: boolean;
-  reportIncludeAvgRating?: boolean;
   kpiBaseSalary?: number;
   kpiTargetBonus?: number;
   kpiTargetTalkTimeMinutes?: number;
@@ -97,10 +89,6 @@ export interface AddUserForm {
   emailMonthlyReport: boolean;
   telegramWeeklyReport: boolean;
   telegramMonthlyReport: boolean;
-  reportIncludeCallSummaries: boolean;
-  reportDetailed: boolean;
-  reportIncludeAvgValue: boolean;
-  reportIncludeAvgRating: boolean;
   kpiBaseSalary: number;
   kpiTargetBonus: number;
   kpiTargetTalkTimeMinutes: number;

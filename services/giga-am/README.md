@@ -58,3 +58,9 @@ MP3, WAV, FLAC, M4A, AAC, OGG, WEBM (макс. 100MB)
 1. Получите токен: https://huggingface.co/settings/tokens
 2. Примите условия: https://huggingface.co/pyannote/segmentation-3.0
 3. Добавьте токен в Secrets как `HF_TOKEN`
+
+### Переменные окружения
+
+- `TRANSCRIPTION_TIMEOUT` - Таймаут распознавания в секундах (по умолчанию 900 = 15 минут)
+- `MODEL_LOADING_TIMEOUT` - Таймаут загрузки модели в секундах (по умолчанию 600 = 10 минут)
+- `HF_TOKEN` - Токен для доступа к pyannote/segmentation-3.0

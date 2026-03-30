@@ -27,12 +27,7 @@ export const updateReportSettings = workspaceProcedure
       await usersService.updateUserReportKpiSettings(
         input.user_id,
         context.workspaceId,
-        {
-          reportIncludeCallSummaries: input.data.reportIncludeCallSummaries,
-          reportDetailed: input.data.reportDetailed,
-          reportIncludeAvgValue: input.data.reportIncludeAvgValue,
-          reportIncludeAvgRating: input.data.reportIncludeAvgRating,
-        },
+        {},
       );
 
       await logUpdate(

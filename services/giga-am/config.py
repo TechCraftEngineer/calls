@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     
     # Timeout settings
-    transcription_timeout: int = 300  # 5 минут
+    transcription_timeout: int = int(os.getenv("TRANSCRIPTION_TIMEOUT", "900"))  # 15 минут по умолчанию
 
     # Async jobs and pipeline
     jobs_dir: str = "temp/jobs"
@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     
     # Concurrency settings
     model_workers: int = Field(default=2, ge=1)
-    model_loading_timeout: int = Field(default=300, ge=1)  # seconds
+    model_loading_timeout: int = int(os.getenv("MODEL_LOADING_TIMEOUT", "600"))  # seconds
     
     # Admin settings
     admin_token: str = Field(default="", description="Admin token for protected endpoints")

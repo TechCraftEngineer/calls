@@ -130,59 +130,6 @@ export function ReportDeliveryFrequency({
   );
 }
 
-export function ReportFormatSettings({
-  form,
-  setForm,
-}: {
-  form: ReportSettingsForm;
-  setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
-}) {
-  return (
-    <div className="rounded-lg border bg-muted/30 p-3 flex flex-col gap-2">
-      <h4 className="text-sm font-semibold">Вид отчета</h4>
-      <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-        <Checkbox
-          checked={form.reportDetailed}
-          onCheckedChange={(checked) =>
-            setForm((f) => ({ ...f, reportDetailed: checked === true }))
-          }
-        />
-        Подробный формат
-      </Label>
-      <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-        <Checkbox
-          checked={form.reportIncludeCallSummaries}
-          onCheckedChange={(checked) =>
-            setForm((f) => ({
-              ...f,
-              reportIncludeCallSummaries: checked === true,
-            }))
-          }
-        />
-        ИИ-саммари вызовов
-      </Label>
-      <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-        <Checkbox
-          checked={form.reportIncludeAvgValue}
-          onCheckedChange={(checked) =>
-            setForm((f) => ({ ...f, reportIncludeAvgValue: checked === true }))
-          }
-        />
-        Средняя сумма сделки
-      </Label>
-      <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
-        <Checkbox
-          checked={form.reportIncludeAvgRating}
-          onCheckedChange={(checked) =>
-            setForm((f) => ({ ...f, reportIncludeAvgRating: checked === true }))
-          }
-        />
-        Средняя оценка качества
-      </Label>
-    </div>
-  );
-}
-
 export function ReportTimeSettings({
   form,
   setForm,

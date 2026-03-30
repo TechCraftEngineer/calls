@@ -243,12 +243,7 @@ export default function ReportSettingsFormBody({
           }),
           updateReportParamsMutation.mutateAsync({
             user_id: userId,
-            data: {
-              reportIncludeCallSummaries: form.reportIncludeCallSummaries,
-              reportDetailed: form.reportDetailed,
-              reportIncludeAvgValue: form.reportIncludeAvgValue,
-              reportIncludeAvgRating: form.reportIncludeAvgRating,
-            },
+            data: {},
           }),
         ];
         if (isAdmin) {
@@ -300,12 +295,7 @@ export default function ReportSettingsFormBody({
           }),
           updateReportParamsMutation.mutateAsync({
             user_id: userId,
-            data: {
-              reportIncludeCallSummaries: form.reportIncludeCallSummaries,
-              reportDetailed: form.reportDetailed,
-              reportIncludeAvgValue: form.reportIncludeAvgValue,
-              reportIncludeAvgRating: form.reportIncludeAvgRating,
-            },
+            data: {},
           }),
         ]);
       },
@@ -330,12 +320,7 @@ export default function ReportSettingsFormBody({
           }),
           updateReportParamsMutation.mutateAsync({
             user_id: userId,
-            data: {
-              reportIncludeCallSummaries: form.reportIncludeCallSummaries,
-              reportDetailed: form.reportDetailed,
-              reportIncludeAvgValue: form.reportIncludeAvgValue,
-              reportIncludeAvgRating: form.reportIncludeAvgRating,
-            },
+            data: {},
           }),
         ];
         if (isAdmin) {
@@ -371,11 +356,6 @@ export default function ReportSettingsFormBody({
         await updateReportParamsMutation.mutateAsync({
           user_id: userId,
           data: {
-            reportIncludeCallSummaries: form.reportIncludeCallSummaries,
-            reportDetailed: form.reportDetailed,
-            reportIncludeAvgValue: form.reportIncludeAvgValue,
-            reportIncludeAvgRating: form.reportIncludeAvgRating,
-
             filterExcludeAnsweringMachine: form.filterExcludeAnsweringMachine,
             filterMinDuration: toNonNegInt(form.filterMinDuration),
             filterMinReplicas: toNonNegInt(form.filterMinReplicas),

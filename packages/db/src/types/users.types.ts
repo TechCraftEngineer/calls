@@ -17,10 +17,6 @@ export interface UserUpdateData {
   emailDailyReport?: boolean;
   emailWeeklyReport?: boolean;
   emailMonthlyReport?: boolean;
-  reportIncludeCallSummaries?: boolean;
-  reportDetailed?: boolean;
-  reportIncludeAvgValue?: boolean;
-  reportIncludeAvgRating?: boolean;
   reportManagedUserIds?: string | null;
   kpiBaseSalary?: number;
   kpiTargetBonus?: number;

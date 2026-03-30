@@ -21,7 +21,6 @@ import { REPORT_TYPE_LABELS, type ReportType } from "../types";
 import type { ReportSettingsForm } from "./report-settings-types";
 import {
   ReportDeliveryFrequency,
-  ReportFormatSettings,
   ReportTimeSettings,
 } from "./shared-report-controls";
 
@@ -144,7 +143,6 @@ export function MaxReportSection({
             </Label>
           )}
         </div>
-        <ReportFormatSettings form={form} setForm={setForm} />
         {isAdmin && <ReportTimeSettings form={form} setForm={setForm} />}
 
         {onSendTest && (

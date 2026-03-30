@@ -19,7 +19,6 @@ import { REPORT_TYPE_LABELS, type ReportType } from "../types";
 import type { ReportSettingsForm } from "./report-settings-types";
 import {
   ReportDeliveryFrequency,
-  ReportFormatSettings,
   ReportTimeSettings,
 } from "./shared-report-controls";
 
@@ -170,7 +169,6 @@ export function TelegramReportSection({
           setForm={setForm}
           channel="telegram"
         />
-        <ReportFormatSettings form={form} setForm={setForm} />
         <Separator />
         {onSendTest && (
           <div className="mt-3 space-y-2">
