@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Button,
   Dialog,
@@ -236,7 +238,7 @@ export default function BulkKpiSettings({
                 onChange={(e) =>
                   handleFieldChange("baseSalary", e.target.value)
                 }
-                placeholder="0"
+                placeholder="50000…"
                 disabled={isLoading}
                 aria-invalid={!!fieldErrors.baseSalary}
                 aria-describedby={
@@ -269,7 +271,7 @@ export default function BulkKpiSettings({
                 onChange={(e) =>
                   handleFieldChange("targetBonus", e.target.value)
                 }
-                placeholder="0"
+                placeholder="10000…"
                 disabled={isLoading}
                 aria-invalid={!!fieldErrors.targetBonus}
                 aria-describedby={
@@ -305,7 +307,7 @@ export default function BulkKpiSettings({
                 onChange={(e) =>
                   handleFieldChange("targetTalkTimeMinutes", e.target.value)
                 }
-                placeholder="0"
+                placeholder="120…"
                 disabled={isLoading}
                 aria-invalid={!!fieldErrors.targetTalkTimeMinutes}
                 aria-describedby={

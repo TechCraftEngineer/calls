@@ -29,7 +29,7 @@ from utils.exceptions import (
     FileSizeError,
     UnsupportedFormatError,
     ServiceUnavailableError,
-    TimeoutError
+    GigaTimeoutError
 )
 from utils.error_handlers import setup_exception_handlers
 from utils.metrics import metrics, RequestTracker
@@ -213,6 +213,9 @@ async def api_transcribe(
                     f"Ошибка при валидации аудиофайла: {str(e)}",
                     audio_file=tmp_path
                 ) from e
+        
+        # Теперь tmp_path используется вне контекста, но файл уже должен быть сохранен
+        # или мы должны работать с копией/байтами файла
 
         preprocess_metadata: dict[str, Any] | None = None
         if preprocess_metadata_json and preprocess_metadata_json.strip():
@@ -259,7 +262,11 @@ async def api_transcribe(
                     preprocess_metadata,
                     request_id,
                 )
+            except (GigaAMException, ModelLoadError, GigaTimeoutError) as e:
+                # Re-raise domain exceptions unchanged
+                raise
             except Exception as e:
+                # Wrap unexpected exceptions into TranscriptionError
                 raise TranscriptionError(
                     f"Ошибка при выполнении pipeline: {str(e)}",
                     stage="pipeline_execution"
@@ -284,14 +291,20 @@ async def api_transcribe(
                 )
                 return JSONResponse(content=result)
 
+            # Check if result contains domain error
             error_msg = result.get("error", "Неизвестная ошибка распознавания")
+            if isinstance(error_msg, dict) and error_msg.get("code") in ["MODEL_LOAD_ERROR", "TIMEOUT_ERROR"]:
+                # Propagate domain errors
+                logger.error("Ошибка распознавания: %s", error_msg)
+                raise
+                
             logger.error("Ошибка распознавания: %s", error_msg)
             raise TranscriptionError(
                 error_msg,
                 stage="pipeline_result"
             )
     except (ValidationError, AudioProcessingError, TranscriptionError, 
-            FileSizeError, UnsupportedFormatError, ServiceUnavailableError, TimeoutError):
+            FileSizeError, UnsupportedFormatError, ServiceUnavailableError, GigaTimeoutError):
         raise
     except Exception as exc:
         logger.exception("Внутренняя ошибка сервера: %s", exc)
@@ -345,6 +358,8 @@ async def get_metrics():
 @app.post("/api/cache/clear")
 async def clear_cache():
     """Очистка кэша (только для администрирования)"""
+    # TODO: Add admin authentication/authorization
+    # For now, this endpoint should be protected by reverse proxy or API gateway
     cache.cleanup()
     return {"message": "Кэш успешно очищен"}
 

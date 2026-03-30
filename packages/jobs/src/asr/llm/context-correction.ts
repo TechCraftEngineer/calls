@@ -221,9 +221,6 @@ export async function correctWithContext(
               functionId: "asr-context-correction",
               actualLength: companyContext.length,
               maxLength: 1000,
-              preview:
-                companyContext.substring(0, 100) +
-                (companyContext.length > 100 ? "..." : ""),
             },
           );
         }
@@ -324,7 +321,7 @@ ${normalizedText}
       inputLength: normalizedText.length,
       outputLength: correctedText.length,
       hasChanges,
-      hasCompanyContext: !!companyContext,
+      hasCompanyContext: !!normalizedContext,
     });
 
     return correctedText.trim();
