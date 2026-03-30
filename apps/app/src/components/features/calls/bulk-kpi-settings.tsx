@@ -81,13 +81,31 @@ export default function BulkKpiSettings({
 
   const handleApply = async () => {
     try {
-      // Проверка на пустые значения
-      if (
-        settings.baseSalary.trim() === "" ||
-        settings.targetBonus.trim() === "" ||
-        settings.targetTalkTimeMinutes.trim() === ""
-      ) {
+      // Проверка на пустые значения и создание ошибок полей
+      const emptyFieldErrors: BulkKpiFieldErrors = {};
+      if (settings.baseSalary.trim() === "") {
+        emptyFieldErrors.baseSalary = "Поле \"Базовая зарплата\" должно быть заполнено";
+      }
+      if (settings.targetBonus.trim() === "") {
+        emptyFieldErrors.targetBonus = "Поле \"Целевой бонус\" должно быть заполнено";
+      }
+      if (settings.targetTalkTimeMinutes.trim() === "") {
+        emptyFieldErrors.targetTalkTimeMinutes = "Поле \"Целевое время разговора\" должно быть заполнено";
+      }
+
+      // Если есть пустые поля, показываем ошибки и фокусируемся
+      if (Object.keys(emptyFieldErrors).length > 0) {
+        setFieldErrors(emptyFieldErrors);
         toast.error("Все поля должны быть заполнены");
+
+        // Фокусируемся на первом поле с ошибкой
+        if (emptyFieldErrors.baseSalary) {
+          baseSalaryRef.current?.focus();
+        } else if (emptyFieldErrors.targetBonus) {
+          targetBonusRef.current?.focus();
+        } else if (emptyFieldErrors.targetTalkTimeMinutes) {
+          targetTalkTimeMinutesRef.current?.focus();
+        }
         return;
       }
 

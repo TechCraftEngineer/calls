@@ -33,12 +33,18 @@ function splitTextIntoChunks(text: string, maxLength: number): string[] {
         end = bestBreak;
         // Include the delimiter in the chunk to preserve spacing
         if (end < text.length) {
+          let delta = 0;
           if (text[end] === " ") {
-            end += 1;
+            delta = 1;
           } else if (text.slice(end, end + 2) === ". ") {
-            end += 2;
+            delta = 2;
           } else if (text[end] === "\n") {
-            end += 1;
+            delta = 1;
+          }
+          
+          // Only add delimiter if it doesn't exceed maxLength
+          if ((end - start) + delta <= maxLength) {
+            end += delta;
           }
         }
       }
@@ -90,7 +96,9 @@ ${chunk}
 }
 
 const CORRECTED_TEXT_SCHEMA = z.object({
-  text: z.string().trim().min(1),
+  text: z.string().refine(s => /\S/.test(s), {
+    message: "Текст должен содержать хотя бы один непробельный символ",
+  }),
 });
 
 const SYSTEM_PROMPT = `Ты эксперт по исправлению ошибок автоматического распознавания речи (ASR).
@@ -191,55 +199,6 @@ export async function correctWithContext(
       return text;
     }
 
-    // Если текст слишком длинный, разбиваем на чанки и обрабатываем по частям
-    if (normalizedText.length > 2000) {
-      logger.info("Текст превышает 2000 символов, обрабатываем по частям", {
-        functionId: "asr-context-correction",
-        textLength: normalizedText.length,
-      });
-
-      const chunks = splitTextIntoChunks(normalizedText, 2000);
-      const correctedChunks: string[] = [];
-
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i];
-        if (!chunk) continue;
-
-        logger.info(`Обработка чанка ${i + 1}/${chunks.length}`, {
-          functionId: "asr-context-correction",
-          chunkLength: chunk.length,
-        });
-
-        try {
-          const correctedChunk = await processChunk(chunk, companyContext);
-          correctedChunks.push(correctedChunk);
-        } catch (error) {
-          logger.warn(
-            `Ошибка при обработке чанка ${i + 1}, используем оригинал`,
-            {
-              functionId: "asr-context-correction",
-              chunkIndex: i,
-              error: error instanceof Error ? error.message : String(error),
-            },
-          );
-          correctedChunks.push(chunk);
-        }
-      }
-
-      const finalText = correctedChunks.join("");
-      logger.info("Chunked обработка завершена", {
-        functionId: "asr-context-correction",
-        processingTimeMs: Date.now() - start,
-        inputLength: normalizedText.length,
-        outputLength: finalText.length,
-        chunksProcessed: chunks.length,
-        hasChanges: finalText !== normalizedText,
-        hasCompanyContext: !!companyContext,
-      });
-
-      return finalText;
-    }
-
     // Нормализуем опциональный контекст
     let normalizedContext: string | undefined;
     if (companyContext) {
@@ -270,6 +229,55 @@ export async function correctWithContext(
         }
         // Отбрасываем контент, не прерывая коррекцию
       }
+    }
+
+    // Если текст слишком длинный, разбиваем на чанки и обрабатываем по частям
+    if (normalizedText.length > 2000) {
+      logger.info("Текст превышает 2000 символов, обрабатываем по частям", {
+        functionId: "asr-context-correction",
+        textLength: normalizedText.length,
+      });
+
+      const chunks = splitTextIntoChunks(normalizedText, 2000);
+      const correctedChunks: string[] = [];
+
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        if (!chunk) continue;
+
+        logger.info(`Обработка чанка ${i + 1}/${chunks.length}`, {
+          functionId: "asr-context-correction",
+          chunkLength: chunk.length,
+        });
+
+        try {
+          const correctedChunk = await processChunk(chunk, normalizedContext);
+          correctedChunks.push(correctedChunk);
+        } catch (error) {
+          logger.warn(
+            `Ошибка при обработке чанка ${i + 1}, используем оригинал`,
+            {
+              functionId: "asr-context-correction",
+              chunkIndex: i,
+              error: error instanceof Error ? error.message : String(error),
+            },
+          );
+          correctedChunks.push(chunk);
+        }
+      }
+
+      const finalText = correctedChunks.join("");
+      logger.info("Chunked обработка завершена", {
+        functionId: "asr-context-correction",
+        processingTimeMs: Date.now() - start,
+        inputLength: normalizedText.length,
+        outputLength: finalText.length,
+        chunksProcessed: chunks.length,
+        hasChanges: finalText !== normalizedText,
+        hasCompanyContext: !!normalizedContext,
+      });
+
+      return finalText;
     }
 
     const contextInfo = normalizedContext
