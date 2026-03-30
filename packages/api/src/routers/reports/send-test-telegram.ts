@@ -22,7 +22,7 @@ function formatDateInMoscow(date: Date): string {
   return formatInTimeZone(date, TZ, "yyyy-MM-dd");
 }
 
-function getContextUserEmail(user: unknown): string {
+function _getContextUserEmail(user: unknown): string {
   if (
     user &&
     typeof user === "object" &&

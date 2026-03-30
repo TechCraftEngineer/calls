@@ -33,6 +33,10 @@ export interface WorkspaceMemberUser {
   kpiTargetBonus?: number;
   kpiTargetTalkTimeMinutes?: number;
   evaluationCustomInstructions?: string | null;
+  reportDetailed?: boolean;
+  reportIncludeCallSummaries?: boolean;
+  reportIncludeAvgRating?: boolean;
+  reportIncludeAvgValue?: boolean;
 }
 
 // Расширенный тип пользователя с полями управления
@@ -94,6 +98,10 @@ export interface AddUserForm {
   kpiTargetTalkTimeMinutes: number;
   evaluationTemplateSlug: string | null;
   evaluationCustomInstructions: string | null;
+  reportDetailed: boolean;
+  reportIncludeCallSummaries: boolean;
+  reportIncludeAvgRating: boolean;
+  reportIncludeAvgValue: boolean;
 }
 
 // Форма редактирования пользователя (без пароля)

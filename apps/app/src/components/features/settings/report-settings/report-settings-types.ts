@@ -22,6 +22,13 @@ export interface ReportSettingsForm {
   maxChatId: string;
   maxDailyReport: boolean;
   maxManagerReport: boolean;
+  kpiBaseSalary: string;
+  kpiTargetBonus: string;
+  kpiTargetTalkTimeMinutes: string;
+  reportDetailed: boolean;
+  reportIncludeCallSummaries: boolean;
+  reportIncludeAvgRating: boolean;
+  reportIncludeAvgValue: boolean;
 }
 
 export interface ReportSettingsUserOption {

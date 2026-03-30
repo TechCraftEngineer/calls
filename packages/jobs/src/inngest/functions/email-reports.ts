@@ -12,9 +12,8 @@ import {
   workspaceSettingsRepository,
   workspacesService,
 } from "@calls/db";
-import { ReportEmail, sendEmail } from "@calls/emails";
+import { ReportEmail, sendEmail, type ManagerStats } from "@calls/emails";
 import { toZonedTime } from "date-fns-tz";
-import type { ManagerStats } from "../../reports/format-report";
 import { formatTelegramReport } from "../../reports/format-report";
 import { inngest } from "../client";
 
@@ -242,6 +241,7 @@ export const emailReportsFn = inngest.createFunction(
                     reportText: text,
                     reportType,
                     username: undefined,
+                    stats,
                   }),
                 });
                 sent++;

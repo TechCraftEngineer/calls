@@ -250,10 +250,37 @@ class TranscriptionService:
         with self._model_lock:
             try:
                 logger.info(f"Начало распознавания: {audio_path}")
-                # Передаем путь к файлу напрямую - библиотека обработает его сама
-                return self.model.transcribe_longform(audio_path)
+                
+                # Проверяем существование файла
+                if not os.path.exists(audio_path):
+                    raise FileNotFoundError(f"Аудиофайл не найден: {audio_path}")
+                
+                # Проверяем размер файла
+                file_size = os.path.getsize(audio_path)
+                logger.info(f"Размер аудиофайла: {file_size} bytes")
+                
+                # Пробуем сначала передать путь к файлу
+                try:
+                    result = self.model.transcribe_longform(audio_path)
+                    logger.info(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
+                    return result
+                except Exception as path_error:
+                    logger.warning(f"Не удалось распознать по пути к файлу: {path_error}")
+                    logger.info("Пробуем загрузить аудиоданные и передать их в модель")
+                    
+                    # Загружаем аудиоданные с помощью librosa
+                    import librosa
+                    audio_data, sample_rate = librosa.load(audio_path, sr=16000, mono=True)
+                    logger.info(f"Аудиоданные загружены: длина={len(audio_data)}, sample_rate={sample_rate}")
+                    
+                    # Пробуем передать аудиоданные напрямую
+                    result = self.model.transcribe_longform(audio_data)
+                    logger.info(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
+                    return result
+                    
             except Exception as e:
                 logger.error(f"Ошибка при распознавании аудио: {e}")
+                logger.error(f"Детали ошибки - путь: {audio_path}, существует: {os.path.exists(audio_path) if audio_path else 'None'}")
                 raise
     
     def format_transcription_text(self, result: Dict[str, Any]) -> str:

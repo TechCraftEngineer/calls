@@ -231,9 +231,8 @@ async def api_transcribe(
             request_id,
         )
 
-        # Используем безопасный контекст менеджер для временных файлов
-        with FileValidator.secure_temp_file(file) as temp_path:
-            tmp_path = temp_path
+        # Создаем временный файл и обрабатываем его в том же контексте
+        with FileValidator.secure_temp_file(file) as tmp_path:
             try:
                 # Дополнительная валидация содержимого аудиофайла
                 audio_metadata = FileValidator.validate_audio_content(tmp_path)
@@ -249,99 +248,97 @@ async def api_transcribe(
                     f"Ошибка при валидации аудиофайла: {str(e)}",
                     audio_file=tmp_path
                 ) from e
-        
-        # Теперь tmp_path используется вне контекста, но файл уже должен быть сохранен
-        # или мы должны работать с копией/байтами файла
-
-        preprocess_metadata: dict[str, Any] | None = None
-        if preprocess_metadata_json and preprocess_metadata_json.strip():
-            try:
-                parsed = json.loads(preprocess_metadata_json)
-            except json.JSONDecodeError as exc:
-                raise ValidationError(
-                    f"Некорректный preprocess_metadata_json: {exc}",
-                    field="preprocess_metadata_json"
-                ) from exc
-            if not isinstance(parsed, dict):
-                raise ValidationError(
-                    "preprocess_metadata_json должен быть JSON объектом",
-                    field="preprocess_metadata_json"
-                )
-            preprocess_metadata = parsed
-
-        # Отслеживание запроса с метриками
-        with RequestTracker(request_id, file_info.get("size", 0), file_hash) as tracker:
-            # Устанавливаем длительность аудио
-            if audio_metadata.get("duration"):
-                metrics.set_audio_duration(request_id, audio_metadata["duration"])
             
-            # Проверяем кэш перед обработкой
-            cached_result = cache.get(file_hash)
-            if cached_result:
-                logger.info(
-                    "Результат получен из кэша для файла %s [Request: %s]", 
-                    os.path.basename(file.filename), 
-                    request_id
-                )
-                # Добавляем метаданные кэшированного результата
-                cached_result["file_hash"] = file_hash
-                cached_result["audio_metadata"] = audio_metadata
-                cached_result["request_id"] = request_id
-                cached_result["processing_time"] = 0.0  # Кэшированный результат обрабатывается мгновенно
-                cached_result["cached"] = True
-                return JSONResponse(content=cached_result)
-            
-            try:
-                result = await run_in_threadpool(
-                    _run_ultra_pipeline,
-                    tmp_path,
-                    preprocess_metadata,
-                    request_id,
-                )
-            except (GigaAMException, ModelLoadError, GigaTimeoutError) as e:
-                # Re-raise domain exceptions unchanged
-                raise
-            except Exception as e:
-                # Wrap unexpected exceptions into TranscriptionError
-                raise TranscriptionError(
-                    f"Ошибка при выполнении pipeline: {str(e)}",
-                    stage="pipeline_execution"
-                ) from e
-                
-            if result.get("success"):
-                # Сохраняем результат в кэш
-                cache.put(file_hash, result, audio_metadata)
-                
-                # Добавляем метаданные в результат
-                result["file_hash"] = file_hash
-                result["audio_metadata"] = audio_metadata
-                result["request_id"] = request_id
-                result["processing_time"] = tracker.duration
-                result["cached"] = False
-                
-                logger.info(
-                    "Успешное распознавание файла %s [Request: %s] за %.2fs", 
-                    os.path.basename(file.filename), 
-                    request_id,
-                    tracker.duration
-                )
-                return JSONResponse(content=result)
+            # Обрабатываем preprocess_metadata
+            preprocess_metadata: dict[str, Any] | None = None
+            if preprocess_metadata_json and preprocess_metadata_json.strip():
+                try:
+                    parsed = json.loads(preprocess_metadata_json)
+                except json.JSONDecodeError as exc:
+                    raise ValidationError(
+                        f"Некорректный preprocess_metadata_json: {exc}",
+                        field="preprocess_metadata_json"
+                    ) from exc
+                if not isinstance(parsed, dict):
+                    raise ValidationError(
+                        "preprocess_metadata_json должен быть JSON объектом",
+                        field="preprocess_metadata_json"
+                    )
+                preprocess_metadata = parsed
 
-            # Check if result contains domain error
-            error_msg = result.get("error", "Неизвестная ошибка распознавания")
-            if isinstance(error_msg, dict) and error_msg.get("code") in ["MODEL_LOAD_ERROR", "TIMEOUT_ERROR"]:
-                # Propagate domain errors with proper exception instances
+            # Отслеживание запроса с метриками
+            with RequestTracker(request_id, file_info.get("size", 0), file_hash) as tracker:
+                # Устанавливаем длительность аудио
+                if audio_metadata.get("duration"):
+                    metrics.set_audio_duration(request_id, audio_metadata["duration"])
+                
+                # Проверяем кэш перед обработкой
+                cached_result = cache.get(file_hash)
+                if cached_result:
+                    logger.info(
+                        "Результат получен из кэша для файла %s [Request: %s]", 
+                        os.path.basename(file.filename), 
+                        request_id
+                    )
+                    # Добавляем метаданные кэшированного результата
+                    cached_result["file_hash"] = file_hash
+                    cached_result["audio_metadata"] = audio_metadata
+                    cached_result["request_id"] = request_id
+                    cached_result["processing_time"] = 0.0  # Кэшированный результат обрабатывается мгновенно
+                    cached_result["cached"] = True
+                    return JSONResponse(content=cached_result)
+                
+                try:
+                    result = await run_in_threadpool(
+                        _run_ultra_pipeline,
+                        tmp_path,
+                        preprocess_metadata,
+                        request_id,
+                    )
+                except (GigaAMException, ModelLoadError, GigaTimeoutError) as e:
+                    # Re-raise domain exceptions unchanged
+                    raise
+                except Exception as e:
+                    # Wrap unexpected exceptions into TranscriptionError
+                    raise TranscriptionError(
+                        f"Ошибка при выполнении pipeline: {str(e)}",
+                        stage="pipeline_execution"
+                    ) from e
+                
+                if result.get("success"):
+                    # Сохраняем результат в кэш
+                    cache.put(file_hash, result, audio_metadata)
+                    
+                    # Добавляем метаданные в результат
+                    result["file_hash"] = file_hash
+                    result["audio_metadata"] = audio_metadata
+                    result["request_id"] = request_id
+                    result["processing_time"] = tracker.duration
+                    result["cached"] = False
+                    
+                    logger.info(
+                        "Успешное распознавание файла %s [Request: %s] за %.2fs", 
+                        os.path.basename(file.filename), 
+                        request_id,
+                        tracker.duration
+                    )
+                    return JSONResponse(content=result)
+
+                # Check if result contains domain error
+                error_msg = result.get("error", "Неизвестная ошибка распознавания")
+                if isinstance(error_msg, dict) and error_msg.get("code") in ["MODEL_LOAD_ERROR", "TIMEOUT_ERROR"]:
+                    # Propagate domain errors with proper exception instances
+                    logger.error("Ошибка распознавания: %s", error_msg)
+                    if error_msg.get("code") == "MODEL_LOAD_ERROR":
+                        raise ModelLoadError(error_msg.get("message", "Model load error"))
+                    elif error_msg.get("code") == "TIMEOUT_ERROR":
+                        raise GigaTimeoutError(error_msg.get("message", "Timeout error"))
+                    
                 logger.error("Ошибка распознавания: %s", error_msg)
-                if error_msg.get("code") == "MODEL_LOAD_ERROR":
-                    raise ModelLoadError(error_msg.get("message", "Model load error"))
-                elif error_msg.get("code") == "TIMEOUT_ERROR":
-                    raise GigaTimeoutError(error_msg.get("message", "Timeout error"))
-                
-            logger.error("Ошибка распознавания: %s", error_msg)
-            raise TranscriptionError(
-                error_msg,
-                stage="pipeline_result"
-            )
+                raise TranscriptionError(
+                    error_msg,
+                    stage="pipeline_result"
+                )
     except (ValidationError, AudioProcessingError, TranscriptionError, 
             FileSizeError, UnsupportedFormatError, ServiceUnavailableError, GigaTimeoutError):
         raise

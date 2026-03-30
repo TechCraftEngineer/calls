@@ -241,10 +241,6 @@ export default function ReportSettingsFormBody({
               emailMonthlyReport: form.emailMonthlyReport,
             },
           }),
-          updateReportParamsMutation.mutateAsync({
-            user_id: userId,
-            data: {},
-          }),
         ];
         if (isAdmin) {
           tasks.push(
@@ -293,10 +289,6 @@ export default function ReportSettingsFormBody({
                 : {}),
             },
           }),
-          updateReportParamsMutation.mutateAsync({
-            user_id: userId,
-            data: {},
-          }),
         ]);
       },
     });
@@ -317,10 +309,6 @@ export default function ReportSettingsFormBody({
               maxDailyReport: form.maxDailyReport,
               maxManagerReport: form.maxManagerReport,
             },
-          }),
-          updateReportParamsMutation.mutateAsync({
-            user_id: userId,
-            data: {},
           }),
         ];
         if (isAdmin) {
@@ -359,6 +347,9 @@ export default function ReportSettingsFormBody({
             filterExcludeAnsweringMachine: form.filterExcludeAnsweringMachine,
             filterMinDuration: toNonNegInt(form.filterMinDuration),
             filterMinReplicas: toNonNegInt(form.filterMinReplicas),
+            kpiBaseSalary: toNonNegInt(form.kpiBaseSalary),
+            kpiTargetBonus: toNonNegInt(form.kpiTargetBonus),
+            kpiTargetTalkTimeMinutes: toNonNegInt(form.kpiTargetTalkTimeMinutes),
           },
         });
       },

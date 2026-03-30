@@ -4,8 +4,8 @@ import {
   usersService,
   workspacesService,
 } from "@calls/db";
-import { ReportEmail, sendEmail } from "@calls/emails";
-import { formatTelegramReport, type ManagerStats } from "@calls/jobs";
+import { ReportEmail, sendEmail, type ManagerStats } from "@calls/emails";
+import { formatTelegramReport } from "@calls/jobs";
 import { ORPCError } from "@orpc/server";
 import { subDays, subMonths, subWeeks } from "date-fns";
 import { z } from "zod";
@@ -149,11 +149,12 @@ export const sendTestEmail = workspaceProcedure
     try {
       await sendEmail({
         to: [userEmail],
-        subject: `Тестовый отчёт по звонкам (${reportTypeLabel}): ${dateFrom} — ${dateTo}`,
+        subject: `Отчёт по звонкам (${reportTypeLabel}): ${dateFrom} — ${dateTo}`,
         react: ReportEmail({
           reportText: text,
           reportType,
           username: userForEdit.givenName ?? undefined,
+          stats,
         }),
       });
       return { success: true };
