@@ -105,7 +105,7 @@ class ServiceUnavailableError(GigaAMException):
         self.service_name = service_name
 
 
-class TimeoutError(GigaAMException):
+class GigaTimeoutError(GigaAMException):
     """Ошибка таймаута"""
     
     def __init__(self, message: str, timeout_seconds: Optional[int] = None, operation: Optional[str] = None, **kwargs):

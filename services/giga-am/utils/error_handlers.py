@@ -17,7 +17,7 @@ from utils.exceptions import (
     FileSizeError,
     UnsupportedFormatError,
     ServiceUnavailableError,
-    TimeoutError,
+    GigaTimeoutError,
     ConfigurationError
 )
 
@@ -45,7 +45,7 @@ async def gigaam_exception_handler(request: Request, exc: GigaAMException) -> JS
         FileSizeError: 413,
         UnsupportedFormatError: 400,
         ServiceUnavailableError: 503,
-        TimeoutError: 408,
+        GigaTimeoutError: 408,
         ConfigurationError: 500
     }
     

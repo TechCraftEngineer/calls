@@ -13,6 +13,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+from config import settings
+
+
 @dataclass
 class RequestMetrics:
     """Метрики для одного запроса"""
@@ -44,12 +47,12 @@ class RequestMetrics:
 class MetricsCollector:
     """Коллектор метрик производительности"""
     
-    def __init__(self, max_history_size: int = 1000):
-        self.max_history_size = max_history_size
+    def __init__(self, max_history_size: int = None):
+        self.max_history_size = max_history_size or settings.metrics_history_size
         self._lock = threading.RLock()
         
         # История запросов
-        self.request_history: deque = deque(maxlen=max_history_size)
+        self.request_history: deque = deque(maxlen=self.max_history_size)
         
         # Счетчики
         self.total_requests = 0
@@ -134,7 +137,10 @@ class MetricsCollector:
             # Метрики производительности
             recent_requests = list(self.request_history)[-100:]  # Последние 100 запросов
             avg_duration = sum(r.duration for r in recent_requests) / len(recent_requests) if recent_requests else 0
-            avg_processing_rate = sum(r.processing_rate for r in recent_requests if r.processing_rate > 0) / len([r for r in recent_requests if r.processing_rate > 0]) if recent_requests else 0
+            
+            # Исправляем деление на ноль для avg_processing_rate
+            positive_rates = [r.processing_rate for r in recent_requests if r.processing_rate > 0]
+            avg_processing_rate = sum(positive_rates) / len(positive_rates) if positive_rates else 0
             
             # Метрики по этапам
             stage_stats = {}
@@ -224,7 +230,7 @@ class MetricsCollector:
                             "timestamp": time.time(),
                             "metrics": metrics
                         })
-                    time.sleep(30)  # Каждые 30 секунд
+                    time.sleep(settings.system_metrics_interval)  # Используем настройку из config
                 except Exception as e:
                     logger.error(f"Ошибка в фоновом сборе метрик: {e}")
                     time.sleep(60)  # При ошибке ждем дольше

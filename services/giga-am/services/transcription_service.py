@@ -9,7 +9,7 @@ import gigaam
 import torch
 import torchaudio
 from config import settings
-from utils.exceptions import ModelLoadError, TimeoutError
+from utils.exceptions import ModelLoadError, GigaTimeoutError
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class TranscriptionService:
         self._model_initialized = False
         self._model_loading = False
         self._model_error = None
-        self._executor = ThreadPoolExecutor(max_workers=2)  # Увеличим для лучшей производительности
+        self._executor = ThreadPoolExecutor(max_workers=settings.model_workers)  # Используем настройку из config
         self._initialization_event = threading.Event()
         
         # Запускаем инициализацию в фоновом потоке
@@ -55,10 +55,10 @@ class TranscriptionService:
         # Если модель сейчас загружается, ждем завершения
         if self._model_loading:
             logger.info("Модель загружается в другом потоке, ждем завершения...")
-            if not self._initialization_event.wait(timeout=300):  # 5 минут таймаут
-                raise TimeoutError(
+            if not self._initialization_event.wait(timeout=settings.model_loading_timeout):  # Используем настройку из config
+                raise GigaTimeoutError(
                     "Превышено время ожидания загрузки модели",
-                    timeout_seconds=300,
+                    timeout_seconds=settings.model_loading_timeout,
                     operation="model_loading"
                 )
             

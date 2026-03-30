@@ -52,6 +52,18 @@ class Settings(BaseSettings):
     )
     speaker_embeddings_timeout: int = 60
     
+    # Metrics settings
+    metrics_history_size: int = 1000
+    system_metrics_interval: int = 30  # seconds
+    
+    # Cache settings  
+    cache_max_size: int = 1000
+    cache_max_age_hours: int = 24
+    
+    # Concurrency settings
+    model_workers: int = 2
+    model_loading_timeout: int = 300  # seconds
+    
     model_config = {
         "env_file": ".env",
         "case_sensitive": False,

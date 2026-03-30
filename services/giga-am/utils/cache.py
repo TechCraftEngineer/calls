@@ -35,12 +35,15 @@ class CacheEntry:
         return self.age_seconds > (max_age_hours * 3600)
 
 
+from config import settings
+
+
 class TranscriptionCache:
     """Кэш результатов распознавания"""
     
-    def __init__(self, max_size: int = 1000, max_age_hours: int = 24):
-        self.max_size = max_size
-        self.max_age_hours = max_age_hours
+    def __init__(self, max_size: int = None, max_age_hours: int = None):
+        self.max_size = max_size or settings.cache_max_size
+        self.max_age_hours = max_age_hours or settings.cache_max_age_hours
         self._lock = threading.RLock()
         self._cache: Dict[str, CacheEntry] = {}
         self._stats = {
