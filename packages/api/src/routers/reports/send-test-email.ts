@@ -152,7 +152,7 @@ export const sendTestEmail = workspaceProcedure
       reportType,
       isManagerReport: false,
       workspaceName,
-      callSummariesByManager,
+      _callSummariesByManager: callSummariesByManager,
     });
 
     try {

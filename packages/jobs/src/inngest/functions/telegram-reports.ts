@@ -294,11 +294,11 @@ export const telegramReportsFn = inngest.createFunction(
                 isManagerReport: r.isManagerReport,
                 workspaceName: reportWorkspaceName,
                 detailed: r.reportSettings?.detailed ?? false,
-                includeCallSummaries:
+                _includeCallSummaries:
                   r.reportSettings?.includeCallSummaries ?? false,
                 includeAvgRating: r.reportSettings?.includeAvgRating ?? false,
                 includeAvgValue: r.reportSettings?.includeAvgValue ?? false,
-                callSummariesByManager,
+                _callSummariesByManager: callSummariesByManager,
                 lowRatedCalls,
               });
 
