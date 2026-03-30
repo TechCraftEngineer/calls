@@ -31,6 +31,16 @@ function splitTextIntoChunks(text: string, maxLength: number): string[] {
 
       if (bestBreak > start) {
         end = bestBreak;
+        // Include the delimiter in the chunk to preserve spacing
+        if (end < text.length) {
+          if (text[end] === " ") {
+            end += 1;
+          } else if (text.slice(end, end + 2) === ". ") {
+            end += 2;
+          } else if (text[end] === "\n") {
+            end += 1;
+          }
+        }
       }
     }
 
@@ -76,7 +86,7 @@ ${chunk}
     return chunk;
   }
 
-  return parsedResponse.data.text.trim();
+  return parsedResponse.data.text;
 }
 
 const CORRECTED_TEXT_SCHEMA = z.object({
@@ -201,10 +211,7 @@ export async function correctWithContext(
         });
 
         try {
-          const correctedChunk = await processChunk(
-            chunk,
-            companyContext ?? undefined,
-          );
+          const correctedChunk = await processChunk(chunk, companyContext);
           correctedChunks.push(correctedChunk);
         } catch (error) {
           logger.warn(
@@ -246,7 +253,7 @@ export async function correctWithContext(
       } else {
         // Если контент слишком длинный, выводим предупреждение с полезной информацией
         const isTooLong = contextValidation.error.issues.some(
-          (issue) => issue.code === "too_big" && (issue.path.length === 0 || issue.path.includes("string") || issue.path.includes("companyContext")),
+          (issue) => issue.code === "too_big" && issue.path.length === 0,
         );
         if (isTooLong) {
           logger.warn(

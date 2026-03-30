@@ -31,12 +31,12 @@ export default function MaxReportSection({
           }
           disabled={!isAdmin || saving}
           className="mr-2"
+          aria-describedby="max-daily-report-help max-daily-report-error"
         />
-        Максимальное количество отчетов
+        Ограничить генерацию отчетов
       </Label>
       <p id="max-daily-report-help" className="text-sm text-muted-foreground">
-        Укажите максимальное количество отчетов, которые могут быть
-        сгенерированы
+        Включите, чтобы ограничить количество генерируемых отчетов
       </p>
       {!isAdmin && (
         <p id="max-daily-report-error" className="text-sm text-destructive">
