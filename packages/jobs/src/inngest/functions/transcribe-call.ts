@@ -43,8 +43,7 @@ export const transcribeCallFn = inngest.createFunction(
     name: "Транскрибация: Inngest → audio-enhancer → giga-am → LLM",
     retries: 2,
     concurrency: {
-      limit: 5,
-      key: "event.data.callId",
+      limit: 1,
     },
     triggers: [transcribeRequested],
   },
@@ -55,6 +54,22 @@ export const transcribeCallFn = inngest.createFunction(
         throw new Error("callId обязателен");
       }
     });
+
+    // Проверяем, что транскрипт еще не существует
+    const existingTranscript = await step.run("validate/transcript:not-exists", async () => {
+      return await callsService.getTranscriptByCallId(callId);
+    });
+    
+    // Если транскрипт уже существует, завершаем успешно
+    if (existingTranscript) {
+      logger.info("Транскрипт уже существует, пропускаем", { callId });
+      return {
+        callId,
+        skipped: true,
+        reason: "transcript_already_exists",
+        message: "Транскрипт уже существует",
+      };
+    }
 
     const call = await step.run("db/calls:get", async () => {
       const c = await callsService.getCall(callId);

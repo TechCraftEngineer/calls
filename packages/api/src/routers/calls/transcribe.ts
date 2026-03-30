@@ -15,6 +15,13 @@ export const transcribe = workspaceProcedure
         message: "Нет доступа к этому звонку",
       });
     }
+    
+    // Проверяем, есть ли уже транскрипт у звонка
+    const existingTranscript = await context.callsService.getTranscriptByCallId(input.call_id);
+    if (existingTranscript) {
+      return { success: true, message: "Транскрипт уже существует", alreadyExists: true };
+    }
+    
     await inngest.send(transcribeRequested.create({ callId: input.call_id }));
     return { success: true, message: "Транскрипция запущена" };
   });
