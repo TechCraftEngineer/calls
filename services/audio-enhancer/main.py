@@ -86,13 +86,18 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title=APP_NAME, version="2.0.0", debug=DEBUG)
 
-# Подавляем известный warning внутри стороннего df.checkpoint (DeepFilterNet).
-# Это не наш прямой torch.load-вызов и не влияет на безопасность нашего кода.
+# Подавляем известные warning из сторонних библиотек
 warnings.filterwarnings(
     "ignore",
     message=r".*torch\.load.*weights_only=False.*",
     category=FutureWarning,
     module=r"df\.checkpoint",
+)
+# Подавляем warning об устаревшем импорте torchaudio
+warnings.filterwarnings(
+    "ignore",
+    message=r".*torchaudio\.backend\.common\.AudioMetaData.*has been moved.*",
+    category=UserWarning,
 )
 
 # Обработка сигналов для корректного завершения
@@ -142,8 +147,13 @@ if PYANNOTE_AVAILABLE:
         hf_token = os.getenv("HF_TOKEN")
         if hf_token:
             model_id = "pyannote/speaker-diarization-3.1"
-            # Используем только новый API с параметром token
-            pyannote_pipeline = Pipeline.from_pretrained(model_id, token=hf_token)
+            # Используем правильный API для pyannote 3.1+
+            try:
+                # Сначала пробуем с use_auth_token (старый API)
+                pyannote_pipeline = Pipeline.from_pretrained(model_id, use_auth_token=hf_token)
+            except TypeError:
+                # Если не работает, пробуем с token (новый API)
+                pyannote_pipeline = Pipeline.from_pretrained(model_id, token=hf_token)
             logger.info("✓ Pyannote диаризация загружена")
         else:
             logger.warning("HF_TOKEN не установлен, pyannote недоступен")

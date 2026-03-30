@@ -59,10 +59,6 @@ export default function UserEditPage() {
       const formValues = { 
         ...formData, 
         email: e,
-        reportDetailed: false,
-        reportIncludeCallSummaries: false,
-        reportIncludeAvgRating: false,
-        reportIncludeAvgValue: false,
       } as EditUserForm;
       setForm(formValues);
       initializeForm(formValues);

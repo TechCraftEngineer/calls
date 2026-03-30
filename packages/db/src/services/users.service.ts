@@ -66,6 +66,10 @@ export class UsersService {
     kpiTargetTalkTimeMinutes: number;
     evaluationTemplateSlug: string | null;
     evaluationCustomInstructions: string | null;
+    reportDetailed: boolean;
+    reportIncludeCallSummaries: boolean;
+    reportIncludeAvgRating: boolean;
+    reportIncludeAvgValue: boolean;
   } | null> {
     const user = await this.usersRepository.findById(userId);
     if (!user) return null;
@@ -160,6 +164,10 @@ export class UsersService {
       kpiTargetTalkTimeMinutes: ks?.targetTalkTimeMinutes ?? 0,
       evaluationTemplateSlug: es?.templateSlug ?? null,
       evaluationCustomInstructions: es?.customInstructions ?? null,
+      reportDetailed: rs?.detailed ?? false,
+      reportIncludeCallSummaries: rs?.includeCallSummaries ?? false,
+      reportIncludeAvgRating: rs?.includeAvgRating ?? false,
+      reportIncludeAvgValue: rs?.includeAvgValue ?? false,
     };
   }
 

@@ -94,21 +94,30 @@ export const sendTestEmail = workspaceProcedure
     const { reportType } = input;
     const reportTypeLabel = REPORT_TYPE_LABELS[reportType];
 
-    let dateFrom: string;
-    let dateTo: string;
+    let dateFrom: Date;
+    let dateTo: Date;
+    let dateFromString: string;
+    let dateToString: string;
+    
     if (reportType === "daily") {
       const yesterday = subDays(now, 1);
-      dateFrom = formatInTimeZone(yesterday, TZ, "yyyy-MM-dd");
-      dateTo = dateFrom;
+      dateFrom = yesterday;
+      dateTo = yesterday;
+      dateFromString = formatInTimeZone(yesterday, TZ, "yyyy-MM-dd");
+      dateToString = dateFromString;
     } else if (reportType === "weekly") {
-      dateFrom = formatInTimeZone(subWeeks(now, 1), TZ, "yyyy-MM-dd");
-      dateTo = formatInTimeZone(now, TZ, "yyyy-MM-dd");
+      dateFrom = subWeeks(now, 1);
+      dateTo = now;
+      dateFromString = formatInTimeZone(dateFrom, TZ, "yyyy-MM-dd");
+      dateToString = formatInTimeZone(dateTo, TZ, "yyyy-MM-dd");
     } else {
-      dateFrom = formatInTimeZone(subMonths(now, 1), TZ, "yyyy-MM-dd");
-      dateTo = formatInTimeZone(now, TZ, "yyyy-MM-dd");
+      dateFrom = subMonths(now, 1);
+      dateTo = now;
+      dateFromString = formatInTimeZone(dateFrom, TZ, "yyyy-MM-dd");
+      dateToString = formatInTimeZone(dateTo, TZ, "yyyy-MM-dd");
     }
-    const dateFromDb = `${dateFrom} 00:00:00`;
-    const dateToDb = `${dateTo} 23:59:59`;
+    const dateFromDb = `${dateFromString} 00:00:00`;
+    const dateToDb = `${dateToString} 23:59:59`;
 
     const ftpSettings = await settingsService.getFtpSettings(workspaceId);
     const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
@@ -143,13 +152,13 @@ export const sendTestEmail = workspaceProcedure
       reportType,
       isManagerReport: false,
       workspaceName,
-      callSummariesByManager,
+      _callSummariesByManager: callSummariesByManager,
     });
 
     try {
       await sendEmail({
         to: [userEmail],
-        subject: `Отчёт по звонкам (${reportTypeLabel}): ${dateFrom} — ${dateTo}`,
+        subject: `Отчёт по звонкам (${reportTypeLabel}): ${dateFromString} — ${dateToString}`,
         react: ReportEmail({
           reportText: text,
           reportType,

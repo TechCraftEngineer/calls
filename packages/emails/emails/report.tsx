@@ -62,6 +62,7 @@ function formatScore(value: number | null | undefined): string {
 }
 
 interface PreparedStats {
+  id: string;
   name: string;
   incomingCount: number;
   outgoingCount: number;
@@ -111,6 +112,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
     evaluatedCount += evalCount;
 
     managers.push({
+      id: name, // Используем имя как уникальный идентификатор
       name,
       incomingCount: inCount,
       outgoingCount: outCount,
@@ -230,7 +232,7 @@ export const ReportEmail = ({
                       const value = formatValue(manager.avgValueScore ?? 0);
                       
                       return (
-                        <tr key={index}>
+                        <tr key={manager.id}>
                           <td className="border border-gray-300 px-3 py-2 text-sm">{manager.name}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">{manager.totalCount}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">{totalMinutes}</td>
