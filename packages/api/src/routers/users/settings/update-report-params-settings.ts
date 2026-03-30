@@ -30,11 +30,6 @@ export const updateReportParamsSettings = workspaceProcedure
         input.user_id,
         context.workspaceId,
         {
-          reportIncludeCallSummaries: input.data.reportIncludeCallSummaries,
-          reportDetailed: input.data.reportDetailed,
-          reportIncludeAvgValue: input.data.reportIncludeAvgValue,
-          reportIncludeAvgRating: input.data.reportIncludeAvgRating,
-
           filterExcludeAnsweringMachine:
             input.data.filterExcludeAnsweringMachine,
           filterMinDuration: input.data.filterMinDuration,

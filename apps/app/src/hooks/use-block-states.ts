@@ -37,12 +37,7 @@ export function useBlockStates() {
           "emailMonthlyReport",
         ];
       case "reports":
-        return [
-          "reportIncludeCallSummaries",
-          "reportDetailed",
-          "reportIncludeAvgValue",
-          "reportIncludeAvgRating",
-        ];
+        return [];
       case "kpi":
         return ["kpiBaseSalary", "kpiTargetBonus", "kpiTargetTalkTimeMinutes"];
       case "filters":

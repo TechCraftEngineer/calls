@@ -25,10 +25,6 @@ export const userUpdateSchema = z.object({
   emailDailyReport: z.boolean().optional(),
   emailWeeklyReport: z.boolean().optional(),
   emailMonthlyReport: z.boolean().optional(),
-  reportIncludeCallSummaries: z.boolean().optional(),
-  reportDetailed: z.boolean().optional(),
-  reportIncludeAvgValue: z.boolean().optional(),
-  reportIncludeAvgRating: z.boolean().optional(),
   kpiBaseSalary: z.number().optional(),
   kpiTargetBonus: z.number().optional(),
   kpiTargetTalkTimeMinutes: z.number().optional(),
@@ -106,12 +102,7 @@ export const updateMaxSettingsSchema = z.object({
   maxManagerReport: z.boolean().optional(),
 });
 
-export const updateReportSettingsSchema = z.object({
-  reportIncludeCallSummaries: z.boolean().optional(),
-  reportDetailed: z.boolean().optional(),
-  reportIncludeAvgValue: z.boolean().optional(),
-  reportIncludeAvgRating: z.boolean().optional(),
-});
+export const updateReportSettingsSchema = z.object({});
 
 export const updateKpiSettingsSchema = z.object({
   kpiBaseSalary: z
@@ -140,35 +131,7 @@ export const updateFilterSettingsSchema = z.object({
     .optional(),
 });
 
-export const updateReportParamsSettingsSchema = z.object({
-  reportIncludeCallSummaries: z.boolean().optional(),
-  reportDetailed: z.boolean().optional(),
-  reportIncludeAvgValue: z.boolean().optional(),
-  reportIncludeAvgRating: z.boolean().optional(),
-
-  filterExcludeAnsweringMachine: z.boolean().optional(),
-  filterMinDuration: z
-    .number()
-    .min(0, "Значение не может быть отрицательным")
-    .optional(),
-  filterMinReplicas: z
-    .number()
-    .min(0, "Значение не может быть отрицательным")
-    .optional(),
-
-  kpiBaseSalary: z
-    .number()
-    .min(0, "Значение не может быть отрицательным")
-    .optional(),
-  kpiTargetBonus: z
-    .number()
-    .min(0, "Значение не может быть отрицательным")
-    .optional(),
-  kpiTargetTalkTimeMinutes: z
-    .number()
-    .min(0, "Значение не может быть отрицательным")
-    .optional(),
-});
+export const updateReportParamsSettingsSchema = z.object({});
 
 export const updateReportManagedUsersSettingsSchema = z.object({
   reportManagedUserIds: z.array(z.string().min(1)),

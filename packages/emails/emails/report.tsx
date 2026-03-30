@@ -9,9 +9,11 @@ import {
   Link,
   Preview,
   pixelBasedPreset,
+  Row,
   Section,
   Tailwind,
   Text,
+  Column,
 } from "@react-email/components";
 
 export type ReportType = "daily" | "weekly" | "monthly";
@@ -58,6 +60,48 @@ export const ReportEmail = ({
               {username ? <>Здравствуйте, {username}.</> : <>Здравствуйте.</>}
             </Text>
 
+            <Section className="my-[24px]">
+              <Heading className="mx-0 my-[16px] p-0 text-[16px] font-semibold text-black">
+                📈 KPI сотрудников
+              </Heading>
+              
+              {/* Таблица с KPI */}
+              <table className="w-full border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Менеджер</th>
+                    <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Звонки</th>
+                    <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Минуты</th>
+                    <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Оценка</th>
+                    <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Сумма</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">Иванов И.И.</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">25</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">180</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">4.2</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">15,000 ₽</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 px-3 py-2 text-sm">Петров П.П.</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">18</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">142</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">3.8</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">12,500 ₽</td>
+                  </tr>
+                  <tr className="bg-gray-50 font-semibold">
+                    <td className="border border-gray-300 px-3 py-2 text-sm">Итого:</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">43</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">322</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">4.0</td>
+                    <td className="border border-gray-300 px-3 py-2 text-sm text-center">13,750 ₽</td>
+                  </tr>
+                </tbody>
+              </table>
+            </Section>
+
             <Section className="my-[24px] rounded bg-[#f9fafb] p-[16px] font-mono text-[13px] leading-[20px] text-black whitespace-pre-wrap">
               {reportText}
             </Section>
@@ -82,7 +126,7 @@ export const ReportEmail = ({
 Object.assign(ReportEmail, {
   PreviewProps: {
     reportText:
-      "👤 Менеджер 1\n   Входящие: 5 (2 мин)\n   Исходящие: 3 (1 мин)\n\n───\nВсего: входящие 5, исходящие 3",
+      "� **Итоги по всем сотрудникам:**\n• Всего звонков: 43\n• Всего минут: 322\n• Оценено: 35 из 43 звонков\n• Средняя оценка качества: 4.0 ⭐\n• Средняя сумма сделки: 13,750 ₽",
     reportType: "daily" as const,
     username: "Иван",
   } as ReportEmailProps,

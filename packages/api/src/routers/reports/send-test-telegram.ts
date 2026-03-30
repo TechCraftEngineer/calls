@@ -69,15 +69,14 @@ export const sendTestTelegram = workspaceProcedure
         message: "Требуется активное рабочее пространство",
       });
 
-    const email = getContextUserEmail(context.user);
-    const user = await usersService.getUserByEmail(email);
-    if (!user)
-      throw new ORPCError("NOT_FOUND", {
-        message: "Пользователь не найден",
+    const userForEdit = await usersService.getUserForEdit(context.user.id as string, workspaceId);
+    if (!userForEdit)
+      throw new ORPCError("INTERNAL_SERVER_ERROR", {
+        message: "Не удалось загрузить настройки",
       });
 
     const chatId = getTelegramChatId(
-      user && typeof user === "object" ? user.telegramChatId : undefined,
+      userForEdit && typeof userForEdit === "object" ? userForEdit.telegramChatId : undefined,
     );
 
     const { token } =
@@ -87,13 +86,6 @@ export const sendTestTelegram = workspaceProcedure
         message:
           "Telegram-бот не настроен. Укажите токен бота в интеграциях или настройте системный TELEGRAM_BOT_TOKEN.",
       });
-
-    const userForEdit = await usersService.getUserForEdit(user.id, workspaceId);
-    if (!userForEdit)
-      throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: "Не удалось загрузить настройки",
-      });
-
     const isAdmin = workspaceRole === "admin" || workspaceRole === "owner";
     const isManagerReport =
       isAdmin && (userForEdit.telegramManagerReport ?? false);
@@ -154,17 +146,7 @@ export const sendTestTelegram = workspaceProcedure
     }
 
     let callSummariesByManager: Record<string, string[]> = {};
-    if (userForEdit.reportIncludeCallSummaries) {
-      callSummariesByManager = await callsService.getCallSummariesByManager({
-        workspaceId,
-        dateFrom: dateFromDb,
-        dateTo: dateToDb,
-        internalNumbers: internalNumbers ?? undefined,
-        excludePhoneNumbers:
-          excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
-        limitPerManager: 2,
-      });
-    }
+    // ИИ-саммари отключены, всегда пустые
 
     const ws = await workspacesService.getById(workspaceId);
     const workspaceName = ws?.name ?? undefined;
@@ -176,10 +158,6 @@ export const sendTestTelegram = workspaceProcedure
       reportType,
       isManagerReport,
       workspaceName,
-      detailed: userForEdit.reportDetailed ?? false,
-      includeCallSummaries: userForEdit.reportIncludeCallSummaries ?? false,
-      includeAvgRating: userForEdit.reportIncludeAvgRating ?? false,
-      includeAvgValue: userForEdit.reportIncludeAvgValue ?? false,
       callSummariesByManager,
       lowRatedCalls,
     });

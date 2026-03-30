@@ -60,10 +60,6 @@ export class UsersService {
     telegramWeeklyReport: boolean;
     telegramMonthlyReport: boolean;
     telegramSkipWeekends: boolean;
-    reportIncludeCallSummaries: boolean;
-    reportDetailed: boolean;
-    reportIncludeAvgValue: boolean;
-    reportIncludeAvgRating: boolean;
     reportManagedUserIds: string[];
     kpiBaseSalary: number;
     kpiTargetBonus: number;
@@ -158,10 +154,6 @@ export class UsersService {
       telegramWeeklyReport: ns?.telegram?.weeklyReport ?? false,
       telegramMonthlyReport: ns?.telegram?.monthlyReport ?? false,
       telegramSkipWeekends: ns?.telegram?.skipWeekends ?? false,
-      reportIncludeCallSummaries: rs?.includeCallSummaries ?? false,
-      reportDetailed: rs?.detailed ?? false,
-      reportIncludeAvgValue: rs?.includeAvgValue ?? false,
-      reportIncludeAvgRating: rs?.includeAvgRating ?? false,
       reportManagedUserIds,
       kpiBaseSalary: ks?.baseSalary ?? 0,
       kpiTargetBonus: ks?.targetBonus ?? 0,
@@ -358,14 +350,6 @@ export class UsersService {
         monthlyReport: data.emailMonthlyReport,
       };
 
-    if (data.reportIncludeCallSummaries !== undefined)
-      reportSettings.includeCallSummaries = data.reportIncludeCallSummaries;
-    if (data.reportDetailed !== undefined)
-      reportSettings.detailed = data.reportDetailed;
-    if (data.reportIncludeAvgValue !== undefined)
-      reportSettings.includeAvgValue = data.reportIncludeAvgValue;
-    if (data.reportIncludeAvgRating !== undefined)
-      reportSettings.includeAvgRating = data.reportIncludeAvgRating;
     if (data.reportManagedUserIds !== undefined) {
       const v = data.reportManagedUserIds;
       reportSettings.managedUserIds = Array.isArray(v)
