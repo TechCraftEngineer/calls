@@ -35,6 +35,9 @@ interface UserSettingsData {
   filterExcludeAnsweringMachine?: boolean;
   filterMinDuration?: number;
   filterMinReplicas?: number;
+  kpiBaseSalary?: number;
+  kpiTargetBonus?: number;
+  kpiTargetTalkTimeMinutes?: number;
 }
 
 export default function ReportSettingsPanel({ user }: { user: User }) {
@@ -99,6 +102,9 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     maxChatId: "",
     maxDailyReport: false,
     maxManagerReport: false,
+    kpiBaseSalary: "0",
+    kpiTargetBonus: "0",
+    kpiTargetTalkTimeMinutes: "0",
   });
 
   useEffect(() => {
@@ -126,6 +132,9 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       maxChatId: d.maxChatId ?? "",
       maxDailyReport: d.maxDailyReport ?? false,
       maxManagerReport: d.maxManagerReport ?? false,
+      kpiBaseSalary: String(d.kpiBaseSalary ?? 0),
+      kpiTargetBonus: String(d.kpiTargetBonus ?? 0),
+      kpiTargetTalkTimeMinutes: String(d.kpiTargetTalkTimeMinutes ?? 0),
     }));
   }, [userData]);
 

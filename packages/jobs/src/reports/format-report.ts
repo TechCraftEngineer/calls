@@ -19,7 +19,6 @@ export interface FormatReportParams {
   reportType: "daily" | "weekly" | "monthly";
   isManagerReport: boolean;
   workspaceName?: string;
-  /** Показывать среднюю оценку и сумму (только для админ-отчёта) */
   detailed?: boolean;
   includeCallSummaries?: boolean;
   includeAvgRating?: boolean;
@@ -179,7 +178,6 @@ export function formatTelegramReport(params: FormatReportParams): string {
     reportType,
     isManagerReport,
     workspaceName,
-    detailed = true,
     includeCallSummaries = false,
     callSummariesByManager = {},
     lowRatedCalls = {},
@@ -299,7 +297,6 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     reportType,
     isManagerReport,
     workspaceName,
-    detailed = true,
     includeCallSummaries = false,
     callSummariesByManager = {},
     lowRatedCalls = {},
@@ -359,10 +356,16 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   lines.push("📈 <b>KPI сотрудников:</b>");
   lines.push("");
   
-  // HTML таблица
-  lines.push("<table>");
-  lines.push("<tr><th><b>Менеджер</b></th><th><b>Звонки</b></th><th><b>Минуты</b></th><th><b>Оценка</b></th><th><b>Сумма</b></th></tr>");
+  // Preformatted текст для таблицы
+  lines.push("<pre>");
   
+  // Заголовок таблицы
+  const header = "│ Менеджер           │ Звонки │ Минуты │ Оценка │ Сумма   │";
+  const separator = "│────────────────────│────────│────────│────────│─────────│";
+  lines.push(header);
+  lines.push(separator);
+  
+  // Данные по менеджерам
   for (const s of managers) {
     const totalMinutes = Math.round(
       (s.incomingAvgDurationSec * s.incomingCount + s.outgoingAvgDurationSec * s.outgoingCount) / 60
@@ -374,14 +377,21 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
       ? formatValue(s.avgValueScore) 
       : "—";
     
-    lines.push(`<tr><td>${escapeHtml(s.name)}</td><td>${s.totalCount}</td><td>${totalMinutes}</td><td>${rating}</td><td>${value}</td></tr>`);
+    const name = (s.name.length > 18 ? s.name.substring(0, 17) + "…" : s.name).padEnd(18, " ");
+    const callsCol = String(s.totalCount).padEnd(8, " ");
+    const minutesCol = String(totalMinutes).padEnd(8, " ");
+    const ratingCol = rating.padEnd(8, " ");
+    const valueCol = value.padEnd(9, " ");
+    
+    lines.push(`│${name}│${callsCol}│${minutesCol}│${ratingCol}│${valueCol}│`);
   }
   
-  lines.push("</table>");
+  lines.push(separator);
+  lines.push("</pre>");
   lines.push("");
 
   // Итоги по всем
-  lines.push("� <b>Итоги по всем сотрудникам:</b>");
+  lines.push("📊 <b>Итоги по всем сотрудникам:</b>");
   lines.push(`• Всего звонков: <b>${totals.totalCount}</b>`);
   lines.push(`• Всего минут: <b>${totalMinutes}</b>`);
   

@@ -102,7 +102,12 @@ export const updateMaxSettingsSchema = z.object({
   maxManagerReport: z.boolean().optional(),
 });
 
-export const updateReportSettingsSchema = z.object({});
+export const updateReportSettingsSchema = z.object({
+  reportDetailed: z.boolean().optional(),
+  reportIncludeCallSummaries: z.boolean().optional(),
+  reportIncludeAvgRating: z.boolean().optional(),
+  reportIncludeAvgValue: z.boolean().optional(),
+});
 
 export const updateKpiSettingsSchema = z.object({
   kpiBaseSalary: z
@@ -131,7 +136,10 @@ export const updateFilterSettingsSchema = z.object({
     .optional(),
 });
 
-export const updateReportParamsSettingsSchema = z.object({});
+export const updateReportParamsSettingsSchema = z.object({
+  ...updateFilterSettingsSchema.shape,
+  ...updateKpiSettingsSchema.shape,
+});
 
 export const updateReportManagedUsersSettingsSchema = z.object({
   reportManagedUserIds: z.array(z.string().min(1)),
