@@ -72,9 +72,6 @@ function buildEditForm(u: WorkspaceMemberUser): EditUserForm {
       u.reportIncludeCallSummaries ?? ext.report_include_call_summaries,
     ),
     reportDetailed: toBool(u.reportDetailed ?? ext.report_detailed),
-    reportIncludeAvgValue: toBool(
-      u.reportIncludeAvgValue ?? ext.report_include_avg_value,
-    ),
     reportIncludeAvgRating: toBool(
       u.reportIncludeAvgRating ?? ext.report_include_avg_rating,
     ),

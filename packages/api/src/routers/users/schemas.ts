@@ -106,7 +106,7 @@ export const updateReportSettingsSchema = z.object({
   reportDetailed: z.boolean().optional(),
   reportIncludeCallSummaries: z.boolean().optional(),
   reportIncludeAvgRating: z.boolean().optional(),
-  reportIncludeAvgValue: z.boolean().optional(),
+  reportIncludeKpi: z.boolean().optional(),
 });
 
 export const updateKpiSettingsSchema = z.object({

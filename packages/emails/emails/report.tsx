@@ -24,8 +24,15 @@ export interface ManagerStats {
   incoming: { count: number; duration: number; totalDuration?: number };
   outgoing: { count: number; duration: number; totalDuration?: number };
   avgManagerScore?: number | null;
-  avgValueScore?: number | null;
   evaluatedCount?: number;
+  // KPI данные
+  kpiBaseSalary?: number;
+  kpiTargetBonus?: number;
+  kpiTargetTalkTimeMinutes?: number;
+  kpiActualTalkTimeMinutes?: number;
+  kpiCompletionPercentage?: number;
+  kpiCalculatedBonus?: number;
+  kpiTotalSalary?: number;
 }
 
 export interface ReportEmailProps {
@@ -37,6 +44,8 @@ export interface ReportEmailProps {
   username?: string;
   /** Статистика по менеджерам для таблицы KPI */
   stats?: Record<string, ManagerStats>;
+  /** Включать KPI данные в отчет */
+  includeKpi?: boolean;
 }
 
 const reportTypeLabels = {
@@ -70,8 +79,15 @@ interface PreparedStats {
   incomingAvgDurationSec: number;
   outgoingAvgDurationSec: number;
   avgManagerScore?: number | null;
-  avgValueScore?: number | null;
   evaluatedCount: number;
+  // KPI данные
+  kpiBaseSalary?: number;
+  kpiTargetBonus?: number;
+  kpiTargetTalkTimeMinutes?: number;
+  kpiActualTalkTimeMinutes?: number;
+  kpiCompletionPercentage?: number;
+  kpiCalculatedBonus?: number;
+  kpiTotalSalary?: number;
 }
 
 function prepareStats(entries: [string, ManagerStats][]): {
@@ -83,6 +99,11 @@ function prepareStats(entries: [string, ManagerStats][]): {
     incomingTotalDurationSec: number;
     outgoingTotalDurationSec: number;
     evaluatedCount: number;
+    // KPI итоги
+    totalBaseSalary: number;
+    totalTargetBonus: number;
+    totalCalculatedBonus: number;
+    totalSalary: number;
   };
 } {
   const managers: PreparedStats[] = [];
@@ -91,6 +112,11 @@ function prepareStats(entries: [string, ManagerStats][]): {
   let incomingTotalDurationSec = 0;
   let outgoingTotalDurationSec = 0;
   let evaluatedCount = 0;
+  // KPI итоги
+  let totalBaseSalary = 0;
+  let totalTargetBonus = 0;
+  let totalCalculatedBonus = 0;
+  let totalSalary = 0;
 
   for (const [name, raw] of entries) {
     if (!raw || typeof raw !== "object") continue;
@@ -110,6 +136,12 @@ function prepareStats(entries: [string, ManagerStats][]): {
     incomingTotalDurationSec += inTotalSec;
     outgoingTotalDurationSec += outTotalSec;
     evaluatedCount += evalCount;
+    
+    // KPI итоги
+    totalBaseSalary += raw.kpiBaseSalary ?? 0;
+    totalTargetBonus += raw.kpiTargetBonus ?? 0;
+    totalCalculatedBonus += raw.kpiCalculatedBonus ?? 0;
+    totalSalary += raw.kpiTotalSalary ?? 0;
 
     managers.push({
       id: name, // Используем имя как уникальный идентификатор
@@ -120,8 +152,15 @@ function prepareStats(entries: [string, ManagerStats][]): {
       incomingAvgDurationSec: inAvgSec,
       outgoingAvgDurationSec: outAvgSec,
       avgManagerScore: raw.avgManagerScore,
-      avgValueScore: raw.avgValueScore,
       evaluatedCount: evalCount,
+      // KPI данные
+      kpiBaseSalary: raw.kpiBaseSalary,
+      kpiTargetBonus: raw.kpiTargetBonus,
+      kpiTargetTalkTimeMinutes: raw.kpiTargetTalkTimeMinutes,
+      kpiActualTalkTimeMinutes: raw.kpiActualTalkTimeMinutes,
+      kpiCompletionPercentage: raw.kpiCompletionPercentage,
+      kpiCalculatedBonus: raw.kpiCalculatedBonus,
+      kpiTotalSalary: raw.kpiTotalSalary,
     });
   }
 
@@ -138,6 +177,11 @@ function prepareStats(entries: [string, ManagerStats][]): {
       incomingTotalDurationSec,
       outgoingTotalDurationSec,
       evaluatedCount,
+      // KPI итоги
+      totalBaseSalary,
+      totalTargetBonus,
+      totalCalculatedBonus,
+      totalSalary,
     },
   };
 }
@@ -147,6 +191,7 @@ export const ReportEmail = ({
   reportType = "daily",
   username,
   stats,
+  includeKpi = false,
 }: ReportEmailProps) => {
   const typeLabel = reportTypeLabels[reportType] ?? "Отчёт по звонкам";
   const previewText = `${typeLabel} · ${APP_CONFIG.shortName}`;
@@ -160,9 +205,7 @@ export const ReportEmail = ({
     
     // Вычисление средних значений
     let scoreWeightedSum = 0;
-    let valueWeightedSum = 0;
     let scoreWeight = 0;
-    let valueWeight = 0;
 
     for (const item of managers) {
       const weight = item.evaluatedCount ?? 0;
@@ -171,20 +214,14 @@ export const ReportEmail = ({
         scoreWeightedSum += item.avgManagerScore * weight;
         scoreWeight += weight;
       }
-      if (typeof item.avgValueScore === "number") {
-        valueWeightedSum += item.avgValueScore * weight;
-        valueWeight += weight;
-      }
     }
 
     const overallAvgManagerScore = scoreWeight > 0 ? scoreWeightedSum / scoreWeight : null;
-    const overallAvgValueScore = valueWeight > 0 ? valueWeightedSum / valueWeight : null;
 
     return {
       managers,
       totals,
       overallAvgManagerScore,
-      overallAvgValueScore,
     };
   })() : null;
 
@@ -220,7 +257,14 @@ export const ReportEmail = ({
                       <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Звонки</th>
                       <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Минуты</th>
                       <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Оценка</th>
-                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Сумма</th>
+                      {includeKpi && (
+                        <>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Оклад</th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Бонус</th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">%KPI</th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Итого</th>
+                        </>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -229,7 +273,6 @@ export const ReportEmail = ({
                         (manager.incomingAvgDurationSec * manager.incomingCount + manager.outgoingAvgDurationSec * manager.outgoingCount) / 60
                       );
                       const rating = formatScore(manager.avgManagerScore);
-                      const value = formatValue(manager.avgValueScore ?? 0);
                       
                       return (
                         <tr key={manager.id}>
@@ -237,7 +280,14 @@ export const ReportEmail = ({
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">{manager.totalCount}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">{totalMinutes}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">{rating}</td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">{value} ₽</td>
+                          {includeKpi && (
+                            <>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(manager.kpiBaseSalary ?? 0)} ₽</td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(manager.kpiCalculatedBonus ?? 0)} ₽</td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{manager.kpiCompletionPercentage ?? 0}%</td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(manager.kpiTotalSalary ?? 0)} ₽</td>
+                            </>
+                          )}
                         </tr>
                       );
                     })}
@@ -250,9 +300,14 @@ export const ReportEmail = ({
                       <td className="border border-gray-300 px-3 py-2 text-sm text-center">
                         {formatScore(kpiTable.overallAvgManagerScore)}
                       </td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                        {formatValue(kpiTable.overallAvgValueScore ?? 0)} ₽
-                      </td>
+                      {includeKpi && (
+                        <>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(kpiTable.totals.totalBaseSalary)} ₽</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(kpiTable.totals.totalTargetBonus)} ₽</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">-</td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(kpiTable.totals.totalSalary)} ₽</td>
+                        </>
+                      )}
                     </tr>
                   </tbody>
                 </table>
@@ -286,7 +341,7 @@ export const ReportEmail = ({
 
 Object.assign(ReportEmail, {
   PreviewProps: {
-    reportText: "📊 **Итоги по всем сотрудникам:**\n• Всего звонков: 0\n• Всего минут: 0\n• Оценено: 0 из 0 звонков\n• Средняя оценка качества: — ⭐\n• Средняя сумма сделки: — ₽",
+    reportText: "📊 **Итоги по всем сотрудникам:**\n• Всего звонков: 0\n• Всего минут: 0\n• Оценено: 0 из 0 звонков\n• Средняя оценка качества: — ⭐",
     reportType: "daily" as const,
     username: "Иван",
     stats: {},

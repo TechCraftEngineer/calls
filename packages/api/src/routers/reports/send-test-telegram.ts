@@ -103,7 +103,7 @@ export const sendTestTelegram = workspaceProcedure
     }
 
     const { reportType } = input;
-    const now = toZonedTime(new Date(), TZ);
+    const now = new Date();
     let dateFrom: Date;
     let dateTo: Date;
     let dateFromString: string;

@@ -43,6 +43,7 @@ export interface ReportSettings {
   detailed: boolean;
   includeAvgValue: boolean;
   includeAvgRating: boolean;
+  kpi: boolean;
   managedUserIds: string[];
 }
 
@@ -91,6 +92,7 @@ export const userWorkspaceSettings = pgTable(
         "detailed": false,
         "includeAvgValue": false,
         "includeAvgRating": false,
+        "kpi": false,
         "managedUserIds": []
       }'::jsonb`),
 

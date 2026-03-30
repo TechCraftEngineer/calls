@@ -30,7 +30,6 @@ export interface ManagerStatsRow {
   incoming: { count: number; duration: number; totalDuration?: number };
   outgoing: { count: number; duration: number; totalDuration?: number };
   avgManagerScore?: number | null;
-  avgValueScore?: number | null;
   evaluatedCount?: number;
 }
 
@@ -121,7 +120,6 @@ export async function getEvaluationsStats(
       managerName: schema.calls.name,
       internalNumber: schema.calls.internalNumber,
       avgManagerScore: avg(schema.callEvaluations.managerScore),
-      avgValueScore: avg(schema.callEvaluations.valueScore),
       evaluatedCount: count(schema.callEvaluations.managerScore),
     })
     .from(schema.calls)
@@ -142,8 +140,6 @@ export async function getEvaluationsStats(
     if (stats[key]) {
       stats[key].avgManagerScore =
         row.avgManagerScore != null ? Number(row.avgManagerScore) : null;
-      stats[key].avgValueScore =
-        row.avgValueScore != null ? Number(row.avgValueScore) : null;
       stats[key].evaluatedCount = Number(row.evaluatedCount ?? 0);
     }
   }

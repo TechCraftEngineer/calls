@@ -260,7 +260,6 @@ export default function UserEditPage() {
       data: {
         reportIncludeCallSummaries: form.reportIncludeCallSummaries,
         reportDetailed: form.reportDetailed,
-        reportIncludeAvgValue: form.reportIncludeAvgValue,
         reportIncludeAvgRating: form.reportIncludeAvgRating,
       },
     });
@@ -418,7 +417,6 @@ export default function UserEditPage() {
             fields={[
               "reportIncludeCallSummaries",
               "reportDetailed",
-              "reportIncludeAvgValue",
               "reportIncludeAvgRating",
             ]}
             labels={[

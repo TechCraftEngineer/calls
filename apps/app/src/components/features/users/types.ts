@@ -36,7 +36,7 @@ export interface WorkspaceMemberUser {
   reportDetailed?: boolean;
   reportIncludeCallSummaries?: boolean;
   reportIncludeAvgRating?: boolean;
-  reportIncludeAvgValue?: boolean;
+  reportIncludeKpi?: boolean;
 }
 
 // Расширенный тип пользователя с полями управления
@@ -101,7 +101,7 @@ export interface AddUserForm {
   reportDetailed: boolean;
   reportIncludeCallSummaries: boolean;
   reportIncludeAvgRating: boolean;
-  reportIncludeAvgValue: boolean;
+  reportIncludeKpi: boolean;
 }
 
 // Форма редактирования пользователя (без пароля)

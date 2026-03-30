@@ -14,6 +14,7 @@ import {
 } from "@calls/db";
 import { ReportEmail, sendEmail, type ManagerStats } from "@calls/emails";
 import { toZonedTime } from "date-fns-tz";
+import { subDays, subMonths, subWeeks } from "date-fns";
 import { formatTelegramReport } from "../../reports/format-report";
 import { inngest } from "../client";
 
@@ -183,8 +184,7 @@ export const emailReportsFn = inngest.createFunction(
               dateFromString = formatDateInMoscow(dateFrom);
               dateToString = formatDateInMoscow(dateTo);
             } else {
-              dateFrom = new Date(now);
-              dateFrom.setMonth(dateFrom.getMonth() - 1);
+              dateFrom = subMonths(new Date(now), 1);
               dateTo = new Date(now);
               dateFromString = formatDateInMoscow(dateFrom);
               dateToString = formatDateInMoscow(dateTo);

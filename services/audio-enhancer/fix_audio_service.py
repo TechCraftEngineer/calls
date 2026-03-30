@@ -10,7 +10,7 @@ import os
 def run_command(cmd, capture_output=True):
     """Выполняет команду и возвращает результат."""
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=capture_output, text=True, check=True)
+        result = subprocess.run(cmd, capture_output=capture_output, text=True, check=True)
         return result.stdout.strip()
     except subprocess.CalledProcessError as e:
         return f"Error: {e.stderr.strip()}" if e.stderr else f"Error: {e}"
@@ -34,10 +34,12 @@ def check_torch_version():
         print(f"TorchAudio version: {torchaudio.__version__}")
         
         torch_version = torch.__version__.split('+')[0]  # Убираем +cu124
-        major_minor = '.'.join(torch_version.split('.')[:2])
         
-        # Проверяем совместимость
-        if major_minor in ['2.0', '2.1', '2.2', '2.3', '2.4', '2.5']:
+        # Используем SpecifierSet для проверки совместимости
+        from packaging.specifiers import SpecifierSet
+        spec = SpecifierSet(">=2.0.0,<2.6.0")
+        
+        if spec.contains(torch_version):
             print("✅ Версия PyTorch совместима")
             return True
         else:
@@ -56,13 +58,29 @@ def check_pyannote():
         # Проверяем версию
         try:
             import pyannote.audio
-            print(f"Pyannote.audio version: {pyannote.audio.__version__}")
-        except:
-            pass
+            version = pyannote.audio.__version__
+            print(f"Pyannote.audio version: {version}")
             
-        return True
+            # Проверяем соответствие версии требуемому диапазону
+            from packaging.version import Version
+            from packaging.specifiers import SpecifierSet
+            
+            spec = SpecifierSet(">=3.0.0,<3.2.0")
+            if spec.contains(version):
+                print("✅ Версия Pyannote.audio соответствует требованиям")
+                return True
+            else:
+                print(f"⚠️ Версия Pyannote.audio {version} не соответствует требованиям {spec}")
+                return False
+        except Exception as version_error:
+            print(f"⚠️ Не удалось проверить версию Pyannote.audio: {version_error}")
+            return False
+            
     except ImportError as e:
         print(f"❌ Pyannote.audio не установлен: {e}")
+        return False
+    except Exception as e:
+        print(f"❌ Ошибка при проверке Pyannote.audio: {e}")
         return False
 
 def check_hf_token():
@@ -79,7 +97,7 @@ def check_hf_token():
 def install_requirements():
     """Устанавливает требования."""
     print("\n📦 Установка зависимостей...")
-    result = run_command("pip install -r requirements.txt")
+    result = run_command(["pip", "install", "-r", "requirements.txt"])
     print(result)
     return "Error" not in result
 
