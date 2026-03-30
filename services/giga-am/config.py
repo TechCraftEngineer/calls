@@ -1,6 +1,7 @@
 import os
 from typing import List
 from pydantic_settings import BaseSettings
+from pydantic import Field
 
 class Settings(BaseSettings):
     # Application settings
@@ -53,16 +54,20 @@ class Settings(BaseSettings):
     speaker_embeddings_timeout: int = 60
     
     # Metrics settings
-    metrics_history_size: int = 1000
-    system_metrics_interval: int = 30  # seconds
+    metrics_history_size: int = Field(default=1000, ge=1)
+    system_metrics_interval: int = Field(default=30, ge=1)  # seconds
     
     # Cache settings  
-    cache_max_size: int = 1000
-    cache_max_age_hours: int = 24
+    cache_max_size: int = Field(default=1000, ge=1)
+    cache_max_age_hours: int = Field(default=24, ge=1)
     
     # Concurrency settings
-    model_workers: int = 2
-    model_loading_timeout: int = 300  # seconds
+    model_workers: int = Field(default=2, ge=1)
+    model_loading_timeout: int = Field(default=300, ge=1)  # seconds
+    
+    # Admin settings
+    admin_token: str = Field(default="", description="Admin token for protected endpoints")
+    enable_cache_clear: bool = Field(default=False, description="Enable cache clear endpoint")
     
     model_config = {
         "env_file": ".env",
