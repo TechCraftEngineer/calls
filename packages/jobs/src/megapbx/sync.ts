@@ -389,20 +389,27 @@ export async function syncMegaPbxCalls(
       // На повторных синках запись звонка может уже существовать с пустой PBX-привязкой.
       // Дозаполняем связь и вспомогательные поля, когда появились данные из directory.
       if (!createResult.created) {
-        await callsService.updateCallPbxBinding(canonicalCall.id, {
-          internalNumber: !canonicalCall.internalNumber?.trim()
-            ? (call.internalNumber ??
-              number?.extension ??
-              employee?.extension ??
-              null)
-            : undefined,
-          source: isEmptyOrMegaPbxPlaceholder(canonicalCall.source)
-            ? (employee?.externalId ?? number?.externalId ?? "megapbx")
-            : undefined,
-          name: isEmptyOrMegaPbxPlaceholder(canonicalCall.name)
-            ? (employee?.displayName ?? number?.label ?? "MegaPBX")
-            : undefined,
-        });
+        const internalNumber = !canonicalCall.internalNumber?.trim()
+          ? (call.internalNumber ??
+            number?.extension ??
+            employee?.extension ??
+            null)
+          : undefined;
+        const source = isEmptyOrMegaPbxPlaceholder(canonicalCall.source)
+          ? (employee?.externalId ?? number?.externalId ?? "megapbx")
+          : undefined;
+        const name = isEmptyOrMegaPbxPlaceholder(canonicalCall.name)
+          ? (employee?.displayName ?? number?.label ?? "MegaPBX")
+          : undefined;
+
+        // Используем транзакционный метод для атомарного обновления
+        if (internalNumber || source || name) {
+          await callsService.updateCallPbxBinding(canonicalCall.id, {
+            internalNumber,
+            source,
+            name,
+          });
+        }
       }
       let recordingFileId: string | null = canonicalCall.fileId;
 

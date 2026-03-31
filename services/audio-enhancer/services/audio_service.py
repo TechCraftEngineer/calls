@@ -110,7 +110,7 @@ class AudioProcessor:
                               original_audio: np.ndarray, original_sr: int,
                               **kwargs) -> np.ndarray:
         """
-        Выполняет полный pipeline обработки аудио.
+        Выполняет полный pipeline обработки аудио с улучшенными параметрами.
         
         Args:
             audio: Аудио данные
@@ -122,7 +122,11 @@ class AudioProcessor:
         Returns:
             Обработанное аудио
         """
-        # DeepFilterNet шумоподавление
+        # Логируем режим агрессивности
+        aggressiveness = kwargs.get("aggressiveness", "custom")
+        logger.info(f"Режим обработки: {aggressiveness}")
+        
+        # DeepFilterNet шумоподавление (всегда включен для light/medium)
         if kwargs.get("use_deepfilter", True) and model_manager.deepfilter_available:
             logger.info("Применяем DeepFilterNet шумоподавление...")
             try:
@@ -132,8 +136,8 @@ class AudioProcessor:
                 logger.warning(f"DeepFilterNet не удался: {e}, используем fallback")
                 kwargs["use_deepfilter"] = False
         
-        # WPE дереверберация
-        if kwargs.get("use_wpe", True) and model_manager.wpe_available:
+        # WPE дереверберация (только в heavy режиме)
+        if kwargs.get("use_wpe", False) and model_manager.wpe_available:
             logger.info("Применяем WPE дереверберацию...")
             try:
                 audio = model_manager.apply_wpe(audio)
@@ -141,33 +145,33 @@ class AudioProcessor:
             except Exception as e:
                 logger.warning(f"WPE не удался: {e}")
         
-        # Классическое шумоподавление
-        if (kwargs.get("noise_reduction", True) and 
+        # Классическое шумоподавление (только если DeepFilter отключен)
+        if (kwargs.get("noise_reduction", False) and 
             (not kwargs.get("use_deepfilter", True) or not model_manager.deepfilter_available)):
             logger.info("Применяем классическое шумоподавление...")
             audio = nr.reduce_noise(y=audio, sr=sr, stationary=True, prop_decrease=0.8)
         
-        # Спектральный гейтинг
-        if kwargs.get("spectral_gating", True):
-            logger.info("Применяем спектральный гейтинг...")
+        # Спектральный гейтинг (улучшенный)
+        if kwargs.get("spectral_gating", False):
+            logger.info("Применяем улучшенный спектральный гейтинг...")
             audio = self._apply_spectral_gating(audio)
         
-        # Усиление речи
+        # Усиление речи (более консервативное)
         if kwargs.get("enhance_speech", True):
             logger.info("Усиливаем речевые частоты...")
             audio = self._enhance_speech(audio, sr)
         
-        # Динамическая компрессия
-        if kwargs.get("use_compressor", True):
-            logger.info("Применяем динамическую компрессию...")
+        # Динамическая компрессия (более мягкая)
+        if kwargs.get("use_compressor", False):
+            logger.info("Применяем мягкую динамическую компрессию...")
             audio = self._apply_compression(audio, sr)
         
-        # Нормализация громкости
+        # Нормализация громкости (LUFS)
         if kwargs.get("normalize_volume", True):
             logger.info("Нормализуем громкость (LUFS)...")
             audio = self._normalize_volume(audio, sr)
         
-        # Удаление пауз
+        # Удаление пауз (по запросу)
         if kwargs.get("remove_silence", False) and model_manager.vad_available:
             logger.info("Удаляем длинные паузы...")
             audio = self._remove_silence(audio, sr)
@@ -183,13 +187,24 @@ class AudioProcessor:
         return audio
     
     def _apply_spectral_gating(self, audio: np.ndarray) -> np.ndarray:
-        """Применяет спектральный гейтинг."""
+        """Применяет улучшенный спектральный гейтинг."""
         D = librosa.stft(audio)
         magnitude = np.abs(D)
-        noise_threshold = np.percentile(magnitude, 10)
-        mask = np.maximum(0, 1 - (noise_threshold / (magnitude + 1e-10)))
-        mask = np.power(mask, 2)
+        
+        # Используем улучшенные параметры из конфига
+        settings = config.SPECTRAL_GATING_SETTINGS
+        noise_threshold = np.percentile(magnitude, settings["noise_percentile"])
+        
+        # Создаем маску с минимальным значением
+        mask = np.maximum(
+            settings["min_mask_value"], 
+            1 - (noise_threshold / (magnitude + 1e-10))
+        )
+        
+        # Применяем степень маски (менее агрессивная)
+        mask = np.power(mask, settings["mask_power"])
         D_filtered = D * mask
+        
         return librosa.istft(D_filtered, length=len(audio))
     
     def _enhance_speech(self, audio: np.ndarray, sr: int) -> np.ndarray:

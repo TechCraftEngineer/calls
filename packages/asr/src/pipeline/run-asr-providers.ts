@@ -39,6 +39,7 @@ export async function runAsrProviders(
     transcribeWithGigaAm(processedAudioUrl, {
       preprocessMetadata: options?.gigaPreprocessMetadata,
       audioBuffer,
+      audioBufferMime: "audio/wav", // FFmpeg всегда конвертирует в WAV формат
     }),
     audioBuffer ? getAudioDurationFromBuffer(audioBuffer) : Promise.resolve(undefined),
   ]);

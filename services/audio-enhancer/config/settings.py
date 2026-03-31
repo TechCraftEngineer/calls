@@ -37,18 +37,50 @@ class Config:
         "audio/x-m4a", "audio/mp4", "audio/webm"
     }
     
-    # Настройки обработки по умолчанию
+    # Настройки обработки по умолчанию (консервативные)
     DEFAULT_ENHANCE_SETTINGS = {
         "use_deepfilter": True,
-        "use_wpe": True,
-        "noise_reduction": True,
+        "use_wpe": False,  # Отключен по умолчанию - может искажать речь
+        "noise_reduction": False,  # Отключен при DeepFilter
         "normalize_volume": True,
         "enhance_speech": True,
         "remove_silence": False,
         "target_sample_rate": 16000,
-        "use_compressor": True,
-        "spectral_gating": True,
+        "use_compressor": False,  # Отключен по умолчанию
+        "spectral_gating": False,  # Отключен по умолчанию
         "enable_diarization": False,
+        "aggressiveness": "medium",  # light/medium/heavy
+    }
+    
+    # Режимы агрессивности обработки
+    AGGRESSIVENESS_MODES = {
+        "light": {
+            "use_deepfilter": True,
+            "use_wpe": False,
+            "noise_reduction": False,
+            "enhance_speech": True,
+            "use_compressor": False,
+            "spectral_gating": False,
+            "normalize_volume": True,
+        },
+        "medium": {
+            "use_deepfilter": True,
+            "use_wpe": False,
+            "noise_reduction": False,
+            "enhance_speech": True,
+            "use_compressor": False,
+            "spectral_gating": True,
+            "normalize_volume": True,
+        },
+        "heavy": {
+            "use_deepfilter": True,
+            "use_wpe": True,
+            "noise_reduction": True,
+            "enhance_speech": True,
+            "use_compressor": True,
+            "spectral_gating": True,
+            "normalize_volume": True,
+        }
     }
     
     # Пороги VAD
@@ -65,24 +97,31 @@ class Config:
     LUFS_TARGET = -16.0
     PEAK_LIMIT = 0.95
     
-    # Настройки компрессора
+    # Настройки компрессора (более консервативные)
     COMPRESSOR_SETTINGS = {
-        "threshold_db": -20,
-        "ratio": 4,
-        "attack_ms": 5,
-        "release_ms": 50,
+        "threshold_db": -16,  # Повышен с -20 до -16
+        "ratio": 2,  # Уменьшен с 4 до 2
+        "attack_ms": 10,  # Увеличен с 5 до 10
+        "release_ms": 100,  # Увеличен с 50 до 100
     }
     
-    # Настройки фильтров речи
+    # Настройки фильтров речи (менее агрессивные)
     SPEECH_FILTER_SETTINGS = {
         "highpass_cutoff": 80,
         "lowpass_cutoff": 8000,
-        "preemphasis_coef": 0.97,
+        "preemphasis_coef": 0.95,  # Уменьшен с 0.97
         "speech_range": (300, 3400),
         "critical_range": (1000, 3000),
-        "speech_gain": 1.3,
-        "critical_gain": 1.5,
-        "non_speech_gain": 0.4,
+        "speech_gain": 1.1,  # Уменьшен с 1.3 до 1.1
+        "critical_gain": 1.2,  # Уменьшен с 1.5 до 1.2
+        "non_speech_gain": 0.7,  # Увеличен с 0.4 до 0.7
+    }
+    
+    # Настройки спектрального гейтинга (улучшенные)
+    SPECTRAL_GATING_SETTINGS = {
+        "noise_percentile": 5,  # Уменьшен с 10 до 5
+        "mask_power": 1.5,  # Уменьшен с 2 до 1.5
+        "min_mask_value": 0.3,  # Минимальное значение маски
     }
 
 
