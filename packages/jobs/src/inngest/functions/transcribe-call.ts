@@ -11,9 +11,9 @@ import {
   workspacesService,
 } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
-import { identifySpeakersWithLlm } from "~/asr/llm/identify-speakers";
-import { runTranscriptionPipelineFromAsrAudio } from "~/asr/pipeline/run-transcription-pipeline";
-import { runPipelineAudioPreprocess } from "~/asr/pipeline/transcribe-pipeline-audio";
+import { identifySpeakersWithLlm } from "@calls/asr/llm/identify-speakers";
+import { runTranscriptionPipelineFromAsrAudio } from "@calls/asr/pipeline/run-transcription-pipeline";
+import { runPipelineAudioPreprocess } from "@calls/asr/pipeline/transcribe-pipeline-audio";
 import { createLogger } from "../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../client";
 

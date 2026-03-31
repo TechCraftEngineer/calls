@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { env } from "~/env";
+import { env } from "@calls/config/env";
 
 /** AssemblyAI требует nodejs runtime для upload (FormData, большие файлы) */
 export const runtime = "nodejs";

@@ -9,7 +9,7 @@ import { exec, spawn } from "node:child_process";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { promisify } from "node:util";
-import { createLogger } from "~/logger";
+import { createLogger } from "@calls/logger";
 import { enhanceAudioWithPython } from "./audio-enhancer-client";
 
 const execAsync = promisify(exec);

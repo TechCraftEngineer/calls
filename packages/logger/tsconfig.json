@@ -1,0 +1,9 @@
+{
+  "extends": "@calls/tsconfig/base.json",
+  "compilerOptions": {
+    "types": ["node", "bun"],
+    "composite": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}

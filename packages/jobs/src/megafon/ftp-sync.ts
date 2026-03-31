@@ -7,7 +7,7 @@ import { Writable } from "node:stream";
 import { callsService, filesService } from "@calls/db";
 import { validateFtpCredentials } from "@calls/shared";
 import { Client } from "basic-ftp";
-import { getAudioDurationFromBuffer } from "../asr/audio/get-audio-duration";
+import { getAudioDurationFromBuffer } from "@calls/asr/audio/get-audio-duration";
 import { createLogger } from "../logger";
 import { parseMegafonFilename } from "./parse-filename";
 
