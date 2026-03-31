@@ -244,16 +244,19 @@ export const telegramReportsFn = inngest.createFunction(
             for (const r of recipients) {
               if (r.skipWeekends && weekend) continue;
 
-              const stats = (await callsService.getEvaluationsStats({
-                workspaceId,
-                dateFrom: dateFromDb,
-                dateTo: dateToDb,
-                internalNumbers: r.internalNumbers ?? undefined,
-                excludePhoneNumbers:
-                  excludePhoneNumbers.length > 0
-                    ? excludePhoneNumbers
-                    : undefined,
-              })) as Record<string, ManagerStats>;
+              const stats = await callsService.enrichStatsWithKpi(
+                (await callsService.getEvaluationsStats({
+                  workspaceId,
+                  dateFrom: dateFromDb,
+                  dateTo: dateToDb,
+                  internalNumbers: r.internalNumbers ?? undefined,
+                  excludePhoneNumbers:
+                    excludePhoneNumbers.length > 0
+                      ? excludePhoneNumbers
+                      : undefined,
+                })) as Record<string, ManagerStats>,
+                workspaceId
+              );
 
               let lowRatedCalls: Record<string, number> = {};
               if (r.isManagerReport) {

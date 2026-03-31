@@ -2,7 +2,7 @@
  * Basic CRUD operations for calls
  */
 
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import type { CreateCallData } from "../../types/calls.types";
@@ -84,7 +84,7 @@ export const callsCrud = {
           eq(schema.calls.number, phone),
         ),
       )
-      .orderBy(schema.calls.timestamp)
+      .orderBy(desc(schema.calls.timestamp))
       .limit(1);
     const row = result[0];
     return row ?? null;
@@ -133,7 +133,10 @@ export const callsCrud = {
         data.provider!,
         data.externalId!,
       );
-      return existing ? { id: existing.id, created: false } : { id: "", created: false };
+      if (!existing) {
+        throw new Error(`Insert conflict: no existing record found for workspaceId=${data.workspaceId}, provider=${data.provider}, externalId=${data.externalId}`);
+      }
+      return { id: existing.id, created: false };
     }
 
     return { id: result[0]!.id, created: true };

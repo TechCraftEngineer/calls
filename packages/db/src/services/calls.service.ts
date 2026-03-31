@@ -13,16 +13,7 @@ import type {
   GetCallsParams,
 } from "../types/calls.types";
 import type { ManagerStatsRow } from "../repositories/calls/get-evaluations-stats";
-
-interface EnrichedManagerStats extends ManagerStatsRow {
-  kpiBaseSalary?: number;
-  kpiTargetBonus?: number;
-  kpiTargetTalkTimeMinutes?: number;
-  kpiActualTalkTimeMinutes?: number;
-  kpiCompletionPercentage?: number;
-  kpiCalculatedBonus?: number;
-  kpiTotalSalary?: number;
-}
+import type { EnrichedManagerStats } from "../repositories/calls/enrich-stats";
 
 export class CallsService {
   constructor(

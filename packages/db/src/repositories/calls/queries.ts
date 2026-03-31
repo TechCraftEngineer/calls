@@ -2,7 +2,7 @@
  * Query operations for calls - search, filtering, and aggregation
  */
 
-import { and, asc, count, desc, eq, isNotNull, ne, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import type { CallWithTranscript, GetCallsParams, GetCallManagersParams } from "../../types/calls.types";
@@ -66,7 +66,7 @@ export const callsQueries = {
         eq(schema.callEvaluations.callId, schema.calls.id),
       )
       .leftJoin(schema.files, eq(schema.files.id, schema.calls.fileId))
-      .where(and(...conditions))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(schema.calls.timestamp))
       .limit(limit)
       .offset(offset);
@@ -120,7 +120,7 @@ export const callsQueries = {
     const result = await db
       .select({ count: count() })
       .from(schema.calls)
-      .where(and(...conditions));
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
 
     return result[0]?.count ?? 0;
   },

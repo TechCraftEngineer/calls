@@ -33,7 +33,11 @@ export const callsEnrichStats = {
       .from(schema.workspacePbxEmployees)
       .innerJoin(
         schema.workspacePbxNumbers,
-        eq(schema.workspacePbxEmployees.externalId, schema.workspacePbxNumbers.employeeExternalId)
+        and(
+          eq(schema.workspacePbxEmployees.workspaceId, schema.workspacePbxNumbers.workspaceId),
+          eq(schema.workspacePbxEmployees.provider, schema.workspacePbxNumbers.provider),
+          eq(schema.workspacePbxEmployees.externalId, schema.workspacePbxNumbers.employeeExternalId)
+        )
       )
       .where(
         and(
@@ -68,9 +72,9 @@ export const callsEnrichStats = {
       let kpiData = cleanInternalNumber ? kpiMapByNumber.get(cleanInternalNumber) : null;
       
       // Вычисляем KPI метрики
-      const totalMinutes = Math.round(
-        ((stat.incoming?.totalDuration ?? 0) + (stat.outgoing?.totalDuration ?? 0)) / 60
-      );
+      const incomingTotal = stat.incoming?.totalDuration ?? ((stat.incoming?.duration ?? 0) * (stat.incoming?.count ?? 0));
+      const outgoingTotal = stat.outgoing?.totalDuration ?? ((stat.outgoing?.duration ?? 0) * (stat.outgoing?.count ?? 0));
+      const totalMinutes = Math.round((incomingTotal + outgoingTotal) / 60);
       
       const targetTalkTimeMinutes = kpiData?.kpiTargetTalkTimeMinutes ?? 0;
       const completionPercentage = targetTalkTimeMinutes > 0 

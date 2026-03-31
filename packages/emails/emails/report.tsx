@@ -58,12 +58,6 @@ const reportTypeLabels = {
   monthly: "Ежемесячный отчёт",
 } as const satisfies Record<ReportType, string>;
 
-function _formatDuration(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds <= 0) return "0";
-  const minutes = Math.round(seconds / 60);
-  return minutes.toString();
-}
-
 function formatValue(value: number): string {
   if (!Number.isFinite(value)) return "—";
   return new Intl.NumberFormat("ru-RU").format(Math.round(value));
@@ -196,6 +190,8 @@ export const ReportEmail = ({
   stats,
   includeKpi = false,
   avgManagerScore = false,
+  reportDetailed,
+  reportIncludeCallSummaries,
 }: ReportEmailProps) => {
   const typeLabel = reportTypeLabels[reportType] ?? "Отчёт по звонкам";
   const previewText = `${typeLabel} · ${APP_CONFIG.shortName}`;
@@ -290,7 +286,7 @@ export const ReportEmail = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {kpiTable.managers.map((manager, index) => {
+                    {kpiTable.managers.map((manager) => {
                       const totalMinutes = Math.round(
                         (manager.incomingAvgDurationSec *
                           manager.incomingCount +
@@ -347,7 +343,7 @@ export const ReportEmail = ({
                       </td>
                       {avgManagerScore && (
                         <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                          -
+                          {formatScore(kpiTable.overallAvgManagerScore)}
                         </td>
                       )}
                       {includeKpi && (
