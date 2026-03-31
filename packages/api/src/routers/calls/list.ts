@@ -5,6 +5,7 @@ import {
   pbxRepository,
   settingsService,
   type WorkspacePbxEmployee,
+  type WorkspacePbxNumber,
 } from "@calls/db";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";

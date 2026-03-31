@@ -19,7 +19,6 @@ export const callsQueries = {
       dateTo,
       directions,
       internalNumbers,
-      managers,
       managerInternalNumbers,
       managerInternalNumbersForQuery,
       mobileNumbers,

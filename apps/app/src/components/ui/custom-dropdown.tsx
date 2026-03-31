@@ -49,17 +49,6 @@ export default function CustomDropdown({
         }))
       : [];
 
-  const values =
-    type === "value"
-      ? [
-          { id: "1", name: "1" },
-          { id: "2", name: "2" },
-          { id: "3", name: "3" },
-          { id: "4", name: "4" },
-          { id: "5", name: "5" },
-        ]
-      : [];
-
   const closeMenu = useCallback((shouldReturnFocus = false) => {
     setIsOpen(false);
     if (shouldReturnFocus) {
@@ -292,7 +281,15 @@ export default function CustomDropdown({
           aria-controls={panelDomId}
           aria-haspopup={popupRole}
         >
-          <button ref={toggleRef} type="button">
+          <button
+            ref={toggleRef}
+            type="button"
+            aria-haspopup={popupRole}
+            aria-labelledby={`${srTriggerLabelId} ${triggerLabelId}`}
+          >
+            <span id={srTriggerLabelId} className="sr-only">
+              Фильтр ценности
+            </span>
             <span id={triggerLabelId} className="dropdown-label">
               {getDisplayLabel()}
             </span>
@@ -328,4 +325,10 @@ export default function CustomDropdown({
     );
   }
 
+  // Exhaustive check for unknown types
+  function assertNever(x: never): never {
+    throw new Error(`Unhandled type: ${x}`);
+  }
+  
+  return assertNever(type as never);
 }
