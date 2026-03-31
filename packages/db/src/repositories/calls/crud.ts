@@ -93,26 +93,28 @@ export const callsCrud = {
     data: CreateCallData,
   ): Promise<{ id: string; created: boolean }> {
     const status = normalizeCallStatus(data.status) ?? null;
+    // Нормализуем provider и externalId для консистентной обработки
+    const normalizedProvider = typeof data.provider === 'string' ? data.provider.trim() || null : data.provider || null;
+    const normalizedExternalId = typeof data.externalId === 'string' ? data.externalId.trim() || null : data.externalId || null;
+
     const values = {
       workspaceId: data.workspaceId,
       filename: data.filename,
-      provider: data.provider ?? null,
-      externalId: data.externalId ?? null,
+      provider: normalizedProvider,
+      externalId: normalizedExternalId,
       number: data.number ?? null,
       timestamp: new Date(data.timestamp),
       name: data.name ?? null,
       direction: data.direction ?? null,
       status,
       fileId: data.fileId ?? null,
-      pbxNumberId: data.pbxNumberId ?? null,
       internalNumber: data.internalNumber ?? null,
       source: data.source ?? null,
       customerName: data.customerName ?? null,
     };
 
     const result =
-      (typeof data.provider === 'string' ? data.provider.trim() !== '' : Boolean(data.provider)) &&
-      (typeof data.externalId === 'string' ? data.externalId.trim() !== '' : Boolean(data.externalId))
+      normalizedProvider && normalizedExternalId
         ? await db
             .insert(schema.calls)
             .values(values)
@@ -128,17 +130,16 @@ export const callsCrud = {
 
     if (result.length === 0) {
       // Find existing record
-      if (data.provider === undefined || data.provider === null || 
-          data.externalId === undefined || data.externalId === null) {
+      if (!normalizedProvider || !normalizedExternalId) {
         throw new Error(`Ошибка вставки: отсутствуют provider или externalId для поиска существующей записи`);
       }
       const existing = await this.findByExternalId(
         data.workspaceId,
-        data.provider,
-        data.externalId,
+        normalizedProvider,
+        normalizedExternalId,
       );
       if (!existing) {
-        throw new Error(`Ошибка вставки: запись не найдена для workspaceId=${data.workspaceId}, provider=${data.provider}, externalId=${data.externalId}`);
+        throw new Error(`Ошибка вставки: запись не найдена для workspaceId=${data.workspaceId}, provider=${normalizedProvider}, externalId=${normalizedExternalId}`);
       }
       return { id: existing.id, created: false };
     }
@@ -187,14 +188,12 @@ export const callsCrud = {
   async updatePbxBinding(
     callId: string,
     data: {
-      pbxNumberId?: string | null;
       internalNumber?: string | null;
       source?: string | null;
       name?: string | null;
     },
   ): Promise<void> {
     const patch: Partial<schema.NewCall> = {};
-    if (data.pbxNumberId !== undefined) patch.pbxNumberId = data.pbxNumberId;
     if (data.internalNumber !== undefined) patch.internalNumber = data.internalNumber;
     if (data.source !== undefined) patch.source = data.source;
     if (data.name !== undefined) patch.name = data.name;

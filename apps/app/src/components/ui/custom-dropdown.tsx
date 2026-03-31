@@ -12,7 +12,7 @@ interface DropdownProps {
   label: string;
   value: string | number[] | string[];
   onChange: (val: string | number[] | string[]) => void;
-  type: "manager" | "value" | "operator";
+  type: "manager" | "value";
   managerOptions?: string[];
 }
 
@@ -47,6 +47,17 @@ export default function CustomDropdown({
           id: name,
           name,
         }))
+      : [];
+
+  const values =
+    type === "value"
+      ? [
+          { id: "1", name: "1" },
+          { id: "2", name: "2" },
+          { id: "3", name: "3" },
+          { id: "4", name: "4" },
+          { id: "5", name: "5" },
+        ]
       : [];
 
   const closeMenu = useCallback((shouldReturnFocus = false) => {
@@ -317,6 +328,4 @@ export default function CustomDropdown({
     );
   }
 
-  
-  return null;
 }
