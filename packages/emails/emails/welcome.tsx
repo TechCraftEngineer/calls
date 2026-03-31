@@ -22,10 +22,7 @@ interface WelcomeEmailProps {
   email?: string;
 }
 
-export const WelcomeEmail = ({
-  username = "пользователь",
-  email,
-}: WelcomeEmailProps) => {
+export const WelcomeEmail = ({ username = "пользователь", email }: WelcomeEmailProps) => {
   const previewText = `Добро пожаловать в ${APP_CONFIG.shortName}`;
 
   return (
@@ -45,12 +42,9 @@ export const WelcomeEmail = ({
                 <strong>{APP_CONFIG.shortName}</strong>
               </Link>
             </Heading>
+            <Text className="text-[14px] leading-[24px] text-black">Здравствуйте, {username},</Text>
             <Text className="text-[14px] leading-[24px] text-black">
-              Здравствуйте, {username},
-            </Text>
-            <Text className="text-[14px] leading-[24px] text-black">
-              Рады приветствовать вас в {APP_CONFIG.shortName}! Ваш аккаунт
-              успешно создан на{" "}
+              Рады приветствовать вас в {APP_CONFIG.shortName}! Ваш аккаунт успешно создан на{" "}
               <Link href={env.APP_URL} className="text-black">
                 <strong>{env.APP_URL.replace(/^https?:\/\//, "")}</strong>
               </Link>
@@ -65,8 +59,7 @@ export const WelcomeEmail = ({
               </Button>
             </Section>
             <Text className="text-[14px] leading-[24px] text-black">
-              Если кнопка не работает, скопируйте и вставьте эту ссылку в
-              браузер:{" "}
+              Если кнопка не работает, скопируйте и вставьте эту ссылку в браузер:{" "}
               <Link href={env.APP_URL} className="text-blue-600 no-underline">
                 {env.APP_URL}
               </Link>
@@ -75,10 +68,9 @@ export const WelcomeEmail = ({
               <>
                 <Hr className="mx-0 my-[26px] w-full border border-solid border-[#eaeaea]" />
                 <Text className="text-[12px] leading-[24px] text-[#666666]">
-                  Это письмо отправлено на адрес{" "}
-                  <span className="text-black">{email}</span>. Если вы не
-                  регистрировались в {APP_CONFIG.shortName}, проигнорируйте это
-                  письмо или обратитесь в службу поддержки.
+                  Это письмо отправлено на адрес <span className="text-black">{email}</span>. Если
+                  вы не регистрировались в {APP_CONFIG.shortName}, проигнорируйте это письмо или
+                  обратитесь в службу поддержки.
                 </Text>
               </>
             )}

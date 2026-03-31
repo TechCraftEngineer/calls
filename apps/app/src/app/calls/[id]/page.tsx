@@ -13,11 +13,7 @@ import Sidebar from "@/components/layout/sidebar";
 import { useSession } from "@/lib/better-auth";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
 import { useORPC } from "@/orpc/react";
-import type {
-  CallDetail,
-  EvaluationDetail,
-  TranscriptDetail,
-} from "@/types/calls";
+import type { CallDetail, EvaluationDetail, TranscriptDetail } from "@/types/calls";
 
 export default function CallDetailPage() {
   const { id } = useParams();
@@ -32,8 +28,7 @@ export default function CallDetailPage() {
   const isValidCallId = (id: string): boolean => {
     if (!id || typeof id !== "string") return false;
     // UUID v7 с префиксом ws_ или обычный UUID
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     const uuidWithPrefixRegex =
       /^ws_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(id) || uuidWithPrefixRegex.test(id);
@@ -57,10 +52,7 @@ export default function CallDetailPage() {
   });
 
   // Безопасное приведение типов с проверкой структуры
-  const call =
-    result?.call && typeof result.call === "object"
-      ? (result.call as CallDetail)
-      : null;
+  const call = result?.call && typeof result.call === "object" ? (result.call as CallDetail) : null;
   const transcript =
     result?.transcript && typeof result.transcript === "object"
       ? (result.transcript as TranscriptDetail)
@@ -73,9 +65,7 @@ export default function CallDetailPage() {
     }
   }, [result?.evaluation]);
 
-  const transcribeMutation = useMutation(
-    orpc.calls.transcribe.mutationOptions(),
-  );
+  const transcribeMutation = useMutation(orpc.calls.transcribe.mutationOptions());
 
   const generateRecommendationsMutation = useMutation(
     orpc.calls.generateRecommendations.mutationOptions({
@@ -100,9 +90,7 @@ export default function CallDetailPage() {
       },
       onError: (error) => {
         const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Не удалось сформировать рекомендации";
+          error instanceof Error ? error.message : "Не удалось сформировать рекомендации";
         toast.error(`Ошибка: ${errorMessage}`);
       },
     }),
@@ -111,16 +99,11 @@ export default function CallDetailPage() {
   const evaluateMutation = useMutation(
     orpc.calls.evaluate.mutationOptions({
       onSuccess: () => {
-        toast.success(
-          "Оценка запущена. Данные обновятся через несколько секунд.",
-        );
+        toast.success("Оценка запущена. Данные обновятся через несколько секунд.");
         setTimeout(() => loadData(), 6000);
       },
       onError: (error) => {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Не удалось запустить оценку";
+        const errorMessage = error instanceof Error ? error.message : "Не удалось запустить оценку";
         toast.error(`Ошибка: ${errorMessage}`);
       },
     }),
@@ -160,9 +143,7 @@ export default function CallDetailPage() {
     } catch (error: unknown) {
       console.error("Failed to restart analysis:", error);
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Ошибка при перезапуске анализа";
+        error instanceof Error ? error.message : "Ошибка при перезапуске анализа";
       toast.error(`Ошибка: ${errorMessage}`);
     } finally {
       setRestarting(false);
@@ -222,9 +203,7 @@ export default function CallDetailPage() {
             onRestartAnalysis={handleRestartAnalysis}
             onReevaluate={handleReevaluate}
             onGenerateRecommendations={handleGenerateRecommendations}
-            isGeneratingRecommendations={
-              generateRecommendationsMutation.isPending
-            }
+            isGeneratingRecommendations={generateRecommendationsMutation.isPending}
           />
         </div>
       </main>

@@ -3,14 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import {
-  index,
-  pgTable,
-  text,
-  timestamp,
-  unique,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { workspaces } from "../workspace/workspaces";
 
 export const evaluationTemplates = pgTable(
@@ -32,10 +25,7 @@ export const evaluationTemplates = pgTable(
   },
   (table) => [
     index("evaluation_templates_workspace_idx").on(table.workspaceId),
-    unique("evaluation_templates_workspace_slug_unique").on(
-      table.workspaceId,
-      table.slug,
-    ),
+    unique("evaluation_templates_workspace_slug_unique").on(table.workspaceId, table.slug),
   ],
 );
 

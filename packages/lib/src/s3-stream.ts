@@ -3,11 +3,7 @@
  */
 
 import type { Readable } from "node:stream";
-import {
-  PutObjectCommand,
-  type PutObjectCommandInput,
-  S3Client,
-} from "@aws-sdk/client-s3";
+import { PutObjectCommand, type PutObjectCommandInput, S3Client } from "@aws-sdk/client-s3";
 import { env } from "@calls/config";
 import type { FileType } from "@calls/db";
 
@@ -18,9 +14,7 @@ function getS3Client(): S3Client {
     const accessKey = env.AWS_ACCESS_KEY_ID;
     const secretKey = env.AWS_SECRET_ACCESS_KEY;
     if (!accessKey || !secretKey)
-      throw new Error(
-        "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are required",
-      );
+      throw new Error("AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are required");
     s3Client = new S3Client({
       region: env.AWS_REGION,
       credentials: {
@@ -67,10 +61,7 @@ export async function uploadStreamToS3(
   };
 }
 
-export function generateS3KeyForFileType(
-  originalKey: string,
-  fileType: FileType,
-): string {
+export function generateS3KeyForFileType(originalKey: string, fileType: FileType): string {
   const timestamp = Date.now();
   const randomId = Math.random().toString(36).substring(2, 15);
   const prefix = fileType === "call_recording" ? "recordings" : "uploads";

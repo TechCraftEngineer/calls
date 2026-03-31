@@ -22,9 +22,7 @@ export function CallRecordPlayer({ callId, className }: CallRecordPlayerProps) {
   });
 
   if (!callId) {
-    return (
-      <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>
-    );
+    return <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>;
   }
 
   if (isPending) {
@@ -39,9 +37,7 @@ export function CallRecordPlayer({ callId, className }: CallRecordPlayerProps) {
   }
 
   if (isError || !data?.url) {
-    return (
-      <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>
-    );
+    return <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>;
   }
 
   return (

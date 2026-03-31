@@ -28,12 +28,9 @@ export function useBackupSettings({ state, setState }: UseBackupSettingsProps) {
       const res = await backupMutation.mutateAsync(undefined);
       const path = res?.path ?? "";
       const message =
-        res?.message ??
-        "Резервная копия: выполните pg_dump $POSTGRES_URL > backup.sql";
+        res?.message ?? "Резервная копия: выполните pg_dump $POSTGRES_URL > backup.sql";
       toast.info(
-        `Запрос на резервную копию зарегистрирован.\n${message}${
-          path ? `\nФайл: ${path}` : ""
-        }`,
+        `Запрос на резервную копию зарегистрирован.\n${message}${path ? `\nФайл: ${path}` : ""}`,
       );
     } catch (error: unknown) {
       const msg =

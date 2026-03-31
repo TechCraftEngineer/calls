@@ -2,7 +2,8 @@
  * Basic CRUD operations for calls
  */
 
-import { eq, and, desc } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import type { CreateCallData } from "../../types/calls.types";
@@ -10,23 +11,18 @@ import { normalizeCallStatus } from "../../utils/call-status";
 import {
   createCallSchema,
   updateCustomerNameSchema,
-  updateRecordingSchema,
   updateEnhancedAudioSchema,
   updatePbxBindingSchema,
-  updateWithRecordingSchema,
   updatePbxBindingWithCustomerSchema,
-  validateWithSchema,
+  updateRecordingSchema,
+  updateWithRecordingSchema,
   ValidationError,
+  validateWithSchema,
 } from "../../validation/call-schemas";
-import { z } from "zod";
 
 export const callsCrud = {
   async findById(id: string): Promise<schema.Call | null> {
-    const result = await db
-      .select()
-      .from(schema.calls)
-      .where(eq(schema.calls.id, id))
-      .limit(1);
+    const result = await db.select().from(schema.calls).where(eq(schema.calls.id, id)).limit(1);
     return result[0] ?? null;
   },
 
@@ -35,10 +31,7 @@ export const callsCrud = {
     return (result.rowCount ?? 0) > 0;
   },
 
-  async findByFilename(
-    filename: string,
-    workspaceId?: string,
-  ): Promise<schema.Call | null> {
+  async findByFilename(filename: string, workspaceId?: string): Promise<schema.Call | null> {
     const conditions = [eq(schema.calls.filename, filename)];
     if (workspaceId != null) {
       conditions.push(eq(schema.calls.workspaceId, workspaceId));
@@ -89,28 +82,27 @@ export const callsCrud = {
         name: schema.calls.name,
       })
       .from(schema.calls)
-      .where(
-        and(
-          eq(schema.calls.workspaceId, workspaceId),
-          eq(schema.calls.number, phone),
-        ),
-      )
+      .where(and(eq(schema.calls.workspaceId, workspaceId), eq(schema.calls.number, phone)))
       .orderBy(desc(schema.calls.timestamp))
       .limit(1);
     const row = result[0];
     return row ?? null;
   },
 
-  async createWithResult(
-    data: CreateCallData,
-  ): Promise<{ id: string; created: boolean }> {
+  async createWithResult(data: CreateCallData): Promise<{ id: string; created: boolean }> {
     // Валидация входных данных с помощью Zod
     const validatedData = validateWithSchema(createCallSchema, data);
-    
+
     const status = normalizeCallStatus(validatedData.status) ?? null;
     // Нормализуем provider и externalId для консистентной обработки
-    const normalizedProvider = typeof validatedData.provider === 'string' ? validatedData.provider.trim() || null : validatedData.provider || null;
-    const normalizedExternalId = typeof validatedData.externalId === 'string' ? validatedData.externalId.trim() || null : validatedData.externalId || null;
+    const normalizedProvider =
+      typeof validatedData.provider === "string"
+        ? validatedData.provider.trim() || null
+        : validatedData.provider || null;
+    const normalizedExternalId =
+      typeof validatedData.externalId === "string"
+        ? validatedData.externalId.trim() || null
+        : validatedData.externalId || null;
 
     const values = {
       workspaceId: validatedData.workspaceId,
@@ -134,11 +126,7 @@ export const callsCrud = {
             .insert(schema.calls)
             .values(values)
             .onConflictDoNothing({
-              target: [
-                schema.calls.workspaceId,
-                schema.calls.provider,
-                schema.calls.externalId,
-              ],
+              target: [schema.calls.workspaceId, schema.calls.provider, schema.calls.externalId],
             })
             .returning({ id: schema.calls.id })
         : await db.insert(schema.calls).values(values).returning({ id: schema.calls.id });
@@ -146,7 +134,9 @@ export const callsCrud = {
     if (result.length === 0) {
       // Find existing record
       if (!normalizedProvider || !normalizedExternalId) {
-        throw new Error(`Ошибка вставки: отсутствуют provider или externalId для поиска существующей записи`);
+        throw new Error(
+          `Ошибка вставки: отсутствуют provider или externalId для поиска существующей записи`,
+        );
       }
       const existing = await this.findByExternalId(
         data.workspaceId,
@@ -154,13 +144,15 @@ export const callsCrud = {
         normalizedExternalId,
       );
       if (!existing) {
-        throw new Error(`Ошибка вставки: запись не найдена для workspaceId=${data.workspaceId}, provider=${normalizedProvider}, externalId=${normalizedExternalId}`);
+        throw new Error(
+          `Ошибка вставки: запись не найдена для workspaceId=${data.workspaceId}, provider=${normalizedProvider}, externalId=${normalizedExternalId}`,
+        );
       }
       return { id: existing.id, created: false };
     }
 
     if (!result[0]?.id) {
-      throw new Error('Ошибка вставки: не получен ID от базы данных');
+      throw new Error("Ошибка вставки: не получен ID от базы данных");
     }
     return { id: result[0].id, created: true };
   },
@@ -170,60 +162,51 @@ export const callsCrud = {
     return created.id;
   },
 
-  async updateCustomerName(
-    callId: string,
-    customerName: string | null,
-  ): Promise<void> {
+  async updateCustomerName(callId: string, customerName: string | null): Promise<void> {
     // Валидация callId как UUID
-    const uuidSchema = z.string().uuid('callId должен быть валидным UUID');
+    const uuidSchema = z.string().uuid("callId должен быть валидным UUID");
     const result = uuidSchema.safeParse(callId);
     if (!result.success) {
-      throw new ValidationError('callId должен быть валидным UUID', result.error.issues);
+      throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
     }
-    
+
     // Валидация customerName с помощью Zod
     const validatedData = validateWithSchema(updateCustomerNameSchema, { customerName });
-    
+
     await db
       .update(schema.calls)
       .set({ customerName: validatedData.customerName })
       .where(eq(schema.calls.id, callId));
   },
 
-  async updateRecording(
-    callId: string,
-    data: { fileId: string | null },
-  ): Promise<void> {
+  async updateRecording(callId: string, data: { fileId: string | null }): Promise<void> {
     // Валидация callId как UUID
-    const uuidSchema = z.string().uuid('callId должен быть валидным UUID');
+    const uuidSchema = z.string().uuid("callId должен быть валидным UUID");
     const result = uuidSchema.safeParse(callId);
     if (!result.success) {
-      throw new ValidationError('callId должен быть валидным UUID', result.error.issues);
+      throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
     }
-    
+
     // Валидация данных с помощью Zod
     const validatedData = validateWithSchema(updateRecordingSchema, data);
-    
+
     await db
       .update(schema.calls)
       .set({ fileId: validatedData.fileId })
       .where(eq(schema.calls.id, callId));
   },
 
-  async updateEnhancedAudio(
-    callId: string,
-    enhancedAudioFileId: string | null,
-  ): Promise<void> {
+  async updateEnhancedAudio(callId: string, enhancedAudioFileId: string | null): Promise<void> {
     // Валидация callId как UUID
-    const uuidSchema = z.string().uuid('callId должен быть валидным UUID');
+    const uuidSchema = z.string().uuid("callId должен быть валидным UUID");
     const result = uuidSchema.safeParse(callId);
     if (!result.success) {
-      throw new ValidationError('callId должен быть валидным UUID', result.error.issues);
+      throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
     }
-    
+
     // Валидация данных с помощью Zod
     const validatedData = validateWithSchema(updateEnhancedAudioSchema, { enhancedAudioFileId });
-    
+
     await db
       .update(schema.calls)
       .set({ enhancedAudioFileId: validatedData.enhancedAudioFileId })
@@ -239,20 +222,21 @@ export const callsCrud = {
     },
   ): Promise<void> {
     // Валидация callId как UUID
-    const uuidSchema = z.string().uuid('callId должен быть валидным UUID');
+    const uuidSchema = z.string().uuid("callId должен быть валидным UUID");
     const result = uuidSchema.safeParse(callId);
     if (!result.success) {
-      throw new ValidationError('callId должен быть валидным UUID', result.error.issues);
+      throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
     }
-    
+
     // Валидация данных с помощью Zod
     const validatedData = validateWithSchema(updatePbxBindingSchema, data);
-    
+
     const patch: Partial<schema.NewCall> = {};
-    if (validatedData.internalNumber !== undefined) patch.internalNumber = validatedData.internalNumber;
+    if (validatedData.internalNumber !== undefined)
+      patch.internalNumber = validatedData.internalNumber;
     if (validatedData.source !== undefined) patch.source = validatedData.source;
     if (validatedData.name !== undefined) patch.name = validatedData.name;
-    
+
     await db.update(schema.calls).set(patch).where(eq(schema.calls.id, callId));
   },
 
@@ -268,12 +252,12 @@ export const callsCrud = {
     },
   ): Promise<void> {
     // Валидация callId как UUID
-    const uuidSchema = z.string().uuid('callId должен быть валидным UUID');
+    const uuidSchema = z.string().uuid("callId должен быть валидным UUID");
     const result = uuidSchema.safeParse(callId);
     if (!result.success) {
-      throw new ValidationError('callId должен быть валидным UUID', result.error.issues);
+      throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
     }
-    
+
     // Валидация данных с помощью Zod
     const validatedData = validateWithSchema(updateWithRecordingSchema, data);
 
@@ -290,10 +274,7 @@ export const callsCrud = {
         updateData.customerName = validatedData.customerName;
       }
 
-      await tx
-        .update(schema.calls)
-        .set(updateData)
-        .where(eq(schema.calls.id, callId));
+      await tx.update(schema.calls).set(updateData).where(eq(schema.calls.id, callId));
     });
   },
 
@@ -310,26 +291,24 @@ export const callsCrud = {
     },
   ): Promise<void> {
     // Валидация callId как UUID
-    const uuidSchema = z.string().uuid('callId должен быть валидным UUID');
+    const uuidSchema = z.string().uuid("callId должен быть валидным UUID");
     const result = uuidSchema.safeParse(callId);
     if (!result.success) {
-      throw new ValidationError('callId должен быть валидным UUID', result.error.issues);
+      throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
     }
-    
+
     // Валидация данных с помощью Zod
     const validatedData = validateWithSchema(updatePbxBindingWithCustomerSchema, data);
 
     const patch: Partial<schema.NewCall> = {};
-    if (validatedData.internalNumber !== undefined) patch.internalNumber = validatedData.internalNumber;
+    if (validatedData.internalNumber !== undefined)
+      patch.internalNumber = validatedData.internalNumber;
     if (validatedData.source !== undefined) patch.source = validatedData.source;
     if (validatedData.name !== undefined) patch.name = validatedData.name;
     if (validatedData.customerName !== undefined) patch.customerName = validatedData.customerName;
 
     await db.transaction(async (tx) => {
-      await tx
-        .update(schema.calls)
-        .set(patch)
-        .where(eq(schema.calls.id, callId));
+      await tx.update(schema.calls).set(patch).where(eq(schema.calls.id, callId));
     });
   },
 };

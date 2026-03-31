@@ -3,12 +3,7 @@
  * AES-256-GCM с уникальным IV для каждой операции.
  */
 
-import {
-  createCipheriv,
-  createDecipheriv,
-  createHash,
-  randomBytes,
-} from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12;
@@ -37,10 +32,7 @@ export function encrypt(plaintext: string): string {
   const cipher = createCipheriv(ALGORITHM, key, iv, {
     authTagLength: AUTH_TAG_LENGTH,
   });
-  const encrypted = Buffer.concat([
-    cipher.update(plaintext, "utf8"),
-    cipher.final(),
-  ]);
+  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   const authTag = cipher.getAuthTag();
   const combined = Buffer.concat([iv, encrypted, authTag]);
   return ENCRYPTED_PREFIX + combined.toString("base64");
@@ -57,23 +49,15 @@ export function decrypt(encrypted: string): string {
   }
   try {
     const key = getEncryptionKey();
-    const combined = Buffer.from(
-      encrypted.slice(ENCRYPTED_PREFIX.length),
-      "base64",
-    );
+    const combined = Buffer.from(encrypted.slice(ENCRYPTED_PREFIX.length), "base64");
     const iv = combined.subarray(0, IV_LENGTH);
     const authTag = combined.subarray(combined.length - AUTH_TAG_LENGTH);
-    const ciphertext = combined.subarray(
-      IV_LENGTH,
-      combined.length - AUTH_TAG_LENGTH,
-    );
+    const ciphertext = combined.subarray(IV_LENGTH, combined.length - AUTH_TAG_LENGTH);
     const decipher = createDecipheriv(ALGORITHM, key, iv, {
       authTagLength: AUTH_TAG_LENGTH,
     });
     decipher.setAuthTag(authTag);
-    return (
-      decipher.update(ciphertext).toString("utf8") + decipher.final("utf8")
-    );
+    return decipher.update(ciphertext).toString("utf8") + decipher.final("utf8");
   } catch {
     return encrypted;
   }

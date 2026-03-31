@@ -26,9 +26,7 @@ export default function Metrics({ metrics }: MetricsProps) {
       </div>
       <div className="metric-card">
         <div className="metric-label">Среднее время</div>
-        <div className="metric-value">
-          {formatDuration(metrics.avg_duration)}
-        </div>
+        <div className="metric-value">{formatDuration(metrics.avg_duration)}</div>
       </div>
       <div className="metric-card">
         <div className="metric-label">Транскрибировано</div>

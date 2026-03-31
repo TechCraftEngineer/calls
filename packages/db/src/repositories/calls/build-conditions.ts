@@ -95,10 +95,7 @@ export function buildCallConditions({
     // Only add SQL predicate when we actually have expanded values
     if (expandedDirections.length > 0) {
       conditions.push(
-        inArray(
-          sql<string>`LOWER(COALESCE(${schema.calls.direction}, ''))`,
-          expandedDirections,
-        ),
+        inArray(sql<string>`LOWER(COALESCE(${schema.calls.direction}, ''))`, expandedDirections),
       );
     }
   }
@@ -129,9 +126,7 @@ export function buildCallConditions({
   // Фильтрация по менеджерам идет через internal_number -> phone_number
   // managerInternalNumbers содержит phone_numbers из workspace_pbx_numbers
   if (managerInternalNumbers?.length) {
-    conditions.push(
-      inArray(schema.calls.internalNumber, managerInternalNumbers),
-    );
+    conditions.push(inArray(schema.calls.internalNumber, managerInternalNumbers));
   }
   if (valueScores?.length) {
     conditions.push(inArray(schema.callEvaluations.valueScore, valueScores));
@@ -150,10 +145,7 @@ export function buildCallConditions({
   }
 
   if (excludePhoneNumbers?.length) {
-    const excludeCondition = buildExcludePhoneCondition(
-      excludePhoneNumbers,
-      schema.calls,
-    );
+    const excludeCondition = buildExcludePhoneCondition(excludePhoneNumbers, schema.calls);
     if (excludeCondition) {
       conditions.push(excludeCondition);
     }

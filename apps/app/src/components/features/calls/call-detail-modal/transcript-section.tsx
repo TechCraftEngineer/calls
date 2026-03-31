@@ -32,10 +32,7 @@ interface TranscriptSectionProps {
   managerName?: string;
 }
 
-function parseMessages(
-  transcript: TranscriptDetail | null,
-  managerName?: string,
-): Message[] {
+function parseMessages(transcript: TranscriptDetail | null, managerName?: string): Message[] {
   const sourceText = transcript?.text;
   if (!sourceText) return [];
 
@@ -58,10 +55,7 @@ function parseMessages(
           (managerName && speaker.includes(managerName)),
       );
 
-      const formattedText = text.replace(
-        /\*\*(.*?)\*\*/g,
-        "<strong>$1</strong>",
-      );
+      const formattedText = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
 
       return { speaker, text: formattedText, isOperator };
     });
@@ -112,15 +106,11 @@ export default function TranscriptSection({
                       : "bg-muted text-muted-foreground ring-1 ring-border/50",
                   )}
                 >
-                  {m.speaker.includes("АВТООТВЕТЧИК")
-                    ? "🤖"
-                    : m.speaker[0]?.toUpperCase() || "?"}
+                  {m.speaker.includes("АВТООТВЕТЧИК") ? "🤖" : m.speaker[0]?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 flex-1 flex-col gap-1.5 items-start">
-                <span className="text-muted-foreground text-xs font-medium">
-                  {m.speaker}
-                </span>
+                <span className="text-muted-foreground text-xs font-medium">{m.speaker}</span>
                 <div
                   className={cn(
                     "rounded-lg border-l-4 px-4 py-2.5 text-sm leading-relaxed",

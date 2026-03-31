@@ -3,12 +3,7 @@
  * Uses Better Auth for session; enriches with backend user profile.
  */
 
-import {
-  callsService,
-  systemRepository,
-  usersService,
-  workspacesService,
-} from "@calls/db";
+import { callsService, systemRepository, usersService, workspacesService } from "@calls/db";
 import { isValidWorkspaceId } from "@calls/shared";
 import { ORPCError, os } from "@orpc/server";
 import { z } from "zod";
@@ -36,15 +31,12 @@ export type AuthLike = {
     /** createUser — fallback из admin plugin */
     createUser?: SignUpFn;
     /** setUserPassword — установка пароля существующему пользователю (admin) */
-    setUserPassword?: (opts: {
-      body: { userId: string; newPassword: string };
-    }) => Promise<unknown>;
+    setUserPassword?: (opts: { body: { userId: string; newPassword: string } }) => Promise<unknown>;
   };
 };
 
 function getWorkspaceIdFromHeaders(headers: Headers): string | null {
-  const fromHeader =
-    headers.get("x-workspace-id") ?? headers.get("X-Workspace-Id");
+  const fromHeader = headers.get("x-workspace-id") ?? headers.get("X-Workspace-Id");
   if (fromHeader) {
     const trimmed = fromHeader.trim();
     if (trimmed.length > 0 && isValidWorkspaceId(trimmed)) return trimmed;
@@ -62,10 +54,7 @@ type BackendUser =
   | Awaited<ReturnType<typeof usersService.getUserByEmail>>
   | Record<string, unknown>;
 
-export async function createBackendContext(opts: {
-  headers: Headers;
-  auth?: AuthLike;
-}): Promise<{
+export async function createBackendContext(opts: { headers: Headers; auth?: AuthLike }): Promise<{
   callsService: typeof callsService;
   systemRepository: typeof systemRepository;
   usersService: typeof usersService;
@@ -91,12 +80,7 @@ export async function createBackendContext(opts: {
         sessionEmail = email;
         const profile = await usersService.getUserByEmail(email);
         user = profile ? { ...profile, ...baUser } : baUser;
-      } else if (
-        authUserId &&
-        baUser &&
-        typeof baUser === "object" &&
-        baUser.id
-      ) {
+      } else if (authUserId && baUser && typeof baUser === "object" && baUser.id) {
         // Сессия есть, но email не передан — используем данные из сессии
         user = baUser;
       }
@@ -106,9 +90,7 @@ export async function createBackendContext(opts: {
   if (!user) {
     const cookie = opts.headers.get("cookie");
     const match = cookie?.match(/\bsession=([^;]+)/);
-    const cookieSessionValue = match?.[1]
-      ? decodeURIComponent(match[1].trim())
-      : null;
+    const cookieSessionValue = match?.[1] ? decodeURIComponent(match[1].trim()) : null;
     const parsed = z.string().email().safeParse(cookieSessionValue);
     if (parsed.success) {
       const foundUser = await usersService.getUserByEmail(parsed.data);
@@ -127,10 +109,7 @@ export async function createBackendContext(opts: {
   let workspaceRole: WorkspaceRole | null = null;
 
   if (workspaceId != null && authUserId) {
-    const role = await workspacesService.ensureUserInWorkspace(
-      workspaceId,
-      authUserId,
-    );
+    const role = await workspacesService.ensureUserInWorkspace(workspaceId, authUserId);
     workspaceRole = role;
   } else if (workspaceId != null && !authUserId) {
     workspaceRole = null;
@@ -185,47 +164,38 @@ export const adminProcedure = protectedProcedure.use(({ context, next }) => {
   return next({ context });
 });
 
-export const workspaceProcedure = protectedProcedure.use(
-  ({ context, next }) => {
-    if (context.workspaceId == null || context.workspaceRole == null) {
-      throw new ORPCError("BAD_REQUEST", {
-        message:
-          "Требуется активное рабочее пространство. Укажите X-Workspace-Id в заголовке или active_workspace_id в cookie.",
-      });
-    }
-    return next({
-      context: {
-        ...context,
-        workspaceId: context.workspaceId,
-        workspaceRole: context.workspaceRole,
-      },
+export const workspaceProcedure = protectedProcedure.use(({ context, next }) => {
+  if (context.workspaceId == null || context.workspaceRole == null) {
+    throw new ORPCError("BAD_REQUEST", {
+      message:
+        "Требуется активное рабочее пространство. Укажите X-Workspace-Id в заголовке или active_workspace_id в cookie.",
     });
-  },
-);
+  }
+  return next({
+    context: {
+      ...context,
+      workspaceId: context.workspaceId,
+      workspaceRole: context.workspaceRole,
+    },
+  });
+});
 
 export const workspaceMemberProcedure = workspaceProcedure;
 
-export const workspaceAdminProcedure = workspaceProcedure.use(
-  ({ context, next }) => {
-    if (
-      context.workspaceRole !== "admin" &&
-      context.workspaceRole !== "owner"
-    ) {
-      throw new ORPCError("FORBIDDEN", {
-        message: "Требуются права администратора рабочего пространства",
-      });
-    }
-    return next({ context });
-  },
-);
+export const workspaceAdminProcedure = workspaceProcedure.use(({ context, next }) => {
+  if (context.workspaceRole !== "admin" && context.workspaceRole !== "owner") {
+    throw new ORPCError("FORBIDDEN", {
+      message: "Требуются права администратора рабочего пространства",
+    });
+  }
+  return next({ context });
+});
 
-export const workspaceOwnerProcedure = workspaceProcedure.use(
-  ({ context, next }) => {
-    if (context.workspaceRole !== "owner") {
-      throw new ORPCError("FORBIDDEN", {
-        message: "Требуются права владельца рабочего пространства",
-      });
-    }
-    return next({ context });
-  },
-);
+export const workspaceOwnerProcedure = workspaceProcedure.use(({ context, next }) => {
+  if (context.workspaceRole !== "owner") {
+    throw new ORPCError("FORBIDDEN", {
+      message: "Требуются права владельца рабочего пространства",
+    });
+  }
+  return next({ context });
+});

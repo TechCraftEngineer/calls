@@ -26,10 +26,7 @@ export function useCallListSelection(calls: CallListProps["calls"]) {
     [calls, rowSelection],
   );
 
-  const selectedCallIds = useMemo(
-    () => selectedCalls.map((item) => item.call.id),
-    [selectedCalls],
-  );
+  const selectedCallIds = useMemo(() => selectedCalls.map((item) => item.call.id), [selectedCalls]);
 
   const clearSelection = useCallback(() => {
     setRowSelection({});
@@ -77,10 +74,7 @@ export function useColumnSchema() {
   const [isHydrated, setIsHydrated] = useState(false);
 
   const effectiveColumnOrder = useMemo(
-    () => [
-      "select",
-      ...columnSchema.columnOrder.filter((column) => column !== "select"),
-    ],
+    () => ["select", ...columnSchema.columnOrder.filter((column) => column !== "select")],
     [columnSchema.columnOrder],
   );
 
@@ -100,9 +94,7 @@ export function useColumnSchema() {
       setColumnSchema((prev) => ({
         ...prev,
         columnOrder:
-          typeof updaterOrValue === "function"
-            ? updaterOrValue(prev.columnOrder)
-            : updaterOrValue,
+          typeof updaterOrValue === "function" ? updaterOrValue(prev.columnOrder) : updaterOrValue,
       }));
     },
     [],

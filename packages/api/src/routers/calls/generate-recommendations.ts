@@ -13,10 +13,7 @@ import { workspaceProcedure } from "../../orpc";
 
 const logger = createLogger("generate-recommendations");
 const DEFAULT_RECOMMENDATIONS_MODEL =
-  AI_RECOMMENDATIONS_MODEL ??
-  AI_MODEL_PREMIUM ??
-  AI_MODEL ??
-  "anthropic/claude-sonnet-4.6";
+  AI_RECOMMENDATIONS_MODEL ?? AI_MODEL_PREMIUM ?? AI_MODEL ?? "anthropic/claude-sonnet-4.6";
 
 const DEFAULT_RECOMMENDATIONS_PROMPT = `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
 
@@ -43,8 +40,7 @@ function sanitizeCompanyContext(s: string): string {
     const l = line.trim();
     if (!l) return true;
     if (/^>>\s*\w/.test(l) || /^#\s*instruction\b/i.test(l)) return false;
-    if (/^(ignore|forget|disregard|override|you\s+are)\b/i.test(l))
-      return false;
+    if (/^(ignore|forget|disregard|override|you\s+are)\b/i.test(l)) return false;
     return true;
   });
   const result = lines.join("\n").trim();
@@ -118,8 +114,7 @@ function parseRecommendationsJson(text: string): string[] {
 
   if (lines.length > 0) return lines.slice(0, 5);
 
-  const fallbackText =
-    trimmed.length > 200 ? `${trimmed.substring(0, 200)}...` : trimmed;
+  const fallbackText = trimmed.length > 200 ? `${trimmed.substring(0, 200)}...` : trimmed;
   return [fallbackText];
 }
 
@@ -136,9 +131,7 @@ export async function generateRecommendations(
 
     let transcriptText = transcript?.text ?? transcript?.rawText ?? "";
     if (!transcriptText.trim()) {
-      throw new Error(
-        "Транскрипт звонка пуст — невозможно сформировать рекомендации",
-      );
+      throw new Error("Транскрипт звонка пуст — невозможно сформировать рекомендации");
     }
 
     if (transcriptText.length > 50000) {
@@ -193,9 +186,7 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
       timestamp: new Date().toISOString(),
       event: "ai.request",
     });
-    const response = await chatBot.sendMessage([
-      { id: "1", role: "user", content: userMessage },
-    ]);
+    const response = await chatBot.sendMessage([{ id: "1", role: "user", content: userMessage }]);
 
     const text = response.message.content.trim();
     const parsed = parseRecommendationsJson(text);
@@ -207,9 +198,7 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
         model,
       });
       return {
-        recommendations: [
-          "Не удалось сформировать рекомендации. Попробуйте позже.",
-        ],
+        recommendations: ["Не удалось сформировать рекомендации. Попробуйте позже."],
       };
     }
 
@@ -232,9 +221,7 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
       error,
     });
     if (error instanceof Error) {
-      throw new Error(
-        `Не удалось сгенерировать рекомендации: ${error.message}`,
-      );
+      throw new Error(`Не удалось сгенерировать рекомендации: ${error.message}`);
     }
     throw new Error("Не удалось сгенерировать рекомендации. Попробуйте позже.");
   }
@@ -258,9 +245,7 @@ export const generateRecommendationsProcedure = workspaceProcedure
       });
     }
 
-    const workspace = await context.workspacesService.getById(
-      context.workspaceId,
-    );
+    const workspace = await context.workspacesService.getById(context.workspaceId);
     if (!workspace) {
       throw new ORPCError("NOT_FOUND", {
         message: "Рабочая область не найдена",
@@ -277,10 +262,5 @@ export const generateRecommendationsProcedure = workspaceProcedure
       });
     }
 
-    return generateRecommendations(
-      call,
-      context.callsService,
-      context.workspaceId,
-      companyContext,
-    );
+    return generateRecommendations(call, context.callsService, context.workspaceId, companyContext);
   });

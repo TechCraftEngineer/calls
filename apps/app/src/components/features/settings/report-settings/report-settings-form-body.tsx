@@ -12,10 +12,7 @@ import {
   ReportParamsSection,
   TelegramReportSection,
 } from "./index";
-import type {
-  ReportSettingsForm,
-  ReportSettingsUserOption,
-} from "./report-settings-types";
+import type { ReportSettingsForm, ReportSettingsUserOption } from "./report-settings-types";
 
 interface ReportSettingsFormBodyProps {
   form: ReportSettingsForm;
@@ -93,17 +90,11 @@ export default function ReportSettingsFormBody({
     }),
   );
 
-  const updateEmailMutation = useMutation(
-    orpc.users.updateEmailSettings.mutationOptions(),
-  );
+  const updateEmailMutation = useMutation(orpc.users.updateEmailSettings.mutationOptions());
 
-  const updateTelegramMutation = useMutation(
-    orpc.users.updateTelegramSettings.mutationOptions(),
-  );
+  const updateTelegramMutation = useMutation(orpc.users.updateTelegramSettings.mutationOptions());
 
-  const updateMaxMutation = useMutation(
-    orpc.users.updateMaxSettings.mutationOptions(),
-  );
+  const updateMaxMutation = useMutation(orpc.users.updateMaxSettings.mutationOptions());
 
   const updateReportParamsMutation = useMutation(
     orpc.users.updateReportParamsSettings.mutationOptions(),
@@ -113,13 +104,9 @@ export default function ReportSettingsFormBody({
     orpc.users.updateReportManagedUsersSettings.mutationOptions(),
   );
 
-  const sendTestTelegramTimeoutRef = useRef<ReturnType<
-    typeof setTimeout
-  > | null>(null);
+  const sendTestTelegramTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendTestTelegramMessageRef = useRef("");
-  const sendTestEmailTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const sendTestEmailTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendTestEmailMessageRef = useRef("");
   const saveOperationKeyRef = useRef("");
   const [isSavingCombined, setIsSavingCombined] = useState(false);
@@ -143,8 +130,7 @@ export default function ReportSettingsFormBody({
         }, 4000);
       },
       onError: (err) => {
-        const msg =
-          err instanceof Error ? err.message : "Не удалось отправить отчёт";
+        const msg = err instanceof Error ? err.message : "Не удалось отправить отчёт";
         toast.error(msg);
       },
     }),
@@ -161,8 +147,7 @@ export default function ReportSettingsFormBody({
         toast.success(msg);
         setSendTestEmailMessage(msg);
         sendTestEmailMessageRef.current = msg;
-        if (sendTestEmailTimeoutRef.current != null)
-          clearTimeout(sendTestEmailTimeoutRef.current);
+        if (sendTestEmailTimeoutRef.current != null) clearTimeout(sendTestEmailTimeoutRef.current);
         sendTestEmailTimeoutRef.current = setTimeout(() => {
           if (sendTestEmailMessageRef.current === msg) {
             setSendTestEmailMessage("");
@@ -171,8 +156,7 @@ export default function ReportSettingsFormBody({
         }, 4000);
       },
       onError: (err) => {
-        const msg =
-          err instanceof Error ? err.message : "Не удалось отправить отчёт";
+        const msg = err instanceof Error ? err.message : "Не удалось отправить отчёт";
         toast.error(msg);
       },
     }),
@@ -426,9 +410,7 @@ export default function ReportSettingsFormBody({
               setForm={setForm}
               user={{ id: String(user.id) }}
               allUsers={allUsers}
-              saving={
-                isSavingCombined || updateReportManagedUsersMutation.isPending
-              }
+              saving={isSavingCombined || updateReportManagedUsersMutation.isPending}
               onSave={handleSaveManagedUsers}
             />
           )}

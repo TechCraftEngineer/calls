@@ -5,10 +5,7 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
-import type {
-  NotificationSettings,
-  ReportSettings,
-} from "../schema/user/workspace-settings";
+import type { NotificationSettings, ReportSettings } from "../schema/user/workspace-settings";
 
 export type ReportType = "daily" | "weekly" | "monthly";
 
@@ -55,10 +52,7 @@ export async function getEmailReportRecipients(
       schema.userWorkspaceSettings,
       and(
         eq(schema.workspaceMembers.userId, schema.userWorkspaceSettings.userId),
-        eq(
-          schema.workspaceMembers.workspaceId,
-          schema.userWorkspaceSettings.workspaceId,
-        ),
+        eq(schema.workspaceMembers.workspaceId, schema.userWorkspaceSettings.workspaceId),
       ),
     )
     .where(
@@ -116,9 +110,7 @@ export async function getEmailReportRecipients(
  * с явно включёнными настройками уведомлений (notificationSettings). Строки
  * без настроек исключаются, в отличие от getEmailReportRecipients, где используется leftJoin.
  */
-export async function getWorkspaceIdsWithEmailReportRecipients(): Promise<
-  string[]
-> {
+export async function getWorkspaceIdsWithEmailReportRecipients(): Promise<string[]> {
   const rows = await db
     .selectDistinct({
       workspaceId: schema.workspaceMembers.workspaceId,
@@ -129,10 +121,7 @@ export async function getWorkspaceIdsWithEmailReportRecipients(): Promise<
       schema.userWorkspaceSettings,
       and(
         eq(schema.workspaceMembers.userId, schema.userWorkspaceSettings.userId),
-        eq(
-          schema.workspaceMembers.workspaceId,
-          schema.userWorkspaceSettings.workspaceId,
-        ),
+        eq(schema.workspaceMembers.workspaceId, schema.userWorkspaceSettings.workspaceId),
       ),
     )
     .where(
@@ -148,7 +137,5 @@ export async function getWorkspaceIdsWithEmailReportRecipients(): Promise<
       ),
     );
 
-  return rows
-    .map((r) => r.workspaceId)
-    .filter((id): id is string => Boolean(id));
+  return rows.map((r) => r.workspaceId).filter((id): id is string => Boolean(id));
 }

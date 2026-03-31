@@ -24,8 +24,7 @@ import { type WebhookFormData, webhookFormSchema } from "../schemas";
 import { SectionBlock } from "../section-block";
 import { generateWebhookSecret } from "../utils";
 
-const ICON_BUTTON_CLASS =
-  "shrink-0 transition-transform duration-150 active:scale-90";
+const ICON_BUTTON_CLASS = "shrink-0 transition-transform duration-150 active:scale-90";
 
 interface WebhookSectionProps {
   webhookUrl: string;
@@ -45,8 +44,9 @@ export function WebhookSection({
   const { isCopied: copiedUrl, copyToClipboard: copyUrl } = useCopyToClipboard({
     timeout: 2000,
   });
-  const { isCopied: copiedSecret, copyToClipboard: copySecret } =
-    useCopyToClipboard({ timeout: 2000 });
+  const { isCopied: copiedSecret, copyToClipboard: copySecret } = useCopyToClipboard({
+    timeout: 2000,
+  });
   const [generated, setGenerated] = useState(false);
 
   const form = useForm<WebhookFormData>({
@@ -86,9 +86,7 @@ export function WebhookSection({
   const handleGenerateSecret = useCallback(() => {
     const secret = generateWebhookSecret();
     form.setValue("webhookSecret", secret, { shouldDirty: true });
-    toast.success(
-      "Секрет сгенерирован. Сохраните настройки и укажите его в админке АТС.",
-    );
+    toast.success("Секрет сгенерирован. Сохраните настройки и укажите его в админке АТС.");
     setGenerated(true);
     setTimeout(() => setGenerated(false), 2000);
   }, [form]);
@@ -106,10 +104,7 @@ export function WebhookSection({
         <form onSubmit={form.handleSubmit(onSubmit)} className="contents">
           <div className="space-y-4">
             <div className="space-y-2">
-              <FormLabel
-                htmlFor="megapbx-webhook-url"
-                className="text-xs text-muted-foreground"
-              >
+              <FormLabel htmlFor="megapbx-webhook-url" className="text-xs text-muted-foreground">
                 URL вебхука (наш адрес)
               </FormLabel>
               <div className="flex gap-2">
@@ -138,14 +133,11 @@ export function WebhookSection({
                       )}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    {copiedUrl ? "Скопировано" : "Скопировать URL"}
-                  </TooltipContent>
+                  <TooltipContent>{copiedUrl ? "Скопировано" : "Скопировать URL"}</TooltipContent>
                 </Tooltip>
               </div>
               <p className="text-xs text-muted-foreground">
-                Вставьте этот URL в админке АТС в поле «URL вебхука» или
-                «Webhook URL».
+                Вставьте этот URL в админке АТС в поле «URL вебхука» или «Webhook URL».
               </p>
             </div>
             <FormField
@@ -180,15 +172,10 @@ export function WebhookSection({
                           size="icon"
                           className={ICON_BUTTON_CLASS}
                           onClick={handleGenerateSecret}
-                          aria-label={
-                            generated ? "Сгенерировано" : "Сгенерировать секрет"
-                          }
+                          aria-label={generated ? "Сгенерировано" : "Сгенерировать секрет"}
                         >
                           {generated ? (
-                            <Check
-                              className="size-4 text-success"
-                              aria-hidden
-                            />
+                            <Check className="size-4 text-success" aria-hidden />
                           ) : (
                             <KeyRound className="size-4" aria-hidden />
                           )}
@@ -207,15 +194,10 @@ export function WebhookSection({
                           className={ICON_BUTTON_CLASS}
                           onClick={copyWebhookSecret}
                           disabled={!webhookSecretValue && !webhookSecret}
-                          aria-label={
-                            copiedSecret ? "Скопировано" : "Скопировать секрет"
-                          }
+                          aria-label={copiedSecret ? "Скопировано" : "Скопировать секрет"}
                         >
                           {copiedSecret ? (
-                            <Check
-                              className="size-4 text-success"
-                              aria-hidden
-                            />
+                            <Check className="size-4 text-success" aria-hidden />
                           ) : (
                             <Copy className="size-4" aria-hidden />
                           )}
@@ -227,20 +209,12 @@ export function WebhookSection({
                     </Tooltip>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Задайте секрет здесь, сохраните, затем укажите тот же секрет
-                    в админке АТС.
+                    Задайте секрет здесь, сохраните, затем укажите тот же секрет в админке АТС.
                   </p>
                   <FormMessage />
                   <div className="pt-2">
-                    <Button
-                      type="submit"
-                      disabled={saving}
-                      aria-busy={saving}
-                      aria-live="polite"
-                    >
-                      {saving ? (
-                        <Loader2 className="size-4 animate-spin" aria-hidden />
-                      ) : null}
+                    <Button type="submit" disabled={saving} aria-busy={saving} aria-live="polite">
+                      {saving ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
                       Сохранить
                     </Button>
                   </div>

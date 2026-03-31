@@ -19,9 +19,6 @@ export const setActive = protectedProcedure
         message: "Вы не являетесь участником этого рабочего пространства",
       });
     }
-    await context.workspacesService.setActiveWorkspace(
-      context.authUserId,
-      input.workspaceId,
-    );
+    await context.workspacesService.setActiveWorkspace(context.authUserId, input.workspaceId);
     return { success: true, workspaceId: input.workspaceId };
   });

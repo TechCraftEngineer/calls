@@ -5,10 +5,7 @@ import { Bot } from "grammy";
  * @param token - токен бота
  * @param webhookUrl - полный URL (https://api.example.com/api/telegram-webhook/ws_xxx)
  */
-export async function setTelegramWebhook(
-  token: string,
-  webhookUrl: string,
-): Promise<void> {
+export async function setTelegramWebhook(token: string, webhookUrl: string): Promise<void> {
   const bot = new Bot(token);
   await bot.api.setWebhook(webhookUrl);
 }

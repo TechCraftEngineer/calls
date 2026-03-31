@@ -14,11 +14,7 @@ interface AudioPlayerModalProps {
   onClose: () => void;
 }
 
-export default function AudioPlayerModal({
-  callId,
-  number,
-  onClose,
-}: AudioPlayerModalProps) {
+export default function AudioPlayerModal({ callId, number, onClose }: AudioPlayerModalProps) {
   const orpc = useORPC();
   const { data, isPending, isError, error } = useQuery(
     orpc.calls.getPlaybackUrl.queryOptions({ input: { call_id: callId } }),
@@ -56,9 +52,9 @@ export default function AudioPlayerModal({
 
     const focusableSelector =
       'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
-    const focusable = Array.from(
-      container.querySelectorAll<HTMLElement>(focusableSelector),
-    ).filter((el) => !el.hasAttribute("disabled") && el.tabIndex !== -1);
+    const focusable = Array.from(container.querySelectorAll<HTMLElement>(focusableSelector)).filter(
+      (el) => !el.hasAttribute("disabled") && el.tabIndex !== -1,
+    );
 
     if (focusable.length === 0) return;
 
@@ -90,12 +86,8 @@ export default function AudioPlayerModal({
         onClick={(e) => e.stopPropagation()}
       >
         <CardHeader className="flex flex-row items-center justify-between gap-4 pb-4">
-          <CardTitle
-            id="audio-modal-title"
-            className="text-sm font-medium text-muted-foreground"
-          >
-            Запись звонка:{" "}
-            <span className="font-semibold text-foreground">{number}</span>
+          <CardTitle id="audio-modal-title" className="text-sm font-medium text-muted-foreground">
+            Запись звонка: <span className="font-semibold text-foreground">{number}</span>
           </CardTitle>
           <Button
             variant="ghost"

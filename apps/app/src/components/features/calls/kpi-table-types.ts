@@ -27,11 +27,7 @@ export interface KpiTableDataProps {
   onEditEmployee: (employeeId: string) => void;
   onSaveRow: (row: KpiRow) => void;
   onCancelEdit: () => void;
-  onDraftFieldChange: (
-    employeeId: string,
-    field: keyof KpiRow,
-    value: string,
-  ) => void;
+  onDraftFieldChange: (employeeId: string, field: keyof KpiRow, value: string) => void;
   onExportCsv: () => void;
 }
 

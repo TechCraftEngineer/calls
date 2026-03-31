@@ -14,10 +14,7 @@ interface AudioComparisonPlayerProps {
 /**
  * Компонент для сравнения оригинального и улучшенного аудио
  */
-export function AudioComparisonPlayer({
-  callId,
-  className,
-}: AudioComparisonPlayerProps) {
+export function AudioComparisonPlayer({ callId, className }: AudioComparisonPlayerProps) {
   const orpc = useORPC();
   const id = callId?.trim() ?? "";
   const fallbackCallId = "__skip__";
@@ -43,9 +40,7 @@ export function AudioComparisonPlayer({
   });
 
   if (!id) {
-    return (
-      <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>
-    );
+    return <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>;
   }
 
   const hasEnhancedAudio = enhancedData?.url != null;
@@ -62,9 +57,7 @@ export function AudioComparisonPlayer({
   }
 
   if (originalError || !originalData?.url) {
-    return (
-      <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>
-    );
+    return <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>;
   }
 
   // Если нет улучшенного аудио, показываем только оригинал
@@ -75,10 +68,7 @@ export function AudioComparisonPlayer({
           <Volume2 className="size-4" />
           Запись звонка
         </div>
-        <AudioPlayer
-          src={originalData.url}
-          durationSeconds={originalData.duration ?? undefined}
-        />
+        <AudioPlayer src={originalData.url} durationSeconds={originalData.duration ?? undefined} />
       </div>
     );
   }
@@ -118,9 +108,7 @@ export function AudioComparisonPlayer({
               src={originalData.url}
               durationSeconds={originalData.duration ?? undefined}
             />
-            <p className="text-muted-foreground text-xs">
-              Оригинальная запись без обработки
-            </p>
+            <p className="text-muted-foreground text-xs">Оригинальная запись без обработки</p>
           </div>
         </TabsContent>
       </Tabs>

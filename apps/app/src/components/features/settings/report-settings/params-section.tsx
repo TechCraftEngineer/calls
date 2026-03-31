@@ -21,18 +21,11 @@ interface ParamsSectionProps {
   saving: boolean;
 }
 
-export function ReportParamsSection({
-  form,
-  setForm,
-  onSave,
-  saving,
-}: ParamsSectionProps) {
+export function ReportParamsSection({ form, setForm, onSave, saving }: ParamsSectionProps) {
   return (
     <Card className="border-border/50 bg-card/50">
       <CardHeader className="px-4 pb-0">
-        <CardDescription>
-          Дополнительные параметры фильтров для расчетов в отчетах.
-        </CardDescription>
+        <CardDescription>Дополнительные параметры фильтров для расчетов в отчетах.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <FilterExclusions form={form} setForm={setForm} />

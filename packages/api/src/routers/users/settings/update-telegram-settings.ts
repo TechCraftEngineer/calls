@@ -11,19 +11,14 @@ export const updateTelegramSettings = workspaceProcedure
   .handler(async ({ input, context }) => {
     const authUser = context.user;
     const userId =
-      authUser &&
-      typeof authUser === "object" &&
-      typeof authUser.id === "string"
+      authUser && typeof authUser === "object" && typeof authUser.id === "string"
         ? authUser.id
         : undefined;
     const authEmail =
-      authUser &&
-      typeof authUser === "object" &&
-      typeof authUser.email === "string"
+      authUser && typeof authUser === "object" && typeof authUser.email === "string"
         ? authUser.email
         : "";
-    const actorUsername =
-      authEmail.trim() || context.sessionEmail?.trim() || "system";
+    const actorUsername = authEmail.trim() || context.sessionEmail?.trim() || "system";
     if (!userId)
       throw new ORPCError("UNAUTHORIZED", {
         message: "Не удалось определить пользователя",
@@ -38,21 +33,16 @@ export const updateTelegramSettings = workspaceProcedure
       });
 
     const user = await usersService.getUser(input.user_id);
-    if (!user)
-      throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+    if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(
-        input.user_id,
-        context.workspaceId,
-        {
-          telegramDailyReport: input.data.telegramDailyReport,
-          telegramManagerReport: input.data.telegramManagerReport,
-          telegramWeeklyReport: input.data.telegramWeeklyReport,
-          telegramMonthlyReport: input.data.telegramMonthlyReport,
-          telegramSkipWeekends: input.data.telegramSkipWeekends,
-        },
-      );
+      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+        telegramDailyReport: input.data.telegramDailyReport,
+        telegramManagerReport: input.data.telegramManagerReport,
+        telegramWeeklyReport: input.data.telegramWeeklyReport,
+        telegramMonthlyReport: input.data.telegramMonthlyReport,
+        telegramSkipWeekends: input.data.telegramSkipWeekends,
+      });
 
       if (input.data.telegramChatId !== undefined) {
         const trimmed = input.data.telegramChatId?.trim() ?? "";
@@ -74,9 +64,7 @@ export const updateTelegramSettings = workspaceProcedure
         "reportMonthlyTime",
       ] as const;
 
-      const hasScheduleUpdates = scheduleKeys.some(
-        (k) => input.data[k] !== undefined,
-      );
+      const hasScheduleUpdates = scheduleKeys.some((k) => input.data[k] !== undefined);
 
       if (hasScheduleUpdates) {
         if (!canUpdateReportSchedule) {
@@ -86,16 +74,11 @@ export const updateTelegramSettings = workspaceProcedure
         }
 
         const username = actorUsername;
-        const reportDailyTimeKey =
-          REPORT_PROMPTS_CAMEL_TO_SNAKE.reportDailyTime;
-        const reportWeeklyDayKey =
-          REPORT_PROMPTS_CAMEL_TO_SNAKE.reportWeeklyDay;
-        const reportWeeklyTimeKey =
-          REPORT_PROMPTS_CAMEL_TO_SNAKE.reportWeeklyTime;
-        const reportMonthlyDayKey =
-          REPORT_PROMPTS_CAMEL_TO_SNAKE.reportMonthlyDay;
-        const reportMonthlyTimeKey =
-          REPORT_PROMPTS_CAMEL_TO_SNAKE.reportMonthlyTime;
+        const reportDailyTimeKey = REPORT_PROMPTS_CAMEL_TO_SNAKE.reportDailyTime;
+        const reportWeeklyDayKey = REPORT_PROMPTS_CAMEL_TO_SNAKE.reportWeeklyDay;
+        const reportWeeklyTimeKey = REPORT_PROMPTS_CAMEL_TO_SNAKE.reportWeeklyTime;
+        const reportMonthlyDayKey = REPORT_PROMPTS_CAMEL_TO_SNAKE.reportMonthlyDay;
+        const reportMonthlyTimeKey = REPORT_PROMPTS_CAMEL_TO_SNAKE.reportMonthlyTime;
 
         // Workspace settings use snake_case keys.
         const scheduleUpdates = [
@@ -122,13 +105,7 @@ export const updateTelegramSettings = workspaceProcedure
         ];
         for (const { key, value } of scheduleUpdates) {
           if (value !== undefined) {
-            await settingsService.updateSetting(
-              key,
-              value,
-              null,
-              context.workspaceId,
-              username,
-            );
+            await settingsService.updateSetting(key, value, null, context.workspaceId, username);
           }
         }
       }

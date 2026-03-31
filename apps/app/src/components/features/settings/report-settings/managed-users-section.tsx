@@ -10,10 +10,7 @@ import {
   Label,
 } from "@calls/ui";
 import type React from "react";
-import type {
-  ReportSettingsForm,
-  ReportSettingsUserOption,
-} from "./report-settings-types";
+import type { ReportSettingsForm, ReportSettingsUserOption } from "./report-settings-types";
 
 function getDisplayName(u: ReportSettingsUserOption): string {
   const parts = [u.givenName, u.familyName].filter(Boolean);
@@ -42,30 +39,24 @@ export function ManagedUsersSection({
   return (
     <Card className="border-border/50 bg-card/50">
       <CardHeader className="px-4 pb-0">
-        <CardTitle className="text-base">
-          Сводный отчёт по выбранным менеджерам
-        </CardTitle>
+        <CardTitle className="text-base">Сводный отчёт по выбранным менеджерам</CardTitle>
         <CardDescription>
-          Если список пуст — отчёты попадут по всем менеджерам. Сейчас
-          выбранных: {selectedCount}.
+          Если список пуст — отчёты попадут по всем менеджерам. Сейчас выбранных: {selectedCount}.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Выберите, по каким менеджерам включать данные в сводный отчёт в
-          Telegram (опция «Получать отчеты по всем менеджерам» настраивается в
-          Управлении пользователями). Если никого не выбрано — в сводку попадают
-          все.
+          Выберите, по каким менеджерам включать данные в сводный отчёт в Telegram (опция «Получать
+          отчеты по всем менеджерам» настраивается в Управлении пользователями). Если никого не
+          выбрано — в сводку попадают все.
         </p>
         <div className="flex max-h-50 flex-col gap-1.5 overflow-y-auto">
           {allUsers
             .filter((u) => u.id !== user.id)
             .map((u) => {
               const display = getDisplayName(u) || u.email || "—";
-              const checked =
-                form.reportManagedUserIds?.includes(u.id) ?? false;
-              const label =
-                display !== u.email ? `${display} (${u.email})` : display;
+              const checked = form.reportManagedUserIds?.includes(u.id) ?? false;
+              const label = display !== u.email ? `${display} (${u.email})` : display;
               return (
                 <Label
                   key={u.id}
@@ -78,9 +69,7 @@ export function ManagedUsersSection({
                       setForm((f) => ({
                         ...f,
                         reportManagedUserIds:
-                          value === true
-                            ? [...ids, u.id]
-                            : ids.filter((id) => id !== u.id),
+                          value === true ? [...ids, u.id] : ids.filter((id) => id !== u.id),
                       }));
                     }}
                   />
@@ -89,9 +78,7 @@ export function ManagedUsersSection({
               );
             })}
           {allUsers.length <= 1 && (
-            <span className="text-sm text-muted-foreground">
-              Нет других пользователей
-            </span>
+            <span className="text-sm text-muted-foreground">Нет других пользователей</span>
           )}
         </div>
       </CardContent>

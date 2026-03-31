@@ -35,10 +35,7 @@ export const get = workspaceProcedure
     }
 
     const managerFromWorkspace = call.internalNumber
-      ? await usersRepository.findUserByInternalNumber(
-          call.workspaceId,
-          call.internalNumber,
-        )
+      ? await usersRepository.findUserByInternalNumber(call.workspaceId, call.internalNumber)
       : null;
     const operatorName =
       (transcript?.metadata &&
@@ -50,9 +47,7 @@ export const get = workspaceProcedure
       call.name ??
       null;
     const managerName =
-      (managerFromWorkspace
-        ? getDisplayNameFromUser(managerFromWorkspace)
-        : null) ??
+      (managerFromWorkspace ? getDisplayNameFromUser(managerFromWorkspace) : null) ??
       operatorName ??
       call.name ??
       null;
@@ -62,16 +57,9 @@ export const get = workspaceProcedure
     return {
       call: {
         ...publicCall,
-        timestamp:
-          call.timestamp instanceof Date
-            ? call.timestamp.toISOString()
-            : call.timestamp,
-        duration: (durationSeconds === undefined ? null : durationSeconds) as
-          | number
-          | null,
-        sizeBytes: (sizeBytes === undefined ? null : sizeBytes) as
-          | number
-          | null,
+        timestamp: call.timestamp instanceof Date ? call.timestamp.toISOString() : call.timestamp,
+        duration: (durationSeconds === undefined ? null : durationSeconds) as number | null,
+        sizeBytes: (sizeBytes === undefined ? null : sizeBytes) as number | null,
         managerName,
         operatorName,
         managerId: managerFromWorkspace?.id ?? null,

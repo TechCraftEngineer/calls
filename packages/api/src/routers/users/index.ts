@@ -28,7 +28,6 @@ export const usersRouter = {
   updateReportParamsSettings: userSettingsRouter.updateReportParamsSettings,
   updateKpiSettings: userSettingsRouter.updateKpiSettings,
   updateFilterSettings: userSettingsRouter.updateFilterSettings,
-  updateReportManagedUsersSettings:
-    userSettingsRouter.updateReportManagedUsersSettings,
+  updateReportManagedUsersSettings: userSettingsRouter.updateReportManagedUsersSettings,
   updateEvaluationSettings: userSettingsRouter.updateEvaluationSettings,
 };

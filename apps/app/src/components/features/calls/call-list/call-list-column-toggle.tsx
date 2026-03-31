@@ -54,9 +54,7 @@ export function CallListColumnToggle({
 
       {showColumnToggle && (
         <div className="absolute right-0 top-10 bg-white border border-gray-200 rounded-lg p-3 shadow-lg w-[200px] z-100">
-          <div className="text-xs font-bold mb-2 text-gray-400 uppercase">
-            Видимость колонок
-          </div>
+          <div className="text-xs font-bold mb-2 text-gray-400 uppercase">Видимость колонок</div>
           {orderedColumns.map((col) => (
             <label
               key={col.key}
@@ -71,12 +69,7 @@ export function CallListColumnToggle({
             </label>
           ))}
           <div className="mt-3 pt-3 border-t border-gray-200">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onResetOrder}
-              className="w-full text-xs"
-            >
+            <Button variant="outline" size="sm" onClick={onResetOrder} className="w-full text-xs">
               Сбросить порядок колонок
             </Button>
           </div>

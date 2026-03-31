@@ -9,18 +9,14 @@ export interface FormValidationError {
   message: string;
 }
 
-const optionalEmailSchema = z
-  .union([z.string().email(), z.literal("")])
-  .optional();
+const optionalEmailSchema = z.union([z.string().email(), z.literal("")]).optional();
 const reportFiltersValidationSchema = editUserFormSchema.pick({
   givenName: true,
   email: true,
   filterMinDuration: true,
   filterMinReplicas: true,
 });
-type ReportFiltersValidationInput = z.input<
-  typeof reportFiltersValidationSchema
->;
+type ReportFiltersValidationInput = z.input<typeof reportFiltersValidationSchema>;
 
 export function useUserFormValidation() {
   const [errors, setErrors] = useState<FormValidationError[]>([]);
@@ -29,22 +25,19 @@ export function useUserFormValidation() {
     return optionalEmailSchema.safeParse(email || "").success;
   }, []);
 
-  const validateForm = useCallback(
-    (form: ReportFiltersValidationInput): FormValidationError[] => {
-      const result = reportFiltersValidationSchema.safeParse({
-        givenName: form.givenName,
-        email: form.email ?? "",
-        filterMinDuration: form.filterMinDuration,
-        filterMinReplicas: form.filterMinReplicas,
-      });
-      if (result.success) return [];
-      return result.error.issues.map((e) => ({
-        field: (e.path[0] as string) ?? "root",
-        message: e.message,
-      }));
-    },
-    [],
-  );
+  const validateForm = useCallback((form: ReportFiltersValidationInput): FormValidationError[] => {
+    const result = reportFiltersValidationSchema.safeParse({
+      givenName: form.givenName,
+      email: form.email ?? "",
+      filterMinDuration: form.filterMinDuration,
+      filterMinReplicas: form.filterMinReplicas,
+    });
+    if (result.success) return [];
+    return result.error.issues.map((e) => ({
+      field: (e.path[0] as string) ?? "root",
+      message: e.message,
+    }));
+  }, []);
 
   const clearErrors = useCallback(() => {
     setErrors([]);

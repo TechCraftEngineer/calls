@@ -5,10 +5,7 @@ import type { CallWithDetails } from "./types";
 
 interface RecordColumnCellProps {
   item: CallWithDetails;
-  onGenerateRecommendations: (
-    callId: string,
-    existingRecommendations?: string[],
-  ) => void;
+  onGenerateRecommendations: (callId: string, existingRecommendations?: string[]) => void;
   onTranscribe?: (callId: string) => void;
   onPlay?: (callId: string, number: string) => void;
   isLoadingRecommendations: boolean;
@@ -107,8 +104,7 @@ export function RecordColumnCell({
     );
   }
 
-  const isRecommendationsLoading =
-    isLoadingRecommendations && recommendationsCallId === call.id;
+  const isRecommendationsLoading = isLoadingRecommendations && recommendationsCallId === call.id;
 
   return (
     <div
@@ -127,10 +123,7 @@ export function RecordColumnCell({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          onGenerateRecommendations(
-            call.id,
-            evaluation?.managerRecommendations ?? undefined,
-          );
+          onGenerateRecommendations(call.id, evaluation?.managerRecommendations ?? undefined);
         }}
         disabled={isRecommendationsLoading}
         title="Сформировать рекомендации"

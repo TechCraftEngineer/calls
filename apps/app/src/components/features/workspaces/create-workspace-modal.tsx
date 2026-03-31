@@ -9,11 +9,7 @@ import { z } from "zod";
 import { useORPC } from "@/orpc/react";
 
 const createWorkspaceSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, "Введите название")
-    .max(100, "Не более 100 символов"),
+  name: z.string().trim().min(1, "Введите название").max(100, "Не более 100 символов"),
 });
 
 type CreateWorkspaceFormData = z.infer<typeof createWorkspaceSchema>;
@@ -23,10 +19,7 @@ interface CreateWorkspaceModalProps {
   onSuccess: (workspaceId: string) => void;
 }
 
-export default function CreateWorkspaceModal({
-  onClose,
-  onSuccess,
-}: CreateWorkspaceModalProps) {
+export default function CreateWorkspaceModal({ onClose, onSuccess }: CreateWorkspaceModalProps) {
   const orpc = useORPC();
   const {
     register,
@@ -46,8 +39,7 @@ export default function CreateWorkspaceModal({
         onSuccess(workspace.id);
       },
       onError: (err) => {
-        const msg =
-          err instanceof Error ? err.message : "Не удалось создать компанию";
+        const msg = err instanceof Error ? err.message : "Не удалось создать компанию";
         setError("root", { message: msg });
         toast.error(msg);
       },
@@ -72,23 +64,15 @@ export default function CreateWorkspaceModal({
             <div className="w-10 h-10 bg-[#FFD600] rounded-lg flex items-center justify-center font-black text-lg">
               M
             </div>
-            <h2 className="text-xl font-bold text-gray-900 m-0">
-              Создать компанию
-            </h2>
+            <h2 className="text-xl font-bold text-gray-900 m-0">Создать компанию</h2>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            onClick={onClose}
-          >
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose}>
             &times;
           </Button>
         </div>
 
         <p className="text-sm text-gray-500 m-0 leading-relaxed">
-          Компания объединяет команду и данные. Укажите название компании или
-          проекта.
+          Компания объединяет команду и данные. Укажите название компании или проекта.
         </p>
 
         {errors.root && (
@@ -100,10 +84,7 @@ export default function CreateWorkspaceModal({
 
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="name"
-              className="text-[13px] font-semibold text-gray-700"
-            >
+            <label htmlFor="name" className="text-[13px] font-semibold text-gray-700">
               Название
             </label>
             <Input
@@ -116,20 +97,11 @@ export default function CreateWorkspaceModal({
               aria-invalid={!!errors.name}
               {...register("name")}
             />
-            {errors.name && (
-              <span className="text-xs text-red-500">
-                {errors.name.message}
-              </span>
-            )}
+            {errors.name && <span className="text-xs text-red-500">{errors.name.message}</span>}
           </div>
 
           <div className="flex gap-3 mt-2">
-            <Button
-              type="button"
-              variant="link"
-              onClick={onClose}
-              className="text-foreground"
-            >
+            <Button type="button" variant="link" onClick={onClose} className="text-foreground">
               Отмена
             </Button>
             <Button

@@ -56,8 +56,8 @@ export function BulkDeleteConfirmModal({
             Удалить выбранные звонки
           </DialogTitle>
           <DialogDescription>
-            Будет удалено {calls.length} {getRecordsLabel(calls.length)}. Это
-            действие нельзя отменить.
+            Будет удалено {calls.length} {getRecordsLabel(calls.length)}. Это действие нельзя
+            отменить.
           </DialogDescription>
         </DialogHeader>
 
@@ -65,10 +65,7 @@ export function BulkDeleteConfirmModal({
           <div className="mb-2 font-medium">Выбраны звонки:</div>
           <div className="space-y-1.5">
             {previewCalls.map(({ call }) => (
-              <div
-                key={call.id}
-                className="flex items-center justify-between gap-3 text-sm"
-              >
+              <div key={call.id} className="flex items-center justify-between gap-3 text-sm">
                 <span className="truncate">{call.number || "Без номера"}</span>
                 <span className="text-muted-foreground shrink-0">
                   {new Date(call.timestamp).toLocaleString("ru-RU")}
@@ -76,28 +73,17 @@ export function BulkDeleteConfirmModal({
               </div>
             ))}
             {hiddenCount > 0 && (
-              <div className="text-muted-foreground text-sm">
-                И еще {hiddenCount}
-              </div>
+              <div className="text-muted-foreground text-sm">И еще {hiddenCount}</div>
             )}
           </div>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button
-            variant="link"
-            onClick={onCancel}
-            disabled={deleting}
-            className="text-foreground"
-          >
+          <Button variant="link" onClick={onCancel} disabled={deleting} className="text-foreground">
             Отмена
           </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={deleting}>
-            {deleting ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Trash2 className="size-4" />
-            )}
+            {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
             Удалить
           </Button>
         </DialogFooter>

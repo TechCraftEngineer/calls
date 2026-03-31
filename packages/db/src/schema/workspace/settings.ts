@@ -4,14 +4,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import {
-  index,
-  pgTable,
-  text,
-  timestamp,
-  unique,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
 
 export const workspaceSettings = pgTable(
@@ -27,10 +20,7 @@ export const workspaceSettings = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => [
-    unique("workspace_settings_workspace_key_unique").on(
-      table.workspaceId,
-      table.key,
-    ),
+    unique("workspace_settings_workspace_key_unique").on(table.workspaceId, table.key),
     index("workspace_settings_key_idx").on(table.key),
     index("workspace_settings_workspace_idx").on(table.workspaceId),
   ],

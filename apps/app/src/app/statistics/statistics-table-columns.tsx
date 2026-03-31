@@ -16,8 +16,7 @@ function getScoreBadgeClasses(scoreNum: number): string {
           : scoreNum === 4
             ? "bg-[#4CAF50]"
             : "bg-[#FFD600]";
-  const text =
-    scoreNum <= 2 ? "text-white" : scoreNum === 5 ? "text-black" : "text-white";
+  const text = scoreNum <= 2 ? "text-white" : scoreNum === 5 ? "text-black" : "text-white";
   return `${base} ${bg} ${text}`;
 }
 
@@ -26,9 +25,7 @@ export function getStatisticsColumns(): ColumnDef<StatsRow>[] {
     {
       id: "name",
       accessorKey: "name",
-      header: ({ column }) => (
-        <DataGridColumnHeader column={column} title="Сотрудник" />
-      ),
+      header: ({ column }) => <DataGridColumnHeader column={column} title="Сотрудник" />,
       cell: ({ row }) => {
         const { isTotalRow, managerCount } = row.original;
         const suffix =
@@ -56,9 +53,7 @@ export function getStatisticsColumns(): ColumnDef<StatsRow>[] {
     {
       id: "internalNumber",
       accessorKey: "internalNumber",
-      header: ({ column }) => (
-        <DataGridColumnHeader column={column} title="Внутренний номер" />
-      ),
+      header: ({ column }) => <DataGridColumnHeader column={column} title="Внутренний номер" />,
       cell: ({ row }) => row.original.internalNumber || "—",
       meta: {
         headerTitle: "Внутренний номер",
@@ -68,9 +63,7 @@ export function getStatisticsColumns(): ColumnDef<StatsRow>[] {
     {
       id: "outgoingCount",
       accessorFn: (row) => row.outgoing?.count ?? 0,
-      header: ({ column }) => (
-        <DataGridColumnHeader column={column} title="Исходящие" />
-      ),
+      header: ({ column }) => <DataGridColumnHeader column={column} title="Исходящие" />,
       cell: ({ row }) => (
         <span className={row.original.isTotalRow ? "font-bold" : ""}>
           {row.original.outgoing?.count ?? 0}
@@ -84,9 +77,7 @@ export function getStatisticsColumns(): ColumnDef<StatsRow>[] {
     {
       id: "incomingCount",
       accessorFn: (row) => row.incoming?.count ?? 0,
-      header: ({ column }) => (
-        <DataGridColumnHeader column={column} title="Входящие" />
-      ),
+      header: ({ column }) => <DataGridColumnHeader column={column} title="Входящие" />,
       cell: ({ row }) => (
         <span className={row.original.isTotalRow ? "font-bold" : ""}>
           {row.original.incoming?.count ?? 0}
@@ -101,10 +92,7 @@ export function getStatisticsColumns(): ColumnDef<StatsRow>[] {
       id: "outgoingDuration",
       accessorFn: (row) => Math.floor((row.outgoing?.duration ?? 0) / 60),
       header: ({ column }) => (
-        <DataGridColumnHeader
-          column={column}
-          title="Длительность исходящих звонков, мин"
-        />
+        <DataGridColumnHeader column={column} title="Длительность исходящих звонков, мин" />
       ),
       cell: ({ row }) => (
         <span className={row.original.isTotalRow ? "font-bold" : ""}>
@@ -120,10 +108,7 @@ export function getStatisticsColumns(): ColumnDef<StatsRow>[] {
       id: "incomingDuration",
       accessorFn: (row) => Math.floor((row.incoming?.duration ?? 0) / 60),
       header: ({ column }) => (
-        <DataGridColumnHeader
-          column={column}
-          title="Длительность входящих звонков, мин"
-        />
+        <DataGridColumnHeader column={column} title="Длительность входящих звонков, мин" />
       ),
       cell: ({ row }) => (
         <span className={row.original.isTotalRow ? "font-bold" : ""}>
@@ -139,11 +124,7 @@ export function getStatisticsColumns(): ColumnDef<StatsRow>[] {
       id: "scoreDistribution",
       accessorKey: "scoreDistribution",
       header: ({ column }) => (
-        <DataGridColumnHeader
-          column={column}
-          title="Распределение оценок"
-          visibility={false}
-        />
+        <DataGridColumnHeader column={column} title="Распределение оценок" visibility={false} />
       ),
       cell: ({ row }) => {
         if (row.original.isTotalRow) return "—";

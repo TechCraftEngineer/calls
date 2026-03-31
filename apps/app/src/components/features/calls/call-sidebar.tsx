@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Separator,
-} from "@calls/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, Separator } from "@calls/ui";
 import { CallWaveformPlayer } from "./call-waveform-player";
 
 interface EvaluationDetail {
@@ -89,12 +82,8 @@ export default function CallSidebar({
       {/* Абонент */}
       <Card className="sidebar-card">
         <CardContent className="p-4">
-          <div
-            className={`text-lg font-bold ${call.customerName ? "text-[#111]" : "text-[#999]"}`}
-          >
-            {call.customerName
-              ? `Абонент: ${call.customerName}`
-              : "Имя: не определено"}
+          <div className={`text-lg font-bold ${call.customerName ? "text-[#111]" : "text-[#999]"}`}>
+            {call.customerName ? `Абонент: ${call.customerName}` : "Имя: не определено"}
           </div>
         </CardContent>
       </Card>
@@ -169,19 +158,14 @@ export default function CallSidebar({
                   }}
                 />
               </div>
-              <p style={{ fontSize: "13px", color: "#666", lineHeight: 1.6 }}>
-                {qualityFeedback}
-              </p>
+              <p style={{ fontSize: "13px", color: "#666", lineHeight: 1.6 }}>{qualityFeedback}</p>
             </div>
           )}
         </CardContent>
       </Card>
 
       {/* Рекомендации */}
-      <Card
-        className="sidebar-card"
-        style={{ background: "#FFFDF0", borderColor: "#FFECB3" }}
-      >
+      <Card className="sidebar-card" style={{ background: "#FFFDF0", borderColor: "#FFECB3" }}>
         <CardHeader className="flex flex-row justify-between items-center pb-3 px-6 pt-6">
           <CardTitle className="sidebar-card-title text-[#975A16] flex items-center gap-2 m-0">
             💡 РЕКОМЕНДАЦИИ
@@ -195,15 +179,13 @@ export default function CallSidebar({
           >
             {isGeneratingRecommendations
               ? "Загрузка…"
-              : evaluation?.managerRecommendations &&
-                  evaluation.managerRecommendations.length > 0
+              : evaluation?.managerRecommendations && evaluation.managerRecommendations.length > 0
                 ? "Обновить"
                 : "Сформировать"}
           </Button>
         </CardHeader>
         <CardContent className="px-6 pb-6 pt-0">
-          {evaluation?.managerRecommendations &&
-          evaluation.managerRecommendations.length > 0 ? (
+          {evaluation?.managerRecommendations && evaluation.managerRecommendations.length > 0 ? (
             <>
               <p
                 style={{
@@ -243,8 +225,7 @@ export default function CallSidebar({
             </>
           ) : (
             <p className="text-[13px] text-[#856404] italic m-0">
-              Нажмите «Сформировать», чтобы получить рекомендации с учётом
-              истории звонков.
+              Нажмите «Сформировать», чтобы получить рекомендации с учётом истории звонков.
             </p>
           )}
         </CardContent>

@@ -75,9 +75,7 @@ export function validateFtpCredentials(
 
   // Если хотя бы одно поле заполнено, все должны быть заполнены
   const hasAnyValue = [host, user, password].some((v) => v && v.trim() !== "");
-  const hasAllValues = [host, user, password].every(
-    (v) => v && v.trim() !== "",
-  );
+  const hasAllValues = [host, user, password].every((v) => v && v.trim() !== "");
 
   if (hasAnyValue && !hasAllValues) {
     errors.push("Заполните все поля подключения");

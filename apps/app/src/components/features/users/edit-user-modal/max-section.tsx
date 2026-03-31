@@ -25,9 +25,7 @@ export function MaxSection({
     <div className="mb-4 p-4 bg-[#f5f7fa] rounded-lg">
       <h3 className="m-0 mb-3 text-sm font-bold">MAX Отчеты</h3>
       <div className="mb-3">
-        <label className="block mb-1 text-[13px] font-semibold">
-          MAX Chat ID
-        </label>
+        <label className="block mb-1 text-[13px] font-semibold">MAX Chat ID</label>
         <Input
           type="text"
           value={form.maxChatId}
@@ -37,8 +35,7 @@ export function MaxSection({
         />
       </div>
       <div className="mb-3">
-        {(editUser.maxChatId ??
-        (editUser as { max_chat_id?: string }).max_chat_id) ? (
+        {(editUser.maxChatId ?? (editUser as { max_chat_id?: string }).max_chat_id) ? (
           <Button
             type="button"
             variant="outline"
@@ -62,10 +59,7 @@ export function MaxSection({
       </div>
       <div className="flex flex-col gap-2">
         {(["maxDailyReport", "maxManagerReport"] as const).map((key) => (
-          <label
-            key={key}
-            className="flex items-center gap-2 text-[13px] cursor-pointer"
-          >
+          <label key={key} className="flex items-center gap-2 text-[13px] cursor-pointer">
             <input
               type="checkbox"
               checked={form[key]}

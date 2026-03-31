@@ -1,7 +1,4 @@
-import {
-  evaluationTemplatesRepository,
-  userWorkspaceSettingsRepository,
-} from "@calls/db";
+import { evaluationTemplatesRepository, userWorkspaceSettingsRepository } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../../orpc";
@@ -10,10 +7,7 @@ export const deleteEvaluationTemplate = workspaceAdminProcedure
   .input(z.object({ id: z.string().uuid() }))
   .handler(async ({ context, input }) => {
     // First, get the template to find its slug
-    const template = await evaluationTemplatesRepository.findById(
-      input.id,
-      context.workspaceId,
-    );
+    const template = await evaluationTemplatesRepository.findById(input.id, context.workspaceId);
 
     if (!template) {
       throw new ORPCError("NOT_FOUND", {
@@ -30,10 +24,7 @@ export const deleteEvaluationTemplate = workspaceAdminProcedure
       );
 
     // Now delete the template
-    const ok = await evaluationTemplatesRepository.delete(
-      input.id,
-      context.workspaceId,
-    );
+    const ok = await evaluationTemplatesRepository.delete(input.id, context.workspaceId);
 
     if (!ok) {
       throw new ORPCError("NOT_FOUND", {

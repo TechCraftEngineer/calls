@@ -11,34 +11,23 @@ import { initializeLangfuseTracing } from "@calls/ai/otel";
 
 initializeLangfuseTracing();
 
-const {
-  createApp,
-  port,
-  checkDatabaseConnection,
-  setupTelegramWebhooks,
-  createLogger,
-} = await import("./main");
+const { createApp, port, checkDatabaseConnection, setupTelegramWebhooks, createLogger } =
+  await import("./main");
 
 const backendLogger = createLogger("backend-server");
 
 (async () => {
   const dbConnected = await checkDatabaseConnection();
   if (!dbConnected) {
-    backendLogger.error(
-      "Failed to connect to database - server may not function properly",
-    );
+    backendLogger.error("Failed to connect to database - server may not function properly");
   }
 
   const webhookSetupResult = await setupTelegramWebhooks();
   if (!webhookSetupResult.success) {
-    backendLogger.warn(
-      "Some Telegram webhooks failed to setup, but server will continue running",
-      {
-        failedCount: webhookSetupResult.results.filter((r) => !r.success)
-          .length,
-        totalCount: webhookSetupResult.results.length,
-      },
-    );
+    backendLogger.warn("Some Telegram webhooks failed to setup, but server will continue running", {
+      failedCount: webhookSetupResult.results.filter((r) => !r.success).length,
+      totalCount: webhookSetupResult.results.length,
+    });
   } else {
     backendLogger.info("All Telegram webhooks setup successfully");
   }

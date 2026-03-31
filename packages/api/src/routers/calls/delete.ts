@@ -20,9 +20,7 @@ export const deleteCall = workspaceAdminProcedure
       });
     }
     const userEmail =
-      context.user &&
-      typeof context.user === "object" &&
-      "email" in context.user
+      context.user && typeof context.user === "object" && "email" in context.user
         ? context.user.email
         : undefined;
     const email = typeof userEmail === "string" ? userEmail : "неизвестен";

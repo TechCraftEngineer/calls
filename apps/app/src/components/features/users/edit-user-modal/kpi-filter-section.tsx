@@ -8,10 +8,7 @@ interface KpiFilterSectionProps {
   onFormChange: (updates: Partial<EditUserForm>) => void;
 }
 
-export function KpiFilterSection({
-  form,
-  onFormChange,
-}: KpiFilterSectionProps) {
+export function KpiFilterSection({ form, onFormChange }: KpiFilterSectionProps) {
   return (
     <>
       {/* Настройки KPI */}
@@ -21,16 +18,11 @@ export function KpiFilterSection({
           [
             ["kpiBaseSalary", "Базовый оклад (₽)"],
             ["kpiTargetBonus", "Целевой бонус (₽)"],
-            [
-              "kpiTargetTalkTimeMinutes",
-              "Целевое время разговоров в месяц (мин)",
-            ],
+            ["kpiTargetTalkTimeMinutes", "Целевое время разговоров в месяц (мин)"],
           ] as const
         ).map(([key, label]) => (
           <div key={key} className="mb-3">
-            <label className="block mb-1 text-[13px] font-semibold">
-              {label}
-            </label>
+            <label className="block mb-1 text-[13px] font-semibold">{label}</label>
             <Input
               type="number"
               value={form[key]}
@@ -62,9 +54,7 @@ export function KpiFilterSection({
           Автоответчики
         </label>
         <div className="mb-2">
-          <label className="block mb-1 text-[13px] font-semibold">
-            Звонки короче (сек)
-          </label>
+          <label className="block mb-1 text-[13px] font-semibold">Звонки короче (сек)</label>
           <Input
             type="number"
             min={0}
@@ -80,9 +70,7 @@ export function KpiFilterSection({
           />
         </div>
         <div>
-          <label className="block mb-1 text-[13px] font-semibold">
-            Меньше реплик
-          </label>
+          <label className="block mb-1 text-[13px] font-semibold">Меньше реплик</label>
           <Input
             type="number"
             min={0}

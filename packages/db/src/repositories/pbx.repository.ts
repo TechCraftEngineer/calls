@@ -254,10 +254,7 @@ export const pbxRepository = {
         invitation: schema.invitations,
       })
       .from(schema.workspacePbxLinks)
-      .leftJoin(
-        schema.user,
-        eq(schema.workspacePbxLinks.userId, schema.user.id),
-      )
+      .leftJoin(schema.user, eq(schema.workspacePbxLinks.userId, schema.user.id))
       .leftJoin(
         schema.invitations,
         eq(schema.workspacePbxLinks.invitationId, schema.invitations.id),
@@ -270,27 +267,16 @@ export const pbxRepository = {
       );
   },
 
-  async findCandidateUsers(
-    workspaceId: string,
-    extensions: string[],
-    emails: string[],
-  ) {
-    const cleanExtensions = [
-      ...new Set(extensions.map((item) => item.trim()).filter(Boolean)),
-    ];
+  async findCandidateUsers(workspaceId: string, extensions: string[], emails: string[]) {
+    const cleanExtensions = [...new Set(extensions.map((item) => item.trim()).filter(Boolean))];
     const cleanEmails = [
-      ...new Set(
-        emails.map((item) => item.trim().toLowerCase()).filter(Boolean),
-      ),
+      ...new Set(emails.map((item) => item.trim().toLowerCase()).filter(Boolean)),
     ];
 
     const members = await db
       .select({ memberId: schema.workspaceMembers.id, user: schema.user })
       .from(schema.workspaceMembers)
-      .innerJoin(
-        schema.user,
-        eq(schema.workspaceMembers.userId, schema.user.id),
-      )
+      .innerJoin(schema.user, eq(schema.workspaceMembers.userId, schema.user.id))
       .where(eq(schema.workspaceMembers.workspaceId, workspaceId));
 
     return members
@@ -321,9 +307,7 @@ export const pbxRepository = {
 
   async findCandidateInvitations(workspaceId: string, emails: string[]) {
     const cleanEmails = [
-      ...new Set(
-        emails.map((item) => item.trim().toLowerCase()).filter(Boolean),
-      ),
+      ...new Set(emails.map((item) => item.trim().toLowerCase()).filter(Boolean)),
     ];
     if (cleanEmails.length === 0) return [];
 
@@ -486,10 +470,7 @@ export const pbxRepository = {
     return db
       .select({ link: schema.workspacePbxLinks, user: schema.user })
       .from(schema.workspacePbxLinks)
-      .leftJoin(
-        schema.user,
-        eq(schema.workspacePbxLinks.userId, schema.user.id),
-      )
+      .leftJoin(schema.user, eq(schema.workspacePbxLinks.userId, schema.user.id))
       .where(
         and(
           eq(schema.workspacePbxLinks.workspaceId, workspaceId),

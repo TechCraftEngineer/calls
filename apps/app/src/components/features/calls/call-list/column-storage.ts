@@ -1,8 +1,4 @@
-import {
-  COLUMN_ORDER_STORAGE_KEY,
-  COLUMNS,
-  DEFAULT_COLUMN_ORDER,
-} from "./constants";
+import { COLUMN_ORDER_STORAGE_KEY, COLUMNS, DEFAULT_COLUMN_ORDER } from "./constants";
 
 export function loadColumnOrder(): string[] {
   if (typeof window === "undefined") return DEFAULT_COLUMN_ORDER;
@@ -17,10 +13,7 @@ export function loadColumnOrder(): string[] {
     const allKeys = new Set(COLUMNS.map((c) => c.key));
     const savedKeys = new Set(parsed);
 
-    if (
-      allKeys.size !== savedKeys.size ||
-      !Array.from(allKeys).every((k) => savedKeys.has(k))
-    ) {
+    if (allKeys.size !== savedKeys.size || !Array.from(allKeys).every((k) => savedKeys.has(k))) {
       return DEFAULT_COLUMN_ORDER;
     }
 

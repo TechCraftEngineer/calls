@@ -6,11 +6,7 @@ import { workspaceAdminProcedure } from "../../../orpc";
 const updateSchema = z.object({
   id: z.string().uuid(),
   name: z.string().min(1).max(200, "Название слишком длинное").optional(),
-  description: z
-    .string()
-    .max(500, "Описание слишком длинное")
-    .optional()
-    .nullable(),
+  description: z.string().max(500, "Описание слишком длинное").optional().nullable(),
   systemPrompt: z
     .string()
     .min(1)
@@ -21,8 +17,7 @@ const updateSchema = z.object({
       return (
         lowerPrompt.includes("value_score") &&
         lowerPrompt.includes("manager_score") &&
-        (lowerPrompt.includes("value_explanation") ||
-          lowerPrompt.includes("manager_feedback"))
+        (lowerPrompt.includes("value_explanation") || lowerPrompt.includes("manager_feedback"))
       );
     }, "Промпт должен содержать обязательные поля: value_score, manager_score, value_explanation, manager_feedback")
     .optional(),
@@ -32,22 +27,14 @@ export const updateEvaluationTemplate = workspaceAdminProcedure
   .input(updateSchema)
   .handler(async ({ context, input }) => {
     const { id, ...data } = input;
-    const ok = await evaluationTemplatesRepository.update(
-      id,
-      context.workspaceId,
-      data,
-    );
+    const ok = await evaluationTemplatesRepository.update(id, context.workspaceId, data);
     if (!ok) {
       throw new ORPCError("NOT_FOUND", {
         message: "Шаблон не найден",
       });
     }
-    const updated = await evaluationTemplatesRepository.findById(
-      id,
-      context.workspaceId,
-    );
-    if (!updated)
-      throw new ORPCError("NOT_FOUND", { message: "Шаблон не найден" });
+    const updated = await evaluationTemplatesRepository.findById(id, context.workspaceId);
+    if (!updated) throw new ORPCError("NOT_FOUND", { message: "Шаблон не найден" });
     return {
       id: updated.id,
       slug: updated.slug,

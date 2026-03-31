@@ -85,9 +85,7 @@ export function CallWaveformPlayer({
       if (cancelled || !containerRef.current) return;
 
       const durationOverride =
-        typeof durationSeconds === "number" && durationSeconds > 0
-          ? durationSeconds
-          : undefined;
+        typeof durationSeconds === "number" && durationSeconds > 0 ? durationSeconds : undefined;
 
       const ws = WaveSurfer.create({
         container: el,
@@ -134,9 +132,7 @@ export function CallWaveformPlayer({
       ws.on("error", (err) => {
         console.error("WaveSurfer error:", err);
         setReady(false);
-        setLoadError(
-          err instanceof Error ? err.message : "Ошибка загрузки аудио",
-        );
+        setLoadError(err instanceof Error ? err.message : "Ошибка загрузки аудио");
       });
     });
 
@@ -175,11 +171,7 @@ export function CallWaveformPlayer({
   }
 
   if (isError || !isSuccess || !data) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        Файл записи не найден или недоступен
-      </p>
-    );
+    return <p className="text-muted-foreground text-sm">Файл записи не найден или недоступен</p>;
   }
 
   if (loadError) {
@@ -191,12 +183,7 @@ export function CallWaveformPlayer({
   }
 
   return (
-    <div
-      className={cn(
-        "rounded-lg border border-border/60 bg-muted/20 px-4 py-3",
-        className,
-      )}
-    >
+    <div className={cn("rounded-lg border border-border/60 bg-muted/20 px-4 py-3", className)}>
       <div className="mb-3 flex items-center gap-2">
         <Volume2 className="text-muted-foreground size-4 shrink-0" />
         <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
@@ -205,10 +192,7 @@ export function CallWaveformPlayer({
       </div>
 
       <div className="relative min-h-[72px] w-full overflow-hidden rounded-md">
-        <div
-          ref={containerRef}
-          className={cn("w-full", !ready && "invisible")}
-        />
+        <div ref={containerRef} className={cn("w-full", !ready && "invisible")} />
         {!ready && (
           <div className="absolute inset-0 flex items-center justify-center rounded-md bg-muted/30">
             <Loader2 className="text-muted-foreground size-6 animate-spin" />
@@ -226,11 +210,7 @@ export function CallWaveformPlayer({
           onClick={togglePlay}
           aria-label={playing ? "Пауза" : "Воспроизвести"}
         >
-          {playing ? (
-            <Pause className="size-5" />
-          ) : (
-            <Play className="size-5 pl-0.5" />
-          )}
+          {playing ? <Pause className="size-5" /> : <Play className="size-5 pl-0.5" />}
         </Button>
         <div className="text-muted-foreground flex items-center gap-2 text-xs tabular-nums">
           <span>{formatTime(currentTime)}</span>

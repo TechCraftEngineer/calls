@@ -4,15 +4,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import {
-  index,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  unique,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { index, jsonb, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { user } from "../auth/user";
 import { workspaces } from "../workspace/workspaces";
 
@@ -125,23 +117,13 @@ export const userWorkspaceSettings = pgTable(
       .notNull(),
   },
   (table) => [
-    unique("user_workspace_settings_user_workspace_unique").on(
-      table.userId,
-      table.workspaceId,
-    ),
+    unique("user_workspace_settings_user_workspace_unique").on(table.userId, table.workspaceId),
     index("user_workspace_settings_workspace_idx").on(table.workspaceId),
     index("user_workspace_settings_user_idx").on(table.userId),
-    index("user_workspace_settings_notification_gin_idx").using(
-      "gin",
-      table.notificationSettings,
-    ),
-    index("user_workspace_settings_report_gin_idx").using(
-      "gin",
-      table.reportSettings,
-    ),
+    index("user_workspace_settings_notification_gin_idx").using("gin", table.notificationSettings),
+    index("user_workspace_settings_report_gin_idx").using("gin", table.reportSettings),
   ],
 );
 
 export type UserWorkspaceSettings = typeof userWorkspaceSettings.$inferSelect;
-export type NewUserWorkspaceSettings =
-  typeof userWorkspaceSettings.$inferInsert;
+export type NewUserWorkspaceSettings = typeof userWorkspaceSettings.$inferInsert;

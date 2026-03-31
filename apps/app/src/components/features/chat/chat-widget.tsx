@@ -62,16 +62,12 @@ export default function ChatWidget() {
     } catch (e: unknown) {
       const errMsg =
         e && typeof e === "object" && "response" in e
-          ? (e as { response?: { data?: { detail?: string } } }).response?.data
-              ?.detail
+          ? (e as { response?: { data?: { detail?: string } } }).response?.data?.detail
           : e instanceof Error
             ? e.message
             : "Ошибка сети";
       setError(String(errMsg));
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: `Ошибка: ${errMsg}` },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", content: `Ошибка: ${errMsg}` }]);
     } finally {
       setLoading(false);
       inputRef.current?.focus();
@@ -101,9 +97,7 @@ export default function ChatWidget() {
           open ? "right-[-60px]" : "right-0"
         }`}
         onMouseEnter={(e) => {
-          if (!open)
-            e.currentTarget.style.transform =
-              "translateY(-50%) translateX(-4px)";
+          if (!open) e.currentTarget.style.transform = "translateY(-50%) translateX(-4px)";
         }}
         onMouseLeave={(e) => {
           if (!open) e.currentTarget.style.transform = "translateY(-50%)";
@@ -186,9 +180,7 @@ export default function ChatWidget() {
               <div
                 key={i}
                 className={`mb-2.5 p-2.5 rounded-lg whitespace-pre-wrap wrap-break-word text-sm ${
-                  m.role === "user"
-                    ? "bg-[#f0f0f0] ml-6 mr-0"
-                    : "bg-[#f9f9f9] ml-0 mr-6"
+                  m.role === "user" ? "bg-[#f0f0f0] ml-6 mr-0" : "bg-[#f9f9f9] ml-0 mr-6"
                 }`}
               >
                 {m.role === "user" ? "Вы" : "ИИ"}: {m.content}
@@ -198,11 +190,7 @@ export default function ChatWidget() {
             <div ref={messagesEndRef} />
           </div>
 
-          {error && (
-            <div className="p-2 bg-[#ffebee] text-[#c62828] text-xs">
-              {error}
-            </div>
-          )}
+          {error && <div className="p-2 bg-[#ffebee] text-[#c62828] text-xs">{error}</div>}
 
           <div className="p-3 border-t border-[#eee] shrink-0">
             <div className="flex gap-2">

@@ -8,8 +8,7 @@ export const getEvaluationTemplateBySlug = workspaceProcedure
   .input(z.object({ slug: z.string().min(1) }))
   .handler(async ({ context, input }) => {
     if (evaluationTemplatesRepository.isBuiltinSlug(input.slug)) {
-      const builtin =
-        EVALUATION_TEMPLATES[input.slug as EvaluationTemplateSlug];
+      const builtin = EVALUATION_TEMPLATES[input.slug as EvaluationTemplateSlug];
       return {
         slug: builtin.slug,
         name: builtin.name,

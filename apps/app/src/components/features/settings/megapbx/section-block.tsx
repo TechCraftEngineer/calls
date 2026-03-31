@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@calls/ui";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@calls/ui";
 
 export function SectionBlock({
   title,

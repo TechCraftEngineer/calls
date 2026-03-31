@@ -1,8 +1,4 @@
-import {
-  type DehydratedState,
-  dehydrate,
-  HydrationBoundary,
-} from "@tanstack/react-query";
+import { type DehydratedState, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { createQueryClient } from "./query-client";
 

@@ -17,17 +17,9 @@ import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-  DeleteAccountDialog,
-  SettingsPageShell,
-} from "@/components/features/settings";
+import { DeleteAccountDialog, SettingsPageShell } from "@/components/features/settings";
 import type { User } from "@/lib/auth";
-import {
-  authClient,
-  logout,
-  toRussianAuthMessage,
-  useSession,
-} from "@/lib/better-auth";
+import { authClient, logout, toRussianAuthMessage, useSession } from "@/lib/better-auth";
 import {
   type ChangePasswordFormData,
   changePasswordSchema,
@@ -91,9 +83,7 @@ export default function AccountSettingsPage() {
   const onProfileSubmit = async (data: UpdateProfileFormData) => {
     const result = await authClient.updateUser({ name: data.name });
     if (result.error) {
-      toast.error(
-        toRussianAuthMessage(result.error.message ?? "Ошибка сохранения"),
-      );
+      toast.error(toRussianAuthMessage(result.error.message ?? "Ошибка сохранения"));
       return;
     }
     toast.success("Имя обновлено");
@@ -106,9 +96,7 @@ export default function AccountSettingsPage() {
       newPassword: data.newPassword,
     });
     if (result.error) {
-      toast.error(
-        toRussianAuthMessage(result.error.message ?? "Ошибка смены пароля"),
-      );
+      toast.error(toRussianAuthMessage(result.error.message ?? "Ошибка смены пароля"));
       return;
     }
     toast.success("Пароль изменён");
@@ -125,20 +113,14 @@ export default function AccountSettingsPage() {
         callbackURL: paths.auth.signin,
       });
       if (result.error) {
-        toast.error(
-          toRussianAuthMessage(
-            result.error.message ?? "Не удалось удалить аккаунт",
-          ),
-        );
+        toast.error(toRussianAuthMessage(result.error.message ?? "Не удалось удалить аккаунт"));
         setDeleting(false);
         return;
       }
       await logout();
       router.replace(paths.auth.signin);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Не удалось удалить аккаунт",
-      );
+      toast.error(err instanceof Error ? err.message : "Не удалось удалить аккаунт");
       setDeleting(false);
     }
   };
@@ -163,12 +145,8 @@ export default function AccountSettingsPage() {
   return (
     <SettingsPageShell>
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Настройки аккаунта
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Имя, пароль и основные данные профиля
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">Настройки аккаунта</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Имя, пароль и основные данные профиля</p>
       </header>
 
       <div className="space-y-8">
@@ -179,15 +157,9 @@ export default function AccountSettingsPage() {
             <CardDescription>Отображаемое имя в системе</CardDescription>
           </CardHeader>
           <CardContent>
-            <form
-              onSubmit={profileForm.handleSubmit(onProfileSubmit)}
-              className="space-y-4"
-            >
+            <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
               <div>
-                <label
-                  htmlFor="name"
-                  className="mb-2 block text-sm font-medium"
-                >
+                <label htmlFor="name" className="mb-2 block text-sm font-medium">
                   Имя
                 </label>
                 <Input
@@ -203,16 +175,9 @@ export default function AccountSettingsPage() {
                   </p>
                 )}
               </div>
-              <div className="text-sm text-muted-foreground">
-                Email: {user.email}
-              </div>
-              <Button
-                type="submit"
-                disabled={profileForm.formState.isSubmitting}
-              >
-                {profileForm.formState.isSubmitting
-                  ? "Сохранение…"
-                  : "Сохранить имя"}
+              <div className="text-sm text-muted-foreground">Email: {user.email}</div>
+              <Button type="submit" disabled={profileForm.formState.isSubmitting}>
+                {profileForm.formState.isSubmitting ? "Сохранение…" : "Сохранить имя"}
               </Button>
             </form>
           </CardContent>
@@ -230,15 +195,9 @@ export default function AccountSettingsPage() {
           </CardHeader>
           <CardContent>
             {hasPassword ? (
-              <form
-                onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
-                className="space-y-4"
-              >
+              <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
                 <div>
-                  <label
-                    htmlFor="currentPassword"
-                    className="mb-2 block text-sm font-medium"
-                  >
+                  <label htmlFor="currentPassword" className="mb-2 block text-sm font-medium">
                     Текущий пароль
                   </label>
                   <PasswordInput
@@ -246,9 +205,7 @@ export default function AccountSettingsPage() {
                     {...passwordForm.register("currentPassword")}
                     placeholder="••••••••"
                     className="max-w-sm"
-                    aria-invalid={
-                      !!passwordForm.formState.errors.currentPassword
-                    }
+                    aria-invalid={!!passwordForm.formState.errors.currentPassword}
                   />
                   {passwordForm.formState.errors.currentPassword && (
                     <p className="mt-1 text-sm text-destructive">
@@ -257,10 +214,7 @@ export default function AccountSettingsPage() {
                   )}
                 </div>
                 <div>
-                  <label
-                    htmlFor="newPassword"
-                    className="mb-2 block text-sm font-medium"
-                  >
+                  <label htmlFor="newPassword" className="mb-2 block text-sm font-medium">
                     Новый пароль
                   </label>
                   <PasswordInput
@@ -279,13 +233,8 @@ export default function AccountSettingsPage() {
                     Минимум 8 символов, заглавная, строчная буква и цифра
                   </p>
                 </div>
-                <Button
-                  type="submit"
-                  disabled={passwordForm.formState.isSubmitting}
-                >
-                  {passwordForm.formState.isSubmitting
-                    ? "Сохранение…"
-                    : "Изменить пароль"}
+                <Button type="submit" disabled={passwordForm.formState.isSubmitting}>
+                  {passwordForm.formState.isSubmitting ? "Сохранение…" : "Изменить пароль"}
                 </Button>
               </form>
             ) : (
@@ -306,19 +255,13 @@ export default function AccountSettingsPage() {
         {/* Удаление аккаунта */}
         <Card className="border-destructive/50">
           <CardHeader>
-            <CardTitle className="text-destructive">
-              Удаление аккаунта
-            </CardTitle>
+            <CardTitle className="text-destructive">Удаление аккаунта</CardTitle>
             <CardDescription>
-              Безвозвратно удалить аккаунт и все связанные данные. Это действие
-              нельзя отменить.
+              Безвозвратно удалить аккаунт и все связанные данные. Это действие нельзя отменить.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
-              variant="destructive"
-              onClick={() => setDeleteDialogOpen(true)}
-            >
+            <Button variant="destructive" onClick={() => setDeleteDialogOpen(true)}>
               <Trash2 className="size-4" aria-hidden />
               Удалить аккаунт
             </Button>

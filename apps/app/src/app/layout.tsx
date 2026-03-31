@@ -15,9 +15,7 @@ const inter = Inter({
 
 const siteUrl =
   process.env.NEXT_PUBLIC_APP_URL ||
-  (process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "https://zvonki.qbsoft.ru");
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://zvonki.qbsoft.ru");
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -63,11 +61,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru" className={`${inter.variable} light`}>
       <body className={inter.className}>

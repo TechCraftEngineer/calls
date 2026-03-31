@@ -22,9 +22,7 @@ export default function ErrorPage({
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#F5F5F7]">
       <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold text-gray-900">
-          Что-то пошло не так
-        </h1>
+        <h1 className="mb-4 text-4xl font-bold text-gray-900">Что-то пошло не так</h1>
         <p className="mb-8 text-gray-600">
           Произошла непредвиденная ошибка. Попробуйте обновить страницу.
         </p>

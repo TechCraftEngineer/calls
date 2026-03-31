@@ -89,46 +89,35 @@ export default function WorkspaceMembersTable({
                   !isCurrentUser &&
                   (currentUserRole === "owner" ||
                     (currentUserRole === "admin" && m.role !== "owner"));
-                const canChangeRole =
-                  isOwner && !isCurrentUser && m.role !== "owner";
+                const canChangeRole = isOwner && !isCurrentUser && m.role !== "owner";
 
                 return (
                   <TableRow key={m.id}>
                     <TableCell className="font-semibold text-[#333]">
                       {m.user?.name || m.user?.email || "—"}
                     </TableCell>
-                    <TableCell className="text-[#555]">
-                      {m.user?.email || "—"}
-                    </TableCell>
+                    <TableCell className="text-[#555]">{m.user?.email || "—"}</TableCell>
                     <TableCell>
                       {canChangeRole ? (
                         <Select
                           value={m.role}
-                          onValueChange={(
-                            value: "owner" | "admin" | "member",
-                          ) => onUpdateRole(m.userId, value)}
+                          onValueChange={(value: "owner" | "admin" | "member") =>
+                            onUpdateRole(m.userId, value)
+                          }
                         >
                           <SelectTrigger className="w-[160px] h-8">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="admin">
-                              {ROLE_LABELS.admin}
-                            </SelectItem>
-                            <SelectItem value="member">
-                              {ROLE_LABELS.member}
-                            </SelectItem>
+                            <SelectItem value="admin">{ROLE_LABELS.admin}</SelectItem>
+                            <SelectItem value="member">{ROLE_LABELS.member}</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (
-                        <span className="text-[#555]">
-                          {ROLE_LABELS[m.role] ?? m.role}
-                        </span>
+                        <span className="text-[#555]">{ROLE_LABELS[m.role] ?? m.role}</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-[#555]">
-                      {formatDate(m.createdAt)}
-                    </TableCell>
+                    <TableCell className="text-[#555]">{formatDate(m.createdAt)}</TableCell>
                     <TableCell>
                       <div className="flex gap-3 justify-end items-center">
                         {isCurrentUser ? (
@@ -152,10 +141,7 @@ export default function WorkspaceMembersTable({
               })
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="text-center py-10 text-[#999]"
-                >
+                <TableCell colSpan={5} className="text-center py-10 text-[#999]">
                   Нет участников
                 </TableCell>
               </TableRow>

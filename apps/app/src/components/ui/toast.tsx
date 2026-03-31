@@ -1,13 +1,7 @@
 "use client";
 
 import { Button } from "@calls/ui";
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useState,
-} from "react";
+import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
 
 interface Toast {
   id: string;
@@ -32,11 +26,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const showToast = useCallback(
-    (
-      message: string,
-      type: Toast["type"] = "info",
-      duration: number = 5000,
-    ) => {
+    (message: string, type: Toast["type"] = "info", duration: number = 5000) => {
       const id = Math.random().toString(36).substr(2, 9);
       const toast: Toast = { id, message, type, duration };
 

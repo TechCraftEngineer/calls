@@ -8,8 +8,7 @@ test.describe("Google OAuth аутентификация", () => {
       await route.fulfill({
         status: 302,
         headers: {
-          Location:
-            "https://accounts.google.com/oauth/authorize?client_id=test&redirect_uri=test",
+          Location: "https://accounts.google.com/oauth/authorize?client_id=test&redirect_uri=test",
         },
       });
     });
@@ -71,9 +70,7 @@ test.describe("Google OAuth аутентификация", () => {
     await expect(page.locator("text=или")).not.toBeVisible();
   });
 
-  test('разделитель "или" отображается только с Google OAuth', async ({
-    page,
-  }) => {
+  test('разделитель "или" отображается только с Google OAuth', async ({ page }) => {
     await page.goto("/auth/signin");
 
     // Проверяем наличие разделителя
@@ -110,9 +107,7 @@ test.describe("Google OAuth аутентификация", () => {
     await expect(googleButton).toBeFocused();
 
     // Проверяем активацию по Enter
-    const requestPromise = page.waitForRequest((request) =>
-      request.url().includes("/api/auth"),
-    );
+    const requestPromise = page.waitForRequest((request) => request.url().includes("/api/auth"));
 
     await page.keyboard.press("Enter");
     await requestPromise;
@@ -156,9 +151,7 @@ test.describe("Google OAuth аутентификация", () => {
     // Перехватываем запрос и проверяем callback URL
     const requestPromise = page.waitForRequest((request) => {
       const url = request.url();
-      return (
-        url.includes("/api/auth/signin/google") && url.includes("callbackURL")
-      );
+      return url.includes("/api/auth/signin/google") && url.includes("callbackURL");
     });
 
     await page.click("text=Войти через Google");
@@ -167,8 +160,6 @@ test.describe("Google OAuth аутентификация", () => {
     const url = new URL(request.url());
 
     // Проверяем, что callback URL указывает на создание workspace
-    expect(url.searchParams.get("callbackURL")).toContain(
-      "/onboarding/create-workspace",
-    );
+    expect(url.searchParams.get("callbackURL")).toContain("/onboarding/create-workspace");
   });
 });

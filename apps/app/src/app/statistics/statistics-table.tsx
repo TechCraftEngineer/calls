@@ -32,10 +32,7 @@ export interface StatsRow {
   managerCount?: number;
 }
 
-function getRussianPlural(
-  count: number,
-  forms: [string, string, string],
-): string {
+function getRussianPlural(count: number, forms: [string, string, string]): string {
   const absCount = Math.abs(count);
   const mod100 = absCount % 100;
   if (mod100 >= 11 && mod100 <= 14) {
@@ -79,8 +76,7 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
     [parseIntegerParam, searchParams],
   );
 
-  const [pagination, setPagination] =
-    useState<PaginationState>(initialPagination);
+  const [pagination, setPagination] = useState<PaginationState>(initialPagination);
 
   useEffect(() => {
     setPagination((prev) => {
@@ -110,15 +106,10 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
   );
 
   const handlePaginationChange = useCallback(
-    (
-      updater: PaginationState | ((old: PaginationState) => PaginationState),
-    ) => {
+    (updater: PaginationState | ((old: PaginationState) => PaginationState)) => {
       setPagination((prev) => {
         const next = typeof updater === "function" ? updater(prev) : updater;
-        if (
-          next.pageIndex !== prev.pageIndex ||
-          next.pageSize !== prev.pageSize
-        ) {
+        if (next.pageIndex !== prev.pageIndex || next.pageSize !== prev.pageSize) {
           updatePaginationSearchParams(next);
         }
         return next;
@@ -239,24 +230,14 @@ export function StatisticsTable({ stats, loading }: StatisticsTableProps) {
                 {managerCount > 0 && (
                   <div className="text-[11px] text-[#999] font-normal mt-0.5">
                     {managerCount}{" "}
-                    {getRussianPlural(managerCount, [
-                      "менеджер",
-                      "менеджера",
-                      "менеджеров",
-                    ])}
+                    {getRussianPlural(managerCount, ["менеджер", "менеджера", "менеджеров"])}
                   </div>
                 )}
               </div>
               <div>Исходящие: {totalRow.outgoing.count}</div>
               <div>Входящие: {totalRow.incoming.count}</div>
-              <div>
-                Длительность исходящих:{" "}
-                {Math.floor(totalRow.outgoing.duration / 60)} мин
-              </div>
-              <div>
-                Длительность входящих:{" "}
-                {Math.floor(totalRow.incoming.duration / 60)} мин
-              </div>
+              <div>Длительность исходящих: {Math.floor(totalRow.outgoing.duration / 60)} мин</div>
+              <div>Длительность входящих: {Math.floor(totalRow.incoming.duration / 60)} мин</div>
             </div>
           </section>
           <div className="px-4 py-3 border-t border-[#EEE]">

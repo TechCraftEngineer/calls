@@ -20,8 +20,7 @@ export const update = workspaceProcedure
       });
 
     const user = await usersService.getUser(input.user_id);
-    if (!user)
-      throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+    if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     const d = input.data;
     const u = user as Record<string, unknown>;
@@ -37,17 +36,11 @@ export const update = workspaceProcedure
       });
 
       if (d.internalExtensions !== undefined) {
-        await usersService.updateUserInternalExtensions(
-          input.user_id,
-          d.internalExtensions,
-        );
+        await usersService.updateUserInternalExtensions(input.user_id, d.internalExtensions);
       }
 
       if (d.mobilePhones !== undefined) {
-        await usersService.updateUserMobilePhones(
-          input.user_id,
-          d.mobilePhones,
-        );
+        await usersService.updateUserMobilePhones(input.user_id, d.mobilePhones);
       }
 
       if (d.email !== undefined) {
@@ -62,57 +55,47 @@ export const update = workspaceProcedure
         await usersService.updateUserFilters(
           input.user_id,
           context.workspaceId,
-          d.filterExcludeAnsweringMachine ??
-            (u.filterExcludeAnsweringMachine as boolean) ??
-            false,
+          d.filterExcludeAnsweringMachine ?? (u.filterExcludeAnsweringMachine as boolean) ?? false,
           d.filterMinDuration ?? (u.filterMinDuration as number) ?? 0,
           d.filterMinReplicas ?? (u.filterMinReplicas as number) ?? 0,
         );
       }
 
-      await usersService.updateUserReportKpiSettings(
-        input.user_id,
-        context.workspaceId,
-        {
-          filterExcludeAnsweringMachine: d.filterExcludeAnsweringMachine,
-          filterMinDuration: d.filterMinDuration,
-          filterMinReplicas: d.filterMinReplicas,
-          telegramDailyReport: d.telegramDailyReport,
-          telegramManagerReport: d.telegramManagerReport,
-          telegramWeeklyReport: d.telegramWeeklyReport,
-          telegramMonthlyReport: d.telegramMonthlyReport,
-          telegramSkipWeekends: d.telegramSkipWeekends,
-          emailDailyReport: d.emailDailyReport,
-          emailWeeklyReport: d.emailWeeklyReport,
-          emailMonthlyReport: d.emailMonthlyReport,
-          reportManagedUserIds: d.reportManagedUserIds,
-          kpiBaseSalary: d.kpiBaseSalary,
-          kpiTargetBonus: d.kpiTargetBonus,
-          kpiTargetTalkTimeMinutes: d.kpiTargetTalkTimeMinutes,
-          evaluationTemplateSlug: d.evaluationTemplateSlug,
-          evaluationCustomInstructions: d.evaluationCustomInstructions,
-        },
-      );
+      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+        filterExcludeAnsweringMachine: d.filterExcludeAnsweringMachine,
+        filterMinDuration: d.filterMinDuration,
+        filterMinReplicas: d.filterMinReplicas,
+        telegramDailyReport: d.telegramDailyReport,
+        telegramManagerReport: d.telegramManagerReport,
+        telegramWeeklyReport: d.telegramWeeklyReport,
+        telegramMonthlyReport: d.telegramMonthlyReport,
+        telegramSkipWeekends: d.telegramSkipWeekends,
+        emailDailyReport: d.emailDailyReport,
+        emailWeeklyReport: d.emailWeeklyReport,
+        emailMonthlyReport: d.emailMonthlyReport,
+        reportManagedUserIds: d.reportManagedUserIds,
+        kpiBaseSalary: d.kpiBaseSalary,
+        kpiTargetBonus: d.kpiTargetBonus,
+        kpiTargetTalkTimeMinutes: d.kpiTargetTalkTimeMinutes,
+        evaluationTemplateSlug: d.evaluationTemplateSlug,
+        evaluationCustomInstructions: d.evaluationCustomInstructions,
+      });
 
       const hasTelegramUpdates =
-        d.telegramDailyReport !== undefined ||
-        d.telegramManagerReport !== undefined;
+        d.telegramDailyReport !== undefined || d.telegramManagerReport !== undefined;
       if (hasTelegramUpdates) {
         await usersService.updateUserTelegramSettings(
           input.user_id,
           context.workspaceId,
           d.telegramDailyReport ?? (u.telegramDailyReport as boolean) ?? false,
-          d.telegramManagerReport ??
-            (u.telegramManagerReport as boolean) ??
-            false,
+          d.telegramManagerReport ?? (u.telegramManagerReport as boolean) ?? false,
         );
       }
 
       await logUpdate(
         "updated",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         undefined,
         context.workspaceId,
       );
@@ -128,8 +111,7 @@ export const update = workspaceProcedure
       await logUpdate(
         "update",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         error,
         context.workspaceId,
       );

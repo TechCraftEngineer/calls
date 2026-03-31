@@ -18,19 +18,14 @@ export type EmployeeLinkOption = { value: string; label: string };
 export function getEmployeeColumns(
   employeeLinkOptions: Record<string, EmployeeLinkOption[]>,
   selectedLinks: Record<string, string>,
-  setSelectedLinks: React.Dispatch<
-    React.SetStateAction<Record<string, string>>
-  >,
+  setSelectedLinks: React.Dispatch<React.SetStateAction<Record<string, string>>>,
   onLink: (input: {
     targetType: "employee";
     targetExternalId: string;
     userId?: string | null;
     invitationId?: string | null;
   }) => Promise<void>,
-  onUnlink: (input: {
-    targetType: "employee";
-    targetExternalId: string;
-  }) => Promise<void>,
+  onUnlink: (input: { targetType: "employee"; targetExternalId: string }) => Promise<void>,
   linkingEmployeeIds: Record<string, boolean>,
   unlinkingEmployeeIds: Record<string, boolean>,
 ): ColumnDef<PbxEmployeeItem>[] {
@@ -114,10 +109,8 @@ export function getEmployeeColumns(
                 const selected = selectedLinks[employee.externalId];
                 if (!selected) return;
                 const colonIdx = selected.indexOf(":");
-                const kind =
-                  colonIdx >= 0 ? selected.slice(0, colonIdx) : "user";
-                const id =
-                  colonIdx >= 0 ? selected.slice(colonIdx + 1) : selected;
+                const kind = colonIdx >= 0 ? selected.slice(0, colonIdx) : "user";
+                const id = colonIdx >= 0 ? selected.slice(colonIdx + 1) : selected;
                 await onLink({
                   targetType: "employee",
                   targetExternalId: employee.externalId,
@@ -126,9 +119,7 @@ export function getEmployeeColumns(
                 });
               }}
             >
-              {linkingEmployeeIds[employee.externalId]
-                ? "Привязка…"
-                : "Привязать"}
+              {linkingEmployeeIds[employee.externalId] ? "Привязка…" : "Привязать"}
             </Button>
             {employee.link && (
               <Button
@@ -146,9 +137,7 @@ export function getEmployeeColumns(
                   })
                 }
               >
-                {unlinkingEmployeeIds[employee.externalId]
-                  ? "Отвязка…"
-                  : "Отвязать"}
+                {unlinkingEmployeeIds[employee.externalId] ? "Отвязка…" : "Отвязать"}
               </Button>
             )}
           </div>

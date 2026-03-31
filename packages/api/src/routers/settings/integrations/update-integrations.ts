@@ -39,8 +39,7 @@ export const updateIntegrations = workspaceAdminProcedure
               webhookUrl,
             });
           } catch (error) {
-            const errorMsg =
-              error instanceof Error ? error.message : String(error);
+            const errorMsg = error instanceof Error ? error.message : String(error);
             webhookResults.push({ success: false, error: errorMsg });
             logger.error("Failed to register Telegram webhook", {
               workspaceId,
@@ -74,8 +73,7 @@ export const updateIntegrations = workspaceAdminProcedure
               workspaceId,
             });
           } catch (error) {
-            const errorMsg =
-              error instanceof Error ? error.message : String(error);
+            const errorMsg = error instanceof Error ? error.message : String(error);
             webhookResults.push({ success: false, error: errorMsg });
             logger.error("Failed to delete Telegram webhook", {
               workspaceId,
@@ -88,17 +86,13 @@ export const updateIntegrations = workspaceAdminProcedure
         const systemToken = env.TELEGRAM_BOT_TOKEN?.trim();
         if (systemToken && baseUrl) {
           try {
-            await setTelegramWebhook(
-              systemToken,
-              `${baseUrl}/api/telegram-webhook-default`,
-            );
+            await setTelegramWebhook(systemToken, `${baseUrl}/api/telegram-webhook-default`);
             webhookResults.push({ success: true });
             logger.info("Default Telegram webhook ensured successfully", {
               workspaceId,
             });
           } catch (error) {
-            const errorMsg =
-              error instanceof Error ? error.message : String(error);
+            const errorMsg = error instanceof Error ? error.message : String(error);
             webhookResults.push({ success: false, error: errorMsg });
             logger.error("Failed to ensure default Telegram webhook", {
               workspaceId,

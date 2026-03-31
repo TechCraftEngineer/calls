@@ -19,10 +19,7 @@ import type { User } from "@/lib/auth";
 import { SendTestReportButton } from "../telegram/send-test-report-button";
 import { REPORT_TYPE_LABELS, type ReportType } from "../types";
 import type { ReportSettingsForm } from "./report-settings-types";
-import {
-  ReportDeliveryFrequency,
-  ReportTimeSettings,
-} from "./shared-report-controls";
+import { ReportDeliveryFrequency, ReportTimeSettings } from "./shared-report-controls";
 
 interface MaxReportSectionProps {
   form: ReportSettingsForm;
@@ -62,16 +59,15 @@ export function MaxReportSection({
   const hasMax = !!form.maxChatId?.trim();
   const canSendTest = hasMax && !sendTestLoading;
   const primaryReportType = sendTestReportType ?? "daily";
-  const primaryReportLabel =
-    REPORT_TYPE_LABELS[primaryReportType] ?? REPORT_TYPE_LABELS.daily;
+  const primaryReportLabel = REPORT_TYPE_LABELS[primaryReportType] ?? REPORT_TYPE_LABELS.daily;
 
   return (
     <Card className="border-border/50 bg-card/50">
       <CardHeader className="px-4 pb-0">
         <CardTitle className="text-base">MAX Отчеты</CardTitle>
         <CardDescription>
-          Полные настройки MAX-отчетов: периодичность, расписание, формат и
-          мгновенная отправка выбранного типа.
+          Полные настройки MAX-отчетов: периодичность, расписание, формат и мгновенная отправка
+          выбранного типа.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -123,11 +119,7 @@ export function MaxReportSection({
           )}
         </Field>
         <div className="flex flex-col gap-2">
-          <ReportDeliveryFrequency
-            form={form}
-            setForm={setForm}
-            channel="max"
-          />
+          <ReportDeliveryFrequency form={form} setForm={setForm} channel="max" />
           {isAdmin && (
             <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal px-3">
               <Checkbox
@@ -159,9 +151,7 @@ export function MaxReportSection({
               />
               {sendTestMessage && (
                 <span
-                  className={`text-sm ${
-                    sendTestSuccess ? "text-success" : "text-destructive"
-                  }`}
+                  className={`text-sm ${sendTestSuccess ? "text-success" : "text-destructive"}`}
                 >
                   {sendTestMessage}
                 </span>

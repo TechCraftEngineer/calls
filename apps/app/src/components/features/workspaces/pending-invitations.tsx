@@ -4,10 +4,7 @@ import { Button, Card, CardContent } from "@calls/ui";
 import { useState } from "react";
 
 // Функция для русской множественной формы
-const formatRussianPlural = (
-  count: number,
-  forms: [string, string, string],
-): string => {
+const formatRussianPlural = (count: number, forms: [string, string, string]): string => {
   const tens = Math.floor((count % 100) / 10);
   const ones = count % 10;
 
@@ -59,8 +56,7 @@ export default function PendingInvitations({
     if (!expiresAt) return false;
     const now = new Date();
     const expires = new Date(expiresAt);
-    const hoursUntilExpiry =
-      (expires.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const hoursUntilExpiry = (expires.getTime() - now.getTime()) / (1000 * 60 * 60);
     return hoursUntilExpiry < 24 && hoursUntilExpiry > 0;
   };
 
@@ -72,16 +68,10 @@ export default function PendingInvitations({
     <Card className="mt-8">
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-gray-900 m-0">
-            Ожидают подтверждения
-          </h3>
+          <h3 className="text-base font-semibold text-gray-900 m-0">Ожидают подтверждения</h3>
           <span className="text-sm text-gray-500">
             {invitations.length}{" "}
-            {formatRussianPlural(invitations.length, [
-              "приглашение",
-              "приглашения",
-              "приглашений",
-            ])}
+            {formatRussianPlural(invitations.length, ["приглашение", "приглашения", "приглашений"])}
           </span>
         </div>
 
@@ -123,12 +113,8 @@ export default function PendingInvitations({
                   )}
                 </div>
                 <div className="flex items-center gap-3 text-xs text-gray-500">
-                  {inv.createdAt && (
-                    <span>Отправлено {formatDate(inv.createdAt)}</span>
-                  )}
-                  {inv.expiresAt && (
-                    <span>· Истекает {formatDate(inv.expiresAt)}</span>
-                  )}
+                  {inv.createdAt && <span>Отправлено {formatDate(inv.createdAt)}</span>}
+                  {inv.expiresAt && <span>· Истекает {formatDate(inv.expiresAt)}</span>}
                 </div>
               </div>
 
@@ -184,8 +170,8 @@ export default function PendingInvitations({
             >
               <path d="M7 0a7 7 0 100 14A7 7 0 007 0zm0 11a1 1 0 110-2 1 1 0 010 2zm1-3.5v.5a1 1 0 01-2 0v-1a1 1 0 011-1 1.5 1.5 0 10-1.5-1.5 1 1 0 01-2 0 3.5 3.5 0 115 3.5z" />
             </svg>
-            Приглашения действительны 7 дней. После принятия пользователь
-            автоматически получит доступ к компании.
+            Приглашения действительны 7 дней. После принятия пользователь автоматически получит
+            доступ к компании.
           </p>
         </div>
       </CardContent>

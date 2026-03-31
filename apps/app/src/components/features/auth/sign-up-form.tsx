@@ -33,9 +33,7 @@ export function SignUpForm() {
 
       if (result.error) {
         setError("root", {
-          message: toRussianAuthMessage(
-            result.error.message || "Ошибка регистрации",
-          ),
+          message: toRussianAuthMessage(result.error.message || "Ошибка регистрации"),
         });
       } else {
         setTimeout(() => {
@@ -45,15 +43,12 @@ export function SignUpForm() {
     } catch (err: unknown) {
       const errorMessage =
         err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { detail?: string } } }).response
-              ?.data?.detail
+          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
           : err instanceof Error
             ? err.message
             : "Ошибка регистрации";
       setError("root", {
-        message: toRussianAuthMessage(
-          String(errorMessage || "Ошибка регистрации"),
-        ),
+        message: toRussianAuthMessage(String(errorMessage || "Ошибка регистрации")),
       });
     }
   };
@@ -65,12 +60,8 @@ export function SignUpForm() {
           <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-[10px] bg-[#FFD600] text-black font-black text-[24px]">
             M
           </div>
-          <h1 className="mb-2 text-[24px] font-bold text-[#111]">
-            Регистрация
-          </h1>
-          <p className="m-0 text-[14px] text-[#888]">
-            Создайте аккаунт QBS Звонки
-          </p>
+          <h1 className="mb-2 text-[24px] font-bold text-[#111]">Регистрация</h1>
+          <p className="m-0 text-[14px] text-[#888]">Создайте аккаунт QBS Звонки</p>
         </div>
 
         {errors.root && (
@@ -82,10 +73,7 @@ export function SignUpForm() {
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="mb-5">
-            <label
-              htmlFor="email"
-              className="mb-2 block text-[13px] font-semibold text-[#333]"
-            >
+            <label htmlFor="email" className="mb-2 block text-[13px] font-semibold text-[#333]">
               Электронная почта
             </label>
             <Input
@@ -102,17 +90,12 @@ export function SignUpForm() {
               {...register("email")}
             />
             {errors.email && (
-              <div className="mt-1 text-xs leading-tight text-red-600">
-                {errors.email.message}
-              </div>
+              <div className="mt-1 text-xs leading-tight text-red-600">{errors.email.message}</div>
             )}
           </div>
 
           <div className="mb-5">
-            <label
-              htmlFor="givenName"
-              className="mb-2 block text-[13px] font-semibold text-[#333]"
-            >
+            <label htmlFor="givenName" className="mb-2 block text-[13px] font-semibold text-[#333]">
               Имя
             </label>
             <Input
@@ -163,10 +146,7 @@ export function SignUpForm() {
           </div>
 
           <div className="mb-5">
-            <label
-              htmlFor="password"
-              className="mb-2 block text-[13px] font-semibold text-[#333]"
-            >
+            <label htmlFor="password" className="mb-2 block text-[13px] font-semibold text-[#333]">
               Пароль
             </label>
             <PasswordInput
@@ -188,12 +168,7 @@ export function SignUpForm() {
             )}
           </div>
 
-          <Button
-            type="submit"
-            variant="dark"
-            className="mt-2 w-full"
-            disabled={isSubmitting}
-          >
+          <Button type="submit" variant="dark" className="mt-2 w-full" disabled={isSubmitting}>
             {isSubmitting ? "Регистрация…" : "Зарегистрироваться"}
           </Button>
 

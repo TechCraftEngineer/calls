@@ -14,10 +14,7 @@ export default function UsersLoading() {
           <div className="p-4 border-b">
             <div className="grid grid-cols-8 gap-4">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-4 bg-gray-100 rounded animate-pulse"
-                />
+                <div key={i} className="h-4 bg-gray-100 rounded animate-pulse" />
               ))}
             </div>
           </div>
@@ -26,10 +23,7 @@ export default function UsersLoading() {
             <div key={i} className="p-4 border-b">
               <div className="grid grid-cols-8 gap-4">
                 {Array.from({ length: 8 }).map((_, j) => (
-                  <div
-                    key={j}
-                    className="h-4 bg-gray-50 rounded animate-pulse"
-                  />
+                  <div key={j} className="h-4 bg-gray-50 rounded animate-pulse" />
                 ))}
               </div>
             </div>

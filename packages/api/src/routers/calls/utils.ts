@@ -24,9 +24,7 @@ function getDisplayName(u: {
 }): string {
   const given = (u.givenName ?? "").trim();
   const family = (u.familyName ?? "").trim();
-  return (
-    [given, family].filter(Boolean).join(" ") || (u.name ?? "").trim() || "—"
-  );
+  return [given, family].filter(Boolean).join(" ") || (u.name ?? "").trim() || "—";
 }
 
 export type ManagerInfo = { userId: string; displayName: string };
@@ -70,9 +68,7 @@ export function getDisplayNameFromUser(u: {
   return getDisplayName(u);
 }
 
-export function getInternalNumbersForUser(
-  user: Record<string, unknown>,
-): string[] | undefined {
+export function getInternalNumbersForUser(user: Record<string, unknown>): string[] | undefined {
   const nums = user.internalExtensions as string | undefined;
   if (!nums || String(nums).trim().toLowerCase() === "all") return undefined;
   return (
@@ -83,9 +79,7 @@ export function getInternalNumbersForUser(
   );
 }
 
-export function getMobileNumbersForUser(
-  user: Record<string, unknown>,
-): string[] | undefined {
+export function getMobileNumbersForUser(user: Record<string, unknown>): string[] | undefined {
   const nums = user.mobilePhones as string | undefined;
   if (!nums?.trim()) return undefined;
   return (

@@ -51,14 +51,13 @@ export const InvitationEmail = ({
             <Text className="text-[14px] leading-[24px] text-black">
               {inviterName ? (
                 <>
-                  <strong>{inviterName}</strong> приглашает вас в рабочее
-                  пространство «<strong>{workspaceName}</strong>» в качестве{" "}
-                  {roleLabel}.
+                  <strong>{inviterName}</strong> приглашает вас в рабочее пространство «
+                  <strong>{workspaceName}</strong>» в качестве {roleLabel}.
                 </>
               ) : (
                 <>
-                  Вас пригласили в рабочее пространство «
-                  <strong>{workspaceName}</strong>» в качестве {roleLabel}.
+                  Вас пригласили в рабочее пространство «<strong>{workspaceName}</strong>» в
+                  качестве {roleLabel}.
                 </>
               )}
             </Text>

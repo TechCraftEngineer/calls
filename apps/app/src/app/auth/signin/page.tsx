@@ -40,15 +40,12 @@ function LoginForm() {
     } catch (err: unknown) {
       const rawMessage =
         err && typeof err === "object" && "response" in err
-          ? (err as { response?: { data?: { detail?: string } } }).response
-              ?.data?.detail
+          ? (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
           : err instanceof Error
             ? err.message
             : "Неверный email или пароль";
       setError("root", {
-        message: toRussianAuthMessage(
-          String(rawMessage || "Неверный email или пароль"),
-        ),
+        message: toRussianAuthMessage(String(rawMessage || "Неверный email или пароль")),
       });
     }
   };
@@ -60,12 +57,8 @@ function LoginForm() {
           <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-[10px] bg-[#FFD600] text-black font-black text-[24px]">
             M
           </div>
-          <h1 className="mb-2 text-[24px] font-bold text-[#111]">
-            С возвращением!
-          </h1>
-          <p className="m-0 text-[14px] text-[#888]">
-            Войдите в личный кабинет QBS Звонки
-          </p>
+          <h1 className="mb-2 text-[24px] font-bold text-[#111]">С возвращением!</h1>
+          <p className="m-0 text-[14px] text-[#888]">Войдите в личный кабинет QBS Звонки</p>
         </div>
 
         {errors.root && (
@@ -91,10 +84,7 @@ function LoginForm() {
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="mb-5">
-            <label
-              htmlFor="email"
-              className="mb-2 block text-[13px] font-semibold text-[#333]"
-            >
+            <label htmlFor="email" className="mb-2 block text-[13px] font-semibold text-[#333]">
               Электронная почта
             </label>
             <Input
@@ -111,17 +101,12 @@ function LoginForm() {
               {...register("email")}
             />
             {errors.email && (
-              <div className="mt-1 text-xs leading-tight text-red-600">
-                {errors.email.message}
-              </div>
+              <div className="mt-1 text-xs leading-tight text-red-600">{errors.email.message}</div>
             )}
           </div>
 
           <div className="mb-5">
-            <label
-              htmlFor="password"
-              className="mb-2 block text-[13px] font-semibold text-[#333]"
-            >
+            <label htmlFor="password" className="mb-2 block text-[13px] font-semibold text-[#333]">
               Пароль
             </label>
             <PasswordInput

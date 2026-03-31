@@ -1,7 +1,6 @@
-import { Badge } from "@calls/ui";
+import { Badge, Button } from "@calls/ui";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Check, Loader2, Phone, Settings2, TrendingUp } from "lucide-react";
-import { Button } from "@calls/ui";
 import { formatCurrency, formatMinutes } from "./kpi-table-formatters";
 import type { KpiRow } from "./kpi-table-types";
 
@@ -22,9 +21,7 @@ export const createKpiTableColumns = (
           <Phone className="size-5" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="font-semibold text-foreground truncate">
-            {row.getValue("name")}
-          </div>
+          <div className="font-semibold text-foreground truncate">{row.getValue("name")}</div>
           <div className="text-sm text-muted-foreground truncate">
             {row.original.internalNumber || "—"}
           </div>
@@ -37,9 +34,7 @@ export const createKpiTableColumns = (
     accessorFn: (row) => row.baseSalary,
     header: "Оклад, ₽",
     cell: ({ row }) => (
-      <div className="font-medium tabular-nums">
-        {formatCurrency(row.getValue("baseSalary"))}
-      </div>
+      <div className="font-medium tabular-nums">{formatCurrency(row.getValue("baseSalary"))}</div>
     ),
   },
   {
@@ -75,9 +70,7 @@ export const createKpiTableColumns = (
         <div className="flex items-center gap-2">
           <div
             className={`flex size-6 shrink-0 items-center justify-center rounded-full ${
-              isOnTarget
-                ? "bg-emerald-50 text-emerald-600"
-                : "bg-amber-50 text-amber-600"
+              isOnTarget ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
             }`}
           >
             {isOnTarget ? (
@@ -118,11 +111,7 @@ export const createKpiTableColumns = (
             <div className="relative h-2 rounded-full bg-muted overflow-hidden">
               <div
                 className={`h-full transition-all duration-300 ${
-                  isComplete
-                    ? "bg-emerald-500"
-                    : isGood
-                      ? "bg-blue-500"
-                      : "bg-amber-500"
+                  isComplete ? "bg-emerald-500" : isGood ? "bg-blue-500" : "bg-amber-500"
                 }`}
                 role="progressbar"
                 aria-valuemin={0}
@@ -161,9 +150,7 @@ export const createKpiTableColumns = (
       const formatted = formatCurrency(value);
       return (
         <div className="font-semibold tabular-nums text-emerald-600">
-          {value != null && value !== 0 && Number.isFinite(value)
-            ? `+${formatted}`
-            : formatted}
+          {value != null && value !== 0 && Number.isFinite(value) ? `+${formatted}` : formatted}
         </div>
       );
     },

@@ -18,12 +18,8 @@ export const getForEdit = workspaceProcedure
         message: "Нет доступа к этому пользователю",
       });
 
-    const data = await usersService.getUserForEdit(
-      input.user_id,
-      context.workspaceId,
-    );
-    if (!data)
-      throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+    const data = await usersService.getUserForEdit(input.user_id, context.workspaceId);
+    if (!data) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     return data;
   });

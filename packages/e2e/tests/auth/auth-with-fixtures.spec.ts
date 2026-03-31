@@ -33,10 +33,7 @@ test.describe("Тесты аутентификации с фикстурами",
     await authHelpers.expectErrorMessage("Неверный email или пароль");
   });
 
-  test("успешная регистрация с валидными данными", async ({
-    page,
-    validUser,
-  }) => {
+  test("успешная регистрация с валидными данными", async ({ page, validUser }) => {
     await page.goto("/auth/signup");
     await authHelpers.expectSignUpPageElements();
 
@@ -68,10 +65,7 @@ test.describe("Тесты аутентификации с фикстурами",
     await authHelpers.expectRedirectToWorkspace();
   });
 
-  test("тестирование с несколькими пользователями", async ({
-    page,
-    testUsers,
-  }) => {
+  test("тестирование с несколькими пользователями", async ({ page, testUsers }) => {
     for (const user of testUsers) {
       await page.goto("/auth/signin");
 
@@ -112,10 +106,7 @@ test.describe("Тесты аутентификации с фикстурами",
     await authHelpers.testKeyboardNavigation();
   });
 
-  test("восстановление пароля с валидным email", async ({
-    page,
-    validUser,
-  }) => {
+  test("восстановление пароля с валидным email", async ({ page, validUser }) => {
     await page.goto("/auth/forgot-password");
     await authHelpers.expectForgotPasswordPageElements();
 

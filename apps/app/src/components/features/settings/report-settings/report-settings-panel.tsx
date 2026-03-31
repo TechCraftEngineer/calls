@@ -43,8 +43,7 @@ interface UserSettingsData {
 export default function ReportSettingsPanel({ user }: { user: User }) {
   const orpc = useORPC();
   const { activeWorkspace } = useWorkspace();
-  const isWorkspaceAdmin =
-    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const userId = user?.id ? String(user.id) : "";
 
   const usersQuery = useQuery(

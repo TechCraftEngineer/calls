@@ -23,9 +23,7 @@ function normalizePhone(value: string | null | undefined): string {
 export function getNumberColumns(
   numberLinkOptions: Record<string, NumberLinkOption[]>,
   selectedLinks: Record<string, string>,
-  setSelectedLinks: React.Dispatch<
-    React.SetStateAction<Record<string, string>>
-  >,
+  setSelectedLinks: React.Dispatch<React.SetStateAction<Record<string, string>>>,
   excludedSet: Set<string>,
   setExcludedSet: React.Dispatch<React.SetStateAction<Set<string>>>,
   savingExcludedNumbers: boolean,
@@ -35,10 +33,7 @@ export function getNumberColumns(
     targetExternalId: string;
     userId?: string | null;
   }) => Promise<void>,
-  onUnlink: (input: {
-    targetType: "number";
-    targetExternalId: string;
-  }) => Promise<void>,
+  onUnlink: (input: { targetType: "number"; targetExternalId: string }) => Promise<void>,
 ): ColumnDef<PbxNumberItem>[] {
   return [
     {
@@ -76,8 +71,7 @@ export function getNumberColumns(
         const extension = normalizePhone(number.extension);
         const keys = [phone, extension].filter(Boolean);
         const isExcluded = keys.some((value) => excludedSet.has(value));
-        const checkboxLabel =
-          number.phoneNumber || number.extension || number.externalId;
+        const checkboxLabel = number.phoneNumber || number.extension || number.externalId;
 
         return (
           <label
@@ -102,9 +96,7 @@ export function getNumberColumns(
                 });
               }}
             />
-            <span className="text-muted-foreground text-xs">
-              {isExcluded ? "Да" : "Нет"}
-            </span>
+            <span className="text-muted-foreground text-xs">{isExcluded ? "Да" : "Нет"}</span>
           </label>
         );
       },

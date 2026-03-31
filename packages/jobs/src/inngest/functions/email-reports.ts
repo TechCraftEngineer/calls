@@ -8,13 +8,13 @@ import {
   getEmailReportRecipients,
   getReportScheduleSettings,
   getWorkspaceIdsWithEmailReportRecipients,
-  settingsService,
   type ManagerStatsRow,
+  settingsService,
   workspaceSettingsRepository,
 } from "@calls/db";
-import { ReportEmail, sendEmail, type ManagerStats } from "@calls/emails";
-import { toZonedTime } from "date-fns-tz";
+import { type ManagerStats, ReportEmail, sendEmail } from "@calls/emails";
 import { subMonths } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 import { inngest } from "../client";
 
 const TZ = "Europe/Moscow";
@@ -30,15 +30,11 @@ function maskEmail(email: string): string {
   const [local, domain] = email.split("@");
   if (!domain || !local) return "***";
   const safeLocal =
-    local.length <= 2
-      ? (local[0] ?? "*")
-      : `${local[0] ?? "*"}***${local.at(-1) ?? "*"}`;
+    local.length <= 2 ? (local[0] ?? "*") : `${local[0] ?? "*"}***${local.at(-1) ?? "*"}`;
   const [domName, domTld] = domain.split(".");
   if (!domName) return "***";
   const safeDomName =
-    domName.length <= 2
-      ? (domName[0] ?? "*")
-      : `${domName[0] ?? "*"}***${domName.at(-1) ?? "*"}`;
+    domName.length <= 2 ? (domName[0] ?? "*") : `${domName[0] ?? "*"}***${domName.at(-1) ?? "*"}`;
   return `${safeLocal}@${safeDomName}.${domTld ?? "***"}`;
 }
 
@@ -79,12 +75,9 @@ export const emailReportsFn = inngest.createFunction(
     triggers: [{ cron: `TZ=${TZ} */15 * * * *` }],
   },
   async ({ step }) => {
-    const workspaceIds = await step.run(
-      "get-workspaces-with-email-reports",
-      async () => {
-        return getWorkspaceIdsWithEmailReportRecipients();
-      },
-    );
+    const workspaceIds = await step.run("get-workspaces-with-email-reports", async () => {
+      return getWorkspaceIdsWithEmailReportRecipients();
+    });
 
     if (workspaceIds.length === 0) {
       return {
@@ -104,136 +97,115 @@ export const emailReportsFn = inngest.createFunction(
     const errors: string[] = [];
 
     for (const workspaceId of workspaceIds) {
-      const result = await step.run(
-        `process-workspace-email-${workspaceId}`,
-        async () => {
-          const schedule = await getReportScheduleSettings(
-            workspaceSettingsRepository,
-            workspaceId,
-          );
+      const result = await step.run(`process-workspace-email-${workspaceId}`, async () => {
+        const schedule = await getReportScheduleSettings(workspaceSettingsRepository, workspaceId);
 
-          const reportTypesToRun: Array<"daily" | "weekly" | "monthly"> = [];
+        const reportTypesToRun: Array<"daily" | "weekly" | "monthly"> = [];
 
-          const slot = Math.floor(currentMinute / 15) * 15;
+        const slot = Math.floor(currentMinute / 15) * 15;
 
-          const dailyTime = parseTimeHHMM(schedule.reportDailyTime);
-          const dailySlot = Math.floor(dailyTime.m / 15) * 15;
-          if (currentHour === dailyTime.h && slot === dailySlot) {
-            reportTypesToRun.push("daily");
+        const dailyTime = parseTimeHHMM(schedule.reportDailyTime);
+        const dailySlot = Math.floor(dailyTime.m / 15) * 15;
+        if (currentHour === dailyTime.h && slot === dailySlot) {
+          reportTypesToRun.push("daily");
+        }
+
+        const weeklyDay = WEEKDAY_MAP[schedule.reportWeeklyDay] ?? 5;
+        const weeklyTime = parseTimeHHMM(schedule.reportWeeklyTime);
+        const weeklySlot = Math.floor(weeklyTime.m / 15) * 15;
+        if (currentDay === weeklyDay && currentHour === weeklyTime.h && slot === weeklySlot) {
+          reportTypesToRun.push("weekly");
+        }
+
+        const monthlyTime = parseTimeHHMM(schedule.reportMonthlyTime);
+        const monthlyDayNum = parseInt(schedule.reportMonthlyDay, 10);
+        const isMonthlyDay =
+          schedule.reportMonthlyDay === "last"
+            ? currentDate === lastDay
+            : !Number.isNaN(monthlyDayNum) && currentDate === monthlyDayNum;
+        const monthlySlot = Math.floor(monthlyTime.m / 15) * 15;
+        if (isMonthlyDay && currentHour === monthlyTime.h && slot === monthlySlot) {
+          reportTypesToRun.push("monthly");
+        }
+
+        if (reportTypesToRun.length === 0) {
+          return { sent: 0, errors: [] as string[] };
+        }
+
+        let sent = 0;
+        const errs: string[] = [];
+
+        for (const reportType of reportTypesToRun) {
+          const recipients = await getEmailReportRecipients(workspaceId, reportType);
+
+          let dateFrom: Date;
+          let dateTo: Date;
+          let dateFromString: string;
+          let dateToString: string;
+
+          if (reportType === "daily") {
+            const d = new Date(now);
+            d.setDate(d.getDate() - 1);
+            dateFrom = d;
+            dateTo = d;
+            dateFromString = formatDateInMoscow(d);
+            dateToString = dateFromString;
+          } else if (reportType === "weekly") {
+            dateFrom = new Date(now);
+            dateFrom.setDate(dateFrom.getDate() - 7);
+            dateTo = new Date(now);
+            dateFromString = formatDateInMoscow(dateFrom);
+            dateToString = formatDateInMoscow(dateTo);
+          } else {
+            dateFrom = subMonths(new Date(now), 1);
+            dateTo = new Date(now);
+            dateFromString = formatDateInMoscow(dateFrom);
+            dateToString = formatDateInMoscow(dateTo);
           }
 
-          const weeklyDay = WEEKDAY_MAP[schedule.reportWeeklyDay] ?? 5;
-          const weeklyTime = parseTimeHHMM(schedule.reportWeeklyTime);
-          const weeklySlot = Math.floor(weeklyTime.m / 15) * 15;
-          if (
-            currentDay === weeklyDay &&
-            currentHour === weeklyTime.h &&
-            slot === weeklySlot
-          ) {
-            reportTypesToRun.push("weekly");
-          }
+          const dateFromDb = `${dateFromString} 00:00:00`;
+          const dateToDb = `${dateToString} 23:59:59`;
 
-          const monthlyTime = parseTimeHHMM(schedule.reportMonthlyTime);
-          const monthlyDayNum = parseInt(schedule.reportMonthlyDay, 10);
-          const isMonthlyDay =
-            schedule.reportMonthlyDay === "last"
-              ? currentDate === lastDay
-              : !Number.isNaN(monthlyDayNum) && currentDate === monthlyDayNum;
-          const monthlySlot = Math.floor(monthlyTime.m / 15) * 15;
-          if (
-            isMonthlyDay &&
-            currentHour === monthlyTime.h &&
-            slot === monthlySlot
-          ) {
-            reportTypesToRun.push("monthly");
-          }
+          const ftpSettings = await settingsService.getFtpSettings(workspaceId);
+          const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
 
-          if (reportTypesToRun.length === 0) {
-            return { sent: 0, errors: [] as string[] };
-          }
-
-          let sent = 0;
-          const errs: string[] = [];
-
-          for (const reportType of reportTypesToRun) {
-            const recipients = await getEmailReportRecipients(
+          for (const r of recipients) {
+            const stats = (await callsService.getEvaluationsStats({
               workspaceId,
-              reportType,
-            );
+              dateFrom: dateFromDb,
+              dateTo: dateToDb,
+              internalNumbers: r.internalNumbers ?? undefined,
+              excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+            })) as Record<string, ManagerStatsRow>;
 
-            let dateFrom: Date;
-            let dateTo: Date;
-            let dateFromString: string;
-            let dateToString: string;
+            const enrichedStats = (await callsService.enrichStatsWithKpi(
+              stats,
+              workspaceId,
+            )) as Record<string, ManagerStats>;
 
-            if (reportType === "daily") {
-              const d = new Date(now);
-              d.setDate(d.getDate() - 1);
-              dateFrom = d;
-              dateTo = d;
-              dateFromString = formatDateInMoscow(d);
-              dateToString = dateFromString;
-            } else if (reportType === "weekly") {
-              dateFrom = new Date(now);
-              dateFrom.setDate(dateFrom.getDate() - 7);
-              dateTo = new Date(now);
-              dateFromString = formatDateInMoscow(dateFrom);
-              dateToString = formatDateInMoscow(dateTo);
-            } else {
-              dateFrom = subMonths(new Date(now), 1);
-              dateTo = new Date(now);
-              dateFromString = formatDateInMoscow(dateFrom);
-              dateToString = formatDateInMoscow(dateTo);
-            }
-
-            const dateFromDb = `${dateFromString} 00:00:00`;
-            const dateToDb = `${dateToString} 23:59:59`;
-
-            const ftpSettings =
-              await settingsService.getFtpSettings(workspaceId);
-            const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
-
-            for (const r of recipients) {
-              const stats = (await callsService.getEvaluationsStats({
-                workspaceId,
-                dateFrom: dateFromDb,
-                dateTo: dateToDb,
-                internalNumbers: r.internalNumbers ?? undefined,
-                excludePhoneNumbers:
-                  excludePhoneNumbers.length > 0
-                    ? excludePhoneNumbers
-                    : undefined,
-              })) as Record<string, ManagerStatsRow>;
-
-              const enrichedStats = await callsService.enrichStatsWithKpi(
-                stats,
-                workspaceId,
-              ) as Record<string, ManagerStats>;
-
-              try {
-                await sendEmail({
-                  to: [r.email],
-                  subject: `Отчёт по звонкам: ${dateFromString} — ${dateToString}`,
-                  react: ReportEmail({
-                    reportType,
-                    username: undefined,
-                    stats: enrichedStats,
-                    includeKpi: r.reportSettings.kpi,
-                  }),
-                });
-                sent++;
-              } catch (e) {
-                const identifier = r.userId ?? maskEmail(r.email);
-                errs.push(
-                  `Не удалось отправить на получателя ${identifier}: ${e instanceof Error ? e.message : String(e)}`,
-                );
-              }
+            try {
+              await sendEmail({
+                to: [r.email],
+                subject: `Отчёт по звонкам: ${dateFromString} — ${dateToString}`,
+                react: ReportEmail({
+                  reportType,
+                  username: undefined,
+                  stats: enrichedStats,
+                  includeKpi: r.reportSettings.kpi,
+                }),
+              });
+              sent++;
+            } catch (e) {
+              const identifier = r.userId ?? maskEmail(r.email);
+              errs.push(
+                `Не удалось отправить на получателя ${identifier}: ${e instanceof Error ? e.message : String(e)}`,
+              );
             }
           }
+        }
 
-          return { sent, errors: errs };
-        },
-      );
+        return { sent, errors: errs };
+      });
 
       sentCount += result.sent;
       errors.push(...result.errors);

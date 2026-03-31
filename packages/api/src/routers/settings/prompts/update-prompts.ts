@@ -13,8 +13,7 @@ export const updatePrompts = workspaceAdminProcedure
   .input(settingsUpdateSchema)
   .handler(async ({ input, context }) => {
     const { workspaceId } = context;
-    const username =
-      (context.user as Record<string, unknown>)?.email ?? "system";
+    const username = (context.user as Record<string, unknown>)?.email ?? "system";
 
     const upserts: Promise<boolean>[] = [];
 
@@ -60,12 +59,8 @@ export const updatePrompts = workspaceAdminProcedure
     }
     const promptLogItems: { key: string; value: string }[] = [];
     if (input.prompts) {
-      for (const [camelKey, snakeKey] of Object.entries(
-        REPORT_PROMPTS_CAMEL_TO_SNAKE,
-      )) {
-        const p = input.prompts[camelKey] as
-          | { value?: string; description?: string }
-          | undefined;
+      for (const [camelKey, snakeKey] of Object.entries(REPORT_PROMPTS_CAMEL_TO_SNAKE)) {
+        const p = input.prompts[camelKey] as { value?: string; description?: string } | undefined;
         if (p) {
           promptLogItems.push({ key: snakeKey, value: p.value ?? "" });
           upserts.push(

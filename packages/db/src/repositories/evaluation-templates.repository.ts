@@ -35,10 +35,7 @@ export const evaluationTemplatesRepository = {
     return result[0] ?? null;
   },
 
-  async findById(
-    id: string,
-    workspaceId: string,
-  ): Promise<schema.EvaluationTemplate | null> {
+  async findById(id: string, workspaceId: string): Promise<schema.EvaluationTemplate | null> {
     const result = await db
       .select()
       .from(schema.evaluationTemplates)
@@ -127,5 +124,4 @@ export const evaluationTemplatesRepository = {
   },
 };
 
-export type EvaluationTemplatesRepository =
-  typeof evaluationTemplatesRepository;
+export type EvaluationTemplatesRepository = typeof evaluationTemplatesRepository;

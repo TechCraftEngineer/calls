@@ -64,10 +64,7 @@ const createSchema = z.object({
   systemPrompt: z
     .string()
     .min(1, "Промпт обязателен")
-    .max(
-      MAX_PROMPT_LENGTH,
-      `Не более ${MAX_PROMPT_LENGTH.toLocaleString()} символов`,
-    )
+    .max(MAX_PROMPT_LENGTH, `Не более ${MAX_PROMPT_LENGTH.toLocaleString()} символов`)
     .refine((prompt) => {
       const lower = prompt.toLowerCase();
       return (
@@ -159,9 +156,7 @@ export function TemplateFormModal({
         onClose();
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error ? err.message : "Не удалось создать шаблон",
-        );
+        toast.error(err instanceof Error ? err.message : "Не удалось создать шаблон");
       },
     }),
   );
@@ -176,9 +171,7 @@ export function TemplateFormModal({
         onClose();
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error ? err.message : "Не удалось сохранить шаблон",
-        );
+        toast.error(err instanceof Error ? err.message : "Не удалось сохранить шаблон");
       },
     }),
   );
@@ -204,16 +197,12 @@ export function TemplateFormModal({
   const promptLength = watch("systemPrompt")?.length ?? 0;
 
   const formContent = (
-    <form
-      onSubmit={form.handleSubmit(onSubmit)}
-      className="flex flex-col gap-6"
-    >
+    <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
       {mode === "create" && (
         <FieldGroup>
           <FieldLabel>Начать с шаблона</FieldLabel>
           <FieldDescription>
-            Выберите встроенный шаблон — промпт скопируется, его можно
-            отредактировать
+            Выберите встроенный шаблон — промпт скопируется, его можно отредактировать
           </FieldDescription>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
             {BASE_TEMPLATES.map((t) => (
@@ -239,17 +228,13 @@ export function TemplateFormModal({
           {...form.register("name")}
         />
         {form.formState.errors.name && (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.name.message}
-          </p>
+          <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
         )}
       </Field>
 
       <Field orientation="vertical">
         <FieldLabel htmlFor="description">Описание</FieldLabel>
-        <FieldDescription>
-          Краткое описание для списка шаблонов
-        </FieldDescription>
+        <FieldDescription>Краткое описание для списка шаблонов</FieldDescription>
         <Input
           id="description"
           placeholder="Необязательно"
@@ -257,17 +242,15 @@ export function TemplateFormModal({
           {...form.register("description")}
         />
         {form.formState.errors.description && (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.description.message}
-          </p>
+          <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>
         )}
       </Field>
 
       <Field orientation="vertical">
         <FieldLabel htmlFor="systemPrompt">Системный промпт</FieldLabel>
         <FieldDescription>
-          Инструкции для AI. Обязательные поля: value_score, value_explanation,
-          manager_score, manager_feedback
+          Инструкции для AI. Обязательные поля: value_score, value_explanation, manager_score,
+          manager_feedback
         </FieldDescription>
         <div className="relative">
           <Textarea
@@ -286,8 +269,7 @@ export function TemplateFormModal({
                 : "text-muted-foreground",
             )}
           >
-            {promptLength.toLocaleString()} /{" "}
-            {MAX_PROMPT_LENGTH.toLocaleString()}
+            {promptLength.toLocaleString()} / {MAX_PROMPT_LENGTH.toLocaleString()}
           </span>
         </div>
         {form.formState.errors.systemPrompt && (
@@ -301,20 +283,11 @@ export function TemplateFormModal({
 
   const footer = (
     <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-      <Button
-        type="button"
-        variant="link"
-        onClick={onClose}
-        className="text-foreground"
-      >
+      <Button type="button" variant="link" onClick={onClose} className="text-foreground">
         Отмена
       </Button>
       <Button onClick={form.handleSubmit(onSubmit)} disabled={isPending}>
-        {isPending
-          ? "Сохранение…"
-          : mode === "create"
-            ? "Создать шаблон"
-            : "Сохранить"}
+        {isPending ? "Сохранение…" : mode === "create" ? "Создать шаблон" : "Сохранить"}
       </Button>
     </div>
   );
@@ -333,9 +306,7 @@ export function TemplateFormModal({
                 : "Редактирование шаблона"}
             </DialogDescription>
           </DrawerHeader>
-          <div className="overflow-y-auto px-4 pb-4 flex-1 -mt-2">
-            {formContent}
-          </div>
+          <div className="overflow-y-auto px-4 pb-4 flex-1 -mt-2">{formContent}</div>
           <DrawerFooter className="border-t pt-4">{footer}</DrawerFooter>
         </DrawerContent>
       </Drawer>
@@ -346,9 +317,7 @@ export function TemplateFormModal({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>
-            {mode === "create" ? "Создать шаблон" : "Редактировать шаблон"}
-          </DialogTitle>
+          <DialogTitle>{mode === "create" ? "Создать шаблон" : "Редактировать шаблон"}</DialogTitle>
           <DialogDescription>
             {mode === "create"
               ? "Создайте кастомный шаблон оценки звонков на основе встроенных или с нуля"

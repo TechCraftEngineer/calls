@@ -17,16 +17,13 @@ import {
 import { useCallback, useState } from "react";
 import type { IntegrationsSectionProps } from "../types";
 
-const linkClass =
-  "text-foreground underline underline-offset-2 hover:opacity-80";
+const linkClass = "text-foreground underline underline-offset-2 hover:opacity-80";
 
 const BOTFATHER_URL = "https://t.me/BotFather";
-const TELEGRAM_BOT_DOCS_URL =
-  "https://core.telegram.org/bots/features#creating-a-new-bot";
+const TELEGRAM_BOT_DOCS_URL = "https://core.telegram.org/bots/features#creating-a-new-bot";
 const MAX_PARTNERS_URL = "https://business.max.ru/self";
 const MAX_DOCS_URL = "https://dev.max.ru/docs-api";
-const MAX_BOTS_CREATE_URL =
-  "https://dev.max.ru/docs/chatbots/bots-nocode/create";
+const MAX_BOTS_CREATE_URL = "https://dev.max.ru/docs/chatbots/bots-nocode/create";
 
 export default function IntegrationsSection({
   integrations,
@@ -60,17 +57,15 @@ export default function IntegrationsSection({
           Интеграции компании
         </CardTitle>
         <CardDescription>
-          Настройки подключений к Telegram и MAX Bot. Токены хранятся в базе в
-          зашифрованном виде. Для Telegram можно использовать либо собственного
-          бота компании, либо системного бота по умолчанию.
+          Настройки подключений к Telegram и MAX Bot. Токены хранятся в базе в зашифрованном виде.
+          Для Telegram можно использовать либо собственного бота компании, либо системного бота по
+          умолчанию.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="rounded-lg border border-border/50 bg-muted/30 p-4 space-y-4">
           <div>
-            <h4 className="font-semibold text-sm">
-              Telegram Bot (для отчётов и уведомлений)
-            </h4>
+            <h4 className="font-semibold text-sm">Telegram Bot (для отчётов и уведомлений)</h4>
             <p className="text-xs text-muted-foreground mt-0.5">
               Если поле токена пустое, используется системный Telegram-бот.
             </p>
@@ -93,9 +88,7 @@ export default function IntegrationsSection({
           </div>
 
           <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-            <p className="font-medium text-foreground mb-2">
-              Как получить токен
-            </p>
+            <p className="font-medium text-foreground mb-2">Как получить токен</p>
             <ol className="list-decimal list-inside space-y-1">
               <li>
                 Откройте{" "}
@@ -133,8 +126,8 @@ export default function IntegrationsSection({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-65">
-                  Формат: 1234567890:ABCdefGHI... (цифры:буквы и цифры). Токен
-                  выдаёт только @BotFather при создании бота.
+                  Формат: 1234567890:ABCdefGHI... (цифры:буквы и цифры). Токен выдаёт только
+                  @BotFather при создании бота.
                 </TooltipContent>
               </Tooltip>
             </Label>
@@ -150,22 +143,15 @@ export default function IntegrationsSection({
               autoComplete="off"
               className={`h-9 ${telegramError ? "border-destructive focus-visible:ring-destructive" : ""}`}
               aria-invalid={!!telegramError}
-              aria-describedby={
-                telegramError ? "telegram-token-error" : undefined
-              }
+              aria-describedby={telegramError ? "telegram-token-error" : undefined}
             />
             {telegramError && (
-              <p
-                id="telegram-token-error"
-                className="text-xs text-destructive"
-                role="alert"
-              >
+              <p id="telegram-token-error" className="text-xs text-destructive" role="alert">
                 {telegramError}
               </p>
             )}
             <p className="text-[11px] text-muted-foreground">
-              Поле не обязательное: оставьте пустым, чтобы использовать
-              системный бот.
+              Поле не обязательное: оставьте пустым, чтобы использовать системный бот.
             </p>
             {integrations.telegramUsesDefault && !hasCustomTelegramToken && (
               <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
@@ -197,9 +183,7 @@ export default function IntegrationsSection({
           </div>
 
           <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-            <p className="font-medium text-foreground mb-2">
-              Как получить токен
-            </p>
+            <p className="font-medium text-foreground mb-2">Как получить токен</p>
             <ol className="list-decimal list-inside space-y-1">
               <li>
                 Зарегистрируйте организацию на платформе{" "}
@@ -214,18 +198,13 @@ export default function IntegrationsSection({
                 и пройдите верификацию
               </li>
               <li>Создайте чат-бота в разделе Чат-боты</li>
-              <li>
-                После модерации откройте Чат-боты → Интеграция → Получить токен
-              </li>
+              <li>После модерации откройте Чат-боты → Интеграция → Получить токен</li>
               <li>Скопируйте выданный токен в поле ниже</li>
             </ol>
           </div>
 
           <div className="space-y-2 max-w-md">
-            <Label
-              htmlFor="max-bot-token"
-              className="text-xs text-muted-foreground"
-            >
+            <Label htmlFor="max-bot-token" className="text-xs text-muted-foreground">
               Токен бота
             </Label>
             <PasswordInput

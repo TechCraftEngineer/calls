@@ -8,9 +8,7 @@ const publicPaths = ["/auth", "/invite", "/terms", "/privacy"];
 export async function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
   const pathname = request.nextUrl.pathname;
-  const isPublicPath = publicPaths.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`),
-  );
+  const isPublicPath = publicPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   const isAuthPage =
     pathname === paths.auth.signin ||
     pathname === paths.auth.signup ||

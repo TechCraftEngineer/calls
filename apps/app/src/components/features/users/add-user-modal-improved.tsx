@@ -44,11 +44,7 @@ const defaultForm: AddUserForm = {
   evaluationCustomInstructions: "",
 };
 
-export default function AddUserModal({
-  onClose,
-  onSuccess,
-  onSubmit,
-}: AddUserModalProps) {
+export default function AddUserModal({ onClose, onSuccess, onSubmit }: AddUserModalProps) {
   const [form, setForm] = useState<AddUserForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -151,10 +147,7 @@ export default function AddUserModal({
       }
     } catch (err: unknown) {
       setErrors({
-        submit:
-          err instanceof Error
-            ? err.message
-            : "Ошибка при создании пользователя",
+        submit: err instanceof Error ? err.message : "Ошибка при создании пользователя",
       });
     } finally {
       setSubmitting(false);
@@ -181,10 +174,7 @@ export default function AddUserModal({
 
         <form onSubmit={handleSubmit} noValidate>
           {errors.submit && (
-            <div
-              className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md"
-              role="alert"
-            >
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md" role="alert">
               <p className="text-red-600 text-sm">{errors.submit}</p>
             </div>
           )}
@@ -215,21 +205,14 @@ export default function AddUserModal({
               required
             />
             {errors.email && (
-              <p
-                id="email-error"
-                className="text-red-500 text-sm mt-1"
-                role="alert"
-              >
+              <p id="email-error" className="text-red-500 text-sm mt-1" role="alert">
                 {errors.email}
               </p>
             )}
           </div>
 
           <div className="mb-3">
-            <label
-              htmlFor="password"
-              className="block mb-1 text-sm font-semibold"
-            >
+            <label htmlFor="password" className="block mb-1 text-sm font-semibold">
               Пароль *
             </label>
             <PasswordInput
@@ -250,21 +233,14 @@ export default function AddUserModal({
               required
             />
             {errors.password && (
-              <p
-                id="password-error"
-                className="text-red-500 text-sm mt-1"
-                role="alert"
-              >
+              <p id="password-error" className="text-red-500 text-sm mt-1" role="alert">
                 {errors.password}
               </p>
             )}
           </div>
 
           <div className="mb-3">
-            <label
-              htmlFor="givenName"
-              className="block mb-1 text-sm font-semibold"
-            >
+            <label htmlFor="givenName" className="block mb-1 text-sm font-semibold">
               Имя *
             </label>
             <Input
@@ -281,28 +257,19 @@ export default function AddUserModal({
               className="w-full py-2 px-3 border border-gray-300 rounded-md text-base"
               autoComplete="given-name"
               aria-invalid={errors.givenName ? "true" : "false"}
-              aria-describedby={
-                errors.givenName ? "givenName-error" : undefined
-              }
+              aria-describedby={errors.givenName ? "givenName-error" : undefined}
               style={{ fontSize: "16px" }}
               required
             />
             {errors.givenName && (
-              <p
-                id="givenName-error"
-                className="text-red-500 text-sm mt-1"
-                role="alert"
-              >
+              <p id="givenName-error" className="text-red-500 text-sm mt-1" role="alert">
                 {errors.givenName}
               </p>
             )}
           </div>
 
           <div className="mb-3">
-            <label
-              htmlFor="familyName"
-              className="block mb-1 text-sm font-semibold"
-            >
+            <label htmlFor="familyName" className="block mb-1 text-sm font-semibold">
               Фамилия
             </label>
             <Input
@@ -310,9 +277,7 @@ export default function AddUserModal({
               name="familyName"
               type="text"
               value={form.familyName}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, familyName: e.target.value }))
-              }
+              onChange={(e) => setForm((f) => ({ ...f, familyName: e.target.value }))}
               className="w-full py-2 px-3 border border-gray-300 rounded-md text-base"
               autoComplete="family-name"
               style={{ fontSize: "16px" }}
@@ -320,10 +285,7 @@ export default function AddUserModal({
           </div>
 
           <div className="mb-3">
-            <label
-              htmlFor="internalExtensions"
-              className="block mb-1 text-sm font-semibold"
-            >
+            <label htmlFor="internalExtensions" className="block mb-1 text-sm font-semibold">
               Внутренние номера
             </label>
             <Input
@@ -331,9 +293,7 @@ export default function AddUserModal({
               name="internalExtensions"
               type="text"
               value={form.internalExtensions}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, internalExtensions: e.target.value }))
-              }
+              onChange={(e) => setForm((f) => ({ ...f, internalExtensions: e.target.value }))}
               className="w-full py-2 px-3 border border-gray-300 rounded-md text-base"
               placeholder="101, 102 или admin, ovchinnikov_nikita…"
               style={{ fontSize: "16px" }}
@@ -341,10 +301,7 @@ export default function AddUserModal({
           </div>
 
           <div className="mb-4">
-            <label
-              htmlFor="mobilePhones"
-              className="block mb-1 text-sm font-semibold"
-            >
+            <label htmlFor="mobilePhones" className="block mb-1 text-sm font-semibold">
               Мобильные номера
             </label>
             <Input
@@ -352,9 +309,7 @@ export default function AddUserModal({
               name="mobilePhones"
               type="text"
               value={form.mobilePhones}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, mobilePhones: e.target.value }))
-              }
+              onChange={(e) => setForm((f) => ({ ...f, mobilePhones: e.target.value }))}
               className="w-full py-2 px-3 border border-gray-300 rounded-md text-base"
               placeholder="79XXXXXXXXX, можно несколько через запятую…"
               style={{ fontSize: "16px" }}

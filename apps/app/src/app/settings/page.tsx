@@ -1,11 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import {
-  SettingsPageShell,
-  TelegramSection,
-  useSettings,
-} from "@/components/features/settings";
+import { SettingsPageShell, TelegramSection, useSettings } from "@/components/features/settings";
 
 export default function SettingsGeneralPage() {
   const { state, loadSettings, handleSendTest } = useSettings();
@@ -27,12 +23,8 @@ export default function SettingsGeneralPage() {
   return (
     <SettingsPageShell>
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Общие настройки
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Отчёты в Telegram и уведомления
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">Общие настройки</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Отчёты в Telegram и уведомления</p>
       </header>
 
       <TelegramSection

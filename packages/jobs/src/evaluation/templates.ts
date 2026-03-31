@@ -4,11 +4,7 @@
  * или workspace default.
  */
 
-export const EVALUATION_TEMPLATE_SLUGS = [
-  "sales",
-  "support",
-  "general",
-] as const;
+export const EVALUATION_TEMPLATE_SLUGS = ["sales", "support", "general"] as const;
 
 export type EvaluationTemplateSlug = (typeof EVALUATION_TEMPLATE_SLUGS)[number];
 
@@ -115,10 +111,7 @@ manager_feedback — 1–2 предложения: что сделано хор�
 Если разговор слишком короткий или неразборчивый (но это не автоответчик) — ставь 3 и укажи в explanation/feedback причину.
 Отвечай только на русском.`;
 
-export const EVALUATION_TEMPLATES: Record<
-  EvaluationTemplateSlug,
-  EvaluationTemplate
-> = {
+export const EVALUATION_TEMPLATES: Record<EvaluationTemplateSlug, EvaluationTemplate> = {
   sales: {
     slug: "sales",
     name: "Продажи",

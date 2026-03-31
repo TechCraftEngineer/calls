@@ -45,11 +45,10 @@ function CreateWorkspaceForm() {
     retry: false,
   });
 
-  const { data: pendingInvitationsData, isPending: checkingInvitations } =
-    useQuery({
-      ...orpc.workspaces.getPendingInvitationsForCurrentUser.queryOptions(),
-      retry: false,
-    });
+  const { data: pendingInvitationsData, isPending: checkingInvitations } = useQuery({
+    ...orpc.workspaces.getPendingInvitationsForCurrentUser.queryOptions(),
+    retry: false,
+  });
 
   const validateTokenMutation = useMutation(
     orpc.workspaces.validateInvitationToken.mutationOptions(),
@@ -69,11 +68,7 @@ function CreateWorkspaceForm() {
   }, [router]);
 
   useEffect(() => {
-    if (
-      workspacesError &&
-      typeof workspacesError === "object" &&
-      "code" in workspacesError
-    ) {
+    if (workspacesError && typeof workspacesError === "object" && "code" in workspacesError) {
       if ((workspacesError as { code?: string }).code === "UNAUTHORIZED") {
         router.replace(paths.auth.signin);
       }
@@ -136,8 +131,7 @@ function CreateWorkspaceForm() {
         router.push(paths.root);
       },
       onError: (err) => {
-        const msg =
-          err instanceof Error ? err.message : "Не удалось создать компанию";
+        const msg = err instanceof Error ? err.message : "Не удалось создать компанию";
         setError("root", { message: msg });
         toast.error(msg);
       },
@@ -165,9 +159,7 @@ function CreateWorkspaceForm() {
           <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-[10px] bg-[#FFD600] text-black font-black text-[24px]">
             M
           </div>
-          <h1 className="mb-2 text-[24px] font-bold text-[#111]">
-            Создайте компанию
-          </h1>
+          <h1 className="mb-2 text-[24px] font-bold text-[#111]">Создайте компанию</h1>
           <p className="m-0 text-[14px] text-[#888]">
             Компания объединяет команду и данные. Начните с названия.
           </p>
@@ -182,19 +174,14 @@ function CreateWorkspaceForm() {
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
           <div className="mb-5">
-            <label
-              htmlFor="name"
-              className="mb-2 block text-[13px] font-semibold text-[#333]"
-            >
+            <label htmlFor="name" className="mb-2 block text-[13px] font-semibold text-[#333]">
               Название
             </label>
             <Input
               id="name"
               type="text"
               className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
-                errors.name
-                  ? "border-red-500 bg-red-50 focus:border-red-500"
-                  : ""
+                errors.name ? "border-red-500 bg-red-50 focus:border-red-500" : ""
               }`}
               placeholder="Например: Маркетинг…"
               autoComplete="organization"
@@ -202,9 +189,7 @@ function CreateWorkspaceForm() {
               {...register("name")}
             />
             {errors.name && (
-              <div className="mt-1 text-xs leading-tight text-red-600">
-                {errors.name.message}
-              </div>
+              <div className="mt-1 text-xs leading-tight text-red-600">{errors.name.message}</div>
             )}
           </div>
 

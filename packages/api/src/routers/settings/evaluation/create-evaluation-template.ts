@@ -3,10 +3,7 @@ import { z } from "zod";
 import { workspaceAdminProcedure } from "../../../orpc";
 
 const createSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Название обязательно")
-    .max(200, "Название слишком длинное"),
+  name: z.string().min(1, "Название обязательно").max(200, "Название слишком длинное"),
   description: z.string().max(500, "Описание слишком длинное").optional(),
   systemPrompt: z
     .string()
@@ -18,8 +15,7 @@ const createSchema = z.object({
       return (
         lowerPrompt.includes("value_score") &&
         lowerPrompt.includes("manager_score") &&
-        (lowerPrompt.includes("value_explanation") ||
-          lowerPrompt.includes("manager_feedback"))
+        (lowerPrompt.includes("value_explanation") || lowerPrompt.includes("manager_feedback"))
       );
     }, "Промпт должен содержать обязательные поля: value_score, manager_score, value_explanation, manager_feedback"),
 });
@@ -34,15 +30,12 @@ export const createEvaluationTemplate = workspaceAdminProcedure
       const slug = evaluationTemplatesRepository.generateCustomSlug();
 
       try {
-        const template = await evaluationTemplatesRepository.create(
-          context.workspaceId,
-          {
-            slug,
-            name: input.name,
-            description: input.description ?? null,
-            systemPrompt: input.systemPrompt,
-          },
-        );
+        const template = await evaluationTemplatesRepository.create(context.workspaceId, {
+          slug,
+          name: input.name,
+          description: input.description ?? null,
+          systemPrompt: input.systemPrompt,
+        });
         return {
           id: template.id,
           slug: template.slug,
@@ -53,10 +46,7 @@ export const createEvaluationTemplate = workspaceAdminProcedure
         };
       } catch (error) {
         // Check if it's a unique constraint violation
-        if (
-          error instanceof Error &&
-          error.message.includes("unique constraint")
-        ) {
+        if (error instanceof Error && error.message.includes("unique constraint")) {
           attempt++;
           continue;
         }

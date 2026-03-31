@@ -20,8 +20,7 @@ export default function SignOutPage() {
           setIsLoggingOut(false);
           // Очищаем куку активной компании при выходе
           // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
-          document.cookie =
-            "active_workspace_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          document.cookie = "active_workspace_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
           router.replace(paths.auth.signin);
         }
       } catch (err) {
@@ -53,9 +52,7 @@ export default function SignOutPage() {
           {error ? (
             <div className="space-y-4">
               <p className="text-[15px] text-red-600">{error}</p>
-              <p className="text-[13px] text-[#888]">
-                Перенаправление на страницу входа…
-              </p>
+              <p className="text-[13px] text-[#888]">Перенаправление на страницу входа…</p>
             </div>
           ) : (
             <p className="text-[15px] text-[#888]">

@@ -17,9 +17,7 @@ interface DropdownProps {
 }
 
 function isNumberArray(value: string | number[] | string[]): value is number[] {
-  return (
-    Array.isArray(value) && (value.length === 0 || typeof value[0] === "number")
-  );
+  return Array.isArray(value) && (value.length === 0 || typeof value[0] === "number");
 }
 
 export default function CustomDropdown({
@@ -58,10 +56,7 @@ export default function CustomDropdown({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         closeMenu(false);
       }
     };
@@ -88,9 +83,7 @@ export default function CustomDropdown({
         'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
       return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter(
-        (el) =>
-          !el.hasAttribute("disabled") &&
-          el.getAttribute("aria-hidden") !== "true",
+        (el) => !el.hasAttribute("disabled") && el.getAttribute("aria-hidden") !== "true",
       );
     };
 
@@ -105,12 +98,7 @@ export default function CustomDropdown({
         return;
       }
 
-      if (
-        e.key === "ArrowDown" ||
-        e.key === "ArrowUp" ||
-        e.key === "Home" ||
-        e.key === "End"
-      ) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Home" || e.key === "End") {
         const items = getFocusable();
         if (items.length === 0) return;
         e.preventDefault();
@@ -127,16 +115,13 @@ export default function CustomDropdown({
         }
 
         if (e.key === "ArrowDown") {
-          const nextIndex =
-            currentIndex >= 0 ? (currentIndex + 1) % items.length : 0;
+          const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % items.length : 0;
           items[nextIndex]?.focus();
           return;
         }
 
         const prevIndex =
-          currentIndex >= 0
-            ? (currentIndex - 1 + items.length) % items.length
-            : items.length - 1;
+          currentIndex >= 0 ? (currentIndex - 1 + items.length) % items.length : items.length - 1;
         items[prevIndex]?.focus();
         return;
       }
@@ -171,9 +156,7 @@ export default function CustomDropdown({
 
   if (type === "manager") {
     const managerValue = typeof value === "string" ? value : "";
-    const selectedManager = managers.find(
-      (m) => m.id.toString() === managerValue,
-    );
+    const selectedManager = managers.find((m) => m.id.toString() === managerValue);
     const displayLabel = selectedManager ? selectedManager.name : "Выбрать";
 
     return (
@@ -247,8 +230,7 @@ export default function CustomDropdown({
 
   // Фильтр значений (1–5)
   if (type === "value") {
-    const selectedValues: number[] =
-      Array.isArray(value) && isNumberArray(value) ? value : [];
+    const selectedValues: number[] = Array.isArray(value) && isNumberArray(value) ? value : [];
     const valueOptions = [1, 2, 3, 4, 5];
 
     const handleValueChange = (val: number, checked: boolean) => {
@@ -264,8 +246,7 @@ export default function CustomDropdown({
     const getDisplayLabel = () => {
       if (selectedValues.length === 0) return "Ценность (Любая)";
       if (selectedValues.length === 1) return `Ценность (${selectedValues[0]})`;
-      if (selectedValues.length <= 3)
-        return `Ценность (${selectedValues.join(", ")})`;
+      if (selectedValues.length <= 3) return `Ценность (${selectedValues.join(", ")})`;
       return `Ценность (${selectedValues.length} выбрано)`;
     };
 
@@ -329,6 +310,6 @@ export default function CustomDropdown({
   function assertNever(x: never): never {
     throw new Error(`Unhandled type: ${x}`);
   }
-  
+
   return assertNever(type as never);
 }

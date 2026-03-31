@@ -94,17 +94,11 @@ export const reportSettingsSchema = z.object({
   kpi_base_salary: z.number().min(0),
   kpi_target_bonus: z.number().min(0),
   kpi_target_talk_time_minutes: z.number().min(0),
-  report_daily_time: z
-    .string()
-    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
+  report_daily_time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
   report_weekly_day: z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]),
-  report_weekly_time: z
-    .string()
-    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
+  report_weekly_time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
   report_monthly_day: z.enum(["1", "15", "last"]),
-  report_monthly_time: z
-    .string()
-    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
+  report_monthly_time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
   report_managed_user_ids: z.array(z.number()),
 });
 
@@ -120,10 +114,7 @@ export const inviteAcceptSchema = z.object({
 // Динамическая схема для link-based приглашений (email обязателен)
 export const inviteAcceptLinkSchema = z.object({
   name: z.string().optional(),
-  email: z
-    .string()
-    .min(1, "Email обязателен")
-    .email("Введите корректный email"),
+  email: z.string().min(1, "Email обязателен").email("Введите корректный email"),
   password: passwordValidation,
 });
 
@@ -132,21 +123,15 @@ export type InviteAcceptData = z.infer<typeof inviteAcceptSchema>;
 // Схема валидации формы редактирования пользователя (подмножество полей)
 export const editUserFormSchema = z.object({
   givenName: z.string().min(1, "Укажите имя."),
-  email: z
-    .union([z.string().email("Укажите корректный email адрес."), z.literal("")])
-    .optional(),
+  email: z.union([z.string().email("Укажите корректный email адрес."), z.literal("")]).optional(),
   filterMinDuration: z
     .number()
     .min(0, "Минимальная длительность звонка не может быть отрицательной."),
   filterMinReplicas: z
     .number()
     .min(0, "Минимальное количество реплик не может быть отрицательным."),
-  kpiBaseSalary: z
-    .number()
-    .min(0, "Базовый оклад не может быть отрицательным."),
-  kpiTargetBonus: z
-    .number()
-    .min(0, "Целевой бонус не может быть отрицательным."),
+  kpiBaseSalary: z.number().min(0, "Базовый оклад не может быть отрицательным."),
+  kpiTargetBonus: z.number().min(0, "Целевой бонус не может быть отрицательным."),
   kpiTargetTalkTimeMinutes: z
     .number()
     .min(0, "Целевое время разговоров не может быть отрицательным."),

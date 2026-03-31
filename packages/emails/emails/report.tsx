@@ -114,10 +114,8 @@ function prepareStats(entries: [string, ManagerStats][]): {
     if (!raw || typeof raw !== "object") continue;
     const inCount = raw.incoming?.count ?? 0;
     const outCount = raw.outgoing?.count ?? 0;
-    const inTotalSec =
-      raw.incoming?.totalDuration ?? (raw.incoming?.duration ?? 0) * inCount;
-    const outTotalSec =
-      raw.outgoing?.totalDuration ?? (raw.outgoing?.duration ?? 0) * outCount;
+    const inTotalSec = raw.incoming?.totalDuration ?? (raw.incoming?.duration ?? 0) * inCount;
+    const outTotalSec = raw.outgoing?.totalDuration ?? (raw.outgoing?.duration ?? 0) * outCount;
     const inAvgSec = inCount > 0 ? inTotalSec / inCount : 0;
     const outAvgSec = outCount > 0 ? outTotalSec / outCount : 0;
     const total = inCount + outCount;
@@ -156,9 +154,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
     });
   }
 
-  managers.sort(
-    (a, b) => b.totalCount - a.totalCount || a.name.localeCompare(b.name),
-  );
+  managers.sort((a, b) => b.totalCount - a.totalCount || a.name.localeCompare(b.name));
 
   return {
     managers,
@@ -209,8 +205,7 @@ export const ReportEmail = ({
           }
         }
 
-        const overallAvgManagerScore =
-          scoreWeight > 0 ? scoreWeightedSum / scoreWeight : null;
+        const overallAvgManagerScore = scoreWeight > 0 ? scoreWeightedSum / scoreWeight : null;
 
         return {
           managers,
@@ -280,10 +275,8 @@ export const ReportEmail = ({
                   <tbody>
                     {kpiTable.managers.map((manager) => {
                       const totalMinutes = Math.round(
-                        (manager.incomingAvgDurationSec *
-                          manager.incomingCount +
-                          manager.outgoingAvgDurationSec *
-                            manager.outgoingCount) /
+                        (manager.incomingAvgDurationSec * manager.incomingCount +
+                          manager.outgoingAvgDurationSec * manager.outgoingCount) /
                           60,
                       );
 
@@ -320,9 +313,7 @@ export const ReportEmail = ({
                       );
                     })}
                     <tr className="bg-gray-50 font-semibold">
-                      <td className="border border-gray-300 px-3 py-2 text-sm">
-                        Итого:
-                      </td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm">Итого:</td>
                       <td className="border border-gray-300 px-3 py-2 text-sm text-center">
                         {kpiTable.totals.totalCount}
                       </td>
@@ -344,8 +335,7 @@ export const ReportEmail = ({
                             {formatValue(kpiTable.totals.totalBaseSalary)} ₽
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                            {formatValue(kpiTable.totals.totalCalculatedBonus)}{" "}
-                            ₽
+                            {formatValue(kpiTable.totals.totalCalculatedBonus)} ₽
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">
                             -
@@ -356,9 +346,7 @@ export const ReportEmail = ({
                   </tbody>
                 </table>
               ) : (
-                <Text className="text-[14px] text-gray-600">
-                  Нет данных для отображения KPI
-                </Text>
+                <Text className="text-[14px] text-gray-600">Нет данных для отображения KPI</Text>
               )}
             </Section>
 
@@ -369,8 +357,8 @@ export const ReportEmail = ({
               <Link href={env.APP_URL} className="text-blue-600 no-underline">
                 {APP_CONFIG.shortName}
               </Link>
-              . Вы получаете его, потому что включили email-отчёты в настройках.
-              Отписаться можно в разделе «Настройки отчётов».
+              . Вы получаете его, потому что включили email-отчёты в настройках. Отписаться можно в
+              разделе «Настройки отчётов».
             </Text>
           </Container>
         </Body>

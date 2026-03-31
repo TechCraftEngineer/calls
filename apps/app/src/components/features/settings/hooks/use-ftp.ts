@@ -4,11 +4,7 @@ import { toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useORPC } from "@/orpc/react";
 import type { FtpConnectionStatus, FtpSettings, SettingsState } from "../types";
-import {
-  validateFtpCredentials,
-  validateFtpHost,
-  validateFtpUser,
-} from "../utils";
+import { validateFtpCredentials, validateFtpHost, validateFtpUser } from "../utils";
 
 interface UseFtpSettingsProps {
   state: {
@@ -56,9 +52,7 @@ export function useFtpSettings({ state, setState }: UseFtpSettingsProps) {
         } else if (passwordSet) {
           const hostValidation = validateFtpHost(host);
           const userValidation = validateFtpUser(user);
-          const errors = [hostValidation.error, userValidation.error].filter(
-            Boolean,
-          );
+          const errors = [hostValidation.error, userValidation.error].filter(Boolean);
           if (errors.length > 0) {
             toast.error(errors.join(". "));
             return;
@@ -86,18 +80,13 @@ export function useFtpSettings({ state, setState }: UseFtpSettingsProps) {
         user,
         password,
         syncFromDate:
-          syncFromDate && /^\d{4}-\d{2}-\d{2}$/.test(syncFromDate)
-            ? syncFromDate
-            : undefined,
+          syncFromDate && /^\d{4}-\d{2}-\d{2}$/.test(syncFromDate) ? syncFromDate : undefined,
         excludePhoneNumbers,
       });
       toast.success("Параметры подключения FTP сохранены");
     } catch (error: unknown) {
       console.error("Failed to save FTP:", error);
-      const msg =
-        error instanceof Error
-          ? error.message
-          : "Не удалось сохранить параметры FTP";
+      const msg = error instanceof Error ? error.message : "Не удалось сохранить параметры FTP";
       toast.error(msg);
     } finally {
       setState((prev: SettingsState) => ({ ...prev, ftpSaving: false }));
@@ -158,10 +147,7 @@ export function useFtpSettings({ state, setState }: UseFtpSettingsProps) {
         }));
       }
     } catch (error: unknown) {
-      const msg =
-        error instanceof Error
-          ? error.message
-          : "Не удалось проверить подключение";
+      const msg = error instanceof Error ? error.message : "Не удалось проверить подключение";
       setState((prev: SettingsState) => ({
         ...prev,
         ftpTestMessage: msg,

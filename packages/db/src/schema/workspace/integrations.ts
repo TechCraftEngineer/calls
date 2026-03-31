@@ -3,16 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import {
-  boolean,
-  index,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  unique,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { workspaces } from "./workspaces";
 
 /** Поддерживаемые типы интеграций */
@@ -83,9 +74,7 @@ export const workspaceIntegrations = pgTable(
     workspaceId: text("workspace_id")
       .notNull()
       .references(() => workspaces.id, { onDelete: "cascade" }),
-    integrationType: text("integration_type")
-      .$type<IntegrationType>()
-      .notNull(),
+    integrationType: text("integration_type").$type<IntegrationType>().notNull(),
     enabled: boolean("enabled").notNull().default(false),
     config: jsonb("config").$type<IntegrationConfig>().notNull().default({}),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -97,9 +86,6 @@ export const workspaceIntegrations = pgTable(
     ),
     index("workspace_integrations_workspace_id_idx").on(table.workspaceId),
     index("workspace_integrations_type_idx").on(table.integrationType),
-    index("workspace_integrations_workspace_type_idx").on(
-      table.workspaceId,
-      table.integrationType,
-    ),
+    index("workspace_integrations_workspace_type_idx").on(table.workspaceId, table.integrationType),
   ],
 );

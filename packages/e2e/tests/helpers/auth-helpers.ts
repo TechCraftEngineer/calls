@@ -52,9 +52,7 @@ export class AuthHelpers {
    * Проверяет состояние загрузки кнопки
    */
   async expectLoadingState(buttonText: string) {
-    await expect(this.page.locator('button[type="submit"]')).toContainText(
-      buttonText,
-    );
+    await expect(this.page.locator('button[type="submit"]')).toContainText(buttonText);
     await expect(this.page.locator('button[type="submit"]')).toBeDisabled();
   }
 
@@ -122,9 +120,7 @@ export class AuthHelpers {
     await expect(this.page.locator("h1")).toContainText("С возвращением!");
     await expect(this.page.locator("#email")).toBeVisible();
     await expect(this.page.locator("#password")).toBeVisible();
-    await expect(this.page.locator('button[type="submit"]')).toContainText(
-      "Войти в систему",
-    );
+    await expect(this.page.locator('button[type="submit"]')).toContainText("Войти в систему");
   }
 
   /**
@@ -136,22 +132,16 @@ export class AuthHelpers {
     await expect(this.page.locator("#givenName")).toBeVisible();
     await expect(this.page.locator("#familyName")).toBeVisible();
     await expect(this.page.locator("#password")).toBeVisible();
-    await expect(this.page.locator('button[type="submit"]')).toContainText(
-      "Зарегистрироваться",
-    );
+    await expect(this.page.locator('button[type="submit"]')).toContainText("Зарегистрироваться");
   }
 
   /**
    * Проверяет основные элементы страницы восстановления пароля
    */
   async expectForgotPasswordPageElements() {
-    await expect(this.page.locator("h1")).toContainText(
-      "Восстановление пароля",
-    );
+    await expect(this.page.locator("h1")).toContainText("Восстановление пароля");
     await expect(this.page.locator("#email")).toBeVisible();
-    await expect(this.page.locator('button[type="submit"]')).toContainText(
-      "Отправить ссылку",
-    );
+    await expect(this.page.locator('button[type="submit"]')).toContainText("Отправить ссылку");
   }
 
   /**
@@ -183,9 +173,7 @@ export class AuthHelpers {
    */
   async waitForAuthResponse() {
     return this.page.waitForResponse(
-      (response) =>
-        response.url().includes("/api/auth") &&
-        response.request().method() === "POST",
+      (response) => response.url().includes("/api/auth") && response.request().method() === "POST",
     );
   }
 
@@ -198,10 +186,7 @@ export class AuthHelpers {
     await expect(this.page.locator('label[for="password"]')).toBeVisible();
 
     // Проверяем autocomplete
-    await expect(this.page.locator("#email")).toHaveAttribute(
-      "autocomplete",
-      "email",
-    );
+    await expect(this.page.locator("#email")).toHaveAttribute("autocomplete", "email");
   }
 
   /**

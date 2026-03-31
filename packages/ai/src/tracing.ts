@@ -30,11 +30,7 @@ export function createTrace(name: string, userId?: string) {
   });
 }
 
-export function logChatEvent(
-  traceId: string,
-  eventName: string,
-  data: Record<string, unknown>,
-) {
+export function logChatEvent(traceId: string, eventName: string, data: Record<string, unknown>) {
   const langfuse = getLangfuse();
   if (!langfuse) return;
 

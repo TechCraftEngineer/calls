@@ -34,9 +34,7 @@ export interface ManagerOption {
 interface CallsFiltersProps {
   filters: CallsFiltersState;
   managerOptions: ManagerOption[];
-  updateFilters: (
-    updater: (prev: CallsFiltersState) => CallsFiltersState,
-  ) => void;
+  updateFilters: (updater: (prev: CallsFiltersState) => CallsFiltersState) => void;
   onReset: () => void;
   onSubmit: () => void;
 }
@@ -53,7 +51,6 @@ const statusOptions = [
   { value: "answered", label: "Принятые" },
 ] as const;
 
-
 const valueOptions = [1, 2, 3, 4, 5] as const;
 
 export function CallsFilters({
@@ -67,9 +64,7 @@ export function CallsFilters({
     filters.direction.length === 0
       ? "Все"
       : filters.direction
-          .map(
-            (value) => directionOptions.find((o) => o.value === value)?.label,
-          )
+          .map((value) => directionOptions.find((o) => o.value === value)?.label)
           .filter(Boolean)
           .join(", ");
 
@@ -152,17 +147,12 @@ export function CallsFilters({
                     } else {
                       updateFilters((prev) => ({
                         ...prev,
-                        direction: prev.direction.filter(
-                          (v) => v !== option.value,
-                        ),
+                        direction: prev.direction.filter((v) => v !== option.value),
                       }));
                     }
                   }}
                 />
-                <Label
-                  htmlFor={`direction-${option.value}`}
-                  className="font-normal"
-                >
+                <Label htmlFor={`direction-${option.value}`} className="font-normal">
                   {option.label}
                 </Label>
               </div>
@@ -209,10 +199,7 @@ export function CallsFilters({
                     }
                   }}
                 />
-                <Label
-                  htmlFor={`status-${option.value}`}
-                  className="font-normal"
-                >
+                <Label htmlFor={`status-${option.value}`} className="font-normal">
                   {option.label}
                 </Label>
               </div>
@@ -235,9 +222,7 @@ export function CallsFilters({
               <Button
                 variant="ghost"
                 className="h-8 w-full justify-start px-2"
-                onClick={() =>
-                  updateFilters((prev) => ({ ...prev, manager: [] }))
-                }
+                onClick={() => updateFilters((prev) => ({ ...prev, manager: [] }))}
               >
                 {managerOptions.length === 1 ? "Мои звонки" : "Все сотрудники"}
               </Button>
@@ -257,10 +242,7 @@ export function CallsFilters({
                         }))
                       }
                     />
-                    <Label
-                      htmlFor={`manager-${manager.id}`}
-                      className="font-normal"
-                    >
+                    <Label htmlFor={`manager-${manager.id}`} className="font-normal">
                       {manager.name}
                     </Label>
                   </div>
@@ -275,9 +257,7 @@ export function CallsFilters({
             <Button variant="outline" className="h-9">
               <Funnel className="size-4" />
               Ценность
-              {selectedValueCount > 0 && (
-                <Badge variant="secondary">{selectedValueCount}</Badge>
-              )}
+              {selectedValueCount > 0 && <Badge variant="secondary">{selectedValueCount}</Badge>}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-48 space-y-3">
@@ -304,15 +284,12 @@ export function CallsFilters({
           </PopoverContent>
         </Popover>
 
-
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className="h-9">
               <Funnel className="size-4" />
               Период
-              {(filters.dateFrom || filters.dateTo) && (
-                <Badge variant="secondary">1</Badge>
-              )}
+              {(filters.dateFrom || filters.dateTo) && <Badge variant="secondary">1</Badge>}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-72 space-y-3">
@@ -320,9 +297,7 @@ export function CallsFilters({
               <Label className="text-xs text-muted-foreground">Дата от</Label>
               <DatePicker
                 value={filters.dateFrom}
-                onChange={(v) =>
-                  updateFilters((prev) => ({ ...prev, dateFrom: v }))
-                }
+                onChange={(v) => updateFilters((prev) => ({ ...prev, dateFrom: v }))}
                 placeholder="Выберите дату"
               />
             </div>
@@ -330,9 +305,7 @@ export function CallsFilters({
               <Label className="text-xs text-muted-foreground">Дата до</Label>
               <DatePicker
                 value={filters.dateTo}
-                onChange={(v) =>
-                  updateFilters((prev) => ({ ...prev, dateTo: v }))
-                }
+                onChange={(v) => updateFilters((prev) => ({ ...prev, dateTo: v }))}
                 placeholder="Выберите дату"
               />
             </div>

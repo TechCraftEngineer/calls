@@ -13,10 +13,7 @@ import Sidebar from "@/components/layout/sidebar";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 import { StatisticsFilters } from "../statistics-filters";
-import {
-  StatisticsPageSkeleton,
-  StatisticsSettingsSkeleton,
-} from "../statistics-skeletons";
+import { StatisticsPageSkeleton, StatisticsSettingsSkeleton } from "../statistics-skeletons";
 import type { StatsRow } from "../statistics-table";
 import { StatisticsTable } from "../statistics-table";
 
@@ -118,29 +115,19 @@ function StatisticsPageContent() {
           <StatisticsFilters
             dateFrom={filters.dateFrom}
             dateTo={filters.dateTo}
-            onDateFromChange={(v) =>
-              setFilters((prev) => ({ ...prev, dateFrom: v }))
-            }
-            onDateToChange={(v) =>
-              setFilters((prev) => ({ ...prev, dateTo: v }))
-            }
+            onDateFromChange={(v) => setFilters((prev) => ({ ...prev, dateFrom: v }))}
+            onDateToChange={(v) => setFilters((prev) => ({ ...prev, dateTo: v }))}
             onApply={loadStats}
             onReset={handleResetFilters}
           />
         )}
 
-        {activeTab === "statistics" && (
-          <StatisticsTable stats={stats} loading={loading} />
-        )}
+        {activeTab === "statistics" && <StatisticsTable stats={stats} loading={loading} />}
 
         {activeTab === "kpi" && <KpiTable />}
 
-        {activeTab === "settings" && userLoading && (
-          <StatisticsSettingsSkeleton />
-        )}
-        {activeTab === "settings" && !userLoading && user && (
-          <ReportSettingsPanel user={user} />
-        )}
+        {activeTab === "settings" && userLoading && <StatisticsSettingsSkeleton />}
+        {activeTab === "settings" && !userLoading && user && <ReportSettingsPanel user={user} />}
         {activeTab === "settings" && !userLoading && !user && (
           <div className="py-12 text-center text-[#666]">
             Войдите в систему для настройки отчётов.

@@ -3,8 +3,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Radio, Volume2 } from "lucide-react";
-import { CallWaveformPlayer } from "./call-waveform-player";
 import { useORPC } from "@/orpc/react";
+import { CallWaveformPlayer } from "./call-waveform-player";
 
 interface AudioComparisonWaveformPlayerProps {
   callId?: string | null;
@@ -40,9 +40,7 @@ export function AudioComparisonWaveformPlayer({
   });
 
   if (!id) {
-    return (
-      <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>
-    );
+    return <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>;
   }
 
   const hasEnhancedAudio = enhancedData?.url != null;
@@ -62,9 +60,7 @@ export function AudioComparisonWaveformPlayer({
   }
 
   if (originalError || !originalData?.url) {
-    return (
-      <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>
-    );
+    return <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>;
   }
 
   // Если нет улучшенного аудио, показываем только оригинал
@@ -101,9 +97,7 @@ export function AudioComparisonWaveformPlayer({
         <TabsContent value="original" className="mt-0">
           <div className="space-y-2">
             <CallWaveformPlayer callId={id} />
-            <p className="text-muted-foreground text-xs">
-              Оригинальная запись без обработки
-            </p>
+            <p className="text-muted-foreground text-xs">Оригинальная запись без обработки</p>
           </div>
         </TabsContent>
       </Tabs>

@@ -42,12 +42,8 @@ function buildEditForm(u: WorkspaceMemberUser): EditUserForm {
     internalExtensions: u.internalExtensions ?? "",
     mobilePhones: u.mobilePhones ?? "",
     telegramChatId: u.telegramChatId ?? "",
-    telegramDailyReport: toBool(
-      u.telegramDailyReport ?? ext.telegram_daily_report,
-    ),
-    telegramManagerReport: toBool(
-      u.telegramManagerReport ?? ext.telegram_manager_report,
-    ),
+    telegramDailyReport: toBool(u.telegramDailyReport ?? ext.telegram_daily_report),
+    telegramManagerReport: toBool(u.telegramManagerReport ?? ext.telegram_manager_report),
     maxChatId: u.maxChatId ?? toStr(ext.max_chat_id) ?? "",
     maxDailyReport: toBool(u.maxDailyReport ?? ext.max_daily_report),
     maxManagerReport: toBool(u.maxManagerReport ?? ext.max_manager_report),
@@ -59,35 +55,22 @@ function buildEditForm(u: WorkspaceMemberUser): EditUserForm {
     email: u.email ?? "",
     emailDailyReport: toBool(u.emailDailyReport ?? ext.email_daily_report),
     emailWeeklyReport: toBool(u.emailWeeklyReport ?? ext.email_weekly_report),
-    emailMonthlyReport: toBool(
-      u.emailMonthlyReport ?? ext.email_monthly_report,
-    ),
-    telegramWeeklyReport: toBool(
-      u.telegramWeeklyReport ?? ext.telegram_weekly_report,
-    ),
-    telegramMonthlyReport: toBool(
-      u.telegramMonthlyReport ?? ext.telegram_monthly_report,
-    ),
+    emailMonthlyReport: toBool(u.emailMonthlyReport ?? ext.email_monthly_report),
+    telegramWeeklyReport: toBool(u.telegramWeeklyReport ?? ext.telegram_weekly_report),
+    telegramMonthlyReport: toBool(u.telegramMonthlyReport ?? ext.telegram_monthly_report),
     reportIncludeCallSummaries: toBool(
       u.reportIncludeCallSummaries ?? ext.report_include_call_summaries,
     ),
     reportDetailed: toBool(u.reportDetailed ?? ext.report_detailed),
-    reportIncludeAvgRating: toBool(
-      u.reportIncludeAvgRating ?? ext.report_include_avg_rating,
-    ),
+    reportIncludeAvgRating: toBool(u.reportIncludeAvgRating ?? ext.report_include_avg_rating),
     reportIncludeKpi: toBool(u.reportIncludeKpi ?? ext.report_include_kpi),
     kpiBaseSalary: toNum(u.kpiBaseSalary ?? ext.kpi_base_salary),
     kpiTargetBonus: toNum(u.kpiTargetBonus ?? ext.kpi_target_bonus),
-    kpiTargetTalkTimeMinutes: toNum(
-      u.kpiTargetTalkTimeMinutes ?? ext.kpi_target_talk_time_minutes,
-    ),
+    kpiTargetTalkTimeMinutes: toNum(u.kpiTargetTalkTimeMinutes ?? ext.kpi_target_talk_time_minutes),
     evaluationTemplateSlug:
-      u.evaluationTemplateSlug ??
-      (toStr(ext.evaluation_template_slug) || "general"),
+      u.evaluationTemplateSlug ?? (toStr(ext.evaluation_template_slug) || "general"),
     evaluationCustomInstructions:
-      u.evaluationCustomInstructions ??
-      toStr(ext.evaluation_custom_instructions) ??
-      "",
+      u.evaluationCustomInstructions ?? toStr(ext.evaluation_custom_instructions) ?? "",
   };
 }
 
@@ -106,12 +89,7 @@ function validateForm(form: EditUserForm): string | null {
   return first?.message ?? "Ошибка валидации";
 }
 
-export default function EditUserModal({
-  user,
-  onClose,
-  onSubmit,
-  onRefresh,
-}: EditUserModalProps) {
+export default function EditUserModal({ user, onClose, onSubmit, onRefresh }: EditUserModalProps) {
   const orpc = useORPC();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<EditUserForm>(() => buildEditForm(user));
@@ -163,8 +141,7 @@ export default function EditUserModal({
       toast.success("Настройки пользователя сохранены");
       onClose();
     } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Ошибка при сохранении";
+      const errorMessage = err instanceof Error ? err.message : "Ошибка при сохранении";
       setError(errorMessage);
     } finally {
       setSubmitting(false);
@@ -184,17 +161,12 @@ export default function EditUserModal({
 
   const maxAuthUrlMutation = useMutation(
     orpc.users.maxAuthUrl.mutationOptions({
-      onSuccess: (res: {
-        url?: string;
-        manual_instruction?: string;
-        token?: string;
-      }) => {
+      onSuccess: (res: { url?: string; manual_instruction?: string; token?: string }) => {
         const url = "url" in res ? res.url : undefined;
         if (typeof url === "string") {
           window.open(url, "_blank");
         } else if (res.manual_instruction) {
-          const cmd =
-            res.manual_instruction.split(": ")[1] ?? res.manual_instruction;
+          const cmd = res.manual_instruction.split(": ")[1] ?? res.manual_instruction;
           toast.info(`Для подключения отправьте боту команду:\n${cmd}`);
         }
       },
@@ -222,15 +194,10 @@ export default function EditUserModal({
         updateForm({
           telegramChatId: updated.telegramChatId ?? "",
           filterExcludeAnsweringMachine: toBool(
-            updated.filterExcludeAnsweringMachine ??
-              ext.filter_exclude_answering_machine,
+            updated.filterExcludeAnsweringMachine ?? ext.filter_exclude_answering_machine,
           ),
-          filterMinDuration: toNum(
-            updated.filterMinDuration ?? ext.filter_min_duration,
-          ),
-          filterMinReplicas: toNum(
-            updated.filterMinReplicas ?? ext.filter_min_replicas,
-          ),
+          filterMinDuration: toNum(updated.filterMinDuration ?? ext.filter_min_duration),
+          filterMinReplicas: toNum(updated.filterMinReplicas ?? ext.filter_min_replicas),
         });
         onRefresh();
       }
@@ -251,17 +218,11 @@ export default function EditUserModal({
   return (
     <div className={modalOverlayClasses} onClick={onClose}>
       <div className={modalBoxClasses} onClick={(e) => e.stopPropagation()}>
-        <h2 className="m-0 mb-5 text-lg font-bold">
-          Редактировать пользователя
-        </h2>
-        <p className="m-0 mb-4 text-[13px] text-[#666]">
-          Email: {String(editUser.email ?? "")}
-        </p>
+        <h2 className="m-0 mb-5 text-lg font-bold">Редактировать пользователя</h2>
+        <p className="m-0 mb-4 text-[13px] text-[#666]">Email: {String(editUser.email ?? "")}</p>
 
         <form onSubmit={handleSubmit}>
-          {error ? (
-            <p className="text-[#c00] mb-3 text-sm">{String(error)}</p>
-          ) : null}
+          {error ? <p className="text-[#c00] mb-3 text-sm">{String(error)}</p> : null}
 
           <BasicFields form={form} onFormChange={updateForm} />
 
@@ -287,12 +248,7 @@ export default function EditUserModal({
           <KpiFilterSection form={form} onFormChange={updateForm} />
 
           <div className="flex gap-3 justify-end">
-            <Button
-              type="button"
-              variant="link"
-              onClick={onClose}
-              className="text-foreground"
-            >
+            <Button type="button" variant="link" onClick={onClose} className="text-foreground">
               Отмена
             </Button>
             <Button type="submit" variant="default" disabled={submitting}>

@@ -52,10 +52,7 @@ export default function SettingsPbxMegafonPage() {
           className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"
           aria-label="Хлебные крошки"
         >
-          <Link
-            href={paths.settings.pbx}
-            className="transition-colors hover:text-foreground"
-          >
+          <Link href={paths.settings.pbx} className="transition-colors hover:text-foreground">
             АТС
           </Link>
           <span aria-hidden>/</span>
@@ -75,15 +72,11 @@ export default function SettingsPbxMegafonPage() {
                 {isEnabled ? "Интеграция включена" : "Интеграция выключена"}
               </Badge>
               <Badge variant={baseUrl && apiKeySet ? "secondary" : "outline"}>
-                {baseUrl && apiKeySet
-                  ? "Подключение готово"
-                  : "Нужно заполнить"}
+                {baseUrl && apiKeySet ? "Подключение готово" : "Нужно заполнить"}
               </Badge>
             </div>
 
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Настройки АТС Мегафон
-            </h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Настройки АТС Мегафон</h1>
             <p className="text-sm text-muted-foreground">
               Подключение, синхронизация и привязка данных Мегафона
             </p>
@@ -107,9 +100,7 @@ export default function SettingsPbxMegafonPage() {
         onLink={handleLinkPbxTarget}
         onUnlink={handleUnlinkPbxTarget}
         saving={
-          state.megaPbxAccessSaving ||
-          state.megaPbxSyncOptionsSaving ||
-          state.megaPbxWebhookSaving
+          state.megaPbxAccessSaving || state.megaPbxSyncOptionsSaving || state.megaPbxWebhookSaving
         }
         savingAccess={state.megaPbxAccessSaving}
         savingSyncOptions={state.megaPbxSyncOptionsSaving}

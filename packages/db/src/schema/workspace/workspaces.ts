@@ -5,11 +5,7 @@
 import { sql } from "drizzle-orm";
 import { jsonb, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-export const workspaceMemberRole = pgEnum("workspace_member_role", [
-  "owner",
-  "admin",
-  "member",
-]);
+export const workspaceMemberRole = pgEnum("workspace_member_role", ["owner", "admin", "member"]);
 
 export const workspaces = pgTable(
   "workspaces",

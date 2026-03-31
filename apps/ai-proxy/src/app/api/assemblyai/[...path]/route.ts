@@ -1,22 +1,15 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@calls/config/env";
+import { type NextRequest, NextResponse } from "next/server";
 
 /** AssemblyAI требует nodejs runtime для upload (FormData, большие файлы) */
 export const runtime = "nodejs";
 
 const ASSEMBLYAI_BASE = "https://api.assemblyai.com";
 
-async function proxyRequest(
-  request: NextRequest,
-  path: string[],
-  method: string,
-) {
+async function proxyRequest(request: NextRequest, path: string[], method: string) {
   const key = env.ASSEMBLYAI_API_KEY;
   if (!key) {
-    return NextResponse.json(
-      { error: "AssemblyAI API key not configured" },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: "AssemblyAI API key not configured" }, { status: 503 });
   }
 
   const targetPath = path.join("/");
@@ -78,10 +71,7 @@ export async function POST(
     return proxyRequest(request, path, "POST");
   } catch (error) {
     console.error("AssemblyAI proxy error:", error);
-    return NextResponse.json(
-      { error: "Internal proxy error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal proxy error" }, { status: 500 });
   }
 }
 
@@ -94,9 +84,6 @@ export async function GET(
     return proxyRequest(request, path, "GET");
   } catch (error) {
     console.error("AssemblyAI proxy error:", error);
-    return NextResponse.json(
-      { error: "Internal proxy error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal proxy error" }, { status: 500 });
   }
 }

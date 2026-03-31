@@ -26,8 +26,7 @@ export function registerCallPlaybackRoutes(app: Hono) {
     const callId = c.req.param("callId");
 
     // Валидация UUID
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(callId)) {
       return c.json({ error: "Некорректный формат ID звонка" }, 400);
     }

@@ -6,10 +6,7 @@ import { workspaceProcedure } from "../../../orpc";
 export const getEvaluationTemplate = workspaceProcedure
   .input(z.object({ id: z.string().uuid() }))
   .handler(async ({ context, input }) => {
-    const custom = await evaluationTemplatesRepository.findById(
-      input.id,
-      context.workspaceId,
-    );
+    const custom = await evaluationTemplatesRepository.findById(input.id, context.workspaceId);
     if (custom) {
       return {
         id: custom.id,

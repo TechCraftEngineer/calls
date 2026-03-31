@@ -152,9 +152,7 @@ export const workspaceSettingsRepository = {
       }
 
       if (typeof value !== "string") {
-        console.error(
-          `Некорректный тип значения для ключа: ${key}, ожидается строка`,
-        );
+        console.error(`Некорректный тип значения для ключа: ${key}, ожидается строка`);
         return false;
       }
 
@@ -170,10 +168,7 @@ export const workspaceSettingsRepository = {
           workspaceId,
         })
         .onConflictDoUpdate({
-          target: [
-            schema.workspaceSettings.workspaceId,
-            schema.workspaceSettings.key,
-          ],
+          target: [schema.workspaceSettings.workspaceId, schema.workspaceSettings.key],
           set: {
             value,
             description: sql`COALESCE(excluded.description, workspace_settings.description)`,

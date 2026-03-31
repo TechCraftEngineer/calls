@@ -2,6 +2,8 @@
  * Calls service - handles business logic for call operations
  */
 
+import type { EnrichedManagerStats } from "../repositories/calls/enrich-stats";
+import type { ManagerStatsRow } from "../repositories/calls/get-evaluations-stats";
 import type { CallsRepository } from "../repositories/calls.repository";
 import type { SystemRepository } from "../repositories/system.repository";
 import type { Call, CallEvaluation, Transcript } from "../schema";
@@ -12,8 +14,6 @@ import type {
   GetCallManagersParams,
   GetCallsParams,
 } from "../types/calls.types";
-import type { ManagerStatsRow } from "../repositories/calls/get-evaluations-stats";
-import type { EnrichedManagerStats } from "../repositories/calls/enrich-stats";
 import { ValidationError } from "../validation/call-schemas";
 
 export class CallsService {
@@ -46,10 +46,7 @@ export class CallsService {
     return result;
   }
 
-  async getCallByFilename(
-    filename: string,
-    workspaceId?: string,
-  ): Promise<Call | null> {
+  async getCallByFilename(filename: string, workspaceId?: string): Promise<Call | null> {
     return this.callsRepository.findByFilename(filename, workspaceId);
   }
 
@@ -58,11 +55,7 @@ export class CallsService {
     provider: string,
     externalId: string,
   ): Promise<Call | null> {
-    return this.callsRepository.findByExternalId(
-      workspaceId,
-      provider,
-      externalId,
-    );
+    return this.callsRepository.findByExternalId(workspaceId, provider, externalId);
   }
 
   async findLatestContactByPhone(workspaceId: string, phone: string) {
@@ -88,10 +81,9 @@ export class CallsService {
     } catch (error) {
       // Добавляем детальное логирование ошибок валидации
       if (error instanceof Error) {
-        const errorMessage = error instanceof ValidationError 
-          ? `Validation errors: ${error.message}` 
-          : error.message;
-          
+        const errorMessage =
+          error instanceof ValidationError ? `Validation errors: ${error.message}` : error.message;
+
         try {
           await this.systemRepository.addActivityLog(
             "ERROR",
@@ -107,9 +99,7 @@ export class CallsService {
     }
   }
 
-  async createCallWithResult(
-    data: CreateCallData,
-  ): Promise<{ id: string; created: boolean }> {
+  async createCallWithResult(data: CreateCallData): Promise<{ id: string; created: boolean }> {
     const result = await this.callsRepository.createWithResult(data);
 
     try {
@@ -145,10 +135,7 @@ export class CallsService {
     return this.callsRepository.upsertTranscript(data);
   }
 
-  async updateCustomerName(
-    callId: string,
-    customerName: string | null,
-  ): Promise<void> {
+  async updateCustomerName(callId: string, customerName: string | null): Promise<void> {
     try {
       await this.callsRepository.updateCustomerName(callId, customerName);
     } catch (error) {
@@ -171,10 +158,7 @@ export class CallsService {
     }
   }
 
-  async updateCallRecording(
-    callId: string,
-    data: { fileId: string | null },
-  ): Promise<void> {
+  async updateCallRecording(callId: string, data: { fileId: string | null }): Promise<void> {
     try {
       await this.callsRepository.updateRecording(callId, data);
     } catch (error) {
@@ -197,10 +181,7 @@ export class CallsService {
     }
   }
 
-  async updateEnhancedAudio(
-    callId: string,
-    enhancedAudioFileId: string | null,
-  ): Promise<void> {
+  async updateEnhancedAudio(callId: string, enhancedAudioFileId: string | null): Promise<void> {
     try {
       await this.callsRepository.updateEnhancedAudio(callId, enhancedAudioFileId);
     } catch (error) {
@@ -247,7 +228,7 @@ export class CallsService {
   ): Promise<void> {
     try {
       await this.callsRepository.updateWithRecording(callId, data);
-      
+
       // Логируем успешное транзакционное обновление
       try {
         const call = await this.callsRepository.findById(callId);
@@ -296,7 +277,7 @@ export class CallsService {
   ): Promise<void> {
     try {
       await this.callsRepository.updatePbxBindingWithCustomer(callId, data);
-      
+
       // Логируем успешное транзакционное обновление
       try {
         const call = await this.callsRepository.findById(callId);
@@ -335,21 +316,15 @@ export class CallsService {
     return this.callsRepository.getEvaluation(callId);
   }
 
-  async getCallsWithTranscripts(
-    params: GetCallsParams = {},
-  ): Promise<CallWithTranscript[]> {
+  async getCallsWithTranscripts(params: GetCallsParams = {}): Promise<CallWithTranscript[]> {
     return this.callsRepository.findWithTranscriptsAndEvaluations(params);
   }
 
-  async countCalls(
-    params: Omit<GetCallsParams, "limit" | "offset"> = {},
-  ): Promise<number> {
+  async countCalls(params: Omit<GetCallsParams, "limit" | "offset"> = {}): Promise<number> {
     return this.callsRepository.countCalls(params);
   }
 
-  async getDistinctManagers(
-    params: GetCallManagersParams = {},
-  ): Promise<string[]> {
+  async getDistinctManagers(params: GetCallManagersParams = {}): Promise<string[]> {
     return this.callsRepository.findDistinctManagers(params);
   }
 

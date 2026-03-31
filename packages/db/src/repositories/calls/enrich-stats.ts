@@ -36,8 +36,11 @@ export const callsEnrichStats = {
         and(
           eq(schema.workspacePbxEmployees.workspaceId, schema.workspacePbxNumbers.workspaceId),
           eq(schema.workspacePbxEmployees.provider, schema.workspacePbxNumbers.provider),
-          eq(schema.workspacePbxEmployees.externalId, schema.workspacePbxNumbers.employeeExternalId)
-        )
+          eq(
+            schema.workspacePbxEmployees.externalId,
+            schema.workspacePbxNumbers.employeeExternalId,
+          ),
+        ),
       )
       .where(
         and(
@@ -47,12 +50,14 @@ export const callsEnrichStats = {
         ),
       );
 
-
-    const kpiMapByNumber = new Map<string, {
-      kpiBaseSalary?: number;
-      kpiTargetBonus?: number;
-      kpiTargetTalkTimeMinutes?: number;
-    }>();
+    const kpiMapByNumber = new Map<
+      string,
+      {
+        kpiBaseSalary?: number;
+        kpiTargetBonus?: number;
+        kpiTargetTalkTimeMinutes?: number;
+      }
+    >();
     for (const emp of employees) {
       if (emp.internalNumber) {
         const cleanNumber = String(emp.internalNumber).trim();
@@ -64,27 +69,32 @@ export const callsEnrichStats = {
       }
     }
 
-
     // Обогащаем статистику KPI данными
     const enrichedStats: Record<string, EnrichedManagerStats> = {};
     for (const [name, stat] of Object.entries(stats)) {
       const cleanInternalNumber = stat.internalNumber ? String(stat.internalNumber).trim() : null;
       const kpiData = cleanInternalNumber ? kpiMapByNumber.get(cleanInternalNumber) : null;
-      
+
       // Вычисляем KPI метрики
-      const incomingTotal = stat.incoming?.totalDuration ?? ((stat.incoming?.duration ?? 0) * (stat.incoming?.count ?? 0));
-      const outgoingTotal = stat.outgoing?.totalDuration ?? ((stat.outgoing?.duration ?? 0) * (stat.outgoing?.count ?? 0));
+      const incomingTotal =
+        stat.incoming?.totalDuration ??
+        (stat.incoming?.duration ?? 0) * (stat.incoming?.count ?? 0);
+      const outgoingTotal =
+        stat.outgoing?.totalDuration ??
+        (stat.outgoing?.duration ?? 0) * (stat.outgoing?.count ?? 0);
       const totalMinutes = Math.round((incomingTotal + outgoingTotal) / 60);
-      
+
       const targetTalkTimeMinutes = kpiData?.kpiTargetTalkTimeMinutes ?? 0;
-      const completionPercentage = targetTalkTimeMinutes > 0 
-        ? Math.min(100, Math.round((totalMinutes / targetTalkTimeMinutes) * 100))
-        : 0;
-      
-      const calculatedBonus = targetTalkTimeMinutes > 0 && completionPercentage > 0
-        ? Math.round((kpiData?.kpiTargetBonus ?? 0) * (completionPercentage / 100))
-        : 0;
-      
+      const completionPercentage =
+        targetTalkTimeMinutes > 0
+          ? Math.min(100, Math.round((totalMinutes / targetTalkTimeMinutes) * 100))
+          : 0;
+
+      const calculatedBonus =
+        targetTalkTimeMinutes > 0 && completionPercentage > 0
+          ? Math.round((kpiData?.kpiTargetBonus ?? 0) * (completionPercentage / 100))
+          : 0;
+
       const totalSalary = (kpiData?.kpiBaseSalary ?? 0) + calculatedBonus;
 
       enrichedStats[name] = {

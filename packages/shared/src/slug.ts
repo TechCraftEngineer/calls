@@ -13,8 +13,6 @@ export function generateWorkspaceSlug(name: string): string {
     lowercase: true,
     decamelize: true,
   });
-  const trimmed = slug
-    .slice(0, WORKSPACE_SLUG_MAX_LENGTH)
-    .replace(/^-|-$/g, "");
+  const trimmed = slug.slice(0, WORKSPACE_SLUG_MAX_LENGTH).replace(/^-|-$/g, "");
   return trimmed || WORKSPACE_SLUG_FALLBACK;
 }

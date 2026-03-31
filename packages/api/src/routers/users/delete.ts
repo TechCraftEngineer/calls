@@ -7,18 +7,14 @@ export const deleteUser = workspaceAdminProcedure
   .input(z.object({ user_id: z.string() }))
   .handler(async ({ input, context }) => {
     const user = await usersService.getUser(input.user_id);
-    if (!user)
-      throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+    if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
     const adminId = (context.user as Record<string, unknown>).id as string;
     if (adminId === input.user_id)
       throw new ORPCError("BAD_REQUEST", {
         message: "Нельзя удалить свой аккаунт",
       });
     if (context.workspaceId) {
-      await context.workspacesService.removeMember(
-        context.workspaceId,
-        input.user_id,
-      );
+      await context.workspacesService.removeMember(context.workspaceId, input.user_id);
     } else {
       if (!(await usersService.deleteUser(input.user_id)))
         throw new ORPCError("INTERNAL_SERVER_ERROR", {

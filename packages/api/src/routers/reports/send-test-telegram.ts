@@ -5,13 +5,13 @@ import {
   usersService,
   workspacesService,
 } from "@calls/db";
+import { formatTelegramReportHtml } from "@calls/jobs";
 import { sendMessage } from "@calls/telegram-bot";
 import { ORPCError } from "@orpc/server";
 import { subDays, subMonths, subWeeks } from "date-fns";
 import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
-import { formatTelegramReportHtml } from "@calls/jobs";
 
 const TZ = "Europe/Moscow";
 
@@ -58,31 +58,24 @@ export const sendTestTelegram = workspaceProcedure
         message: "Требуется активное рабочее пространство",
       });
 
-    const userForEdit = await usersService.getUserForEdit(
-      context.user.id as string,
-      workspaceId,
-    );
+    const userForEdit = await usersService.getUserForEdit(context.user.id as string, workspaceId);
     if (!userForEdit)
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message: "Не удалось загрузить настройки",
       });
 
     const chatId = getTelegramChatId(
-      userForEdit && typeof userForEdit === "object"
-        ? userForEdit.telegramChatId
-        : undefined,
+      userForEdit && typeof userForEdit === "object" ? userForEdit.telegramChatId : undefined,
     );
 
-    const { token } =
-      await settingsService.getEffectiveTelegramBotToken(workspaceId);
+    const { token } = await settingsService.getEffectiveTelegramBotToken(workspaceId);
     if (!token?.trim())
       throw new ORPCError("BAD_REQUEST", {
         message:
           "Telegram-бот не настроен. Укажите токен бота в интеграциях или настройте системный TELEGRAM_BOT_TOKEN.",
       });
     const isAdmin = workspaceRole === "admin" || workspaceRole === "owner";
-    const isManagerReport =
-      isAdmin && (userForEdit.telegramManagerReport ?? false);
+    const isManagerReport = isAdmin && (userForEdit.telegramManagerReport ?? false);
 
     let internalNumbers: string[] | null = null;
     if (isManagerReport) {
@@ -91,9 +84,7 @@ export const sendTestTelegram = workspaceProcedure
         userForEdit.reportManagedUserIds ?? null,
       );
     } else {
-      internalNumbers = parseInternalExtensions(
-        userForEdit.internalExtensions ?? null,
-      );
+      internalNumbers = parseInternalExtensions(userForEdit.internalExtensions ?? null);
     }
 
     const { reportType } = input;
@@ -130,14 +121,10 @@ export const sendTestTelegram = workspaceProcedure
       dateFrom: dateFromDb,
       dateTo: dateToDb,
       internalNumbers: internalNumbers ?? undefined,
-      excludePhoneNumbers:
-        excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+      excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
     });
 
-    const enrichedStats = await callsService.enrichStatsWithKpi(
-      stats,
-      workspaceId,
-    );
+    const enrichedStats = await callsService.enrichStatsWithKpi(stats, workspaceId);
 
     let lowRatedCalls: Record<string, number> = {};
     if (isManagerReport) {
@@ -146,8 +133,7 @@ export const sendTestTelegram = workspaceProcedure
         dateFrom: dateFromDb,
         dateTo: dateToDb,
         internalNumbers: internalNumbers ?? undefined,
-        excludePhoneNumbers:
-          excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+        excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
         maxScore: 3,
       });
     }
@@ -175,8 +161,7 @@ export const sendTestTelegram = workspaceProcedure
     });
     if (!success) {
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message:
-          "Не удалось отправить сообщение в Telegram. Проверьте настройки и подключение.",
+        message: "Не удалось отправить сообщение в Telegram. Проверьте настройки и подключение.",
       });
     }
     return { success: true };

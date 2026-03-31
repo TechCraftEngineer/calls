@@ -8,16 +8,12 @@ test.describe("Страница входа", () => {
   test("отображает форму входа", async ({ page }) => {
     // Проверяем основные элементы страницы
     await expect(page.locator("h1")).toContainText("С возвращением!");
-    await expect(
-      page.locator("text=Войдите в личный кабинет QBS Звонки"),
-    ).toBeVisible();
+    await expect(page.locator("text=Войдите в личный кабинет QBS Звонки")).toBeVisible();
 
     // Проверяем поля формы
     await expect(page.locator("#email")).toBeVisible();
     await expect(page.locator("#password")).toBeVisible();
-    await expect(page.locator('button[type="submit"]')).toContainText(
-      "Войти в систему",
-    );
+    await expect(page.locator('button[type="submit"]')).toContainText("Войти в систему");
   });
 
   test("показывает ошибки валидации для пустых полей", async ({ page }) => {
@@ -42,9 +38,7 @@ test.describe("Страница входа", () => {
     await page.fill("#password", "123");
     await page.click('button[type="submit"]');
 
-    await expect(
-      page.locator("text=Пароль должен содержать минимум 8 символов"),
-    ).toBeVisible();
+    await expect(page.locator("text=Пароль должен содержать минимум 8 символов")).toBeVisible();
   });
 
   test("отправляет форму с валидными данными", async ({ page }) => {
@@ -53,9 +47,7 @@ test.describe("Страница входа", () => {
 
     // Перехватываем запрос аутентификации
     const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes("/api/auth") &&
-        response.request().method() === "POST",
+      (response) => response.url().includes("/api/auth") && response.request().method() === "POST",
     );
 
     await page.click('button[type="submit"]');
@@ -89,9 +81,7 @@ test.describe("Страница входа", () => {
   test("показывает сообщение об успешной регистрации", async ({ page }) => {
     await page.goto("/auth/signin?message=registration_success");
 
-    await expect(
-      page.locator("text=Регистрация прошла успешно!"),
-    ).toBeVisible();
+    await expect(page.locator("text=Регистрация прошла успешно!")).toBeVisible();
     await expect(page.locator("text=✅")).toBeVisible();
   });
 
@@ -107,10 +97,7 @@ test.describe("Страница входа", () => {
     const passwordField = page.locator("#password");
 
     await expect(emailField).toHaveAttribute("autocomplete", "email");
-    await expect(passwordField).toHaveAttribute(
-      "autocomplete",
-      "current-password",
-    );
+    await expect(passwordField).toHaveAttribute("autocomplete", "current-password");
   });
 
   test("поддерживает отправку формы по Enter", async ({ page }) => {
@@ -118,9 +105,7 @@ test.describe("Страница входа", () => {
     await page.fill("#password", "Password123");
 
     const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes("/api/auth") &&
-        response.request().method() === "POST",
+      (response) => response.url().includes("/api/auth") && response.request().method() === "POST",
     );
 
     await page.press("#password", "Enter");

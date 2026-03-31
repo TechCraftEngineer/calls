@@ -44,9 +44,7 @@ export function validateCreateUserData(data: CreateUserData): void {
   const emailResult = emailSchema.safeParse(trimmed);
   if (!emailResult.success) {
     const first = emailResult.error.issues[0];
-    throw new ValidationError(
-      (first?.message as string) ?? "Введите корректный email адрес",
-    );
+    throw new ValidationError((first?.message as string) ?? "Введите корректный email адрес");
   }
 
   // Валидация password
@@ -87,18 +85,13 @@ export function validateCreateUserData(data: CreateUserData): void {
   }
 
   // Валидация internalExtensions
-  if (
-    data.internalExtensions !== undefined &&
-    data.internalExtensions !== null
-  ) {
+  if (data.internalExtensions !== undefined && data.internalExtensions !== null) {
     if (typeof data.internalExtensions !== "string") {
       throw new ValidationError("Внутренние номера должны быть строкой");
     }
 
     if (data.internalExtensions.length > 500) {
-      throw new ValidationError(
-        "Внутренние номера не должны превышать 500 символов",
-      );
+      throw new ValidationError("Внутренние номера не должны превышать 500 символов");
     }
   }
 
@@ -109,9 +102,7 @@ export function validateCreateUserData(data: CreateUserData): void {
     }
 
     if (data.mobilePhones.length > 500) {
-      throw new ValidationError(
-        "Мобильные номера не должны превышать 500 символов",
-      );
+      throw new ValidationError("Мобильные номера не должны превышать 500 символов");
     }
   }
 
@@ -123,9 +114,7 @@ export function validateCreateUserData(data: CreateUserData): void {
     const emailResult = emailSchema.safeParse(data.email.trim());
     if (!emailResult.success) {
       const first = emailResult.error.issues[0];
-      throw new ValidationError(
-        (first?.message as string) ?? "Некорректный формат email",
-      );
+      throw new ValidationError((first?.message as string) ?? "Некорректный формат email");
     }
   }
 }
@@ -158,18 +147,13 @@ export function validateUpdateUserData(data: UpdateUserData): void {
   }
 
   // Валидация internalExtensions
-  if (
-    data.internalExtensions !== undefined &&
-    data.internalExtensions !== null
-  ) {
+  if (data.internalExtensions !== undefined && data.internalExtensions !== null) {
     if (typeof data.internalExtensions !== "string") {
       throw new ValidationError("Внутренние номера должны быть строкой");
     }
 
     if (data.internalExtensions.length > 500) {
-      throw new ValidationError(
-        "Внутренние номера не должны превышать 500 символов",
-      );
+      throw new ValidationError("Внутренние номера не должны превышать 500 символов");
     }
   }
 
@@ -180,9 +164,7 @@ export function validateUpdateUserData(data: UpdateUserData): void {
     }
 
     if (data.mobilePhones.length > 500) {
-      throw new ValidationError(
-        "Мобильные номера не должны превышать 500 символов",
-      );
+      throw new ValidationError("Мобильные номера не должны превышать 500 символов");
     }
   }
 
@@ -194,9 +176,7 @@ export function validateUpdateUserData(data: UpdateUserData): void {
     const emailResult = emailSchema.safeParse(data.email.trim());
     if (!emailResult.success) {
       const first = emailResult.error.issues[0];
-      throw new ValidationError(
-        (first?.message as string) ?? "Некорректный формат email",
-      );
+      throw new ValidationError((first?.message as string) ?? "Некорректный формат email");
     }
   }
 }

@@ -12,14 +12,10 @@ import { workspaceProcedure } from "../../orpc";
 import { calculateAnalysisCostRub } from "./analysis-cost";
 import { getInternalNumbersForUser, getMobileNumbersForUser } from "./utils";
 
-const transcriptMetadataSchema = z
-  .object({ operatorName: z.string().optional() })
-  .passthrough();
+const transcriptMetadataSchema = z.object({ operatorName: z.string().optional() }).passthrough();
 const PBX_PROVIDER = "megapbx";
 
-const maybeStringOrArraySchema = z
-  .union([z.string(), z.array(z.string())])
-  .optional();
+const maybeStringOrArraySchema = z.union([z.string(), z.array(z.string())]).optional();
 const directionSchema = z.enum([
   "inbound",
   "outbound",
@@ -41,12 +37,8 @@ const statusSchema = z.enum([
   "ПРОПУЩЕН",
   "ПРИНЯТ",
 ]);
-const maybeDirectionOrArraySchema = z
-  .union([directionSchema, z.array(directionSchema)])
-  .optional();
-const maybeStatusOrArraySchema = z
-  .union([statusSchema, z.array(statusSchema)])
-  .optional();
+const maybeDirectionOrArraySchema = z.union([directionSchema, z.array(directionSchema)]).optional();
+const maybeStatusOrArraySchema = z.union([statusSchema, z.array(statusSchema)]).optional();
 
 function toStringArray(input: string | string[] | undefined): string[] {
   if (typeof input === "string") {
@@ -65,13 +57,10 @@ export function normalizeStatusFilter(status: string): CallStatus | null {
   return null;
 }
 
-export function normalizeDirectionFilter(
-  direction: string,
-): "inbound" | "outbound" | null {
+export function normalizeDirectionFilter(direction: string): "inbound" | "outbound" | null {
   const normalized = direction.trim().toLowerCase();
   if (normalized === "inbound" || normalized === "входящий") return "inbound";
-  if (normalized === "outbound" || normalized === "исходящий")
-    return "outbound";
+  if (normalized === "outbound" || normalized === "исходящий") return "outbound";
   return null;
 }
 
@@ -96,15 +85,13 @@ export const list = workspaceProcedure
   .input(listCallsSchema)
   .handler(async ({ input, context }) => {
     const { callsService, user, workspaceId } = context;
-    
+
     const offset = (input.page - 1) * input.per_page;
     const directionFilters = toStringArray(input.direction);
     const managerFilters = toStringArray(input.manager);
     const statusFilters = toStringArray(input.status);
 
-    const dateFrom = input.date_from
-      ? `${input.date_from}T00:00:00`
-      : undefined;
+    const dateFrom = input.date_from ? `${input.date_from}T00:00:00` : undefined;
     const dateTo = input.date_to ? `${input.date_to}T23:59:59` : undefined;
     const normalizedStatuses = statusFilters
       ?.map(normalizeStatusFilter)
@@ -112,9 +99,7 @@ export const list = workspaceProcedure
 
     const normalizedDirections = directionFilters
       ?.map(normalizeDirectionFilter)
-      .filter(
-        (direction): direction is "inbound" | "outbound" => direction !== null,
-      );
+      .filter((direction): direction is "inbound" | "outbound" => direction !== null);
     const trimmedQuery = input.q?.trim() || undefined;
 
     // Получаем PBX сотрудников и номера для построения менеджеров
@@ -122,7 +107,7 @@ export const list = workspaceProcedure
       pbxRepository.listEmployees(workspaceId, PBX_PROVIDER),
       pbxRepository.listNumbers(workspaceId, PBX_PROVIDER),
     ]);
-    
+
     // Создаем карты сотрудников для эффективного поиска
     const employeeByExternalId = new Map<string, WorkspacePbxEmployee>();
     const employeeById = new Map<string, WorkspacePbxEmployee>();
@@ -132,7 +117,7 @@ export const list = workspaceProcedure
         employeeById.set(employee.id, employee);
       }
     }
-    
+
     // Группируем PBX номера по employeeExternalId для эффективного поиска
     const phoneNumbersByEmployeeExternalId = new Map<string, WorkspacePbxNumber[]>();
     for (const number of pbxNumbers) {
@@ -142,25 +127,26 @@ export const list = workspaceProcedure
         phoneNumbersByEmployeeExternalId.set(number.employeeExternalId, numbers);
       }
     }
-    
+
     // Строим менеджеров из PBX данных и получаем связанные phone_number
     const managerDisplayNameById = new Map<string, string>();
     const managerPhoneNumbers = new Map<string, Set<string>>(); // employeeId -> Set<phone_number>
-    
+
     for (const employee of pbxEmployees) {
       if (!employee.isActive) continue;
-      
+
       const employeeId = employee.id;
-      const displayName = employee.displayName || 
-        `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 
+      const displayName =
+        employee.displayName ||
+        `${employee.firstName || ""} ${employee.lastName || ""}`.trim() ||
         `Employee ${employee.externalId}`;
-      
+
       // Устанавливаем отображаемое имя
       managerDisplayNameById.set(employeeId, displayName);
-      
+
       // Получаем все PBX номера связанные с этим сотрудником через карту
       const relatedNumbers = phoneNumbersByEmployeeExternalId.get(employee.externalId) || [];
-      
+
       if (relatedNumbers.length > 0) {
         const phoneNumbers = managerPhoneNumbers.get(employeeId) || new Set<string>();
         for (const number of relatedNumbers) {
@@ -172,8 +158,7 @@ export const list = workspaceProcedure
       }
     }
 
-    const isAdminOrOwner =
-      context.workspaceRole === "admin" || context.workspaceRole === "owner";
+    const isAdminOrOwner = context.workspaceRole === "admin" || context.workspaceRole === "owner";
 
     // Ограничиваем фильтр по менеджерам для обычных пользователей
     const finalManagerFilters = isAdminOrOwner
@@ -206,7 +191,7 @@ export const list = workspaceProcedure
               .filter(([employeeId, phoneNumbers]) => {
                 const employee = employeeById.get(employeeId);
                 if (!employee) return false;
-                
+
                 const haystack = [
                   employee.displayName,
                   employee.firstName,
@@ -218,24 +203,19 @@ export const list = workspaceProcedure
                   .toLowerCase();
                 return haystack.includes(trimmedQuery.toLowerCase());
               })
-              .flatMap(([, phoneNumbers]) => Array.from(phoneNumbers))
+              .flatMap(([, phoneNumbers]) => Array.from(phoneNumbers)),
           ),
         )
       : [];
 
-    const internalNumbers = isAdminOrOwner
-      ? undefined
-      : getInternalNumbersForUser(user);
-    const mobileNumbers = isAdminOrOwner
-      ? undefined
-      : getMobileNumbersForUser(user);
+    const internalNumbers = isAdminOrOwner ? undefined : getInternalNumbersForUser(user);
+    const mobileNumbers = isAdminOrOwner ? undefined : getMobileNumbersForUser(user);
 
     const ftpSettings = await settingsService.getFtpSettings(workspaceId);
     const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
     // Участник (member) видит только свои звонки — при отсутствии internalExtensions/mobilePhones возвращаем пустой список
     if (context.workspaceRole === "member") {
-      const hasIdentifiers =
-        (internalNumbers?.length ?? 0) > 0 || (mobileNumbers?.length ?? 0) > 0;
+      const hasIdentifiers = (internalNumbers?.length ?? 0) > 0 || (mobileNumbers?.length ?? 0) > 0;
       if (!hasIdentifiers) {
         return {
           calls: [],
@@ -275,19 +255,14 @@ export const list = workspaceProcedure
       dateTo,
       internalNumbers,
       mobileNumbers,
-      excludePhoneNumbers:
-        excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
-      directions: normalizedDirections?.length
-        ? normalizedDirections
-        : undefined,
+      excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+      directions: normalizedDirections?.length ? normalizedDirections : undefined,
       valueScores: input.value?.length ? input.value : undefined,
       managerInternalNumbers:
         managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
       statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
       managerInternalNumbersForQuery:
-        managerInternalNumbersForQuery.length > 0
-          ? managerInternalNumbersForQuery
-          : undefined,
+        managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
       q: trimmedQuery,
     });
 
@@ -297,19 +272,14 @@ export const list = workspaceProcedure
       dateTo,
       internalNumbers,
       mobileNumbers,
-      excludePhoneNumbers:
-        excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
-      directions: normalizedDirections?.length
-        ? normalizedDirections
-        : undefined,
+      excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+      directions: normalizedDirections?.length ? normalizedDirections : undefined,
       valueScores: input.value?.length ? input.value : undefined,
       managerInternalNumbers:
         managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
       statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
       managerInternalNumbersForQuery:
-        managerInternalNumbersForQuery.length > 0
-          ? managerInternalNumbersForQuery
-          : undefined,
+        managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
       q: trimmedQuery,
     });
 
@@ -318,9 +288,7 @@ export const list = workspaceProcedure
       workspaceId,
       excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
     );
-    const managers: ManagerOption[] = Array.from(
-      managerDisplayNameById.entries(),
-    )
+    const managers: ManagerOption[] = Array.from(managerDisplayNameById.entries())
       .map(([id, name]) => ({ id, name }))
       .filter((item) => item.name.trim().length > 0)
       .filter((item) => {
@@ -328,7 +296,6 @@ export const list = workspaceProcedure
         return isAdminOrOwner || item.id === user.id;
       })
       .sort((a, b) => a.name.localeCompare(b.name, "ru"));
-
 
     const callsWithTranscripts = await Promise.all(
       rawCalls.map(async (item: CallWithTranscript) => {
@@ -339,15 +306,13 @@ export const list = workspaceProcedure
             ? parsed.data.operatorName.trim() || null
             : null;
         })();
-        
+
         const trimmedName = item.call.name?.trim();
         const managerName = trimmedName && trimmedName !== "" ? trimmedName : operatorName || null;
 
         const { filename: _filename, ...publicCall } = item.call;
 
-        const isLlmProcessed = Boolean(
-          item.transcript?.summary?.trim() || item.evaluation,
-        );
+        const isLlmProcessed = Boolean(item.transcript?.summary?.trim() || item.evaluation);
 
         return {
           ...item,
@@ -360,17 +325,13 @@ export const list = workspaceProcedure
             managerName,
             operatorName,
             managerId: null, // Не используется, так как extension не применяется
-            duration:
-              item.fileDuration ??
-              item.transcript?.metadata?.durationInSeconds ??
-              null,
+            duration: item.fileDuration ?? item.transcript?.metadata?.durationInSeconds ?? null,
           },
           analysisCostRub: isLlmProcessed
             ? calculateAnalysisCostRub(
                 typeof item.fileDuration === "number" && item.fileDuration > 0
                   ? item.fileDuration
-                  : typeof item.transcript?.metadata?.durationInSeconds ===
-                      "number"
+                  : typeof item.transcript?.metadata?.durationInSeconds === "number"
                     ? item.transcript.metadata.durationInSeconds
                     : null,
               )

@@ -26,9 +26,7 @@ export default function AudioPlayer({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const resolvedDurationOverride =
-    typeof durationSeconds === "number" && durationSeconds > 0
-      ? durationSeconds
-      : null;
+    typeof durationSeconds === "number" && durationSeconds > 0 ? durationSeconds : null;
   const [duration, setDuration] = useState(resolvedDurationOverride ?? 0);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -194,11 +192,7 @@ export default function AudioPlayer({
             onClick={toggleMute}
             title={isMuted ? "Включить звук" : "Выключить звук"}
           >
-            {isMuted ? (
-              <VolumeX className="size-4.5" />
-            ) : (
-              <Volume2 className="size-4.5" />
-            )}
+            {isMuted ? <VolumeX className="size-4.5" /> : <Volume2 className="size-4.5" />}
           </Button>
           <Button
             size="icon"

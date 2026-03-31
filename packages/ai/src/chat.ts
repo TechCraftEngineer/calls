@@ -15,16 +15,12 @@ import {
 
 type ChatProvider = "openai" | "openrouter";
 
-function normalizeConversationMessages(
-  messages: ChatMessage[],
-): ChatConversationMessage[] {
+function normalizeConversationMessages(messages: ChatMessage[]): ChatConversationMessage[] {
   const trimmedMessages = messages
     .map((msg) => {
       const baseContent = msg.content.trim();
       const context = msg.context?.trim();
-      const mergedContent = context
-        ? `${baseContent}\n\nContext: ${context}`
-        : baseContent;
+      const mergedContent = context ? `${baseContent}\n\nContext: ${context}` : baseContent;
 
       return {
         role: msg.role,
@@ -51,12 +47,9 @@ function isTimeoutError(error: unknown): boolean {
 }
 
 function createTimeoutStreamError(cause: unknown): Error & { code: string } {
-  const timeoutError = new Error(
-    "Превышено время ожидания потоковой передачи ИИ",
-    {
-      cause: cause instanceof Error ? cause : undefined,
-    },
-  ) as Error & { code: string };
+  const timeoutError = new Error("Превышено время ожидания потоковой передачи ИИ", {
+    cause: cause instanceof Error ? cause : undefined,
+  }) as Error & { code: string };
   timeoutError.name = "TimeoutError";
   timeoutError.code = "TIMEOUT";
   return timeoutError;
@@ -75,24 +68,18 @@ export function createChatBot(config: ChatBotConfig) {
     .parse(config);
 
   const getProviderOrder = (primary: ChatProvider): ChatProvider[] =>
-    primary === "openrouter"
-      ? ["openrouter", "openai"]
-      : ["openai", "openrouter"];
+    primary === "openrouter" ? ["openrouter", "openai"] : ["openai", "openrouter"];
 
   const buildStreamingCandidates = () => {
     const rawFallbackModel = env.AI_MODEL?.trim();
     const fallbackModel =
-      rawFallbackModel && rawFallbackModel !== validatedConfig.model
-        ? rawFallbackModel
-        : undefined;
-    const models = [validatedConfig.model, fallbackModel].filter(
-      (item): item is string => Boolean(item),
+      rawFallbackModel && rawFallbackModel !== validatedConfig.model ? rawFallbackModel : undefined;
+    const models = [validatedConfig.model, fallbackModel].filter((item): item is string =>
+      Boolean(item),
     );
     const providers = getProviderOrder(validatedConfig.provider);
 
-    return providers.flatMap((provider) =>
-      models.map((modelId) => ({ provider, modelId })),
-    );
+    return providers.flatMap((provider) => models.map((modelId) => ({ provider, modelId })));
   };
 
   const getModelInstance = (provider: ChatProvider, modelId: string) =>
@@ -196,15 +183,12 @@ export function createChatBot(config: ChatBotConfig) {
           }
         }
 
-        throw (
-          lastError ?? new Error("Нет доступных кандидатов стриминговой модели")
-        );
+        throw lastError ?? new Error("Нет доступных кандидатов стриминговой модели");
       } catch (error) {
         console.error("Chat bot streaming error:", error);
         if (
           error instanceof Error &&
-          (error.name === "TimeoutError" ||
-            Reflect.get(error, "code") === "TIMEOUT")
+          (error.name === "TimeoutError" || Reflect.get(error, "code") === "TIMEOUT")
         ) {
           throw error;
         }
@@ -214,10 +198,7 @@ export function createChatBot(config: ChatBotConfig) {
   };
 }
 
-export async function streamChatResponse(
-  config: ChatBotConfig,
-  messages: ChatMessage[],
-) {
+export async function streamChatResponse(config: ChatBotConfig, messages: ChatMessage[]) {
   const chatBot = createChatBot(config);
   return chatBot.sendMessageStream(messages);
 }

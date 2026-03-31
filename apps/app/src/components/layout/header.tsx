@@ -83,11 +83,7 @@ export default function Header({ user }: HeaderProps) {
             </div>
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          sideOffset={8}
-          className="z-1000 min-w-45"
-        >
+        <DropdownMenuContent align="end" sideOffset={8} className="z-1000 min-w-45">
           <DropdownMenuItem asChild>
             <Link href={paths.settings.profile}>
               <Settings className="size-4" />

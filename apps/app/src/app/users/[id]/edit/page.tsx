@@ -34,13 +34,8 @@ export default function UserEditPage() {
   const user = session?.user ?? null;
   const _userLoading = sessionPending;
 
-  const {
-    clearBlockChanges,
-    setBlockState,
-    initializeForm,
-    hasBlockChanges,
-    getBlockState,
-  } = useBlockStates();
+  const { clearBlockChanges, setBlockState, initializeForm, hasBlockChanges, getBlockState } =
+    useBlockStates();
 
   const {
     data,
@@ -56,8 +51,8 @@ export default function UserEditPage() {
     if (data) {
       const { email: e, ...formData } = data;
       setEmail(e);
-      const formValues = { 
-        ...formData, 
+      const formValues = {
+        ...formData,
         email: e,
       } as EditUserForm;
       setForm(formValues);
@@ -311,12 +306,7 @@ export default function UserEditPage() {
         <main className="main-content">
           <div className="p-6">
             <p className="text-destructive">Ошибка загрузки пользователя</p>
-            <Button
-              variant="link"
-              size="sm"
-              className="mt-4 text-foreground"
-              asChild
-            >
+            <Button variant="link" size="sm" className="mt-4 text-foreground" asChild>
               <Link href={paths.users.root}>← К списку пользователей</Link>
             </Button>
           </div>
@@ -349,9 +339,7 @@ export default function UserEditPage() {
         <header className="page-header mb-6 flex justify-between items-start">
           <div>
             <h1 className="page-title">Редактирование пользователя</h1>
-            <p className="page-subtitle mt-1 text-sm text-[#999]">
-              Email: {email}
-            </p>
+            <p className="page-subtitle mt-1 text-sm text-[#999]">Email: {email}</p>
           </div>
           <Button variant="link" size="sm" className="text-foreground" asChild>
             <Link href={paths.users.root}>← К списку пользователей</Link>
@@ -414,11 +402,7 @@ export default function UserEditPage() {
             title="Параметры отчетов"
             form={form}
             setForm={setForm}
-            fields={[
-              "reportIncludeCallSummaries",
-              "reportDetailed",
-              "reportIncludeAvgRating",
-            ]}
+            fields={["reportIncludeCallSummaries", "reportDetailed", "reportIncludeAvgRating"]}
             labels={[
               "Включать тексты звонков",
               "Детальный отчет",
@@ -446,11 +430,7 @@ export default function UserEditPage() {
             title="Исключить из отчётов"
             form={form}
             setForm={setForm}
-            fields={[
-              "filterExcludeAnsweringMachine",
-              "filterMinDuration",
-              "filterMinReplicas",
-            ]}
+            fields={["filterExcludeAnsweringMachine", "filterMinDuration", "filterMinReplicas"]}
             labels={[
               "Исключить автоответчик",
               "Минимальная длительность разговора (секунды)",

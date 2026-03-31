@@ -12,17 +12,13 @@ export const updatePbx = workspaceAdminProcedure
       });
     }
 
-    const username =
-      (context.user as Record<string, unknown>)?.email ?? "system";
+    const username = (context.user as Record<string, unknown>)?.email ?? "system";
 
     const syncFromDate =
-      input.syncFromDate?.trim() &&
-      /^\d{4}-\d{2}-\d{2}$/.test(input.syncFromDate.trim())
+      input.syncFromDate?.trim() && /^\d{4}-\d{2}-\d{2}$/.test(input.syncFromDate.trim())
         ? input.syncFromDate.trim()
         : null;
-    const excludePhoneNumbers = normalizePhoneNumberList(
-      input.excludePhoneNumbers,
-    );
+    const excludePhoneNumbers = normalizePhoneNumberList(input.excludePhoneNumbers);
 
     await pbxService.updateSettings(
       context.workspaceId,

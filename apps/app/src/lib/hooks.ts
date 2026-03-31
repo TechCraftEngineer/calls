@@ -18,10 +18,7 @@ export function useAuth() {
 }
 
 // Хук для загрузки данных с retry логикой
-export function useApiData<T>(
-  fetcher: () => Promise<T>,
-  deps: React.DependencyList = [],
-) {
+export function useApiData<T>(fetcher: () => Promise<T>, deps: React.DependencyList = []) {
   const [data, setData] = useState<T | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -89,10 +86,7 @@ export function usePagination<T>(
 }
 
 // Хук для поиска с дебаунсом
-export function useSearch<T>(
-  fetcher: (query: string) => Promise<T[]>,
-  debounceMs = 300,
-) {
+export function useSearch<T>(fetcher: (query: string) => Promise<T[]>, debounceMs = 300) {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
@@ -104,10 +98,7 @@ export function useSearch<T>(
     return () => clearTimeout(timer);
   }, [query, debounceMs]);
 
-  const { data, isLoading, error } = useApiData(
-    () => fetcher(debouncedQuery),
-    [debouncedQuery],
-  );
+  const { data, isLoading, error } = useApiData(() => fetcher(debouncedQuery), [debouncedQuery]);
 
   return {
     results: data || [],

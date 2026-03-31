@@ -66,15 +66,9 @@ export const workspaceIntegrationsRepository = {
       };
       if (cfg?.host && cfg?.user && cfg?.password) {
         let syncFromDate = defaultFromDate;
-        if (
-          typeof cfg.syncFromDate === "string" &&
-          /^\d{4}-\d{2}-\d{2}$/.test(cfg.syncFromDate)
-        ) {
+        if (typeof cfg.syncFromDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(cfg.syncFromDate)) {
           syncFromDate = cfg.syncFromDate;
-        } else if (
-          typeof cfg.syncDaysBack === "number" &&
-          cfg.syncDaysBack >= 1
-        ) {
+        } else if (typeof cfg.syncDaysBack === "number" && cfg.syncDaysBack >= 1) {
           const d = new Date();
           d.setDate(d.getDate() - cfg.syncDaysBack);
           syncFromDate = d.toISOString().slice(0, 10);
@@ -120,9 +114,7 @@ export const workspaceIntegrationsRepository = {
 
     return {
       enabled: row.enabled,
-      config: (row.config ?? {}) as
-        | FtpIntegrationConfig
-        | Record<string, unknown>,
+      config: (row.config ?? {}) as FtpIntegrationConfig | Record<string, unknown>,
     };
   },
 
@@ -145,9 +137,7 @@ export const workspaceIntegrationsRepository = {
     return rows.map((row) => ({
       workspaceId: row.workspaceId,
       enabled: row.enabled,
-      config: (row.config ?? {}) as
-        | FtpIntegrationConfig
-        | Record<string, unknown>,
+      config: (row.config ?? {}) as FtpIntegrationConfig | Record<string, unknown>,
     }));
   },
 
@@ -278,9 +268,7 @@ export const workspaceIntegrationsRepository = {
 
       // Пустая строка допустима (означает удаление токена)
       if (!encryptedToken.trim()) {
-        console.log(
-          `Удаление токена бота для ${integrationType} в workspace ${workspaceId}`,
-        );
+        console.log(`Удаление токена бота для ${integrationType} в workspace ${workspaceId}`);
       } else {
         // Валидация зашифрованного токена: префикс enc: + base64
         if (!isEncryptedTokenValid(encryptedToken)) {
@@ -289,9 +277,7 @@ export const workspaceIntegrationsRepository = {
           );
           return false;
         }
-        console.log(
-          `Обновление токена бота для ${integrationType} в workspace ${workspaceId}`,
-        );
+        console.log(`Обновление токена бота для ${integrationType} в workspace ${workspaceId}`);
       }
 
       const config: Record<string, unknown> = {
@@ -349,5 +335,4 @@ export const workspaceIntegrationsRepository = {
   },
 };
 
-export type WorkspaceIntegrationsRepository =
-  typeof workspaceIntegrationsRepository;
+export type WorkspaceIntegrationsRepository = typeof workspaceIntegrationsRepository;

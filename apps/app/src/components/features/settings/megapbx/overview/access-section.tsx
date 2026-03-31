@@ -74,9 +74,7 @@ export function AccessSection({
               name="baseUrl"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <FormLabel className="text-xs text-muted-foreground">
-                    Base URL
-                  </FormLabel>
+                  <FormLabel className="text-xs text-muted-foreground">Base URL</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -96,9 +94,7 @@ export function AccessSection({
               name="apiKey"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <FormLabel className="text-xs text-muted-foreground">
-                    API key
-                  </FormLabel>
+                  <FormLabel className="text-xs text-muted-foreground">API key</FormLabel>
                   <FormControl>
                     <PasswordInput
                       {...field}
@@ -139,8 +135,7 @@ export function AccessSection({
                     />
                   </FormControl>
                   <p className="text-xs text-muted-foreground">
-                    Используется как стартовая дата для первой загрузки истории
-                    звонков.
+                    Используется как стартовая дата для первой загрузки истории звонков.
                   </p>
                   <FormMessage />
                 </FormItem>
@@ -159,23 +154,17 @@ export function AccessSection({
                   if (!parsed.success) return;
                   const normalizedBaseUrl = parsed.data.baseUrl?.trim() ?? "";
                   const normalizedApiKey =
-                    parsed.data.apiKey?.trim() === ""
-                      ? undefined
-                      : parsed.data.apiKey?.trim();
+                    parsed.data.apiKey?.trim() === "" ? undefined : parsed.data.apiKey?.trim();
                   await onTest(normalizedBaseUrl, normalizedApiKey);
                 })();
               }}
               disabled={testing || !form.watch("baseUrl")?.trim()}
             >
-              {testing ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : null}
+              {testing ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
               Проверить API
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : null}
+              {saving ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
               Сохранить
             </Button>
           </div>

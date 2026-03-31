@@ -76,9 +76,7 @@ export const subscriptions = pgTable(
     index("subscriptions_workspace_idx").on(table.workspaceId),
     index("subscriptions_status_idx").on(table.status),
     index("subscriptions_stripe_customer_idx").on(table.stripeCustomerId),
-    index("subscriptions_stripe_subscription_idx").on(
-      table.stripeSubscriptionId,
-    ),
+    index("subscriptions_stripe_subscription_idx").on(table.stripeSubscriptionId),
   ],
 );
 
@@ -109,10 +107,7 @@ export const usageMetrics = pgTable(
       table.period,
     ),
     index("usage_metrics_workspace_idx").on(table.workspaceId),
-    index("usage_metrics_workspace_period_idx").on(
-      table.workspaceId,
-      table.period,
-    ),
+    index("usage_metrics_workspace_period_idx").on(table.workspaceId, table.period),
     index("usage_metrics_period_idx").on(table.period),
   ],
 );

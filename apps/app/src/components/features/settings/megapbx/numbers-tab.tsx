@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Badge,
-  DataGrid,
-  DataGridContainer,
-  DataGridPagination,
-  DataGridTable,
-} from "@calls/ui";
+import { Badge, DataGrid, DataGridContainer, DataGridPagination, DataGridTable } from "@calls/ui";
 import {
   getCoreRowModel,
   getPaginationRowModel,
@@ -35,10 +29,7 @@ interface NumbersTabProps {
     targetExternalId: string;
     userId?: string | null;
   }) => Promise<void>;
-  onUnlink: (input: {
-    targetType: "number";
-    targetExternalId: string;
-  }) => Promise<void>;
+  onUnlink: (input: { targetType: "number"; targetExternalId: string }) => Promise<void>;
 }
 
 export function NumbersTab({
@@ -53,17 +44,13 @@ export function NumbersTab({
   onLink,
   onUnlink,
 }: NumbersTabProps) {
-  const [selectedLinks, setSelectedLinks] = useState<Record<string, string>>(
-    {},
-  );
+  const [selectedLinks, setSelectedLinks] = useState<Record<string, string>>({});
   const [excludedSet, setExcludedSet] = useState<Set<string>>(
     () => new Set(excludedPhoneNumbers.map((value) => normalizePhone(value))),
   );
 
   useEffect(() => {
-    setExcludedSet(
-      new Set(excludedPhoneNumbers.map((value) => normalizePhone(value))),
-    );
+    setExcludedSet(new Set(excludedPhoneNumbers.map((value) => normalizePhone(value))));
   }, [excludedPhoneNumbers]);
 
   const filteredNumbers = useMemo(() => {
@@ -139,8 +126,8 @@ export function NumbersTab({
         <div>
           <h4 className="font-semibold">Привязка номеров</h4>
           <p className="text-sm text-muted-foreground">
-            Используйте сопоставление номеров, если звонки нужно жёстко
-            привязать к конкретным пользователям.
+            Используйте сопоставление номеров, если звонки нужно жёстко привязать к конкретным
+            пользователям.
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:items-end">

@@ -10,10 +10,9 @@ export const userPreferences = pgTable("user_preferences", {
   userId: text("user_id")
     .primaryKey()
     .references(() => user.id, { onDelete: "cascade" }),
-  activeWorkspaceId: text("active_workspace_id").references(
-    () => workspaces.id,
-    { onDelete: "set null" },
-  ),
+  activeWorkspaceId: text("active_workspace_id").references(() => workspaces.id, {
+    onDelete: "set null",
+  }),
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => new Date())

@@ -17,9 +17,7 @@ export const updatePbxAccess = workspaceAdminProcedure
 
     const rawSyncFromDate = input.syncFromDate?.trim();
     const syncFromDate =
-      rawSyncFromDate && rawSyncFromDate.length > 0
-        ? rawSyncFromDate
-        : undefined;
+      rawSyncFromDate && rawSyncFromDate.length > 0 ? rawSyncFromDate : undefined;
 
     const partial: {
       enabled: boolean;
@@ -40,11 +38,7 @@ export const updatePbxAccess = workspaceAdminProcedure
 
     let ok: boolean;
     try {
-      ok = await pbxService.updateAccess(
-        context.workspaceId,
-        partial,
-        String(username),
-      );
+      ok = await pbxService.updateAccess(context.workspaceId, partial, String(username));
     } catch (err: unknown) {
       console.error("Failed to update PBX access:", err);
       throw new ORPCError("INTERNAL_SERVER_ERROR", {

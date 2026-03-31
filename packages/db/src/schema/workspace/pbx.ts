@@ -31,27 +31,18 @@ export const workspacePbxEmployees = pgTable(
     displayName: text("display_name").notNull(),
     kpiBaseSalary: integer("kpi_base_salary").notNull().default(0),
     kpiTargetBonus: integer("kpi_target_bonus").notNull().default(0),
-    kpiTargetTalkTimeMinutes: integer("kpi_target_talk_time_minutes")
-      .notNull()
-      .default(0),
+    kpiTargetTalkTimeMinutes: integer("kpi_target_talk_time_minutes").notNull().default(0),
     isActive: boolean("is_active").notNull().default(true),
     rawData: jsonb("raw_data").$type<Record<string, unknown>>().notNull(),
-    syncedAt: timestamp("synced_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    syncedAt: timestamp("synced_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => [
-    check(
-      "workspace_pbx_employees_kpi_base_salary_non_negative",
-      sql`${table.kpiBaseSalary} >= 0`,
-    ),
+    check("workspace_pbx_employees_kpi_base_salary_non_negative", sql`${table.kpiBaseSalary} >= 0`),
     check(
       "workspace_pbx_employees_kpi_target_bonus_non_negative",
       sql`${table.kpiTargetBonus} >= 0`,
@@ -88,12 +79,8 @@ export const workspacePbxNumbers = pgTable(
     lineType: text("line_type"),
     isActive: boolean("is_active").notNull().default(true),
     rawData: jsonb("raw_data").$type<Record<string, unknown>>().notNull(),
-    syncedAt: timestamp("synced_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    syncedAt: timestamp("synced_at", { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
@@ -134,9 +121,7 @@ export const workspacePbxLinks = pgTable(
       onDelete: "set null",
     }),
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
@@ -172,9 +157,7 @@ export const workspacePbxSyncState = pgTable(
     lastSuccessfulAt: timestamp("last_successful_at", { withTimezone: true }),
     lastError: text("last_error"),
     stats: jsonb("stats").$type<Record<string, unknown>>(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
@@ -206,9 +189,7 @@ export const workspacePbxWebhookEvents = pgTable(
     payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
     processedAt: timestamp("processed_at", { withTimezone: true }),
     errorMessage: text("error_message"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     index("workspace_pbx_webhook_events_workspace_idx").on(table.workspaceId),
@@ -230,12 +211,9 @@ export type NewWorkspacePbxNumber = typeof workspacePbxNumbers.$inferInsert;
 export type WorkspacePbxLink = typeof workspacePbxLinks.$inferSelect;
 export type NewWorkspacePbxLink = typeof workspacePbxLinks.$inferInsert;
 export type WorkspacePbxSyncState = typeof workspacePbxSyncState.$inferSelect;
-export type NewWorkspacePbxSyncState =
-  typeof workspacePbxSyncState.$inferInsert;
-export type WorkspacePbxWebhookEvent =
-  typeof workspacePbxWebhookEvents.$inferSelect;
-export type NewWorkspacePbxWebhookEvent =
-  typeof workspacePbxWebhookEvents.$inferInsert;
+export type NewWorkspacePbxSyncState = typeof workspacePbxSyncState.$inferInsert;
+export type WorkspacePbxWebhookEvent = typeof workspacePbxWebhookEvents.$inferSelect;
+export type NewWorkspacePbxWebhookEvent = typeof workspacePbxWebhookEvents.$inferInsert;
 
 export type WorkspaceMegaPbxEmployee = WorkspacePbxEmployee;
 export type NewWorkspaceMegaPbxEmployee = NewWorkspacePbxEmployee;

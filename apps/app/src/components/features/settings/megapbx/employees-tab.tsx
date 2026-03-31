@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Badge,
-  DataGrid,
-  DataGridContainer,
-  DataGridPagination,
-  DataGridTable,
-} from "@calls/ui";
+import { Badge, DataGrid, DataGridContainer, DataGridPagination, DataGridTable } from "@calls/ui";
 import {
   getCoreRowModel,
   getPaginationRowModel,
@@ -16,10 +10,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { SearchInput } from "@/components/ui/search-input";
 import type { PbxEmployeeItem } from "../types";
-import {
-  type EmployeeLinkOption,
-  getEmployeeColumns,
-} from "./employee-columns";
+import { type EmployeeLinkOption, getEmployeeColumns } from "./employee-columns";
 
 interface EmployeesTabProps {
   employees: PbxEmployeeItem[];
@@ -33,10 +24,7 @@ interface EmployeesTabProps {
     userId?: string | null;
     invitationId?: string | null;
   }) => Promise<void>;
-  onUnlink: (input: {
-    targetType: "employee";
-    targetExternalId: string;
-  }) => Promise<void>;
+  onUnlink: (input: { targetType: "employee"; targetExternalId: string }) => Promise<void>;
 }
 
 export function EmployeesTab({
@@ -48,15 +36,9 @@ export function EmployeesTab({
   onLink,
   onUnlink,
 }: EmployeesTabProps) {
-  const [selectedLinks, setSelectedLinks] = useState<Record<string, string>>(
-    {},
-  );
-  const [linkingEmployeeIds, setLinkingEmployeeIds] = useState<
-    Record<string, boolean>
-  >({});
-  const [unlinkingEmployeeIds, setUnlinkingEmployeeIds] = useState<
-    Record<string, boolean>
-  >({});
+  const [selectedLinks, setSelectedLinks] = useState<Record<string, string>>({});
+  const [linkingEmployeeIds, setLinkingEmployeeIds] = useState<Record<string, boolean>>({});
+  const [unlinkingEmployeeIds, setUnlinkingEmployeeIds] = useState<Record<string, boolean>>({});
 
   const handleLink = useCallback(
     async (input: {
@@ -152,8 +134,7 @@ export function EmployeesTab({
         <div>
           <h4 className="font-semibold">Привязка сотрудников</h4>
           <p className="text-sm text-muted-foreground">
-            Сопоставьте сотрудников АТС с пользователями и приглашениями в
-            компании.
+            Сопоставьте сотрудников АТС с пользователями и приглашениями в компании.
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:items-end">

@@ -5,8 +5,8 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
-import { z } from "zod/v4";
 import { createLogger } from "@calls/logger";
+import { z } from "zod/v4";
 
 const logger = createLogger("asr-context-correction");
 
@@ -41,9 +41,9 @@ function splitTextIntoChunks(text: string, maxLength: number): string[] {
           } else if (text[end] === "\n") {
             delta = 1;
           }
-          
+
           // Only add delimiter if it doesn't exceed maxLength
-          if ((end - start) + delta <= maxLength) {
+          if (end - start + delta <= maxLength) {
             end += delta;
           }
         }
@@ -57,10 +57,7 @@ function splitTextIntoChunks(text: string, maxLength: number): string[] {
   return chunks.filter((chunk) => chunk.length > 0);
 }
 
-async function processChunk(
-  chunk: string,
-  companyContext?: string,
-): Promise<string> {
+async function processChunk(chunk: string, companyContext?: string): Promise<string> {
   const contextInfo = companyContext
     ? `\n\nКОНТЕКСТ КОМПАНИИ:\n${companyContext}\n\nКРИТИЧЕСКИ ВАЖНО: Используй ТОЧНО это название компании. НЕ изменяй написание, НЕ транслитерируй, НЕ переводи. Используй эту информацию для лучшего понимания предметной области и терминологии.`
     : "";
@@ -96,7 +93,7 @@ ${chunk}
 }
 
 const CORRECTED_TEXT_SCHEMA = z.object({
-  text: z.string().refine(s => /\S/.test(s), {
+  text: z.string().refine((s) => /\S/.test(s), {
     message: "Текст должен содержать хотя бы один непробельный символ",
   }),
 });
@@ -186,11 +183,7 @@ export async function correctWithContext(
     const companyContext = options?.companyContext?.trim() ?? undefined;
 
     // Валидируем обязательное поле message отдельно
-    const messageValidation = z
-      .string()
-      .trim()
-      .min(1)
-      .safeParse(normalizedText);
+    const messageValidation = z.string().trim().min(1).safeParse(normalizedText);
     if (!messageValidation.success) {
       logger.warn("Текст не прошел валидацию, оставляем исходный текст", {
         functionId: "asr-context-correction",
@@ -215,14 +208,11 @@ export async function correctWithContext(
           (issue) => issue.code === "too_big" && issue.path.length === 0,
         );
         if (isTooLong) {
-          logger.warn(
-            "Контекст компании слишком длинный, будет проигнорирован",
-            {
-              functionId: "asr-context-correction",
-              actualLength: companyContext.length,
-              maxLength: 1000,
-            },
-          );
+          logger.warn("Контекст компании слишком длинный, будет проигнорирован", {
+            functionId: "asr-context-correction",
+            actualLength: companyContext.length,
+            maxLength: 1000,
+          });
         }
         // Отбрасываем контент, не прерывая коррекцию
       }
@@ -251,14 +241,11 @@ export async function correctWithContext(
           const correctedChunk = await processChunk(chunk, normalizedContext);
           correctedChunks.push(correctedChunk);
         } catch (error) {
-          logger.warn(
-            `Ошибка при обработке чанка ${i + 1}, используем оригинал`,
-            {
-              functionId: "asr-context-correction",
-              chunkIndex: i,
-              error: error instanceof Error ? error.message : String(error),
-            },
-          );
+          logger.warn(`Ошибка при обработке чанка ${i + 1}, используем оригинал`, {
+            functionId: "asr-context-correction",
+            chunkIndex: i,
+            error: error instanceof Error ? error.message : String(error),
+          });
           correctedChunks.push(chunk);
         }
       }
@@ -303,13 +290,10 @@ ${normalizedText}
     });
 
     if (!parsedResponse.success) {
-      logger.warn(
-        "Ответ AI для контекстной коррекции отклонён (пусто), оставляем исходный текст",
-        {
-          functionId: "asr-context-correction",
-          issues: parsedResponse.error.issues,
-        },
-      );
+      logger.warn("Ответ AI для контекстной коррекции отклонён (пусто), оставляем исходный текст", {
+        functionId: "asr-context-correction",
+        issues: parsedResponse.error.issues,
+      });
       return text;
     }
 

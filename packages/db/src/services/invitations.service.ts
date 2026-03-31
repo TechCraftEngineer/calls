@@ -9,10 +9,7 @@
 
 import { z } from "zod";
 import type { InvitationsRepository } from "../repositories/invitations.repository";
-import {
-  generateInviteToken,
-  getDefaultExpiresAt,
-} from "../repositories/invitations.repository";
+import { generateInviteToken, getDefaultExpiresAt } from "../repositories/invitations.repository";
 import type { UserWorkspaceSettingsRepository } from "../repositories/user-workspace-settings.repository";
 import type { UsersService } from "./users.service";
 import type { WorkspacesService } from "./workspaces.service";
@@ -73,21 +70,13 @@ export class InvitationsService {
       ];
 
       for (const field of numericFields) {
-        if (
-          field in settings &&
-          typeof settings[field] === "number" &&
-          settings[field] >= 0
-        ) {
+        if (field in settings && typeof settings[field] === "number" && settings[field] >= 0) {
           validated[field] = settings[field];
         }
       }
 
       // Валидация времени
-      const timeFields = [
-        "report_daily_time",
-        "report_weekly_time",
-        "report_monthly_time",
-      ];
+      const timeFields = ["report_daily_time", "report_weekly_time", "report_monthly_time"];
       const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
 
       for (const field of timeFields) {
@@ -181,9 +170,7 @@ export class InvitationsService {
     requiresPassword: boolean;
   }> {
     const trimmedEmail = email.toLowerCase().trim();
-    const emailResult = z
-      .email({ message: "Некорректный email" })
-      .safeParse(trimmedEmail);
+    const emailResult = z.email({ message: "Некорректный email" }).safeParse(trimmedEmail);
     if (!emailResult.success) {
       const firstIssue = emailResult.error.issues[0];
       throw new Error(firstIssue?.message ?? "Некорректный email");
@@ -196,14 +183,9 @@ export class InvitationsService {
 
     if (user) {
       // Existing user: add to workspace_members with pending status
-      const member = await this.workspacesService.getMemberWithRole(
-        workspaceId,
-        user.id,
-      );
+      const member = await this.workspacesService.getMemberWithRole(workspaceId, user.id);
       if (member) {
-        throw new Error(
-          "Пользователь уже является участником рабочего пространства",
-        );
+        throw new Error("Пользователь уже является участником рабочего пространства");
       }
 
       const token = generateInviteToken();
@@ -233,9 +215,7 @@ export class InvitationsService {
       validatedEmail,
     );
     if (hasPending) {
-      throw new Error(
-        "Приглашение на этот email уже отправлено и ожидает принятия",
-      );
+      throw new Error("Приглашение на этот email уже отправлено и ожидает принятия");
     }
 
     const token = generateInviteToken();
@@ -273,8 +253,7 @@ export class InvitationsService {
     invitationType: "email" | "link";
   } | null> {
     // 1. Check workspace_members (existing users)
-    const member =
-      await this.workspacesService.getMemberByInvitationToken(token);
+    const member = await this.workspacesService.getMemberByInvitationToken(token);
 
     if (member && member.status === "pending") {
       const expiresAt = member.invitationExpiresAt;
@@ -331,11 +310,10 @@ export class InvitationsService {
     const rows = await this.workspacesService.getPendingMembers(workspaceId);
     const withSettings = await Promise.all(
       rows.map(async (r) => {
-        const settings =
-          await this.userWorkspaceSettingsRepository.findByUserAndWorkspace(
-            r.userId,
-            workspaceId,
-          );
+        const settings = await this.userWorkspaceSettingsRepository.findByUserAndWorkspace(
+          r.userId,
+          workspaceId,
+        );
         return {
           ...r,
           pendingSettings: settings
@@ -381,14 +359,12 @@ export class InvitationsService {
       const result: Array<{ token: string; workspaceName: string }> = [];
 
       for (const inv of fromInvitations) {
-        const name =
-          workspacesMap.get(inv.workspaceId) ?? "Рабочее пространство";
+        const name = workspacesMap.get(inv.workspaceId) ?? "Рабочее пространство";
         result.push({ token: inv.token, workspaceName: name });
       }
       for (const m of fromMembers) {
         if (m.token) {
-          const name =
-            workspacesMap.get(m.workspaceId) ?? "Рабочее пространство";
+          const name = workspacesMap.get(m.workspaceId) ?? "Рабочее пространство";
           result.push({ token: m.token, workspaceName: name });
         }
       }
@@ -446,14 +422,11 @@ export class InvitationsService {
       createdAt: inv.createdAt,
       invitedBy: inv.invitedBy,
       invitationType: (inv.email ? "email" : "link") as "email" | "link",
-      pendingSettings: inv.pendingSettings as
-        | Record<string, unknown>
-        | undefined,
+      pendingSettings: inv.pendingSettings as Record<string, unknown> | undefined,
     }));
 
     return [...fromMembers, ...fromInvitations].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
   }
 
@@ -477,14 +450,10 @@ export class InvitationsService {
     setPasswordFn?: (userId: string, newPassword: string) => Promise<void>,
   ): Promise<{ userId: string; workspaceId: string }> {
     // 1. Try workspace_members (existing users)
-    const member =
-      await this.workspacesService.getMemberByInvitationToken(token);
+    const member = await this.workspacesService.getMemberByInvitationToken(token);
 
     if (member && member.status === "pending") {
-      if (
-        member.invitationExpiresAt &&
-        member.invitationExpiresAt < new Date()
-      ) {
+      if (member.invitationExpiresAt && member.invitationExpiresAt < new Date()) {
         throw new Error("Срок действия приглашения истек");
       }
 
@@ -504,9 +473,7 @@ export class InvitationsService {
         );
         try {
           await setPasswordFn(member.userId, password);
-          console.log(
-            `[InvitationsService] Password setup completed for user: ${member.userId}`,
-          );
+          console.log(`[InvitationsService] Password setup completed for user: ${member.userId}`);
         } catch (error) {
           console.error(
             `[InvitationsService] Failed to set up password for user: ${member.userId}`,
@@ -519,9 +486,7 @@ export class InvitationsService {
           `[InvitationsService] No password provided for existing user: ${member.userId}`,
         );
       } else if (!setPasswordFn) {
-        console.log(
-          `[InvitationsService] setPasswordFn not available for user: ${member.userId}`,
-        );
+        console.log(`[InvitationsService] setPasswordFn not available for user: ${member.userId}`);
       }
 
       // Атомарно обновляем статус с проверкой
@@ -553,25 +518,20 @@ export class InvitationsService {
 
     // For link-based invitations, email must be provided
     const invitationEmail =
-      inv.invitationType === "link"
-        ? email?.toLowerCase().trim()
-        : inv.email?.toLowerCase().trim();
+      inv.invitationType === "link" ? email?.toLowerCase().trim() : inv.email?.toLowerCase().trim();
 
     if (!invitationEmail) {
       throw new Error("Email обязателен для принятия приглашения");
     }
 
     // Validate email format
-    const emailResult = z
-      .email({ message: "Некорректный email" })
-      .safeParse(invitationEmail);
+    const emailResult = z.email({ message: "Некорректный email" }).safeParse(invitationEmail);
     if (!emailResult.success) {
       throw new Error("Некорректный email");
     }
 
     // Check if user with this email already exists
-    const existingUser =
-      await this.usersService.getUserByEmail(invitationEmail);
+    const existingUser = await this.usersService.getUserByEmail(invitationEmail);
     let userId: string;
 
     if (existingUser) {
@@ -582,9 +542,7 @@ export class InvitationsService {
         existingUser.id,
       );
       if (member) {
-        throw new Error(
-          "Пользователь уже является участником рабочего пространства",
-        );
+        throw new Error("Пользователь уже является участником рабочего пространства");
       }
 
       const newToken = generateInviteToken();
@@ -634,18 +592,13 @@ export class InvitationsService {
         await this.userWorkspaceSettingsRepository.upsert(
           userId,
           inv.workspaceId,
-          validatedSettings as Parameters<
-            UserWorkspaceSettingsRepository["upsert"]
-          >[2],
+          validatedSettings as Parameters<UserWorkspaceSettingsRepository["upsert"]>[2],
         );
       }
     }
 
     // Помечаем приглашение как принято с проверкой на дублирование
-    const markedAccepted = await this.invitationsRepository.markAccepted(
-      inv.id,
-      userId,
-    );
+    const markedAccepted = await this.invitationsRepository.markAccepted(inv.id, userId);
     if (!markedAccepted) {
       throw new Error("Не удалось отметить приглашение как принятое");
     }
@@ -663,10 +616,7 @@ export class InvitationsService {
     workspaceId: string,
     userId: string,
   ): Promise<{ token: string; expiresAt: Date }> {
-    const member = await this.workspacesService.getMemberWithRole(
-      workspaceId,
-      userId,
-    );
+    const member = await this.workspacesService.getMemberWithRole(workspaceId, userId);
 
     if (!member || member.status !== "pending") {
       throw new Error("Приглашение не найдено или уже принято");
@@ -676,11 +626,7 @@ export class InvitationsService {
     const token = generateInviteToken();
     const expiresAt = getDefaultExpiresAt();
 
-    await this.workspacesService.updateMemberInvitationToken(
-      member.id,
-      token,
-      expiresAt,
-    );
+    await this.workspacesService.updateMemberInvitationToken(member.id, token, expiresAt);
 
     return { token, expiresAt };
   }
@@ -693,8 +639,7 @@ export class InvitationsService {
     userId: string,
   ): Promise<{ workspaceId: string; workspaceName: string }> {
     // Find member by invitation token
-    const member =
-      await this.workspacesService.getMemberByInvitationToken(token);
+    const member = await this.workspacesService.getMemberByInvitationToken(token);
 
     if (!member || member.status !== "pending") {
       throw new Error("Приглашение не найдено или уже принято");
@@ -727,21 +672,14 @@ export class InvitationsService {
   /**
    * Revoke invitation by id - tries workspace_members first, then invitations table
    */
-  async revoke(
-    invitationId: string,
-    workspaceId: string,
-    _authUserId: string,
-  ): Promise<boolean> {
+  async revoke(invitationId: string, workspaceId: string, _authUserId: string): Promise<boolean> {
     const removedMember = await this.workspacesService.removePendingMemberById(
       invitationId,
       workspaceId,
     );
     if (removedMember) return true;
 
-    return this.invitationsRepository.revokeByIdAndWorkspace(
-      invitationId,
-      workspaceId,
-    );
+    return this.invitationsRepository.revokeByIdAndWorkspace(invitationId, workspaceId);
   }
 
   /**
@@ -758,41 +696,27 @@ export class InvitationsService {
       throw new Error("Некорректные настройки приглашения");
     }
 
-    const member = await this.workspacesService.getPendingMemberById(
-      invitationId,
-      workspaceId,
-    );
+    const member = await this.workspacesService.getPendingMemberById(invitationId, workspaceId);
     if (member) {
       return this.userWorkspaceSettingsRepository.upsert(
         member.userId,
         workspaceId,
-        validatedSettings as Parameters<
-          UserWorkspaceSettingsRepository["upsert"]
-        >[2],
+        validatedSettings as Parameters<UserWorkspaceSettingsRepository["upsert"]>[2],
       );
     }
 
-    const inv = await this.invitationsRepository.findByIdAndWorkspace(
-      invitationId,
-      workspaceId,
-    );
+    const inv = await this.invitationsRepository.findByIdAndWorkspace(invitationId, workspaceId);
     if (!inv) {
       throw new Error("Приглашение не найдено или уже принято");
     }
-    return this.invitationsRepository.updatePendingSettings(
-      invitationId,
-      validatedSettings,
-    );
+    return this.invitationsRepository.updatePendingSettings(invitationId, validatedSettings);
   }
 
   /**
    * Revoke invitation - removes pending member from workspace
    */
   async revokeInvitation(workspaceId: string, userId: string): Promise<void> {
-    const member = await this.workspacesService.getMemberWithRole(
-      workspaceId,
-      userId,
-    );
+    const member = await this.workspacesService.getMemberWithRole(workspaceId, userId);
 
     if (!member || member.status !== "pending") {
       throw new Error("Приглашение не найдено");

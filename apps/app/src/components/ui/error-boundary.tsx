@@ -14,10 +14,7 @@ interface ErrorBoundaryProps {
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
-export class ErrorBoundary extends React.Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -46,13 +43,7 @@ export class ErrorBoundary extends React.Component<
   }
 }
 
-function DefaultErrorFallback({
-  error,
-  reset,
-}: {
-  error?: Error;
-  reset: () => void;
-}) {
+function DefaultErrorFallback({ error, reset }: { error?: Error; reset: () => void }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
@@ -71,21 +62,16 @@ function DefaultErrorFallback({
             />
           </svg>
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Что-то пошло не так
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Что-то пошло не так</h2>
         <p className="text-gray-600 mb-4">
-          Произошла ошибка при загрузке приложения. Попробуйте обновить
-          страницу.
+          Произошла ошибка при загрузке приложения. Попробуйте обновить страницу.
         </p>
         {process.env.NODE_ENV === "development" && error && (
           <details className="mb-4 text-left">
             <summary className="cursor-pointer text-sm text-gray-500 mb-2">
               Технические детали
             </summary>
-            <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto">
-              {error.stack}
-            </pre>
+            <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto">{error.stack}</pre>
           </details>
         )}
         <Button onClick={reset} className="w-full">

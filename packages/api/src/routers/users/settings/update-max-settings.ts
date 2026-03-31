@@ -20,25 +20,19 @@ export const updateMaxSettings = workspaceProcedure
       });
 
     const user = await usersService.getUser(input.user_id);
-    if (!user)
-      throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+    if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(
-        input.user_id,
-        context.workspaceId,
-        {
-          maxChatId: input.data.maxChatId,
-          maxDailyReport: input.data.maxDailyReport,
-          maxManagerReport: input.data.maxManagerReport,
-        },
-      );
+      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+        maxChatId: input.data.maxChatId,
+        maxDailyReport: input.data.maxDailyReport,
+        maxManagerReport: input.data.maxManagerReport,
+      });
 
       await logUpdate(
         "max settings updated",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         undefined,
         context.workspaceId,
       );
@@ -48,8 +42,7 @@ export const updateMaxSettings = workspaceProcedure
       await logUpdate(
         "update user max settings",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         error,
         context.workspaceId,
       );

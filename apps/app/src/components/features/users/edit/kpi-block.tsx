@@ -41,16 +41,11 @@ export function KpiBlock({
     }
   };
 
-  const handleNumberChange = (
-    key: (typeof KPI_FIELDS)[number][0],
-    value: string,
-  ) => {
+  const handleNumberChange = (key: (typeof KPI_FIELDS)[number][0], value: string) => {
     const num = parseInt(value, 10);
     // Prevent extremely large numbers that could cause issues
     const maxValue = 999999999; // 1 billion
-    const safeNum = Number.isNaN(num)
-      ? 0
-      : Math.max(0, Math.min(maxValue, num));
+    const safeNum = Number.isNaN(num) ? 0 : Math.max(0, Math.min(maxValue, num));
     setForm({
       ...form,
       [key]: safeNum,
@@ -66,18 +61,14 @@ export function KpiBlock({
         {hasChanges && (
           <div className="flex items-center gap-1 text-amber-600">
             <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-            <span className="text-xs font-medium hidden sm:inline">
-              Есть изменения
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Есть изменения</span>
             <span className="text-xs font-medium sm:hidden">*</span>
           </div>
         )}
         {state === "saving" && (
           <div className="flex items-center gap-1 text-blue-600">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-spin" />
-            <span className="text-xs font-medium hidden sm:inline">
-              Сохранение...
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Сохранение...</span>
           </div>
         )}
         {state === "success" && (
@@ -89,9 +80,7 @@ export function KpiBlock({
                 clipRule="evenodd"
               />
             </svg>
-            <span className="text-xs font-medium hidden sm:inline">
-              Сохранено
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Сохранено</span>
           </div>
         )}
         {state === "error" && (
@@ -109,16 +98,13 @@ export function KpiBlock({
       </div>
 
       <p className="text-sm text-muted-foreground mb-4">
-        Укажите суммы и целевые показатели для расчёта KPI в отчётах и на
-        вкладке «Расчёт KPI».
+        Укажите суммы и целевые показатели для расчёта KPI в отчётах и на вкладке «Расчёт KPI».
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {KPI_FIELDS.map(([key, label, placeholder]) => (
           <div key={key}>
-            <label className="block mb-1.5 text-[13px] font-semibold">
-              {label}
-            </label>
+            <label className="block mb-1.5 text-[13px] font-semibold">{label}</label>
             <Input
               type="number"
               min={0}

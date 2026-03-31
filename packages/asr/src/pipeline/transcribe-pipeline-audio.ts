@@ -4,20 +4,17 @@
 
 import { callsService, filesService } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
+import { createLogger } from "@calls/logger";
 import { preprocessAudioWithPython } from "../audio/audio-enhancer-client";
 import type { PreprocessingResult } from "../audio/audio-preprocessing";
 import { getAudioDurationFromBuffer } from "../audio/get-audio-duration";
 import { validatePcm16WavBuffer } from "../audio/validate-pcm16-wav";
-import { createLogger } from "@calls/logger";
 
 const logger = createLogger("transcribe-pipeline-audio");
 
 const DEFAULT_AUDIO_DOWNLOAD_TIMEOUT_MS = 120_000;
 
-async function fetchAudioBuffer(
-  audioUrl: string,
-  timeoutMs: number,
-): Promise<Buffer> {
+async function fetchAudioBuffer(audioUrl: string, timeoutMs: number): Promise<Buffer> {
   const response = await fetch(audioUrl, {
     signal: AbortSignal.timeout(timeoutMs),
   });
@@ -71,22 +68,16 @@ export async function runPipelineAudioPreprocess(params: {
       error: error instanceof Error ? error.message : String(error),
     });
   }
-  const originalBuffer = await fetchAudioBuffer(
-    originalUrl,
-    DEFAULT_AUDIO_DOWNLOAD_TIMEOUT_MS,
-  );
+  const originalBuffer = await fetchAudioBuffer(originalUrl, DEFAULT_AUDIO_DOWNLOAD_TIMEOUT_MS);
 
   const prep = await preprocessAudioWithPython(originalBuffer, {
     targetSampleRate: 16000,
   });
 
   if (!prep.wasProcessed || !prep.audioBuffer.length) {
-    logger.warn(
-      "audio-enhancer preprocess недоступен, ASR по оригинальному файлу",
-      {
-        callId: params.callId,
-      },
-    );
+    logger.warn("audio-enhancer preprocess недоступен, ASR по оригинальному файлу", {
+      callId: params.callId,
+    });
     const preprocessingResult: PipelinePreprocessSnapshot = {
       audioUrl: originalUrl,
       wasProcessed: false,

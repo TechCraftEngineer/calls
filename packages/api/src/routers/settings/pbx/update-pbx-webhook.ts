@@ -38,11 +38,7 @@ export const updatePbxWebhook = workspaceAdminProcedure
 
     let ok: boolean;
     try {
-      ok = await pbxService.updateWebhook(
-        context.workspaceId,
-        partial,
-        String(username),
-      );
+      ok = await pbxService.updateWebhook(context.workspaceId, partial, String(username));
     } catch (err: unknown) {
       console.error("Failed to update PBX webhook:", err);
       throw new ORPCError("INTERNAL_SERVER_ERROR", {

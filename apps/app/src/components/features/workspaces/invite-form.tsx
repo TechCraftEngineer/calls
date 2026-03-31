@@ -18,10 +18,7 @@ interface InviteFormProps {
   isLoading: boolean;
 }
 
-const emailSchema = z
-  .string()
-  .min(1, "Email обязателен")
-  .email("Неверный формат email");
+const emailSchema = z.string().min(1, "Email обязателен").email("Неверный формат email");
 
 const ROLE_LABELS: Record<string, string> = {
   admin: "Администратор",
@@ -60,9 +57,7 @@ export default function InviteForm({
       <div className="space-y-4">
         <Field>
           <FieldLabel asChild>
-            <legend className="text-sm font-medium text-gray-900">
-              Тип приглашения
-            </legend>
+            <legend className="text-sm font-medium text-gray-900">Тип приглашения</legend>
           </FieldLabel>
           <RadioGroup
             value={inviteType}
@@ -75,9 +70,7 @@ export default function InviteForm({
                 <FieldLabel htmlFor="invite-email" className="font-normal">
                   Пригласить по email
                 </FieldLabel>
-                <FieldDescription>
-                  Отправить приглашение на конкретный email адрес
-                </FieldDescription>
+                <FieldDescription>Отправить приглашение на конкретный email адрес</FieldDescription>
               </FieldContent>
             </div>
             <div className="flex items-center space-x-2">
@@ -86,9 +79,7 @@ export default function InviteForm({
                 <FieldLabel htmlFor="invite-link" className="font-normal">
                   Создать ссылку-приглашение
                 </FieldLabel>
-                <FieldDescription>
-                  Любой человек со ссылкой сможет присоединиться
-                </FieldDescription>
+                <FieldDescription>Любой человек со ссылкой сможет присоединиться</FieldDescription>
               </FieldContent>
             </div>
           </RadioGroup>
@@ -111,9 +102,7 @@ export default function InviteForm({
 
         <Field>
           <FieldLabel asChild>
-            <legend className="text-sm font-medium text-gray-900">
-              Роль в компании
-            </legend>
+            <legend className="text-sm font-medium text-gray-900">Роль в компании</legend>
           </FieldLabel>
           <RadioGroup
             value={role}

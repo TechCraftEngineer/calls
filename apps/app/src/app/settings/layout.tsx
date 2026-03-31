@@ -135,18 +135,13 @@ const SETTINGS_NAV = [
   },
 ] as const;
 
-export default function SettingsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { activeWorkspace } = useWorkspace();
   const { data: session, isPending: sessionPending } = useSession();
   const user = session?.user ?? null;
   const _userLoading = sessionPending;
-  const isWorkspaceAdmin =
-    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
   const navItems = SETTINGS_NAV.filter(
     (item) => !("adminOnly" in item && item.adminOnly) || isWorkspaceAdmin,
@@ -168,8 +163,7 @@ export default function SettingsLayout({
               {navItems.map((item) => {
                 const isActive =
                   pathname === item.href ||
-                  (item.href !== paths.settings.root &&
-                    pathname.startsWith(item.href));
+                  (item.href !== paths.settings.root && pathname.startsWith(item.href));
                 return (
                   <Link
                     key={item.href}
@@ -194,9 +188,7 @@ export default function SettingsLayout({
                       <span
                         className={cn(
                           "text-xs truncate",
-                          isActive
-                            ? "text-muted-foreground"
-                            : "text-muted-foreground/80",
+                          isActive ? "text-muted-foreground" : "text-muted-foreground/80",
                         )}
                       >
                         {item.description}

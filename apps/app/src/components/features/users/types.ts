@@ -114,5 +114,4 @@ export const modalBoxClasses =
   "bg-white rounded-xl p-6 max-w-[440px] w-full max-h-[90vh] overflow-y-auto shadow-[0_8px_32px_rgba(0,0,0,0.2)]";
 export const formFieldWrap = "mb-3";
 export const formLabel = "block mb-1 text-[13px] font-semibold";
-export const formInput =
-  "w-full py-2 px-3 border border-[#ddd] rounded-md box-border";
+export const formInput = "w-full py-2 px-3 border border-[#ddd] rounded-md box-border";

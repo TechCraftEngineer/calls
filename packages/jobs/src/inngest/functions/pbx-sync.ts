@@ -1,10 +1,6 @@
 import { pbxService } from "@calls/db";
 import { inngest, pbxSyncRequested } from "@calls/jobs/client";
-import {
-  runActivePbxSync,
-  syncPbxCalls,
-  syncPbxDirectory,
-} from "@calls/jobs/pbx/sync";
+import { runActivePbxSync, syncPbxCalls, syncPbxDirectory } from "@calls/jobs/pbx/sync";
 import { createLogger } from "../../logger";
 
 const logger = createLogger("pbx-sync");
@@ -41,12 +37,7 @@ export const pbxSyncRequestedFn = inngest.createFunction(
     },
   },
   async ({ event, step }) => {
-    const {
-      workspaceId,
-      syncType,
-      syncRecordings = false,
-      webhookEvent,
-    } = event.data;
+    const { workspaceId, syncType, syncRecordings = false, webhookEvent } = event.data;
     if (!workspaceId) {
       throw new Error("workspaceId обязателен");
     }
@@ -70,11 +61,7 @@ export const pbxSyncRequestedFn = inngest.createFunction(
       const result = await step.run(`sync-${syncType}`, async () => {
         return syncType === "directory"
           ? syncPbxDirectory(workspaceId, config)
-          : syncPbxCalls(
-              workspaceId,
-              { ...config, syncRecordings },
-              webhookEvent?.payload,
-            );
+          : syncPbxCalls(workspaceId, { ...config, syncRecordings }, webhookEvent?.payload);
       });
 
       if (webhookEvent) {
@@ -99,8 +86,7 @@ export const pbxSyncRequestedFn = inngest.createFunction(
 
       return result;
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
 
       if (webhookEvent) {
         await step.run("mark-webhook-error", async () => {

@@ -1,5 +1,5 @@
-import { callsService, settingsService, usersService, type ManagerStatsRow } from "@calls/db";
-import { ReportEmail, sendEmail, type ManagerStats } from "@calls/emails";
+import { callsService, type ManagerStatsRow, settingsService, usersService } from "@calls/db";
+import { type ManagerStats, ReportEmail, sendEmail } from "@calls/emails";
 import { ORPCError } from "@orpc/server";
 import { subDays, subMonths, subWeeks } from "date-fns";
 import { z } from "zod";
@@ -32,10 +32,7 @@ const REPORT_TYPE_LABELS = {
   daily: "Ежедневный",
   weekly: "Еженедельный",
   monthly: "Ежемесячный",
-} as const satisfies Record<
-  z.infer<typeof reportTypeSchema>["reportType"],
-  string
->;
+} as const satisfies Record<z.infer<typeof reportTypeSchema>["reportType"], string>;
 
 function parseInternalExtensions(ext: string | null): string[] | null {
   if (!ext || String(ext).trim().toLowerCase() === "all") return null;
@@ -86,9 +83,7 @@ export const sendTestEmail = workspaceProcedure
         message: "Не удалось загрузить настройки",
       });
 
-    const internalNumbers = parseInternalExtensions(
-      userForEdit.internalExtensions ?? null,
-    );
+    const internalNumbers = parseInternalExtensions(userForEdit.internalExtensions ?? null);
 
     const { formatInTimeZone } = await import("date-fns-tz");
     const now = new Date();
@@ -128,8 +123,7 @@ export const sendTestEmail = workspaceProcedure
       dateFrom: dateFromDb,
       dateTo: dateToDb,
       internalNumbers: internalNumbers ?? undefined,
-      excludePhoneNumbers:
-        excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+      excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
     });
 
     const parseResult = statsSchema.safeParse(rawStats);
@@ -139,10 +133,10 @@ export const sendTestEmail = workspaceProcedure
       });
     }
     const stats = parseResult.data as Record<string, ManagerStatsRow>;
-    const enrichedStats = await callsService.enrichStatsWithKpi(
-      stats,
-      workspaceId,
-    ) as Record<string, ManagerStats>;
+    const enrichedStats = (await callsService.enrichStatsWithKpi(stats, workspaceId)) as Record<
+      string,
+      ManagerStats
+    >;
 
     try {
       await sendEmail({

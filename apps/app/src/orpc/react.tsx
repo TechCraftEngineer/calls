@@ -53,8 +53,7 @@ const link = new RPCLink({
 });
 
 // Создаем oRPC клиент (используем глобальный $client если доступен для SSR оптимизации)
-export const client: RouterClient<typeof appRouter> =
-  globalThis.$client ?? createORPCClient(link);
+export const client: RouterClient<typeof appRouter> = globalThis.$client ?? createORPCClient(link);
 
 // Создаем утилиты для TanStack Query - предоставляет .queryOptions(), .mutationOptions(), .queryKey()
 export const orpc = createTanstackQueryUtils(client);
@@ -69,9 +68,5 @@ export const useORPC = () => {
 export function ORPCReactProvider(props: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      {props.children}
-    </QueryClientProvider>
-  );
+  return <QueryClientProvider client={queryClient}>{props.children}</QueryClientProvider>;
 }

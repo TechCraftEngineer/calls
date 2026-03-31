@@ -15,10 +15,7 @@ import type React from "react";
 import { SendTestReportButton } from "../telegram/send-test-report-button";
 import { REPORT_TYPE_LABELS, type ReportType } from "../types";
 import type { ReportSettingsForm } from "./report-settings-types";
-import {
-  ReportDeliveryFrequency,
-  ReportTimeSettings,
-} from "./shared-report-controls";
+import { ReportDeliveryFrequency, ReportTimeSettings } from "./shared-report-controls";
 
 interface EmailSectionProps {
   form: ReportSettingsForm;
@@ -47,16 +44,15 @@ export function EmailReportSection({
 }: EmailSectionProps) {
   const canSendTest = Boolean(form.email.trim()) && !sendTestLoading;
   const primaryReportType = sendTestReportType ?? "daily";
-  const primaryReportLabel =
-    REPORT_TYPE_LABELS[primaryReportType] ?? REPORT_TYPE_LABELS.daily;
+  const primaryReportLabel = REPORT_TYPE_LABELS[primaryReportType] ?? REPORT_TYPE_LABELS.daily;
 
   return (
     <Card className="border-border/50 bg-card/50">
       <CardHeader className="px-4 pb-0">
         <CardTitle className="text-base">Отчёты по электронной почте</CardTitle>
         <CardDescription>
-          Полные настройки email-отчетов: периодичность, расписание, формат и
-          мгновенная отправка выбранного типа.
+          Полные настройки email-отчетов: периодичность, расписание, формат и мгновенная отправка
+          выбранного типа.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -71,11 +67,7 @@ export function EmailReportSection({
             placeholder="Ваш Email"
           />
         </Field>
-        <ReportDeliveryFrequency
-          form={form}
-          setForm={setForm}
-          channel="email"
-        />
+        <ReportDeliveryFrequency form={form} setForm={setForm} channel="email" />
         {isAdmin && <ReportTimeSettings form={form} setForm={setForm} />}
 
         {onSendTest && (
@@ -92,9 +84,7 @@ export function EmailReportSection({
               />
               {sendTestMessage && (
                 <span
-                  className={`text-sm ${
-                    sendTestSuccess ? "text-success" : "text-destructive"
-                  }`}
+                  className={`text-sm ${sendTestSuccess ? "text-success" : "text-destructive"}`}
                 >
                   {sendTestMessage}
                 </span>

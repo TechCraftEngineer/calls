@@ -19,14 +19,10 @@ export const listUsersAvailableToAdd = protectedProcedure
         message: "Недостаточно прав для добавления участников",
       });
     }
-    const rows = await context.workspacesService.getUsersNotInWorkspace(
-      input.workspaceId,
-    );
-    return rows.map(
-      (r: { id: string; name: string | null; email: string }) => ({
-        id: r.id,
-        name: r.name ?? "Без имени",
-        email: r.email ?? `user_${r.id.slice(0, 8)}`,
-      }),
-    );
+    const rows = await context.workspacesService.getUsersNotInWorkspace(input.workspaceId);
+    return rows.map((r: { id: string; name: string | null; email: string }) => ({
+      id: r.id,
+      name: r.name ?? "Без имени",
+      email: r.email ?? `user_${r.id.slice(0, 8)}`,
+    }));
   });

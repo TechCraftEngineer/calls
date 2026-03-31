@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@calls/ui";
+import { Skeleton, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@calls/ui";
 import { loadColumnOrder } from "./column-storage";
 import { COLUMNS } from "./constants";
 

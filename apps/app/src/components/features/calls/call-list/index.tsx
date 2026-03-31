@@ -71,13 +71,7 @@ export default function CallList(props: CallListProps) {
                         >
                           {[2, 6, 10].flatMap((x) =>
                             [2, 6, 10].map((y) => (
-                              <circle
-                                key={`${x}-${y}`}
-                                cx={x}
-                                cy={y}
-                                r={1}
-                                fill="currentColor"
-                              />
+                              <circle key={`${x}-${y}`} cx={x} cy={y} r={1} fill="currentColor" />
                             )),
                           )}
                         </svg>
@@ -116,8 +110,7 @@ export default function CallList(props: CallListProps) {
                     colKey,
                     visibleColumns: state.visibleColumns,
                     onSelectCall: state.setSelectedCallId,
-                    onGenerateRecommendations:
-                      state.handleGenerateRecommendations,
+                    onGenerateRecommendations: state.handleGenerateRecommendations,
                     onTranscribe: state.handleTranscribe,
                     onPlay: state.onPlay,
                     isLoadingRecommendations: state.isLoadingRecommendations,

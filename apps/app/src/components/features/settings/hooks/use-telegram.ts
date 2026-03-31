@@ -15,10 +15,7 @@ interface UseTelegramSettingsProps {
   setState: React.Dispatch<React.SetStateAction<SettingsState>>;
 }
 
-export function useTelegramSettings({
-  state,
-  setState,
-}: UseTelegramSettingsProps) {
+export function useTelegramSettings({ state, setState }: UseTelegramSettingsProps) {
   const orpc = useORPC();
   const queryClient = useQueryClient();
 
@@ -55,9 +52,7 @@ export function useTelegramSettings({
     } catch (error: unknown) {
       console.error("Failed to save Telegram:", error);
       const msg =
-        error instanceof Error
-          ? error.message
-          : "Не удалось сохранить настройки Telegram";
+        error instanceof Error ? error.message : "Не удалось сохранить настройки Telegram";
       toast.error(msg);
     } finally {
       setState((prev: SettingsState) => ({ ...prev, telegramSaving: false }));
@@ -73,19 +68,14 @@ export function useTelegramSettings({
       toast.success("MAX Bot сохранён");
     } catch (error: unknown) {
       console.error("Failed to save MAX Bot:", error);
-      const msg =
-        error instanceof Error
-          ? error.message
-          : "Не удалось сохранить настройки MAX Bot";
+      const msg = error instanceof Error ? error.message : "Не удалось сохранить настройки MAX Bot";
       toast.error(msg);
     } finally {
       setState((prev: SettingsState) => ({ ...prev, maxBotSaving: false }));
     }
   };
 
-  const setTelegramBotToken = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+  const setTelegramBotToken = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const value = e.target.value;
     setState((prev: SettingsState) => ({
       ...prev,
@@ -93,9 +83,7 @@ export function useTelegramSettings({
     }));
   };
 
-  const setMaxBotToken = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+  const setMaxBotToken = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const value = e.target.value;
     setState((prev: SettingsState) => ({
       ...prev,

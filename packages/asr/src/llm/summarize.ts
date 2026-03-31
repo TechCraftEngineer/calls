@@ -7,9 +7,9 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
+import { createLogger } from "@calls/logger";
 import { Output } from "ai";
 import { z } from "zod";
-import { createLogger } from "@calls/logger";
 
 const logger = createLogger("asr-summarize");
 
@@ -39,44 +39,21 @@ const summarizeInputSchema = z
     text: z.string().trim().min(1).max(TEXT_INPUT_MAX_CHARS),
     options: z
       .object({
-        summaryPrompt: z
-          .string()
-          .trim()
-          .max(REQUEST_FIELD_MAX_CHARS)
-          .optional(),
-        companyContext: z
-          .string()
-          .trim()
-          .max(REQUEST_FIELD_MAX_CHARS)
-          .nullable()
-          .optional(),
+        summaryPrompt: z.string().trim().max(REQUEST_FIELD_MAX_CHARS).optional(),
+        companyContext: z.string().trim().max(REQUEST_FIELD_MAX_CHARS).nullable().optional(),
         model: z.string().optional(),
-        maxChars: z
-          .number()
-          .int()
-          .positive()
-          .max(DEFAULT_HARD_MAX_CHARS)
-          .optional(),
-        hardMaxChars: z
-          .number()
-          .int()
-          .positive()
-          .max(DEFAULT_HARD_MAX_CHARS)
-          .optional(),
+        maxChars: z.number().int().positive().max(DEFAULT_HARD_MAX_CHARS).optional(),
+        hardMaxChars: z.number().int().positive().max(DEFAULT_HARD_MAX_CHARS).optional(),
       })
       .optional(),
   })
   .superRefine((data, ctx) => {
     const options = data.options ?? {};
     const hardMaxChars = options.hardMaxChars ?? DEFAULT_HARD_MAX_CHARS;
-    const maxChars = Math.min(
-      options.maxChars ?? DEFAULT_MAX_CHARS,
-      hardMaxChars,
-    );
+    const maxChars = Math.min(options.maxChars ?? DEFAULT_MAX_CHARS, hardMaxChars);
     const summaryLength = options.summaryPrompt?.length ?? 0;
     const companyContextLength = options.companyContext?.length ?? 0;
-    const totalRequestChars =
-      data.text.length + summaryLength + companyContextLength;
+    const totalRequestChars = data.text.length + summaryLength + companyContextLength;
 
     if (totalRequestChars > hardMaxChars) {
       ctx.addIssue({
@@ -121,26 +98,18 @@ export async function summarizeWithLlm(
   const inputText = parsed.data.text;
   const inputOptions = parsed.data.options ?? {};
   const hardMaxChars = inputOptions.hardMaxChars ?? DEFAULT_HARD_MAX_CHARS;
-  const maxChars = Math.min(
-    inputOptions.maxChars ?? DEFAULT_MAX_CHARS,
-    hardMaxChars,
-  );
+  const maxChars = Math.min(inputOptions.maxChars ?? DEFAULT_MAX_CHARS, hardMaxChars);
 
   if (inputText.length > hardMaxChars) {
-    logger.warn(
-      "Текст транскрипта превышает жесткий лимит для summarizeWithLlm",
-      {
-        textLength: inputText.length,
-        hardMaxChars,
-      },
-    );
+    logger.warn("Текст транскрипта превышает жесткий лимит для summarizeWithLlm", {
+      textLength: inputText.length,
+      hardMaxChars,
+    });
     return DEFAULT_FALLBACK;
   }
 
-  const sanitizedText =
-    inputText.length > maxChars ? inputText.slice(0, maxChars) : inputText;
-  const normalizedSummaryPrompt =
-    inputOptions.summaryPrompt?.trim() || undefined;
+  const sanitizedText = inputText.length > maxChars ? inputText.slice(0, maxChars) : inputText;
+  const normalizedSummaryPrompt = inputOptions.summaryPrompt?.trim() || undefined;
   const normalizedModel = inputOptions.model?.trim() || undefined;
 
   const companyBlock = inputOptions.companyContext?.trim()
@@ -175,22 +144,15 @@ export async function summarizeWithLlm(
 
 Отвечай только на русском языке. Будь конкретным и лаконичным.`;
 
-  const systemPrompt =
-    companyBlock + (normalizedSummaryPrompt || defaultPrompt);
+  const systemPrompt = companyBlock + (normalizedSummaryPrompt || defaultPrompt);
 
   const schema = z.object({
-    summary: z
-      .string()
-      .describe("Краткое содержание разговора (1-3 предложения)"),
+    summary: z.string().describe("Краткое содержание разговора (1-3 предложения)"),
     sentiment: z
       .string()
-      .describe(
-        "Настроение разговора (например: Позитивный, Нейтральный, Негативный)",
-      ),
+      .describe("Настроение разговора (например: Позитивный, Нейтральный, Негативный)"),
     title: z.string().describe("Краткий заголовок темы звонка"),
-    callType: z
-      .string()
-      .describe("Верхнеуровневый тип обращения из фиксированного списка"),
+    callType: z.string().describe("Верхнеуровневый тип обращения из фиксированного списка"),
     topic: z.string().describe("Основная тема обсуждения"),
   });
 

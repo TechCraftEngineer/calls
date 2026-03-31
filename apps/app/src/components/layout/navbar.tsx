@@ -11,8 +11,7 @@ interface NavbarProps {
 
 export default function Navbar({ user }: NavbarProps) {
   const { activeWorkspace } = useWorkspace();
-  const isWorkspaceAdmin =
-    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
   return (
     <nav className="top-bar">
@@ -30,24 +29,15 @@ export default function Navbar({ user }: NavbarProps) {
         <Link href={paths.dashboard.root} className="nav-link font-medium">
           Панель
         </Link>
-        <Link
-          href={paths.statistics.root}
-          className="nav-link font-medium opacity-60"
-        >
+        <Link href={paths.statistics.root} className="nav-link font-medium opacity-60">
           Статистика
         </Link>
         {isWorkspaceAdmin && (
           <>
-            <Link
-              href={paths.users.root}
-              className="nav-link font-medium opacity-60"
-            >
+            <Link href={paths.users.root} className="nav-link font-medium opacity-60">
               Пользователи
             </Link>
-            <Link
-              href={paths.settings.root}
-              className="nav-link font-medium opacity-60"
-            >
+            <Link href={paths.settings.root} className="nav-link font-medium opacity-60">
               Настройки
             </Link>
           </>

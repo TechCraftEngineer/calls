@@ -46,12 +46,9 @@ export type NewWorkspacePbxNumber = typeof workspacePbxNumbers.$inferInsert;
 export type WorkspacePbxLink = typeof workspacePbxLinks.$inferSelect;
 export type NewWorkspacePbxLink = typeof workspacePbxLinks.$inferInsert;
 export type WorkspacePbxSyncState = typeof workspacePbxSyncState.$inferSelect;
-export type NewWorkspacePbxSyncState =
-  typeof workspacePbxSyncState.$inferInsert;
-export type WorkspacePbxWebhookEvent =
-  typeof workspacePbxWebhookEvents.$inferSelect;
-export type NewWorkspacePbxWebhookEvent =
-  typeof workspacePbxWebhookEvents.$inferInsert;
+export type NewWorkspacePbxSyncState = typeof workspacePbxSyncState.$inferInsert;
+export type WorkspacePbxWebhookEvent = typeof workspacePbxWebhookEvents.$inferSelect;
+export type NewWorkspacePbxWebhookEvent = typeof workspacePbxWebhookEvents.$inferInsert;
 export type WorkspaceMegaPbxEmployee = WorkspacePbxEmployee;
 export type NewWorkspaceMegaPbxEmployee = NewWorkspacePbxEmployee;
 export type WorkspaceMegaPbxNumber = WorkspacePbxNumber;

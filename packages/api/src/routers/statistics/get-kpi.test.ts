@@ -104,9 +104,7 @@ describe("buildKpiRows", () => {
     expect(rows).toHaveLength(2);
 
     const linked = rows.find((row) => row.employeeExternalId === "emp-linked");
-    const unlinked = rows.find(
-      (row) => row.employeeExternalId === "emp-unlinked",
-    );
+    const unlinked = rows.find((row) => row.employeeExternalId === "emp-unlinked");
 
     expect(linked).toEqual(
       expect.objectContaining({
@@ -254,9 +252,7 @@ describe("buildKpiRows", () => {
           extension: "404",
           isActive: true,
         },
-      ] as unknown as NonNullable<
-        Parameters<typeof buildKpiRows>[0]["pbxNumbers"]
-      >,
+      ] as unknown as NonNullable<Parameters<typeof buildKpiRows>[0]["pbxNumbers"]>,
       kpiStats: [
         {
           internalNumber: "404",

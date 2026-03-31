@@ -47,8 +47,7 @@ export const create = workspaceAdminProcedure
         context.workspaceId,
       );
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message:
-          "Не удалось создать пользователя. Пожалуйста, попробуйте снова.",
+        message: "Не удалось создать пользователя. Пожалуйста, попробуйте снова.",
       });
     }
     return user;

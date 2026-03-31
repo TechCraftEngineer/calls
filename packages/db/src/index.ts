@@ -12,6 +12,7 @@ export {
   createWorkspaceNullResponse,
   handleWorkspaceError,
 } from "./lib/workspace-utils";
+export type { ManagerStatsRow } from "./repositories/calls/get-evaluations-stats";
 export { evaluationTemplatesRepository } from "./repositories/evaluation-templates.repository";
 export { megaPbxRepository } from "./repositories/megapbx.repository";
 export { pbxRepository } from "./repositories/pbx.repository";
@@ -19,9 +20,9 @@ export { systemRepository } from "./repositories/system.repository";
 export { userWorkspaceSettingsRepository } from "./repositories/user-workspace-settings.repository";
 // Repositories
 export { usersRepository } from "./repositories/users.repository";
-export { workspacesRepository } from "./repositories/workspaces.repository";
 export { workspaceIntegrationsRepository } from "./repositories/workspace-integrations.repository";
 export { workspaceSettingsRepository } from "./repositories/workspace-settings.repository";
+export { workspacesRepository } from "./repositories/workspaces.repository";
 // Schemas and types
 export type {
   Account,
@@ -161,7 +162,6 @@ export type {
   GetCallManagersParams,
   GetCallsParams,
 } from "./types/calls.types";
-export type { ManagerStatsRow } from "./repositories/calls/get-evaluations-stats";
 export type {
   CreateUserData,
   UpdateUserData,

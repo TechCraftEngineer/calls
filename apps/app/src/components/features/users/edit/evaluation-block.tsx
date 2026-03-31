@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Button,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@calls/ui";
+import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
 import type { EditUserForm } from "@/components/features/users/types";
 import { useORPC } from "@/orpc/react";
@@ -32,9 +25,7 @@ export function EvaluationBlock({
   disabled,
 }: EvaluationBlockProps) {
   const orpc = useORPC();
-  const { data: templates = [] } = useQuery(
-    orpc.settings.getEvaluationTemplates.queryOptions(),
-  );
+  const { data: templates = [] } = useQuery(orpc.settings.getEvaluationTemplates.queryOptions());
 
   const getBlockAnimationClass = () => {
     switch (state) {
@@ -60,18 +51,14 @@ export function EvaluationBlock({
         {hasChanges && (
           <div className="flex items-center gap-1 text-amber-600">
             <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-            <span className="text-xs font-medium hidden sm:inline">
-              Есть изменения
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Есть изменения</span>
             <span className="text-xs font-medium sm:hidden">*</span>
           </div>
         )}
         {state === "saving" && (
           <div className="flex items-center gap-1 text-blue-600">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-spin" />
-            <span className="text-xs font-medium hidden sm:inline">
-              Сохранение...
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Сохранение...</span>
           </div>
         )}
         {state === "success" && (
@@ -83,9 +70,7 @@ export function EvaluationBlock({
                 clipRule="evenodd"
               />
             </svg>
-            <span className="text-xs font-medium hidden sm:inline">
-              Сохранено
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Сохранено</span>
           </div>
         )}
         {state === "error" && (
@@ -103,14 +88,11 @@ export function EvaluationBlock({
       </div>
 
       <p className="text-sm text-muted-foreground mb-4">
-        Шаблон оценки применяется к звонкам этого менеджера (по внутренним
-        номерам).
+        Шаблон оценки применяется к звонкам этого менеджера (по внутренним номерам).
       </p>
 
       <div className="mb-4">
-        <label className="block mb-1 text-[13px] font-semibold">
-          Шаблон оценки
-        </label>
+        <label className="block mb-1 text-[13px] font-semibold">Шаблон оценки</label>
         <Select
           value={value}
           onValueChange={(v: string) =>

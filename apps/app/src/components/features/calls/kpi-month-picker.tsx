@@ -1,10 +1,4 @@
-import {
-  Button,
-  Calendar,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@calls/ui";
+import { Button, Calendar, Popover, PopoverContent, PopoverTrigger } from "@calls/ui";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
@@ -37,10 +31,7 @@ export function useKpiMonthUtils() {
     return format(new Date(year, month - 1, 1), "LLLL yyyy", { locale: ru });
   };
 
-  const canGoNextMonth = (
-    selectedMonth: string,
-    currentMonth: string,
-  ): boolean => {
+  const canGoNextMonth = (selectedMonth: string, currentMonth: string): boolean => {
     return selectedMonth < currentMonth;
   };
 
@@ -84,10 +75,7 @@ export default function KpiMonthPicker({
             className="min-w-52 justify-start text-left font-normal touch-action-manipulation"
             aria-label="Выбор месяца KPI"
           >
-            <CalendarIcon
-              className="size-4 shrink-0 opacity-70 mr-2"
-              aria-hidden
-            />
+            <CalendarIcon className="size-4 shrink-0 opacity-70 mr-2" aria-hidden />
             <span className="truncate">{monthLabel(normalizedMonthValue)}</span>
           </Button>
         </PopoverTrigger>
@@ -110,8 +98,7 @@ export default function KpiMonthPicker({
             }}
             disabled={() => true}
             formatters={{
-              formatCaption: (date) =>
-                format(date, "LLLL yyyy", { locale: ru }),
+              formatCaption: (date) => format(date, "LLLL yyyy", { locale: ru }),
             }}
           />
         </PopoverContent>

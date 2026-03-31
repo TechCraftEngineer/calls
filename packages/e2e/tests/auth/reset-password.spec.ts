@@ -30,17 +30,13 @@ test.describe("Страница сброса пароля", () => {
     });
   });
 
-  test("отображает форму сброса пароля с валидным токеном", async ({
-    page,
-  }) => {
+  test("отображает форму сброса пароля с валидным токеном", async ({ page }) => {
     await page.goto(`/auth/reset-password?token=${validToken}`);
 
     // Проверяем основные элементы страницы
     await expect(page.locator("h1")).toContainText("Новый пароль");
     await expect(page.locator("#newPassword")).toBeVisible();
-    await expect(page.locator('button[type="submit"]')).toContainText(
-      "Сохранить пароль",
-    );
+    await expect(page.locator('button[type="submit"]')).toContainText("Сохранить пароль");
   });
 
   test("показывает ошибку для недействительного токена", async ({ page }) => {
@@ -65,9 +61,7 @@ test.describe("Страница сброса пароля", () => {
 
     await page.click('button[type="submit"]');
 
-    await expect(
-      page.locator("text=Пароль должен содержать минимум 8 символов"),
-    ).toBeVisible();
+    await expect(page.locator("text=Пароль должен содержать минимум 8 символов")).toBeVisible();
   });
 
   test("успешно сбрасывает пароль", async ({ page }) => {
@@ -91,9 +85,7 @@ test.describe("Страница сброса пароля", () => {
     await page.click('button[type="submit"]');
 
     // Проверяем состояние загрузки
-    await expect(page.locator('button[type="submit"]')).toContainText(
-      "Сохранение…",
-    );
+    await expect(page.locator('button[type="submit"]')).toContainText("Сохранение…");
 
     // Проверяем редирект на страницу входа с сообщением
     await page.waitForURL("**/auth/signin?message=password_reset");

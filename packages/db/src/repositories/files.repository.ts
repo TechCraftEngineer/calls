@@ -14,20 +14,12 @@ export const filesRepository = {
   },
 
   async findById(id: string) {
-    const result = await db
-      .select()
-      .from(files)
-      .where(eq(files.id, id))
-      .limit(1);
+    const result = await db.select().from(files).where(eq(files.id, id)).limit(1);
     return result[0] || null;
   },
 
   async findByStorageKey(storageKey: string) {
-    const result = await db
-      .select()
-      .from(files)
-      .where(eq(files.storageKey, storageKey))
-      .limit(1);
+    const result = await db.select().from(files).where(eq(files.storageKey, storageKey)).limit(1);
     return result[0] || null;
   },
 
@@ -65,10 +57,7 @@ export const filesRepository = {
   },
 
   async deleteByStorageKey(storageKey: string) {
-    const result = await db
-      .delete(files)
-      .where(eq(files.storageKey, storageKey))
-      .returning();
+    const result = await db.delete(files).where(eq(files.storageKey, storageKey)).returning();
     return result[0] || null;
   },
 };

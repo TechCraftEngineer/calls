@@ -10,8 +10,7 @@ export const CALL_DIRECTIONS = {
   OUTBOUND: "outbound",
 } as const;
 
-export type CallDirection =
-  (typeof CALL_DIRECTIONS)[keyof typeof CALL_DIRECTIONS];
+export type CallDirection = (typeof CALL_DIRECTIONS)[keyof typeof CALL_DIRECTIONS];
 
 export interface GetCallsParams {
   workspaceId?: string;

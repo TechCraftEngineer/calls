@@ -2,10 +2,7 @@
 
 import { useEffect } from "react";
 import { SettingsPageShell, useSettings } from "@/components/features/settings";
-import {
-  FtpSection,
-  IntegrationsSection,
-} from "@/components/features/settings/integrations";
+import { FtpSection, IntegrationsSection } from "@/components/features/settings/integrations";
 
 export default function SettingsIntegrationsPage() {
   const {
@@ -40,9 +37,7 @@ export default function SettingsIntegrationsPage() {
     <SettingsPageShell>
       <header className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight">Интеграции</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          FTP, Telegram-бот и MAX-бот
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">FTP, Telegram-бот и MAX-бот</p>
       </header>
 
       <div className="space-y-8">

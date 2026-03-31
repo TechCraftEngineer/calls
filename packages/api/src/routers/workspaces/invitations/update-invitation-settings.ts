@@ -84,9 +84,7 @@ const updateInvitationSettingsSchema = workspaceIdInputSchema.extend({
     })
     .refine(
       (s) => {
-        const isNonEmpty = (
-          block: Record<string, unknown> | null | undefined,
-        ) =>
+        const isNonEmpty = (block: Record<string, unknown> | null | undefined) =>
           block != null &&
           typeof block === "object" &&
           !Array.isArray(block) &&
@@ -114,14 +112,8 @@ export const updateInvitationSettings = workspaceAdminProcedure
       );
       return { success: result };
     } catch (err) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : "Ошибка обновления настроек приглашения";
-      if (
-        msg.includes("не найдено") ||
-        msg.includes("не найдено или уже принято")
-      ) {
+      const msg = err instanceof Error ? err.message : "Ошибка обновления настроек приглашения";
+      if (msg.includes("не найдено") || msg.includes("не найдено или уже принято")) {
         throw new ORPCError("NOT_FOUND", { message: msg });
       }
       if (msg.includes("Некорректные настройки")) {

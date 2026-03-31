@@ -3,6 +3,9 @@
  * Получает аудио из S3, запускает ASR pipeline, сохраняет транскрипт.
  */
 
+import { identifySpeakersWithLlm } from "@calls/asr/llm/identify-speakers";
+import { runTranscriptionPipelineFromAsrAudio } from "@calls/asr/pipeline/run-transcription-pipeline";
+import { runPipelineAudioPreprocess } from "@calls/asr/pipeline/transcribe-pipeline-audio";
 import {
   callsService,
   filesService,
@@ -11,9 +14,6 @@ import {
   workspacesService,
 } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
-import { identifySpeakersWithLlm } from "@calls/asr/llm/identify-speakers";
-import { runTranscriptionPipelineFromAsrAudio } from "@calls/asr/pipeline/run-transcription-pipeline";
-import { runPipelineAudioPreprocess } from "@calls/asr/pipeline/transcribe-pipeline-audio";
 import { createLogger } from "../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../client";
 
@@ -59,7 +59,7 @@ export const transcribeCallFn = inngest.createFunction(
     const existingTranscript = await step.run("validate/transcript:not-exists", async () => {
       return await callsService.getTranscriptByCallId(callId);
     });
-    
+
     // Если транскрипт уже существует, завершаем успешно
     if (existingTranscript) {
       logger.info("Транскрипт уже существует, пропускаем", { callId });
@@ -74,8 +74,7 @@ export const transcribeCallFn = inngest.createFunction(
     const call = await step.run("db/calls:get", async () => {
       const c = await callsService.getCall(callId);
       if (!c) throw new Error(`Звонок не найден: ${callId}`);
-      if (!c.fileId)
-        throw new Error(`У звонка ${callId} нет привязанного файла`);
+      if (!c.fileId) throw new Error(`У звонка ${callId} нет привязанного файла`);
       return c;
     });
 
@@ -91,123 +90,100 @@ export const transcribeCallFn = inngest.createFunction(
       return ws;
     });
 
-    const managerNameFromPbx = await step.run(
-      "pbx/manager:resolve",
-      async () => {
-        try {
-          const pbxIntegration =
-            await workspaceIntegrationsRepository.getByWorkspaceAndType(
-              call.workspaceId,
-              "megapbx",
-            );
+    const managerNameFromPbx = await step.run("pbx/manager:resolve", async () => {
+      try {
+        const pbxIntegration = await workspaceIntegrationsRepository.getByWorkspaceAndType(
+          call.workspaceId,
+          "megapbx",
+        );
 
-          if (!pbxIntegration?.enabled) {
-            logger.info("PBX integration not enabled for workspace", {
-              callId,
-              workspaceId: call.workspaceId,
-            });
-            return null;
-          }
-
-          const rawProvider =
-            typeof pbxIntegration.config === "object" &&
-            pbxIntegration.config !== null &&
-            "provider" in pbxIntegration.config
-              ? pbxIntegration.config.provider
-              : undefined;
-          const integrationProvider =
-            typeof rawProvider === "string" ? rawProvider.trim() : "megapbx";
-          if (!integrationProvider) {
-            logger.warn("PBX integration provider is missing", {
-              callId,
-              workspaceId: call.workspaceId,
-            });
-            return null;
-          }
-
-          const pbxNumbers = await pbxRepository.listNumbers(
-            call.workspaceId,
-            integrationProvider,
-          );
-          const activePbxNumbers = pbxNumbers.filter(
-            (number) => number.isActive,
-          );
-          const normalizedInternalNumber = call.internalNumber?.trim() || null;
-
-          const matchedByInternalNumber =
-            normalizedInternalNumber
-              ? activePbxNumbers.find(
-                  (number) =>
-                    (number.extension?.trim() || null) ===
-                    normalizedInternalNumber,
-                )
-              : undefined;
-
-          const matchedNumber = matchedByInternalNumber;
-          const managerName =
-            matchedNumber?.label?.trim() ||
-            matchedNumber?.extension?.trim() ||
-            matchedNumber?.phoneNumber?.trim() ||
-            null;
-
-          if (managerName) {
-            logger.info("Менеджер определён из pbx_numbers", {
-              callId,
-              resolutionStrategy: "internal_number",
-            });
-          }
-
-          return managerName;
-        } catch (error) {
-          logger.warn("Не удалось определить менеджера из pbx_numbers", {
+        if (!pbxIntegration?.enabled) {
+          logger.info("PBX integration not enabled for workspace", {
             callId,
-            error: error instanceof Error ? error.message : String(error),
+            workspaceId: call.workspaceId,
           });
           return null;
         }
-      },
-    );
 
-    const pipelineAudio = await step.run(
-      "pipeline/audio:preprocess",
-      async () => {
-        logger.info("Inngest: audio-enhancer /preprocess", { callId });
-        const originalFileId = call.fileId;
-        if (!originalFileId) {
-          throw new Error(`У звонка ${callId} нет привязанного файла`);
+        const rawProvider =
+          typeof pbxIntegration.config === "object" &&
+          pbxIntegration.config !== null &&
+          "provider" in pbxIntegration.config
+            ? pbxIntegration.config.provider
+            : undefined;
+        const integrationProvider =
+          typeof rawProvider === "string" ? rawProvider.trim() : "megapbx";
+        if (!integrationProvider) {
+          logger.warn("PBX integration provider is missing", {
+            callId,
+            workspaceId: call.workspaceId,
+          });
+          return null;
         }
-        const f = await filesService.getFileById(originalFileId);
-        if (!f) {
-          throw new Error(`Файл не найден: ${originalFileId}`);
+
+        const pbxNumbers = await pbxRepository.listNumbers(call.workspaceId, integrationProvider);
+        const activePbxNumbers = pbxNumbers.filter((number) => number.isActive);
+        const normalizedInternalNumber = call.internalNumber?.trim() || null;
+
+        const matchedByInternalNumber = normalizedInternalNumber
+          ? activePbxNumbers.find(
+              (number) => (number.extension?.trim() || null) === normalizedInternalNumber,
+            )
+          : undefined;
+
+        const matchedNumber = matchedByInternalNumber;
+        const managerName =
+          matchedNumber?.label?.trim() ||
+          matchedNumber?.extension?.trim() ||
+          matchedNumber?.phoneNumber?.trim() ||
+          null;
+
+        if (managerName) {
+          logger.info("Менеджер определён из pbx_numbers", {
+            callId,
+            resolutionStrategy: "internal_number",
+          });
         }
-        return runPipelineAudioPreprocess({
+
+        return managerName;
+      } catch (error) {
+        logger.warn("Не удалось определить менеджера из pbx_numbers", {
           callId,
-          workspaceId: call.workspaceId,
-          originalFileId,
-          originalStorageKey: f.storageKey,
+          error: error instanceof Error ? error.message : String(error),
         });
-      },
-    );
+        return null;
+      }
+    });
+
+    const pipelineAudio = await step.run("pipeline/audio:preprocess", async () => {
+      logger.info("Inngest: audio-enhancer /preprocess", { callId });
+      const originalFileId = call.fileId;
+      if (!originalFileId) {
+        throw new Error(`У звонка ${callId} нет привязанного файла`);
+      }
+      const f = await filesService.getFileById(originalFileId);
+      if (!f) {
+        throw new Error(`Файл не найден: ${originalFileId}`);
+      }
+      return runPipelineAudioPreprocess({
+        callId,
+        workspaceId: call.workspaceId,
+        originalFileId,
+        originalStorageKey: f.storageKey,
+      });
+    });
 
     const result = await step.run("pipeline/asr:transcribe", async () => {
       logger.info("Inngest: giga-am ASR pipeline", { callId });
-      const f = await filesService.getFileById(
-        pipelineAudio.preprocessedFileId,
-      );
+      const f = await filesService.getFileById(pipelineAudio.preprocessedFileId);
       if (!f) {
-        throw new Error(
-          `Файл после preprocess не найден: ${pipelineAudio.preprocessedFileId}`,
-        );
+        throw new Error(`Файл после preprocess не найден: ${pipelineAudio.preprocessedFileId}`);
       }
       const asrAudioUrl = await getDownloadUrlForAsr(f.storageKey);
-      return runTranscriptionPipelineFromAsrAudio(
-        asrAudioUrl,
-        pipelineAudio.preprocessingResult,
-        {
-          companyContext: buildCompanyContext(workspace),
-          gigaPreprocessMetadata: pipelineAudio.preprocessMetadata,
-        },
-      );
+      return runTranscriptionPipelineFromAsrAudio(asrAudioUrl, pipelineAudio.preprocessingResult, {
+        companyContext: buildCompanyContext(workspace),
+        gigaPreprocessMetadata: pipelineAudio.preprocessMetadata,
+      });
     });
 
     const identifyResult = await step.run("llm/diarize", async () => {
@@ -231,10 +207,7 @@ export const transcribeCallFn = inngest.createFunction(
         if (operatorName != null && operatorName !== "") {
           serializedMetadata.operatorName = operatorName;
         }
-        if (
-          identifyResult.metadata &&
-          typeof identifyResult.metadata === "object"
-        ) {
+        if (identifyResult.metadata && typeof identifyResult.metadata === "object") {
           serializedMetadata.diarization = identifyResult.metadata;
         }
       } catch (error) {
@@ -268,10 +241,7 @@ export const transcribeCallFn = inngest.createFunction(
       });
     });
 
-    await step.sendEvent(
-      "event/call.evaluate.requested",
-      evaluateRequested.create({ callId }),
-    );
+    await step.sendEvent("event/call.evaluate.requested", evaluateRequested.create({ callId }));
 
     return {
       callId,

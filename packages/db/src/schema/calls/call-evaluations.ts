@@ -29,8 +29,7 @@ export const callEvaluations = pgTable(
     valueExplanation: text("value_explanation"),
     managerScore: integer("manager_score"),
     managerFeedback: text("manager_feedback"),
-    managerBreakdown:
-      jsonb("manager_breakdown").$type<Record<string, unknown>>(),
+    managerBreakdown: jsonb("manager_breakdown").$type<Record<string, unknown>>(),
     managerRecommendations: jsonb("manager_recommendations").$type<string[]>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),

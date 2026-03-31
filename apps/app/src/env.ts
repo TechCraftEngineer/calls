@@ -3,9 +3,7 @@ import { z } from "zod";
 
 export const env = createEnv({
   shared: {
-    NODE_ENV: z
-      .enum(["development", "production", "test"])
-      .default("development"),
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
     VERCEL_ENV: z.enum(["production", "preview", "development"]).optional(),
   },
   server: {
@@ -30,6 +28,5 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_SHORT_NAME: process.env.NEXT_PUBLIC_APP_SHORT_NAME,
     VERCEL_ENV: process.env.VERCEL_ENV,
   },
-  skipValidation:
-    !!process.env.CI || process.env.npm_lifecycle_event === "lint",
+  skipValidation: !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });

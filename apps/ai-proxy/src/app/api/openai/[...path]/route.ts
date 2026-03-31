@@ -1,21 +1,14 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@calls/config/env";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "edge";
 
 const OPENAI_BASE = "https://api.openai.com/v1";
 
-async function proxyRequest(
-  request: NextRequest,
-  path: string[],
-  method: string,
-) {
+async function proxyRequest(request: NextRequest, path: string[], method: string) {
   const key = env.OPENAI_API_KEY;
   if (!key) {
-    return NextResponse.json(
-      { error: "OpenAI API key not configured" },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 503 });
   }
 
   const targetPath = path.join("/");
@@ -44,18 +37,14 @@ async function proxyRequest(
 
   const res = await fetch(url, {
     method,
-    headers:
-      body instanceof FormData ? { Authorization: `Bearer ${key}` } : headers,
+    headers: body instanceof FormData ? { Authorization: `Bearer ${key}` } : headers,
     body,
   });
 
   if (!res.ok) {
     const error = await res.text();
     console.error("OpenAI API error:", error);
-    return NextResponse.json(
-      { error: "OpenAI API error", details: error },
-      { status: res.status },
-    );
+    return NextResponse.json({ error: "OpenAI API error", details: error }, { status: res.status });
   }
 
   const data = await res.json();
@@ -71,10 +60,7 @@ export async function POST(
     return proxyRequest(request, path, "POST");
   } catch (error) {
     console.error("OpenAI proxy error:", error);
-    return NextResponse.json(
-      { error: "Internal proxy error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal proxy error" }, { status: 500 });
   }
 }
 
@@ -87,9 +73,6 @@ export async function GET(
     return proxyRequest(request, path, "GET");
   } catch (error) {
     console.error("OpenAI proxy error:", error);
-    return NextResponse.json(
-      { error: "Internal proxy error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal proxy error" }, { status: 500 });
   }
 }

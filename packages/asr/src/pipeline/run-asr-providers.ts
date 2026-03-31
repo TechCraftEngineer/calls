@@ -29,7 +29,8 @@ export async function runAsrProviders(
     if (response.ok) {
       const arrayBuffer = await response.arrayBuffer();
       audioBuffer = Buffer.from(arrayBuffer);
-      mimeType = response.headers.get('content-type') || undefined;
+      mimeType =
+        response.headers.get("content-type")?.split(";")[0]?.trim()?.toLowerCase() || undefined;
     }
   } catch (err) {
     logger.warn("Не удалось загрузить аудио для определения длительности", {
@@ -46,8 +47,7 @@ export async function runAsrProviders(
     audioBuffer ? getAudioDurationFromBuffer(audioBuffer) : Promise.resolve(undefined),
   ]);
 
-  const gigaAm =
-    gigaAmResult.status === "fulfilled" ? gigaAmResult.value : null;
+  const gigaAm = gigaAmResult.status === "fulfilled" ? gigaAmResult.value : null;
   const gigaAmSuccessful = gigaAm ? [gigaAm] : [];
   const gigaAmBest = gigaAm;
 
@@ -73,8 +73,7 @@ export async function runAsrProviders(
     );
   }
 
-  const durationFromUrl =
-    durationResult.status === "fulfilled" ? durationResult.value : undefined;
+  const durationFromUrl = durationResult.status === "fulfilled" ? durationResult.value : undefined;
 
   return {
     gigaAmSuccessful,

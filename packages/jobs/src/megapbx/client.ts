@@ -9,10 +9,7 @@ const MEGAPBX_ENDPOINTS = {
 } as const;
 
 const RecordSchema = z.record(z.string(), z.unknown());
-const AnyObjectOrArrayResponseSchema = z.union([
-  z.array(RecordSchema),
-  RecordSchema,
-]);
+const AnyObjectOrArrayResponseSchema = z.union([z.array(RecordSchema), RecordSchema]);
 
 export const EmployeeResponseSchema = AnyObjectOrArrayResponseSchema;
 export const NumberResponseSchema = AnyObjectOrArrayResponseSchema;
@@ -41,14 +38,10 @@ function validateResponse<TSchema extends z.ZodTypeAny>(
   );
 }
 
-function pickArray(
-  payload: unknown,
-  resultKey?: string,
-): Record<string, unknown>[] {
+function pickArray(payload: unknown, resultKey?: string): Record<string, unknown>[] {
   if (Array.isArray(payload)) {
     return payload.filter(
-      (item): item is Record<string, unknown> =>
-        Boolean(item) && typeof item === "object",
+      (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object",
     );
   }
 
@@ -56,8 +49,7 @@ function pickArray(
     const nested = (payload as Record<string, unknown>)[resultKey];
     if (Array.isArray(nested)) {
       return nested.filter(
-        (item): item is Record<string, unknown> =>
-          Boolean(item) && typeof item === "object",
+        (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object",
       );
     }
   }
@@ -78,8 +70,7 @@ function pickArray(
       const nested = (payload as Record<string, unknown>)[key];
       if (Array.isArray(nested)) {
         return nested.filter(
-          (item): item is Record<string, unknown> =>
-            Boolean(item) && typeof item === "object",
+          (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object",
         );
       }
     }
@@ -115,17 +106,13 @@ function rejectMegaPbxErrorJsonBody(payload: unknown): void {
   }
   if (o.success === false) {
     const msg =
-      typeof o.message === "string" && o.message.trim()
-        ? o.message.trim()
-        : "Запрос отклонён API";
+      typeof o.message === "string" && o.message.trim() ? o.message.trim() : "Запрос отклонён API";
     throw new Error(msg);
   }
   const code = o.status ?? o.statusCode;
   if (typeof code === "number" && code >= 400) {
     const msg =
-      typeof o.message === "string" && o.message.trim()
-        ? o.message.trim()
-        : `Код ошибки ${code}`;
+      typeof o.message === "string" && o.message.trim() ? o.message.trim() : `Код ошибки ${code}`;
     throw new Error(msg);
   }
 }
@@ -209,8 +196,7 @@ export class MegaPbxClient {
 
   private buildUrl(path: string): URL {
     const looksLikeScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(path);
-    const isRelativePath =
-      path.startsWith("/") && !path.startsWith("//") && !looksLikeScheme;
+    const isRelativePath = path.startsWith("/") && !path.startsWith("//") && !looksLikeScheme;
     if (!isRelativePath) {
       throw new Error(
         'Некорректный путь MegaPBX API: ожидается относительный путь, начинающийся с "/".',
@@ -226,10 +212,7 @@ export class MegaPbxClient {
     const basePath = base.pathname.replace(/\/+$/, "");
     let endpointPath = path.replace(/^\/+/, "");
     // Совместимость: если base уже указывает на /crmapi/v1, не дублируем путь
-    if (
-      basePath.endsWith("/crmapi/v1") &&
-      endpointPath.startsWith("crmapi/v1/")
-    ) {
+    if (basePath.endsWith("/crmapi/v1") && endpointPath.startsWith("crmapi/v1/")) {
       endpointPath = endpointPath.slice(10);
     }
     base.pathname = `${basePath}/${endpointPath}`.replace(/\/{2,}/g, "/");
@@ -288,8 +271,7 @@ export class MegaPbxClient {
         if (msg) detail = ` — ${msg}`;
       } catch {
         if (bodyText.trim()) {
-          const preview =
-            bodyText.length > 200 ? `${bodyText.slice(0, 200)}…` : bodyText;
+          const preview = bodyText.length > 200 ? `${bodyText.slice(0, 200)}…` : bodyText;
           detail = bodyText.slice(0, 10).startsWith("<")
             ? " — ответ не JSON (возможно HTML)"
             : ` — ${preview}`;
@@ -307,17 +289,11 @@ export class MegaPbxClient {
     return response.text();
   }
 
-  async testConnection(): Promise<
-    { success: true } | { success: false; error: string }
-  > {
+  async testConnection(): Promise<{ success: true } | { success: false; error: string }> {
     try {
       const payload = await this.request(MEGAPBX_ENDPOINTS.employees);
       rejectMegaPbxErrorJsonBody(payload);
-      validateResponse(
-        EmployeeResponseSchema,
-        payload,
-        "проверка API (сотрудники)",
-      );
+      validateResponse(EmployeeResponseSchema, payload, "проверка API (сотрудники)");
       assertListLikeMegaPbxPayload(payload);
       return { success: true };
     } catch (error) {
@@ -332,11 +308,7 @@ export class MegaPbxClient {
     const payload = await this.request(MEGAPBX_ENDPOINTS.employees);
     rejectMegaPbxErrorJsonBody(payload);
     assertListLikeMegaPbxPayload(payload);
-    const validated = validateResponse(
-      EmployeeResponseSchema,
-      payload,
-      "сотрудники",
-    );
+    const validated = validateResponse(EmployeeResponseSchema, payload, "сотрудники");
     return pickArray(validated);
   }
 
@@ -383,8 +355,7 @@ export class MegaPbxClient {
     const baseParsed = new URL(normalizedBaseUrl);
     const sameHost = parsed.hostname === baseParsed.hostname;
     const samePort = (parsed.port || "") === (baseParsed.port || "");
-    const isTrustedRecordingUrl =
-      parsed.protocol === "https:" && sameHost && samePort;
+    const isTrustedRecordingUrl = parsed.protocol === "https:" && sameHost && samePort;
     if (!isTrustedRecordingUrl) {
       throw new Error(`Запрещён внешний URL записи MegaPBX: ${parsed.origin}.`);
     }
@@ -421,8 +392,7 @@ export class MegaPbxClient {
     if (pathname.endsWith(".m4a")) return { buffer, extension: "m4a" };
     if (pathname.endsWith(".mp3")) return { buffer, extension: "mp3" };
 
-    const contentType =
-      response.headers.get("content-type")?.toLowerCase() ?? "";
+    const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
     if (contentType.includes("wav")) return { buffer, extension: "wav" };
     if (contentType.includes("ogg")) return { buffer, extension: "ogg" };
     if (contentType.includes("m4a") || contentType.includes("mp4")) {

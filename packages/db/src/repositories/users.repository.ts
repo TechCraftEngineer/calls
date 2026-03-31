@@ -41,9 +41,7 @@ export const usersRepository = {
     const result = await db
       .select()
       .from(schema.user)
-      .where(
-        and(eq(schema.user.email, normalized), isNull(schema.user.deletedAt)),
-      )
+      .where(and(eq(schema.user.email, normalized), isNull(schema.user.deletedAt)))
       .limit(1);
 
     const user = result[0] ?? null;
@@ -133,10 +131,7 @@ export const usersRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
-  async updateMobilePhones(
-    userId: string,
-    mobilePhones: string | null,
-  ): Promise<boolean> {
+  async updateMobilePhones(userId: string, mobilePhones: string | null): Promise<boolean> {
     const result = await db
       .update(schema.user)
       .set({ mobilePhones })
@@ -199,15 +194,9 @@ export const usersRepository = {
         user: schema.user,
       })
       .from(schema.workspaceMembers)
-      .innerJoin(
-        schema.user,
-        eq(schema.workspaceMembers.userId, schema.user.id),
-      )
+      .innerJoin(schema.user, eq(schema.workspaceMembers.userId, schema.user.id))
       .where(
-        and(
-          eq(schema.workspaceMembers.workspaceId, workspaceId),
-          isNull(schema.user.deletedAt),
-        ),
+        and(eq(schema.workspaceMembers.workspaceId, workspaceId), isNull(schema.user.deletedAt)),
       );
 
     const numbersSet = new Set(normalizedNumbers);
@@ -218,10 +207,7 @@ export const usersRepository = {
       if (!extensions) continue;
 
       for (const extension of extensions) {
-        if (
-          numbersSet.has(extension) &&
-          !usersByInternalNumber.has(extension)
-        ) {
+        if (numbersSet.has(extension) && !usersByInternalNumber.has(extension)) {
           usersByInternalNumber.set(extension, row.user);
         }
       }
@@ -234,10 +220,7 @@ export const usersRepository = {
    * Находит внутренние номера сотрудников воркспейса по строке поиска имени.
    * Поиск выполняется по givenName/familyName/name (без учета регистра).
    */
-  async findInternalNumbersByNameQuery(
-    workspaceId: string,
-    query: string,
-  ): Promise<string[]> {
+  async findInternalNumbersByNameQuery(workspaceId: string, query: string): Promise<string[]> {
     const needle = query.trim().toLowerCase();
     if (!needle) return [];
 
@@ -246,15 +229,9 @@ export const usersRepository = {
         user: schema.user,
       })
       .from(schema.workspaceMembers)
-      .innerJoin(
-        schema.user,
-        eq(schema.workspaceMembers.userId, schema.user.id),
-      )
+      .innerJoin(schema.user, eq(schema.workspaceMembers.userId, schema.user.id))
       .where(
-        and(
-          eq(schema.workspaceMembers.workspaceId, workspaceId),
-          isNull(schema.user.deletedAt),
-        ),
+        and(eq(schema.workspaceMembers.workspaceId, workspaceId), isNull(schema.user.deletedAt)),
       );
 
     const matched = new Set<string>();
@@ -289,10 +266,9 @@ export const usersRepository = {
     const normalizedNumber = internalNumber?.trim();
     if (!normalizedNumber) return null;
 
-    const usersByInternalNumber = await this.findUsersByInternalNumbers(
-      workspaceId,
-      [normalizedNumber],
-    );
+    const usersByInternalNumber = await this.findUsersByInternalNumbers(workspaceId, [
+      normalizedNumber,
+    ]);
 
     return usersByInternalNumber.get(normalizedNumber) ?? null;
   },
