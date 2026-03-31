@@ -15,28 +15,33 @@
       "!**/packages/ui/src/**/*.ts",
       "!**/packages/ui/src/**/*.css",
       "!**/tooling/**/*",
-      "!**/apps/app/**/*.css"
+      "!**/apps/app/**/*.css",
+      "!**/dist/**/*",
+      "!**/build/**/*",
+      "!**/.git/**/*"
     ]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineWidth": 80
+    "lineWidth": 100
   },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noExplicitAny": "warn",
+        "noExplicitAny": "error",
         "noAssignInExpressions": "off",
-        "noArrayIndexKey": "warn"
+        "noArrayIndexKey": "warn",
+        "noDebugger": "warn"
       },
       "style": {
         "noNonNullAssertion": "warn",
         "useImportType": "error",
-        "useTemplate": "warn"
+        "useTemplate": "warn",
+        "useConst": "warn"
       },
       "a11y": {
         "useSemanticElements": "warn"
@@ -48,7 +53,9 @@
         "noUnusedVariables": {
           "level": "error"
         },
-        "noChildrenProp": "off"
+        "noChildrenProp": "off",
+        "noUnreachable": "error",
+        "noUndeclaredVariables": "error"
       }
     }
   },
@@ -85,7 +92,7 @@
             "noLabelWithoutControl": "off"
           },
           "suspicious": {
-            "noExplicitAny": "warn",
+            "noExplicitAny": "error",
             "noArrayIndexKey": "off"
           },
           "correctness": {

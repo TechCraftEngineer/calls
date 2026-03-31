@@ -158,30 +158,17 @@ export const list = workspaceProcedure
         id: n.id,
         externalId: n.externalId,
         employeeExternalId: n.employeeExternalId,
-        extension: n.extension,
         phoneNumber: n.phoneNumber,
         isActive: n.isActive
       }))
     });
     
-    // Строим менеджеров из PBX данных
-    const managerNameByInternalNumber = new Map<string, string>();
-    const managerIdByInternalNumber = new Map<string, string>();
-    const managerInternalNumbersById = new Map<string, Set<string>>();
+    // Строим менеджеров из PBX данных и получаем связанные phone_number
     const managerDisplayNameById = new Map<string, string>();
+    const managerPhoneNumbers = new Map<string, Set<string>>(); // employeeId -> Set<phone_number>
     
-    for (const number of pbxNumbers) {
-      if (!number.isActive) continue;
-      
-      const extension = number.extension?.trim();
-      if (!extension) continue;
-      
-      // Ищем сотрудника по employeeExternalId или externalId
-      const employee = number.employeeExternalId 
-        ? employeeByExternalId.get(number.employeeExternalId)
-        : employeeByExternalId.get(number.externalId);
-      
-      if (!employee) continue;
+    for (const employee of pbxEmployees) {
+      if (!employee.isActive) continue;
       
       const employeeId = employee.id;
       const displayName = employee.displayName || 
@@ -189,17 +176,25 @@ export const list = workspaceProcedure
         `Employee ${employee.externalId}`;
       
       // Устанавливаем отображаемое имя
-      if (!managerDisplayNameById.has(employeeId)) {
-        managerDisplayNameById.set(employeeId, displayName);
+      managerDisplayNameById.set(employeeId, displayName);
+      
+      // Находим все PBX номера связанные с этим сотрудником
+      const relatedNumbers = pbxNumbers.filter(number => 
+        number.isActive && (
+          number.employeeExternalId === employee.externalId || 
+          number.externalId === employee.externalId
+        )
+      );
+      
+      if (relatedNumbers.length > 0) {
+        const phoneNumbers = managerPhoneNumbers.get(employeeId) || new Set<string>();
+        for (const number of relatedNumbers) {
+          if (number.phoneNumber) {
+            phoneNumbers.add(number.phoneNumber);
+          }
+        }
+        managerPhoneNumbers.set(employeeId, phoneNumbers);
       }
-      
-      // Устанавливаем соответствия для внутреннего номера
-      managerNameByInternalNumber.set(extension, displayName);
-      managerIdByInternalNumber.set(extension, employeeId);
-      
-      const numbers = managerInternalNumbersById.get(employeeId) || new Set<string>();
-      numbers.add(extension);
-      managerInternalNumbersById.set(employeeId, numbers);
     }
 
     const isAdminOrOwner =
@@ -216,38 +211,41 @@ export const list = workspaceProcedure
           })
         : [];
 
+    // Получаем phone_numbers для фильтрации по менеджерам
     const managerInternalNumbers = finalManagerFilters.length
       ? Array.from(
           new Set(
-            finalManagerFilters.flatMap((managerId) =>
-              Array.from(
-                managerInternalNumbersById.get(managerId.trim()) ??
-                  new Set<string>(),
-              ),
-            ),
+            finalManagerFilters.flatMap((managerId) => {
+              const phoneNumbers = managerPhoneNumbers.get(managerId.trim());
+              return phoneNumbers ? Array.from(phoneNumbers) : [];
+            }),
           ),
         )
       : [];
 
+    // Для поиска по текстовому запросу используем phone_numbers связанных сотрудников
     const managerInternalNumbersForQuery = trimmedQuery
-      ? pbxEmployees
-          .filter((employee) => {
-            if (!employee.isActive) return false;
-            const haystack = [
-              employee.displayName,
-              employee.firstName,
-              employee.lastName,
-              employee.extension,
-              employee.externalId,
-              employee.email,
-            ]
-              .filter((value): value is string => typeof value === "string")
-              .join(" ")
-              .toLowerCase();
-            return haystack.includes(trimmedQuery.toLowerCase());
-          })
-          .map((employee) => employee.extension?.trim())
-          .filter((value): value is string => Boolean(value))
+      ? Array.from(
+          new Set(
+            Array.from(managerPhoneNumbers.entries())
+              .filter(([employeeId, phoneNumbers]) => {
+                const employee = employeeByExternalId.get(employeeId);
+                if (!employee) return false;
+                
+                const haystack = [
+                  employee.displayName,
+                  employee.firstName,
+                  employee.lastName,
+                  employee.email,
+                ]
+                  .filter((value): value is string => typeof value === "string")
+                  .join(" ")
+                  .toLowerCase();
+                return haystack.includes(trimmedQuery.toLowerCase());
+              })
+              .flatMap(([, phoneNumbers]) => Array.from(phoneNumbers))
+          ),
+        )
       : [];
 
     const internalNumbers = isAdminOrOwner
@@ -379,16 +377,9 @@ export const list = workspaceProcedure
             ? parsed.data.operatorName.trim() || null
             : null;
         })();
-        const normalizedInternalNumber =
-          item.call.internalNumber?.trim() || null;
-        const managerFromPbx = normalizedInternalNumber
-          ? (managerNameByInternalNumber.get(normalizedInternalNumber) ?? null)
-          : null;
+        
         const trimmedName = item.call.name?.trim();
-        const normalizedCallName =
-          trimmedName === "" ? null : (trimmedName ?? null);
-        const managerName =
-          managerFromPbx ?? normalizedCallName ?? operatorName ?? null;
+        const managerName = trimmedName && trimmedName !== "" ? trimmedName : operatorName || null;
 
         const { filename: _filename, ...publicCall } = item.call;
 
@@ -406,10 +397,7 @@ export const list = workspaceProcedure
                 : item.call.timestamp,
             managerName,
             operatorName,
-            managerId: normalizedInternalNumber
-              ? (managerIdByInternalNumber.get(normalizedInternalNumber) ??
-                null)
-              : null,
+            managerId: null, // Не используется, так как extension не применяется
             duration:
               item.fileDuration ??
               item.transcript?.metadata?.durationInSeconds ??
