@@ -208,7 +208,7 @@ class FileValidator:
             
             # Проверяем, что файл действительно является аудио
             try:
-                duration = librosa.get_duration(filename=file_path)
+                duration = librosa.get_duration(path=file_path)
                 if duration <= 0:
                     raise AudioProcessingError(
                         "Файл не содержит аудиоданных или имеет нулевую длительность",
