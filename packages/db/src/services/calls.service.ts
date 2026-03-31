@@ -147,7 +147,6 @@ export class CallsService {
   async updateCallPbxBinding(
     callId: string,
     data: {
-      pbxNumberId?: string | null;
       internalNumber?: string | null;
       source?: string | null;
       name?: string | null;

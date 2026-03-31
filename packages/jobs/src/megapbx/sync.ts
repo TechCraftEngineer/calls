@@ -371,7 +371,6 @@ export async function syncMegaPbxCalls(
         source: employee?.externalId ?? number?.externalId ?? "megapbx",
         name: employee?.displayName ?? number?.label ?? "MegaPBX",
         fileId: null,
-        pbxNumberId: number?.id ?? null,
       });
 
       const canonicalCall =
@@ -391,10 +390,6 @@ export async function syncMegaPbxCalls(
       // Дозаполняем связь и вспомогательные поля, когда появились данные из directory.
       if (!createResult.created) {
         await callsService.updateCallPbxBinding(canonicalCall.id, {
-          pbxNumberId:
-            canonicalCall.pbxNumberId == null
-              ? (number?.id ?? null)
-              : undefined,
           internalNumber: !canonicalCall.internalNumber?.trim()
             ? (call.internalNumber ??
               number?.extension ??
