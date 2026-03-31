@@ -15,6 +15,17 @@ const GIGA_AM_HTTP_TIMEOUT_MS = 120_000;
 const MAX_AUDIO_BYTES = 100 * 1024 * 1024;
 const NON_RETRYABLE_HTTP_STATUSES = new Set([400, 401, 403, 404]);
 
+// Константа для преобразования расширений файлов в MIME типы
+const EXTENSION_TO_MIME: Record<string, string> = {
+  'mp3': 'audio/mpeg',
+  'wav': 'audio/wav',
+  'flac': 'audio/flac',
+  'm4a': 'audio/mp4',
+  'aac': 'audio/aac',
+  'ogg': 'audio/ogg',
+  'webm': 'audio/webm'
+};
+
 const gigaAmSegmentSchema = z.object({
   text: z.string(),
   start: z.number().optional(),
@@ -239,16 +250,7 @@ export async function transcribeWithGigaAm(
     } else {
       // Извлекаем расширение из URL и определяем соответствующий MIME тип
       const extension = audioUrl.split('.').pop()?.toLowerCase();
-      const mimeMap: Record<string, string> = {
-        'mp3': 'audio/mpeg',
-        'wav': 'audio/wav',
-        'flac': 'audio/flac',
-        'm4a': 'audio/mp4',
-        'aac': 'audio/aac',
-        'ogg': 'audio/ogg',
-        'webm': 'audio/webm'
-      };
-      contentType = mimeMap[extension || ''] || 'application/octet-stream';
+      contentType = EXTENSION_TO_MIME[extension || ''] || 'application/octet-stream';
     }
   } else {
     const result = await withRetry(

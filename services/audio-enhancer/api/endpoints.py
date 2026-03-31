@@ -186,20 +186,30 @@ async def enhance_audio(
         audio_bytes = await read_upload_bytes_capped(file, config.MAX_UPLOAD_BYTES)
         
         # Параметры обработки
+        # Валидация aggressiveness
+        if aggressiveness and aggressiveness not in config.AGGRESSIVENESS_MODES and aggressiveness != "custom":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid aggressiveness value: {aggressiveness}. "
+                       f"Must be one of: {list(config.AGGRESSIVENESS_MODES.keys())} or 'custom'"
+            )
+        
         # Применяем режим агрессивности если указан
         if aggressiveness in config.AGGRESSIVENESS_MODES:
             mode_settings = config.AGGRESSIVENESS_MODES[aggressiveness]
+            # Начинаем с настроек режима, затем применяем пользовательские флаги
             params = {
                 "use_deepfilter": mode_settings["use_deepfilter"],
                 "use_wpe": mode_settings["use_wpe"],
                 "noise_reduction": mode_settings["noise_reduction"],
                 "normalize_volume": mode_settings["normalize_volume"],
                 "enhance_speech": mode_settings["enhance_speech"],
-                "remove_silence": remove_silence,  # Сохраняем пользовательский выбор
-                "target_sample_rate": target_sample_rate,
                 "use_compressor": mode_settings["use_compressor"],
                 "spectral_gating": mode_settings["spectral_gating"],
-                "enable_diarization": enable_diarization,  # Сохраняем пользовательский выбор
+                # Пользовательские флаги имеют приоритет
+                "remove_silence": remove_silence,
+                "target_sample_rate": target_sample_rate,
+                "enable_diarization": enable_diarization,
                 "aggressiveness": aggressiveness,
             }
         else:

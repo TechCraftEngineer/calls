@@ -39,17 +39,17 @@ const statusSchema = z.enum(['missed', 'answered'], {
 export const createCallSchema = z.object({
   workspaceId: z.string().min(1, 'workspaceId обязателен'),
   filename: z.string().min(1, 'filename обязателен'),
-  provider: z.string().max(50, 'provider не должен превышать 50 символов').nullable(),
-  externalId: z.string().max(100, 'externalId не должен превышать 100 символов').nullable(),
-  number: phoneSchema.nullable(),
-  timestamp: z.string().min(1, 'timestamp обязателен'),
-  name: z.string().max(100, 'name не должен превышать 100 символов').nullable(),
-  direction: directionSchema.nullable(),
-  status: statusSchema,
-  fileId: uuidSchema.nullable(),
-  internalNumber: internalNumberSchema,
-  source: z.string().max(50, 'source не должен превышать 50 символов').nullable(),
-  customerName: z.string().max(200, 'customerName не должен превышать 200 символов').nullable(),
+  provider: z.string().max(50, 'provider не должен превышать 50 символов').nullable().optional(),
+  externalId: z.string().max(100, 'externalId не должен превышать 100 символов').nullable().optional(),
+  number: phoneSchema.nullable().optional(),
+  timestamp: z.string().datetime('timestamp должен быть валидной ISO 8601 датой'),
+  name: z.string().max(100, 'name не должен превышать 100 символов').nullable().optional(),
+  direction: directionSchema.nullable().optional(),
+  status: statusSchema.optional(),
+  fileId: uuidSchema.nullable().optional(),
+  internalNumber: internalNumberSchema.optional(),
+  source: z.string().max(50, 'source не должен превышать 50 символов').nullable().optional(),
+  customerName: z.string().max(200, 'customerName не должен превышать 200 символов').nullable().optional(),
 });
 
 /**

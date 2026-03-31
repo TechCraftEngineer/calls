@@ -40,14 +40,14 @@ class Config:
     # Настройки обработки по умолчанию (консервативные)
     DEFAULT_ENHANCE_SETTINGS = {
         "use_deepfilter": True,
-        "use_wpe": False,  # Отключен по умолчанию - может искажать речь
-        "noise_reduction": False,  # Отключен при DeepFilter
+        "use_wpe": True,  # Включен для совместимости
+        "noise_reduction": True,  # Включен для совместимости
         "normalize_volume": True,
         "enhance_speech": True,
         "remove_silence": False,
         "target_sample_rate": 16000,
-        "use_compressor": False,  # Отключен по умолчанию
-        "spectral_gating": False,  # Отключен по умолчанию
+        "use_compressor": True,  # Включен для совместимости
+        "spectral_gating": True,  # Включен для совместимости
         "enable_diarization": False,
         "aggressiveness": "medium",  # light/medium/heavy
     }

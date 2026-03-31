@@ -326,7 +326,8 @@ class AudioProcessor:
         return save_audio_to_bytes(audio_denoised, sr)
     
     def preprocess_audio(self, audio_bytes: bytes, target_sample_rate: int = 16000,
-                        return_audio_base64: bool = True) -> Dict[str, Any]:
+                        return_audio_base64: bool = True, use_wpe: bool = True, 
+                        use_deepfilter: bool = True) -> Dict[str, Any]:
         """
         Предварительная обработка аудио для orchestrator.
         
@@ -360,8 +361,8 @@ class AudioProcessor:
         except Exception:
             logger.debug("LUFS нормализация в preprocess не удалась", exc_info=True)
         
-        # DeepFilterNet если доступен
-        if model_manager.deepfilter_available:
+        # DeepFilterNet если доступен и включен
+        if model_manager.deepfilter_available and use_deepfilter:
             try:
                 audio_48k = librosa.resample(audio, orig_sr=16000, target_sr=48000)
                 enhanced = model_manager.apply_deepfilter(audio_48k, 48000)
@@ -369,8 +370,8 @@ class AudioProcessor:
             except Exception:
                 logger.debug("DeepFilter enhancement в preprocess не удался", exc_info=True)
         
-        # WPE если доступен
-        if model_manager.wpe_available:
+        # WPE если доступен и включен
+        if model_manager.wpe_available and use_wpe:
             try:
                 audio = model_manager.apply_wpe(audio)
             except Exception:

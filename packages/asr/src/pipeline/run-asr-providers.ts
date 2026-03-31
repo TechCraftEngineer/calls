@@ -20,6 +20,7 @@ export async function runAsrProviders(
 }> {
   // Get audio buffer for duration calculation
   let audioBuffer: Buffer | undefined;
+  let mimeType: string | undefined;
   try {
     const response = await fetch(processedAudioUrl, {
       headers: { Accept: "audio/*" },
@@ -28,6 +29,7 @@ export async function runAsrProviders(
     if (response.ok) {
       const arrayBuffer = await response.arrayBuffer();
       audioBuffer = Buffer.from(arrayBuffer);
+      mimeType = response.headers.get('content-type') || undefined;
     }
   } catch (err) {
     logger.warn("Не удалось загрузить аудио для определения длительности", {
@@ -39,7 +41,7 @@ export async function runAsrProviders(
     transcribeWithGigaAm(processedAudioUrl, {
       preprocessMetadata: options?.gigaPreprocessMetadata,
       audioBuffer,
-      audioBufferMime: "audio/wav", // FFmpeg всегда конвертирует в WAV формат
+      audioBufferMime: mimeType || "audio/wav", // Используем реальный MIME или fallback
     }),
     audioBuffer ? getAudioDurationFromBuffer(audioBuffer) : Promise.resolve(undefined),
   ]);

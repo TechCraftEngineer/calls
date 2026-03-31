@@ -40,9 +40,10 @@ type SyncStats = {
   latestCursor: string | null;
 };
 
-function normalizePhoneForMatch(value: string | null | undefined): string {
-  if (!value) return "";
-  return value.replace(/\D/g, "");
+function normalizePhoneForMatch(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const digits = value.replace(/\D/g, "");
+  return digits.length > 0 ? digits : null;
 }
 
 function shouldSkipCallByExcludedPhoneNumbers(
@@ -54,13 +55,13 @@ function shouldSkipCallByExcludedPhoneNumbers(
   const excluded = new Set(
     excludePhoneNumbers
       .map((value) => normalizePhoneForMatch(value))
-      .filter(Boolean),
+      .filter((value): value is string => value !== null),
   );
   if (excluded.size === 0) return false;
 
   const internal = normalizePhoneForMatch(call.internalNumber);
   const external = normalizePhoneForMatch(call.externalNumber);
-  const values = [internal, external].filter(Boolean);
+  const values = [internal, external].filter((value): value is string => value !== null);
   for (const value of values) {
     if (excluded.has(value)) return true;
     for (const excludedValue of excluded) {
@@ -390,9 +391,9 @@ export async function syncMegaPbxCalls(
       // Дозаполняем связь и вспомогательные поля, когда появились данные из directory.
       if (!createResult.created) {
         const internalNumber = !canonicalCall.internalNumber?.trim()
-          ? (call.internalNumber ??
-            number?.extension ??
-            employee?.extension ??
+          ? (normalizePhoneForMatch(call.internalNumber) ??
+            normalizePhoneForMatch(number?.extension) ??
+            normalizePhoneForMatch(employee?.extension) ??
             null)
           : undefined;
         const source = isEmptyOrMegaPbxPlaceholder(canonicalCall.source)

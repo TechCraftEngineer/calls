@@ -176,8 +176,9 @@ export const callsCrud = {
   ): Promise<void> {
     // Валидация callId как UUID
     const uuidSchema = z.string().uuid('callId должен быть валидным UUID');
-    if (!uuidSchema.safeParse(callId).success) {
-      throw new Error('callId должен быть валидным UUID');
+    const result = uuidSchema.safeParse(callId);
+    if (!result.success) {
+      throw new ValidationError('callId должен быть валидным UUID', result.error.issues);
     }
     
     // Валидация customerName с помощью Zod
@@ -195,8 +196,9 @@ export const callsCrud = {
   ): Promise<void> {
     // Валидация callId как UUID
     const uuidSchema = z.string().uuid('callId должен быть валидным UUID');
-    if (!uuidSchema.safeParse(callId).success) {
-      throw new Error('callId должен быть валидным UUID');
+    const result = uuidSchema.safeParse(callId);
+    if (!result.success) {
+      throw new ValidationError('callId должен быть валидным UUID', result.error.issues);
     }
     
     // Валидация данных с помощью Zod
@@ -214,8 +216,9 @@ export const callsCrud = {
   ): Promise<void> {
     // Валидация callId как UUID
     const uuidSchema = z.string().uuid('callId должен быть валидным UUID');
-    if (!uuidSchema.safeParse(callId).success) {
-      throw new Error('callId должен быть валидным UUID');
+    const result = uuidSchema.safeParse(callId);
+    if (!result.success) {
+      throw new ValidationError('callId должен быть валидным UUID', result.error.issues);
     }
     
     // Валидация данных с помощью Zod
@@ -237,8 +240,9 @@ export const callsCrud = {
   ): Promise<void> {
     // Валидация callId как UUID
     const uuidSchema = z.string().uuid('callId должен быть валидным UUID');
-    if (!uuidSchema.safeParse(callId).success) {
-      throw new Error('callId должен быть валидным UUID');
+    const result = uuidSchema.safeParse(callId);
+    if (!result.success) {
+      throw new ValidationError('callId должен быть валидным UUID', result.error.issues);
     }
     
     // Валидация данных с помощью Zod
@@ -265,8 +269,9 @@ export const callsCrud = {
   ): Promise<void> {
     // Валидация callId как UUID
     const uuidSchema = z.string().uuid('callId должен быть валидным UUID');
-    if (!uuidSchema.safeParse(callId).success) {
-      throw new Error('callId должен быть валидным UUID');
+    const result = uuidSchema.safeParse(callId);
+    if (!result.success) {
+      throw new ValidationError('callId должен быть валидным UUID', result.error.issues);
     }
     
     // Валидация данных с помощью Zod
@@ -306,8 +311,9 @@ export const callsCrud = {
   ): Promise<void> {
     // Валидация callId как UUID
     const uuidSchema = z.string().uuid('callId должен быть валидным UUID');
-    if (!uuidSchema.safeParse(callId).success) {
-      throw new Error('callId должен быть валидным UUID');
+    const result = uuidSchema.safeParse(callId);
+    if (!result.success) {
+      throw new ValidationError('callId должен быть валидным UUID', result.error.issues);
     }
     
     // Валидация данных с помощью Zod
