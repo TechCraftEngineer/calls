@@ -233,8 +233,23 @@ export async function transcribeWithGigaAm(
   
   if (options?.audioBuffer) {
     audioBuffer = options.audioBuffer;
-    const detectedMime = "application/octet-stream"; // Could be enhanced with MIME detection in the future
-    contentType = options.audioBufferMime ?? detectedMime;
+    // Определяем MIME тип на основе расширения файла или переданного параметра
+    if (options.audioBufferMime) {
+      contentType = options.audioBufferMime;
+    } else {
+      // Извлекаем расширение из URL и определяем соответствующий MIME тип
+      const extension = audioUrl.split('.').pop()?.toLowerCase();
+      const mimeMap: Record<string, string> = {
+        'mp3': 'audio/mpeg',
+        'wav': 'audio/wav',
+        'flac': 'audio/flac',
+        'm4a': 'audio/mp4',
+        'aac': 'audio/aac',
+        'ogg': 'audio/ogg',
+        'webm': 'audio/webm'
+      };
+      contentType = mimeMap[extension || ''] || 'application/octet-stream';
+    }
   } else {
     const result = await withRetry(
       () =>

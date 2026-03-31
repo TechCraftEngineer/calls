@@ -99,6 +99,10 @@ async def health_check():
 @app.post("/enhance")
 async def enhance_audio(
     file: UploadFile = File(..., description="Аудио файл для улучшения"),
+    aggressiveness: str = Form(
+        default=config.DEFAULT_ENHANCE_SETTINGS["aggressiveness"],
+        description="Режим агрессивности обработки (light/medium/heavy)"
+    ),
     use_deepfilter: bool = Form(
         default=config.DEFAULT_ENHANCE_SETTINGS["use_deepfilter"],
         description="Применить DeepFilterNet (AI шумоподавление)"
@@ -148,6 +152,7 @@ async def enhance_audio(
     
     ## Parameters:
     - **file**: Аудио файл (WAV, MP3, FLAC, M4A, AAC, OGG, WEBM)
+    - **aggressiveness**: Режим агрессивности (light/medium/heavy)
     - **use_deepfilter**: DeepFilterNet (нейросетевое шумоподавление, 48kHz)
     - **use_wpe**: WPE (удаление реверберации)
     - **noise_reduction**: Классическое шумоподавление (noisereduce)
@@ -155,8 +160,8 @@ async def enhance_audio(
     - **enhance_speech**: Усиление речевых частот (300-3400 Hz)
     - **remove_silence**: Удаление пауз (Silero VAD)
     - **target_sample_rate**: Частота дискретизации (800-192000 Hz)
-    - **use_compressor**: Динамическая компрессия (-20dB, 4:1)
-    - **spectral_gating**: Спектральный гейтинг
+    - **use_compressor**: Динамическая компрессия (-16dB, 2:1)
+    - **spectral_gating**: Спектральный гейтинг (консервативный)
     - **enable_diarization**: Диаризация (pyannote)
     
     ## Returns:
@@ -167,7 +172,7 @@ async def enhance_audio(
     ```bash
     curl -X POST "http://localhost:7860/enhance" \\
       -F "file=@audio.mp3" \\
-      -F "use_deepfilter=true" \\
+      -F "aggressiveness=light" \\
       -F "target_sample_rate=16000"
     ```
     """
@@ -181,18 +186,37 @@ async def enhance_audio(
         audio_bytes = await read_upload_bytes_capped(file, config.MAX_UPLOAD_BYTES)
         
         # Параметры обработки
-        params = {
-            "use_deepfilter": use_deepfilter,
-            "use_wpe": use_wpe,
-            "noise_reduction": noise_reduction,
-            "normalize_volume": normalize_volume,
-            "enhance_speech": enhance_speech,
-            "remove_silence": remove_silence,
-            "target_sample_rate": target_sample_rate,
-            "use_compressor": use_compressor,
-            "spectral_gating": spectral_gating,
-            "enable_diarization": enable_diarization,
-        }
+        # Применяем режим агрессивности если указан
+        if aggressiveness in config.AGGRESSIVENESS_MODES:
+            mode_settings = config.AGGRESSIVENESS_MODES[aggressiveness]
+            params = {
+                "use_deepfilter": mode_settings["use_deepfilter"],
+                "use_wpe": mode_settings["use_wpe"],
+                "noise_reduction": mode_settings["noise_reduction"],
+                "normalize_volume": mode_settings["normalize_volume"],
+                "enhance_speech": mode_settings["enhance_speech"],
+                "remove_silence": remove_silence,  # Сохраняем пользовательский выбор
+                "target_sample_rate": target_sample_rate,
+                "use_compressor": mode_settings["use_compressor"],
+                "spectral_gating": mode_settings["spectral_gating"],
+                "enable_diarization": enable_diarization,  # Сохраняем пользовательский выбор
+                "aggressiveness": aggressiveness,
+            }
+        else:
+            # Ручные настройки
+            params = {
+                "use_deepfilter": use_deepfilter,
+                "use_wpe": use_wpe,
+                "noise_reduction": noise_reduction,
+                "normalize_volume": normalize_volume,
+                "enhance_speech": enhance_speech,
+                "remove_silence": remove_silence,
+                "target_sample_rate": target_sample_rate,
+                "use_compressor": use_compressor,
+                "spectral_gating": spectral_gating,
+                "enable_diarization": enable_diarization,
+                "aggressiveness": "custom",
+            }
         
         # Обработка аудио
         result = await asyncio.to_thread(

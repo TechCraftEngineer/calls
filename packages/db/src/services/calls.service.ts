@@ -14,6 +14,7 @@ import type {
 } from "../types/calls.types";
 import type { ManagerStatsRow } from "../repositories/calls/get-evaluations-stats";
 import type { EnrichedManagerStats } from "../repositories/calls/enrich-stats";
+import { ValidationError } from "../validation/call-schemas";
 
 export class CallsService {
   constructor(
@@ -69,20 +70,41 @@ export class CallsService {
   }
 
   async createCall(data: CreateCallData): Promise<string> {
-    const callId = await this.callsRepository.create(data);
-
     try {
-      await this.systemRepository.addActivityLog(
-        "INFO",
-        `Call ${callId} created from file: ${data.filename}`,
-        "system",
-        data.workspaceId,
-      );
-    } catch {
-      // Игнорируем ошибки логирования
-    }
+      const callId = await this.callsRepository.create(data);
 
-    return callId;
+      try {
+        await this.systemRepository.addActivityLog(
+          "INFO",
+          `Call ${callId} created from file: ${data.filename}`,
+          "system",
+          data.workspaceId,
+        );
+      } catch {
+        // Игнорируем ошибки логирования
+      }
+
+      return callId;
+    } catch (error) {
+      // Добавляем детальное логирование ошибок валидации
+      if (error instanceof Error) {
+        const errorMessage = error instanceof ValidationError 
+          ? `Validation errors: ${error.message}` 
+          : error.message;
+          
+        try {
+          await this.systemRepository.addActivityLog(
+            "ERROR",
+            `Failed to create call from file ${data.filename}: ${errorMessage}`,
+            "system",
+            data.workspaceId,
+          );
+        } catch {
+          // Игнорируем ошибки логирования
+        }
+      }
+      throw error;
+    }
   }
 
   async createCallWithResult(
@@ -127,21 +149,78 @@ export class CallsService {
     callId: string,
     customerName: string | null,
   ): Promise<void> {
-    await this.callsRepository.updateCustomerName(callId, customerName);
+    try {
+      await this.callsRepository.updateCustomerName(callId, customerName);
+    } catch (error) {
+      if (error instanceof Error) {
+        try {
+          const call = await this.callsRepository.findById(callId);
+          if (call) {
+            await this.systemRepository.addActivityLog(
+              "ERROR",
+              `Failed to update customer name for call ${callId}: ${error.message}`,
+              "system",
+              call.workspaceId,
+            );
+          }
+        } catch {
+          // Игнорируем ошибки логирования
+        }
+      }
+      throw error;
+    }
   }
 
   async updateCallRecording(
     callId: string,
     data: { fileId: string | null },
   ): Promise<void> {
-    await this.callsRepository.updateRecording(callId, data);
+    try {
+      await this.callsRepository.updateRecording(callId, data);
+    } catch (error) {
+      if (error instanceof Error) {
+        try {
+          const call = await this.callsRepository.findById(callId);
+          if (call) {
+            await this.systemRepository.addActivityLog(
+              "ERROR",
+              `Failed to update recording for call ${callId}: ${error.message}`,
+              "system",
+              call.workspaceId,
+            );
+          }
+        } catch {
+          // Игнорируем ошибки логирования
+        }
+      }
+      throw error;
+    }
   }
 
   async updateEnhancedAudio(
     callId: string,
     enhancedAudioFileId: string | null,
   ): Promise<void> {
-    await this.callsRepository.updateEnhancedAudio(callId, enhancedAudioFileId);
+    try {
+      await this.callsRepository.updateEnhancedAudio(callId, enhancedAudioFileId);
+    } catch (error) {
+      if (error instanceof Error) {
+        try {
+          const call = await this.callsRepository.findById(callId);
+          if (call) {
+            await this.systemRepository.addActivityLog(
+              "ERROR",
+              `Failed to update enhanced audio for call ${callId}: ${error.message}`,
+              "system",
+              call.workspaceId,
+            );
+          }
+        } catch {
+          // Игнорируем ошибки логирования
+        }
+      }
+      throw error;
+    }
   }
 
   async updateCallPbxBinding(
@@ -153,6 +232,103 @@ export class CallsService {
     },
   ): Promise<void> {
     await this.callsRepository.updatePbxBinding(callId, data);
+  }
+
+  /**
+   * Транзакционное обновление записи звонка и файла
+   */
+  async updateCallWithRecording(
+    callId: string,
+    data: {
+      fileId: string | null;
+      enhancedAudioFileId?: string | null;
+      customerName?: string | null;
+    },
+  ): Promise<void> {
+    try {
+      await this.callsRepository.updateWithRecording(callId, data);
+      
+      // Логируем успешное транзакционное обновление
+      try {
+        const call = await this.callsRepository.findById(callId);
+        if (call) {
+          await this.systemRepository.addActivityLog(
+            "INFO",
+            `Call ${callId} updated with recording data (fileId: ${data.fileId}, enhancedAudio: ${data.enhancedAudioFileId})`,
+            "system",
+            call.workspaceId,
+          );
+        }
+      } catch {
+        // Игнорируем ошибки логирования
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        try {
+          const call = await this.callsRepository.findById(callId);
+          if (call) {
+            await this.systemRepository.addActivityLog(
+              "ERROR",
+              `Failed to update call ${callId} with recording data: ${error.message}`,
+              "system",
+              call.workspaceId,
+            );
+          }
+        } catch {
+          // Игнорируем ошибки логирования
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Транзакционное обновление PBX привязки и имени клиента
+   */
+  async updateCallPbxBindingWithCustomer(
+    callId: string,
+    data: {
+      internalNumber?: string | null;
+      source?: string | null;
+      name?: string | null;
+      customerName?: string | null;
+    },
+  ): Promise<void> {
+    try {
+      await this.callsRepository.updatePbxBindingWithCustomer(callId, data);
+      
+      // Логируем успешное транзакционное обновление
+      try {
+        const call = await this.callsRepository.findById(callId);
+        if (call) {
+          await this.systemRepository.addActivityLog(
+            "INFO",
+            `Call ${callId} updated with PBX binding and customer data`,
+            "system",
+            call.workspaceId,
+          );
+        }
+      } catch {
+        // Игнорируем ошибки логирования
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        try {
+          const call = await this.callsRepository.findById(callId);
+          if (call) {
+            await this.systemRepository.addActivityLog(
+              "ERROR",
+              `Failed to update call ${callId} with PBX binding: ${error.message}`,
+              "system",
+              call.workspaceId,
+            );
+          }
+        } catch {
+          // Игнорируем ошибки логирования
+        }
+      }
+      throw error;
+    }
   }
 
   async getEvaluation(callId: string): Promise<CallEvaluation | null> {
