@@ -58,6 +58,10 @@ export const callsTranscripts = {
       })
       .returning({ id: schema.transcripts.id });
     
-    return result[0]?.id ?? "";
+    if (!result[0]?.id) {
+      throw new Error('upsertTranscript failed: missing transcript id');
+    }
+    
+    return result[0].id;
   },
 };

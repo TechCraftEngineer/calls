@@ -4,7 +4,6 @@ import {
   settingsService,
   usersService,
   workspacesService,
-  type ManagerStatsRow,
 } from "@calls/db";
 import { formatTelegramReportHtml, type ManagerStats } from "@calls/jobs";
 import { sendMessage } from "@calls/telegram-bot";
@@ -160,7 +159,7 @@ export const sendTestTelegram = workspaceProcedure
     const workspaceName = ws?.name ?? undefined;
 
     const text = formatTelegramReportHtml({
-      stats: enrichedStats as Record<string, ManagerStats>,
+      stats: enrichedStats,
       dateFrom,
       dateTo,
       reportType,

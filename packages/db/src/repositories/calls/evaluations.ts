@@ -18,6 +18,20 @@ export const callsEvaluations = {
   },
 
   async addEvaluation(data: EvaluationData): Promise<string> {
+    // Валидация managerBreakdown перед транзакцией
+    let parsedManagerBreakdown = null;
+    if (data.managerBreakdown) {
+      if (typeof data.managerBreakdown === 'string') {
+        try {
+          parsedManagerBreakdown = JSON.parse(data.managerBreakdown);
+        } catch (error) {
+          throw new Error(`Invalid JSON in managerBreakdown: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+      } else {
+        parsedManagerBreakdown = data.managerBreakdown;
+      }
+    }
+
     // Используем транзакцию для атомарности операции
     return await db.transaction(async (tx) => {
       // Проверяем существование звонка
@@ -40,11 +54,7 @@ export const callsEvaluations = {
           valueExplanation: data.valueExplanation ?? null,
           managerScore: data.managerScore ?? null,
           managerFeedback: data.managerFeedback ?? null,
-          managerBreakdown: data.managerBreakdown 
-            ? (typeof data.managerBreakdown === 'string' 
-                ? JSON.parse(data.managerBreakdown) 
-                : data.managerBreakdown)
-            : null,
+          managerBreakdown: parsedManagerBreakdown,
           managerRecommendations: data.managerRecommendations ?? null,
           isQualityAnalyzable: data.isQualityAnalyzable,
           notAnalyzableReason: data.notAnalyzableReason ?? null,
@@ -56,11 +66,7 @@ export const callsEvaluations = {
             valueExplanation: data.valueExplanation ?? null,
             managerScore: data.managerScore ?? null,
             managerFeedback: data.managerFeedback ?? null,
-            managerBreakdown: data.managerBreakdown 
-              ? (typeof data.managerBreakdown === 'string' 
-                  ? JSON.parse(data.managerBreakdown) 
-                  : data.managerBreakdown)
-              : null,
+            managerBreakdown: parsedManagerBreakdown,
             managerRecommendations: data.managerRecommendations ?? null,
             isQualityAnalyzable: data.isQualityAnalyzable,
             notAnalyzableReason: data.notAnalyzableReason ?? null,
@@ -68,7 +74,11 @@ export const callsEvaluations = {
         })
         .returning({ id: schema.callEvaluations.id });
 
-      return result[0]?.id ?? "";
+      if (!result[0]?.id) {
+        throw new Error('upsert failed: missing callEvaluation id');
+      }
+
+      return result[0].id;
     });
   },
 };

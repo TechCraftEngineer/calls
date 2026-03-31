@@ -209,7 +209,7 @@ export function formatTelegramReport(params: FormatReportParams): string {
     isManagerReport,
     workspaceName,
     lowRatedCalls = {},
-    includeKpi = true,
+    includeKpi = false,
   } = params;
 
   // Валидация входных параметров
@@ -267,8 +267,8 @@ export function formatTelegramReport(params: FormatReportParams): string {
 
       lines.push(`👤 ${s.name}`);
       lines.push(`   📞 Звонков: ${s.totalCount} | ⏱️ Минут: ${totalMinutes}`);
-      lines.push(`   💰 Оклад: ${formatValue(s.kpiBaseSalary ?? 0)} ₽ | 🎁 Бонус: ${formatValue(s.kpiCalculatedBonus ?? 0)} ₽`);
-      lines.push(`   💵 Итого: ${formatValue(s.kpiTotalSalary ?? 0)} ₽`);
+      lines.push(`   💰 Оклад: ${s.kpiBaseSalary ? formatValue(s.kpiBaseSalary) : '—'} ₽ | 🎁 Бонус: ${s.kpiCalculatedBonus ? formatValue(s.kpiCalculatedBonus) : '—'} ₽`);
+      lines.push(`   💵 Итого: ${s.kpiTotalSalary ? formatValue(s.kpiTotalSalary) : '—'} ₽`);
       lines.push("");
     }
   } else {
@@ -340,7 +340,7 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     isManagerReport,
     workspaceName,
     lowRatedCalls = {},
-    includeKpi = true,
+    includeKpi = false,
   } = params;
 
   if (!stats || typeof stats !== "object") {
@@ -408,8 +408,8 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
 
       lines.push(`👤 <b>${escapeHtml(s.name)}</b>`);
       lines.push(`   📞 Звонков: <b>${s.totalCount}</b> | ⏱️ Минут: <b>${totalMinutes}</b>`);
-      lines.push(`   💰 Оклад: <b>${formatValue(s.kpiBaseSalary ?? 0)} ₽</b> | 🎁 Бонус: <b>${formatValue(s.kpiCalculatedBonus ?? 0)} ₽</b>`);
-      lines.push(`   💵 Итого: <b>${formatValue(s.kpiTotalSalary ?? 0)} ₽</b>`);
+      lines.push(`   💰 Оклад: <b>${s.kpiBaseSalary ? formatValue(s.kpiBaseSalary) : '—'} ₽</b> | 🎁 Бонус: <b>${s.kpiCalculatedBonus ? formatValue(s.kpiCalculatedBonus) : '—'} ₽</b>`);
+      lines.push(`   💵 Итого: <b>${s.kpiTotalSalary ? formatValue(s.kpiTotalSalary) : '—'} ₽</b>`);
       lines.push("");
     }
   } else {
@@ -447,17 +447,15 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
 
   // KPI итоги
   if (includeKpi) {
+    lines.push(`• Общий оклад: <b>${totals.totalBaseSalary > 0 ? formatValue(totals.totalBaseSalary) : '—'} ₽</b>`);
     lines.push(
-      `• Общий оклад: <b>${formatValue(totals.totalBaseSalary)} ₽</b>`,
+      `• Целевой бонус: <b>${totals.totalTargetBonus > 0 ? formatValue(totals.totalTargetBonus) : '—'} ₽</b>`,
     );
     lines.push(
-      `• Целевой бонус: <b>${formatValue(totals.totalTargetBonus)} ₽</b>`,
+      `• Начисленный бонус: <b>${totals.totalCalculatedBonus > 0 ? formatValue(totals.totalCalculatedBonus) : '—'} ₽</b>`,
     );
     lines.push(
-      `• Начисленный бонус: <b>${formatValue(totals.totalCalculatedBonus)} ₽</b>`,
-    );
-    lines.push(
-      `• Итого к выплате: <b>${formatValue(totals.totalSalary)} ₽</b>`,
+      `• Итого к выплате: <b>${totals.totalSalary > 0 ? formatValue(totals.totalSalary) : '—'} ₽</b>`,
     );
   }
 
