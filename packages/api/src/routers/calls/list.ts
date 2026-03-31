@@ -132,6 +132,16 @@ export const list = workspaceProcedure
       }
     }
     
+    // Группируем PBX номера по employeeExternalId для эффективного поиска
+    const phoneNumbersByEmployeeExternalId = new Map<string, WorkspacePbxNumber[]>();
+    for (const number of pbxNumbers) {
+      if (number.isActive && number.employeeExternalId) {
+        const numbers = phoneNumbersByEmployeeExternalId.get(number.employeeExternalId) || [];
+        numbers.push(number);
+        phoneNumbersByEmployeeExternalId.set(number.employeeExternalId, numbers);
+      }
+    }
+    
     // Строим менеджеров из PBX данных и получаем связанные phone_number
     const managerDisplayNameById = new Map<string, string>();
     const managerPhoneNumbers = new Map<string, Set<string>>(); // employeeId -> Set<phone_number>
@@ -147,10 +157,8 @@ export const list = workspaceProcedure
       // Устанавливаем отображаемое имя
       managerDisplayNameById.set(employeeId, displayName);
       
-      // Находим все PBX номера связанные с этим сотрудником
-      const relatedNumbers = pbxNumbers.filter(number => 
-        number.isActive && number.employeeExternalId === employee.externalId
-      );
+      // Получаем все PBX номера связанные с этим сотрудником через карту
+      const relatedNumbers = phoneNumbersByEmployeeExternalId.get(employee.externalId) || [];
       
       if (relatedNumbers.length > 0) {
         const phoneNumbers = managerPhoneNumbers.get(employeeId) || new Set<string>();
@@ -272,7 +280,6 @@ export const list = workspaceProcedure
         ? normalizedDirections
         : undefined,
       valueScores: input.value?.length ? input.value : undefined,
-      managers: finalManagerFilters.length > 0 ? finalManagerFilters : undefined,
       managerInternalNumbers:
         managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
       statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
@@ -295,7 +302,6 @@ export const list = workspaceProcedure
         ? normalizedDirections
         : undefined,
       valueScores: input.value?.length ? input.value : undefined,
-      managers: finalManagerFilters.length > 0 ? finalManagerFilters : undefined,
       managerInternalNumbers:
         managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
       statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,

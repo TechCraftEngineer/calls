@@ -227,41 +227,50 @@ export async function transcribeWithGigaAm(
     return null;
   }
   const start = Date.now();
-  const { buffer: audioBuffer, contentType } = options?.audioBuffer
-    ? { buffer: options.audioBuffer, contentType: "application/octet-stream" }
-    : await withRetry(
-        () =>
-          fetchWithTimeout(
-            audioUrl,
-            {},
-            "TIMEOUT_AUDIO_DOWNLOAD: Превышено время ожидания скачивания аудио",
-            FETCH_TIMEOUT_MS,
-            async (audioResponse, signal) => {
-              if (!audioResponse.ok) {
-                const msg = `Не удалось скачать аудио: ${audioResponse.status} ${audioResponse.statusText}`;
-                if (NON_RETRYABLE_HTTP_STATUSES.has(audioResponse.status)) {
-                  throw new NonRetryableError(msg);
-                }
-                throw new Error(msg);
+  let audioBuffer: Buffer;
+  let contentType: string;
+  
+  if (options?.audioBuffer) {
+    audioBuffer = options.audioBuffer;
+    contentType = "application/octet-stream";
+  } else {
+    const result = await withRetry(
+      () =>
+        fetchWithTimeout(
+          audioUrl,
+          {},
+          "TIMEOUT_AUDIO_DOWNLOAD: Превышено время ожидания скачивания аудио",
+          FETCH_TIMEOUT_MS,
+          async (audioResponse, signal) => {
+            if (!audioResponse.ok) {
+              const msg = `Не удалось скачать аудио: ${audioResponse.status} ${audioResponse.statusText}`;
+              if (NON_RETRYABLE_HTTP_STATUSES.has(audioResponse.status)) {
+                throw new NonRetryableError(msg);
               }
+              throw new Error(msg);
+            }
 
-              const ct =
-                audioResponse.headers.get("content-type") ??
-                "application/octet-stream";
-              const buffer = await readAudioWithLimit(audioResponse, signal);
-              return { buffer, contentType: ct };
-            },
-          ),
-        {
-          maxAttempts: 3,
-          baseDelayMs: 1500,
-          onRetry: (attempt: number, error: unknown) =>
-            logger.warn("Повторная попытка скачивания аудио Giga AM", {
-              attempt,
-              error: toErrorMessage(error),
-            }),
-        },
-      );
+            const ct =
+              audioResponse.headers.get("content-type") ??
+              "application/octet-stream";
+            const arrayBuffer = await readAudioWithLimit(audioResponse, signal);
+            return { buffer: Buffer.from(arrayBuffer), contentType: ct };
+          },
+        ),
+      {
+        maxAttempts: 3,
+        baseDelayMs: 1500,
+        onRetry: (attempt: number, error: unknown) =>
+          logger.warn("Повторная попытка скачивания аудио Giga AM", {
+            attempt,
+            error: toErrorMessage(error),
+          }),
+      },
+    );
+    
+    audioBuffer = result.buffer;
+    contentType = result.contentType;
+  }
 
   const filename = guessAudioFilename(audioUrl, contentType);
 

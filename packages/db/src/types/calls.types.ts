@@ -25,7 +25,6 @@ export interface GetCallsParams {
   excludePhoneNumbers?: string[];
   directions?: string[];
   valueScores?: number[];
-  managers?: string[];
   /** Internal numbers выбранных менеджеров по их id */
   managerInternalNumbers?: string[];
   statuses?: string[];
@@ -56,7 +55,6 @@ export interface CreateCallData {
   direction?: string | null;
   status?: CallStatus | string | null;
   fileId?: string | null;
-  pbxNumberId?: string | null;
   internalNumber?: string | null;
   source?: string | null;
   customerName?: string | null;
