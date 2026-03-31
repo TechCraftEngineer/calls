@@ -19,6 +19,7 @@ export { systemRepository } from "./repositories/system.repository";
 export { userWorkspaceSettingsRepository } from "./repositories/user-workspace-settings.repository";
 // Repositories
 export { usersRepository } from "./repositories/users.repository";
+export { workspacesRepository } from "./repositories/workspaces.repository";
 export { workspaceIntegrationsRepository } from "./repositories/workspace-integrations.repository";
 export { workspaceSettingsRepository } from "./repositories/workspace-settings.repository";
 // Schemas and types

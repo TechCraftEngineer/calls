@@ -252,7 +252,7 @@ export async function transcribeWithGigaAm(
     {
       maxAttempts: 3,
       baseDelayMs: 1500,
-      onRetry: (attempt: number, error: any) =>
+      onRetry: (attempt: number, error: unknown) =>
         logger.warn("Повторная попытка скачивания аудио Giga AM", {
           attempt,
           error: toErrorMessage(error),
@@ -323,7 +323,7 @@ export async function transcribeWithGigaAm(
     {
       maxAttempts: 3,
       baseDelayMs: 2000,
-      onRetry: (attempt: number, error: any) =>
+      onRetry: (attempt: number, error: unknown) =>
         logger.warn("Повторная попытка POST запроса в Giga AM", {
           attempt,
           error: toErrorMessage(error),

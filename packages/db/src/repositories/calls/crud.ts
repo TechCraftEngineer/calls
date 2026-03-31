@@ -111,7 +111,8 @@ export const callsCrud = {
     };
 
     const result =
-      data.provider && data.externalId
+      data.provider !== undefined && data.provider !== null && 
+      data.externalId !== undefined && data.externalId !== null
         ? await db
             .insert(schema.calls)
             .values(values)
@@ -127,7 +128,8 @@ export const callsCrud = {
 
     if (result.length === 0) {
       // Find existing record
-      if (!data.provider || !data.externalId) {
+      if (data.provider === undefined || data.provider === null || 
+          data.externalId === undefined || data.externalId === null) {
         throw new Error(`Ошибка вставки: отсутствуют provider или externalId для поиска существующей записи`);
       }
       const existing = await this.findByExternalId(

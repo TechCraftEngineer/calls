@@ -52,7 +52,3 @@ export { runAsrProviders } from "./pipeline/run-asr-providers";
 
 // Utils
 export { NonRetryableError, withRetry } from "./utils/retry";
-
-// Internal utilities (for advanced usage)
-export { parseGigaAmRaw } from "./pipeline/gigaam-raw";
-export { ASR_LOG_ERROR_MAX_LENGTH, ASR_LOG_TEXT_MAX_LENGTH, truncateForLog } from "./pipeline/log-utils";

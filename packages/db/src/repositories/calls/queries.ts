@@ -113,6 +113,10 @@ export const callsQueries = {
     const result = await db
       .select({ count: count() })
       .from(schema.calls)
+      .leftJoin(
+        schema.callEvaluations,
+        eq(schema.callEvaluations.callId, schema.calls.id),
+      )
       .where(and(...conditions));
 
     return result[0]?.count ?? 0;
@@ -159,6 +163,10 @@ export const callsQueries = {
     const result = await db
       .select({ name: schema.calls.name })
       .from(schema.calls)
+      .leftJoin(
+        schema.callEvaluations,
+        eq(schema.callEvaluations.callId, schema.calls.id),
+      )
       .where(conditions.length > 0 ? and(...conditions, isNotNull(schema.calls.name)) : isNotNull(schema.calls.name))
       .groupBy(schema.calls.name)
       .orderBy(asc(schema.calls.name));

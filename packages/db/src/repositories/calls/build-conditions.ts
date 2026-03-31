@@ -134,9 +134,8 @@ export function buildCallConditions(params: CallConditionsParams) {
   if (operators?.length) {
     conditions.push(inArray(schema.calls.source, operators));
   }
-  if (managers?.length) {
-    conditions.push(inArray(schema.calls.name, managers));
-  }
+  // Фильтрация по менеджерам идет через internal_number -> phone_number
+  // managerInternalNumbers содержит phone_numbers из workspace_pbx_numbers
   if (managerInternalNumbers?.length) {
     conditions.push(
       inArray(schema.calls.internalNumber, managerInternalNumbers),

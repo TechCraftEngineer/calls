@@ -95,6 +95,16 @@ export const list = workspaceProcedure
   .input(listCallsSchema)
   .handler(async ({ input, context }) => {
     const { callsService, user, workspaceId } = context;
+    
+    // Логирование для отладки
+    console.log('🔍 Calls list API:', {
+      workspaceId,
+      userId: user?.id,
+      workspaceRole: context.workspaceRole,
+      inputManager: input.manager,
+      userInternalExtensions: user?.internalExtensions,
+      userMobilePhones: user?.mobilePhones
+    });
     const offset = (input.page - 1) * input.per_page;
     const directionFilters = toStringArray(input.direction);
     const managerFilters = toStringArray(input.manager);
@@ -115,75 +125,129 @@ export const list = workspaceProcedure
       );
     const trimmedQuery = input.q?.trim() || undefined;
 
-    const pbxNumbers = await pbxRepository.listNumbers(
-      workspaceId,
-      PBX_PROVIDER,
-    );
-    const activePbxNumbers = pbxNumbers.filter((number) => number.isActive);
-    const managerNameByInternalNumber = new Map<string, string>();
-    const managerIdByInternalNumber = new Map<string, string>();
-    const managerInternalNumbersById = new Map<string, Set<string>>();
+    // Получаем PBX сотрудников и номера для построения менеджеров
+    const [pbxEmployees, pbxNumbers] = await Promise.all([
+      pbxRepository.listEmployees(workspaceId, PBX_PROVIDER),
+      pbxRepository.listNumbers(workspaceId, PBX_PROVIDER),
+    ]);
+    
+    // Создаем карту сотрудников по external_id
+    const employeeByExternalId = new Map<string, any>();
+    for (const employee of pbxEmployees) {
+      if (employee.isActive) {
+        employeeByExternalId.set(employee.externalId, employee);
+      }
+    }
+    
+    // Логирование данных
+    console.log('👥 PBX Employees:', {
+      total: pbxEmployees.length,
+      active: pbxEmployees.filter(e => e.isActive).length,
+      sample: pbxEmployees.slice(0, 3).map(e => ({
+        id: e.id,
+        externalId: e.externalId,
+        displayName: e.displayName,
+        isActive: e.isActive
+      }))
+    });
+    
+    console.log('📋 PBX Numbers:', {
+      total: pbxNumbers.length,
+      active: pbxNumbers.filter(n => n.isActive).length,
+      sample: pbxNumbers.slice(0, 3).map(n => ({
+        id: n.id,
+        externalId: n.externalId,
+        employeeExternalId: n.employeeExternalId,
+        phoneNumber: n.phoneNumber,
+        isActive: n.isActive
+      }))
+    });
+    
+    // Строим менеджеров из PBX данных и получаем связанные phone_number
     const managerDisplayNameById = new Map<string, string>();
-    for (const number of activePbxNumbers) {
-      const managerId = number.id?.trim() || null;
-      if (!managerId) continue;
-
-      const ext = number.extension?.trim() || null;
-      const managerName =
-        number.label?.trim() || ext || number.phoneNumber?.trim() || null;
-
-      // Справочник менеджеров строим по pbx_numbers (даже если extension нет)
-      if (managerName && !managerDisplayNameById.has(managerId)) {
-        managerDisplayNameById.set(managerId, managerName);
-      }
-
-      // Для фильтрации/сопоставления звонков нужен internalNumber <-> extension
-      if (!ext) continue;
-      if (managerName && !managerNameByInternalNumber.has(ext)) {
-        managerNameByInternalNumber.set(ext, managerName);
-      }
-      managerIdByInternalNumber.set(ext, managerId);
-      const managerNumbers = managerInternalNumbersById.get(managerId);
-      if (managerNumbers) {
-        managerNumbers.add(ext);
-      } else {
-        managerInternalNumbersById.set(managerId, new Set([ext]));
+    const managerPhoneNumbers = new Map<string, Set<string>>(); // employeeId -> Set<phone_number>
+    
+    for (const employee of pbxEmployees) {
+      if (!employee.isActive) continue;
+      
+      const employeeId = employee.id;
+      const displayName = employee.displayName || 
+        `${employee.firstName || ''} ${employee.lastName || ''}`.trim() || 
+        `Employee ${employee.externalId}`;
+      
+      // Устанавливаем отображаемое имя
+      managerDisplayNameById.set(employeeId, displayName);
+      
+      // Находим все PBX номера связанные с этим сотрудником
+      const relatedNumbers = pbxNumbers.filter(number => 
+        number.isActive && (
+          number.employeeExternalId === employee.externalId || 
+          number.externalId === employee.externalId
+        )
+      );
+      
+      if (relatedNumbers.length > 0) {
+        const phoneNumbers = managerPhoneNumbers.get(employeeId) || new Set<string>();
+        for (const number of relatedNumbers) {
+          if (number.phoneNumber) {
+            phoneNumbers.add(number.phoneNumber);
+          }
+        }
+        managerPhoneNumbers.set(employeeId, phoneNumbers);
       }
     }
 
-    const managerInternalNumbers = managerFilters.length
+    const isAdminOrOwner =
+      context.workspaceRole === "admin" || context.workspaceRole === "owner";
+
+    // Ограничиваем фильтр по менеджерам для обычных пользователей
+    const finalManagerFilters = isAdminOrOwner
+      ? managerFilters
+      : managerFilters.length > 0
+        ? managerFilters.filter((managerId) => {
+            // Для обычного пользователя разрешаем только его собственные manager ID
+            // Manager ID для пользователя - это его user ID
+            return managerId === user.id;
+          })
+        : [];
+
+    // Получаем phone_numbers для фильтрации по менеджерам
+    const managerInternalNumbers = finalManagerFilters.length
       ? Array.from(
           new Set(
-            managerFilters.flatMap((managerId) =>
-              Array.from(
-                managerInternalNumbersById.get(managerId.trim()) ??
-                  new Set<string>(),
-              ),
-            ),
+            finalManagerFilters.flatMap((managerId) => {
+              const phoneNumbers = managerPhoneNumbers.get(managerId.trim());
+              return phoneNumbers ? Array.from(phoneNumbers) : [];
+            }),
           ),
         )
       : [];
 
+    // Для поиска по текстовому запросу используем phone_numbers связанных сотрудников
     const managerInternalNumbersForQuery = trimmedQuery
-      ? activePbxNumbers
-          .filter((number) => {
-            const haystack = [
-              number.label,
-              number.extension,
-              number.phoneNumber,
-              number.externalId,
-            ]
-              .filter((value): value is string => typeof value === "string")
-              .join(" ")
-              .toLowerCase();
-            return haystack.includes(trimmedQuery.toLowerCase());
-          })
-          .map((number) => number.extension?.trim())
-          .filter((value): value is string => Boolean(value))
+      ? Array.from(
+          new Set(
+            Array.from(managerPhoneNumbers.entries())
+              .filter(([employeeId, phoneNumbers]) => {
+                const employee = employeeByExternalId.get(employeeId);
+                if (!employee) return false;
+                
+                const haystack = [
+                  employee.displayName,
+                  employee.firstName,
+                  employee.lastName,
+                  employee.email,
+                ]
+                  .filter((value): value is string => typeof value === "string")
+                  .join(" ")
+                  .toLowerCase();
+                return haystack.includes(trimmedQuery.toLowerCase());
+              })
+              .flatMap(([, phoneNumbers]) => Array.from(phoneNumbers))
+          ),
+        )
       : [];
 
-    const isAdminOrOwner =
-      context.workspaceRole === "admin" || context.workspaceRole === "owner";
     const internalNumbers = isAdminOrOwner
       ? undefined
       : getInternalNumbersForUser(user);
@@ -214,7 +278,7 @@ export const list = workspaceProcedure
             date_to: input.date_to ?? "",
             direction: directionFilters,
             status: statusFilters,
-            manager: managerFilters,
+            manager: finalManagerFilters,
             value: input.value ?? [],
             operator: input.operator ?? [],
           },
@@ -244,7 +308,7 @@ export const list = workspaceProcedure
         : undefined,
       valueScores: input.value?.length ? input.value : undefined,
       operators: input.operator?.length ? input.operator : undefined,
-      managers: undefined,
+      managers: finalManagerFilters.length > 0 ? finalManagerFilters : undefined,
       managerInternalNumbers:
         managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
       statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
@@ -268,7 +332,7 @@ export const list = workspaceProcedure
         : undefined,
       valueScores: input.value?.length ? input.value : undefined,
       operators: input.operator?.length ? input.operator : undefined,
-      managers: undefined,
+      managers: finalManagerFilters.length > 0 ? finalManagerFilters : undefined,
       managerInternalNumbers:
         managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
       statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
@@ -289,7 +353,20 @@ export const list = workspaceProcedure
     )
       .map(([id, name]) => ({ id, name }))
       .filter((item) => item.name.trim().length > 0)
+      .filter((item) => {
+        // Для обычных пользователей показываем только себя
+        return isAdminOrOwner || item.id === user.id;
+      })
       .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+
+    // Логирование финальных результатов
+    console.log('👥 Final managers:', {
+      totalBeforeFilter: managerDisplayNameById.size,
+      totalAfterFilter: managers.length,
+      isAdminOrOwner,
+      userId: user.id,
+      managers: managers.map(m => ({ id: m.id, name: m.name }))
+    });
 
     const callsWithTranscripts = await Promise.all(
       rawCalls.map(async (item: CallWithTranscript) => {
@@ -300,16 +377,9 @@ export const list = workspaceProcedure
             ? parsed.data.operatorName.trim() || null
             : null;
         })();
-        const normalizedInternalNumber =
-          item.call.internalNumber?.trim() || null;
-        const managerFromPbx = normalizedInternalNumber
-          ? (managerNameByInternalNumber.get(normalizedInternalNumber) ?? null)
-          : null;
+        
         const trimmedName = item.call.name?.trim();
-        const normalizedCallName =
-          trimmedName === "" ? null : (trimmedName ?? null);
-        const managerName =
-          managerFromPbx ?? normalizedCallName ?? operatorName ?? null;
+        const managerName = trimmedName && trimmedName !== "" ? trimmedName : operatorName || null;
 
         const { filename: _filename, ...publicCall } = item.call;
 
@@ -327,10 +397,7 @@ export const list = workspaceProcedure
                 : item.call.timestamp,
             managerName,
             operatorName,
-            managerId: normalizedInternalNumber
-              ? (managerIdByInternalNumber.get(normalizedInternalNumber) ??
-                null)
-              : null,
+            managerId: null, // Не используется, так как extension не применяется
             duration:
               item.fileDuration ??
               item.transcript?.metadata?.durationInSeconds ??
@@ -366,7 +433,7 @@ export const list = workspaceProcedure
         date_to: input.date_to ?? "",
         direction: directionFilters,
         status: statusFilters,
-        manager: managerFilters,
+        manager: finalManagerFilters,
         value: input.value ?? [],
         operator: input.operator ?? [],
       },

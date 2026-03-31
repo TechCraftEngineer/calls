@@ -7,7 +7,6 @@
     "declarationMap": true,
     "emitDeclarationOnly": true,
     "noEmit": false,
-    "outDir": "${configDir}/dist",
-    "composite": true
+    "outDir": "${configDir}/dist"
   }
 }

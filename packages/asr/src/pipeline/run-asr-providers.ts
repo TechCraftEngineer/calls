@@ -18,11 +18,28 @@ export async function runAsrProviders(
   gigaAmSuccessCount: number;
   durationFromUrl?: number;
 }> {
+  // Get audio buffer for duration calculation
+  let audioBuffer: Buffer | undefined;
+  try {
+    const response = await fetch(processedAudioUrl, {
+      headers: { Accept: "audio/*" },
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (response.ok) {
+      const arrayBuffer = await response.arrayBuffer();
+      audioBuffer = Buffer.from(arrayBuffer);
+    }
+  } catch (err) {
+    logger.warn("Не удалось загрузить аудио для определения длительности", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   const [gigaAmResult, durationResult] = await Promise.allSettled([
     transcribeWithGigaAm(processedAudioUrl, {
       preprocessMetadata: options?.gigaPreprocessMetadata,
     }),
-    getAudioDurationFromBuffer(Buffer.from([])), // TODO: fix this
+    audioBuffer ? getAudioDurationFromBuffer(audioBuffer) : Promise.resolve(undefined),
   ]);
 
   const gigaAm =
