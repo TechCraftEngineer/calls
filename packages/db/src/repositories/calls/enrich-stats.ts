@@ -25,7 +25,7 @@ export const callsEnrichStats = {
     // Получаем KPI данные сотрудников через правильную связь
     const employees = await db
       .select({
-        internalNumber: schema.workspacePbxNumbers.extension,
+        internalNumber: schema.workspacePbxNumbers.phoneNumber,
         kpiBaseSalary: schema.workspacePbxEmployees.kpiBaseSalary,
         kpiTargetBonus: schema.workspacePbxEmployees.kpiTargetBonus,
         kpiTargetTalkTimeMinutes: schema.workspacePbxEmployees.kpiTargetTalkTimeMinutes,
