@@ -9,14 +9,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import {
-  index,
-  pgTable,
-  text,
-  timestamp,
-  unique,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { user } from "../auth/user";
 import { workspaceMemberRole, workspaces } from "./workspaces";
 
@@ -45,14 +38,8 @@ export const workspaceMembers = pgTable(
   (table) => [
     index("workspace_members_workspace_id_idx").on(table.workspaceId),
     index("workspace_members_user_id_idx").on(table.userId),
-    unique("workspace_members_workspace_user_unique").on(
-      table.workspaceId,
-      table.userId,
-    ),
-    index("workspace_members_workspace_user_idx").on(
-      table.workspaceId,
-      table.userId,
-    ),
+    unique("workspace_members_workspace_user_unique").on(table.workspaceId, table.userId),
+    index("workspace_members_workspace_user_idx").on(table.workspaceId, table.userId),
     index("workspace_members_status_idx").on(table.status),
     index("workspace_members_invitation_token_idx").on(table.invitationToken),
   ],

@@ -12,10 +12,7 @@ export function buildExcludePhoneCondition(
 ) {
   if (!excludePhoneNumbers?.length) return undefined;
   return and(
-    or(
-      isNull(calls.internalNumber),
-      notInArray(calls.internalNumber, excludePhoneNumbers),
-    ),
+    or(isNull(calls.internalNumber), notInArray(calls.internalNumber, excludePhoneNumbers)),
     or(isNull(calls.number), notInArray(calls.number, excludePhoneNumbers)),
   );
 }

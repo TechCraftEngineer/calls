@@ -27,13 +27,13 @@ import RecommendationsModal from "../recommendations-modal";
 import { BulkDeleteConfirmModal } from "./bulk-delete-confirm-modal";
 import { getCallListColumns } from "./call-list-columns";
 import { CallListEmpty } from "./call-list-empty";
-import type { CallListProps } from "./types";
 import {
   getLocalDateKey,
   useCallListSelection,
-  useDayToneByDate,
   useColumnSchema,
+  useDayToneByDate,
 } from "./call-list-hooks";
+import type { CallListProps } from "./types";
 
 export interface CallListDataGridProps extends CallListProps {
   pagination: {
@@ -59,19 +59,12 @@ export function CallListDataGrid({
   const orpc = useORPC();
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
-  const [recommendationsCallId, setRecommendationsCallId] = useState<
-    string | null
-  >(null);
+  const [recommendationsCallId, setRecommendationsCallId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
 
   // Используем хук для управления выборкой строк
-  const {
-    rowSelection,
-    setRowSelection,
-    selectedCalls,
-    selectedCallIds,
-    clearSelection,
-  } = useCallListSelection(calls);
+  const { rowSelection, setRowSelection, selectedCalls, selectedCallIds, clearSelection } =
+    useCallListSelection(calls);
 
   // Используем хук для управления тонами дат
   const dayToneByDate = useDayToneByDate(calls);
@@ -122,9 +115,7 @@ export function CallListDataGrid({
       },
       onError: (error) => {
         const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Не удалось удалить выбранные звонки";
+          error instanceof Error ? error.message : "Не удалось удалить выбранные звонки";
         toast.error(errorMessage);
       },
     }),
@@ -144,8 +135,7 @@ export function CallListDataGrid({
         { call_id: callId },
         {
           onSuccess: (result) => {
-            const recs =
-              (result as { recommendations?: string[] })?.recommendations ?? [];
+            const recs = (result as { recommendations?: string[] })?.recommendations ?? [];
             setRecommendations(recs);
             onRecommendationsGenerated?.(callId, recs);
           },
@@ -175,14 +165,11 @@ export function CallListDataGrid({
           <div className="flex h-full w-full items-center justify-center ps-1">
             <Checkbox
               checked={
-                table.getIsSomePageRowsSelected() &&
-                !table.getIsAllPageRowsSelected()
+                table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()
                   ? "indeterminate"
                   : table.getIsAllPageRowsSelected()
               }
-              onCheckedChange={(value) =>
-                table.toggleAllPageRowsSelected(!!value)
-              }
+              onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
               aria-label="Выбрать все звонки на странице"
             />
           </div>
@@ -306,8 +293,7 @@ export function CallListDataGrid({
           const tone = dayToneByDate.get(dateKey) ?? 0;
 
           return classNames(
-            tone !== 0 &&
-              "bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/20 dark:hover:bg-sky-950/30",
+            tone !== 0 && "bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/20 dark:hover:bg-sky-950/30",
           );
         }}
         tableLayout={{
@@ -332,9 +318,7 @@ export function CallListDataGrid({
               <Button
                 variant="destructive"
                 size="sm"
-                disabled={
-                  selectedCallIds.length === 0 || deleteManyMutation.isPending
-                }
+                disabled={selectedCallIds.length === 0 || deleteManyMutation.isPending}
                 onClick={() => setShowBulkDeleteConfirm(true)}
               >
                 Удалить выбранные…

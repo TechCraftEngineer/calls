@@ -1,19 +1,9 @@
 "use client";
 
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@calls/ui";
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@calls/ui";
 import type { BackupSectionProps } from "../types";
 
-export default function BackupSection({
-  backupLoading,
-  onBackup,
-}: BackupSectionProps) {
+export default function BackupSection({ backupLoading, onBackup }: BackupSectionProps) {
   return (
     <Card>
       <CardHeader>
@@ -23,17 +13,10 @@ export default function BackupSection({
           </span>
           Резервная копия базы
         </CardTitle>
-        <CardDescription>
-          Создать копию базы данных и сохранить её на сервере.
-        </CardDescription>
+        <CardDescription>Создать копию базы данных и сохранить её на сервере.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Button
-          type="button"
-          onClick={onBackup}
-          disabled={backupLoading}
-          variant="default"
-        >
+        <Button type="button" onClick={onBackup} disabled={backupLoading} variant="default">
           {backupLoading ? "Создание копии…" : "Создать копию базы"}
         </Button>
       </CardContent>

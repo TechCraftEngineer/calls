@@ -94,19 +94,13 @@ const kpiDraftSchema = z.object({
 });
 
 const pad2 = (value: number) => value.toString().padStart(2, "0");
-const toMonthValue = (date: Date) =>
-  `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
+const toMonthValue = (date: Date) => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
 const getCurrentMonthValue = () => toMonthValue(new Date());
 const getMonthRange = (monthValue: string) => {
   const [yearRaw, monthRaw] = monthValue.split("-");
   const year = Number.parseInt(yearRaw ?? "", 10);
   const month = Number.parseInt(monthRaw ?? "", 10);
-  if (
-    !Number.isInteger(year) ||
-    !Number.isInteger(month) ||
-    month < 1 ||
-    month > 12
-  ) {
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
     const fallback = new Date();
     const y = fallback.getFullYear();
     const m = fallback.getMonth();
@@ -140,8 +134,7 @@ const monthLabel = (monthValue: string) => {
   const [yearRaw, monthRaw] = monthValue.split("-");
   const year = Number.parseInt(yearRaw ?? "", 10);
   const month = Number.parseInt(monthRaw ?? "", 10);
-  if (!Number.isInteger(year) || !Number.isInteger(month))
-    return "Текущий месяц";
+  if (!Number.isInteger(year) || !Number.isInteger(month)) return "Текущий месяц";
   return new Date(year, month - 1, 1).toLocaleString("ru-RU", {
     month: "long",
     year: "numeric",
@@ -154,8 +147,7 @@ export default function KpiTable() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [selectedMonth, setSelectedMonth] =
-    useState<string>(getCurrentMonthValue);
+  const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonthValue);
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
   const {
     startDate: dFrom,
@@ -164,13 +156,9 @@ export default function KpiTable() {
   } = useMemo(() => getMonthRange(selectedMonth), [selectedMonth]);
   const currentMonthValue = useMemo(() => getCurrentMonthValue(), []);
   const canGoNextMonth = normalizedMonthValue < currentMonthValue;
-  const [draftsByEmployeeId, setDraftsByEmployeeId] = useState<
-    Record<string, KpiDraft>
-  >({});
+  const [draftsByEmployeeId, setDraftsByEmployeeId] = useState<Record<string, KpiDraft>>({});
   const [savingEmployeeId, setSavingEmployeeId] = useState<string | null>(null);
-  const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(
-    null,
-  );
+  const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
   const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
   const [bulkDraft, setBulkDraft] = useState<BulkKpiDraft>({
     baseSalary: "",
@@ -197,11 +185,8 @@ export default function KpiTable() {
   useEffect(() => {
     const monthFromUrl = searchParams.get("month");
     if (!monthFromUrl) return;
-    const { normalizedMonthValue: normalizedFromUrl } =
-      getMonthRange(monthFromUrl);
-    setSelectedMonth((prev) =>
-      prev === normalizedFromUrl ? prev : normalizedFromUrl,
-    );
+    const { normalizedMonthValue: normalizedFromUrl } = getMonthRange(monthFromUrl);
+    setSelectedMonth((prev) => (prev === normalizedFromUrl ? prev : normalizedFromUrl));
   }, [searchParams]);
 
   useEffect(() => {
@@ -257,11 +242,7 @@ export default function KpiTable() {
     return Math.max(0, Math.trunc(value));
   };
 
-  const setDraftField = (
-    employeeExternalId: string,
-    field: keyof KpiDraft,
-    value: string,
-  ) => {
+  const setDraftField = (employeeExternalId: string, field: keyof KpiDraft, value: string) => {
     const parsed = Number(value);
     const safeValue =
       value.trim() === "" || Number.isNaN(parsed)
@@ -298,8 +279,7 @@ export default function KpiTable() {
       toast.success(`KPI для ${row.name} сохранены`);
       setEditingEmployeeId(null);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Не удалось сохранить KPI";
+      const message = error instanceof Error ? error.message : "Не удалось сохранить KPI";
       toast.error(message);
       console.error("Failed to update KPI by employee", {
         employeeExternalId: row.employeeExternalId,
@@ -312,32 +292,19 @@ export default function KpiTable() {
 
   const applyKpiToAllEmployees = async () => {
     const normalizeBulkDraft = (): KpiDraft | null => {
-      const parseBulkField = (
-        value: string,
-        limit: number,
-      ): number | undefined => {
+      const parseBulkField = (value: string, limit: number): number | undefined => {
         if (value.trim() === "") return undefined;
         const parsed = Number(value);
         if (Number.isNaN(parsed)) return undefined;
         return Math.min(toNonNegativeInt(parsed), limit);
       };
-      const baseSalary = parseBulkField(
-        bulkDraft.baseSalary,
-        KPI_FIELD_LIMITS.baseSalary,
-      );
-      const targetBonus = parseBulkField(
-        bulkDraft.targetBonus,
-        KPI_FIELD_LIMITS.targetBonus,
-      );
+      const baseSalary = parseBulkField(bulkDraft.baseSalary, KPI_FIELD_LIMITS.baseSalary);
+      const targetBonus = parseBulkField(bulkDraft.targetBonus, KPI_FIELD_LIMITS.targetBonus);
       const targetTalkTimeMinutes = parseBulkField(
         bulkDraft.targetTalkTimeMinutes,
         KPI_FIELD_LIMITS.targetTalkTimeMinutes,
       );
-      if (
-        baseSalary == null ||
-        targetBonus == null ||
-        targetTalkTimeMinutes == null
-      ) {
+      if (baseSalary == null || targetBonus == null || targetTalkTimeMinutes == null) {
         return null;
       }
       const normalized: KpiDraft = {
@@ -391,9 +358,7 @@ export default function KpiTable() {
       }
 
       await queryClient.invalidateQueries({ queryKey: kpiQueryKey });
-      const failedCount = updates.filter(
-        (result) => result.status === "rejected",
-      ).length;
+      const failedCount = updates.filter((result) => result.status === "rejected").length;
       if (failedCount > 0) {
         throw new Error(
           failedCount === rows.length
@@ -406,9 +371,7 @@ export default function KpiTable() {
       setIsBulkEditOpen(false);
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "Не удалось применить KPI всем сотрудникам";
+        error instanceof Error ? error.message : "Не удалось применить KPI всем сотрудникам";
       toast.error(message);
       console.error("Не удалось применить KPI ко всем сотрудникам", { error });
     } finally {
@@ -433,11 +396,7 @@ export default function KpiTable() {
         size: 340,
         minSize: 300,
         header: ({ column }) => (
-          <DataGridColumnHeader
-            column={column}
-            title="Сотрудник"
-            className="min-w-52"
-          />
+          <DataGridColumnHeader column={column} title="Сотрудник" className="min-w-52" />
         ),
         cell: ({ row }) => (
           <div className="flex items-start gap-3 py-1">
@@ -445,12 +404,8 @@ export default function KpiTable() {
               <Phone className="size-5" aria-hidden />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="font-semibold text-foreground truncate">
-                {row.original.name}
-              </div>
-              <div className="text-sm text-muted-foreground truncate">
-                {row.original.email}
-              </div>
+              <div className="font-semibold text-foreground truncate">{row.original.name}</div>
+              <div className="text-sm text-muted-foreground truncate">{row.original.email}</div>
             </div>
           </div>
         ),
@@ -526,15 +481,12 @@ export default function KpiTable() {
         ),
         cell: ({ row }) => {
           const isOnTarget =
-            row.original.actualTalkTimeMinutes >=
-            row.original.periodTargetTalkTimeMinutes;
+            row.original.actualTalkTimeMinutes >= row.original.periodTargetTalkTimeMinutes;
           return (
             <div className="flex items-center gap-2">
               <div
                 className={`flex size-6 shrink-0 items-center justify-center rounded-full ${
-                  isOnTarget
-                    ? "bg-emerald-50 text-emerald-600"
-                    : "bg-amber-50 text-amber-600"
+                  isOnTarget ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
                 }`}
               >
                 {isOnTarget ? (
@@ -576,11 +528,7 @@ export default function KpiTable() {
                 <div className="relative h-2 rounded-full bg-muted overflow-hidden">
                   <div
                     className={`h-full transition-all duration-300 ${
-                      isComplete
-                        ? "bg-emerald-500"
-                        : isGood
-                          ? "bg-blue-500"
-                          : "bg-amber-500"
+                      isComplete ? "bg-emerald-500" : isGood ? "bg-blue-500" : "bg-amber-500"
                     }`}
                     role="progressbar"
                     aria-valuemin={0}
@@ -662,8 +610,7 @@ export default function KpiTable() {
         enableSorting: false,
         cell: ({ row }) => {
           const rowSaving =
-            savingEmployeeId === row.original.employeeExternalId &&
-            updateKpiMutation.isPending;
+            savingEmployeeId === row.original.employeeExternalId && updateKpiMutation.isPending;
           return (
             <Button
               type="button"
@@ -672,9 +619,7 @@ export default function KpiTable() {
               disabled={rowSaving || isApplyingBulkKpi}
               className="touch-action-manipulation"
               aria-label={`Открыть настройки KPI для ${row.original.name}`}
-              onClick={() =>
-                setEditingEmployeeId(row.original.employeeExternalId)
-              }
+              onClick={() => setEditingEmployeeId(row.original.employeeExternalId)}
             >
               {rowSaving ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -687,12 +632,7 @@ export default function KpiTable() {
         meta: { headerTitle: "Настройки" },
       },
     ],
-    [
-      formatRub,
-      isApplyingBulkKpi,
-      savingEmployeeId,
-      updateKpiMutation.isPending,
-    ],
+    [formatRub, isApplyingBulkKpi, savingEmployeeId, updateKpiMutation.isPending],
   );
 
   const table = useReactTable({
@@ -745,9 +685,7 @@ export default function KpiTable() {
       return `"${normalized}"`;
     };
 
-    const csv = [header, ...lines]
-      .map((row) => row.map(escapeCsvValue).join(";"))
-      .join("\n");
+    const csv = [header, ...lines].map((row) => row.map(escapeCsvValue).join(";")).join("\n");
     const blob = new Blob([`\uFEFF${csv}`], {
       type: "text/csv;charset=utf-8;",
     });
@@ -764,8 +702,7 @@ export default function KpiTable() {
   const editingRow =
     editingEmployeeId == null
       ? null
-      : (rows.find((row) => row.employeeExternalId === editingEmployeeId) ??
-        null);
+      : (rows.find((row) => row.employeeExternalId === editingEmployeeId) ?? null);
   const editingDraft = editingRow
     ? (draftsByEmployeeId[editingRow.employeeExternalId] ?? {
         baseSalary: editingRow.baseSalary,
@@ -780,9 +717,7 @@ export default function KpiTable() {
     <Card className="card p-0! overflow-hidden mt-6">
       <div className="py-5 px-6 border-b border-border bg-muted/30 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="section-title m-0 flex items-center gap-2">
-            Расчет KPI сотрудников
-          </h3>
+          <h3 className="section-title m-0 flex items-center gap-2">Расчет KPI сотрудников</h3>
           <p className="text-sm text-muted-foreground mt-1">
             Период: {dFrom} — {dTo}
           </p>
@@ -795,9 +730,7 @@ export default function KpiTable() {
             className="touch-action-manipulation"
             disabled={rows.length === 0 || isApplyingBulkKpi}
           >
-            {isApplyingBulkKpi && (
-              <Loader2 className="size-4 animate-spin mr-2" aria-hidden />
-            )}
+            {isApplyingBulkKpi && <Loader2 className="size-4 animate-spin mr-2" aria-hidden />}
             Применить KPI всем
           </Button>
           <Button
@@ -818,13 +751,8 @@ export default function KpiTable() {
                 className="min-w-52 justify-start text-left font-normal touch-action-manipulation"
                 aria-label="Выбор месяца KPI"
               >
-                <CalendarIcon
-                  className="size-4 shrink-0 opacity-70 mr-2"
-                  aria-hidden
-                />
-                <span className="truncate">
-                  {monthLabel(normalizedMonthValue)}
-                </span>
+                <CalendarIcon className="size-4 shrink-0 opacity-70 mr-2" aria-hidden />
+                <span className="truncate">{monthLabel(normalizedMonthValue)}</span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -836,10 +764,7 @@ export default function KpiTable() {
                 endMonth={
                   new Date(
                     Number.parseInt(currentMonthValue.split("-")[0] ?? "0", 10),
-                    Number.parseInt(
-                      currentMonthValue.split("-")[1] ?? "1",
-                      10,
-                    ) - 1,
+                    Number.parseInt(currentMonthValue.split("-")[1] ?? "1", 10) - 1,
                     1,
                   )
                 }
@@ -849,8 +774,7 @@ export default function KpiTable() {
                 }}
                 disabled={() => true}
                 formatters={{
-                  formatCaption: (date) =>
-                    format(date, "LLLL yyyy", { locale: ru }),
+                  formatCaption: (date) => format(date, "LLLL yyyy", { locale: ru }),
                 }}
               />
             </PopoverContent>
@@ -987,9 +911,7 @@ export default function KpiTable() {
               {editingRow ? (
                 <span>
                   Изменение параметров KPI для{" "}
-                  <span className="font-medium text-foreground">
-                    {editingRow.name}
-                  </span>
+                  <span className="font-medium text-foreground">{editingRow.name}</span>
                 </span>
               ) : (
                 "Изменение KPI сотрудника"
@@ -1016,18 +938,11 @@ export default function KpiTable() {
                   className="text-base tabular-nums touch-action-manipulation"
                   value={editingDraft.baseSalary}
                   onChange={(e) =>
-                    setDraftField(
-                      editingRow.employeeExternalId,
-                      "baseSalary",
-                      e.target.value,
-                    )
+                    setDraftField(editingRow.employeeExternalId, "baseSalary", e.target.value)
                   }
                   aria-describedby="kpi-base-salary-hint"
                 />
-                <p
-                  id="kpi-base-salary-hint"
-                  className="text-xs text-muted-foreground"
-                >
+                <p id="kpi-base-salary-hint" className="text-xs text-muted-foreground">
                   Ежемесячный базовый оклад сотрудника
                 </p>
               </div>
@@ -1049,18 +964,11 @@ export default function KpiTable() {
                   className="text-base tabular-nums touch-action-manipulation"
                   value={editingDraft.targetBonus}
                   onChange={(e) =>
-                    setDraftField(
-                      editingRow.employeeExternalId,
-                      "targetBonus",
-                      e.target.value,
-                    )
+                    setDraftField(editingRow.employeeExternalId, "targetBonus", e.target.value)
                   }
                   aria-describedby="kpi-target-bonus-hint"
                 />
-                <p
-                  id="kpi-target-bonus-hint"
-                  className="text-xs text-muted-foreground"
-                >
+                <p id="kpi-target-bonus-hint" className="text-xs text-muted-foreground">
                   Бонус при 100% выполнении KPI
                 </p>
               </div>
@@ -1090,10 +998,7 @@ export default function KpiTable() {
                   }
                   aria-describedby="kpi-target-talk-time-hint"
                 />
-                <p
-                  id="kpi-target-talk-time-hint"
-                  className="text-xs text-muted-foreground"
-                >
+                <p id="kpi-target-talk-time-hint" className="text-xs text-muted-foreground">
                   Минимальное время разговоров для получения полного бонуса
                 </p>
               </div>
@@ -1113,8 +1018,7 @@ export default function KpiTable() {
               disabled={
                 !editingRow ||
                 isApplyingBulkKpi ||
-                (savingEmployeeId === editingRow.employeeExternalId &&
-                  updateKpiMutation.isPending)
+                (savingEmployeeId === editingRow.employeeExternalId && updateKpiMutation.isPending)
               }
               className="touch-action-manipulation"
               onClick={() => {
@@ -1140,8 +1044,7 @@ export default function KpiTable() {
           <DialogHeader>
             <DialogTitle>Применить KPI всем сотрудникам</DialogTitle>
             <DialogDescription>
-              Значения будут установлены одинаковыми для всех сотрудников из
-              текущей таблицы.
+              Значения будут установлены одинаковыми для всех сотрудников из текущей таблицы.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1234,9 +1137,7 @@ export default function KpiTable() {
               disabled={isApplyingBulkKpi}
               className="touch-action-manipulation"
             >
-              {isApplyingBulkKpi && (
-                <Loader2 className="size-4 animate-spin mr-2" aria-hidden />
-              )}
+              {isApplyingBulkKpi && <Loader2 className="size-4 animate-spin mr-2" aria-hidden />}
               Применить всем
             </Button>
           </DialogFooter>

@@ -64,8 +64,7 @@ export const evaluateCallFn = inngest.createFunction(
       return callsService.getTranscriptByCallId(callId);
     });
 
-    const transcriptText =
-      transcript?.text?.trim() ?? transcript?.rawText?.trim() ?? "";
+    const transcriptText = transcript?.text?.trim() ?? transcript?.rawText?.trim() ?? "";
     if (!transcriptText) {
       logger.warn("Транскрипт пуст — пропускаем оценку", { callId });
       return { callId, skipped: true, reason: "empty_transcript" };
@@ -82,11 +81,10 @@ export const evaluateCallFn = inngest.createFunction(
       );
 
       if (user) {
-        const settings =
-          await userWorkspaceSettingsRepository.findByUserAndWorkspace(
-            user.id,
-            call.workspaceId,
-          );
+        const settings = await userWorkspaceSettingsRepository.findByUserAndWorkspace(
+          user.id,
+          call.workspaceId,
+        );
         const evalSettings = settings?.evaluationSettings as
           | { templateSlug?: string; customInstructions?: string }
           | null
@@ -99,22 +97,17 @@ export const evaluateCallFn = inngest.createFunction(
       }
 
       if (!userHasTemplate) {
-        const defaultTemplate =
-          await workspaceSettingsRepository.findByKeyWithDefault(
-            "evaluation_default_template",
-            call.workspaceId,
-            DEFAULT_TEMPLATE,
-          );
+        const defaultTemplate = await workspaceSettingsRepository.findByKeyWithDefault(
+          "evaluation_default_template",
+          call.workspaceId,
+          DEFAULT_TEMPLATE,
+        );
         if (defaultTemplate) {
           templateSlug = defaultTemplate;
         }
       }
 
-      return resolveEvaluationPrompt(
-        call.workspaceId,
-        templateSlug,
-        customInstructions,
-      );
+      return resolveEvaluationPrompt(call.workspaceId, templateSlug, customInstructions);
     });
 
     const workspace = await step.run("get-workspace", async () => {

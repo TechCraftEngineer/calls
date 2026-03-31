@@ -20,25 +20,19 @@ export const updateKpiSettings = workspaceProcedure
       });
 
     const user = await usersService.getUser(input.user_id);
-    if (!user)
-      throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+    if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(
-        input.user_id,
-        context.workspaceId,
-        {
-          kpiBaseSalary: input.data.kpiBaseSalary,
-          kpiTargetBonus: input.data.kpiTargetBonus,
-          kpiTargetTalkTimeMinutes: input.data.kpiTargetTalkTimeMinutes,
-        },
-      );
+      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+        kpiBaseSalary: input.data.kpiBaseSalary,
+        kpiTargetBonus: input.data.kpiTargetBonus,
+        kpiTargetTalkTimeMinutes: input.data.kpiTargetTalkTimeMinutes,
+      });
 
       await logUpdate(
         "KPI settings updated",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         undefined,
         context.workspaceId,
       );
@@ -48,8 +42,7 @@ export const updateKpiSettings = workspaceProcedure
       await logUpdate(
         "update user KPI settings",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         error,
         context.workspaceId,
       );

@@ -4,8 +4,8 @@
  * @see https://github.com/Borewit/music-metadata
  */
 
-import { parseBuffer } from "music-metadata";
 import { createLogger } from "@calls/logger";
+import { parseBuffer } from "music-metadata";
 import { safeAudioUrlParts } from "./audio-preprocessing";
 
 const logger = createLogger("asr-audio-duration");
@@ -14,9 +14,7 @@ const logger = createLogger("asr-audio-duration");
  * Возвращает длительность аудио в секундах по буферу (например, после загрузки с FTP).
  * Не зависит от ASR/LLM сервисов.
  */
-export async function getAudioDurationFromBuffer(
-  buffer: Buffer,
-): Promise<number | undefined> {
+export async function getAudioDurationFromBuffer(buffer: Buffer): Promise<number | undefined> {
   try {
     const metadata = await parseBuffer(buffer, undefined, { duration: true });
     const duration = metadata.format.duration;
@@ -38,9 +36,7 @@ export async function getAudioDurationFromBuffer(
  * Возвращает длительность аудио в секундах по URL.
  * Не зависит от ASR/LLM сервисов.
  */
-export async function getAudioDurationFromUrl(
-  audioUrl: string,
-): Promise<number | undefined> {
+export async function getAudioDurationFromUrl(audioUrl: string): Promise<number | undefined> {
   try {
     const res = await fetch(audioUrl, {
       headers: { Accept: "audio/*" },

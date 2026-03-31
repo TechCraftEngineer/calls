@@ -5,9 +5,5 @@ export function isValidCalendarIsoDate(value: string): boolean {
   const m = Number(value.slice(5, 7));
   const d = Number(value.slice(8, 10));
   const dt = new Date(Date.UTC(y, m - 1, d));
-  return (
-    dt.getUTCFullYear() === y &&
-    dt.getUTCMonth() === m - 1 &&
-    dt.getUTCDate() === d
-  );
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 }

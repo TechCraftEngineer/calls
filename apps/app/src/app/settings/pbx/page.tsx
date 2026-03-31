@@ -4,11 +4,7 @@ import { paths } from "@calls/config";
 import { Badge, Card, CardContent } from "@calls/ui";
 import Link from "next/link";
 import { useEffect } from "react";
-import {
-  PbxProviderLogo,
-  SettingsPageShell,
-  useSettings,
-} from "@/components/features/settings";
+import { PbxProviderLogo, SettingsPageShell, useSettings } from "@/components/features/settings";
 
 const PROVIDERS = [
   {
@@ -88,34 +84,22 @@ export default function SettingsPbxProvidersPage() {
         {PROVIDERS.map((provider) => (
           <div key={provider.id}>
             {provider.available && provider.href ? (
-              <Link
-                href={provider.href}
-                className="block transition-opacity hover:opacity-95"
-              >
+              <Link href={provider.href} className="block transition-opacity hover:opacity-95">
                 <Card className="h-full overflow-hidden transition-colors hover:border-primary/30 hover:shadow-md">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                       <PbxProviderLogo providerId={provider.id} />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <div className="text-sm font-semibold">
-                            {provider.name}
-                          </div>
+                          <div className="text-sm font-semibold">{provider.name}</div>
                           {megafonAtcActive ? (
                             <Badge variant="outline">АТС активна</Badge>
                           ) : (
-                            <Badge
-                              variant="outline"
-                              className="text-destructive"
-                            >
+                            <Badge variant="outline" className="text-destructive">
                               АТС не настроена
                             </Badge>
                           )}
-                          <Badge
-                            variant={
-                              megafonIntegrationActive ? "default" : "secondary"
-                            }
-                          >
+                          <Badge variant={megafonIntegrationActive ? "default" : "secondary"}>
                             {megafonIntegrationActive
                               ? "Интеграция активна"
                               : "Интеграция выключена"}
@@ -123,11 +107,7 @@ export default function SettingsPbxProvidersPage() {
                         </div>
                         <div className="mt-3 flex flex-wrap gap-1.5">
                           {provider.features.map((feature) => (
-                            <Badge
-                              key={feature}
-                              variant="secondary"
-                              className="bg-muted px-2 py-0"
-                            >
+                            <Badge key={feature} variant="secondary" className="bg-muted px-2 py-0">
                               {feature}
                             </Badge>
                           ))}

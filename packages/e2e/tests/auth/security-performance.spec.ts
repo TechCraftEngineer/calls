@@ -84,9 +84,7 @@ test.describe("Безопасность и производительность 
       expect(parseInt(htmlResponse.size, 10)).toBeLessThan(100000); // 100KB
     }
 
-    console.log(
-      `Загружено ${cssResponses.length} CSS файлов, ${jsResponses.length} JS файлов`,
-    );
+    console.log(`Загружено ${cssResponses.length} CSS файлов, ${jsResponses.length} JS файлов`);
   });
 
   test("защита паролей в DOM", async ({ page }) => {
@@ -131,12 +129,10 @@ test.describe("Безопасность и производительность 
 
     if (headers) {
       // Проверяем наличие важных заголовков безопасности
-      expect(
-        headers["x-frame-options"] || headers["X-Frame-Options"],
-      ).toBeTruthy();
-      expect(
-        headers["x-content-type-options"] || headers["X-Content-Type-Options"],
-      ).toBe("nosniff");
+      expect(headers["x-frame-options"] || headers["X-Frame-Options"]).toBeTruthy();
+      expect(headers["x-content-type-options"] || headers["X-Content-Type-Options"]).toBe(
+        "nosniff",
+      );
     }
   });
 
@@ -162,8 +158,7 @@ test.describe("Безопасность и производительность 
 
     // Ждём ответа
     await page.waitForResponse(
-      (response) =>
-        response.url().includes("/api/auth") && response.status() === 200,
+      (response) => response.url().includes("/api/auth") && response.status() === 200,
     );
 
     const responseTime = Date.now() - startTime;

@@ -17,16 +17,12 @@ type AuthWithInternalContext = {
       ) => Promise<{ id: string } | Array<{ id: string }> | null | undefined>;
       findAccounts: (
         userId: string,
-      ) => Promise<
-        Array<{ providerId: string; accountId: string; userId: string }>
-      >;
+      ) => Promise<Array<{ providerId: string; accountId: string; userId: string }>>;
     };
   }>;
 };
 
-function isAuthWithInternalContext(
-  auth: unknown,
-): auth is AuthWithInternalContext {
+function isAuthWithInternalContext(auth: unknown): auth is AuthWithInternalContext {
   const ctx =
     auth != null && typeof auth === "object" && "$context" in auth
       ? (auth as { $context?: unknown }).$context
@@ -59,9 +55,7 @@ export const checkUserPassword = publicProcedure
         });
       }
 
-      const users = await internalAdapter.findUserByEmail(
-        input.email.toLowerCase().trim(),
-      );
+      const users = await internalAdapter.findUserByEmail(input.email.toLowerCase().trim());
 
       if (!users || (Array.isArray(users) && users.length === 0)) {
         return { hasPassword: false, exists: false };

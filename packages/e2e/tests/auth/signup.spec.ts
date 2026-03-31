@@ -8,31 +8,23 @@ test.describe("Страница регистрации", () => {
   test("отображает форму регистрации", async ({ page }) => {
     // Проверяем основные элементы страницы
     await expect(page.locator("h1")).toContainText("Регистрация");
-    await expect(
-      page.locator("text=Создайте аккаунт QBS Звонки"),
-    ).toBeVisible();
+    await expect(page.locator("text=Создайте аккаунт QBS Звонки")).toBeVisible();
 
     // Проверяем поля формы
     await expect(page.locator("#email")).toBeVisible();
     await expect(page.locator("#givenName")).toBeVisible();
     await expect(page.locator("#familyName")).toBeVisible();
     await expect(page.locator("#password")).toBeVisible();
-    await expect(page.locator('button[type="submit"]')).toContainText(
-      "Зарегистрироваться",
-    );
+    await expect(page.locator('button[type="submit"]')).toContainText("Зарегистрироваться");
   });
 
-  test("показывает ошибки валидации для пустых обязательных полей", async ({
-    page,
-  }) => {
+  test("показывает ошибки валидации для пустых обязательных полей", async ({ page }) => {
     await page.click('button[type="submit"]');
 
     // Проверяем ошибки валидации для обязательных полей
     await expect(page.locator("text=Введите корректный email")).toBeVisible();
     await expect(page.locator("text=Имя обязательно")).toBeVisible();
-    await expect(
-      page.locator("text=Пароль должен содержать минимум 8 символов"),
-    ).toBeVisible();
+    await expect(page.locator("text=Пароль должен содержать минимум 8 символов")).toBeVisible();
   });
 
   test("показывает ошибку для некорректного email", async ({ page }) => {
@@ -50,9 +42,7 @@ test.describe("Страница регистрации", () => {
     await page.fill("#password", "123");
     await page.click('button[type="submit"]');
 
-    await expect(
-      page.locator("text=Пароль должен содержать минимум 8 символов"),
-    ).toBeVisible();
+    await expect(page.locator("text=Пароль должен содержать минимум 8 символов")).toBeVisible();
   });
 
   test("успешно отправляет форму с валидными данными", async ({ page }) => {
@@ -63,17 +53,13 @@ test.describe("Страница регистрации", () => {
 
     // Перехватываем запрос регистрации
     const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes("/api/auth") &&
-        response.request().method() === "POST",
+      (response) => response.url().includes("/api/auth") && response.request().method() === "POST",
     );
 
     await page.click('button[type="submit"]');
 
     // Проверяем, что кнопка показывает состояние загрузки
-    await expect(page.locator('button[type="submit"]')).toContainText(
-      "Регистрация…",
-    );
+    await expect(page.locator('button[type="submit"]')).toContainText("Регистрация…");
 
     await responsePromise;
   });
@@ -84,9 +70,7 @@ test.describe("Страница регистрации", () => {
     await page.fill("#password", "Password123");
 
     const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes("/api/auth") &&
-        response.request().method() === "POST",
+      (response) => response.url().includes("/api/auth") && response.request().method() === "POST",
     );
 
     await page.click('button[type="submit"]');
@@ -115,10 +99,7 @@ test.describe("Страница регистрации", () => {
 
     await expect(emailField).toHaveAttribute("autocomplete", "email");
     await expect(givenNameField).toHaveAttribute("autocomplete", "given-name");
-    await expect(familyNameField).toHaveAttribute(
-      "autocomplete",
-      "family-name",
-    );
+    await expect(familyNameField).toHaveAttribute("autocomplete", "family-name");
     await expect(passwordField).toHaveAttribute("autocomplete", "new-password");
   });
 
@@ -128,9 +109,7 @@ test.describe("Страница регистрации", () => {
     await page.fill("#password", "Password123");
 
     const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes("/api/auth") &&
-        response.request().method() === "POST",
+      (response) => response.url().includes("/api/auth") && response.request().method() === "POST",
     );
 
     await page.press("#password", "Enter");
@@ -159,28 +138,14 @@ test.describe("Страница регистрации", () => {
   });
 
   test("проверяет плейсхолдеры полей", async ({ page }) => {
-    await expect(page.locator("#email")).toHaveAttribute(
-      "placeholder",
-      "example@mail.com",
-    );
-    await expect(page.locator("#givenName")).toHaveAttribute(
-      "placeholder",
-      "Иван",
-    );
-    await expect(page.locator("#familyName")).toHaveAttribute(
-      "placeholder",
-      "Иванов",
-    );
-    await expect(page.locator("#password")).toHaveAttribute(
-      "placeholder",
-      "••••••••",
-    );
+    await expect(page.locator("#email")).toHaveAttribute("placeholder", "example@mail.com");
+    await expect(page.locator("#givenName")).toHaveAttribute("placeholder", "Иван");
+    await expect(page.locator("#familyName")).toHaveAttribute("placeholder", "Иванов");
+    await expect(page.locator("#password")).toHaveAttribute("placeholder", "••••••••");
   });
 
   test("проверяет копирайт", async ({ page }) => {
     const currentYear = new Date().getFullYear();
-    await expect(
-      page.locator(`text=© ${currentYear} QBS Звонки`),
-    ).toBeVisible();
+    await expect(page.locator(`text=© ${currentYear} QBS Звонки`)).toBeVisible();
   });
 });

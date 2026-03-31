@@ -6,9 +6,7 @@ interface SettingsPageShellProps {
   children: React.ReactNode;
 }
 
-export default function SettingsPageShell({
-  children,
-}: SettingsPageShellProps) {
+export default function SettingsPageShell({ children }: SettingsPageShellProps) {
   return <div className="space-y-8">{children}</div>;
 }
 

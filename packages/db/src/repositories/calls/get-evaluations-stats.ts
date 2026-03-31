@@ -1,17 +1,4 @@
-import {
-  and,
-  asc,
-  avg,
-  count,
-  eq,
-  gte,
-  inArray,
-  isNotNull,
-  lt,
-  lte,
-  sql,
-  sum,
-} from "drizzle-orm";
+import { and, asc, avg, count, eq, gte, inArray, isNotNull, lt, lte, sql, sum } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
@@ -36,27 +23,16 @@ export interface ManagerStatsRow {
 export async function getEvaluationsStats(
   params: GetEvaluationsStatsParams,
 ): Promise<Record<string, ManagerStatsRow>> {
-  const {
-    workspaceId,
-    dateFrom,
-    dateTo,
-    internalNumbers,
-    excludePhoneNumbers,
-  } = params;
+  const { workspaceId, dateFrom, dateTo, internalNumbers, excludePhoneNumbers } = params;
 
   const conditions = [];
-  if (workspaceId != null)
-    conditions.push(eq(schema.calls.workspaceId, workspaceId));
-  if (dateFrom)
-    conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
+  if (workspaceId != null) conditions.push(eq(schema.calls.workspaceId, workspaceId));
+  if (dateFrom) conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
   if (dateTo) conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
   if (internalNumbers?.length) {
     conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
   }
-  const excludeConditionStats = buildExcludePhoneCondition(
-    excludePhoneNumbers,
-    schema.calls,
-  );
+  const excludeConditionStats = buildExcludePhoneCondition(excludePhoneNumbers, schema.calls);
   if (excludeConditionStats) {
     conditions.push(excludeConditionStats);
   }
@@ -71,19 +47,11 @@ export async function getEvaluationsStats(
     })
     .from(schema.calls)
     .leftJoin(schema.files, eq(schema.calls.fileId, schema.files.id))
-    .leftJoin(
-      schema.callEvaluations,
-      eq(schema.calls.id, schema.callEvaluations.callId),
-    )
-    .groupBy(
-      schema.calls.internalNumber,
-      schema.calls.name,
-      schema.calls.direction,
-    )
+    .leftJoin(schema.callEvaluations, eq(schema.calls.id, schema.callEvaluations.callId))
+    .groupBy(schema.calls.internalNumber, schema.calls.name, schema.calls.direction)
     .$dynamic();
 
-  const results =
-    conditions.length > 0 ? await query.where(and(...conditions)) : await query;
+  const results = conditions.length > 0 ? await query.where(and(...conditions)) : await query;
 
   const stats: Record<string, ManagerStatsRow> = {};
 
@@ -101,15 +69,13 @@ export async function getEvaluationsStats(
     const dir = String(row.direction ?? "")
       .trim()
       .toLowerCase();
-    const target =
-      dir === "inbound" ? stats[key].incoming : stats[key].outgoing;
+    const target = dir === "inbound" ? stats[key].incoming : stats[key].outgoing;
 
     const totalCalls = Number(row.totalCalls ?? 0);
     const totalDuration = Number(row.totalDuration ?? 0);
     target.count += totalCalls;
     target.totalDuration = Number(target.totalDuration ?? 0) + totalDuration;
-    target.duration =
-      target.count > 0 ? Number(target.totalDuration ?? 0) / target.count : 0;
+    target.duration = target.count > 0 ? Number(target.totalDuration ?? 0) / target.count : 0;
   }
 
   // Агрегаты оценок по менеджерам (avg rating, avg value, evaluated count)
@@ -123,23 +89,17 @@ export async function getEvaluationsStats(
       evaluatedCount: count(schema.callEvaluations.managerScore),
     })
     .from(schema.calls)
-    .innerJoin(
-      schema.callEvaluations,
-      eq(schema.calls.id, schema.callEvaluations.callId),
-    )
+    .innerJoin(schema.callEvaluations, eq(schema.calls.id, schema.callEvaluations.callId))
     .groupBy(schema.calls.name, schema.calls.internalNumber)
     .$dynamic();
 
   const evalResults =
-    evalConditions.length > 0
-      ? await evalQuery.where(and(...evalConditions))
-      : await evalQuery;
+    evalConditions.length > 0 ? await evalQuery.where(and(...evalConditions)) : await evalQuery;
 
   for (const row of evalResults) {
     const key = row.managerName ?? row.internalNumber ?? "Unknown";
     if (stats[key]) {
-      stats[key].avgManagerScore =
-        row.avgManagerScore != null ? Number(row.avgManagerScore) : null;
+      stats[key].avgManagerScore = row.avgManagerScore != null ? Number(row.avgManagerScore) : null;
       stats[key].evaluatedCount = Number(row.evaluatedCount ?? 0);
     }
   }
@@ -179,23 +139,16 @@ export async function getCallSummariesByManager(
   } = params;
 
   const safeLimitPerManager =
-    Number.isFinite(limitPerManager) && limitPerManager > 0
-      ? Math.floor(limitPerManager)
-      : 3;
+    Number.isFinite(limitPerManager) && limitPerManager > 0 ? Math.floor(limitPerManager) : 3;
 
   const conditions = [];
-  if (workspaceId != null)
-    conditions.push(eq(schema.calls.workspaceId, workspaceId));
-  if (dateFrom)
-    conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
+  if (workspaceId != null) conditions.push(eq(schema.calls.workspaceId, workspaceId));
+  if (dateFrom) conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
   if (dateTo) conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
   if (internalNumbers?.length) {
     conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
   }
-  const excludeCondition = buildExcludePhoneCondition(
-    excludePhoneNumbers,
-    schema.calls,
-  );
+  const excludeCondition = buildExcludePhoneCondition(excludePhoneNumbers, schema.calls);
   if (excludeCondition) {
     conditions.push(excludeCondition);
   }
@@ -213,10 +166,7 @@ export async function getCallSummariesByManager(
       )`.as("rn"),
     })
     .from(schema.calls)
-    .innerJoin(
-      schema.transcripts,
-      eq(schema.calls.id, schema.transcripts.callId),
-    )
+    .innerJoin(schema.transcripts, eq(schema.calls.id, schema.transcripts.callId))
     .where(and(...conditions))
     .as("ranked_summaries");
 
@@ -271,16 +221,12 @@ export async function getLowRatedCallsCount(
     lt(schema.callEvaluations.managerScore, maxScore),
     eq(schema.callEvaluations.isQualityAnalyzable, true),
   ];
-  if (dateFrom)
-    conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
+  if (dateFrom) conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
   if (dateTo) conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
   if (internalNumbers?.length) {
     conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
   }
-  const excludeConditionLowRated = buildExcludePhoneCondition(
-    excludePhoneNumbers,
-    schema.calls,
-  );
+  const excludeConditionLowRated = buildExcludePhoneCondition(excludePhoneNumbers, schema.calls);
   if (excludeConditionLowRated) {
     conditions.push(excludeConditionLowRated);
   }
@@ -292,10 +238,7 @@ export async function getLowRatedCallsCount(
       count: count(),
     })
     .from(schema.calls)
-    .innerJoin(
-      schema.callEvaluations,
-      eq(schema.calls.id, schema.callEvaluations.callId),
-    )
+    .innerJoin(schema.callEvaluations, eq(schema.calls.id, schema.callEvaluations.callId))
     .where(and(...conditions))
     .groupBy(schema.calls.name, schema.calls.internalNumber);
 

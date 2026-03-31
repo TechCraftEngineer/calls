@@ -32,8 +32,7 @@ const DEFAULT_FALLBACK: CallEvaluationResult = {
   isQualityAnalyzable: true,
   notAnalyzableReason: null,
   valueScore: 3,
-  valueExplanation:
-    "Оценка недоступна — недостаточно данных или AI не настроен",
+  valueExplanation: "Оценка недоступна — недостаточно данных или AI не настроен",
   managerScore: 3,
   managerFeedback: "Оценка недоступна",
 };
@@ -90,28 +89,14 @@ export async function evaluateCallWithLlm(
   }
 
   const schema = z.object({
-    is_quality_analyzable: z
-      .boolean()
-      .describe("Можно ли оценивать качество менеджера по звонку"),
+    is_quality_analyzable: z.boolean().describe("Можно ли оценивать качество менеджера по звонку"),
     not_analyzable_reason: z
       .string()
       .nullable()
       .describe('Причина неанализируемости (например, "autoanswerer")'),
-    value_score: z
-      .number()
-      .min(1)
-      .max(5)
-      .nullable()
-      .describe("Ценность звонка для бизнеса (1–5)"),
-    value_explanation: z
-      .string()
-      .describe("Краткое объяснение оценки ценности (1–2 предложения)"),
-    manager_score: z
-      .number()
-      .min(1)
-      .max(5)
-      .nullable()
-      .describe("Качество работы менеджера (1–5)"),
+    value_score: z.number().min(1).max(5).nullable().describe("Ценность звонка для бизнеса (1–5)"),
+    value_explanation: z.string().describe("Краткое объяснение оценки ценности (1–2 предложения)"),
+    manager_score: z.number().min(1).max(5).nullable().describe("Качество работы менеджера (1–5)"),
     manager_feedback: z
       .string()
       .describe("Обратная связь по коммуникации менеджера (1–2 предложения)"),
@@ -121,8 +106,7 @@ export async function evaluateCallWithLlm(
     ? `КОНТЕКСТ КОМПАНИИ:\n${options.companyContext.trim()}\n\nКРИТИЧЕСКИ ВАЖНО: Используй ТОЧНО это название компании при оценке. НЕ изменяй написание, НЕ транслитерируй, НЕ переводи. Учитывай специфику бизнеса при оценке value_score и manager_score.\n\n`
     : "";
 
-  const evaluationPrompt =
-    companyBlock + (options.evaluationPrompt || EVALUATION_SYSTEM_PROMPT);
+  const evaluationPrompt = companyBlock + (options.evaluationPrompt || EVALUATION_SYSTEM_PROMPT);
 
   try {
     const { output: result } = await generateWithAi({

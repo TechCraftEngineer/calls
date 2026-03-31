@@ -24,10 +24,7 @@ import type { PbxSectionProps } from "../types";
 
 function getWebhookBaseUrl(): string {
   if (typeof window !== "undefined") {
-    return (
-      process.env.NEXT_PUBLIC_APP_URL?.replace(/\/?$/, "") ||
-      window.location.origin
-    );
+    return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/?$/, "") || window.location.origin;
   }
   return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/?$/, "") ?? "";
 }
@@ -126,12 +123,8 @@ export default function MegaPbxSection({
     if (typeof window === "undefined") return;
 
     const savedTab = window.localStorage.getItem(STORAGE_KEYS.tab);
-    const savedEmployeeSearch = window.localStorage.getItem(
-      STORAGE_KEYS.employeeSearch,
-    );
-    const savedNumberSearch = window.localStorage.getItem(
-      STORAGE_KEYS.numberSearch,
-    );
+    const savedEmployeeSearch = window.localStorage.getItem(STORAGE_KEYS.employeeSearch);
+    const savedNumberSearch = window.localStorage.getItem(STORAGE_KEYS.numberSearch);
 
     if (savedTab) setActiveTab(savedTab);
     if (savedEmployeeSearch) setEmployeeSearch(savedEmployeeSearch);
@@ -156,9 +149,8 @@ export default function MegaPbxSection({
               АТС
             </CardTitle>
             <CardDescription className="mt-1">
-              Подключение провайдера телефонии, синхронизация сотрудников,
-              номеров и звонков, а также ручная привязка к пользователям
-              компании.
+              Подключение провайдера телефонии, синхронизация сотрудников, номеров и звонков, а
+              также ручная привязка к пользователям компании.
             </CardDescription>
           </div>
           <label
@@ -182,18 +174,12 @@ export default function MegaPbxSection({
           <SummaryTile
             label="Статус"
             value={enabled ? "Включено" : "Выключено"}
-            hint={
-              enabled
-                ? "Интеграция участвует в синхронизации"
-                : "Интеграция не используется"
-            }
+            hint={enabled ? "Интеграция участвует в синхронизации" : "Интеграция не используется"}
           />
           <SummaryTile
             label="Подключение"
             value={hasConnection ? "Готово" : "Не настроено"}
-            hint={
-              hasConnection ? "Base URL и API key заданы" : "Заполните доступ"
-            }
+            hint={hasConnection ? "Base URL и API key заданы" : "Заполните доступ"}
           />
           <SummaryTile
             label="Сотрудники"

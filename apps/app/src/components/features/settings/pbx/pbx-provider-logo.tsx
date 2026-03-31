@@ -11,10 +11,7 @@ const LOGO_PATHS: Record<string, string> = {
   beeline: "/pbx-logos/beeline.svg",
 };
 
-const FALLBACK_SVG: Record<
-  string,
-  { viewBox: string; content: React.ReactNode }
-> = {
+const FALLBACK_SVG: Record<string, { viewBox: string; content: React.ReactNode }> = {
   megafon: {
     viewBox: "0 0 32 32",
     content: (
@@ -42,10 +39,7 @@ const FALLBACK_SVG: Record<
     content: (
       <>
         <circle cx="16" cy="16" r="14" fill="#E30611" />
-        <path
-          fill="#fff"
-          d="M12 12h2v8h-2zm6 0h2v8h-2zm-4 2h2v4h-2zm-4 2h2v2h-2zm8 0h2v2h-2z"
-        />
+        <path fill="#fff" d="M12 12h2v8h-2zm6 0h2v8h-2zm-4 2h2v4h-2zm-4 2h2v2h-2zm8 0h2v2h-2z" />
       </>
     ),
   },
@@ -90,10 +84,7 @@ export function PbxProviderLogo({
           className={`object-contain ${muted ? "opacity-60" : ""}`}
         />
       ) : fallbackSvg ? (
-        <svg
-          viewBox={fallbackSvg.viewBox}
-          className={`size-6 ${muted ? "opacity-60" : ""}`}
-        >
+        <svg viewBox={fallbackSvg.viewBox} className={`size-6 ${muted ? "opacity-60" : ""}`}>
           {fallbackSvg.content}
         </svg>
       ) : null}

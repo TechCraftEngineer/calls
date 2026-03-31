@@ -25,11 +25,7 @@ interface InviteResult {
   expiresAt: Date;
 }
 
-export default function InviteUserModal({
-  onClose,
-  onSubmit,
-  onCreateLink,
-}: InviteUserModalProps) {
+export default function InviteUserModal({ onClose, onSubmit, onCreateLink }: InviteUserModalProps) {
   const [result, setResult] = useState<InviteResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const modalRef = useFocusTrap<HTMLDivElement>(true);
@@ -64,11 +60,7 @@ export default function InviteUserModal({
       });
       toast.success("Приглашение отправлено");
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Не удалось отправить приглашение",
-      );
+      toast.error(error instanceof Error ? error.message : "Не удалось отправить приглашение");
     } finally {
       setIsLoading(false);
     }
@@ -85,9 +77,7 @@ export default function InviteUserModal({
       });
       toast.success("Ссылка-приглашение создана");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Не удалось создать ссылку",
-      );
+      toast.error(error instanceof Error ? error.message : "Не удалось создать ссылку");
     } finally {
       setIsLoading(false);
     }
@@ -118,18 +108,11 @@ export default function InviteUserModal({
           <div className="flex flex-col gap-6">
             <div className="flex justify-between items-start">
               <div>
-                <h1
-                  id="modal-title"
-                  className="text-xl font-bold text-gray-900 m-0"
-                >
+                <h1 id="modal-title" className="text-xl font-bold text-gray-900 m-0">
                   Пригласить в компанию
                 </h1>
-                <p
-                  id="modal-description"
-                  className="text-sm text-gray-600 mt-1 m-0"
-                >
-                  Добавьте нового участника или создайте ссылку для
-                  присоединения
+                <p id="modal-description" className="text-sm text-gray-600 mt-1 m-0">
+                  Добавьте нового участника или создайте ссылку для присоединения
                 </p>
               </div>
               <button

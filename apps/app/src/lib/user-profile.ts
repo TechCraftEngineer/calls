@@ -34,18 +34,10 @@ export function getDisplayName(u: UserLike): string {
  * Использует fallback к name.split() для обратной совместимости
  */
 export function extractUserFields(user: UserLike) {
-  const email = (user.email ??
-    user.username ??
-    user.displayUsername ??
-    user.name ??
-    "—") as string;
+  const email = (user.email ?? user.username ?? user.displayUsername ?? user.name ?? "—") as string;
 
-  const givenName = (user.givenName ??
-    user.name?.toString().split(" ")[0] ??
-    "") as string;
-  const familyName = (user.familyName ??
-    user.name?.toString().split(" ")[1] ??
-    "") as string;
+  const givenName = (user.givenName ?? user.name?.toString().split(" ")[0] ?? "") as string;
+  const familyName = (user.familyName ?? user.name?.toString().split(" ")[1] ?? "") as string;
   const internalExtensions = (user.internalExtensions ?? null) as string | null;
   const mobilePhones = (user.mobilePhones ?? null) as string | null;
   const telegramChatId = (user.telegramChatId ?? null) as string | null;

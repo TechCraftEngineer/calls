@@ -15,10 +15,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 
-function getInviteUrl(
-  inviteUrl: string | undefined,
-  token: string | undefined,
-): string {
+function getInviteUrl(inviteUrl: string | undefined, token: string | undefined): string {
   if (inviteUrl) return inviteUrl;
   if (!token || typeof window === "undefined") return "";
   const base = window.location.origin;
@@ -46,11 +43,7 @@ interface InviteUserModalProps {
   ) => Promise<{ token: string; inviteUrl: string; expiresAt: Date }>;
 }
 
-export default function InviteUserModal({
-  onClose,
-  onSubmit,
-  onCreateLink,
-}: InviteUserModalProps) {
+export default function InviteUserModal({ onClose, onSubmit, onCreateLink }: InviteUserModalProps) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "member">("member");
   const [submitting, setSubmitting] = useState(false);
@@ -125,9 +118,7 @@ export default function InviteUserModal({
       });
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Не удалось отправить приглашение. Попробуйте позже.",
+        err instanceof Error ? err.message : "Не удалось отправить приглашение. Попробуйте позже.",
       );
     } finally {
       setSubmitting(false);
@@ -224,13 +215,8 @@ export default function InviteUserModal({
                 </svg>
               </div>
               <div>
-                <h2
-                  id="invite-success-title"
-                  className="text-xl font-bold text-gray-900 m-0"
-                >
-                  {result.isLinkInvite
-                    ? "Ссылка-приглашение создана"
-                    : "Приглашение отправлено"}
+                <h2 id="invite-success-title" className="text-xl font-bold text-gray-900 m-0">
+                  {result.isLinkInvite ? "Ссылка-приглашение создана" : "Приглашение отправлено"}
                 </h2>
                 <p className="text-sm text-gray-600 mt-1 m-0">
                   {result.isLinkInvite ? (
@@ -265,10 +251,7 @@ export default function InviteUserModal({
           </div>
 
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <label
-              htmlFor="invite-link"
-              className="block text-xs font-semibold text-gray-700 mb-2"
-            >
+            <label htmlFor="invite-link" className="block text-xs font-semibold text-gray-700 mb-2">
               Ссылка для приглашения
             </label>
             <div className="flex min-w-0 gap-2">
@@ -327,16 +310,14 @@ export default function InviteUserModal({
             <p className="text-sm text-blue-900 m-0">
               {result.isLinkInvite ? (
                 <>
-                  <strong>Что дальше?</strong> Любой, у кого есть эта ссылка,
-                  сможет создать аккаунт и присоединиться к компании. Будьте
-                  осторожны при распространении ссылки.
+                  <strong>Что дальше?</strong> Любой, у кого есть эта ссылка, сможет создать аккаунт
+                  и присоединиться к компании. Будьте осторожны при распространении ссылки.
                 </>
               ) : (
                 <>
-                  <strong>Что дальше?</strong> Получатель перейдёт по ссылке,
-                  создаст аккаунт и автоматически получит доступ к компании. Вы
-                  также можете скопировать ссылку и отправить её любым удобным
-                  способом.
+                  <strong>Что дальше?</strong> Получатель перейдёт по ссылке, создаст аккаунт и
+                  автоматически получит доступ к компании. Вы также можете скопировать ссылку и
+                  отправить её любым удобным способом.
                 </>
               )}
             </p>
@@ -356,12 +337,7 @@ export default function InviteUserModal({
             >
               Пригласить ещё
             </Button>
-            <Button
-              type="button"
-              variant="dark"
-              onClick={handleClose}
-              className="flex-1"
-            >
+            <Button type="button" variant="dark" onClick={handleClose} className="flex-1">
               Готово
             </Button>
           </div>
@@ -384,10 +360,7 @@ export default function InviteUserModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center">
-          <h2
-            id="invite-modal-title"
-            className="text-xl font-bold text-gray-900 m-0"
-          >
+          <h2 id="invite-modal-title" className="text-xl font-bold text-gray-900 m-0">
             Пригласить участника
           </h2>
           <Button
@@ -474,10 +447,7 @@ export default function InviteUserModal({
 
           {inviteMode === "email" && (
             <div className="flex flex-col gap-2">
-              <label
-                htmlFor="invite-email"
-                className="text-sm font-semibold text-gray-700"
-              >
+              <label htmlFor="invite-email" className="text-sm font-semibold text-gray-700">
                 Email адрес
               </label>
               <Input
@@ -513,24 +483,16 @@ export default function InviteUserModal({
               <Field orientation="horizontal">
                 <RadioGroupItem value="member" id="invite-role-member" />
                 <FieldContent>
-                  <FieldLabel
-                    htmlFor="invite-role-member"
-                    className="font-normal"
-                  >
+                  <FieldLabel htmlFor="invite-role-member" className="font-normal">
                     {ROLE_LABELS.member}
                   </FieldLabel>
-                  <FieldDescription>
-                    {ROLE_DESCRIPTIONS.member}
-                  </FieldDescription>
+                  <FieldDescription>{ROLE_DESCRIPTIONS.member}</FieldDescription>
                 </FieldContent>
               </Field>
               <Field orientation="horizontal">
                 <RadioGroupItem value="admin" id="invite-role-admin" />
                 <FieldContent>
-                  <FieldLabel
-                    htmlFor="invite-role-admin"
-                    className="font-normal"
-                  >
+                  <FieldLabel htmlFor="invite-role-admin" className="font-normal">
                     {ROLE_LABELS.admin}
                   </FieldLabel>
                   <FieldDescription>{ROLE_DESCRIPTIONS.admin}</FieldDescription>
@@ -549,12 +511,7 @@ export default function InviteUserModal({
             >
               Отмена
             </Button>
-            <Button
-              type="submit"
-              variant="dark"
-              disabled={submitting}
-              className="flex-1"
-            >
+            <Button type="submit" variant="dark" disabled={submitting} className="flex-1">
               {submitting
                 ? inviteMode === "link"
                   ? "Создание ссылки…"

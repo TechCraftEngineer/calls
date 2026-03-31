@@ -25,12 +25,8 @@ export const createInvitation = workspaceAdminProcedure
         context.authUserId,
       );
 
-      const workspace = await invitationsService.workspacesService.getById(
-        input.workspaceId,
-      );
-      const inviter = await invitationsService.usersService.getUser(
-        context.authUserId,
-      );
+      const workspace = await invitationsService.workspacesService.getById(input.workspaceId);
+      const inviter = await invitationsService.usersService.getUser(context.authUserId);
 
       const inviteLink = `${env.APP_URL}${paths.invite.byToken(result.token)}`;
       await sendEmail({
@@ -50,8 +46,7 @@ export const createInvitation = workspaceAdminProcedure
         inviteUrl: inviteLink,
       };
     } catch (err) {
-      const rawMsg =
-        err instanceof Error ? err.message : "Ошибка создания приглашения";
+      const rawMsg = err instanceof Error ? err.message : "Ошибка создания приглашения";
 
       // Безопасные сообщения, которые можно показывать пользователю
       const safeMessages = [
@@ -66,9 +61,7 @@ export const createInvitation = workspaceAdminProcedure
         rawMsg.toLowerCase().includes(safeMsg.toLowerCase()),
       );
 
-      const msg = isSafeMessage
-        ? rawMsg
-        : "Не удалось отправить приглашение. Попробуйте позже.";
+      const msg = isSafeMessage ? rawMsg : "Не удалось отправить приглашение. Попробуйте позже.";
 
       throw new ORPCError("BAD_REQUEST", { message: msg });
     }

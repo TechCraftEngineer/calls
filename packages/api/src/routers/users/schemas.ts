@@ -30,10 +30,7 @@ export const userUpdateSchema = z.object({
   kpiTargetTalkTimeMinutes: z.number().optional(),
   telegramSkipWeekends: z.boolean().optional(),
   reportManagedUserIds: z.string().optional().nullable(),
-  evaluationTemplateSlug: z
-    .enum(["sales", "support", "general"])
-    .optional()
-    .nullable(),
+  evaluationTemplateSlug: z.enum(["sales", "support", "general"]).optional().nullable(),
   evaluationCustomInstructions: z.string().optional().nullable(),
 });
 
@@ -64,20 +61,12 @@ export const updateTelegramSettingsSchema = z.object({
    */
   reportDailyTime: z
     .string()
-    .regex(
-      /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
-      "Некорректный формат времени. Ожидается HH:MM",
-    )
+    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Некорректный формат времени. Ожидается HH:MM")
     .optional(),
-  reportWeeklyDay: z
-    .enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"])
-    .optional(),
+  reportWeeklyDay: z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]).optional(),
   reportWeeklyTime: z
     .string()
-    .regex(
-      /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
-      "Некорректный формат времени. Ожидается HH:MM",
-    )
+    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Некорректный формат времени. Ожидается HH:MM")
     .optional(),
   reportMonthlyDay: z
     .string()
@@ -89,10 +78,7 @@ export const updateTelegramSettingsSchema = z.object({
     .optional(),
   reportMonthlyTime: z
     .string()
-    .regex(
-      /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/,
-      "Некорректный формат времени. Ожидается HH:MM",
-    )
+    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Некорректный формат времени. Ожидается HH:MM")
     .optional(),
 });
 
@@ -110,30 +96,15 @@ export const updateReportSettingsSchema = z.object({
 });
 
 export const updateKpiSettingsSchema = z.object({
-  kpiBaseSalary: z
-    .number()
-    .min(0, "Значение не может быть отрицательным")
-    .optional(),
-  kpiTargetBonus: z
-    .number()
-    .min(0, "Значение не может быть отрицательным")
-    .optional(),
-  kpiTargetTalkTimeMinutes: z
-    .number()
-    .min(0, "Значение не может быть отрицательным")
-    .optional(),
+  kpiBaseSalary: z.number().min(0, "Значение не может быть отрицательным").optional(),
+  kpiTargetBonus: z.number().min(0, "Значение не может быть отрицательным").optional(),
+  kpiTargetTalkTimeMinutes: z.number().min(0, "Значение не может быть отрицательным").optional(),
 });
 
 export const updateFilterSettingsSchema = z.object({
   filterExcludeAnsweringMachine: z.boolean().optional(),
-  filterMinDuration: z
-    .number()
-    .min(0, "Значение не может быть отрицательным")
-    .optional(),
-  filterMinReplicas: z
-    .number()
-    .min(0, "Значение не может быть отрицательным")
-    .optional(),
+  filterMinDuration: z.number().min(0, "Значение не может быть отрицательным").optional(),
+  filterMinReplicas: z.number().min(0, "Значение не может быть отрицательным").optional(),
 });
 
 export const updateReportParamsSettingsSchema = z.object({

@@ -55,22 +55,14 @@ export const env = createEnv({
     YANDEX_SPEECHKIT_API_KEY: z.string().optional(),
     YANDEX_SPEECHKIT_ENABLED: z.stringbool().default(true),
     /** Giga AM (HTTP) sync endpoint */
-    GIGA_AM_TRANSCRIBE_URL: z
-      .url()
-      .default("https://vnggncb-giga-am.hf.space/api/transcribe"),
+    GIGA_AM_TRANSCRIBE_URL: z.url().default("https://vnggncb-giga-am.hf.space/api/transcribe"),
     GIGA_AM_ENABLED: z.stringbool().default(true),
     /** Оценка себестоимости ASR (руб/сек) для расчёта в UI */
     GIGA_AM_RATE_RUB_PER_SECOND: z.coerce.number().positive().default(0.01),
     ASSEMBLYAI_RATE_USD_PER_HOUR: z.coerce.number().positive().default(0.23),
     RUB_PER_USD: z.coerce.number().positive().default(90),
-    YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND: z.coerce
-      .number()
-      .positive()
-      .optional(),
-    YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE: z.coerce
-      .number()
-      .positive()
-      .default(0.6),
+    YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND: z.coerce.number().positive().optional(),
+    YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE: z.coerce.number().positive().default(0.6),
 
     // Audio preprocessing (optional Python service)
     AUDIO_ENHANCER_URL: z
@@ -145,10 +137,8 @@ export const env = createEnv({
     GIGA_AM_RATE_RUB_PER_SECOND: process.env.GIGA_AM_RATE_RUB_PER_SECOND,
     ASSEMBLYAI_RATE_USD_PER_HOUR: process.env.ASSEMBLYAI_RATE_USD_PER_HOUR,
     RUB_PER_USD: process.env.RUB_PER_USD,
-    YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND:
-      process.env.YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND,
-    YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE:
-      process.env.YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE,
+    YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND: process.env.YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND,
+    YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE: process.env.YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE,
     AUDIO_ENHANCER_URL: process.env.AUDIO_ENHANCER_URL,
     MIN_FILE_SIZE_BYTES: process.env.MIN_FILE_SIZE_BYTES,
     MAX_FILE_SIZE_BYTES: process.env.MAX_FILE_SIZE_BYTES,
@@ -165,21 +155,14 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY,
     LANGFUSE_PUBLIC_KEY: process.env.LANGFUSE_PUBLIC_KEY,
-    LANGFUSE_BASEURL:
-      process.env.LANGFUSE_BASEURL ?? process.env.LANGFUSE_BASE_URL,
+    LANGFUSE_BASEURL: process.env.LANGFUSE_BASEURL ?? process.env.LANGFUSE_BASE_URL,
   },
-  skipValidation:
-    !!process.env.CI || process.env.npm_lifecycle_event === "lint",
+  skipValidation: !!process.env.CI || process.env.npm_lifecycle_event === "lint",
 });
 
-const serverEnvSkip =
-  !!process.env.CI || process.env.npm_lifecycle_event === "lint";
+const serverEnvSkip = !!process.env.CI || process.env.npm_lifecycle_event === "lint";
 
-if (
-  !serverEnvSkip &&
-  env.GIGA_AM_ENABLED &&
-  !env.GIGA_AM_TRANSCRIBE_URL?.trim()
-) {
+if (!serverEnvSkip && env.GIGA_AM_ENABLED && !env.GIGA_AM_TRANSCRIBE_URL?.trim()) {
   throw new Error(
     "При GIGA_AM_ENABLED=true задайте GIGA_AM_TRANSCRIBE_URL (валидный HTTP/HTTPS URL).",
   );

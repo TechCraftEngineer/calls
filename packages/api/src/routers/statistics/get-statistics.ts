@@ -33,8 +33,7 @@ export const getStatistics = workspaceAdminProcedure
       workspaceId,
       dateFrom: dateFromDb,
       dateTo: dateToDb,
-      excludePhoneNumbers:
-        excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+      excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
     });
     const statsList = Object.values(stats);
     const reverse = input.order === "desc";

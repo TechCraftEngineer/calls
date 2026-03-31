@@ -118,7 +118,7 @@ with open("enhanced_light.wav", "wb") as f:
 ## 📝 Логирование
 
 Сервис логирует применяемые настройки:
-```
+```bash
 INFO: Режим обработки: light
 INFO: Применяем DeepFilterNet шумоподавление...
 INFO: ✓ DeepFilterNet применен

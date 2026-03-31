@@ -17,9 +17,8 @@ import {
 } from "@tanstack/react-table";
 import { Download } from "lucide-react";
 import { useMemo } from "react";
-
-import { createKpiTableColumns } from "./kpi-table-columns";
 import KpiEditDialog from "./kpi-edit-dialog";
+import { createKpiTableColumns } from "./kpi-table-columns";
 import type { KpiTableDataProps } from "./kpi-table-types";
 
 export default function KpiTableData({
@@ -36,12 +35,7 @@ export default function KpiTableData({
   onExportCsv,
 }: KpiTableDataProps) {
   const columns = useMemo(
-    () =>
-      createKpiTableColumns(
-        onEditEmployee,
-        savingEmployeeId,
-        isApplyingBulkKpi,
-      ),
+    () => createKpiTableColumns(onEditEmployee, savingEmployeeId, isApplyingBulkKpi),
     [onEditEmployee, savingEmployeeId, isApplyingBulkKpi],
   );
 
@@ -71,9 +65,7 @@ export default function KpiTableData({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">KPI сотрудников</h3>
-          <p className="text-sm text-muted-foreground">
-            Всего сотрудников: {rows.length}
-          </p>
+          <p className="text-sm text-muted-foreground">Всего сотрудников: {rows.length}</p>
         </div>
         <Button
           variant="outline"

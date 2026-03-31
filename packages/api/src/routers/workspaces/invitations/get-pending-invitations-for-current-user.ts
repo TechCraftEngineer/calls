@@ -12,10 +12,7 @@ export const getPendingInvitationsForCurrentUser = protectedProcedure.handler(
     }
 
     try {
-      const invitations = await invitationsService.getPendingInvitationsForUser(
-        userId,
-        email,
-      );
+      const invitations = await invitationsService.getPendingInvitationsForUser(userId, email);
       return { invitations };
     } catch (e) {
       console.error("Error fetching pending invitations for user:", {
@@ -24,8 +21,7 @@ export const getPendingInvitationsForCurrentUser = protectedProcedure.handler(
         error: e instanceof Error ? e.message : String(e),
       });
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message:
-          e instanceof Error ? e.message : "Ошибка при получении приглашений",
+        message: e instanceof Error ? e.message : "Ошибка при получении приглашений",
       });
     }
   },

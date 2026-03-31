@@ -38,10 +38,7 @@ interface CellRendererProps {
   colKey: string;
   visibleColumns: string[];
   onSelectCall: (callId: string) => void;
-  onGenerateRecommendations: (
-    callId: string,
-    existingRecommendations?: string[],
-  ) => void;
+  onGenerateRecommendations: (callId: string, existingRecommendations?: string[]) => void;
   onTranscribe?: (callId: string) => void;
   onPlay?: (callId: string, number: string) => void;
   isLoadingRecommendations: boolean;
@@ -75,10 +72,8 @@ export function renderCallListCell({
 
   const isMissed = (call.duration ?? 0) === 0 && call.direction === "inbound";
 
-  const directionLabel =
-    call.direction === "inbound" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ";
-  const directionClass =
-    directionLabel === "ВХОДЯЩИЙ" ? "badge-yellow-op" : "badge-black-op";
+  const directionLabel = call.direction === "inbound" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ";
+  const directionClass = directionLabel === "ВХОДЯЩИЙ" ? "badge-yellow-op" : "badge-black-op";
 
   const renderLinkOrButton = (content: ReactNode, extraStyle?: object) =>
     isMobileDevice() ? (
@@ -119,16 +114,12 @@ export function renderCallListCell({
                 display: "block",
                 marginBottom: "4px",
               })}
-              <div style={{ fontSize: "11px", color: "#999" }}>
-                {call.number || ""}
-              </div>
+              <div style={{ fontSize: "11px", color: "#999" }}>{call.number || ""}</div>
             </>
           ) : (
             <>
               {renderLinkOrButton(call.number)}
-              <div
-                style={{ fontSize: "11px", color: "#999", marginTop: "2px" }}
-              >
+              <div style={{ fontSize: "11px", color: "#999", marginTop: "2px" }}>
                 {call.internalNumber || ""}
               </div>
             </>
@@ -138,17 +129,13 @@ export function renderCallListCell({
     case "manager":
       return (
         <TableCell key={colKey}>
-          <span style={{ color: "#555", fontWeight: 500 }}>
-            {call.customerName || "—"}
-          </span>
+          <span style={{ color: "#555", fontWeight: 500 }}>{call.customerName || "—"}</span>
         </TableCell>
       );
     case "status":
       return (
         <TableCell key={colKey}>
-          <span
-            className={`op-badge ${isMissed ? "badge-red-op" : "badge-green-op"}`}
-          >
+          <span className={`op-badge ${isMissed ? "badge-red-op" : "badge-green-op"}`}>
             {isMissed ? "ПРОПУЩЕН" : "ПРИНЯТ"}
           </span>
         </TableCell>
@@ -179,9 +166,7 @@ export function renderCallListCell({
         <TableCell key={colKey}>
           {transcript?.summary ? (
             <div className="op-tooltip min-w-0 max-w-[220px] overflow-hidden">
-              <span className="block truncate text-[#666]">
-                {transcript.summary}
-              </span>
+              <span className="block truncate text-[#666]">{transcript.summary}</span>
               <div className="tooltip-content" style={{ width: "280px" }}>
                 <strong>Вывод:</strong>
                 <br />
@@ -219,16 +204,12 @@ export function renderCallListCell({
                       evaluation?.managerRecommendations ?? undefined,
                     );
                   }}
-                  disabled={
-                    isLoadingRecommendations &&
-                    recommendationsCallId === call.id
-                  }
+                  disabled={isLoadingRecommendations && recommendationsCallId === call.id}
                   title="Сформировать рекомендации"
                   aria-label="Сформировать рекомендации по звонку"
                   className="size-6 min-w-6 p-0"
                 >
-                  {isLoadingRecommendations &&
-                  recommendationsCallId === call.id ? (
+                  {isLoadingRecommendations && recommendationsCallId === call.id ? (
                     <div
                       style={{
                         width: "14px",

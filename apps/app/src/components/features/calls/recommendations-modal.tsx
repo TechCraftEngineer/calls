@@ -49,11 +49,7 @@ export default function RecommendationsModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="modal-overlay"
-      ref={overlayRef}
-      onClick={handleOverlayClick}
-    >
+    <div className="modal-overlay" ref={overlayRef} onClick={handleOverlayClick}>
       <div
         className="modal-container max-w-[600px] max-h-[80vh]"
         ref={modalRef}
@@ -79,9 +75,7 @@ export default function RecommendationsModal({
             {isLoading ? (
               <div className="py-[60px] px-5 text-center flex flex-col items-center gap-4">
                 <div className="w-12 h-12 border-4 border-gray-100 border-t-[#F7931E] rounded-full animate-spin" />
-                <div className="text-sm text-gray-500">
-                  Формирование рекомендаций…
-                </div>
+                <div className="text-sm text-gray-500">Формирование рекомендаций…</div>
               </div>
             ) : recommendations.length > 0 ? (
               <>
@@ -94,9 +88,7 @@ export default function RecommendationsModal({
                       key={i}
                       className="mb-3 text-sm leading-relaxed relative pl-5 text-[#533F03]"
                     >
-                      <span className="absolute left-0 text-[#F7931E] text-lg">
-                        •
-                      </span>
+                      <span className="absolute left-0 text-[#F7931E] text-lg">•</span>
                       {rec}
                     </li>
                   ))}

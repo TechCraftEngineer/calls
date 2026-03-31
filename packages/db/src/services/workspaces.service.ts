@@ -17,10 +17,7 @@ export type { CreateWorkspaceData, WorkspaceMemberRole };
 export class WorkspacesService {
   constructor(private workspacesRepository: WorkspacesRepository) {}
 
-  async create(
-    data: CreateWorkspaceData,
-    ownerUserId: string,
-  ): Promise<string> {
+  async create(data: CreateWorkspaceData, ownerUserId: string): Promise<string> {
     // Используем транзакцию для атомарного создания workspace и владельца
     const workspaceId = await db.transaction(async (tx) => {
       // Создаем workspace
@@ -126,26 +123,15 @@ export class WorkspacesService {
   }
 
   async getPendingMemberById(memberId: string, workspaceId: string) {
-    return this.workspacesRepository.getPendingMemberById(
-      memberId,
-      workspaceId,
-    );
+    return this.workspacesRepository.getPendingMemberById(memberId, workspaceId);
   }
 
   async activateMember(memberId: string) {
     return this.workspacesRepository.activateMember(memberId);
   }
 
-  async updateMemberInvitationToken(
-    memberId: string,
-    token: string,
-    expiresAt: Date,
-  ) {
-    return this.workspacesRepository.updateMemberInvitationToken(
-      memberId,
-      token,
-      expiresAt,
-    );
+  async updateMemberInvitationToken(memberId: string, token: string, expiresAt: Date) {
+    return this.workspacesRepository.updateMemberInvitationToken(memberId, token, expiresAt);
   }
 
   async listUserWorkspaces(userId: string) {
@@ -153,40 +139,26 @@ export class WorkspacesService {
   }
 
   async removeMember(workspaceId: string, userId: string) {
-    const result = await this.workspacesRepository.removeMember(
-      workspaceId,
-      userId,
-    );
+    const result = await this.workspacesRepository.removeMember(workspaceId, userId);
     // Invalidate user workspaces cache when member is removed
     workspaceCache.invalidateUserWorkspaces(userId);
     return result;
   }
 
-  async removePendingMemberById(
-    memberId: string,
-    workspaceId: string,
-  ): Promise<boolean> {
+  async removePendingMemberById(memberId: string, workspaceId: string): Promise<boolean> {
     return this.workspacesRepository.removeMemberById(memberId, workspaceId);
   }
 
-  async updateMemberRole(
-    workspaceId: string,
-    userId: string,
-    role: WorkspaceMemberRole,
-  ) {
-    return this.workspacesRepository.updateMemberRole(
-      workspaceId,
-      userId,
-      role,
-    );
+  async updateMemberRole(workspaceId: string, userId: string, role: WorkspaceMemberRole) {
+    return this.workspacesRepository.updateMemberRole(workspaceId, userId, role);
   }
 
   async getUserWorkspaces(userId: string) {
     const cacheKey = workspaceCache.createUserWorkspacesKey(userId);
     const cached =
-      workspaceCache.get<
-        Awaited<ReturnType<typeof this.workspacesRepository.getUserWorkspaces>>
-      >(cacheKey);
+      workspaceCache.get<Awaited<ReturnType<typeof this.workspacesRepository.getUserWorkspaces>>>(
+        cacheKey,
+      );
     if (cached) return cached;
 
     const result = await this.workspacesRepository.getUserWorkspaces(userId);
@@ -207,10 +179,7 @@ export class WorkspacesService {
     invitationExpiresAt: Date | null;
     invitedBy: string | null;
   } | null> {
-    const member = await this.workspacesRepository.getMember(
-      workspaceId,
-      userId,
-    );
+    const member = await this.workspacesRepository.getMember(workspaceId, userId);
     return member
       ? {
           role: member.role as WorkspaceMemberRole,
@@ -229,10 +198,7 @@ export class WorkspacesService {
     workspaceId: string,
     userId: string,
   ): Promise<WorkspaceMemberRole | null> {
-    const member = await this.workspacesRepository.getMember(
-      workspaceId,
-      userId,
-    );
+    const member = await this.workspacesRepository.getMember(workspaceId, userId);
     return (member?.role as WorkspaceMemberRole) ?? null;
   }
 

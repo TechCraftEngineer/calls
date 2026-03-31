@@ -13,13 +13,13 @@ import {
   workspacesService,
 } from "@calls/db";
 import { sendMessage } from "@calls/telegram-bot";
+import { subMonths } from "date-fns";
 import {
   formatTelegramReportHtml,
   type ManagerStats,
   splitTelegramHtmlMessage,
 } from "../../reports/format-report";
 import { inngest } from "../client";
-import { subMonths } from "date-fns";
 
 const TZ = "Europe/Moscow";
 const SEND_RETRY_DELAYS_MS = [500, 1000, 2000] as const;
@@ -30,11 +30,7 @@ function sleep(ms: number): Promise<void> {
   });
 }
 
-async function sendChunkWithRetry(
-  token: string,
-  chatId: string,
-  text: string,
-): Promise<boolean> {
+async function sendChunkWithRetry(token: string, chatId: string, text: string): Promise<boolean> {
   for (let attempt = 0; attempt < SEND_RETRY_DELAYS_MS.length; attempt++) {
     try {
       const ok = await sendMessage(token, chatId, text, {
@@ -106,12 +102,9 @@ export const telegramReportsFn = inngest.createFunction(
     triggers: [{ cron: `TZ=${TZ} */15 * * * *` }],
   },
   async ({ step }) => {
-    const workspaceIds = await step.run(
-      "get-workspaces-with-telegram-recipients",
-      async () => {
-        return getWorkspaceIdsWithTelegramReportRecipients();
-      },
-    );
+    const workspaceIds = await step.run("get-workspaces-with-telegram-recipients", async () => {
+      return getWorkspaceIdsWithTelegramReportRecipients();
+    });
 
     if (workspaceIds.length === 0) {
       return {
@@ -133,210 +126,177 @@ export const telegramReportsFn = inngest.createFunction(
     const errors: string[] = [];
 
     for (const workspaceId of workspaceIds) {
-      const result = await step.run(
-        `process-workspace-${workspaceId}`,
-        async () => {
-          const ws = await workspacesService.getById(workspaceId);
-          const workspaceName = ws?.name ?? workspaceId;
+      const result = await step.run(`process-workspace-${workspaceId}`, async () => {
+        const ws = await workspacesService.getById(workspaceId);
+        const workspaceName = ws?.name ?? workspaceId;
 
-          const { token } =
-            await settingsService.getEffectiveTelegramBotToken(workspaceId);
-          if (!token?.trim()) {
-            return {
-              sent: 0,
-              errors: [
-                `Не настроен токен Telegram-бота для компании "${workspaceName}" (${workspaceId})`,
-              ] as string[],
-              failed: false,
-            };
+        const { token } = await settingsService.getEffectiveTelegramBotToken(workspaceId);
+        if (!token?.trim()) {
+          return {
+            sent: 0,
+            errors: [
+              `Не настроен токен Telegram-бота для компании "${workspaceName}" (${workspaceId})`,
+            ] as string[],
+            failed: false,
+          };
+        }
+
+        const schedule = await getReportScheduleSettings(workspaceSettingsRepository, workspaceId);
+
+        const reportWorkspaceName = ws?.name ?? undefined;
+
+        const reportTypesToRun: Array<"daily" | "weekly" | "monthly"> = [];
+
+        // Совпадение по 15-мин окну (cron */15)
+        const slot = Math.floor(currentMinute / 15) * 15;
+
+        const dailyTime = parseTimeHHMM(schedule.reportDailyTime);
+        const dailySlot = Math.floor(dailyTime.m / 15) * 15;
+        if (currentHour === dailyTime.h && slot === dailySlot) {
+          reportTypesToRun.push("daily");
+        }
+
+        const weeklyDay = WEEKDAY_MAP[schedule.reportWeeklyDay] ?? 5;
+        const weeklyTime = parseTimeHHMM(schedule.reportWeeklyTime);
+        const weeklySlot = Math.floor(weeklyTime.m / 15) * 15;
+        if (currentDay === weeklyDay && currentHour === weeklyTime.h && slot === weeklySlot) {
+          reportTypesToRun.push("weekly");
+        }
+
+        const monthlyTime = parseTimeHHMM(schedule.reportMonthlyTime);
+        const monthlyDayNum = parseInt(schedule.reportMonthlyDay, 10);
+        const isMonthlyDay =
+          schedule.reportMonthlyDay === "last"
+            ? currentDate === lastDay
+            : !Number.isNaN(monthlyDayNum) && currentDate === monthlyDayNum;
+        const monthlySlot = Math.floor(monthlyTime.m / 15) * 15;
+        if (isMonthlyDay && currentHour === monthlyTime.h && slot === monthlySlot) {
+          reportTypesToRun.push("monthly");
+        }
+
+        if (reportTypesToRun.length === 0) {
+          return { sent: 0, errors: [] as string[], failed: false };
+        }
+
+        let sent = 0;
+        let failed = false;
+        const errs: string[] = [];
+
+        for (const reportType of reportTypesToRun) {
+          const recipients = await getTelegramReportRecipients(workspaceId, reportType);
+
+          let dateFrom: Date;
+          let dateTo: Date;
+          let dateFromString: string;
+          let dateToString: string;
+
+          if (reportType === "daily") {
+            const d = new Date(now);
+            d.setDate(d.getDate() - 1);
+            dateFrom = d;
+            dateTo = d;
+            dateFromString = formatDateInMoscow(d);
+            dateToString = dateFromString;
+          } else if (reportType === "weekly") {
+            dateFrom = new Date(now);
+            dateFrom.setDate(dateFrom.getDate() - 7);
+            dateTo = new Date(now);
+            dateFromString = formatDateInMoscow(dateFrom);
+            dateToString = formatDateInMoscow(dateTo);
+          } else {
+            dateFrom = subMonths(new Date(now), 1);
+            dateTo = new Date(now);
+            dateFromString = formatDateInMoscow(dateFrom);
+            dateToString = formatDateInMoscow(dateTo);
           }
 
-          const schedule = await getReportScheduleSettings(
-            workspaceSettingsRepository,
-            workspaceId,
-          );
+          const dateFromDb = `${dateFromString} 00:00:00`;
+          const dateToDb = `${dateToString} 23:59:59`;
 
-          const reportWorkspaceName = ws?.name ?? undefined;
+          const ftpSettings = await settingsService.getFtpSettings(workspaceId);
+          const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
 
-          const reportTypesToRun: Array<"daily" | "weekly" | "monthly"> = [];
+          for (const r of recipients) {
+            if (r.skipWeekends && weekend) continue;
 
-          // Совпадение по 15-мин окну (cron */15)
-          const slot = Math.floor(currentMinute / 15) * 15;
-
-          const dailyTime = parseTimeHHMM(schedule.reportDailyTime);
-          const dailySlot = Math.floor(dailyTime.m / 15) * 15;
-          if (currentHour === dailyTime.h && slot === dailySlot) {
-            reportTypesToRun.push("daily");
-          }
-
-          const weeklyDay = WEEKDAY_MAP[schedule.reportWeeklyDay] ?? 5;
-          const weeklyTime = parseTimeHHMM(schedule.reportWeeklyTime);
-          const weeklySlot = Math.floor(weeklyTime.m / 15) * 15;
-          if (
-            currentDay === weeklyDay &&
-            currentHour === weeklyTime.h &&
-            slot === weeklySlot
-          ) {
-            reportTypesToRun.push("weekly");
-          }
-
-          const monthlyTime = parseTimeHHMM(schedule.reportMonthlyTime);
-          const monthlyDayNum = parseInt(schedule.reportMonthlyDay, 10);
-          const isMonthlyDay =
-            schedule.reportMonthlyDay === "last"
-              ? currentDate === lastDay
-              : !Number.isNaN(monthlyDayNum) && currentDate === monthlyDayNum;
-          const monthlySlot = Math.floor(monthlyTime.m / 15) * 15;
-          if (
-            isMonthlyDay &&
-            currentHour === monthlyTime.h &&
-            slot === monthlySlot
-          ) {
-            reportTypesToRun.push("monthly");
-          }
-
-          if (reportTypesToRun.length === 0) {
-            return { sent: 0, errors: [] as string[], failed: false };
-          }
-
-          let sent = 0;
-          let failed = false;
-          const errs: string[] = [];
-
-          for (const reportType of reportTypesToRun) {
-            const recipients = await getTelegramReportRecipients(
+            const evaluationsStats = await callsService.getEvaluationsStats({
               workspaceId,
-              reportType,
-            );
+              dateFrom: dateFromDb,
+              dateTo: dateToDb,
+              internalNumbers: r.internalNumbers ?? undefined,
+              excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+            });
 
-            let dateFrom: Date;
-            let dateTo: Date;
-            let dateFromString: string;
-            let dateToString: string;
+            const stats = await callsService.enrichStatsWithKpi(evaluationsStats, workspaceId);
 
-            if (reportType === "daily") {
-              const d = new Date(now);
-              d.setDate(d.getDate() - 1);
-              dateFrom = d;
-              dateTo = d;
-              dateFromString = formatDateInMoscow(d);
-              dateToString = dateFromString;
-            } else if (reportType === "weekly") {
-              dateFrom = new Date(now);
-              dateFrom.setDate(dateFrom.getDate() - 7);
-              dateTo = new Date(now);
-              dateFromString = formatDateInMoscow(dateFrom);
-              dateToString = formatDateInMoscow(dateTo);
-            } else {
-              dateFrom = subMonths(new Date(now), 1);
-              dateTo = new Date(now);
-              dateFromString = formatDateInMoscow(dateFrom);
-              dateToString = formatDateInMoscow(dateTo);
-            }
-
-            const dateFromDb = `${dateFromString} 00:00:00`;
-            const dateToDb = `${dateToString} 23:59:59`;
-
-            const ftpSettings =
-              await settingsService.getFtpSettings(workspaceId);
-            const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
-
-            for (const r of recipients) {
-              if (r.skipWeekends && weekend) continue;
-
-              const evaluationsStats = await callsService.getEvaluationsStats({
+            let lowRatedCalls: Record<string, number> = {};
+            if (r.isManagerReport) {
+              lowRatedCalls = await callsService.getLowRatedCallsCount({
                 workspaceId,
                 dateFrom: dateFromDb,
                 dateTo: dateToDb,
                 internalNumbers: r.internalNumbers ?? undefined,
                 excludePhoneNumbers:
-                  excludePhoneNumbers.length > 0
-                    ? excludePhoneNumbers
-                    : undefined,
+                  excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+                maxScore: 3,
               });
+            }
 
-              const stats = await callsService.enrichStatsWithKpi(
-                evaluationsStats,
-                workspaceId
-              );
-
-              let lowRatedCalls: Record<string, number> = {};
-              if (r.isManagerReport) {
-                lowRatedCalls = await callsService.getLowRatedCallsCount({
-                  workspaceId,
-                  dateFrom: dateFromDb,
-                  dateTo: dateToDb,
-                  internalNumbers: r.internalNumbers ?? undefined,
-                  excludePhoneNumbers:
-                    excludePhoneNumbers.length > 0
-                      ? excludePhoneNumbers
-                      : undefined,
-                  maxScore: 3,
-                });
-              }
-
-              let callSummariesByManager: Record<string, string[]> = {};
-              if (r.reportSettings?.includeCallSummaries) {
-                callSummariesByManager =
-                  await callsService.getCallSummariesByManager({
-                    workspaceId,
-                    dateFrom: dateFromDb,
-                    dateTo: dateToDb,
-                    internalNumbers: r.internalNumbers ?? undefined,
-                    excludePhoneNumbers:
-                      excludePhoneNumbers.length > 0
-                        ? excludePhoneNumbers
-                        : undefined,
-                    limitPerManager: 2,
-                  });
-              }
-
-              const text = formatTelegramReportHtml({
-                stats,
-                dateFrom,
-                dateTo,
-                reportType,
-                isManagerReport: r.isManagerReport,
-                workspaceName: reportWorkspaceName,
-                detailed: r.reportSettings?.detailed ?? false,
-                _includeCallSummaries:
-                  r.reportSettings?.includeCallSummaries ?? false,
-                includeAvgRating: r.reportSettings?.includeAvgRating ?? false,
-                includeAvgValue: r.reportSettings?.includeAvgValue ?? false,
-                includeKpi: true,
-                _callSummariesByManager: callSummariesByManager,
-                lowRatedCalls,
+            let callSummariesByManager: Record<string, string[]> = {};
+            if (r.reportSettings?.includeCallSummaries) {
+              callSummariesByManager = await callsService.getCallSummariesByManager({
+                workspaceId,
+                dateFrom: dateFromDb,
+                dateTo: dateToDb,
+                internalNumbers: r.internalNumbers ?? undefined,
+                excludePhoneNumbers:
+                  excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+                limitPerManager: 2,
               });
+            }
 
-              const chunks = splitTelegramHtmlMessage(text, 4000);
-              let allChunksSent = true;
-              const totalChunks = chunks.length;
-              for (const [index, chunk] of chunks.entries()) {
-                const chunkPrefix =
-                  totalChunks > 1
-                    ? `<i>Часть ${index + 1} из ${totalChunks}</i>\n`
-                    : "";
-                const chunkText = `${chunkPrefix}${chunk}`;
-                const ok = await sendChunkWithRetry(token, r.chatId, chunkText);
-                if (!ok) {
-                  allChunksSent = false;
-                  break;
-                }
-              }
-              if (allChunksSent) {
-                sent++;
-              } else {
-                failed = true;
-                errs.push(
-                  `Не удалось отправить отчёт в chat ${r.chatId}: отправка прервана на одной из частей`,
-                );
+            const text = formatTelegramReportHtml({
+              stats,
+              dateFrom,
+              dateTo,
+              reportType,
+              isManagerReport: r.isManagerReport,
+              workspaceName: reportWorkspaceName,
+              detailed: r.reportSettings?.detailed ?? false,
+              _includeCallSummaries: r.reportSettings?.includeCallSummaries ?? false,
+              includeAvgRating: r.reportSettings?.includeAvgRating ?? false,
+              includeAvgValue: r.reportSettings?.includeAvgValue ?? false,
+              includeKpi: true,
+              _callSummariesByManager: callSummariesByManager,
+              lowRatedCalls,
+            });
+
+            const chunks = splitTelegramHtmlMessage(text, 4000);
+            let allChunksSent = true;
+            const totalChunks = chunks.length;
+            for (const [index, chunk] of chunks.entries()) {
+              const chunkPrefix =
+                totalChunks > 1 ? `<i>Часть ${index + 1} из ${totalChunks}</i>\n` : "";
+              const chunkText = `${chunkPrefix}${chunk}`;
+              const ok = await sendChunkWithRetry(token, r.chatId, chunkText);
+              if (!ok) {
+                allChunksSent = false;
+                break;
               }
             }
+            if (allChunksSent) {
+              sent++;
+            } else {
+              failed = true;
+              errs.push(
+                `Не удалось отправить отчёт в chat ${r.chatId}: отправка прервана на одной из частей`,
+              );
+            }
           }
+        }
 
-          return { sent, errors: errs, failed };
-        },
-      );
+        return { sent, errors: errs, failed };
+      });
 
       sentCount += result.sent;
       errors.push(...result.errors);
@@ -346,9 +306,7 @@ export const telegramReportsFn = inngest.createFunction(
     }
 
     if (hasHardFailure) {
-      throw new Error(
-        `Telegram report failed: ${errors.join("; ") || "partial send failure"}`,
-      );
+      throw new Error(`Telegram report failed: ${errors.join("; ") || "partial send failure"}`);
     }
 
     return {

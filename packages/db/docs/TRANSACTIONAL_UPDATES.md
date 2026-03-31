@@ -8,14 +8,14 @@
 import { callsService } from '@calls/db';
 
 // Вместо последовательных обновлений:
-await callsService.updateCallRecording(callId, { fileId: 'file-uuid' });
-await callsService.updateEnhancedAudio(callId, 'enhanced-file-uuid');
-await callsService.updateCustomerName(callId, 'Иван Иванов');
+await callsService.updateCallRecording('550e8400-e29b-41d4-a716-446655440000', { fileId: '550e8400-e29b-41d4-a716-446655440001' });
+await callsService.updateEnhancedAudio('550e8400-e29b-41d4-a716-446655440000', '550e8400-e29b-41d4-a716-446655440002');
+await callsService.updateCustomerName('550e8400-e29b-41d4-a716-446655440000', 'Иван Иванов');
 
 // Используем один транзакционный метод:
-await callsService.updateCallWithRecording(callId, {
-  fileId: 'file-uuid',
-  enhancedAudioFileId: 'enhanced-file-uuid',
+await callsService.updateCallWithRecording('550e8400-e29b-41d4-a716-446655440000', {
+  fileId: '550e8400-e29b-41d4-a716-446655440001',
+  enhancedAudioFileId: '550e8400-e29b-41d4-a716-446655440002',
   customerName: 'Иван Иванов'
 });
 ```
@@ -24,15 +24,15 @@ await callsService.updateCallWithRecording(callId, {
 
 ```typescript
 // Вместо последовательных обновлений:
-await callsService.updateCallPbxBinding(callId, {
+await callsService.updateCallPbxBinding('550e8400-e29b-41d4-a716-446655440000', {
   internalNumber: '123',
   source: 'megapbx',
   name: 'Менеджер'
 });
-await callsService.updateCustomerName(callId, 'Клиент');
+await callsService.updateCustomerName('550e8400-e29b-41d4-a716-446655440000', 'Клиент');
 
 // Используем один транзакционный метод:
-await callsService.updateCallPbxBindingWithCustomer(callId, {
+await callsService.updateCallPbxBindingWithCustomer('550e8400-e29b-41d4-a716-446655440000', {
   internalNumber: '123',
   source: 'megapbx', 
   name: 'Менеджер',
@@ -112,7 +112,7 @@ try {
 
 ```typescript
 try {
-  await callsService.updateCallRecording('invalid-uuid', { fileId: null });
+  await callsService.updateCallRecording('invalid-uuid-format', { fileId: null });
 } catch (error) {
   if (error instanceof ValidationError) {
     console.error(error.message); // "Validation errors: callId должен быть валидным UUID"
@@ -120,8 +120,8 @@ try {
 }
 
 try {
-  await callsService.updateCallRecording('valid-uuid', { 
-    fileId: 'invalid-uuid' 
+  await callsService.updateCallRecording('550e8400-e29b-41d4-a716-446655440000', { 
+    fileId: 'invalid-uuid-format' 
   });
 } catch (error) {
   if (error instanceof ValidationError) {
@@ -151,12 +151,12 @@ await callsService.updateCallRecording(callId, { fileId: invalidFileId });
 ### Успешное логирование для транзакций
 
 ```typescript
-await callsService.updateCallWithRecording(callId, {
-  fileId: 'file-uuid',
-  enhancedAudioFileId: 'enhanced-uuid'
+await callsService.updateCallWithRecording('550e8400-e29b-41d4-a716-446655440000', {
+  fileId: '550e8400-e29b-41d4-a716-446655440001',
+  enhancedAudioFileId: '550e8400-e29b-41d4-a716-446655440002'
 });
 // Автоматически добавится в activity log:
-// "Call {callId} updated with recording data (fileId: file-uuid, enhancedAudio: enhanced-uuid)"
+// "Call 550e8400-e29b-41d4-a716-446655440000 updated with recording data (fileId: 550e8400-e29b-41d4-a716-446655440001, enhancedAudio: 550e8400-e29b-41d4-a716-446655440002)"
 ```
 
 ## Преимущества Zod валидации

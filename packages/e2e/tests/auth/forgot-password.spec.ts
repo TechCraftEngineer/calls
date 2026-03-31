@@ -14,9 +14,7 @@ test.describe("Страница восстановления пароля", () =
 
     // Проверяем поля формы
     await expect(page.locator("#email")).toBeVisible();
-    await expect(page.locator('button[type="submit"]')).toContainText(
-      "Отправить ссылку",
-    );
+    await expect(page.locator('button[type="submit"]')).toContainText("Отправить ссылку");
   });
 
   test("показывает ошибку валидации для пустого email", async ({ page }) => {
@@ -37,17 +35,13 @@ test.describe("Страница восстановления пароля", () =
 
     // Перехватываем запрос восстановления пароля
     const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes("/api/auth") &&
-        response.request().method() === "POST",
+      (response) => response.url().includes("/api/auth") && response.request().method() === "POST",
     );
 
     await page.click('button[type="submit"]');
 
     // Проверяем, что кнопка показывает состояние загрузки
-    await expect(page.locator('button[type="submit"]')).toContainText(
-      "Отправка…",
-    );
+    await expect(page.locator('button[type="submit"]')).toContainText("Отправка…");
 
     await responsePromise;
   });
@@ -89,9 +83,7 @@ test.describe("Страница восстановления пароля", () =
     await page.fill("#email", "test@example.com");
 
     const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes("/api/auth") &&
-        response.request().method() === "POST",
+      (response) => response.url().includes("/api/auth") && response.request().method() === "POST",
     );
 
     await page.press("#email", "Enter");
@@ -99,17 +91,12 @@ test.describe("Страница восстановления пароля", () =
   });
 
   test("проверяет плейсхолдер поля email", async ({ page }) => {
-    await expect(page.locator("#email")).toHaveAttribute(
-      "placeholder",
-      "example@mail.com",
-    );
+    await expect(page.locator("#email")).toHaveAttribute("placeholder", "example@mail.com");
   });
 
   test("проверяет копирайт", async ({ page }) => {
     const currentYear = new Date().getFullYear();
-    await expect(
-      page.locator(`text=© ${currentYear} QBS Звонки`),
-    ).toBeVisible();
+    await expect(page.locator(`text=© ${currentYear} QBS Звонки`)).toBeVisible();
   });
 
   test("скрывает форму после успешной отправки", async ({ page }) => {

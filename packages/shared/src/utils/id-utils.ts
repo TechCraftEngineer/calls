@@ -27,9 +27,7 @@ export function compareIds(
  */
 export function isValidId(id: string | number | undefined | null): boolean {
   const normalized = normalizeId(id);
-  return (
-    normalized.length > 0 && normalized !== "null" && normalized !== "undefined"
-  );
+  return normalized.length > 0 && normalized !== "null" && normalized !== "undefined";
 }
 
 /**

@@ -3,13 +3,7 @@
 import { paths } from "@calls/config";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  type KeyboardEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 
 import WorkspaceSwitcher from "./workspace-switcher";
@@ -133,8 +127,7 @@ export default function Sidebar() {
       prevInert: boolean;
     }>
   >([]);
-  const isWorkspaceAdmin =
-    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
   const getFocusableInMenu = useCallback(() => {
     const root = menuRef.current;
@@ -149,14 +142,12 @@ export default function Sidebar() {
       '[tabindex]:not([tabindex="-1"])',
     ].join(",");
 
-    return Array.from(root.querySelectorAll<HTMLElement>(selectors)).filter(
-      (el) => {
-        if (el.getAttribute("aria-hidden") === "true") return false;
-        if (el.hasAttribute("hidden")) return false;
-        const style = window.getComputedStyle(el);
-        return style.display !== "none" && style.visibility !== "hidden";
-      },
-    );
+    return Array.from(root.querySelectorAll<HTMLElement>(selectors)).filter((el) => {
+      if (el.getAttribute("aria-hidden") === "true") return false;
+      if (el.hasAttribute("hidden")) return false;
+      const style = window.getComputedStyle(el);
+      return style.display !== "none" && style.visibility !== "hidden";
+    });
   }, []);
 
   const restoreTriggerFocus = useCallback(() => {
@@ -200,9 +191,7 @@ export default function Sidebar() {
     if (isMobileMenuOpen) {
       const focusables = getFocusableInMenu();
       const initial =
-        closeButtonRef.current ??
-        focusables[0] ??
-        (menuRef.current as HTMLElement | null);
+        closeButtonRef.current ?? focusables[0] ?? (menuRef.current as HTMLElement | null);
       initial?.focus?.();
 
       const container = menuRef.current?.closest(".app-container");
@@ -210,10 +199,8 @@ export default function Sidebar() {
         const toHide = Array.from(container.children).filter((child) => {
           if (!(child instanceof HTMLElement)) return false;
           if (child.contains(menuRef.current)) return false;
-          if (overlayRef.current && child.contains(overlayRef.current))
-            return false;
-          if (menuTriggerRef.current && child.contains(menuTriggerRef.current))
-            return false;
+          if (overlayRef.current && child.contains(overlayRef.current)) return false;
+          if (menuTriggerRef.current && child.contains(menuTriggerRef.current)) return false;
           return true;
         }) as HTMLElement[];
 
@@ -313,9 +300,7 @@ export default function Sidebar() {
             href: paths.settings.root,
             isActive: pathname.startsWith(paths.settings.root),
             title: "Настройки",
-            icon: (
-              <div className="icon-bubble bg-gray-50">{ICONS.settings}</div>
-            ),
+            icon: <div className="icon-bubble bg-gray-50">{ICONS.settings}</div>,
           },
         ]
       : []),
@@ -365,11 +350,7 @@ export default function Sidebar() {
           : {})}
       >
         <div className="sidebar-brand">
-          <Link
-            href={paths.dashboard.root}
-            className="sidebar-logo"
-            title="QBS Звонки"
-          >
+          <Link href={paths.dashboard.root} className="sidebar-logo" title="QBS Звонки">
             M
           </Link>
           <button

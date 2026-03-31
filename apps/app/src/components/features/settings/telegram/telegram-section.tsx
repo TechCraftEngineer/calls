@@ -1,14 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
-import {
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@calls/ui";
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@calls/ui";
 import Link from "next/link";
 import { getReportTypeLabel, type TelegramSectionProps } from "../types";
 import { SendTestReportButton } from "./send-test-report-button";
@@ -39,8 +32,8 @@ export default function TelegramSection({
           Отчёты в Telegram
         </CardTitle>
         <CardDescription>
-          Подписки на ежедневный/еженедельный/ежемесячный отчёт и опция «не
-          отправлять в выходные» настраиваются на странице{" "}
+          Подписки на ежедневный/еженедельный/ежемесячный отчёт и опция «не отправлять в выходные»
+          настраиваются на странице{" "}
           <Link
             href={paths.statistics.settings}
             className="font-medium text-foreground underline-offset-4 hover:underline"
@@ -60,16 +53,12 @@ export default function TelegramSection({
             canSendTest
           />
           <Button variant="outline" asChild>
-            <Link href={paths.statistics.settings}>
-              Перейти к настройкам отчётов
-            </Link>
+            <Link href={paths.statistics.settings}>Перейти к настройкам отчётов</Link>
           </Button>
           {sendTestMessage && (
             <span
               className={`text-sm font-medium ${
-                isSuccess
-                  ? "text-green-600 dark:text-green-400"
-                  : "text-destructive"
+                isSuccess ? "text-green-600 dark:text-green-400" : "text-destructive"
               }`}
             >
               {sendTestMessage}

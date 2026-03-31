@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@calls/ui";
+import { Badge, Button, Card, CardContent, CardHeader, CardTitle } from "@calls/ui";
 import {
   BarChart3,
   Briefcase,
@@ -107,9 +100,7 @@ export default function EvaluationSidebar({
             </p>
             {showQualityUnavailable ? (
               <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-                <p className="mb-1 text-sm font-medium text-destructive">
-                  Качество не оценивалось
-                </p>
+                <p className="mb-1 text-sm font-medium text-destructive">Качество не оценивалось</p>
                 <p className="text-destructive/80 text-xs">
                   {qualityNotAnalyzableReason ||
                     call.operatorName ||
@@ -129,9 +120,7 @@ export default function EvaluationSidebar({
                     style={{ width: `${Number(qualityScore) * 20}%` }}
                   />
                 </div>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  {qualityFeedback}
-                </p>
+                <p className="text-muted-foreground text-sm leading-relaxed">{qualityFeedback}</p>
               </>
             )}
           </div>
@@ -181,8 +170,7 @@ export default function EvaluationSidebar({
           </Button>
         </CardHeader>
         <CardContent className="space-y-3 px-4 pb-4 sm:px-6 sm:pb-6">
-          {evaluation?.managerRecommendations &&
-          evaluation.managerRecommendations.length > 0 ? (
+          {evaluation?.managerRecommendations && evaluation.managerRecommendations.length > 0 ? (
             <>
               <p className="text-amber-800 dark:text-amber-200 text-sm">
                 Вопросы, которые можно было задать (с учётом истории):
@@ -200,8 +188,8 @@ export default function EvaluationSidebar({
             </>
           ) : (
             <p className="text-amber-800 dark:text-amber-200 m-0 text-sm italic">
-              Нажмите &quot;Сформировать&quot;, чтобы получить рекомендации с
-              учётом истории звонков.
+              Нажмите &quot;Сформировать&quot;, чтобы получить рекомендации с учётом истории
+              звонков.
             </p>
           )}
         </CardContent>

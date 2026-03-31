@@ -22,9 +22,7 @@ export interface KpiStatsByInternalNumber {
  * Возвращает статистику звонков по internal_number за период.
  * duration берётся из files.durationSeconds.
  */
-export async function getKpiStats(
-  params: GetKpiStatsParams,
-): Promise<KpiStatsByInternalNumber[]> {
+export async function getKpiStats(params: GetKpiStatsParams): Promise<KpiStatsByInternalNumber[]> {
   const { workspaceId, dateFrom, dateTo, excludePhoneNumbers } = params;
 
   const conditions = [
@@ -39,10 +37,7 @@ export async function getKpiStats(
         isNull(schema.calls.internalNumber),
         notInArray(schema.calls.internalNumber, excludePhoneNumbers),
       ),
-      or(
-        isNull(schema.calls.number),
-        notInArray(schema.calls.number, excludePhoneNumbers),
-      ),
+      or(isNull(schema.calls.number), notInArray(schema.calls.number, excludePhoneNumbers)),
     );
     if (excludeCondition) {
       conditions.push(excludeCondition);
@@ -59,10 +54,7 @@ export async function getKpiStats(
     })
     .from(schema.calls)
     .leftJoin(schema.files, eq(schema.calls.fileId, schema.files.id))
-    .leftJoin(
-      schema.callEvaluations,
-      eq(schema.calls.id, schema.callEvaluations.callId),
-    )
+    .leftJoin(schema.callEvaluations, eq(schema.calls.id, schema.callEvaluations.callId))
     // Исключаем звонки, отмеченные как автоответчик/неанализируемые.
     // Звонки без оценки (еще не обработанные) оставляем в KPI.
     .where(
@@ -85,10 +77,7 @@ export async function getKpiStats(
     )
     .groupBy(schema.calls.internalNumber);
   return results
-    .filter(
-      (row) =>
-        row.internalNumber != null && String(row.internalNumber).trim() !== "",
-    )
+    .filter((row) => row.internalNumber != null && String(row.internalNumber).trim() !== "")
     .map((row) => ({
       internalNumber: String(row.internalNumber).trim(),
       totalDurationSeconds: Math.max(0, Number(row.totalDuration) || 0),

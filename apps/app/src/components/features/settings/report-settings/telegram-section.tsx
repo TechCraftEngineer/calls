@@ -17,10 +17,7 @@ import type { User } from "@/lib/auth";
 import { SendTestReportButton } from "../telegram/send-test-report-button";
 import { REPORT_TYPE_LABELS, type ReportType } from "../types";
 import type { ReportSettingsForm } from "./report-settings-types";
-import {
-  ReportDeliveryFrequency,
-  ReportTimeSettings,
-} from "./shared-report-controls";
+import { ReportDeliveryFrequency, ReportTimeSettings } from "./shared-report-controls";
 
 interface TelegramSectionProps {
   form: ReportSettingsForm;
@@ -71,22 +68,20 @@ export function TelegramReportSection({
   const sendTestSuccessSafe = sendTestSuccess ?? false;
 
   const effectiveConnectLoading = connectLoading ?? connecting ?? false;
-  const effectiveDisconnectLoading =
-    disconnectLoading ?? disconnecting ?? false;
+  const effectiveDisconnectLoading = disconnectLoading ?? disconnecting ?? false;
 
   const canSendTest = form.telegramChatId?.trim() && !sendTestLoadingSafe;
   const hasTelegram = !!form.telegramChatId?.trim();
   const primaryReportType = sendTestReportType ?? "daily";
-  const primaryReportLabel =
-    REPORT_TYPE_LABELS[primaryReportType] ?? REPORT_TYPE_LABELS.daily;
+  const primaryReportLabel = REPORT_TYPE_LABELS[primaryReportType] ?? REPORT_TYPE_LABELS.daily;
 
   return (
     <Card className="border-border/50 bg-card/50">
       <CardHeader className="px-4 pb-0">
         <CardTitle className="text-base">Telegram Отчеты</CardTitle>
         <CardDescription>
-          Полные настройки Telegram-отчетов: периодичность, расписание, формат и
-          мгновенная отправка выбранного типа.
+          Полные настройки Telegram-отчетов: периодичность, расписание, формат и мгновенная отправка
+          выбранного типа.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -164,11 +159,7 @@ export function TelegramReportSection({
             </div>
           )}
         </Field>
-        <ReportDeliveryFrequency
-          form={form}
-          setForm={setForm}
-          channel="telegram"
-        />
+        <ReportDeliveryFrequency form={form} setForm={setForm} channel="telegram" />
         <Separator />
         {onSendTest && (
           <div className="mt-3 space-y-2">
@@ -184,9 +175,7 @@ export function TelegramReportSection({
               />
               {sendTestMessageSafe && (
                 <span
-                  className={`text-sm ${
-                    sendTestSuccessSafe ? "text-success" : "text-destructive"
-                  }`}
+                  className={`text-sm ${sendTestSuccessSafe ? "text-success" : "text-destructive"}`}
                 >
                   {sendTestMessageSafe}
                 </span>
@@ -194,8 +183,8 @@ export function TelegramReportSection({
             </div>
             {!form.telegramChatId?.trim() && (
               <p className="text-xs text-muted-foreground">
-                Сначала подключите Telegram или укажите Telegram Chat ID, затем
-                можно отправить тестовый отчёт.
+                Сначала подключите Telegram или укажите Telegram Chat ID, затем можно отправить
+                тестовый отчёт.
               </p>
             )}
           </div>

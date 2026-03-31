@@ -21,11 +21,13 @@ export const callsEvaluations = {
     // Валидация managerBreakdown перед транзакцией
     let parsedManagerBreakdown = null;
     if (data.managerBreakdown) {
-      if (typeof data.managerBreakdown === 'string') {
+      if (typeof data.managerBreakdown === "string") {
         try {
           parsedManagerBreakdown = JSON.parse(data.managerBreakdown);
         } catch (error) {
-          throw new Error(`Неверный JSON в managerBreakdown: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          throw new Error(
+            `Неверный JSON в managerBreakdown: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
         }
       } else {
         parsedManagerBreakdown = data.managerBreakdown;
@@ -75,7 +77,7 @@ export const callsEvaluations = {
         .returning({ id: schema.callEvaluations.id });
 
       if (!result[0]?.id) {
-        throw new Error('upsert не выполнен: отсутствует id callEvaluation');
+        throw new Error("upsert не выполнен: отсутствует id callEvaluation");
       }
 
       return result[0].id;

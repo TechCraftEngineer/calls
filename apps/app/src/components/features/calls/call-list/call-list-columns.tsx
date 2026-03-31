@@ -22,19 +22,14 @@ import type { CallWithDetails } from "./types";
 
 export interface CallListColumnsOptions {
   onSelectCall: (callId: string) => void;
-  onGenerateRecommendations: (
-    callId: string,
-    existingRecommendations?: string[],
-  ) => void;
+  onGenerateRecommendations: (callId: string, existingRecommendations?: string[]) => void;
   onTranscribe?: (callId: string) => void;
   onPlay?: (callId: string, number: string) => void;
   isLoadingRecommendations: boolean;
   recommendationsCallId: string | null;
 }
 
-export function getCallListColumns(
-  options: CallListColumnsOptions,
-): ColumnDef<CallWithDetails>[] {
+export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<CallWithDetails>[] {
   const {
     onSelectCall,
     onGenerateRecommendations,
@@ -52,8 +47,7 @@ export function getCallListColumns(
     summary: "Краткое резюме разговора",
     record: "Быстрые действия по звонку: запись, транскрипция, рекомендации",
   };
-  const headerClassName =
-    "h-auto min-h-6 py-1 text-left leading-tight whitespace-normal";
+  const headerClassName = "h-auto min-h-6 py-1 text-left leading-tight whitespace-normal";
 
   return [
     {
@@ -121,8 +115,7 @@ export function getCallListColumns(
     },
     {
       id: "manager",
-      accessorFn: (row) =>
-        row.call.managerName?.trim() || row.call.operatorName?.trim() || "",
+      accessorFn: (row) => row.call.managerName?.trim() || row.call.operatorName?.trim() || "",
       size: 164,
       minSize: 140,
       header: ({ column }) => (

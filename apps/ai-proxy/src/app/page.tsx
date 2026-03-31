@@ -7,16 +7,13 @@ export default function Home() {
         <h2>Эндпоинты</h2>
         <ul style={{ listStyle: "none", padding: 0 }}>
           <li>
-            <strong>OpenAI</strong> — <code>/api/openai/...</code> (chat,
-            embeddings, audio)
+            <strong>OpenAI</strong> — <code>/api/openai/...</code> (chat, embeddings, audio)
           </li>
           <li>
-            <strong>AssemblyAI</strong> — <code>/api/assemblyai/v2/...</code>{" "}
-            (upload, transcript)
+            <strong>AssemblyAI</strong> — <code>/api/assemblyai/v2/...</code> (upload, transcript)
           </li>
           <li>
-            <strong>OpenRouter</strong> — <code>/api/openrouter/...</code> (chat
-            completions)
+            <strong>OpenRouter</strong> — <code>/api/openrouter/...</code> (chat completions)
           </li>
         </ul>
         <p style={{ marginTop: "0.5rem", color: "#666", fontSize: "0.9rem" }}>

@@ -4,9 +4,9 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
+import { createLogger } from "@calls/logger";
 import { Output } from "ai";
 import { z } from "zod";
-import { createLogger } from "@calls/logger";
 
 const logger = createLogger("asr-identify-speakers");
 const MAX_ANALYSIS_CHARS = 20_000;
@@ -64,9 +64,7 @@ const FALLBACK_SYSTEM_PROMPT = `Определи роли и имена спик
 Правила: speakerId копируй точно, role только operator/client, имя только при явном упоминании, иначе "".`;
 
 const speakerSchema = z.object({
-  speakerId: z
-    .string()
-    .describe('Метка спикера из транскрипта, напр. "Спикер 1"'),
+  speakerId: z.string().describe('Метка спикера из транскрипта, напр. "Спикер 1"'),
   role: z.enum(["operator", "client"]).describe("Роль: operator или client"),
   name: z.string().describe("Имя, если упоминается; иначе пустая строка"),
 });
@@ -76,15 +74,11 @@ const schema = z.object({
   operatorName: z
     .string()
     .optional()
-    .describe(
-      "Имя оператора, если упоминается в разговоре (только имя или полное имя)",
-    ),
+    .describe("Имя оператора, если упоминается в разговоре (только имя или полное имя)"),
   customerName: z
     .string()
     .optional()
-    .describe(
-      "Имя клиента, если упоминается в разговоре (только имя или полное имя)",
-    ),
+    .describe("Имя клиента, если упоминается в разговоре (только имя или полное имя)"),
 });
 
 export interface IdentifySpeakersOptions {
@@ -163,15 +157,9 @@ ${analysisText}
         functionId: "asr-identify-speakers",
       });
     } catch (primaryError) {
-      logger.warn(
-        "Primary speaker-identification prompt failed, retry fallback",
-        {
-          error:
-            primaryError instanceof Error
-              ? primaryError.message
-              : String(primaryError),
-        },
-      );
+      logger.warn("Primary speaker-identification prompt failed, retry fallback", {
+        error: primaryError instanceof Error ? primaryError.message : String(primaryError),
+      });
       response = await generateWithAi({
         modelProfile: "cheap",
         system: `${FALLBACK_SYSTEM_PROMPT}${options.managerName ? `\nПодсказка: оператор может быть ${options.managerName}.` : ""}`,
@@ -191,10 +179,7 @@ ${analysisText}
     try {
       result = response.output;
     } catch (outputError) {
-      const msg =
-        outputError instanceof Error
-          ? outputError.message
-          : String(outputError);
+      const msg = outputError instanceof Error ? outputError.message : String(outputError);
       if (msg.includes("No output generated") && response.text?.trim()) {
         result = schema.parse(JSON.parse(response.text));
       } else {

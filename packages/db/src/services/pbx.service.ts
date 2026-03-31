@@ -59,9 +59,7 @@ function ensureUrl(input: string): string {
   const value = input.trim();
   if (!value) return "";
   const url =
-    value.startsWith("http://") || value.startsWith("https://")
-      ? value
-      : `https://${value}`;
+    value.startsWith("http://") || value.startsWith("https://") ? value : `https://${value}`;
   return url.replace(/\/$/, "");
 }
 
@@ -70,9 +68,7 @@ function decryptIfPresent(value?: string | null): string | null {
   return decrypt(value);
 }
 
-function normalizeExcludePhoneNumbers(
-  values?: string[] | null,
-): string[] | undefined {
+function normalizeExcludePhoneNumbers(values?: string[] | null): string[] | undefined {
   const normalized = normalizePhoneNumberList(values);
   if (normalized.length === 0) return undefined;
   return normalized;
@@ -92,13 +88,10 @@ function buildFixedMegaPbxConfig(
     syncFromDate:
       input.syncFromDate === null
         ? undefined
-        : input.syncFromDate?.trim() &&
-            /^\d{4}-\d{2}-\d{2}$/.test(input.syncFromDate.trim())
+        : input.syncFromDate?.trim() && /^\d{4}-\d{2}-\d{2}$/.test(input.syncFromDate.trim())
           ? input.syncFromDate.trim()
           : existing?.syncFromDate,
-    excludePhoneNumbers: normalizeExcludePhoneNumbers(
-      input.excludePhoneNumbers,
-    ),
+    excludePhoneNumbers: normalizeExcludePhoneNumbers(input.excludePhoneNumbers),
     webhook: {
       secret: input.webhookSecret?.trim()
         ? encrypt(input.webhookSecret.trim())
@@ -129,20 +122,17 @@ export class PbxService {
   ) {}
 
   async getSettings(workspaceId: string) {
-    const row =
-      await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
-        workspaceId,
-        MEGAPBX_INTEGRATION,
-      );
+    const row = await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
+      workspaceId,
+      MEGAPBX_INTEGRATION,
+    );
     const config = (row?.config ?? {}) as Partial<MegaPbxIntegrationConfig>;
     return {
       enabled: row?.enabled ?? false,
       baseUrl: ensureUrl(config.baseUrl ?? ""),
       apiKeySet: Boolean(config.apiKey?.trim()),
       syncFromDate: config.syncFromDate ?? "",
-      excludePhoneNumbers: normalizeExcludePhoneNumbers(
-        config.excludePhoneNumbers,
-      ),
+      excludePhoneNumbers: normalizeExcludePhoneNumbers(config.excludePhoneNumbers),
       employeesPath: MEGAPBX_ENDPOINTS.employees,
       employeesMethod: "GET",
       employeesResultKey: "",
@@ -171,11 +161,10 @@ export class PbxService {
   async getConfigWithSecrets(
     workspaceId: string,
   ): Promise<(MegaPbxIntegrationConfig & { enabled: boolean }) | null> {
-    const row =
-      await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
-        workspaceId,
-        MEGAPBX_INTEGRATION,
-      );
+    const row = await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
+      workspaceId,
+      MEGAPBX_INTEGRATION,
+    );
     if (!row) return null;
     const config = row.config as Partial<MegaPbxIntegrationConfig>;
     return {
@@ -183,9 +172,7 @@ export class PbxService {
       baseUrl: ensureUrl(config.baseUrl ?? ""),
       apiKey: decryptIfPresent(config.apiKey) ?? "",
       syncFromDate: config.syncFromDate ?? undefined,
-      excludePhoneNumbers: normalizeExcludePhoneNumbers(
-        config.excludePhoneNumbers,
-      ),
+      excludePhoneNumbers: normalizeExcludePhoneNumbers(config.excludePhoneNumbers),
       webhook: {
         secret: decryptIfPresent(config.webhook?.secret) ?? undefined,
       },
@@ -203,10 +190,7 @@ export class PbxService {
   async listActiveIntegrations(): Promise<
     Array<MegaPbxIntegrationConfig & { workspaceId: string }>
   > {
-    const rows =
-      await this.workspaceIntegrationsRepository.listByType(
-        MEGAPBX_INTEGRATION,
-      );
+    const rows = await this.workspaceIntegrationsRepository.listByType(MEGAPBX_INTEGRATION);
     return rows
       .filter((row) => row.enabled)
       .map((row) => {
@@ -216,9 +200,7 @@ export class PbxService {
           baseUrl: ensureUrl(config.baseUrl ?? ""),
           apiKey: decryptIfPresent(config.apiKey) ?? "",
           syncFromDate: config.syncFromDate ?? undefined,
-          excludePhoneNumbers: normalizeExcludePhoneNumbers(
-            config.excludePhoneNumbers,
-          ),
+          excludePhoneNumbers: normalizeExcludePhoneNumbers(config.excludePhoneNumbers),
           webhook: {
             secret: decryptIfPresent(config.webhook?.secret) ?? undefined,
           },

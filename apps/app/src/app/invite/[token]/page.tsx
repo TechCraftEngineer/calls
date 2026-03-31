@@ -22,8 +22,8 @@ import { useForm } from "react-hook-form";
 import { getCurrentUser } from "@/lib/auth";
 import {
   type InviteAcceptData,
-  inviteAcceptSchema,
   inviteAcceptLinkSchema,
+  inviteAcceptSchema,
 } from "@/lib/validations";
 import { useORPC } from "@/orpc/react";
 
@@ -132,11 +132,7 @@ export default function InviteAcceptPage() {
   }, []);
 
   useEffect(() => {
-    if (
-      passwordCheck &&
-      typeof passwordCheck === "object" &&
-      "hasPassword" in passwordCheck
-    ) {
+    if (passwordCheck && typeof passwordCheck === "object" && "hasPassword" in passwordCheck) {
       setUserHasPassword(passwordCheck.hasPassword);
     }
   }, [passwordCheck]);
@@ -153,9 +149,7 @@ export default function InviteAcceptPage() {
         router.push(`/?workspace=${data.workspaceId}&message=joined`);
       },
       onError: (err) => {
-        setError(
-          err instanceof Error ? err.message : "Не удалось принять приглашение",
-        );
+        setError(err instanceof Error ? err.message : "Не удалось принять приглашение");
       },
     }),
   );
@@ -163,23 +157,18 @@ export default function InviteAcceptPage() {
   const acceptInvitationMutation = useMutation(
     orpc.workspaces.acceptInvitation.mutationOptions({
       onSuccess: () => {
-        const emailForRedirect = isLinkInvitation
-          ? form.getValues("email")
-          : invitation?.email;
+        const emailForRedirect = isLinkInvitation ? form.getValues("email") : invitation?.email;
         router.push(
           `${paths.auth.signin}?message=invite_accepted&email=${encodeURIComponent(emailForRedirect ?? "")}`,
         );
       },
       onError: (err) => {
-        setError(
-          err instanceof Error ? err.message : "Не удалось принять приглашение",
-        );
+        setError(err instanceof Error ? err.message : "Не удалось принять приглашение");
       },
     }),
   );
 
-  const submitting =
-    acceptExistingMutation.isPending || acceptInvitationMutation.isPending;
+  const submitting = acceptExistingMutation.isPending || acceptInvitationMutation.isPending;
 
   const isCheckingUser = checkingAuth || checkingPasswordQuery;
 
@@ -231,12 +220,8 @@ export default function InviteAcceptPage() {
               <line x1="9" y1="9" x2="15" y2="15" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Неверная ссылка
-          </h1>
-          <p className="text-gray-600 mb-6">
-            Ссылка приглашения некорректна или отсутствует
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Неверная ссылка</h1>
+          <p className="text-gray-600 mb-6">Ссылка приглашения некорректна или отсутствует</p>
           <Link
             href={paths.auth.signin}
             className="inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white no-underline hover:bg-gray-800 transition-colors min-h-[44px] flex items-center justify-center"
@@ -280,12 +265,10 @@ export default function InviteAcceptPage() {
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
           </div>
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">
-            Приглашение не найдено
-          </h1>
+          <h1 className="mb-2 text-2xl font-bold text-gray-900">Приглашение не найдено</h1>
           <p className="mb-6 text-sm text-gray-600">
-            Ссылка приглашения истекла или недействительна. Попросите
-            администратора отправить новое приглашение.
+            Ссылка приглашения истекла или недействительна. Попросите администратора отправить новое
+            приглашение.
           </p>
           <Link
             href={paths.auth.signin}
@@ -303,8 +286,7 @@ export default function InviteAcceptPage() {
     // For email-based invitations, check email match
     const isCorrectEmail =
       isLinkInvitation ||
-      (invitation.email &&
-        currentUser.email.toLowerCase() === invitation.email.toLowerCase());
+      (invitation.email && currentUser.email.toLowerCase() === invitation.email.toLowerCase());
 
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-[#F8F9FB] p-4">
@@ -340,9 +322,7 @@ export default function InviteAcceptPage() {
               <p className="text-sm text-gray-500">Для: {invitation.email}</p>
             )}
             {!isCorrectEmail && !isLinkInvitation && invitation.email && (
-              <p className="text-sm text-amber-600 mt-2">
-                Вы вошли как: {currentUser.email}
-              </p>
+              <p className="text-sm text-amber-600 mt-2">Вы вошли как: {currentUser.email}</p>
             )}
             {isCorrectEmail && userHasPassword !== null && (
               <p className="text-sm text-blue-600 mt-2">
@@ -379,15 +359,14 @@ export default function InviteAcceptPage() {
               {userHasPassword ? (
                 <div className="bg-green-50 rounded-lg p-4 border border-green-100">
                   <p className="text-sm text-green-900 m-0">
-                    У вас уже есть пароль. Нажмите кнопку ниже, чтобы
-                    присоединиться к компании.
+                    У вас уже есть пароль. Нажмите кнопку ниже, чтобы присоединиться к компании.
                   </p>
                 </div>
               ) : (
                 <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
                   <p className="text-sm text-blue-900 m-0">
-                    Создайте пароль для вашего аккаунта. После этого вы сможете
-                    войти в систему и присоединиться к компании.
+                    Создайте пароль для вашего аккаунта. После этого вы сможете войти в систему и
+                    присоединиться к компании.
                   </p>
                 </div>
               )}
@@ -403,18 +382,13 @@ export default function InviteAcceptPage() {
                 </Button>
               ) : (
                 <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="flex flex-col gap-5"
-                  >
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700">
-                            Ваше имя
-                          </FormLabel>
+                          <FormLabel className="text-gray-700">Ваше имя</FormLabel>
                           <FormControl>
                             <Input
                               type="text"
@@ -492,9 +466,7 @@ export default function InviteAcceptPage() {
                     onClick={() => {
                       const email = invitation.email;
                       if (email) {
-                        router.push(
-                          `${paths.auth.signin}?email=${encodeURIComponent(email)}`,
-                        );
+                        router.push(`${paths.auth.signin}?email=${encodeURIComponent(email)}`);
                       }
                     }}
                     variant="dark"
@@ -543,9 +515,7 @@ export default function InviteAcceptPage() {
               <path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
             </svg>
           </div>
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">
-            Присоединяйтесь к компании
-          </h1>
+          <h1 className="mb-2 text-2xl font-bold text-gray-900">Присоединяйтесь к компании</h1>
           <p className="text-sm text-gray-600 mb-1">
             Вас пригласили в «<strong>{invitation.workspaceName}</strong>»
           </p>
@@ -576,10 +546,7 @@ export default function InviteAcceptPage() {
         )}
 
         <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-5"
-          >
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5">
             {isLinkInvitation && (
               <FormField
                 control={form.control}

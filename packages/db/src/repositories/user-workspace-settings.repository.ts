@@ -51,10 +51,7 @@ export const userWorkspaceSettingsRepository = {
     const merge = <T>(base: T, partial?: Partial<T>): T =>
       partial ? { ...base, ...partial } : base;
 
-    const deepMerge = <T extends Record<string, unknown>>(
-      base: T,
-      partial?: Partial<T>,
-    ): T => {
+    const deepMerge = <T extends Record<string, unknown>>(base: T, partial?: Partial<T>): T => {
       if (!partial) return base;
       const out = { ...base };
       for (const k of Object.keys(partial) as (keyof T)[]) {
@@ -190,9 +187,7 @@ export const userWorkspaceSettingsRepository = {
     });
   },
 
-  async findByTelegramConnectToken(
-    token: string,
-  ): Promise<schema.UserWorkspaceSettings | null> {
+  async findByTelegramConnectToken(token: string): Promise<schema.UserWorkspaceSettings | null> {
     const result = await db
       .select()
       .from(schema.userWorkspaceSettings)
@@ -203,11 +198,7 @@ export const userWorkspaceSettingsRepository = {
     return result[0] ?? null;
   },
 
-  async saveMaxConnectToken(
-    userId: string,
-    workspaceId: string,
-    token: string,
-  ): Promise<boolean> {
+  async saveMaxConnectToken(userId: string, workspaceId: string, token: string): Promise<boolean> {
     return this.upsert(userId, workspaceId, {
       notificationSettings: {
         max: {
@@ -267,8 +258,7 @@ export const userWorkspaceSettingsRepository = {
 
     let updatedCount = 0;
     for (const row of rows) {
-      const evaluationSettings =
-        row.evaluationSettings as EvaluationSettings | null;
+      const evaluationSettings = row.evaluationSettings as EvaluationSettings | null;
       if (evaluationSettings?.templateSlug === fromTemplateSlug) {
         const updatedEvaluationSettings: EvaluationSettings = {
           ...evaluationSettings,
@@ -297,5 +287,4 @@ export const userWorkspaceSettingsRepository = {
   },
 };
 
-export type UserWorkspaceSettingsRepository =
-  typeof userWorkspaceSettingsRepository;
+export type UserWorkspaceSettingsRepository = typeof userWorkspaceSettingsRepository;

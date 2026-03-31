@@ -39,10 +39,7 @@ export interface CallListProps {
   onPlay?: (callId: string, number: string) => void;
   onCallDeleted?: (callId: string) => void;
   onCallsDeleted?: (callIds: string[]) => void;
-  onRecommendationsGenerated?: (
-    callId: string,
-    recommendations: string[],
-  ) => void;
+  onRecommendationsGenerated?: (callId: string, recommendations: string[]) => void;
 }
 
 export type SortKey =

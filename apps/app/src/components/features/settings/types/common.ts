@@ -156,12 +156,8 @@ export interface TelegramSectionProps {
 
 export interface IntegrationsSectionProps {
   integrations: IntegrationsSettings;
-  onTelegramTokenChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => void;
-  onMaxBotTokenChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => void;
+  onTelegramTokenChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onMaxBotTokenChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onSaveTelegram: () => Promise<void>;
   onSaveMaxBot: () => Promise<void>;
   telegramSaving: boolean;
@@ -171,15 +167,9 @@ export interface IntegrationsSectionProps {
 export interface PbxSectionProps {
   megaPbx: MegaPbxSettings;
   onEnabledChange: (checked: boolean) => void;
-  onSaveAccess: (
-    data: import("../megapbx/schemas").AccessFormData,
-  ) => Promise<void>;
-  onSaveSyncOptions: (
-    data: import("../megapbx/schemas").SyncOptionsFormData,
-  ) => Promise<void>;
-  onSaveWebhook: (
-    data: import("../megapbx/schemas").WebhookFormData,
-  ) => Promise<void>;
+  onSaveAccess: (data: import("../megapbx/schemas").AccessFormData) => Promise<void>;
+  onSaveSyncOptions: (data: import("../megapbx/schemas").SyncOptionsFormData) => Promise<void>;
+  onSaveWebhook: (data: import("../megapbx/schemas").WebhookFormData) => Promise<void>;
   onSaveExcludedNumbers: (excludePhoneNumbers: string[]) => Promise<void>;
   onTest: (baseUrl?: string, apiKey?: string) => Promise<void>;
   onSyncDirectory: () => Promise<void>;

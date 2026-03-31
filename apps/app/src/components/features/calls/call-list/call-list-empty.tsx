@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@calls/ui";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@calls/ui";
 
 function StackedCallsIllustration() {
   return (
@@ -35,8 +29,7 @@ export function CallListEmpty() {
           </EmptyMedia>
           <EmptyTitle>Нет звонков</EmptyTitle>
           <EmptyDescription>
-            Пока нет данных для отображения. Мы уведомим вас, когда появятся
-            новые звонки.
+            Пока нет данных для отображения. Мы уведомим вас, когда появятся новые звонки.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>

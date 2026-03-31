@@ -33,9 +33,7 @@ type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 /**
  * Transaction helper for atomic operations
  */
-export async function withTransaction<T>(
-  callback: (tx: Transaction) => Promise<T>,
-): Promise<T> {
+export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
   return db.transaction(callback);
 }
 
@@ -59,9 +57,7 @@ export const workspacesRepository = {
     return result[0]?.id ?? "";
   },
 
-  async getById(
-    id: string,
-  ): Promise<typeof schema.workspaces.$inferSelect | null> {
+  async getById(id: string): Promise<typeof schema.workspaces.$inferSelect | null> {
     const result = await db
       .select()
       .from(schema.workspaces)
@@ -78,17 +74,12 @@ export const workspacesRepository = {
       metadata?: Record<string, unknown> | null;
     },
   ): Promise<boolean> {
-    const result = await db
-      .update(schema.workspaces)
-      .set(data)
-      .where(eq(schema.workspaces.id, id));
+    const result = await db.update(schema.workspaces).set(data).where(eq(schema.workspaces.id, id));
     return (result.rowCount ?? 0) > 0;
   },
 
   async delete(id: string): Promise<boolean> {
-    const result = await db
-      .delete(schema.workspaces)
-      .where(eq(schema.workspaces.id, id));
+    const result = await db.delete(schema.workspaces).where(eq(schema.workspaces.id, id));
     return (result.rowCount ?? 0) > 0;
   },
 
@@ -108,21 +99,12 @@ export const workspacesRepository = {
         evaluationSettings: schema.userWorkspaceSettings.evaluationSettings,
       })
       .from(schema.workspaceMembers)
-      .innerJoin(
-        schema.user,
-        eq(schema.workspaceMembers.userId, schema.user.id),
-      )
+      .innerJoin(schema.user, eq(schema.workspaceMembers.userId, schema.user.id))
       .leftJoin(
         schema.userWorkspaceSettings,
         and(
-          eq(
-            schema.workspaceMembers.userId,
-            schema.userWorkspaceSettings.userId,
-          ),
-          eq(
-            schema.workspaceMembers.workspaceId,
-            schema.userWorkspaceSettings.workspaceId,
-          ),
+          eq(schema.workspaceMembers.userId, schema.userWorkspaceSettings.userId),
+          eq(schema.workspaceMembers.workspaceId, schema.userWorkspaceSettings.workspaceId),
         ),
       )
       .where(eq(schema.workspaceMembers.workspaceId, workspaceId))
@@ -180,10 +162,7 @@ export const workspacesRepository = {
         user: schema.user,
       })
       .from(schema.workspaceMembers)
-      .innerJoin(
-        schema.user,
-        eq(schema.workspaceMembers.userId, schema.user.id),
-      )
+      .innerJoin(schema.user, eq(schema.workspaceMembers.userId, schema.user.id))
       .where(
         and(
           eq(schema.workspaceMembers.workspaceId, workspaceId),
@@ -271,10 +250,7 @@ export const workspacesRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
-  async removeMemberById(
-    memberId: string,
-    workspaceId: string,
-  ): Promise<boolean> {
+  async removeMemberById(memberId: string, workspaceId: string): Promise<boolean> {
     const result = await db
       .delete(schema.workspaceMembers)
       .where(
@@ -307,9 +283,7 @@ export const workspacesRepository = {
   async getMember(
     workspaceId: string,
     userId: string,
-  ): Promise<
-    (typeof schema.workspaceMembers.$inferSelect & { status: string }) | null
-  > {
+  ): Promise<(typeof schema.workspaceMembers.$inferSelect & { status: string }) | null> {
     const result = await db
       .select()
       .from(schema.workspaceMembers)
@@ -331,10 +305,7 @@ export const workspacesRepository = {
         createdAt: schema.workspaceMembers.createdAt,
       })
       .from(schema.workspaceMembers)
-      .innerJoin(
-        schema.workspaces,
-        eq(schema.workspaceMembers.workspaceId, schema.workspaces.id),
-      )
+      .innerJoin(schema.workspaces, eq(schema.workspaceMembers.workspaceId, schema.workspaces.id))
       .where(
         and(
           eq(schema.workspaceMembers.userId, userId),

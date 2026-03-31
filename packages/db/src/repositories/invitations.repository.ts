@@ -13,9 +13,7 @@ export function generateInviteToken(): string {
   // 32 байта = 64 hex символа - достаточно для безопасности
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
-  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
-    "",
-  );
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 export function getDefaultExpiresAt(): Date {
@@ -103,10 +101,7 @@ export const invitationsRepository = {
       .select()
       .from(schema.invitations)
       .where(
-        and(
-          eq(schema.invitations.workspaceId, workspaceId),
-          isNull(schema.invitations.acceptedAt),
-        ),
+        and(eq(schema.invitations.workspaceId, workspaceId), isNull(schema.invitations.acceptedAt)),
       )
       .orderBy(desc(schema.invitations.createdAt));
   },
@@ -129,10 +124,7 @@ export const invitationsRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
-  async updatePendingSettings(
-    invitationId: string,
-    settings: Record<string, unknown>,
-  ) {
+  async updatePendingSettings(invitationId: string, settings: Record<string, unknown>) {
     const result = await db
       .update(schema.invitations)
       .set({ pendingSettings: settings as never })
@@ -172,10 +164,7 @@ export const invitationsRepository = {
       );
   },
 
-  async hasPendingForEmail(
-    workspaceId: string,
-    email: string,
-  ): Promise<boolean> {
+  async hasPendingForEmail(workspaceId: string, email: string): Promise<boolean> {
     const result = await db
       .select({ id: schema.invitations.id })
       .from(schema.invitations)
@@ -191,10 +180,7 @@ export const invitationsRepository = {
     return result.length > 0;
   },
 
-  async revokeByIdAndWorkspace(
-    invitationId: string,
-    workspaceId: string,
-  ): Promise<boolean> {
+  async revokeByIdAndWorkspace(invitationId: string, workspaceId: string): Promise<boolean> {
     const result = await db
       .delete(schema.invitations)
       .where(

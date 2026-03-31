@@ -18,9 +18,7 @@ const OUT_PATTERN =
 const IN_PATTERN =
   /^(.+)_in_(\d+)_(\d{4})_(\d{2})_(\d{2})-(\d{2})_(\d{2})_(\d{2})_[a-z0-9]+\.mp3$/i;
 
-export function parseMegafonFilename(
-  filename: string,
-): ParsedMegafonFilename | null {
+export function parseMegafonFilename(filename: string): ParsedMegafonFilename | null {
   const baseName = filename.split("/").pop() ?? filename;
 
   let match = baseName.match(OUT_PATTERN);

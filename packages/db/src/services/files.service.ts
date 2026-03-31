@@ -2,12 +2,7 @@
  * Files service - handles business logic for file operations
  */
 
-import {
-  buildStorageKey,
-  type FileSource,
-  getDownloadUrl,
-  uploadBufferToS3,
-} from "@calls/lib";
+import { buildStorageKey, type FileSource, getDownloadUrl, uploadBufferToS3 } from "@calls/lib";
 import type { FilesRepository } from "../repositories/files.repository";
 import type { SystemRepository } from "../repositories/system.repository";
 import type { FileType } from "../types";

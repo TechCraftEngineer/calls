@@ -20,9 +20,7 @@ export function formatDuration(seconds: number): string {
   return `${mins}м ${secs}с`;
 }
 
-export function classNames(
-  ...classes: (string | undefined | null | false)[]
-): string {
+export function classNames(...classes: (string | undefined | null | false)[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
@@ -41,10 +39,8 @@ export function isMobileDevice(): boolean {
   // Проверка по User-Agent
   if (typeof navigator !== "undefined" && typeof window !== "undefined") {
     const win = window as Window & { opera?: string };
-    const userAgent =
-      navigator.userAgent || navigator.vendor || win.opera || "";
-    const mobileRegex =
-      /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
+    const userAgent = navigator.userAgent || navigator.vendor || win.opera || "";
+    const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
     return mobileRegex.test(userAgent.toLowerCase());
   }
 

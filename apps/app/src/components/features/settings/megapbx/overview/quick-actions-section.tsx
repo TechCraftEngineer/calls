@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Button,
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@calls/ui";
+import { Button, Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@calls/ui";
 import { QUICK_ACTIONS } from "../constants";
 import { SectionBlock } from "../section-block";
 
@@ -45,9 +38,7 @@ export function QuickActionsSection({
                 <Icon className="size-4 text-muted-foreground" />
               </div>
               <CardTitle className="text-base">{title}</CardTitle>
-              <CardDescription className="text-sm">
-                {description}
-              </CardDescription>
+              <CardDescription className="text-sm">{description}</CardDescription>
             </CardHeader>
             <CardFooter className="px-4 pt-0">
               <Button
@@ -57,9 +48,7 @@ export function QuickActionsSection({
                 disabled={syncing !== null}
                 className="w-full transition-transform duration-150 active:scale-[0.98]"
                 aria-label={
-                  syncing === key
-                    ? `Синхронизация ${title}…`
-                    : `Синхронизировать ${title}`
+                  syncing === key ? `Синхронизация ${title}…` : `Синхронизировать ${title}`
                 }
               >
                 {syncing === key ? "Синк…" : "Запустить"}

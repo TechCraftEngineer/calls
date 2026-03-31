@@ -31,9 +31,7 @@ export default function CallMetaHeader({ call }: Props) {
         </Badge>
       </div>
       <div className="call-sub-meta">
-        <div className="meta-item-inline">
-          📅 {new Date(call.timestamp).toLocaleDateString()}
-        </div>
+        <div className="meta-item-inline">📅 {new Date(call.timestamp).toLocaleDateString()}</div>
         <div className="meta-item-inline">
           ⏰{" "}
           {new Date(call.timestamp).toLocaleTimeString([], {
@@ -41,12 +39,8 @@ export default function CallMetaHeader({ call }: Props) {
             minute: "2-digit",
           })}
         </div>
-        <div className="meta-item-inline">
-          ⏱️ {Math.round(call.duration ?? 0)}с
-        </div>
-        <div className="meta-item-inline">
-          👤 {call.managerName || call.operatorName || "—"}
-        </div>
+        <div className="meta-item-inline">⏱️ {Math.round(call.duration ?? 0)}с</div>
+        <div className="meta-item-inline">👤 {call.managerName || call.operatorName || "—"}</div>
       </div>
     </div>
   );

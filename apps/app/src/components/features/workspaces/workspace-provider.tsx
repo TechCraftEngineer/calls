@@ -3,14 +3,7 @@
 import { toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-} from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from "react";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 
@@ -28,9 +21,7 @@ interface WorkspaceContextType {
   refreshWorkspaces: () => Promise<void>;
 }
 
-const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
-  undefined,
-);
+const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
 function setActiveWorkspaceCookie(workspaceId: string) {
   if (typeof document === "undefined") return;
@@ -74,15 +65,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const activeWorkspaceId = workspacesData?.activeWorkspaceId ?? null;
   const activeWorkspace = useMemo(() => {
     if (!activeWorkspaceId) return workspaces[0] ?? null;
-    return (
-      workspaces.find((w: Workspace) => w.id === activeWorkspaceId) ??
-      workspaces[0] ??
-      null
-    );
+    return workspaces.find((w: Workspace) => w.id === activeWorkspaceId) ?? workspaces[0] ?? null;
   }, [workspaces, activeWorkspaceId]);
 
-  const loading =
-    sessionPending || (shouldFetchWorkspaces && workspacesPending);
+  const loading = sessionPending || (shouldFetchWorkspaces && workspacesPending);
 
   useEffect(() => {
     if (activeWorkspace) {
@@ -119,20 +105,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setActiveWorkspace,
       refreshWorkspaces,
     }),
-    [
-      workspaces,
-      activeWorkspace,
-      loading,
-      setActiveWorkspace,
-      refreshWorkspaces,
-    ],
+    [workspaces, activeWorkspace, loading, setActiveWorkspace, refreshWorkspaces],
   );
 
-  return (
-    <WorkspaceContext.Provider value={value}>
-      {children}
-    </WorkspaceContext.Provider>
-  );
+  return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 }
 
 export function useWorkspace() {

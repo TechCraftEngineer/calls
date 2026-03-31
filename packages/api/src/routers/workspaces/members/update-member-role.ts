@@ -19,10 +19,6 @@ export const updateMemberRole = protectedProcedure
         message: "Изменять роли участников может только владелец",
       });
     }
-    await context.workspacesService.updateMemberRole(
-      input.workspaceId,
-      input.userId,
-      input.role,
-    );
+    await context.workspacesService.updateMemberRole(input.workspaceId, input.userId, input.role);
     return { success: true };
   });

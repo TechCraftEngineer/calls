@@ -50,11 +50,7 @@ const defaultForm: AddUserForm = {
   evaluationCustomInstructions: "",
 };
 
-export default function AddUserModal({
-  onClose,
-  onSubmit,
-  onSuccess,
-}: AddUserModalProps) {
+export default function AddUserModal({ onClose, onSubmit, onSuccess }: AddUserModalProps) {
   const [form, setForm] = useState<AddUserForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -70,9 +66,7 @@ export default function AddUserModal({
     setError("");
     setFormErrors({});
     const trimmedEmail = form.email.trim().toLowerCase();
-    const nextErrors: Partial<
-      Record<"email" | "password" | "givenName", string>
-    > = {};
+    const nextErrors: Partial<Record<"email" | "password" | "givenName", string>> = {};
 
     if (!trimmedEmail) nextErrors.email = "Введите email.";
     if (!form.password.trim()) nextErrors.password = "Введите пароль.";
@@ -100,9 +94,7 @@ export default function AddUserModal({
       onSuccess();
       onClose();
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Ошибка при создании пользователя",
-      );
+      setError(err instanceof Error ? err.message : "Ошибка при создании пользователя");
     } finally {
       setSubmitting(false);
     }
@@ -136,15 +128,10 @@ export default function AddUserModal({
               placeholder="example@mail.com"
               autoComplete="email"
               aria-invalid={Boolean(formErrors.email)}
-              aria-describedby={
-                formErrors.email ? "add-user-email-error" : undefined
-              }
+              aria-describedby={formErrors.email ? "add-user-email-error" : undefined}
             />
             {formErrors.email ? (
-              <span
-                id="add-user-email-error"
-                className="text-destructive mt-1 text-xs"
-              >
+              <span id="add-user-email-error" className="text-destructive mt-1 text-xs">
                 {formErrors.email}
               </span>
             ) : null}
@@ -164,15 +151,10 @@ export default function AddUserModal({
               className={formInput}
               autoComplete="new-password"
               aria-invalid={Boolean(formErrors.password)}
-              aria-describedby={
-                formErrors.password ? "add-user-password-error" : undefined
-              }
+              aria-describedby={formErrors.password ? "add-user-password-error" : undefined}
             />
             {formErrors.password ? (
-              <span
-                id="add-user-password-error"
-                className="text-destructive mt-1 text-xs"
-              >
+              <span id="add-user-password-error" className="text-destructive mt-1 text-xs">
                 {formErrors.password}
               </span>
             ) : null}
@@ -192,15 +174,10 @@ export default function AddUserModal({
               }}
               className={formInput}
               aria-invalid={Boolean(formErrors.givenName)}
-              aria-describedby={
-                formErrors.givenName ? "add-user-given-name-error" : undefined
-              }
+              aria-describedby={formErrors.givenName ? "add-user-given-name-error" : undefined}
             />
             {formErrors.givenName ? (
-              <span
-                id="add-user-given-name-error"
-                className="text-destructive mt-1 text-xs"
-              >
+              <span id="add-user-given-name-error" className="text-destructive mt-1 text-xs">
                 {formErrors.givenName}
               </span>
             ) : null}
@@ -213,9 +190,7 @@ export default function AddUserModal({
               id="add-user-family-name"
               type="text"
               value={form.familyName}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, familyName: e.target.value }))
-              }
+              onChange={(e) => setForm((f) => ({ ...f, familyName: e.target.value }))}
               className={formInput}
             />
           </div>
@@ -227,9 +202,7 @@ export default function AddUserModal({
               id="add-user-internal-extensions"
               type="text"
               value={form.internalExtensions}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, internalExtensions: e.target.value }))
-              }
+              onChange={(e) => setForm((f) => ({ ...f, internalExtensions: e.target.value }))}
               className={formInput}
               placeholder="101, 102 или admin, ovchinnikov_nikita (МегаФон)"
             />
@@ -242,9 +215,7 @@ export default function AddUserModal({
               id="add-user-mobile-phones"
               type="text"
               value={form.mobilePhones}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, mobilePhones: e.target.value }))
-              }
+              onChange={(e) => setForm((f) => ({ ...f, mobilePhones: e.target.value }))}
               className={formInput}
               placeholder="79XXXXXXXXX, можно несколько через запятую"
             />
@@ -261,9 +232,7 @@ export default function AddUserModal({
                 id="add-user-telegram-chat-id"
                 type="text"
                 value={form.telegramChatId}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, telegramChatId: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, telegramChatId: e.target.value }))}
                 className={formInput}
                 placeholder="ID чата пользователя"
               />
@@ -312,9 +281,7 @@ export default function AddUserModal({
                 id="add-user-max-chat-id"
                 type="text"
                 value={form.maxChatId}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, maxChatId: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, maxChatId: e.target.value }))}
                 className={formInput}
                 placeholder="ID чата MAX"
               />
@@ -353,12 +320,7 @@ export default function AddUserModal({
           </div>
 
           <div className="flex gap-3 justify-end">
-            <Button
-              type="button"
-              variant="link"
-              onClick={onClose}
-              className="text-foreground"
-            >
+            <Button type="button" variant="link" onClick={onClose} className="text-foreground">
               Отмена
             </Button>
             <Button
@@ -368,9 +330,7 @@ export default function AddUserModal({
               aria-busy={submitting}
               aria-live="polite"
             >
-              {submitting ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : null}
+              {submitting ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
               Добавить
             </Button>
           </div>

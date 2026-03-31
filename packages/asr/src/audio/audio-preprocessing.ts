@@ -72,10 +72,7 @@ export function safeAudioUrlParts(urlString: string): {
   }
 }
 
-async function fetchAudioBuffer(
-  audioUrl: string,
-  timeoutMs: number,
-): Promise<Buffer> {
+async function fetchAudioBuffer(audioUrl: string, timeoutMs: number): Promise<Buffer> {
   const response = await fetch(audioUrl, {
     signal: AbortSignal.timeout(timeoutMs),
   });
@@ -136,10 +133,7 @@ function buildFFmpegFilters(options: PreprocessingOptions): string[] {
   return filters;
 }
 
-function runFfmpegWithBuffer(
-  args: string[],
-  inputBuffer: Buffer,
-): Promise<Buffer> {
+function runFfmpegWithBuffer(args: string[], inputBuffer: Buffer): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const child = spawn("ffmpeg", args, {
       stdio: ["pipe", "pipe", "pipe"],
@@ -156,11 +150,7 @@ function runFfmpegWithBuffer(
     child.on("error", reject);
     child.on("close", (code) => {
       if (code !== 0) {
-        reject(
-          new Error(
-            `FFmpeg завершился с кодом ${code}: ${stderr.slice(0, 2000)}`,
-          ),
-        );
+        reject(new Error(`FFmpeg завершился с кодом ${code}: ${stderr.slice(0, 2000)}`));
         return;
       }
       resolve(Buffer.concat(chunks));
@@ -188,8 +178,7 @@ export async function preprocessAudio(
 ): Promise<PreprocessingResult> {
   const start = Date.now();
   const appliedFilters: string[] = [];
-  const downloadTimeoutMs =
-    options.downloadTimeoutMs ?? DEFAULT_AUDIO_DOWNLOAD_TIMEOUT_MS;
+  const downloadTimeoutMs = options.downloadTimeoutMs ?? DEFAULT_AUDIO_DOWNLOAD_TIMEOUT_MS;
 
   // Настройки по умолчанию (оптимальные для ASR)
   const config: Required<Omit<PreprocessingOptions, "downloadTimeoutMs">> & {

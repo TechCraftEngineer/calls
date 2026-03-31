@@ -30,20 +30,14 @@ export function getDefaultSchema(): ColumnSchema {
   };
 }
 
-function validateAndMerge(
-  saved: ColumnSchema,
-  validIds: Set<string>,
-): ColumnSchema {
+function validateAndMerge(saved: ColumnSchema, validIds: Set<string>): ColumnSchema {
   const validOrder = saved.columnOrder.filter((id) => validIds.has(id));
-  const missingInOrder = DEFAULT_COLUMN_IDS.filter(
-    (id) => !validOrder.includes(id),
-  );
+  const missingInOrder = DEFAULT_COLUMN_IDS.filter((id) => !validOrder.includes(id));
   const columnOrder = [...validOrder, ...missingInOrder];
 
   const columnVisibility: Record<string, boolean> = {};
   for (const id of DEFAULT_COLUMN_IDS) {
-    columnVisibility[id] =
-      saved.columnVisibility?.[id] ?? id !== "analysisCost";
+    columnVisibility[id] = saved.columnVisibility?.[id] ?? id !== "analysisCost";
   }
 
   return { columnOrder, columnVisibility };

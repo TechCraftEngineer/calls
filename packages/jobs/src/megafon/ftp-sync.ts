@@ -4,10 +4,10 @@
  */
 
 import { Writable } from "node:stream";
+import { getAudioDurationFromBuffer } from "@calls/asr/audio/get-audio-duration";
 import { callsService, filesService } from "@calls/db";
 import { validateFtpCredentials } from "@calls/shared";
 import { Client } from "basic-ftp";
-import { getAudioDurationFromBuffer } from "@calls/asr/audio/get-audio-duration";
 import { createLogger } from "../logger";
 import { parseMegafonFilename } from "./parse-filename";
 
@@ -29,11 +29,7 @@ export interface SyncResult {
 }
 
 function validateFtpConfig(config: FtpConfig): string[] {
-  const validation = validateFtpCredentials(
-    config.host,
-    config.user,
-    config.password,
-  );
+  const validation = validateFtpCredentials(config.host, config.user, config.password);
   return validation.errors;
 }
 
@@ -138,20 +134,14 @@ export async function syncFtp(
       await Promise.race([
         client.cd(baseRemoteDir),
         new Promise((_, reject) =>
-          setTimeout(
-            () => reject(new Error("Timeout changing directory")),
-            OPERATION_TIMEOUT,
-          ),
+          setTimeout(() => reject(new Error("Timeout changing directory")), OPERATION_TIMEOUT),
         ),
       ]);
 
       const dirList = (await Promise.race([
         client.list(),
         new Promise<never>((_, reject) =>
-          setTimeout(
-            () => reject(new Error("Timeout listing directory")),
-            OPERATION_TIMEOUT,
-          ),
+          setTimeout(() => reject(new Error("Timeout listing directory")), OPERATION_TIMEOUT),
         ),
       ])) as { name: string; isDirectory?: boolean }[];
 
@@ -166,9 +156,7 @@ export async function syncFtp(
         dateDirs = dateDirs.filter((d) => d === dateStr);
       } else if (syncFromDate) {
         const todayStr = new Date().toISOString().slice(0, 10);
-        dateDirs = dateDirs
-          .filter((d) => d >= syncFromDate && d <= todayStr)
-          .sort();
+        dateDirs = dateDirs.filter((d) => d >= syncFromDate && d <= todayStr).sort();
       } else {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -197,20 +185,14 @@ export async function syncFtp(
         await Promise.race([
           client.cd(dateDir),
           new Promise((_, reject) =>
-            setTimeout(
-              () => reject(new Error("Timeout changing directory")),
-              OPERATION_TIMEOUT,
-            ),
+            setTimeout(() => reject(new Error("Timeout changing directory")), OPERATION_TIMEOUT),
           ),
         ]);
 
         const list = (await Promise.race([
           client.list(),
           new Promise<never>((_, reject) =>
-            setTimeout(
-              () => reject(new Error("Timeout listing directory")),
-              OPERATION_TIMEOUT,
-            ),
+            setTimeout(() => reject(new Error("Timeout listing directory")), OPERATION_TIMEOUT),
           ),
         ])) as { name: string }[];
 
@@ -229,10 +211,7 @@ export async function syncFtp(
       for (const file of files) {
         const relativePath = `${dateDir}/${file.name}`;
 
-        const existing = await callsService.getCallByFilename(
-          relativePath,
-          workspaceId,
-        );
+        const existing = await callsService.getCallByFilename(relativePath, workspaceId);
         if (existing) {
           result.skipped++;
           continue;
@@ -288,10 +267,7 @@ export async function syncFtp(
               return Buffer.concat(chunks);
             })(),
             new Promise<never>((_, reject) =>
-              setTimeout(
-                () => reject(new Error("Timeout downloading file")),
-                OPERATION_TIMEOUT,
-              ),
+              setTimeout(() => reject(new Error("Timeout downloading file")), OPERATION_TIMEOUT),
             ),
           ]);
 
@@ -326,11 +302,7 @@ export async function syncFtp(
           let fileDurationSeconds: number | null = null;
 
           const duration = await getAudioDurationFromBuffer(downloadBuffer);
-          if (
-            typeof duration === "number" &&
-            Number.isFinite(duration) &&
-            duration > 0
-          ) {
+          if (typeof duration === "number" && Number.isFinite(duration) && duration > 0) {
             fileDurationSeconds = duration;
           } else {
             logger.warn("Не удалось определить длительность записи", {
@@ -364,8 +336,7 @@ export async function syncFtp(
             result.errors.push(errorMsg);
             logger.error("Критическая ошибка загрузки в S3", {
               filename: relativePath,
-              error:
-                s3Error instanceof Error ? s3Error.message : String(s3Error),
+              error: s3Error instanceof Error ? s3Error.message : String(s3Error),
             });
             // Прерываем обработку файла, так как без S3 транскрибация невозможна
             continue;

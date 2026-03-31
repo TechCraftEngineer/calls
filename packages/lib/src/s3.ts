@@ -15,9 +15,7 @@ function getS3Client(): S3Client {
     const accessKeyId = env.AWS_ACCESS_KEY_ID;
     const secretAccessKey = env.AWS_SECRET_ACCESS_KEY;
     if (!accessKeyId || !secretAccessKey) {
-      throw new Error(
-        "AWS credentials (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY) are required",
-      );
+      throw new Error("AWS credentials (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY) are required");
     }
     const s3Endpoint = env.AWS_S3_ENDPOINT;
     const s3ForcePathStyle = env.AWS_S3_FORCE_PATH_STYLE !== "false";

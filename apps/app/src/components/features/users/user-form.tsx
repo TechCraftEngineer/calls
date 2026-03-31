@@ -40,15 +40,9 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       ? {
           email: String((user as { email?: string }).email ?? ""),
           givenName: String((user as Record<string, unknown>).givenName ?? ""),
-          familyName: String(
-            (user as Record<string, unknown>).familyName ?? "",
-          ),
-          internalExtensions: String(
-            (user as Record<string, unknown>).internalExtensions ?? "",
-          ),
-          mobilePhones: String(
-            (user as Record<string, unknown>).mobilePhones ?? "",
-          ),
+          familyName: String((user as Record<string, unknown>).familyName ?? ""),
+          internalExtensions: String((user as Record<string, unknown>).internalExtensions ?? ""),
+          mobilePhones: String((user as Record<string, unknown>).mobilePhones ?? ""),
         }
       : {
           email: "",
@@ -68,8 +62,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
         reset();
       },
       onError: (err) => {
-        const message =
-          err instanceof Error ? err.message : "Ошибка сохранения";
+        const message = err instanceof Error ? err.message : "Ошибка сохранения";
         setError("root", { message });
         toast.error(message);
       },
@@ -84,8 +77,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
         reset();
       },
       onError: (err) => {
-        const message =
-          err instanceof Error ? err.message : "Ошибка сохранения";
+        const message = err instanceof Error ? err.message : "Ошибка сохранения";
         setError("root", { message });
         toast.error(message);
       },
@@ -104,9 +96,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
   };
 
   const createErrors = errors as FieldErrors<CreateUserData | UpdateUserData>;
-  const passwordError = !isEditing
-    ? (errors as FieldErrors<CreateUserData>).password
-    : undefined;
+  const passwordError = !isEditing ? (errors as FieldErrors<CreateUserData>).password : undefined;
 
   return (
     <form
@@ -122,10 +112,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
 
       <div className="space-y-5">
         <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-semibold text-primary-800 mb-2"
-          >
+          <label htmlFor="email" className="block text-sm font-semibold text-primary-800 mb-2">
             Email *
           </label>
           <Input
@@ -150,10 +137,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
 
         {!isEditing && (
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-semibold text-primary-800 mb-2"
-            >
+            <label htmlFor="password" className="block text-sm font-semibold text-primary-800 mb-2">
               Пароль *
             </label>
             <PasswordInput
@@ -176,10 +160,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
         )}
 
         <div>
-          <label
-            htmlFor="givenName"
-            className="block text-sm font-semibold text-primary-800 mb-2"
-          >
+          <label htmlFor="givenName" className="block text-sm font-semibold text-primary-800 mb-2">
             Имя *
           </label>
           <Input
@@ -202,10 +183,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
         </div>
 
         <div>
-          <label
-            htmlFor="familyName"
-            className="block text-sm font-semibold text-primary-800 mb-2"
-          >
+          <label htmlFor="familyName" className="block text-sm font-semibold text-primary-800 mb-2">
             Фамилия
           </label>
           <Input

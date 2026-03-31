@@ -23,9 +23,7 @@ test.describe("Поток аутентификации", () => {
     await expect(page.locator("h1")).toContainText("С возвращением!");
   });
 
-  test("редирект неавторизованного пользователя на страницу входа", async ({
-    page,
-  }) => {
+  test("редирект неавторизованного пользователя на страницу входа", async ({ page }) => {
     // Пытаемся зайти на защищённую страницу
     await page.goto("/");
 
@@ -88,9 +86,7 @@ test.describe("Поток аутентификации", () => {
     expect(title).toBeTruthy();
 
     // Проверяем viewport meta tag
-    const viewport = await page
-      .locator('meta[name="viewport"]')
-      .getAttribute("content");
+    const viewport = await page.locator('meta[name="viewport"]').getAttribute("content");
     expect(viewport).toContain("width=device-width");
   });
 
@@ -129,9 +125,7 @@ test.describe("Поток аутентификации", () => {
       // Проверяем, что элементы не перекрываются
       const emailBox = await page.locator("#email").boundingBox();
       const passwordBox = await page.locator("#password").boundingBox();
-      const submitBox = await page
-        .locator('button[type="submit"]')
-        .boundingBox();
+      const submitBox = await page.locator('button[type="submit"]').boundingBox();
 
       expect(emailBox).toBeTruthy();
       expect(passwordBox).toBeTruthy();

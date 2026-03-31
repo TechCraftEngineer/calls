@@ -16,13 +16,9 @@ export const ChatConversationMessageSchema = z.object({
   context: z.string().trim().min(1).max(2000).optional(),
 });
 
-export const ChatConversationHistorySchema = z
-  .array(ChatConversationMessageSchema)
-  .max(20);
+export const ChatConversationHistorySchema = z.array(ChatConversationMessageSchema).max(20);
 
-export type ChatConversationMessage = z.infer<
-  typeof ChatConversationMessageSchema
->;
+export type ChatConversationMessage = z.infer<typeof ChatConversationMessageSchema>;
 
 export const ChatBotConfigSchema = z.object({
   provider: z.enum(["openai", "openrouter"]).default("openai"),

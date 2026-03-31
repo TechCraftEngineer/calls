@@ -14,8 +14,7 @@ const logger = createLogger("accept-invitation-for-existing-user");
 export const acceptInvitationForExistingUser = protectedProcedure
   .input(z.object({ token: z.string().min(1, "Токен приглашения обязателен") }))
   .handler(async ({ input, context }) => {
-    const authUserId =
-      context.authUserId ?? (context.user as { id?: string })?.id;
+    const authUserId = context.authUserId ?? (context.user as { id?: string })?.id;
     if (!authUserId) {
       throw new ORPCError("UNAUTHORIZED", {
         message: "Необходима авторизация",
@@ -33,8 +32,7 @@ export const acceptInvitationForExistingUser = protectedProcedure
         workspaceName: result.workspaceName,
       };
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Не удалось принять приглашение";
+      const msg = err instanceof Error ? err.message : "Не удалось принять приглашение";
       logger.error("acceptInvitationForExistingUser failed", {
         token: `${input.token.slice(0, 8)}...`,
         error: msg,

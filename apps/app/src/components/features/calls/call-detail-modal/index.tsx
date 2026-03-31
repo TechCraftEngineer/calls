@@ -19,18 +19,9 @@ import { useORPC } from "@/orpc/react";
 import DeleteConfirmModal from "./delete-confirm-modal";
 import EvaluationSidebar from "./evaluation-sidebar";
 import TranscriptSection from "./transcript-section";
-import type {
-  CallDetail,
-  CallDetailModalProps,
-  EvaluationDetail,
-  TranscriptDetail,
-} from "./types";
+import type { CallDetail, CallDetailModalProps, EvaluationDetail, TranscriptDetail } from "./types";
 
-export default function CallDetailModal({
-  callId,
-  onClose,
-  onCallDeleted,
-}: CallDetailModalProps) {
+export default function CallDetailModal({ callId, onClose, onCallDeleted }: CallDetailModalProps) {
   const orpc = useORPC();
   const [evaluation, setEvaluation] = useState<EvaluationDetail | null>(null);
   const [restarting, setRestarting] = useState(false);
@@ -41,8 +32,7 @@ export default function CallDetailModal({
     if (!id) return false;
     const idStr = String(id);
     // UUID v7 с префиксом ws_ или обычный UUID
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     const uuidWithPrefixRegex =
       /^ws_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(idStr) || uuidWithPrefixRegex.test(idStr);
@@ -63,10 +53,7 @@ export default function CallDetailModal({
   });
 
   // Безопасное приведение типов с проверкой структуры
-  const call =
-    result?.call && typeof result.call === "object"
-      ? (result.call as CallDetail)
-      : null;
+  const call = result?.call && typeof result.call === "object" ? (result.call as CallDetail) : null;
   const transcript =
     result?.transcript && typeof result.transcript === "object"
       ? (result.transcript as TranscriptDetail)
@@ -76,15 +63,12 @@ export default function CallDetailModal({
     setEvaluation((result?.evaluation ?? null) as EvaluationDetail | null);
   }, [result?.evaluation]);
 
-  const transcribeMutation = useMutation(
-    orpc.calls.transcribe.mutationOptions(),
-  );
+  const transcribeMutation = useMutation(orpc.calls.transcribe.mutationOptions());
 
   const generateRecommendationsMutation = useMutation(
     orpc.calls.generateRecommendations.mutationOptions({
       onSuccess: (data) => {
-        const recs =
-          (data as { recommendations?: string[] })?.recommendations ?? [];
+        const recs = (data as { recommendations?: string[] })?.recommendations ?? [];
         setEvaluation((prev) => {
           if (!prev) {
             return {
@@ -101,9 +85,7 @@ export default function CallDetailModal({
       },
       onError: (error) => {
         const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Не удалось сформировать рекомендации";
+          error instanceof Error ? error.message : "Не удалось сформировать рекомендации";
         toast.error(`Ошибка: ${errorMessage}`);
       },
     }),
@@ -112,16 +94,11 @@ export default function CallDetailModal({
   const evaluateMutation = useMutation(
     orpc.calls.evaluate.mutationOptions({
       onSuccess: () => {
-        toast.success(
-          "Оценка запущена. Данные обновятся через несколько секунд.",
-        );
+        toast.success("Оценка запущена. Данные обновятся через несколько секунд.");
         setTimeout(() => void loadData(), 6000);
       },
       onError: (error) => {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Не удалось запустить оценку";
+        const errorMessage = error instanceof Error ? error.message : "Не удалось запустить оценку";
         toast.error(`Ошибка: ${errorMessage}`);
       },
     }),
@@ -136,8 +113,7 @@ export default function CallDetailModal({
         toast.success("Звонок удалён");
       },
       onError: (error) => {
-        const errorMessage =
-          error instanceof Error ? error.message : "Ошибка при удалении звонка";
+        const errorMessage = error instanceof Error ? error.message : "Ошибка при удалении звонка";
         toast.error(`Ошибка: ${errorMessage}`);
       },
     }),
@@ -190,9 +166,7 @@ export default function CallDetailModal({
     } catch (error: unknown) {
       console.error("Failed to restart analysis:", error);
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Ошибка при перезапуске анализа";
+        error instanceof Error ? error.message : "Ошибка при перезапуске анализа";
       toast.error(`Ошибка: ${errorMessage}`);
     } finally {
       setRestarting(false);
@@ -211,8 +185,7 @@ export default function CallDetailModal({
   };
 
   const { activeWorkspace } = useWorkspace();
-  const isWorkspaceAdmin =
-    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
   const handleDeleteCall = useCallback(() => {
     if (!call || deleteMutation.isPending) return;
@@ -248,14 +221,10 @@ export default function CallDetailModal({
                     </DialogTitle>
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="secondary" className="font-medium">
-                        {call.direction === "inbound"
-                          ? "Входящий"
-                          : "Исходящий"}
+                        {call.direction === "inbound" ? "Входящий" : "Исходящий"}
                       </Badge>
                       <Badge
-                        variant={
-                          (call.duration ?? 0) > 0 ? "outline" : "destructive"
-                        }
+                        variant={(call.duration ?? 0) > 0 ? "outline" : "destructive"}
                         className={
                           (call.duration ?? 0) > 0
                             ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400"
@@ -306,9 +275,7 @@ export default function CallDetailModal({
                   callId={callIdStr}
                   transcript={transcript}
                   onDownloadTxt={handleDownloadTxt}
-                  managerName={
-                    call.managerName ?? call.operatorName ?? undefined
-                  }
+                  managerName={call.managerName ?? call.operatorName ?? undefined}
                 />
                 <EvaluationSidebar
                   call={call}
@@ -319,9 +286,7 @@ export default function CallDetailModal({
                   onRestartAnalysis={handleRestartAnalysis}
                   onReevaluate={handleReevaluate}
                   onGenerateRecommendations={handleGenerateRecommendations}
-                  isGeneratingRecommendations={
-                    generateRecommendationsMutation.isPending
-                  }
+                  isGeneratingRecommendations={generateRecommendationsMutation.isPending}
                 />
               </div>
             </>

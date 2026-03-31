@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Button,
@@ -13,7 +13,7 @@ import {
   toast,
 } from "@calls/ui";
 import { Loader2 } from "lucide-react";
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 
 interface BulkKpiSettingsProps {
   isOpen: boolean;
@@ -86,13 +86,14 @@ export default function BulkKpiSettings({
       // Проверка на пустые значения и создание ошибок полей
       const emptyFieldErrors: BulkKpiFieldErrors = {};
       if (settings.baseSalary.trim() === "") {
-        emptyFieldErrors.baseSalary = "Поле \"Базовая зарплата\" должно быть заполнено";
+        emptyFieldErrors.baseSalary = 'Поле "Базовая зарплата" должно быть заполнено';
       }
       if (settings.targetBonus.trim() === "") {
-        emptyFieldErrors.targetBonus = "Поле \"Целевой бонус\" должно быть заполнено";
+        emptyFieldErrors.targetBonus = 'Поле "Целевой бонус" должно быть заполнено';
       }
       if (settings.targetTalkTimeMinutes.trim() === "") {
-        emptyFieldErrors.targetTalkTimeMinutes = "Поле \"Целевое время разговора\" должно быть заполнено";
+        emptyFieldErrors.targetTalkTimeMinutes =
+          'Поле "Целевое время разговора" должно быть заполнено';
       }
 
       // Если есть пустые поля, показываем ошибки и фокусируемся
@@ -171,14 +172,8 @@ export default function BulkKpiSettings({
       }
 
       const validatedSettings = {
-        baseSalary: Math.min(
-          baseSalaryResult.value,
-          KPI_FIELD_LIMITS.baseSalary,
-        ),
-        targetBonus: Math.min(
-          targetBonusResult.value,
-          KPI_FIELD_LIMITS.targetBonus,
-        ),
+        baseSalary: Math.min(baseSalaryResult.value, KPI_FIELD_LIMITS.baseSalary),
+        targetBonus: Math.min(targetBonusResult.value, KPI_FIELD_LIMITS.targetBonus),
         targetTalkTimeMinutes: Math.min(
           targetTalkTimeMinutesResult.value,
           KPI_FIELD_LIMITS.targetTalkTimeMinutes,
@@ -217,9 +212,7 @@ export default function BulkKpiSettings({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Массовое применение KPI</DialogTitle>
-          <DialogDescription>
-            Установите одинаковые KPI для всех сотрудников
-          </DialogDescription>
+          <DialogDescription>Установите одинаковые KPI для всех сотрудников</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
@@ -235,21 +228,14 @@ export default function BulkKpiSettings({
                 inputMode="numeric"
                 autoComplete="off"
                 value={settings.baseSalary || ""}
-                onChange={(e) =>
-                  handleFieldChange("baseSalary", e.target.value)
-                }
+                onChange={(e) => handleFieldChange("baseSalary", e.target.value)}
                 placeholder="50000…"
                 disabled={isLoading}
                 aria-invalid={!!fieldErrors.baseSalary}
-                aria-describedby={
-                  fieldErrors.baseSalary ? "baseSalary-error" : undefined
-                }
+                aria-describedby={fieldErrors.baseSalary ? "baseSalary-error" : undefined}
               />
               {fieldErrors.baseSalary && (
-                <p
-                  id="baseSalary-error"
-                  className="text-sm text-destructive mt-1"
-                >
+                <p id="baseSalary-error" className="text-sm text-destructive mt-1">
                   {fieldErrors.baseSalary}
                 </p>
               )}
@@ -268,31 +254,21 @@ export default function BulkKpiSettings({
                 inputMode="numeric"
                 autoComplete="off"
                 value={settings.targetBonus || ""}
-                onChange={(e) =>
-                  handleFieldChange("targetBonus", e.target.value)
-                }
+                onChange={(e) => handleFieldChange("targetBonus", e.target.value)}
                 placeholder="10000…"
                 disabled={isLoading}
                 aria-invalid={!!fieldErrors.targetBonus}
-                aria-describedby={
-                  fieldErrors.targetBonus ? "targetBonus-error" : undefined
-                }
+                aria-describedby={fieldErrors.targetBonus ? "targetBonus-error" : undefined}
               />
               {fieldErrors.targetBonus && (
-                <p
-                  id="targetBonus-error"
-                  className="text-sm text-destructive mt-1"
-                >
+                <p id="targetBonus-error" className="text-sm text-destructive mt-1">
                   {fieldErrors.targetBonus}
                 </p>
               )}
             </div>
           </div>
           <div className="grid grid-cols-4 items-start gap-4">
-            <Label
-              htmlFor="bulkTargetTalkTimeMinutes"
-              className="text-right mt-2"
-            >
+            <Label htmlFor="bulkTargetTalkTimeMinutes" className="text-right mt-2">
               Целевое время разговора
             </Label>
             <div className="col-span-3">
@@ -304,23 +280,16 @@ export default function BulkKpiSettings({
                 inputMode="numeric"
                 autoComplete="off"
                 value={settings.targetTalkTimeMinutes || ""}
-                onChange={(e) =>
-                  handleFieldChange("targetTalkTimeMinutes", e.target.value)
-                }
+                onChange={(e) => handleFieldChange("targetTalkTimeMinutes", e.target.value)}
                 placeholder="120…"
                 disabled={isLoading}
                 aria-invalid={!!fieldErrors.targetTalkTimeMinutes}
                 aria-describedby={
-                  fieldErrors.targetTalkTimeMinutes
-                    ? "targetTalkTimeMinutes-error"
-                    : undefined
+                  fieldErrors.targetTalkTimeMinutes ? "targetTalkTimeMinutes-error" : undefined
                 }
               />
               {fieldErrors.targetTalkTimeMinutes && (
-                <p
-                  id="targetTalkTimeMinutes-error"
-                  className="text-sm text-destructive mt-1"
-                >
+                <p id="targetTalkTimeMinutes-error" className="text-sm text-destructive mt-1">
                   {fieldErrors.targetTalkTimeMinutes}
                 </p>
               )}
@@ -328,12 +297,7 @@ export default function BulkKpiSettings({
           </div>
         </div>
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleClose}
-            disabled={isLoading}
-          >
+          <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
             Отмена
           </Button>
           <Button type="button" onClick={handleApply} disabled={isLoading}>

@@ -7,5 +7,4 @@ export { verification } from "./verification";
 export type User = typeof import("./user").user.$inferSelect;
 export type Session = typeof import("./session").session.$inferSelect;
 export type Account = typeof import("./account").account.$inferSelect;
-export type Verification =
-  typeof import("./verification").verification.$inferSelect;
+export type Verification = typeof import("./verification").verification.$inferSelect;

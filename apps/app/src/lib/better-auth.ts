@@ -10,15 +10,9 @@ import { extractUserFields, isAdminUser } from "./user-profile";
 // baseURL — URL приложения (запросы идут через Next.js proxy /api/auth → backend)
 function getAuthBaseUrl(): string {
   if (typeof window !== "undefined") {
-    return (
-      process.env.NEXT_PUBLIC_APP_URL?.replace(/\/?$/, "") ||
-      window.location.origin
-    );
+    return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/?$/, "") || window.location.origin;
   }
-  return (
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/?$/, "") ||
-    "http://localhost:3000"
-  );
+  return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/?$/, "") || "http://localhost:3000";
 }
 
 export const authClient = createAuthClient({

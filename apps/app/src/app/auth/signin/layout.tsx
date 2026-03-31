@@ -6,10 +6,6 @@ export const metadata: Metadata = {
     "Войдите в личный кабинет QBS Звонки. Доступ к аналитике телефонных разговоров и отчётам.",
 };
 
-export default function SignInLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function SignInLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

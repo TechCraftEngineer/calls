@@ -15,8 +15,7 @@ export const updateBasicInfo = workspaceProcedure
       });
 
     const user = await usersService.getUser(input.user_id);
-    if (!user)
-      throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+    if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
       await usersService.updateUserName(input.user_id, {
@@ -41,8 +40,7 @@ export const updateBasicInfo = workspaceProcedure
       await logUpdate(
         "basic info updated",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         undefined,
         context.workspaceId,
       );
@@ -52,8 +50,7 @@ export const updateBasicInfo = workspaceProcedure
       await logUpdate(
         "update user basic info",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         error,
         context.workspaceId,
       );

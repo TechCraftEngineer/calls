@@ -6,10 +6,7 @@ export const pbxSettingsSchema = z.object({
   baseUrl: z.string().trim(),
   apiKey: z.string().trim(),
   syncFromDate: z.string().trim().optional().default(""),
-  excludePhoneNumbers: z
-    .array(z.string().regex(/^\d+$/))
-    .optional()
-    .default([]),
+  excludePhoneNumbers: z.array(z.string().regex(/^\d+$/)).optional().default([]),
   webhookSecret: z.string().trim().optional().default(""),
   ftpHost: z.string().trim().optional().default(""),
   ftpUser: z.string().trim().optional().default(""),
@@ -30,9 +27,7 @@ export const pbxAccessSchema = z.object({
       (value) => {
         if (!value) return true;
         const urlCandidate =
-          value.startsWith("http://") || value.startsWith("https://")
-            ? value
-            : `https://${value}`;
+          value.startsWith("http://") || value.startsWith("https://") ? value : `https://${value}`;
         try {
           new URL(urlCandidate);
           return true;
@@ -48,8 +43,7 @@ export const pbxAccessSchema = z.object({
     .trim()
     .optional()
     .refine((v) => v === undefined || v === "" || isValidCalendarIsoDate(v), {
-      message:
-        "Некорректная дата импорта. Используйте формат YYYY-MM-DD и реальную дату.",
+      message: "Некорректная дата импорта. Используйте формат YYYY-MM-DD и реальную дату.",
     }),
 });
 

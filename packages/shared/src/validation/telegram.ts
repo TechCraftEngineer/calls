@@ -21,8 +21,7 @@ export function validateTelegramBotToken(token?: string | null): {
   if (!TELEGRAM_BOT_TOKEN_REGEX.test(trimmed)) {
     return {
       isValid: false,
-      error:
-        "Неверный формат токена. Ожидается вид: <числа>:<строка_из_букв_цифр_-_или_>.",
+      error: "Неверный формат токена. Ожидается вид: <числа>:<строка_из_букв_цифр_-_или_>.",
     };
   }
 

@@ -1,8 +1,5 @@
 import { createLogger } from "@calls/logger";
-import type {
-  PreprocessingOptions,
-  PreprocessingResult,
-} from "../audio/audio-preprocessing";
+import type { PreprocessingOptions, PreprocessingResult } from "../audio/audio-preprocessing";
 import { preprocessAudio } from "../audio/audio-preprocessing";
 
 const logger = createLogger("asr-pipeline-prepare-audio");

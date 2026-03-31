@@ -18,7 +18,6 @@ export const evaluate = workspaceProcedure
     await inngest.send(evaluateRequested.create({ callId: input.call_id }));
     return {
       success: true,
-      message:
-        "Оценка звонка запущена. Результат появится через несколько секунд.",
+      message: "Оценка звонка запущена. Результат появится через несколько секунд.",
     };
   });

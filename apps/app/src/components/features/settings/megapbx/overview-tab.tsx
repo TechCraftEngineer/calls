@@ -1,17 +1,8 @@
 "use client";
 
 import type { MegaPbxSettings } from "../types";
-import {
-  AccessSection,
-  QuickActionsSection,
-  SyncOptionsSection,
-  WebhookSection,
-} from "./overview";
-import type {
-  AccessFormData,
-  SyncOptionsFormData,
-  WebhookFormData,
-} from "./schemas";
+import { AccessSection, QuickActionsSection, SyncOptionsSection, WebhookSection } from "./overview";
+import type { AccessFormData, SyncOptionsFormData, WebhookFormData } from "./schemas";
 
 export interface OverviewTabProps {
   megaPbx: MegaPbxSettings;

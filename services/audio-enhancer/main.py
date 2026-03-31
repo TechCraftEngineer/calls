@@ -99,6 +99,12 @@ warnings.filterwarnings(
     message=r".*torchaudio\.backend\.common\.AudioMetaData.*has been moved.*",
     category=UserWarning,
 )
+# Подавляем warning об устаревшем torchaudio.set_audio_backend
+warnings.filterwarnings(
+    "ignore",
+    message=r".*torchaudio\._backend\.set_audio_backend has been deprecated.*",
+    category=UserWarning,
+)
 
 # Обработка сигналов для корректного завершения
 def signal_handler(sig, frame):
@@ -148,12 +154,7 @@ if PYANNOTE_AVAILABLE:
         if hf_token:
             model_id = "pyannote/speaker-diarization-3.1"
             # Используем правильный API для pyannote 3.1+
-            try:
-                # Сначала пробуем с use_auth_token (старый API)
-                pyannote_pipeline = Pipeline.from_pretrained(model_id, use_auth_token=hf_token)
-            except TypeError:
-                # Если не работает, пробуем с token (новый API)
-                pyannote_pipeline = Pipeline.from_pretrained(model_id, token=hf_token)
+            pyannote_pipeline = Pipeline.from_pretrained(model_id, use_auth_token=hf_token)
             logger.info("✓ Pyannote диаризация загружена")
         else:
             logger.warning("HF_TOKEN не установлен, pyannote недоступен")

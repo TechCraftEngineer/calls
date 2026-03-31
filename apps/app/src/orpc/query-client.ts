@@ -7,9 +7,7 @@ import {
 
 function captureApiErrorToPostHog(error: unknown) {
   if (typeof window === "undefined") return;
-  const posthog = (
-    window as { posthog?: { capture: (e: string, p?: object) => void } }
-  ).posthog;
+  const posthog = (window as { posthog?: { capture: (e: string, p?: object) => void } }).posthog;
   if (!posthog) return;
   try {
     const message = error instanceof Error ? error.message : String(error);
@@ -48,8 +46,7 @@ export const createQueryClient = () => {
       },
       dehydrate: {
         shouldDehydrateQuery: (query) =>
-          defaultShouldDehydrateQuery(query) ||
-          query.state.status === "pending",
+          defaultShouldDehydrateQuery(query) || query.state.status === "pending",
         shouldRedactErrors: () => process.env.NODE_ENV !== "development",
       },
     },

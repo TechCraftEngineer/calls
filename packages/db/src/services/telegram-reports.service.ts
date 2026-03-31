@@ -5,10 +5,7 @@
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
-import type {
-  NotificationSettings,
-  ReportSettings,
-} from "../schema/user/workspace-settings";
+import type { NotificationSettings, ReportSettings } from "../schema/user/workspace-settings";
 
 export type ReportType = "daily" | "weekly" | "monthly";
 
@@ -73,10 +70,7 @@ export async function getTelegramReportRecipients(
       schema.userWorkspaceSettings,
       and(
         eq(schema.workspaceMembers.userId, schema.userWorkspaceSettings.userId),
-        eq(
-          schema.workspaceMembers.workspaceId,
-          schema.userWorkspaceSettings.workspaceId,
-        ),
+        eq(schema.workspaceMembers.workspaceId, schema.userWorkspaceSettings.workspaceId),
       ),
     )
     .where(
@@ -198,9 +192,7 @@ export async function getTelegramReportRecipients(
 /**
  * Возвращает ID воркспейсов, где есть хотя бы один получатель Telegram-отчётов.
  */
-export async function getWorkspaceIdsWithTelegramReportRecipients(): Promise<
-  string[]
-> {
+export async function getWorkspaceIdsWithTelegramReportRecipients(): Promise<string[]> {
   const rows = await db
     .selectDistinct({
       workspaceId: schema.workspaceMembers.workspaceId,
@@ -211,10 +203,7 @@ export async function getWorkspaceIdsWithTelegramReportRecipients(): Promise<
       schema.userWorkspaceSettings,
       and(
         eq(schema.workspaceMembers.userId, schema.userWorkspaceSettings.userId),
-        eq(
-          schema.workspaceMembers.workspaceId,
-          schema.userWorkspaceSettings.workspaceId,
-        ),
+        eq(schema.workspaceMembers.workspaceId, schema.userWorkspaceSettings.workspaceId),
       ),
     )
     .where(
@@ -234,9 +223,7 @@ export async function getWorkspaceIdsWithTelegramReportRecipients(): Promise<
       ),
     );
 
-  return rows
-    .map((r) => r.workspaceId)
-    .filter((id): id is string => Boolean(id));
+  return rows.map((r) => r.workspaceId).filter((id): id is string => Boolean(id));
 }
 
 export async function getInternalNumbersForUserIds(
@@ -250,10 +237,7 @@ export async function getInternalNumbersForUserIds(
       internalExtensions: schema.user.internalExtensions,
     })
     .from(schema.user)
-    .innerJoin(
-      schema.workspaceMembers,
-      eq(schema.user.id, schema.workspaceMembers.userId),
-    )
+    .innerJoin(schema.workspaceMembers, eq(schema.user.id, schema.workspaceMembers.userId))
     .where(
       and(
         inArray(schema.user.id, userIds),
@@ -284,42 +268,17 @@ export interface ReportScheduleSettings {
  */
 export async function getReportScheduleSettings(
   settingsRepository: {
-    findByKeyWithDefault: (
-      k: string,
-      w: string,
-      d?: string,
-    ) => Promise<string | null>;
+    findByKeyWithDefault: (k: string, w: string, d?: string) => Promise<string | null>;
   },
   workspaceId: string,
 ): Promise<ReportScheduleSettings> {
-  const [dailyTime, weeklyDay, weeklyTime, monthlyDay, monthlyTime] =
-    await Promise.all([
-      settingsRepository.findByKeyWithDefault(
-        "report_daily_time",
-        workspaceId,
-        "18:00",
-      ),
-      settingsRepository.findByKeyWithDefault(
-        "report_weekly_day",
-        workspaceId,
-        "fri",
-      ),
-      settingsRepository.findByKeyWithDefault(
-        "report_weekly_time",
-        workspaceId,
-        "18:10",
-      ),
-      settingsRepository.findByKeyWithDefault(
-        "report_monthly_day",
-        workspaceId,
-        "last",
-      ),
-      settingsRepository.findByKeyWithDefault(
-        "report_monthly_time",
-        workspaceId,
-        "18:20",
-      ),
-    ]);
+  const [dailyTime, weeklyDay, weeklyTime, monthlyDay, monthlyTime] = await Promise.all([
+    settingsRepository.findByKeyWithDefault("report_daily_time", workspaceId, "18:00"),
+    settingsRepository.findByKeyWithDefault("report_weekly_day", workspaceId, "fri"),
+    settingsRepository.findByKeyWithDefault("report_weekly_time", workspaceId, "18:10"),
+    settingsRepository.findByKeyWithDefault("report_monthly_day", workspaceId, "last"),
+    settingsRepository.findByKeyWithDefault("report_monthly_time", workspaceId, "18:20"),
+  ]);
 
   const normTime = (v: string | null) => {
     const s = v ?? "";

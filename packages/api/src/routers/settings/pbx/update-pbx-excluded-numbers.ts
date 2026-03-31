@@ -8,9 +8,7 @@ export const updatePbxExcludedNumbers = workspaceAdminProcedure
   .input(pbxExcludePhoneNumbersSchema)
   .handler(async ({ input, context }) => {
     const username = getUserEmail(context.user) ?? "system";
-    const excludePhoneNumbers = normalizePhoneNumberList(
-      input.excludePhoneNumbers,
-    );
+    const excludePhoneNumbers = normalizePhoneNumberList(input.excludePhoneNumbers);
 
     let ok: boolean;
     try {

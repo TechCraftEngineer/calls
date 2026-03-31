@@ -12,23 +12,15 @@ const roleTranslations: Record<string, string> = {
 };
 
 export default function WorkspaceSwitcher() {
-  const {
-    workspaces,
-    activeWorkspace,
-    loading,
-    setActiveWorkspace,
-    refreshWorkspaces,
-  } = useWorkspace();
+  const { workspaces, activeWorkspace, loading, setActiveWorkspace, refreshWorkspaces } =
+    useWorkspace();
   const [isOpen, setIsOpen] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -85,18 +77,14 @@ export default function WorkspaceSwitcher() {
                   className={`workspace-item w-full justify-start ${ws.id === activeWorkspace?.id ? "is-active" : ""}`}
                   onClick={() => handleSelect(ws.id)}
                 >
-                  <div className="workspace-item-icon">
-                    {ws.name.charAt(0).toUpperCase()}
-                  </div>
+                  <div className="workspace-item-icon">{ws.name.charAt(0).toUpperCase()}</div>
                   <div className="workspace-item-info">
                     <div className="workspace-item-name">{ws.name}</div>
                     <div className="workspace-item-role">
                       {roleTranslations[ws.role] || ws.role}
                     </div>
                   </div>
-                  {ws.id === activeWorkspace?.id && (
-                    <span className="check-icon">✓</span>
-                  )}
+                  {ws.id === activeWorkspace?.id && <span className="check-icon">✓</span>}
                 </Button>
               ))}
             </div>

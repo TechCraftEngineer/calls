@@ -41,12 +41,9 @@ export const ResetPasswordEmail = ({
                 <strong>{APP_CONFIG.shortName}</strong>
               </Link>
             </Heading>
+            <Text className="text-[14px] leading-[24px] text-black">Здравствуйте,</Text>
             <Text className="text-[14px] leading-[24px] text-black">
-              Здравствуйте,
-            </Text>
-            <Text className="text-[14px] leading-[24px] text-black">
-              Мы получили запрос на сброс пароля. Нажмите кнопку ниже, чтобы
-              создать новый пароль:
+              Мы получили запрос на сброс пароля. Нажмите кнопку ниже, чтобы создать новый пароль:
             </Text>
             <Section className="mt-[32px] mb-[32px] text-center">
               <Button
@@ -66,13 +63,13 @@ export const ResetPasswordEmail = ({
               Ссылка действительна 1 час по соображениям безопасности.
             </Text>
             <Text className="text-[14px] leading-[24px] text-black">
-              Если вы не запрашивали сброс пароля, проигнорируйте это письмо или
-              обратитесь в поддержку.
+              Если вы не запрашивали сброс пароля, проигнорируйте это письмо или обратитесь в
+              поддержку.
             </Text>
             <Hr className="mx-0 my-[26px] w-full border border-solid border-[#eaeaea]" />
             <Text className="text-[12px] leading-[24px] text-[#666666]">
-              Это автоматическое сообщение от {APP_CONFIG.shortName}.
-              Пожалуйста, не отвечайте на это письмо.
+              Это автоматическое сообщение от {APP_CONFIG.shortName}. Пожалуйста, не отвечайте на
+              это письмо.
             </Text>
           </Container>
         </Body>

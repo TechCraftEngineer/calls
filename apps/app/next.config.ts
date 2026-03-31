@@ -29,13 +29,7 @@ export default async function createNextConfig(): Promise<NextConfig> {
     /** Source maps только для production builds (не публикуются) */
     productionBrowserSourceMaps: false,
 
-    transpilePackages: [
-      "@calls/auth",
-      "@calls/api",
-      "@calls/db",
-      "@calls/ui",
-      "@calls/validators",
-    ],
+    transpilePackages: ["@calls/auth", "@calls/api", "@calls/db", "@calls/ui", "@calls/validators"],
 
     /** We already do linting and typechecking as separate tasks in CI */
     typescript: { ignoreBuildErrors: true },
@@ -80,8 +74,7 @@ export default async function createNextConfig(): Promise<NextConfig> {
 
     /** Proxy API routes to app-server */
     async rewrites() {
-      const appServerUrl =
-        process.env.APP_SERVER_URL || "http://localhost:7000";
+      const appServerUrl = process.env.APP_SERVER_URL || "http://localhost:7000";
 
       return [
         {

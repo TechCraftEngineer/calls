@@ -29,9 +29,6 @@ export const removeMember = protectedProcedure
         message: "Недостаточно прав для удаления участника",
       });
     }
-    await context.workspacesService.removeMember(
-      input.workspaceId,
-      input.userId,
-    );
+    await context.workspacesService.removeMember(input.workspaceId, input.userId);
     return { success: true };
   });

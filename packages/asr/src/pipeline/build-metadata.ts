@@ -1,10 +1,6 @@
-import { parseGigaAmRaw } from "./gigaam-raw";
-import {
-  ASR_LOG_ERROR_MAX_LENGTH,
-  ASR_LOG_TEXT_MAX_LENGTH,
-  truncateForLog,
-} from "./log-utils";
 import type { AsrResult, AsrSource, TranscriptMetadata } from "../types";
+import { parseGigaAmRaw } from "./gigaam-raw";
+import { ASR_LOG_ERROR_MAX_LENGTH, ASR_LOG_TEXT_MAX_LENGTH, truncateForLog } from "./log-utils";
 
 export function buildTranscriptMetadata(input: {
   gigaAmSuccessful: AsrResult[];
@@ -13,17 +9,9 @@ export function buildTranscriptMetadata(input: {
   durationFromUrl?: number;
   processingTimeMs: number;
 }): TranscriptMetadata {
-  const {
-    gigaAmSuccessful,
-    gigaAmBest,
-    gigaAmErrors,
-    durationFromUrl,
-    processingTimeMs,
-  } = input;
+  const { gigaAmSuccessful, gigaAmBest, gigaAmErrors, durationFromUrl, processingTimeMs } = input;
 
-  const gigaAmTexts = gigaAmSuccessful
-    .map((result) => result.text.trim())
-    .filter(Boolean);
+  const gigaAmTexts = gigaAmSuccessful.map((result) => result.text.trim()).filter(Boolean);
   const gigaAmText = gigaAmBest?.text?.trim() ?? "";
 
   const durationFromGigaRaw = gigaAmBest?.raw
@@ -43,11 +31,9 @@ export function buildTranscriptMetadata(input: {
     processingTimeMs,
     confidence: gigaAmBest?.confidence,
     speakerCount: gigaAmBest?.utterances
-      ? new Set(gigaAmBest.utterances.map((u) => u.speaker).filter(Boolean))
-          .size
+      ? new Set(gigaAmBest.utterances.map((u) => u.speaker).filter(Boolean)).size
       : undefined,
-    durationInSeconds:
-      typeof durationInSeconds === "number" ? durationInSeconds : undefined,
+    durationInSeconds: typeof durationInSeconds === "number" ? durationInSeconds : undefined,
     asrGigaAm: gigaAmBest
       ? {
           text: gigaAmText || undefined,
@@ -63,10 +49,7 @@ export function buildTranscriptMetadata(input: {
         processingTimeMs: gigaAmBest?.processingTimeMs,
         text:
           gigaAmTexts.length > 0
-            ? truncateForLog(
-                gigaAmTexts.join("\n\n---\n\n"),
-                ASR_LOG_TEXT_MAX_LENGTH,
-              )
+            ? truncateForLog(gigaAmTexts.join("\n\n---\n\n"), ASR_LOG_TEXT_MAX_LENGTH)
             : undefined,
         confidence: gigaAmBest?.confidence,
         utterances: undefined,

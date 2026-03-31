@@ -66,8 +66,8 @@ export default function FtpSection({
               FTP (загрузка записей с PBX)
             </CardTitle>
             <CardDescription className="mt-1">
-              Подключение к FTP-серверу PBX для автоматической загрузки записей
-              звонков. Учётные данные хранятся в базе в зашифрованном виде.
+              Подключение к FTP-серверу PBX для автоматической загрузки записей звонков. Учётные
+              данные хранятся в базе в зашифрованном виде.
             </CardDescription>
           </div>
           <label
@@ -96,10 +96,7 @@ export default function FtpSection({
         >
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label
-                htmlFor="ftp-host"
-                className="text-xs text-muted-foreground"
-              >
+              <Label htmlFor="ftp-host" className="text-xs text-muted-foreground">
                 Host
               </Label>
               <Input
@@ -113,10 +110,7 @@ export default function FtpSection({
               />
             </div>
             <div className="space-y-2">
-              <Label
-                htmlFor="ftp-user"
-                className="text-xs text-muted-foreground"
-              >
+              <Label htmlFor="ftp-user" className="text-xs text-muted-foreground">
                 User
               </Label>
               <Input
@@ -130,10 +124,7 @@ export default function FtpSection({
               />
             </div>
             <div className="space-y-2">
-              <Label
-                htmlFor="ftp-password"
-                className="text-xs text-muted-foreground"
-              >
+              <Label htmlFor="ftp-password" className="text-xs text-muted-foreground">
                 Password
               </Label>
               <PasswordInput
@@ -141,9 +132,7 @@ export default function FtpSection({
                 value={password}
                 onChange={onFieldChange("password")}
                 placeholder={
-                  passwordSet
-                    ? "•••••••• (оставьте пустым, чтобы не менять)"
-                    : "FTP пароль"
+                  passwordSet ? "•••••••• (оставьте пустым, чтобы не менять)" : "FTP пароль"
                 }
                 autoComplete="off"
                 className="h-9"
@@ -152,10 +141,7 @@ export default function FtpSection({
           </div>
 
           <div className="space-y-2 max-w-xs">
-            <Label
-              htmlFor="ftp-sync-from-date"
-              className="text-xs text-muted-foreground"
-            >
+            <Label htmlFor="ftp-sync-from-date" className="text-xs text-muted-foreground">
               Выгружать с даты
             </Label>
             <DatePicker
@@ -171,10 +157,7 @@ export default function FtpSection({
           </div>
 
           <div className="space-y-2">
-            <Label
-              htmlFor="ftp-exclude-phone-numbers"
-              className="text-xs text-muted-foreground"
-            >
+            <Label htmlFor="ftp-exclude-phone-numbers" className="text-xs text-muted-foreground">
               Исключить номера из загрузки и анализа
             </Label>
             <Textarea
@@ -186,9 +169,8 @@ export default function FtpSection({
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Номера телефонов (внутренние или внешние), которые не будут
-              загружаться с FTP и не попадут в аналитику. Один номер на строку
-              или через запятую.
+              Номера телефонов (внутренние или внешние), которые не будут загружаться с FTP и не
+              попадут в аналитику. Один номер на строку или через запятую.
             </p>
           </div>
 
@@ -205,10 +187,7 @@ export default function FtpSection({
               ) : connectionStatus?.success === true ? (
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
-                    <span
-                      className="size-2 shrink-0 rounded-full bg-green-500"
-                      aria-hidden
-                    />
+                    <span className="size-2 shrink-0 rounded-full bg-green-500" aria-hidden />
                     <span className="text-sm font-medium text-green-700 dark:text-green-400">
                       {host.trim()
                         ? `Подключено к ${host}`
@@ -222,18 +201,13 @@ export default function FtpSection({
               ) : connectionStatus?.success === false ? (
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
-                    <span
-                      className="size-2 shrink-0 rounded-full bg-red-500"
-                      aria-hidden
-                    />
+                    <span className="size-2 shrink-0 rounded-full bg-red-500" aria-hidden />
                     <span className="text-sm font-medium text-red-700 dark:text-red-400">
                       Ошибка подключения
                     </span>
                   </div>
                   {connectionStatus.message && (
-                    <p className="text-xs text-muted-foreground">
-                      {connectionStatus.message}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{connectionStatus.message}</p>
                   )}
                 </div>
               ) : null}
@@ -243,8 +217,7 @@ export default function FtpSection({
           {testMessage && (
             <div
               className={`rounded-lg border p-3 text-sm ${
-                testMessage.includes("установлено") ||
-                testMessage.includes("корректны")
+                testMessage.includes("установлено") || testMessage.includes("корректны")
                   ? "border-green-200 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-400"
                   : "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400"
               }`}

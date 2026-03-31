@@ -50,18 +50,14 @@ export function EmailBlock({
         {hasChanges && (
           <div className="flex items-center gap-1 text-amber-600">
             <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-            <span className="text-xs font-medium hidden sm:inline">
-              Есть изменения
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Есть изменения</span>
             <span className="text-xs font-medium sm:hidden">*</span>
           </div>
         )}
         {state === "saving" && (
           <div className="flex items-center gap-1 text-blue-600">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-spin"></div>
-            <span className="text-xs font-medium hidden sm:inline">
-              Сохранение...
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Сохранение...</span>
           </div>
         )}
         {state === "success" && (
@@ -73,9 +69,7 @@ export function EmailBlock({
                 clipRule="evenodd"
               />
             </svg>
-            <span className="text-xs font-medium hidden sm:inline">
-              Сохранено
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Сохранено</span>
           </div>
         )}
         {state === "error" && (
@@ -93,9 +87,7 @@ export function EmailBlock({
       </div>
 
       <div className="mb-4">
-        <label className="block mb-1 text-[13px] font-semibold">
-          Email адрес
-        </label>
+        <label className="block mb-1 text-[13px] font-semibold">Email адрес</label>
         <Input
           type="email"
           value={form.email}
@@ -109,10 +101,7 @@ export function EmailBlock({
 
       <div className="space-y-2">
         {emailOptions.map(([key, label]) => (
-          <label
-            key={key}
-            className="flex items-center gap-2 text-sm cursor-pointer"
-          >
+          <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
             <input
               type="checkbox"
               checked={form[key]}

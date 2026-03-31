@@ -8,10 +8,7 @@ import type { Context, Next } from "hono";
 
 const logger = createLogger("backend-server");
 
-export const rateLimitMap = new Map<
-  string,
-  { count: number; resetTime: number }
->();
+export const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 
 // Periodic cleanup to prevent memory leaks
 setInterval(() => {
@@ -23,13 +20,9 @@ setInterval(() => {
   }
 }, 60000); // Clean every minute
 
-export function createRateLimit(options: {
-  windowMs: number;
-  maxRequests: number;
-}) {
+export function createRateLimit(options: { windowMs: number; maxRequests: number }) {
   return async (c: Context, next: Next) => {
-    const clientIp =
-      c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "unknown";
+    const clientIp = c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "unknown";
     const now = Date.now();
     const key = `${clientIp}:${Math.floor(now / options.windowMs)}`;
 

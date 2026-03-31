@@ -1,8 +1,5 @@
 import { createLogger } from "@calls/logger";
-import {
-  type PreprocessingResult,
-  safeAudioUrlParts,
-} from "../audio/audio-preprocessing";
+import { type PreprocessingResult, safeAudioUrlParts } from "../audio/audio-preprocessing";
 import { mergeAsrWithLlm } from "../llm/merge-asr";
 import type { PipelineResult } from "../types";
 import { buildTranscriptMetadata } from "./build-metadata";
@@ -15,10 +12,7 @@ export async function runTranscriptionPipelineFromAsrAudio(
   asrAudioUrl: string,
   preprocessingResult:
     | PreprocessingResult
-    | Pick<
-        PreprocessingResult,
-        "audioUrl" | "wasProcessed" | "appliedFilters" | "processingTimeMs"
-      >
+    | Pick<PreprocessingResult, "audioUrl" | "wasProcessed" | "appliedFilters" | "processingTimeMs">
     | null,
   options?: {
     skipNormalization?: boolean;
@@ -39,14 +33,10 @@ export async function runTranscriptionPipelineFromAsrAudio(
     gigaPreprocessMetadata: options?.gigaPreprocessMetadata,
   });
 
-  const gigaAmTexts = asr.gigaAmSuccessful
-    .map((result) => result.text.trim())
-    .filter(Boolean);
+  const gigaAmTexts = asr.gigaAmSuccessful.map((result) => result.text.trim()).filter(Boolean);
   const gigaAmText = asr.gigaAmBest?.text?.trim() ?? "";
 
-  const gigaRaw = asr.gigaAmBest?.raw as
-    | { ultraPipeline?: boolean }
-    | undefined;
+  const gigaRaw = asr.gigaAmBest?.raw as { ultraPipeline?: boolean } | undefined;
   const isUltraPipeline = Boolean(gigaRaw?.ultraPipeline);
 
   const rawText = isUltraPipeline

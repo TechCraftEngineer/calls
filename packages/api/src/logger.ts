@@ -3,8 +3,7 @@
  * Фильтрует чувствительные данные перед выводом в логи
  */
 
-const IS_DEV =
-  process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
+const IS_DEV = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
 
 // Список чувствительных полей для фильтрации
 const SENSITIVE_FIELDS = [
@@ -53,22 +52,14 @@ export function sanitizeForLogging(data: unknown): unknown {
   if (typeof data === "object") {
     const sanitized: Record<string, unknown> = {};
 
-    for (const [key, value] of Object.entries(
-      data as Record<string, unknown>,
-    )) {
+    for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
       const lowerKey = key.toLowerCase();
 
       if (NOT_MASKED_FIELDS.some((field) => lowerKey === field.toLowerCase())) {
         sanitized[key] = value;
-      } else if (
-        SENSITIVE_FIELDS.some((field) => lowerKey.includes(field.toLowerCase()))
-      ) {
+      } else if (SENSITIVE_FIELDS.some((field) => lowerKey.includes(field.toLowerCase()))) {
         sanitized[key] = "[REDACTED]";
-      } else if (
-        PARTIAL_MASK_FIELDS.some((field) =>
-          lowerKey.includes(field.toLowerCase()),
-        )
-      ) {
+      } else if (PARTIAL_MASK_FIELDS.some((field) => lowerKey.includes(field.toLowerCase()))) {
         sanitized[key] = maskString(String(value));
       } else {
         sanitized[key] = sanitizeForLogging(value);
@@ -103,11 +94,7 @@ function maskString(str: string): string {
 /**
  * Безопасное логирование с фильтрацией чувствительных данных
  */
-export function safeLog(
-  level: "info" | "warn" | "error",
-  message: string,
-  data?: unknown,
-) {
+export function safeLog(level: "info" | "warn" | "error", message: string, data?: unknown) {
   const sanitizedData = data ? sanitizeForLogging(data) : undefined;
 
   switch (level) {
@@ -128,11 +115,8 @@ export function safeLog(
  */
 export function createLogger(module: string) {
   return {
-    info: (message: string, data?: unknown) =>
-      safeLog("info", `[${module}] ${message}`, data),
-    warn: (message: string, data?: unknown) =>
-      safeLog("warn", `[${module}] ${message}`, data),
-    error: (message: string, data?: unknown) =>
-      safeLog("error", `[${module}] ${message}`, data),
+    info: (message: string, data?: unknown) => safeLog("info", `[${module}] ${message}`, data),
+    warn: (message: string, data?: unknown) => safeLog("warn", `[${module}] ${message}`, data),
+    error: (message: string, data?: unknown) => safeLog("error", `[${module}] ${message}`, data),
   };
 }

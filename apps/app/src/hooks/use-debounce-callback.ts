@@ -22,9 +22,7 @@ export function useDebouncedCallback<Args extends unknown[], R>(
   callback: (...args: Args) => R,
   delay: number,
 ): (...args: Args) => void {
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(
-    null,
-  );
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
   const debouncedCallback = useCallback(
     (...args: Args) => {

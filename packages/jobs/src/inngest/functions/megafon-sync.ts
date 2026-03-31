@@ -27,23 +27,20 @@ export const megafonSyncFn = inngest.createFunction(
       const allErrors: string[] = [];
 
       for (const integration of integrations) {
-        const result = await step.run(
-          `sync-ftp-${integration.workspaceId}`,
-          async () => {
-            return syncFtp(
-              {
-                host: integration.host,
-                user: integration.user,
-                password: integration.password,
-              },
-              integration.workspaceId,
-              {
-                syncFromDate: integration.syncFromDate,
-                excludePhoneNumbers: integration.excludePhoneNumbers,
-              },
-            );
-          },
-        );
+        const result = await step.run(`sync-ftp-${integration.workspaceId}`, async () => {
+          return syncFtp(
+            {
+              host: integration.host,
+              user: integration.user,
+              password: integration.password,
+            },
+            integration.workspaceId,
+            {
+              syncFromDate: integration.syncFromDate,
+              excludePhoneNumbers: integration.excludePhoneNumbers,
+            },
+          );
+        });
 
         totalDownloaded += result.downloaded;
         totalSkipped += result.skipped;
@@ -75,9 +72,7 @@ export const megafonSyncFn = inngest.createFunction(
         errorsCount: allErrors.length,
       };
     } catch (error) {
-      throw new Error(
-        `FTP sync failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      throw new Error(`FTP sync failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   },
 );

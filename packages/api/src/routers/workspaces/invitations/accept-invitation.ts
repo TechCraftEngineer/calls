@@ -43,9 +43,7 @@ type AuthWithContext = {
   }>;
   // Также доступен setUserPassword из auth.api
   api?: {
-    setUserPassword?: (opts: {
-      body: { userId: string; newPassword: string };
-    }) => Promise<unknown>;
+    setUserPassword?: (opts: { body: { userId: string; newPassword: string } }) => Promise<unknown>;
   };
 };
 
@@ -99,8 +97,7 @@ export const acceptInvitation = publicProcedure
 
         const hashedPassword = await pwd.hash(opts.password);
         // Генерируем уникальный accountId для Better Auth
-        const accountId =
-          generateId({ model: "account" }) ?? crypto.randomUUID();
+        const accountId = generateId({ model: "account" }) ?? crypto.randomUUID();
 
         logger.info("Linking credential account", {
           userId: createdUser.id,
@@ -145,19 +142,14 @@ export const acceptInvitation = publicProcedure
           })),
         });
 
-        const credentialAccount = accounts.find(
-          (a) => a.providerId === "credential",
-        );
+        const credentialAccount = accounts.find((a) => a.providerId === "credential");
 
         // Устанавливаем пароль только если у пользователя НЕТ аккаунта с паролем
         if (credentialAccount) {
-          logger.info(
-            "User already has credential account - skipping password setup",
-            {
-              userId,
-              accountId: credentialAccount.accountId,
-            },
-          );
+          logger.info("User already has credential account - skipping password setup", {
+            userId,
+            accountId: credentialAccount.accountId,
+          });
           return; // Ничего не делаем, пароль уже есть
         }
 
@@ -165,8 +157,7 @@ export const acceptInvitation = publicProcedure
         logger.info("Creating new credential account for existing user", {
           userId,
         });
-        const accountId =
-          generateId({ model: "account" }) ?? crypto.randomUUID();
+        const accountId = generateId({ model: "account" }) ?? crypto.randomUUID();
         const hashedPassword = await pwd.hash(newPassword);
 
         await internalAdapter.linkAccount({
@@ -176,13 +167,10 @@ export const acceptInvitation = publicProcedure
           password: hashedPassword,
         });
 
-        logger.info(
-          "Successfully created credential account for existing user",
-          {
-            userId,
-            accountId,
-          },
-        );
+        logger.info("Successfully created credential account for existing user", {
+          userId,
+          accountId,
+        });
       } catch (error) {
         logger.error("Failed to set up password for user", {
           userId,
@@ -204,8 +192,7 @@ export const acceptInvitation = publicProcedure
       );
       return { success: true, userId };
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Не удалось принять приглашение";
+      const msg = err instanceof Error ? err.message : "Не удалось принять приглашение";
       logger.error("acceptInvitation failed", {
         token: `${token.slice(0, 8)}...`,
         error: msg,

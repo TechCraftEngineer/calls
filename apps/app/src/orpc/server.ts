@@ -53,14 +53,12 @@ export async function createServerHelpers() {
     prefetch: {
       workspaces: {
         list: {
-          prefetch: () =>
-            queryClient.prefetchQuery(orpc.workspaces.list.queryOptions()),
+          prefetch: () => queryClient.prefetchQuery(orpc.workspaces.list.queryOptions()),
         },
       },
       users: {
         list: {
-          prefetch: () =>
-            queryClient.prefetchQuery(orpc.users.list.queryOptions()),
+          prefetch: () => queryClient.prefetchQuery(orpc.users.list.queryOptions()),
         },
       },
     },

@@ -5,18 +5,8 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useORPC } from "@/orpc/react";
 import { loadColumnOrder, saveColumnOrder } from "./column-storage";
-import {
-  COLUMN_ORDER_STORAGE_KEY,
-  COLUMNS,
-  DEFAULT_COLUMN_ORDER,
-} from "./constants";
-import type {
-  CallListProps,
-  CallWithDetails,
-  ColumnConfig,
-  SortKey,
-  SortOrder,
-} from "./types";
+import { COLUMN_ORDER_STORAGE_KEY, COLUMNS, DEFAULT_COLUMN_ORDER } from "./constants";
+import type { CallListProps, CallWithDetails, ColumnConfig, SortKey, SortOrder } from "./types";
 
 export function useCallListState(props: CallListProps) {
   const { onPlay, onCallDeleted, onRecommendationsGenerated } = props;
@@ -36,9 +26,7 @@ export function useCallListState(props: CallListProps) {
   );
 
   const [columnOrder, setColumnOrder] = useState<string[]>(loadColumnOrder);
-  const [visibleColumns, setVisibleColumns] = useState<string[]>(
-    COLUMNS.map((c) => c.key),
-  );
+  const [visibleColumns, setVisibleColumns] = useState<string[]>(COLUMNS.map((c) => c.key));
   const [sortConfig, setSortConfig] = useState<{
     key: SortKey;
     order: SortOrder;
@@ -47,9 +35,7 @@ export function useCallListState(props: CallListProps) {
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
-  const [recommendationsCallId, setRecommendationsCallId] = useState<
-    string | null
-  >(null);
+  const [recommendationsCallId, setRecommendationsCallId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
 
   const handleSort = (key: SortKey) => {
@@ -58,10 +44,7 @@ export function useCallListState(props: CallListProps) {
     setSortConfig({ key, order });
   };
 
-  const sortedCalls = useMemo(
-    () => sortCalls(props.calls, sortConfig),
-    [props.calls, sortConfig],
-  );
+  const sortedCalls = useMemo(() => sortCalls(props.calls, sortConfig), [props.calls, sortConfig]);
 
   useEffect(() => {
     saveColumnOrder(columnOrder);
@@ -135,10 +118,7 @@ export function useCallListState(props: CallListProps) {
     );
   };
 
-  const handleGenerateRecommendations = (
-    callId: string,
-    existingRecommendations?: string[],
-  ) => {
+  const handleGenerateRecommendations = (callId: string, existingRecommendations?: string[]) => {
     if (generateRecommendationsMutation.isPending) return;
     if (existingRecommendations && existingRecommendations.length > 0) {
       setRecommendations(existingRecommendations);
@@ -151,8 +131,7 @@ export function useCallListState(props: CallListProps) {
       { call_id: callId },
       {
         onSuccess: (result) => {
-          const recs =
-            (result as { recommendations?: string[] })?.recommendations ?? [];
+          const recs = (result as { recommendations?: string[] })?.recommendations ?? [];
           setRecommendations(recs);
           onRecommendationsGenerated?.(callId, recs);
         },

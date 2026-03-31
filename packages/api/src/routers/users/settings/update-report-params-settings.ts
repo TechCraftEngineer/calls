@@ -6,9 +6,7 @@ import { updateReportParamsSettingsSchema } from "../schemas";
 import { canAccessUser, logUpdate } from "../utils";
 
 export const updateReportParamsSettings = workspaceProcedure
-  .input(
-    z.object({ user_id: z.string(), data: updateReportParamsSettingsSchema }),
-  )
+  .input(z.object({ user_id: z.string(), data: updateReportParamsSettingsSchema }))
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
       throw new ORPCError("BAD_REQUEST", {
@@ -22,30 +20,23 @@ export const updateReportParamsSettings = workspaceProcedure
       });
 
     const user = await usersService.getUser(input.user_id);
-    if (!user)
-      throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+    if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(
-        input.user_id,
-        context.workspaceId,
-        {
-          filterExcludeAnsweringMachine:
-            input.data.filterExcludeAnsweringMachine,
-          filterMinDuration: input.data.filterMinDuration,
-          filterMinReplicas: input.data.filterMinReplicas,
+      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+        filterExcludeAnsweringMachine: input.data.filterExcludeAnsweringMachine,
+        filterMinDuration: input.data.filterMinDuration,
+        filterMinReplicas: input.data.filterMinReplicas,
 
-          kpiBaseSalary: input.data.kpiBaseSalary,
-          kpiTargetBonus: input.data.kpiTargetBonus,
-          kpiTargetTalkTimeMinutes: input.data.kpiTargetTalkTimeMinutes,
-        },
-      );
+        kpiBaseSalary: input.data.kpiBaseSalary,
+        kpiTargetBonus: input.data.kpiTargetBonus,
+        kpiTargetTalkTimeMinutes: input.data.kpiTargetTalkTimeMinutes,
+      });
 
       await logUpdate(
         "report params settings updated",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         undefined,
         context.workspaceId,
       );
@@ -55,8 +46,7 @@ export const updateReportParamsSettings = workspaceProcedure
       await logUpdate(
         "update report params settings",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         error,
         context.workspaceId,
       );

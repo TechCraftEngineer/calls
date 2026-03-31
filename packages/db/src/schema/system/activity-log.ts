@@ -21,10 +21,7 @@ export const activityLog = pgTable(
   (table) => [
     index("activity_log_timestamp_idx").on(table.timestamp),
     index("activity_log_workspace_id_idx").on(table.workspaceId),
-    index("activity_log_workspace_timestamp_idx").on(
-      table.workspaceId,
-      table.timestamp,
-    ),
+    index("activity_log_workspace_timestamp_idx").on(table.workspaceId, table.timestamp),
     index("activity_log_level_idx").on(table.level),
   ],
 );

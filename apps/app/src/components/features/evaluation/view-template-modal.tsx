@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@calls/ui";
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useORPC } from "@/orpc/react";
 
@@ -23,12 +17,7 @@ const PROMPT_STRUCTURE_HELP = `Структура ответа AI (обязат�
 • manager_score (1–5) — качество работы менеджера
 • manager_feedback — рекомендации менеджеру`;
 
-export function ViewTemplateModal({
-  open,
-  onClose,
-  slug,
-  onCreateFrom,
-}: ViewTemplateModalProps) {
+export function ViewTemplateModal({ open, onClose, slug, onCreateFrom }: ViewTemplateModalProps) {
   const orpc = useORPC();
   const { data: template, isPending } = useQuery({
     ...orpc.settings.getEvaluationTemplateBySlug.queryOptions({
@@ -44,22 +33,16 @@ export function ViewTemplateModal({
           <DialogTitle>
             {template?.name ?? "Шаблон"}
             {template?.isBuiltin && (
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
-                (встроенный)
-              </span>
+              <span className="ml-2 text-sm font-normal text-muted-foreground">(встроенный)</span>
             )}
           </DialogTitle>
         </DialogHeader>
         {isPending ? (
-          <div className="py-8 text-center text-muted-foreground">
-            Загрузка…
-          </div>
+          <div className="py-8 text-center text-muted-foreground">Загрузка…</div>
         ) : template ? (
           <div className="space-y-4">
             {template.description && (
-              <p className="text-sm text-muted-foreground">
-                {template.description}
-              </p>
+              <p className="text-sm text-muted-foreground">{template.description}</p>
             )}
             <div>
               <p className="mb-2 text-sm font-medium">Системный промпт</p>
@@ -69,9 +52,7 @@ export function ViewTemplateModal({
             </div>
             <div className="rounded-md border border-amber-200 bg-amber-50/50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
               <p className="font-medium mb-1">Справка по структуре</p>
-              <pre className="whitespace-pre-wrap font-sans text-xs">
-                {PROMPT_STRUCTURE_HELP}
-              </pre>
+              <pre className="whitespace-pre-wrap font-sans text-xs">{PROMPT_STRUCTURE_HELP}</pre>
             </div>
             {template.isBuiltin && onCreateFrom && (
               <Button

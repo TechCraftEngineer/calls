@@ -3,14 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import {
-  index,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { user } from "../auth/user";
 import { workspaces } from "../workspace/workspaces";
 
@@ -46,10 +39,7 @@ export const auditLog = pgTable(
     index("audit_log_resource_idx").on(table.resource, table.resourceId),
     index("audit_log_action_idx").on(table.action),
     index("audit_log_created_at_idx").on(table.createdAt),
-    index("audit_log_workspace_created_at_idx").on(
-      table.workspaceId,
-      table.createdAt,
-    ),
+    index("audit_log_workspace_created_at_idx").on(table.workspaceId, table.createdAt),
   ],
 );
 

@@ -4,11 +4,11 @@
  */
 
 import { callsCrud } from "./calls/crud";
-import { callsTranscripts } from "./calls/transcripts";
+import { callsEnrichStats } from "./calls/enrich-stats";
 import { callsEvaluations } from "./calls/evaluations";
 import { callsQueries } from "./calls/queries";
 import { callsStats } from "./calls/stats";
-import { callsEnrichStats } from "./calls/enrich-stats";
+import { callsTranscripts } from "./calls/transcripts";
 
 export const callsRepository = {
   // Basic CRUD operations

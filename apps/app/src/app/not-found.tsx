@@ -6,9 +6,7 @@ export default function NotFound() {
     <div className="flex min-h-screen flex-col items-center justify-center">
       <div className="text-center">
         <h1 className="mb-4 text-6xl font-bold text-gray-900">404</h1>
-        <h2 className="mb-4 text-2xl font-semibold text-gray-700">
-          Страница не найдена
-        </h2>
+        <h2 className="mb-4 text-2xl font-semibold text-gray-700">Страница не найдена</h2>
         <p className="mb-8 text-gray-600">
           Извините, но страница, которую вы ищете, не существует.
         </p>

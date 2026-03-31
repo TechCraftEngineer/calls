@@ -30,17 +30,11 @@ export class SettingsService {
   ) {}
 
   async getSetting(key: string, workspaceId: string): Promise<string | null> {
-    return this.workspaceSettingsRepository.findByKeyWithDefault(
-      key,
-      workspaceId,
-    );
+    return this.workspaceSettingsRepository.findByKeyWithDefault(key, workspaceId);
   }
 
   /** Токен бота в расшифрованном виде (для Telegram, MAX и др.) */
-  async getDecryptedBotToken(
-    key: string,
-    workspaceId: string,
-  ): Promise<string | null> {
+  async getDecryptedBotToken(key: string, workspaceId: string): Promise<string | null> {
     try {
       const botType = BOT_KEY_TO_TYPE[key];
       if (!botType) {
@@ -48,10 +42,7 @@ export class SettingsService {
         return null;
       }
 
-      const raw = await this.workspaceIntegrationsRepository.getBotToken(
-        workspaceId,
-        botType,
-      );
+      const raw = await this.workspaceIntegrationsRepository.getBotToken(workspaceId, botType);
 
       if (!raw?.trim()) {
         return null;
@@ -59,18 +50,13 @@ export class SettingsService {
 
       const decrypted = decrypt(raw);
       if (!decrypted?.trim()) {
-        console.warn(
-          `Failed to decrypt bot token for key: ${key}, workspace: ${workspaceId}`,
-        );
+        console.warn(`Failed to decrypt bot token for key: ${key}, workspace: ${workspaceId}`);
         return null;
       }
 
       return decrypted;
     } catch (error) {
-      console.error(
-        `Error decrypting bot token for key: ${key}, workspace: ${workspaceId}`,
-        error,
-      );
+      console.error(`Error decrypting bot token for key: ${key}, workspace: ${workspaceId}`, error);
       return null;
     }
   }
@@ -91,9 +77,7 @@ export class SettingsService {
 
       // Handle empty/null values properly
       if (!value?.trim()) {
-        console.log(
-          `Removing bot token for key: ${key}, workspace: ${workspaceId}`,
-        );
+        console.log(`Removing bot token for key: ${key}, workspace: ${workspaceId}`);
         return this.workspaceIntegrationsRepository.upsertBotToken(
           workspaceId,
           botType,
@@ -106,17 +90,13 @@ export class SettingsService {
 
       // Basic validation for bot tokens
       if (trimmedValue.length < BOT_TOKEN_MIN_LENGTH) {
-        console.error(
-          `Bot token too short for key: ${key}, workspace: ${workspaceId}`,
-        );
+        console.error(`Bot token too short for key: ${key}, workspace: ${workspaceId}`);
         return false;
       }
 
       const encrypted = encrypt(trimmedValue);
       if (!encrypted) {
-        console.error(
-          `Failed to encrypt bot token for key: ${key}, workspace: ${workspaceId}`,
-        );
+        console.error(`Failed to encrypt bot token for key: ${key}, workspace: ${workspaceId}`);
         return false;
       }
 
@@ -128,21 +108,14 @@ export class SettingsService {
       );
 
       if (result) {
-        console.log(
-          `Successfully updated bot token for key: ${key}, workspace: ${workspaceId}`,
-        );
+        console.log(`Successfully updated bot token for key: ${key}, workspace: ${workspaceId}`);
       } else {
-        console.error(
-          `Failed to save bot token for key: ${key}, workspace: ${workspaceId}`,
-        );
+        console.error(`Failed to save bot token for key: ${key}, workspace: ${workspaceId}`);
       }
 
       return result;
     } catch (error) {
-      console.error(
-        `Error updating bot token for key: ${key}, workspace: ${workspaceId}`,
-        error,
-      );
+      console.error(`Error updating bot token for key: ${key}, workspace: ${workspaceId}`, error);
       return false;
     }
   }
@@ -160,10 +133,7 @@ export class SettingsService {
     token: string | null;
     source: "workspace" | "system" | "none";
   }> {
-    const workspaceTokenRaw = await this.getDecryptedBotToken(
-      "telegram_bot_token",
-      workspaceId,
-    );
+    const workspaceTokenRaw = await this.getDecryptedBotToken("telegram_bot_token", workspaceId);
     const workspaceToken = workspaceTokenRaw?.trim();
     if (workspaceToken && isValidTelegramToken(workspaceToken)) {
       return { token: workspaceToken, source: "workspace" };
@@ -206,11 +176,10 @@ export class SettingsService {
     /** Номера телефонов, исключённые из загрузки и анализа */
     excludePhoneNumbers: string[];
   }> {
-    const row =
-      await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
-        workspaceId,
-        FTP_INTEGRATION,
-      );
+    const row = await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
+      workspaceId,
+      FTP_INTEGRATION,
+    );
 
     const defaultFromDate = this.getDefaultSyncFromDate();
 
@@ -237,9 +206,7 @@ export class SettingsService {
     const user = config?.user ?? null;
     const encryptedPassword = config?.password ?? null;
     const passwordSet = Boolean(encryptedPassword?.trim());
-    const syncFromDate = this.parseSyncFromDate(
-      config?.syncFromDate ?? config?.syncDaysBack,
-    );
+    const syncFromDate = this.parseSyncFromDate(config?.syncFromDate ?? config?.syncDaysBack);
     const excludePhoneNumbers = Array.isArray(config?.excludePhoneNumbers)
       ? config.excludePhoneNumbers.filter(
           (n): n is string => typeof n === "string" && n.trim() !== "",
@@ -280,11 +247,10 @@ export class SettingsService {
     user: string;
     password: string;
   } | null> {
-    const row =
-      await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
-        workspaceId,
-        FTP_INTEGRATION,
-      );
+    const row = await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
+      workspaceId,
+      FTP_INTEGRATION,
+    );
     if (!row) return null;
     const config = row.config as {
       host?: string;
@@ -335,11 +301,10 @@ export class SettingsService {
     syncFromDate?: string,
     excludePhoneNumbers?: string[],
   ): Promise<boolean> {
-    const row =
-      await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
-        workspaceId,
-        FTP_INTEGRATION,
-      );
+    const row = await this.workspaceIntegrationsRepository.getByWorkspaceAndType(
+      workspaceId,
+      FTP_INTEGRATION,
+    );
     const existingConfig = (row?.config ?? {}) as {
       host?: string;
       user?: string;
@@ -347,18 +312,13 @@ export class SettingsService {
       syncFromDate?: string;
       excludePhoneNumbers?: string[];
     };
-    const encryptedPassword = password
-      ? encrypt(password)
-      : (existingConfig.password ?? "");
+    const encryptedPassword = password ? encrypt(password) : (existingConfig.password ?? "");
     const validSyncFromDate =
-      typeof syncFromDate === "string" &&
-      /^\d{4}-\d{2}-\d{2}$/.test(syncFromDate)
+      typeof syncFromDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(syncFromDate)
         ? syncFromDate
         : this.getDefaultSyncFromDate();
     const validExcludePhoneNumbers = Array.isArray(excludePhoneNumbers)
-      ? excludePhoneNumbers
-          .map((n) => (typeof n === "string" ? n.trim() : ""))
-          .filter(Boolean)
+      ? excludePhoneNumbers.map((n) => (typeof n === "string" ? n.trim() : "")).filter(Boolean)
       : (existingConfig.excludePhoneNumbers ?? []);
     const result = await this.workspaceIntegrationsRepository.upsert(
       workspaceId,

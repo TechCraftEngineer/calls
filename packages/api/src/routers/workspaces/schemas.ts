@@ -15,11 +15,7 @@ export const workspaceIdInputSchema = z.object({
 export const updateWorkspaceSchema = z.object({
   workspaceId: workspaceIdSchema,
   name: workspaceNameSchema.optional(),
-  description: z
-    .string()
-    .max(2000, "Не более 2000 символов")
-    .nullable()
-    .optional(),
+  description: z.string().max(2000, "Не более 2000 символов").nullable().optional(),
 });
 
 export const addMemberSchema = z.object({

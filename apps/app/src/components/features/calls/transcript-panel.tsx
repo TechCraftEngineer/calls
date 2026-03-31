@@ -77,16 +77,11 @@ export default function TranscriptPanel({
           messages.map((m, i) => (
             <div
               key={i}
-              className={cn(
-                "message-item flex gap-3 max-w-[85%]",
-                m.isOperator && "self-start",
-              )}
+              className={cn("message-item flex gap-3 max-w-[85%]", m.isOperator && "self-start")}
             >
               <Avatar className="size-8 shrink-0 rounded-full bg-[#EEE]">
                 <AvatarFallback className="bg-[#EEE] text-[#999] text-xs font-bold">
-                  {m.speaker.includes("АВТООТВЕТЧИК")
-                    ? "🤖"
-                    : m.speaker[0]?.toUpperCase() || "👤"}
+                  {m.speaker.includes("АВТООТВЕТЧИК") ? "🤖" : m.speaker[0]?.toUpperCase() || "👤"}
                 </AvatarFallback>
               </Avatar>
               <div className="message-content flex flex-col gap-1">

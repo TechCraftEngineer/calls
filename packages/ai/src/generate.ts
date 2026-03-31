@@ -141,12 +141,9 @@ function getFallbackProviders(primary: AiProvider): AiProvider[] {
   return [primary, ...order.filter((p) => p !== primary)];
 }
 
-function buildModelCandidates(
-  options: GetAIModelOptions = {},
-): ModelCandidate[] {
+function buildModelCandidates(options: GetAIModelOptions = {}): ModelCandidate[] {
   const primaryProvider = options.provider ?? env.AI_PROVIDER;
-  const providers =
-    getFallbackProviders(primaryProvider).filter(hasProviderApiKey);
+  const providers = getFallbackProviders(primaryProvider).filter(hasProviderApiKey);
 
   const explicitModel = options.model?.trim();
   const profileModel = getRawAIModelId(options.profile);
@@ -226,17 +223,13 @@ export interface GenerateWithAiPromptOptions extends GenerateWithAiBaseOptions {
 }
 
 /** Опции с messages */
-export interface GenerateWithAiMessagesOptions
-  extends GenerateWithAiBaseOptions {
+export interface GenerateWithAiMessagesOptions extends GenerateWithAiBaseOptions {
   prompt?: never;
   messages: Parameters<typeof aiGenerateText>[0]["messages"];
 }
 
 /** Опции generateWithAi — prompt или messages обязательны */
-export type GenerateWithAiOptions = (
-  | GenerateWithAiPromptOptions
-  | GenerateWithAiMessagesOptions
-) &
+export type GenerateWithAiOptions = (GenerateWithAiPromptOptions | GenerateWithAiMessagesOptions) &
   GenerateWithAiBaseOptions & {
     /** Структурированный вывод (Output.object), tools и др. — передаются в generateText */
     [key: string]: unknown;
@@ -300,17 +293,13 @@ export async function generateWithAi(
   });
 
   if (candidates.length === 0) {
-    throw new Error(
-      "generateWithAi: не найдено доступных AI провайдеров (проверьте API ключи)",
-    );
+    throw new Error("generateWithAi: не найдено доступных AI провайдеров (проверьте API ключи)");
   }
 
   let lastError: unknown = null;
   const errors: Error[] = [];
 
-  const mapErrorCode = (
-    error: unknown,
-  ): "TIMEOUT" | "ABORTED" | "INTERNAL_SERVER_ERROR" => {
+  const mapErrorCode = (error: unknown): "TIMEOUT" | "ABORTED" | "INTERNAL_SERVER_ERROR" => {
     if (
       error instanceof Error &&
       (error.name === "TimeoutError" ||
@@ -340,9 +329,7 @@ export async function generateWithAi(
             ...(typeof metadata.provider === "string"
               ? { requestedProvider: metadata.provider }
               : {}),
-            ...(typeof metadata.model === "string"
-              ? { requestedModel: metadata.model }
-              : {}),
+            ...(typeof metadata.model === "string" ? { requestedModel: metadata.model } : {}),
             provider: candidate.provider,
             model: normalizeModelId(candidate.modelId),
             fallbackAttempt: i,

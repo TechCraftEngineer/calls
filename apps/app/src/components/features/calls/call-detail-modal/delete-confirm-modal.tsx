@@ -34,8 +34,7 @@ export default function DeleteConfirmModal({
             Подтверждение удаления
           </DialogTitle>
           <DialogDescription>
-            Вы уверены, что хотите удалить этот звонок? Это действие нельзя
-            отменить.
+            Вы уверены, что хотите удалить этот звонок? Это действие нельзя отменить.
           </DialogDescription>
         </DialogHeader>
         {call && (
@@ -53,20 +52,13 @@ export default function DeleteConfirmModal({
               </div>
               <div className="flex justify-between gap-2">
                 <span className="text-muted-foreground">Длительность:</span>
-                <span className="font-medium">
-                  {Math.round(call.duration ?? 0)} с
-                </span>
+                <span className="font-medium">{Math.round(call.duration ?? 0)} с</span>
               </div>
             </div>
           </div>
         )}
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button
-            variant="link"
-            onClick={onCancel}
-            disabled={deleting}
-            className="text-foreground"
-          >
+          <Button variant="link" onClick={onCancel} disabled={deleting} className="text-foreground">
             Отмена
           </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={deleting}>

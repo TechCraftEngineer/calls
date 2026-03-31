@@ -57,9 +57,7 @@ function asNonEmptyString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-async function parseWebhookPayload(
-  c: Context,
-): Promise<Record<string, unknown> | null> {
+async function parseWebhookPayload(c: Context): Promise<Record<string, unknown> | null> {
   const contentType = (c.req.header("content-type") ?? "").toLowerCase();
 
   if (contentType.includes("application/x-www-form-urlencoded")) {
@@ -69,13 +67,8 @@ async function parseWebhookPayload(
   }
 
   if (contentType.includes("application/json")) {
-    const payload = (await c.req.json().catch(() => null)) as Record<
-      string,
-      unknown
-    > | null;
-    return payload && typeof payload === "object" && !Array.isArray(payload)
-      ? payload
-      : null;
+    const payload = (await c.req.json().catch(() => null)) as Record<string, unknown> | null;
+    return payload && typeof payload === "object" && !Array.isArray(payload) ? payload : null;
   }
 
   // Legacy fallback: read body once, then try JSON and urlencoded parsing.
@@ -88,11 +81,7 @@ async function parseWebhookPayload(
       return null;
     }
   })();
-  if (
-    jsonPayload &&
-    typeof jsonPayload === "object" &&
-    !Array.isArray(jsonPayload)
-  ) {
+  if (jsonPayload && typeof jsonPayload === "object" && !Array.isArray(jsonPayload)) {
     return jsonPayload as Record<string, unknown>;
   }
   const params = new URLSearchParams(raw);
@@ -120,8 +109,7 @@ const handlePbxWebhook = async (c: Context) => {
   if (!payload) {
     return c.json(
       {
-        error:
-          "Неверный формат тела запроса. Ожидается JSON или x-www-form-urlencoded.",
+        error: "Неверный формат тела запроса. Ожидается JSON или x-www-form-urlencoded.",
       },
       400,
     );
@@ -131,8 +119,7 @@ const handlePbxWebhook = async (c: Context) => {
   if (!parsedPayload.success) {
     return c.json(
       {
-        error:
-          "Неверный формат тела запроса. Ожидается объект с непустым полем cmd.",
+        error: "Неверный формат тела запроса. Ожидается объект с непустым полем cmd.",
       },
       400,
     );
@@ -142,16 +129,14 @@ const handlePbxWebhook = async (c: Context) => {
   if (!command || !SUPPORTED_COMMANDS.has(command)) {
     return c.json(
       {
-        error:
-          "Неподдерживаемая команда webhook. Ожидается cmd=history|event|contact|rating.",
+        error: "Неподдерживаемая команда webhook. Ожидается cmd=history|event|contact|rating.",
       },
       400,
     );
   }
 
   const crmToken = asNonEmptyString(parsedPayload.data.crm_token);
-  const signature =
-    c.req.header("x-megapbx-secret") ?? c.req.header("x-webhook-secret");
+  const signature = c.req.header("x-megapbx-secret") ?? c.req.header("x-webhook-secret");
   if (!isAnyWebhookSecretValid(config.webhook?.secret, [crmToken, signature])) {
     backendLogger.warn("Rejected MegaPBX webhook because of invalid secret", {
       workspaceId,
@@ -181,13 +166,9 @@ const handlePbxWebhook = async (c: Context) => {
 
   if (command === "contact") {
     const phone = asNonEmptyString(parsedPayload.data.phone);
-    const contact = phone
-      ? await callsService.findLatestContactByPhone(workspaceId, phone)
-      : null;
-    const contactName =
-      contact?.customerName?.trim() || (phone ? `Клиент ${phone}` : "");
-    const responsible =
-      contact?.internalNumber?.trim() || contact?.name?.trim() || "";
+    const contact = phone ? await callsService.findLatestContactByPhone(workspaceId, phone) : null;
+    const contactName = contact?.customerName?.trim() || (phone ? `Клиент ${phone}` : "");
+    const responsible = contact?.internalNumber?.trim() || contact?.name?.trim() || "";
 
     await pbxService.recordWebhookEvent({
       workspaceId,
@@ -259,9 +240,5 @@ const handlePbxWebhook = async (c: Context) => {
 
 export const registerPbxWebhookRoutes = (app: Hono) => {
   app.post("/api/pbx-webhook/:workspaceId", webhookRateLimit, handlePbxWebhook);
-  app.post(
-    "/api/megapbx-webhook/:workspaceId",
-    webhookRateLimit,
-    handlePbxWebhook,
-  );
+  app.post("/api/megapbx-webhook/:workspaceId", webhookRateLimit, handlePbxWebhook);
 };

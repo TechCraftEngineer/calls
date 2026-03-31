@@ -98,8 +98,7 @@ describe("MegaPBX normalize helpers", () => {
       client: "79263901590",
       diversion: "79361326729",
       user: "admin",
-      record:
-        "https://vats919602.megapbx.ru/api/v2/call-records/record/2026-03-19/file.mp3",
+      record: "https://vats919602.megapbx.ru/api/v2/call-records/record/2026-03-19/file.mp3",
       duration: 188,
     });
 

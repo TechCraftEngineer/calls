@@ -5,7 +5,11 @@
 import { and, asc, count, desc, eq, isNotNull } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
-import type { CallWithTranscript, GetCallsParams, GetCallManagersParams } from "../../types/calls.types";
+import type {
+  CallWithTranscript,
+  GetCallManagersParams,
+  GetCallsParams,
+} from "../../types/calls.types";
 import { buildCallConditions } from "./build-conditions";
 
 export const callsQueries = {
@@ -31,7 +35,7 @@ export const callsQueries = {
 
     // Явно требуем workspaceId для безопасности
     if (!workspaceId) {
-      throw new Error('workspaceId обязателен для findWithTranscriptsAndEvaluations');
+      throw new Error("workspaceId обязателен для findWithTranscriptsAndEvaluations");
     }
 
     const conditions = buildCallConditions({
@@ -58,14 +62,8 @@ export const callsQueries = {
         fileSizeBytes: schema.files.sizeBytes,
       })
       .from(schema.calls)
-      .leftJoin(
-        schema.transcripts,
-        eq(schema.transcripts.callId, schema.calls.id),
-      )
-      .leftJoin(
-        schema.callEvaluations,
-        eq(schema.callEvaluations.callId, schema.calls.id),
-      )
+      .leftJoin(schema.transcripts, eq(schema.transcripts.callId, schema.calls.id))
+      .leftJoin(schema.callEvaluations, eq(schema.callEvaluations.callId, schema.calls.id))
       .leftJoin(schema.files, eq(schema.files.id, schema.calls.fileId))
       .where(and(...conditions))
       .orderBy(desc(schema.calls.timestamp))
@@ -81,12 +79,10 @@ export const callsQueries = {
     }));
   },
 
-  async countCalls(
-    params: Omit<GetCallsParams, "limit" | "offset"> = {},
-  ): Promise<number> {
+  async countCalls(params: Omit<GetCallsParams, "limit" | "offset"> = {}): Promise<number> {
     // Явно требуем workspaceId для безопасности
     if (!params.workspaceId) {
-      throw new Error('workspaceId обязателен для countCalls');
+      throw new Error("workspaceId обязателен для countCalls");
     }
 
     const conditions = buildCallConditions({
@@ -105,10 +101,8 @@ export const callsQueries = {
     });
 
     // Добавляем LEFT JOIN только когда нужны фильтры по valueScores
-    const baseQuery = db
-      .select({ count: count() })
-      .from(schema.calls);
-    
+    const baseQuery = db.select({ count: count() }).from(schema.calls);
+
     const queryWithJoins = params.valueScores?.length
       ? baseQuery.leftJoin(
           schema.callEvaluations,
@@ -121,9 +115,7 @@ export const callsQueries = {
     return result[0]?.count ?? 0;
   },
 
-  async findDistinctManagers(
-    params: GetCallManagersParams = {},
-  ): Promise<string[]> {
+  async findDistinctManagers(params: GetCallManagersParams = {}): Promise<string[]> {
     const {
       dateFrom,
       dateTo,
@@ -156,10 +148,8 @@ export const callsQueries = {
     });
 
     // Добавляем LEFT JOIN только когда нужны фильтры по valueScores
-    const baseQuery = db
-      .select({ name: schema.calls.name })
-      .from(schema.calls);
-    
+    const baseQuery = db.select({ name: schema.calls.name }).from(schema.calls);
+
     const queryWithJoins = valueScores?.length
       ? baseQuery.leftJoin(
           schema.callEvaluations,
@@ -168,12 +158,14 @@ export const callsQueries = {
       : baseQuery;
 
     const result = await queryWithJoins
-      .where(conditions.length > 0 ? and(...conditions, isNotNull(schema.calls.name)) : isNotNull(schema.calls.name))
+      .where(
+        conditions.length > 0
+          ? and(...conditions, isNotNull(schema.calls.name))
+          : isNotNull(schema.calls.name),
+      )
       .groupBy(schema.calls.name)
       .orderBy(asc(schema.calls.name));
 
-    return result
-      .map((row) => row.name)
-      .filter((name): name is string => Boolean(name));
+    return result.map((row) => row.name).filter((name): name is string => Boolean(name));
   },
 };

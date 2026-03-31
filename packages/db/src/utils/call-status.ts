@@ -24,20 +24,14 @@ export const ANSWERED_ALIASES = [
 ] as const;
 
 const STATUS_ALIASES: Record<string, CallStatus> = {
-  ...Object.fromEntries(
-    MISSED_ALIASES.map((alias) => [alias, CALL_STATUS.MISSED]),
-  ),
-  ...Object.fromEntries(
-    ANSWERED_ALIASES.map((alias) => [alias, CALL_STATUS.ANSWERED]),
-  ),
+  ...Object.fromEntries(MISSED_ALIASES.map((alias) => [alias, CALL_STATUS.MISSED])),
+  ...Object.fromEntries(ANSWERED_ALIASES.map((alias) => [alias, CALL_STATUS.ANSWERED])),
 };
 
 /**
  * Нормализует статус из внешних систем к универсальному справочнику на английском.
  */
-export function normalizeCallStatus(
-  status: string | null | undefined,
-): CallStatus | null {
+export function normalizeCallStatus(status: string | null | undefined): CallStatus | null {
   if (!status) return null;
   const normalized = status.trim().toLowerCase();
   if (!normalized) return null;

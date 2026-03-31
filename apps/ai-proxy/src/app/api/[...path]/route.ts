@@ -2,8 +2,9 @@
  * Обратная совместимость: /api/chat/completions и т.д. → OpenAI.
  * Рекомендуется использовать /api/openai/... для явного указания провайдера.
  */
-import { type NextRequest, NextResponse } from "next/server";
+
 import { env } from "@calls/config/env";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "edge";
 
@@ -14,10 +15,7 @@ export async function POST(
   const { path } = await params;
   const key = env.OPENAI_API_KEY;
   if (!key) {
-    return NextResponse.json(
-      { error: "OpenAI API key not configured" },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 503 });
   }
   try {
     const body = await request.json();
@@ -43,10 +41,7 @@ export async function POST(
     return NextResponse.json(await res.json());
   } catch (error) {
     console.error("Proxy error:", error);
-    return NextResponse.json(
-      { error: "Internal proxy error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal proxy error" }, { status: 500 });
   }
 }
 
@@ -57,10 +52,7 @@ export async function GET(
   const { path } = await params;
   const key = env.OPENAI_API_KEY;
   if (!key) {
-    return NextResponse.json(
-      { error: "OpenAI API key not configured" },
-      { status: 503 },
-    );
+    return NextResponse.json({ error: "OpenAI API key not configured" }, { status: 503 });
   }
   try {
     const openaiPath = path.join("/");
@@ -78,9 +70,6 @@ export async function GET(
     return NextResponse.json(await res.json());
   } catch (error) {
     console.error("Proxy error:", error);
-    return NextResponse.json(
-      { error: "Internal proxy error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal proxy error" }, { status: 500 });
   }
 }

@@ -19,32 +19,23 @@ export const updateEmailSettings = workspaceProcedure
       });
 
     const user = await usersService.getUser(input.user_id);
-    if (!user)
-      throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+    if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
       if (input.data.email !== undefined) {
-        await usersService.updateUserEmail(
-          input.user_id,
-          input.data.email?.trim() || null,
-        );
+        await usersService.updateUserEmail(input.user_id, input.data.email?.trim() || null);
       }
 
-      await usersService.updateUserReportKpiSettings(
-        input.user_id,
-        context.workspaceId,
-        {
-          emailDailyReport: input.data.emailDailyReport,
-          emailWeeklyReport: input.data.emailWeeklyReport,
-          emailMonthlyReport: input.data.emailMonthlyReport,
-        },
-      );
+      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+        emailDailyReport: input.data.emailDailyReport,
+        emailWeeklyReport: input.data.emailWeeklyReport,
+        emailMonthlyReport: input.data.emailMonthlyReport,
+      });
 
       await logUpdate(
         "email settings updated",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         undefined,
         context.workspaceId,
       );
@@ -54,8 +45,7 @@ export const updateEmailSettings = workspaceProcedure
       await logUpdate(
         "update user email settings",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         error,
         context.workspaceId,
       );

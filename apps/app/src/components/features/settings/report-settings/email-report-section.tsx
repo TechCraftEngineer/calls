@@ -5,10 +5,7 @@ interface EmailReportSectionProps {
   onChange: (email: string) => void;
 }
 
-export default function EmailReportSection({
-  email,
-  onChange,
-}: EmailReportSectionProps) {
+export default function EmailReportSection({ email, onChange }: EmailReportSectionProps) {
   return (
     <div className="space-y-2">
       <Label htmlFor="report-email">Email для отправки отчетов</Label>

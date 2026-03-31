@@ -27,9 +27,7 @@ export async function setupTelegramWebhooks(): Promise<SetupTelegramWebhooksResu
     process.env.NEXT_PUBLIC_APP_URL
   )?.replace(/\/$/, "");
   if (!baseUrl) {
-    logger.info(
-      "No public URL (APP_URL/NEXT_PUBLIC_APP_URL) configured, skipping webhook setup",
-    );
+    logger.info("No public URL (APP_URL/NEXT_PUBLIC_APP_URL) configured, skipping webhook setup");
     return { success: true, results: [] };
   }
 
@@ -47,10 +45,7 @@ export async function setupTelegramWebhooks(): Promise<SetupTelegramWebhooksResu
     }
 
     try {
-      await setTelegramWebhook(
-        systemToken,
-        `${baseUrl}/api/telegram-webhook-default`,
-      );
+      await setTelegramWebhook(systemToken, `${baseUrl}/api/telegram-webhook-default`);
       logger.info("Default Telegram webhook set successfully");
       return { success: true, results: [] };
     } catch (error) {
@@ -82,10 +77,7 @@ export async function setupTelegramWebhooks(): Promise<SetupTelegramWebhooksResu
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const token = await settingsService.getDecryptedBotToken(
-          "telegram_bot_token",
-          workspaceId,
-        );
+        const token = await settingsService.getDecryptedBotToken("telegram_bot_token", workspaceId);
         if (!token?.trim()) {
           logger.info("Skipping workspace with empty token", { workspaceId });
           return {
@@ -142,10 +134,7 @@ export async function setupTelegramWebhooks(): Promise<SetupTelegramWebhooksResu
   let defaultWebhookSuccess = true;
   if (systemToken) {
     try {
-      await setTelegramWebhook(
-        systemToken,
-        `${baseUrl}/api/telegram-webhook-default`,
-      );
+      await setTelegramWebhook(systemToken, `${baseUrl}/api/telegram-webhook-default`);
       logger.info("Default Telegram webhook set successfully");
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);

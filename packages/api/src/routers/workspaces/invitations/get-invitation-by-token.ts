@@ -34,8 +34,7 @@ export const getInvitationByToken = publicProcedure
         stack: e instanceof Error ? e.stack : undefined,
       });
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message:
-          e instanceof Error ? e.message : "Ошибка при получении приглашения",
+        message: e instanceof Error ? e.message : "Ошибка при получении приглашения",
       });
     }
   });

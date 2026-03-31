@@ -23,12 +23,10 @@ export default function GlobalError({
       <body className="m-0 font-sans antialiased">
         <div className="flex min-h-screen flex-col items-center justify-center bg-muted p-6">
           <div className="max-w-[400px] text-center">
-            <h1 className="mb-4 text-2xl font-bold text-foreground">
-              Критическая ошибка
-            </h1>
+            <h1 className="mb-4 text-2xl font-bold text-foreground">Критическая ошибка</h1>
             <p className="mb-8 leading-relaxed text-muted-foreground">
-              Приложение столкнулось с серьёзной ошибкой. Пожалуйста, обновите
-              страницу или вернитесь на главную.
+              Приложение столкнулось с серьёзной ошибкой. Пожалуйста, обновите страницу или
+              вернитесь на главную.
             </p>
             <div className="flex justify-center gap-4">
               <Button type="button" onClick={reset}>

@@ -6,11 +6,7 @@ import type { SystemRepository } from "../repositories/system.repository";
 import { userWorkspaceSettingsRepository } from "../repositories/user-workspace-settings.repository";
 import type { UsersRepository } from "../repositories/users.repository";
 import type { User } from "../schema/types";
-import type {
-  CreateUserData,
-  UpdateUserData,
-  UserUpdateData,
-} from "../types/users.types";
+import type { CreateUserData, UpdateUserData, UserUpdateData } from "../types/users.types";
 import {
   ValidationError,
   validateCreateUserData,
@@ -74,11 +70,10 @@ export class UsersService {
     const user = await this.usersRepository.findById(userId);
     if (!user) return null;
 
-    const settings =
-      await userWorkspaceSettingsRepository.findByUserAndWorkspace(
-        userId,
-        workspaceId,
-      );
+    const settings = await userWorkspaceSettingsRepository.findByUserAndWorkspace(
+      userId,
+      workspaceId,
+    );
 
     const ns = settings?.notificationSettings as
       | {
@@ -134,9 +129,7 @@ export class UsersService {
       | undefined;
 
     const managedIds = rs?.managedUserIds;
-    const reportManagedUserIds = Array.isArray(managedIds)
-      ? managedIds
-      : ([] as string[]);
+    const reportManagedUserIds = Array.isArray(managedIds) ? managedIds : ([] as string[]);
 
     return {
       email: (user.email ?? "") as string,
@@ -207,11 +200,7 @@ export class UsersService {
     const result = await this.usersRepository.updateName(userId, data);
 
     if (result) {
-      await this.systemRepository.addActivityLog(
-        "INFO",
-        `User ${userId} name updated`,
-        "admin",
-      );
+      await this.systemRepository.addActivityLog("INFO", `User ${userId} name updated`, "admin");
     }
 
     return result;
@@ -221,23 +210,14 @@ export class UsersService {
     userId: string,
     internalExtensions: string | null,
   ): Promise<boolean> {
-    return this.usersRepository.updateInternalExtensions(
-      userId,
-      internalExtensions,
-    );
+    return this.usersRepository.updateInternalExtensions(userId, internalExtensions);
   }
 
-  async updateUserMobilePhones(
-    userId: string,
-    mobilePhones: string | null,
-  ): Promise<boolean> {
+  async updateUserMobilePhones(userId: string, mobilePhones: string | null): Promise<boolean> {
     return this.usersRepository.updateMobilePhones(userId, mobilePhones);
   }
 
-  async updateUserEmail(
-    userId: string,
-    email: string | null,
-  ): Promise<boolean> {
+  async updateUserEmail(userId: string, email: string | null): Promise<boolean> {
     return this.usersRepository.updateEmail(userId, email);
   }
 
@@ -297,12 +277,9 @@ export class UsersService {
     }> = {};
 
     if (data.filterExcludeAnsweringMachine !== undefined)
-      filterSettings.excludeAnsweringMachine =
-        data.filterExcludeAnsweringMachine;
-    if (data.filterMinDuration !== undefined)
-      filterSettings.minDuration = data.filterMinDuration;
-    if (data.filterMinReplicas !== undefined)
-      filterSettings.minReplicas = data.filterMinReplicas;
+      filterSettings.excludeAnsweringMachine = data.filterExcludeAnsweringMachine;
+    if (data.filterMinDuration !== undefined) filterSettings.minDuration = data.filterMinDuration;
+    if (data.filterMinReplicas !== undefined) filterSettings.minReplicas = data.filterMinReplicas;
 
     if (data.telegramDailyReport !== undefined)
       notificationSettings.telegram = {
@@ -376,20 +353,16 @@ export class UsersService {
           : [];
     }
 
-    if (data.reportIncludeKpi !== undefined)
-      reportSettings.kpi = data.reportIncludeKpi;
+    if (data.reportIncludeKpi !== undefined) reportSettings.kpi = data.reportIncludeKpi;
 
-    if (data.reportDetailed !== undefined)
-      reportSettings.detailed = data.reportDetailed;
+    if (data.reportDetailed !== undefined) reportSettings.detailed = data.reportDetailed;
     if (data.reportIncludeCallSummaries !== undefined)
       reportSettings.includeCallSummaries = data.reportIncludeCallSummaries;
     if (data.reportIncludeAvgRating !== undefined)
       reportSettings.includeAvgRating = data.reportIncludeAvgRating;
 
-    if (data.kpiBaseSalary !== undefined)
-      kpiSettings.baseSalary = data.kpiBaseSalary;
-    if (data.kpiTargetBonus !== undefined)
-      kpiSettings.targetBonus = data.kpiTargetBonus;
+    if (data.kpiBaseSalary !== undefined) kpiSettings.baseSalary = data.kpiBaseSalary;
+    if (data.kpiTargetBonus !== undefined) kpiSettings.targetBonus = data.kpiTargetBonus;
     if (data.kpiTargetTalkTimeMinutes !== undefined)
       kpiSettings.targetTalkTimeMinutes = data.kpiTargetTalkTimeMinutes;
 
@@ -399,8 +372,7 @@ export class UsersService {
           ? null
           : {
               templateSlug: data.evaluationTemplateSlug,
-              customInstructions:
-                data.evaluationCustomInstructions?.trim() || undefined,
+              customInstructions: data.evaluationCustomInstructions?.trim() || undefined,
             }
         : undefined;
 
@@ -413,29 +385,18 @@ export class UsersService {
 
     if (!hasUpdates) return true;
 
-    const upsertData: Parameters<
-      typeof userWorkspaceSettingsRepository.upsert
-    >[2] = {
-      filterSettings:
-        Object.keys(filterSettings).length > 0 ? filterSettings : undefined,
+    const upsertData: Parameters<typeof userWorkspaceSettingsRepository.upsert>[2] = {
+      filterSettings: Object.keys(filterSettings).length > 0 ? filterSettings : undefined,
       notificationSettings:
-        Object.keys(notificationSettings).length > 0
-          ? notificationSettings
-          : undefined,
-      reportSettings:
-        Object.keys(reportSettings).length > 0 ? reportSettings : undefined,
-      kpiSettings:
-        Object.keys(kpiSettings).length > 0 ? kpiSettings : undefined,
+        Object.keys(notificationSettings).length > 0 ? notificationSettings : undefined,
+      reportSettings: Object.keys(reportSettings).length > 0 ? reportSettings : undefined,
+      kpiSettings: Object.keys(kpiSettings).length > 0 ? kpiSettings : undefined,
     };
     if (evaluationSettingsRaw !== undefined) {
       upsertData.evaluationSettings = evaluationSettingsRaw;
     }
 
-    const result = await userWorkspaceSettingsRepository.upsert(
-      userId,
-      workspaceId,
-      upsertData,
-    );
+    const result = await userWorkspaceSettingsRepository.upsert(userId, workspaceId, upsertData);
 
     if (result) {
       await this.systemRepository.addActivityLog(
@@ -460,21 +421,12 @@ export class UsersService {
           dailyReport: telegramDailyReport,
           managerReport: telegramManagerReport,
         },
-      } as Partial<
-        import("../schema/user/workspace-settings").NotificationSettings
-      >,
+      } as Partial<import("../schema/user/workspace-settings").NotificationSettings>,
     });
   }
 
-  async updateUserPassword(
-    userId: string,
-    _newPassword: string,
-  ): Promise<boolean> {
-    await this.systemRepository.addActivityLog(
-      "INFO",
-      `User ${userId} password updated`,
-      "admin",
-    );
+  async updateUserPassword(userId: string, _newPassword: string): Promise<boolean> {
+    await this.systemRepository.addActivityLog("INFO", `User ${userId} password updated`, "admin");
     return true;
   }
 
@@ -482,11 +434,7 @@ export class UsersService {
     const result = await this.usersRepository.softDelete(userId);
 
     if (result) {
-      await this.systemRepository.addActivityLog(
-        "WARNING",
-        `User ${userId} deactivated`,
-        "admin",
-      );
+      await this.systemRepository.addActivityLog("WARNING", `User ${userId} deactivated`, "admin");
     }
 
     return result;
@@ -497,33 +445,22 @@ export class UsersService {
     workspaceId: string,
     token: string,
   ): Promise<boolean> {
-    return userWorkspaceSettingsRepository.saveTelegramConnectToken(
-      userId,
-      workspaceId,
-      token,
-    );
+    return userWorkspaceSettingsRepository.saveTelegramConnectToken(userId, workspaceId, token);
   }
 
   async getUserByTelegramConnectToken(token: string): Promise<User | null> {
-    const settings =
-      await userWorkspaceSettingsRepository.findByTelegramConnectToken(token);
+    const settings = await userWorkspaceSettingsRepository.findByTelegramConnectToken(token);
     if (!settings) return null;
     return this.usersRepository.findById(settings.userId);
   }
 
-  async getWorkspaceIdByTelegramConnectToken(
-    token: string,
-  ): Promise<string | null> {
-    const settings =
-      await userWorkspaceSettingsRepository.findByTelegramConnectToken(token);
+  async getWorkspaceIdByTelegramConnectToken(token: string): Promise<string | null> {
+    const settings = await userWorkspaceSettingsRepository.findByTelegramConnectToken(token);
     return settings?.workspaceId ?? null;
   }
 
   async saveTelegramChatId(userId: string, chatId: string): Promise<boolean> {
-    const result = await this.usersRepository.saveTelegramChatId(
-      userId,
-      chatId,
-    );
+    const result = await this.usersRepository.saveTelegramChatId(userId, chatId);
 
     if (result) {
       await this.systemRepository.addActivityLog(
@@ -536,16 +473,8 @@ export class UsersService {
     return result;
   }
 
-  async saveMaxConnectToken(
-    userId: string,
-    workspaceId: string,
-    token: string,
-  ): Promise<boolean> {
-    return userWorkspaceSettingsRepository.saveMaxConnectToken(
-      userId,
-      workspaceId,
-      token,
-    );
+  async saveMaxConnectToken(userId: string, workspaceId: string, token: string): Promise<boolean> {
+    return userWorkspaceSettingsRepository.saveMaxConnectToken(userId, workspaceId, token);
   }
 
   async disconnectTelegram(userId: string): Promise<boolean> {
@@ -566,11 +495,7 @@ export class UsersService {
     const result = await userWorkspaceSettingsRepository.disconnectMax(userId);
 
     if (result) {
-      await this.systemRepository.addActivityLog(
-        "INFO",
-        `User ${userId} Max disconnected`,
-        "user",
-      );
+      await this.systemRepository.addActivityLog("INFO", `User ${userId} Max disconnected`, "user");
     }
 
     return result;

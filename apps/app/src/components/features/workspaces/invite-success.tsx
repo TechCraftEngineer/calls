@@ -39,13 +39,8 @@ export default function InviteSuccess({
             <Check className="w-5 h-5 text-green-600" />
           </div>
           <div>
-            <h2
-              id="invite-success-title"
-              className="text-xl font-bold text-gray-900 m-0"
-            >
-              {isLinkInvite
-                ? "Ссылка-приглашение создана"
-                : "Приглашение отправлено"}
+            <h2 id="invite-success-title" className="text-xl font-bold text-gray-900 m-0">
+              {isLinkInvite ? "Ссылка-приглашение создана" : "Приглашение отправлено"}
             </h2>
             <p className="text-sm text-gray-600 mt-1 m-0">
               {isLinkInvite ? (
@@ -71,10 +66,7 @@ export default function InviteSuccess({
       </div>
 
       <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-        <label
-          htmlFor="invite-link"
-          className="block text-xs font-semibold text-gray-700 mb-2"
-        >
+        <label htmlFor="invite-link" className="block text-xs font-semibold text-gray-700 mb-2">
           Ссылка для приглашения
         </label>
         <div className="flex min-w-0 gap-2">
@@ -93,11 +85,7 @@ export default function InviteSuccess({
             className="shrink-0 min-w-[44px]"
             aria-label="Скопировать ссылку"
           >
-            {copied ? (
-              <Check className="w-4 h-4 text-green-600" />
-            ) : (
-              <Copy className="w-4 h-4" />
-            )}
+            {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
           </Button>
         </div>
       </div>

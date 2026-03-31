@@ -62,9 +62,7 @@ export function ReportDeliveryFrequency({
       <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
         <Checkbox
           checked={Boolean(form[dailyKey])}
-          onCheckedChange={(checked) =>
-            setForm((f) => ({ ...f, [dailyKey]: checked === true }))
-          }
+          onCheckedChange={(checked) => setForm((f) => ({ ...f, [dailyKey]: checked === true }))}
         />
         Ежедневный отчет
       </Label>
@@ -142,8 +140,7 @@ export function ReportTimeSettings({
       <div>
         <h4 className="text-sm font-bold">Когда отправлять отчеты</h4>
         <p className="mt-1 text-xs text-muted-foreground">
-          Это общее расписание для ежедневных, еженедельных и ежемесячных
-          рассылок.
+          Это общее расписание для ежедневных, еженедельных и ежемесячных рассылок.
         </p>
       </div>
 
@@ -152,9 +149,7 @@ export function ReportTimeSettings({
           <Label className="text-xs font-normal">Ежедневно:</Label>
           <Select
             value={form.reportDailyTime}
-            onValueChange={(v) =>
-              setForm((f) => ({ ...f, reportDailyTime: v }))
-            }
+            onValueChange={(v) => setForm((f) => ({ ...f, reportDailyTime: v }))}
           >
             <SelectTrigger size="sm" className="h-8 w-22.5">
               <SelectValue placeholder="Время" />
@@ -173,9 +168,7 @@ export function ReportTimeSettings({
           <Label className="text-xs font-normal">Еженедельно:</Label>
           <Select
             value={form.reportWeeklyDay}
-            onValueChange={(v) =>
-              setForm((f) => ({ ...f, reportWeeklyDay: v }))
-            }
+            onValueChange={(v) => setForm((f) => ({ ...f, reportWeeklyDay: v }))}
           >
             <SelectTrigger size="sm" className="h-8 w-17.5">
               <SelectValue />
@@ -190,9 +183,7 @@ export function ReportTimeSettings({
           </Select>
           <Select
             value={form.reportWeeklyTime}
-            onValueChange={(v) =>
-              setForm((f) => ({ ...f, reportWeeklyTime: v }))
-            }
+            onValueChange={(v) => setForm((f) => ({ ...f, reportWeeklyTime: v }))}
           >
             <SelectTrigger size="sm" className="h-8 w-22.5">
               <SelectValue placeholder="Время" />
@@ -211,9 +202,7 @@ export function ReportTimeSettings({
           <Label className="text-xs font-normal">Ежемесячно:</Label>
           <Select
             value={form.reportMonthlyDay}
-            onValueChange={(v) =>
-              setForm((f) => ({ ...f, reportMonthlyDay: v }))
-            }
+            onValueChange={(v) => setForm((f) => ({ ...f, reportMonthlyDay: v }))}
           >
             <SelectTrigger size="sm" className="h-8 w-25">
               <SelectValue placeholder="День" />
@@ -229,9 +218,7 @@ export function ReportTimeSettings({
           </Select>
           <Select
             value={form.reportMonthlyTime}
-            onValueChange={(v) =>
-              setForm((f) => ({ ...f, reportMonthlyTime: v }))
-            }
+            onValueChange={(v) => setForm((f) => ({ ...f, reportMonthlyTime: v }))}
           >
             <SelectTrigger size="sm" className="h-8 w-22.5">
               <SelectValue placeholder="Время" />

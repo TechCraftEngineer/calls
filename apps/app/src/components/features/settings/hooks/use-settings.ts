@@ -7,12 +7,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
-import type {
-  PbxEmployeeItem,
-  PbxNumberItem,
-  ReportType,
-  SettingsState,
-} from "../types";
+import type { PbxEmployeeItem, PbxNumberItem, ReportType, SettingsState } from "../types";
 import { getReportTypeLabel } from "../types";
 import { useFtpSettings } from "./use-ftp";
 import { useMegaPbxSettings } from "./use-megapbx";
@@ -143,18 +138,15 @@ export function useSettings() {
       }
       setCurrentUser(user);
 
-      const [integrations, megaPbx, megaPbxEmployees, megaPbxNumbers] =
-        await Promise.all([
-          queryClient.fetchQuery(orpc.settings.getIntegrations.queryOptions()),
-          queryClient.fetchQuery(orpc.settings.getPbx.queryOptions()),
-          queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
-          queryClient.fetchQuery(orpc.settings.listPbxNumbers.queryOptions()),
-        ]);
+      const [integrations, megaPbx, megaPbxEmployees, megaPbxNumbers] = await Promise.all([
+        queryClient.fetchQuery(orpc.settings.getIntegrations.queryOptions()),
+        queryClient.fetchQuery(orpc.settings.getPbx.queryOptions()),
+        queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
+        queryClient.fetchQuery(orpc.settings.listPbxNumbers.queryOptions()),
+      ]);
       const ftp = integrations.ftp;
       const ftpConfigured =
-        Boolean(ftp.host?.trim()) &&
-        Boolean(ftp.user?.trim()) &&
-        ftp.passwordSet;
+        Boolean(ftp.host?.trim()) && Boolean(ftp.user?.trim()) && ftp.passwordSet;
       setState((prev) => ({
         ...prev,
         ftp: {
@@ -202,9 +194,7 @@ export function useSettings() {
 
       if (ftpConfigured) {
         try {
-          const status = await queryClient.fetchQuery(
-            orpc.settings.checkFtpStatus.queryOptions(),
-          );
+          const status = await queryClient.fetchQuery(orpc.settings.checkFtpStatus.queryOptions());
           setState((prev) => ({
             ...prev,
             ftpConnectionStatus: status,
@@ -241,9 +231,7 @@ export function useSettings() {
 
   const backupMutation = useMutation(orpc.settings.backup.mutationOptions());
 
-  const sendTestTelegramMutation = useMutation(
-    orpc.reports.sendTestTelegram.mutationOptions(),
-  );
+  const sendTestTelegramMutation = useMutation(orpc.reports.sendTestTelegram.mutationOptions());
 
   const handleBackup = async () => {
     if (state.backupLoading) return;

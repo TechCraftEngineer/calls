@@ -7,10 +7,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { authClient } from "@/lib/better-auth";
-import {
-  type ForgotPasswordFormData,
-  forgotPasswordSchema,
-} from "@/lib/validations";
+import { type ForgotPasswordFormData, forgotPasswordSchema } from "@/lib/validations";
 
 function ForgotPasswordForm() {
   const {
@@ -36,8 +33,7 @@ function ForgotPasswordForm() {
       });
       // Всегда показываем успех — защита от перебора email (Better Auth / OWASP)
     } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Ошибка при отправке письма";
+      const errorMessage = err instanceof Error ? err.message : "Ошибка при отправке письма";
       setError("root", { message: String(errorMessage) });
     }
   };
@@ -49,9 +45,7 @@ function ForgotPasswordForm() {
           <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-[10px] bg-[#FFD600] text-black font-black text-[24px]">
             M
           </div>
-          <h1 className="mb-2 text-[24px] font-bold text-[#111]">
-            Восстановление пароля
-          </h1>
+          <h1 className="mb-2 text-[24px] font-bold text-[#111]">Восстановление пароля</h1>
           <p className="m-0 text-[14px] text-[#888]">
             Введите email — мы отправим ссылку для сброса пароля
           </p>
@@ -61,8 +55,7 @@ function ForgotPasswordForm() {
           <div className="space-y-6">
             <div className="flex items-center gap-[10px] rounded-lg border-[#4CAF50] bg-[#E8F5E8] p-3 text-[13px] font-medium text-[#2E7D32]">
               <span>✅</span>
-              Письмо отправлено. Проверьте почту и перейдите по ссылке для
-              сброса пароля.
+              Письмо отправлено. Проверьте почту и перейдите по ссылке для сброса пароля.
             </div>
             <Link
               href={paths.auth.signin}
@@ -82,19 +75,14 @@ function ForgotPasswordForm() {
 
             <form onSubmit={handleSubmit(onSubmit)} noValidate>
               <div className="mb-5">
-                <label
-                  htmlFor="email"
-                  className="mb-2 block text-[13px] font-semibold text-[#333]"
-                >
+                <label htmlFor="email" className="mb-2 block text-[13px] font-semibold text-[#333]">
                   Электронная почта
                 </label>
                 <Input
                   id="email"
                   type="email"
                   className={`w-full rounded-lg border border-[#DDD] px-4 py-3 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
-                    errors.email
-                      ? "border-red-500 bg-red-50 focus:border-red-500"
-                      : ""
+                    errors.email ? "border-red-500 bg-red-50 focus:border-red-500" : ""
                   }`}
                   placeholder="example@mail.com"
                   autoComplete="email"

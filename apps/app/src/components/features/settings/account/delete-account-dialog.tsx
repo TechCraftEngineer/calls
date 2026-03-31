@@ -62,12 +62,7 @@ export function DeleteAccountDialog({
           />
         </div>
         <DialogFooter>
-          <Button
-            variant="link"
-            onClick={onCancel}
-            disabled={deleting}
-            className="text-foreground"
-          >
+          <Button variant="link" onClick={onCancel} disabled={deleting} className="text-foreground">
             Отмена
           </Button>
           <Button

@@ -35,10 +35,7 @@ export function createWebhookHandler(getToken: GetTokenFn) {
         botCache.set(token, bot);
         console.log("[telegram-webhook] Created new bot instance for token");
       } catch (error) {
-        console.error(
-          "[telegram-webhook] Failed to create bot instance:",
-          error,
-        );
+        console.error("[telegram-webhook] Failed to create bot instance:", error);
         return c.json({ error: "Invalid bot token" }, 400);
       }
     }
@@ -49,43 +46,30 @@ export function createWebhookHandler(getToken: GetTokenFn) {
 
         // Валидация payload
         if (!payload) {
-          await ctx.reply(
-            "Отправьте ссылку из настроек приложения для подключения.",
-          );
+          await ctx.reply("Отправьте ссылку из настроек приложения для подключения.");
           return;
         }
 
         if (!isValidConnectToken(payload)) {
           console.warn(`[telegram-webhook] Invalid token format: ${payload}`);
-          await ctx.reply(
-            "Неверный формат ссылки. Используйте ссылку из настроек приложения.",
-          );
+          await ctx.reply("Неверный формат ссылки. Используйте ссылку из настроек приложения.");
           return;
         }
 
         const user = await usersService.getUserByTelegramConnectToken(payload);
         if (!user) {
-          console.warn(
-            `[telegram-webhook] User not found for token: ${payload}`,
-          );
+          console.warn(`[telegram-webhook] User not found for token: ${payload}`);
           await ctx.reply("Ссылка недействительна или устарела.");
           return;
         }
 
-        const saved = await usersService.saveTelegramChatId(
-          user.id,
-          String(ctx.chat.id),
-        );
+        const saved = await usersService.saveTelegramChatId(user.id, String(ctx.chat.id));
 
         if (saved) {
-          console.log(
-            `[telegram-webhook] Successfully connected Telegram for user ${user.id}`,
-          );
+          console.log(`[telegram-webhook] Successfully connected Telegram for user ${user.id}`);
           await ctx.reply("Telegram успешно подключён.");
         } else {
-          console.error(
-            `[telegram-webhook] Failed to save chat ID for user ${user.id}`,
-          );
+          console.error(`[telegram-webhook] Failed to save chat ID for user ${user.id}`);
           await ctx.reply("Ошибка при сохранении. Попробуйте позже.");
         }
       } catch (error) {

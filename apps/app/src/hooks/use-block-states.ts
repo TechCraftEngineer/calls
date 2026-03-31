@@ -6,20 +6,13 @@ export type BlockState = "idle" | "saving" | "success" | "error";
 export function useBlockStates() {
   const [changedBlocks, setChangedBlocks] = useState<Set<string>>(new Set());
   const [originalForm, setOriginalForm] = useState<EditUserForm | null>(null);
-  const [blockStates, setBlockStates] = useState<Record<string, BlockState>>(
-    {},
-  );
+  const [blockStates, setBlockStates] = useState<Record<string, BlockState>>({});
   const [animatedBlocks, setAnimatedBlocks] = useState<Set<string>>(new Set());
 
   const getBlockFields = useCallback((blockName: string): string[] => {
     switch (blockName) {
       case "basic":
-        return [
-          "givenName",
-          "familyName",
-          "internalExtensions",
-          "mobilePhones",
-        ];
+        return ["givenName", "familyName", "internalExtensions", "mobilePhones"];
       case "telegram":
         return [
           "telegramDailyReport",
@@ -30,22 +23,13 @@ export function useBlockStates() {
       case "max":
         return ["maxChatId", "maxDailyReport", "maxManagerReport"];
       case "email":
-        return [
-          "email",
-          "emailDailyReport",
-          "emailWeeklyReport",
-          "emailMonthlyReport",
-        ];
+        return ["email", "emailDailyReport", "emailWeeklyReport", "emailMonthlyReport"];
       case "reports":
         return [];
       case "kpi":
         return ["kpiBaseSalary", "kpiTargetBonus", "kpiTargetTalkTimeMinutes"];
       case "filters":
-        return [
-          "filterExcludeAnsweringMachine",
-          "filterMinDuration",
-          "filterMinReplicas",
-        ];
+        return ["filterExcludeAnsweringMachine", "filterMinDuration", "filterMinReplicas"];
       case "evaluation":
         return ["evaluationTemplateSlug", "evaluationCustomInstructions"];
       default:
@@ -60,8 +44,7 @@ export function useBlockStates() {
       const blockFields = getBlockFields(blockName);
       return blockFields.some(
         (field) =>
-          originalForm[field as keyof EditUserForm] !==
-          currentForm[field as keyof EditUserForm],
+          originalForm[field as keyof EditUserForm] !== currentForm[field as keyof EditUserForm],
       );
     },
     [originalForm, getBlockFields],
@@ -69,12 +52,7 @@ export function useBlockStates() {
 
   // Функции для отслеживания изменений в блоках
   const trackBlockChange = useCallback(
-    (
-      blockName: string,
-      fieldName: string,
-      _value: unknown,
-      currentForm: EditUserForm,
-    ) => {
+    (blockName: string, fieldName: string, _value: unknown, currentForm: EditUserForm) => {
       if (!originalForm) return;
 
       const originalValue = originalForm[fieldName as keyof EditUserForm];

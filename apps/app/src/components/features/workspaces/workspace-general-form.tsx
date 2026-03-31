@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Input,
-  Textarea,
-} from "@calls/ui";
+import { Button, Card, CardContent, CardHeader, Input, Textarea } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -47,8 +40,7 @@ export default function WorkspaceGeneralForm({
     try {
       await onSave(data);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Не удалось сохранить настройки";
+      const msg = err instanceof Error ? err.message : "Не удалось сохранить настройки";
       setError("root", { message: msg });
     }
   };
@@ -62,9 +54,7 @@ export default function WorkspaceGeneralForm({
       </CardHeader>
       <CardContent className="p-0">
         <form
-          onSubmit={handleSubmit(
-            onSubmit as (data: WorkspaceGeneralFormData) => Promise<void>,
-          )}
+          onSubmit={handleSubmit(onSubmit as (data: WorkspaceGeneralFormData) => Promise<void>)}
           className="flex flex-col gap-5"
         >
           {errors.root && (
@@ -87,9 +77,7 @@ export default function WorkspaceGeneralForm({
               {...register("name")}
             />
             {errors.name && (
-              <span className="text-xs text-red-500 mt-1 block">
-                {errors.name.message}
-              </span>
+              <span className="text-xs text-red-500 mt-1 block">{errors.name.message}</span>
             )}
           </div>
 
@@ -105,22 +93,14 @@ export default function WorkspaceGeneralForm({
               {...register("description")}
             />
             <span className="text-[11px] text-gray-400 mt-1 block">
-              Используется для более точного анализа и оценки звонков. Можно
-              заполнить позже.
+              Используется для более точного анализа и оценки звонков. Можно заполнить позже.
             </span>
             {errors.description && (
-              <span className="text-xs text-red-500 mt-1 block">
-                {errors.description.message}
-              </span>
+              <span className="text-xs text-red-500 mt-1 block">{errors.description.message}</span>
             )}
           </div>
 
-          <Button
-            type="submit"
-            variant="success"
-            disabled={saving}
-            className="self-start"
-          >
+          <Button type="submit" variant="success" disabled={saving} className="self-start">
             {saving ? "Сохранение…" : "Сохранить"}
           </Button>
         </form>

@@ -3,15 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import {
-  boolean,
-  index,
-  pgTable,
-  text,
-  timestamp,
-  unique,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { files } from "../files/files";
 import { workspaces } from "../workspace/workspaces";
 
@@ -31,12 +23,9 @@ export const calls = pgTable(
     fileId: uuid("file_id").references(() => files.id, {
       onDelete: "set null",
     }),
-    enhancedAudioFileId: uuid("enhanced_audio_file_id").references(
-      () => files.id,
-      {
-        onDelete: "set null",
-      },
-    ),
+    enhancedAudioFileId: uuid("enhanced_audio_file_id").references(() => files.id, {
+      onDelete: "set null",
+    }),
     internalNumber: text("internal_number"),
     provider: text("provider"),
     externalId: text("external_id"),
@@ -46,19 +35,14 @@ export const calls = pgTable(
     isArchived: boolean("is_archived").default(false).notNull(),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
 
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .defaultNow()
-      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => [
-    unique("calls_workspace_filename_unique").on(
-      table.workspaceId,
-      table.filename,
-    ),
+    unique("calls_workspace_filename_unique").on(table.workspaceId, table.filename),
     unique("calls_workspace_provider_external_id_unique").on(
       table.workspaceId,
       table.provider,
@@ -67,14 +51,8 @@ export const calls = pgTable(
     index("calls_timestamp_idx").on(table.timestamp),
     index("calls_internal_number_idx").on(table.internalNumber),
     index("calls_workspace_id_idx").on(table.workspaceId),
-    index("calls_workspace_timestamp_idx").on(
-      table.workspaceId,
-      table.timestamp,
-    ),
-    index("calls_workspace_archived_idx").on(
-      table.workspaceId,
-      table.isArchived,
-    ),
+    index("calls_workspace_timestamp_idx").on(table.workspaceId, table.timestamp),
+    index("calls_workspace_archived_idx").on(table.workspaceId, table.isArchived),
     index("calls_number_idx").on(table.number),
     index("calls_enhanced_audio_file_id_idx").on(table.enhancedAudioFileId),
     index("calls_status_idx").on(table.status),

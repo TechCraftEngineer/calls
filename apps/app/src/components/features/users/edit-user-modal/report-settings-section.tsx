@@ -8,17 +8,12 @@ interface ReportSettingsSectionProps {
   onFormChange: (updates: Partial<EditUserForm>) => void;
 }
 
-export function ReportSettingsSection({
-  form,
-  onFormChange,
-}: ReportSettingsSectionProps) {
+export function ReportSettingsSection({ form, onFormChange }: ReportSettingsSectionProps) {
   return (
     <>
       {/* Периодичность Telegram */}
       <div className="mb-4 p-4 bg-[#f5f7fa] rounded-lg">
-        <h3 className="m-0 mb-3 text-sm font-bold">
-          Периодичность Telegram отчетов
-        </h3>
+        <h3 className="m-0 mb-3 text-sm font-bold">Периодичность Telegram отчетов</h3>
         <div className="flex flex-col gap-2">
           {(
             [
@@ -27,10 +22,7 @@ export function ReportSettingsSection({
               ["telegramMonthlyReport", "Ежемесячный отчет"],
             ] as const
           ).map(([key, label]) => (
-            <label
-              key={key}
-              className="flex items-center gap-2 text-[13px] cursor-pointer"
-            >
+            <label key={key} className="flex items-center gap-2 text-[13px] cursor-pointer">
               <input
                 type="checkbox"
                 checked={form[key]}
@@ -46,9 +38,7 @@ export function ReportSettingsSection({
       <div className="mb-4 p-4 bg-[#f5f7fa] rounded-lg">
         <h3 className="m-0 mb-3 text-sm font-bold">Email Отчеты</h3>
         <div className="mb-3">
-          <label className="block mb-1 text-[13px] font-semibold">
-            Email адрес
-          </label>
+          <label className="block mb-1 text-[13px] font-semibold">Email адрес</label>
           <Input
             type="email"
             value={form.email}
@@ -65,10 +55,7 @@ export function ReportSettingsSection({
               ["emailMonthlyReport", "Ежемесячный отчет"],
             ] as const
           ).map(([key, label]) => (
-            <label
-              key={key}
-              className="flex items-center gap-2 text-[13px] cursor-pointer"
-            >
+            <label key={key} className="flex items-center gap-2 text-[13px] cursor-pointer">
               <input
                 type="checkbox"
                 checked={form[key]}
@@ -87,18 +74,12 @@ export function ReportSettingsSection({
           {(
             [
               ["reportDetailed", "Подробный отчет (доп. метрики)"],
-              [
-                "reportIncludeCallSummaries",
-                "Включать ИИ-саммари звонков (Email)",
-              ],
+              ["reportIncludeCallSummaries", "Включать ИИ-саммари звонков (Email)"],
               ["reportIncludeAvgRating", "Средняя оценка качества"],
               ["reportIncludeKpi", "Включать KPI данные (оклад, бонус)"],
             ] as const
           ).map(([key, label]) => (
-            <label
-              key={key}
-              className="flex items-center gap-2 text-[13px] cursor-pointer"
-            >
+            <label key={key} className="flex items-center gap-2 text-[13px] cursor-pointer">
               <input
                 type="checkbox"
                 checked={form[key]}

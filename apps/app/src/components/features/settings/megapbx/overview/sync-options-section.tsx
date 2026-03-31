@@ -103,9 +103,7 @@ export function SyncOptionsSection({
                               <Icon aria-hidden className="size-4" />
                             </div>
                             <div className="flex flex-col items-start gap-0.5">
-                              <span className="text-sm font-semibold">
-                                {label}
-                              </span>
+                              <span className="text-sm font-semibold">{label}</span>
                               <FieldDescription className="text-muted-foreground mt-0 text-xs">
                                 {hint}
                               </FieldDescription>

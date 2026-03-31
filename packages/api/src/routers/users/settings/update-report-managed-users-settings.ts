@@ -25,25 +25,19 @@ export const updateReportManagedUsersSettings = workspaceProcedure
       });
 
     const user = await usersService.getUser(input.user_id);
-    if (!user)
-      throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+    if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(
-        input.user_id,
-        context.workspaceId,
-        {
-          // Флаг "по менеджерам" зависит от наличия выбранных пользователей.
-          telegramManagerReport: input.data.reportManagedUserIds.length > 0,
-          reportManagedUserIds: JSON.stringify(input.data.reportManagedUserIds),
-        },
-      );
+      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+        // Флаг "по менеджерам" зависит от наличия выбранных пользователей.
+        telegramManagerReport: input.data.reportManagedUserIds.length > 0,
+        reportManagedUserIds: JSON.stringify(input.data.reportManagedUserIds),
+      });
 
       await logUpdate(
         "report managed users settings updated",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         undefined,
         context.workspaceId,
       );
@@ -53,8 +47,7 @@ export const updateReportManagedUsersSettings = workspaceProcedure
       await logUpdate(
         "update report managed users settings",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         error,
         context.workspaceId,
       );

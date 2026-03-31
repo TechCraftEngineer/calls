@@ -18,8 +18,7 @@ export default function WorkspaceSettingsPage() {
   const { activeWorkspace, refreshWorkspaces } = useWorkspace();
 
   const workspaceId = activeWorkspace?.id ?? null;
-  const isWorkspaceAdmin =
-    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const isOwner = activeWorkspace?.role === "owner";
 
   const { data: workspace } = useQuery<typeof workspaces.$inferSelect>({
@@ -46,8 +45,7 @@ export default function WorkspaceSettingsPage() {
         toast.success("Настройки компании сохранены");
       },
       onError: (err) => {
-        const msg =
-          err instanceof Error ? err.message : "Не удалось сохранить настройки";
+        const msg = err instanceof Error ? err.message : "Не удалось сохранить настройки";
         toast.error(msg);
       },
     }),
@@ -61,9 +59,7 @@ export default function WorkspaceSettingsPage() {
         router.replace(paths.onboarding.createWorkspace);
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error ? err.message : "Не удалось удалить компанию",
-        );
+        toast.error(err instanceof Error ? err.message : "Не удалось удалить компанию");
       },
     }),
   );
@@ -89,10 +85,7 @@ export default function WorkspaceSettingsPage() {
     return null;
   }
 
-  const handleSaveGeneral = async (data: {
-    name: string;
-    description?: string | null;
-  }) => {
+  const handleSaveGeneral = async (data: { name: string; description?: string | null }) => {
     if (!workspaceId) return;
     await updateMutation.mutateAsync({
       workspaceId,
@@ -115,12 +108,8 @@ export default function WorkspaceSettingsPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Настройки компании
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {activeWorkspace.name}
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">Настройки компании</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{activeWorkspace.name}</p>
       </header>
 
       {workspace ? (
@@ -139,8 +128,7 @@ export default function WorkspaceSettingsPage() {
               Опасная зона
             </h3>
             <p className="text-sm text-red-700 dark:text-red-300 mb-4">
-              Удаление компании необратимо. Все данные (звонки, настройки,
-              участники) будут удалены.
+              Удаление компании необратимо. Все данные (звонки, настройки, участники) будут удалены.
             </p>
             <Button
               variant="outline"

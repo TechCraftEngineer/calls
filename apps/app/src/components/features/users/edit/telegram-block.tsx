@@ -61,18 +61,14 @@ export function TelegramBlock({
         {hasChanges && (
           <div className="flex items-center gap-1 text-amber-600">
             <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-            <span className="text-xs font-medium hidden sm:inline">
-              Есть изменения
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Есть изменения</span>
             <span className="text-xs font-medium sm:hidden">*</span>
           </div>
         )}
         {state === "saving" && (
           <div className="flex items-center gap-1 text-blue-600">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-spin"></div>
-            <span className="text-xs font-medium hidden sm:inline">
-              Сохранение...
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Сохранение...</span>
           </div>
         )}
         {state === "success" && (
@@ -84,9 +80,7 @@ export function TelegramBlock({
                 clipRule="evenodd"
               />
             </svg>
-            <span className="text-xs font-medium hidden sm:inline">
-              Сохранено
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Сохранено</span>
           </div>
         )}
         {state === "error" && (
@@ -104,9 +98,7 @@ export function TelegramBlock({
       </div>
 
       <div className="mb-4">
-        <label className="block mb-1 text-[13px] font-semibold">
-          Telegram Chat ID
-        </label>
+        <label className="block mb-1 text-[13px] font-semibold">Telegram Chat ID</label>
         <div className="flex gap-2">
           <Input
             type="text"
@@ -125,12 +117,7 @@ export function TelegramBlock({
               onClick={onDisconnect}
               className="gap-2 shrink-0 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
             >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -202,10 +189,7 @@ export function TelegramBlock({
 
       <div className="space-y-2">
         {telegramOptions.map(([key, label]) => (
-          <label
-            key={key}
-            className="flex items-center gap-2 text-sm cursor-pointer"
-          >
+          <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
             <input
               type="checkbox"
               checked={form[key]}

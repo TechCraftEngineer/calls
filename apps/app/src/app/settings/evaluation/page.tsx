@@ -35,8 +35,7 @@ export default function EvaluationSettingsPage() {
   const { activeWorkspace } = useWorkspace();
 
   const workspaceId = activeWorkspace?.id ?? null;
-  const isWorkspaceAdmin =
-    activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
   const { data: evaluationSettings } = useQuery({
     ...orpc.settings.getEvaluationSettings.queryOptions(),
@@ -84,9 +83,7 @@ export default function EvaluationSettingsPage() {
         toast.success("Шаблон удалён");
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error ? err.message : "Не удалось удалить шаблон",
-        );
+        toast.error(err instanceof Error ? err.message : "Не удалось удалить шаблон");
       },
     }),
   );
@@ -100,11 +97,7 @@ export default function EvaluationSettingsPage() {
         toast.success("Шаблон по умолчанию сохранён");
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error
-            ? err.message
-            : "Не удалось сохранить настройки оценки",
-        );
+        toast.error(err instanceof Error ? err.message : "Не удалось сохранить настройки оценки");
       },
     }),
   );
@@ -155,9 +148,7 @@ export default function EvaluationSettingsPage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Шаблоны оценки звонков
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Шаблоны оценки звонков</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Настройка критериев оценки для каждого менеджера и по умолчанию
         </p>
@@ -167,8 +158,7 @@ export default function EvaluationSettingsPage() {
         <CardContent className="p-6">
           <h3 className="text-base font-semibold mb-2">Шаблон по умолчанию</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Используется для звонков без привязки к пользователю (по внутреннему
-            номеру)
+            Используется для звонков без привязки к пользователю (по внутреннему номеру)
           </p>
           <div className="flex flex-wrap items-center gap-4">
             <Select value={defaultTemplate} onValueChange={setDefaultTemplate}>
@@ -176,19 +166,14 @@ export default function EvaluationSettingsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {(evaluationTemplates as { slug: string; name: string }[]).map(
-                  (t) => (
-                    <SelectItem key={t.slug} value={t.slug}>
-                      {t.name}
-                    </SelectItem>
-                  ),
-                )}
+                {(evaluationTemplates as { slug: string; name: string }[]).map((t) => (
+                  <SelectItem key={t.slug} value={t.slug}>
+                    {t.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Button
-              onClick={handleSaveDefault}
-              disabled={updateEvaluationMutation.isPending}
-            >
+            <Button onClick={handleSaveDefault} disabled={updateEvaluationMutation.isPending}>
               {updateEvaluationMutation.isPending ? "Сохранение…" : "Сохранить"}
             </Button>
           </div>
@@ -201,14 +186,11 @@ export default function EvaluationSettingsPage() {
             <div>
               <h3 className="text-base font-semibold">Шаблоны оценки</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Встроенные шаблоны и созданные вами. Редактируйте промпты для
-                кастомных шаблонов.
+                Встроенные шаблоны и созданные вами. Редактируйте промпты для кастомных шаблонов.
               </p>
             </div>
             <Button
-              onClick={() =>
-                setTemplateModal({ open: true, mode: "create", template: null })
-              }
+              onClick={() => setTemplateModal({ open: true, mode: "create", template: null })}
             >
               Создать шаблон
             </Button>
@@ -234,11 +216,7 @@ export default function EvaluationSettingsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => setViewModalSlug(t.slug)}
-                      >
+                      <Button variant="default" size="sm" onClick={() => setViewModalSlug(t.slug)}>
                         Просмотреть
                       </Button>
                       {!t.isBuiltin && t.id && (
@@ -249,11 +227,9 @@ export default function EvaluationSettingsPage() {
                             onClick={async () => {
                               if (!t.id) return;
                               const full = await queryClient.fetchQuery(
-                                orpc.settings.getEvaluationTemplate.queryOptions(
-                                  {
-                                    input: { id: t.id },
-                                  },
-                                ),
+                                orpc.settings.getEvaluationTemplate.queryOptions({
+                                  input: { id: t.id },
+                                }),
                               );
                               setTemplateModal({
                                 open: true,
@@ -295,13 +271,10 @@ export default function EvaluationSettingsPage() {
 
       <Card>
         <CardContent className="p-6">
-          <h3 className="text-base font-semibold mb-2">
-            Шаблоны по участникам
-          </h3>
+          <h3 className="text-base font-semibold mb-2">Шаблоны по участникам</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Назначьте шаблон каждому менеджеру. Звонки определяются по
-            внутренним номерам. Для редактирования перейдите в настройки
-            участника.
+            Назначьте шаблон каждому менеджеру. Звонки определяются по внутренним номерам. Для
+            редактирования перейдите в настройки участника.
           </p>
           <Table className="op-table">
             <TableHeader>
@@ -320,9 +293,7 @@ export default function EvaluationSettingsPage() {
                     (x): x is string => typeof x === "string" && x.length > 0,
                   );
                   const displayName =
-                    nameParts.length > 0
-                      ? nameParts.join(" ")
-                      : String(u.email ?? "");
+                    nameParts.length > 0 ? nameParts.join(" ") : String(u.email ?? "");
                   const emailStr = typeof u.email === "string" ? u.email : "";
                   return (
                     <TableRow key={u.id}>
@@ -349,9 +320,7 @@ export default function EvaluationSettingsPage() {
                         <Button
                           variant="default"
                           size="sm"
-                          onClick={() =>
-                            router.push(`${paths.users.root}/${userId}/edit`)
-                          }
+                          onClick={() => router.push(`${paths.users.root}/${userId}/edit`)}
                           aria-label={`Редактировать ${u.email}`}
                         >
                           Настройки
@@ -363,9 +332,7 @@ export default function EvaluationSettingsPage() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-10">
-                    <p className="text-muted-foreground">
-                      Нет участников в компании
-                    </p>
+                    <p className="text-muted-foreground">Нет участников в компании</p>
                   </TableCell>
                 </TableRow>
               )}

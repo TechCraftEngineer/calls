@@ -3,10 +3,10 @@
  */
 
 import { env } from "@calls/config";
+import { createLogger } from "@calls/logger";
 import { z } from "zod";
 import type { AsrResult, Utterance } from "../types";
 import { NonRetryableError, withRetry } from "../utils/retry";
-import { createLogger } from "@calls/logger";
 
 const logger = createLogger("asr-gigaam");
 
@@ -14,6 +14,17 @@ const FETCH_TIMEOUT_MS = 30_000;
 const GIGA_AM_HTTP_TIMEOUT_MS = 120_000;
 const MAX_AUDIO_BYTES = 100 * 1024 * 1024;
 const NON_RETRYABLE_HTTP_STATUSES = new Set([400, 401, 403, 404]);
+
+// Константа для преобразования расширений файлов в MIME типы
+const EXTENSION_TO_MIME: Record<string, string> = {
+  mp3: "audio/mpeg",
+  wav: "audio/wav",
+  flac: "audio/flac",
+  m4a: "audio/mp4",
+  aac: "audio/aac",
+  ogg: "audio/ogg",
+  webm: "audio/webm",
+};
 
 const gigaAmSegmentSchema = z.object({
   text: z.string(),
@@ -114,23 +125,16 @@ async function fetchWithTimeout<T>(
   }
 }
 
-async function readAudioWithLimit(
-  response: Response,
-  signal?: AbortSignal,
-): Promise<ArrayBuffer> {
+async function readAudioWithLimit(response: Response, signal?: AbortSignal): Promise<ArrayBuffer> {
   const contentLengthHeader = response.headers.get("content-length");
   const contentLength = contentLengthHeader ? Number(contentLengthHeader) : NaN;
   if (Number.isFinite(contentLength) && contentLength > MAX_AUDIO_BYTES) {
-    throw new Error(
-      `Размер аудио превышает лимит: ${contentLength} > ${MAX_AUDIO_BYTES}`,
-    );
+    throw new Error(`Размер аудио превышает лимит: ${contentLength} > ${MAX_AUDIO_BYTES}`);
   }
 
   const reader = response.body?.getReader();
   if (!reader) {
-    return await (signal
-      ? abortable(signal, response.arrayBuffer())
-      : response.arrayBuffer());
+    return await (signal ? abortable(signal, response.arrayBuffer()) : response.arrayBuffer());
   }
 
   let total = 0;
@@ -160,18 +164,14 @@ async function readAudioWithLimit(
   return merged.buffer;
 }
 
-function segmentsToText(
-  segments: z.infer<typeof gigaAmSegmentSchema>[],
-): string {
+function segmentsToText(segments: z.infer<typeof gigaAmSegmentSchema>[]): string {
   return segments
     .map((s) => {
       const text = s.text.trim();
       if (!text) return "";
 
       const speaker =
-        typeof s.speaker === "string" && s.speaker.trim()
-          ? s.speaker.trim()
-          : "Спикер";
+        typeof s.speaker === "string" && s.speaker.trim() ? s.speaker.trim() : "Спикер";
       return `${speaker}: ${text}`;
     })
     .filter(Boolean)
@@ -195,9 +195,7 @@ function speakerTimelineToText(
     .trim();
 }
 
-function segmentsToUtterances(
-  segments: z.infer<typeof gigaAmSegmentSchema>[],
-): Utterance[] {
+function segmentsToUtterances(segments: z.infer<typeof gigaAmSegmentSchema>[]): Utterance[] {
   return segments.map((s, i) => ({
     speaker: typeof s.speaker === "string" ? s.speaker : `Сегмент ${i + 1}`,
     text: s.text.trim(),
@@ -230,25 +228,22 @@ export async function transcribeWithGigaAm(
   const start = Date.now();
   let audioBuffer: Buffer;
   let contentType: string;
-  
+
   if (options?.audioBuffer) {
     audioBuffer = options.audioBuffer;
     // Определяем MIME тип на основе расширения файла или переданного параметра
     if (options.audioBufferMime) {
       contentType = options.audioBufferMime;
     } else {
-      // Извлекаем расширение из URL и определяем соответствующий MIME тип
-      const extension = audioUrl.split('.').pop()?.toLowerCase();
-      const mimeMap: Record<string, string> = {
-        'mp3': 'audio/mpeg',
-        'wav': 'audio/wav',
-        'flac': 'audio/flac',
-        'm4a': 'audio/mp4',
-        'aac': 'audio/aac',
-        'ogg': 'audio/ogg',
-        'webm': 'audio/webm'
-      };
-      contentType = mimeMap[extension || ''] || 'application/octet-stream';
+      // Извлекаем расширение из pathname URL (устойчиво к query/fragment)
+      let pathForExtension = audioUrl;
+      try {
+        pathForExtension = new URL(audioUrl).pathname;
+      } catch {
+        // ignore invalid URL and fallback to raw string
+      }
+      const extension = pathForExtension.split(".").pop()?.toLowerCase();
+      contentType = EXTENSION_TO_MIME[extension || ""] || "application/octet-stream";
     }
   } else {
     const result = await withRetry(
@@ -267,9 +262,7 @@ export async function transcribeWithGigaAm(
               throw new Error(msg);
             }
 
-            const ct =
-              audioResponse.headers.get("content-type") ??
-              "application/octet-stream";
+            const ct = audioResponse.headers.get("content-type") ?? "application/octet-stream";
             const arrayBuffer = await readAudioWithLimit(audioResponse, signal);
             return { buffer: Buffer.from(arrayBuffer), contentType: ct };
           },
@@ -284,7 +277,7 @@ export async function transcribeWithGigaAm(
           }),
       },
     );
-    
+
     audioBuffer = result.buffer;
     contentType = result.contentType;
   }
@@ -292,19 +285,9 @@ export async function transcribeWithGigaAm(
   const filename = guessAudioFilename(audioUrl, contentType);
 
   const formData = new FormData();
-  formData.append(
-    "file",
-    new Blob([new Uint8Array(audioBuffer)], { type: contentType }),
-    filename,
-  );
-  if (
-    options?.preprocessMetadata &&
-    Object.keys(options.preprocessMetadata).length > 0
-  ) {
-    formData.append(
-      "preprocess_metadata_json",
-      JSON.stringify(options.preprocessMetadata),
-    );
+  formData.append("file", new Blob([new Uint8Array(audioBuffer)], { type: contentType }), filename);
+  if (options?.preprocessMetadata && Object.keys(options.preprocessMetadata).length > 0) {
+    formData.append("preprocess_metadata_json", JSON.stringify(options.preprocessMetadata));
   }
   const apiResponse = await withRetry(
     () =>
@@ -342,9 +325,7 @@ export async function transcribeWithGigaAm(
             logger.warn("Некорректный формат sync-ответа Giga AM", {
               issues: parsedSync.error.issues.map((i) => i.message),
             });
-            throw new NonRetryableError(
-              "Giga AM: некорректный JSON sync-ответа",
-            );
+            throw new NonRetryableError("Giga AM: некорректный JSON sync-ответа");
           }
           return parsedSync.data;
         },
@@ -367,9 +348,7 @@ export async function transcribeWithGigaAm(
 
   // Приоритет: speaker_timeline > final_transcript > segments
   const speakerText =
-    speakerTimeline && speakerTimeline.length > 0
-      ? speakerTimelineToText(speakerTimeline)
-      : "";
+    speakerTimeline && speakerTimeline.length > 0 ? speakerTimelineToText(speakerTimeline) : "";
   const text = speakerText || finalTranscript || segmentsToText(segments);
 
   const utterances = segmentsToUtterances(segments);
@@ -392,8 +371,7 @@ export async function transcribeWithGigaAm(
       segmentCount: segments.length,
       mode: "sync",
       ultraPipeline:
-        apiResponse.pipeline === "ultra-sync-2026" ||
-        Boolean(apiResponse.final_transcript),
+        apiResponse.pipeline === "ultra-sync-2026" || Boolean(apiResponse.final_transcript),
       final_transcript: apiResponse.final_transcript,
       speakerTimelineCount: apiResponse.speaker_timeline?.length,
       pipelineStages: apiResponse.stages,

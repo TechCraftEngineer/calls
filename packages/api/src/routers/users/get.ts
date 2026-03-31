@@ -13,7 +13,6 @@ export const get = workspaceProcedure
         message: "Нет доступа к этому пользователю",
       });
     const user = await usersService.getUser(input.user_id);
-    if (!user)
-      throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+    if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
     return user;
   });

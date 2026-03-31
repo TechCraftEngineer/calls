@@ -2,13 +2,13 @@
  * Минимальный логгер для использования в разных пакетах.
  */
 
-type JSONValue = 
-  | string 
-  | number 
-  | boolean 
-  | null 
+type JSONValue =
+  | string
+  | number
+  | boolean
+  | null
   | undefined
-  | Array<JSONValue> 
+  | Array<JSONValue>
   | { [k: string]: JSONValue };
 
 type LogData = Record<string, JSONValue>;

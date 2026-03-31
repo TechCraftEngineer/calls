@@ -30,10 +30,7 @@ export default function MaxReportSection({
           }
           disabled={!isAdmin || saving}
           className="mr-2"
-          aria-describedby={[
-            "max-daily-report-help",
-            !isAdmin ? "max-daily-report-error" : null,
-          ]
+          aria-describedby={["max-daily-report-help", !isAdmin ? "max-daily-report-error" : null]
             .filter(Boolean)
             .join(" ")}
         />

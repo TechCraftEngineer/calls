@@ -10,9 +10,7 @@ const updateEvaluationSettingsSchema = z.object({
 });
 
 export const updateEvaluationSettings = workspaceProcedure
-  .input(
-    z.object({ user_id: z.string(), data: updateEvaluationSettingsSchema }),
-  )
+  .input(z.object({ user_id: z.string(), data: updateEvaluationSettingsSchema }))
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
       throw new ORPCError("BAD_REQUEST", {
@@ -26,38 +24,28 @@ export const updateEvaluationSettings = workspaceProcedure
       });
 
     const user = await usersService.getUser(input.user_id);
-    if (!user)
-      throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+    if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(
-        input.user_id,
-        context.workspaceId,
-        {
-          evaluationTemplateSlug: input.data.evaluationTemplateSlug,
-          evaluationCustomInstructions: input.data.evaluationCustomInstructions,
-        },
-      );
+      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+        evaluationTemplateSlug: input.data.evaluationTemplateSlug,
+        evaluationCustomInstructions: input.data.evaluationCustomInstructions,
+      });
 
       await logUpdate(
         "evaluation settings updated",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         undefined,
         context.workspaceId,
       );
 
-      return await usersService.getUserForEdit(
-        input.user_id,
-        context.workspaceId,
-      );
+      return await usersService.getUserForEdit(input.user_id, context.workspaceId);
     } catch (error) {
       await logUpdate(
         "update user evaluation settings",
         user.email ?? "unknown",
-        ((context.user as Record<string, unknown>).email as string) ??
-          "unknown",
+        ((context.user as Record<string, unknown>).email as string) ?? "unknown",
         error,
         context.workspaceId,
       );

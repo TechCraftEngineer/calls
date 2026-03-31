@@ -26,9 +26,7 @@ export function TranscriptCard({ call, transcript }: Props) {
   const [showRaw, setShowRaw] = useState(false);
 
   const messages = useMemo(() => {
-    const sourceText = showRaw
-      ? transcript?.rawText || transcript?.text
-      : transcript?.text;
+    const sourceText = showRaw ? transcript?.rawText || transcript?.text : transcript?.text;
     if (!sourceText) return [];
 
     return sourceText
@@ -49,10 +47,7 @@ export function TranscriptCard({ call, transcript }: Props) {
           speaker.toLowerCase().includes("менеджер") ||
           (call?.managerName && speaker.includes(call.managerName));
 
-        const formattedText = text.replace(
-          /\*\*(.*?)\*\*/g,
-          "<strong>$1</strong>",
-        );
+        const formattedText = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
 
         return { speaker, text: formattedText, isOperator };
       });
@@ -109,16 +104,11 @@ export function TranscriptCard({ call, transcript }: Props) {
           messages.map((m, i) => (
             <div
               key={i}
-              className={cn(
-                "message-item flex gap-3 max-w-[85%]",
-                m.isOperator && "self-start",
-              )}
+              className={cn("message-item flex gap-3 max-w-[85%]", m.isOperator && "self-start")}
             >
               <Avatar className="size-8 shrink-0 rounded-full bg-[#EEE]">
                 <AvatarFallback className="bg-[#EEE] text-[#999] text-xs font-bold">
-                  {m.speaker.includes("АВТООТВЕТЧИК")
-                    ? "🤖"
-                    : m.speaker[0]?.toUpperCase() || "👤"}
+                  {m.speaker.includes("АВТООТВЕТЧИК") ? "🤖" : m.speaker[0]?.toUpperCase() || "👤"}
                 </AvatarFallback>
               </Avatar>
               <div className="message-content flex flex-col gap-1">

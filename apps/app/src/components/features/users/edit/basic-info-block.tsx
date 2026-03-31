@@ -44,18 +44,14 @@ export function BasicInfoBlock({
         {hasChanges && (
           <div className="flex items-center gap-1 text-amber-600">
             <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-            <span className="text-xs font-medium hidden sm:inline">
-              Есть изменения
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Есть изменения</span>
             <span className="text-xs font-medium sm:hidden">*</span>
           </div>
         )}
         {state === "saving" && (
           <div className="flex items-center gap-1 text-blue-600">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-spin"></div>
-            <span className="text-xs font-medium hidden sm:inline">
-              Сохранение...
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Сохранение...</span>
           </div>
         )}
         {state === "success" && (
@@ -67,9 +63,7 @@ export function BasicInfoBlock({
                 clipRule="evenodd"
               />
             </svg>
-            <span className="text-xs font-medium hidden sm:inline">
-              Сохранено
-            </span>
+            <span className="text-xs font-medium hidden sm:inline">Сохранено</span>
           </div>
         )}
         {state === "error" && (
@@ -112,9 +106,7 @@ export function BasicInfoBlock({
       </div>
 
       <div className="mb-4">
-        <label className="block mb-1 text-[13px] font-semibold">
-          Внутренние номера
-        </label>
+        <label className="block mb-1 text-[13px] font-semibold">Внутренние номера</label>
         <Input
           type="text"
           value={form.internalExtensions}
@@ -127,9 +119,7 @@ export function BasicInfoBlock({
       </div>
 
       <div className="mb-4">
-        <label className="block mb-1 text-[13px] font-semibold">
-          Мобильные телефоны
-        </label>
+        <label className="block mb-1 text-[13px] font-semibold">Мобильные телефоны</label>
         <Input
           type="text"
           value={form.mobilePhones}

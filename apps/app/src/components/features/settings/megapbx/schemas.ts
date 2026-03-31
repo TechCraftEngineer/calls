@@ -1,7 +1,4 @@
-import {
-  isValidCalendarIsoDate,
-  WEBHOOK_SECRET_MIN_LENGTH,
-} from "@calls/shared";
+import { isValidCalendarIsoDate, WEBHOOK_SECRET_MIN_LENGTH } from "@calls/shared";
 import { z } from "zod";
 
 export const accessFormSchema = z.object({
@@ -12,9 +9,7 @@ export const accessFormSchema = z.object({
       (value) => {
         if (!value) return true;
         const urlCandidate =
-          value.startsWith("http://") || value.startsWith("https://")
-            ? value
-            : `https://${value}`;
+          value.startsWith("http://") || value.startsWith("https://") ? value : `https://${value}`;
         try {
           new URL(urlCandidate);
           return true;
@@ -30,8 +25,7 @@ export const accessFormSchema = z.object({
     .trim()
     .optional()
     .refine((v) => v === undefined || v === "" || isValidCalendarIsoDate(v), {
-      message:
-        "Некорректная дата. Используйте формат YYYY-MM-DD и реальную дату календаря.",
+      message: "Некорректная дата. Используйте формат YYYY-MM-DD и реальную дату календаря.",
     }),
 });
 

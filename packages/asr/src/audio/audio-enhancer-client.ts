@@ -76,16 +76,13 @@ export async function enhanceAudioWithPython(
         signal: healthCheckController.signal,
       });
       if (!healthResponse.ok) {
-        logger.warn(
-          "Python enhancer недоступен на health-check, пропускаем обработку",
-          {
-            serviceUrl,
-            healthUrl,
-            status: healthResponse.status,
-            statusText: healthResponse.statusText,
-            functionId: "enhanceAudioWithPython",
-          },
-        );
+        logger.warn("Python enhancer недоступен на health-check, пропускаем обработку", {
+          serviceUrl,
+          healthUrl,
+          status: healthResponse.status,
+          statusText: healthResponse.statusText,
+          functionId: "enhanceAudioWithPython",
+        });
         return {
           audioBuffer,
           wasProcessed: false,
@@ -94,31 +91,19 @@ export async function enhanceAudioWithPython(
       }
     } catch (healthError) {
       if (timedOut) {
-        logger.warn(
-          "Python enhancer: health-check тайм-аут, пробуем `/enhance`",
-          {
-            serviceUrl,
-            healthUrl,
-            functionId: "enhanceAudioWithPython",
-            error:
-              healthError instanceof Error
-                ? healthError.message
-                : String(healthError),
-          },
-        );
+        logger.warn("Python enhancer: health-check тайм-аут, пробуем `/enhance`", {
+          serviceUrl,
+          healthUrl,
+          functionId: "enhanceAudioWithPython",
+          error: healthError instanceof Error ? healthError.message : String(healthError),
+        });
       } else {
-        logger.warn(
-          "Python enhancer не прошёл быстрый health-check, пропускаем обработку",
-          {
-            serviceUrl,
-            healthUrl,
-            functionId: "enhanceAudioWithPython",
-            error:
-              healthError instanceof Error
-                ? healthError.message
-                : String(healthError),
-          },
-        );
+        logger.warn("Python enhancer не прошёл быстрый health-check, пропускаем обработку", {
+          serviceUrl,
+          healthUrl,
+          functionId: "enhanceAudioWithPython",
+          error: healthError instanceof Error ? healthError.message : String(healthError),
+        });
         return {
           audioBuffer,
           wasProcessed: false,
@@ -136,16 +121,10 @@ export async function enhanceAudioWithPython(
     formData.append("file", blob, "audio.wav");
 
     formData.append("noise_reduction", String(options.noiseReduction ?? true));
-    formData.append(
-      "normalize_volume",
-      String(options.normalizeVolume ?? true),
-    );
+    formData.append("normalize_volume", String(options.normalizeVolume ?? true));
     formData.append("enhance_speech", String(options.enhanceSpeech ?? true));
     formData.append("remove_silence", String(options.removeSilence ?? false));
-    formData.append(
-      "target_sample_rate",
-      String(options.targetSampleRate ?? 16000),
-    );
+    formData.append("target_sample_rate", String(options.targetSampleRate ?? 16000));
 
     logger.info("Отправка аудио в Python enhancer", {
       serviceUrl,
@@ -160,9 +139,7 @@ export async function enhanceAudioWithPython(
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Python enhancer вернул ошибку: ${response.status} ${response.statusText}`,
-      );
+      throw new Error(`Python enhancer вернул ошибку: ${response.status} ${response.statusText}`);
     }
 
     const enhancedBuffer = Buffer.from(await response.arrayBuffer());
@@ -224,20 +201,14 @@ export async function preprocessAudioWithPython(
       type: "audio/wav",
     });
     formData.append("file", blob, "audio.wav");
-    formData.append(
-      "target_sample_rate",
-      String(options.targetSampleRate ?? 16000),
-    );
+    formData.append("target_sample_rate", String(options.targetSampleRate ?? 16000));
     formData.append("return_audio_base64", "true");
 
-    const response = await fetch(
-      `${serviceUrl.replace(/\/$/, "")}/preprocess`,
-      {
-        method: "POST",
-        body: formData,
-        signal: AbortSignal.timeout(120_000),
-      },
-    );
+    const response = await fetch(`${serviceUrl.replace(/\/$/, "")}/preprocess`, {
+      method: "POST",
+      body: formData,
+      signal: AbortSignal.timeout(120_000),
+    });
 
     if (!response.ok) {
       throw new Error(`preprocess: ${response.status} ${response.statusText}`);

@@ -51,10 +51,7 @@ export default function HomePage() {
     value: [],
   });
   const [appliedFilters, setAppliedFilters] = useState(filters);
-  const debouncedFilters = useDebounce(
-    filters,
-    PAGINATION_CONSTANTS.SEARCH_DEBOUNCE_MS,
-  );
+  const debouncedFilters = useDebounce(filters, PAGINATION_CONSTANTS.SEARCH_DEBOUNCE_MS);
   const [activeAudio, setActiveAudio] = useState<{
     callId: string;
     number: string;
@@ -66,9 +63,7 @@ export default function HomePage() {
     q: appliedFilters.q || undefined,
     date_from: appliedFilters.dateFrom || undefined,
     date_to: appliedFilters.dateTo || undefined,
-    direction: appliedFilters.direction.length
-      ? appliedFilters.direction
-      : undefined,
+    direction: appliedFilters.direction.length ? appliedFilters.direction : undefined,
     manager: appliedFilters.manager.length ? appliedFilters.manager : undefined,
     status: appliedFilters.status.length ? appliedFilters.status : undefined,
     value: appliedFilters.value?.length ? appliedFilters.value : undefined,
@@ -97,12 +92,9 @@ export default function HomePage() {
         prev.q !== debouncedFilters.q ||
         prev.dateFrom !== debouncedFilters.dateFrom ||
         prev.dateTo !== debouncedFilters.dateTo ||
-        JSON.stringify(prev.direction) !==
-          JSON.stringify(debouncedFilters.direction) ||
-        JSON.stringify(prev.manager) !==
-          JSON.stringify(debouncedFilters.manager) ||
-        JSON.stringify(prev.status) !==
-          JSON.stringify(debouncedFilters.status) ||
+        JSON.stringify(prev.direction) !== JSON.stringify(debouncedFilters.direction) ||
+        JSON.stringify(prev.manager) !== JSON.stringify(debouncedFilters.manager) ||
+        JSON.stringify(prev.status) !== JSON.stringify(debouncedFilters.status) ||
         JSON.stringify(prev.value) !== JSON.stringify(debouncedFilters.value);
       if (!changed) return prev;
       setPagination((p) => ({ ...p, page: 1 }));
@@ -123,8 +115,7 @@ export default function HomePage() {
       setPagination({
         total: result.pagination?.total ?? 0,
         page: result.pagination?.page ?? 1,
-        per_page:
-          result.pagination?.per_page ?? PAGINATION_CONSTANTS.DEFAULT_PER_PAGE,
+        per_page: result.pagination?.per_page ?? PAGINATION_CONSTANTS.DEFAULT_PER_PAGE,
         total_pages: result.pagination?.total_pages ?? 0,
       });
     }
@@ -187,18 +178,10 @@ export default function HomePage() {
             <CardHeader className="px-6 pt-5 pb-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-semibold tracking-tight">
-                    Последние звонки
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Фильтры применяются на сервере
-                  </p>
+                  <h2 className="text-lg font-semibold tracking-tight">Последние звонки</h2>
+                  <p className="text-sm text-muted-foreground">Фильтры применяются на сервере</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  className="font-normal text-sm gap-2 h-9"
-                  disabled
-                >
+                <Button variant="ghost" className="font-normal text-sm gap-2 h-9" disabled>
                   <span className="text-base opacity-60">📄</span>
                   Скачать XLS (скоро)
                 </Button>

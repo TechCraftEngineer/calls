@@ -71,10 +71,7 @@ function formatScore(value: number | null | undefined): string {
 }
 
 function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 }
 
 /** Русская склонение: 1 звонок, 2 звонка, 5 звонков */
@@ -119,10 +116,8 @@ function prepareStats(entries: [string, ManagerStats][]): {
     if (!raw || typeof raw !== "object") continue;
     const inCount = raw.incoming?.count ?? 0;
     const outCount = raw.outgoing?.count ?? 0;
-    const inTotalSec =
-      raw.incoming?.totalDuration ?? (raw.incoming?.duration ?? 0) * inCount;
-    const outTotalSec =
-      raw.outgoing?.totalDuration ?? (raw.outgoing?.duration ?? 0) * outCount;
+    const inTotalSec = raw.incoming?.totalDuration ?? (raw.incoming?.duration ?? 0) * inCount;
+    const outTotalSec = raw.outgoing?.totalDuration ?? (raw.outgoing?.duration ?? 0) * outCount;
     const inAvgSec = inCount > 0 ? inTotalSec / inCount : 0;
     const outAvgSec = outCount > 0 ? outTotalSec / outCount : 0;
     const total = inCount + outCount;
@@ -160,9 +155,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
     });
   }
 
-  managers.sort(
-    (a, b) => b.totalCount - a.totalCount || a.name.localeCompare(b.name),
-  );
+  managers.sort((a, b) => b.totalCount - a.totalCount || a.name.localeCompare(b.name));
 
   return {
     managers,
@@ -262,23 +255,25 @@ export function formatTelegramReport(params: FormatReportParams): string {
     // Формат списка вместо таблицы для лучшей читаемости в Telegram
     for (const s of managers) {
       const totalMinutes = Math.round(
-        (s.incomingAvgDurationSec * s.incomingCount +
-          s.outgoingAvgDurationSec * s.outgoingCount) /
+        (s.incomingAvgDurationSec * s.incomingCount + s.outgoingAvgDurationSec * s.outgoingCount) /
           60,
       );
 
       lines.push(`👤 ${s.name}`);
       lines.push(`   📞 Звонков: ${s.totalCount} | ⏱️ Минут: ${totalMinutes}`);
-      lines.push(`   💰 Оклад: ${s.kpiBaseSalary !== null && s.kpiBaseSalary !== undefined ? formatValue(s.kpiBaseSalary) : '—'} ₽ | 🎁 Бонус: ${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : '—'} ₽`);
-      lines.push(`   💵 Итого: ${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : '—'} ₽`);
+      lines.push(
+        `   💰 Оклад: ${s.kpiBaseSalary !== null && s.kpiBaseSalary !== undefined ? formatValue(s.kpiBaseSalary) : "—"} ₽ | 🎁 Бонус: ${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : "—"} ₽`,
+      );
+      lines.push(
+        `   💵 Итого: ${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : "—"} ₽`,
+      );
       lines.push("");
     }
   } else {
     // Формат списка без KPI
     for (const s of managers) {
       const totalMinutes = Math.round(
-        (s.incomingAvgDurationSec * s.incomingCount +
-          s.outgoingAvgDurationSec * s.outgoingCount) /
+        (s.incomingAvgDurationSec * s.incomingCount + s.outgoingAvgDurationSec * s.outgoingCount) /
           60,
       );
 
@@ -298,30 +293,22 @@ export function formatTelegramReport(params: FormatReportParams): string {
   lines.push(`• Всего минут: ${totalMinutes}`);
 
   if (isManagerReport && totals.totalCount > 0) {
-    lines.push(
-      `• Оценено: ${totals.evaluatedCount} из ${totals.totalCount} звонков`,
-    );
+    lines.push(`• Оценено: ${totals.evaluatedCount} из ${totals.totalCount} звонков`);
   }
   if (overall.avgManagerScore != null) {
-    lines.push(
-      `• Средняя оценка качества: ${formatScore(overall.avgManagerScore)} ⭐`,
-    );
+    lines.push(`• Средняя оценка качества: ${formatScore(overall.avgManagerScore)} ⭐`);
   }
 
   // KPI итоги
   if (includeKpi) {
     lines.push(`• Общий оклад: ${formatValue(totals.totalBaseSalary)} ₽`);
     lines.push(`• Целевой бонус: ${formatValue(totals.totalTargetBonus)} ₽`);
-    lines.push(
-      `• Начисленный бонус: ${formatValue(totals.totalCalculatedBonus)} ₽`,
-    );
+    lines.push(`• Начисленный бонус: ${formatValue(totals.totalCalculatedBonus)} ₽`);
     lines.push(`• Итого к выплате: ${formatValue(totals.totalSalary)} ₽`);
   }
 
   // Требуют внимания
-  const lowRatedEntries = Object.entries(lowRatedCalls).filter(
-    ([, n]) => n > 0,
-  );
+  const lowRatedEntries = Object.entries(lowRatedCalls).filter(([, n]) => n > 0);
   if (isManagerReport && lowRatedEntries.length > 0) {
     lines.push("");
     lines.push("⚠️ **Требуют внимания (оценка < 3):**");
@@ -403,23 +390,25 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     // Формат списка вместо таблицы для лучшей читаемости в Telegram
     for (const s of managers) {
       const totalMinutes = Math.round(
-        (s.incomingAvgDurationSec * s.incomingCount +
-          s.outgoingAvgDurationSec * s.outgoingCount) /
+        (s.incomingAvgDurationSec * s.incomingCount + s.outgoingAvgDurationSec * s.outgoingCount) /
           60,
       );
 
       lines.push(`👤 <b>${escapeHtml(s.name)}</b>`);
       lines.push(`   📞 Звонков: <b>${s.totalCount}</b> | ⏱️ Минут: <b>${totalMinutes}</b>`);
-      lines.push(`   💰 Оклад: <b>${s.kpiBaseSalary !== null && s.kpiBaseSalary !== undefined ? formatValue(s.kpiBaseSalary) : '—'} ₽</b> | 🎁 Бонус: <b>${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : '—'} ₽</b>`);
-      lines.push(`   💵 Итого: <b>${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : '—'} ₽</b>`);
+      lines.push(
+        `   💰 Оклад: <b>${s.kpiBaseSalary !== null && s.kpiBaseSalary !== undefined ? formatValue(s.kpiBaseSalary) : "—"} ₽</b> | 🎁 Бонус: <b>${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : "—"} ₽</b>`,
+      );
+      lines.push(
+        `   💵 Итого: <b>${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : "—"} ₽</b>`,
+      );
       lines.push("");
     }
   } else {
     // Формат списка без KPI
     for (const s of managers) {
       const totalMinutes = Math.round(
-        (s.incomingAvgDurationSec * s.incomingCount +
-          s.outgoingAvgDurationSec * s.outgoingCount) /
+        (s.incomingAvgDurationSec * s.incomingCount + s.outgoingAvgDurationSec * s.outgoingCount) /
           60,
       );
 
@@ -437,27 +426,25 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   lines.push(`• Всего минут: <b>${totalMinutes}</b>`);
 
   if (isManagerReport && totals.totalCount > 0) {
-    lines.push(
-      `• Оценено: <b>${totals.evaluatedCount}/${totals.totalCount}</b>`,
-    );
+    lines.push(`• Оценено: <b>${totals.evaluatedCount}/${totals.totalCount}</b>`);
   }
   if (overall.avgManagerScore != null) {
-    lines.push(
-      `• Ср. оценка качества: <b>${formatScore(overall.avgManagerScore)}</b> ⭐`,
-    );
+    lines.push(`• Ср. оценка качества: <b>${formatScore(overall.avgManagerScore)}</b> ⭐`);
   }
 
   // KPI итоги
   if (includeKpi) {
-    lines.push(`• Общий оклад: <b>${totals.totalBaseSalary > 0 ? formatValue(totals.totalBaseSalary) : '—'} ₽</b>`);
     lines.push(
-      `• Целевой бонус: <b>${totals.totalTargetBonus > 0 ? formatValue(totals.totalTargetBonus) : '—'} ₽</b>`,
+      `• Общий оклад: <b>${totals.totalBaseSalary > 0 ? formatValue(totals.totalBaseSalary) : "—"} ₽</b>`,
     );
     lines.push(
-      `• Начисленный бонус: <b>${totals.totalCalculatedBonus > 0 ? formatValue(totals.totalCalculatedBonus) : '—'} ₽</b>`,
+      `• Целевой бонус: <b>${totals.totalTargetBonus > 0 ? formatValue(totals.totalTargetBonus) : "—"} ₽</b>`,
     );
     lines.push(
-      `• Итого к выплате: <b>${totals.totalSalary > 0 ? formatValue(totals.totalSalary) : '—'} ₽</b>`,
+      `• Начисленный бонус: <b>${totals.totalCalculatedBonus > 0 ? formatValue(totals.totalCalculatedBonus) : "—"} ₽</b>`,
+    );
+    lines.push(
+      `• Итого к выплате: <b>${totals.totalSalary > 0 ? formatValue(totals.totalSalary) : "—"} ₽</b>`,
     );
   }
 
@@ -465,19 +452,14 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     lines.push("");
     lines.push("⚠️ <b>Требуют внимания (оценка &lt; 3)</b>");
     for (const [manager, count] of lowRatedEntries.slice(0, 10)) {
-      lines.push(
-        `• <b>${escapeHtml(manager)}</b>: ${count} ${pluralizeCalls(count)}`,
-      );
+      lines.push(`• <b>${escapeHtml(manager)}</b>: ${count} ${pluralizeCalls(count)}`);
     }
   }
 
   return lines.join("\n");
 }
 
-export function splitTelegramHtmlMessage(
-  message: string,
-  maxLength = 4000,
-): string[] {
+export function splitTelegramHtmlMessage(message: string, maxLength = 4000): string[] {
   if (!message) return [""];
   if (!Number.isFinite(maxLength) || maxLength <= 0) {
     throw new RangeError("maxLength должен быть положительным числом");

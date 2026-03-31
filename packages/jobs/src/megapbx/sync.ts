@@ -1,3 +1,4 @@
+import { getAudioDurationFromBuffer } from "@calls/asr/audio/get-audio-duration";
 import {
   callsService,
   filesService,
@@ -5,7 +6,6 @@ import {
   pbxRepository,
   pbxService,
 } from "@calls/db";
-import { getAudioDurationFromBuffer } from "@calls/asr/audio/get-audio-duration";
 import { inngest, transcribeRequested } from "../inngest/client";
 import { createLogger } from "../logger";
 import { MegaPbxClient } from "./client";
@@ -21,9 +21,7 @@ import {
 const logger = createLogger("megapbx-sync");
 const PROVIDER = "megapbx";
 
-function isEmptyOrMegaPbxPlaceholder(
-  value: string | null | undefined,
-): boolean {
+function isEmptyOrMegaPbxPlaceholder(value: string | null | undefined): boolean {
   const normalized = value?.trim().toLowerCase() ?? "";
   return normalized.length === 0 || normalized === "megapbx";
 }
@@ -40,9 +38,10 @@ type SyncStats = {
   latestCursor: string | null;
 };
 
-function normalizePhoneForMatch(value: string | null | undefined): string {
-  if (!value) return "";
-  return value.replace(/\D/g, "");
+function normalizePhoneForMatch(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const digits = value.replace(/\D/g, "");
+  return digits.length > 0 ? digits : null;
 }
 
 function shouldSkipCallByExcludedPhoneNumbers(
@@ -54,13 +53,13 @@ function shouldSkipCallByExcludedPhoneNumbers(
   const excluded = new Set(
     excludePhoneNumbers
       .map((value) => normalizePhoneForMatch(value))
-      .filter(Boolean),
+      .filter((value): value is string => value !== null),
   );
   if (excluded.size === 0) return false;
 
   const internal = normalizePhoneForMatch(call.internalNumber);
   const external = normalizePhoneForMatch(call.externalNumber);
-  const values = [internal, external].filter(Boolean);
+  const values = [internal, external].filter((value): value is string => value !== null);
   for (const value of values) {
     if (excluded.has(value)) return true;
     for (const excludedValue of excluded) {
@@ -82,11 +81,7 @@ async function autoLinkEmployees(
   employees: NormalizedEmployee[],
 ): Promise<number> {
   let linked = 0;
-  const existingLinks = await pbxRepository.getLinkMap(
-    workspaceId,
-    PROVIDER,
-    "employee",
-  );
+  const existingLinks = await pbxRepository.getLinkMap(workspaceId, PROVIDER, "employee");
 
   for (const employee of employees) {
     if (existingLinks.has(employee.externalId)) continue;
@@ -112,9 +107,7 @@ async function autoLinkEmployees(
     }
 
     if (!employee.email) continue;
-    const invites = await pbxRepository.findCandidateInvitations(workspaceId, [
-      employee.email,
-    ]);
+    const invites = await pbxRepository.findCandidateInvitations(workspaceId, [employee.email]);
     if (invites.length === 1) {
       await pbxRepository.upsertLink({
         workspaceId,
@@ -147,11 +140,7 @@ async function uploadRecordingIfNeeded(
   const filename = `megapbx/${providerCallId}.${extension}`;
   let fileDurationSeconds: number | null = null;
   const duration = await getAudioDurationFromBuffer(buffer);
-  if (
-    typeof duration === "number" &&
-    Number.isFinite(duration) &&
-    duration > 0
-  ) {
+  if (typeof duration === "number" && Number.isFinite(duration) && duration > 0) {
     fileDurationSeconds = duration;
   } else {
     logger.warn("Не удалось определить длительность записи", {
@@ -262,8 +251,7 @@ function extractCallsFromWebhookPayload(
 ): Record<string, unknown>[] {
   if (Array.isArray(payload)) {
     return payload.filter(
-      (item): item is Record<string, unknown> =>
-        Boolean(item) && typeof item === "object",
+      (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object",
     );
   }
   const keys = ["history", "calls", "items", "data", "result"];
@@ -271,18 +259,11 @@ function extractCallsFromWebhookPayload(
     const nested = payload[key];
     if (Array.isArray(nested)) {
       return nested.filter(
-        (item): item is Record<string, unknown> =>
-          Boolean(item) && typeof item === "object",
+        (item): item is Record<string, unknown> => Boolean(item) && typeof item === "object",
       );
     }
   }
-  if (
-    payload.uid ||
-    payload.start ||
-    payload.id ||
-    payload.callId ||
-    payload.timestamp
-  ) {
+  if (payload.uid || payload.start || payload.id || payload.callId || payload.timestamp) {
     return [payload];
   }
   return [];
@@ -306,11 +287,7 @@ export async function syncMegaPbxCalls(
     latestCursor: null,
   };
 
-  const syncState = await pbxRepository.getSyncState(
-    workspaceId,
-    PROVIDER,
-    "calls",
-  );
+  const syncState = await pbxRepository.getSyncState(workspaceId, PROVIDER, "calls");
   await pbxRepository.updateSyncState({
     workspaceId,
     provider: PROVIDER,
@@ -321,17 +298,12 @@ export async function syncMegaPbxCalls(
   });
 
   try {
-    const employeeMap = await pbxRepository.getEmployeeMap(
-      workspaceId,
-      PROVIDER,
-    );
+    const employeeMap = await pbxRepository.getEmployeeMap(workspaceId, PROVIDER);
     const numberMap = await pbxRepository.getNumberMap(workspaceId, PROVIDER);
 
     const rawCalls = webhookPayload
       ? extractCallsFromWebhookPayload(webhookPayload)
-      : await client.fetchCalls(
-          syncState?.cursor ?? config.syncFromDate ?? null,
-        );
+      : await client.fetchCalls(syncState?.cursor ?? config.syncFromDate ?? null);
 
     const calls = rawCalls
       .map(normalizeCall)
@@ -350,9 +322,7 @@ export async function syncMegaPbxCalls(
       const employee = call.employeeExternalId
         ? employeeMap.get(call.employeeExternalId)
         : undefined;
-      const number = call.numberExternalId
-        ? numberMap.get(call.numberExternalId)
-        : undefined;
+      const number = call.numberExternalId ? numberMap.get(call.numberExternalId) : undefined;
 
       const createResult = await callsService.createCallWithResult({
         workspaceId,
@@ -361,11 +331,7 @@ export async function syncMegaPbxCalls(
         externalId: call.externalId,
         timestamp: call.timestamp,
         number: call.externalNumber,
-        internalNumber:
-          call.internalNumber ??
-          number?.extension ??
-          employee?.extension ??
-          null,
+        internalNumber: call.internalNumber ?? number?.extension ?? employee?.extension ?? null,
         direction: call.direction,
         status: call.status,
         source: employee?.externalId ?? number?.externalId ?? "megapbx",
@@ -374,11 +340,8 @@ export async function syncMegaPbxCalls(
       });
 
       const canonicalCall =
-        (await callsService.getCallByExternalId(
-          workspaceId,
-          PROVIDER,
-          call.externalId,
-        )) ?? (await callsService.getCallByFilename(filename, workspaceId));
+        (await callsService.getCallByExternalId(workspaceId, PROVIDER, call.externalId)) ??
+        (await callsService.getCallByFilename(filename, workspaceId));
 
       if (!canonicalCall) {
         throw new Error(
@@ -390,9 +353,9 @@ export async function syncMegaPbxCalls(
       // Дозаполняем связь и вспомогательные поля, когда появились данные из directory.
       if (!createResult.created) {
         const internalNumber = !canonicalCall.internalNumber?.trim()
-          ? (call.internalNumber ??
-            number?.extension ??
-            employee?.extension ??
+          ? (normalizePhoneForMatch(call.internalNumber) ??
+            normalizePhoneForMatch(number?.extension) ??
+            normalizePhoneForMatch(employee?.extension) ??
             null)
           : undefined;
         const source = isEmptyOrMegaPbxPlaceholder(canonicalCall.source)
@@ -429,8 +392,7 @@ export async function syncMegaPbxCalls(
             stats.recordings += 1;
           }
         } catch (error) {
-          const message =
-            error instanceof Error ? error.message : String(error);
+          const message = error instanceof Error ? error.message : String(error);
           stats.errors.push(message);
           logger.warn("Ошибка загрузки записи MegaPBX", {
             workspaceId,
@@ -443,9 +405,7 @@ export async function syncMegaPbxCalls(
       }
 
       if (createResult.created && recordingFileId) {
-        await inngest.send(
-          transcribeRequested.create({ callId: canonicalCall.id }),
-        );
+        await inngest.send(transcribeRequested.create({ callId: canonicalCall.id }));
         stats.transcriptionsQueued += 1;
       }
 
@@ -494,15 +454,10 @@ export async function syncMegaPbxCalls(
   }
 }
 
-export async function syncMegaPbxWorkspace(
-  workspaceId: string,
-  config: MegaPbxIntegrationConfig,
-) {
+export async function syncMegaPbxWorkspace(workspaceId: string, config: MegaPbxIntegrationConfig) {
   const directory = await syncMegaPbxDirectory(workspaceId, config);
 
-  const calls = config.syncCalls
-    ? await syncMegaPbxCalls(workspaceId, config)
-    : null;
+  const calls = config.syncCalls ? await syncMegaPbxCalls(workspaceId, config) : null;
 
   logger.info("MegaPBX синхронизация завершена", {
     workspaceId,
@@ -515,8 +470,7 @@ export async function syncMegaPbxWorkspace(
 
 export async function runActiveMegaPbxSync() {
   const integrations = await pbxService.listActiveIntegrations();
-  const results: Array<{ workspaceId: string; ok: boolean; error?: string }> =
-    [];
+  const results: Array<{ workspaceId: string; ok: boolean; error?: string }> = [];
 
   for (const integration of integrations) {
     try {

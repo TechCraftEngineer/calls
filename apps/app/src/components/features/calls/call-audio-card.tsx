@@ -1,5 +1,13 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@calls/ui";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@calls/ui";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@calls/ui";
 import { Radio, Volume2 } from "lucide-react";
 import type { CallDetail } from "@/types/calls";
 import { CallWaveformPlayer } from "./call-waveform-player";
@@ -42,9 +50,7 @@ export function CallAudioCard({ call }: Props) {
           <TabsContent value="original" className="mt-0">
             <div className="space-y-2">
               <CallWaveformPlayer callId={call.id} enhanced={false} />
-              <p className="text-muted-foreground text-xs">
-                Оригинальная запись без обработки
-              </p>
+              <p className="text-muted-foreground text-xs">Оригинальная запись без обработки</p>
             </div>
           </TabsContent>
         </Tabs>

@@ -100,8 +100,7 @@ export default function UsersTable({
               users.map((u) => {
                 const userId = u.userId ?? u.id;
                 const isCurrentUser = compareIds(currentUser?.id, userId);
-                const canChangeRole =
-                  isOwner && !isCurrentUser && u.role !== "owner";
+                const canChangeRole = isOwner && !isCurrentUser && u.role !== "owner";
                 const canRemove =
                   !isCurrentUser &&
                   (currentUserRole === "owner" ||
@@ -111,9 +110,7 @@ export default function UsersTable({
                   <TableRow key={u.id}>
                     <TableCell className="font-semibold text-[#333]">
                       {u.givenName || u.familyName
-                        ? [u.givenName, u.familyName]
-                            .filter((x): x is string => !!x)
-                            .join(" ")
+                        ? [u.givenName, u.familyName].filter((x): x is string => !!x).join(" ")
                         : String(u.email ?? "")}
                       {u.email && (u.givenName || u.familyName) ? (
                         <span className="block text-xs text-[#999] font-normal">
@@ -133,26 +130,20 @@ export default function UsersTable({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="admin">
-                              {ROLE_LABELS.admin}
-                            </SelectItem>
-                            <SelectItem value="member">
-                              {ROLE_LABELS.member}
-                            </SelectItem>
+                            <SelectItem value="admin">{ROLE_LABELS.admin}</SelectItem>
+                            <SelectItem value="member">{ROLE_LABELS.member}</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (
                         <span className="text-[#555]">
-                          {ROLE_LABELS[String(u.role ?? "member")] ??
-                            String(u.role ?? "member")}
+                          {ROLE_LABELS[String(u.role ?? "member")] ?? String(u.role ?? "member")}
                         </span>
                       )}
                     </TableCell>
                     <TableCell className="text-[#555]">
                       {u.evaluationTemplateSlug
-                        ? (EVALUATION_TEMPLATE_LABELS[
-                            u.evaluationTemplateSlug
-                          ] ?? u.evaluationTemplateSlug)
+                        ? (EVALUATION_TEMPLATE_LABELS[u.evaluationTemplateSlug] ??
+                          u.evaluationTemplateSlug)
                         : "—"}
                     </TableCell>
                     <TableCell
@@ -193,12 +184,7 @@ export default function UsersTable({
                             variant="ghost"
                             size="sm"
                             className="text-destructive hover:text-destructive/80"
-                            onClick={() =>
-                              onRemoveMember(
-                                userId,
-                                String(u.email ?? u.name ?? ""),
-                              )
-                            }
+                            onClick={() => onRemoveMember(userId, String(u.email ?? u.name ?? ""))}
                             aria-label={`Исключить ${u.email}`}
                           >
                             Исключить
@@ -229,8 +215,7 @@ export default function UsersTable({
                     </svg>
                     <p className="text-[#999] font-medium">Нет участников</p>
                     <p className="text-[#BBB] text-sm">
-                      Пригласите по email или добавьте существующего
-                      пользователя
+                      Пригласите по email или добавьте существующего пользователя
                     </p>
                   </div>
                 </TableCell>

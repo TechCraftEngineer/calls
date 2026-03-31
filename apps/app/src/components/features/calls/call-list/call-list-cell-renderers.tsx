@@ -36,11 +36,7 @@ const analysisCostFormatter = new Intl.NumberFormat("ru-RU", {
 
 export function createLinkOrButton(
   onSelectCall: (callId: string) => void,
-): (
-  item: CallWithDetails,
-  content: ReactNode,
-  extraStyle?: object,
-) => ReactNode {
+): (item: CallWithDetails, content: ReactNode, extraStyle?: object) => ReactNode {
   return (item, content, extraStyle) => {
     const { call } = item;
     return isMobileDevice() ? (
@@ -66,10 +62,8 @@ export function createLinkOrButton(
 }
 
 export function renderDirectionCell(call: CallWithDetails["call"]) {
-  const directionLabel =
-    call.direction === "inbound" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ";
-  const directionClass =
-    directionLabel === "ВХОДЯЩИЙ" ? "badge-yellow-op" : "badge-black-op";
+  const directionLabel = call.direction === "inbound" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ";
+  const directionClass = directionLabel === "ВХОДЯЩИЙ" ? "badge-yellow-op" : "badge-black-op";
   return <span className={`op-badge ${directionClass}`}>{directionLabel}</span>;
 }
 
@@ -152,11 +146,7 @@ export function renderSentimentCell(transcript: CallWithDetails["transcript"]) {
 
 export function renderNumberCell(
   item: CallWithDetails,
-  renderLinkOrButton: (
-    item: CallWithDetails,
-    content: ReactNode,
-    extraStyle?: object,
-  ) => ReactNode,
+  renderLinkOrButton: (item: CallWithDetails, content: ReactNode, extraStyle?: object) => ReactNode,
 ) {
   const { call } = item;
   return call.customerName ? (
@@ -182,9 +172,7 @@ export function renderNumberCell(
 export function renderStatusCell(call: CallWithDetails["call"]) {
   const isMissed = (call.duration ?? 0) === 0 && call.direction === "inbound";
   return (
-    <span
-      className={`op-badge ${isMissed ? "badge-red-op" : "badge-green-op"}`}
-    >
+    <span className={`op-badge ${isMissed ? "badge-red-op" : "badge-green-op"}`}>
       {isMissed ? "ПРОПУЩЕН" : "ПРИНЯТ"}
     </span>
   );
@@ -192,9 +180,7 @@ export function renderStatusCell(call: CallWithDetails["call"]) {
 
 export function renderDateCell(call: CallWithDetails["call"]) {
   return (
-    <span style={{ whiteSpace: "nowrap", color: "#555" }}>
-      {formatTimestamp(call.timestamp)}
-    </span>
+    <span style={{ whiteSpace: "nowrap", color: "#555" }}>{formatTimestamp(call.timestamp)}</span>
   );
 }
 
@@ -238,9 +224,7 @@ export function renderSummaryCell(transcript: CallWithDetails["transcript"]) {
 
 export function renderDurationCell(call: CallWithDetails["call"]) {
   return (
-    <span style={{ fontWeight: 600, color: "#444" }}>
-      {formatDuration(call.duration ?? 0)}
-    </span>
+    <span style={{ fontWeight: 600, color: "#444" }}>{formatDuration(call.duration ?? 0)}</span>
   );
 }
 

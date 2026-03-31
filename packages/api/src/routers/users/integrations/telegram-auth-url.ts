@@ -16,23 +16,13 @@ export const telegramAuthUrl = workspaceProcedure
         message: "Нет доступа к этому пользователю",
       });
     const user = await usersService.getUser(input.user_id);
-    if (!user)
-      throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+    if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
     const token = randomBytes(16).toString("base64url");
-    if (
-      !(await usersService.saveTelegramConnectToken(
-        input.user_id,
-        workspaceId,
-        token,
-      ))
-    )
+    if (!(await usersService.saveTelegramConnectToken(input.user_id, workspaceId, token)))
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message: "Не удалось сохранить токен",
       });
-    const { token: botToken } =
-      await settingsService.getEffectiveTelegramBotToken(workspaceId);
-    const botUsername = botToken?.trim()
-      ? await getBotUsername(botToken)
-      : "mango_react_bot";
+    const { token: botToken } = await settingsService.getEffectiveTelegramBotToken(workspaceId);
+    const botUsername = botToken?.trim() ? await getBotUsername(botToken) : "mango_react_bot";
     return { url: `https://t.me/${botUsername}?start=${token}` };
   });

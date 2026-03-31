@@ -39,9 +39,7 @@ export default function KpiEditDialog({
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Редактирование KPI</DialogTitle>
-          <DialogDescription>
-            Настройте KPI для сотрудника: {row.name}
-          </DialogDescription>
+          <DialogDescription>Настройте KPI для сотрудника: {row.name}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4">
@@ -85,9 +83,7 @@ export default function KpiEditDialog({
               id="targetTalkTimeMinutes"
               type="number"
               value={draft.targetTalkTimeMinutes ?? ""}
-              onChange={(e) =>
-                onFieldChange("targetTalkTimeMinutes", e.target.value)
-              }
+              onChange={(e) => onFieldChange("targetTalkTimeMinutes", e.target.value)}
               className="col-span-3"
               max={KPI_FIELD_LIMITS.targetTalkTimeMinutes}
               min="0"

@@ -81,9 +81,7 @@ export default function UsersPage() {
         toast.success("Участник исключён");
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error ? err.message : "Не удалось исключить участника",
-        );
+        toast.error(err instanceof Error ? err.message : "Не удалось исключить участника");
       },
     }),
   );
@@ -95,9 +93,7 @@ export default function UsersPage() {
         toast.success("Роль обновлена");
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error ? err.message : "Не удалось обновить роль",
-        );
+        toast.error(err instanceof Error ? err.message : "Не удалось обновить роль");
       },
     }),
   );
@@ -109,11 +105,7 @@ export default function UsersPage() {
         toast.success("Приглашение отправлено");
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error
-            ? err.message
-            : "Не удалось отправить приглашение",
-        );
+        toast.error(err instanceof Error ? err.message : "Не удалось отправить приглашение");
       },
     }),
   );
@@ -125,11 +117,7 @@ export default function UsersPage() {
         toast.success("Ссылка-приглашение создана");
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error
-            ? err.message
-            : "Не удалось создать ссылку-приглашение",
-        );
+        toast.error(err instanceof Error ? err.message : "Не удалось создать ссылку-приглашение");
       },
     }),
   );
@@ -141,19 +129,12 @@ export default function UsersPage() {
         toast.success("Приглашение отменено");
       },
       onError: (err) => {
-        toast.error(
-          err instanceof Error
-            ? err.message
-            : "Не удалось отменить приглашение",
-        );
+        toast.error(err instanceof Error ? err.message : "Не удалось отменить приглашение");
       },
     }),
   );
 
-  const handleInviteSubmit = async (
-    email: string,
-    role: "admin" | "member",
-  ) => {
+  const handleInviteSubmit = async (email: string, role: "admin" | "member") => {
     if (!workspaceId) throw new Error("Нет компании");
     return createInvitationMutation.mutateAsync({
       workspaceId,
@@ -174,17 +155,12 @@ export default function UsersPage() {
     setConfirmRemove({ userId, email });
   };
 
-  const handleUpdateRole = (
-    userId: string,
-    role: "owner" | "admin" | "member",
-  ) => {
+  const handleUpdateRole = (userId: string, role: "owner" | "admin" | "member") => {
     if (!workspaceId) return;
     updateRoleMutation.mutate({ workspaceId, userId, role });
   };
 
-  const activeUsersCount = (users as WorkspaceMemberUser[]).filter(
-    (u) => u.id,
-  ).length;
+  const activeUsersCount = (users as WorkspaceMemberUser[]).filter((u) => u.id).length;
 
   return (
     <div className="app-container">

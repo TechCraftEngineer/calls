@@ -8,10 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { authClient } from "@/lib/better-auth";
-import {
-  type ResetPasswordFormData,
-  resetPasswordSchema,
-} from "@/lib/validations";
+import { type ResetPasswordFormData, resetPasswordSchema } from "@/lib/validations";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -24,9 +21,7 @@ function ResetPasswordForm() {
     const err = searchParams.get("error");
     setToken(t);
     if (err === "INVALID_TOKEN") {
-      setTokenError(
-        "Ссылка недействительна или истекла. Запросите новый сброс пароля.",
-      );
+      setTokenError("Ссылка недействительна или истекла. Запросите новый сброс пароля.");
     }
   }, [searchParams]);
 
@@ -60,13 +55,9 @@ function ResetPasswordForm() {
         });
         return;
       }
-      setTimeout(
-        () => router.push(`${paths.auth.signin}?message=password_reset`),
-        1500,
-      );
+      setTimeout(() => router.push(`${paths.auth.signin}?message=password_reset`), 1500);
     } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Ошибка при сбросе пароля";
+      const errorMessage = err instanceof Error ? err.message : "Ошибка при сбросе пароля";
       setError("root", { message: String(errorMessage) });
     }
   };
@@ -86,10 +77,7 @@ function ResetPasswordForm() {
             Запросить новую ссылку
           </Link>
           <div className="mt-6 text-center">
-            <Link
-              href={paths.auth.signin}
-              className="text-[13px] text-[#888] hover:text-[#111]"
-            >
+            <Link href={paths.auth.signin} className="text-[13px] text-[#888] hover:text-[#111]">
               ← Вернуться ко входу
             </Link>
           </div>
@@ -115,12 +103,8 @@ function ResetPasswordForm() {
           <div className="mb-6 inline-flex h-12 w-12 items-center justify-center rounded-[10px] bg-[#FFD600] text-black font-black text-[24px]">
             M
           </div>
-          <h1 className="mb-2 text-[24px] font-bold text-[#111]">
-            Новый пароль
-          </h1>
-          <p className="m-0 text-[14px] text-[#888]">
-            Введите новый пароль для входа в QBS Звонки
-          </p>
+          <h1 className="mb-2 text-[24px] font-bold text-[#111]">Новый пароль</h1>
+          <p className="m-0 text-[14px] text-[#888]">Введите новый пароль для входа в QBS Звонки</p>
         </div>
 
         {isSubmitSuccessful ? (
@@ -148,9 +132,7 @@ function ResetPasswordForm() {
                 <PasswordInput
                   id="newPassword"
                   className={`w-full rounded-lg border border-[#DDD] px-4 py-3 pr-10 text-[14px] transition-all duration-200 box-border focus:border-[#FFD600] focus:shadow-[0_0_0_3px_rgba(255,214,0,0.1)] focus:outline-none ${
-                    errors.newPassword
-                      ? "border-red-500 bg-red-50 focus:border-red-500"
-                      : ""
+                    errors.newPassword ? "border-red-500 bg-red-50 focus:border-red-500" : ""
                   }`}
                   placeholder="••••••••"
                   autoComplete="new-password"
