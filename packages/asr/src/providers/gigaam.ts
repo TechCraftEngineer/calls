@@ -215,6 +215,7 @@ export async function transcribeWithGigaAm(
   options?: {
     preprocessMetadata?: Record<string, unknown> | null;
     audioBuffer?: Buffer;
+    audioBufferMime?: string;
   },
 ): Promise<AsrResult | null> {
   if (!isGigaAmTranscribeConfigured()) {
@@ -232,7 +233,8 @@ export async function transcribeWithGigaAm(
   
   if (options?.audioBuffer) {
     audioBuffer = options.audioBuffer;
-    contentType = "application/octet-stream";
+    const detectedMime = "application/octet-stream"; // Could be enhanced with MIME detection in the future
+    contentType = options.audioBufferMime ?? detectedMime;
   } else {
     const result = await withRetry(
       () =>
