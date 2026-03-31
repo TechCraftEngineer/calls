@@ -1,13 +1,14 @@
 {
-  "extends": "@calls/tsconfig/compiled-package.json",
+  "extends": "@calls/tsconfig/base.json",
   "include": ["src"],
   "exclude": ["node_modules"],
   "compilerOptions": {
-    "rootDir": "src",
     "types": ["node", "bun"],
-    "baseUrl": ".",
+    "composite": true,
+    "baseUrl": "./src",
     "paths": {
-      "~/*": ["../jobs/src/*"]
+      "~/*": ["./*"],
+      "~": ["."]
     }
   }
 }

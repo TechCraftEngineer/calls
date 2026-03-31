@@ -22,8 +22,7 @@
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
     "paths": {
-      "@/*": ["./src/*"],
-      "~/*": ["../../packages/jobs/src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": [

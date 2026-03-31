@@ -127,10 +127,13 @@ export const callsCrud = {
 
     if (result.length === 0) {
       // Find existing record
+      if (!data.provider || !data.externalId) {
+        throw new Error(`Ошибка вставки: отсутствуют provider или externalId для поиска существующей записи`);
+      }
       const existing = await this.findByExternalId(
         data.workspaceId,
-        data.provider || '',
-        data.externalId || '',
+        data.provider,
+        data.externalId,
       );
       if (!existing) {
         throw new Error(`Ошибка вставки: запись не найдена для workspaceId=${data.workspaceId}, provider=${data.provider}, externalId=${data.externalId}`);
@@ -138,7 +141,10 @@ export const callsCrud = {
       return { id: existing.id, created: false };
     }
 
-    return { id: result[0]?.id || '', created: true };
+    if (!result[0]?.id) {
+      throw new Error('Ошибка вставки: не получен ID от базы данных');
+    }
+    return { id: result[0].id, created: true };
   },
 
   async create(data: CreateCallData): Promise<string> {

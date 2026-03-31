@@ -256,7 +256,7 @@ export const telegramReportsFn = inngest.createFunction(
               });
 
               const stats = await callsService.enrichStatsWithKpi(
-                evaluationsStats as Record<string, ManagerStats>,
+                evaluationsStats,
                 workspaceId
               );
 
