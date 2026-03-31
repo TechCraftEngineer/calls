@@ -85,7 +85,7 @@
             "noLabelWithoutControl": "off"
           },
           "suspicious": {
-            "noExplicitAny": "off",
+            "noExplicitAny": "warn",
             "noArrayIndexKey": "off"
           },
           "correctness": {

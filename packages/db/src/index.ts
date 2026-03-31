@@ -160,6 +160,7 @@ export type {
   GetCallManagersParams,
   GetCallsParams,
 } from "./types/calls.types";
+export type { ManagerStatsRow } from "./repositories/calls/get-evaluations-stats";
 export type {
   CreateUserData,
   UpdateUserData,

@@ -1,8 +1,4 @@
-import {
-  callsService,
-  settingsService,
-  usersService,
-} from "@calls/db";
+import { callsService, settingsService, usersService, type ManagerStatsRow } from "@calls/db";
 import { ReportEmail, sendEmail, type ManagerStats } from "@calls/emails";
 import { ORPCError } from "@orpc/server";
 import { subDays, subMonths, subWeeks } from "date-fns";
@@ -17,8 +13,16 @@ const reportTypeSchema = z.object({
 const managerStatsSchema = z.object({
   name: z.string(),
   internalNumber: z.string().nullable(),
-  incoming: z.object({ count: z.number(), duration: z.number() }),
-  outgoing: z.object({ count: z.number(), duration: z.number() }),
+  incoming: z.object({
+    count: z.number(),
+    duration: z.number(),
+    totalDuration: z.number().optional(),
+  }),
+  outgoing: z.object({
+    count: z.number(),
+    duration: z.number(),
+    totalDuration: z.number().optional(),
+  }),
   avgManagerScore: z.number().nullable().optional(),
   evaluatedCount: z.number().optional(),
 });
@@ -95,7 +99,7 @@ export const sendTestEmail = workspaceProcedure
     let dateTo: Date;
     let dateFromString: string;
     let dateToString: string;
-    
+
     if (reportType === "daily") {
       const yesterday = subDays(now, 1);
       dateFrom = yesterday;
@@ -134,8 +138,11 @@ export const sendTestEmail = workspaceProcedure
         message: "Некорректные данные статистики",
       });
     }
-    const stats = parseResult.data as Record<string, ManagerStats>;
-    const enrichedStats = await callsService.enrichStatsWithKpi(stats, workspaceId);
+    const stats = parseResult.data as Record<string, ManagerStatsRow>;
+    const enrichedStats = await callsService.enrichStatsWithKpi(
+      stats,
+      workspaceId,
+    ) as Record<string, ManagerStats>;
 
     try {
       await sendEmail({
