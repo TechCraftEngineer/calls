@@ -4,6 +4,7 @@ import {
   settingsService,
   usersService,
   workspacesService,
+  type ManagerStatsRow,
 } from "@calls/db";
 import { formatTelegramReportHtml, type ManagerStats } from "@calls/jobs";
 import { sendMessage } from "@calls/telegram-bot";
@@ -134,7 +135,10 @@ export const sendTestTelegram = workspaceProcedure
         excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
     });
 
-    const enrichedStats = await callsService.enrichStatsWithKpi(stats, workspaceId);
+    const enrichedStats = await callsService.enrichStatsWithKpi(
+      stats,
+      workspaceId,
+    ) as Record<string, ManagerStats>;
 
     let lowRatedCalls: Record<string, number> = {};
     if (isManagerReport) {
@@ -164,7 +168,7 @@ export const sendTestTelegram = workspaceProcedure
       workspaceName,
       _callSummariesByManager: callSummariesByManager,
       lowRatedCalls,
-      includeKpi: userForEdit.reportIncludeKpi ?? false,
+      includeKpi:  true,
     });
 
     const success = await sendMessage(token, chatId, text, {

@@ -5,7 +5,6 @@
 import type { CallsRepository } from "../repositories/calls.repository";
 import type { SystemRepository } from "../repositories/system.repository";
 import type { Call, CallEvaluation, Transcript } from "../schema";
-import { ManagerStats } from "@calls/jobs";
 import type {
   CallWithTranscript,
   CreateCallData,
@@ -13,6 +12,17 @@ import type {
   GetCallManagersParams,
   GetCallsParams,
 } from "../types/calls.types";
+import type { ManagerStatsRow } from "../repositories/calls/get-evaluations-stats";
+
+interface EnrichedManagerStats extends ManagerStatsRow {
+  kpiBaseSalary?: number;
+  kpiTargetBonus?: number;
+  kpiTargetTalkTimeMinutes?: number;
+  kpiActualTalkTimeMinutes?: number;
+  kpiCompletionPercentage?: number;
+  kpiCalculatedBonus?: number;
+  kpiTotalSalary?: number;
+}
 
 export class CallsService {
   constructor(
@@ -215,7 +225,7 @@ export class CallsService {
     dateTo?: string;
     internalNumbers?: string[];
     excludePhoneNumbers?: string[];
-  }): Promise<Record<string, unknown>> {
+  }): Promise<Record<string, ManagerStatsRow>> {
     return this.callsRepository.getEvaluationsStats(params);
   }
 
@@ -251,9 +261,9 @@ export class CallsService {
   }
 
   async enrichStatsWithKpi(
-    stats: Record<string, any>,
+    stats: Record<string, ManagerStatsRow>,
     workspaceId: string,
-  ): Promise<Record<string, any>> {
+  ): Promise<Record<string, EnrichedManagerStats>> {
     return this.callsRepository.enrichStatsWithKpi(stats, workspaceId);
   }
 }

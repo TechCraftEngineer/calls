@@ -209,7 +209,7 @@ export function formatTelegramReport(params: FormatReportParams): string {
     isManagerReport,
     workspaceName,
     lowRatedCalls = {},
-    includeKpi = false,
+    includeKpi = true,
   } = params;
 
   // Валидация входных параметров
@@ -257,13 +257,10 @@ export function formatTelegramReport(params: FormatReportParams): string {
   lines.push("");
 
   if (includeKpi) {
-    // Расширенная таблица с KPI данными - полный феншуй
-    const header =
-      "│ Менеджер        │ Звонки │ Минуты │ Оценка │ Оклад    │ Бонус    │ %KPI │ Итого    │";
-    const separator =
-      "│─────────────────│────────│────────│────────│─────────│─────────│──────│─────────│";
-    lines.push(header);
-    lines.push(separator);
+    // Компактная таблица с KPI - умещается в Telegram
+    lines.push('┌───────────────┬─────┬─────┬──────┬──────┬──────┐');
+    lines.push('│ Менеджер     │Звон │ Мин │Оклад  │Бонус  │Итого  │');
+    lines.push('├───────────────┼─────┼─────┼──────┼──────┼──────┤');
 
     // Данные по менеджерам с KPI
     for (const s of managers) {
@@ -272,39 +269,32 @@ export function formatTelegramReport(params: FormatReportParams): string {
           s.outgoingAvgDurationSec * s.outgoingCount) /
           60,
       );
-      const rating =
-        s.avgManagerScore != null ? formatScore(s.avgManagerScore) : "—";
 
-      const name = s.name.length > 15 ? `${s.name.substring(0, 14)}…` : s.name;
-      const nameCol = name.padEnd(15, " ");
-      const callsCol = String(s.totalCount).padStart(6, " ").padEnd(8, " ");
-      const minutesCol = String(totalMinutes).padStart(6, " ").padEnd(8, " ");
-      const ratingCol = rating.padStart(6, " ").padEnd(8, " ");
+      const name = s.name.length > 11 ? `${s.name.substring(0, 10)}…` : s.name;
+      const nameCol = name.padEnd(11, " ");
+      const callsCol = String(s.totalCount).padStart(4, " ").padEnd(5, " ");
+      const minutesCol = String(totalMinutes).padStart(4, " ").padEnd(5, " ");
       const salaryCol = formatValue(s.kpiBaseSalary ?? 0)
-        .padStart(7, " ")
-        .padEnd(9, " ");
+        .padStart(5, " ")
+        .padEnd(6, " ");
       const bonusCol = formatValue(s.kpiCalculatedBonus ?? 0)
-        .padStart(7, " ")
-        .padEnd(9, " ");
-      const kpiCol = String(s.kpiCompletionPercentage ?? 0)
-        .padStart(4, " ")
+        .padStart(5, " ")
         .padEnd(6, " ");
       const totalCol = formatValue(s.kpiTotalSalary ?? 0)
-        .padStart(7, " ")
-        .padEnd(9, " ");
+        .padStart(5, " ")
+        .padEnd(6, " ");
 
       lines.push(
-        `│ ${nameCol} │${callsCol}│${minutesCol}│${ratingCol}│ ${salaryCol} │ ${bonusCol} │${kpiCol}│ ${totalCol} │`,
+        `│ ${nameCol} │${callsCol}│${minutesCol}│${salaryCol}│${bonusCol}│${totalCol}│`,
       );
     }
 
-    lines.push(separator);
+    lines.push('└───────────────┴─────┴─────┴──────┴──────┴──────┘');
   } else {
-    // Стандартная таблица без KPI - полный феншуй
-    const header = "│ Менеджер          │ Звонки │ Минуты │ Оценка │";
-    const separator = "│──────────────────│────────│────────│────────│";
-    lines.push(header);
-    lines.push(separator);
+    // Компактная таблица без KPI
+    lines.push('┌───────────────┬─────┬─────┐');
+    lines.push('│ Менеджер     │Звон │ Мин │');
+    lines.push('├───────────────┼─────┼─────┤');
 
     // Данные по менеджерам
     for (const s of managers) {
@@ -313,19 +303,16 @@ export function formatTelegramReport(params: FormatReportParams): string {
           s.outgoingAvgDurationSec * s.outgoingCount) /
           60,
       );
-      const rating =
-        s.avgManagerScore != null ? formatScore(s.avgManagerScore) : "—";
 
-      const name = s.name.length > 16 ? `${s.name.substring(0, 15)}…` : s.name;
-      const nameCol = name.padEnd(16, " ");
-      const callsCol = String(s.totalCount).padStart(6, " ").padEnd(8, " ");
-      const minutesCol = String(totalMinutes).padStart(6, " ").padEnd(8, " ");
-      const ratingCol = rating.padStart(6, " ").padEnd(8, " ");
+      const name = s.name.length > 11 ? `${s.name.substring(0, 10)}…` : s.name;
+      const nameCol = name.padEnd(11, " ");
+      const callsCol = String(s.totalCount).padStart(4, " ").padEnd(5, " ");
+      const minutesCol = String(totalMinutes).padStart(4, " ").padEnd(5, " ");
 
-      lines.push(`│ ${nameCol} │${callsCol}│${minutesCol}│${ratingCol}│`);
+      lines.push(`│ ${nameCol} │${callsCol}│${minutesCol}│`);
     }
 
-    lines.push(separator);
+    lines.push('└───────────────┴─────┴─────┘');
   }
   lines.push("");
 
@@ -382,7 +369,7 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     isManagerReport,
     workspaceName,
     lowRatedCalls = {},
-    includeKpi = false,
+    includeKpi = true,
   } = params;
 
   if (!stats || typeof stats !== "object") {
@@ -440,13 +427,11 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   lines.push("");
 
   if (includeKpi) {
-    // Расширенная таблица с KPI данными - полный феншуй
-    const header =
-      "│ Менеджер        │ Звонки │ Минуты │ Оценка │ Оклад    │ Бонус    │ %KPI │ Итого    │";
-    const separator =
-      "│─────────────────│────────│────────│────────│─────────│─────────│──────│─────────│";
-    lines.push(header);
-    lines.push(separator);
+    // Компактная таблица с KPI - умещается в Telegram
+    lines.push('<code>');
+    lines.push('┌───────────────┬─────┬─────┬──────┬──────┬──────┐');
+    lines.push('│ Менеджер     │Звон │ Мин │Оклад  │Бонус  │Итого  │');
+    lines.push('├───────────────┼─────┼─────┼──────┼──────┼──────┤');
 
     // Данные по менеджерам с KPI
     for (const s of managers) {
@@ -455,40 +440,35 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
           s.outgoingAvgDurationSec * s.outgoingCount) /
           60,
       );
-      const rating =
-        s.avgManagerScore != null ? formatScore(s.avgManagerScore) : "—";
 
       const name = (
-        s.name.length > 15 ? `${s.name.substring(0, 14)}…` : s.name
-      ).padEnd(15, " ");
-      const callsCol = String(s.totalCount).padStart(6, " ").padEnd(8, " ");
-      const minutesCol = String(totalMinutes).padStart(6, " ").padEnd(8, " ");
-      const ratingCol = rating.padStart(6, " ").padEnd(8, " ");
+        s.name.length > 11 ? `${s.name.substring(0, 10)}…` : s.name
+      ).padEnd(11, " ");
+      const callsCol = String(s.totalCount).padStart(4, " ").padEnd(5, " ");
+      const minutesCol = String(totalMinutes).padStart(4, " ").padEnd(5, " ");
       const salaryCol = formatValue(s.kpiBaseSalary ?? 0)
-        .padStart(7, " ")
-        .padEnd(9, " ");
+        .padStart(5, " ")
+        .padEnd(6, " ");
       const bonusCol = formatValue(s.kpiCalculatedBonus ?? 0)
-        .padStart(7, " ")
-        .padEnd(9, " ");
-      const kpiCol = String(s.kpiCompletionPercentage ?? 0)
-        .padStart(4, " ")
+        .padStart(5, " ")
         .padEnd(6, " ");
       const totalCol = formatValue(s.kpiTotalSalary ?? 0)
-        .padStart(7, " ")
-        .padEnd(9, " ");
+        .padStart(5, " ")
+        .padEnd(6, " ");
 
       lines.push(
-        `│ ${name} │${callsCol}│${minutesCol}│${ratingCol}│ ${salaryCol} │ ${bonusCol} │${kpiCol}│ ${totalCol} │`,
+        `│ ${name} │${callsCol}│${minutesCol}│${salaryCol}│${bonusCol}│${totalCol}│`,
       );
     }
 
-    lines.push(separator);
+    lines.push('└───────────────┴─────┴─────┴──────┴──────┴──────┘');
+    lines.push('</code>');
   } else {
-    // Стандартная таблица без KPI - полный феншуй
-    const header = "│ Менеджер          │ Звонки │ Минуты │ Оценка │";
-    const separator = "│──────────────────│────────│────────│────────│";
-    lines.push(header);
-    lines.push(separator);
+    // Компактная таблица без KPI
+    lines.push('<code>');
+    lines.push('┌───────────────┬─────┬─────┐');
+    lines.push('│ Менеджер     │Звон │ Мин │');
+    lines.push('├───────────────┼─────┼─────┤');
 
     // Данные по менеджерам
     for (const s of managers) {
@@ -497,20 +477,18 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
           s.outgoingAvgDurationSec * s.outgoingCount) /
           60,
       );
-      const rating =
-        s.avgManagerScore != null ? formatScore(s.avgManagerScore) : "—";
 
       const name = (
-        s.name.length > 16 ? `${s.name.substring(0, 15)}…` : s.name
-      ).padEnd(16, " ");
-      const callsCol = String(s.totalCount).padStart(6, " ").padEnd(8, " ");
-      const minutesCol = String(totalMinutes).padStart(6, " ").padEnd(8, " ");
-      const ratingCol = rating.padStart(6, " ").padEnd(8, " ");
+        s.name.length > 11 ? `${s.name.substring(0, 10)}…` : s.name
+      ).padEnd(11, " ");
+      const callsCol = String(s.totalCount).padStart(4, " ").padEnd(5, " ");
+      const minutesCol = String(totalMinutes).padStart(4, " ").padEnd(5, " ");
 
-      lines.push(`│ ${name} │${callsCol}│${minutesCol}│${ratingCol}│`);
+      lines.push(`│ ${name} │${callsCol}│${minutesCol}│`);
     }
 
-    lines.push(separator);
+    lines.push('└───────────────┴─────┴─────┘');
+    lines.push('</code>');
   }
 
   lines.push("");

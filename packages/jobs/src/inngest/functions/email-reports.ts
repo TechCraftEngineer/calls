@@ -9,6 +9,7 @@ import {
   getReportScheduleSettings,
   getWorkspaceIdsWithEmailReportRecipients,
   settingsService,
+  type ManagerStatsRow,
   workspaceSettingsRepository,
 } from "@calls/db";
 import { ReportEmail, sendEmail, type ManagerStats } from "@calls/emails";
@@ -202,9 +203,12 @@ export const emailReportsFn = inngest.createFunction(
                   excludePhoneNumbers.length > 0
                     ? excludePhoneNumbers
                     : undefined,
-              })) as Record<string, ManagerStats>;
+              })) as Record<string, ManagerStatsRow>;
 
-              const enrichedStats = await callsService.enrichStatsWithKpi(stats, workspaceId);
+              const enrichedStats = await callsService.enrichStatsWithKpi(
+                stats,
+                workspaceId,
+              ) as Record<string, ManagerStats>;
 
               try {
                 await sendEmail({
