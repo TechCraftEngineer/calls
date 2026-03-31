@@ -112,8 +112,9 @@ class ModelManager:
                 return
             
             model_id = "pyannote/speaker-diarization-3.1"
+            # Совместимо с новым huggingface_hub: используем token или fallback без kwargs.
             last_error = None
-            for kwargs in ({"token": hf_token}, {"use_auth_token": hf_token}, {}):
+            for kwargs in ({"token": hf_token}, {}):
                 try:
                     self.pyannote_pipeline = Pipeline.from_pretrained(model_id, **kwargs)
                     break
