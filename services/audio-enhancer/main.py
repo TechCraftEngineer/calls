@@ -153,8 +153,17 @@ if PYANNOTE_AVAILABLE:
         hf_token = os.getenv("HF_TOKEN")
         if hf_token:
             model_id = "pyannote/speaker-diarization-3.1"
-            # Используем правильный API для pyannote 3.1+
-            pyannote_pipeline = Pipeline.from_pretrained(model_id, use_auth_token=hf_token)
+            # Разные версии pyannote/huggingface_hub поддерживают разные имена параметра токена.
+            last_error = None
+            for kwargs in ({"token": hf_token}, {"use_auth_token": hf_token}, {}):
+                try:
+                    pyannote_pipeline = Pipeline.from_pretrained(model_id, **kwargs)
+                    break
+                except TypeError as e:
+                    last_error = e
+                    continue
+            if pyannote_pipeline is None and last_error is not None:
+                raise last_error
             logger.info("✓ Pyannote диаризация загружена")
         else:
             logger.warning("HF_TOKEN не установлен, pyannote недоступен")
