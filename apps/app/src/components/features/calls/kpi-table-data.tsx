@@ -20,7 +20,7 @@ import { useMemo } from "react";
 
 import { createKpiTableColumns } from "./kpi-table-columns";
 import KpiEditDialog from "./kpi-edit-dialog";
-import type { KpiTableDataProps, KpiRow } from "./kpi-table-types";
+import type { KpiTableDataProps } from "./kpi-table-types";
 
 export default function KpiTableData({
   rows,

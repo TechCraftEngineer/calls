@@ -2,6 +2,8 @@
  * Форматирование текста отчёта по звонкам для Telegram
  */
 
+import type { EnrichedManagerStats } from "../../../db/src/repositories/calls/enrich-stats";
+
 export interface ManagerStats {
   name: string;
   internalNumber: string | null;
@@ -39,7 +41,7 @@ export interface PreparedStats {
 }
 
 export interface FormatReportParams {
-  stats: Record<string, ManagerStats>;
+  stats: Record<string, ManagerStats | EnrichedManagerStats>;
   dateFrom: Date;
   dateTo: Date;
   reportType: "daily" | "weekly" | "monthly";
@@ -267,8 +269,8 @@ export function formatTelegramReport(params: FormatReportParams): string {
 
       lines.push(`👤 ${s.name}`);
       lines.push(`   📞 Звонков: ${s.totalCount} | ⏱️ Минут: ${totalMinutes}`);
-      lines.push(`   💰 Оклад: ${s.kpiBaseSalary ? formatValue(s.kpiBaseSalary) : '—'} ₽ | 🎁 Бонус: ${s.kpiCalculatedBonus ? formatValue(s.kpiCalculatedBonus) : '—'} ₽`);
-      lines.push(`   💵 Итого: ${s.kpiTotalSalary ? formatValue(s.kpiTotalSalary) : '—'} ₽`);
+      lines.push(`   💰 Оклад: ${s.kpiBaseSalary !== null && s.kpiBaseSalary !== undefined ? formatValue(s.kpiBaseSalary) : '—'} ₽ | 🎁 Бонус: ${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : '—'} ₽`);
+      lines.push(`   💵 Итого: ${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : '—'} ₽`);
       lines.push("");
     }
   } else {
@@ -408,8 +410,8 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
 
       lines.push(`👤 <b>${escapeHtml(s.name)}</b>`);
       lines.push(`   📞 Звонков: <b>${s.totalCount}</b> | ⏱️ Минут: <b>${totalMinutes}</b>`);
-      lines.push(`   💰 Оклад: <b>${s.kpiBaseSalary ? formatValue(s.kpiBaseSalary) : '—'} ₽</b> | 🎁 Бонус: <b>${s.kpiCalculatedBonus ? formatValue(s.kpiCalculatedBonus) : '—'} ₽</b>`);
-      lines.push(`   💵 Итого: <b>${s.kpiTotalSalary ? formatValue(s.kpiTotalSalary) : '—'} ₽</b>`);
+      lines.push(`   💰 Оклад: <b>${s.kpiBaseSalary !== null && s.kpiBaseSalary !== undefined ? formatValue(s.kpiBaseSalary) : '—'} ₽</b> | 🎁 Бонус: <b>${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : '—'} ₽</b>`);
+      lines.push(`   💵 Итого: <b>${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : '—'} ₽</b>`);
       lines.push("");
     }
   } else {

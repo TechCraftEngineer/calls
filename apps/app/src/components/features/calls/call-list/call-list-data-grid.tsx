@@ -16,7 +16,6 @@ import {
   type ColumnDef,
   getCoreRowModel,
   getSortedRowModel,
-  type RowSelectionState,
   useReactTable,
 } from "@tanstack/react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";

@@ -9,11 +9,9 @@ import {
   Link,
   Preview,
   pixelBasedPreset,
-  Row,
   Section,
   Tailwind,
   Text,
-  Column,
 } from "@react-email/components";
 
 export type ReportType = "daily" | "weekly" | "monthly";
@@ -36,7 +34,7 @@ export interface ManagerStats {
 }
 
 export interface ReportEmailProps {
-  /** Тип отчёта: daily | weekly | monthly */
+  /** Тип отчёта */
   reportType: ReportType;
   /** Имя пользователя для приветствия */
   username?: string;
@@ -46,10 +44,6 @@ export interface ReportEmailProps {
   includeKpi?: boolean;
   /** Показывать средний рейтинг менеджеров */
   avgManagerScore?: boolean;
-  /** Детальный отчет */
-  reportDetailed?: boolean;
-  /** Включать сводки по звонкам */
-  reportIncludeCallSummaries?: boolean;
 }
 
 const reportTypeLabels = {
@@ -190,8 +184,6 @@ export const ReportEmail = ({
   stats,
   includeKpi = false,
   avgManagerScore = false,
-  reportDetailed,
-  reportIncludeCallSummaries,
 }: ReportEmailProps) => {
   const typeLabel = reportTypeLabels[reportType] ?? "Отчёт по звонкам";
   const previewText = `${typeLabel} · ${APP_CONFIG.shortName}`;

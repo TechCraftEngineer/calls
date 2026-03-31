@@ -114,7 +114,7 @@ export default function BulkKpiSettings({
       // Валидация и преобразование строк в числа с ограничениями
       const validateNumericField = (
         value: string,
-        fieldName: keyof BulkKpiSettings,
+        _fieldName: keyof BulkKpiSettings,
         fieldLabel: string,
       ): { value: number; error?: string } => {
         const parsed = Number(value);

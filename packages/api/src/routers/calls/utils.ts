@@ -49,7 +49,7 @@ export function buildInternalNumberToManagerMap(
   const map = new Map<string, ManagerInfo>();
   for (const m of members) {
     const user = m.user;
-    if (!user || !user.id) continue;
+    if (!user?.id) continue;
     const extensions = parseInternalExtensions(user.internalExtensions);
     const displayName = getDisplayName(user);
     for (const ext of extensions) {

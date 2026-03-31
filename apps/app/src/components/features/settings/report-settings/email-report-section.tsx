@@ -1,5 +1,4 @@
 import { Input, Label } from "@calls/ui";
-import type React from "react";
 
 interface EmailReportSectionProps {
   email: string;
