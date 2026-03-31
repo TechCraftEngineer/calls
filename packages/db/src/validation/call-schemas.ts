@@ -7,7 +7,23 @@ import { z } from "zod";
 /**
  * Схема для валидации UUID
  */
-const uuidSchema = z.string().uuid("Должен быть валидным UUID");
+export const uuidSchema = z.string().uuid("Должен быть валидным UUID");
+
+function normalizeTimestamp(value: unknown): unknown {
+  if (typeof value === "string" && value.trim()) {
+    const v = value.trim();
+    const megapbxMatch = v.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/);
+    if (megapbxMatch) {
+      const [, y, mo, d, h, mi, s] = megapbxMatch;
+      return `${y}-${mo}-${d}T${h}:${mi}:${s}Z`;
+    }
+    return v;
+  }
+  if (typeof value === "number" || typeof value === "bigint") {
+    return String(value);
+  }
+  return value;
+}
 
 /**
  * Схема для валидации номера телефона
@@ -51,7 +67,10 @@ export const createCallSchema = z.object({
     .nullable()
     .optional(),
   number: phoneSchema.nullable().optional(),
-  timestamp: z.string().datetime("timestamp должен быть валидной ISO 8601 датой"),
+  timestamp: z.preprocess(
+    (value) => normalizeTimestamp(value),
+    z.string().datetime("timestamp должен быть валидной ISO 8601 датой"),
+  ),
   name: z.string().max(100, "name не должен превышать 100 символов").nullable().optional(),
   direction: directionSchema.nullable().optional(),
   status: statusSchema.optional(),
@@ -158,4 +177,11 @@ export function validateWithSchema<T>(schema: z.ZodSchema<T>, data: unknown): T 
   }
 
   return result.data;
+}
+
+export function validateCallId(callId: string): void {
+  const result = uuidSchema.safeParse(callId);
+  if (!result.success) {
+    throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
+  }
 }
