@@ -43,7 +43,7 @@ export function buildTranscriptMetadata(input: {
     processingTimeMs,
     confidence: gigaAmBest?.confidence,
     speakerCount: gigaAmBest?.utterances
-      ? new Set(gigaAmBest.utterances.map((u: any) => u.speaker).filter(Boolean))
+      ? new Set(gigaAmBest.utterances.map((u) => u.speaker).filter(Boolean))
           .size
       : undefined,
     durationInSeconds:

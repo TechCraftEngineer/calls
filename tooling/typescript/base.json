@@ -23,7 +23,7 @@
     "noEmit": true,
     "ignoreDeprecations": "6.0",
     
-    "baseUrl": ".",
+    "baseUrl": "."
   },
   "exclude": ["node_modules", "build", "dist", ".next"]
 }

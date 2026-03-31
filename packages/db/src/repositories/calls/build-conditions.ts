@@ -134,9 +134,8 @@ export function buildCallConditions(params: CallConditionsParams) {
   if (operators?.length) {
     conditions.push(inArray(schema.calls.source, operators));
   }
-  if (managers?.length) {
-    conditions.push(inArray(schema.calls.name, managers));
-  }
+  // Фильтрация по менеджерам теперь идет через internalNumbers (уже преобразованные из manager IDs)
+  // Поле managers больше не используется, т.к. фильтрация происходит через managerInternalNumbers
   if (managerInternalNumbers?.length) {
     conditions.push(
       inArray(schema.calls.internalNumber, managerInternalNumbers),

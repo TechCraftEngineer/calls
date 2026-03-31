@@ -245,7 +245,7 @@ export function CallsFilters({
                   updateFilters((prev) => ({ ...prev, manager: [] }))
                 }
               >
-                Все сотрудники
+                {managerOptions.length === 1 ? "Мои звонки" : "Все сотрудники"}
               </Button>
               <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
                 {managerOptions.map((manager) => (
