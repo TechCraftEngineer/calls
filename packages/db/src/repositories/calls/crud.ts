@@ -188,14 +188,12 @@ export const callsCrud = {
   async updatePbxBinding(
     callId: string,
     data: {
-      pbxNumberId?: string | null;
       internalNumber?: string | null;
       source?: string | null;
       name?: string | null;
     },
   ): Promise<void> {
     const patch: Partial<schema.NewCall> = {};
-    if (data.pbxNumberId !== undefined) patch.pbxNumberId = data.pbxNumberId;
     if (data.internalNumber !== undefined) patch.internalNumber = data.internalNumber;
     if (data.source !== undefined) patch.source = data.source;
     if (data.name !== undefined) patch.name = data.name;

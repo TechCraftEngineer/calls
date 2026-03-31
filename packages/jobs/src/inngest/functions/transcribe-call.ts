@@ -132,14 +132,10 @@ export const transcribeCallFn = inngest.createFunction(
           const activePbxNumbers = pbxNumbers.filter(
             (number) => number.isActive,
           );
-          const callPbxNumberId = call.pbxNumberId;
           const normalizedInternalNumber = call.internalNumber?.trim() || null;
 
-          const matchedById = callPbxNumberId
-            ? activePbxNumbers.find((number) => number.id === callPbxNumberId)
-            : undefined;
           const matchedByInternalNumber =
-            !matchedById && normalizedInternalNumber
+            normalizedInternalNumber
               ? activePbxNumbers.find(
                   (number) =>
                     (number.extension?.trim() || null) ===
@@ -147,7 +143,7 @@ export const transcribeCallFn = inngest.createFunction(
                 )
               : undefined;
 
-          const matchedNumber = matchedById ?? matchedByInternalNumber;
+          const matchedNumber = matchedByInternalNumber;
           const managerName =
             matchedNumber?.label?.trim() ||
             matchedNumber?.extension?.trim() ||
@@ -157,9 +153,7 @@ export const transcribeCallFn = inngest.createFunction(
           if (managerName) {
             logger.info("Менеджер определён из pbx_numbers", {
               callId,
-              resolutionStrategy: matchedById
-                ? "pbx_number_id"
-                : "internal_number",
+              resolutionStrategy: "internal_number",
             });
           }
 

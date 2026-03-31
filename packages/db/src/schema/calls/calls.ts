@@ -38,7 +38,6 @@ export const calls = pgTable(
       },
     ),
     internalNumber: text("internal_number"),
-    pbxNumberId: text("pbx_number_id"),
     provider: text("provider"),
     externalId: text("external_id"),
     source: text("source"),
