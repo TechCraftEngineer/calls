@@ -5,6 +5,7 @@
 import type { CallsRepository } from "../repositories/calls.repository";
 import type { SystemRepository } from "../repositories/system.repository";
 import type { Call, CallEvaluation, Transcript } from "../schema";
+import { ManagerStats } from "@calls/jobs";
 import type {
   CallWithTranscript,
   CreateCallData,

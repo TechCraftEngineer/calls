@@ -590,6 +590,7 @@ export const callsRepository = {
     return getKpiStatsFn(params);
   },
 
+  // Локальные интерфейсы для строгой типизации
   async enrichStatsWithKpi(
     stats: Record<string, any>,
     workspaceId: string,
@@ -610,12 +611,16 @@ export const callsRepository = {
         ),
       );
 
-    console.log('KPI Employees from DB:', employees);
-    console.log('Stats to enrich:', Object.entries(stats).map(([name, stat]) => ({ name, internalNumber: stat.internalNumber })));
+    // Логируем только агрегированные, нечувствительные данные
+    console.log('KPI Employees count:', employees.length);
+    console.log('Stats to enrich count:', Object.keys(stats).length);
 
-    // Создаем映射 internalNumber -> KPI данные и имя -> KPI данные
-    const kpiMapByNumber = new Map();
-    const kpiMapByName = new Map();
+    // Создаем映射 internalNumber -> KPI данные
+    const kpiMapByNumber = new Map<string, {
+      kpiBaseSalary?: number;
+      kpiTargetBonus?: number;
+      kpiTargetTalkTimeMinutes?: number;
+    }>();
     for (const emp of employees) {
       if (emp.internalNumber) {
         const cleanNumber = String(emp.internalNumber).trim();
@@ -627,15 +632,13 @@ export const callsRepository = {
       }
     }
 
-    console.log('KPI Map by number created:', Array.from(kpiMapByNumber.entries()));
+    console.log('KPI Map by number created:', kpiMapByNumber.size, 'entries');
 
     // Обогащаем статистику KPI данными
     const enrichedStats: Record<string, any> = {};
     for (const [name, stat] of Object.entries(stats)) {
       const cleanInternalNumber = stat.internalNumber ? String(stat.internalNumber).trim() : null;
       let kpiData = cleanInternalNumber ? kpiMapByNumber.get(cleanInternalNumber) : null;
-      
-      console.log(`Processing manager: ${name}, internalNumber: ${cleanInternalNumber}, kpiData:`, kpiData);
       
       // Вычисляем KPI метрики
       const totalMinutes = Math.round(
@@ -665,7 +668,7 @@ export const callsRepository = {
       };
     }
 
-    console.log('Enriched stats:', enrichedStats);
+    console.log('Enriched stats completed:', Object.keys(enrichedStats).length, 'managers');
     return enrichedStats;
   },
 };

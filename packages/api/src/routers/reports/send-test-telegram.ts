@@ -9,15 +9,14 @@ import { formatTelegramReportHtml, type ManagerStats } from "@calls/jobs";
 import { sendMessage } from "@calls/telegram-bot";
 import { ORPCError } from "@orpc/server";
 import { subDays, subMonths, subWeeks } from "date-fns";
-import { formatInTimeZone } from "date-fns-tz";
+import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 
 const TZ = "Europe/Moscow";
 
 function nowInMoscow(): Date {
-  const now = new Date();
-  return new Date(now.toLocaleString("en-US", { timeZone: TZ }));
+  return toZonedTime(new Date(), TZ);
 }
 
 function formatDateInMoscow(date: Date): string {
@@ -135,6 +134,8 @@ export const sendTestTelegram = workspaceProcedure
         excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
     });
 
+    const enrichedStats = await callsService.enrichStatsWithKpi(stats, workspaceId);
+
     let lowRatedCalls: Record<string, number> = {};
     if (isManagerReport) {
       lowRatedCalls = await callsService.getLowRatedCallsCount({
@@ -155,7 +156,7 @@ export const sendTestTelegram = workspaceProcedure
     const workspaceName = ws?.name ?? undefined;
 
     const text = formatTelegramReportHtml({
-      stats: stats as Record<string, ManagerStats>,
+      stats: enrichedStats as Record<string, ManagerStats>,
       dateFrom,
       dateTo,
       reportType,

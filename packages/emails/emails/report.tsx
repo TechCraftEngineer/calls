@@ -44,6 +44,12 @@ export interface ReportEmailProps {
   stats?: Record<string, ManagerStats>;
   /** Включать KPI данные в отчет */
   includeKpi?: boolean;
+  /** Показывать средний рейтинг менеджеров */
+  avgManagerScore?: boolean;
+  /** Детальный отчет */
+  reportDetailed?: boolean;
+  /** Включать сводки по звонкам */
+  reportIncludeCallSummaries?: boolean;
 }
 
 const reportTypeLabels = {
@@ -189,6 +195,9 @@ export const ReportEmail = ({
   username,
   stats,
   includeKpi = false,
+  avgManagerScore = false,
+  reportDetailed = false,
+  reportIncludeCallSummaries = false,
 }: ReportEmailProps) => {
   const typeLabel = reportTypeLabels[reportType] ?? "Отчёт по звонкам";
   const previewText = `${typeLabel} · ${APP_CONFIG.shortName}`;
@@ -253,6 +262,9 @@ export const ReportEmail = ({
                       <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">Менеджер</th>
                       <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Звонки</th>
                       <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Минуты</th>
+                      {avgManagerScore && (
+                        <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Рейтинг</th>
+                      )}
                       {includeKpi && (
                         <>
                           <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">Оклад</th>
@@ -273,6 +285,9 @@ export const ReportEmail = ({
                           <td className="border border-gray-300 px-3 py-2 text-sm">{manager.name}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">{manager.totalCount}</td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">{totalMinutes}</td>
+                          {avgManagerScore && (
+                            <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatScore(manager.avgManagerScore)}</td>
+                          )}
                           {includeKpi && (
                             <>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(manager.kpiBaseSalary ?? 0)} ₽</td>
@@ -289,6 +304,9 @@ export const ReportEmail = ({
                       <td className="border border-gray-300 px-3 py-2 text-sm text-center">
                         {Math.round((kpiTable.totals.incomingTotalDurationSec + kpiTable.totals.outgoingTotalDurationSec) / 60)}
                       </td>
+                      {avgManagerScore && (
+                        <td className="border border-gray-300 px-3 py-2 text-sm text-center">-</td>
+                      )}
                       {includeKpi && (
                         <>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">{formatValue(kpiTable.totals.totalBaseSalary)} ₽</td>

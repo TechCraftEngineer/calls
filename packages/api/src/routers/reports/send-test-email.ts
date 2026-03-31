@@ -17,8 +17,8 @@ const reportTypeSchema = z.object({
 const managerStatsSchema = z.object({
   name: z.string(),
   internalNumber: z.string().nullable(),
-  incoming: z.object({ count: z.number(), duration: z.number() }),
-  outgoing: z.object({ count: z.number(), duration: z.number() }),
+  incoming: z.object({ count: z.number(), duration: z.number(), totalDuration: z.number().optional() }),
+  outgoing: z.object({ count: z.number(), duration: z.number(), totalDuration: z.number().optional() }),
   avgManagerScore: z.number().nullable().optional(),
   evaluatedCount: z.number().optional(),
 });
@@ -145,7 +145,10 @@ export const sendTestEmail = workspaceProcedure
           reportType,
           username: userForEdit.givenName ?? undefined,
           stats: enrichedStats,
-          includeKpi: true,
+          includeKpi: userForEdit.reportIncludeKpi ?? false,
+          avgManagerScore: userForEdit.avgManagerScore ?? false,
+          reportDetailed: userForEdit.reportDetailed ?? false,
+          reportIncludeCallSummaries: userForEdit.reportIncludeCallSummaries ?? false,
         }),
       });
       return { success: true };
