@@ -5,13 +5,13 @@ import {
   usersService,
   workspacesService,
 } from "@calls/db";
-import { formatTelegramReportHtml, type ManagerStats } from "@calls/jobs";
 import { sendMessage } from "@calls/telegram-bot";
 import { ORPCError } from "@orpc/server";
 import { subDays, subMonths, subWeeks } from "date-fns";
 import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
+import { formatTelegramReportHtml } from "~/index";
 
 const TZ = "Europe/Moscow";
 
@@ -137,7 +137,7 @@ export const sendTestTelegram = workspaceProcedure
     const enrichedStats = await callsService.enrichStatsWithKpi(
       stats,
       workspaceId,
-    ) as Record<string, ManagerStats>;
+    );
 
     let lowRatedCalls: Record<string, number> = {};
     if (isManagerReport) {

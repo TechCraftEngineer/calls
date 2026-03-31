@@ -90,7 +90,7 @@ export class SettingsService {
       }
 
       // Handle empty/null values properly
-      if (!value || !value.trim()) {
+      if (!value?.trim()) {
         console.log(
           `Removing bot token for key: ${key}, workspace: ${workspaceId}`,
         );

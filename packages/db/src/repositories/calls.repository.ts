@@ -3,8 +3,6 @@
  * Refactored into modular components for better maintainability
  */
 
-import type { ManagerStatsRow } from "./calls/get-evaluations-stats";
-import type { EnrichedManagerStats } from "./calls/enrich-stats";
 import { callsCrud } from "./calls/crud";
 import { callsTranscripts } from "./calls/transcripts";
 import { callsEvaluations } from "./calls/evaluations";

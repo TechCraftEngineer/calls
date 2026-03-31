@@ -7,7 +7,6 @@ import { db } from "../../client";
 import * as schema from "../../schema";
 import type { CreateCallData } from "../../types/calls.types";
 import { normalizeCallStatus } from "../../utils/call-status";
-import { buildCallConditions } from "./build-conditions";
 
 export const callsCrud = {
   async findById(id: string): Promise<schema.Call | null> {
@@ -130,16 +129,16 @@ export const callsCrud = {
       // Find existing record
       const existing = await this.findByExternalId(
         data.workspaceId,
-        data.provider!,
-        data.externalId!,
+        data.provider || '',
+        data.externalId || '',
       );
       if (!existing) {
-        throw new Error(`Insert conflict: no existing record found for workspaceId=${data.workspaceId}, provider=${data.provider}, externalId=${data.externalId}`);
+        throw new Error(`Ошибка вставки: запись не найдена для workspaceId=${data.workspaceId}, provider=${data.provider}, externalId=${data.externalId}`);
       }
       return { id: existing.id, created: false };
     }
 
-    return { id: result[0]!.id, created: true };
+    return { id: result[0]?.id || '', created: true };
   },
 
   async create(data: CreateCallData): Promise<string> {

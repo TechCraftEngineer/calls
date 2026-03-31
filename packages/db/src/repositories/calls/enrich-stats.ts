@@ -69,7 +69,7 @@ export const callsEnrichStats = {
     const enrichedStats: Record<string, EnrichedManagerStats> = {};
     for (const [name, stat] of Object.entries(stats)) {
       const cleanInternalNumber = stat.internalNumber ? String(stat.internalNumber).trim() : null;
-      let kpiData = cleanInternalNumber ? kpiMapByNumber.get(cleanInternalNumber) : null;
+      const kpiData = cleanInternalNumber ? kpiMapByNumber.get(cleanInternalNumber) : null;
       
       // Вычисляем KPI метрики
       const incomingTotal = stat.incoming?.totalDuration ?? ((stat.incoming?.duration ?? 0) * (stat.incoming?.count ?? 0));

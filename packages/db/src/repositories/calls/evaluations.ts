@@ -25,7 +25,7 @@ export const callsEvaluations = {
         try {
           parsedManagerBreakdown = JSON.parse(data.managerBreakdown);
         } catch (error) {
-          throw new Error(`Invalid JSON in managerBreakdown: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          throw new Error(`Неверный JSON в managerBreakdown: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
       } else {
         parsedManagerBreakdown = data.managerBreakdown;
@@ -75,7 +75,7 @@ export const callsEvaluations = {
         .returning({ id: schema.callEvaluations.id });
 
       if (!result[0]?.id) {
-        throw new Error('upsert failed: missing callEvaluation id');
+        throw new Error('upsert не выполнен: отсутствует id callEvaluation');
       }
 
       return result[0].id;

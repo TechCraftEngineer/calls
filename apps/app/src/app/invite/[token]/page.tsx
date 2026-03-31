@@ -17,7 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { getCurrentUser } from "@/lib/auth";
 import {
@@ -66,13 +66,13 @@ export default function InviteAcceptPage() {
   };
 
   // Create dynamic schema based on invitation type
-  const createInviteSchema = (isLink: boolean) => {
+  const createInviteSchema = useCallback((isLink: boolean) => {
     return isLink ? inviteAcceptLinkSchema : inviteAcceptSchema;
-  };
+  }, []);
 
   const resolver = useMemo(
     () => zodResolver(createInviteSchema(isLinkInvitation)),
-    [isLinkInvitation],
+    [isLinkInvitation, createInviteSchema],
   );
 
   const form = useForm<InviteAcceptData>({
@@ -110,7 +110,7 @@ export default function InviteAcceptPage() {
   // Update form resolver when invitation type changes
   useEffect(() => {
     form.setValue("email", "");
-  }, [isLinkInvitation, form]);
+  }, [form.setValue]);
 
   // Проверяем наличие пароля у пользователя, если он авторизован и email совпадает (или это link-приглашение)
   const { data: passwordCheck, isLoading: checkingPasswordQuery } = useQuery<{
