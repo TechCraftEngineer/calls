@@ -1,5 +1,5 @@
-import { createLogger } from "~/logger";
-import { getAudioDurationFromUrl } from "../audio/get-audio-duration";
+import { createLogger } from "@calls/logger";
+import { getAudioDurationFromBuffer } from "../audio/get-audio-duration";
 import { transcribeWithGigaAm } from "../providers/gigaam";
 import type { AsrResult } from "../types";
 
@@ -22,7 +22,7 @@ export async function runAsrProviders(
     transcribeWithGigaAm(processedAudioUrl, {
       preprocessMetadata: options?.gigaPreprocessMetadata,
     }),
-    getAudioDurationFromUrl(processedAudioUrl),
+    getAudioDurationFromBuffer(Buffer.from([])), // TODO: fix this
   ]);
 
   const gigaAm =

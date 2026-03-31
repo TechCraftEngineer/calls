@@ -13,7 +13,7 @@ import { Hono } from "hono";
 
 initializeLangfuseTracing();
 
-import { inngestHandler } from "./hono";
+import { inngestHandler } from "./inngest-handler";
 
 const app = new Hono();
 

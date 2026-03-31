@@ -3,7 +3,7 @@
  * Альтернатива: POST /api/openai/audio/transcriptions
  */
 import { type NextRequest, NextResponse } from "next/server";
-import { env } from "~/env";
+import { env } from "@calls/config/env";
 
 export const runtime = "nodejs";
 

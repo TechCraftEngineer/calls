@@ -5,7 +5,7 @@ import {
   pbxRepository,
   pbxService,
 } from "@calls/db";
-import { getAudioDurationFromBuffer } from "~/asr/audio/get-audio-duration";
+import { getAudioDurationFromBuffer } from "@calls/asr/audio/get-audio-duration";
 import { inngest, transcribeRequested } from "../inngest/client";
 import { createLogger } from "../logger";
 import { MegaPbxClient } from "./client";

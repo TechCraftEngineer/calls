@@ -1,10 +1,10 @@
-import { parseGigaAmRaw } from "~/asr/pipeline/gigaam-raw";
+import { parseGigaAmRaw } from "./gigaam-raw";
 import {
   ASR_LOG_ERROR_MAX_LENGTH,
   ASR_LOG_TEXT_MAX_LENGTH,
   truncateForLog,
-} from "~/asr/pipeline/log-utils";
-import type { AsrResult, AsrSource, TranscriptMetadata } from "~/asr/types";
+} from "./log-utils";
+import type { AsrResult, AsrSource, TranscriptMetadata } from "../types";
 
 export function buildTranscriptMetadata(input: {
   gigaAmSuccessful: AsrResult[];
@@ -43,7 +43,7 @@ export function buildTranscriptMetadata(input: {
     processingTimeMs,
     confidence: gigaAmBest?.confidence,
     speakerCount: gigaAmBest?.utterances
-      ? new Set(gigaAmBest.utterances.map((u) => u.speaker).filter(Boolean))
+      ? new Set(gigaAmBest.utterances.map((u: any) => u.speaker).filter(Boolean))
           .size
       : undefined,
     durationInSeconds:

@@ -4,9 +4,9 @@
 
 import { env } from "@calls/config";
 import { z } from "zod";
-import type { AsrResult, Utterance } from "~/asr/types";
-import { NonRetryableError, withRetry } from "~/asr/utils/retry";
-import { createLogger } from "~/logger";
+import type { AsrResult, Utterance } from "../types";
+import { NonRetryableError, withRetry } from "../utils/retry";
+import { createLogger } from "@calls/logger";
 
 const logger = createLogger("asr-gigaam");
 
@@ -252,7 +252,7 @@ export async function transcribeWithGigaAm(
     {
       maxAttempts: 3,
       baseDelayMs: 1500,
-      onRetry: (attempt, error) =>
+      onRetry: (attempt: number, error: any) =>
         logger.warn("Повторная попытка скачивания аудио Giga AM", {
           attempt,
           error: toErrorMessage(error),
@@ -323,7 +323,7 @@ export async function transcribeWithGigaAm(
     {
       maxAttempts: 3,
       baseDelayMs: 2000,
-      onRetry: (attempt, error) =>
+      onRetry: (attempt: number, error: any) =>
         logger.warn("Повторная попытка POST запроса в Giga AM", {
           attempt,
           error: toErrorMessage(error),

@@ -3,7 +3,7 @@
  * Рекомендуется использовать /api/openai/... для явного указания провайдера.
  */
 import { type NextRequest, NextResponse } from "next/server";
-import { env } from "~/env";
+import { env } from "@calls/config/env";
 
 export const runtime = "edge";
 

@@ -1,5 +1,5 @@
 {
-  "extends": "@calls/tsconfig/base.json",
+  "extends": "@calls/tsconfig/compiled-package.json",
   "include": ["src", "*.ts"],
   "exclude": ["node_modules"]
 }

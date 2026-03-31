@@ -109,8 +109,8 @@ export default function InviteAcceptPage() {
 
   // Update form resolver when invitation type changes
   useEffect(() => {
-    form.setValue("email", "");
-  }, [form.setValue]);
+    form.resetField("email");
+  }, [form, isLinkInvitation]);
 
   // Проверяем наличие пароля у пользователя, если он авторизован и email совпадает (или это link-приглашение)
   const { data: passwordCheck, isLoading: checkingPasswordQuery } = useQuery<{

@@ -1,14 +1,15 @@
 {
   "extends": "@calls/tsconfig/base.json",
-  "include": ["src"],
-  "exclude": ["node_modules"],
   "compilerOptions": {
     "types": ["node", "bun"],
+    "lib": ["ES2022", "DOM"],
     "composite": true,
     "baseUrl": "./src",
     "paths": {
       "~/*": ["./*"],
       "~": ["."]
     }
-  }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
 }

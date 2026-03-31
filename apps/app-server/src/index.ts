@@ -7,7 +7,7 @@
  * only after the OpenTelemetry provider is registered.
  */
 
-import { initializeLangfuseTracing } from "@calls/ai/instrumentation";
+import { initializeLangfuseTracing } from "@calls/ai/otel";
 
 initializeLangfuseTracing();
 

@@ -21,7 +21,9 @@
     "module": "Preserve",
     "moduleResolution": "Bundler",
     "noEmit": true,
-    "ignoreDeprecations": "6.0"
+    "ignoreDeprecations": "6.0",
+    
+    "baseUrl": ".",
   },
   "exclude": ["node_modules", "build", "dist", ".next"]
 }

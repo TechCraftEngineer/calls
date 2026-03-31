@@ -6,7 +6,7 @@
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
 import { Output } from "ai";
 import { z } from "zod";
-import { createLogger } from "~/logger";
+import { createLogger } from "@calls/logger";
 
 const logger = createLogger("asr-identify-speakers");
 const MAX_ANALYSIS_CHARS = 20_000;

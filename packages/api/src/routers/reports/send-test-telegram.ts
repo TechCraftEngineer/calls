@@ -11,7 +11,7 @@ import { subDays, subMonths, subWeeks } from "date-fns";
 import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
-import { formatTelegramReportHtml } from "~/index";
+import { formatTelegramReportHtml } from "@calls/jobs";
 
 const TZ = "Europe/Moscow";
 

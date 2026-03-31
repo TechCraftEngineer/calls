@@ -5,13 +5,13 @@
   "exports": {
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
-    "./hono": "./src/hono.ts",
+    "./hono": "./src/inngest-handler.ts",
     "./pbx/sync": "./src/pbx/sync.ts"
   },
   "scripts": {
     "build": "bun build ./src/server.ts --outdir ./dist --target bun",
     "inngest": "npx --ignore-scripts=false inngest-cli@latest dev -u http://localhost:8000/api/inngest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --project tsconfig.typecheck.json",
     "start": "bun with-env dist/server.js",
     "dev": "bun with-env --watch src/server.ts",
     "with-env": "bun run --env-file ../../.env"
@@ -19,6 +19,7 @@
   "dependencies": {
     "@ai-sdk/openai": "3.0.48",
     "@calls/ai": "workspace:*",
+    "@calls/asr": "workspace:*",
     "@calls/config": "workspace:*",
     "@calls/db": "workspace:*",
     "@calls/emails": "workspace:*",
@@ -30,10 +31,10 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "hono": "4.12.9",
-    "inngest": "4.0.5",
+    "inngest": "4.1.0",
     "music-metadata": "^11.12.3",
-    "ssh2-sftp-client": "12.1.0",
-    "undici": "^7.24.5",
+    "ssh2-sftp-client": "12.1.1",
+    "undici": "^7.24.6",
     "zod": "4.3.6"
   },
   "devDependencies": {
