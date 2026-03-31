@@ -111,8 +111,8 @@ export const callsCrud = {
     };
 
     const result =
-      data.provider !== undefined && data.provider !== null && 
-      data.externalId !== undefined && data.externalId !== null
+      (typeof data.provider === 'string' ? data.provider.trim() !== '' : Boolean(data.provider)) &&
+      (typeof data.externalId === 'string' ? data.externalId.trim() !== '' : Boolean(data.externalId))
         ? await db
             .insert(schema.calls)
             .values(values)

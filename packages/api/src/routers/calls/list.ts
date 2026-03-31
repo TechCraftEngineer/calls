@@ -4,6 +4,7 @@ import {
   normalizeCallStatus,
   pbxRepository,
   settingsService,
+  type WorkspacePbxEmployee,
 } from "@calls/db";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
@@ -88,7 +89,6 @@ const listCallsSchema = z.object({
   manager: maybeStringOrArraySchema,
   status: maybeStatusOrArraySchema,
   value: z.array(z.number()).optional(),
-  operator: z.array(z.string()).optional(),
 });
 
 export const list = workspaceProcedure
@@ -96,15 +96,6 @@ export const list = workspaceProcedure
   .handler(async ({ input, context }) => {
     const { callsService, user, workspaceId } = context;
     
-    // Логирование для отладки
-    console.log('🔍 Calls list API:', {
-      workspaceId,
-      userId: user?.id,
-      workspaceRole: context.workspaceRole,
-      inputManager: input.manager,
-      userInternalExtensions: user?.internalExtensions,
-      userMobilePhones: user?.mobilePhones
-    });
     const offset = (input.page - 1) * input.per_page;
     const directionFilters = toStringArray(input.direction);
     const managerFilters = toStringArray(input.manager);
@@ -131,37 +122,15 @@ export const list = workspaceProcedure
       pbxRepository.listNumbers(workspaceId, PBX_PROVIDER),
     ]);
     
-    // Создаем карту сотрудников по external_id
-    const employeeByExternalId = new Map<string, any>();
+    // Создаем карты сотрудников для эффективного поиска
+    const employeeByExternalId = new Map<string, WorkspacePbxEmployee>();
+    const employeeById = new Map<string, WorkspacePbxEmployee>();
     for (const employee of pbxEmployees) {
       if (employee.isActive) {
         employeeByExternalId.set(employee.externalId, employee);
+        employeeById.set(employee.id, employee);
       }
     }
-    
-    // Логирование данных
-    console.log('👥 PBX Employees:', {
-      total: pbxEmployees.length,
-      active: pbxEmployees.filter(e => e.isActive).length,
-      sample: pbxEmployees.slice(0, 3).map(e => ({
-        id: e.id,
-        externalId: e.externalId,
-        displayName: e.displayName,
-        isActive: e.isActive
-      }))
-    });
-    
-    console.log('📋 PBX Numbers:', {
-      total: pbxNumbers.length,
-      active: pbxNumbers.filter(n => n.isActive).length,
-      sample: pbxNumbers.slice(0, 3).map(n => ({
-        id: n.id,
-        externalId: n.externalId,
-        employeeExternalId: n.employeeExternalId,
-        phoneNumber: n.phoneNumber,
-        isActive: n.isActive
-      }))
-    });
     
     // Строим менеджеров из PBX данных и получаем связанные phone_number
     const managerDisplayNameById = new Map<string, string>();
@@ -180,10 +149,7 @@ export const list = workspaceProcedure
       
       // Находим все PBX номера связанные с этим сотрудником
       const relatedNumbers = pbxNumbers.filter(number => 
-        number.isActive && (
-          number.employeeExternalId === employee.externalId || 
-          number.externalId === employee.externalId
-        )
+        number.isActive && number.employeeExternalId === employee.externalId
       );
       
       if (relatedNumbers.length > 0) {
@@ -229,7 +195,7 @@ export const list = workspaceProcedure
           new Set(
             Array.from(managerPhoneNumbers.entries())
               .filter(([employeeId, phoneNumbers]) => {
-                const employee = employeeByExternalId.get(employeeId);
+                const employee = employeeById.get(employeeId);
                 if (!employee) return false;
                 
                 const haystack = [
@@ -280,7 +246,6 @@ export const list = workspaceProcedure
             status: statusFilters,
             manager: finalManagerFilters,
             value: input.value ?? [],
-            operator: input.operator ?? [],
           },
           metrics: {
             total_calls: 0,
@@ -307,7 +272,6 @@ export const list = workspaceProcedure
         ? normalizedDirections
         : undefined,
       valueScores: input.value?.length ? input.value : undefined,
-      operators: input.operator?.length ? input.operator : undefined,
       managers: finalManagerFilters.length > 0 ? finalManagerFilters : undefined,
       managerInternalNumbers:
         managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
@@ -331,7 +295,6 @@ export const list = workspaceProcedure
         ? normalizedDirections
         : undefined,
       valueScores: input.value?.length ? input.value : undefined,
-      operators: input.operator?.length ? input.operator : undefined,
       managers: finalManagerFilters.length > 0 ? finalManagerFilters : undefined,
       managerInternalNumbers:
         managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
@@ -359,14 +322,6 @@ export const list = workspaceProcedure
       })
       .sort((a, b) => a.name.localeCompare(b.name, "ru"));
 
-    // Логирование финальных результатов
-    console.log('👥 Final managers:', {
-      totalBeforeFilter: managerDisplayNameById.size,
-      totalAfterFilter: managers.length,
-      isAdminOrOwner,
-      userId: user.id,
-      managers: managers.map(m => ({ id: m.id, name: m.name }))
-    });
 
     const callsWithTranscripts = await Promise.all(
       rawCalls.map(async (item: CallWithTranscript) => {
@@ -435,7 +390,6 @@ export const list = workspaceProcedure
         status: statusFilters,
         manager: finalManagerFilters,
         value: input.value ?? [],
-        operator: input.operator ?? [],
       },
       metrics: {
         total_calls: totalItems,

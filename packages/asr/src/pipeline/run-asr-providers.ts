@@ -38,6 +38,7 @@ export async function runAsrProviders(
   const [gigaAmResult, durationResult] = await Promise.allSettled([
     transcribeWithGigaAm(processedAudioUrl, {
       preprocessMetadata: options?.gigaPreprocessMetadata,
+      audioBuffer,
     }),
     audioBuffer ? getAudioDurationFromBuffer(audioBuffer) : Promise.resolve(undefined),
   ]);

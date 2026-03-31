@@ -24,7 +24,6 @@ export interface CallsFiltersState {
   manager: string[];
   status: StatusFilter[];
   value: number[];
-  operator: string[];
 }
 
 export interface ManagerOption {
@@ -54,10 +53,6 @@ const statusOptions = [
   { value: "answered", label: "Принятые" },
 ] as const;
 
-const operatorOptions = [
-  { value: "mango", label: "Манго" },
-  { value: "megafon", label: "Мегафон" },
-] as const;
 
 const valueOptions = [1, 2, 3, 4, 5] as const;
 
@@ -87,7 +82,6 @@ export function CallsFilters({
           .join(", ");
 
   const selectedValueCount = filters.value.length;
-  const selectedOperatorCount = filters.operator.length;
 
   return (
     <div className="flex flex-col gap-3">
@@ -310,42 +304,6 @@ export function CallsFilters({
           </PopoverContent>
         </Popover>
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="h-9">
-              <Funnel className="size-4" />
-              Оператор
-              {selectedOperatorCount > 0 && (
-                <Badge variant="secondary">{selectedOperatorCount}</Badge>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-56 space-y-3">
-            {operatorOptions.map((operator) => (
-              <div key={operator.value} className="flex items-center gap-2.5">
-                <Checkbox
-                  id={`operator-${operator.value}`}
-                  checked={filters.operator.includes(operator.value)}
-                  onCheckedChange={(checked) =>
-                    updateFilters((prev) => ({
-                      ...prev,
-                      operator:
-                        checked === true
-                          ? [...prev.operator, operator.value]
-                          : prev.operator.filter((v) => v !== operator.value),
-                    }))
-                  }
-                />
-                <Label
-                  htmlFor={`operator-${operator.value}`}
-                  className="font-normal"
-                >
-                  {operator.label}
-                </Label>
-              </div>
-            ))}
-          </PopoverContent>
-        </Popover>
 
         <Popover>
           <PopoverTrigger asChild>

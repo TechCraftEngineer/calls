@@ -13,32 +13,27 @@ export interface CallConditionsParams {
   excludePhoneNumbers?: string[];
   directions?: string[];
   valueScores?: number[];
-  operators?: string[];
-  managers?: string[];
   managerInternalNumbers?: string[];
   statuses?: string[];
   managerInternalNumbersForQuery?: string[];
   q?: string;
 }
 
-export function buildCallConditions(params: CallConditionsParams) {
+export function buildCallConditions({
+  workspaceId,
+  dateFrom,
+  dateTo,
+  internalNumbers,
+  mobileNumbers,
+  excludePhoneNumbers,
+  directions,
+  valueScores,
+  managerInternalNumbers,
+  statuses,
+  managerInternalNumbersForQuery,
+  q,
+}: CallConditionsParams) {
   const conditions = [];
-  const {
-    workspaceId,
-    dateFrom,
-    dateTo,
-    internalNumbers,
-    mobileNumbers,
-    excludePhoneNumbers,
-    directions,
-    valueScores,
-    operators,
-    managers,
-    managerInternalNumbers,
-    statuses,
-    managerInternalNumbersForQuery,
-    q,
-  } = params;
 
   if (workspaceId != null) {
     conditions.push(eq(schema.calls.workspaceId, workspaceId));
@@ -130,9 +125,6 @@ export function buildCallConditions(params: CallConditionsParams) {
       `;
       conditions.push(inArray(canonicalStatus, normalizedStatuses));
     }
-  }
-  if (operators?.length) {
-    conditions.push(inArray(schema.calls.source, operators));
   }
   // Фильтрация по менеджерам идет через internal_number -> phone_number
   // managerInternalNumbers содержит phone_numbers из workspace_pbx_numbers

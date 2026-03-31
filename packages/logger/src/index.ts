@@ -2,7 +2,15 @@
  * Минимальный логгер для использования в разных пакетах.
  */
 
-type LogData = Record<string, unknown>;
+type JSONValue = 
+  | string 
+  | number 
+  | boolean 
+  | null 
+  | Array<JSONValue> 
+  | { [k: string]: JSONValue };
+
+type LogData = Record<string, JSONValue>;
 
 export function createLogger(module: string) {
   const prefix = `[${module}]`;
