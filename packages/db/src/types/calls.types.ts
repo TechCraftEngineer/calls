@@ -25,7 +25,6 @@ export interface GetCallsParams {
   excludePhoneNumbers?: string[];
   directions?: string[];
   valueScores?: number[];
-  operators?: string[];
   managers?: string[];
   /** Internal numbers выбранных менеджеров по их id */
   managerInternalNumbers?: string[];

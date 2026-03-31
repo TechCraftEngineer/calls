@@ -49,7 +49,6 @@ export default function HomePage() {
     manager: [],
     status: [],
     value: [],
-    operator: [],
   });
   const [appliedFilters, setAppliedFilters] = useState(filters);
   const debouncedFilters = useDebounce(
@@ -73,9 +72,6 @@ export default function HomePage() {
     manager: appliedFilters.manager.length ? appliedFilters.manager : undefined,
     status: appliedFilters.status.length ? appliedFilters.status : undefined,
     value: appliedFilters.value?.length ? appliedFilters.value : undefined,
-    operator: appliedFilters.operator?.length
-      ? appliedFilters.operator
-      : undefined,
   };
 
   const {
@@ -107,9 +103,7 @@ export default function HomePage() {
           JSON.stringify(debouncedFilters.manager) ||
         JSON.stringify(prev.status) !==
           JSON.stringify(debouncedFilters.status) ||
-        JSON.stringify(prev.value) !== JSON.stringify(debouncedFilters.value) ||
-        JSON.stringify(prev.operator) !==
-          JSON.stringify(debouncedFilters.operator);
+        JSON.stringify(prev.value) !== JSON.stringify(debouncedFilters.value);
       if (!changed) return prev;
       setPagination((p) => ({ ...p, page: 1 }));
       return debouncedFilters;
@@ -178,7 +172,6 @@ export default function HomePage() {
       manager: [],
       status: [],
       value: [],
-      operator: [],
     });
     setPagination((prev) => ({ ...prev, page: 1 }));
   };

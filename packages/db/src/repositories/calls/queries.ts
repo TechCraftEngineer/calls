@@ -23,7 +23,6 @@ export const callsQueries = {
       managerInternalNumbers,
       managerInternalNumbersForQuery,
       mobileNumbers,
-      operators,
       q,
       statuses,
       valueScores,
@@ -41,11 +40,9 @@ export const callsQueries = {
       dateTo,
       directions,
       internalNumbers,
-      managers,
       managerInternalNumbers,
       managerInternalNumbersForQuery,
       mobileNumbers,
-      operators,
       q,
       statuses,
       valueScores,
@@ -102,22 +99,25 @@ export const callsQueries = {
       excludePhoneNumbers: params.excludePhoneNumbers,
       directions: params.directions,
       valueScores: params.valueScores,
-      operators: params.operators,
-      managers: params.managers,
       managerInternalNumbers: params.managerInternalNumbers,
       statuses: params.statuses,
       managerInternalNumbersForQuery: params.managerInternalNumbersForQuery,
       q: params.q,
     });
 
-    const result = await db
+    // Добавляем LEFT JOIN только когда нужны фильтры по valueScores
+    const baseQuery = db
       .select({ count: count() })
-      .from(schema.calls)
-      .leftJoin(
-        schema.callEvaluations,
-        eq(schema.callEvaluations.callId, schema.calls.id),
-      )
-      .where(and(...conditions));
+      .from(schema.calls);
+    
+    const queryWithJoins = params.valueScores?.length
+      ? baseQuery.leftJoin(
+          schema.callEvaluations,
+          eq(schema.callEvaluations.callId, schema.calls.id),
+        )
+      : baseQuery;
+
+    const result = await queryWithJoins.where(and(...conditions));
 
     return result[0]?.count ?? 0;
   },
@@ -130,10 +130,8 @@ export const callsQueries = {
       dateTo,
       directions,
       internalNumbers,
-      managers,
       managerInternalNumbers,
       mobileNumbers,
-      operators,
       statuses,
       valueScores,
       workspaceId,
@@ -142,31 +140,35 @@ export const callsQueries = {
 
     // Явно требуем workspaceId для безопасности
     if (!workspaceId) {
-      throw new Error('workspaceId обязателен для findDistinctManagers');
+      throw new Error("workspaceId обязателен для findDistinctManagers");
     }
 
     const conditions = buildCallConditions({
+      workspaceId,
       dateFrom,
       dateTo,
-      directions,
       internalNumbers,
-      managers,
-      managerInternalNumbers,
       mobileNumbers,
-      operators,
-      statuses,
-      valueScores,
-      workspaceId,
       excludePhoneNumbers,
+      directions,
+      valueScores,
+      managerInternalNumbers,
+      statuses,
     });
 
-    const result = await db
+    // Добавляем LEFT JOIN только когда нужны фильтры по valueScores
+    const baseQuery = db
       .select({ name: schema.calls.name })
-      .from(schema.calls)
-      .leftJoin(
-        schema.callEvaluations,
-        eq(schema.callEvaluations.callId, schema.calls.id),
-      )
+      .from(schema.calls);
+    
+    const queryWithJoins = valueScores?.length
+      ? baseQuery.leftJoin(
+          schema.callEvaluations,
+          eq(schema.callEvaluations.callId, schema.calls.id),
+        )
+      : baseQuery;
+
+    const result = await queryWithJoins
       .where(conditions.length > 0 ? and(...conditions, isNotNull(schema.calls.name)) : isNotNull(schema.calls.name))
       .groupBy(schema.calls.name)
       .orderBy(asc(schema.calls.name));

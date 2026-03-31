@@ -3,6 +3,11 @@
   "include": ["src"],
   "exclude": ["node_modules"],
   "compilerOptions": {
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "baseUrl": "./src",
+    "paths": {
+      "~/*": ["./*"],
+      "~": ["."]
+    }
   }
 }
