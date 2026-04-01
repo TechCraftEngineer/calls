@@ -53,6 +53,8 @@ export function prepareStats(entries: [string, ManagerStats][]): PreparedStatsRe
       totalCount: total,
       incomingAvgDurationSec: inAvgSec,
       outgoingAvgDurationSec: outAvgSec,
+      incomingTotalDurationSec: inTotalSec,
+      outgoingTotalDurationSec: outTotalSec,
       avgManagerScore: raw.avgManagerScore,
       evaluatedCount: evalCount,
       // KPI данные
@@ -118,8 +120,6 @@ export function calculateTotalMinutes(totals: StatsTotals): number {
 
 export function calculateManagerTotalMinutes(manager: PreparedStats): number {
   return Math.round(
-    (manager.incomingAvgDurationSec * manager.incomingCount +
-      manager.outgoingAvgDurationSec * manager.outgoingCount) /
-      60,
+    (manager.incomingTotalDurationSec + manager.outgoingTotalDurationSec) / 60,
   );
 }

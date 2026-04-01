@@ -27,6 +27,8 @@ export interface PreparedStats {
   totalCount: number;
   incomingAvgDurationSec: number;
   outgoingAvgDurationSec: number;
+  incomingTotalDurationSec: number;
+  outgoingTotalDurationSec: number;
   avgManagerScore?: number | null;
   evaluatedCount: number;
   // KPI данные

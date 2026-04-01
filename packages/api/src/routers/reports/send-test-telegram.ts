@@ -124,7 +124,7 @@ export const sendTestTelegram = workspaceProcedure
       excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
     });
 
-    const enrichedStats = await callsService.enrichStatsWithKpi(stats, workspaceId);
+    const enrichedStats = await callsService.enrichStatsWithKpi(stats, workspaceId, reportType);
 
     let lowRatedCalls: Record<string, number> = {};
     if (isManagerReport) {

@@ -133,7 +133,7 @@ export const sendTestEmail = workspaceProcedure
       });
     }
     const stats = parseResult.data as Record<string, ManagerStatsRow>;
-    const enrichedStats = (await callsService.enrichStatsWithKpi(stats, workspaceId)) as Record<
+    const enrichedStats = (await callsService.enrichStatsWithKpi(stats, workspaceId, reportType)) as Record<
       string,
       ManagerStats
     >;

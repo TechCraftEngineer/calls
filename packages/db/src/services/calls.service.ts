@@ -404,7 +404,8 @@ export class CallsService {
   async enrichStatsWithKpi(
     stats: Record<string, ManagerStatsRow>,
     workspaceId: string,
+    reportType?: "daily" | "weekly" | "monthly",
   ): Promise<Record<string, EnrichedManagerStats>> {
-    return this.callsRepository.enrichStatsWithKpi(stats, workspaceId);
+    return this.callsRepository.enrichStatsWithKpi(stats, workspaceId, reportType);
   }
 }

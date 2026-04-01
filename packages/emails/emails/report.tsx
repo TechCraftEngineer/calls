@@ -94,6 +94,8 @@ interface PreparedStats {
   totalCount: number;
   incomingAvgDurationSec: number;
   outgoingAvgDurationSec: number;
+  incomingTotalDurationSec: number;
+  outgoingTotalDurationSec: number;
   avgManagerScore?: number | null;
   evaluatedCount: number;
   // KPI данные
@@ -169,6 +171,8 @@ function prepareStats(entries: [string, ManagerStats][]): {
       totalCount: total,
       incomingAvgDurationSec: inAvgSec,
       outgoingAvgDurationSec: outAvgSec,
+      incomingTotalDurationSec: inTotalSec,
+      outgoingTotalDurationSec: outTotalSec,
       avgManagerScore: raw.avgManagerScore,
       evaluatedCount: evalCount,
       // KPI данные
@@ -320,7 +324,7 @@ export const ReportEmail = ({
                           Рейтинг
                         </th>
                       )}
-                      {includeKpi && (
+                      {includeKpi && reportType === "monthly" && (
                         <>
                           <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
                             Оклад, ₽
@@ -330,6 +334,23 @@ export const ReportEmail = ({
                           </th>
                           <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
                             Итого, ₽
+                          </th>
+                        </>
+                      )}
+                      {includeKpi && reportType === "weekly" && (
+                        <>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                            Бонус, ₽
+                          </th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                            Итого, ₽
+                          </th>
+                        </>
+                      )}
+                      {includeKpi && reportType === "daily" && (
+                        <>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                            Бонус, ₽
                           </th>
                         </>
                       )}
@@ -362,9 +383,7 @@ export const ReportEmail = ({
                   <tbody>
                     {kpiTable.managers.map((manager) => {
                       const totalMinutes = Math.round(
-                        (manager.incomingAvgDurationSec * manager.incomingCount +
-                          manager.outgoingAvgDurationSec * manager.outgoingCount) /
-                          60,
+                        (manager.incomingTotalDurationSec + manager.outgoingTotalDurationSec) / 60,
                       );
                       
                       // Вычисляем процент выполнения на основе плана для текущего периода
@@ -391,10 +410,10 @@ export const ReportEmail = ({
                                 {formatValue(calculateTargetPlan(manager.kpiTargetTalkTimeMinutes ?? 0, reportType))}
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                                {formatValue(Math.round(manager.incomingAvgDurationSec * manager.incomingCount / 60))}
+                                {formatValue(Math.round(manager.incomingTotalDurationSec / 60))}
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                                {formatValue(Math.round(manager.outgoingAvgDurationSec * manager.outgoingCount / 60))}
+                                {formatValue(Math.round(manager.outgoingTotalDurationSec / 60))}
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                                 {formatValue(totalMinutes)}
@@ -409,7 +428,7 @@ export const ReportEmail = ({
                               {formatScore(manager.avgManagerScore)}
                             </td>
                           )}
-                          {includeKpi && (
+                          {includeKpi && reportType === "monthly" && (
                             <>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                                 {formatValue(manager.kpiBaseSalary ?? 0)}
@@ -419,6 +438,23 @@ export const ReportEmail = ({
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                                 {formatValue(manager.kpiTotalSalary ?? 0)}
+                              </td>
+                            </>
+                          )}
+                          {includeKpi && reportType === "weekly" && (
+                            <>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(manager.kpiCalculatedBonus ?? 0)}
+                              </td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(manager.kpiTotalSalary ?? 0)}
+                              </td>
+                            </>
+                          )}
+                          {includeKpi && reportType === "daily" && (
+                            <>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(manager.kpiCalculatedBonus ?? 0)}
                               </td>
                             </>
                           )}
@@ -460,7 +496,7 @@ export const ReportEmail = ({
                           {formatScore(kpiTable.overallAvgManagerScore)}
                         </td>
                       )}
-                      {includeKpi && (
+                      {includeKpi && reportType === "monthly" && (
                         <>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                             {formatValue(kpiTable.totals.totalBaseSalary)}
@@ -470,6 +506,23 @@ export const ReportEmail = ({
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                             {formatValue(kpiTable.totals.totalSalary)}
+                          </td>
+                        </>
+                      )}
+                      {includeKpi && reportType === "weekly" && (
+                        <>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {formatValue(kpiTable.totals.totalCalculatedBonus)}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {formatValue(kpiTable.totals.totalSalary)}
+                          </td>
+                        </>
+                      )}
+                      {includeKpi && reportType === "daily" && (
+                        <>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {formatValue(kpiTable.totals.totalCalculatedBonus)}
                           </td>
                         </>
                       )}

@@ -22,7 +22,44 @@ export const callsEnrichStats = {
   async enrichStatsWithKpi(
     stats: Record<string, ManagerStatsRow>,
     workspaceId: string,
+    reportType?: "daily" | "weekly" | "monthly",
   ): Promise<Record<string, EnrichedManagerStats>> {
+    // Вычисление плана и бонуса в зависимости от типа отчета
+    const calculateTargetPlan = (monthlyTargetMinutes: number): number => {
+      if (!monthlyTargetMinutes || monthlyTargetMinutes <= 0) return 0;
+      
+      switch (reportType) {
+        case "daily":
+          // Дневной план = месячный план / 22 рабочих дня
+          return Math.round(monthlyTargetMinutes / 22);
+        case "weekly":
+          // Недельный план = месячный план / 4 недели
+          return Math.round(monthlyTargetMinutes / 4);
+        case "monthly":
+          // Месячный план остается без изменений
+          return monthlyTargetMinutes;
+        default:
+          return monthlyTargetMinutes;
+      }
+    };
+
+    const calculateTargetBonus = (monthlyTargetBonus: number): number => {
+      if (!monthlyTargetBonus || monthlyTargetBonus <= 0) return 0;
+      
+      switch (reportType) {
+        case "daily":
+          // Дневной бонус = месячный бонус / 22 рабочих дней
+          return Math.round(monthlyTargetBonus / 22);
+        case "weekly":
+          // Недельный бонус = месячный бонус / 4 недели
+          return Math.round(monthlyTargetBonus / 4);
+        case "monthly":
+          // Месячный бонус остается без изменений
+          return monthlyTargetBonus;
+        default:
+          return monthlyTargetBonus;
+      }
+    };
     // Получаем KPI данные сотрудников через правильную связь
     const employees = await db
       .select({
@@ -85,7 +122,8 @@ export const callsEnrichStats = {
         (stat.outgoing?.duration ?? 0) * (stat.outgoing?.count ?? 0);
       const totalMinutes = Math.round((incomingTotal + outgoingTotal) / 60);
 
-      const targetTalkTimeMinutes = kpiData?.kpiTargetTalkTimeMinutes ?? 0;
+      const targetTalkTimeMinutes = calculateTargetPlan(kpiData?.kpiTargetTalkTimeMinutes ?? 0);
+      const targetBonus = calculateTargetBonus(kpiData?.kpiTargetBonus ?? 0);
       const completionPercentage =
         targetTalkTimeMinutes > 0
           ? Math.min(100, Math.round((totalMinutes / targetTalkTimeMinutes) * 100))
@@ -93,10 +131,11 @@ export const callsEnrichStats = {
 
       const calculatedBonus =
         targetTalkTimeMinutes > 0 && completionPercentage > 0
-          ? Math.round((kpiData?.kpiTargetBonus ?? 0) * (completionPercentage / 100))
+          ? Math.round(targetBonus * (completionPercentage / 100))
           : 0;
 
-      const totalSalary = (kpiData?.kpiBaseSalary ?? 0) + calculatedBonus;
+      // Для ежедневных и еженедельных отчетов не включаем оклад в итоговую сумму
+      const totalSalary = (reportType === "monthly" ? (kpiData?.kpiBaseSalary ?? 0) : 0) + calculatedBonus;
       
       // Факт выполнения в рублях - это рассчитанный бонус
       const actualPerformanceRubles = calculatedBonus;
