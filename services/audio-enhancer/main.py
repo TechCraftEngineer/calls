@@ -27,6 +27,22 @@ from fastapi.responses import Response
 from pedalboard import Pedalboard, Compressor, HighpassFilter, LowpassFilter
 from scipy import signal as scipy_signal
 
+# Импортируем управление предупреждениями (прямой импорт)
+import warnings
+import sys
+import os
+
+# Добавляем путь к модулю
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+# Прямой импорт без использования utils/__init__.py
+warnings_utils_path = os.path.join(current_dir, 'utils', 'warnings_utils.py')
+spec = __import__('importlib.util').util.spec_from_file_location("warnings_utils", warnings_utils_path)
+warnings_utils = __import__('importlib.util').util.module_from_spec(spec)
+spec.loader.exec_module(warnings_utils)
+warnings_utils.setup_warnings_filters()
+
 # DeepFilterNet для нейросетевого шумоподавления
 try:
     from df.enhance import enhance, init_df
@@ -41,6 +57,43 @@ try:
     WPE_AVAILABLE = True
 except ImportError:
     WPE_AVAILABLE = False
+
+# Импорты для телефонии
+try:
+    from services.telephony_service import TelephonyProcessor
+    TELEPHONY_AVAILABLE = True
+    logger.info("✓ Telephony сервис доступен")
+except ImportError as e:
+    logger.warning(f"Telephony service недоступен: {e}")
+    TELEPHONY_AVAILABLE = False
+
+# Silero VAD для детекции речи
+try:
+    import torch.nn.functional as F
+    from utils.audio_utils import read_upload_bytes_capped
+    from utils.error_handlers import handle_audio_processing_error
+    from config.settings import MAX_UPLOAD_BYTES, MAX_AUDIO_SECONDS
+    
+    # Загружаем модель Silero VAD
+    try:
+        vad_model, utils = torch.hub.load(
+            repo_or_dir='snakers4/silero-vad',
+            model='silero_vad',
+            force_reload=False,
+            onnx=False,
+            trust_repo=True
+        )
+        vad_model.eval()
+        VAD_AVAILABLE = True
+        logger.info("✓ Silero VAD модель загружена")
+    except Exception as e:
+        logger.error(f"Ошибка загрузки Silero VAD: {e}")
+        VAD_AVAILABLE = False
+        vad_model = None
+except ImportError as e:
+    logger.error(f"Silero VAD недоступен: {e}")
+    VAD_AVAILABLE = False
+    vad_model = None
 
 # Pyannote для диаризации
 try:
@@ -86,25 +139,24 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title=APP_NAME, version="2.0.0", debug=DEBUG)
 
-# Подавляем известные warning из сторонних библиотек
-warnings.filterwarnings(
-    "ignore",
-    message=r".*torch\.load.*weights_only=False.*",
-    category=FutureWarning,
-    module=r"df\.checkpoint",
-)
-# Подавляем warning об устаревшем импорте torchaudio
-warnings.filterwarnings(
-    "ignore",
-    message=r".*torchaudio\.backend\.common\.AudioMetaData.*has been moved.*",
-    category=UserWarning,
-)
-# Подавляем warning об устаревшем torchaudio.set_audio_backend
-warnings.filterwarnings(
-    "ignore",
-    message=r".*torchaudio\._backend\.set_audio_backend has been deprecated.*",
-    category=UserWarning,
-)
+# Импортируем телефонные эндпоинты
+try:
+    from api.telephony_endpoints import (
+        enhance_telephony_audio,
+        convert_telephony_format, 
+        split_telephony_duplex
+    )
+    TELEPHONY_ENDPOINTS_AVAILABLE = True
+    logger.info("✓ Telephony API эндпоинты загружены")
+except ImportError as e:
+    logger.warning(f"Telephony endpoints недоступны: {e}")
+    TELEPHONY_ENDPOINTS_AVAILABLE = False
+
+# Добавляем телефонные эндпоинты в приложение
+if TELEPHONY_ENDPOINTS_AVAILABLE:
+    app.post("/telephony/enhance")(enhance_telephony_audio)
+    app.post("/telephony/convert")(convert_telephony_format)
+    app.post("/telephony/split")(split_telephony_duplex)
 
 # Обработка сигналов для корректного завершения
 def signal_handler(sig, frame):
@@ -149,22 +201,15 @@ except Exception as e:
 pyannote_pipeline = None
 if PYANNOTE_AVAILABLE:
     try:
+        from utils.pyannote_utils import load_pyannote_pipeline
+        
         # Требуется HuggingFace токен для загрузки
         hf_token = os.getenv("HF_TOKEN")
         if hf_token:
-            model_id = "pyannote/speaker-diarization-3.1"
-            # Совместимо с новым huggingface_hub: используем token или fallback без kwargs.
-            last_error = None
-            for kwargs in ({"token": hf_token}, {}):
-                try:
-                    pyannote_pipeline = Pipeline.from_pretrained(model_id, **kwargs)
-                    break
-                except TypeError as e:
-                    last_error = e
-                    continue
-            if pyannote_pipeline is None and last_error is not None:
-                raise last_error
-            logger.info("✓ Pyannote диаризация загружена")
+            pyannote_pipeline = load_pyannote_pipeline(
+                model_id="pyannote/speaker-diarization-3.1",
+                hf_token=hf_token
+            )
         else:
             logger.warning("HF_TOKEN не установлен, pyannote недоступен")
             PYANNOTE_AVAILABLE = False
@@ -717,6 +762,8 @@ async def health_check():
         "deepfilter_loaded": DEEPFILTER_AVAILABLE and deepfilter_model is not None,
         "wpe_available": WPE_AVAILABLE,
         "pyannote_loaded": PYANNOTE_AVAILABLE and pyannote_pipeline is not None,
+        "telephony_available": TELEPHONY_AVAILABLE,
+        "telephony_endpoints_available": TELEPHONY_ENDPOINTS_AVAILABLE,
         "version": "2.0.0",
     }
 

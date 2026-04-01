@@ -40,4 +40,4 @@ export {
   formatTelegramReport,
   formatTelegramReportHtml,
   type ManagerStats,
-} from "./reports/format-report";
+} from "./reports";

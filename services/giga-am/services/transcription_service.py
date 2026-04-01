@@ -13,6 +13,23 @@ from utils.exceptions import ModelLoadError, GigaTimeoutError
 
 logger = logging.getLogger(__name__)
 
+def to_safe_float(value) -> Optional[float]:
+    """
+    Безопасно конвертирует значение в float.
+    
+    Args:
+        value: Значение для конвертации
+        
+    Returns:
+        float или None в случае ошибки
+    """
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
 class TranscriptionService:
     def __init__(self):
         self.model = None
@@ -215,14 +232,25 @@ class TranscriptionService:
             result = {
                 "success": True,
                 "segments": [],
-                "total_duration": 0
+                "total_duration": 0,
+                "skipped_segments": []  # Информация о пропущенных сегментах
             }
             
             for utt in utterances:
                 try:
                     start, end, text = self._extract_utterance_fields(utt)
                 except ValueError as parse_error:
-                    logger.warning("Пропущен сегмент с неподдерживаемым форматом: %s; utterance=%r", parse_error, utt)
+                    # Собираем безопасную информацию о пропущенном сегменте
+                    safe_utt_info = f"type={type(utt).__name__}"
+                    if isinstance(utt, dict):
+                        safe_utt_info += f", keys={list(utt.keys())}"
+                    
+                    skipped_info = {
+                        "error": str(parse_error),
+                        "utterance_info": safe_utt_info
+                    }
+                    result["skipped_segments"].append(skipped_info)
+                    logger.warning("Пропущен сегмент с неподдерживаемым форматом: %s; %s", parse_error, safe_utt_info)
                     continue
 
                 segment = {
@@ -262,19 +290,21 @@ class TranscriptionService:
         if isinstance(utterance, dict):
             # Популярные варианты имен полей
             if "start" in utterance and "end" in utterance:
-                start = float(utterance["start"])
-                end = float(utterance["end"])
-                text = utterance.get("transcription") or utterance.get("text") or ""
-                return start, end, str(text)
+                start = to_safe_float(utterance["start"])
+                end = to_safe_float(utterance["end"])
+                if start is not None and end is not None:
+                    text = utterance.get("transcription") or utterance.get("text") or ""
+                    return start, end, str(text)
             boundaries = utterance.get("boundaries") or utterance.get("segment") or utterance.get("timestamp")
             text = utterance.get("transcription") or utterance.get("text") or ""
         else:
             # Вариант с объектом, где start/end доступны напрямую
             if hasattr(utterance, "start") and hasattr(utterance, "end"):
-                start = float(getattr(utterance, "start"))
-                end = float(getattr(utterance, "end"))
-                text = getattr(utterance, "transcription", None) or getattr(utterance, "text", None) or ""
-                return start, end, str(text)
+                start = to_safe_float(getattr(utterance, "start"))
+                end = to_safe_float(getattr(utterance, "end"))
+                if start is not None and end is not None:
+                    text = getattr(utterance, "transcription", None) or getattr(utterance, "text", None) or ""
+                    return start, end, str(text)
 
             boundaries = (
                 getattr(utterance, "boundaries", None)
@@ -287,24 +317,36 @@ class TranscriptionService:
             if boundaries is None and isinstance(utterance, (list, tuple)) and len(utterance) >= 2:
                 candidate_segment, candidate_text = utterance[0], utterance[1]
                 if hasattr(candidate_segment, "start") and hasattr(candidate_segment, "end"):
-                    return float(candidate_segment.start), float(candidate_segment.end), str(candidate_text or "")
+                    start = to_safe_float(candidate_segment.start)
+                    end = to_safe_float(candidate_segment.end)
+                    if start is not None and end is not None:
+                        return start, end, str(candidate_text or "")
                 if isinstance(candidate_segment, (list, tuple)) and len(candidate_segment) >= 2:
-                    return float(candidate_segment[0]), float(candidate_segment[1]), str(candidate_text or "")
+                    start = to_safe_float(candidate_segment[0])
+                    end = to_safe_float(candidate_segment[1])
+                    if start is not None and end is not None:
+                        return start, end, str(candidate_text or "")
 
         if boundaries is None:
             raise ValueError("Utterance не содержит boundaries/segment/start-end")
 
         # pyannote Segment и похожие объекты с .start/.end
         if hasattr(boundaries, "start") and hasattr(boundaries, "end"):
-            start = float(boundaries.start)
-            end = float(boundaries.end)
+            start = to_safe_float(boundaries.start)
+            end = to_safe_float(boundaries.end)
         else:
             try:
                 start_raw, end_raw = boundaries
-                start = float(start_raw)
-                end = float(end_raw)
+                start = to_safe_float(start_raw)
+                end = to_safe_float(end_raw)
             except Exception as exc:
                 raise ValueError(f"Неподдерживаемый формат boundaries: {type(boundaries)}") from exc
+
+        if start is None or end is None:
+            raise ValueError("Не удалось конвертировать start/end в числа")
+        
+        if end < start:
+            raise ValueError(f"end ({end}) должен быть >= start ({start})")
 
         return start, end, str(text or "")
     

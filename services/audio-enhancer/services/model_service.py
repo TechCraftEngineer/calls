@@ -11,7 +11,7 @@ from pyannote.audio import Pipeline
 
 from config.settings import config
 from utils.error_handlers import ModelLoadError
-from utils.logging_utils import model_logger, timing_logger
+from utils.pyannote_utils import load_pyannote_pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -103,26 +103,16 @@ class ModelManager:
     def _load_pyannote_model(self):
         """Загружает Pyannote диаризацию."""
         try:
-            from pyannote.audio import Pipeline
-            
             hf_token = config.HF_TOKEN
             if not hf_token:
                 logger.warning("HF_TOKEN не установлен, pyannote недоступен")
                 self.pyannote_available = False
                 return
             
-            model_id = "pyannote/speaker-diarization-3.1"
-            # Совместимо с новым huggingface_hub: используем token или fallback без kwargs.
-            last_error = None
-            for kwargs in ({"token": hf_token}, {}):
-                try:
-                    self.pyannote_pipeline = Pipeline.from_pretrained(model_id, **kwargs)
-                    break
-                except TypeError as e:
-                    last_error = e
-                    continue
-            if self.pyannote_pipeline is None and last_error is not None:
-                raise last_error
+            self.pyannote_pipeline = load_pyannote_pipeline(
+                model_id="pyannote/speaker-diarization-3.1",
+                hf_token=hf_token
+            )
             self.pyannote_available = True
             model_logger.log_model_load("pyannote", 0, True)
             logger.info("✓ Pyannote диаризация загружена")

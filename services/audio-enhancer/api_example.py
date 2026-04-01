@@ -7,7 +7,7 @@ import requests
 
 def enhance_audio_example():
     """Пример полной обработки аудио"""
-    url = "http://localhost:7860/api/enhance"
+    url = "http://localhost:7860/enhance"
 
     with open("audio.mp3", "rb") as f:
         files = {"file": f}
@@ -32,7 +32,7 @@ def enhance_audio_example():
 
 def denoise_only_example():
     """Пример быстрого шумоподавления"""
-    url = "http://localhost:7860/api/denoise"
+    url = "http://localhost:7860/denoise"
 
     with open("noisy_audio.mp3", "rb") as f:
         files = {"file": f}
@@ -54,7 +54,7 @@ def denoise_only_example():
 
 def health_check_example():
     """Проверка работоспособности сервиса"""
-    url = "http://localhost:7860/api/health"
+    url = "http://localhost:7860/health"
 
     response = requests.get(url)
 

@@ -192,6 +192,8 @@ export const emailReportsFn = inngest.createFunction(
                   username: undefined,
                   stats: enrichedStats,
                   includeKpi: r.reportSettings.kpi,
+                  dateFrom,
+                  dateTo,
                 }),
               });
               sent++;

@@ -356,11 +356,11 @@ async def preprocess_audio(
         description="Возвращать аудио в base64"
     ),
     use_wpe: bool = Form(
-        default=True,
+        default=config.DEFAULT_ENHANCE_SETTINGS["use_wpe"],
         description="Применять WPE дереверберацию"
     ),
     use_deepfilter: bool = Form(
-        default=True,
+        default=config.DEFAULT_ENHANCE_SETTINGS["use_deepfilter"],
         description="Применять DeepFilter шумоподавление"
     ),
     start_time: float = Depends(get_processing_time)
