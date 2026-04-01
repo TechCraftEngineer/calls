@@ -355,6 +355,14 @@ async def preprocess_audio(
         default=True,
         description="Возвращать аудио в base64"
     ),
+    use_wpe: bool = Form(
+        default=True,
+        description="Применять WPE дереверберацию"
+    ),
+    use_deepfilter: bool = Form(
+        default=True,
+        description="Применять DeepFilter шумоподавление"
+    ),
     start_time: float = Depends(get_processing_time)
 ):
     """
@@ -366,6 +374,8 @@ async def preprocess_audio(
     - **file**: Аудио файл
     - **target_sample_rate**: Целевая частота дискретизации
     - **return_audio_base64**: Возвращать аудио в base64
+    - **use_wpe**: Применять WPE дереверберацию
+    - **use_deepfilter**: Применять DeepFilter шумоподавление
     
     ## Returns:
     - **JSON**: с метаданными и опционально аудио
@@ -388,7 +398,9 @@ async def preprocess_audio(
             audio_processor.preprocess_audio,
             audio_bytes,
             target_sample_rate=target_sample_rate,
-            return_audio_base64=return_audio_base64
+            return_audio_base64=return_audio_base64,
+            use_wpe=use_wpe,
+            use_deepfilter=use_deepfilter,
         )
         
         duration_ms = (time.time() - start_time) * 1000

@@ -3,7 +3,6 @@
  */
 
 import { and, desc, eq } from "drizzle-orm";
-import { z } from "zod";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import type { CreateCallData } from "../../types/calls.types";
@@ -16,7 +15,7 @@ import {
   updatePbxBindingWithCustomerSchema,
   updateRecordingSchema,
   updateWithRecordingSchema,
-  ValidationError,
+  validateCallId,
   validateWithSchema,
 } from "../../validation/call-schemas";
 
@@ -164,11 +163,7 @@ export const callsCrud = {
 
   async updateCustomerName(callId: string, customerName: string | null): Promise<void> {
     // Валидация callId как UUID
-    const uuidSchema = z.string().uuid("callId должен быть валидным UUID");
-    const result = uuidSchema.safeParse(callId);
-    if (!result.success) {
-      throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
-    }
+    validateCallId(callId);
 
     // Валидация customerName с помощью Zod
     const validatedData = validateWithSchema(updateCustomerNameSchema, { customerName });
@@ -181,11 +176,7 @@ export const callsCrud = {
 
   async updateRecording(callId: string, data: { fileId: string | null }): Promise<void> {
     // Валидация callId как UUID
-    const uuidSchema = z.string().uuid("callId должен быть валидным UUID");
-    const result = uuidSchema.safeParse(callId);
-    if (!result.success) {
-      throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
-    }
+    validateCallId(callId);
 
     // Валидация данных с помощью Zod
     const validatedData = validateWithSchema(updateRecordingSchema, data);
@@ -198,11 +189,7 @@ export const callsCrud = {
 
   async updateEnhancedAudio(callId: string, enhancedAudioFileId: string | null): Promise<void> {
     // Валидация callId как UUID
-    const uuidSchema = z.string().uuid("callId должен быть валидным UUID");
-    const result = uuidSchema.safeParse(callId);
-    if (!result.success) {
-      throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
-    }
+    validateCallId(callId);
 
     // Валидация данных с помощью Zod
     const validatedData = validateWithSchema(updateEnhancedAudioSchema, { enhancedAudioFileId });
@@ -222,11 +209,7 @@ export const callsCrud = {
     },
   ): Promise<void> {
     // Валидация callId как UUID
-    const uuidSchema = z.string().uuid("callId должен быть валидным UUID");
-    const result = uuidSchema.safeParse(callId);
-    if (!result.success) {
-      throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
-    }
+    validateCallId(callId);
 
     // Валидация данных с помощью Zod
     const validatedData = validateWithSchema(updatePbxBindingSchema, data);
@@ -252,11 +235,7 @@ export const callsCrud = {
     },
   ): Promise<void> {
     // Валидация callId как UUID
-    const uuidSchema = z.string().uuid("callId должен быть валидным UUID");
-    const result = uuidSchema.safeParse(callId);
-    if (!result.success) {
-      throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
-    }
+    validateCallId(callId);
 
     // Валидация данных с помощью Zod
     const validatedData = validateWithSchema(updateWithRecordingSchema, data);
@@ -291,11 +270,7 @@ export const callsCrud = {
     },
   ): Promise<void> {
     // Валидация callId как UUID
-    const uuidSchema = z.string().uuid("callId должен быть валидным UUID");
-    const result = uuidSchema.safeParse(callId);
-    if (!result.success) {
-      throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
-    }
+    validateCallId(callId);
 
     // Валидация данных с помощью Zod
     const validatedData = validateWithSchema(updatePbxBindingWithCustomerSchema, data);

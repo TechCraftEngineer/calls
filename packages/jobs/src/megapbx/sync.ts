@@ -63,7 +63,6 @@ function shouldSkipCallByExcludedPhoneNumbers(
   for (const value of values) {
     if (excluded.has(value)) return true;
     for (const excludedValue of excluded) {
-      if (!excludedValue) continue;
       if (
         value === excludedValue ||
         value.endsWith(excludedValue) ||

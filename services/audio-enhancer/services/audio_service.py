@@ -332,12 +332,22 @@ class AudioProcessor:
         Предварительная обработка аудио для orchestrator.
         
         Args:
-            audio_bytes: Байты аудио
-            target_sample_rate: Целевая частота
-            return_audio_base64: Возвращать аудио в base64
+            audio_bytes: Байты входного аудио.
+            target_sample_rate: Целевая частота дискретизации выходного аудио.
+            return_audio_base64: Если True, включает поле audio_base64 в ответ.
+                Если False, возвращаются только метаданные и параметры результата.
+            use_wpe: bool, по умолчанию True. Включает WPE-деверберацию
+                (удаление реверберации) на этапе preprocess. Может улучшить
+                разборчивость речи в эхо/реверберационных записях.
+            use_deepfilter: bool, по умолчанию True. Включает DeepFilterNet
+                для шумоподавления. Может уменьшить фоновые шумы и повысить
+                качество финального сигнала перед ресемплингом.
             
         Returns:
-            Метаданные и опционально аудио
+            Словарь с metadata preprocess (sample_rate, duration, preprocess_metadata)
+            и опционально audio_base64 (если return_audio_base64=True). target_sample_rate
+            влияет на sample_rate/duration результата; флаги use_wpe/use_deepfilter
+            меняют обработанный сигнал, но формат ответа остается тем же.
         """
         from utils.audio_utils import load_audio_with_duration_check
         audio, sr = load_audio_with_duration_check(audio_bytes)

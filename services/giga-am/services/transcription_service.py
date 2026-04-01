@@ -219,9 +219,14 @@ class TranscriptionService:
             }
             
             for utt in utterances:
-                start, end = utt["boundaries"]
+                try:
+                    start, end, text = self._extract_utterance_fields(utt)
+                except ValueError as parse_error:
+                    logger.warning("Пропущен сегмент с неподдерживаемым форматом: %s; utterance=%r", parse_error, utt)
+                    continue
+
                 segment = {
-                    "text": utt["transcription"],
+                    "text": text,
                     "start": start,
                     "end": end,
                     "start_formatted": gigaam.format_time(start),
@@ -244,6 +249,64 @@ class TranscriptionService:
                 "success": False,
                 "error": str(e)
             }
+
+    @staticmethod
+    def _extract_utterance_fields(utterance: Any) -> tuple[float, float, str]:
+        """
+        Извлекает start/end/text из utterance в разных форматах ответа модели.
+        Поддерживает:
+        - dict с ключами "boundaries"/"transcription"
+        - объекты с атрибутами boundaries/transcription
+        - boundaries как tuple/list [start, end] или объект Segment с .start/.end
+        """
+        if isinstance(utterance, dict):
+            # Популярные варианты имен полей
+            if "start" in utterance and "end" in utterance:
+                start = float(utterance["start"])
+                end = float(utterance["end"])
+                text = utterance.get("transcription") or utterance.get("text") or ""
+                return start, end, str(text)
+            boundaries = utterance.get("boundaries") or utterance.get("segment") or utterance.get("timestamp")
+            text = utterance.get("transcription") or utterance.get("text") or ""
+        else:
+            # Вариант с объектом, где start/end доступны напрямую
+            if hasattr(utterance, "start") and hasattr(utterance, "end"):
+                start = float(getattr(utterance, "start"))
+                end = float(getattr(utterance, "end"))
+                text = getattr(utterance, "transcription", None) or getattr(utterance, "text", None) or ""
+                return start, end, str(text)
+
+            boundaries = (
+                getattr(utterance, "boundaries", None)
+                or getattr(utterance, "segment", None)
+                or getattr(utterance, "timestamp", None)
+            )
+            text = getattr(utterance, "transcription", None) or getattr(utterance, "text", None) or ""
+
+            # Иногда utterance приходит как tuple/list вида (segment, text)
+            if boundaries is None and isinstance(utterance, (list, tuple)) and len(utterance) >= 2:
+                candidate_segment, candidate_text = utterance[0], utterance[1]
+                if hasattr(candidate_segment, "start") and hasattr(candidate_segment, "end"):
+                    return float(candidate_segment.start), float(candidate_segment.end), str(candidate_text or "")
+                if isinstance(candidate_segment, (list, tuple)) and len(candidate_segment) >= 2:
+                    return float(candidate_segment[0]), float(candidate_segment[1]), str(candidate_text or "")
+
+        if boundaries is None:
+            raise ValueError("Utterance не содержит boundaries/segment/start-end")
+
+        # pyannote Segment и похожие объекты с .start/.end
+        if hasattr(boundaries, "start") and hasattr(boundaries, "end"):
+            start = float(boundaries.start)
+            end = float(boundaries.end)
+        else:
+            try:
+                start_raw, end_raw = boundaries
+                start = float(start_raw)
+                end = float(end_raw)
+            except Exception as exc:
+                raise ValueError(f"Неподдерживаемый формат boundaries: {type(boundaries)}") from exc
+
+        return start, end, str(text or "")
     
     def _transcribe_sync(self, audio_path: str):
         """Синхронное распознавание в отдельном потоке"""

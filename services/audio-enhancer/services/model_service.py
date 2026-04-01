@@ -112,7 +112,17 @@ class ModelManager:
                 return
             
             model_id = "pyannote/speaker-diarization-3.1"
-            self.pyannote_pipeline = Pipeline.from_pretrained(model_id, token=hf_token)
+            # Совместимо с новым huggingface_hub: используем token или fallback без kwargs.
+            last_error = None
+            for kwargs in ({"token": hf_token}, {}):
+                try:
+                    self.pyannote_pipeline = Pipeline.from_pretrained(model_id, **kwargs)
+                    break
+                except TypeError as e:
+                    last_error = e
+                    continue
+            if self.pyannote_pipeline is None and last_error is not None:
+                raise last_error
             self.pyannote_available = True
             model_logger.log_model_load("pyannote", 0, True)
             logger.info("✓ Pyannote диаризация загружена")

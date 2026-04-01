@@ -37,17 +37,17 @@ class Config:
         "audio/x-m4a", "audio/mp4", "audio/webm"
     }
     
-    # Настройки обработки по умолчанию (консервативные)
+    # Настройки обработки по умолчанию (соответствуют режиму medium)
     DEFAULT_ENHANCE_SETTINGS = {
         "use_deepfilter": True,
-        "use_wpe": True,  # Включен для совместимости
-        "noise_reduction": True,  # Включен для совместимости
+        "use_wpe": False,
+        "noise_reduction": False,
         "normalize_volume": True,
         "enhance_speech": True,
         "remove_silence": False,
         "target_sample_rate": 16000,
-        "use_compressor": True,  # Включен для совместимости
-        "spectral_gating": True,  # Включен для совместимости
+        "use_compressor": False,
+        "spectral_gating": True,
         "enable_diarization": False,
         "aggressiveness": "medium",  # light/medium/heavy
     }
