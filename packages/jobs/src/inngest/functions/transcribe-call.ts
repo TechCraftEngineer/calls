@@ -55,22 +55,7 @@ export const transcribeCallFn = inngest.createFunction(
       }
     });
 
-    // Проверяем, что транскрипт еще не существует
-    const existingTranscript = await step.run("validate/transcript:not-exists", async () => {
-      return await callsService.getTranscriptByCallId(callId);
-    });
-
-    // Если транскрипт уже существует, завершаем успешно
-    if (existingTranscript) {
-      logger.info("Транскрипт уже существует, пропускаем", { callId });
-      return {
-        callId,
-        skipped: true,
-        reason: "transcript_already_exists",
-        message: "Транскрипт уже существует",
-      };
-    }
-
+    
     const call = await step.run("db/calls:get", async () => {
       const c = await callsService.getCall(callId);
       if (!c) throw new Error(`Звонок не найден: ${callId}`);

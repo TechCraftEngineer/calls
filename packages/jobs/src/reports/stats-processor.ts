@@ -4,6 +4,13 @@
 
 import type { ManagerStats, PreparedStats, StatsTotals, PreparedStatsResult } from "./types";
 
+/**
+ * Вычисляет минуты из секунд с округлением
+ */
+export function calculateMinutesFromSeconds(seconds: number): number {
+  return Math.round(seconds / 60);
+}
+
 export function prepareStats(entries: [string, ManagerStats][]): PreparedStatsResult {
   const managers: PreparedStats[] = [];
   let incomingCount = 0;
@@ -55,6 +62,8 @@ export function prepareStats(entries: [string, ManagerStats][]): PreparedStatsRe
       outgoingAvgDurationSec: outAvgSec,
       incomingTotalDurationSec: inTotalSec,
       outgoingTotalDurationSec: outTotalSec,
+      incomingMinutes: calculateMinutesFromSeconds(inTotalSec),
+      outgoingMinutes: calculateMinutesFromSeconds(outTotalSec),
       avgManagerScore: raw.avgManagerScore,
       evaluatedCount: evalCount,
       // KPI данные

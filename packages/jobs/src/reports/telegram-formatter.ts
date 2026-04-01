@@ -4,7 +4,7 @@
 
 import type { FormatReportParams, PreparedStats, StatsTotals } from "./types";
 import { formatValue, formatScore, pluralizeCalls, getReportTypeLabel, validateReportParams } from "./utils";
-import { prepareStats, computeOverallAverages } from "./stats-processor";
+import { prepareStats, computeOverallAverages, calculateMinutesFromSeconds } from "./stats-processor";
 
 export function formatTelegramReport(params: FormatReportParams): string {
   const {
@@ -57,9 +57,9 @@ export function formatTelegramReport(params: FormatReportParams): string {
       const targetPlan = s.kpiTargetTalkTimeMinutes ?? 0;
       const completionPercentage = s.kpiCompletionPercentage ?? 0;
       
-      // Вычисляем минуты для входящих и исходящих
-      const incomingMinutes = Math.round(s.incomingTotalDurationSec / 60);
-      const outgoingMinutes = Math.round(s.outgoingTotalDurationSec / 60);
+      // Используем precomputed минуты для согласованности
+      const incomingMinutes = s.incomingMinutes;
+      const outgoingMinutes = s.outgoingMinutes;
 
       lines.push(`👤 ${s.name}`);
       lines.push(`   📞 Вх: ${s.incomingCount} (${incomingMinutes}мин) | Исх: ${s.outgoingCount} (${outgoingMinutes}мин) | Всего: ${s.totalCount} (${totalMinutes}мин)`);
@@ -99,9 +99,9 @@ export function formatTelegramReport(params: FormatReportParams): string {
     for (const s of managers) {
       const totalMinutes = s.kpiActualTalkTimeMinutes ?? 0;
       
-      // Вычисляем минуты для входящих и исходящих
-      const incomingMinutes = Math.round(s.incomingTotalDurationSec / 60);
-      const outgoingMinutes = Math.round(s.outgoingTotalDurationSec / 60);
+      // Используем precomputed минуты для согласованности
+      const incomingMinutes = s.incomingMinutes;
+      const outgoingMinutes = s.outgoingMinutes;
 
       lines.push(`👤 ${s.name}`);
       lines.push(`   📞 Вх: ${s.incomingCount} (${incomingMinutes}мин) | Исх: ${s.outgoingCount} (${outgoingMinutes}мин) | Всего: ${s.totalCount} (${totalMinutes}мин)`);
@@ -112,8 +112,8 @@ export function formatTelegramReport(params: FormatReportParams): string {
 
   // Итоги по всем
   const totalMinutes = totals.totalKpiActualTalkTimeMinutes ?? 0;
-  const totalIncomingMinutes = Math.round(totals.incomingTotalDurationSec / 60);
-  const totalOutgoingMinutes = Math.round(totals.outgoingTotalDurationSec / 60);
+  const totalIncomingMinutes = calculateMinutesFromSeconds(totals.incomingTotalDurationSec);
+  const totalOutgoingMinutes = calculateMinutesFromSeconds(totals.outgoingTotalDurationSec);
   
   lines.push(`📊 **Итоги по всем сотрудникам:**`);
   lines.push(`• Входящие: ${totals.incomingCount} (${totalIncomingMinutes}мин)`);

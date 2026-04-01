@@ -4,7 +4,7 @@
 
 import type { FormatReportParams, PreparedStats } from "./types";
 import { formatValue, formatScore, pluralizeCalls, getReportTypeLabel, validateReportParams, escapeHtml } from "./utils";
-import { prepareStats, computeOverallAverages } from "./stats-processor";
+import { prepareStats, computeOverallAverages, calculateMinutesFromSeconds } from "./stats-processor";
 
 export function formatTelegramReportHtml(params: FormatReportParams): string {
   const {
@@ -64,9 +64,9 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
       const targetPlan = s.kpiTargetTalkTimeMinutes ?? 0;
       const completionPercentage = s.kpiCompletionPercentage ?? 0;
       
-      // Вычисляем минуты для входящих и исходящих
-      const incomingMinutes = Math.round(s.incomingTotalDurationSec / 60);
-      const outgoingMinutes = Math.round(s.outgoingTotalDurationSec / 60);
+      // Используем precomputed минуты для согласованности
+      const incomingMinutes = s.incomingMinutes;
+      const outgoingMinutes = s.outgoingMinutes;
 
       lines.push(`👤 <b>${escapeHtml(s.name)}</b>`);
       lines.push(`   📞 Вх: <b>${s.incomingCount}</b> (${incomingMinutes}мин) | Исх: <b>${s.outgoingCount}</b> (${outgoingMinutes}мин) | Всего: <b>${s.totalCount}</b> (${totalMinutes}мин)`);
@@ -105,9 +105,9 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     for (const s of managers) {
       const totalMinutes = s.kpiActualTalkTimeMinutes ?? 0;
       
-      // Вычисляем минуты для входящих и исходящих
-      const incomingMinutes = Math.round(s.incomingTotalDurationSec / 60);
-      const outgoingMinutes = Math.round(s.outgoingTotalDurationSec / 60);
+      // Используем precomputed минуты для согласованности
+      const incomingMinutes = s.incomingMinutes;
+      const outgoingMinutes = s.outgoingMinutes;
 
       lines.push(`👤 <b>${escapeHtml(s.name)}</b>`);
       lines.push(`   📞 Вх: <b>${s.incomingCount}</b> (${incomingMinutes}мин) | Исх: <b>${s.outgoingCount}</b> (${outgoingMinutes}мин) | Всего: <b>${s.totalCount}</b> (${totalMinutes}мин)`);
@@ -118,9 +118,9 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   lines.push("");
 
   // Итоги по всем
-  const totalMinutes = totals.totalKpiActualTalkTimeMinutes ?? 0;
-  const totalIncomingMinutes = Math.round(totals.incomingTotalDurationSec / 60);
-  const totalOutgoingMinutes = Math.round(totals.outgoingTotalDurationSec / 60);
+  const totalMinutes = totals.totalKpiActualTalkTimeMinutes;
+  const totalIncomingMinutes = calculateMinutesFromSeconds(totals.incomingTotalDurationSec);
+  const totalOutgoingMinutes = calculateMinutesFromSeconds(totals.outgoingTotalDurationSec);
   
   lines.push("📊 <b>Итоги по всем сотрудникам:</b>");
   lines.push(`• Входящие: <b>${totals.incomingCount}</b> (${totalIncomingMinutes}мин)`);
@@ -142,7 +142,7 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     // Показываем общий оклад и целевой бонус только в ежемесячных отчетах
     if (reportType === "monthly") {
       lines.push(`• Общий оклад: <b>${totals.totalBaseSalary > 0 ? formatValue(totals.totalBaseSalary) : "—"} ₽</b>`);
-      lines.push(`• Целевой бонус: <b>${totals.totalTargetBonus > 0 ? formatValue(totals.totalTargetBonus) : "—"}</b>`);
+      lines.push(`• Целевой бонус: <b>${totals.totalTargetBonus > 0 ? formatValue(totals.totalTargetBonus) : "—"} ₽</b>`);
     }
     lines.push(`• Начисленный бонус: <b>${totals.totalCalculatedBonus > 0 ? formatValue(totals.totalCalculatedBonus) : "—"} ₽</b>`);
     lines.push(`• План минут: <b>${totalTargetPlan > 0 ? formatValue(totalTargetPlan) : "—"}</b>`);
