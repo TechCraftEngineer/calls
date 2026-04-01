@@ -51,8 +51,12 @@ export async function enhanceAudioWithPython(
   const start = Date.now();
   const serviceUrl = env.AUDIO_ENHANCER_URL;
 
-  if (!serviceUrl) {
-    logMissingEnhancerUrlOnce();
+  if (!serviceUrl || !env.AUDIO_ENHANCER_ENABLED) {
+    if (!env.AUDIO_ENHANCER_ENABLED) {
+      logger.info("AUDIO_ENHANCER_ENABLED=false, пропускаем Python обработку");
+    } else {
+      logMissingEnhancerUrlOnce();
+    }
     return {
       audioBuffer,
       wasProcessed: false,
@@ -191,8 +195,12 @@ export async function preprocessAudioWithPython(
   const start = Date.now();
   const serviceUrl = env.AUDIO_ENHANCER_URL;
 
-  if (!serviceUrl) {
-    logMissingEnhancerUrlOnce();
+  if (!serviceUrl || !env.AUDIO_ENHANCER_ENABLED) {
+    if (!env.AUDIO_ENHANCER_ENABLED) {
+      logger.info("AUDIO_ENHANCER_ENABLED=false, пропускаем Python preprocess");
+    } else {
+      logMissingEnhancerUrlOnce();
+    }
     return {
       audioBuffer,
       preprocessMetadata: null,
@@ -271,8 +279,12 @@ export async function denoiseAudioWithPython(
   const start = Date.now();
   const serviceUrl = env.AUDIO_ENHANCER_URL;
 
-  if (!serviceUrl) {
-    logMissingEnhancerUrlOnce();
+  if (!serviceUrl || !env.AUDIO_ENHANCER_ENABLED) {
+    if (!env.AUDIO_ENHANCER_ENABLED) {
+      logger.info("AUDIO_ENHANCER_ENABLED=false, пропускаем Python denoise");
+    } else {
+      logMissingEnhancerUrlOnce();
+    }
     return {
       audioBuffer,
       wasProcessed: false,
