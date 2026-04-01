@@ -300,7 +300,7 @@ class ClusteringService:
                 # Confidence на основе расстояния
                 confidence = 1.0 - min(1.0, base_distance / adaptive_threshold)
                 
-                if adjusted_distance <= adaptive_threshold:
+                if adjusted_distance <= adaptive_threshold and confidence >= self.confidence_threshold:
                     seg["speaker"] = best_cluster["speaker"]
                     seg["confidence"] = max(0.5, confidence)
                     
@@ -310,6 +310,9 @@ class ClusteringService:
                     best_cluster["last_end"] = end
                     best_cluster["segment_count"] += 1
                 else:
+                    # Не прошли порог уверенности или расстояния
+                    # Записываем confidence для диагностики
+                    seg["confidence"] = max(0.5, confidence)
                     # Новый кластер
                     new_speaker = f"SPEAKER_{len(clusters) + 1:02d}"
                     clusters.append(
@@ -322,7 +325,6 @@ class ClusteringService:
                         }
                     )
                     seg["speaker"] = new_speaker
-                    seg["confidence"] = 0.8
         
         # Шаг 3: Переназначение ненадёжных сегментов
         if unreliable_segments:
