@@ -1,3 +1,5 @@
+import { normalizeCallStatus } from "@calls/db";
+
 type NormalizedBase = {
   externalId: string;
   rawData: Record<string, unknown>;
@@ -195,7 +197,7 @@ export function normalizeCall(raw: Record<string, unknown>): NormalizedCall | nu
           asString(raw.internalNumber) ??
           asString(raw.internal_number),
       ) ?? null,
-    status: asString(raw.status),
+    status: normalizeCallStatus(asString(raw.status)),
     recordingUrl:
       asString(raw.link) ??
       asString(raw.Link) ??

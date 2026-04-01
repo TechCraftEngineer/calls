@@ -47,12 +47,12 @@ const directionSchema = z.enum(["inbound", "outbound"], {
 
 /**
  * Схема для валидации статуса звонка
+ * Принимает любую строку и позволяет normalizeCallStatus обработать её
  */
 const statusSchema = z
-  .enum(["missed", "answered"], {
-    message: 'status должен быть "missed" или "answered"',
-  })
-  .nullable();
+  .union([z.enum(["missed", "answered"]), z.string()])
+  .nullable()
+  .optional();
 
 /**
  * Основная схема для создания звонка
