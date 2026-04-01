@@ -168,20 +168,22 @@ export class ValidationError extends Error {
 /**
  * Функция для валидации с выбросом ValidationError
  */
-export function validateWithSchema<T>(schema: z.ZodSchema<T>, data: unknown): T {
+export function validateWithSchema<T>(
+  schema: z.ZodSchema<T>,
+  data: unknown,
+  fieldName?: string,
+): T {
   const result = schema.safeParse(data);
 
   if (!result.success) {
     const errorMessages = result.error.issues.map((issue) => issue.message).join("; ");
-    throw new ValidationError(errorMessages, result.error.issues);
+    const fieldPrefix = fieldName ? `${fieldName}: ` : "";
+    throw new ValidationError(fieldPrefix + errorMessages, result.error.issues);
   }
 
   return result.data;
 }
 
 export function validateCallId(callId: string): void {
-  const result = uuidSchema.safeParse(callId);
-  if (!result.success) {
-    throw new ValidationError("callId должен быть валидным UUID", result.error.issues);
-  }
+  validateWithSchema(uuidSchema, callId, "callId");
 }

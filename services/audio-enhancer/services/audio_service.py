@@ -154,22 +154,34 @@ class AudioProcessor:
         # Спектральный гейтинг (улучшенный)
         if kwargs.get("spectral_gating", False):
             logger.info("Применяем улучшенный спектральный гейтинг...")
-            audio = self._apply_spectral_gating(audio)
+            try:
+                audio = self._apply_spectral_gating(audio)
+            except Exception as e:
+                logger.warning(f"Спектральный гейтинг не удался: {e}, пропускаем")
         
         # Усиление речи (более консервативное)
-        if kwargs.get("enhance_speech", True):
+        if kwargs.get("enhance_speech", False):  # Изменено на False по умолчанию
             logger.info("Усиливаем речевые частоты...")
-            audio = self._enhance_speech(audio, sr)
+            try:
+                audio = self._enhance_speech(audio, sr)
+            except Exception as e:
+                logger.warning(f"Усиление речи не удалось: {e}, пропускаем")
         
         # Динамическая компрессия (более мягкая)
         if kwargs.get("use_compressor", False):
             logger.info("Применяем мягкую динамическую компрессию...")
-            audio = self._apply_compression(audio, sr)
+            try:
+                audio = self._apply_compression(audio, sr)
+            except Exception as e:
+                logger.warning(f"Компрессия не удалась: {e}, пропускаем")
         
         # Нормализация громкости (LUFS)
         if kwargs.get("normalize_volume", True):
             logger.info("Нормализуем громкость (LUFS)...")
-            audio = self._normalize_volume(audio, sr)
+            try:
+                audio = self._normalize_volume(audio, sr)
+            except Exception as e:
+                logger.warning(f"Нормализация громкости не удалась: {e}, пропускаем")
         
         # Удаление пауз (по запросу)
         if kwargs.get("remove_silence", False) and model_manager.vad_available:

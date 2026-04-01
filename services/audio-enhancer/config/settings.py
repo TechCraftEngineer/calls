@@ -11,7 +11,7 @@ class Config:
     APP_NAME: str = os.getenv("APP_NAME", "Audio Enhancer Service")
     DEBUG: bool = os.getenv("DEBUG", "false").lower() in {"1", "true", "yes", "on"}
     HOST: str = os.getenv("HOST", "0.0.0.0")
-    PORT: int = int(os.getenv("PORT", "7860"))
+    PORT: int = int(os.getenv("PORT", "7860"))  # Docker порт
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO").upper()
     
     # Ограничения файлов
@@ -37,39 +37,39 @@ class Config:
         "audio/x-m4a", "audio/mp4", "audio/webm"
     }
     
-    # Настройки обработки по умолчанию (соответствуют режиму medium)
+    # Настройки обработки по умолчанию (более консервативные)
     DEFAULT_ENHANCE_SETTINGS = {
         "use_deepfilter": True,
         "use_wpe": False,
         "noise_reduction": False,
         "normalize_volume": True,
-        "enhance_speech": True,
+        "enhance_speech": False,  # Отключено по умолчанию
         "remove_silence": False,
         "target_sample_rate": 16000,
         "use_compressor": False,
-        "spectral_gating": True,
+        "spectral_gating": False,  # Отключено по умолчанию
         "enable_diarization": False,
-        "aggressiveness": "medium",  # light/medium/heavy
+        "aggressiveness": "light",  # Изменено на light
     }
     
-    # Режимы агрессивности обработки
+    # Режимы агрессивности обработки (более консервативные)
     AGGRESSIVENESS_MODES = {
         "light": {
             "use_deepfilter": True,
             "use_wpe": False,
             "noise_reduction": False,
-            "enhance_speech": True,
+            "enhance_speech": False,  # Отключено
             "use_compressor": False,
-            "spectral_gating": False,
+            "spectral_gating": False,  # Отключено
             "normalize_volume": True,
         },
         "medium": {
             "use_deepfilter": True,
             "use_wpe": False,
             "noise_reduction": False,
-            "enhance_speech": True,
+            "enhance_speech": True,  # Включено только в medium
             "use_compressor": False,
-            "spectral_gating": True,
+            "spectral_gating": False,  # Отключено
             "normalize_volume": True,
         },
         "heavy": {
@@ -78,7 +78,7 @@ class Config:
             "noise_reduction": True,
             "enhance_speech": True,
             "use_compressor": True,
-            "spectral_gating": True,
+            "spectral_gating": True,  # Включено только в heavy
             "normalize_volume": True,
         }
     }
@@ -105,23 +105,23 @@ class Config:
         "release_ms": 100,  # Увеличен с 50 до 100
     }
     
-    # Настройки фильтров речи (менее агрессивные)
+    # Настройки фильтров речи (минимальные вмешательства)
     SPEECH_FILTER_SETTINGS = {
         "highpass_cutoff": 80,
         "lowpass_cutoff": 8000,
         "preemphasis_coef": 0.95,  # Уменьшен с 0.97
         "speech_range": (300, 3400),
         "critical_range": (1000, 3000),
-        "speech_gain": 1.1,  # Уменьшен с 1.3 до 1.1
-        "critical_gain": 1.2,  # Уменьшен с 1.5 до 1.2
-        "non_speech_gain": 0.7,  # Увеличен с 0.4 до 0.7
+        "speech_gain": 1.05,  # Минимальное усиление (было 1.1)
+        "critical_gain": 1.1,  # Минимальное усиление (было 1.2)
+        "non_speech_gain": 0.9,  # Меньше подавление (было 0.7)
     }
     
-    # Настройки спектрального гейтинга (улучшенные)
+    # Настройки спектрального гейтинга (консервативные)
     SPECTRAL_GATING_SETTINGS = {
-        "noise_percentile": 5,  # Уменьшен с 10 до 5
-        "mask_power": 1.5,  # Уменьшен с 2 до 1.5
-        "min_mask_value": 0.3,  # Минимальное значение маски
+        "noise_percentile": 15,  # Увеличен до 15% (меньше агрессии)
+        "mask_power": 1.2,  # Уменьшен до 1.2 (мягче)
+        "min_mask_value": 0.5,  # Повышен до 0.5 (меньше подавления)
     }
 
 

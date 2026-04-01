@@ -82,15 +82,16 @@ pip install -r requirements.txt
 
 ## 🎯 Использование
 
-### Запуск сервера
+### Запуск через Docker
 
 ```bash
-python main.py
+cd services/audio-enhancer
+docker-compose up --build
 ```
 
-API доступен на <http://localhost:8080>
+API доступен на <http://localhost:7860>
 
-Документация: <http://localhost:8080/docs>
+Документация: <http://localhost:7860/docs>
 
 ### API endpoints
 
@@ -99,7 +100,7 @@ API доступен на <http://localhost:8080>
 Проверка здоровья сервиса:
 
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:7860/health
 ```
 
 Ответ:
@@ -118,7 +119,7 @@ curl http://localhost:8080/health
 Полная обработка аудио:
 
 ```bash
-curl -X POST "http://localhost:8080/enhance" \
+curl -X POST "http://localhost:7860/enhance" \
   -F "file=@audio.mp3" \
   -F "use_deepfilter=true" \
   -F "spectral_gating=true" \
@@ -135,7 +136,7 @@ curl -X POST "http://localhost:8080/enhance" \
 Только классическое шумоподавление (быстрый endpoint):
 
 ```bash
-curl -X POST "http://localhost:8080/denoise" \
+curl -X POST "http://localhost:7860/denoise" \
   -F "file=@audio.mp3" \
   -F "stationary=true" \
   -F "prop_decrease=0.8" \
@@ -248,7 +249,7 @@ curl -X POST "http://localhost:8080/denoise" \
 
 ```bash
 docker build -t audio-enhancer .
-docker run -p 8080:8080 audio-enhancer
+docker run -p 7860:7860 audio-enhancer
 ```
 
 ## 📈 Сравнение качества
@@ -269,7 +270,7 @@ import requests
 
 with open("audio.mp3", "rb") as f:
     response = requests.post(
-        "http://localhost:8080/enhance",
+        "http://localhost:7860/enhance",
         files={"file": f},
         data={
             "use_deepfilter": True,
@@ -289,7 +290,7 @@ formData.append("file", audioFile);
 formData.append("use_deepfilter", "true");
 formData.append("target_sample_rate", "16000");
 
-const response = await fetch("http://localhost:8080/enhance", {
+const response = await fetch("http://localhost:7860/enhance", {
   method: "POST",
   body: formData,
 });

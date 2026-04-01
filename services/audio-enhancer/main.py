@@ -149,22 +149,15 @@ except Exception as e:
 pyannote_pipeline = None
 if PYANNOTE_AVAILABLE:
     try:
+        from utils.pyannote_utils import load_pyannote_pipeline
+        
         # Требуется HuggingFace токен для загрузки
         hf_token = os.getenv("HF_TOKEN")
         if hf_token:
-            model_id = "pyannote/speaker-diarization-3.1"
-            # Совместимо с новым huggingface_hub: используем token или fallback без kwargs.
-            last_error = None
-            for kwargs in ({"token": hf_token}, {}):
-                try:
-                    pyannote_pipeline = Pipeline.from_pretrained(model_id, **kwargs)
-                    break
-                except TypeError as e:
-                    last_error = e
-                    continue
-            if pyannote_pipeline is None and last_error is not None:
-                raise last_error
-            logger.info("✓ Pyannote диаризация загружена")
+            pyannote_pipeline = load_pyannote_pipeline(
+                model_id="pyannote/speaker-diarization-3.1",
+                hf_token=hf_token
+            )
         else:
             logger.warning("HF_TOKEN не установлен, pyannote недоступен")
             PYANNOTE_AVAILABLE = False
