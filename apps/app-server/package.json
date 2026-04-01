@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bunx nodemon --watch src --watch ../../packages/api/src --watch ../../packages/db/src --watch ../../packages/jobs/src --ext ts,tsx,json --exec \"bun with-env src/index.ts\"",
+    "dev": "nodemon --watch src --watch ../../packages/api/src --watch ../../packages/db/src --watch ../../packages/jobs/src --ext ts,tsx,json --exec \"bun with-env src/index.ts\"",
     "start": "bun with-env dist/index.js",
     "build": "bun build ./src/index.ts --outdir ./dist --target bun",
     "typecheck": "tsc --noEmit",
@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
+    "nodemon": "^3.1.14",
     "typescript": "6.0.2"
   }
 }

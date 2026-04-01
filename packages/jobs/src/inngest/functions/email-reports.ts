@@ -181,6 +181,7 @@ export const emailReportsFn = inngest.createFunction(
             const enrichedStats = (await callsService.enrichStatsWithKpi(
               stats,
               workspaceId,
+              reportType,
             )) as Record<string, ManagerStats>;
 
             try {

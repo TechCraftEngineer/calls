@@ -3,7 +3,7 @@
  */
 
 import type { FormatReportParams, PreparedStats, StatsTotals } from "./types";
-import { formatValue, formatScore, pluralizeCalls, getReportTypeLabel, validateReportParams } from "./utils";
+import { formatValue, formatScore, pluralizeCalls, getReportTypeLabel, validateReportParams, calculateTargetPlan } from "./utils";
 import { prepareStats, computeOverallAverages, calculateTotalMinutes, calculateManagerTotalMinutes } from "./stats-processor";
 
 export function formatTelegramReport(params: FormatReportParams): string {
@@ -54,17 +54,39 @@ export function formatTelegramReport(params: FormatReportParams): string {
     // Формат списка вместо таблицы для лучшей читаемости в Telegram
     for (const s of managers) {
       const totalMinutes = calculateManagerTotalMinutes(s);
+      const targetPlan = calculateTargetPlan(s.kpiTargetTalkTimeMinutes ?? 0, reportType);
+      const completionPercentage = targetPlan > 0 ? Math.round((totalMinutes / targetPlan) * 100) : 0;
 
       lines.push(`👤 ${s.name}`);
       lines.push(`   📞 Звонков: ${s.totalCount} | ⏱️ Минут: ${totalMinutes}`);
+      
+      // Показываем оклад только в ежемесячных отчетах
+      if (reportType === "monthly") {
+        lines.push(
+          `   💰 Оклад: ${s.kpiBaseSalary !== null && s.kpiBaseSalary !== undefined ? formatValue(s.kpiBaseSalary) : "—"} ₽ | 🎁 Бонус: ${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : "—"} ₽`,
+        );
+        lines.push(
+          `   💵 Итого: ${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : "—"} ₽`,
+        );
+      } else if (reportType === "weekly") {
+        lines.push(
+          `   🎁 Бонус: ${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : "—"} ₽`,
+        );
+        lines.push(
+          `   💵 Итого: ${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : "—"} ₽`,
+        );
+      } else {
+        // Ежедневный отчет - только бонус
+        lines.push(
+          `   🎁 Бонус: ${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : "—"} ₽`,
+        );
+      }
+      
       lines.push(
-        `   💰 Оклад: ${s.kpiBaseSalary !== null && s.kpiBaseSalary !== undefined ? formatValue(s.kpiBaseSalary) : "—"} ₽ | 🎁 Бонус: ${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : "—"} ₽`,
+        `   📊 План минут: ${formatValue(targetPlan)} | 📈 Факт: ${totalMinutes}`,
       );
       lines.push(
-        `   📊 План минут: ${s.kpiTargetTalkTimeMinutes !== null && s.kpiTargetTalkTimeMinutes !== undefined ? formatValue(s.kpiTargetTalkTimeMinutes) : "—"} | 📈 Факт: ${s.kpiActualPerformanceRubles !== null && s.kpiActualPerformanceRubles !== undefined ? formatValue(s.kpiActualPerformanceRubles) : "—"} ₽`,
-      );
-      lines.push(
-        `   📊 % выполнения: ${s.kpiCompletionPercentage !== null && s.kpiCompletionPercentage !== undefined ? s.kpiCompletionPercentage : "—"}% | 💵 Итого: ${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : "—"} ₽`,
+        `   📊 % выполнения: ${completionPercentage}%`,
       );
       lines.push("");
     }
@@ -95,11 +117,23 @@ export function formatTelegramReport(params: FormatReportParams): string {
 
   // KPI итоги
   if (includeKpi) {
-    lines.push(`• Общий оклад: ${formatValue(totals.totalBaseSalary)} ₽`);
+    // Вычисляем общий план для периода на основе суммарного месячного плана
+    const totalTargetPlan = calculateTargetPlan(totals.totalKpiTargetTalkTimeMinutes, reportType);
+    
+    // Показываем общий оклад только в ежемесячных отчетах
+    if (reportType === "monthly") {
+      lines.push(`• Общий оклад: ${formatValue(totals.totalBaseSalary)} ₽`);
+    }
     lines.push(`• Целевой бонус: ${formatValue(totals.totalTargetBonus)} ₽`);
     lines.push(`• Начисленный бонус: ${formatValue(totals.totalCalculatedBonus)} ₽`);
+    lines.push(`• План минут: ${formatValue(totalTargetPlan)}`);
+    lines.push(`• Факт минут: ${formatValue(totals.totalKpiActualTalkTimeMinutes)}`);
     lines.push(`• Факт выполнения: ${formatValue(totals.totalActualPerformanceRubles)} ₽`);
-    lines.push(`• Итого к выплате: ${formatValue(totals.totalSalary)} ₽`);
+    
+    // Показываем итоговую сумму только для еженедельных и ежемесячных отчетов
+    if (reportType !== "daily") {
+      lines.push(`• Итого к выплате: ${formatValue(totals.totalSalary)} ₽`);
+    }
   }
 
   // Требуют внимания

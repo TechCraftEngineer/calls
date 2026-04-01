@@ -67,6 +67,7 @@ function formatScore(value: number | null | undefined): string {
   return value.toFixed(1);
 }
 
+
 interface PreparedStats {
   id: string;
   name: string;
@@ -75,6 +76,8 @@ interface PreparedStats {
   totalCount: number;
   incomingAvgDurationSec: number;
   outgoingAvgDurationSec: number;
+  incomingTotalDurationSec: number;
+  outgoingTotalDurationSec: number;
   avgManagerScore?: number | null;
   evaluatedCount: number;
   // KPI данные
@@ -97,12 +100,11 @@ function prepareStats(entries: [string, ManagerStats][]): {
     incomingTotalDurationSec: number;
     outgoingTotalDurationSec: number;
     evaluatedCount: number;
-    // KPI итоги
     totalBaseSalary: number;
     totalTargetBonus: number;
     totalCalculatedBonus: number;
     totalSalary: number;
-    totalActualPerformanceRubles: number; // Факт выполнения в рублях
+    totalActualPerformanceRubles: number;
   };
 } {
   const managers: PreparedStats[] = [];
@@ -118,8 +120,22 @@ function prepareStats(entries: [string, ManagerStats][]): {
   let totalSalary = 0;
   let totalActualPerformanceRubles = 0;
 
+  console.log("[DEBUG EMAIL] prepareStats called with entries:", entries.length);
+
   for (const [name, raw] of entries) {
     if (!raw || typeof raw !== "object") continue;
+    
+    console.log(`[DEBUG EMAIL] Processing manager: ${name}`);
+    console.log(`[DEBUG EMAIL] Raw KPI data:`, {
+      kpiBaseSalary: raw.kpiBaseSalary,
+      kpiTargetBonus: raw.kpiTargetBonus,
+      kpiTargetTalkTimeMinutes: raw.kpiTargetTalkTimeMinutes,
+      kpiActualTalkTimeMinutes: raw.kpiActualTalkTimeMinutes,
+      kpiCompletionPercentage: raw.kpiCompletionPercentage,
+      kpiCalculatedBonus: raw.kpiCalculatedBonus,
+      kpiTotalSalary: raw.kpiTotalSalary,
+    });
+    
     const inCount = raw.incoming?.count ?? 0;
     const outCount = raw.outgoing?.count ?? 0;
     const inTotalSec = raw.incoming?.totalDuration ?? (raw.incoming?.duration ?? 0) * inCount;
@@ -150,6 +166,8 @@ function prepareStats(entries: [string, ManagerStats][]): {
       totalCount: total,
       incomingAvgDurationSec: inAvgSec,
       outgoingAvgDurationSec: outAvgSec,
+      incomingTotalDurationSec: inTotalSec,
+      outgoingTotalDurationSec: outTotalSec,
       avgManagerScore: raw.avgManagerScore,
       evaluatedCount: evalCount,
       // KPI данные
@@ -201,13 +219,14 @@ export const ReportEmail = ({
     return date.toLocaleDateString('ru-RU', {
       day: 'numeric',
       month: 'long',
-      year: 'numeric'
+      year: 'numeric',
+      timeZone: "Europe/Moscow"
     });
   };
   
   let periodText = '';
   if (dateFrom && dateTo) {
-    if (dateFrom.toDateString() === dateTo.toDateString()) {
+    if (formatDate(dateFrom) === formatDate(dateTo)) {
       periodText = ` за ${formatDate(dateFrom)}`;
     } else {
       periodText = ` за ${formatDate(dateFrom)} — ${formatDate(dateTo)}`;
@@ -258,7 +277,7 @@ export const ReportEmail = ({
       >
         <Body className="mx-auto my-auto bg-white px-2 font-sans">
           <Preview>{previewText}</Preview>
-          <Container className="mx-auto my-[40px] max-w-[600px] rounded border border-[#eaeaea] border-solid p-[24px]">
+          <Container className="mx-auto my-[40px] max-w-[900px] rounded border border-[#eaeaea] border-solid p-[24px]">
             <Heading className="mx-0 my-[24px] p-0 text-[20px] font-semibold text-black">
               {title}
             </Heading>
@@ -276,40 +295,81 @@ export const ReportEmail = ({
                 <table className="w-full border-collapse border border-gray-300">
                   <thead>
                     <tr className="bg-gray-50">
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">
+                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold" rowSpan={2}>
                         Менеджер
                       </th>
-                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" colSpan={3}>
                         Звонки, шт.
                       </th>
                       {includeKpi && (
                         <>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                            План минут
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                            План, мин.
                           </th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                            Факт минут
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" colSpan={3}>
+                            Факт, мин.
                           </th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
                             % выполнения
                           </th>
                         </>
                       )}
                       {avgManagerScore && (
-                        <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                        <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
                           Рейтинг
                         </th>
                       )}
+                      {includeKpi && reportType === "monthly" && (
+                        <>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                            Оклад, ₽
+                          </th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                            Бонус, ₽
+                          </th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                            Итого, ₽
+                          </th>
+                        </>
+                      )}
+                      {includeKpi && reportType === "weekly" && (
+                        <>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                            Бонус, ₽
+                          </th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                            Итого, ₽
+                          </th>
+                        </>
+                      )}
+                      {includeKpi && reportType === "daily" && (
+                        <>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                            Бонус, ₽
+                          </th>
+                        </>
+                      )}
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                        Вх.
+                      </th>
+                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                        Исх.
+                      </th>
+                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                        Всего
+                      </th>
                       {includeKpi && (
                         <>
                           <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                            Оклад, ₽
+                            Вх.
                           </th>
                           <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                            Бонус, ₽
+                            Исх.
                           </th>
                           <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                            Итого, ₽
+                            Всего
                           </th>
                         </>
                       )}
@@ -317,16 +377,16 @@ export const ReportEmail = ({
                   </thead>
                   <tbody>
                     {kpiTable.managers.map((manager) => {
-                      const totalMinutes = Math.round(
-                        (manager.incomingAvgDurationSec * manager.incomingCount +
-                          manager.outgoingAvgDurationSec * manager.outgoingCount) /
-                          60,
-                      );
-
                       return (
                         <tr key={manager.id}>
                           <td className="border border-gray-300 px-3 py-2 text-sm">
                             {manager.name}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {manager.incomingCount}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {manager.outgoingCount}
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                             {manager.totalCount}
@@ -335,6 +395,12 @@ export const ReportEmail = ({
                             <>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                                 {formatValue(manager.kpiTargetTalkTimeMinutes ?? 0)}
+                              </td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(Math.round(manager.incomingTotalDurationSec / 60))}
+                              </td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(Math.round(manager.outgoingTotalDurationSec / 60))}
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                                 {formatValue(manager.kpiActualTalkTimeMinutes ?? 0)}
@@ -349,7 +415,7 @@ export const ReportEmail = ({
                               {formatScore(manager.avgManagerScore)}
                             </td>
                           )}
-                          {includeKpi && (
+                          {includeKpi && reportType === "monthly" && (
                             <>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                                 {formatValue(manager.kpiBaseSalary ?? 0)}
@@ -362,11 +428,34 @@ export const ReportEmail = ({
                               </td>
                             </>
                           )}
+                          {includeKpi && reportType === "weekly" && (
+                            <>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(manager.kpiCalculatedBonus ?? 0)}
+                              </td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(manager.kpiTotalSalary ?? 0)}
+                              </td>
+                            </>
+                          )}
+                          {includeKpi && reportType === "daily" && (
+                            <>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(manager.kpiCalculatedBonus ?? 0)}
+                              </td>
+                            </>
+                          )}
                         </tr>
                       );
                     })}
                     <tr className="bg-gray-50 font-semibold">
                       <td className="border border-gray-300 px-3 py-2 text-sm">Итого:</td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                        {kpiTable.totals.incomingCount}
+                      </td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                        {kpiTable.totals.outgoingCount}
+                      </td>
                       <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                         {kpiTable.totals.totalCount}
                       </td>
@@ -376,11 +465,13 @@ export const ReportEmail = ({
                             -
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                            {Math.round(
-                              (kpiTable.totals.incomingTotalDurationSec +
-                                kpiTable.totals.outgoingTotalDurationSec) /
-                                60,
-                            )}
+                            {formatValue(Math.round(kpiTable.totals.incomingTotalDurationSec / 60))}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {formatValue(Math.round(kpiTable.totals.outgoingTotalDurationSec / 60))}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {formatValue(Math.round((kpiTable.totals.incomingTotalDurationSec + kpiTable.totals.outgoingTotalDurationSec) / 60))}
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                             -
@@ -392,7 +483,7 @@ export const ReportEmail = ({
                           {formatScore(kpiTable.overallAvgManagerScore)}
                         </td>
                       )}
-                      {includeKpi && (
+                      {includeKpi && reportType === "monthly" && (
                         <>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                             {formatValue(kpiTable.totals.totalBaseSalary)}
@@ -405,8 +496,25 @@ export const ReportEmail = ({
                           </td>
                         </>
                       )}
+                      {includeKpi && reportType === "weekly" && (
+                        <>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {formatValue(kpiTable.totals.totalCalculatedBonus)}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {formatValue(kpiTable.totals.totalSalary)}
+                          </td>
+                        </>
+                      )}
+                      {includeKpi && reportType === "daily" && (
+                        <>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {formatValue(kpiTable.totals.totalCalculatedBonus)}
+                          </td>
+                        </>
+                      )}
                     </tr>
-                  </tbody>
+                                      </tbody>
                 </table>
               ) : (
                 <Text className="text-[14px] text-gray-600">Нет данных для отображения KPI</Text>

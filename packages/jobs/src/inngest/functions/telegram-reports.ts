@@ -227,7 +227,7 @@ export const telegramReportsFn = inngest.createFunction(
               excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
             });
 
-            const stats = await callsService.enrichStatsWithKpi(evaluationsStats, workspaceId);
+            const stats = await callsService.enrichStatsWithKpi(evaluationsStats, workspaceId, reportType);
 
             let lowRatedCalls: Record<string, number> = {};
             if (r.isManagerReport) {

@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
     build-essential \
+    portaudio19-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Установка Rust через rustup (для DeepFilterNet)
@@ -56,4 +57,4 @@ USER user
 EXPOSE 7860
 
 # Запуск uvicorn напрямую для лучшей производительности
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860", "--workers", "1"]
+CMD ["uvicorn", "api.endpoints:app", "--host", "0.0.0.0", "--port", "7860", "--workers", "1"]
