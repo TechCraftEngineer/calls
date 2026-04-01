@@ -18,7 +18,7 @@ import {
   formatTelegramReportHtml,
   type ManagerStats,
   splitTelegramHtmlMessage,
-} from "../../reports/format-report";
+} from "../../reports";
 import { inngest } from "../client";
 
 const TZ = "Europe/Moscow";
