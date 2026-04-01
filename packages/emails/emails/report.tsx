@@ -331,11 +331,9 @@ export const ReportEmail = ({
                         </>
                       )}
                       {includeKpi && reportType === "daily" && (
-                        <>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
-                            Бонус, ₽
-                          </th>
-                        </>
+                        <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                          Бонус, ₽
+                        </th>
                       )}
                     </tr>
                     <tr className="bg-gray-50">
@@ -427,11 +425,9 @@ export const ReportEmail = ({
                             </>
                           )}
                           {includeKpi && reportType === "daily" && (
-                            <>
-                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                                {formatValue(manager.kpiCalculatedBonus ?? 0)}
-                              </td>
-                            </>
+                            <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                              {formatValue(manager.kpiCalculatedBonus ?? 0)}
+                            </td>
                           )}
                         </tr>
                       );
@@ -495,11 +491,9 @@ export const ReportEmail = ({
                         </>
                       )}
                       {includeKpi && reportType === "daily" && (
-                        <>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                            {formatValue(kpiTable.totals.totalCalculatedBonus)}
-                          </td>
-                        </>
+                        <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                          {formatValue(kpiTable.totals.totalCalculatedBonus)}
+                        </td>
                       )}
                     </tr>
                                       </tbody>

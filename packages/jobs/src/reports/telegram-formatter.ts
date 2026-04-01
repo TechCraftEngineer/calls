@@ -2,7 +2,7 @@
  * Форматирование отчетов для Telegram
  */
 
-import type { FormatReportParams, PreparedStats, StatsTotals } from "./types";
+import type { FormatReportParams } from "./types";
 import { formatValue, formatScore, pluralizeCalls, getReportTypeLabel, validateReportParams } from "./utils";
 import { prepareStats, computeOverallAverages, calculateMinutesFromSeconds } from "./stats-processor";
 
