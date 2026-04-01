@@ -35,7 +35,7 @@ const gigaAmSegmentSchema = z.object({
   duration: z.number().optional(),
   speaker: z.string().optional(),
   embedding: z.array(z.number()).optional(),
-  confidence: z.number().optional(),
+  confidence: z.number().min(0).max(1).optional(),
 });
 
 const gigaAmSpeakerTimelineEntrySchema = z.object({
