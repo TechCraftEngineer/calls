@@ -27,6 +27,10 @@ from fastapi.responses import Response
 from pedalboard import Pedalboard, Compressor, HighpassFilter, LowpassFilter
 from scipy import signal as scipy_signal
 
+# Импортируем управление предупреждениями
+from utils.warnings_utils import setup_warnings_filters
+setup_warnings_filters()
+
 # DeepFilterNet для нейросетевого шумоподавления
 try:
     from df.enhance import enhance, init_df
@@ -85,26 +89,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title=APP_NAME, version="2.0.0", debug=DEBUG)
-
-# Подавляем известные warning из сторонних библиотек
-warnings.filterwarnings(
-    "ignore",
-    message=r".*torch\.load.*weights_only=False.*",
-    category=FutureWarning,
-    module=r"df\.checkpoint",
-)
-# Подавляем warning об устаревшем импорте torchaudio
-warnings.filterwarnings(
-    "ignore",
-    message=r".*torchaudio\.backend\.common\.AudioMetaData.*has been moved.*",
-    category=UserWarning,
-)
-# Подавляем warning об устаревшем torchaudio.set_audio_backend
-warnings.filterwarnings(
-    "ignore",
-    message=r".*torchaudio\._backend\.set_audio_backend has been deprecated.*",
-    category=UserWarning,
-)
 
 # Обработка сигналов для корректного завершения
 def signal_handler(sig, frame):
