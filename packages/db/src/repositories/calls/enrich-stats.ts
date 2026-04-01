@@ -15,6 +15,7 @@ export interface EnrichedManagerStats extends ManagerStatsRow {
   kpiCompletionPercentage?: number;
   kpiCalculatedBonus?: number;
   kpiTotalSalary?: number;
+  kpiActualPerformanceRubles?: number; // Факт выполнения в рублях
 }
 
 export const callsEnrichStats = {
@@ -96,6 +97,9 @@ export const callsEnrichStats = {
           : 0;
 
       const totalSalary = (kpiData?.kpiBaseSalary ?? 0) + calculatedBonus;
+      
+      // Факт выполнения в рублях - это рассчитанный бонус
+      const actualPerformanceRubles = calculatedBonus;
 
       enrichedStats[name] = {
         ...stat,
@@ -106,6 +110,7 @@ export const callsEnrichStats = {
         kpiCompletionPercentage: completionPercentage,
         kpiCalculatedBonus: calculatedBonus,
         kpiTotalSalary: totalSalary,
+        kpiActualPerformanceRubles: actualPerformanceRubles,
       };
     }
 

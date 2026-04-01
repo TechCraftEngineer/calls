@@ -19,6 +19,7 @@ export interface ManagerStats {
   kpiCompletionPercentage?: number;
   kpiCalculatedBonus?: number;
   kpiTotalSalary?: number;
+  kpiActualPerformanceRubles?: number; // Факт выполнения в рублях
 }
 
 export interface PreparedStats {
@@ -38,6 +39,7 @@ export interface PreparedStats {
   kpiCompletionPercentage?: number;
   kpiCalculatedBonus?: number;
   kpiTotalSalary?: number;
+  kpiActualPerformanceRubles?: number; // Факт выполнения в рублях
 }
 
 export interface FormatReportParams {
@@ -98,6 +100,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
     totalTargetBonus: number;
     totalCalculatedBonus: number;
     totalSalary: number;
+    totalActualPerformanceRubles: number; // Факт выполнения в рублях
   };
 } {
   const managers: PreparedStats[] = [];
@@ -111,6 +114,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
   let totalTargetBonus = 0;
   let totalCalculatedBonus = 0;
   let totalSalary = 0;
+  let totalActualPerformanceRubles = 0;
 
   for (const [name, raw] of entries) {
     if (!raw || typeof raw !== "object") continue;
@@ -134,6 +138,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
     totalTargetBonus += raw.kpiTargetBonus ?? 0;
     totalCalculatedBonus += raw.kpiCalculatedBonus ?? 0;
     totalSalary += raw.kpiTotalSalary ?? 0;
+    totalActualPerformanceRubles += raw.kpiActualPerformanceRubles ?? 0;
 
     managers.push({
       name,
@@ -152,6 +157,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
       kpiCompletionPercentage: raw.kpiCompletionPercentage,
       kpiCalculatedBonus: raw.kpiCalculatedBonus,
       kpiTotalSalary: raw.kpiTotalSalary,
+      kpiActualPerformanceRubles: raw.kpiActualPerformanceRubles,
     });
   }
 
@@ -171,6 +177,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
       totalTargetBonus,
       totalCalculatedBonus,
       totalSalary,
+      totalActualPerformanceRubles,
     },
   };
 }
@@ -265,7 +272,10 @@ export function formatTelegramReport(params: FormatReportParams): string {
         `   💰 Оклад: ${s.kpiBaseSalary !== null && s.kpiBaseSalary !== undefined ? formatValue(s.kpiBaseSalary) : "—"} ₽ | 🎁 Бонус: ${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : "—"} ₽`,
       );
       lines.push(
-        `   💵 Итого: ${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : "—"} ₽`,
+        `   📊 План минут: ${s.kpiTargetTalkTimeMinutes !== null && s.kpiTargetTalkTimeMinutes !== undefined ? formatValue(s.kpiTargetTalkTimeMinutes) : "—"} | 📈 Факт: ${s.kpiActualPerformanceRubles !== null && s.kpiActualPerformanceRubles !== undefined ? formatValue(s.kpiActualPerformanceRubles) : "—"} ₽`,
+      );
+      lines.push(
+        `   📊 % выполнения: ${s.kpiCompletionPercentage !== null && s.kpiCompletionPercentage !== undefined ? s.kpiCompletionPercentage : "—"}% | 💵 Итого: ${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : "—"} ₽`,
       );
       lines.push("");
     }
@@ -304,6 +314,7 @@ export function formatTelegramReport(params: FormatReportParams): string {
     lines.push(`• Общий оклад: ${formatValue(totals.totalBaseSalary)} ₽`);
     lines.push(`• Целевой бонус: ${formatValue(totals.totalTargetBonus)} ₽`);
     lines.push(`• Начисленный бонус: ${formatValue(totals.totalCalculatedBonus)} ₽`);
+    lines.push(`• Факт выполнения: ${formatValue(totals.totalActualPerformanceRubles)} ₽`);
     lines.push(`• Итого к выплате: ${formatValue(totals.totalSalary)} ₽`);
   }
 
@@ -400,7 +411,10 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
         `   💰 Оклад: <b>${s.kpiBaseSalary !== null && s.kpiBaseSalary !== undefined ? formatValue(s.kpiBaseSalary) : "—"} ₽</b> | 🎁 Бонус: <b>${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : "—"} ₽</b>`,
       );
       lines.push(
-        `   💵 Итого: <b>${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : "—"} ₽</b>`,
+        `   📊 План минут: <b>${s.kpiTargetTalkTimeMinutes !== null && s.kpiTargetTalkTimeMinutes !== undefined ? formatValue(s.kpiTargetTalkTimeMinutes) : "—"}</b> | 📈 Факт: <b>${s.kpiActualPerformanceRubles !== null && s.kpiActualPerformanceRubles !== undefined ? formatValue(s.kpiActualPerformanceRubles) : "—"} ₽</b>`,
+      );
+      lines.push(
+        `   � % выполнения: <b>${s.kpiCompletionPercentage !== null && s.kpiCompletionPercentage !== undefined ? s.kpiCompletionPercentage : "—"}%</b> | �💵 Итого: <b>${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : "—"} ₽</b>`,
       );
       lines.push("");
     }
@@ -442,6 +456,9 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     );
     lines.push(
       `• Начисленный бонус: <b>${totals.totalCalculatedBonus > 0 ? formatValue(totals.totalCalculatedBonus) : "—"} ₽</b>`,
+    );
+    lines.push(
+      `• Факт выполнения: <b>${totals.totalActualPerformanceRubles > 0 ? formatValue(totals.totalActualPerformanceRubles) : "—"} ₽</b>`,
     );
     lines.push(
       `• Итого к выплате: <b>${totals.totalSalary > 0 ? formatValue(totals.totalSalary) : "—"} ₽</b>`,

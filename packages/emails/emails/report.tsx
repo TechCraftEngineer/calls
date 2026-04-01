@@ -31,6 +31,7 @@ export interface ManagerStats {
   kpiCompletionPercentage?: number;
   kpiCalculatedBonus?: number;
   kpiTotalSalary?: number;
+  kpiActualPerformanceRubles?: number; // Факт выполнения в рублях
 }
 
 export interface ReportEmailProps {
@@ -80,6 +81,7 @@ interface PreparedStats {
   kpiCompletionPercentage?: number;
   kpiCalculatedBonus?: number;
   kpiTotalSalary?: number;
+  kpiActualPerformanceRubles?: number; // Факт выполнения в рублях
 }
 
 function prepareStats(entries: [string, ManagerStats][]): {
@@ -96,6 +98,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
     totalTargetBonus: number;
     totalCalculatedBonus: number;
     totalSalary: number;
+    totalActualPerformanceRubles: number; // Факт выполнения в рублях
   };
 } {
   const managers: PreparedStats[] = [];
@@ -109,6 +112,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
   let totalTargetBonus = 0;
   let totalCalculatedBonus = 0;
   let totalSalary = 0;
+  let totalActualPerformanceRubles = 0;
 
   for (const [name, raw] of entries) {
     if (!raw || typeof raw !== "object") continue;
@@ -132,6 +136,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
     totalTargetBonus += raw.kpiTargetBonus ?? 0;
     totalCalculatedBonus += raw.kpiCalculatedBonus ?? 0;
     totalSalary += raw.kpiTotalSalary ?? 0;
+    totalActualPerformanceRubles += raw.kpiActualPerformanceRubles ?? 0;
 
     managers.push({
       id: name, // Используем имя как уникальный идентификатор
@@ -151,6 +156,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
       kpiCompletionPercentage: raw.kpiCompletionPercentage,
       kpiCalculatedBonus: raw.kpiCalculatedBonus,
       kpiTotalSalary: raw.kpiTotalSalary,
+      kpiActualPerformanceRubles: raw.kpiActualPerformanceRubles,
     });
   }
 
@@ -170,6 +176,7 @@ function prepareStats(entries: [string, ManagerStats][]): {
       totalTargetBonus,
       totalCalculatedBonus,
       totalSalary,
+      totalActualPerformanceRubles,
     },
   };
 }
@@ -266,7 +273,16 @@ export const ReportEmail = ({
                             Бонус
                           </th>
                           <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                            План минут
+                          </th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                            Факт выполнения
+                          </th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
                             % выполнения
+                          </th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                            Итого
                           </th>
                         </>
                       )}
@@ -305,7 +321,16 @@ export const ReportEmail = ({
                                 {formatValue(manager.kpiCalculatedBonus ?? 0)} ₽
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center">
+                                {formatValue(manager.kpiTargetTalkTimeMinutes ?? 0)}
+                              </td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">
+                                {formatValue(manager.kpiActualPerformanceRubles ?? 0)} ₽
+                              </td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">
                                 {manager.kpiCompletionPercentage ?? 0}%
+                              </td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">
+                                {formatValue(manager.kpiTotalSalary ?? 0)} ₽
                               </td>
                             </>
                           )}
@@ -339,6 +364,15 @@ export const ReportEmail = ({
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center">
                             -
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">
+                            {formatValue(kpiTable.totals.totalActualPerformanceRubles)} ₽
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">
+                            -
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">
+                            {formatValue(kpiTable.totals.totalSalary)} ₽
                           </td>
                         </>
                       )}
