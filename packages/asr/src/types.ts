@@ -10,6 +10,8 @@ export interface Utterance {
   text: string;
   start?: number;
   end?: number;
+  embedding?: number[];
+  confidence?: number;
 }
 
 export interface AsrResult {

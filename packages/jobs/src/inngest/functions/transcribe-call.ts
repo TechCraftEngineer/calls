@@ -3,7 +3,7 @@
  * Получает аудио из S3, запускает ASR pipeline, сохраняет транскрипт.
  */
 
-import { identifySpeakersWithLlm } from "@calls/asr/llm/identify-speakers";
+import { identifySpeakersWithEmbeddings } from "@calls/asr/llm/identify-speakers-with-embeddings";
 import { runTranscriptionPipelineFromAsrAudio } from "@calls/asr/pipeline/run-transcription-pipeline";
 import { runPipelineAudioPreprocess } from "@calls/asr/pipeline/transcribe-pipeline-audio";
 import {
@@ -55,7 +55,6 @@ export const transcribeCallFn = inngest.createFunction(
       }
     });
 
-    
     const call = await step.run("db/calls:get", async () => {
       const c = await callsService.getCall(callId);
       if (!c) throw new Error(`Звонок не найден: ${callId}`);
@@ -173,10 +172,60 @@ export const transcribeCallFn = inngest.createFunction(
 
     const identifyResult = await step.run("llm/diarize", async () => {
       const fallbackManagerName = call.name?.trim() || null;
-      return identifySpeakersWithLlm(result.normalizedText, {
+
+      // Извлекаем данные из giga-am результата
+      const gigaAmLog = result.metadata.asrLogs?.find((log) => log.provider === "gigaam");
+      const gigaAmRaw = gigaAmLog?.raw as { speakerTimeline?: unknown } | undefined;
+
+      // Безопасно извлекаем speaker_timeline
+      let speakerTimeline:
+        | Array<{
+            speaker: string;
+            start: number;
+            end: number;
+            text: string;
+            overlap?: boolean;
+          }>
+        | undefined;
+
+      if (gigaAmRaw?.speakerTimeline && Array.isArray(gigaAmRaw.speakerTimeline)) {
+        speakerTimeline = gigaAmRaw.speakerTimeline.map((item: unknown) => {
+          if (typeof item === "object" && item !== null) {
+            const entry = item as Record<string, unknown>;
+            return {
+              speaker: typeof entry.speaker === "string" ? entry.speaker : "SPEAKER_01",
+              start: typeof entry.start === "number" ? entry.start : 0,
+              end: typeof entry.end === "number" ? entry.end : 0,
+              text: typeof entry.text === "string" ? entry.text : "",
+              overlap: typeof entry.overlap === "boolean" ? entry.overlap : undefined,
+            };
+          }
+          return {
+            speaker: "SPEAKER_01",
+            start: 0,
+            end: 0,
+            text: "",
+          };
+        });
+      }
+
+      // Извлекаем utterances с эмбеддингами и confidence
+      const utterances = gigaAmLog?.utterances;
+      const segments = utterances?.map((u) => ({
+        speaker: u.speaker,
+        start: u.start,
+        end: u.end,
+        text: u.text,
+        embedding: u.embedding,
+        confidence: u.confidence,
+      }));
+
+      return identifySpeakersWithEmbeddings(result.normalizedText, {
         direction: call.direction,
         managerName: managerNameFromPbx ?? fallbackManagerName,
         workspaceId: call.workspaceId,
+        speakerTimeline,
+        segments,
       });
     });
     const { text: finalText, customerName, operatorName } = identifyResult;

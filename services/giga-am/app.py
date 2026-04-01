@@ -19,6 +19,7 @@ from services.alignment_service import AlignmentService
 from services.attribution_service import AttributionService
 from services.clustering_service import ClusteringService
 from services.embedding_service import EmbeddingService
+from services.overlap_handler import OverlapHandler
 from services.postprocess_service import PostprocessService
 from services.transcription_service import transcription_service
 from utils.file_validation import FileValidator
@@ -87,7 +88,17 @@ setup_cache_cleanup()
 
 alignment_service = AlignmentService()
 embedding_service = EmbeddingService()
-clustering_service = ClusteringService()
+clustering_service = ClusteringService(
+    base_threshold=settings.clustering_base_threshold,
+    min_segment_duration=settings.clustering_min_segment_duration,
+    temporal_weight=settings.clustering_temporal_weight,
+    confidence_threshold=settings.clustering_confidence_threshold,
+)
+overlap_handler = OverlapHandler(
+    overlap_confidence_threshold=getattr(settings, 'overlap_confidence_threshold', 0.7),
+    min_overlap_duration=getattr(settings, 'min_overlap_duration', 0.5),
+    embedding_similarity_threshold=getattr(settings, 'overlap_embedding_similarity', 0.6),
+)
 attribution_service = AttributionService()
 postprocess_service = PostprocessService()
 
@@ -162,6 +173,42 @@ def _run_ultra_pipeline(
         )
         clustering_time = time.time() - start_time
         metrics.record_stage_time(request_id, "clustering", clustering_time)
+        
+        # Overlap processing этап - разделение одновременно говорящих спикеров
+        if settings.diarization_enabled and getattr(settings, 'overlap_separation_enabled', True):
+            start_time = time.time()
+            # Получаем кластеры из результатов кластеризации
+            clusters_map: dict[str, dict[str, Any]] = {}
+            for seg in diarized_segments:
+                speaker = seg.get("speaker")
+                if speaker and speaker not in clusters_map:
+                    embedding = seg.get("embedding", [])
+                    if embedding:
+                        clusters_map[speaker] = {
+                            "speaker": speaker,
+                            "centroid": embedding,
+                            "vectors": [embedding],
+                        }
+            
+            clusters = list(clusters_map.values())
+            
+            # Обработка overlap
+            diarized_segments = overlap_handler.process_overlaps(
+                diarized_segments,
+                clusters,
+                overlap_spans=overlap_spans,
+            )
+            overlap_time = time.time() - start_time
+            metrics.record_stage_time(request_id, "overlap_separation", overlap_time)
+            
+            # Логируем статистику overlap
+            overlap_stats = overlap_handler.get_overlap_statistics(diarized_segments)
+            logger.info("Overlap processing completed", {
+                "request_id": request_id,
+                "overlap_segments": overlap_stats["overlap_segments"],
+                "sub_segments": overlap_stats["sub_segments"],
+                "overlap_percentage": f"{overlap_stats['overlap_percentage']:.1f}%",
+            })
 
     # Attribution этап
     start_time = time.time()
