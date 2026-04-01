@@ -187,7 +187,7 @@ export const emailReportsFn = inngest.createFunction(
             try {
               await sendEmail({
                 to: [r.email],
-                subject: `Звонки: ${dateFromString} — ${dateToString}`,
+                subject: `Отчёт по звонкам: ${dateFromString} — ${dateToString}`,
                 react: ReportEmail({
                   reportType,
                   username: undefined,
