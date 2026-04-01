@@ -27,9 +27,21 @@ from fastapi.responses import Response
 from pedalboard import Pedalboard, Compressor, HighpassFilter, LowpassFilter
 from scipy import signal as scipy_signal
 
-# Импортируем управление предупреждениями
-from utils.warnings_utils import setup_warnings_filters
-setup_warnings_filters()
+# Импортируем управление предупреждениями (прямой импорт)
+import warnings
+import sys
+import os
+
+# Добавляем путь к модулю
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
+
+# Прямой импорт без использования utils/__init__.py
+warnings_utils_path = os.path.join(current_dir, 'utils', 'warnings_utils.py')
+spec = __import__('importlib.util').util.spec_from_file_location("warnings_utils", warnings_utils_path)
+warnings_utils = __import__('importlib.util').util.module_from_spec(spec)
+spec.loader.exec_module(warnings_utils)
+warnings_utils.setup_warnings_filters()
 
 # DeepFilterNet для нейросетевого шумоподавления
 try:
@@ -45,6 +57,43 @@ try:
     WPE_AVAILABLE = True
 except ImportError:
     WPE_AVAILABLE = False
+
+# Импорты для телефонии
+try:
+    from services.telephony_service import TelephonyProcessor
+    TELEPHONY_AVAILABLE = True
+    logger.info("✓ Telephony сервис доступен")
+except ImportError as e:
+    logger.warning(f"Telephony service недоступен: {e}")
+    TELEPHONY_AVAILABLE = False
+
+# Silero VAD для детекции речи
+try:
+    import torch.nn.functional as F
+    from utils.audio_utils import read_upload_bytes_capped
+    from utils.error_handlers import handle_audio_processing_error
+    from config.settings import MAX_UPLOAD_BYTES, MAX_AUDIO_SECONDS
+    
+    # Загружаем модель Silero VAD
+    try:
+        vad_model, utils = torch.hub.load(
+            repo_or_dir='snakers4/silero-vad',
+            model='silero_vad',
+            force_reload=False,
+            onnx=False,
+            trust_repo=True
+        )
+        vad_model.eval()
+        VAD_AVAILABLE = True
+        logger.info("✓ Silero VAD модель загружена")
+    except Exception as e:
+        logger.error(f"Ошибка загрузки Silero VAD: {e}")
+        VAD_AVAILABLE = False
+        vad_model = None
+except ImportError as e:
+    logger.error(f"Silero VAD недоступен: {e}")
+    VAD_AVAILABLE = False
+    vad_model = None
 
 # Pyannote для диаризации
 try:
@@ -89,6 +138,25 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title=APP_NAME, version="2.0.0", debug=DEBUG)
+
+# Импортируем телефонные эндпоинты
+try:
+    from api.telephony_endpoints import (
+        enhance_telephony_audio,
+        convert_telephony_format, 
+        split_telephony_duplex
+    )
+    TELEPHONY_ENDPOINTS_AVAILABLE = True
+    logger.info("✓ Telephony API эндпоинты загружены")
+except ImportError as e:
+    logger.warning(f"Telephony endpoints недоступны: {e}")
+    TELEPHONY_ENDPOINTS_AVAILABLE = False
+
+# Добавляем телефонные эндпоинты в приложение
+if TELEPHONY_ENDPOINTS_AVAILABLE:
+    app.post("/telephony/enhance")(enhance_telephony_audio)
+    app.post("/telephony/convert")(convert_telephony_format)
+    app.post("/telephony/split")(split_telephony_duplex)
 
 # Обработка сигналов для корректного завершения
 def signal_handler(sig, frame):
@@ -694,6 +762,8 @@ async def health_check():
         "deepfilter_loaded": DEEPFILTER_AVAILABLE and deepfilter_model is not None,
         "wpe_available": WPE_AVAILABLE,
         "pyannote_loaded": PYANNOTE_AVAILABLE and pyannote_pipeline is not None,
+        "telephony_available": TELEPHONY_AVAILABLE,
+        "telephony_endpoints_available": TELEPHONY_ENDPOINTS_AVAILABLE,
         "version": "2.0.0",
     }
 

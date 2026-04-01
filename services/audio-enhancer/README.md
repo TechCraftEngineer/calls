@@ -16,6 +16,8 @@ startup_duration_timeout: 1h
 
 Продвинутый микросервис для улучшения качества аудио перед распознаванием речи (ASR/STT).
 
+**🆕 НОВОЕ**: Поддержка телефонных звонков с кодеками G.711, G.729, Opus и дуплексной обработкой.
+
 ![Build](https://img.shields.io/github/actions/workflow/status/TechCraftEngineer/calls/jobs.yml?branch=main)
 ![Coverage](https://img.shields.io/badge/coverage-NA-lightgrey)
 ![PyPI/version](https://img.shields.io/badge/PyPI%2Fversion-NA-lightgrey)
@@ -94,6 +96,39 @@ API доступен на <http://localhost:7860>
 Документация: <http://localhost:7860/docs>
 
 ### API endpoints
+
+#### Телефония 🆕
+
+##### POST /telephony/enhance
+Улучшение телефонного аудио с поддержкой кодеков.
+
+```bash
+curl -X POST "http://localhost:7860/telephony/enhance" \
+  -F "file=@call.g711" \
+  -F "format_type=g711" \
+  -F "duplex=true" \
+  -F "apply_telephony_filters=true"
+```
+
+##### POST /telephony/convert
+Конвертация телефонного формата в WAV.
+
+```bash
+curl -X POST "http://localhost:7860/telephony/convert" \
+  -F "file=@call.opus" \
+  -F "from_format=opus" \
+  -F "to_format=wav"
+```
+
+##### POST /telephony/split
+Разделение дуплексного аудио на caller/callee.
+
+```bash
+curl -X POST "http://localhost:7860/telephony/split" \
+  -F "file=@stereo_call.wav"
+```
+
+#### Стандартные endpoints
 
 #### GET /health
 
