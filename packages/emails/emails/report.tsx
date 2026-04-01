@@ -67,24 +67,6 @@ function formatScore(value: number | null | undefined): string {
   return value.toFixed(1);
 }
 
-// Вычисление плана в зависимости от типа отчета
-function calculateTargetPlan(monthlyTargetMinutes: number, reportType: ReportType): number {
-  if (!monthlyTargetMinutes || monthlyTargetMinutes <= 0) return 0;
-  
-  switch (reportType) {
-    case "daily":
-      // Дневной план = месячный план / 22 рабочих дня
-      return Math.round(monthlyTargetMinutes / 22);
-    case "weekly":
-      // Недельный план = месячный план / 4 недели
-      return Math.round(monthlyTargetMinutes / 4);
-    case "monthly":
-      // Месячный план остается без изменений
-      return monthlyTargetMinutes;
-    default:
-      return monthlyTargetMinutes;
-  }
-}
 
 interface PreparedStats {
   id: string;
@@ -118,12 +100,11 @@ function prepareStats(entries: [string, ManagerStats][]): {
     incomingTotalDurationSec: number;
     outgoingTotalDurationSec: number;
     evaluatedCount: number;
-    // KPI итоги
     totalBaseSalary: number;
     totalTargetBonus: number;
     totalCalculatedBonus: number;
     totalSalary: number;
-    totalActualPerformanceRubles: number; // Факт выполнения в рублях
+    totalActualPerformanceRubles: number;
   };
 } {
   const managers: PreparedStats[] = [];
@@ -139,8 +120,22 @@ function prepareStats(entries: [string, ManagerStats][]): {
   let totalSalary = 0;
   let totalActualPerformanceRubles = 0;
 
+  console.log("[DEBUG EMAIL] prepareStats called with entries:", entries.length);
+
   for (const [name, raw] of entries) {
     if (!raw || typeof raw !== "object") continue;
+    
+    console.log(`[DEBUG EMAIL] Processing manager: ${name}`);
+    console.log(`[DEBUG EMAIL] Raw KPI data:`, {
+      kpiBaseSalary: raw.kpiBaseSalary,
+      kpiTargetBonus: raw.kpiTargetBonus,
+      kpiTargetTalkTimeMinutes: raw.kpiTargetTalkTimeMinutes,
+      kpiActualTalkTimeMinutes: raw.kpiActualTalkTimeMinutes,
+      kpiCompletionPercentage: raw.kpiCompletionPercentage,
+      kpiCalculatedBonus: raw.kpiCalculatedBonus,
+      kpiTotalSalary: raw.kpiTotalSalary,
+    });
+    
     const inCount = raw.incoming?.count ?? 0;
     const outCount = raw.outgoing?.count ?? 0;
     const inTotalSec = raw.incoming?.totalDuration ?? (raw.incoming?.duration ?? 0) * inCount;
@@ -382,14 +377,6 @@ export const ReportEmail = ({
                   </thead>
                   <tbody>
                     {kpiTable.managers.map((manager) => {
-                      const totalMinutes = Math.round(
-                        (manager.incomingTotalDurationSec + manager.outgoingTotalDurationSec) / 60,
-                      );
-                      
-                      // Вычисляем процент выполнения на основе плана для текущего периода
-                      const targetPlan = calculateTargetPlan(manager.kpiTargetTalkTimeMinutes ?? 0, reportType);
-                      const completionPercentage = targetPlan > 0 ? Math.round((totalMinutes / targetPlan) * 100) : 0;
-
                       return (
                         <tr key={manager.id}>
                           <td className="border border-gray-300 px-3 py-2 text-sm">
@@ -407,7 +394,7 @@ export const ReportEmail = ({
                           {includeKpi && (
                             <>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                                {formatValue(calculateTargetPlan(manager.kpiTargetTalkTimeMinutes ?? 0, reportType))}
+                                {formatValue(manager.kpiTargetTalkTimeMinutes ?? 0)}
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                                 {formatValue(Math.round(manager.incomingTotalDurationSec / 60))}
@@ -416,10 +403,10 @@ export const ReportEmail = ({
                                 {formatValue(Math.round(manager.outgoingTotalDurationSec / 60))}
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                                {formatValue(totalMinutes)}
+                                {formatValue(manager.kpiActualTalkTimeMinutes ?? 0)}
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                                {completionPercentage}%
+                                {manager.kpiCompletionPercentage ?? 0}%
                               </td>
                             </>
                           )}
@@ -478,13 +465,13 @@ export const ReportEmail = ({
                             -
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                            {Math.round(kpiTable.totals.incomingTotalDurationSec / 60)}
+                            {formatValue(Math.round(kpiTable.totals.incomingTotalDurationSec / 60))}
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                            {Math.round(kpiTable.totals.outgoingTotalDurationSec / 60)}
+                            {formatValue(Math.round(kpiTable.totals.outgoingTotalDurationSec / 60))}
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                            {Math.round((kpiTable.totals.incomingTotalDurationSec + kpiTable.totals.outgoingTotalDurationSec) / 60)}
+                            {formatValue(Math.round((kpiTable.totals.incomingTotalDurationSec + kpiTable.totals.outgoingTotalDurationSec) / 60))}
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                             -
