@@ -107,9 +107,9 @@ export interface PbxNumberItem {
 export type ReportType = "daily" | "weekly" | "monthly";
 
 export const REPORT_TYPE_LABELS = {
-  daily: "Ежедневный",
-  weekly: "Еженедельный",
-  monthly: "Ежемесячный",
+  daily: "Звонки",
+  weekly: "Звонки",
+  monthly: "Звонки",
 } as const;
 
 export function getReportTypeLabel(reportType: ReportType): string {

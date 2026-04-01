@@ -141,7 +141,7 @@ export const sendTestEmail = workspaceProcedure
     try {
       await sendEmail({
         to: [userEmail],
-        subject: `Отчёт по звонкам (${reportTypeLabel}): ${dateFromString} — ${dateToString}`,
+        subject: `Звонки: ${dateFromString} — ${dateToString}`,
         react: ReportEmail({
           reportType,
           username: userForEdit.givenName ?? undefined,

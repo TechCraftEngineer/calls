@@ -2,7 +2,7 @@
  * Обработка и подготовка статистики для отчетов
  */
 
-import type { ManagerStats, PreparedStats, StatsTotals, PreparedStatsResult } from "./types";
+import type { ManagerStats, PreparedStats, PreparedStatsResult } from "./types";
 
 /**
  * Вычисляет минуты из секунд с округлением

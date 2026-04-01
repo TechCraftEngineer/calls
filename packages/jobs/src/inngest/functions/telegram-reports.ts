@@ -16,7 +16,6 @@ import { sendMessage } from "@calls/telegram-bot";
 import { subMonths } from "date-fns";
 import {
   formatTelegramReportHtml,
-  type ManagerStats,
   splitTelegramHtmlMessage,
 } from "../../reports";
 import { inngest } from "../client";

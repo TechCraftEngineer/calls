@@ -2,7 +2,7 @@
  * Форматирование HTML отчетов для Telegram
  */
 
-import type { FormatReportParams, PreparedStats } from "./types";
+import type { FormatReportParams } from "./types";
 import { formatValue, formatScore, pluralizeCalls, getReportTypeLabel, validateReportParams, escapeHtml } from "./utils";
 import { prepareStats, computeOverallAverages, calculateMinutesFromSeconds } from "./stats-processor";
 
@@ -87,7 +87,7 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
           `   💵 Итого: <b>${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : "—"} ₽</b>`,
         );
       } else {
-        // Ежедневный отчет - только бонус
+        // Звонки - только бонус
         lines.push(
           `   🎁 Бонус: <b>${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : "—"} ₽</b>`,
         );

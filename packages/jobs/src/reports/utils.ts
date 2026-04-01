@@ -39,11 +39,7 @@ export function pluralizeCalls(n: number): string {
 }
 
 export function getReportTypeLabel(reportType: "daily" | "weekly" | "monthly"): string {
-  return reportType === "daily"
-    ? "Ежедневный"
-    : reportType === "weekly"
-      ? "Еженедельный"
-      : "Ежемесячный";
+  return "Звонки";
 }
 
 

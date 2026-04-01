@@ -30,8 +30,10 @@ class CacheEntry:
         return (datetime.utcnow() - self.created_at).total_seconds()
     
     @property
-    def is_expired(self, max_age_hours: int = 24) -> bool:
+    def is_expired(self) -> bool:
         """Проверка истечения срока хранения"""
+        from config import settings
+        max_age_hours = settings.cache_max_age_hours
         return self.age_seconds > (max_age_hours * 3600)
 
 
@@ -90,7 +92,7 @@ class TranscriptionCache:
             entry = self._cache[cache_key]
             
             # Проверка истечения срока
-            if entry.is_expired(self.max_age_hours):
+            if entry.is_expired:
                 logger.debug(f"Cache entry expired for key: {cache_key[:16]}...")
                 del self._cache[cache_key]
                 self._stats["misses"] += 1
