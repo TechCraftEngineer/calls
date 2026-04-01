@@ -24,13 +24,10 @@ export {
   pluralizeCalls,
   getReportTypeLabel,
   validateReportParams,
-  calculateTargetPlan,
 } from "./utils";
 
 // Обработка статистики
 export {
   prepareStats,
   computeOverallAverages,
-  calculateTotalMinutes,
-  calculateManagerTotalMinutes,
 } from "./stats-processor";

@@ -201,6 +201,32 @@ class ModelManager:
             logger.error("WPE processing failed: %s", e)
             raise ModelLoadError("wpe", f"Processing failed: {str(e)}")
     
+    @property
+    def pyannote_available(self) -> bool:
+        """
+        Возвращает доступность Pyannote для диаризации.
+        
+        Returns:
+            False - диаризация обрабатывается в другом сервисе
+        """
+        return False
+    
+    def run_diarization(self, audio: np.ndarray, sr: int) -> dict:
+        """
+        Запускает диаризацию аудио.
+        
+        Args:
+            audio: Аудио данные
+            sr: Частота дискретизации
+            
+        Returns:
+            Результат диаризации
+            
+        Raises:
+            ModelLoadError: Always - диаризация не поддерживается в этом сервисе
+        """
+        raise ModelLoadError("pyannote", "Diarization is handled by a separate service")
+    
     
     def get_model_status(self) -> dict:
         """

@@ -26,11 +26,8 @@ export {
   pluralizeCalls,
   getReportTypeLabel,
   validateReportParams,
-  calculateTargetPlan,
   
   // Обработка статистики
   prepareStats,
   computeOverallAverages,
-  calculateTotalMinutes,
-  calculateManagerTotalMinutes,
 } from "./index";

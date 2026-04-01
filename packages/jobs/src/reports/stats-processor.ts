@@ -112,14 +112,3 @@ export function computeOverallAverages(managers: PreparedStats[]): {
   };
 }
 
-export function calculateTotalMinutes(totals: StatsTotals): number {
-  return Math.round(
-    (totals.incomingTotalDurationSec + totals.outgoingTotalDurationSec) / 60,
-  );
-}
-
-export function calculateManagerTotalMinutes(manager: PreparedStats): number {
-  return Math.round(
-    (manager.incomingTotalDurationSec + manager.outgoingTotalDurationSec) / 60,
-  );
-}

@@ -3,8 +3,8 @@
  */
 
 import type { FormatReportParams, PreparedStats } from "./types";
-import { formatValue, formatScore, pluralizeCalls, getReportTypeLabel, validateReportParams, escapeHtml, calculateTargetPlan } from "./utils";
-import { prepareStats, computeOverallAverages, calculateTotalMinutes, calculateManagerTotalMinutes } from "./stats-processor";
+import { formatValue, formatScore, pluralizeCalls, getReportTypeLabel, validateReportParams, escapeHtml } from "./utils";
+import { prepareStats, computeOverallAverages } from "./stats-processor";
 
 export function formatTelegramReportHtml(params: FormatReportParams): string {
   const {
@@ -40,7 +40,6 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
       .join("\n");
   }
 
-  const totalMinutes = calculateTotalMinutes(totals);
   const lowRatedEntries = Object.entries(lowRatedCalls)
     .filter(([, n]) => n > 0)
     .sort((a, b) => b[1] - a[1]);
@@ -61,12 +60,16 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
 
   if (includeKpi) {
     for (const s of managers) {
-      const totalMinutes = calculateManagerTotalMinutes(s);
-      const targetPlan = calculateTargetPlan(s.kpiTargetTalkTimeMinutes ?? 0, reportType);
-      const completionPercentage = targetPlan > 0 ? Math.round((totalMinutes / targetPlan) * 100) : 0;
+      const totalMinutes = s.kpiActualTalkTimeMinutes ?? 0;
+      const targetPlan = s.kpiTargetTalkTimeMinutes ?? 0;
+      const completionPercentage = s.kpiCompletionPercentage ?? 0;
+      
+      // Вычисляем минуты для входящих и исходящих
+      const incomingMinutes = Math.round(s.incomingTotalDurationSec / 60);
+      const outgoingMinutes = Math.round(s.outgoingTotalDurationSec / 60);
 
       lines.push(`👤 <b>${escapeHtml(s.name)}</b>`);
-      lines.push(`   📞 Звонков: <b>${s.totalCount}</b> | ⏱️ Минут: <b>${totalMinutes}</b>`);
+      lines.push(`   📞 Вх: <b>${s.incomingCount}</b> (${incomingMinutes}мин) | Исх: <b>${s.outgoingCount}</b> (${outgoingMinutes}мин) | Всего: <b>${s.totalCount}</b> (${totalMinutes}мин)`);
       
       // Показываем оклад только в ежемесячных отчетах
       if (reportType === "monthly") {
@@ -100,9 +103,14 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     }
   } else {
     for (const s of managers) {
-      const totalMinutes = calculateManagerTotalMinutes(s);
+      const totalMinutes = s.kpiActualTalkTimeMinutes ?? 0;
+      
+      // Вычисляем минуты для входящих и исходящих
+      const incomingMinutes = Math.round(s.incomingTotalDurationSec / 60);
+      const outgoingMinutes = Math.round(s.outgoingTotalDurationSec / 60);
+
       lines.push(`👤 <b>${escapeHtml(s.name)}</b>`);
-      lines.push(`   📞 Звонков: <b>${s.totalCount}</b> | ⏱️ Минут: <b>${totalMinutes}</b>`);
+      lines.push(`   📞 Вх: <b>${s.incomingCount}</b> (${incomingMinutes}мин) | Исх: <b>${s.outgoingCount}</b> (${outgoingMinutes}мин) | Всего: <b>${s.totalCount}</b> (${totalMinutes}мин)`);
       lines.push("");
     }
   }
@@ -110,9 +118,14 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
   lines.push("");
 
   // Итоги по всем
+  const totalMinutes = totals.totalKpiActualTalkTimeMinutes ?? 0;
+  const totalIncomingMinutes = Math.round(totals.incomingTotalDurationSec / 60);
+  const totalOutgoingMinutes = Math.round(totals.outgoingTotalDurationSec / 60);
+  
   lines.push("📊 <b>Итоги по всем сотрудникам:</b>");
-  lines.push(`• Всего звонков: <b>${totals.totalCount}</b>`);
-  lines.push(`• Всего минут: <b>${totalMinutes}</b>`);
+  lines.push(`• Входящие: <b>${totals.incomingCount}</b> (${totalIncomingMinutes}мин)`);
+  lines.push(`• Исходящие: <b>${totals.outgoingCount}</b> (${totalOutgoingMinutes}мин)`);
+  lines.push(`• Всего: <b>${totals.totalCount}</b> (${totalMinutes}мин)`);
 
   if (isManagerReport && totals.totalCount > 0) {
     lines.push(`• Оценено: <b>${totals.evaluatedCount}/${totals.totalCount}</b>`);
@@ -123,14 +136,14 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
 
   // KPI итоги
   if (includeKpi) {
-    // Вычисляем общий план для периода на основе суммарного месячного плана
-    const totalTargetPlan = calculateTargetPlan(totals.totalKpiTargetTalkTimeMinutes, reportType);
+    // Используем уже вычисленный план из totals
+    const totalTargetPlan = totals.totalKpiTargetTalkTimeMinutes ?? 0;
     
-    // Показываем общий оклад только в ежемесячных отчетах
+    // Показываем общий оклад и целевой бонус только в ежемесячных отчетах
     if (reportType === "monthly") {
       lines.push(`• Общий оклад: <b>${totals.totalBaseSalary > 0 ? formatValue(totals.totalBaseSalary) : "—"} ₽</b>`);
+      lines.push(`• Целевой бонус: <b>${totals.totalTargetBonus > 0 ? formatValue(totals.totalTargetBonus) : "—"}</b>`);
     }
-    lines.push(`• Целевой бонус: <b>${totals.totalTargetBonus > 0 ? formatValue(totals.totalTargetBonus) : "—"} ₽</b>`);
     lines.push(`• Начисленный бонус: <b>${totals.totalCalculatedBonus > 0 ? formatValue(totals.totalCalculatedBonus) : "—"} ₽</b>`);
     lines.push(`• План минут: <b>${totalTargetPlan > 0 ? formatValue(totalTargetPlan) : "—"}</b>`);
     lines.push(`• Факт минут: <b>${totals.totalKpiActualTalkTimeMinutes > 0 ? formatValue(totals.totalKpiActualTalkTimeMinutes) : "—"}</b>`);

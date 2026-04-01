@@ -88,13 +88,6 @@ export const callsEnrichStats = {
         ),
       );
 
-    console.log(`[DEBUG] Found ${employees.length} employees in workspace ${workspaceId}`);
-    console.log("[DEBUG] Employees:", employees.map(e => ({
-      internalNumber: e.internalNumber,
-      kpiBaseSalary: e.kpiBaseSalary,
-      kpiTargetBonus: e.kpiTargetBonus,
-      kpiTargetTalkTimeMinutes: e.kpiTargetTalkTimeMinutes,
-    })));
 
     const kpiMapByNumber = new Map<
       string,
@@ -117,26 +110,14 @@ export const callsEnrichStats = {
       }
     }
 
-    console.log("[DEBUG] KPI map by number:", Object.fromEntries(kpiMapByNumber));
 
     // Обогащаем статистику KPI данными
     const enrichedStats: Record<string, EnrichedManagerStats> = {};
-    
-    console.log("[DEBUG] Input stats keys:", Object.keys(stats));
-    const firstKey = Object.keys(stats)[0];
-    if (firstKey) {
-      console.log("[DEBUG] Sample stat:", stats[firstKey]);
-    }
     
     for (const [name, stat] of Object.entries(stats)) {
       const cleanInternalNumber = stat.internalNumber ? String(stat.internalNumber).trim() : null;
       const kpiData = cleanInternalNumber ? kpiMapByNumber.get(cleanInternalNumber) : null;
 
-      // Отладочная информация
-      console.log(`[DEBUG] Processing manager: ${name}`);
-      console.log(`[DEBUG] Internal number: ${cleanInternalNumber}`);
-      console.log(`[DEBUG] KPI data found:`, kpiData);
-      console.log(`[DEBUG] Report type: ${reportType}`);
 
       // Вычисляем KPI метрики
       const incomingTotal =
@@ -147,29 +128,22 @@ export const callsEnrichStats = {
         (stat.outgoing?.duration ?? 0) * (stat.outgoing?.count ?? 0);
       const totalMinutes = Math.round((incomingTotal + outgoingTotal) / 60);
 
-      console.log(`[DEBUG] Total minutes: ${totalMinutes}`);
 
       const targetTalkTimeMinutes = calculateTargetPlan(kpiData?.kpiTargetTalkTimeMinutes ?? 0);
       const targetBonus = calculateTargetBonus(kpiData?.kpiTargetBonus ?? 0);
       
-      console.log(`[DEBUG] Monthly target plan: ${kpiData?.kpiTargetTalkTimeMinutes}`);
-      console.log(`[DEBUG] Calculated target plan: ${targetTalkTimeMinutes}`);
-      console.log(`[DEBUG] Monthly target bonus: ${kpiData?.kpiTargetBonus}`);
-      console.log(`[DEBUG] Calculated target bonus: ${targetBonus}`);
       
       const completionPercentage =
         targetTalkTimeMinutes > 0
           ? Math.min(100, Math.round((totalMinutes / targetTalkTimeMinutes) * 100))
           : 0;
 
-      console.log(`[DEBUG] Completion percentage: ${completionPercentage}%`);
 
       const calculatedBonus =
         targetTalkTimeMinutes > 0 && completionPercentage > 0
           ? Math.round(targetBonus * (completionPercentage / 100))
           : 0;
 
-      console.log(`[DEBUG] Calculated bonus: ${calculatedBonus}`);
 
       // Для ежедневных и еженедельных отчетов не включаем оклад в итоговую сумму
       const totalSalary = (reportType === "monthly" ? (kpiData?.kpiBaseSalary ?? 0) : 0) + calculatedBonus;

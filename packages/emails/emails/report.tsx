@@ -120,21 +120,9 @@ function prepareStats(entries: [string, ManagerStats][]): {
   let totalSalary = 0;
   let totalActualPerformanceRubles = 0;
 
-  console.log("[DEBUG EMAIL] prepareStats called with entries:", entries.length);
 
   for (const [name, raw] of entries) {
     if (!raw || typeof raw !== "object") continue;
-    
-    console.log(`[DEBUG EMAIL] Processing manager: ${name}`);
-    console.log(`[DEBUG EMAIL] Raw KPI data:`, {
-      kpiBaseSalary: raw.kpiBaseSalary,
-      kpiTargetBonus: raw.kpiTargetBonus,
-      kpiTargetTalkTimeMinutes: raw.kpiTargetTalkTimeMinutes,
-      kpiActualTalkTimeMinutes: raw.kpiActualTalkTimeMinutes,
-      kpiCompletionPercentage: raw.kpiCompletionPercentage,
-      kpiCalculatedBonus: raw.kpiCalculatedBonus,
-      kpiTotalSalary: raw.kpiTotalSalary,
-    });
     
     const inCount = raw.incoming?.count ?? 0;
     const outCount = raw.outgoing?.count ?? 0;

@@ -18,7 +18,8 @@ from utils.audio_utils import (
 )
 from utils.error_handlers import (
     setup_exception_handlers,
-    handle_audio_processing_error
+    handle_audio_processing_error,
+    ModelLoadError
 )
 from utils.logging_utils import request_logger, processing_logger
 
@@ -232,6 +233,12 @@ async def enhance_audio(
     """
     request_logger.log_request("POST", "/enhance", file_size=file.size)
     
+    if not AUDIO_PROCESSOR_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Audio processing service unavailable. Please ensure audio_service is properly installed."
+        )
+    
     try:
         # Валидация файла
         validate_audio_file(file)
@@ -360,6 +367,12 @@ async def denoise_only(
     """
     request_logger.log_request("POST", "/denoise", file_size=file.size)
     
+    if not AUDIO_PROCESSOR_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Audio processing service unavailable. Please ensure audio_service is properly installed."
+        )
+    
     try:
         validate_audio_file(file)
         audio_bytes = await read_upload_bytes_capped(file, config.MAX_UPLOAD_BYTES)
@@ -444,6 +457,12 @@ async def preprocess_audio(
     """
     request_logger.log_request("POST", "/preprocess", file_size=file.size)
     
+    if not AUDIO_PROCESSOR_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Audio processing service unavailable. Please ensure audio_service is properly installed."
+        )
+    
     try:
         validate_audio_file(file)
         audio_bytes = await read_upload_bytes_capped(file, config.MAX_UPLOAD_BYTES)
@@ -520,6 +539,14 @@ async def diarize_audio(
         
         return result
     
+    except ModelLoadError as e:
+        duration_ms = (time.time() - start_time) * 1000
+        request_logger.log_response("POST", "/diarize", 503, duration_ms)
+        logger.warning(f"Диаризация недоступна: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Diarization service unavailable: {str(e)}"
+        ) from e
     except HTTPException:
         raise
     except Exception as e:
@@ -715,15 +742,9 @@ def process_telephony_enhance(audio_bytes: bytes, format_type: str, duplex: bool
             sr = channel_data['sample_rate']
             
             # Применяем DeepFilterNet если доступен
-            if hasattr(model_manager, 'deepfilter_model') and model_manager.deepfilter_model is not None:
+            if model_manager.deepfilter_available:
                 try:
-                    from df.enhance import enhance
-                    audio = enhance(
-                        model=model_manager.deepfilter_model,
-                        df_state=model_manager.deepfilter_df_state,
-                        audio=audio.reshape(1, -1),
-                        sample_rate=sr
-                    )[0]
+                    audio = model_manager.apply_deepfilter(audio, sr)
                 except Exception as e:
                     logger.warning(f"DeepFilterNet обработка не удалась: {e}")
             
@@ -733,18 +754,22 @@ def process_telephony_enhance(audio_bytes: bytes, format_type: str, duplex: bool
                 meter = pyln.Meter(sr)
                 loudness = meter.integrated_loudness(audio)
                 if loudness > -16:
-                    audio = pyln.normalize.loudness(audio, -16)
-            except Exception:
-                pass
+                    audio = pyln.normalize.loudness(audio, loudness, -16)
+            except Exception as e:
+                logger.warning(f"Нормализация громкости не удалась: {e}")
             
             # Ресемплинг если нужно
             if sr != target_sr:
                 librosa = get_librosa()
                 if librosa:
                     audio = librosa.resample(audio, orig_sr=sr, target_sr=target_sr)
+                    sr = target_sr  # Обновляем sr только после успешного ресемплинга
+                else:
+                    # Если librosa недоступен и ресемплинг необходим, оставляем исходную частоту
+                    logger.warning(f"Ресемплинг с {sr}Hz до {target_sr}Hz не выполнен: librosa недоступен")
             
             result[channel_name]['audio'] = audio
-            result[channel_name]['sample_rate'] = target_sr
+            result[channel_name]['sample_rate'] = sr
     
     # Конвертация в байты для ответа
     response = {}
@@ -793,6 +818,10 @@ def process_telephony_convert(audio_bytes: bytes, from_format: str,
         librosa = get_librosa()
         if librosa:
             audio = librosa.resample(audio, orig_sr=sr, target_sr=sample_rate)
+            sr = sample_rate  # Обновляем sr только после успешного ресемплинга
+        else:
+            # Если librosa недоступен и ресемплинг необходим, оставляем исходную частоту
+            logger.warning(f"Ресемплинг с {sr}Hz до {sample_rate}Hz не выполнен: librosa недоступен")
     
     # Конвертируем в 16-bit PCM
     np = get_numpy()
@@ -806,13 +835,13 @@ def process_telephony_convert(audio_bytes: bytes, from_format: str,
         raise HTTPException(status_code=500, detail="SoundFile library not available")
     with io.BytesIO() as buffer:
         if to_format.lower() == "wav":
-            sf.write(buffer, audio_int16, sample_rate, format='WAV', subtype='PCM_16')
+            sf.write(buffer, audio_int16, sr, format='WAV', subtype='PCM_16')
         elif to_format.lower() == "mp3":
             # Используем pydub для MP3
             from pydub import AudioSegment
             audio_seg = AudioSegment(
                 audio_int16.tobytes(), 
-                frame_rate=sample_rate, 
+                frame_rate=sr, 
                 sample_width=2, 
                 channels=1
             )
