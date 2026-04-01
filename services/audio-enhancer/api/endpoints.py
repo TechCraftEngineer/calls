@@ -542,10 +542,10 @@ async def diarize_audio(
     except ModelLoadError as e:
         duration_ms = (time.time() - start_time) * 1000
         request_logger.log_response("POST", "/diarize", 503, duration_ms)
-        logger.warning(f"Диаризация недоступна: {e}")
+        logger.warning(f"Диаризация недоступна: {e!s}")
         raise HTTPException(
             status_code=503,
-            detail=f"Diarization service unavailable: {str(e)}"
+            detail=f"Diarization service unavailable: {e!s}"
         ) from e
     except HTTPException:
         raise
@@ -791,12 +791,16 @@ def process_telephony_enhance(audio_bytes: bytes, format_type: str, duplex: bool
             sf.write(buffer, audio_int16, sr, format='WAV', subtype='PCM_16')
             response[channel_name] = base64.b64encode(buffer.getvalue()).decode()
     
+    # Вычисляем реальную частоту дискретизации из обработанных данных
+    actual_sample_rates = [data['sample_rate'] for data in result.values()]
+    sample_rate = actual_sample_rates[0] if actual_sample_rates else target_sr
+    
     return {
         "channels": response,
         "metadata": {
             "original_format": format_type,
             "duplex": duplex,
-            "sample_rate": target_sr,
+            "sample_rate": sample_rate,
             "duration": max(data['duration'] for data in result.values()),
             "telephony_filters_applied": apply_filters
         }
