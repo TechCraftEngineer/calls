@@ -34,6 +34,8 @@ const gigaAmSegmentSchema = z.object({
   end_formatted: z.string().optional(),
   duration: z.number().optional(),
   speaker: z.string().optional(),
+  embedding: z.array(z.number()).optional(),
+  confidence: z.number().min(0).max(1).optional(),
 });
 
 const gigaAmSpeakerTimelineEntrySchema = z.object({
@@ -201,6 +203,8 @@ function segmentsToUtterances(segments: z.infer<typeof gigaAmSegmentSchema>[]): 
     text: s.text.trim(),
     start: s.start,
     end: s.end,
+    embedding: s.embedding,
+    confidence: s.confidence,
   }));
 }
 
@@ -373,6 +377,7 @@ export async function transcribeWithGigaAm(
       ultraPipeline:
         apiResponse.pipeline === "ultra-sync-2026" || Boolean(apiResponse.final_transcript),
       final_transcript: apiResponse.final_transcript,
+      speakerTimeline: apiResponse.speaker_timeline,
       speakerTimelineCount: apiResponse.speaker_timeline?.length,
       pipelineStages: apiResponse.stages,
     },

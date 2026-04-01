@@ -53,6 +53,56 @@ class Settings(BaseSettings):
     )
     speaker_embeddings_timeout: int = 60
     
+    # Clustering settings (modern diarization improvements)
+    clustering_base_threshold: float = Field(
+        default=0.40,
+        ge=0.1,
+        le=0.9,
+        description="Base cosine distance threshold for speaker clustering"
+    )
+    clustering_min_segment_duration: float = Field(
+        default=0.3,
+        ge=0.1,
+        le=2.0,
+        description="Minimum segment duration for reliable clustering (seconds)"
+    )
+    clustering_temporal_weight: float = Field(
+        default=0.1,
+        ge=0.0,
+        le=0.5,
+        description="Weight of temporal proximity in clustering decisions"
+    )
+    clustering_confidence_threshold: float = Field(
+        default=0.6,
+        ge=0.0,
+        le=1.0,
+        description="Confidence threshold for final clustering"
+    )
+    
+    # Overlap separation settings (одновременная речь)
+    overlap_separation_enabled: bool = Field(
+        default=True,
+        description="Enable separation of overlapping speech (simultaneous speakers)"
+    )
+    overlap_confidence_threshold: float = Field(
+        default=0.7,
+        ge=0.0,
+        le=1.0,
+        description="Confidence threshold for overlap detection"
+    )
+    min_overlap_duration: float = Field(
+        default=0.5,
+        ge=0.1,
+        le=5.0,
+        description="Minimum overlap duration to process (seconds)"
+    )
+    overlap_embedding_similarity: float = Field(
+        default=0.6,
+        ge=0.0,
+        le=1.0,
+        description="Embedding similarity threshold for overlap speaker separation"
+    )
+    
     # Metrics settings
     metrics_history_size: int = Field(default=1000, ge=1)
     system_metrics_interval: int = Field(default=30, ge=1)  # seconds

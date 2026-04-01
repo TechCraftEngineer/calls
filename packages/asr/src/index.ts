@@ -20,6 +20,11 @@ export type {
 } from "./llm/identify-speakers";
 // LLM functions
 export { identifySpeakersWithLlm } from "./llm/identify-speakers";
+export type {
+  IdentifySpeakersWithEmbeddingsOptions,
+  IdentifySpeakersWithEmbeddingsResult,
+} from "./llm/identify-speakers-with-embeddings";
+export { identifySpeakersWithEmbeddings } from "./llm/identify-speakers-with-embeddings";
 export { mergeAsrWithLlm } from "./llm/merge-asr";
 export { normalizeWithLlm } from "./llm/normalize";
 export type { SummarizeOptions } from "./llm/summarize";
