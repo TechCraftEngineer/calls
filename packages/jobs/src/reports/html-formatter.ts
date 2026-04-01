@@ -104,6 +104,8 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     lines.push(`• Общий оклад: <b>${totals.totalBaseSalary > 0 ? formatValue(totals.totalBaseSalary) : "—"} ₽</b>`);
     lines.push(`• Целевой бонус: <b>${totals.totalTargetBonus > 0 ? formatValue(totals.totalTargetBonus) : "—"} ₽</b>`);
     lines.push(`• Начисленный бонус: <b>${totals.totalCalculatedBonus > 0 ? formatValue(totals.totalCalculatedBonus) : "—"} ₽</b>`);
+    lines.push(`• План минут: <b>${totals.totalKpiTargetTalkTimeMinutes > 0 ? formatValue(totals.totalKpiTargetTalkTimeMinutes) : "—"}</b>`);
+    lines.push(`• Факт минут: <b>${totals.totalKpiActualTalkTimeMinutes > 0 ? formatValue(totals.totalKpiActualTalkTimeMinutes) : "—"}</b>`);
     lines.push(`• Факт выполнения: <b>${totals.totalActualPerformanceRubles > 0 ? formatValue(totals.totalActualPerformanceRubles) : "—"} ₽</b>`);
     lines.push(`• Итого к выплате: <b>${totals.totalSalary > 0 ? formatValue(totals.totalSalary) : "—"} ₽</b>`);
   }

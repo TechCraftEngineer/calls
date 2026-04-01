@@ -17,6 +17,8 @@ export function prepareStats(entries: [string, ManagerStats][]): PreparedStatsRe
   let totalCalculatedBonus = 0;
   let totalSalary = 0;
   let totalActualPerformanceRubles = 0;
+  let totalKpiTargetTalkTimeMinutes = 0;
+  let totalKpiActualTalkTimeMinutes = 0;
 
   for (const [name, raw] of entries) {
     if (!raw || typeof raw !== "object") continue;
@@ -41,6 +43,8 @@ export function prepareStats(entries: [string, ManagerStats][]): PreparedStatsRe
     totalCalculatedBonus += raw.kpiCalculatedBonus ?? 0;
     totalSalary += raw.kpiTotalSalary ?? 0;
     totalActualPerformanceRubles += raw.kpiActualPerformanceRubles ?? 0;
+    totalKpiTargetTalkTimeMinutes += raw.kpiTargetTalkTimeMinutes ?? 0;
+    totalKpiActualTalkTimeMinutes += raw.kpiActualTalkTimeMinutes ?? 0;
 
     managers.push({
       name,
@@ -80,6 +84,8 @@ export function prepareStats(entries: [string, ManagerStats][]): PreparedStatsRe
       totalCalculatedBonus,
       totalSalary,
       totalActualPerformanceRubles,
+      totalKpiTargetTalkTimeMinutes,
+      totalKpiActualTalkTimeMinutes,
     },
   };
 }

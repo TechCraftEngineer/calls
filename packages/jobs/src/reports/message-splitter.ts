@@ -37,21 +37,31 @@ export function splitTelegramHtmlMessage(message: string, maxLength = 4000): str
       if (intendedEnd >= text.length) return intendedEnd;
       const chunk = text.slice(start, intendedEnd);
 
+      // Проверяем наличие незакрытого HTML тега
       const lastOpenTag = chunk.lastIndexOf("<");
       const lastCloseTag = chunk.lastIndexOf(">");
       if (lastOpenTag > lastCloseTag) {
-        const safeTagEnd = chunk.lastIndexOf(">");
-        if (safeTagEnd >= 0) {
-          return start + safeTagEnd + 1;
+        // Сканируем вперед от intendedEnd для поиска закрывающего '>'
+        const searchStart = intendedEnd;
+        const maxSearch = Math.min(searchStart + 100, text.length); // Ограничение для избежания бесконечного роста
+        for (let i = searchStart; i < maxSearch; i++) {
+          if (text[i] === '>') {
+            return i + 1; // Возвращаем индекс после '>'
+          }
         }
       }
 
+      // Проверяем наличие незакрытой HTML entity
       const lastOpenEntity = chunk.lastIndexOf("&");
       const lastCloseEntity = chunk.lastIndexOf(";");
       if (lastOpenEntity > lastCloseEntity) {
-        const safeEntityEnd = chunk.lastIndexOf(";");
-        if (safeEntityEnd >= 0) {
-          return start + safeEntityEnd + 1;
+        // Сканируем вперед от intendedEnd для поиска закрывающего ';'
+        const searchStart = intendedEnd;
+        const maxSearch = Math.min(searchStart + 20, text.length); // Ограничение для entities
+        for (let i = searchStart; i < maxSearch; i++) {
+          if (text[i] === ';') {
+            return i + 1; // Возвращаем индекс после ';'
+          }
         }
       }
 

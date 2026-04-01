@@ -1,17 +1,17 @@
 """API эндпоинты audio-enhancer сервиса."""
 
 import asyncio
+import base64
+import io
 import logging
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, Depends
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from config.settings import config
-from services.audio_service import audio_processor
-from services.model_service import model_manager
 from utils.audio_utils import (
     read_upload_bytes_capped, 
     validate_audio_file
@@ -22,7 +22,53 @@ from utils.error_handlers import (
 )
 from utils.logging_utils import request_logger, processing_logger
 
-logger = logging.getLogger(__name__)
+# Импорты для телефонии
+try:
+    from services.telephony_service import TelephonyProcessor
+    TELEPHONY_AVAILABLE = True
+    logger = logging.getLogger(__name__)
+    logger.info("✓ Telephony сервис доступен")
+except ImportError as e:
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Telephony service недоступен: {e}")
+    TELEPHONY_AVAILABLE = False
+
+# Ленивые импорты для тяжелых библиотек
+def get_librosa():
+    try:
+        import librosa
+        return librosa
+    except ImportError:
+        return None
+
+def get_numpy():
+    try:
+        import numpy as np
+        return np
+    except ImportError:
+        return None
+
+def get_soundfile():
+    try:
+        import soundfile as sf
+        return sf
+    except ImportError:
+        return None
+
+# Импорты сервисов с проверкой
+try:
+    from services.audio_service import audio_processor
+    AUDIO_PROCESSOR_AVAILABLE = True
+except ImportError:
+    audio_processor = None
+    AUDIO_PROCESSOR_AVAILABLE = False
+
+try:
+    from services.model_service import model_manager
+    MODEL_MANAGER_AVAILABLE = True
+except ImportError:
+    model_manager = None
+    MODEL_MANAGER_AVAILABLE = False
 
 # Создание FastAPI приложения
 app = FastAPI(
@@ -83,7 +129,15 @@ async def health_check():
     Returns:
         Статус сервиса и загруженных моделей
     """
-    model_status = model_manager.get_model_status()
+    model_status = {}
+    if MODEL_MANAGER_AVAILABLE and model_manager is not None:
+        try:
+            model_status = model_manager.get_model_status()
+        except Exception as e:
+            logger.warning(f"Ошибка получения статуса моделей: {e}")
+            model_status = {"error": str(e)}
+    else:
+        model_status = {"status": "unavailable", "message": "Model manager not available"}
     
     return {
         "status": "healthy",
@@ -486,7 +540,14 @@ async def get_models_status():
     Returns:
         JSON с информацией о загруженных моделях
     """
-    return model_manager.get_model_status()
+    if MODEL_MANAGER_AVAILABLE and model_manager is not None:
+        try:
+            return model_manager.get_model_status()
+        except Exception as e:
+            logger.warning(f"Ошибка получения статуса моделей: {e}")
+            return {"error": str(e)}
+    else:
+        return {"status": "unavailable", "message": "Model manager not available"}
 
 
 @app.get("/config")
@@ -507,4 +568,299 @@ async def get_config():
         "metrics_enabled": config.ENABLE_METRICS,
         "default_settings": config.DEFAULT_ENHANCE_SETTINGS,
         "allowed_mime_types": list(config.ALLOWED_MIME_TYPES),
+    }
+
+
+# Телефонные эндпоинты
+@app.post("/telephony/enhance")
+async def enhance_telephony_audio(
+    file: UploadFile = File(...),
+    format_type: str = Form("auto"),
+    duplex: bool = Form(False),
+    apply_telephony_filters: bool = Form(True),
+    target_sample_rate: int = Form(16000, ge=800, le=48000),
+):
+    """
+    Улучшение телефонного аудио с поддержкой кодеков.
+    
+    Args:
+        file: Аудио файл (G.711, G.729, Opus, WAV)
+        format_type: Тип формата ('auto', 'g711', 'g729', 'opus', 'wav')
+        duplex: Дуплексное аудио (два канала)
+        apply_telephony_filters: Применять телефонные фильтры
+        target_sample_rate: Целевая частота дискретизации
+        
+    Returns:
+        JSON с улучшенным аудио и метаданными
+    """
+    if not TELEPHONY_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Telephony service не доступен"
+        )
+    
+    try:
+        request_logger.log_request("POST", "/telephony/enhance", file_size=file.size)
+        audio_bytes = await read_upload_bytes_capped(file, config.MAX_UPLOAD_BYTES)
+        return await asyncio.to_thread(
+            process_telephony_enhance, 
+            audio_bytes, format_type, duplex, apply_telephony_filters, target_sample_rate
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Ошибка обработки телефонного аудио", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Telephony processing failed",
+        ) from e
+
+
+@app.post("/telephony/convert")
+async def convert_telephony_format(
+    file: UploadFile = File(...),
+    from_format: str = Form("auto"),
+    to_format: str = Form("wav"),
+    sample_rate: int = Form(16000, ge=800, le=48000),
+):
+    """
+    Конвертация телефонного формата в стандартный.
+    
+    Args:
+        file: Аудио файл
+        from_format: Исходный формат ('auto', 'g711', 'g729', 'opus')
+        to_format: Целевой формат ('wav', 'mp3')
+        sample_rate: Частота дискретизации
+        
+    Returns:
+        WAV файл с конвертированным аудио
+    """
+    if not TELEPHONY_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Telephony service не доступен"
+        )
+    
+    try:
+        request_logger.log_request("POST", "/telephony/convert", file_size=file.size)
+        audio_bytes = await read_upload_bytes_capped(file, config.MAX_UPLOAD_BYTES)
+        return await asyncio.to_thread(
+            process_telephony_convert,
+            audio_bytes, from_format, to_format, sample_rate
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Ошибка конвертации телефонного формата", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Format conversion failed",
+        ) from e
+
+
+@app.post("/telephony/split")
+async def split_telephony_duplex(
+    file: UploadFile = File(...),
+    format_type: str = Form("auto"),
+):
+    """
+    Разделение дуплексного аудио на два канала.
+    
+    Args:
+        file: Стерео аудио файл (канал 1 - caller, канал 2 - callee)
+        format_type: Тип формата
+        
+    Returns:
+        JSON с разделенными каналами
+    """
+    if not TELEPHONY_AVAILABLE:
+        raise HTTPException(
+            status_code=503,
+            detail="Telephony service не доступен"
+        )
+    
+    try:
+        request_logger.log_request("POST", "/telephony/split", file_size=file.size)
+        audio_bytes = await read_upload_bytes_capped(file, config.MAX_UPLOAD_BYTES)
+        return await asyncio.to_thread(
+            process_telephony_split,
+            audio_bytes, format_type
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Ошибка разделения дуплексного аудио", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Duplex split failed",
+        ) from e
+
+
+def process_telephony_enhance(audio_bytes: bytes, format_type: str, duplex: bool, 
+                           apply_filters: bool, target_sr: int) -> dict:
+    """Обработка телефонного аудио с улучшением."""
+    from services.telephony_service import TelephonyProcessor
+    
+    telephony = TelephonyProcessor()
+    
+    # Обработка телефонного аудио
+    result = telephony.enhance_telephony_audio(
+        audio_bytes, format_type, duplex
+    )
+    
+    # Применение стандартных фильтров если нужно
+    if apply_filters:
+        for channel_name, channel_data in result.items():
+            audio = channel_data['audio']
+            sr = channel_data['sample_rate']
+            
+            # Применяем DeepFilterNet если доступен
+            if hasattr(model_manager, 'deepfilter_model') and model_manager.deepfilter_model is not None:
+                try:
+                    from df.enhance import enhance
+                    audio = enhance(
+                        model=model_manager.deepfilter_model,
+                        df_state=model_manager.deepfilter_df_state,
+                        audio=audio.reshape(1, -1),
+                        sample_rate=sr
+                    )[0]
+                except Exception as e:
+                    logger.warning(f"DeepFilterNet обработка не удалась: {e}")
+            
+            # Нормализация громкости
+            try:
+                import pyloudnorm as pyln
+                meter = pyln.Meter(sr)
+                loudness = meter.integrated_loudness(audio)
+                if loudness > -16:
+                    audio = pyln.normalize.loudness(audio, -16)
+            except Exception:
+                pass
+            
+            # Ресемплинг если нужно
+            if sr != target_sr:
+                librosa = get_librosa()
+                if librosa:
+                    audio = librosa.resample(audio, orig_sr=sr, target_sr=target_sr)
+            
+            result[channel_name]['audio'] = audio
+            result[channel_name]['sample_rate'] = target_sr
+    
+    # Конвертация в байты для ответа
+    response = {}
+    for channel_name, channel_data in result.items():
+        audio = channel_data['audio']
+        sr = channel_data['sample_rate']
+        
+        # Конвертируем в 16-bit PCM
+        np = get_numpy()
+        if np is None:
+            raise HTTPException(status_code=500, detail="NumPy library not available")
+        audio_int16 = (audio * 32767).astype(np.int16)
+        
+        # Сохраняем в WAV
+        sf = get_soundfile()
+        if sf is None:
+            raise HTTPException(status_code=500, detail="SoundFile library not available")
+        with io.BytesIO() as buffer:
+            sf.write(buffer, audio_int16, sr, format='WAV', subtype='PCM_16')
+            response[channel_name] = base64.b64encode(buffer.getvalue()).decode()
+    
+    return {
+        "channels": response,
+        "metadata": {
+            "original_format": format_type,
+            "duplex": duplex,
+            "sample_rate": target_sr,
+            "duration": max(data['duration'] for data in result.values()),
+            "telephony_filters_applied": apply_filters
+        }
+    }
+
+
+def process_telephony_convert(audio_bytes: bytes, from_format: str, 
+                         to_format: str, sample_rate: int) -> bytes:
+    """Конвертация телефонного формата."""
+    from services.telephony_service import TelephonyProcessor
+    
+    telephony = TelephonyProcessor()
+    
+    # Конвертируем в стандартный формат
+    audio, sr = telephony.convert_telephony_format(audio_bytes, from_format)
+    
+    # Ресемплинг если нужно
+    if sr != sample_rate:
+        librosa = get_librosa()
+        if librosa:
+            audio = librosa.resample(audio, orig_sr=sr, target_sr=sample_rate)
+    
+    # Конвертируем в 16-bit PCM
+    np = get_numpy()
+    if np is None:
+        raise HTTPException(status_code=500, detail="NumPy library not available")
+    audio_int16 = (audio * 32767).astype(np.int16)
+    
+    # Сохраняем в нужном формате
+    sf = get_soundfile()
+    if sf is None:
+        raise HTTPException(status_code=500, detail="SoundFile library not available")
+    with io.BytesIO() as buffer:
+        if to_format.lower() == "wav":
+            sf.write(buffer, audio_int16, sample_rate, format='WAV', subtype='PCM_16')
+        elif to_format.lower() == "mp3":
+            # Используем pydub для MP3
+            from pydub import AudioSegment
+            audio_seg = AudioSegment(
+                audio_int16.tobytes(), 
+                frame_rate=sample_rate, 
+                sample_width=2, 
+                channels=1
+            )
+            audio_seg.export(buffer, format="mp3")
+        else:
+            raise ValueError(f"Unsupported target format: {to_format}")
+        
+        return buffer.getvalue()
+
+
+def process_telephony_split(audio_bytes: bytes, format_type: str) -> dict:
+    """Разделение дуплексного аудио."""
+    from services.telephony_service import TelephonyProcessor
+    
+    telephony = TelephonyProcessor()
+    
+    # Конвертируем в стандартный формат
+    audio, sr = telephony.convert_telephony_format(audio_bytes, format_type)
+    
+    # Разделяем каналы
+    caller_audio, callee_audio = telephony.split_channels(audio)
+    
+    # Конвертируем в байты
+    def audio_to_bytes(audio_data, name):
+        np = get_numpy()
+        if np is None:
+            raise HTTPException(status_code=500, detail="NumPy library not available")
+        audio_int16 = (audio_data * 32767).astype(np.int16)
+        sf = get_soundfile()
+        if sf is None:
+            raise HTTPException(status_code=500, detail="SoundFile library not available")
+        with io.BytesIO() as buffer:
+            sf.write(buffer, audio_int16, sr, format='WAV', subtype='PCM_16')
+            return base64.b64encode(buffer.getvalue()).decode()
+    
+    return {
+        "caller": {
+            "audio": audio_to_bytes(caller_audio, "caller"),
+            "sample_rate": sr,
+            "duration": len(caller_audio) / sr
+        },
+        "callee": {
+            "audio": audio_to_bytes(callee_audio, "callee"), 
+            "sample_rate": sr,
+            "duration": len(callee_audio) / sr
+        },
+        "metadata": {
+            "original_format": format_type,
+            "channels_separated": True
+        }
     }

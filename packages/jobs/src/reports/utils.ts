@@ -2,6 +2,18 @@
  * Утилиты для форматирования отчетов
  */
 
+import { z } from "zod";
+
+// Zod schema для валидации параметров отчета
+const ReportParamsSchema = z.object({
+  stats: z.record(z.string(), z.any()),
+  dateFrom: z.date(),
+  dateTo: z.date(),
+  reportType: z.enum(["daily", "weekly", "monthly"]),
+});
+
+export type ValidatedReportParams = z.infer<typeof ReportParamsSchema>;
+
 export function formatValue(value: number): string {
   if (!Number.isFinite(value)) return "—";
   return new Intl.NumberFormat("ru-RU").format(Math.round(value));
@@ -34,22 +46,32 @@ export function getReportTypeLabel(reportType: "daily" | "weekly" | "monthly"): 
       : "Ежемесячный";
 }
 
-export function validateReportParams(params: {
-  stats?: unknown;
-  dateFrom?: unknown;
-  dateTo?: unknown;
-  reportType?: unknown;
-}): string | null {
-  if (!params.stats || typeof params.stats !== "object") {
-    return "❌ Ошибка: отсутствуют данные статистики";
-  }
-
-  if (!params.dateFrom || !params.dateTo) {
-    return "❌ Ошибка: отсутствуют даты периода";
-  }
-
-  if (!params.reportType || !["daily", "weekly", "monthly"].includes(params.reportType as string)) {
-    return "❌ Ошибка: неверный тип отчёта";
+export function validateReportParams(params: unknown): string | null {
+  const result = ReportParamsSchema.safeParse(params);
+  
+  if (!result.success) {
+    const error = result.error;
+    if (error.issues.length > 0) {
+      const firstIssue = error.issues[0];
+      if (!firstIssue) return "❌ Ошибка: неверные параметры отчета";
+      
+      const field = firstIssue.path.join('.');
+      const message = firstIssue.message;
+      
+      // Определяем тип ошибки на основе сообщения
+      if (message.includes('Expected') && message.includes('date')) {
+        return `❌ Ошибка: поле '${field}' должно быть датой`;
+      }
+      if (message.includes('Expected') && message.includes('object')) {
+        return `❌ Ошибка: поле '${field}' должно быть объектом`;
+      }
+      if (message.includes('Invalid') && (message.includes('enum') || message.includes('literal'))) {
+        return `❌ Ошибка: поле '${field}' должно быть одним из: daily, weekly, monthly`;
+      }
+      
+      return `❌ Ошибка: поле '${field}' - ${message}`;
+    }
+    return "❌ Ошибка: неверные параметры отчета";
   }
 
   return null;

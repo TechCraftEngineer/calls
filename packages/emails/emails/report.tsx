@@ -201,13 +201,14 @@ export const ReportEmail = ({
     return date.toLocaleDateString('ru-RU', {
       day: 'numeric',
       month: 'long',
-      year: 'numeric'
+      year: 'numeric',
+      timeZone: "Europe/Moscow"
     });
   };
   
   let periodText = '';
   if (dateFrom && dateTo) {
-    if (dateFrom.toDateString() === dateTo.toDateString()) {
+    if (formatDate(dateFrom) === formatDate(dateTo)) {
       periodText = ` за ${formatDate(dateFrom)}`;
     } else {
       periodText = ` за ${formatDate(dateFrom)} — ${formatDate(dateTo)}`;

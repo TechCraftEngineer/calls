@@ -61,7 +61,7 @@ export function formatTelegramReport(params: FormatReportParams): string {
         `   💰 Оклад: ${s.kpiBaseSalary !== null && s.kpiBaseSalary !== undefined ? formatValue(s.kpiBaseSalary) : "—"} ₽ | 🎁 Бонус: ${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : "—"} ₽`,
       );
       lines.push(
-        `   📊 План минут: ${s.kpiTargetTalkTimeMinutes !== null && s.kpiTargetTalkTimeMinutes !== undefined ? formatValue(s.kpiTargetTalkTimeMinutes) : "—"} | 📈 Факт: ${s.kpiActualPerformanceRubles !== null && s.kpiActualPerformanceRubles !== undefined ? formatValue(s.kpiActualPerformanceRubles) : "—"} ₽`,
+        `   📊 План минут: ${s.kpiTargetTalkTimeMinutes !== null && s.kpiTargetTalkTimeMinutes !== undefined ? formatValue(s.kpiTargetTalkTimeMinutes) : "—"} | 📈 Факт: ${s.kpiActualTalkTimeMinutes !== null && s.kpiActualTalkTimeMinutes !== undefined ? formatValue(s.kpiActualTalkTimeMinutes) : "—"}`,
       );
       lines.push(
         `   📊 % выполнения: ${s.kpiCompletionPercentage !== null && s.kpiCompletionPercentage !== undefined ? s.kpiCompletionPercentage : "—"}% | 💵 Итого: ${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : "—"} ₽`,
@@ -98,6 +98,8 @@ export function formatTelegramReport(params: FormatReportParams): string {
     lines.push(`• Общий оклад: ${formatValue(totals.totalBaseSalary)} ₽`);
     lines.push(`• Целевой бонус: ${formatValue(totals.totalTargetBonus)} ₽`);
     lines.push(`• Начисленный бонус: ${formatValue(totals.totalCalculatedBonus)} ₽`);
+    lines.push(`• План минут: ${formatValue(totals.totalKpiTargetTalkTimeMinutes)}`);
+    lines.push(`• Факт минут: ${formatValue(totals.totalKpiActualTalkTimeMinutes)}`);
     lines.push(`• Факт выполнения: ${formatValue(totals.totalActualPerformanceRubles)} ₽`);
     lines.push(`• Итого к выплате: ${formatValue(totals.totalSalary)} ₽`);
   }

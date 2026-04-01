@@ -1,7 +1,7 @@
 """Проверка запуска audio-enhancer."""
 
 import uvicorn
-from main import app
+from api.endpoints import app
 
 if __name__ == "__main__":
     print("Запуск Audio Enhancer...")

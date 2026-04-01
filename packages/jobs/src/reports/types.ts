@@ -2,8 +2,6 @@
  * Типы для отчетов
  */
 
-import type { EnrichedManagerStats } from "../../../db/src/repositories/calls/enrich-stats";
-
 export interface ManagerStats {
   name: string;
   internalNumber: string | null;
@@ -43,7 +41,7 @@ export interface PreparedStats {
 }
 
 export interface FormatReportParams {
-  stats: Record<string, ManagerStats | EnrichedManagerStats>;
+  stats: Record<string, ManagerStats>;
   dateFrom: Date;
   dateTo: Date;
   reportType: "daily" | "weekly" | "monthly";
@@ -75,6 +73,8 @@ export interface StatsTotals {
   totalCalculatedBonus: number;
   totalSalary: number;
   totalActualPerformanceRubles: number; // Факт выполнения в рублях
+  totalKpiTargetTalkTimeMinutes: number; // План минут по KPI
+  totalKpiActualTalkTimeMinutes: number; // Факт минут по KPI
 }
 
 export interface PreparedStatsResult {
