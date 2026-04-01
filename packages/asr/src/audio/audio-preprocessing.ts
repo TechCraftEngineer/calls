@@ -10,6 +10,7 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { promisify } from "node:util";
 import { createLogger } from "@calls/logger";
+import { env } from "@calls/config";
 import { enhanceAudioWithPython } from "./audio-enhancer-client";
 
 const execAsync = promisify(exec);
@@ -196,8 +197,8 @@ export async function preprocessAudio(
 
   let downloadedBuffer: Buffer | undefined;
 
-  // Приоритет 1: Пытаемся использовать Python ML сервис (если доступен)
-  if (config.usePythonEnhancer) {
+  // Приоритет 1: Пытаемся использовать Python ML сервис (если доступен и включен)
+  if (config.usePythonEnhancer && env.AUDIO_ENHANCER_ENABLED) {
     logger.info("Попытка использовать Python ML сервис для обработки аудио");
 
     try {
@@ -243,6 +244,8 @@ export async function preprocessAudio(
         error: error instanceof Error ? error.message : String(error),
       });
     }
+  } else if (config.usePythonEnhancer && !env.AUDIO_ENHANCER_ENABLED) {
+    logger.info("Python ML сервис отключен через AUDIO_ENHANCER_ENABLED=false, используем FFmpeg");
   }
 
   // Приоритет 2: FFmpeg (если Python недоступен или отключен)

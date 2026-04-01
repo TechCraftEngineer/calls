@@ -65,6 +65,7 @@ export const env = createEnv({
     YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE: z.coerce.number().positive().default(0.6),
 
     // Audio preprocessing (optional Python service)
+    AUDIO_ENHANCER_ENABLED: z.stringbool().default(false),
     AUDIO_ENHANCER_URL: z
       .string()
       .default("https://vnggncb-audio-enhancer.hf.space/")
@@ -139,6 +140,7 @@ export const env = createEnv({
     RUB_PER_USD: process.env.RUB_PER_USD,
     YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND: process.env.YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND,
     YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE: process.env.YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE,
+    AUDIO_ENHANCER_ENABLED: process.env.AUDIO_ENHANCER_ENABLED,
     AUDIO_ENHANCER_URL: process.env.AUDIO_ENHANCER_URL,
     MIN_FILE_SIZE_BYTES: process.env.MIN_FILE_SIZE_BYTES,
     MAX_FILE_SIZE_BYTES: process.env.MAX_FILE_SIZE_BYTES,
