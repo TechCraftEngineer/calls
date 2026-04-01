@@ -147,6 +147,8 @@ export const sendTestEmail = workspaceProcedure
           username: userForEdit.givenName ?? undefined,
           stats: enrichedStats,
           includeKpi: true,
+          dateFrom,
+          dateTo,
         }),
       });
       return { success: true };

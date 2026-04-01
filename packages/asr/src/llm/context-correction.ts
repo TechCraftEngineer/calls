@@ -6,7 +6,7 @@
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
 import { createLogger } from "@calls/logger";
-import { z } from "zod/v4";
+import { z } from "zod";
 
 const logger = createLogger("asr-context-correction");
 
@@ -84,7 +84,11 @@ ${chunk}
   if (!parsedResponse.success) {
     logger.warn("Ответ AI для чанка отклонён (пусто), возвращаем оригинал", {
       functionId: "asr-context-correction-chunk",
-      issues: parsedResponse.error.issues,
+      issues: parsedResponse.error.issues.map(issue => ({
+        code: issue.code,
+        message: issue.message,
+        path: issue.path.map(p => String(p)),
+      })),
     });
     return chunk;
   }
@@ -187,7 +191,11 @@ export async function correctWithContext(
     if (!messageValidation.success) {
       logger.warn("Текст не прошел валидацию, оставляем исходный текст", {
         functionId: "asr-context-correction",
-        issues: messageValidation.error.issues,
+        issues: messageValidation.error.issues.map(issue => ({
+          code: issue.code,
+          message: issue.message,
+          path: issue.path.map(p => String(p)),
+        })),
       });
       return text;
     }
@@ -292,7 +300,11 @@ ${normalizedText}
     if (!parsedResponse.success) {
       logger.warn("Ответ AI для контекстной коррекции отклонён (пусто), оставляем исходный текст", {
         functionId: "asr-context-correction",
-        issues: parsedResponse.error.issues,
+        issues: parsedResponse.error.issues.map(issue => ({
+          code: issue.code,
+          message: issue.message,
+          path: issue.path.map(p => String(p)),
+        })),
       });
       return text;
     }

@@ -45,6 +45,10 @@ export interface ReportEmailProps {
   includeKpi?: boolean;
   /** Показывать средний рейтинг менеджеров */
   avgManagerScore?: boolean;
+  /** Дата начала периода */
+  dateFrom?: Date;
+  /** Дата конца периода */
+  dateTo?: Date;
 }
 
 const reportTypeLabels = {
@@ -187,9 +191,31 @@ export const ReportEmail = ({
   stats,
   includeKpi = false,
   avgManagerScore = false,
+  dateFrom,
+  dateTo,
 }: ReportEmailProps) => {
   const typeLabel = reportTypeLabels[reportType] ?? "Отчёт по звонкам";
-  const previewText = `${typeLabel} · ${APP_CONFIG.shortName}`;
+  
+  // Форматируем даты периода
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('ru-RU', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+  
+  let periodText = '';
+  if (dateFrom && dateTo) {
+    if (dateFrom.toDateString() === dateTo.toDateString()) {
+      periodText = ` за ${formatDate(dateFrom)}`;
+    } else {
+      periodText = ` за ${formatDate(dateFrom)} — ${formatDate(dateTo)}`;
+    }
+  }
+  
+  const title = `${typeLabel}${periodText}`;
+  const previewText = `${title} · ${APP_CONFIG.shortName}`;
 
   // Подготовка данных для таблицы KPI
   const kpiTable = stats
@@ -234,7 +260,7 @@ export const ReportEmail = ({
           <Preview>{previewText}</Preview>
           <Container className="mx-auto my-[40px] max-w-[600px] rounded border border-[#eaeaea] border-solid p-[24px]">
             <Heading className="mx-0 my-[24px] p-0 text-[20px] font-semibold text-black">
-              {typeLabel}
+              {title}
             </Heading>
 
             <Text className="text-[14px] leading-[24px] text-black">
@@ -254,11 +280,21 @@ export const ReportEmail = ({
                         Менеджер
                       </th>
                       <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                        Звонки
+                        Звонки, шт.
                       </th>
-                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                        Минуты
-                      </th>
+                      {includeKpi && (
+                        <>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                            План минут
+                          </th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                            Факт минут
+                          </th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                            % выполнения
+                          </th>
+                        </>
+                      )}
                       {avgManagerScore && (
                         <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
                           Рейтинг
@@ -267,22 +303,13 @@ export const ReportEmail = ({
                       {includeKpi && (
                         <>
                           <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                            Оклад
+                            Оклад, ₽
                           </th>
                           <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                            Бонус
+                            Бонус, ₽
                           </th>
                           <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                            План минут
-                          </th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                            Факт выполнения
-                          </th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                            % выполнения
-                          </th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                            Итого
+                            Итого, ₽
                           </th>
                         </>
                       )}
@@ -301,36 +328,37 @@ export const ReportEmail = ({
                           <td className="border border-gray-300 px-3 py-2 text-sm">
                             {manager.name}
                           </td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                             {manager.totalCount}
                           </td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                            {totalMinutes}
-                          </td>
+                          {includeKpi && (
+                            <>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(manager.kpiTargetTalkTimeMinutes ?? 0)}
+                              </td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(manager.kpiActualTalkTimeMinutes ?? 0)}
+                              </td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {manager.kpiCompletionPercentage ?? 0}%
+                              </td>
+                            </>
+                          )}
                           {avgManagerScore && (
-                            <td className="border border-gray-300 px-3 py-2 text-sm text-center">
+                            <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                               {formatScore(manager.avgManagerScore)}
                             </td>
                           )}
                           {includeKpi && (
                             <>
-                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                                {formatValue(manager.kpiBaseSalary ?? 0)} ₽
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(manager.kpiBaseSalary ?? 0)}
                               </td>
-                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                                {formatValue(manager.kpiCalculatedBonus ?? 0)} ₽
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(manager.kpiCalculatedBonus ?? 0)}
                               </td>
-                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                                {formatValue(manager.kpiTargetTalkTimeMinutes ?? 0)}
-                              </td>
-                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                                {formatValue(manager.kpiActualPerformanceRubles ?? 0)} ₽
-                              </td>
-                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                                {manager.kpiCompletionPercentage ?? 0}%
-                              </td>
-                              <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                                {formatValue(manager.kpiTotalSalary ?? 0)} ₽
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(manager.kpiTotalSalary ?? 0)}
                               </td>
                             </>
                           )}
@@ -339,40 +367,41 @@ export const ReportEmail = ({
                     })}
                     <tr className="bg-gray-50 font-semibold">
                       <td className="border border-gray-300 px-3 py-2 text-sm">Итого:</td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm text-center">
+                      <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                         {kpiTable.totals.totalCount}
                       </td>
-                      <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                        {Math.round(
-                          (kpiTable.totals.incomingTotalDurationSec +
-                            kpiTable.totals.outgoingTotalDurationSec) /
-                            60,
-                        )}
-                      </td>
+                      {includeKpi && (
+                        <>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            -
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {Math.round(
+                              (kpiTable.totals.incomingTotalDurationSec +
+                                kpiTable.totals.outgoingTotalDurationSec) /
+                                60,
+                            )}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            -
+                          </td>
+                        </>
+                      )}
                       {avgManagerScore && (
-                        <td className="border border-gray-300 px-3 py-2 text-sm text-center">
+                        <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                           {formatScore(kpiTable.overallAvgManagerScore)}
                         </td>
                       )}
                       {includeKpi && (
                         <>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                            {formatValue(kpiTable.totals.totalBaseSalary)} ₽
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {formatValue(kpiTable.totals.totalBaseSalary)}
                           </td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                            {formatValue(kpiTable.totals.totalCalculatedBonus)} ₽
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {formatValue(kpiTable.totals.totalCalculatedBonus)}
                           </td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                            -
-                          </td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                            {formatValue(kpiTable.totals.totalActualPerformanceRubles)} ₽
-                          </td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                            -
-                          </td>
-                          <td className="border border-gray-300 px-3 py-2 text-sm text-center">
-                            {formatValue(kpiTable.totals.totalSalary)} ₽
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {formatValue(kpiTable.totals.totalSalary)}
                           </td>
                         </>
                       )}
@@ -400,13 +429,5 @@ export const ReportEmail = ({
     </Html>
   );
 };
-
-Object.assign(ReportEmail, {
-  PreviewProps: {
-    reportType: "daily" as const,
-    username: "Иван",
-    stats: {},
-  } as ReportEmailProps,
-});
 
 export default ReportEmail;

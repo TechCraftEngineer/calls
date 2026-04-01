@@ -129,7 +129,13 @@ export async function enhanceAudioWithPython(
     logger.info("Отправка аудио в Python enhancer", {
       serviceUrl,
       audioSize: audioBuffer.length,
-      options,
+      options: {
+        noiseReduction: options.noiseReduction,
+        normalizeVolume: options.normalizeVolume,
+        enhanceSpeech: options.enhanceSpeech,
+        removeSilence: options.removeSilence,
+        targetSampleRate: options.targetSampleRate,
+      },
     });
 
     const response = await fetch(`${serviceUrl}/enhance`, {
