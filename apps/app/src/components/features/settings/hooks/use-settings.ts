@@ -262,7 +262,7 @@ export function useSettings() {
       const reportTypeLabel = getReportTypeLabel(reportType);
       setState((prev) => ({
         ...prev,
-        sendTestMessage: `${reportTypeLabel} отчёт отправлен в Telegram`,
+        sendTestMessage: `Отчёт по звонкам отправлен в Telegram`,
       }));
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {

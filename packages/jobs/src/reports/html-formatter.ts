@@ -87,7 +87,7 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
           `   💵 Итого: <b>${s.kpiTotalSalary !== null && s.kpiTotalSalary !== undefined ? formatValue(s.kpiTotalSalary) : "—"} ₽</b>`,
         );
       } else {
-        // Ежедневный отчет - только бонус
+        // Звонки - только бонус
         lines.push(
           `   🎁 Бонус: <b>${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : "—"} ₽</b>`,
         );
