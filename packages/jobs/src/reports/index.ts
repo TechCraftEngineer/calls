@@ -24,6 +24,7 @@ export {
   pluralizeCalls,
   getReportTypeLabel,
   validateReportParams,
+  calculateTargetPlan,
 } from "./utils";
 
 // Обработка статистики

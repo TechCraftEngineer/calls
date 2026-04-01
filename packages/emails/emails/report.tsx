@@ -67,6 +67,25 @@ function formatScore(value: number | null | undefined): string {
   return value.toFixed(1);
 }
 
+// Вычисление плана в зависимости от типа отчета
+function calculateTargetPlan(monthlyTargetMinutes: number, reportType: ReportType): number {
+  if (!monthlyTargetMinutes || monthlyTargetMinutes <= 0) return 0;
+  
+  switch (reportType) {
+    case "daily":
+      // Дневной план = месячный план / 22 рабочих дня
+      return Math.round(monthlyTargetMinutes / 22);
+    case "weekly":
+      // Недельный план = месячный план / 4 недели
+      return Math.round(monthlyTargetMinutes / 4);
+    case "monthly":
+      // Месячный план остается без изменений
+      return monthlyTargetMinutes;
+    default:
+      return monthlyTargetMinutes;
+  }
+}
+
 interface PreparedStats {
   id: string;
   name: string;
@@ -259,7 +278,7 @@ export const ReportEmail = ({
       >
         <Body className="mx-auto my-auto bg-white px-2 font-sans">
           <Preview>{previewText}</Preview>
-          <Container className="mx-auto my-[40px] max-w-[600px] rounded border border-[#eaeaea] border-solid p-[24px]">
+          <Container className="mx-auto my-[40px] max-w-[900px] rounded border border-[#eaeaea] border-solid p-[24px]">
             <Heading className="mx-0 my-[24px] p-0 text-[20px] font-semibold text-black">
               {title}
             </Heading>
@@ -277,40 +296,64 @@ export const ReportEmail = ({
                 <table className="w-full border-collapse border border-gray-300">
                   <thead>
                     <tr className="bg-gray-50">
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold">
+                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold" rowSpan={2}>
                         Менеджер
                       </th>
-                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" colSpan={3}>
                         Звонки, шт.
                       </th>
                       {includeKpi && (
                         <>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                            План минут
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                            План, мин.
                           </th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
-                            Факт минут
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" colSpan={3}>
+                            Факт, мин.
                           </th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
                             % выполнения
                           </th>
                         </>
                       )}
                       {avgManagerScore && (
-                        <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                        <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
                           Рейтинг
                         </th>
                       )}
                       {includeKpi && (
                         <>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
                             Оклад, ₽
                           </th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
                             Бонус, ₽
                           </th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
                             Итого, ₽
+                          </th>
+                        </>
+                      )}
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                        Вх.
+                      </th>
+                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                        Исх.
+                      </th>
+                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                        Всего
+                      </th>
+                      {includeKpi && (
+                        <>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                            Вх.
+                          </th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                            Исх.
+                          </th>
+                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold">
+                            Всего
                           </th>
                         </>
                       )}
@@ -323,6 +366,10 @@ export const ReportEmail = ({
                           manager.outgoingAvgDurationSec * manager.outgoingCount) /
                           60,
                       );
+                      
+                      // Вычисляем процент выполнения на основе плана для текущего периода
+                      const targetPlan = calculateTargetPlan(manager.kpiTargetTalkTimeMinutes ?? 0, reportType);
+                      const completionPercentage = targetPlan > 0 ? Math.round((totalMinutes / targetPlan) * 100) : 0;
 
                       return (
                         <tr key={manager.id}>
@@ -330,18 +377,30 @@ export const ReportEmail = ({
                             {manager.name}
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {manager.incomingCount}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {manager.outgoingCount}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                             {manager.totalCount}
                           </td>
                           {includeKpi && (
                             <>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                                {formatValue(manager.kpiTargetTalkTimeMinutes ?? 0)}
+                                {formatValue(calculateTargetPlan(manager.kpiTargetTalkTimeMinutes ?? 0, reportType))}
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                                {formatValue(manager.kpiActualTalkTimeMinutes ?? 0)}
+                                {formatValue(Math.round(manager.incomingAvgDurationSec * manager.incomingCount / 60))}
                               </td>
                               <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                                {manager.kpiCompletionPercentage ?? 0}%
+                                {formatValue(Math.round(manager.outgoingAvgDurationSec * manager.outgoingCount / 60))}
+                              </td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {formatValue(totalMinutes)}
+                              </td>
+                              <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                                {completionPercentage}%
                               </td>
                             </>
                           )}
@@ -369,6 +428,12 @@ export const ReportEmail = ({
                     <tr className="bg-gray-50 font-semibold">
                       <td className="border border-gray-300 px-3 py-2 text-sm">Итого:</td>
                       <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                        {kpiTable.totals.incomingCount}
+                      </td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                        {kpiTable.totals.outgoingCount}
+                      </td>
+                      <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                         {kpiTable.totals.totalCount}
                       </td>
                       {includeKpi && (
@@ -377,11 +442,13 @@ export const ReportEmail = ({
                             -
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                            {Math.round(
-                              (kpiTable.totals.incomingTotalDurationSec +
-                                kpiTable.totals.outgoingTotalDurationSec) /
-                                60,
-                            )}
+                            {Math.round(kpiTable.totals.incomingTotalDurationSec / 60)}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {Math.round(kpiTable.totals.outgoingTotalDurationSec / 60)}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
+                            {Math.round((kpiTable.totals.incomingTotalDurationSec + kpiTable.totals.outgoingTotalDurationSec) / 60)}
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                             -
@@ -407,7 +474,7 @@ export const ReportEmail = ({
                         </>
                       )}
                     </tr>
-                  </tbody>
+                                      </tbody>
                 </table>
               ) : (
                 <Text className="text-[14px] text-gray-600">Нет данных для отображения KPI</Text>

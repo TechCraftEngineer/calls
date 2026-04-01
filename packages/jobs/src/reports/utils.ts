@@ -46,6 +46,25 @@ export function getReportTypeLabel(reportType: "daily" | "weekly" | "monthly"): 
       : "Ежемесячный";
 }
 
+// Вычисление плана в зависимости от типа отчета
+export function calculateTargetPlan(monthlyTargetMinutes: number, reportType: "daily" | "weekly" | "monthly"): number {
+  if (!monthlyTargetMinutes || monthlyTargetMinutes <= 0) return 0;
+  
+  switch (reportType) {
+    case "daily":
+      // Дневной план = месячный план / 22 рабочих дня
+      return Math.round(monthlyTargetMinutes / 22);
+    case "weekly":
+      // Недельный план = месячный план / 4 недели
+      return Math.round(monthlyTargetMinutes / 4);
+    case "monthly":
+      // Месячный план остается без изменений
+      return monthlyTargetMinutes;
+    default:
+      return monthlyTargetMinutes;
+  }
+}
+
 export function validateReportParams(params: unknown): string | null {
   const result = ReportParamsSchema.safeParse(params);
   

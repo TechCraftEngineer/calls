@@ -26,6 +26,7 @@ export {
   pluralizeCalls,
   getReportTypeLabel,
   validateReportParams,
+  calculateTargetPlan,
   
   // Обработка статистики
   prepareStats,

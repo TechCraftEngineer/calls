@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
     build-essential \
+    portaudio19-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Установка Rust через rustup (для DeepFilterNet)

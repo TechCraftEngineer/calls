@@ -7,11 +7,10 @@ from typing import Optional, Tuple
 import torch
 import librosa
 import numpy as np
-from pyannote.audio import Pipeline
 
 from config.settings import config
 from utils.error_handlers import ModelLoadError
-from utils.pyannote_utils import load_pyannote_pipeline
+from utils.logging_utils import timing_logger, model_logger
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +23,11 @@ class ModelManager:
         self.vad_utils = None
         self.deepfilter_model = None
         self.deepfilter_df_state = None
-        self.pyannote_pipeline = None
         
         # Флаги доступности
         self.vad_available = False
         self.deepfilter_available = False
         self.wpe_available = False
-        self.pyannote_available = False
         
         # Загружаем модели при инициализации
         self._load_models()
@@ -40,7 +37,7 @@ class ModelManager:
         self._load_vad_model()
         self._load_deepfilter_model()
         self._check_wpe_availability()
-        self._load_pyannote_model()
+        # Pyannote не нужен - диаризация обрабатывается в другом сервисе
     
     @timing_logger("vad_model_load")
     def _load_vad_model(self):
@@ -99,31 +96,6 @@ class ModelManager:
             self.wpe_available = False
             logger.warning(f"WPE недоступен: {e}")
     
-    @timing_logger("pyannote_model_load")
-    def _load_pyannote_model(self):
-        """Загружает Pyannote диаризацию."""
-        try:
-            hf_token = config.HF_TOKEN
-            if not hf_token:
-                logger.warning("HF_TOKEN не установлен, pyannote недоступен")
-                self.pyannote_available = False
-                return
-            
-            self.pyannote_pipeline = load_pyannote_pipeline(
-                model_id="pyannote/speaker-diarization-3.1",
-                hf_token=hf_token
-            )
-            self.pyannote_available = True
-            model_logger.log_model_load("pyannote", 0, True)
-            logger.info("✓ Pyannote диаризация загружена")
-            
-        except ImportError:
-            self.pyannote_available = False
-            logger.warning("Pyannote не установлен")
-        except Exception as e:
-            self.pyannote_available = False
-            model_logger.log_model_load("pyannote", 0, False)
-            logger.warning(f"Не удалось загрузить Pyannote: {e}")
     
     def get_vad_timestamps(self, audio: np.ndarray, sr: int) -> list:
         """
@@ -229,84 +201,6 @@ class ModelManager:
             logger.error("WPE processing failed: %s", e)
             raise ModelLoadError("wpe", f"Processing failed: {str(e)}")
     
-    def run_diarization(self, audio: np.ndarray, sr: int) -> dict:
-        """
-        Запускает диаризацию аудио.
-        
-        Args:
-            audio: Аудио данные
-            sr: Частота дискретизации
-            
-        Returns:
-            Результаты диаризации
-        """
-        if not self.pyannote_available or self.pyannote_pipeline is None:
-            raise ModelLoadError("pyannote", "Model not loaded")
-        
-        try:
-            import io
-            import soundfile as sf
-            
-            # Создаем временный файл для pyannote
-            with io.BytesIO() as temp_audio:
-                sf.write(temp_audio, audio, sr, format="WAV")
-                temp_audio.seek(0)
-                diarization = self.pyannote_pipeline({"audio": temp_audio})
-            
-            # Обработка результатов
-            segments = []
-            speaker_changes = []
-            overlaps = []
-            
-            prev_speaker = None
-            for turn, _, speaker in diarization.itertracks(yield_label=True):
-                segment_info = {
-                    "start": turn.start,
-                    "end": turn.end,
-                    "duration": turn.end - turn.start,
-                    "speaker": speaker,
-                }
-                segments.append(segment_info)
-                
-                if prev_speaker is not None and prev_speaker != speaker:
-                    speaker_changes.append({
-                        "time": turn.start,
-                        "from_speaker": prev_speaker,
-                        "to_speaker": speaker,
-                    })
-                prev_speaker = speaker
-            
-            # Поиск перекрытий
-            track_list = list(diarization.itertracks(yield_label=True))
-            for i in range(len(track_list) - 1):
-                s1, _, spk1 = track_list[i]
-                s2, _, spk2 = track_list[i + 1]
-                if s1.end > s2.start and spk1 != spk2:
-                    overlaps.append({
-                        "start": s2.start,
-                        "end": min(s1.end, s2.end),
-                        "duration": min(s1.end, s2.end) - s2.start,
-                        "speakers": [spk1, spk2],
-                    })
-            
-            result = {
-                "segments": segments,
-                "speaker_changes": speaker_changes,
-                "overlaps": overlaps,
-                "num_speakers": len(set(s["speaker"] for s in segments)),
-                "total_duration": audio.shape[0] / sr,
-            }
-            
-            logger.info(
-                "✓ Диаризация: %d сегментов, %d смен спикера, %d перекрытий",
-                len(segments), len(speaker_changes), len(overlaps)
-            )
-            
-            return result
-            
-        except Exception as e:
-            logger.error("Diarization failed: %s", e)
-            raise ModelLoadError("pyannote", f"Processing failed: {str(e)}")
     
     def get_model_status(self) -> dict:
         """
@@ -319,7 +213,7 @@ class ModelManager:
             "vad_loaded": self.vad_available,
             "deepfilter_loaded": self.deepfilter_available,
             "wpe_available": self.wpe_available,
-            "pyannote_loaded": self.pyannote_available,
+            "pyannote_loaded": False,  # Диаризация обрабатывается в другом сервисе
         }
 
 
