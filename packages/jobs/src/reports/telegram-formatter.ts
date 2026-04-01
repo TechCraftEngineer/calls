@@ -28,7 +28,7 @@ export function formatTelegramReport(params: FormatReportParams): string {
   const scopeLabel = isManagerReport ? " (сводка по менеджерам)" : "";
 
   const lines: string[] = [];
-  lines.push(`📊 ${typeLabel} отчёт по звонкам${scopeLabel}`);
+  lines.push(`📊 ${typeLabel} ${scopeLabel}`);
   lines.push(
     `📅 ${dateFrom.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" })} — ${dateTo.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" })}`,
   );

@@ -30,7 +30,7 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
 
   if (managers.length === 0) {
     return [
-      `📊 <b>${typeLabel} отчёт по звонкам</b>`,
+    `📊 <b>${typeLabel}</b>`,
       `📅 <b>Период:</b> ${escapeHtml(dateFrom.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" }))} — ${escapeHtml(dateTo.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" }))}`,
       workspaceName ? `🏢 <b>Компания:</b> ${escapeHtml(workspaceName)}` : "",
       "",
@@ -45,7 +45,7 @@ export function formatTelegramReportHtml(params: FormatReportParams): string {
     .sort((a, b) => b[1] - a[1]);
 
   const lines: string[] = [];
-  lines.push(`📊 <b>${typeLabel} отчёт по звонкам</b>`);
+  lines.push(`📊 <b>${typeLabel}</b>`);
   lines.push(
     `📅 <b>Период:</b> ${escapeHtml(dateFrom.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" }))} — ${escapeHtml(dateTo.toLocaleDateString("ru-RU", { timeZone: "Europe/Moscow" }))}`,
   );
