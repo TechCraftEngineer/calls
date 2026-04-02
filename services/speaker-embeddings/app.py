@@ -121,14 +121,56 @@ class HybridEmbeddingModel:
         return audio[start_idx:end_idx].astype(np.float32, copy=False)
 
     def _pyannote_vector(self, audio_slice: np.ndarray, sr: int) -> np.ndarray:
-        if self._pyannote_embedder is None or audio_slice.size < max(400, sr // 40):
+        if self._pyannote_embedder is None:
+            logger.debug("Pyannote embedder не загружен, возвращаем нули")
             return np.zeros(192, dtype=np.float32)
+        
+        if audio_slice.size < max(400, sr // 40):
+            logger.debug(f"Аудио слайс слишком короткий: {audio_slice.size} samples")
+            return np.zeros(192, dtype=np.float32)
+        
         try:
+            import torch
+            
+            # Проверяем входные данные
+            if not np.isfinite(audio_slice).all():
+                logger.warning("Аудио слайс содержит NaN или Inf значения")
+                audio_slice = np.nan_to_num(audio_slice, nan=0.0, posinf=0.0, neginf=0.0)
+            
+            # Нормализуем амплитуду если нужно
+            max_val = np.abs(audio_slice).max()
+            if max_val > 1.0:
+                logger.debug(f"Нормализация аудио: max_val={max_val:.4f}")
+                audio_slice = audio_slice / max_val
+            
+            # Конвертируем numpy в torch.Tensor
+            waveform_tensor = torch.from_numpy(audio_slice).float()
+            
+            # Pyannote ожидает dict с torch.Tensor
             emb = self._pyannote_embedder(
-                {"waveform": audio_slice[None, :], "sample_rate": sr}
+                {"waveform": waveform_tensor.unsqueeze(0), "sample_rate": sr}
             )
-            return self._l2_normalize(np.asarray(emb, dtype=np.float32).reshape(-1))
-        except Exception:
+            emb_np = np.asarray(emb, dtype=np.float32).reshape(-1)
+            
+            # Проверяем результат
+            if not np.isfinite(emb_np).all():
+                logger.error("Pyannote вернул NaN или Inf эмбеддинги!")
+                return np.zeros(192, dtype=np.float32)
+            
+            normalized = self._l2_normalize(emb_np)
+            
+            # Диагностика
+            norm_before = float(np.linalg.norm(emb_np))
+            norm_after = float(np.linalg.norm(normalized))
+            nonzero = np.count_nonzero(normalized)
+            logger.debug(
+                f"Pyannote: norm_before={norm_before:.4f}, norm_after={norm_after:.4f}, "
+                f"nonzero={nonzero}/192"
+            )
+            
+            return normalized
+        except Exception as e:
+            logger.error(f"Ошибка в _pyannote_vector: {e}", exc_info=True)
             return np.zeros(192, dtype=np.float32)
 
     @staticmethod
@@ -171,7 +213,12 @@ class HybridEmbeddingModel:
         segments: list[dict[str, Any]],
     ) -> list[list[float]]:
         out: list[list[float]] = []
-        for seg in segments:
+        
+        logger.info(f"Начало генерации эмбеддингов для {len(segments)} сегментов")
+        logger.info(f"Аудио: shape={audio.shape}, sr={sr}, duration={len(audio)/sr:.2f}s")
+        logger.info(f"Pyannote загружена: {self._pyannote_embedder is not None}")
+        
+        for idx, seg in enumerate(segments):
             if not isinstance(seg, dict):
                 raise ValueError("Each segment must be an object")
             try:
@@ -181,12 +228,58 @@ class HybridEmbeddingModel:
                 raise ValueError("Segment start/end must be numeric") from exc
             if end <= start:
                 out.append([0.0] * 222)
+                logger.warning(f"Сегмент {idx}: пустой (start={start}, end={end})")
                 continue
+            
             audio_slice = self._slice(audio, sr, start, end)
+            logger.debug(f"Сегмент {idx}: start={start:.2f}s, end={end:.2f}s, slice_size={audio_slice.shape[0]}")
+            
             p = self._pyannote_vector(audio_slice, sr)
             a = self._acoustic_vector(audio_slice, sr)
+            
+            # Диагностика векторов
+            p_norm = float(np.linalg.norm(p))
+            a_norm = float(np.linalg.norm(a))
+            p_nonzero = np.count_nonzero(p)
+            a_nonzero = np.count_nonzero(a)
+            
+            logger.info(
+                f"Сегмент {idx}: pyannote_norm={p_norm:.4f} ({p_nonzero}/192 nonzero), "
+                f"acoustic_norm={a_norm:.4f} ({a_nonzero}/30 nonzero)"
+            )
+            
             merged = self._l2_normalize(np.concatenate([p, a]).astype(np.float32))
+            merged_norm = float(np.linalg.norm(merged))
+            logger.info(f"Сегмент {idx}: merged_norm={merged_norm:.4f}")
+            
             out.append(merged.tolist())
+        
+        # Диагностика попарных расстояний
+        if len(out) >= 2:
+            distances = []
+            for i in range(len(out)):
+                for j in range(i + 1, len(out)):
+                    # Косинусное расстояние
+                    emb_i = np.array(out[i])
+                    emb_j = np.array(out[j])
+                    dot = float(np.dot(emb_i, emb_j))
+                    dist = 1.0 - dot
+                    distances.append(dist)
+            
+            if distances:
+                avg_dist = np.mean(distances)
+                min_dist = min(distances)
+                max_dist = max(distances)
+                logger.info(
+                    f"Попарные расстояния: avg={avg_dist:.4f}, min={min_dist:.4f}, max={max_dist:.4f}"
+                )
+                
+                if avg_dist < 0.01:
+                    logger.error(
+                        "КРИТИЧЕСКАЯ ПРОБЛЕМА: Эмбеддинги практически идентичны! "
+                        "Проверьте работу pyannote модели."
+                    )
+        
         return out
 
 
@@ -278,12 +371,59 @@ async def embed_batch(
         raise HTTPException(status_code=500, detail="embed-batch failed") from exc
 
 
+@app.get("/")
+async def root() -> dict[str, Any]:
+    """Корневой endpoint с информацией о сервисе"""
+    return {
+        "service": "Speaker Embeddings API",
+        "version": "1.0.0",
+        "description": "Batch speaker embeddings for speaker diarization",
+        "endpoints": {
+            "/": "GET - Информация о сервисе",
+            "/health": "GET - Health check",
+            "/api/diagnostics": "GET - Диагностическая информация",
+            "/api/embed-batch": "POST - Генерация эмбеддингов для сегментов"
+        },
+        "docs": "/docs",
+        "embedding_dim": 222,
+        "components": {
+            "pyannote": 192,
+            "acoustic": 30
+        }
+    }
+
+
 @app.get("/health")
 async def health() -> dict[str, Any]:
     current_model = await run_in_threadpool(_ensure_model_initialized_sync)
     return {
         "status": "healthy",
         "pyannote_loaded": current_model.is_pyannote_loaded if current_model else False,
+    }
+
+
+@app.get("/api/diagnostics")
+async def diagnostics() -> dict[str, Any]:
+    """Диагностическая информация о сервисе"""
+    current_model = await run_in_threadpool(_ensure_model_initialized_sync)
+    
+    return {
+        "service": "speaker-embeddings",
+        "version": "1.0.0",
+        "pyannote": {
+            "loaded": current_model.is_pyannote_loaded if current_model else False,
+            "model": os.getenv("PYANNOTE_MODEL", "pyannote/embedding"),
+            "enabled": os.getenv("ENABLE_PYANNOTE", "1"),
+        },
+        "config": {
+            "hf_token_set": bool(os.getenv("HF_TOKEN", "").strip()),
+            "port": os.getenv("PORT", "7860"),
+        },
+        "embedding_dim": 222,
+        "components": {
+            "pyannote_dim": 192,
+            "acoustic_dim": 30,
+        }
     }
 
 

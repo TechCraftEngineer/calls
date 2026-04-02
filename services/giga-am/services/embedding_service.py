@@ -170,8 +170,13 @@ class EmbeddingService:
         if self._pyannote_embedder is None or audio_slice.size < max(400, sr // 40):
             return np.zeros(192, dtype=np.float32)
         try:
+            import torch
+            
+            # Конвертируем numpy в torch.Tensor для pyannote
+            waveform_tensor = torch.from_numpy(audio_slice).float()
+            
             emb = self._pyannote_embedder(
-                {"waveform": audio_slice[None, :], "sample_rate": sr}
+                {"waveform": waveform_tensor.unsqueeze(0), "sample_rate": sr}
             )
             emb_np = np.asarray(emb, dtype=np.float32).reshape(-1)
             return self._l2_normalize(emb_np)
@@ -255,14 +260,16 @@ class EmbeddingService:
         if not segments:
             return []
 
+        # Приоритет: сначала пробуем remote сервис, потом локальную pyannote
         remote_embeddings = self._try_remote_embeddings(segments, audio, sample_rate)
         if remote_embeddings is not None:
             logger.info(f"Использованы remote эмбеддинги для {len(segments)} сегментов")
             return remote_embeddings
 
+        # Fallback на локальную генерацию
         logger.info(
             f"Генерация локальных эмбеддингов для {len(segments)} сегментов "
-            f"(pyannote={'loaded' if self._pyannote_embedder else 'not loaded'})"
+            f"(pyannote={'loaded' if self._pyannote_embedder else 'not loaded'}, remote unavailable)"
         )
         
         embeddings = [
