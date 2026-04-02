@@ -74,7 +74,7 @@ class Settings(BaseSettings):
         "SPEAKER_EMBEDDINGS_URL",
         "",
     )
-    speaker_embeddings_timeout: int = 60
+    speaker_embeddings_timeout: int = 300  # 5 минут для диаризации (может быть долгой)
     
     # Audio preprocessing settings
     auto_resample_enabled: bool = Field(

@@ -72,8 +72,8 @@ class HybridEmbeddingModel:
             from pyannote.audio import Model, Inference
 
             token = os.getenv("HF_TOKEN", "").strip() or None
-            # Используем стабильную модель эмбеддингов
-            model_name = os.getenv("PYANNOTE_MODEL", "pyannote/embedding").strip() or "pyannote/embedding"
+            # Используем последнюю модель эмбеддингов (2024)
+            model_name = os.getenv("PYANNOTE_MODEL", "pyannote/wespeaker-voxceleb-resnet34-LM").strip() or "pyannote/wespeaker-voxceleb-resnet34-LM"
             last_exc: Exception | None = None
 
             # Пробуем разные варианты инициализации
@@ -444,7 +444,7 @@ async def diagnostics() -> dict[str, Any]:
         "version": "1.0.0",
         "pyannote": {
             "loaded": current_model.is_pyannote_loaded if current_model else False,
-            "model": os.getenv("PYANNOTE_MODEL", "pyannote/embedding"),
+            "model": os.getenv("PYANNOTE_MODEL", "pyannote/wespeaker-voxceleb-resnet34-LM"),
             "enabled": os.getenv("ENABLE_PYANNOTE", "1"),
         },
         "config": {
@@ -529,10 +529,10 @@ def _process_diarization(
         
         # Загружаем pyannote diarization pipeline
         token = os.getenv("HF_TOKEN", "").strip() or None
-        # Используем стабильную diarization модель (3.1)
+        # Используем последнюю community модель (сентябрь 2025)
         diarization_model = os.getenv(
             "PYANNOTE_DIARIZATION_MODEL",
-            "pyannote/speaker-diarization-3.1"
+            "pyannote/speaker-diarization-community-1"
         )
         
         # Пробуем загрузить pipeline
