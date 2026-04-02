@@ -72,6 +72,7 @@ class HybridEmbeddingModel:
             from pyannote.audio import Model, Inference
 
             token = os.getenv("HF_TOKEN", "").strip() or None
+            # Используем стабильную модель эмбеддингов
             model_name = os.getenv("PYANNOTE_MODEL", "pyannote/embedding").strip() or "pyannote/embedding"
             last_exc: Exception | None = None
 
@@ -528,6 +529,7 @@ def _process_diarization(
         
         # Загружаем pyannote diarization pipeline
         token = os.getenv("HF_TOKEN", "").strip() or None
+        # Используем стабильную diarization модель (3.1)
         diarization_model = os.getenv(
             "PYANNOTE_DIARIZATION_MODEL",
             "pyannote/speaker-diarization-3.1"
@@ -587,14 +589,43 @@ def _process_diarization(
         # Выполнение диаризации
         diarization = pipeline(audio_dict, **diarization_params)
         
-        # Конвертация результатов
+        # Конвертация результатов (новый API pyannote 4.x)
         segments = []
-        for turn, _, speaker in diarization.itertracks(yield_label=True):
-            segments.append({
-                "start": float(turn.start),
-                "end": float(turn.end),
-                "speaker": speaker,
-            })
+        
+        # Проверяем тип результата
+        if hasattr(diarization, 'itertracks'):
+            # Старый API (pyannote < 4.0)
+            for turn, _, speaker in diarization.itertracks(yield_label=True):
+                segments.append({
+                    "start": float(turn.start),
+                    "end": float(turn.end),
+                    "speaker": speaker,
+                })
+        elif hasattr(diarization, 'segments'):
+            # Новый API (pyannote 4.x) - DiarizeOutput
+            for segment in diarization.segments:
+                segments.append({
+                    "start": float(segment.start),
+                    "end": float(segment.end),
+                    "speaker": segment.speaker,
+                })
+        else:
+            # Fallback: пробуем итерировать напрямую
+            logger.warning(f"Unknown diarization output type: {type(diarization)}")
+            try:
+                for item in diarization:
+                    if hasattr(item, 'start') and hasattr(item, 'end') and hasattr(item, 'speaker'):
+                        segments.append({
+                            "start": float(item.start),
+                            "end": float(item.end),
+                            "speaker": item.speaker,
+                        })
+            except Exception as e:
+                logger.error(f"Failed to iterate diarization output: {e}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Unsupported diarization output format: {type(diarization)}"
+                )
         
         # Сортировка по времени
         segments.sort(key=lambda s: s["start"])

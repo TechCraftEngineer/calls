@@ -67,11 +67,13 @@ def run_ultra_pipeline(
             audio_np = np.array([], dtype=np.float32)
             audio_sr = 16000
         
-        # Проверяем доступность pyannote
+        # Проверяем доступность remote diarization service
         if not diarization_service.is_available:
             raise RuntimeError(
-                "Pyannote diarization недоступен. "
-                "Установите HF_TOKEN и перезапустите сервис. "
+                "Remote diarization service недоступен или pyannote не загружен. "
+                f"Проверьте: 1) SPEAKER_EMBEDDINGS_URL={settings.speaker_embeddings_url}, "
+                "2) HF_TOKEN на remote сервисе (speaker-embeddings), "
+                "3) docker-compose logs speaker-embeddings. "
                 "См. документацию: DIARIZATION_PIPELINE.md"
             )
         
