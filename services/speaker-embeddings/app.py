@@ -1,4 +1,5 @@
 import io
+import functools
 import logging
 import os
 from typing import Any
@@ -126,6 +127,36 @@ async def diarize(
         raise HTTPException(status_code=500, detail="diarization failed") from exc
 
 
+@functools.lru_cache(maxsize=1)
+def _get_diarization_pipeline(diarization_model: str, token: str):
+    """Get cached diarization pipeline instance."""
+    try:
+        from pyannote.audio import Pipeline
+        
+        # Пробуем загрузить pipeline с retry логикой
+        init_attempts = [
+            {"use_auth_token": token},
+            {"token": token},
+        ]
+        
+        for kwargs in init_attempts:
+            try:
+                pipeline = Pipeline.from_pretrained(diarization_model, **kwargs)
+                logger.info(f"Successfully loaded diarization pipeline: {diarization_model}")
+                return pipeline
+            except TypeError:
+                continue
+            except Exception as exc:
+                logger.error(f"Failed to load diarization pipeline: {exc}")
+                break
+        
+        return None
+        
+    except Exception as exc:
+        logger.error(f"Error initializing diarization pipeline: {exc}")
+        return None
+
+
 def _process_diarization(
     audio: np.ndarray,
     sr: int,
@@ -137,9 +168,8 @@ def _process_diarization(
     
     try:
         import torch
-        from pyannote.audio import Pipeline
         
-        # Загружаем pyannote diarization pipeline
+        # Проверяем наличие токена
         token = os.getenv("HF_TOKEN", "").strip() or None
         if not token:
             raise HTTPException(
@@ -153,22 +183,8 @@ def _process_diarization(
             "pyannote/speaker-diarization-community-1"
         )
         
-        # Пробуем загрузить pipeline
-        pipeline = None
-        init_attempts = [
-            {"use_auth_token": token},
-            {"token": token},
-        ]
-        
-        for kwargs in init_attempts:
-            try:
-                pipeline = Pipeline.from_pretrained(diarization_model, **kwargs)
-                break
-            except TypeError:
-                continue
-            except Exception as exc:
-                logger.error(f"Failed to load diarization pipeline: {exc}")
-                break
+        # Получаем кешированный pipeline
+        pipeline = _get_diarization_pipeline(diarization_model, token)
         
         if pipeline is None:
             raise HTTPException(
