@@ -21,6 +21,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger("speaker-embeddings")
 
+# Размерность гибридных эмбеддингов: 512 (pyannote) + 30 (acoustic)
+HYBRID_EMBEDDING_DIM = 542
+
 model: "HybridEmbeddingModel | None" = None
 model_lock = threading.Lock()
 
@@ -123,11 +126,11 @@ class HybridEmbeddingModel:
     def _pyannote_vector(self, audio_slice: np.ndarray, sr: int) -> np.ndarray:
         if self._pyannote_embedder is None:
             logger.debug("Pyannote embedder не загружен, возвращаем нули")
-            return np.zeros(192, dtype=np.float32)
+            return np.zeros(512, dtype=np.float32)
         
         if audio_slice.size < max(400, sr // 40):
             logger.debug(f"Аудио слайс слишком короткий: {audio_slice.size} samples")
-            return np.zeros(192, dtype=np.float32)
+            return np.zeros(512, dtype=np.float32)
         
         try:
             import torch
@@ -152,26 +155,39 @@ class HybridEmbeddingModel:
             )
             emb_np = np.asarray(emb, dtype=np.float32).reshape(-1)
             
+            # Используем полную размерность (512)
+            expected_dim = 512
+            if emb_np.shape[0] != expected_dim:
+                logger.warning(f"Неожиданная размерность эмбеддинга: {emb_np.shape[0]}, ожидалось {expected_dim}. Обрезаем/дополняем.")
+                if emb_np.shape[0] > expected_dim:
+                    emb_np = emb_np[:expected_dim]
+                else:
+                    emb_np = np.pad(emb_np, (0, expected_dim - emb_np.shape[0]), mode='constant')
+            
             # Проверяем результат
             if not np.isfinite(emb_np).all():
                 logger.error("Pyannote вернул NaN или Inf эмбеддинги!")
-                return np.zeros(192, dtype=np.float32)
+                return np.zeros(512, dtype=np.float32)
             
-            normalized = self._l2_normalize(emb_np)
+            # НЕ нормализуем! Pyannote эмбеддинги используем как есть
+            # Нормализация будет применена к финальному hybrid вектору
             
             # Диагностика
-            norm_before = float(np.linalg.norm(emb_np))
-            norm_after = float(np.linalg.norm(normalized))
-            nonzero = np.count_nonzero(normalized)
-            logger.debug(
-                f"Pyannote: norm_before={norm_before:.4f}, norm_after={norm_after:.4f}, "
-                f"nonzero={nonzero}/192"
+            norm = float(np.linalg.norm(emb_np))
+            nonzero = np.count_nonzero(emb_np)
+            
+            # Показываем первые несколько значений для диагностики
+            sample_values = emb_np[:5].tolist()
+            logger.info(
+                f"Pyannote: dim={emb_np.shape[0]}, norm={norm:.4f}, "
+                f"nonzero={nonzero}/{expected_dim}, "
+                f"sample_values={[f'{v:.4f}' for v in sample_values]}"
             )
             
-            return normalized
+            return emb_np
         except Exception as e:
             logger.error(f"Ошибка в _pyannote_vector: {e}", exc_info=True)
-            return np.zeros(192, dtype=np.float32)
+            return np.zeros(512, dtype=np.float32)
 
     @staticmethod
     def _acoustic_vector(audio_slice: np.ndarray, sr: int) -> np.ndarray:
@@ -227,7 +243,7 @@ class HybridEmbeddingModel:
             except (TypeError, ValueError) as exc:
                 raise ValueError("Segment start/end must be numeric") from exc
             if end <= start:
-                out.append([0.0] * 222)
+                out.append([0.0] * 542)
                 logger.warning(f"Сегмент {idx}: пустой (start={start}, end={end})")
                 continue
             
@@ -243,9 +259,13 @@ class HybridEmbeddingModel:
             p_nonzero = np.count_nonzero(p)
             a_nonzero = np.count_nonzero(a)
             
+            # Показываем первые значения для диагностики
+            p_sample = p[:5].tolist() if p.size >= 5 else p.tolist()
+            
             logger.info(
-                f"Сегмент {idx}: pyannote_norm={p_norm:.4f} ({p_nonzero}/192 nonzero), "
-                f"acoustic_norm={a_norm:.4f} ({a_nonzero}/30 nonzero)"
+                f"Сегмент {idx}: pyannote_norm={p_norm:.4f} ({p_nonzero}/{p.shape[0]} nonzero), "
+                f"acoustic_norm={a_norm:.4f} ({a_nonzero}/30 nonzero), "
+                f"pyannote_sample={[f'{v:.4f}' for v in p_sample]}"
             )
             
             merged = self._l2_normalize(np.concatenate([p, a]).astype(np.float32))
@@ -419,10 +439,10 @@ async def diagnostics() -> dict[str, Any]:
             "hf_token_set": bool(os.getenv("HF_TOKEN", "").strip()),
             "port": os.getenv("PORT", "7860"),
         },
-        "embedding_dim": 222,
+        "embedding_dim": 542,
         "components": {
-            "pyannote_dim": 192,
-            "acoustic_dim": 30,
+            "pyannote": 512,
+            "acoustic": 30
         }
     }
 

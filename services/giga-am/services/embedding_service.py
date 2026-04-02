@@ -13,7 +13,7 @@ import soundfile as sf
 from config import settings
 
 logger = logging.getLogger(__name__)
-HYBRID_EMBEDDING_DIM = 222
+HYBRID_EMBEDDING_DIM = 542  # 512 (pyannote) + 30 (acoustic)
 
 
 class EmbeddingService:
@@ -168,7 +168,7 @@ class EmbeddingService:
 
     def _pyannote_vector(self, audio_slice: np.ndarray, sr: int) -> np.ndarray:
         if self._pyannote_embedder is None or audio_slice.size < max(400, sr // 40):
-            return np.zeros(192, dtype=np.float32)
+            return np.zeros(512, dtype=np.float32)
         try:
             import torch
             
@@ -179,9 +179,20 @@ class EmbeddingService:
                 {"waveform": waveform_tensor.unsqueeze(0), "sample_rate": sr}
             )
             emb_np = np.asarray(emb, dtype=np.float32).reshape(-1)
-            return self._l2_normalize(emb_np)
+            
+            # Используем полную размерность 512
+            if emb_np.shape[0] != 512:
+                logger.warning(f"Unexpected embedding dimension: {emb_np.shape[0]}, expected 512")
+                if emb_np.shape[0] > 512:
+                    emb_np = emb_np[:512]
+                else:
+                    emb_np = np.pad(emb_np, (0, 512 - emb_np.shape[0]), mode='constant')
+            
+            # НЕ нормализуем! Используем raw эмбеддинги
+            # Нормализация будет применена к финальному hybrid вектору
+            return emb_np
         except Exception:
-            return np.zeros(192, dtype=np.float32)
+            return np.zeros(512, dtype=np.float32)
 
     @staticmethod
     def _acoustic_vector(audio_slice: np.ndarray, sr: int) -> np.ndarray:
