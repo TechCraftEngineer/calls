@@ -2,6 +2,7 @@
 Сервис для выполнения полного pipeline обработки аудио.
 """
 import logging
+import os
 import time
 from typing import Any
 
@@ -13,9 +14,7 @@ from config import settings
 from services.alignment_service import AlignmentService
 from services.attribution_service import AttributionService
 from services.audio_preprocessing import preprocess_audio_for_diarization, cleanup_processed_audio
-from services.clustering_service import ClusteringService
-from services.embedding_service import EmbeddingService
-from services.overlap_handler import OverlapHandler
+from services.diarization_service import DiarizationService
 from services.postprocess_service import PostprocessService
 from services.transcription_service import transcription_service
 from utils.metrics import metrics
@@ -23,19 +22,8 @@ from utils.metrics import metrics
 logger = logging.getLogger(__name__)
 
 # Инициализация сервисов
+diarization_service = DiarizationService()
 alignment_service = AlignmentService()
-embedding_service = EmbeddingService()
-clustering_service = ClusteringService(
-    base_threshold=settings.clustering_base_threshold,
-    min_segment_duration=settings.clustering_min_segment_duration,
-    temporal_weight=settings.clustering_temporal_weight,
-    confidence_threshold=settings.clustering_confidence_threshold,
-)
-overlap_handler = OverlapHandler(
-    overlap_confidence_threshold=getattr(settings, 'overlap_confidence_threshold', 0.7),
-    min_overlap_duration=getattr(settings, 'min_overlap_duration', 0.5),
-    embedding_similarity_threshold=getattr(settings, 'overlap_embedding_similarity', 0.6),
-)
 attribution_service = AttributionService()
 postprocess_service = PostprocessService()
 
@@ -48,19 +36,16 @@ def run_ultra_pipeline(
     """
     Выполнение полного pipeline обработки аудио с отслеживанием метрик.
     
-    Pipeline включает:
+    Pipeline (SOTA 2024-2026):
     1. Предобработка аудио (апсемплинг при необходимости)
-    2. ASR (распознавание речи)
-    3. Alignment (выравнивание сегментов)
-    4. Embedding (генерация эмбеддингов спикеров)
-    5. Clustering (кластеризация спикеров)
-    6. Overlap processing (обработка одновременной речи)
-    7. Attribution (построение timeline спикеров)
-    8. Postprocessing (финальная обработка)
+    2. Diarization (pyannote) → сегменты по спикерам
+    3. ASR (GigaAM) → транскрипция каждого сегмента
+    4. Alignment (выравнивание сегментов)
+    5. Postprocessing (финальная обработка)
     
     Args:
         audio_path: Путь к аудиофайлу
-        preprocess_metadata: Метаданные предобработки (overlap candidates и т.д.)
+        preprocess_metadata: Метаданные предобработки
         request_id: ID запроса для логирования и метрик
     
     Returns:
@@ -70,147 +55,163 @@ def run_ultra_pipeline(
     processed_audio_path = preprocess_audio_for_diarization(audio_path, request_id)
     
     try:
-        # ASR этап - используем обработанное аудио
+        # Загружаем аудио для диаризации
+        try:
+            audio_np, audio_sr = librosa.load(processed_audio_path, sr=16000, mono=True)
+        except (
+            librosa.util.exceptions.ParameterError,
+            FileNotFoundError,
+            OSError,
+            soundfile.SoundFileError,
+        ):
+            audio_np = np.array([], dtype=np.float32)
+            audio_sr = 16000
+        
+        # Проверяем доступность pyannote
+        if not diarization_service.is_available:
+            raise RuntimeError(
+                "Pyannote diarization недоступен. "
+                "Установите HF_TOKEN и перезапустите сервис. "
+                "См. документацию: DIARIZATION_PIPELINE.md"
+            )
+        
+        logger.info(f"[{request_id}] Используется SOTA pipeline: Pyannote Diarization → GigaAM ASR")
+        
+        # Этап 1: Diarization - определяем границы спикеров
         start_time = time.time()
-        asr_result = transcription_service.transcribe_audio(processed_audio_path)
+        diarization_segments = diarization_service.diarize(
+            audio_np,
+            audio_sr,
+            num_speakers=settings.diarization_num_speakers,
+            min_speakers=settings.diarization_min_speakers,
+            max_speakers=settings.diarization_max_speakers,
+        )
+        diarization_time = time.time() - start_time
+        metrics.record_stage_time(request_id, "diarization", diarization_time)
+        
+        if not diarization_segments:
+            raise RuntimeError(
+                "Diarization не вернул сегментов. "
+                "Проверьте качество аудио и настройки pyannote."
+            )
+        
+        # Объединяем короткие сегменты
+        diarization_segments = diarization_service.merge_short_segments(
+            diarization_segments,
+            min_duration=settings.diarization_min_segment_duration,
+        )
+        
+        logger.info(
+            f"[{request_id}] Diarization создал {len(diarization_segments)} сегментов "
+            f"для транскрипции"
+        )
+        
+        # Этап 2: ASR - транскрибируем каждый сегмент
+        start_time = time.time()
+        transcribed_segments = []
+        
+        for idx, diar_seg in enumerate(diarization_segments):
+            start = diar_seg["start"]
+            end = diar_seg["end"]
+            speaker = diar_seg["speaker"]
+            
+            # Извлекаем аудио для этого сегмента
+            start_sample = int(start * audio_sr)
+            end_sample = int(end * audio_sr)
+            segment_audio = audio_np[start_sample:end_sample]
+            
+            if segment_audio.size == 0:
+                logger.warning(f"[{request_id}] Пустой сегмент {idx}: {start:.2f}-{end:.2f}s")
+                continue
+            
+            # Сохраняем временный файл для ASR
+            import tempfile
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
+                segment_path = tmp_file.name
+                soundfile.write(segment_path, segment_audio, audio_sr)
+            
+            try:
+                # Транскрибируем сегмент
+                asr_result = transcription_service.transcribe_audio(segment_path)
+                
+                if asr_result.get("success") and asr_result.get("segments"):
+                    # Добавляем спикера и корректируем временные метки
+                    for asr_seg in asr_result["segments"]:
+                        transcribed_segments.append({
+                            "start": start + float(asr_seg.get("start", 0)),
+                            "end": start + float(asr_seg.get("end", 0)),
+                            "text": asr_seg.get("text", ""),
+                            "speaker": speaker,
+                            "confidence": asr_seg.get("confidence", 1.0),
+                        })
+                else:
+                    # ASR не вернул текст, создаём пустой сегмент
+                    transcribed_segments.append({
+                        "start": start,
+                        "end": end,
+                        "text": "",
+                        "speaker": speaker,
+                        "confidence": 0.0,
+                    })
+            finally:
+                # Удаляем временный файл
+                try:
+                    os.unlink(segment_path)
+                except Exception:
+                    pass
+        
         asr_time = time.time() - start_time
         metrics.record_stage_time(request_id, "asr", asr_time)
         
-        if not asr_result.get("success"):
-            return asr_result
-
-        base_segments = asr_result.get("segments", []) or []
+        logger.info(
+            f"[{request_id}] ASR завершён: {len(transcribed_segments)} сегментов "
+            f"из {len(diarization_segments)} diarization сегментов"
+        )
         
-        # Логируем информацию о сегментах из ASR
-        logger.info(f"[{request_id}] ASR создал {len(base_segments)} сегментов:")
-        for idx, seg in enumerate(base_segments):
-            start = seg.get("start", 0)
-            end = seg.get("end", 0)
-            text = seg.get("text", "")[:50]  # Первые 50 символов
-            logger.info(f"  Сегмент {idx}: {start:.2f}s-{end:.2f}s, text='{text}...'")
-        
-        # Alignment этап
+        # Этап 3: Alignment (если включен)
         start_time = time.time()
         aligned_segments = (
-            alignment_service.align_segments(base_segments)
+            alignment_service.align_segments(transcribed_segments)
             if settings.alignment_enabled
-            else base_segments
+            else transcribed_segments
         )
         alignment_time = time.time() - start_time
         if settings.alignment_enabled:
             metrics.record_stage_time(request_id, "alignment", alignment_time)
-
-        overlap_spans = []
-        if isinstance(preprocess_metadata, dict):
-            raw_overlap = preprocess_metadata.get("overlap_candidates", [])
-            if isinstance(raw_overlap, list):
-                overlap_spans = raw_overlap
-
-        diarized_segments = aligned_segments
-        if settings.diarization_enabled:
-            try:
-                audio_np, audio_sr = librosa.load(processed_audio_path, sr=16000, mono=True)
-            except (
-                librosa.util.exceptions.ParameterError,
-                FileNotFoundError,
-                OSError,
-                soundfile.SoundFileError,
-            ):
-                audio_np = np.array([], dtype=np.float32)
-                audio_sr = 16000
-
-            # Embedding этап
-            start_time = time.time()
-            batch_embeddings = embedding_service.build_batch_hybrid_embeddings(
-                aligned_segments,
-                audio=audio_np,
-                sample_rate=audio_sr,
-            )
-            embedding_time = time.time() - start_time
-            metrics.record_stage_time(request_id, "embedding", embedding_time)
-            
-            for idx, segment in enumerate(aligned_segments):
-                segment["embedding"] = (
-                    batch_embeddings[idx] if idx < len(batch_embeddings) else []
-                )
-            
-            # Clustering этап
-            start_time = time.time()
-            diarized_segments = clustering_service.assign_speakers(
-                aligned_segments,
-                overlap_spans=overlap_spans,
-            )
-            clustering_time = time.time() - start_time
-            metrics.record_stage_time(request_id, "clustering", clustering_time)
-            
-            # Overlap processing этап - разделение одновременно говорящих спикеров
-            if settings.diarization_enabled and getattr(settings, 'overlap_separation_enabled', True):
-                start_time = time.time()
-                # Получаем кластеры из результатов кластеризации
-                clusters_map: dict[str, dict[str, Any]] = {}
-                for seg in diarized_segments:
-                    speaker = seg.get("speaker")
-                    if speaker and speaker not in clusters_map:
-                        embedding = seg.get("embedding", [])
-                        if embedding:
-                            clusters_map[speaker] = {
-                                "speaker": speaker,
-                                "centroid": embedding,
-                                "vectors": [embedding],
-                            }
-                
-                clusters = list(clusters_map.values())
-                
-                # Обработка overlap
-                diarized_segments = overlap_handler.process_overlaps(
-                    diarized_segments,
-                    clusters,
-                    overlap_spans=overlap_spans,
-                )
-                overlap_time = time.time() - start_time
-                metrics.record_stage_time(request_id, "overlap_separation", overlap_time)
-                
-                # Логируем статистику overlap
-                overlap_stats = overlap_handler.get_overlap_statistics(diarized_segments)
-                logger.info("Overlap processing completed", {
-                    "request_id": request_id,
-                    "overlap_segments": overlap_stats["overlap_segments"],
-                    "sub_segments": overlap_stats["sub_segments"],
-                    "overlap_percentage": f"{overlap_stats['overlap_percentage']:.1f}%",
-                })
-
-        # Attribution этап
+        
+        # Этап 4: Attribution - построение timeline
         start_time = time.time()
-        speaker_timeline = attribution_service.build_speaker_timeline(diarized_segments)
+        speaker_timeline = attribution_service.build_speaker_timeline(aligned_segments)
         attribution_time = time.time() - start_time
         metrics.record_stage_time(request_id, "attribution", attribution_time)
         
-        # Postprocess этап
+        # Этап 5: Postprocessing
         start_time = time.time()
-        final_segments = postprocess_service.apply_to_segments(diarized_segments)
+        final_segments = postprocess_service.apply_to_segments(aligned_segments)
         final_transcript = postprocess_service.build_final_transcript(final_segments)
         postprocess_time = time.time() - start_time
         metrics.record_stage_time(request_id, "postprocess", postprocess_time)
-
+        
+        # Вычисляем общую длительность
+        total_duration = float(audio_np.size / audio_sr) if audio_sr > 0 else 0.0
+        
         result = {
             "success": True,
             "segments": final_segments,
             "speaker_timeline": speaker_timeline,
             "final_transcript": final_transcript,
-            "total_duration": asr_result.get("total_duration", 0),
-            "pipeline": "ultra-sync-2026",
+            "total_duration": total_duration,
+            "pipeline": "pyannote-diarization-sota-2026",
             "stages": [
+                "diarization",
                 "asr",
                 "alignment" if settings.alignment_enabled else "alignment:disabled",
-                "embedding+clustering"
-                if settings.diarization_enabled
-                else "embedding+clustering:disabled",
                 "attribution",
                 "postprocess",
             ],
         }
         
-        # Очистка временного файла после обработки
+        # Очистка временного файла
         cleanup_processed_audio(processed_audio_path, audio_path, request_id)
         
         return result

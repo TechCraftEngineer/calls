@@ -1,15 +1,15 @@
 #!/bin/bash
 
-# Скрипт для тестирования диаризации с разными параметрами
-# Версия: 2.0 (обновлено для 512-мерных эмбеддингов)
+# Скрипт для тестирования диаризации
+# Версия: 3.0 (Pyannote Diarization → GigaAM ASR, SOTA 2024-2026)
 
 AUDIO_FILE="${1:-test_demo.mp3}"
 API_URL="${2:-https://vnggncb-giga-am.hf.space}"
 PROXY="${3:-127.0.0.1:2080}"
 
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║         Тестирование Speaker Diarization v2.0              ║"
-echo "║    (512-dim pyannote embeddings + acoustic features)       ║"
+echo "║         Тестирование Speaker Diarization v3.0              ║"
+echo "║      Pyannote Diarization → GigaAM ASR (SOTA 2024-2026)    ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -34,53 +34,8 @@ else
     USE_JQ=true
 fi
 
-# 1. Диагностика эмбеддингов
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🔍 Шаг 1: Диагностика эмбеддингов"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-RESPONSE=$(curl -s -w "\n%{http_code}" -x "$PROXY" -X POST "$API_URL/api/debug-embeddings" \
-  -F "file=@$AUDIO_FILE")
-
-HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-BODY=$(echo "$RESPONSE" | sed '$d')
-
-if [ "$HTTP_CODE" != "200" ]; then
-    echo "Ошибка: HTTP $HTTP_CODE"
-    echo "$BODY"
-else
-    if [ "$USE_JQ" = true ]; then
-        echo "=== Качество аудио ==="
-        echo "$BODY" | jq -r '.audio_quality | 
-            "Sample Rate: \(.original_sample_rate)Hz → \(.processed_sample_rate)Hz",
-            "Quality: \(.quality)",
-            "Auto Resample: \(.auto_resample_enabled)",
-            "Was Resampled: \(.was_resampled)",
-            "Recommendation: \(.recommendation)"'
-        
-        echo ""
-        echo "=== Статистика эмбеддингов ==="
-        echo "$BODY" | jq -r '.statistics | 
-            "Pyannote Loaded: \(.pyannote_loaded)",
-            "Remote URL: \(.remote_url)",
-            "Avg Embedding Norm: \(.avg_embedding_norm)",
-            "Avg Cosine Distance: \(.avg_cosine_distance)",
-            "Clustering Threshold: \(.clustering_threshold)"'
-        
-        echo ""
-        echo "=== Результаты ==="
-        echo "$BODY" | jq '{
-            segments_count,
-            valid_embeddings,
-            recommendations
-        }'
-    else
-        echo "$BODY"
-    fi
-fi
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🎤 Шаг 2: Полная транскрипция с диаризацией"
+echo "🎤 Транскрипция с диаризацией"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 RESPONSE=$(curl -s -w "\n%{http_code}" -x "$PROXY" -X POST "$API_URL/api/transcribe" \
   -F "file=@$AUDIO_FILE")
@@ -89,22 +44,22 @@ HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 BODY=$(echo "$RESPONSE" | sed '$d')
 
 if [ "$HTTP_CODE" != "200" ]; then
-    echo "Ошибка: HTTP $HTTP_CODE"
+    echo "❌ Ошибка: HTTP $HTTP_CODE"
     echo "$BODY"
 else
     if [ "$USE_JQ" = true ]; then
-        echo "=== Результат транскрипции ==="
+        echo "=== Результат ==="
         echo "$BODY" | jq -r '
             "Success: \(.success)",
+            "Pipeline: \(.pipeline)",
             "Total Segments: \(.segments | length)",
             "Unique Speakers: \([.segments[].speaker] | unique | length)",
             "Speakers: \([.segments[].speaker] | unique | join(", "))",
-            "Processing Time: \(.processing_time // "N/A")s",
-            "Cached: \(.cached // false)"'
+            "Total Duration: \(.total_duration // "N/A")s"'
         
         echo ""
         echo "=== Timeline по спикерам ==="
-        echo "$BODY" | jq -r '.speaker_timeline[] | 
+        echo "$BODY" | jq -r '.speaker_timeline[]? | 
             "\(.speaker): \(.start)s - \(.end)s (\(.end - .start | floor)s)",
             "  Text: \(.text[:80])\(if (.text | length) > 80 then "..." else "" end)",
             ""'
@@ -114,12 +69,20 @@ else
         TOTAL_SPEAKERS=$(echo "$BODY" | jq '[.segments[].speaker] | unique | length')
         if [ "$TOTAL_SPEAKERS" -eq 1 ]; then
             echo "⚠️  Обнаружен только 1 спикер"
+            echo ""
             echo "Возможные причины:"
-            echo "  - В аудио действительно один человек"
-            echo "  - Эмбеддинги идентичны (проверьте диагностику выше)"
-            echo "  - Низкое качество аудио"
+            echo "  1. В аудио действительно один человек"
+            echo "  2. Pyannote не загружен (проверьте HF_TOKEN)"
+            echo "  3. Низкое качество аудио (< 16kHz)"
         else
             echo "✅ Обнаружено спикеров: $TOTAL_SPEAKERS"
+            
+            # Показываем статистику по каждому спикеру
+            for speaker in $(echo "$BODY" | jq -r '[.segments[].speaker] | unique | .[]'); do
+                COUNT=$(echo "$BODY" | jq "[.segments[] | select(.speaker == \"$speaker\")] | length")
+                DURATION=$(echo "$BODY" | jq "[.segments[] | select(.speaker == \"$speaker\") | (.end - .start)] | add")
+                echo "  $speaker: $COUNT сегментов, ${DURATION}s"
+            done
         fi
     else
         echo "$BODY"
@@ -128,39 +91,32 @@ fi
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📊 Анализ результатов и рекомендации"
+echo "📊 Рекомендации"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "Проверьте диагностику:"
-echo "1. pyannote_loaded: должно быть true"
-echo "2. remote_url: должен быть настроен или пустой"
-echo "3. avg_cosine_distance:"
-echo "   - < 0.01: ❌ ПРОБЛЕМА - эмбеддинги идентичны (проверьте модель)"
-echo "   - 0.01-0.20: ⚠️  Очень похожие голоса (возможно один спикер)"
-echo "   - 0.20-0.40: ✅ Хорошее различие (2+ спикера)"
-echo "   - > 0.40: ✅ Отличное различие (явно разные голоса)"
+echo "🎯 Для лучшего качества диаризации:"
 echo ""
-echo "Если все сегменты получили SPEAKER_01:"
+echo "1. Настройте Pyannote (обязательно):"
+echo "   export HF_TOKEN=your_token_here"
+echo "   # Получите токен: https://huggingface.co/settings/tokens"
+echo "   # Примите условия: https://huggingface.co/pyannote/speaker-diarization-3.1"
 echo ""
-echo "📌 Вариант 1: В аудио действительно один спикер"
-echo "  → Это нормально, попробуйте другое аудио с разными голосами"
+echo "2. Качество аудио:"
+echo "   - Минимум 16kHz sample rate (автоматический апсемплинг включен)"
+echo "   - Чистое аудио без шума и эха"
+echo "   - Явно разные голоса (мужской/женский, разные возраста)"
 echo ""
-echo "📌 Вариант 2: Эмбеддинги идентичны (avg_distance < 0.01)"
-echo "  → Проверьте что pyannote_loaded=true"
-echo "  → Проверьте что используется полная размерность (512, не 192)"
-echo "  → Перезапустите speaker-embeddings сервис"
-echo ""
-echo "📌 Вариант 3: Низкое качество аудио"
-echo "  → Проверьте sample_rate в audio_quality"
-echo "  → Должен быть >= 16000 Hz (или auto_resample_enabled=true)"
-echo ""
-echo "⚙️  Настройка порога кластеризации:"
-echo "  - Если avg_distance 0.20-0.30: export CLUSTERING_BASE_THRESHOLD=0.25"
-echo "  - Если avg_distance 0.30-0.40: export CLUSTERING_BASE_THRESHOLD=0.30 (по умолчанию)"
-echo "  - Если avg_distance > 0.40: export CLUSTERING_BASE_THRESHOLD=0.35"
+echo "3. Укажите количество спикеров (если известно):"
+echo "   export DIARIZATION_NUM_SPEAKERS=2"
+echo "   # Или диапазон:"
+echo "   export DIARIZATION_MIN_SPEAKERS=2"
+echo "   export DIARIZATION_MAX_SPEAKERS=4"
 echo ""
 echo "🔄 После изменений перезапустите сервис:"
-echo "  docker-compose restart giga-am"
+echo "   docker-compose restart giga-am"
+echo ""
+echo "📚 Документация:"
+echo "   services/giga-am/DIARIZATION_PIPELINE.md"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✅ Тестирование завершено"
