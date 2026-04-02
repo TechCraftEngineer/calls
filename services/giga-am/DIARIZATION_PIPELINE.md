@@ -2,9 +2,21 @@
 
 ## Архитектура (SOTA 2024-2026)
 
+### Стандартный режим
+
 ```
 Аудио → Remote Diarization Service (Pyannote) → Сегменты по спикерам → GigaAM ASR → Транскрипция
 ```
+
+### Dual ASR + LLM режим (по умолчанию, максимальная точность)
+
+```
+Аудио → Full ASR (контекст) ┐
+     ↓                       ├→ LLM Correction → Улучшенная транскрипция
+     → Diarization → ASR ────┘
+```
+
+📖 **Подробнее о Dual ASR + LLM:** [DUAL_ASR_LLM_CORRECTION.md](./DUAL_ASR_LLM_CORRECTION.md)
 
 **Преимущества:**
 
@@ -13,13 +25,16 @@
 - ✅ DER ~11-19% (профессиональный уровень)
 - ✅ Используется в production: HuggingFace, Rev.ai, AWS и др.
 - ✅ Централизованный сервис диаризации (разгружает giga-am)
+- ✅ LLM коррекция улучшает точность на 10-20%
 
 **Этапы:**
 
-1. **Diarization** (remote) - pyannote определяет "кто когда говорил"
-2. **ASR** (giga-am) - GigaAM транскрибирует каждый сегмент
-3. **Alignment** - выравнивание слов
-4. **Postprocessing** - финальная обработка
+1. **Full ASR** (опционально) - полная транскрипция для контекста
+2. **Diarization** (remote) - pyannote определяет "кто когда говорил"
+3. **Diarized ASR** (giga-am) - GigaAM транскрибирует каждый сегмент
+4. **LLM Correction** (опционально) - улучшение через LLM
+5. **Alignment** - выравнивание слов
+6. **Postprocessing** - финальная обработка
 
 ## Настройки
 
@@ -28,6 +43,14 @@
 ```bash
 # Remote diarization service
 SPEAKER_EMBEDDINGS_URL=http://speaker-embeddings:7860
+
+# Dual ASR + LLM correction (по умолчанию включено)
+ENABLE_DUAL_ASR_LLM_CORRECTION=true
+DUAL_ASR_LLM_API_URL=https://api.openai.com/v1
+DUAL_ASR_LLM_API_KEY=sk-...
+DUAL_ASR_LLM_MODEL=gpt-4o-mini
+DUAL_ASR_LLM_TIMEOUT=60
+DUAL_ASR_FALLBACK_ON_ERROR=true
 SPEAKER_EMBEDDINGS_TIMEOUT=120
 
 # Параметры диаризации

@@ -38,12 +38,25 @@ class Settings(BaseSettings):
     job_ttl_hours: int = 24
     source_download_timeout: int = 120
     max_job_retries: int = 2
+    
+    # LLM correction settings (старая система - для async jobs)
     llm_correction_enabled: bool = True
     llm_api_url: str = os.getenv("LLM_API_URL", "")
     llm_api_key: str = os.getenv("LLM_API_KEY", "")
     llm_model: str = os.getenv("LLM_MODEL", "gpt-4o-mini")
     llm_timeout: int = 45
     strict_correction_mode: bool = True
+    
+    # Dual ASR + LLM correction (через Inngest - только флаг)
+    enable_dual_asr_llm_correction: bool = Field(
+        default=True,
+        description="Enable dual ASR (full + diarized) - orchestrated by Inngest"
+    )
+    
+    # Inngest connection
+    inngest_api_url: str = os.getenv("INNGEST_API_URL", "http://localhost:3001")
+    inngest_event_key: str = os.getenv("INNGEST_EVENT_KEY", "")
+    
     callback_timeout: int = 20
     diarization_enabled: bool = True
     alignment_enabled: bool = True
