@@ -122,4 +122,14 @@ class PostprocessService:
         return output
 
     def build_final_transcript(self, segments: list[dict[str, Any]]) -> str:
-        return " ".join([s.get("text", "").strip() for s in segments if s.get("text")]).strip()
+        """Строим финальный транскрипт с разметкой спикеров"""
+        lines = []
+        for segment in segments:
+            text = segment.get("text", "").strip()
+            if not text:
+                continue
+                
+            speaker = segment.get("speaker", "SPEAKER_XX")
+            lines.append(f"{speaker}: {text}")
+        
+        return "\n".join(lines)

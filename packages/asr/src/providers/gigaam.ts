@@ -362,12 +362,13 @@ export async function transcribeWithGigaAm(
     processingTimeMs,
     textLength: text.length,
     segmentCount: segments.length,
+    utterancesCount: utterances.length,
   });
 
   return {
     source: "gigaam",
     text,
-    utterances: utterances, // Всегда передаем массив, даже если пустой
+    utterances,
     processingTimeMs,
     raw: {
       endpoint: transcribeUrl,
