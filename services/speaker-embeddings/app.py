@@ -7,7 +7,10 @@ from typing import Any
 import librosa
 import numpy as np
 import soundfile as sf
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.middleware import Middleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 import uvicorn
 
 
@@ -18,11 +21,34 @@ logging.basicConfig(
 logger = logging.getLogger("speaker-embeddings")
 
 
+class MaxContentSizeMiddleware(BaseHTTPMiddleware):
+    """Middleware для ограничения максимального размера контента запроса"""
+    
+    def __init__(self, app, max_size: int = 100 * 1024 * 1024):  # 100MB по умолчанию
+        super().__init__(app)
+        self.max_size = max_size
+    
+    async def dispatch(self, request: Request, call_next):
+        # Проверяем Content-Length для запросов с телом
+        content_length = request.headers.get("content-length")
+        if content_length:
+            if int(content_length) > self.max_size:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"Request entity too large. Maximum size is {self.max_size // (1024*1024)}MB"
+                )
+        
+        return await call_next(request)
+
+
 app = FastAPI(
     title="Speaker Diarization API",
     description="Speaker diarization service using pyannote.audio",
     version="2.0.0",
 )
+
+# Добавляем middleware для ограничения размера запроса (100MB)
+app.add_middleware(MaxContentSizeMiddleware, max_size=100 * 1024 * 1024)
 
 
 @app.get("/")
@@ -58,10 +84,26 @@ async def health() -> dict[str, Any]:
     except Exception:
         pass
     
+    hf_token_set = bool(os.getenv("HF_TOKEN", "").strip())
+    
+    # Если либо pyannote недоступен, либо HF_TOKEN не установлен - сервис нездоров
+    if not pyannote_available or not hf_token_set:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "unhealthy",
+                "pyannote_available": pyannote_available,
+                "pyannote_loaded": pyannote_available,  # Backward compatibility
+                "hf_token_set": hf_token_set,
+                "reason": "Service prerequisites not met"
+            }
+        )
+    
     return {
         "status": "healthy",
         "pyannote_available": pyannote_available,
-        "hf_token_set": bool(os.getenv("HF_TOKEN", "").strip()),
+        "pyannote_loaded": pyannote_available,  # Backward compatibility
+        "hf_token_set": hf_token_set,
     }
 
 
@@ -95,19 +137,59 @@ async def diarize(
     Возвращает список сегментов с временными метками и ID спикеров.
     """
     try:
-        audio_bytes = await file.read()
-        
-        # Загружаем аудио
-        with io.BytesIO(audio_bytes) as buf:
-            audio, sr = sf.read(buf, dtype="float32")
-            if audio.ndim > 1:
-                audio = np.mean(audio, axis=1)
-            audio = np.asarray(audio, dtype=np.float32)
+        # Загружаем аудио напрямую из файла (потоковое чтение)
+        audio, sr = sf.read(file.file, dtype="float32")
+        if audio.ndim > 1:
+            audio = np.mean(audio, axis=1)
+        audio = np.asarray(audio, dtype=np.float32)
         
         # Ресемплируем если нужно
         if sr != 16000:
             audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
             sr = 16000
+        
+        # Валидация параметров количества спикеров
+        if num_speakers is not None:
+            if not isinstance(num_speakers, int) or num_speakers <= 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail="num_speakers must be a positive integer"
+                )
+        
+        if min_speakers is not None:
+            if not isinstance(min_speakers, int) or min_speakers <= 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail="min_speakers must be a positive integer"
+                )
+        
+        if max_speakers is not None:
+            if not isinstance(max_speakers, int) or max_speakers <= 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail="max_speakers must be a positive integer"
+                )
+        
+        # Проверка соотношения между min и max
+        if min_speakers is not None and max_speakers is not None:
+            if min_speakers > max_speakers:
+                raise HTTPException(
+                    status_code=400,
+                    detail="min_speakers must be less than or equal to max_speakers"
+                )
+        
+        # Проверка, что num_speakers находится в диапазоне [min_speakers, max_speakers]
+        if num_speakers is not None:
+            if min_speakers is not None and num_speakers < min_speakers:
+                raise HTTPException(
+                    status_code=400,
+                    detail="num_speakers must be greater than or equal to min_speakers"
+                )
+            if max_speakers is not None and num_speakers > max_speakers:
+                raise HTTPException(
+                    status_code=400,
+                    detail="num_speakers must be less than or equal to max_speakers"
+                )
         
         # Выполняем диаризацию
         result = _process_diarization(
@@ -254,7 +336,7 @@ def _process_diarization(
             logger.error(f"Failed to extract segments: {e}", exc_info=True)
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to extract diarization segments: {str(e)}"
+                detail="Failed to extract diarization segments"
             )
         
         if not segments:
@@ -291,7 +373,7 @@ def _process_diarization(
         logger.error(f"Diarization error: {exc}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Diarization failed: {str(exc)}"
+            detail="Diarization failed"
         ) from exc
 
 

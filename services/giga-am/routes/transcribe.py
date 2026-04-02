@@ -80,7 +80,7 @@ async def api_transcribe(
                 # Вычисляем хеш файла для кэширования и отладки
                 file_hash = FileValidator.calculate_file_hash(tmp_path)
                 logger.debug("Хеш файла: %s", file_hash)
-            except (AudioProcessingError, ValidationError) as e:
+            except (AudioProcessingError, ValidationError, GigaAMException, ModelLoadError, GigaTimeoutError) as e:
                 raise e
             except Exception as e:
                 raise AudioProcessingError(
@@ -127,59 +127,33 @@ async def api_transcribe(
                     cached_result["cached"] = True
                     return JSONResponse(content=cached_result)
                 
-                try:
-                    result = await run_in_threadpool(
-                        run_ultra_pipeline,
-                        tmp_path,
-                        preprocess_metadata,
-                        request_id,
-                    )
-                except (GigaAMException, ModelLoadError, GigaTimeoutError) as e:
-                    # Re-raise domain exceptions unchanged
-                    raise
-                except Exception as e:
-                    # Wrap unexpected exceptions into TranscriptionError
-                    raise TranscriptionError(
-                        f"Ошибка при выполнении pipeline: {str(e)}",
-                        stage="pipeline_execution"
-                    ) from e
+                # Возвращаем немедленный ответ с request_id для асинхронной обработки
+                initial_response = {
+                    "request_id": request_id,
+                    "status": "processing",
+                    "message": "Транскрипция началась, используйте request_id для получения результатов",
+                    "results_url": f"/api/results/{request_id}",
+                    "file_hash": file_hash,
+                    "audio_metadata": audio_metadata,
+                }
                 
-                if result.get("success"):
-                    # Сохраняем результат в кэш
-                    cache.put(file_hash, result, audio_metadata)
-                    
-                    # Добавляем метаданные в результат
-                    result["file_hash"] = file_hash
-                    result["audio_metadata"] = audio_metadata
-                    result["request_id"] = request_id
-                    result["processing_time"] = tracker.duration
-                    result["cached"] = False
-                    
-                    logger.info(
-                        "Успешное распознавание файла %s [Request: %s] за %.2fs", 
-                        os.path.basename(file.filename), 
-                        request_id,
-                        tracker.duration
+                # Запускаем обработку в фоне
+                import asyncio
+                asyncio.create_task(
+                    run_processing_background(
+                        tmp_path, 
+                        preprocess_metadata, 
+                        request_id, 
+                        file_hash, 
+                        audio_metadata,
+                        tracker
                     )
-                    return JSONResponse(content=result)
-
-                # Check if result contains domain error
-                error_msg = result.get("error", "Неизвестная ошибка распознавания")
-                if isinstance(error_msg, dict) and error_msg.get("code") in ["MODEL_LOAD_ERROR", "TIMEOUT_ERROR"]:
-                    # Propagate domain errors with proper exception instances
-                    logger.error("Ошибка распознавания: %s", error_msg)
-                    if error_msg.get("code") == "MODEL_LOAD_ERROR":
-                        raise ModelLoadError(error_msg.get("message", "Model load error"))
-                    elif error_msg.get("code") == "TIMEOUT_ERROR":
-                        raise GigaTimeoutError(error_msg.get("message", "Timeout error"))
-                    
-                logger.error("Ошибка распознавания: %s", error_msg)
-                raise TranscriptionError(
-                    error_msg,
-                    stage="pipeline_result"
                 )
+                
+                return JSONResponse(content=initial_response)
     except (ValidationError, AudioProcessingError, TranscriptionError, 
-            FileSizeError, UnsupportedFormatError, ServiceUnavailableError, GigaTimeoutError):
+            FileSizeError, UnsupportedFormatError, ServiceUnavailableError, 
+            GigaTimeoutError, GigaAMException, ModelLoadError):
         raise
     except Exception as exc:
         logger.exception("Внутренняя ошибка сервера: %s", exc)
@@ -187,3 +161,51 @@ async def api_transcribe(
             "Внутренняя ошибка сервера",
             service_name="gigaam-api"
         ) from exc
+
+
+async def run_processing_background(
+    tmp_path: str,
+    preprocess_metadata: dict[str, Any] | None,
+    request_id: str,
+    file_hash: str,
+    audio_metadata: dict[str, Any],
+    tracker: RequestTracker,
+) -> None:
+    """
+    Фоновая обработка транскрипции.
+    
+    Запускается асинхронно после возврата initial response.
+    """
+    try:
+        # Выполняем pipeline в фоне
+        result = await run_in_threadpool(
+            run_ultra_pipeline,
+            tmp_path,
+            preprocess_metadata,
+            request_id,
+        )
+        
+        if result.get("success"):
+            # Сохраняем результат в кэш
+            cache.put(file_hash, result, audio_metadata)
+            logger.info(
+                "Фоновое распознавание завершено [Request: %s] за %.2fs", 
+                request_id, 
+                tracker.duration
+            )
+        else:
+            # Обработка ошибки из pipeline
+            error_msg = result.get("error", "Unknown error")
+            logger.error(
+                "Ошибка фонового распознавания [Request: %s]: %s", 
+                request_id, 
+                error_msg
+            )
+            
+    except Exception as e:
+        logger.error(
+            "Ошибка в фоновой обработке [Request: %s]: %s", 
+            request_id, 
+            str(e), 
+            exc_info=True
+        )

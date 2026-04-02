@@ -10,13 +10,13 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/health")
-async def health_check():
+@router.get("/diagnostics/health")
+async def diagnostics_health_check():
     """
-    Проверка работоспособности сервиса.
+    Проверка работоспособности сервиса диагностики.
     """
     return JSONResponse(content={
         "status": "ok",
-        "service": "giga-am",
-        "message": "Service is running"
+        "service": "giga-am-diagnostics",
+        "message": "Diagnostics service is running"
     })

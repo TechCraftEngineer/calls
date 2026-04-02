@@ -17,6 +17,7 @@ from services.audio_preprocessing import preprocess_audio_for_diarization, clean
 from services.diarization_service import DiarizationService
 from services.inngest_client import inngest_client
 from services.postprocess_service import PostprocessService
+from services.storage import transcription_storage
 from services.transcription_service import transcription_service
 from utils.metrics import metrics
 
@@ -52,6 +53,9 @@ def run_ultra_pipeline(
     Returns:
         Словарь с результатами обработки
     """
+    # Устанавливаем статус "в обработке"
+    transcription_storage.set_processing(request_id)
+    
     # Предобработка аудио для улучшения диаризации
     processed_audio_path = preprocess_audio_for_diarization(audio_path, request_id)
     
@@ -64,9 +68,15 @@ def run_ultra_pipeline(
             FileNotFoundError,
             OSError,
             soundfile.SoundFileError,
-        ):
-            audio_np = np.array([], dtype=np.float32)
-            audio_sr = 16000
+        ) as exc:
+            logger.error(
+                f"[{request_id}] Failed to load processed audio file: {processed_audio_path}. "
+                f"Error: {type(exc).__name__}: {exc}"
+            )
+            raise RuntimeError(
+                f"Failed to load processed audio file '{processed_audio_path}' for diarization. "
+                f"Original error: {type(exc).__name__}: {exc}"
+            ) from exc
         
         # Проверяем доступность remote diarization service
         if not diarization_service.is_available:
@@ -79,31 +89,6 @@ def run_ultra_pipeline(
             )
         
         logger.info(f"[{request_id}] Используется SOTA pipeline: Pyannote Diarization → GigaAM ASR")
-        
-        # Dual ASR mode: сначала делаем полную транскрипцию для контекста
-        full_transcript = ""
-        if settings.enable_dual_asr_llm_correction and inngest_client.is_available:
-            logger.info(f"[{request_id}] Dual ASR mode: выполняем полную транскрипцию для контекста")
-            start_time = time.time()
-            
-            try:
-                full_asr_result = transcription_service.transcribe_audio(processed_audio_path)
-                if full_asr_result.get("success") and full_asr_result.get("segments"):
-                    # Объединяем все сегменты в один текст
-                    full_transcript = " ".join(
-                        seg.get("text", "").strip()
-                        for seg in full_asr_result["segments"]
-                        if seg.get("text", "").strip()
-                    )
-                    full_asr_time = time.time() - start_time
-                    logger.info(
-                        f"[{request_id}] Полная транскрипция завершена за {full_asr_time:.2f}s: "
-                        f"{len(full_transcript)} символов"
-                    )
-                else:
-                    logger.warning(f"[{request_id}] Полная транскрипция не удалась, продолжаем без неё")
-            except Exception as e:
-                logger.warning(f"[{request_id}] Ошибка полной транскрипции: {e}, продолжаем без неё")
         
         # Этап 1: Diarization - определяем границы спикеров
         start_time = time.time()
@@ -154,11 +139,11 @@ def run_ultra_pipeline(
             
             # Сохраняем временный файл для ASR
             import tempfile
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
-                segment_path = tmp_file.name
-                soundfile.write(segment_path, segment_audio, audio_sr)
-            
             try:
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
+                    segment_path = tmp_file.name
+                    soundfile.write(segment_path, segment_audio, audio_sr)
+                
                 # Транскрибируем сегмент
                 asr_result = transcription_service.transcribe_audio(segment_path)
                 
@@ -185,8 +170,10 @@ def run_ultra_pipeline(
                 # Удаляем временный файл
                 try:
                     os.unlink(segment_path)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning(
+                        f"[{request_id}] Failed to delete temporary file {segment_path}: {exc}"
+                    )
         
         asr_time = time.time() - start_time
         metrics.record_stage_time(request_id, "asr", asr_time)
@@ -207,48 +194,6 @@ def run_ultra_pipeline(
         if settings.alignment_enabled:
             metrics.record_stage_time(request_id, "alignment", alignment_time)
         
-        # Этап 3.5: Отправка результатов в Inngest (если включено)
-        if settings.enable_dual_asr_llm_correction and inngest_client.is_available and full_transcript:
-            try:
-                logger.info(f"[{request_id}] Отправляем результаты транскрипции в Inngest")
-                
-                # Подготавливаем сегменты
-                segments_for_inngest = [
-                    {
-                        "start": seg["start"],
-                        "end": seg["end"],
-                        "speaker": seg["speaker"],
-                        "text": seg["text"],
-                        "confidence": seg.get("confidence", 1.0),
-                    }
-                    for seg in aligned_segments
-                ]
-                
-                # Метаданные
-                metadata_for_inngest = {
-                    "diarizationTime": diarization_time,
-                    "asrTime": asr_time,
-                    "alignmentTime": alignment_time if settings.alignment_enabled else 0,
-                    "totalDuration": float(audio_np.size / audio_sr) if audio_sr > 0 else 0.0,
-                }
-                
-                # Отправляем event в Inngest
-                # Inngest сам решит что делать: LLM коррекция, сохранение и т.д.
-                inngest_response = inngest_client.send_transcription_completed(
-                    request_id=request_id,
-                    full_transcript=full_transcript,
-                    diarized_segments=segments_for_inngest,
-                    metadata=metadata_for_inngest,
-                )
-                
-                logger.info(
-                    f"[{request_id}] Результаты отправлены в Inngest для дальнейшей обработки"
-                )
-                
-            except Exception as e:
-                logger.error(f"[{request_id}] Ошибка отправки в Inngest: {e}", exc_info=True)
-                # Продолжаем, это не критично
-        
         # Этап 4: Attribution - построение timeline
         start_time = time.time()
         speaker_timeline = attribution_service.build_speaker_timeline(aligned_segments)
@@ -267,15 +212,11 @@ def run_ultra_pipeline(
         
         # Определяем используемый pipeline
         pipeline_name = "pyannote-diarization-sota-2026"
-        if settings.enable_dual_asr_llm_correction and inngest_client.is_available and full_transcript:
-            pipeline_name = "dual-asr-inngest-llm-2026"
         
         stages = [
-            "full_asr" if full_transcript else "full_asr:skipped",
             "diarization",
             "diarized_asr",
             "alignment" if settings.alignment_enabled else "alignment:disabled",
-            "inngest_llm_correction" if (settings.enable_dual_asr_llm_correction and full_transcript) else "llm_correction:disabled",
             "attribution",
             "postprocess",
         ]
@@ -288,8 +229,19 @@ def run_ultra_pipeline(
             "total_duration": total_duration,
             "pipeline": pipeline_name,
             "stages": stages,
-            "dual_asr_enabled": settings.enable_dual_asr_llm_correction and bool(full_transcript),
+            "dual_asr_enabled": False,
         }
+        
+        # Сохраняем результат в хранилище для Inngest
+        transcription_storage.store_result(request_id, result)
+        
+        # Отправляем событие в Inngest
+        if inngest_client.is_available:
+            try:
+                inngest_client.send_transcription_completed(request_id, result)
+                logger.info(f"[{request_id}] Результаты отправлены в Inngest")
+            except Exception as e:
+                logger.error(f"[{request_id}] Ошибка отправки в Inngest: {e}")
         
         # Очистка временного файла
         cleanup_processed_audio(processed_audio_path, audio_path, request_id)
@@ -297,6 +249,9 @@ def run_ultra_pipeline(
         return result
         
     except Exception as e:
+        # Сохраняем ошибку в хранилище
+        transcription_storage.set_failed(request_id, str(e))
+        
         # Очистка временного файла в случае ошибки
         cleanup_processed_audio(processed_audio_path, audio_path, request_id)
         raise

@@ -14,6 +14,7 @@ from routes.diagnostics import router as diagnostics_router
 from routes.health import router as health_router
 from routes.cache import router as cache_router
 from routes.root import router as root_router
+from routes.results import router as results_router
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ app.include_router(transcribe_router, prefix="/api", tags=["transcription"])
 app.include_router(diagnostics_router, prefix="/api", tags=["diagnostics"])
 app.include_router(health_router, prefix="/api", tags=["health"])
 app.include_router(cache_router, prefix="/api", tags=["cache"])
+app.include_router(results_router, prefix="/api", tags=["results"])
 app.include_router(root_router, tags=["root"])
 
 

@@ -1,107 +1,80 @@
 """
-Клиент для отправки событий в Inngest.
-
-GigaAM только отправляет события, вся оркестрация в Inngest.
+Простой клиент для отправки событий в Inngest.
 """
 
 import logging
+import os
 from typing import Any
 
 import requests
 
-from config import settings
-
 logger = logging.getLogger(__name__)
 
 
-class InngestClient:
-    """Клиент для отправки событий в Inngest."""
+class SimpleInngestClient:
+    """Простой клиент для отправки событий в Inngest."""
 
     def __init__(self) -> None:
-        self._api_url = settings.inngest_api_url.strip().rstrip("/")
-        self._event_key = settings.inngest_event_key.strip()
+        self.api_url = os.getenv("INNGEST_API_URL")
+        self.event_key = os.getenv("INNGEST_EVENT_KEY")
+        self.is_available = bool(self.api_url and self.event_key)
 
-    @property
-    def is_available(self) -> bool:
-        """Проверка доступности Inngest."""
-        return bool(self._api_url)
-
-    def send_event(
-        self,
-        name: str,
-        data: dict[str, Any],
-        user: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
+    def send_event(self, name: str, data: dict[str, Any]) -> bool:
         """
-        Отправка события в Inngest.
+        Отправить событие в Inngest.
         
         Args:
-            name: Имя события (например, "asr/transcription.completed")
+            name: Имя события
             data: Данные события
-            user: Опциональная информация о пользователе
-        
+            
         Returns:
-            Ответ от Inngest API
+            True если успешно, False если ошибка
         """
         if not self.is_available:
-            raise RuntimeError("Inngest API URL not configured")
-
-        payload = {
-            "name": name,
-            "data": data,
-        }
-        
-        if user:
-            payload["user"] = user
-
-        headers = {"Content-Type": "application/json"}
-        if self._event_key:
-            headers["Authorization"] = f"Bearer {self._event_key}"
+            logger.warning("Inngest не настроен, событие не отправлено")
+            return False
 
         try:
             response = requests.post(
-                f"{self._api_url}/e/calls-sync-and-transcribe",
-                json=payload,
-                headers=headers,
+                f"{self.api_url}/event",
+                headers={
+                    "Authorization": f"Bearer {self.event_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "name": name,
+                    "data": data,
+                },
                 timeout=10,
             )
-            response.raise_for_status()
-            return response.json()
+            
+            if response.status_code == 200:
+                logger.info(f"Событие {name} успешно отправлено в Inngest")
+                return True
+            else:
+                logger.error(f"Ошибка отправки события в Inngest: {response.status_code} {response.text}")
+                return False
+                
         except Exception as e:
-            logger.error(f"Failed to send Inngest event: {e}")
-            raise
+            logger.error(f"Ошибка при отправке события в Inngest: {e}")
+            return False
 
-    def send_transcription_completed(
-        self,
-        request_id: str,
-        full_transcript: str,
-        diarized_segments: list[dict[str, Any]],
-        metadata: dict[str, Any],
-    ) -> dict[str, Any]:
+    def send_transcription_completed(self, request_id: str, transcription_result: dict[str, Any]) -> bool:
         """
-        Отправка события о завершении транскрипции.
-        
-        Inngest решит что делать дальше (LLM коррекция, сохранение и т.д.)
+        Отправить событие о завершении транскрипции.
         
         Args:
             request_id: ID запроса
-            full_transcript: Полная транскрипция без диаризации
-            diarized_segments: Сегменты с диаризацией
-            metadata: Метаданные (timing, confidence и т.д.)
-        
+            transcription_result: Результат транскрипции
+            
         Returns:
-            Ответ от Inngest API
+            True если успешно, False если ошибка
         """
-        return self.send_event(
-            name="asr/transcription.completed",
-            data={
-                "requestId": request_id,
-                "fullTranscript": full_transcript,
-                "diarizedSegments": diarized_segments,
-                "metadata": metadata,
-            },
-        )
+        return self.send_event("asr/transcription.completed", {
+            "requestId": request_id,
+            "transcriptionResult": transcription_result,
+        })
 
 
 # Глобальный экземпляр клиента
-inngest_client = InngestClient()
+inngest_client = SimpleInngestClient()
