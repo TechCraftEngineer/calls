@@ -53,10 +53,10 @@ export const env = createEnv({
     // ASR (Speech-to-Text) - at least one required
     ASSEMBLYAI_API_KEY: z.string().optional(),
     YANDEX_SPEECHKIT_API_KEY: z.string().optional(),
-    YANDEX_SPEECHKIT_ENABLED: z.stringbool().default(true),
+    YANDEX_SPEECHKIT_ENABLED: z.coerce.boolean().default(true),
     /** Giga AM (HTTP) sync endpoint */
     GIGA_AM_TRANSCRIBE_URL: z.url().default("https://vnggncb-giga-am.hf.space/api/transcribe"),
-    GIGA_AM_ENABLED: z.stringbool().default(true),
+    GIGA_AM_ENABLED: z.coerce.boolean().default(true),
     /** Оценка себестоимости ASR (руб/сек) для расчёта в UI */
     GIGA_AM_RATE_RUB_PER_SECOND: z.coerce.number().positive().default(0.01),
     ASSEMBLYAI_RATE_USD_PER_HOUR: z.coerce.number().positive().default(0.23),
@@ -65,19 +65,8 @@ export const env = createEnv({
     YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE: z.coerce.number().positive().default(0.6),
 
     // Audio preprocessing (optional Python service)
-    AUDIO_ENHANCER_ENABLED: z.stringbool().default(false),
-    AUDIO_ENHANCER_URL: z
-      .string()
-      .default("https://vnggncb-audio-enhancer.hf.space/")
-      .refine(
-        (val) => {
-          // Базовая проверка URL формата
-          return /^https?:\/\/.+/.test(val);
-        },
-        {
-          message: "AUDIO_ENHANCER_URL должен быть валидным HTTP/HTTPS URL",
-        },
-      ),
+    AUDIO_ENHANCER_ENABLED: z.coerce.boolean().default(false),
+    AUDIO_ENHANCER_URL: z.url().default("https://vnggncb-audio-enhancer.hf.space/"),
 
     // File processing limits
     MIN_FILE_SIZE_BYTES: z.coerce.number().default(1024), // 1KB
