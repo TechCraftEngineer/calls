@@ -592,40 +592,67 @@ def _process_diarization(
         # Конвертация результатов (новый API pyannote 4.x)
         segments = []
         
-        # Проверяем тип результата
-        if hasattr(diarization, 'itertracks'):
-            # Старый API (pyannote < 4.0)
-            for turn, _, speaker in diarization.itertracks(yield_label=True):
-                segments.append({
-                    "start": float(turn.start),
-                    "end": float(turn.end),
-                    "speaker": speaker,
-                })
-        elif hasattr(diarization, 'segments'):
-            # Новый API (pyannote 4.x) - DiarizeOutput
-            for segment in diarization.segments:
-                segments.append({
-                    "start": float(segment.start),
-                    "end": float(segment.end),
-                    "speaker": segment.speaker,
-                })
-        else:
-            # Fallback: пробуем итерировать напрямую
-            logger.warning(f"Unknown diarization output type: {type(diarization)}")
-            try:
-                for item in diarization:
-                    if hasattr(item, 'start') and hasattr(item, 'end') and hasattr(item, 'speaker'):
+        logger.info(f"Diarization output type: {type(diarization)}")
+        logger.info(f"Diarization attributes: {dir(diarization)}")
+        
+        # DiarizeOutput в pyannote 4.x - пробуем разные способы извлечения
+        try:
+            # Способ 1: Прямой доступ к segments как к списку
+            if hasattr(diarization, 'segments'):
+                segs = diarization.segments
+                logger.info(f"Found segments attribute, type: {type(segs)}")
+                
+                if isinstance(segs, list):
+                    for seg in segs:
                         segments.append({
-                            "start": float(item.start),
-                            "end": float(item.end),
-                            "speaker": item.speaker,
+                            "start": float(seg.start),
+                            "end": float(seg.end),
+                            "speaker": seg.speaker,
                         })
-            except Exception as e:
-                logger.error(f"Failed to iterate diarization output: {e}")
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Unsupported diarization output format: {type(diarization)}"
-                )
+                else:
+                    # Может быть итератором или другим типом
+                    for seg in segs:
+                        segments.append({
+                            "start": float(seg.start),
+                            "end": float(seg.end),
+                            "speaker": seg.speaker,
+                        })
+            
+            # Способ 2: Используем itertracks если есть
+            elif hasattr(diarization, 'itertracks'):
+                for turn, _, speaker in diarization.itertracks(yield_label=True):
+                    segments.append({
+                        "start": float(turn.start),
+                        "end": float(turn.end),
+                        "speaker": speaker,
+                    })
+            
+            # Способ 3: Конвертируем в Annotation и итерируем
+            else:
+                # DiarizeOutput может иметь метод to_annotation()
+                if hasattr(diarization, 'to_annotation'):
+                    annotation = diarization.to_annotation()
+                    for segment, _, label in annotation.itertracks(yield_label=True):
+                        segments.append({
+                            "start": float(segment.start),
+                            "end": float(segment.end),
+                            "speaker": label,
+                        })
+                else:
+                    raise ValueError(f"Cannot extract segments from {type(diarization)}")
+        
+        except Exception as e:
+            logger.error(f"Failed to extract segments: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to extract diarization segments: {str(e)}"
+            )
+        
+        if not segments:
+            raise HTTPException(
+                status_code=500,
+                detail="Diarization returned no segments"
+            )
         
         # Сортировка по времени
         segments.sort(key=lambda s: s["start"])
