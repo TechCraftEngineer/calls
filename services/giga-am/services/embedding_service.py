@@ -47,15 +47,37 @@ class EmbeddingService:
             import torch
             from pyannote.audio import Inference
 
-            # Явно используем CPU
-            device = torch.device("cpu")
+            # Принудительно используем CPU
+            os.environ["CUDA_VISIBLE_DEVICES"] = ""
+            torch.set_num_threads(1)
+
             token = os.getenv("HF_TOKEN", "").strip() or None
-            self._pyannote_embedder = Inference(
-                "pyannote/embedding",
-                use_auth_token=token,
-                device=device,
-            )
-            logger.info("Pyannote speaker embedder загружен на CPU")
+            
+            # Пробуем разные варианты инициализации
+            init_attempts = []
+            if token:
+                init_attempts = [
+                    {"use_auth_token": token},
+                    {"token": token},
+                    {}
+                ]
+            else:
+                init_attempts = [{}]
+
+            last_exc = None
+            for kwargs in init_attempts:
+                try:
+                    self._pyannote_embedder = Inference("pyannote/embedding", **kwargs)
+                    logger.info("Pyannote speaker embedder загружен на CPU")
+                    return
+                except TypeError as exc:
+                    last_exc = exc
+                    continue
+                except Exception as exc:
+                    last_exc = exc
+                    break
+            
+            raise RuntimeError(f"Failed to initialize pyannote: {last_exc}")
         except Exception as exc:
             self._pyannote_embedder = None
             logger.warning(

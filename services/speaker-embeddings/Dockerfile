@@ -3,6 +3,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     TORCHCODEC_DISABLE=1 \
+    CUDA_VISIBLE_DEVICES="" \
     HOME=/home/appuser \
     TORCH_HOME=/home/appuser/.cache/torch \
     TRANSFORMERS_CACHE=/home/appuser/.cache/huggingface/transformers \

@@ -53,6 +53,10 @@ class HybridEmbeddingModel:
         try:
             import torch
             
+            # Принудительно используем CPU
+            os.environ["CUDA_VISIBLE_DEVICES"] = ""
+            torch.set_num_threads(1)
+            
             os.environ.setdefault("TORCHCODEC_DISABLE", "1")
             warnings.filterwarnings(
                 "ignore",
@@ -64,22 +68,22 @@ class HybridEmbeddingModel:
             )
             from pyannote.audio import Inference
 
-            # Явно используем CPU
-            device = torch.device("cpu")
             token = os.getenv("HF_TOKEN", "").strip() or None
             model_name = os.getenv("PYANNOTE_MODEL", "pyannote/embedding").strip() or "pyannote/embedding"
             last_exc: Exception | None = None
 
-            # pyannote versions differ: some accept `token`, older versions use `use_auth_token`.
-            init_kwargs_candidates: list[dict[str, Any]] = [{"device": device}]
+            # Пробуем разные варианты инициализации
+            init_attempts = []
             if token:
-                init_kwargs_candidates = [
-                    {"token": token, "device": device},
-                    {"use_auth_token": token, "device": device},
-                    {"device": device}
+                init_attempts = [
+                    {"use_auth_token": token},
+                    {"token": token},
+                    {}
                 ]
+            else:
+                init_attempts = [{}]
 
-            for kwargs in init_kwargs_candidates:
+            for kwargs in init_attempts:
                 try:
                     self._pyannote_embedder = Inference(model_name, **kwargs)
                     logger.info("pyannote embedder loaded on CPU: model=%s", model_name)

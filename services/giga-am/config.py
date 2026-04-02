@@ -103,6 +103,18 @@ class Settings(BaseSettings):
         description="Embedding similarity threshold for overlap speaker separation"
     )
     
+    # Audio preprocessing settings
+    auto_resample_enabled: bool = Field(
+        default=True,
+        description="Automatically resample audio to 16kHz if sample rate is lower"
+    )
+    target_sample_rate: int = Field(
+        default=16000,
+        ge=8000,
+        le=48000,
+        description="Target sample rate for resampling (Hz)"
+    )
+    
     # Metrics settings
     metrics_history_size: int = Field(default=1000, ge=1)
     system_metrics_interval: int = Field(default=30, ge=1)  # seconds
