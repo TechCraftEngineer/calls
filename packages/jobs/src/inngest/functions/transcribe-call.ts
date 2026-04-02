@@ -175,22 +175,31 @@ export const transcribeCallFn = inngest.createFunction(
       const gigaAmLog = result.metadata.asrLogs?.find((log) => log.provider === "gigaam");
 
       if (gigaAmLog) {
+        // Добавляем детальное логирование всех полей
         logger.info("GigaAM ответ получен - полный лог", {
           callId,
-          gigaAmLogKeys: Object.keys(gigaAmLog), // Показываем все ключи
-          gigaAmLog: gigaAmLog, // Выводим весь объект целиком
+          gigaAmLogKeys: Object.keys(gigaAmLog),
+          // Логируем каждое поле отдельно
+          hasUtterances: Boolean(gigaAmLog.utterances),
+          utterancesCount: gigaAmLog.utterances?.length || 0,
+          utterancesSample: gigaAmLog.utterances?.slice(0, 2) || [],
+          hasConfidence: gigaAmLog.confidence !== undefined,
+          confidence: gigaAmLog.confidence,
+          gigaAmLog: gigaAmLog,
         });
         return {
           callId,
           gigaAmLog,
           gigaAmLogKeys: Object.keys(gigaAmLog),
+          utterancesCount: gigaAmLog.utterances?.length || 0,
+          confidence: gigaAmLog.confidence,
         };
       } else {
         logger.warn("GigaAM лог не найден в метаданных", {
           callId,
           asrLogsCount: result.metadata.asrLogs?.length || 0,
           asrSources: result.metadata.asrLogs?.map((log) => log.provider) || [],
-          allAsrLogs: result.metadata.asrLogs, // Показываем все логи
+          allAsrLogs: result.metadata.asrLogs,
         });
         return {
           callId,
