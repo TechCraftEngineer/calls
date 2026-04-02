@@ -170,6 +170,43 @@ export const transcribeCallFn = inngest.createFunction(
       });
     });
 
+    // Логирование детального ответа от giga-am через step.run
+    await step.run("debug/giga-am-response", async () => {
+      const gigaAmLog = result.metadata.asrLogs?.find((log) => log.provider === "gigaam");
+      if (gigaAmLog) {
+        logger.info("GigaAM ответ получен", {
+          callId,
+          provider: gigaAmLog.provider,
+          success: gigaAmLog.success,
+          processingTimeMs: gigaAmLog.processingTimeMs,
+          textLength: gigaAmLog.text?.length || 0,
+          utterancesCount: gigaAmLog.utterances?.length || 0,
+          hasEmbeddings:
+            gigaAmLog.utterances?.some((u) => u.embedding && u.embedding.length > 0) || false,
+          hasConfidence: gigaAmLog.utterances?.some((u) => u.confidence !== undefined) || false,
+          speakerTimelineLength:
+            (gigaAmLog.raw?.speakerTimeline as unknown[] | undefined)?.length || 0,
+          // Логируем первые несколько спикеров для понимания диаризации
+          sampleSpeakers: gigaAmLog.utterances?.slice(0, 5).map((u) => ({
+            speaker: u.speaker,
+            start: u.start,
+            end: u.end,
+            confidence: u.confidence,
+            hasEmbedding: Boolean(u.embedding && u.embedding.length > 0),
+          })),
+          // Полный raw response для детальной отладки (только если включен debug уровень логов)
+          rawResponse: process.env.LOG_LEVEL === "debug" ? gigaAmLog.raw : undefined,
+        });
+      } else {
+        logger.warn("GigaAM лог не найден в метаданных", {
+          callId,
+          asrLogsCount: result.metadata.asrLogs?.length || 0,
+          asrSources: result.metadata.asrLogs?.map((log) => log.provider) || [],
+        });
+      }
+      return { logged: true };
+    });
+
     const identifyResult = await step.run("llm/diarize", async () => {
       const fallbackManagerName = call.name?.trim() || null;
 
@@ -229,6 +266,24 @@ export const transcribeCallFn = inngest.createFunction(
       });
     });
     const { text: finalText, customerName, operatorName } = identifyResult;
+
+    // Логирование результатов LLM идентификации спикеров через step.run
+    await step.run("debug/llm-results", async () => {
+      logger.info("Результаты LLM идентификации спикеров", {
+        callId,
+        finalTextLength: finalText.length,
+        originalTextLength: result.normalizedText.length,
+        customerName,
+        operatorName,
+        identificationSuccess: identifyResult.metadata?.success || false,
+        speakerMapping: identifyResult.metadata?.mapping || {},
+        usedEmbeddings: identifyResult.metadata?.usedEmbeddings || false,
+        clusterCount: identifyResult.metadata?.clusterCount || 0,
+        identificationReason: identifyResult.metadata?.reason,
+        truncatedForAnalysis: identifyResult.metadata?.truncatedForAnalysis || false,
+      });
+      return { logged: true };
+    });
 
     await step.run("persist/transcript:upsert", async () => {
       const normalizedCallType = result.callType?.trim() || null;

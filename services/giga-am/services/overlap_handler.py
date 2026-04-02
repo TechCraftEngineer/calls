@@ -208,6 +208,7 @@ class OverlapHandler:
                         "overlap_confidence": best_similarity,
                         "is_sub_segment": True,
                         "parent_segment_start": seg.get("start"),
+                        "confidence": seg.get("confidence", 0.7),
                     }
                 )
         
