@@ -3,27 +3,32 @@
 ## Архитектура (SOTA 2024-2026)
 
 ```
-Аудио → Pyannote Diarization → Сегменты по спикерам → GigaAM ASR → Транскрипция
+Аудио → Remote Diarization Service (Pyannote) → Сегменты по спикерам → GigaAM ASR → Транскрипция
 ```
 
 **Преимущества:**
+
 - ✅ Определяет границы спикеров по голосу, а не по паузам
 - ✅ Работает даже когда спикеры говорят подряд без пауз
 - ✅ DER ~11-19% (профессиональный уровень)
 - ✅ Используется в production: HuggingFace, Rev.ai, AWS и др.
+- ✅ Централизованный сервис диаризации (разгружает giga-am)
 
 **Этапы:**
-1. **Diarization** - pyannote определяет "кто когда говорил"
-2. **ASR** - GigaAM транскрибирует каждый сегмент
+
+1. **Diarization** (remote) - pyannote определяет "кто когда говорил"
+2. **ASR** (giga-am) - GigaAM транскрибирует каждый сегмент
 3. **Alignment** - выравнивание слов
 4. **Postprocessing** - финальная обработка
 
-## Настройки (.env)
+## Настройки
+
+### GigaAM (.env)
 
 ```bash
-# Pyannote diarization (обязательно)
-HF_TOKEN=your_huggingface_token
-PYANNOTE_DIARIZATION_MODEL=pyannote/speaker-diarization-3.1
+# Remote diarization service
+SPEAKER_EMBEDDINGS_URL=http://speaker-embeddings:7860
+SPEAKER_EMBEDDINGS_TIMEOUT=120
 
 # Параметры диаризации
 DIARIZATION_NUM_SPEAKERS=  # Точное количество (если известно)
@@ -36,45 +41,82 @@ AUTO_RESAMPLE_ENABLED=true
 TARGET_SAMPLE_RATE=16000
 ```
 
+### Speaker-Embeddings (.env)
+
+```bash
+# Pyannote models
+HF_TOKEN=your_huggingface_token
+PYANNOTE_MODEL=pyannote/embedding
+PYANNOTE_DIARIZATION_MODEL=pyannote/speaker-diarization-3.1
+ENABLE_PYANNOTE=1
+
+# Server
+PORT=7860
+```
+
 ## Получение HF_TOKEN
 
-1. Зарегистрируйтесь на https://huggingface.co
-2. Создайте токен: https://huggingface.co/settings/tokens
-3. Примите условия: https://huggingface.co/pyannote/speaker-diarization-3.1
+1. Зарегистрируйтесь на <https://huggingface.co>
+2. Создайте токен: <https://huggingface.co/settings/tokens>
+3. Примите условия:
+   - <https://huggingface.co/pyannote/speaker-diarization-3.1>
+   - <https://huggingface.co/pyannote/embedding>
 
 ## Качество
 
 **Pyannote 3.1:**
+
 - DER (Diarization Error Rate): 11-19% на стандартных бенчмарках
 - SOTA open-source решение 2024-2026
 - Используется в production у крупных компаний
 
 **Источники:**
+
 - [HuggingFace Blog](https://huggingface.co/blog/asr-diarization)
 - [BrassTranscripts Comparison 2026](https://brasstranscripts.com/blog/speaker-diarization-models-comparison)
 - [Pyannote.ai](https://www.pyannote.ai/)
 
 ## Логи
 
+**GigaAM:**
+
 ```
+Remote diarization service доступен: http://speaker-embeddings:7860
 [request_id] Используется SOTA pipeline: Pyannote Diarization → GigaAM ASR
-[request_id] Diarization создал N сегментов для транскрипции
-[request_id] ASR завершён: M сегментов из N diarization сегментов
+[request_id] Запрос diarization к remote service: audio_duration=49.10s
+Remote diarization завершена: 5 сегментов, 2 спикеров
+[request_id] ASR завершён: 12 сегментов из 5 diarization сегментов
+```
+
+**Speaker-Embeddings:**
+
+```
+Pyannote diarization pipeline загружен: pyannote/speaker-diarization-3.1
+Starting diarization: duration=49.10s, params={'num_speakers': 2}
+Diarization completed: 5 segments, 2 speakers, total_speech=45.30s
 ```
 
 ## Troubleshooting
 
-**Pyannote не загружается:**
-- Проверьте HF_TOKEN в .env
-- Примите условия на https://huggingface.co/pyannote/speaker-diarization-3.1
-- Проверьте логи: `Pyannote diarization pipeline загружен`
+**Remote service недоступен:**
+
+- Проверьте что speaker-embeddings запущен: `docker ps | grep speaker`
+- Проверьте SPEAKER_EMBEDDINGS_URL в giga-am/.env
+- Проверьте логи: `docker logs speaker-embeddings`
+
+**Pyannote не загружается на remote:**
+
+- Проверьте HF_TOKEN в speaker-embeddings/.env
+- Примите условия на <https://huggingface.co/pyannote/speaker-diarization-3.1>
+- Перезапустите: `docker-compose restart speaker-embeddings`
 
 **Плохое качество диаризации:**
+
 - Используйте аудио ≥16kHz (автоматический апсемплинг включен)
-- Укажите количество спикеров если известно: `DIARIZATION_NUM_SPEAKERS=2`
+- Укажите количество спикеров: `DIARIZATION_NUM_SPEAKERS=2`
 - Проверьте качество аудио (шум, эхо)
 
-**Ошибка "Pyannote diarization недоступен":**
-- Установите HF_TOKEN в .env
-- Перезапустите сервис: `docker-compose restart giga-am`
-- Проверьте что токен валиден и условия приняты
+**Timeout при диаризации:**
+
+- Увеличьте SPEAKER_EMBEDDINGS_TIMEOUT (по умолчанию 60s)
+- Для длинных аудио (>5 минут) установите 120-180s

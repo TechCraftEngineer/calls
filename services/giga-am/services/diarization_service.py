@@ -1,5 +1,5 @@
 """
-Сервис для speaker diarization с использованием pyannote.audio.
+Сервис для speaker diarization через remote service (speaker-embeddings).
 
 Определяет "кто говорил когда" в аудио, создавая сегменты по спикерам.
 Это SOTA подход 2024-2026, используемый в production (HuggingFace, Rev.ai и др.)
@@ -7,19 +7,22 @@
 
 from __future__ import annotations
 
+import io
 import logging
-import os
-import warnings
 from typing import Any
 
 import numpy as np
+import requests
+import soundfile as sf
+
+from config import settings
 
 logger = logging.getLogger(__name__)
 
 
 class DiarizationService:
     """
-    Speaker diarization с использованием pyannote.audio Pipeline.
+    Speaker diarization через remote service.
     
     Создаёт сегменты по спикерам (не по паузам), что позволяет правильно
     разделять речь даже когда спикеры говорят подряд без пауз.
@@ -28,62 +31,64 @@ class DiarizationService:
     """
 
     def __init__(self) -> None:
-        self._pipeline = None
-        self._load_pipeline()
+        self._remote_url = settings.speaker_embeddings_url.strip().rstrip("/")
+        self._timeout = settings.speaker_embeddings_timeout
+        self._check_availability()
 
-    def _load_pipeline(self) -> None:
-        """Загрузка pyannote diarization pipeline."""
-        try:
-            # Подавляем предупреждения torchcodec
-            os.environ.setdefault("TORCHCODEC_DISABLE", "1")
-            warnings.filterwarnings("ignore", message=r".*libtorchcodec.*")
-            warnings.filterwarnings("ignore", module=r"torchcodec\..*")
-            
-            from pyannote.audio import Pipeline
-            
-            token = os.getenv("HF_TOKEN", "").strip() or None
-            model_name = os.getenv(
-                "PYANNOTE_DIARIZATION_MODEL",
-                "pyannote/speaker-diarization-3.1"
-            ).strip()
-            
-            # Пробуем разные варианты инициализации
-            init_attempts = []
-            if token:
-                init_attempts = [
-                    {"use_auth_token": token},
-                    {"token": token},
-                    {}
-                ]
-            else:
-                init_attempts = [{}]
-            
-            last_exc = None
-            for kwargs in init_attempts:
-                try:
-                    self._pipeline = Pipeline.from_pretrained(model_name, **kwargs)
-                    logger.info(f"Pyannote diarization pipeline загружен: {model_name}")
-                    return
-                except TypeError as exc:
-                    last_exc = exc
-                    continue
-                except Exception as exc:
-                    last_exc = exc
-                    break
-            
-            raise RuntimeError(f"Failed to load pyannote pipeline: {last_exc}")
-            
-        except Exception as exc:
-            self._pipeline = None
+    def _check_availability(self) -> None:
+        """Проверка доступности remote сервиса."""
+        if not self._remote_url:
             logger.warning(
-                f"Pyannote diarization недоступен ({type(exc).__name__}): {exc}. "
-                f"Будет использован fallback на ASR сегментацию."
+                "SPEAKER_EMBEDDINGS_URL не настроен. "
+                "Diarization будет недоступен. "
+                "Установите SPEAKER_EMBEDDINGS_URL в .env"
+            )
+            return
+        
+        try:
+            response = requests.get(
+                f"{self._remote_url}/health",
+                timeout=5,
+            )
+            if response.status_code == 200:
+                data = response.json()
+                pyannote_loaded = data.get("pyannote_loaded", False)
+                if pyannote_loaded:
+                    logger.info(
+                        f"Remote diarization service доступен: {self._remote_url}"
+                    )
+                else:
+                    logger.warning(
+                        f"Remote service доступен, но pyannote не загружен. "
+                        f"Проверьте HF_TOKEN на remote сервисе."
+                    )
+            else:
+                logger.warning(
+                    f"Remote service вернул HTTP {response.status_code}"
+                )
+        except Exception as exc:
+            logger.warning(
+                f"Не удалось подключиться к remote diarization service: {exc}"
             )
 
     @property
     def is_available(self) -> bool:
-        """Проверка доступности diarization pipeline."""
-        return self._pipeline is not None
+        """Проверка доступности diarization."""
+        if not self._remote_url:
+            return False
+        
+        try:
+            response = requests.get(
+                f"{self._remote_url}/health",
+                timeout=5,
+            )
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("pyannote_loaded", False)
+        except Exception:
+            pass
+        
+        return False
 
     def diarize(
         self,
@@ -94,7 +99,7 @@ class DiarizationService:
         max_speakers: int | None = None,
     ) -> list[dict[str, Any]]:
         """
-        Выполнение speaker diarization.
+        Выполнение speaker diarization через remote service.
         
         Args:
             audio: Аудио массив (mono, float32)
@@ -109,8 +114,8 @@ class DiarizationService:
             - end: конец сегмента (секунды)
             - speaker: ID спикера (SPEAKER_00, SPEAKER_01, ...)
         """
-        if not self.is_available:
-            logger.warning("Diarization недоступен, возвращаем пустой список")
+        if not self._remote_url:
+            logger.error("SPEAKER_EMBEDDINGS_URL не настроен")
             return []
         
         if audio.size == 0 or sample_rate <= 0:
@@ -118,66 +123,57 @@ class DiarizationService:
             return []
         
         try:
-            import torch
-            
-            # Подготовка аудио для pyannote
-            # Pyannote ожидает dict с waveform и sample_rate
-            waveform = torch.from_numpy(audio).float()
-            
-            # Если аудио стерео, конвертируем в моно
-            if waveform.ndim > 1:
-                waveform = waveform.mean(dim=0)
-            
-            # Pyannote ожидает shape (channels, samples)
-            if waveform.ndim == 1:
-                waveform = waveform.unsqueeze(0)
-            
-            audio_dict = {
-                "waveform": waveform,
-                "sample_rate": sample_rate,
-            }
+            # Подготовка аудио для отправки
+            with io.BytesIO() as wav_buffer:
+                sf.write(
+                    wav_buffer,
+                    audio.astype(np.float32),
+                    sample_rate,
+                    format="WAV",
+                    subtype="PCM_16",
+                )
+                wav_bytes = wav_buffer.getvalue()
             
             # Параметры диаризации
-            diarization_params = {}
+            form_data = {}
             if num_speakers is not None:
-                diarization_params["num_speakers"] = num_speakers
+                form_data["num_speakers"] = str(num_speakers)
             if min_speakers is not None:
-                diarization_params["min_speakers"] = min_speakers
+                form_data["min_speakers"] = str(min_speakers)
             if max_speakers is not None:
-                diarization_params["max_speakers"] = max_speakers
+                form_data["max_speakers"] = str(max_speakers)
             
             logger.info(
-                f"Запуск diarization: audio_duration={len(audio)/sample_rate:.2f}s, "
-                f"params={diarization_params}"
+                f"Запрос diarization к remote service: "
+                f"audio_duration={len(audio)/sample_rate:.2f}s, "
+                f"params={form_data}"
             )
             
-            # Выполнение диаризации
-            diarization = self._pipeline(audio_dict, **diarization_params)
+            # Отправка запроса
+            response = requests.post(
+                f"{self._remote_url}/api/diarize",
+                files={"file": ("audio.wav", wav_bytes, "audio/wav")},
+                data=form_data,
+                timeout=self._timeout,
+            )
+            response.raise_for_status()
             
-            # Конвертация результатов в наш формат
-            segments = []
-            for turn, _, speaker in diarization.itertracks(yield_label=True):
-                segments.append({
-                    "start": float(turn.start),
-                    "end": float(turn.end),
-                    "speaker": speaker,
-                })
+            data = response.json()
             
-            # Сортировка по времени
-            segments.sort(key=lambda s: s["start"])
+            if not data.get("success"):
+                logger.error(f"Remote diarization failed: {data}")
+                return []
+            
+            segments = data.get("segments", [])
             
             # Статистика
-            unique_speakers = set(s["speaker"] for s in segments)
-            total_duration = sum(s["end"] - s["start"] for s in segments)
-            
             logger.info(
-                f"Diarization завершена: {len(segments)} сегментов, "
-                f"{len(unique_speakers)} спикеров, "
-                f"total_speech={total_duration:.2f}s"
+                f"Remote diarization завершена: {len(segments)} сегментов, "
+                f"{data.get('num_speakers', 0)} спикеров"
             )
             
             # Логируем детали по спикерам
-            for speaker in sorted(unique_speakers):
+            for speaker in data.get("speakers", []):
                 speaker_segments = [s for s in segments if s["speaker"] == speaker]
                 speaker_duration = sum(s["end"] - s["start"] for s in speaker_segments)
                 logger.info(
@@ -187,6 +183,15 @@ class DiarizationService:
             
             return segments
             
+        except requests.exceptions.Timeout:
+            logger.error(
+                f"Timeout при запросе к remote diarization service "
+                f"(timeout={self._timeout}s)"
+            )
+            return []
+        except requests.exceptions.RequestException as exc:
+            logger.error(f"Ошибка при запросе к remote service: {exc}")
+            return []
         except Exception as exc:
             logger.error(f"Ошибка при diarization: {exc}", exc_info=True)
             return []
