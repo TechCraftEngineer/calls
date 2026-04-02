@@ -4,16 +4,18 @@
 
 AUDIO_FILE="${1:-test_demo.mp3}"
 API_URL="${2:-https://vnggncb-giga-am.hf.space}"
+PROXY="${3:-127.0.0.1:2080}"
 
 if [ ! -f "$AUDIO_FILE" ]; then
     echo "Ошибка: Файл $AUDIO_FILE не найден"
-    echo "Использование: $0 <audio_file> [api_url]"
+    echo "Использование: $0 <audio_file> [api_url] [proxy]"
     exit 1
 fi
 
 echo "=== Тестирование диаризации ==="
 echo "Файл: $AUDIO_FILE"
 echo "API: $API_URL"
+echo "Прокси: $PROXY"
 echo ""
 
 # Проверка доступности jq
@@ -28,7 +30,7 @@ fi
 
 # 1. Диагностика эмбеддингов
 echo "1. Диагностика эмбеддингов..."
-RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/debug-embeddings" \
+RESPONSE=$(curl -s -w "\n%{http_code}" -x "$PROXY" -X POST "$API_URL/api/debug-embeddings" \
   -F "file=@$AUDIO_FILE")
 
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
@@ -52,7 +54,7 @@ fi
 
 echo ""
 echo "2. Полная транскрипция с текущими параметрами..."
-RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/transcribe" \
+RESPONSE=$(curl -s -w "\n%{http_code}" -x "$PROXY" -X POST "$API_URL/api/transcribe" \
   -F "file=@$AUDIO_FILE")
 
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
