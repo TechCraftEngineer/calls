@@ -35,6 +35,41 @@ pinned: false
   - `SPEAKER_EMBEDDINGS_URL=https://<your-space>.hf.space`
   - `SPEAKER_EMBEDDINGS_TIMEOUT=60`
 
+## Локальный запуск
+
+### Требования
+
+1. Получите токен HuggingFace: https://huggingface.co/settings/tokens
+2. Примите условия доступа к модели: https://huggingface.co/pyannote/embedding
+
+### Docker Compose
+
+```bash
+# Скопируйте .env.example в .env и добавьте ваш токен
+cp .env.example .env
+# Отредактируйте .env и установите HF_TOKEN
+
+# Запуск
+docker-compose up -d
+
+# Проверка
+curl http://localhost:7861/health
+```
+
+### Прямой запуск
+
+```bash
+# Установите зависимости
+pip install -r requirements.txt
+
+# Установите переменные окружения
+export HF_TOKEN=your_token_here
+export PORT=7860
+
+# Запуск
+python app.py
+```
+
 ## Endpoint
 
 - `POST /api/embed-batch`

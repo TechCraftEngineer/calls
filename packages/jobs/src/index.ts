@@ -10,6 +10,7 @@ export {
   inngest,
   pbxSyncRequested,
   transcribeRequested,
+  transcriptionCompletedEvent,
 } from "./inngest/client";
 export { emailReportsFn } from "./inngest/functions/email-reports";
 export { evaluateCallFn } from "./inngest/functions/evaluate-call";

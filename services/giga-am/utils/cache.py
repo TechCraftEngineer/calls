@@ -65,15 +65,18 @@ class TranscriptionCache:
         return hashlib.sha256(key_data.encode()).hexdigest()
     
     def get_pipeline_config(self) -> Dict[str, Any]:
-        """Получение текущей конфигурации pipeline"""
+        """
+        Получение текущей конфигурации pipeline.
+        
+        LLM коррекция теперь в Inngest, не влияет на кэш Python сервиса.
+        """
         from config import settings
         
         return {
             "model_name": settings.model_name,
             "alignment_enabled": settings.alignment_enabled,
             "diarization_enabled": settings.diarization_enabled,
-            "llm_correction_enabled": settings.llm_correction_enabled,
-            "strict_correction_mode": settings.strict_correction_mode
+            "enable_dual_asr_llm_correction": settings.enable_dual_asr_llm_correction,
         }
     
     def get(self, file_hash: str) -> Optional[Dict[str, Any]]:

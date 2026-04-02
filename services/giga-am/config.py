@@ -31,77 +31,48 @@ class Settings(BaseSettings):
     
     # Timeout settings
     transcription_timeout: int = Field(default=900, ge=1)  # 15 минут по умолчанию
-
-    # Async jobs and pipeline
-    jobs_dir: str = "temp/jobs"
-    max_parallel_jobs: int = 1
-    job_ttl_hours: int = 24
-    source_download_timeout: int = 120
-    max_job_retries: int = 2
-    llm_correction_enabled: bool = True
-    llm_api_url: str = os.getenv("LLM_API_URL", "")
-    llm_api_key: str = os.getenv("LLM_API_KEY", "")
-    llm_model: str = os.getenv("LLM_MODEL", "gpt-4o-mini")
-    llm_timeout: int = 45
-    strict_correction_mode: bool = True
+    
+    # Dual ASR + LLM correction (через Inngest - только флаг)
+    enable_dual_asr_llm_correction: bool = Field(
+        default=True,
+        description="Enable dual ASR (full + diarized) - orchestrated by Inngest"
+    )
+    
+    # Inngest connection
+    inngest_api_url: str = os.getenv("INNGEST_API_URL", "http://localhost:3001")
+    inngest_event_key: str = os.getenv("INNGEST_EVENT_KEY", "")
+    
     callback_timeout: int = 20
     diarization_enabled: bool = True
     alignment_enabled: bool = True
+    
+    # Diarization settings (pyannote-based, SOTA 2024-2026)
+    diarization_num_speakers: int | None = Field(
+        default=None,
+        description="Exact number of speakers (if known). Leave None for automatic detection"
+    )
+    diarization_min_speakers: int | None = Field(
+        default=None,
+        ge=1,
+        description="Minimum number of speakers for automatic detection"
+    )
+    diarization_max_speakers: int | None = Field(
+        default=None,
+        ge=1,
+        description="Maximum number of speakers for automatic detection"
+    )
+    diarization_min_segment_duration: float = Field(
+        default=0.5,
+        ge=0.1,
+        le=5.0,
+        description="Minimum segment duration after diarization (seconds)"
+    )
+    
     speaker_embeddings_url: str = os.getenv(
         "SPEAKER_EMBEDDINGS_URL",
         "",
     )
-    speaker_embeddings_timeout: int = 60
-    
-    # Clustering settings (modern diarization improvements)
-    clustering_base_threshold: float = Field(
-        default=0.40,
-        ge=0.1,
-        le=0.9,
-        description="Base cosine distance threshold for speaker clustering"
-    )
-    clustering_min_segment_duration: float = Field(
-        default=0.3,
-        ge=0.1,
-        le=2.0,
-        description="Minimum segment duration for reliable clustering (seconds)"
-    )
-    clustering_temporal_weight: float = Field(
-        default=0.1,
-        ge=0.0,
-        le=0.5,
-        description="Weight of temporal proximity in clustering decisions"
-    )
-    clustering_confidence_threshold: float = Field(
-        default=0.6,
-        ge=0.0,
-        le=1.0,
-        description="Confidence threshold for final clustering"
-    )
-    
-    # Overlap separation settings (одновременная речь)
-    overlap_separation_enabled: bool = Field(
-        default=True,
-        description="Enable separation of overlapping speech (simultaneous speakers)"
-    )
-    overlap_confidence_threshold: float = Field(
-        default=0.7,
-        ge=0.0,
-        le=1.0,
-        description="Confidence threshold for overlap detection"
-    )
-    min_overlap_duration: float = Field(
-        default=0.5,
-        ge=0.1,
-        le=5.0,
-        description="Minimum overlap duration to process (seconds)"
-    )
-    overlap_embedding_similarity: float = Field(
-        default=0.6,
-        ge=0.0,
-        le=1.0,
-        description="Embedding similarity threshold for overlap speaker separation"
-    )
+    speaker_embeddings_timeout: int = 300  # 5 минут для диаризации (может быть долгой)
     
     # Audio preprocessing settings
     auto_resample_enabled: bool = Field(
