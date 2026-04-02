@@ -173,42 +173,24 @@ export const transcribeCallFn = inngest.createFunction(
     // Логирование детального ответа от giga-am через step.run
     await step.run("debug/giga-am-response", async () => {
       const gigaAmLog = result.metadata.asrLogs?.find((log) => log.provider === "gigaam");
-      if (gigaAmLog) {
-        const debugData = {
-          callId,
-          provider: gigaAmLog.provider,
-          success: gigaAmLog.success,
-          processingTimeMs: gigaAmLog.processingTimeMs,
-          textLength: gigaAmLog.text?.length || 0,
-          utterancesCount: gigaAmLog.utterances?.length || 0,
-          hasEmbeddings:
-            gigaAmLog.utterances?.some((u) => u.embedding && u.embedding.length > 0) || false,
-          hasConfidence: gigaAmLog.utterances?.some((u) => u.confidence !== undefined) || false,
-          speakerTimelineLength:
-            (gigaAmLog.raw?.speakerTimeline as unknown[] | undefined)?.length || 0,
-          // Логируем первые несколько спикеров для понимания диаризации
-          sampleSpeakers: gigaAmLog.utterances?.slice(0, 5).map((u) => ({
-            speaker: u.speaker,
-            start: u.start,
-            end: u.end,
-            confidence: u.confidence,
-            hasEmbedding: Boolean(u.embedding && u.embedding.length > 0),
-          })),
-          // Полный raw response для детальной отладки (только если включен debug уровень логов)
-          rawResponse: gigaAmLog.raw,
-        };
 
-        logger.info("GigaAM ответ получен", debugData);
-        return debugData;
+      if (gigaAmLog) {
+        logger.info("GigaAM ответ получен - полный лог", {
+          callId,
+          gigaAmLog: gigaAmLog, // Выводим весь объект целиком
+        });
+        return { callId, gigaAmLog };
       } else {
-        const debugData = {
+        logger.warn("GigaAM лог не найден в метаданных", {
           callId,
           asrLogsCount: result.metadata.asrLogs?.length || 0,
           asrSources: result.metadata.asrLogs?.map((log) => log.provider) || [],
+        });
+        return {
+          callId,
+          found: false,
+          asrLogs: result.metadata.asrLogs,
         };
-
-        logger.warn("GigaAM лог не найден в метаданных", debugData);
-        return { ...debugData, found: false };
       }
     });
 
