@@ -350,6 +350,24 @@ export async function transcribeWithGigaAm(
   const totalDuration = apiResponse.total_duration;
   const finalTranscript = apiResponse.final_transcript?.trim() ?? "";
 
+  // Временное логирование для отладки
+  logger.info("Giga AM API ответ", {
+    segmentCount: segments.length,
+    speakerTimelineCount: speakerTimeline?.length || 0,
+    hasFinalTranscript: Boolean(finalTranscript),
+    sampleSegments: segments.slice(0, 2).map((s) => ({
+      hasSpeaker: Boolean(s.speaker),
+      hasEmbedding: Boolean(s.embedding && s.embedding.length > 0),
+      hasConfidence: s.confidence !== undefined,
+      speaker: s.speaker,
+      text: s.text?.slice(0, 30),
+      start: s.start,
+      end: s.end,
+    })),
+    pipeline: apiResponse.pipeline,
+    stages: apiResponse.stages,
+  });
+
   // Приоритет: speaker_timeline > final_transcript > segments
   const speakerText =
     speakerTimeline && speakerTimeline.length > 0 ? speakerTimelineToText(speakerTimeline) : "";
