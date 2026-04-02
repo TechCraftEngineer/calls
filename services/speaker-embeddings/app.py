@@ -593,53 +593,33 @@ def _process_diarization(
         segments = []
         
         logger.info(f"Diarization output type: {type(diarization)}")
-        logger.info(f"Diarization attributes: {dir(diarization)}")
         
-        # DiarizeOutput в pyannote 4.x - пробуем разные способы извлечения
+        # DiarizeOutput в pyannote 4.x имеет атрибут speaker_diarization (Annotation объект)
         try:
-            # Способ 1: Прямой доступ к segments как к списку
-            if hasattr(diarization, 'segments'):
-                segs = diarization.segments
-                logger.info(f"Found segments attribute, type: {type(segs)}")
-                
-                if isinstance(segs, list):
-                    for seg in segs:
-                        segments.append({
-                            "start": float(seg.start),
-                            "end": float(seg.end),
-                            "speaker": seg.speaker,
-                        })
-                else:
-                    # Может быть итератором или другим типом
-                    for seg in segs:
-                        segments.append({
-                            "start": float(seg.start),
-                            "end": float(seg.end),
-                            "speaker": seg.speaker,
-                        })
+            # Извлекаем Annotation из DiarizeOutput
+            annotation = None
             
-            # Способ 2: Используем itertracks если есть
+            if hasattr(diarization, 'speaker_diarization'):
+                # Новый API (pyannote 4.x) - используем speaker_diarization
+                annotation = diarization.speaker_diarization
+                logger.info(f"Using speaker_diarization, type: {type(annotation)}")
             elif hasattr(diarization, 'itertracks'):
-                for turn, _, speaker in diarization.itertracks(yield_label=True):
-                    segments.append({
-                        "start": float(turn.start),
-                        "end": float(turn.end),
-                        "speaker": speaker,
-                    })
-            
-            # Способ 3: Конвертируем в Annotation и итерируем
+                # Старый API (pyannote < 4.0) - diarization это уже Annotation
+                annotation = diarization
+                logger.info(f"Using diarization directly as Annotation")
             else:
-                # DiarizeOutput может иметь метод to_annotation()
-                if hasattr(diarization, 'to_annotation'):
-                    annotation = diarization.to_annotation()
-                    for segment, _, label in annotation.itertracks(yield_label=True):
-                        segments.append({
-                            "start": float(segment.start),
-                            "end": float(segment.end),
-                            "speaker": label,
-                        })
-                else:
-                    raise ValueError(f"Cannot extract segments from {type(diarization)}")
+                raise ValueError(f"Cannot extract annotation from {type(diarization)}")
+            
+            # Теперь итерируем по Annotation
+            if hasattr(annotation, 'itertracks'):
+                for segment, _, label in annotation.itertracks(yield_label=True):
+                    segments.append({
+                        "start": float(segment.start),
+                        "end": float(segment.end),
+                        "speaker": label,
+                    })
+            else:
+                raise ValueError(f"Annotation has no itertracks method: {type(annotation)}")
         
         except Exception as e:
             logger.error(f"Failed to extract segments: {e}", exc_info=True)
