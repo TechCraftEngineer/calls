@@ -174,7 +174,7 @@ export const transcribeCallFn = inngest.createFunction(
     await step.run("debug/giga-am-response", async () => {
       const gigaAmLog = result.metadata.asrLogs?.find((log) => log.provider === "gigaam");
       if (gigaAmLog) {
-        logger.info("GigaAM ответ получен", {
+        const debugData = {
           callId,
           provider: gigaAmLog.provider,
           success: gigaAmLog.success,
@@ -196,15 +196,20 @@ export const transcribeCallFn = inngest.createFunction(
           })),
           // Полный raw response для детальной отладки (только если включен debug уровень логов)
           rawResponse: process.env.LOG_LEVEL === "debug" ? gigaAmLog.raw : undefined,
-        });
+        };
+
+        logger.info("GigaAM ответ получен", debugData);
+        return debugData;
       } else {
-        logger.warn("GigaAM лог не найден в метаданных", {
+        const debugData = {
           callId,
           asrLogsCount: result.metadata.asrLogs?.length || 0,
           asrSources: result.metadata.asrLogs?.map((log) => log.provider) || [],
-        });
+        };
+
+        logger.warn("GigaAM лог не найден в метаданных", debugData);
+        return { ...debugData, found: false };
       }
-      return { logged: true };
     });
 
     const identifyResult = await step.run("llm/diarize", async () => {
@@ -269,7 +274,7 @@ export const transcribeCallFn = inngest.createFunction(
 
     // Логирование результатов LLM идентификации спикеров через step.run
     await step.run("debug/llm-results", async () => {
-      logger.info("Результаты LLM идентификации спикеров", {
+      const debugData = {
         callId,
         finalTextLength: finalText.length,
         originalTextLength: result.normalizedText.length,
@@ -281,8 +286,10 @@ export const transcribeCallFn = inngest.createFunction(
         clusterCount: identifyResult.metadata?.clusterCount || 0,
         identificationReason: identifyResult.metadata?.reason,
         truncatedForAnalysis: identifyResult.metadata?.truncatedForAnalysis || false,
-      });
-      return { logged: true };
+      };
+
+      logger.info("Результаты LLM идентификации спикеров", debugData);
+      return debugData;
     });
 
     await step.run("persist/transcript:upsert", async () => {
