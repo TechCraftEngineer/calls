@@ -11,8 +11,11 @@
 
 from __future__ import annotations
 
+import logging
 import math
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 class ClusteringService:
@@ -240,8 +243,14 @@ class ClusteringService:
 
         overlap_spans = overlap_spans or []
         
+        logger.info(f"Начало кластеризации: {len(segments)} сегментов")
+        
         # Шаг 1: Фильтрация
         reliable_segments, unreliable_segments = self._filter_unreliable_segments(segments)
+        logger.info(
+            f"Фильтрация: {len(reliable_segments)} надёжных, "
+            f"{len(unreliable_segments)} ненадёжных сегментов"
+        )
         
         # Шаг 2: Кластеризация надёжных сегментов
         clusters: list[dict[str, Any]] = []
@@ -266,6 +275,16 @@ class ClusteringService:
             embedding_quality = self._estimate_embedding_quality(emb)
             adaptive_threshold = self._compute_adaptive_threshold(duration, embedding_quality)
             
+            # Логируем качество эмбеддинга
+            emb_norm = math.sqrt(sum(v * v for v in emb))
+            logger.info(
+                f"Сегмент {start:.2f}-{end:.2f}s: "
+                f"duration={duration:.2f}s, "
+                f"emb_norm={emb_norm:.4f}, "
+                f"emb_quality={embedding_quality:.4f}, "
+                f"threshold={adaptive_threshold:.4f}"
+            )
+            
             if not clusters:
                 clusters.append(
                     {
@@ -278,6 +297,9 @@ class ClusteringService:
                 )
                 seg["speaker"] = "SPEAKER_01"
                 seg["confidence"] = 0.9
+                logger.info(
+                    f"Создан первый кластер SPEAKER_01 для сегмента {start:.2f}-{end:.2f}s"
+                )
             else:
                 # Вычисляем расстояния с учётом temporal bonus
                 candidates = []
@@ -299,6 +321,16 @@ class ClusteringService:
                 
                 # Confidence на основе расстояния
                 confidence = 1.0 - min(1.0, base_distance / adaptive_threshold)
+                
+                # Логирование для диагностики - всегда INFO для отладки
+                logger.info(
+                    f"Сегмент {start:.2f}-{end:.2f}s: "
+                    f"base_dist={base_distance:.4f}, "
+                    f"adjusted_dist={adjusted_distance:.4f}, "
+                    f"threshold={adaptive_threshold:.4f}, "
+                    f"confidence={confidence:.4f}, "
+                    f"best_cluster={best_cluster['speaker']}"
+                )
                 
                 if adjusted_distance <= adaptive_threshold and confidence >= self.confidence_threshold:
                     seg["speaker"] = best_cluster["speaker"]
@@ -325,6 +357,10 @@ class ClusteringService:
                         }
                     )
                     seg["speaker"] = new_speaker
+                    logger.info(
+                        f"Создан новый кластер {new_speaker} для сегмента {start:.2f}-{end:.2f}s "
+                        f"(distance={adjusted_distance:.4f} > threshold={adaptive_threshold:.4f})"
+                    )
         
         # Шаг 3: Переназначение ненадёжных сегментов
         if unreliable_segments:
@@ -335,6 +371,21 @@ class ClusteringService:
         # Объединяем все сегменты обратно
         all_segments = reliable_segments + unreliable_segments
         all_segments.sort(key=lambda s: float(s.get("start", 0.0)))
+        
+        # Статистика кластеризации
+        unique_speakers = set(s.get("speaker") for s in all_segments if s.get("speaker"))
+        logger.info(
+            f"Кластеризация завершена: {len(unique_speakers)} спикеров - {sorted(unique_speakers)}"
+        )
+        
+        # Детальная статистика по кластерам
+        for speaker in sorted(unique_speakers):
+            speaker_segments = [s for s in all_segments if s.get("speaker") == speaker]
+            avg_confidence = sum(s.get("confidence", 0) for s in speaker_segments) / len(speaker_segments)
+            logger.info(
+                f"  {speaker}: {len(speaker_segments)} сегментов, "
+                f"avg_confidence={avg_confidence:.3f}"
+            )
         
         # Шаг 4: Добавление метаданных
         for seg in all_segments:

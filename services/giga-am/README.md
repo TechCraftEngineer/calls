@@ -17,8 +17,11 @@ REST API для распознавания русской речи на базе
 ### API Эндпоинты
 
 - `POST /api/transcribe` - Распознавание речи из аудиофайла
+- `POST /api/debug-embeddings` - Диагностика проблем с диаризацией спикеров
 - `GET /api/health` - Проверка работоспособности
 - `GET /api/info` - Информация о приложении
+- `GET /api/metrics` - Метрики производительности
+- `GET /api/cache/stats` - Статистика кэша
 - `GET /docs` - Swagger документация
 
 ### Пример запроса
@@ -50,6 +53,42 @@ curl -X POST "https://your-space.hf.space/api/transcribe" \
 ## Поддерживаемые форматы
 
 MP3, WAV, FLAC, M4A, AAC, OGG, WEBM (макс. 100MB)
+
+## Диаризация спикеров (Speaker Diarization)
+
+API автоматически определяет разных спикеров в диалоге.
+
+### Проблемы с диаризацией?
+
+Если все сегменты получают `SPEAKER_01`, используйте диагностику:
+
+```bash
+curl -X POST "http://localhost:7860/api/debug-embeddings" \
+  -F "file=@audio.mp3" | jq .
+```
+
+Система автоматически выдаст рекомендации по настройке параметров.
+
+**Документация:**
+- [QUICK_FIX_DIARIZATION.md](QUICK_FIX_DIARIZATION.md) - Быстрое решение
+- [DIARIZATION_ANALYSIS.md](DIARIZATION_ANALYSIS.md) - Детальный анализ
+- [DIARIZATION_DEBUG.md](DIARIZATION_DEBUG.md) - Полная диагностика
+- [docs/CLUSTERING_TUNING.md](docs/CLUSTERING_TUNING.md) - Настройка параметров
+
+### Параметры кластеризации
+
+```bash
+# Строгая кластеризация (больше спикеров)
+export CLUSTERING_BASE_THRESHOLD=0.30
+
+# Мягкая кластеризация (меньше спикеров)
+export CLUSTERING_BASE_THRESHOLD=0.45
+
+# Другие параметры
+export CLUSTERING_MIN_SEGMENT_DURATION=0.3
+export CLUSTERING_TEMPORAL_WEIGHT=0.1
+export CLUSTERING_CONFIDENCE_THRESHOLD=0.6
+```
 
 ## Настройка
 

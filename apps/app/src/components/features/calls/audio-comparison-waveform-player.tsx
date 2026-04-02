@@ -9,6 +9,8 @@ import { CallWaveformPlayer } from "./call-waveform-player";
 interface AudioComparisonWaveformPlayerProps {
   callId?: string | null;
   className?: string;
+  onDownloadRecording?: () => void;
+  downloadingRecording?: boolean;
 }
 
 /**
@@ -17,6 +19,8 @@ interface AudioComparisonWaveformPlayerProps {
 export function AudioComparisonWaveformPlayer({
   callId,
   className,
+  onDownloadRecording,
+  downloadingRecording,
 }: AudioComparisonWaveformPlayerProps) {
   const orpc = useORPC();
   const id = callId?.trim() ?? "";
@@ -67,7 +71,11 @@ export function AudioComparisonWaveformPlayer({
   if (!hasEnhancedAudio) {
     return (
       <div className={className}>
-        <CallWaveformPlayer callId={id} />
+        <CallWaveformPlayer
+          callId={id}
+          onDownloadRecording={onDownloadRecording}
+          downloadingRecording={downloadingRecording}
+        />
       </div>
     );
   }
@@ -88,7 +96,12 @@ export function AudioComparisonWaveformPlayer({
         </TabsList>
         <TabsContent value="enhanced" className="mt-0">
           <div className="space-y-2">
-            <CallWaveformPlayer callId={id} enhanced />
+            <CallWaveformPlayer
+              callId={id}
+              enhanced
+              onDownloadRecording={onDownloadRecording}
+              downloadingRecording={downloadingRecording}
+            />
             <p className="text-muted-foreground text-xs">
               Аудио обработано с помощью ML для улучшения качества распознавания
             </p>
@@ -96,7 +109,11 @@ export function AudioComparisonWaveformPlayer({
         </TabsContent>
         <TabsContent value="original" className="mt-0">
           <div className="space-y-2">
-            <CallWaveformPlayer callId={id} />
+            <CallWaveformPlayer
+              callId={id}
+              onDownloadRecording={onDownloadRecording}
+              downloadingRecording={downloadingRecording}
+            />
             <p className="text-muted-foreground text-xs">Оригинальная запись без обработки</p>
           </div>
         </TabsContent>

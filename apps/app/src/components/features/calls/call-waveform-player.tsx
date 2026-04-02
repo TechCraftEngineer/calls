@@ -2,7 +2,7 @@
 
 import { Button, cn } from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Pause, Play, Volume2 } from "lucide-react";
+import { Download, Loader2, Pause, Play, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type WaveSurfer from "wavesurfer.js";
 import { useORPC } from "@/orpc/react";
@@ -37,6 +37,8 @@ interface CallWaveformPlayerProps {
   callId: string;
   className?: string;
   enhanced?: boolean;
+  onDownloadRecording?: () => void;
+  downloadingRecording?: boolean;
 }
 
 /**
@@ -46,6 +48,8 @@ export function CallWaveformPlayer({
   callId,
   className,
   enhanced = false,
+  onDownloadRecording,
+  downloadingRecording = false,
 }: CallWaveformPlayerProps) {
   const orpc = useORPC();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -201,17 +205,37 @@ export function CallWaveformPlayer({
       </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <Button
-          type="button"
-          size="icon"
-          variant="secondary"
-          className="size-10 shrink-0 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border-0 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100"
-          disabled={!ready}
-          onClick={togglePlay}
-          aria-label={playing ? "Пауза" : "Воспроизвести"}
-        >
-          {playing ? <Pause className="size-5" /> : <Play className="size-5 pl-0.5" />}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="icon"
+            variant="secondary"
+            className="size-10 shrink-0 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 border-0 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100"
+            disabled={!ready}
+            onClick={togglePlay}
+            aria-label={playing ? "Пауза" : "Воспроизвести"}
+          >
+            {playing ? <Pause className="size-5" /> : <Play className="size-5 pl-0.5" />}
+          </Button>
+          {onDownloadRecording && (
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              className="size-10 shrink-0 rounded-full"
+              disabled={downloadingRecording}
+              onClick={onDownloadRecording}
+              aria-label="Скачать запись"
+              title="Скачать запись"
+            >
+              {downloadingRecording ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
+            </Button>
+          )}
+        </div>
         <div className="text-muted-foreground flex items-center gap-2 text-xs tabular-nums">
           <span>{formatTime(currentTime)}</span>
           <span className="opacity-50">/</span>

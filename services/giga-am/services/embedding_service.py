@@ -44,14 +44,18 @@ class EmbeddingService:
 
     def _load_pyannote_embedder(self) -> None:
         try:
+            import torch
             from pyannote.audio import Inference
 
+            # Явно используем CPU
+            device = torch.device("cpu")
             token = os.getenv("HF_TOKEN", "").strip() or None
             self._pyannote_embedder = Inference(
                 "pyannote/embedding",
                 use_auth_token=token,
+                device=device,
             )
-            logger.info("Pyannote speaker embedder загружен")
+            logger.info("Pyannote speaker embedder загружен на CPU")
         except Exception as exc:
             self._pyannote_embedder = None
             logger.warning(
@@ -234,9 +238,15 @@ class EmbeddingService:
 
         remote_embeddings = self._try_remote_embeddings(segments, audio, sample_rate)
         if remote_embeddings is not None:
+            logger.info(f"Использованы remote эмбеддинги для {len(segments)} сегментов")
             return remote_embeddings
 
-        return [
+        logger.info(
+            f"Генерация локальных эмбеддингов для {len(segments)} сегментов "
+            f"(pyannote={'loaded' if self._pyannote_embedder else 'not loaded'})"
+        )
+        
+        embeddings = [
             self.build_hybrid_embedding(
                 segment,
                 audio=audio,
@@ -244,3 +254,30 @@ class EmbeddingService:
             )
             for segment in segments
         ]
+        
+        # Диагностика качества эмбеддингов
+        if embeddings:
+            norms = [float(np.linalg.norm(emb)) for emb in embeddings]
+            avg_norm = np.mean(norms)
+            logger.info(
+                f"Эмбеддинги сгенерированы: avg_norm={avg_norm:.4f}, "
+                f"min_norm={min(norms):.4f}, max_norm={max(norms):.4f}"
+            )
+            
+            # Вычисляем попарные расстояния для диагностики
+            if len(embeddings) >= 2:
+                from services.clustering_service import ClusteringService
+                distances = []
+                for i in range(len(embeddings)):
+                    for j in range(i + 1, len(embeddings)):
+                        dist = ClusteringService._cosine_distance(embeddings[i], embeddings[j])
+                        distances.append(dist)
+                
+                if distances:
+                    avg_dist = np.mean(distances)
+                    logger.info(
+                        f"Попарные расстояния: avg={avg_dist:.4f}, "
+                        f"min={min(distances):.4f}, max={max(distances):.4f}"
+                    )
+        
+        return embeddings

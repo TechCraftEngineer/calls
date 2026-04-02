@@ -15,7 +15,7 @@ import { Calendar, Clock, Loader2, Phone, Trash2, User } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
-import { useORPC } from "@/orpc/react";
+import { client, useORPC } from "@/orpc/react";
 import DeleteConfirmModal from "./delete-confirm-modal";
 import EvaluationSidebar from "./evaluation-sidebar";
 import TranscriptSection from "./transcript-section";
@@ -26,6 +26,7 @@ export default function CallDetailModal({ callId, onClose, onCallDeleted }: Call
   const [evaluation, setEvaluation] = useState<EvaluationDetail | null>(null);
   const [restarting, setRestarting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [downloadingRecording, setDownloadingRecording] = useState(false);
 
   // Валидация UUID v7 формата
   const isValidCallId = (id: string | number): boolean => {
@@ -149,6 +150,40 @@ export default function CallDetailModal({ callId, onClose, onCallDeleted }: Call
     element.download = `call_${call?.number || callId}_transcript.txt`;
     document.body.appendChild(element);
     element.click();
+  };
+
+  const handleDownloadRecording = async () => {
+    if (!call?.fileId || downloadingRecording) return;
+
+    try {
+      setDownloadingRecording(true);
+
+      // Получаем presigned URL из S3 через ORPC клиент
+      const result = await client.calls.getPlaybackUrl({ call_id: callIdStr });
+
+      if (!result?.url) {
+        toast.error("URL записи недоступен");
+        return;
+      }
+
+      // Прямое скачивание с S3 через ссылку
+      const element = document.createElement("a");
+      element.href = result.url;
+      element.download = `call_${call.number || callId}_recording.mp3`;
+      element.target = "_blank";
+      element.rel = "noopener noreferrer";
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+
+      toast.success("Скачивание начато");
+    } catch (error) {
+      console.error("Failed to download recording:", error);
+      const errorMessage = error instanceof Error ? error.message : "Ошибка при скачивании записи";
+      toast.error(`Ошибка: ${errorMessage}`);
+    } finally {
+      setDownloadingRecording(false);
+    }
   };
 
   const handleRestartAnalysis = async () => {
@@ -275,6 +310,8 @@ export default function CallDetailModal({ callId, onClose, onCallDeleted }: Call
                   callId={callIdStr}
                   transcript={transcript}
                   onDownloadTxt={handleDownloadTxt}
+                  onDownloadRecording={call.fileId ? handleDownloadRecording : undefined}
+                  downloadingRecording={downloadingRecording}
                   managerName={call.managerName ?? call.operatorName ?? undefined}
                 />
                 <EvaluationSidebar

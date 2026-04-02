@@ -103,17 +103,73 @@ attribution_service = AttributionService()
 postprocess_service = PostprocessService()
 
 
+def _preprocess_audio_for_diarization(audio_path: str, request_id: str) -> str:
+    """
+    Предобработка аудио для улучшения качества диаризации.
+    
+    Если sample rate < 16000 Hz, автоматически апсемплирует до 16000 Hz.
+    Возвращает путь к обработанному файлу (или оригинальному, если обработка не нужна).
+    """
+    try:
+        # Проверяем метаданные аудио
+        import soundfile as sf
+        info = sf.info(audio_path)
+        original_sr = info.samplerate
+        
+        # Если качество достаточное, возвращаем оригинал
+        if original_sr >= 16000:
+            logger.info(f"[{request_id}] Аудио качество достаточное: {original_sr}Hz")
+            return audio_path
+        
+        # Апсемплинг до 16kHz
+        logger.info(
+            f"[{request_id}] Низкое качество аудио: {original_sr}Hz. "
+            f"Автоматический апсемплинг до 16000Hz для улучшения диаризации..."
+        )
+        
+        # Загружаем и ресемплируем
+        audio_data, _ = librosa.load(audio_path, sr=16000, mono=True)
+        
+        # Сохраняем во временный файл
+        import tempfile
+        resampled_path = audio_path.replace('.mp3', '_16k.wav').replace('.m4a', '_16k.wav')
+        if resampled_path == audio_path:
+            resampled_path = audio_path + '_16k.wav'
+        
+        sf.write(resampled_path, audio_data, 16000, subtype='PCM_16')
+        
+        logger.info(
+            f"[{request_id}] Аудио успешно апсемплировано: "
+            f"{original_sr}Hz → 16000Hz, сохранено в {os.path.basename(resampled_path)}"
+        )
+        
+        return resampled_path
+        
+    except Exception as e:
+        logger.warning(
+            f"[{request_id}] Не удалось предобработать аудио: {e}. "
+            f"Используется оригинальный файл."
+        )
+        return audio_path
+
+
 def _run_ultra_pipeline(
     audio_path: str,
     preprocess_metadata: dict[str, Any] | None,
     request_id: str,
 ) -> dict[str, Any]:
     """Выполнение полного pipeline с отслеживанием метрик"""
-    # ASR этап
-    start_time = time.time()
-    asr_result = transcription_service.transcribe_audio(audio_path)
-    asr_time = time.time() - start_time
-    metrics.record_stage_time(request_id, "asr", asr_time)
+    
+    # Предобработка аудио для улучшения диаризации
+    processed_audio_path = _preprocess_audio_for_diarization(audio_path, request_id)
+    cleanup_processed = processed_audio_path != audio_path  # Нужно ли удалять обработанный файл
+    
+    try:
+        # ASR этап - используем обработанное аудио
+        start_time = time.time()
+        asr_result = transcription_service.transcribe_audio(processed_audio_path)
+        asr_time = time.time() - start_time
+        metrics.record_stage_time(request_id, "asr", asr_time)
     
     if not asr_result.get("success"):
         return asr_result
@@ -140,7 +196,7 @@ def _run_ultra_pipeline(
     diarized_segments = aligned_segments
     if settings.diarization_enabled:
         try:
-            audio_np, audio_sr = librosa.load(audio_path, sr=16000, mono=True)
+            audio_np, audio_sr = librosa.load(processed_audio_path, sr=16000, mono=True)
         except (
             librosa.util.exceptions.ParameterError,
             FileNotFoundError,
@@ -395,6 +451,203 @@ async def api_transcribe(
             "Внутренняя ошибка сервера",
             service_name="gigaam-api"
         ) from exc
+
+
+@app.post("/api/debug-embeddings")
+async def debug_embeddings(file: UploadFile = File(...)):
+    """
+    Диагностика эмбеддингов для отладки проблем с диаризацией.
+    
+    Возвращает:
+    - Информацию о загруженных моделях
+    - Статистику эмбеддингов для каждого сегмента
+    - Попарные расстояния между сегментами
+    - Рекомендации по настройке параметров
+    """
+    import uuid
+    request_id = str(uuid.uuid4())
+    tmp_path = None
+    
+    try:
+        # Мягкая валидация для диагностики (без проверки MIME типа)
+        if not file.filename:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Имя файла отсутствует"}
+            )
+        
+        file_extension = os.path.splitext(file.filename)[1].lower()
+        if file_extension not in settings.allowed_audio_formats:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": f"Неподдерживаемый формат: {file_extension}",
+                    "supported": settings.allowed_audio_formats
+                }
+            )
+        
+        # Сохраняем временный файл
+        with FileValidator.secure_temp_file(file) as tmp_path:
+            logger.info(f"[{request_id}] Начало диагностики эмбеддингов для {file.filename}")
+            
+            # Транскрипция
+            asr_result = await run_in_threadpool(
+                transcription_service.transcribe_audio,
+                tmp_path
+            )
+            
+            if not asr_result.get("success"):
+                return JSONResponse(
+                    status_code=500,
+                    content={"error": "Ошибка транскрипции", "details": asr_result}
+                )
+            
+            segments = asr_result.get("segments", [])
+            if not segments:
+                return JSONResponse(
+                    content={
+                        "error": "Нет сегментов для анализа",
+                        "segments_count": 0
+                    }
+                )
+            
+            # Загрузка аудио
+            try:
+                audio_np, audio_sr = librosa.load(tmp_path, sr=16000, mono=True)
+            except Exception as e:
+                return JSONResponse(
+                    status_code=500,
+                    content={"error": f"Ошибка загрузки аудио: {str(e)}"}
+                )
+            
+            # Генерация эмбеддингов
+            embeddings = await run_in_threadpool(
+                embedding_service.build_batch_hybrid_embeddings,
+                segments,
+                audio_np,
+                audio_sr
+            )
+            
+            # Диагностика эмбеддингов
+            diagnostics = []
+            for i, (seg, emb) in enumerate(zip(segments, embeddings)):
+                norm = float(np.linalg.norm(emb))
+                non_zero = sum(1 for v in emb if abs(v) > 1e-6)
+                
+                diagnostics.append({
+                    "segment": i,
+                    "start": seg.get("start"),
+                    "end": seg.get("end"),
+                    "duration": seg.get("end", 0) - seg.get("start", 0),
+                    "text": seg.get("text", "")[:50],  # Первые 50 символов
+                    "embedding_norm": round(norm, 4),
+                    "non_zero_values": non_zero,
+                    "embedding_dim": len(emb),
+                    "is_normalized": 0.9 < norm < 1.1,
+                    "is_valid": non_zero > 100 and 0.9 < norm < 1.1,
+                })
+            
+            # Расстояния между сегментами
+            distances = []
+            for i in range(len(embeddings)):
+                for j in range(i + 1, min(i + 5, len(embeddings))):  # Только ближайшие 5
+                    dist = clustering_service._cosine_distance(embeddings[i], embeddings[j])
+                    distances.append({
+                        "segment_i": i,
+                        "segment_j": j,
+                        "cosine_distance": round(float(dist), 4),
+                        "similar": dist < 0.4,  # Похожие спикеры
+                    })
+            
+            # Анализ и рекомендации
+            avg_norm = np.mean([d["embedding_norm"] for d in diagnostics])
+            valid_embeddings = sum(1 for d in diagnostics if d["is_valid"])
+            avg_distance = np.mean([d["cosine_distance"] for d in distances]) if distances else 0
+            
+            # Получаем метаданные аудио
+            audio_metadata = FileValidator.validate_audio_content(tmp_path)
+            sample_rate = audio_metadata.get("sample_rate", 0)
+            
+            recommendations = []
+            
+            # Проверка sample rate
+            if sample_rate < 16000:
+                recommendations.append({
+                    "level": "critical",
+                    "message": f"Низкое качество аудио: {sample_rate}Hz. Рекомендуется минимум 16000Hz.",
+                    "action": f"ffmpeg -i input.mp3 -ar 16000 -ac 1 output.wav"
+                })
+            
+            if not embedding_service._pyannote_embedder:
+                recommendations.append({
+                    "level": "critical",
+                    "message": "Pyannote модель не загружена. Установите HF_TOKEN.",
+                    "action": "export HF_TOKEN='your_token_here'"
+                })
+            
+            if avg_norm < 0.5:
+                recommendations.append({
+                    "level": "critical",
+                    "message": "Эмбеддинги почти нулевые. Проверьте качество аудио.",
+                    "action": "Убедитесь, что аудио содержит речь и не повреждено"
+                })
+            
+            if avg_distance < 0.01:
+                recommendations.append({
+                    "level": "critical",
+                    "message": f"Эмбеддинги практически идентичны (avg_distance={avg_distance:.4f}). Голоса неразличимы для модели.",
+                    "action": "1) Улучшите качество аудио до 16kHz, 2) Попробуйте отключить remote embeddings: export SPEAKER_EMBEDDINGS_URL=''"
+                })
+            elif avg_distance < 0.2:
+                recommendations.append({
+                    "level": "warning",
+                    "message": "Малые расстояния между сегментами. Уменьшите порог кластеризации.",
+                    "action": "export CLUSTERING_BASE_THRESHOLD=0.35"
+                })
+            elif avg_distance > 0.6:
+                recommendations.append({
+                    "level": "warning",
+                    "message": "Большие расстояния между сегментами. Увеличьте порог кластеризации.",
+                    "action": "export CLUSTERING_BASE_THRESHOLD=0.45"
+                })
+            
+            if valid_embeddings == len(diagnostics):
+                recommendations.append({
+                    "level": "success",
+                    "message": "Все эмбеддинги валидны. Система работает корректно.",
+                    "action": "Настройте параметры кластеризации при необходимости"
+                })
+            
+            logger.info(f"[{request_id}] Диагностика завершена: {len(segments)} сегментов, {valid_embeddings} валидных")
+            
+            return JSONResponse(content={
+                "request_id": request_id,
+                "segments_count": len(segments),
+                "valid_embeddings": valid_embeddings,
+                "diagnostics": diagnostics,
+                "pairwise_distances": distances[:20],  # Первые 20
+                "audio_quality": {
+                    "sample_rate": sample_rate,
+                    "quality": "good" if sample_rate >= 16000 else "poor",
+                    "recommendation": "OK" if sample_rate >= 16000 else "Увеличьте sample rate до 16000Hz"
+                },
+                "statistics": {
+                    "avg_embedding_norm": round(float(avg_norm), 4),
+                    "avg_cosine_distance": round(float(avg_distance), 4),
+                    "pyannote_loaded": embedding_service._pyannote_embedder is not None,
+                    "remote_url": embedding_service._remote_url or "not configured",
+                    "clustering_threshold": settings.clustering_base_threshold,
+                    "min_segment_duration": settings.clustering_min_segment_duration,
+                },
+                "recommendations": recommendations,
+            })
+            
+    except Exception as exc:
+        logger.exception(f"[{request_id}] Ошибка диагностики: {exc}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(exc)}
+        )
 
 
 @app.get("/api/health")

@@ -29,6 +29,8 @@ interface TranscriptSectionProps {
   callId: string;
   transcript: TranscriptDetail | null;
   onDownloadTxt: () => void;
+  onDownloadRecording?: () => void;
+  downloadingRecording?: boolean;
   managerName?: string;
 }
 
@@ -65,6 +67,8 @@ export default function TranscriptSection({
   callId,
   transcript,
   onDownloadTxt,
+  onDownloadRecording,
+  downloadingRecording,
   managerName,
 }: TranscriptSectionProps) {
   const messages = parseMessages(transcript, managerName);
@@ -72,7 +76,11 @@ export default function TranscriptSection({
   return (
     <Card className="flex min-h-[600px] max-h-[800px] flex-col overflow-hidden border-border/60">
       <div className="border-b border-border/60 px-6 py-4">
-        <AudioComparisonWaveformPlayer callId={callId} />
+        <AudioComparisonWaveformPlayer
+          callId={callId}
+          onDownloadRecording={onDownloadRecording}
+          downloadingRecording={downloadingRecording}
+        />
       </div>
       <CardHeader className="flex flex-row items-center justify-between gap-4 border-b border-border/60 px-6 py-4">
         <div className="flex items-center gap-3">

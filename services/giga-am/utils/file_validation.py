@@ -72,13 +72,13 @@ class FileValidator:
         
         # Строгая проверка MIME типа
         allowed_mime_types = {
-            '.mp3': ['audio/mpeg', 'audio/mp3'],
-            '.wav': ['audio/wav', 'audio/x-wav', 'audio/wave'],
-            '.flac': ['audio/flac', 'audio/x-flac'],
-            '.m4a': ['audio/mp4', 'audio/x-m4a'],
-            '.aac': ['audio/aac', 'audio/x-aac'],
-            '.ogg': ['audio/ogg', 'audio/x-ogg'],
-            '.webm': ['audio/webm']
+            '.mp3': ['audio/mpeg', 'audio/mp3', 'application/octet-stream'],
+            '.wav': ['audio/wav', 'audio/x-wav', 'audio/wave', 'application/octet-stream'],
+            '.flac': ['audio/flac', 'audio/x-flac', 'application/octet-stream'],
+            '.m4a': ['audio/mp4', 'audio/x-m4a', 'application/octet-stream'],
+            '.aac': ['audio/aac', 'audio/x-aac', 'application/octet-stream'],
+            '.ogg': ['audio/ogg', 'audio/x-ogg', 'application/octet-stream'],
+            '.webm': ['audio/webm', 'application/octet-stream']
         }
         
         if file.content_type:
