@@ -241,7 +241,7 @@ ${analysisText}
       output: Output.object({ schema }),
       temperature: 0.2,
       maxRetries: 2,
-      abortSignal: AbortSignal.timeout(30_000),
+      abortSignal: AbortSignal.timeout(60_000),
       functionId: "asr-identify-speakers-embeddings",
     });
 
