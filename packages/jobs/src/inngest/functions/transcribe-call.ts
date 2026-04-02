@@ -274,9 +274,22 @@ export const transcribeCallFn = inngest.createFunction(
         clusterCount: identifyResult.metadata?.clusterCount || 0,
         identificationReason: identifyResult.metadata?.reason,
         truncatedForAnalysis: identifyResult.metadata?.truncatedForAnalysis || false,
+        // Новые поля для мониторинга таймаутов
+        fallbackReason: identifyResult.metadata?.fallbackReason,
+        fallbackAttempted: identifyResult.metadata?.fallbackAttempted || false,
+        errorCode: identifyResult.metadata?.errorCode,
+        errorMessage: identifyResult.metadata?.error,
       };
 
-      logger.info("Результаты LLM идентификации спикеров", debugData);
+      // Если был фоллбек или таймаут, логируем с уровнем warn
+      if (
+        identifyResult.metadata?.fallbackAttempted ||
+        identifyResult.metadata?.reason === "timeout"
+      ) {
+        logger.warn("LLM идентификация спикеров использовала фоллбек", debugData);
+      } else {
+        logger.info("Результаты LLM идентификации спикеров", debugData);
+      }
       return debugData;
     });
 

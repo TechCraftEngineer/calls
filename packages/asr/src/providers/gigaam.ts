@@ -367,7 +367,7 @@ export async function transcribeWithGigaAm(
   return {
     source: "gigaam",
     text,
-    utterances: utterances.length > 0 ? utterances : undefined,
+    utterances: utterances, // Всегда передаем массив, даже если пустой
     processingTimeMs,
     raw: {
       endpoint: transcribeUrl,

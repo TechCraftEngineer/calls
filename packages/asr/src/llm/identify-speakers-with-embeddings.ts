@@ -61,7 +61,13 @@ export interface IdentifySpeakersWithEmbeddingsResult {
   customerName?: string;
   metadata?: {
     success: boolean;
-    reason?: "empty_input" | "ai_provider_not_configured" | "error" | "no_embeddings";
+    reason?:
+      | "empty_input"
+      | "ai_provider_not_configured"
+      | "error"
+      | "no_embeddings"
+      | "timeout"
+      | "fallback_simple";
     error?: string;
     mapping?: Record<string, string>;
     speakers?: z.infer<typeof speakerSchema>[];
@@ -70,6 +76,9 @@ export interface IdentifySpeakersWithEmbeddingsResult {
     truncatedForAnalysis?: boolean;
     usedEmbeddings?: boolean;
     clusterCount?: number;
+    fallbackReason?: string;
+    fallbackAttempted?: boolean;
+    errorCode?: string;
   };
 }
 
@@ -240,9 +249,10 @@ ${analysisText}
 Определи роль каждого спикера и верни JSON по схеме.`,
       output: Output.object({ schema }),
       temperature: 0.2,
-      maxRetries: 2,
+      maxRetries: 3,
       abortSignal: AbortSignal.timeout(60_000),
       functionId: "asr-identify-speakers-embeddings",
+      timeout: 60_000,
     });
 
     let result: z.infer<typeof schema>;
@@ -329,17 +339,80 @@ ${analysisText}
       },
     };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isTimeout = errorMessage.includes("TIMEOUT") || errorMessage.includes("timed out");
+    const errorCode = (error as Error & { code?: string })?.code;
+
     logger.error("Ошибка анализа спикеров с эмбеддингами", {
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMessage,
+      errorCode,
+      isTimeout,
+      hasEmbeddingData,
+      clusterCount: clusters.size,
+      analysisTextLength: analysisText.length,
+      originalTextLength: normalizedText.length,
     });
+
+    // Если это таймаут, попробуем упрощенный анализ без эмбеддингов
+    if (isTimeout && hasEmbeddingData) {
+      logger.info("Пробуем упрощенный анализ без эмбеддингов из-за таймаута");
+      try {
+        const simpleResponse = await generateWithAi({
+          modelProfile: "cheap",
+          provider: "deepseek", // Используем более стабильный провайдер для фоллбека
+          system:
+            "Определи роль спикеров в транскрипте. Верни JSON: {speakers: [{speakerId, role, name, confidence}], operatorName, customerName}",
+          prompt: `Транскрипт:\n${analysisText.slice(0, 5000)}\n\nОпредели роли спикеров.`,
+          output: Output.object({ schema }),
+          temperature: 0.1,
+          maxRetries: 2,
+          abortSignal: AbortSignal.timeout(45_000),
+          timeout: 45_000,
+          functionId: "asr-identify-speakers-simple",
+        });
+
+        const result = simpleResponse.output;
+        const operatorName = result.operatorName?.trim() || undefined;
+        const customerName = result.customerName?.trim() || undefined;
+
+        logger.info("Упрощенный анализ спикеров завершен успешно", {
+          operatorName,
+          customerName,
+        });
+
+        return {
+          text: normalizedText,
+          operatorName,
+          customerName,
+          metadata: {
+            success: true,
+            reason: "fallback_simple",
+            speakers: result.speakers,
+            operatorName: operatorName ?? null,
+            customerName: customerName ?? null,
+            usedEmbeddings: false,
+            clusterCount: 0,
+            fallbackReason: "timeout",
+          },
+        };
+      } catch (fallbackError) {
+        logger.error("Упрощенный анализ также завершился ошибкой", {
+          fallbackError:
+            fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+        });
+      }
+    }
+
     return {
       text: normalizedText,
       metadata: {
         success: false,
-        reason: "error",
-        error: error instanceof Error ? error.message : String(error),
+        reason: isTimeout ? "timeout" : "error",
+        error: errorMessage,
+        errorCode,
         usedEmbeddings: hasEmbeddingData,
         clusterCount: clusters.size,
+        fallbackAttempted: isTimeout && hasEmbeddingData,
       },
     };
   }
