@@ -268,7 +268,18 @@ class HybridEmbeddingModel:
                 f"pyannote_sample={[f'{v:.4f}' for v in p_sample]}"
             )
             
-            merged = self._l2_normalize(np.concatenate([p, a]).astype(np.float32))
+            # КРИТИЧНО: Нормализуем каждый компонент ПЕРЕД конкатенацией
+            # Даём больший вес pyannote (идентичность спикера) vs acoustic (тембр)
+            # Соотношение 70% pyannote / 30% acoustic для лучшего разделения спикеров
+            p_normalized = self._l2_normalize(p) * 0.7
+            a_normalized = self._l2_normalize(a) * 0.3
+            
+            # Конкатенируем с весами
+            merged = np.concatenate([p_normalized, a_normalized]).astype(np.float32)
+            
+            # Финальная нормализация всего вектора
+            merged = self._l2_normalize(merged)
+            
             merged_norm = float(np.linalg.norm(merged))
             logger.info(f"Сегмент {idx}: merged_norm={merged_norm:.4f}")
             

@@ -55,8 +55,8 @@ class Settings(BaseSettings):
     
     # Clustering settings (modern diarization improvements)
     clustering_base_threshold: float = Field(
-        default=0.05,
-        ge=0.1,
+        default=0.10,
+        ge=0.01,
         le=0.9,
         description="Base cosine distance threshold for speaker clustering"
     )

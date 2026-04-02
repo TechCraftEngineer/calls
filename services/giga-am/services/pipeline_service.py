@@ -81,6 +81,14 @@ def run_ultra_pipeline(
 
         base_segments = asr_result.get("segments", []) or []
         
+        # Логируем информацию о сегментах из ASR
+        logger.info(f"[{request_id}] ASR создал {len(base_segments)} сегментов:")
+        for idx, seg in enumerate(base_segments):
+            start = seg.get("start", 0)
+            end = seg.get("end", 0)
+            text = seg.get("text", "")[:50]  # Первые 50 символов
+            logger.info(f"  Сегмент {idx}: {start:.2f}s-{end:.2f}s, text='{text}...'")
+        
         # Alignment этап
         start_time = time.time()
         aligned_segments = (

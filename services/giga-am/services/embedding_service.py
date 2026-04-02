@@ -258,7 +258,17 @@ class EmbeddingService:
         audio_slice = self._extract_audio_slice(audio, sample_rate, start, end)
         pyannote_vec = self._pyannote_vector(audio_slice, sample_rate)
         acoustic_vec = self._acoustic_vector(audio_slice, sample_rate)
-        merged = np.concatenate([pyannote_vec, acoustic_vec]).astype(np.float32)
+        
+        # КРИТИЧНО: Нормализуем каждый компонент ПЕРЕД конкатенацией
+        # Даём больший вес pyannote (идентичность спикера) vs acoustic (тембр)
+        # Соотношение 70% pyannote / 30% acoustic для лучшего разделения спикеров
+        pyannote_normalized = self._l2_normalize(pyannote_vec) * 0.7
+        acoustic_normalized = self._l2_normalize(acoustic_vec) * 0.3
+        
+        # Конкатенируем с весами
+        merged = np.concatenate([pyannote_normalized, acoustic_normalized]).astype(np.float32)
+        
+        # Финальная нормализация всего вектора
         merged = self._l2_normalize(merged)
         return merged.tolist()
 

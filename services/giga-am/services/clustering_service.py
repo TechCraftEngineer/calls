@@ -255,6 +255,40 @@ class ClusteringService:
         # Шаг 2: Кластеризация надёжных сегментов
         clusters: list[dict[str, Any]] = []
         
+        # Диагностика: вычисляем средние расстояния между всеми эмбеддингами
+        if len(reliable_segments) >= 2:
+            all_embeddings = [
+                seg.get("embedding") 
+                for seg in reliable_segments 
+                if seg.get("embedding")
+            ]
+            if len(all_embeddings) >= 2:
+                distances = []
+                for i in range(len(all_embeddings)):
+                    for j in range(i + 1, len(all_embeddings)):
+                        dist = self._cosine_distance(all_embeddings[i], all_embeddings[j])
+                        distances.append(dist)
+                
+                if distances:
+                    avg_dist = sum(distances) / len(distances)
+                    min_dist = min(distances)
+                    max_dist = max(distances)
+                    
+                    logger.info(
+                        f"Диагностика эмбеддингов: avg_dist={avg_dist:.4f}, "
+                        f"min_dist={min_dist:.4f}, max_dist={max_dist:.4f}"
+                    )
+                    
+                    if avg_dist < 0.10:
+                        logger.warning(
+                            f"⚠️ ВНИМАНИЕ: Эмбеддинги очень похожи (avg_dist={avg_dist:.4f})! "
+                            f"Возможные причины: "
+                            f"1) Низкое качество аудио (апсемплинг с 8kHz), "
+                            f"2) Очень похожие голоса, "
+                            f"3) Один спикер. "
+                            f"Рекомендуется использовать оригинальное аудио ≥16kHz."
+                        )
+        
         for seg in reliable_segments:
             start = float(seg.get("start", 0.0))
             end = float(seg.get("end", start))
@@ -312,7 +346,9 @@ class ClusteringService:
                         start, end, cluster.get("last_end")
                     )
                     
-                    adjusted_distance = base_distance - temporal_bonus
+                    # ВАЖНО: adjusted_distance не может быть отрицательным
+                    # Temporal bonus только уменьшает расстояние, но не делает его < 0
+                    adjusted_distance = max(0.0, base_distance - temporal_bonus)
                     candidates.append((adjusted_distance, base_distance, cluster))
                 
                 candidates.sort(key=lambda x: x[0])
