@@ -81,22 +81,6 @@ setup_exception_handlers(app)
 # Настройка кэша
 setup_cache_cleanup()
 
-alignment_service = AlignmentService()
-embedding_service = EmbeddingService()
-clustering_service = ClusteringService(
-    base_threshold=settings.clustering_base_threshold,
-    min_segment_duration=settings.clustering_min_segment_duration,
-    temporal_weight=settings.clustering_temporal_weight,
-    confidence_threshold=settings.clustering_confidence_threshold,
-)
-overlap_handler = OverlapHandler(
-    overlap_confidence_threshold=getattr(settings, 'overlap_confidence_threshold', 0.7),
-    min_overlap_duration=getattr(settings, 'min_overlap_duration', 0.5),
-    embedding_similarity_threshold=getattr(settings, 'overlap_embedding_similarity', 0.6),
-)
-attribution_service = AttributionService()
-postprocess_service = PostprocessService()
-
 
 def _preprocess_audio_for_diarization(audio_path: str, request_id: str) -> str:
     """

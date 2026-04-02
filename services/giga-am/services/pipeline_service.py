@@ -32,7 +32,7 @@ clustering_service = ClusteringService(
     confidence_threshold=settings.clustering_confidence_threshold,
 )
 overlap_handler = OverlapHandler(
-    confidence_threshold=getattr(settings, 'overlap_confidence_threshold', 0.7),
+    overlap_confidence_threshold=getattr(settings, 'overlap_confidence_threshold', 0.7),
     min_overlap_duration=getattr(settings, 'min_overlap_duration', 0.5),
     embedding_similarity_threshold=getattr(settings, 'overlap_embedding_similarity', 0.6),
 )

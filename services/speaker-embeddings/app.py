@@ -66,7 +66,7 @@ class HybridEmbeddingModel:
                 "ignore",
                 module=r"torchcodec\..*",
             )
-            from pyannote.audio import Inference
+            from pyannote.audio import Model, Inference
 
             token = os.getenv("HF_TOKEN", "").strip() or None
             model_name = os.getenv("PYANNOTE_MODEL", "pyannote/embedding").strip() or "pyannote/embedding"
@@ -85,7 +85,9 @@ class HybridEmbeddingModel:
 
             for kwargs in init_attempts:
                 try:
-                    self._pyannote_embedder = Inference(model_name, **kwargs)
+                    # Правильный способ: сначала загружаем модель, потом создаем Inference
+                    model = Model.from_pretrained(model_name, **kwargs)
+                    self._pyannote_embedder = Inference(model, window="whole")
                     logger.info("pyannote embedder loaded on CPU: model=%s", model_name)
                     return
                 except TypeError as exc:

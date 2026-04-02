@@ -44,12 +44,7 @@ class EmbeddingService:
 
     def _load_pyannote_embedder(self) -> None:
         try:
-            import torch
-            from pyannote.audio import Inference
-
-            # Принудительно используем CPU
-            os.environ["CUDA_VISIBLE_DEVICES"] = ""
-            torch.set_num_threads(1)
+            from pyannote.audio import Model, Inference
 
             token = os.getenv("HF_TOKEN", "").strip() or None
             
@@ -67,8 +62,10 @@ class EmbeddingService:
             last_exc = None
             for kwargs in init_attempts:
                 try:
-                    self._pyannote_embedder = Inference("pyannote/embedding", **kwargs)
-                    logger.info("Pyannote speaker embedder загружен на CPU")
+                    # Правильный способ: сначала загружаем модель, потом создаем Inference
+                    model = Model.from_pretrained("pyannote/embedding", **kwargs)
+                    self._pyannote_embedder = Inference(model, window="whole")
+                    logger.info("Pyannote speaker embedder загружен")
                     return
                 except TypeError as exc:
                     last_exc = exc
