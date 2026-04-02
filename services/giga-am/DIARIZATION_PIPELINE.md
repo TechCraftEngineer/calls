@@ -44,13 +44,9 @@
 # Remote diarization service
 SPEAKER_EMBEDDINGS_URL=http://speaker-embeddings:7860
 
-# Dual ASR + LLM correction (по умолчанию включено)
+# Dual ASR + LLM correction (оркестрация через Inngest)
 ENABLE_DUAL_ASR_LLM_CORRECTION=true
-DUAL_ASR_LLM_API_URL=https://api.openai.com/v1
-DUAL_ASR_LLM_API_KEY=sk-...
-DUAL_ASR_LLM_MODEL=gpt-4o-mini
-DUAL_ASR_LLM_TIMEOUT=60
-DUAL_ASR_FALLBACK_ON_ERROR=true
+INNGEST_API_URL=http://localhost:3001
 SPEAKER_EMBEDDINGS_TIMEOUT=120
 
 # Параметры диаризации

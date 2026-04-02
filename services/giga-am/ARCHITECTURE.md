@@ -119,10 +119,10 @@ INNGEST_EVENT_KEY=
 
 ### Inngest (.env)
 ```bash
-# LLM настройки ЗДЕСЬ
-DUAL_ASR_LLM_API_URL=https://api.openai.com/v1
-DUAL_ASR_LLM_API_KEY=sk-...
-DUAL_ASR_LLM_MODEL=gpt-4o-mini
+# AI Provider (использует @calls/config)
+AI_PROVIDER=openrouter
+AI_MODEL=openai/gpt-4o-mini
+OPENROUTER_API_KEY=sk-or-v1-...
 ```
 
 ## Преимущества
@@ -197,7 +197,7 @@ services/other/.env: LLM_MODEL=gpt-4
 **Правильно:**
 ```bash
 # ✅ Менять только в Inngest
-packages/jobs/.env: DUAL_ASR_LLM_MODEL=gpt-4
+packages/jobs/.env: AI_MODEL=gpt-4o
 ```
 
 ## Миграция существующего кода

@@ -9,6 +9,10 @@
  * Вся оркестрация здесь, Python сервисы только выполняют свои задачи.
  */
 
+import { generateWithAi } from "@calls/ai";
+import { env } from "@calls/config";
+import { Output } from "ai";
+import { z } from "zod";
 import { createLogger } from "../../logger";
 import { inngest } from "../client";
 
@@ -22,21 +26,20 @@ interface Segment {
   confidence?: number;
 }
 
-interface TranscriptionMetadata {
-  diarizationTime: number;
-  asrTime: number;
-  alignmentTime: number;
-  totalDuration: number;
-}
+// Схема для структурированного вывода LLM
+const CorrectionOutputSchema = z.object({
+  segments: z.array(
+    z.object({
+      start: z.number(),
+      end: z.number(),
+      speaker: z.string(),
+      text: z.string(),
+    }),
+  ),
+});
 
-// LLM настройки из окружения Inngest (не из Python!)
-const LLM_CONFIG = {
-  apiUrl: process.env.DUAL_ASR_LLM_API_URL || process.env.LLM_API_URL || "",
-  apiKey: process.env.DUAL_ASR_LLM_API_KEY || process.env.LLM_API_KEY || "",
-  model: process.env.DUAL_ASR_LLM_MODEL || "gpt-4o-mini",
-  timeout: parseInt(process.env.DUAL_ASR_LLM_TIMEOUT || "60", 10),
-  enabled: process.env.ENABLE_DUAL_ASR_LLM_CORRECTION !== "false",
-};
+// LLM коррекция включена по умолчанию (можно отключить через env)
+const LLM_CORRECTION_ENABLED = process.env.ENABLE_DUAL_ASR_LLM_CORRECTION !== "false";
 
 function buildCorrectionPrompt(fullTranscript: string, diarizedSegments: Segment[]): string {
   const segmentsText = diarizedSegments
@@ -70,75 +73,29 @@ ${segmentsText}
 - Не меняй порядок сегментов
 - Не меняй временные метки (start, end)
 - Не меняй ID спикеров (speaker)
-- Только улучшай текст (text)
-
-Верни результат СТРОГО в JSON формате:
-{
-  "segments": [
-    {"start": 2.08, "end": 2.71, "speaker": "SPEAKER_00", "text": "исправленный текст"},
-    ...
-  ]
+- Только улучшай текст (text)`;
 }
 
-Верни ТОЛЬКО JSON, без дополнительных комментариев.`;
-}
+async function correctTranscriptionWithLLM(prompt: string, requestId: string): Promise<Segment[]> {
+  const { output } = await generateWithAi({
+    system:
+      "Ты эксперт по обработке транскрипций аудио. " +
+      "Твоя задача - улучшить качество транскрипции, " +
+      "исправляя ошибки распознавания речи и улучшая форматирование.",
+    prompt,
+    temperature: 0.1,
+    maxOutputTokens: 4000,
+    output: Output.object({
+      schema: CorrectionOutputSchema,
+    }),
+    functionId: "transcription-llm-correction",
+    metadata: {
+      requestId,
+      tags: ["transcription", "llm-correction", "dual-asr"],
+    },
+  });
 
-async function callLLMAPI(prompt: string, timeout: number): Promise<Segment[]> {
-  if (!LLM_CONFIG.apiUrl || !LLM_CONFIG.apiKey) {
-    throw new Error("LLM API not configured");
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout * 1000);
-
-  try {
-    const response = await fetch(`${LLM_CONFIG.apiUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${LLM_CONFIG.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: LLM_CONFIG.model,
-        messages: [
-          {
-            role: "system",
-            content:
-              "Ты эксперт по обработке транскрипций аудио. " +
-              "Твоя задача - улучшить качество транскрипции, " +
-              "исправляя ошибки распознавания речи и улучшая форматирование. " +
-              "Всегда возвращай результат в строгом JSON формате.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.1,
-        response_format: { type: "json_object" },
-      }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`LLM API returned ${response.status}`);
-    }
-
-    const data = await response.json();
-    const content = data.choices[0].message.content;
-    const result = JSON.parse(content);
-
-    if (!result.segments) {
-      throw new Error("LLM response missing 'segments'");
-    }
-
-    return result.segments;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
+  return output.segments;
 }
 
 function validateAndMergeCorrections(
@@ -153,8 +110,10 @@ function validateAndMergeCorrections(
   let correctionsApplied = 0;
 
   for (let i = 0; i < originalSegments.length; i++) {
-    const orig = originalSegments[i]!;
-    const corr = correctedSegments[i]!;
+    const orig = originalSegments[i];
+    const corr = correctedSegments[i];
+
+    if (!orig || !corr) continue;
 
     const validatedSeg: Segment = {
       start: orig.start,
@@ -186,8 +145,8 @@ export const transcriptionCompletedFn = inngest.createFunction(
     concurrency: {
       limit: 5,
     },
+    triggers: [{ event: "asr/transcription.completed" }],
   },
-  { event: "asr/transcription.completed" },
   async ({ event, step }) => {
     const { requestId, fullTranscript, diarizedSegments, metadata } = event.data;
 
@@ -200,19 +159,26 @@ export const transcriptionCompletedFn = inngest.createFunction(
     let finalSegments = diarizedSegments;
     let llmCorrectionApplied = false;
 
-    // LLM коррекция (если включена)
-    if (LLM_CONFIG.enabled && LLM_CONFIG.apiUrl && LLM_CONFIG.apiKey) {
+    // LLM коррекция (если включена и AI провайдер настроен)
+    const hasAiProvider = !!(env.OPENAI_API_KEY || env.OPENROUTER_API_KEY || env.DEEPSEEK_API_KEY);
+
+    if (LLM_CORRECTION_ENABLED && hasAiProvider) {
       const prompt = await step.run("llm/build-prompt", async () => {
         logger.info("Building LLM prompt", { requestId });
         return buildCorrectionPrompt(fullTranscript, diarizedSegments);
       });
 
       const correctedSegments = await step.run("llm/correct", async () => {
-        logger.info("Calling LLM", { requestId, model: LLM_CONFIG.model });
+        logger.info("Calling LLM via AI SDK", {
+          requestId,
+          provider: env.AI_PROVIDER,
+          model: env.AI_MODEL,
+        });
         try {
-          return await callLLMAPI(prompt, LLM_CONFIG.timeout);
+          return await correctTranscriptionWithLLM(prompt, requestId);
         } catch (error) {
-          logger.error("LLM failed", { requestId, error });
+          logger.error("LLM correction failed", { requestId, error });
+          // Возвращаем оригинальные сегменты при ошибке
           return diarizedSegments;
         }
       });
@@ -227,6 +193,13 @@ export const transcriptionCompletedFn = inngest.createFunction(
       logger.info("LLM correction done", {
         requestId,
         corrections: result.correctionsApplied,
+        provider: env.AI_PROVIDER,
+      });
+    } else {
+      logger.info("LLM correction skipped", {
+        requestId,
+        enabled: LLM_CORRECTION_ENABLED,
+        hasAiProvider,
       });
     }
 

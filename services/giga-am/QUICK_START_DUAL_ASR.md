@@ -20,12 +20,17 @@ nano .env
 # Remote diarization
 SPEAKER_EMBEDDINGS_URL=http://speaker-embeddings:7860
 
-# Dual ASR + LLM
+# Dual ASR + LLM (оркестрация через Inngest)
 ENABLE_DUAL_ASR_LLM_CORRECTION=true
 INNGEST_API_URL=http://localhost:3001
-DUAL_ASR_LLM_API_URL=https://api.openai.com/v1
-DUAL_ASR_LLM_API_KEY=sk-your-openai-key
-DUAL_ASR_LLM_MODEL=gpt-4o-mini
+```
+
+**Настройка LLM в Inngest** (packages/jobs/.env):
+```bash
+# AI Provider (использует @calls/config)
+AI_PROVIDER=openrouter
+AI_MODEL=openai/gpt-4o-mini
+OPENROUTER_API_KEY=sk-or-v1-your-key
 ```
 
 ## Шаг 2: Настройка Speaker Embeddings

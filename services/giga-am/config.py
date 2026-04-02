@@ -31,21 +31,6 @@ class Settings(BaseSettings):
     
     # Timeout settings
     transcription_timeout: int = Field(default=900, ge=1)  # 15 минут по умолчанию
-
-    # Async jobs and pipeline
-    jobs_dir: str = "temp/jobs"
-    max_parallel_jobs: int = 1
-    job_ttl_hours: int = 24
-    source_download_timeout: int = 120
-    max_job_retries: int = 2
-    
-    # LLM correction settings (старая система - для async jobs)
-    llm_correction_enabled: bool = True
-    llm_api_url: str = os.getenv("LLM_API_URL", "")
-    llm_api_key: str = os.getenv("LLM_API_KEY", "")
-    llm_model: str = os.getenv("LLM_MODEL", "gpt-4o-mini")
-    llm_timeout: int = 45
-    strict_correction_mode: bool = True
     
     # Dual ASR + LLM correction (через Inngest - только флаг)
     enable_dual_asr_llm_correction: bool = Field(

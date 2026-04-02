@@ -50,17 +50,24 @@ ENABLE_DUAL_ASR_LLM_CORRECTION=true
 # Inngest API
 INNGEST_API_URL=http://localhost:3001
 INNGEST_EVENT_KEY=your-event-key  # Опционально
+```
 
-# LLM настройки (передаются в Inngest)
-DUAL_ASR_LLM_API_URL=https://api.openai.com/v1
-DUAL_ASR_LLM_API_KEY=sk-...
-DUAL_ASR_LLM_MODEL=gpt-4o-mini
-DUAL_ASR_LLM_TIMEOUT=60
+**LLM настройки в Inngest** (packages/jobs/.env):
+
+```bash
+# AI Provider (использует @calls/config и @calls/ai)
+AI_PROVIDER=openrouter
+AI_MODEL=openai/gpt-4o-mini
+OPENROUTER_API_KEY=sk-or-v1-...
+
+# Или используйте другой провайдер
+# AI_PROVIDER=openai
+# OPENAI_API_KEY=sk-...
 ```
 
 ### 2. Inngest
 
-Функция `dual-asr-llm-correction` автоматически зарегистрирована в `packages/jobs`.
+Функция `transcription-completed` автоматически зарегистрирована в `packages/jobs`.
 
 ## Pipeline
 
@@ -141,6 +148,7 @@ Request → GigaAM → Response (diarized segments)
 ### Inngest Dashboard
 
 Все запросы видны в Inngest UI:
+
 - Статус выполнения
 - Время обработки
 - Ошибки и retry
@@ -205,6 +213,7 @@ Pipeline вернётся к стандартному режиму: `Diarization
 ### Inngest недоступен
 
 Проверьте:
+
 ```bash
 curl http://localhost:3001/health
 ```
@@ -212,6 +221,7 @@ curl http://localhost:3001/health
 ### Event не отправляется
 
 Проверьте логи GigaAM:
+
 ```bash
 docker-compose logs giga-am | grep "Inngest"
 ```
@@ -219,6 +229,7 @@ docker-compose logs giga-am | grep "Inngest"
 ### LLM коррекция не выполняется
 
 Проверьте Inngest Dashboard:
+
 - Функция зарегистрирована?
 - Event получен?
 - Есть ошибки?
@@ -240,7 +251,6 @@ docker-compose logs giga-am | grep "Inngest"
 4. **Приоритеты**
    - Важные запросы обрабатываются первыми
    - Очереди в Inngest
-
 
 ## Концепция
 
@@ -302,42 +312,46 @@ docker-compose logs giga-am | grep "Inngest"
 ### 1. Включение/выключение
 
 ```bash
-# .env
+# GigaAM .env
 ENABLE_DUAL_ASR_LLM_CORRECTION=true  # По умолчанию включено
 ```
 
-### 2. LLM API настройки
+### 2. AI Provider настройки (Inngest)
+
+В `packages/jobs/.env` настройте AI провайдер через `@calls/config`:
 
 ```bash
-# OpenAI
-DUAL_ASR_LLM_API_URL=https://api.openai.com/v1
-DUAL_ASR_LLM_API_KEY=sk-...
-DUAL_ASR_LLM_MODEL=gpt-4o-mini
+# OpenRouter (рекомендуется)
+AI_PROVIDER=openrouter
+AI_MODEL=openai/gpt-4o-mini
+OPENROUTER_API_KEY=sk-or-v1-...
 
-# Или другой OpenAI-совместимый API
-DUAL_ASR_LLM_API_URL=https://your-llm-api.com/v1
-DUAL_ASR_LLM_API_KEY=your-key
-DUAL_ASR_LLM_MODEL=your-model
-```
+# Или OpenAI
+AI_PROVIDER=openai
+AI_MODEL=gpt-4o-mini
+OPENAI_API_KEY=sk-...
 
+# Или DeepSeek
+AI_PROVIDER=deepseek
 ### 3. Дополнительные параметры
 
-```bash
-# Timeout для LLM запроса (секунды)
-DUAL_ASR_LLM_TIMEOUT=60
+AI SDK (`@calls/ai`) автоматически обрабатывает:
+- Retry при ошибках (встроенный fallback механизм)
+- Timeout (через параметры `generateWithAi`)
+- Fallback на другие провайдеры (если настроено несколько API ключей)
 
-# Количество повторных попыток при ошибке
-DUAL_ASR_LLM_MAX_RETRIES=2
+Inngest функция автоматически возвращает оригинальные сегменты при ошибке LLM.
 
-# Fallback на оригинальные сегменты при ошибке LLM
-DUAL_ASR_FALLBACK_ON_ERROR=true
-```
+## Как работает LLM коррекция
+
+### Промпт
 
 ## Как работает LLM коррекция
 
 ### Промпт
 
 LLM получает:
+
 1. Полную транскрипцию (контекст)
 2. Сегменты с диаризацией (структура)
 3. Инструкции по коррекции
@@ -353,6 +367,7 @@ LLM получает:
 ### Валидация
 
 После LLM коррекции:
+
 - Проверяем количество сегментов (должно совпадать)
 - Проверяем временные метки (не должны измениться)
 - Проверяем ID спикеров (не должны измениться)
@@ -385,6 +400,7 @@ LLM получает:
 ```
 
 Улучшения:
+
 - Заглавные буквы
 - Правильное имя (Никита вместо никит)
 - Пунктуация
@@ -392,6 +408,7 @@ LLM получает:
 ## Метрики
 
 Pipeline добавляет метрики:
+
 - `full_asr_time` - время полной транскрипции
 - `llm_correction_time` - время LLM коррекции
 - `corrections_applied` - количество исправленных сегментов
@@ -425,6 +442,7 @@ Pipeline вернётся к стандартному режиму: `Diarization
 ## Стоимость
 
 Примерная стоимость на gpt-4o-mini:
+
 - 1 минута аудио ≈ 500-1000 токенов промпт
 - 1 минута аудио ≈ 300-600 токенов ответ
 - Итого: ~$0.0001-0.0003 за минуту
@@ -436,10 +454,11 @@ Pipeline вернётся к стандартному режиму: `Diarization
 ### LLM не отвечает
 
 Проверьте:
-1. `DUAL_ASR_LLM_API_URL` правильный
-2. `DUAL_ASR_LLM_API_KEY` валидный
-3. Модель доступна
-4. Timeout достаточный
+
+1. AI провайдер настроен в `packages/jobs/.env`
+2. `AI_PROVIDER` и соответствующий API ключ установлены
+3. Модель доступна для вашего провайдера
+4. Inngest запущен и получает events
 
 ### LLM возвращает неправильный формат
 
@@ -450,11 +469,13 @@ Pipeline вернётся к стандартному режиму: `Diarization
 ### Сегменты не исправляются
 
 Проверьте логи:
+
 ```bash
 docker-compose logs giga-am | grep "LLM correction"
 ```
 
 Возможные причины:
+
 - LLM не нашёл ошибок (текст уже правильный)
 - Fallback на оригинальные сегменты из-за ошибки
 - Валидация отклонила изменения
@@ -462,6 +483,7 @@ docker-compose logs giga-am | grep "LLM correction"
 ## Мониторинг
 
 Логи показывают:
+
 - Время каждого этапа
 - Количество исправленных сегментов
 - Значительные изменения текста
@@ -478,6 +500,7 @@ docker-compose logs giga-am | grep "LLM correction"
 ## Дальнейшие улучшения
 
 Возможные направления:
+
 1. Кэширование LLM ответов для похожих сегментов
 2. Batch обработка нескольких файлов
 3. Fine-tuning LLM на специфичных доменах
