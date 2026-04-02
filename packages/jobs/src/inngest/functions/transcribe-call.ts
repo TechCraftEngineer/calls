@@ -195,7 +195,7 @@ export const transcribeCallFn = inngest.createFunction(
             hasEmbedding: Boolean(u.embedding && u.embedding.length > 0),
           })),
           // Полный raw response для детальной отладки (только если включен debug уровень логов)
-          rawResponse: process.env.LOG_LEVEL === "debug" ? gigaAmLog.raw : undefined,
+          rawResponse: gigaAmLog.raw,
         };
 
         logger.info("GigaAM ответ получен", debugData);
