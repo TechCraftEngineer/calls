@@ -26,15 +26,47 @@ async def readiness_check() -> JSONResponse:
     Проверка готовности сервиса.
     """
     try:
-        # Здесь можно добавить проверку загрузки моделей или доступности зависимостей
-        # Например, проверить доступность transcription_service или diarization_service
+        # Импортируем и проверяем готовность transcription_service
         from services.transcription_service import transcription_service
         
-        # Простая проверка - сервис импортирован и готов к работе
+        # Проверяем, что сервис готов к работе
+        if hasattr(transcription_service, 'is_ready'):
+            is_ready = transcription_service.is_ready()
+            if not is_ready:
+                return JSONResponse(
+                    status_code=503,
+                    content={
+                        "status": "not_ready",
+                        "service": "giga-am-transcription",
+                        "reason": "transcription_service.is_ready() returned False"
+                    }
+                )
+        elif hasattr(transcription_service, 'model_initialized'):
+            if not transcription_service.model_initialized:
+                return JSONResponse(
+                    status_code=503,
+                    content={
+                        "status": "not_ready",
+                        "service": "giga-am-transcription",
+                        "reason": "transcription_service.model_initialized is False"
+                    }
+                )
+        
+        # Если нет специфических проверок готовности, считаем сервис готовым
         return JSONResponse(content={
             "status": "ready",
             "service": "giga-am-transcription"
         })
+        
+    except AttributeError as ae:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "not_ready",
+                "service": "giga-am-transcription",
+                "reason": f"Service attribute missing: {str(ae)}"
+            }
+        )
     except Exception as e:
         return JSONResponse(
             status_code=503,

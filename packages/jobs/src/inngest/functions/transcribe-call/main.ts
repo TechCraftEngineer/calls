@@ -13,7 +13,7 @@ import type { ZodIssue } from "zod";
 import { createLogger } from "../../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../../client";
 import {
-  downloadAudioBuffer,
+  downloadAudioFile,
   identifySpeakers,
   processAudioWithGigaAmDiarized,
   processAudioWithGigaAmNonDiarized,
@@ -39,7 +39,8 @@ export const transcribeCallFn = inngest.createFunction(
     name: "Транскрибация: Dual ASR + LLM Merge + Speaker ID",
     retries: 2,
     concurrency: {
-      limit: 1,
+      limit: 3,
+      key: "event.data.callId",
     },
     triggers: [transcribeRequested],
   },
@@ -135,16 +136,17 @@ export const transcribeCallFn = inngest.createFunction(
       return pipelineValidation.data;
     });
 
-    // Загрузка аудио один раз для обоих ASR
-    const { buffer, filename } = await step.run("asr:download-audio", () =>
-      downloadAudioBuffer(pipelineAudio.preprocessedFileId)
-    );
-
-    // Параллельный запуск двух ASR с общим buffer
+    // Параллельный запуск двух ASR с fileId
     const asrStartTime = Date.now();
     const [nonDiarizedResult, diarizedResult] = await Promise.all([
-      step.run("asr:non-diarized", () => processAudioWithGigaAmNonDiarized(buffer, filename)),
-      step.run("asr:diarized", () => processAudioWithGigaAmDiarized(buffer, filename)),
+      step.run("asr:non-diarized", async () => {
+        const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
+        return processAudioWithGigaAmNonDiarized(buffer, filename);
+      }),
+      step.run("asr:diarized", async () => {
+        const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
+        return processAudioWithGigaAmDiarized(buffer, filename);
+      }),
     ]);
 
     const asrResults = {

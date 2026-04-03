@@ -15,9 +15,18 @@ const logger = createLogger("transcribe-llm-merge");
 // Максимальное количество токенов для LLM промпта
 export const MAX_PROMPT_TOKENS = 12000;
 
-// Оценка количества токенов (приблизительно: 1 токен ≈ 4 символа)
+// Оценка количества токенов с учетом кириллицы
 export function estimateTokenCount(text: string): number {
-  return Math.ceil(text.length / 4);
+  // Проверяем наличие не-ASCII символов (кириллица и др.)
+  const hasNonAscii = /[\u0080-\uFFFF]/.test(text);
+  
+  if (hasNonAscii) {
+    // Для кириллицы и других не-ASCII символов используем более консервативный коэффициент
+    return Math.ceil(text.length / 1.8); // 1 токен ≈ 1.8 символа для кириллицы
+  } else {
+    // Для ASCII текста сохраняем стандартный коэффициент
+    return Math.ceil(text.length / 4); // 1 токен ≈ 4 символа для ASCII
+  }
 }
 
 export interface AsrSegment {
@@ -165,7 +174,8 @@ export async function mergeAsrResultsWithLLM(
   });
 
   // Преобразуем результат в AsrSegment[]
-  const segments: AsrSegment[] = output.segments.map((seg: any) => ({
+  type MergedSegment = z.infer<typeof MergedOutputSchema>["segments"][number];
+  const segments: AsrSegment[] = output.segments.map((seg: MergedSegment) => ({
     start: seg.start,
     end: seg.end,
     speaker: seg.speaker,

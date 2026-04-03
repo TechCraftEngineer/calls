@@ -310,6 +310,9 @@ export async function syncMegaPbxCalls(
       .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
     const excludePhoneNumbers = config.excludePhoneNumbers ?? [];
 
+    // Собираем все callIds для батчинговой отправки событий
+    const callIdsForTranscription: string[] = [];
+
     for (const call of calls) {
       if (shouldSkipCallByExcludedPhoneNumbers(call, excludePhoneNumbers)) {
         stats.skipped += 1;
@@ -338,9 +341,8 @@ export async function syncMegaPbxCalls(
         fileId: null,
       });
 
-      const canonicalCall =
-        (await callsService.getCallByExternalId(workspaceId, PROVIDER, call.externalId)) ??
-        (await callsService.getCallByFilename(filename, workspaceId));
+      // Используем ID из результата создания вместо дополнительных запросов
+      const canonicalCall = { id: createResult.id };
 
       if (!canonicalCall) {
         throw new Error(
@@ -351,18 +353,16 @@ export async function syncMegaPbxCalls(
       // На повторных синках запись звонка может уже существовать с пустой PBX-привязкой.
       // Дозаполняем связь и вспомогательные поля, когда появились данные из directory.
       if (!createResult.created) {
-        const internalNumber = !canonicalCall.internalNumber?.trim()
+        const internalNumber = !call.internalNumber?.trim()
           ? (normalizePhoneForMatch(call.internalNumber) ??
             normalizePhoneForMatch(number?.extension) ??
             normalizePhoneForMatch(employee?.extension) ??
             null)
           : undefined;
-        const source = isEmptyOrMegaPbxPlaceholder(canonicalCall.source)
-          ? (employee?.externalId ?? number?.externalId ?? "megapbx")
-          : undefined;
-        const name = isEmptyOrMegaPbxPlaceholder(canonicalCall.name)
-          ? (employee?.displayName ?? number?.label ?? "MegaPBX")
-          : undefined;
+        
+        // Для source и name используем данные из employee/number, так как в NormalizedCall их нет
+        const source = employee?.externalId ?? number?.externalId ?? "megapbx";
+        const name = employee?.displayName ?? number?.label ?? "MegaPBX";
 
         // Используем транзакционный метод для атомарного обновления
         if (internalNumber || source || name) {
@@ -373,9 +373,10 @@ export async function syncMegaPbxCalls(
           });
         }
       }
-      let recordingFileId: string | null = canonicalCall.fileId;
+      // NormalizedCall не имеет fileId, всегда null для записи
+      let recordingFileId: string | null = null;
 
-      if (config.syncRecordings && call.recordingUrl && !canonicalCall.fileId) {
+      if (config.syncRecordings && call.recordingUrl) {
         try {
           const uploaded = await uploadRecordingIfNeeded(
             client,
@@ -404,8 +405,7 @@ export async function syncMegaPbxCalls(
       }
 
       if (createResult.created && recordingFileId) {
-        await inngest.send(transcribeRequested.create({ callId: canonicalCall.id }));
-        stats.transcriptionsQueued += 1;
+        callIdsForTranscription.push(canonicalCall.id);
       }
 
       if (createResult.created) {
@@ -414,6 +414,14 @@ export async function syncMegaPbxCalls(
         stats.skipped += 1;
       }
       stats.latestCursor = call.timestamp;
+    }
+
+    // Батчевая отправка событий транскрипции
+    if (callIdsForTranscription.length > 0) {
+      await inngest.send(
+        callIdsForTranscription.map(callId => transcribeRequested.create({ callId }))
+      );
+      stats.transcriptionsQueued += callIdsForTranscription.length;
     }
 
     const previousCursor = syncState?.cursor ?? config.syncFromDate ?? null;

@@ -3,8 +3,19 @@
  */
 
 import { createLogger } from "../../../logger";
+import { z } from "zod";
 
 const logger = createLogger("transcribe-call-validation");
+
+// Схема для валидации workspace для LLM
+const WorkspaceLlmInputSchema = z.object({
+  message: z.string().min(1).max(2000, "Сообщение должно быть от 1 до 2000 символов"),
+  context: z.string().optional(),
+  history: z.array(z.object({
+    role: z.enum(["user", "assistant"]),
+    content: z.string()
+  })).max(20, "История диалога не может содержать более 20 сообщений").optional()
+});
 
 export interface ValidationError {
   field: string;
@@ -68,7 +79,7 @@ export function validateWorkspace(workspace: {
   id: string;
   name?: string | null;
   description?: string | null;
-}): void {
+ }): void {
   // Validate UUID format
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(workspace.id)) {
@@ -84,9 +95,34 @@ export function validateWorkspace(workspace: {
     logger.warn(`Workspace has no name, LLM context will be degraded (workspaceId: ${workspace.id})`);
   }
 
-  // Validate description length (LLM context optimization)
-  if (workspace.description && workspace.description.length > 2000) {
-    logger.warn(`Workspace description too long, may cause LLM context issues (workspaceId: ${workspace.id}, descriptionLength: ${workspace.description.length})`);
+  // Validate and normalize description length (LLM context optimization)
+  if (workspace.description) {
+    if (workspace.description.length > 2000) {
+      // Автоматически обрезаем и логируем изменение
+      const originalLength = workspace.description.length;
+      workspace.description = workspace.description.slice(0, 2000);
+      logger.warn(
+        `Workspace description обрезан с ${originalLength} до 2000 символов (workspaceId: ${workspace.id})`
+      );
+    }
+    
+    // Дополнительная валидация контента для LLM
+    try {
+      WorkspaceLlmInputSchema.parse({
+        message: workspace.description,
+        context: undefined,
+        history: undefined
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new TranscriptionError(
+          `Описание workspace содержит недопустимые символы: ${error.issues.map((e: any) => e.message).join(", ")}`,
+          "INVALID_WORKSPACE_DESCRIPTION",
+          "workspace.description"
+        );
+      }
+      throw error;
+    }
   }
 }
 

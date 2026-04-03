@@ -184,6 +184,6 @@ export function validateWithSchema<T>(
   return result.data;
 }
 
-export function validateCallId(callId: string): void {
-  validateWithSchema(uuidSchema, callId, "callId");
+export function validateCallId(callId: string): string {
+  return validateWithSchema(uuidSchema, callId, "callId");
 }

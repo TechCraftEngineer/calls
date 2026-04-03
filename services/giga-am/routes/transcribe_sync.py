@@ -38,17 +38,28 @@ async def transcribe_sync(
             filename=filename
         )
         
-        logger.info(f"Синхронная транскрипция завершена")
+        logger.info("Синхронная транскрипция завершена")
         
         return JSONResponse(content=result)
         
     except ValueError as ve:
         # Обработка ошибок валидации (например, слишком большой файл)
         logger.error("Ошибка валидации в синхронной транскрипции: %s", ve)
-        raise HTTPException(
-            status_code=413,
-            detail=str(ve)
-        )
+        
+        # Проверяем, связана ли ошибка с размером файла
+        error_message = str(ve).lower()
+        if "size" in error_message or "размер" in error_message or "превышает" in error_message:
+            # Ошибка размера файла - статус 413
+            raise HTTPException(
+                status_code=413,
+                detail=str(ve)
+            ) from ve
+        else:
+            # Общая ошибка валидации - статус 400
+            raise HTTPException(
+                status_code=400,
+                detail=f"Ошибка валидации: {str(ve)}"
+            ) from ve
     except Exception as exc:
         logger.exception("Ошибка синхронной транскрипции: %s", exc)
         raise HTTPException(
