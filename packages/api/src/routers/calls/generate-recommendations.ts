@@ -192,6 +192,11 @@ export const generateRecommendationsProcedure = workspaceProcedure
         companyContext = companyContextSchema.parse(rawContext);
       }
     } catch (error) {
+      logger.error("Company context validation failed", {
+        workspaceId: context.workspaceId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       throw new ORPCError("BAD_REQUEST", {
         message:
           "Описание рабочей области содержит недопустимое содержимое. Проверьте и удалите подозрительные инструкции.",

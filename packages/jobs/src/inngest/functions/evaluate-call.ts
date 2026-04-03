@@ -106,8 +106,20 @@ export const evaluateCallFn = inngest.createFunction(
     });
 
     const evaluation = await step.run("evaluate", async () => {
-      const rawContext = buildCompanyContext(workspace);
-      const companyContext = rawContext ? companyContextSchema.parse(rawContext) : undefined;
+      let companyContext: string | undefined;
+      try {
+        const rawContext = buildCompanyContext(workspace);
+        companyContext = rawContext ? companyContextSchema.parse(rawContext) : undefined;
+      } catch (error) {
+        logger.error("Company context validation failed in evaluate-call", {
+          workspaceId: call.workspaceId,
+          callId,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        // Продолжаем без companyContext
+        companyContext = undefined;
+      }
       
       return evaluateCallWithLlm(transcriptText, {
         evaluationPrompt,

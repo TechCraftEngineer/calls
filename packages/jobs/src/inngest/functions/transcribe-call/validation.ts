@@ -123,7 +123,7 @@ export function validateWorkspace(workspace: {
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new TranscriptionError(
-          `Описание workspace содержит недопустимые символы: ${error.issues.map((e: z.ZodIssue) => e.message).join(", ")}`,
+          `Описание workspace не проходит валидацию: ${error.issues.map((e: z.ZodIssue) => e.message).join(", ")}`,
           "INVALID_WORKSPACE_DESCRIPTION",
           "workspace.description"
         );
