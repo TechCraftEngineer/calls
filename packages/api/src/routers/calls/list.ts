@@ -283,6 +283,9 @@ export const list = workspaceProcedure
           managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
         q: trimmedQuery,
       }),
+      // Примечание: calculateMetrics использует ограниченный набор фильтров
+      // и возвращает агрегаты по всему workspace с учетом excludePhoneNumbers
+      // Это сделано из-за архитектурных ограничений функции calculateMetrics
       callsService.calculateMetrics(
         workspaceId,
         excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,

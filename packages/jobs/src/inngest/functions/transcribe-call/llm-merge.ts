@@ -17,16 +17,21 @@ export const MAX_PROMPT_TOKENS = 12000;
 
 // Оценка количества токенов с учетом кириллицы
 export function estimateTokenCount(text: string): number {
-  // Проверяем наличие не-ASCII символов (кириллица и др.)
-  const hasNonAscii = /[\u0080-\uFFFF]/.test(text);
+  if (!text || text.length === 0) return 0;
   
-  if (hasNonAscii) {
-    // Для кириллицы и других не-ASCII символов используем более консервативный коэффициент
-    return Math.ceil(text.length / 1.8); // 1 токен ≈ 1.8 символа для кириллицы
-  } else {
-    // Для ASCII текста сохраняем стандартный коэффициент
-    return Math.ceil(text.length / 4); // 1 токен ≈ 4 символа для ASCII
+  // Считаем долю не-ASCII символов (кириллица и др.)
+  let nonAsciiCount = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (text.charCodeAt(i) > 127) nonAsciiCount++;
   }
+  
+  const nonAsciiRatio = nonAsciiCount / text.length;
+  
+  // Используем blended characters-per-token значение
+  // 1.8 для кириллицы, 4.0 для ASCII
+  const avgCPT = nonAsciiRatio * 1.8 + (1 - nonAsciiRatio) * 4.0;
+  
+  return Math.ceil(text.length / avgCPT);
 }
 
 export interface AsrSegment {

@@ -251,7 +251,7 @@ def run_ultra_pipeline(
 class PipelineService:
     """Сервис для выполнения pipeline транскрипции."""
     
-    async def process_audio_sync(self, audio_data: bytes, filename: str) -> Dict[str, Any]:
+    async def process_audio_sync(self, audio_data: bytes, filename: str, diarization: bool = False) -> Dict[str, Any]:
         """
         Синхронная обработка аудио файла.
         
@@ -260,6 +260,7 @@ class PipelineService:
         Args:
             audio_data: Байты аудио файла
             filename: Имя файла
+            diarization: Флаг диаризации (по умолчанию False)
             
         Returns:
             Результат транскрипции
@@ -267,7 +268,7 @@ class PipelineService:
         request_id = f"sync-{uuid.uuid4()}"
         
         try:
-            logger.info(f"[{request_id}] Начало синхронной обработки аудио: {filename}")
+            logger.info(f"[{request_id}] Начало синхронной обработки аудио: {filename}, diarization={diarization}")
             
             # Проверяем размер файла (ограничение 100MB)
             max_size = 100 * 1024 * 1024  # 100MB
@@ -285,13 +286,31 @@ class PipelineService:
                     tmp_path = tmp_file.name
                     tmp_file.write(audio_data)
                 
-                # Запускаем полную обработку в отдельном потоке
-                result = await asyncio.to_thread(
-                    run_ultra_pipeline, 
-                    tmp_path, 
-                    None, 
-                    request_id
-                )
+                if diarization:
+                    # Запускаем полный pipeline с диаризацией
+                    result = await asyncio.to_thread(
+                        run_ultra_pipeline, 
+                        tmp_path, 
+                        None, 
+                        request_id
+                    )
+                else:
+                    # Запускаем только транскрипцию без диаризации
+                    result = await asyncio.to_thread(
+                        transcription_service.transcribe_audio_file, 
+                        tmp_path
+                    )
+                    # Конвертируем в ожидаемый формат
+                    if result.get("success"):
+                        result = {
+                            "success": True,
+                            "final_transcript": result.get("text", ""),
+                            "segments": [],  # Без диаризации сегменты пустые
+                            "pipeline": "gigam-asr-only",
+                            "dual_asr_enabled": False,
+                        }
+                    else:
+                        raise RuntimeError("ASR транскрипция не удалась")
                 
                 logger.info(f"[{request_id}] Синхронная обработка завершена")
                 return result

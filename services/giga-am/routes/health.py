@@ -30,27 +30,16 @@ async def readiness_check() -> JSONResponse:
         from services.transcription_service import transcription_service
         
         # Проверяем, что сервис готов к работе
-        if hasattr(transcription_service, 'is_ready'):
-            is_ready = transcription_service.is_ready()
-            if not is_ready:
-                return JSONResponse(
-                    status_code=503,
-                    content={
-                        "status": "not_ready",
-                        "service": "giga-am-transcription",
-                        "reason": "transcription_service.is_ready() returned False"
-                    }
-                )
-        elif hasattr(transcription_service, 'model_initialized'):
-            if not transcription_service.model_initialized:
-                return JSONResponse(
-                    status_code=503,
-                    content={
-                        "status": "not_ready",
-                        "service": "giga-am-transcription",
-                        "reason": "transcription_service.model_initialized is False"
-                    }
-                )
+        # Используем внутренние флаги _model_initialized/_model_loading, так как is_ready() не существует
+        if not transcription_service._model_initialized or transcription_service._model_loading:
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "status": "not_ready",
+                    "service": "giga-am-transcription",
+                    "reason": "model not loaded or still loading"
+                }
+            )
         
         # Если нет специфических проверок готовности, считаем сервис готовым
         return JSONResponse(content={

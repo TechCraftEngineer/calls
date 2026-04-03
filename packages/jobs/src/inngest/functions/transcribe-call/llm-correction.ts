@@ -200,11 +200,12 @@ export async function applyLLMCorrection(
       error.message.includes('timeout')
     )) {
       // Объединяем логи для предотвращения дублирования
-      logger.error(`LLM correction timeout: ${error.message}`, { requestId });
-      throw new Error(`LLM correction timeout: ${error.message}`);
+      logger.error(`Таймаут исправления LLM: ${error.message}`, { requestId });
+      // Возвращаем fallback вместо пробрасывания ошибки
+      return { segments, correctionsApplied: false };
     }
     
-    logger.error("LLM correction failed", { requestId, error });
+    logger.error("Сбой исправления LLM", { requestId, error });
     return { segments, correctionsApplied: false };
   }
 }

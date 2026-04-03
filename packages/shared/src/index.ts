@@ -12,6 +12,7 @@ export {
   safeId,
 } from "./utils/id-utils";
 export {
+  companyContextSchema,
   isValidEmail,
   isValidUuid,
   isValidWorkspaceId,

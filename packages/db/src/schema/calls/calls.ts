@@ -42,7 +42,9 @@ export const calls = pgTable(
       .notNull(),
   },
   (table) => [
-    check("calls_status_check", sql`status IN ('missed', 'answered', 'accepted', 'completed', 'connected')`),
+    // NULL разрешен, нормализация происходит через normalizeCallStatus (packages/db/src/utils/call-status.ts)
+    // и CRUD пути (packages/db/src/repositories/calls/crud.ts)
+    check("calls_status_check", sql`status IN ('missed', 'answered')`),
     unique("calls_workspace_filename_unique").on(table.workspaceId, table.filename),
     unique("calls_workspace_provider_external_id_unique").on(
       table.workspaceId,

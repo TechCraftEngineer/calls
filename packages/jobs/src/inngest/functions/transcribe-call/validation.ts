@@ -7,6 +7,9 @@ import { z } from "zod";
 
 const logger = createLogger("transcribe-call-validation");
 
+// Схема для валидации описания workspace
+const WorkspaceDescriptionSchema = z.string().max(2000, "Описание должно быть не более 2000 символов");
+
 // Схема для валидации workspace для LLM
 const WorkspaceLlmInputSchema = z.object({
   message: z.string().min(1).max(2000, "Сообщение должно быть от 1 до 2000 символов"),
@@ -79,7 +82,7 @@ export function validateWorkspace(workspace: {
   id: string;
   name?: string | null;
   description?: string | null;
- }): void {
+}): typeof workspace | void {
   // Validate UUID format
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(workspace.id)) {
@@ -98,25 +101,29 @@ export function validateWorkspace(workspace: {
   // Validate and normalize description length (LLM context optimization)
   if (workspace.description) {
     if (workspace.description.length > 2000) {
-      // Автоматически обрезаем и логируем изменение
+      // Создаем новый workspace объект с обрезанным описанием
       const originalLength = workspace.description.length;
-      workspace.description = workspace.description.slice(0, 2000);
+      const truncatedDescription = workspace.description.slice(0, 2000);
+      
+      // Логируем изменение
       logger.warn(
         `Workspace description обрезан с ${originalLength} до 2000 символов (workspaceId: ${workspace.id})`
       );
+      
+      // Возвращаем новый workspace объект с обрезанным описанием
+      return {
+        ...workspace,
+        description: truncatedDescription
+      };
     }
     
     // Дополнительная валидация контента для LLM
     try {
-      WorkspaceLlmInputSchema.parse({
-        message: workspace.description,
-        context: undefined,
-        history: undefined
-      });
+      WorkspaceDescriptionSchema.parse(workspace.description);
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new TranscriptionError(
-          `Описание workspace содержит недопустимые символы: ${error.issues.map((e: any) => e.message).join(", ")}`,
+          `Описание workspace содержит недопустимые символы: ${error.issues.map((e: z.ZodIssue) => e.message).join(", ")}`,
           "INVALID_WORKSPACE_DESCRIPTION",
           "workspace.description"
         );
