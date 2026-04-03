@@ -136,37 +136,29 @@ export const transcribeCallFn = inngest.createFunction(
       return pipelineValidation.data;
     });
 
-    // Загружаем аудио один раз и переиспользуем в обоих ASR
-    const audioData = await step.run("download-audio", async () => {
+    // Объединяем download и ASR в один шаг для оптимизации
+    const asrStartTime = Date.now();
+    const asrResults = await step.run("asr:process", async () => {
+      // Загружаем аудио файл
       const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
-      // Возвращаем base64 для корректной сериализации в Inngest
+      
+      // Исправляем ArrayBuffer reconstruction с учетом byteOffset
+      const audioBuffer = buffer.buffer.slice(
+        buffer.byteOffset, 
+        buffer.byteOffset + buffer.byteLength
+      );
+      
+      // Параллельный запуск двух ASR с переиспользованием загруженных данных
+      const [nonDiarizedResult, diarizedResult] = await Promise.all([
+        processAudioWithGigaAmNonDiarized(audioBuffer, filename),
+        processAudioWithGigaAmDiarized(audioBuffer, filename),
+      ]);
+      
       return {
-        bufferBase64: Buffer.from(buffer).toString('base64'),
-        filename,
-        byteLength: buffer.byteLength,
+        nonDiarized: nonDiarizedResult,
+        diarized: diarizedResult,
       };
     });
-
-    // Восстанавливаем ArrayBuffer из base64
-    const audioBuffer = Buffer.from(audioData.bufferBase64, 'base64').buffer.slice(
-      0, audioData.byteLength
-    );
-
-    // Параллельный запуск двух ASR с переиспользованием загруженных данных
-    const asrStartTime = Date.now();
-    const [nonDiarizedResult, diarizedResult] = await Promise.all([
-      step.run("asr:non-diarized", async () => {
-        return processAudioWithGigaAmNonDiarized(audioBuffer, audioData.filename);
-      }),
-      step.run("asr:diarized", async () => {
-        return processAudioWithGigaAmDiarized(audioBuffer, audioData.filename);
-      }),
-    ]);
-
-    const asrResults = {
-      nonDiarized: nonDiarizedResult,
-      diarized: diarizedResult,
-    };
 
     // Логирование результатов ASR
     logger.info("ASR results", {
@@ -208,6 +200,7 @@ export const transcribeCallFn = inngest.createFunction(
     const validatedResult = await step.run("validate/transcription", async () => {
       const resultForValidation = {
         segments: mergedResult.segments,
+        transcript: mergedResult.mergedTranscript,
         normalizedText: mergedResult.mergedTranscript,
         rawText: asrResults.nonDiarized.transcript,
         summary: null,

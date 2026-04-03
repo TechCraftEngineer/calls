@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import io
 import logging
+import time
 from typing import Any
 
 import numpy as np
@@ -33,6 +34,8 @@ class DiarizationService:
     def __init__(self) -> None:
         self._remote_url = settings.speaker_embeddings_url.strip().rstrip("/")
         self._timeout = settings.speaker_embeddings_timeout
+        self._available: bool | None = None
+        self._available_checked_at: float = 0
         self._check_availability()
 
     def _check_availability(self) -> None:
@@ -73,10 +76,16 @@ class DiarizationService:
 
     @property
     def is_available(self) -> bool:
-        """Проверка доступности diarization."""
+        """Проверка доступности diarization с кэшем TTL 30 секунд."""
         if not self._remote_url:
             return False
         
+        # Используем кэш если не истёк TTL (30 секунд)
+        current_time = time.time()
+        if self._available is not None and (current_time - self._available_checked_at) < 30:
+            return self._available
+        
+        # Делаем HTTP запрос только раз в 30 секунд
         try:
             response = requests.get(
                 f"{self._remote_url}/health",
@@ -84,11 +93,14 @@ class DiarizationService:
             )
             if response.status_code == 200:
                 data = response.json()
-                return data.get("pyannote_available", False)
+                self._available = data.get("pyannote_available", False)
+            else:
+                self._available = False
         except Exception:
-            pass
+            self._available = False
         
-        return False
+        self._available_checked_at = current_time
+        return self._available
 
     def diarize(
         self,

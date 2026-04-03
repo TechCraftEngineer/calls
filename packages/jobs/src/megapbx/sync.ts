@@ -354,8 +354,7 @@ export async function syncMegaPbxCalls(
           internalNumber = undefined;
         } else {
           // Иначе вычисляем fallback из доступных данных
-          internalNumber = normalizePhoneForMatch(call.internalNumber) ??
-            normalizePhoneForMatch(number?.extension) ??
+          internalNumber = normalizePhoneForMatch(number?.extension) ??
             normalizePhoneForMatch(employee?.extension) ??
             undefined;
         }
@@ -365,7 +364,8 @@ export async function syncMegaPbxCalls(
         const name = employee?.displayName ?? number?.label ?? "MegaPBX";
 
         // Используем транзакционный метод для атомарного обновления
-        if (internalNumber || source || name) {
+        // Обновляем только если есть meaningful internalNumber
+        if (internalNumber) {
           await callsService.updateCallPbxBinding(callId, {
             internalNumber,
             source,

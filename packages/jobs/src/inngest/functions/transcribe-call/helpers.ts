@@ -187,8 +187,11 @@ async function processAudioWithGigaAm(
   const gigaAmUrl = env.GIGA_AM_TRANSCRIBE_URL;
   const formData = new FormData();
   const blob = new Blob([audioBuffer], { type: "audio/wav" });
-  formData.append("file", blob, "audio.wav");
-  formData.append("filename", filename);
+  
+  // Используем реальное имя файла или fallback на "audio.wav"
+  const audioFilename = filename && filename.trim() ? filename : "audio.wav";
+  formData.append("file", blob, audioFilename);
+  formData.append("filename", audioFilename);
   formData.append("diarization", diarization.toString());
 
   const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-sync`, {
@@ -282,32 +285,10 @@ export async function processAudioWithGigaAmDiarized(
   return processAudioWithGigaAm(audioBuffer, filename, true);
 }
 
-export async function processAudioWithGigaAmDiarizedLegacy(
-  bufferBase64: string,
-  filename: string,
-): Promise<AsrResult> {
-  const buffer = Buffer.from(bufferBase64, 'base64');
-  const audioBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-  return processAudioWithGigaAm(audioBuffer, filename, true);
-}
-
 export async function processAudioWithGigaAmNonDiarized(
   audioBuffer: ArrayBuffer,
   filename: string,
 ): Promise<Omit<AsrResult, "segments"> & { segments: [] }> {
-  const result = await processAudioWithGigaAm(audioBuffer, filename, false);
-  return {
-    ...result,
-    segments: [], // Явно указываем пустые сегменты для non-diarized
-  };
-}
-
-export async function processAudioWithGigaAmNonDiarizedLegacy(
-  bufferBase64: string,
-  filename: string,
-): Promise<Omit<AsrResult, "segments"> & { segments: [] }> {
-  const buffer = Buffer.from(bufferBase64, 'base64');
-  const audioBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
   const result = await processAudioWithGigaAm(audioBuffer, filename, false);
   return {
     ...result,

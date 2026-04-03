@@ -273,7 +273,12 @@ class PipelineService:
             # Проверяем размер файла (ограничение 100MB)
             max_size = 100 * 1024 * 1024  # 100MB
             if len(audio_data) > max_size:
-                raise ValueError(f"Размер файла ({len(audio_data)} bytes) превышает лимит ({max_size} bytes)")
+                from utils.exceptions import FileSizeError
+                raise FileSizeError(
+                    f"Размер файла ({len(audio_data)} bytes) превышает лимит ({max_size} bytes)",
+                    file_size=len(audio_data),
+                    max_size=max_size
+                )
             
             # Сохраняем аудио во временный файл
             tmp_path = None
@@ -310,7 +315,15 @@ class PipelineService:
                             "dual_asr_enabled": False,
                         }
                     else:
-                        raise RuntimeError("ASR транскрипция не удалась")
+                        # Сохраняем детали ошибки для отладки
+                        error_details = {
+                            "success": result.get("success"),
+                            "error": result.get("error"),
+                            "text": result.get("text"),
+                            "pipeline": "gigam-asr-only"
+                        }
+                        logger.error(f"[{request_id}] ASR транскрипция не удалась: {error_details}")
+                        raise RuntimeError(f"ASR транскрипция не удалась: {error_details}")
                 
                 logger.info(f"[{request_id}] Синхронная обработка завершена")
                 return result
