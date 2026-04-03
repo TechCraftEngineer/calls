@@ -36,8 +36,8 @@ export interface GigaAmSegment {
   start: number;
   end: number;
   text: string;
-  embedding?: unknown;
-  confidence?: unknown;
+  embedding?: number[] | null;
+  confidence?: number | null;
 }
 
 export interface SpeakerTimelineItem {
@@ -65,7 +65,7 @@ export interface TranscriptionResult {
   transcript: string;
   metadata: {
     asrLogs: AsrLog[];
-    confidence?: unknown;
+    confidence?: number;
     processingTimeMs?: number;
     asrSource?: string;
   };

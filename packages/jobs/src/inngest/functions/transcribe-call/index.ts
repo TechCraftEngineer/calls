@@ -42,3 +42,6 @@ export type {
   Workspace,
 } from "./types";
 export * from "./validation";
+
+// Экспорт downloadAudioBuffer для внешнего использования
+export { downloadAudioBuffer } from "./helpers";

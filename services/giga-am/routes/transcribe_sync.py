@@ -5,7 +5,7 @@
 import logging
 from typing import Dict, Any
 
-from fastapi import APIRouter, File, Form, HTTPException
+from fastapi import APIRouter, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 from services.pipeline_service import PipelineService
@@ -18,7 +18,7 @@ pipeline_service = PipelineService()
 
 @router.post("/transcribe-sync")
 async def transcribe_sync(
-    file: bytes = File(...),
+    file: UploadFile,
     filename: str = Form(...)
 ) -> JSONResponse:
     """
@@ -29,9 +29,12 @@ async def transcribe_sync(
     try:
         logger.info(f"Получен синхронный запрос на транскрипцию: {filename}")
         
+        # Читаем файл из UploadFile
+        audio_data = await file.read()
+        
         # Запускаем транскрипцию и ждем результата
         result = await pipeline_service.process_audio_sync(
-            audio_data=file,
+            audio_data=audio_data,
             filename=filename
         )
         
@@ -39,6 +42,13 @@ async def transcribe_sync(
         
         return JSONResponse(content=result)
         
+    except ValueError as ve:
+        # Обработка ошибок валидации (например, слишком большой файл)
+        logger.error("Ошибка валидации в синхронной транскрипции: %s", ve)
+        raise HTTPException(
+            status_code=413,
+            detail=str(ve)
+        )
     except Exception as exc:
         logger.exception("Ошибка синхронной транскрипции: %s", exc)
         raise HTTPException(

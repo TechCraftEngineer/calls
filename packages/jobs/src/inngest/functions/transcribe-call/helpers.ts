@@ -7,7 +7,8 @@ import { env } from "@calls/config";
 import { filesService, pbxRepository, workspaceIntegrationsRepository } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
 import { createLogger } from "../../../logger";
-import { FileSchema, GigaAmResponseSchema } from "./schemas";
+import { z } from "zod";
+import { FileSchema, GigaAmResponseSchema, TranscriptionSegmentSchema } from "./schemas";
 
 const logger = createLogger("transcribe-call-helpers");
 
@@ -98,17 +99,13 @@ export interface AsrResult {
   metadata: {
     asrLogs: Array<{
       provider: string;
-      utterances: unknown[];
+      utterances: z.infer<typeof TranscriptionSegmentSchema>[];
       raw: unknown;
     }>;
   };
 }
 
-async function processAudioWithGigaAm(
-  fileId: string,
-  filename: string | undefined,
-  diarization: boolean,
-): Promise<AsrResult> {
+export async function downloadAudioBuffer(fileId: string): Promise<{ buffer: string; filename: string }> {
   const file = await filesService.getFileById(fileId);
   if (!file) {
     throw new Error(`Файл не найден: ${fileId}`);
@@ -154,17 +151,56 @@ async function processAudioWithGigaAm(
     );
   }
 
+  // Конвертируем в Base64 для совместимости с Inngest
+  const base64Buffer = Buffer.from(audioBuffer).toString('base64');
+
+  return {
+    buffer: base64Buffer,
+    filename: file.filename || "audio.wav",
+  };
+}
+
+export async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries = 3,
+  baseDelayMs = 1000
+): Promise<Response> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok || attempt === retries) return response;
+      // retry on 5xx only
+      if (response.status < 500) return response;
+      logger.warn(`GigaAM transient error, retrying (attempt: ${attempt}, status: ${response.status}, url: ${url})`);
+    } catch (err) {
+      if (attempt === retries) throw err;
+      logger.warn(`GigaAM network error, retrying (attempt: ${attempt}, err: ${err}, url: ${url})`);
+    }
+    await new Promise(resolve => setTimeout(resolve, baseDelayMs * 2 ** attempt));
+  }
+  throw new Error("fetchWithRetry: unreachable");
+}
+
+async function processAudioWithGigaAm(
+  bufferBase64: string,
+  filename: string,
+  diarization: boolean,
+): Promise<AsrResult> {
+  // Конвертируем Base64 обратно в ArrayBuffer
+  const audioBuffer = Buffer.from(bufferBase64, 'base64').buffer;
+
   const gigaAmUrl = env.GIGA_AM_TRANSCRIBE_URL;
   const formData = new FormData();
   const blob = new Blob([audioBuffer], { type: "audio/wav" });
   formData.append("file", blob, "audio.wav");
-  formData.append("filename", filename || "audio.wav");
+  formData.append("filename", filename);
   formData.append("diarization", diarization.toString());
 
-  const response = await fetch(`${gigaAmUrl}/api/transcribe-sync`, {
+  const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-sync`, {
     method: "POST",
     body: formData,
-    signal: AbortSignal.timeout(300000), // 5 минут таймаут
+    signal: AbortSignal.timeout(env.GIGA_AM_TIMEOUT_MS),
   });
 
   if (!response.ok) {
@@ -177,7 +213,7 @@ async function processAudioWithGigaAm(
   if (diarization) {
     if (!gigaResult.segments || !Array.isArray(gigaResult.segments)) {
       logger.warn("GigaAM API не вернул сегменты с диаризацией", {
-        fileId,
+        filename,
         response: gigaResult,
       });
       throw new Error("GigaAM API не поддерживает диаризацию в текущей конфигурации");
@@ -185,7 +221,7 @@ async function processAudioWithGigaAm(
   } else {
     if (!gigaResult.final_transcript && !gigaResult.text) {
       logger.warn("GigaAM API не вернул текст транскрипции", {
-        fileId,
+        filename,
         response: gigaResult,
       });
       throw new Error("GigaAM API не вернул текст транскрипции");
@@ -198,13 +234,34 @@ async function processAudioWithGigaAm(
       .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
       .join(", ");
     logger.warn("GigaAM response validation failed", {
-      fileId,
+      filename,
       errorDetails,
       response: gigaResult,
     });
+    
+    // Создаем безопасный fallback объект вместо использования невалидированных данных
+    const validatedGigaResult = {
+      segments: diarization ? [] : undefined,
+      final_transcript: "",
+      text: "",
+    };
+    
+    return {
+      segments: diarization ? validatedGigaResult.segments || [] : [],
+      transcript: validatedGigaResult.final_transcript || validatedGigaResult.text || "",
+      metadata: {
+        asrLogs: [
+          {
+            provider: diarization ? "gigaam-diarized" : "gigaam-non-diarized",
+            utterances: diarization ? [] : [],
+            raw: gigaResult,
+          },
+        ],
+      },
+    };
   }
 
-  const validatedGigaResult = gigaValidation.success ? gigaValidation.data : gigaResult;
+  const validatedGigaResult = gigaValidation.data;
 
   return {
     segments: diarization ? validatedGigaResult.segments || [] : [],
@@ -222,17 +279,17 @@ async function processAudioWithGigaAm(
 }
 
 export async function processAudioWithGigaAmDiarized(
-  fileId: string,
-  filename?: string,
+  bufferBase64: string,
+  filename: string,
 ): Promise<AsrResult> {
-  return processAudioWithGigaAm(fileId, filename, true);
+  return processAudioWithGigaAm(bufferBase64, filename, true);
 }
 
 export async function processAudioWithGigaAmNonDiarized(
-  fileId: string,
-  filename?: string,
+  bufferBase64: string,
+  filename: string,
 ): Promise<Omit<AsrResult, "segments"> & { segments: [] }> {
-  const result = await processAudioWithGigaAm(fileId, filename, false);
+  const result = await processAudioWithGigaAm(bufferBase64, filename, false);
   return {
     ...result,
     segments: [], // Явно указываем пустые сегменты для non-diarized

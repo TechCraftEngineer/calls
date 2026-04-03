@@ -45,7 +45,7 @@ export const TranscriptionSegmentSchema = z.object({
   end: z.number(),
   text: z.string(),
   confidence: z.number().optional(),
-  embedding: z.unknown().optional(),
+  embedding: z.array(z.number()).optional(),
 });
 
 // Схема для валидации ответа GigaAM
@@ -75,7 +75,7 @@ export const AsrLogSchema = z.object({
 // Схема для валидации метаданных ASR
 export const AsrMetadataSchema = z.object({
   asrLogs: z.array(AsrLogSchema),
-  confidence: z.unknown().optional(),
+  confidence: z.number().optional(),
   processingTimeMs: z.number().optional(),
   asrSource: z.string().optional(),
 });

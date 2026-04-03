@@ -13,6 +13,7 @@ import type { ZodIssue } from "zod";
 import { createLogger } from "../../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../../client";
 import {
+  downloadAudioBuffer,
   identifySpeakers,
   processAudioWithGigaAmDiarized,
   processAudioWithGigaAmNonDiarized,
@@ -22,10 +23,13 @@ import {
 import { applyLLMMerging } from "./llm-merge";
 import {
   CallSchema,
+  FileSchema,
+  PipelineAudioResultSchema,
   TranscribeCallEventSchema,
   TranscriptionResultSchema,
   WorkspaceSchema,
 } from "./schemas";
+import { validateWorkspace } from "./validation";
 
 const logger = createLogger("transcribe-call");
 
@@ -67,7 +71,7 @@ export const transcribeCallFn = inngest.createFunction(
       return validationResult.data;
     });
 
-    await step.run("db/workspaces:get", async () => {
+    const workspace = await step.run("db/workspaces:get", async () => {
       const ws = await workspacesService.getById(call.workspaceId);
       if (!ws) {
         logger.warn("Workspace not found for call transcription", {
@@ -85,6 +89,7 @@ export const transcribeCallFn = inngest.createFunction(
         throw new Error(`Workspace validation failed: ${errorDetails}`);
       }
 
+      validateWorkspace(validationResult.data);
       return validationResult.data;
     });
 
@@ -101,42 +106,60 @@ export const transcribeCallFn = inngest.createFunction(
       if (!f) {
         throw new Error(`Файл не найден: ${originalFileId}`);
       }
-      return runPipelineAudioPreprocess({
+      
+      // Валидация файла
+      const fileValidation = FileSchema.safeParse(f);
+      if (!fileValidation.success) {
+        const errorDetails = fileValidation.error.issues
+          .map((issue: ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+          .join(", ");
+        throw new Error(`File validation failed: ${errorDetails}`);
+      }
+      
+      const pipelineResult = await runPipelineAudioPreprocess({
         callId,
         workspaceId: call.workspaceId,
         originalFileId,
-        originalStorageKey: f.storageKey,
+        originalStorageKey: fileValidation.data.storageKey,
       });
-    });
-
-    // Параллельный запуск двух ASR
-    const asrResults = await step.run("pipeline/asr:dual-transcribe", async () => {
-      const f = await filesService.getFileById(pipelineAudio.preprocessedFileId);
-      if (!f) {
-        throw new Error(`Файл после preprocess не найден: ${pipelineAudio.preprocessedFileId}`);
+      
+      // Валидация результата pipeline
+      const pipelineValidation = PipelineAudioResultSchema.safeParse(pipelineResult);
+      if (!pipelineValidation.success) {
+        const errorDetails = pipelineValidation.error.issues
+          .map((issue: ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+          .join(", ");
+        throw new Error(`Pipeline validation failed: ${errorDetails}`);
       }
-
-      const [nonDiarizedResult, diarizedResult] = await Promise.all([
-        processAudioWithGigaAmNonDiarized(pipelineAudio.preprocessedFileId, f.filename),
-        processAudioWithGigaAmDiarized(pipelineAudio.preprocessedFileId, f.filename),
-      ]);
-
-      return {
-        nonDiarized: nonDiarizedResult,
-        diarized: diarizedResult,
-      };
+      
+      return pipelineValidation.data;
     });
+
+    // Загрузка аудио один раз для обоих ASR
+    const { buffer, filename } = await step.run("asr:download-audio", () =>
+      downloadAudioBuffer(pipelineAudio.preprocessedFileId)
+    );
+
+    // Параллельный запуск двух ASR с общим buffer
+    const asrStartTime = Date.now();
+    const [nonDiarizedResult, diarizedResult] = await Promise.all([
+      step.run("asr:non-diarized", () => processAudioWithGigaAmNonDiarized(buffer, filename)),
+      step.run("asr:diarized", () => processAudioWithGigaAmDiarized(buffer, filename)),
+    ]);
+
+    const asrResults = {
+      nonDiarized: nonDiarizedResult,
+      diarized: diarizedResult,
+    };
 
     // Логирование результатов ASR
-    await step.run("debug/asr-results", async () => {
-      return {
-        callId,
-        nonDiarizedProvider: asrResults.nonDiarized.metadata.asrLogs[0]?.provider,
-        nonDiarizedTranscriptLength: asrResults.nonDiarized.transcript.length,
-        diarizedProvider: asrResults.diarized.metadata.asrLogs[0]?.provider,
-        diarizedSegmentsCount: asrResults.diarized.segments.length,
-        diarizedTranscriptLength: asrResults.diarized.transcript.length,
-      };
+    logger.info("ASR results", {
+      callId,
+      nonDiarizedProvider: asrResults.nonDiarized.metadata.asrLogs[0]?.provider,
+      nonDiarizedTranscriptLength: asrResults.nonDiarized.transcript.length,
+      diarizedProvider: asrResults.diarized.metadata.asrLogs[0]?.provider,
+      diarizedSegmentsCount: asrResults.diarized.segments.length,
+      diarizedTranscriptLength: asrResults.diarized.transcript.length,
     });
 
     // LLM Merging двух ASR результатов
@@ -156,6 +179,15 @@ export const transcribeCallFn = inngest.createFunction(
       };
     });
 
+    // Вычисляем общее время обработки ASR + LLM merge
+    const processingTimeMs = Date.now() - asrStartTime;
+    
+    logger.info("ASR + LLM processing completed", {
+      callId,
+      processingTimeMs,
+      processingTimeSeconds: Math.round(processingTimeMs / 1000 * 100) / 100,
+    });
+
     // Валидация результата
     const validatedResult = await step.run("validate/transcription", async () => {
       const resultForValidation = {
@@ -173,7 +205,7 @@ export const transcribeCallFn = inngest.createFunction(
             ...asrResults.nonDiarized.metadata.asrLogs,
             ...asrResults.diarized.metadata.asrLogs,
           ],
-          processingTimeMs: 0,
+          processingTimeMs,
         },
       };
 
@@ -208,30 +240,28 @@ export const transcribeCallFn = inngest.createFunction(
     const { text: finalText, customerName, operatorName } = identifyResult;
 
     // Логирование результатов идентификации
-    await step.run("debug/identify-results", async () => {
-      const originalText = validatedResult.normalizedText || "";
-      const debugData = {
-        callId,
-        finalTextLength: finalText.length,
-        originalTextLength: originalText.length,
-        customerName,
-        operatorName,
-        identificationSuccess: identifyResult.metadata?.success || false,
-        speakerMapping: identifyResult.metadata?.mapping || {},
-        usedEmbeddings: identifyResult.metadata?.usedEmbeddings || false,
-        clusterCount: identifyResult.metadata?.clusterCount || 0,
-        identificationReason: identifyResult.metadata?.reason,
-        llmMergeApplied: mergedResult.applied,
-        llmMergeQuality: mergedResult.qualityScore,
-        llmMergeFallbackReason: mergedResult.fallbackReason,
-      };
+    const originalText = validatedResult.normalizedText || "";
+    const debugData = {
+      callId,
+      finalTextLength: finalText.length,
+      originalTextLength: originalText.length,
+      customerName,
+      operatorName,
+      identificationSuccess: identifyResult.metadata?.success || false,
+      speakerMapping: identifyResult.metadata?.mapping || {},
+      usedEmbeddings: identifyResult.metadata?.usedEmbeddings || false,
+      clusterCount: identifyResult.metadata?.clusterCount || 0,
+      identificationReason: identifyResult.metadata?.reason,
+      llmMergeApplied: mergedResult.applied,
+      llmMergeQuality: mergedResult.qualityScore,
+      llmMergeFallbackReason: mergedResult.fallbackReason,
+    };
 
-      if (identifyResult.metadata?.fallbackAttempted) {
-        logger.warn("LLM идентификация спикеров использовала фоллбек", debugData);
-      }
-
-      return debugData;
-    });
+    if (identifyResult.metadata?.fallbackAttempted) {
+      logger.warn("LLM идентификация спикеров использовала фоллбек", debugData);
+    } else {
+      logger.info("Speaker identification results", debugData);
+    }
 
     // Сохранение транскрипта
     await step.run("persist/transcript:upsert", async () => {
@@ -246,7 +276,7 @@ export const transcribeCallFn = inngest.createFunction(
         callId,
         text: finalText,
         rawText: validatedResult.rawText,
-        confidence: validatedResult.metadata.confidence ?? null,
+        confidence: (typeof validatedResult.metadata.confidence === 'number' ? validatedResult.metadata.confidence : null),
         metadata: {
           ...serializedMetadata,
           dualAsr: {
@@ -262,11 +292,8 @@ export const transcribeCallFn = inngest.createFunction(
         title: validatedResult.title,
         callType: normalizedCallType,
         callTopic: validatedResult.callTopic,
+        customerName: customerName ?? undefined, // Атомарное обновление с transcript
       });
-
-      if (customerName) {
-        await callsService.updateCustomerName(callId, customerName);
-      }
     });
 
     await step.sendEvent("event/call.evaluate.requested", evaluateRequested.create({ callId }));

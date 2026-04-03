@@ -131,6 +131,7 @@ export class CallsService {
     callType?: string | null;
     callTopic?: string | null;
     metadata?: Record<string, unknown> | null;
+    customerName?: string | null;
   }): Promise<string> {
     return this.callsRepository.upsertTranscript(data);
   }
