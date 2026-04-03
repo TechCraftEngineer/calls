@@ -12,12 +12,13 @@ const logger = createLogger("gigaam-client");
 
 export async function fetchWithRetry(
   url: string,
-  options: RequestInit,
+  buildOptions: () => RequestInit,
   retries = 3,
   baseDelayMs = 1000,
 ): Promise<Response> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
+      const options = buildOptions();
       const response = await fetch(url, options);
       if (response.ok || attempt === retries) return response;
       // retry on 5xx only
@@ -53,84 +54,72 @@ export async function processAudioWithGigaAm(
   formData.append("filename", audioFilename);
   formData.append("diarization", diarization.toString());
 
-  const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-sync`, {
-    method: "POST",
-    body: formData,
-    signal: AbortSignal.timeout(env.GIGA_AM_TIMEOUT_MS),
-  });
+  const response = await fetchWithRetry(
+    `${gigaAmUrl}/api/transcribe-sync`,
+    () => ({
+      method: "POST",
+      body: formData,
+      signal: AbortSignal.timeout(env.GIGA_AM_TIMEOUT_MS),
+    }),
+  );
 
   if (!response.ok) {
-    throw new Error(`GigaAM API error: ${response.status} ${response.statusText}`);
+    throw new Error(`Ошибка GigaAM API: ${response.status} ${response.statusText}`);
   }
 
-  const gigaResult = await response.json();
-
-  // Валидация ответа в зависимости от режима
-  if (diarization) {
-    if (!gigaResult.segments || !Array.isArray(gigaResult.segments)) {
-      logger.warn("GigaAM API не вернул сегменты с диаризацией", {
-        filename,
-        response: gigaResult,
-      });
-      throw new Error("GigaAM API не поддерживает диаризацию в текущей конфигурации");
-    }
-  } else {
-    if (!gigaResult.final_transcript && !gigaResult.text) {
-      logger.warn("GigaAM API не вернул текст транскрипции", {
-        filename,
-        response: gigaResult,
-      });
-      throw new Error("GigaAM API не вернул текст транскрипции");
-    }
-  }
-
-  const gigaValidation = GigaAmResponseSchema.safeParse(gigaResult);
+  const rawResult = await response.json();
+  
+  // Zod валидация перед доступом к полям
+  const gigaValidation = GigaAmResponseSchema.safeParse(rawResult);
   if (!gigaValidation.success) {
     const errorDetails = gigaValidation.error.issues
       .map((issue: z.ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
       .join(", ");
-    logger.warn("GigaAM response validation failed", {
+    logger.warn("Ошибка валидации ответа GigaAM", {
       filename,
       errorDetails,
-      response: gigaResult,
+      response: rawResult,
     });
 
-    // Создаем безопасный fallback объект вместо использования невалидированных данных
-    const validatedGigaResult = {
-      segments: diarization ? [] : undefined,
-      final_transcript: "",
-      text: "",
-    };
-
+    // Создаем безопасный fallback объект
     return {
-      segments: diarization ? validatedGigaResult.segments || [] : [],
-      transcript: validatedGigaResult.final_transcript || validatedGigaResult.text || "",
+      segments: [],
+      transcript: "",
       validationFailed: true,
-      validationError: `GigaAM response validation failed: ${errorDetails}`,
+      validationError: `Ошибка валидации ответа GigaAM: ${errorDetails}`,
       metadata: {
         asrLogs: [
           {
-            provider: diarization ? "gigaam-diarized" : "gigaam-non-diarized",
-            utterances: diarization ? [] : [],
-            raw: gigaResult,
+            provider: "gigaam-non-diarized",
+            utterances: [],
+            raw: rawResult,
           },
         ],
       },
     };
   }
 
-  const validatedGigaResult = gigaValidation.data;
+  const gigaResult = gigaValidation.data;
+
+  // Проверяем наличие транскрипции
+  if (!gigaResult.final_transcript) {
+    logger.warn("GigaAM API не вернул текст транскрипции", {
+      filename,
+      response: gigaResult,
+    });
+    throw new Error("GigaAM API не вернул текст транскрипции");
+  }
 
   return {
-    segments: diarization ? validatedGigaResult.segments || [] : [],
-    transcript: validatedGigaResult.final_transcript || "",
+    segments: [],
+    transcript: gigaResult.final_transcript || "",
     validationFailed: false,
     metadata: {
       asrLogs: [
         {
-          provider: diarization ? "gigaam-diarized" : "gigaam-non-diarized",
-          utterances: diarization ? gigaResult.segments || [] : [],
-          raw: gigaResult,
+          provider: "gigaam-non-diarized",
+          utterances: [],
+          raw: rawResult,
         },
       ],
     },
@@ -142,8 +131,93 @@ export async function processAudioWithoutDiarization(
   filename: string,
 ): Promise<AsrResult> {
   const result = await processAudioWithGigaAm(audioBuffer, filename, false);
-  return {
-    ...result,
-    segments: [], // Явно указываем пустые сегменты для non-diarized
-  };
+  return result;
+}
+
+/**
+ * Интерфейс сегмента диаризации
+ */
+export interface DiarizationSegmentInput {
+  start: number;
+  end: number;
+  speaker: string;
+}
+
+/**
+ * Результат транскрипции диаризированного аудио
+ */
+export interface DiarizedTranscriptionResult {
+  success: boolean;
+  final_transcript: string;
+  segments: Array<{
+    text: string;
+    start: number;
+    end: number;
+    speaker: string;
+    confidence: number;
+  }>;
+  speaker_timeline: Array<{
+    speaker: string;
+    start: number;
+    end: number;
+    text: string;
+  }>;
+  num_speakers: number;
+  speakers: string[];
+  processing_time: number;
+  pipeline: string;
+  error?: string;
+}
+
+/**
+ * Транскрибирует диаризированное аудио через GigaAM API.
+ * Использует единый endpoint вместо N+1 HTTP-запросов.
+ */
+export async function processDiarizedAudioWithGigaAm(
+  audioBuffer: ArrayBuffer,
+  filename: string,
+  segments: DiarizationSegmentInput[],
+): Promise<DiarizedTranscriptionResult> {
+  const gigaAmUrl = env.GIGA_AM_TRANSCRIBE_URL;
+
+  const formData = new FormData();
+  const blob = new Blob([audioBuffer], { type: "audio/wav" });
+
+  const audioFilename = filename && filename.trim() ? filename : "audio.wav";
+  formData.append("file", blob, audioFilename);
+  formData.append("filename", audioFilename);
+  formData.append("segments", JSON.stringify(segments));
+
+  logger.info("Отправка диаризированного аудио на транскрипцию", {
+    filename: audioFilename,
+    segmentsCount: segments.length,
+    endpoint: `${gigaAmUrl}/api/transcribe-diarized`,
+  });
+
+  const response = await fetchWithRetry(
+    `${gigaAmUrl}/api/transcribe-diarized`,
+    () => ({
+      method: "POST",
+      body: formData,
+      signal: AbortSignal.timeout(env.GIGA_AM_TIMEOUT_MS),
+    }),
+  );
+
+  if (!response.ok) {
+    throw new Error(`GigaAM diarized API error: ${response.status} ${response.statusText}`);
+  }
+
+  const result: DiarizedTranscriptionResult = await response.json();
+
+  if (!result.success) {
+    throw new Error(`GigaAM diarized transcription failed: ${result.error || "Unknown error"}`);
+  }
+
+  logger.info("Диаризированная транскрипция завершена", {
+    filename: audioFilename,
+    segmentsCount: result.segments.length,
+    processingTime: result.processing_time,
+  });
+
+  return result;
 }

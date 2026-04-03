@@ -1,11 +1,19 @@
 /**
  * Диаризация аудио через speaker-embeddings сервис
+ *
+ * ИСПОЛЬЗУЕТ НОВЫЙ БАТЧЕВЫЙ ENDPOINT /api/transcribe-diarized
+ * Вместо N+1 HTTP-запросов для каждого сегмента, отправляем один запрос
+ * с полным аудио и сегментами. Python сервис нарезает и транскрибирует
+ * параллельно с ограничением concurrency.
  */
 
 import { createLogger } from "../../../../logger";
-import { processAudioWithoutDiarization } from "./client";
-import { extractAudioSegment } from "../audio/processing";
-import { performDiarization } from "../speaker-diarization";
+import {
+  processDiarizedAudioWithGigaAm,
+  processAudioWithoutDiarization,
+  type DiarizationSegmentInput,
+} from "./client";
+import { performDiarization, checkSpeakerEmbeddingsHealth } from "../speaker-diarization";
 import type { AsrResult } from "../types";
 
 const logger = createLogger("gigaam-diarization");
@@ -18,6 +26,13 @@ export async function processAudioWithDiarization(
 
   try {
     logger.info("Начало диаризации аудио", { filename });
+
+    // Health check перед диаризацией
+    const healthStatus = await checkSpeakerEmbeddingsHealth();
+    if (!healthStatus) {
+      logger.warn("Speaker-embeddings сервис недоступен, пропускаем диаризацию");
+      return processAudioWithoutDiarization(audioBuffer, filename);
+    }
 
     // Шаг 1: Диаризация через speaker-embeddings
     const diarizationResult = await performDiarization(audioBuffer, filename);
@@ -38,73 +53,58 @@ export async function processAudioWithDiarization(
       speakers: diarizationResult.speakers,
     });
 
-    // Шаг 2: Транскрибируем каждый сегмент через GigaAM
-    const transcribedSegments = [];
+    // Шаг 2: Транскрибируем все сегменты через батчевый endpoint (ОДИН HTTP-зАПРОС!)
+    const segmentsInput: DiarizationSegmentInput[] = diarizationResult.segments.map((seg) => ({
+      start: seg.start,
+      end: seg.end,
+      speaker: seg.speaker,
+    }));
 
-    for (const segment of diarizationResult.segments) {
-      try {
-        // Извлекаем аудио для сегмента
-        const segmentAudio = await extractAudioSegment(audioBuffer, segment.start, segment.end);
+    logger.info("Отправка на батчевую транскрипцию", {
+      filename,
+      segmentsCount: segmentsInput.length,
+    });
 
-        // Транскрибируем сегмент
-        const segmentResult = await processAudioWithoutDiarization(
-          segmentAudio,
-          `segment_${segment.start}_${segment.end}.wav`,
-        );
-
-        if (segmentResult.transcript) {
-          transcribedSegments.push({
-            speaker: segment.speaker,
-            start: segment.start,
-            end: segment.end,
-            text: segmentResult.transcript,
-            confidence: segmentResult.metadata?.asrLogs?.[0]?.utterances?.[0]?.confidence || 1.0,
-          });
-        } else {
-          // Пустой сегмент если транскрипция не удалась
-          transcribedSegments.push({
-            speaker: segment.speaker,
-            start: segment.start,
-            end: segment.end,
-            text: "",
-            confidence: 0.0,
-          });
-        }
-      } catch (error) {
-        logger.warn(`Ошибка транскрипции сегмента ${segment.start}-${segment.end}s`, {
-          error: error instanceof Error ? error.message : String(error),
-        });
-
-        // Добавляем пустой сегмент при ошибке
-        transcribedSegments.push({
-          speaker: segment.speaker,
-          start: segment.start,
-          end: segment.end,
-          text: "",
-          confidence: 0.0,
-        });
-      }
-    }
+    const diarizedResult = await processDiarizedAudioWithGigaAm(
+      audioBuffer,
+      filename,
+      segmentsInput,
+    );
 
     const processingTime = Date.now() - requestStartTime;
 
-    // Собираем полный текст
-    const fullTranscript = transcribedSegments
-      .map((seg) => seg.text)
-      .join(" ")
-      .trim();
+    // Конвертируем результат в стандартный AsrResult формат
+    const transcribedSegments = diarizedResult.segments.map((seg) => ({
+      speaker: seg.speaker,
+      start: seg.start,
+      end: seg.end,
+      text: seg.text,
+      confidence: seg.confidence,
+    }));
+
+    logger.info("Батчевая транскрипция завершена", {
+      filename,
+      segmentsCount: transcribedSegments.length,
+      processingTime,
+      gigaProcessingTime: diarizedResult.processing_time,
+    });
 
     return {
       segments: transcribedSegments,
-      transcript: fullTranscript,
+      transcript: diarizedResult.final_transcript,
       metadata: {
         asrLogs: [
           {
             provider: "gigaam-diarized",
             utterances: transcribedSegments,
             raw: {
-              diarization: diarizationResult,
+              diarization: {
+                num_speakers: diarizationResult.num_speakers,
+                speakers: diarizationResult.speakers,
+              },
               processingTime,
+              gigaProcessingTime: diarizedResult.processing_time,
+              pipeline: diarizedResult.pipeline,
             },
           },
         ],

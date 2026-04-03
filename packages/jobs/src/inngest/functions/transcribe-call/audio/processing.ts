@@ -3,12 +3,40 @@
  */
 
 import { spawn } from "child_process";
-import { createReadStream, unlinkSync, writeFileSync } from "fs";
+import { createReadStream, mkdirSync, unlinkSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { randomUUID } from "crypto";
 import { createLogger } from "../../../../logger";
+import * as fs from "fs";
 
 const logger = createLogger("audio-processing");
+
+/**
+ * Создает уникальный временный каталог для обработки аудио
+ */
+function createTempDir(): string {
+  const tempDir = join(tmpdir(), `transcribe-${randomUUID()}`);
+  try {
+    mkdirSync(tempDir, { recursive: true });
+    return tempDir;
+  } catch (error) {
+    logger.error("Ошибка создания временного каталога", { tempDir, error: error instanceof Error ? error.message : String(error) });
+    throw new Error(`Не удалось создать временный каталог: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Удаляет временный каталог и все его содержимое
+ */
+function cleanupTempDir(tempDir: string): void {
+  try {
+    // Используем fs.rmSync с recursive для удаления директории и содержимого
+    (fs as unknown as { rmSync: (path: string, options: { recursive: boolean; force: boolean }) => void }).rmSync(tempDir, { recursive: true, force: true });
+  } catch {
+    // Игнорируем ошибки при очистке
+  }
+}
 
 /**
  * Извлекает аудио сегмент из полного аудио буфера с помощью ffmpeg
@@ -22,12 +50,14 @@ export async function extractAudioSegment(
 
   if (duration <= 0) {
     logger.warn("Некорректная длительность сегмента", { startTime, endTime, duration });
-    return audioBuffer;
+    // Возвращаем пустой буфер вместо полного аудио
+    return new ArrayBuffer(0);
   }
 
-  const tempDir = tmpdir();
-  const inputPath = join(tempDir, `extract_input_${Date.now()}.wav`);
-  const outputPath = join(tempDir, `extract_output_${Date.now()}.wav`);
+  // Создаем уникальный временный каталог
+  const tempDir = createTempDir();
+  const inputPath = join(tempDir, "input.wav");
+  const outputPath = join(tempDir, "output.wav");
 
   try {
     // Записываем входной буфер во временный файл
@@ -91,26 +121,17 @@ export async function extractAudioSegment(
 
     return new Uint8Array(resultBuffer).buffer;
   } catch (error) {
-    logger.error("Ошибка извлечения аудио сегмента, возвращаем полный буфер", {
+    logger.error("Ошибка извлечения аудио сегмента", {
       startTime,
       endTime,
       duration,
       error: error instanceof Error ? error.message : String(error),
     });
 
-    // Fallback: возвращаем полный буфер при ошибке
-    return audioBuffer;
+    // НЕ возвращаем полный буфер - это приведет к неверной транскрипции
+    throw new Error(`Failed to extract audio segment ${startTime}-${endTime}s: ${error instanceof Error ? error.message : String(error)}`);
   } finally {
-    // Очистка временных файлов
-    try {
-      unlinkSync(inputPath);
-    } catch {
-      /* ignore */
-    }
-    try {
-      unlinkSync(outputPath);
-    } catch {
-      /* ignore */
-    }
+    // Очистка временного каталога
+    cleanupTempDir(tempDir);
   }
 }

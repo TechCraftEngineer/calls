@@ -3,9 +3,28 @@
  */
 
 import { env } from "@calls/config";
-import { createLogger } from "../../../logger";
+import { createLogger } from "~/logger";
+import { z } from "zod";
 
 const logger = createLogger("speaker-diarization");
+
+// Zod схемы для валидации ответов
+const DiarizationSegmentSchema = z.object({
+  start: z.number(),
+  end: z.number(),
+  speaker: z.string(),
+});
+
+const DiarizationResponseSchema = z.object({
+  success: z.boolean(),
+  segments: z.array(DiarizationSegmentSchema).optional().default([]),
+  num_speakers: z.number().optional().default(0),
+  speakers: z.array(z.string()).optional().default([]),
+});
+
+const HealthCheckResponseSchema = z.object({
+  pyannote_available: z.boolean().optional(),
+});
 
 export interface DiarizationSegment {
   start: number;
@@ -78,17 +97,35 @@ export async function performDiarization(
 
     const result = await response.json();
     
+    // Zod валидация ответа
+    let validatedResult: z.infer<typeof DiarizationResponseSchema>;
+    try {
+      validatedResult = DiarizationResponseSchema.parse(result);
+    } catch (validationError) {
+      logger.error("Ошибка валидации ответа диаризации", {
+        filename,
+        error: validationError instanceof Error ? validationError.message : String(validationError),
+        response: result,
+      });
+      return {
+        success: false,
+        segments: [],
+        num_speakers: 0,
+        speakers: []
+      };
+    }
+    
     logger.info("Диаризация завершена", {
-      segmentsCount: result.segments?.length || 0,
-      numSpeakers: result.num_speakers,
-      speakers: result.speakers
+      segmentsCount: validatedResult.segments.length,
+      numSpeakers: validatedResult.num_speakers,
+      speakers: validatedResult.speakers
     });
 
     return {
-      success: true,
-      segments: result.segments || [],
-      num_speakers: result.num_speakers || 0,
-      speakers: result.speakers || []
+      success: validatedResult.success,
+      segments: validatedResult.segments,
+      num_speakers: validatedResult.num_speakers,
+      speakers: validatedResult.speakers
     };
 
   } catch (error) {
@@ -124,7 +161,12 @@ export async function checkSpeakerEmbeddingsHealth(): Promise<boolean> {
 
     if (response.ok) {
       const data = await response.json();
-      return data.pyannote_available || false;
+      try {
+        const validatedData = HealthCheckResponseSchema.parse(data);
+        return validatedData.pyannote_available || false;
+      } catch {
+        return false;
+      }
     }
 
     return false;

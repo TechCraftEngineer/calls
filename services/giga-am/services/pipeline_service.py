@@ -19,10 +19,6 @@ from utils.metrics import metrics
 
 logger = logging.getLogger(__name__)
 
-# Инициализация сервисов
-transcription_service = transcription_service
-
-
 
 
 class PipelineService:
@@ -60,7 +56,6 @@ class PipelineService:
             tmp_path = None
             try:
                 # Извлекаем только расширение из filename
-                import os
                 file_extension = os.path.splitext(filename)[1] or ".tmp"
                 
                 with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp_file:

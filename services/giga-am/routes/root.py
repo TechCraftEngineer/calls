@@ -8,5 +8,5 @@ async def root():
     return {
         "message": "GigaAM Sync API",
         "description": "Sync API для распознавания русской речи на базе GigaAM",
-        "version": "1.0.0"
+        "version": "1.1.0"
     }

@@ -62,4 +62,4 @@ async def transcribe_sync(
         raise HTTPException(
             status_code=500,
             detail="Внутренняя ошибка сервера при транскрипции"
-        )
+        ) from exc

@@ -43,11 +43,20 @@ export const transcribeCallFn = inngest.createFunction(
     },
     triggers: [transcribeRequested],
     onFailure: async ({ event, error }) => {
-      // Записываем статус failed в БД
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const typedEvent = event as unknown as { data: { callId: string } };
-      const callId = typedEvent.data.callId;
       try {
+        // Валидируем event перед использованием
+        const eventValidation = TranscribeCallEventSchema.safeParse(event.data);
+        if (!eventValidation.success) {
+          logger.error("Ошибка валидации event в onFailure handler", {
+            error: eventValidation.error.message,
+            eventData: event.data,
+          });
+          return;
+        }
+        
+        const { callId } = eventValidation.data;
+        
+        // Записываем статус failed в БД
         await callsService.markTranscriptionFailed(callId, error.message);
         logger.error("Транскрибация завершилась с ошибкой после всех попыток", {
           callId,
@@ -55,8 +64,8 @@ export const transcribeCallFn = inngest.createFunction(
         });
       } catch (dbError) {
         logger.error("Не удалось записать статус ошибки транскрибации", {
-          callId,
           error: dbError instanceof Error ? dbError.message : String(dbError),
+          originalError: error.message,
         });
       }
     },
@@ -159,8 +168,7 @@ export const transcribeCallFn = inngest.createFunction(
       // Загружаем аудио файл
       const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
       
-      // Исправляем ArrayBuffer reconstruction с учетом byteOffset
-      const audioBuffer = buffer;
+    const audioBuffer = buffer;
       
       // Параллельный запуск двух ASR с fallback механизмом
       const [nonDiarizedSettled, diarizedSettled] = await Promise.allSettled([

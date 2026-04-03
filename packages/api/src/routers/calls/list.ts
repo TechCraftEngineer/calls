@@ -102,14 +102,12 @@ export const list = workspaceProcedure
       .filter((direction): direction is "inbound" | "outbound" => direction !== null);
     const trimmedQuery = input.q?.trim() || undefined;
 
-    // Получаем PBX сотрудников и номера только если нужен manager filter или query
-    const needsPbxData = managerFilters.length > 0 || trimmedQuery;
-    const [pbxEmployees, pbxNumbers] = needsPbxData
-      ? await Promise.all([
-          pbxRepository.listEmployees(workspaceId, PBX_PROVIDER),
-          pbxRepository.listNumbers(workspaceId, PBX_PROVIDER),
-        ])
-      : [[], []];
+    // Получаем PBX сотрудников всегда (для списка менеджеров), а номера только при необходимости
+    const needsPbxNumbers = managerFilters.length > 0 || trimmedQuery;
+    const [pbxEmployees, pbxNumbers] = await Promise.all([
+      pbxRepository.listEmployees(workspaceId, PBX_PROVIDER),
+      needsPbxNumbers ? pbxRepository.listNumbers(workspaceId, PBX_PROVIDER) : Promise.resolve([]),
+    ]);
 
     // Создаем карты сотрудников для эффективного поиска
     const employeeByExternalId = new Map<string, WorkspacePbxEmployee>();
