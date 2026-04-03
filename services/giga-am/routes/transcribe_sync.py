@@ -20,8 +20,7 @@ pipeline_service = PipelineService()
 @router.post("/transcribe-sync")
 async def transcribe_sync(
     file: UploadFile,
-    filename: str = Form(...),
-    diarization: bool = Form(False)
+    filename: str = Form(...)
 ) -> JSONResponse:
     """
     Синхронная транскрипция аудио файла.
@@ -29,7 +28,7 @@ async def transcribe_sync(
     Вызывается из Inngest и ждет завершения обработки.
     """
     try:
-        logger.info(f"Получен синхронный запрос на транскрипцию: {filename}, diarization={diarization}")
+        logger.info(f"Получен синхронный запрос на транскрипцию: {filename}")
         
         # Читаем файл из UploadFile
         audio_data = await file.read()
@@ -37,8 +36,7 @@ async def transcribe_sync(
         # Запускаем транскрипцию и ждем результата
         result = await pipeline_service.process_audio_sync(
             audio_data=audio_data,
-            filename=filename,
-            diarization=diarization
+            filename=filename
         )
         
         logger.info("Синхронная транскрипция завершена")

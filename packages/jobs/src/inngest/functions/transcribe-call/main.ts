@@ -12,14 +12,13 @@ import { callsService, filesService, workspacesService } from "@calls/db";
 import type { ZodIssue } from "zod";
 import { createLogger } from "../../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../../client";
-import {
-  downloadAudioFile,
-  identifySpeakers,
-  processAudioWithGigaAmDiarized,
-  processAudioWithGigaAmNonDiarized,
-  resolveManagerFromPbx,
-  serializeMetadata,
-} from "./helpers";
+import { downloadAudioFile } from "./audio/download";
+import { identifySpeakers } from "./speaker-identification";
+import { processAudioWithDiarization } from "./gigaam/diarization";
+import { processAudioWithoutDiarization } from "./gigaam/client";
+import { resolveManagerFromPbx } from "./manager-resolution";
+import { serializeMetadata } from "./metadata";
+import type { AsrResult } from "./types";
 import { applyLLMMerging } from "./llm-merge";
 import {
   CallSchema,
@@ -43,6 +42,24 @@ export const transcribeCallFn = inngest.createFunction(
       key: "event.data.callId",
     },
     triggers: [transcribeRequested],
+    onFailure: async ({ event, error }) => {
+      // Записываем статус failed в БД
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const typedEvent = event as unknown as { data: { callId: string } };
+      const callId = typedEvent.data.callId;
+      try {
+        await callsService.markTranscriptionFailed(callId, error.message);
+        logger.error("Транскрибация завершилась с ошибкой после всех попыток", {
+          callId,
+          error: error.message,
+        });
+      } catch (dbError) {
+        logger.error("Не удалось записать статус ошибки транскрибации", {
+          callId,
+          error: dbError instanceof Error ? dbError.message : String(dbError),
+        });
+      }
+    },
   },
   async ({ event, step }) => {
     const { callId } = event.data;
@@ -143,16 +160,45 @@ export const transcribeCallFn = inngest.createFunction(
       const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
       
       // Исправляем ArrayBuffer reconstruction с учетом byteOffset
-      const audioBuffer = buffer.buffer.slice(
-        buffer.byteOffset, 
-        buffer.byteOffset + buffer.byteLength
-      );
+      const audioBuffer = buffer;
       
-      // Параллельный запуск двух ASR с переиспользованием загруженных данных
-      const [nonDiarizedResult, diarizedResult] = await Promise.all([
-        processAudioWithGigaAmNonDiarized(audioBuffer, filename),
-        processAudioWithGigaAmDiarized(audioBuffer, filename),
+      // Параллельный запуск двух ASR с fallback механизмом
+      const [nonDiarizedSettled, diarizedSettled] = await Promise.allSettled([
+        processAudioWithoutDiarization(audioBuffer, filename),
+        processAudioWithDiarization(audioBuffer, filename),
       ]);
+
+      // Проверяем, что оба провайдера не упали
+      if (nonDiarizedSettled.status === "rejected" && diarizedSettled.status === "rejected") {
+        logger.error("Оба ASR провайдера завершились ошибкой", {
+          callId,
+          nonDiarizedError: nonDiarizedSettled.reason,
+          diarizedError: diarizedSettled.reason,
+        });
+        throw new Error("Оба ASR провайдера завершились ошибкой");
+      }
+
+      // Fallback механизм: если один провайдер упал, используем результат другого
+      const nonDiarizedResult: AsrResult = nonDiarizedSettled.status === "fulfilled"
+        ? nonDiarizedSettled.value
+        : diarizedSettled.status === "fulfilled"
+          ? diarizedSettled.value
+          : (() => { throw new Error("Нет доступных ASR результатов для non-diarized"); })();
+
+      const diarizedResult: AsrResult = diarizedSettled.status === "fulfilled"
+        ? diarizedSettled.value
+        : nonDiarizedSettled.status === "fulfilled"
+          ? nonDiarizedSettled.value
+          : (() => { throw new Error("Нет доступных ASR результатов для diarized"); })();
+
+      // Логируем fallback ситуации
+      if (nonDiarizedSettled.status === "rejected" || diarizedSettled.status === "rejected") {
+        logger.warn("ASR fallback активирован", {
+          callId,
+          nonDiarizedFailed: nonDiarizedSettled.status === "rejected",
+          diarizedFailed: diarizedSettled.status === "rejected",
+        });
+      }
       
       return {
         nonDiarized: nonDiarizedResult,

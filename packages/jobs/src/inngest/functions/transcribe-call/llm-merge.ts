@@ -39,7 +39,7 @@ export interface AsrSegment {
   start: number;
   end: number;
   text: string;
-  embedding?: number[];
+  embedding?: number[] | null;
   confidence?: number;
 }
 

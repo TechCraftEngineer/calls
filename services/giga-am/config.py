@@ -43,36 +43,6 @@ class Settings(BaseSettings):
     inngest_event_key: str = os.getenv("INNGEST_EVENT_KEY", "")
     
     callback_timeout: int = 20
-    diarization_enabled: bool = True
-    alignment_enabled: bool = True
-    
-    # Diarization settings (pyannote-based, SOTA 2024-2026)
-    diarization_num_speakers: int | None = Field(
-        default=None,
-        description="Exact number of speakers (if known). Leave None for automatic detection"
-    )
-    diarization_min_speakers: int | None = Field(
-        default=None,
-        ge=1,
-        description="Minimum number of speakers for automatic detection"
-    )
-    diarization_max_speakers: int | None = Field(
-        default=None,
-        ge=1,
-        description="Maximum number of speakers for automatic detection"
-    )
-    diarization_min_segment_duration: float = Field(
-        default=0.5,
-        ge=0.1,
-        le=5.0,
-        description="Minimum segment duration after diarization (seconds)"
-    )
-    
-    speaker_embeddings_url: str = os.getenv(
-        "SPEAKER_EMBEDDINGS_URL",
-        "",
-    )
-    speaker_embeddings_timeout: int = 300  # 5 минут для диаризации (может быть долгой)
     
     # Audio preprocessing settings
     auto_resample_enabled: bool = Field(

@@ -2,9 +2,36 @@
  * Индексный файл для модуля транскрибации
  */
 
-export * from "./helpers";
+// Прямые экспорты из модулей (без helpers.ts barrel-экспорта)
+export { downloadAudioFile, downloadAudioBuffer } from "./audio/download";
+export { extractAudioSegment } from "./audio/processing";
+export {
+  processAudioWithGigaAm,
+  processAudioWithoutDiarization,
+  fetchWithRetry,
+} from "./gigaam/client";
+export { processAudioWithDiarization } from "./gigaam/diarization";
+export { extractSpeakerTimeline, extractSegmentsFromUtterances } from "./extraction";
+export { identifySpeakers } from "./speaker-identification";
+export { resolveManagerFromPbx } from "./manager-resolution";
+export { serializeMetadata } from "./metadata";
 export * from "./llm-correction";
+export * from "./llm-merge";
 export * from "./main";
+export * from "./validation";
+
+// Экспорт типов
+export type {
+  AsrResult,
+  AudioFileResult,
+  AudioBufferLegacyResult,
+  Call,
+  PipelineAudioResult,
+  SpeakerIdentificationResult,
+  TranscriptionResult,
+  Workspace,
+} from "./types";
+
 // Экспорт типов и схем с разрешением конфликтов
 export type {
   AsrLog as AsrLogType,
@@ -18,6 +45,7 @@ export type {
   TranscriptMetadata,
   Workspace as WorkspaceType,
 } from "./schemas";
+
 // Экспорт схем валидации
 export {
   AsrLogSchema,
@@ -33,12 +61,3 @@ export {
   TranscriptMetadataSchema,
   WorkspaceSchema,
 } from "./schemas";
-
-export type {
-  Call,
-  PipelineAudioResult,
-  SpeakerIdentificationResult,
-  TranscriptionResult,
-  Workspace,
-} from "./types";
-export * from "./validation";

@@ -34,6 +34,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.10",
     "@turbo/gen": "^2.9.3",
+    "@types/fluent-ffmpeg": "^2.1.28",
     "to-ico": "^1.1.5",
     "tsdown": "^0.21.7",
     "turbo": "^2.9.3",
