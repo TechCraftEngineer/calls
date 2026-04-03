@@ -9,7 +9,6 @@ from fastapi import APIRouter, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 
 from services.pipeline_service import PipelineService
-from utils.metrics import metrics
 
 logger = logging.getLogger(__name__)
 

@@ -116,8 +116,13 @@ routes/results.py          # API результатов
 
 ### TypeScript (Inngest)
 ```
-functions/transcription-sync.ts      # Основная функция
-functions/transcription-completed.ts  # LLM коррекция (опционально)
+functions/transcribe-call/
+├── main.ts              # Основная функция транскрипции
+├── helpers.ts           # Вспомогательные функции
+├── llm-correction.ts    # LLM коррекция
+├── types.ts            # Типы и интерфейсы
+├── validation.ts       # Валидация и ошибки
+└── index.ts           # Экспорт модуля
 ```
 
 ## Поток данных
