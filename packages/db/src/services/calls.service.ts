@@ -352,13 +352,37 @@ export class CallsService {
   async calculateMetrics(
     workspaceId?: string,
     excludePhoneNumbers?: string[],
+    additionalFilters?: {
+      dateFrom?: string;
+      dateTo?: string;
+      internalNumbers?: string[];
+      mobileNumbers?: string[];
+      directions?: ("inbound" | "outbound")[];
+      managerInternalNumbers?: string[];
+      statuses?: ("missed" | "answered" | "voicemail" | "failed")[];
+      managerInternalNumbersForQuery?: string[];
+      q?: string;
+    },
   ): Promise<{
     totalCalls: number;
     transcribed: number;
     avgDuration: number;
     lastSync: string | null;
   }> {
-    return this.callsRepository.getMetrics(workspaceId, excludePhoneNumbers);
+    return this.callsRepository.getMetrics({
+      workspaceId,
+      excludePhoneNumbers,
+      ...additionalFilters,
+    });
+  }
+
+  async markTranscriptionFailed(callId: string, errorMessage: string): Promise<void> {
+    // Используем существующий метод updatePbxBinding для обновления статуса
+    await this.callsRepository.updatePbxBinding(callId, {
+      transcriptionStatus: 'failed',
+      transcriptionError: errorMessage,
+      transcribedAt: new Date(),
+    } as any);
   }
 
   async getEvaluationsStats(params: {

@@ -102,11 +102,14 @@ export const list = workspaceProcedure
       .filter((direction): direction is "inbound" | "outbound" => direction !== null);
     const trimmedQuery = input.q?.trim() || undefined;
 
-    // Получаем PBX сотрудников и номера для построения менеджеров
-    const [pbxEmployees, pbxNumbers] = await Promise.all([
-      pbxRepository.listEmployees(workspaceId, PBX_PROVIDER),
-      pbxRepository.listNumbers(workspaceId, PBX_PROVIDER),
-    ]);
+    // Получаем PBX сотрудников и номера только если нужен manager filter или query
+    const needsPbxData = managerFilters.length > 0 || trimmedQuery;
+    const [pbxEmployees, pbxNumbers] = needsPbxData
+      ? await Promise.all([
+          pbxRepository.listEmployees(workspaceId, PBX_PROVIDER),
+          pbxRepository.listNumbers(workspaceId, PBX_PROVIDER),
+        ])
+      : [[], []];
 
     // Создаем карты сотрудников для эффективного поиска
     const employeeByExternalId = new Map<string, WorkspacePbxEmployee>();
@@ -208,8 +211,12 @@ export const list = workspaceProcedure
         )
       : [];
 
-    const internalNumbers = isAdminOrOwner ? undefined : getInternalNumbersForUser(user);
-    const mobileNumbers = isAdminOrOwner ? undefined : getMobileNumbersForUser(user);
+    const internalNumbers = isAdminOrOwner
+      ? undefined
+      : getInternalNumbersForUser(user as { id: string; internalExtensions?: string | null; mobilePhones?: string | null });
+    const mobileNumbers = isAdminOrOwner
+      ? undefined
+      : getMobileNumbersForUser(user as { id: string; internalExtensions?: string | null; mobilePhones?: string | null });
 
     const ftpSettings = await settingsService.getFtpSettings(workspaceId);
     const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
@@ -283,12 +290,21 @@ export const list = workspaceProcedure
           managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
         q: trimmedQuery,
       }),
-      // Примечание: calculateMetrics использует ограниченный набор фильтров
-      // и возвращает агрегаты по всему workspace с учетом excludePhoneNumbers
-      // Это сделано из-за архитектурных ограничений функции calculateMetrics
+      // Исправлено: calculateMetrics теперь учитывает все текущие фильтры
       callsService.calculateMetrics(
         workspaceId,
         excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+        {
+          dateFrom,
+          dateTo,
+          internalNumbers,
+          mobileNumbers,
+          directions: normalizedDirections?.length ? normalizedDirections : undefined,
+          managerInternalNumbers: managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
+          statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
+          managerInternalNumbersForQuery: managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
+          q: trimmedQuery,
+        },
       ),
     ]);
 

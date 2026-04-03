@@ -50,8 +50,8 @@ export interface IdentifySpeakersWithEmbeddingsOptions {
     start?: number;
     end?: number;
     text?: string;
-    embedding?: number[];
-    confidence?: number;
+    embedding?: number[] | null;
+    confidence?: number | null;
   }>;
 }
 
@@ -88,8 +88,8 @@ function analyzeSpeakerClusters(
     start?: number;
     end?: number;
     text?: string;
-    embedding?: number[];
-    confidence?: number;
+    embedding?: number[] | null;
+    confidence?: number | null;
   }>,
 ): Map<string, SpeakerCluster> {
   const clusters = new Map<string, SpeakerCluster>();

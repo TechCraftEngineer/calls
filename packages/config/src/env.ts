@@ -69,6 +69,9 @@ export const env = createEnv({
     AUDIO_ENHANCER_ENABLED: z.coerce.boolean().default(false),
     AUDIO_ENHANCER_URL: z.url().default("https://vnggncb-audio-enhancer.hf.space/"),
 
+    // Speaker diarization service
+    SPEAKER_EMBEDDINGS_URL: z.url().default("https://vnggncb-speaker-embeddings.hf.space/"),
+
     // LLM correction for dual ASR
     ENABLE_DUAL_ASR_LLM_CORRECTION: z.coerce.boolean().default(true),
 
@@ -136,6 +139,7 @@ export const env = createEnv({
     YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE: process.env.YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE,
     AUDIO_ENHANCER_ENABLED: process.env.AUDIO_ENHANCER_ENABLED,
     AUDIO_ENHANCER_URL: process.env.AUDIO_ENHANCER_URL,
+    SPEAKER_EMBEDDINGS_URL: process.env.SPEAKER_EMBEDDINGS_URL,
     ENABLE_DUAL_ASR_LLM_CORRECTION: process.env.ENABLE_DUAL_ASR_LLM_CORRECTION,
     MIN_FILE_SIZE_BYTES: process.env.MIN_FILE_SIZE_BYTES,
     MAX_FILE_SIZE_BYTES: process.env.MAX_FILE_SIZE_BYTES,

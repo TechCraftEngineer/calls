@@ -20,25 +20,8 @@ type PbxSyncRequestedData = {
     payload: Record<string, unknown>;
   };
 };
-type TranscriptionCompletedData = {
-  requestId: string;
-  fullTranscript: string;
-  diarizedSegments: Array<{
-    start: number;
-    end: number;
-    speaker: string;
-    text: string;
-    confidence?: number;
-  }>;
-  metadata: {
-    diarizationTime: number;
-    asrTime: number;
-    alignmentTime: number;
-    totalDuration: number;
-  };
-};
 
-export const transcribeRequested = eventType("call/transcribe.requested", {
+export const transcribeRequested = eventType("asr/transcribe.requested", {
   schema: staticSchema<TranscribeRequestedData>(),
 });
 
@@ -48,8 +31,4 @@ export const evaluateRequested = eventType("call/evaluate.requested", {
 
 export const pbxSyncRequested = eventType("pbx/sync.requested", {
   schema: staticSchema<PbxSyncRequestedData>(),
-});
-
-export const transcriptionCompletedEvent = eventType("asr/transcription.completed", {
-  schema: staticSchema<TranscriptionCompletedData>(),
 });

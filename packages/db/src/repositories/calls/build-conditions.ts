@@ -35,6 +35,9 @@ export function buildCallConditions({
 }: CallConditionsParams) {
   const conditions = [];
 
+  // По умолчанию исключаем архивированные звонки
+  conditions.push(eq(schema.calls.isArchived, false));
+
   if (workspaceId != null) {
     conditions.push(eq(schema.calls.workspaceId, workspaceId));
   }

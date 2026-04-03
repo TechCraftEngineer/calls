@@ -12,8 +12,20 @@ import { getKpiStats as getKpiStatsFn } from "./get-kpi-stats";
 import { getCallsMetrics } from "./get-metrics";
 
 export const callsStats = {
-  async getMetrics(workspaceId?: string, excludePhoneNumbers?: string[]) {
-    return getCallsMetrics(workspaceId, excludePhoneNumbers);
+  async getMetrics(params?: {
+    workspaceId?: string;
+    excludePhoneNumbers?: string[];
+    dateFrom?: string;
+    dateTo?: string;
+    internalNumbers?: string[];
+    mobileNumbers?: string[];
+    directions?: ("inbound" | "outbound")[];
+    managerInternalNumbers?: string[];
+    statuses?: ("missed" | "answered" | "voicemail" | "failed")[];
+    managerInternalNumbersForQuery?: string[];
+    q?: string;
+  }) {
+    return getCallsMetrics(params);
   },
 
   async getEvaluationsStats(params: {

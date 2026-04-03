@@ -6,6 +6,7 @@ import { sql } from "drizzle-orm";
 import { boolean, index, pgTable, text, timestamp, unique, uuid, check } from "drizzle-orm/pg-core";
 import { files } from "../files/files";
 import { workspaces } from "../workspace/workspaces";
+import { callDirectionEnum, callStatusEnum } from "./enums";
 
 export const calls = pgTable(
   "calls",
@@ -18,8 +19,8 @@ export const calls = pgTable(
     number: text("number"),
     timestamp: timestamp("timestamp", { withTimezone: true }).notNull(),
     name: text("name"),
-    direction: text("direction"),
-    status: text("status"),
+    direction: callDirectionEnum("direction"),
+    status: callStatusEnum("status"),
     fileId: uuid("file_id").references(() => files.id, {
       onDelete: "set null",
     }),
@@ -42,10 +43,9 @@ export const calls = pgTable(
       .notNull(),
   },
   (table) => [
-    // NULL разрешен, нормализация происходит через normalizeCallStatus (packages/db/src/utils/call-status.ts)
-    // и CRUD пути (packages/db/src/repositories/calls/crud.ts)
-    // NOT VALID используется для безопасной миграции - constraint добавляется без проверки существующих данных
-    check("calls_status_check", sql`status IN ('missed', 'answered')`),
+    // Используем pgEnum для валидации значений
+    check("calls_status_check", sql`status IN ('missed', 'answered', 'voicemail', 'failed')`),
+    check("calls_direction_check", sql`direction IN ('inbound', 'outbound', 'incoming', 'outgoing')`),
     unique("calls_workspace_filename_unique").on(table.workspaceId, table.filename),
     unique("calls_workspace_provider_external_id_unique").on(
       table.workspaceId,

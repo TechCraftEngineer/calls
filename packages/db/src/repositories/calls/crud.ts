@@ -267,22 +267,27 @@ export const callsCrud = {
       source?: string | null;
       name?: string | null;
       customerName?: string | null;
-    },
-  ): Promise<void> {
-    // Валидация callId как UUID
-    validateCallId(callId);
+    }
+  ) {
+    return await db.transaction(async (tx) => {
+      const patch: Partial<schema.NewCall> = {};
 
-    // Валидация данных с помощью Zod
-    const validatedData = validateWithSchema(updatePbxBindingWithCustomerSchema, data);
+      if (data.internalNumber !== undefined) {
+        patch.internalNumber = data.internalNumber;
+      }
 
-    const patch: Partial<schema.NewCall> = {};
-    if (validatedData.internalNumber !== undefined)
-      patch.internalNumber = validatedData.internalNumber;
-    if (validatedData.source !== undefined) patch.source = validatedData.source;
-    if (validatedData.name !== undefined) patch.name = validatedData.name;
-    if (validatedData.customerName !== undefined) patch.customerName = validatedData.customerName;
+      if (data.source !== undefined) {
+        patch.source = data.source;
+      }
 
-    await db.transaction(async (tx) => {
+      if (data.name !== undefined) {
+        patch.name = data.name;
+      }
+
+      if (data.customerName !== undefined) {
+        patch.customerName = data.customerName;
+      }
+
       await tx.update(schema.calls).set(patch).where(eq(schema.calls.id, callId));
     });
   },

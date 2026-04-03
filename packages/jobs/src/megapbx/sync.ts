@@ -6,6 +6,7 @@ import {
   pbxRepository,
   pbxService,
 } from "@calls/db";
+import pLimit from "p-limit";
 import { inngest, transcribeRequested } from "../inngest/client";
 import { createLogger } from "../logger";
 import { MegaPbxClient } from "./client";
@@ -479,23 +480,30 @@ export async function runActiveMegaPbxSync() {
   const integrations = await pbxService.listActiveIntegrations();
   const results: Array<{ workspaceId: string; ok: boolean; error?: string }> = [];
 
-  for (const integration of integrations) {
-    try {
-      await syncMegaPbxWorkspace(integration.workspaceId, integration);
-      results.push({ workspaceId: integration.workspaceId, ok: true });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      results.push({
-        workspaceId: integration.workspaceId,
-        ok: false,
-        error: message,
-      });
-      logger.error("Ошибка фонового синка MegaPBX", {
-        workspaceId: integration.workspaceId,
-        error: message,
-      });
-    }
-  }
+  // Ограничиваем одновременную обработку до 3 workspace'ов
+  const limit = pLimit(3);
+  
+  await Promise.all(
+    integrations.map(integration =>
+      limit(async () => {
+        try {
+          await syncMegaPbxWorkspace(integration.workspaceId, integration);
+          results.push({ workspaceId: integration.workspaceId, ok: true });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          results.push({
+            workspaceId: integration.workspaceId,
+            ok: false,
+            error: message,
+          });
+          logger.error("Ошибка фонового синка MegaPBX", {
+            workspaceId: integration.workspaceId,
+            error: message,
+          });
+        }
+      })
+    )
+  );
 
   return results;
 }

@@ -1,30 +1,130 @@
-import { and, avg, count, desc, eq } from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, lte, ilike, or } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
 
+interface GetCallsMetricsParams {
+  workspaceId?: string;
+  excludePhoneNumbers?: string[];
+  dateFrom?: string;
+  dateTo?: string;
+  internalNumbers?: string[];
+  mobileNumbers?: string[];
+  directions?: ("inbound" | "outbound")[];
+  managerInternalNumbers?: string[];
+  statuses?: ("missed" | "answered" | "voicemail" | "failed")[];
+  managerInternalNumbersForQuery?: string[];
+  q?: string;
+}
+
 export async function getCallsMetrics(
-  workspaceId?: string,
-  excludePhoneNumbers?: string[],
+  params?: GetCallsMetricsParams,
 ): Promise<{
   totalCalls: number;
   transcribed: number;
   avgDuration: number;
   lastSync: string | null;
 }> {
-  const callConditions =
-    workspaceId != null ? [eq(schema.calls.workspaceId, workspaceId)] : undefined;
+  const {
+    workspaceId,
+    excludePhoneNumbers,
+    dateFrom,
+    dateTo,
+    internalNumbers,
+    mobileNumbers,
+    directions,
+    managerInternalNumbers,
+    statuses,
+    managerInternalNumbersForQuery,
+    q,
+  } = params || {};
+
+  const conditions = [];
+  
+  if (workspaceId != null) {
+    conditions.push(eq(schema.calls.workspaceId, workspaceId));
+  }
+
+  if (dateFrom) {
+    conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
+  }
+
+  if (dateTo) {
+    conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
+  }
+
+  if (internalNumbers?.length) {
+    conditions.push(
+      or(
+        ...internalNumbers.map(num => eq(schema.calls.internalNumber, num))
+      )
+    );
+  }
+
+  if (mobileNumbers?.length) {
+    conditions.push(
+      or(
+        ...mobileNumbers.map(num => eq(schema.calls.number, num))
+      )
+    );
+  }
+
+  if (directions?.length) {
+    conditions.push(
+      or(
+        ...directions.map(dir => eq(schema.calls.direction, dir))
+      )
+    );
+  }
+
+  // Убираем valueScore так как этого поля нет в схеме
+  // if (valueScores?.length) {
+  //   conditions.push(
+  //     or(
+  //       ...valueScores.map(score => eq(schema.calls.valueScore, score))
+  //     )
+  //   );
+  // }
+
+  if (managerInternalNumbers?.length) {
+    conditions.push(
+      or(
+        ...managerInternalNumbers.map(num => eq(schema.calls.internalNumber, num))
+      )
+    );
+  }
+
+  if (statuses?.length) {
+    conditions.push(
+      or(
+        ...statuses.map(status => eq(schema.calls.status, status))
+      )
+    );
+  }
+
+  if (managerInternalNumbersForQuery?.length) {
+    conditions.push(
+      or(
+        ...managerInternalNumbersForQuery.map(num => eq(schema.calls.internalNumber, num))
+      )
+    );
+  }
+
+  if (q) {
+    conditions.push(
+      or(
+        ilike(schema.calls.name, `%${q}%`),
+        ilike(schema.calls.number, `%${q}%`),
+        ilike(schema.calls.internalNumber, `%${q}%`)
+      )
+    );
+  }
 
   const excludeCondition = excludePhoneNumbers?.length
     ? buildExcludePhoneCondition(excludePhoneNumbers, schema.calls)
     : undefined;
-  const allConditions = [callConditions?.[0], excludeCondition].filter(
-    (
-      condition,
-    ): condition is NonNullable<
-      (typeof callConditions extends Array<infer T> ? T : never) | typeof excludeCondition
-    > => condition != null,
-  );
+
+  const allConditions = [...conditions, excludeCondition].filter(Boolean);
 
   const totalCallsQuery = db.select({ count: count() }).from(schema.calls).$dynamic();
   const transcribedQuery = db
