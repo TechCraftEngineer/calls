@@ -259,15 +259,20 @@ class DiarizedTranscriptionService:
         # Параллельная нарезка (I/O bound, можно все сразу)
         tasks = [extract_one(i, seg) for i, seg in enumerate(segments)]
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        segment_files = []
+
+        # Сохраняем позиционное соответствие: храним (index, result) пары
+        indexed_results = []
         for i, r in enumerate(results):
             if isinstance(r, Exception):
                 logger.error(f"[{request_id}] Ошибка нарезки сегмента {i}: {r}")
             else:
-                segment_files.append(r)
-        
-        logger.debug(f"[{request_id}] Нарезано {len(segment_files)} сегментов из {len(segments)}")
+                indexed_results.append((i, r))
+
+        segment_files = [None] * len(segments)  # Placeholder для всех сегментов
+        for idx, file_path in indexed_results:
+            segment_files[idx] = file_path
+
+        logger.debug(f"[{request_id}] Нарезано {len(indexed_results)} сегментов из {len(segments)}")
         return segment_files
     
     async def _transcribe_segments_parallel(
@@ -349,14 +354,27 @@ class DiarizedTranscriptionService:
                     )
         
         # Запускаем все задачи параллельно (семафор ограничит выполнение)
+        # Используем enumerate для сохранения исходных индексов
         tasks = [
-            transcribe_one(i, file_path, segment)
-            for i, (file_path, segment) in enumerate(zip(segment_files, segments))
+            transcribe_one(i, file_path, segments[i])
+            for i, file_path in enumerate(segment_files)
+            if file_path is not None  # Пропускаем failed сегменты
         ]
-        
+
         results = await asyncio.gather(*tasks)
-        
-        return results
+
+        # Создаем полный список результатов с None для failed сегментов
+        full_results = [None] * len(segments)
+        for i, file_path in enumerate(segment_files):
+            if file_path is not None:
+                # Находим соответствующий результат по исходному индексу
+                for res in results:
+                    if res.start == segments[i].start and res.end == segments[i].end:
+                        full_results[i] = res
+                        break
+
+        # Фильтруем None значения
+        return [r for r in full_results if r is not None]
 
 
 # Глобальный экземпляр сервиса

@@ -4,18 +4,15 @@
 
 import { filesService } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
+import type { z } from "zod";
 import { createLogger } from "../../../../logger";
 import { FileSchema } from "../schemas";
 import type { AudioBufferLegacyResult, AudioFileResult } from "../types";
-import type { z } from "zod";
 
-const logger = createLogger("audio-download");
+const _logger = createLogger("audio-download");
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
-async function streamWithSizeLimit(
-  url: string,
-  maxBytes: number,
-): Promise<ArrayBuffer> {
+async function streamWithSizeLimit(url: string, maxBytes: number): Promise<ArrayBuffer> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 минут таймаут
 

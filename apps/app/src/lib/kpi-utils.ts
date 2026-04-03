@@ -60,7 +60,22 @@ export function formatCurrency(value: number): string {
 export function formatDateISO(date: string | Date): string {
   // Для строк в формате YYYY-MM-DD парсим без timezone conversion
   if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return date;
+    // Проверяем валидность календарной даты (например, отсекаем "2024-99-99")
+    const [yearStr, monthStr, dayStr] = date.split("-");
+    const year = Number.parseInt(yearStr, 10);
+    const month = Number.parseInt(monthStr, 10);
+    const day = Number.parseInt(dayStr, 10);
+
+    // Создаем дату в UTC и проверяем, что компоненты совпадают
+    const utcDate = new Date(Date.UTC(year, month - 1, day));
+    if (
+      utcDate.getUTCFullYear() === year &&
+      utcDate.getUTCMonth() + 1 === month &&
+      utcDate.getUTCDate() === day
+    ) {
+      return date;
+    }
+    // Если дата невалидна, продолжаем к обычному парсингу (вызовет Invalid Date)
   }
   const d = typeof date === "string" ? new Date(date) : date;
   const year = d.getFullYear();

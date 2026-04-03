@@ -8,7 +8,7 @@ import {
   formatCurrency,
   formatDateISO,
   getColorByPercentage,
-} from "./kpi-utils";
+} from "@/lib/kpi-utils";
 
 describe("calculateDaysInMonth", () => {
   it("should return 31 days for January", () => {

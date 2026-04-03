@@ -96,7 +96,7 @@ async function processFile(
 
     if (downloadBuffer.length < MIN_FILE_SIZE) {
       result.errors.push(
-        `${relativePath}: Файл слишком маленький (${downloadBuffer.length} bytes)`,
+        `${relativePath}: Файл слишком маленький (${formatBytesRu(downloadBuffer.length)})`,
       );
       logger.warn("Файл слишком маленький", {
         filename: relativePath,
@@ -106,7 +106,9 @@ async function processFile(
     }
 
     if (downloadBuffer.length > MAX_FILE_SIZE) {
-      result.errors.push(`${relativePath}: Файл слишком большой (${downloadBuffer.length} bytes)`);
+      result.errors.push(
+        `${relativePath}: Файл слишком большой (${formatBytesRu(downloadBuffer.length)})`,
+      );
       logger.warn("Файл слишком большой", {
         filename: relativePath,
         size: downloadBuffer.length,
@@ -251,6 +253,16 @@ export async function testFtpConnection(
   } finally {
     client.close();
   }
+}
+
+/** Форматирует размер файла в человекочитаемый вид с русскими единицами */
+function formatBytesRu(bytes: number): string {
+  if (bytes === 0) return "0 байт";
+  const k = 1024;
+  const sizes = ["байт", "КБ", "МБ", "ГБ"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const size = Math.round((bytes / k ** i) * 100) / 100;
+  return `${size} ${sizes[i]}`;
 }
 
 /** Нормализация номера для сравнения (только цифры) */

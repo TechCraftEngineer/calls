@@ -1,4 +1,4 @@
-import { and, avg, count, desc, eq, gte, ilike, lte, or } from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, ilike, lt, or } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
@@ -63,7 +63,7 @@ export async function getCallsMetrics(params?: GetCallsMetricsParams): Promise<{
     // Используем half-open interval: добавляем день к dateTo и используем lt
     const dateToPlusOne = new Date(dateTo);
     dateToPlusOne.setDate(dateToPlusOne.getDate() + 1);
-    conditions.push(lte(schema.calls.timestamp, dateToPlusOne));
+    conditions.push(lt(schema.calls.timestamp, dateToPlusOne));
   }
 
   if (internalNumbers?.length) {
