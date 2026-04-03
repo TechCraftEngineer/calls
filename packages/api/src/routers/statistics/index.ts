@@ -1,3 +1,4 @@
+import type { AnyProcedure } from "@orpc/server";
 import { getKpi } from "./get-kpi";
 import { getMetrics } from "./get-metrics";
 import { getStatistics } from "./get-statistics";
@@ -8,4 +9,4 @@ export const statisticsRouter = {
   getMetrics,
   getKpi,
   updateKpiEmployee,
-};
+} satisfies Record<string, AnyProcedure>;
