@@ -1,12 +1,13 @@
 """
 Сервис для выполнения полного pipeline обработки аудио.
 """
+import asyncio
 import logging
 import os
 import tempfile
 import time
 import uuid
-from typing import Any
+from typing import Dict, Any
 
 import librosa
 import numpy as np
@@ -138,6 +139,7 @@ def run_ultra_pipeline(
                 continue
             
             # Сохраняем временный файл для ASR
+            segment_path = None
             try:
                 with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
                     segment_path = tmp_file.name
@@ -167,12 +169,13 @@ def run_ultra_pipeline(
                     })
             finally:
                 # Удаляем временный файл
-                try:
-                    os.unlink(segment_path)
-                except Exception as exc:
-                    logger.warning(
-                        f"[{request_id}] Failed to delete temporary file {segment_path}: {exc}"
-                    )
+                if segment_path and os.path.exists(segment_path):
+                    try:
+                        os.unlink(segment_path)
+                    except Exception as exc:
+                        logger.warning(
+                            f"[{request_id}] Failed to delete temporary file {segment_path}: {exc}"
+                        )
         
         asr_time = time.time() - start_time
         metrics.record_stage_time(request_id, "asr", asr_time)
@@ -272,15 +275,29 @@ class PipelineService:
                 raise ValueError(f"Размер файла ({len(audio_data)} bytes) превышает лимит ({max_size} bytes)")
             
             # Сохраняем аудио во временный файл
-            with tempfile.NamedTemporaryFile(delete=False, suffix=filename) as tmp_file:
-                tmp_path = tmp_file.name
-                tmp_file.write(audio_data)
-            
-            # Запускаем полную обработку
-            result = run_ultra_pipeline(tmp_path, None, request_id)
-            
-            logger.info(f"[{request_id}] Синхронная обработка завершена")
-            return result
+            tmp_path = None
+            try:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=filename) as tmp_file:
+                    tmp_path = tmp_file.name
+                    tmp_file.write(audio_data)
+                
+                # Запускаем полную обработку в отдельном потоке
+                result = await asyncio.to_thread(
+                    run_ultra_pipeline, 
+                    tmp_path, 
+                    None, 
+                    request_id
+                )
+                
+                logger.info(f"[{request_id}] Синхронная обработка завершена")
+                return result
+            finally:
+                # Очистка временного файла
+                if tmp_path and os.path.exists(tmp_path):
+                    try:
+                        os.unlink(tmp_path)
+                    except Exception as e:
+                        logger.warning(f"[{request_id}] Failed to cleanup temp file {tmp_path}: {e}")
             
         except Exception as e:
             logger.error(f"[{request_id}] Ошибка синхронной обработки: {e}")

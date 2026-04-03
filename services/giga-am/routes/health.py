@@ -2,15 +2,10 @@
 Health check эндпоинты.
 """
 
-import logging
-from typing import Dict, Any
-
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
-logger = logging.getLogger(__name__)
-
-router = APIRouter(prefix="/api", tags=["health"])
+router = APIRouter(tags=["health"])
 
 
 @router.get("/health")
@@ -30,8 +25,22 @@ async def readiness_check() -> JSONResponse:
     """
     Проверка готовности сервиса.
     """
-    # Здесь можно добавить проверку загрузки моделей
-    return JSONResponse(content={
-        "status": "ready",
-        "service": "giga-am-transcription"
-    })
+    try:
+        # Здесь можно добавить проверку загрузки моделей или доступности зависимостей
+        # Например, проверить доступность transcription_service или diarization_service
+        from services.transcription_service import transcription_service
+        
+        # Простая проверка - сервис импортирован и готов к работе
+        return JSONResponse(content={
+            "status": "ready",
+            "service": "giga-am-transcription"
+        })
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "not_ready",
+                "service": "giga-am-transcription",
+                "reason": f"Service not ready: {str(e)}"
+            }
+        )

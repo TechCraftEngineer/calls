@@ -114,7 +114,16 @@ export function validateAndMergeCorrections(
     const orig = originalSegments[i];
     const corr = correctedSegments[i];
 
-    if (!orig || !corr) continue;
+    if (!orig || !corr) {
+      logger.warn("Пропуск сегмента при валидации", {
+        index: i,
+        hasOriginal: !!orig,
+        hasCorrected: !!corr,
+        originalText: orig?.text?.substring(0, 50),
+        correctedText: corr?.text?.substring(0, 50),
+      });
+      continue;
+    }
 
     const validatedSeg: TranscriptionSegment = {
       start: orig.start,
@@ -181,6 +190,17 @@ export async function applyLLMCorrection(
     };
   } catch (error) {
     logger.error("LLM correction failed", { requestId, error });
+    
+    // Проверяем на timeout ошибки
+    if (error instanceof Error && (
+      error.name === 'TimeoutError' || 
+      (error as any).code === 'ETIMEDOUT' ||
+      error.message.includes('timeout')
+    )) {
+      logger.error("LLM correction timeout", { requestId, error });
+      throw new Error(`LLM correction timeout: ${error.message}`);
+    }
+    
     return { segments, correctionsApplied: false };
   }
 }

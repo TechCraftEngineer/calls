@@ -116,7 +116,7 @@ export async function mergeAsrResultsWithLLM(
   });
 
   // Преобразуем результат в AsrSegment[]
-  const segments: AsrSegment[] = output.segments.map((seg) => ({
+  const segments: AsrSegment[] = output.segments.map((seg: any) => ({
     start: seg.start,
     end: seg.end,
     speaker: seg.speaker,

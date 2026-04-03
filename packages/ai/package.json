@@ -24,14 +24,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ai-sdk/deepseek": "2.0.26",
-    "@ai-sdk/openai": "3.0.49",
+    "@ai-sdk/deepseek": "2.0.27",
+    "@ai-sdk/openai": "3.0.50",
     "@calls/config": "workspace:*",
     "@langfuse/otel": "^5.0.2",
     "@langfuse/tracing": "^5.0.2",
     "@openrouter/ai-sdk-provider": "^2.3.3",
     "@opentelemetry/sdk-trace-node": "^2.6.1",
-    "ai": "^6.0.142",
+    "ai": "^6.0.145",
     "langfuse": "^3.38.20",
     "zod": "4.3.6"
   },

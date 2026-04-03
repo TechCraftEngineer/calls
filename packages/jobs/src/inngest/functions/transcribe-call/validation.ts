@@ -143,7 +143,12 @@ export function handleAsyncError<T>(operation: () => Promise<T>, context: string
       throw error;
     }
 
-    throw new TranscriptionError(`Внутренняя ошибка в ${context}`, "INTERNAL_ERROR", context);
+    // Сохраняем оригинальную ошибку как cause
+    const transcriptionError = new TranscriptionError(`Внутренняя ошибка в ${context}`, "INTERNAL_ERROR", context);
+    if (error instanceof Error) {
+      transcriptionError.cause = error;
+    }
+    throw transcriptionError;
   });
 }
 
