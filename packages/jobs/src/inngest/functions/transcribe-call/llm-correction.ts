@@ -189,18 +189,22 @@ export async function applyLLMCorrection(
       correctionsApplied: result.correctionsApplied > 0,
     };
   } catch (error) {
-    logger.error("LLM correction failed", { requestId, error });
+    // Type guard для проверки error с кодом
+    const isErrorWithCode = (err: unknown): err is { code?: string } => 
+      err instanceof Error && 'code' in err;
     
     // Проверяем на timeout ошибки
     if (error instanceof Error && (
       error.name === 'TimeoutError' || 
-      (error as any).code === 'ETIMEDOUT' ||
+      (isErrorWithCode(error) && error.code === 'ETIMEDOUT') ||
       error.message.includes('timeout')
     )) {
-      logger.error("LLM correction timeout", { requestId, error });
+      // Объединяем логи для предотвращения дублирования
+      logger.error(`LLM correction timeout: ${error.message}`, { requestId });
       throw new Error(`LLM correction timeout: ${error.message}`);
     }
     
+    logger.error("LLM correction failed", { requestId, error });
     return { segments, correctionsApplied: false };
   }
 }

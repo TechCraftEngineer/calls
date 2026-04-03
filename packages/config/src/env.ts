@@ -57,7 +57,7 @@ export const env = createEnv({
     /** Giga AM (HTTP) sync endpoint */
     GIGA_AM_TRANSCRIBE_URL: z.url().default("https://vnggncb-giga-am.hf.space/api/transcribe"),
     GIGA_AM_ENABLED: z.coerce.boolean().default(true),
-    GIGA_AM_TIMEOUT_MS: z.coerce.number().default(300000),
+    GIGA_AM_TIMEOUT_MS: z.preprocess((value) => value === "" ? undefined : value, z.coerce.number().positive().default(300000)),
     /** Оценка себестоимости ASR (руб/сек) для расчёта в UI */
     GIGA_AM_RATE_RUB_PER_SECOND: z.coerce.number().positive().default(0.01),
     ASSEMBLYAI_RATE_USD_PER_HOUR: z.coerce.number().positive().default(0.23),

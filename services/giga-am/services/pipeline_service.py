@@ -277,7 +277,11 @@ class PipelineService:
             # Сохраняем аудио во временный файл
             tmp_path = None
             try:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=filename) as tmp_file:
+                # Извлекаем только расширение из filename
+                import os
+                file_extension = os.path.splitext(filename)[1] or ".tmp"
+                
+                with tempfile.NamedTemporaryFile(delete=False, suffix=file_extension) as tmp_file:
                     tmp_path = tmp_file.name
                     tmp_file.write(audio_data)
                 

@@ -5,6 +5,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
+import { validateCallId, updateCustomerNameSchema } from "../../validation/call-schemas";
 
 export const callsTranscripts = {
   async getTranscriptByCallId(callId: string): Promise<schema.Transcript | null> {
@@ -64,10 +65,14 @@ export const callsTranscripts = {
 
       // Обновляем customerName в таблице calls, если предоставлен
       if (data.customerName !== undefined) {
+        // Валидируем callId и customerName перед использованием
+        const validatedCallId = validateCallId(data.callId);
+        const validatedCustomerName = updateCustomerNameSchema.parse({ customerName: data.customerName }).customerName;
+        
         await tx
           .update(schema.calls)
-          .set({ customerName: data.customerName })
-          .where(eq(schema.calls.id, data.callId));
+          .set({ customerName: validatedCustomerName })
+          .where(eq(schema.calls.id, validatedCallId));
       }
 
       if (!transcriptResult[0]?.id) {

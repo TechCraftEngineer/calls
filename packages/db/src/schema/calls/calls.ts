@@ -3,7 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import { boolean, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, text, timestamp, unique, uuid, check } from "drizzle-orm/pg-core";
 import { files } from "../files/files";
 import { workspaces } from "../workspace/workspaces";
 
@@ -42,6 +42,7 @@ export const calls = pgTable(
       .notNull(),
   },
   (table) => [
+    check("calls_status_check", sql`status IN ('missed', 'answered', 'accepted', 'completed', 'connected')`),
     unique("calls_workspace_filename_unique").on(table.workspaceId, table.filename),
     unique("calls_workspace_provider_external_id_unique").on(
       table.workspaceId,

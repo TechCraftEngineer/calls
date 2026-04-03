@@ -3,7 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, real, text, uuid } from "drizzle-orm/pg-core";
+import { index, jsonb, pgTable, real, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { calls } from "./calls";
 
 export const transcripts = pgTable(
@@ -24,6 +24,12 @@ export const transcripts = pgTable(
     callType: text("call_type"),
     callTopic: text("call_topic"),
     metadata: jsonb("metadata").$type<Record<string, unknown>>(),
+
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
   },
   (table) => [
     index("transcripts_call_id_idx").on(table.callId),

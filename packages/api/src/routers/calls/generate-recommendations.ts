@@ -7,6 +7,7 @@ import {
   OPENROUTER_API_KEY,
 } from "@calls/config";
 import type { Call, callsService } from "@calls/db";
+import { buildCompanyContext } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
@@ -49,28 +50,6 @@ function sanitizeCompanyContext(s: string): string {
 
 function hasInjectionPatterns(s: string): boolean {
   return INJECTION_PATTERNS.some((re) => re.test(s));
-}
-
-function buildCompanyContext(workspace: {
-  name?: string | null;
-  description?: string | null;
-}): string | undefined {
-  const parts: string[] = [];
-  const companyName = workspace.name?.trim();
-  const companyDescription = workspace.description?.trim();
-
-  if (companyName) {
-    parts.push(`Название компании: ${companyName}`);
-  }
-  if (companyDescription) {
-    parts.push(`Описание компании: ${companyDescription}`);
-  }
-
-  if (parts.length === 0) {
-    return undefined;
-  }
-
-  return companyContextSchema.parse(parts.join("\n"));
 }
 
 const companyContextSchema = z

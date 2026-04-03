@@ -247,47 +247,49 @@ export const list = workspaceProcedure
       }
     }
 
-    const rawCalls = await callsService.getCallsWithTranscripts({
-      workspaceId,
-      limit: input.per_page,
-      offset,
-      dateFrom,
-      dateTo,
-      internalNumbers,
-      mobileNumbers,
-      excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
-      directions: normalizedDirections?.length ? normalizedDirections : undefined,
-      valueScores: input.value?.length ? input.value : undefined,
-      managerInternalNumbers:
-        managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
-      statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
-      managerInternalNumbersForQuery:
-        managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
-      q: trimmedQuery,
-    });
-
-    const totalItems = await callsService.countCalls({
-      workspaceId,
-      dateFrom,
-      dateTo,
-      internalNumbers,
-      mobileNumbers,
-      excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
-      directions: normalizedDirections?.length ? normalizedDirections : undefined,
-      valueScores: input.value?.length ? input.value : undefined,
-      managerInternalNumbers:
-        managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
-      statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
-      managerInternalNumbersForQuery:
-        managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
-      q: trimmedQuery,
-    });
+    // Параллельно выполняем три независимых запроса к БД
+    const [rawCalls, totalItems, metrics] = await Promise.all([
+      callsService.getCallsWithTranscripts({
+        workspaceId,
+        limit: input.per_page,
+        offset,
+        dateFrom,
+        dateTo,
+        internalNumbers,
+        mobileNumbers,
+        excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+        directions: normalizedDirections?.length ? normalizedDirections : undefined,
+        valueScores: input.value?.length ? input.value : undefined,
+        managerInternalNumbers:
+          managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
+        statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
+        managerInternalNumbersForQuery:
+          managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
+        q: trimmedQuery,
+      }),
+      callsService.countCalls({
+        workspaceId,
+        dateFrom,
+        dateTo,
+        internalNumbers,
+        mobileNumbers,
+        excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+        directions: normalizedDirections?.length ? normalizedDirections : undefined,
+        valueScores: input.value?.length ? input.value : undefined,
+        managerInternalNumbers:
+          managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
+        statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
+        managerInternalNumbersForQuery:
+          managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
+        q: trimmedQuery,
+      }),
+      callsService.calculateMetrics(
+        workspaceId,
+        excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+      ),
+    ]);
 
     const totalPages = Math.ceil(totalItems / input.per_page) || 1;
-    const metrics = await callsService.calculateMetrics(
-      workspaceId,
-      excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
-    );
     const managers: ManagerOption[] = Array.from(managerDisplayNameById.entries())
       .map(([id, name]) => ({ id, name }))
       .filter((item) => item.name.trim().length > 0)
@@ -324,7 +326,6 @@ export const list = workspaceProcedure
                 : item.call.timestamp,
             managerName,
             operatorName,
-            managerId: null, // Не используется, так как extension не применяется
             duration: item.fileDuration ?? item.transcript?.metadata?.durationInSeconds ?? null,
           },
           analysisCostRub: isLlmProcessed
