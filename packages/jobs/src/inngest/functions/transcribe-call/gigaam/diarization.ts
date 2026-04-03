@@ -101,6 +101,7 @@ export async function processAudioWithDiarization(
               diarization: {
                 num_speakers: diarizationResult.num_speakers,
                 speakers: diarizationResult.speakers,
+                segments: transcribedSegments,
               },
               processingTime,
               gigaProcessingTime: diarizedResult.processing_time,

@@ -2,6 +2,8 @@
  * Statistics and analytics operations for calls
  */
 
+import type { DailyKpiStat, GetDailyKpiStatsInput } from "./get-daily-kpi-stats";
+import { getDailyKpiStats as getDailyKpiStatsFn } from "./get-daily-kpi-stats";
 import type { ManagerStatsRow } from "./get-evaluations-stats";
 import {
   getCallSummariesByManager as getCallSummariesByManagerFn,
@@ -67,5 +69,9 @@ export const callsStats = {
     excludePhoneNumbers?: string[];
   }) {
     return getKpiStatsFn(params);
+  },
+
+  async getDailyKpiStats(input: GetDailyKpiStatsInput): Promise<DailyKpiStat[]> {
+    return getDailyKpiStatsFn(input);
   },
 };

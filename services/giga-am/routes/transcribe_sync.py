@@ -13,7 +13,7 @@ from utils.exceptions import FileSizeError
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api", tags=["transcription"])
+router = APIRouter(tags=["transcription"])
 pipeline_service = PipelineService()
 
 

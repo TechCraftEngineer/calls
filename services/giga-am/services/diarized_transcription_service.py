@@ -82,7 +82,7 @@ class DiarizedTranscriptionService:
             Результат транскрипции с сегментами
         """
         request_id = f"diarized-{uuid.uuid4()}"
-        start_time = asyncio.get_event_loop().time()
+        start_time = asyncio.get_running_loop().time()
         
         logger.info(
             f"[{request_id}] Начало транскрипции диаризированного аудио: "
@@ -94,10 +94,12 @@ class DiarizedTranscriptionService:
             return {
                 "success": True,
                 "final_transcript": "",
+                "speakerTimeline": [],
                 "segments": [],
                 "num_speakers": 0,
                 "speakers": [],
                 "processing_time": 0,
+                "pipeline": None,
             }
         
         # Проверяем размер файла
@@ -116,7 +118,7 @@ class DiarizedTranscriptionService:
             
             # Сохраняем полный аудио файл
             file_extension = os.path.splitext(filename)[1] or ".wav"
-            full_audio_path = os.path.join(temp_dir, f"full{audio_data}")
+            full_audio_path = os.path.join(temp_dir, f"full{file_extension}")
             
             with open(full_audio_path, 'wb') as f:
                 f.write(audio_data)
@@ -159,7 +161,7 @@ class DiarizedTranscriptionService:
             # Получаем уникальных спикеров
             speakers = list(set(seg.speaker for seg in transcribed_segments))
             
-            processing_time = asyncio.get_event_loop().time() - start_time
+            processing_time = asyncio.get_running_loop().time() - start_time
             
             logger.info(
                 f"[{request_id}] Транскрипция завершена: {len(transcribed_segments)} сегментов, "
@@ -201,7 +203,12 @@ class DiarizedTranscriptionService:
                 "success": False,
                 "error": str(e),
                 "final_transcript": "",
+                "speakerTimeline": [],
                 "segments": [],
+                "num_speakers": 0,
+                "speakers": [],
+                "processing_time": 0,
+                "pipeline": None,
             }
         finally:
             # Очистка временных файлов
@@ -237,7 +244,7 @@ class DiarizedTranscriptionService:
             
             segment_audio = audio_array[start_sample:end_sample]
             
-            output_path = os.path.join(temp_dir, f"segment_{idx:04d}_{segment.speaker}.wav")
+            output_path = os.path.join(temp_dir, f"segment_{idx:04d}.wav")
             
             await asyncio.to_thread(
                 soundfile.write,
@@ -292,11 +299,17 @@ class DiarizedTranscriptionService:
                     if result.get("success"):
                         segments_data = result.get("segments", [])
                         if segments_data:
-                            # Берем первый сегмент (там должен быть один)
-                            first_seg = segments_data[0]
-                            text = first_seg.get("text", "").strip()
-                            # confidence может быть не всегда
-                            confidence = first_seg.get("confidence", 1.0)
+                            # Объединяем все сегменты в один текст
+                            texts = []
+                            confidences = []
+                            for seg in segments_data:
+                                seg_text = seg.get("text", "").strip()
+                                if seg_text:
+                                    texts.append(seg_text)
+                                confidences.append(seg.get("confidence", 1.0))
+                            text = " ".join(texts).strip()
+                            # Вычисляем среднюю уверенность
+                            confidence = sum(confidences) / len(confidences) if confidences else 1.0
                         else:
                             text = ""
                             confidence = 0.0

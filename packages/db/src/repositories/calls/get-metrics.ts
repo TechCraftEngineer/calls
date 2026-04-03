@@ -1,4 +1,4 @@
-import { and, avg, count, desc, eq, gte, lt, ilike, or } from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, lt, ilike, or, lte } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
@@ -40,7 +40,10 @@ export async function getCallsMetrics(
   } = params || {};
 
   const conditions = [];
-  
+
+  // По умолчанию исключаем архивные звонки (как в buildCallConditions)
+  conditions.push(eq(schema.calls.isArchived, false));
+
   if (workspaceId != null) {
     conditions.push(eq(schema.calls.workspaceId, workspaceId));
   }
@@ -50,11 +53,8 @@ export async function getCallsMetrics(
   }
 
   if (dateTo) {
-    // Используем half-open interval: [dateFrom, nextDay(dateTo))
-    // Это включает весь день dateTo
-    const endDate = new Date(dateTo);
-    endDate.setUTCDate(endDate.getUTCDate() + 1);
-    conditions.push(lt(schema.calls.timestamp, endDate));
+    // Используем lte для согласованности с buildCallConditions
+    conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
   }
 
   if (internalNumbers?.length) {

@@ -5,6 +5,7 @@
 возвращает транскрипцию каждого сегмента.
 """
 
+import json
 import logging
 from typing import List, Dict, Any
 
@@ -17,7 +18,7 @@ from utils.exceptions import FileSizeError
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api", tags=["diarized-transcription"])
+router = APIRouter(tags=["diarized-transcription"])
 
 
 class DiarizationSegmentInput(BaseModel):
@@ -80,8 +81,6 @@ async def transcribe_diarized(
         segments = '[{"start": 0.0, "end": 5.2, "speaker": "SPEAKER_00"}, ...]'
         ```
     """
-    import json
-    
     request_id = f"diarized-req-{id(file) % 10000}"
     
     try:
@@ -97,13 +96,13 @@ async def transcribe_diarized(
             raise HTTPException(
                 status_code=400,
                 detail=f"Невалидный JSON в segments: {e}"
-            )
+            ) from e
         except ValueError as e:
             logger.error(f"[{request_id}] Невалидный формат segments: {e}")
             raise HTTPException(
                 status_code=400,
                 detail=str(e)
-            )
+            ) from e
         
         # Валидируем сегменты
         for i, seg in enumerate(segments_data):
@@ -162,7 +161,7 @@ async def transcribe_diarized(
         raise HTTPException(
             status_code=413,
             detail=str(fse)
-        )
+        ) from fse
     except HTTPException:
         raise
     except Exception as e:
@@ -170,4 +169,4 @@ async def transcribe_diarized(
         raise HTTPException(
             status_code=500,
             detail=f"Внутренняя ошибка сервера: {str(e)}"
-        )
+        ) from e

@@ -4,7 +4,10 @@
 
 import { identifySpeakersWithEmbeddings } from "@calls/asr/llm/identify-speakers-with-embeddings";
 import { z } from "zod";
+import { createLogger } from "../../../logger";
 import { extractSegmentsFromUtterances, extractSpeakerTimeline } from "./extraction";
+
+const logger = createLogger("speaker-identification");
 
 // Zod схема для валидации входных данных identifySpeakersWithEmbeddings
 const IdentifySpeakersInputSchema = z.object({
@@ -42,7 +45,12 @@ export async function identifySpeakers(
   
   if (normalizedText.length > MAX_MESSAGE_LENGTH) {
     normalizedText = normalizedText.substring(0, MAX_MESSAGE_LENGTH);
-    console.warn(`[speaker-identification] Текст обрезан с ${originalLength} до ${MAX_MESSAGE_LENGTH} символов`);
+    logger.warn(`Текст обрезан с ${originalLength} до ${MAX_MESSAGE_LENGTH} символов`, {
+      event: "speaker-identification.truncate",
+      originalLength,
+      truncatedTo: MAX_MESSAGE_LENGTH,
+      messagePreview: normalizedText.slice(0, 100),
+    });
   }
   
   // Zod валидация входных данных
@@ -53,7 +61,14 @@ export async function identifySpeakers(
   });
   
   if (!validationResult.success) {
-    console.error(`[speaker-identification] Ошибка валидации входных данных: ${validationResult.error.message}`);
+    logger.error("Ошибка валидации входных данных", {
+      event: "speaker-identification.validation_error",
+      error: validationResult.error,
+      input: {
+        messageLength: normalizedText.length,
+        context: fallbackManagerName,
+      },
+    });
     // Продолжаем с обрезанным текстом, но логируем ошибку
   }
 

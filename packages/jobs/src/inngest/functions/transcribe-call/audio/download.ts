@@ -15,7 +15,7 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 async function streamWithSizeLimit(
   url: string,
   maxBytes: number,
-): Promise<{ buffer: ArrayBuffer; wasAborted: boolean }> {
+): Promise<ArrayBuffer> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 минут таймаут
 
@@ -32,7 +32,6 @@ async function streamWithSizeLimit(
 
     const chunks: Uint8Array[] = [];
     let totalBytes = 0;
-    let wasAborted = false;
 
     try {
       while (true) {
@@ -43,7 +42,6 @@ async function streamWithSizeLimit(
 
         // Проверяем лимит размера
         if (totalBytes > maxBytes) {
-          wasAborted = true;
           controller.abort();
           throw new Error(
             `Размер аудиоданных (${Math.round(totalBytes / 1024 / 1024)}MB) превышает лимит (100MB)`,
@@ -64,7 +62,7 @@ async function streamWithSizeLimit(
       offset += chunk.length;
     }
 
-    return { buffer: result.buffer, wasAborted };
+    return result.buffer;
   } finally {
     clearTimeout(timeoutId);
   }
@@ -103,10 +101,10 @@ export async function downloadAudioFile(fileId: string): Promise<AudioFileResult
   }
 
   // Потоковая загрузка с проверкой размера
-  const { buffer: audioBuffer } = await streamWithSizeLimit(asrAudioUrl, MAX_FILE_SIZE);
+  const buffer = await streamWithSizeLimit(asrAudioUrl, MAX_FILE_SIZE);
 
   return {
-    buffer: audioBuffer,
+    buffer,
     filename: file.filename || "audio.wav",
   };
 }
