@@ -3,10 +3,10 @@
  */
 
 import { env } from "@calls/config";
+import { z } from "zod";
 import { createLogger } from "../../../../logger";
 import { GigaAmResponseSchema } from "../schemas";
 import type { AsrResult } from "../types";
-import { z } from "zod";
 
 const logger = createLogger("gigaam-client");
 
@@ -55,21 +55,18 @@ export async function processAudioWithGigaAm(
   formData.append("filename", audioFilename);
   formData.append("diarization", diarization.toString());
 
-  const response = await fetchWithRetry(
-    `${gigaAmUrl}/api/transcribe-sync`,
-    () => ({
-      method: "POST",
-      body: formData,
-      signal: AbortSignal.timeout(env.GIGA_AM_TIMEOUT_MS),
-    }),
-  );
+  const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-sync`, () => ({
+    method: "POST",
+    body: formData,
+    signal: AbortSignal.timeout(env.GIGA_AM_TIMEOUT_MS),
+  }));
 
   if (!response.ok) {
     throw new Error(`Ошибка GigaAM API: ${response.status} ${response.statusText}`);
   }
 
   const rawResult = await response.json();
-  
+
   // Zod валидация перед доступом к полям
   const gigaValidation = GigaAmResponseSchema.safeParse(rawResult);
   if (!gigaValidation.success) {
@@ -231,14 +228,11 @@ export async function processDiarizedAudioWithGigaAm(
     endpoint: `${gigaAmUrl}/api/transcribe-diarized`,
   });
 
-  const response = await fetchWithRetry(
-    `${gigaAmUrl}/api/transcribe-diarized`,
-    () => ({
-      method: "POST",
-      body: formData,
-      signal: AbortSignal.timeout(env.GIGA_AM_TIMEOUT_MS),
-    }),
-  );
+  const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-diarized`, () => ({
+    method: "POST",
+    body: formData,
+    signal: AbortSignal.timeout(env.GIGA_AM_TIMEOUT_MS),
+  }));
 
   if (!response.ok) {
     throw new Error(`GigaAM diarized API error: ${response.status} ${response.statusText}`);
@@ -259,7 +253,9 @@ export async function processDiarizedAudioWithGigaAm(
   const validatedResult = validationResult.data;
 
   if (!validatedResult.success) {
-    throw new Error(`GigaAM diarized transcription failed: ${validatedResult.error || "Unknown error"}`);
+    throw new Error(
+      `Ошибка диаризированной транскрипции GigaAM: ${validatedResult.error || "Неизвестная ошибка"}`,
+    );
   }
 
   logger.info("Диаризированная транскрипция завершена", {

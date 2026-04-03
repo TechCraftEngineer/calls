@@ -6,9 +6,9 @@
 import { Writable } from "node:stream";
 import { getAudioDurationFromBuffer } from "@calls/asr/audio/get-audio-duration";
 import { callsService, filesService } from "@calls/db";
-import pLimit from "p-limit";
 import { validateFtpCredentials } from "@calls/shared";
 import { Client } from "basic-ftp";
+import pLimit from "p-limit";
 import { createLogger } from "~/logger";
 import { parseMegafonFilename } from "~/megafon/parse-filename";
 
@@ -106,9 +106,7 @@ async function processFile(
     }
 
     if (downloadBuffer.length > MAX_FILE_SIZE) {
-      result.errors.push(
-        `${relativePath}: Файл слишком большой (${downloadBuffer.length} bytes)`,
-      );
+      result.errors.push(`${relativePath}: Файл слишком большой (${downloadBuffer.length} bytes)`);
       logger.warn("Файл слишком большой", {
         filename: relativePath,
         size: downloadBuffer.length,
@@ -388,14 +386,14 @@ export async function syncFtp(
 
       // Ограничиваем одновременную обработку файлов до 5
       const fileLimit = pLimit(5);
-      
+
       await Promise.all(
-        files.map(file =>
+        files.map((file) =>
           fileLimit(async () => {
             // Создаем отдельный FTP клиент для каждой задачи
             const taskClient = new Client(OPERATION_TIMEOUT);
             taskClient.ftp.verbose = false;
-            
+
             try {
               await taskClient.access({
                 host: config.host,
@@ -404,10 +402,10 @@ export async function syncFtp(
                 secure: true,
                 secureOptions: { rejectUnauthorized: true },
               });
-              
-              // Переходим в директорию с файлами
-              await taskClient.cd(dateDir);
-              
+
+              // Переходим в директорию с файлами (полный путь от корня FTP)
+              await taskClient.cd(`${baseRemoteDir}/${dateDir}`);
+
               // Обрабатываем файл
               await processFile(taskClient, file, dateDir, workspaceId, options, result);
             } catch (error) {
@@ -420,8 +418,8 @@ export async function syncFtp(
             } finally {
               taskClient.close();
             }
-          })
-        )
+          }),
+        ),
       );
 
       // Возврат в recordings для следующей итерации

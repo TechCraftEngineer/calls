@@ -49,7 +49,9 @@ export async function getDailyKpiStats(input: GetDailyKpiStatsInput): Promise<Da
     .filter((num): num is string => num != null && num.trim() !== "");
 
   // Вычисляем nextDay(endDate) для half-open period семантики
+  // Сначала нормализуем к midnight, затем добавляем день
   const dateToExclusive = new Date(dateTo);
+  dateToExclusive.setHours(0, 0, 0, 0);
   dateToExclusive.setDate(dateToExclusive.getDate() + 1);
 
   const conditions = [

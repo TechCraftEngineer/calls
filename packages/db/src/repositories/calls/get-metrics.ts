@@ -1,4 +1,4 @@
-import { and, avg, count, desc, eq, gte, lt, ilike, or, lte } from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, ilike, lte, or } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
@@ -15,11 +15,11 @@ interface GetCallsMetricsParams {
   statuses?: ("missed" | "answered" | "voicemail" | "failed")[];
   managerInternalNumbersForQuery?: string[];
   q?: string;
+  includeArchived?: boolean;
+  onlyArchived?: boolean;
 }
 
-export async function getCallsMetrics(
-  params?: GetCallsMetricsParams,
-): Promise<{
+export async function getCallsMetrics(params?: GetCallsMetricsParams): Promise<{
   totalCalls: number;
   transcribed: number;
   avgDuration: number;
@@ -37,12 +37,19 @@ export async function getCallsMetrics(
     statuses,
     managerInternalNumbersForQuery,
     q,
+    includeArchived,
+    onlyArchived,
   } = params || {};
 
   const conditions = [];
 
-  // По умолчанию исключаем архивные звонки (как в buildCallConditions)
-  conditions.push(eq(schema.calls.isArchived, false));
+  // Логика фильтрации по архивным звонкам
+  if (onlyArchived) {
+    conditions.push(eq(schema.calls.isArchived, true));
+  } else if (!includeArchived) {
+    // По умолчанию исключаем архивные звонки
+    conditions.push(eq(schema.calls.isArchived, false));
+  }
 
   if (workspaceId != null) {
     conditions.push(eq(schema.calls.workspaceId, workspaceId));
@@ -53,32 +60,22 @@ export async function getCallsMetrics(
   }
 
   if (dateTo) {
-    // Используем lte для согласованности с buildCallConditions
-    conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
+    // Используем half-open interval: добавляем день к dateTo и используем lt
+    const dateToPlusOne = new Date(dateTo);
+    dateToPlusOne.setDate(dateToPlusOne.getDate() + 1);
+    conditions.push(lte(schema.calls.timestamp, dateToPlusOne));
   }
 
   if (internalNumbers?.length) {
-    conditions.push(
-      or(
-        ...internalNumbers.map(num => eq(schema.calls.internalNumber, num))
-      )
-    );
+    conditions.push(or(...internalNumbers.map((num) => eq(schema.calls.internalNumber, num))));
   }
 
   if (mobileNumbers?.length) {
-    conditions.push(
-      or(
-        ...mobileNumbers.map(num => eq(schema.calls.number, num))
-      )
-    );
+    conditions.push(or(...mobileNumbers.map((num) => eq(schema.calls.number, num))));
   }
 
   if (directions?.length) {
-    conditions.push(
-      or(
-        ...directions.map(dir => eq(schema.calls.direction, dir))
-      )
-    );
+    conditions.push(or(...directions.map((dir) => eq(schema.calls.direction, dir))));
   }
 
   // Убираем valueScore так как этого поля нет в схеме
@@ -92,25 +89,17 @@ export async function getCallsMetrics(
 
   if (managerInternalNumbers?.length) {
     conditions.push(
-      or(
-        ...managerInternalNumbers.map(num => eq(schema.calls.internalNumber, num))
-      )
+      or(...managerInternalNumbers.map((num) => eq(schema.calls.internalNumber, num))),
     );
   }
 
   if (statuses?.length) {
-    conditions.push(
-      or(
-        ...statuses.map(status => eq(schema.calls.status, status))
-      )
-    );
+    conditions.push(or(...statuses.map((status) => eq(schema.calls.status, status))));
   }
 
   if (managerInternalNumbersForQuery?.length) {
     conditions.push(
-      or(
-        ...managerInternalNumbersForQuery.map(num => eq(schema.calls.internalNumber, num))
-      )
+      or(...managerInternalNumbersForQuery.map((num) => eq(schema.calls.internalNumber, num))),
     );
   }
 
@@ -119,8 +108,8 @@ export async function getCallsMetrics(
       or(
         ilike(schema.calls.name, `%${q}%`),
         ilike(schema.calls.number, `%${q}%`),
-        ilike(schema.calls.internalNumber, `%${q}%`)
-      )
+        ilike(schema.calls.internalNumber, `%${q}%`),
+      ),
     );
   }
 

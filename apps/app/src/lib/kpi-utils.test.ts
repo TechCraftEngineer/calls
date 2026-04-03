@@ -6,7 +6,7 @@ import {
   calculateDailyTarget,
   calculateDaysInMonth,
   formatCurrency,
-  formatDate,
+  formatDateISO,
   getColorByPercentage,
 } from "./kpi-utils";
 
@@ -114,24 +114,24 @@ describe("formatCurrency", () => {
   });
 });
 
-describe("formatDate", () => {
+describe("formatDateISO", () => {
   it("should format Date object to YYYY-MM-DD", () => {
     const date = new Date("2024-01-15T10:30:00");
-    expect(formatDate(date)).toBe("2024-01-15");
+    expect(formatDateISO(date)).toBe("2024-01-15");
   });
 
   it("should format date string to YYYY-MM-DD", () => {
-    expect(formatDate("2024-01-15")).toBe("2024-01-15");
+    expect(formatDateISO("2024-01-15")).toBe("2024-01-15");
   });
 
   it("should pad single-digit month and day with zeros", () => {
     const date = new Date("2024-03-05T10:30:00");
-    expect(formatDate(date)).toBe("2024-03-05");
+    expect(formatDateISO(date)).toBe("2024-03-05");
   });
 
   it("should handle end of year", () => {
     const date = new Date("2024-12-31T23:59:59");
-    expect(formatDate(date)).toBe("2024-12-31");
+    expect(formatDateISO(date)).toBe("2024-12-31");
   });
 });
 
