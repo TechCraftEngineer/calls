@@ -1,5 +1,5 @@
 /**
- * Загрузка аудио файлов для транскрибации
+ * Загрузка аудио файлов для транскрибации с потоковой проверкой размера
  */
 
 import { filesService } from "@calls/db";
@@ -11,6 +11,64 @@ import type { z } from "zod";
 
 const logger = createLogger("audio-download");
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
+async function streamWithSizeLimit(
+  url: string,
+  maxBytes: number,
+): Promise<{ buffer: ArrayBuffer; wasAborted: boolean }> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 минут таймаут
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`Не удалось скачать аудио: ${response.status}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error("Response body не доступен для чтения");
+    }
+
+    const chunks: Uint8Array[] = [];
+    let totalBytes = 0;
+    let wasAborted = false;
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        totalBytes += value.length;
+
+        // Проверяем лимит размера
+        if (totalBytes > maxBytes) {
+          wasAborted = true;
+          controller.abort();
+          throw new Error(
+            `Размер аудиоданных (${Math.round(totalBytes / 1024 / 1024)}MB) превышает лимит (100MB)`,
+          );
+        }
+
+        chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    // Объединяем чанки в один ArrayBuffer
+    const result = new Uint8Array(totalBytes);
+    let offset = 0;
+    for (const chunk of chunks) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+
+    return { buffer: result.buffer, wasAborted };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 export async function downloadAudioFile(fileId: string): Promise<AudioFileResult> {
   const file = await filesService.getFileById(fileId);
@@ -28,7 +86,7 @@ export async function downloadAudioFile(fileId: string): Promise<AudioFileResult
 
   const asrAudioUrl = await getDownloadUrlForAsr(file.storageKey);
 
-  // Проверяем размер файла перед загрузкой
+  // Проверяем размер файла перед загрузкой через HEAD запрос
   const headResponse = await fetch(asrAudioUrl, { method: "HEAD" });
   if (!headResponse.ok) {
     throw new Error(`Не удалось получить информацию о файле: ${headResponse.status}`);
@@ -44,18 +102,8 @@ export async function downloadAudioFile(fileId: string): Promise<AudioFileResult
     }
   }
 
-  const audioResponse = await fetch(asrAudioUrl);
-  if (!audioResponse.ok) {
-    throw new Error(`Не удалось скачать аудио: ${audioResponse.status}`);
-  }
-  const audioBuffer = await audioResponse.arrayBuffer();
-
-  // Дополнительная проверка размера после загрузки
-  if (audioBuffer.byteLength > MAX_FILE_SIZE) {
-    throw new Error(
-      `Размер аудиоданных (${Math.round(audioBuffer.byteLength / 1024 / 1024)}MB) превышает лимит (100MB)`,
-    );
-  }
+  // Потоковая загрузка с проверкой размера
+  const { buffer: audioBuffer } = await streamWithSizeLimit(asrAudioUrl, MAX_FILE_SIZE);
 
   return {
     buffer: audioBuffer,

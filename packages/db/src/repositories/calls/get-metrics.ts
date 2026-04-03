@@ -1,4 +1,4 @@
-import { and, avg, count, desc, eq, gte, lte, ilike, or } from "drizzle-orm";
+import { and, avg, count, desc, eq, gte, lt, ilike, or } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
@@ -50,7 +50,11 @@ export async function getCallsMetrics(
   }
 
   if (dateTo) {
-    conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
+    // Используем half-open interval: [dateFrom, nextDay(dateTo))
+    // Это включает весь день dateTo
+    const endDate = new Date(dateTo);
+    endDate.setUTCDate(endDate.getUTCDate() + 1);
+    conditions.push(lt(schema.calls.timestamp, endDate));
   }
 
   if (internalNumbers?.length) {

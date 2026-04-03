@@ -17,6 +17,10 @@ export interface CallConditionsParams {
   statuses?: string[];
   managerInternalNumbersForQuery?: string[];
   q?: string;
+  /** Включить архивированные звонки (по умолчанию false - только неархивированные) */
+  includeArchived?: boolean;
+  /** Только архивированные звонки (по умолчанию false) */
+  onlyArchived?: boolean;
 }
 
 export function buildCallConditions({
@@ -32,11 +36,20 @@ export function buildCallConditions({
   statuses,
   managerInternalNumbersForQuery,
   q,
+  includeArchived,
+  onlyArchived,
 }: CallConditionsParams) {
   const conditions = [];
 
-  // По умолчанию исключаем архивированные звонки
-  conditions.push(eq(schema.calls.isArchived, false));
+  // Управление архивными звонками: onlyArchived > includeArchived > default (неархивированные)
+  if (onlyArchived) {
+    conditions.push(eq(schema.calls.isArchived, true));
+  } else if (includeArchived) {
+    // Не добавляем фильтр по архивации - включаем все звонки
+  } else {
+    // По умолчанию - только неархивированные
+    conditions.push(eq(schema.calls.isArchived, false));
+  }
 
   if (workspaceId != null) {
     conditions.push(eq(schema.calls.workspaceId, workspaceId));

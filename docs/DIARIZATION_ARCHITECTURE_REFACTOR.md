@@ -7,7 +7,7 @@
 ## Problem
 
 **Previous Architecture:**
-```
+```text
 GigaAM Service:
 ├── ASR (транскрипция) ✓
 ├── Diarization (pyannote) ❌
@@ -21,7 +21,7 @@ GigaAM Service:
 ## Solution
 
 **New Architecture:**
-```
+```text
 Inngest (оркестратор)
 ├── Speaker-embeddings Service (диаризация)
 │   └── pyannote SOTA 2024-2026
@@ -66,7 +66,7 @@ Inngest (оркестратор)
 SPEAKER_EMBEDDINGS_URL=https://your-space.hf.space
 
 # Существующие (без изменений)
-GIGA_AM_TRANSCRIBE_URL=https://vnggncb-giga-am.hf.space/api/transcribe
+GIGA_AM_TRANSCRIBE_URL=https://vnggncb-giga-am.hf.space/api/transcribe-sync
 ```
 
 ## New Processing Flow
@@ -96,12 +96,18 @@ const mergedResult = await applyLLMMerging(nonDiarized, diarized, callId);
 
 ## TODO
 
-1. **Audio Segmentation**: Реализовать правильное извлечение аудио сегментов
-   - Установить библиотеку: `npm install node-ffmpeg` или `wavefile`
-   - Заменить заглушку в `extractAudioSegment()`
+1. **Audio Segmentation**: Реализация извлечения аудио сегментов
+   - ✅ Установлена библиотека: ffmpeg через child_process spawn
+   - ✅ Реализовано в `packages/jobs/src/inngest/functions/transcribe-call/audio/processing.ts`
+   - Функция `extractAudioSegment()` использует ffmpeg для точного извлечения сегментов
 
 2. **Error Handling**: Улучшить обработку ошибок speaker-embeddings
+   - Добавлена Zod валидация ответов в speaker-diarization.ts
+   - Добавлен graceful fallback при ошибках диаризации
+
 3. **Performance**: Оптимизировать передачу аудио между сервисами
+   - Потоковая загрузка аудио с проверкой размера в download.ts
+   - Уникальные временные каталоги для параллельной обработки
 
 ## Deployment
 
@@ -125,7 +131,7 @@ services:
 ```bash
 # .env
 SPEAKER_EMBEDDINGS_URL=https://vnggncb-speaker-embeddings.hf.space
-GIGA_AM_TRANSCRIBE_URL=https://vnggncb-giga-am.hf.space/api/transcribe
+GIGA_AM_TRANSCRIBE_URL=https://vnggncb-giga-am.hf.space/api/transcribe-sync
 ```
 
 ## Testing

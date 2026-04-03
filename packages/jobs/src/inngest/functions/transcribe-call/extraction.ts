@@ -7,13 +7,13 @@ import type { GigaAmSegment, SpeakerTimelineItem } from "./types";
 export function extractSpeakerTimeline(gigaAmRaw: unknown):
   | SpeakerTimelineItem[]
   | undefined {
-  const raw = gigaAmRaw as { speakerTimeline?: unknown } | undefined;
+  const raw = gigaAmRaw as { diarization?: { segments?: unknown } } | undefined;
 
-  if (!raw?.speakerTimeline || !Array.isArray(raw.speakerTimeline)) {
+  if (!raw?.diarization?.segments || !Array.isArray(raw.diarization.segments)) {
     return undefined;
   }
 
-  return raw.speakerTimeline.map((item: unknown) => {
+  return raw.diarization.segments.map((item: unknown) => {
     if (typeof item === "object" && item !== null) {
       const entry = item as Record<string, unknown>;
       return {

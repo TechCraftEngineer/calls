@@ -648,7 +648,7 @@ export type QuickFilter =
 2. **Client-Side Caching**
    - TanStack Query для кэширования API responses
    - `staleTime: 5 * 60 * 1000` (5 минут)
-   - `cacheTime: 10 * 60 * 1000` (10 минут)
+   - `gcTime: 10 * 60 * 1000` (10 минут) - в TanStack Query v5 параметр переименован из cacheTime в gcTime
    - Prefetching данных при hover на сотрудника
 
 3. **URL State Caching**

@@ -6,7 +6,7 @@
 
 ## Architecture
 
-```
+```text
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Inngest     │───▶│ Speaker-embeddings │───▶│     GigaAM      │
 │  (оркестратор) │    │   (диаризация)   │    │  (транскрипция)  │
@@ -47,7 +47,7 @@
 SPEAKER_EMBEDDINGS_URL=https://vnggncb-speaker-embeddings.hf.space
 
 # GigaAM (транскрипция) 
-GIGA_AM_TRANSCRIBE_URL=https://vnggncb-giga-am.hf.space/api/transcribe
+GIGA_AM_TRANSCRIBE_URL=https://vnggncb-giga-am.hf.space/api/transcribe-sync
 GIGA_AM_ENABLED=true
 GIGA_AM_TIMEOUT_MS=300000
 ```
@@ -101,7 +101,7 @@ services:
 
 2. **Update GigaAM URL**:
    ```bash
-   GIGA_AM_TRANSCRIBE_URL=https://vnggncb-giga-am.hf.space/api/transcribe
+   GIGA_AM_TRANSCRIBE_URL=https://vnggncb-giga-am.hf.space/api/transcribe-sync
    ```
 
 ## API Usage
@@ -217,19 +217,19 @@ docker logs giga-am
 ### Common Issues
 
 1. **SPEAKER_EMBEDDINGS_URL not configured**
-   ```
+   ```text
    Error: Remote diarization service недоступен
    Solution: Установите SPEAKER_EMBEDDINGS_URL в .env
    ```
 
 2. **HF_TOKEN missing on speaker-embeddings**
-   ```
+   ```text
    Error: pyannote не загружен
    Solution: Добавьте HF_TOKEN в HuggingFace Space settings
    ```
 
 3. **Audio segmentation not working**
-   ```
+   ```text
    Warning: extractAudioSegment использует заглушку
    Solution: Реализуйте правильное извлечение аудио сегментов
    ```

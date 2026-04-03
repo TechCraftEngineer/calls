@@ -80,21 +80,19 @@ export type UserWithInternalExtensions = {
 export function getInternalNumbersForUser(user: UserWithInternalExtensions): string[] | undefined {
   const nums = user.internalExtensions;
   if (!nums || String(nums).trim().toLowerCase() === "all") return undefined;
-  return (
-    nums
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean) || undefined
-  );
+  const result = nums
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return result.length > 0 ? result : undefined;
 }
 
 export function getMobileNumbersForUser(user: UserWithInternalExtensions): string[] | undefined {
   const nums = user.mobilePhones;
   if (!nums?.trim()) return undefined;
-  return (
-    nums
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean) || undefined
-  );
+  const result = nums
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return result.length > 0 ? result : undefined;
 }
