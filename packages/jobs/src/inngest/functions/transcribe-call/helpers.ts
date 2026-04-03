@@ -3,7 +3,6 @@
  */
 
 import { identifySpeakersWithEmbeddings } from "@calls/asr/llm/identify-speakers-with-embeddings";
-import { buildCompanyContext } from "@calls/shared";
 import { env } from "@calls/config";
 import { filesService, pbxRepository, workspaceIntegrationsRepository } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
@@ -287,7 +286,8 @@ export async function processAudioWithGigaAmDiarizedLegacy(
   bufferBase64: string,
   filename: string,
 ): Promise<AsrResult> {
-  const audioBuffer = Buffer.from(bufferBase64, 'base64').buffer;
+  const buffer = Buffer.from(bufferBase64, 'base64');
+  const audioBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
   return processAudioWithGigaAm(audioBuffer, filename, true);
 }
 
@@ -306,7 +306,8 @@ export async function processAudioWithGigaAmNonDiarizedLegacy(
   bufferBase64: string,
   filename: string,
 ): Promise<Omit<AsrResult, "segments"> & { segments: [] }> {
-  const audioBuffer = Buffer.from(bufferBase64, 'base64').buffer;
+  const buffer = Buffer.from(bufferBase64, 'base64');
+  const audioBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
   const result = await processAudioWithGigaAm(audioBuffer, filename, false);
   return {
     ...result,
@@ -401,7 +402,9 @@ export async function identifySpeakers(
   const fallbackManagerName = call.name?.trim() || null;
 
   // Извлекаем данные из giga-am результата
-  const gigaAmLog = result.metadata.asrLogs?.find((log) => log.provider === "gigaam");
+  const gigaAmLog = result.metadata.asrLogs?.find(
+    (log) => log.provider === "gigaam-diarized" || log.provider === "gigaam"
+  );
   const gigaAmRaw = gigaAmLog?.raw;
 
   // Безопасно извлекаем speaker_timeline

@@ -90,8 +90,8 @@ export const transcribeCallFn = inngest.createFunction(
         throw new Error(`Workspace validation failed: ${errorDetails}`);
       }
 
-      validateWorkspace(validationResult.data);
-      return validationResult.data;
+      const validatedWorkspace = validateWorkspace(validationResult.data);
+      return validatedWorkspace || validationResult.data;
     });
 
     const managerNameFromPbx = await step.run("pbx/manager:resolve", async () => {
@@ -136,16 +136,30 @@ export const transcribeCallFn = inngest.createFunction(
       return pipelineValidation.data;
     });
 
-    // Параллельный запуск двух ASR с fileId
+    // Загружаем аудио один раз и переиспользуем в обоих ASR
+    const audioData = await step.run("download-audio", async () => {
+      const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
+      // Возвращаем base64 для корректной сериализации в Inngest
+      return {
+        bufferBase64: Buffer.from(buffer).toString('base64'),
+        filename,
+        byteLength: buffer.byteLength,
+      };
+    });
+
+    // Восстанавливаем ArrayBuffer из base64
+    const audioBuffer = Buffer.from(audioData.bufferBase64, 'base64').buffer.slice(
+      0, audioData.byteLength
+    );
+
+    // Параллельный запуск двух ASR с переиспользованием загруженных данных
     const asrStartTime = Date.now();
     const [nonDiarizedResult, diarizedResult] = await Promise.all([
       step.run("asr:non-diarized", async () => {
-        const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
-        return processAudioWithGigaAmNonDiarized(buffer, filename);
+        return processAudioWithGigaAmNonDiarized(audioBuffer, audioData.filename);
       }),
       step.run("asr:diarized", async () => {
-        const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
-        return processAudioWithGigaAmDiarized(buffer, filename);
+        return processAudioWithGigaAmDiarized(audioBuffer, audioData.filename);
       }),
     ]);
 

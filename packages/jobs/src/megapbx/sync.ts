@@ -341,24 +341,24 @@ export async function syncMegaPbxCalls(
         fileId: null,
       });
 
-      // Используем ID из результата создания вместо дополнительных запросов
-      const canonicalCall = { id: createResult.id };
-
-      if (!canonicalCall) {
-        throw new Error(
-          `Canonical call not found after create (workspaceId=${workspaceId}, provider=${PROVIDER}, externalId=${call.externalId}, filename=${filename})`,
-        );
-      }
+      // Используем ID из результата создания
+      const callId = createResult.id;
 
       // На повторных синках запись звонка может уже существовать с пустой PBX-привязкой.
       // Дозаполняем связь и вспомогательные поля, когда появились данные из directory.
       if (!createResult.created) {
-        const internalNumber = !call.internalNumber?.trim()
-          ? (normalizePhoneForMatch(call.internalNumber) ??
+        let internalNumber: string | undefined;
+        
+        // Если у call есть непустой internalNumber, то не устанавливаем PBX привязку
+        if (call.internalNumber?.trim()) {
+          internalNumber = undefined;
+        } else {
+          // Иначе вычисляем fallback из доступных данных
+          internalNumber = normalizePhoneForMatch(call.internalNumber) ??
             normalizePhoneForMatch(number?.extension) ??
             normalizePhoneForMatch(employee?.extension) ??
-            null)
-          : undefined;
+            undefined;
+        }
         
         // Для source и name используем данные из employee/number, так как в NormalizedCall их нет
         const source = employee?.externalId ?? number?.externalId ?? "megapbx";
@@ -366,7 +366,7 @@ export async function syncMegaPbxCalls(
 
         // Используем транзакционный метод для атомарного обновления
         if (internalNumber || source || name) {
-          await callsService.updateCallPbxBinding(canonicalCall.id, {
+          await callsService.updateCallPbxBinding(callId, {
             internalNumber,
             source,
             name,
@@ -385,7 +385,7 @@ export async function syncMegaPbxCalls(
             call.recordingUrl,
           );
           if (uploaded.fileId) {
-            await callsService.updateCallRecording(canonicalCall.id, {
+            await callsService.updateCallRecording(callId, {
               fileId: uploaded.fileId,
             });
             recordingFileId = uploaded.fileId;
@@ -397,7 +397,7 @@ export async function syncMegaPbxCalls(
           logger.warn("Ошибка загрузки записи MegaPBX", {
             workspaceId,
             callId: call.externalId,
-            callRecordId: canonicalCall.id,
+            callRecordId: callId,
             createResultId: createResult.id,
             error: message,
           });
@@ -405,7 +405,7 @@ export async function syncMegaPbxCalls(
       }
 
       if (createResult.created && recordingFileId) {
-        callIdsForTranscription.push(canonicalCall.id);
+        callIdsForTranscription.push(callId);
       }
 
       if (createResult.created) {

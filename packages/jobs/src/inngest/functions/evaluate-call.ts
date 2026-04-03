@@ -11,7 +11,7 @@ import {
   workspaceSettingsRepository,
   workspacesService,
 } from "@calls/db";
-import { buildCompanyContext } from "@calls/shared";
+import { buildCompanyContext, companyContextSchema } from "@calls/shared";
 import { evaluateCallWithLlm, resolveEvaluationPrompt } from "../../evaluation";
 import { createLogger } from "../../logger";
 import { evaluateRequested, inngest } from "../client";
@@ -106,9 +106,12 @@ export const evaluateCallFn = inngest.createFunction(
     });
 
     const evaluation = await step.run("evaluate", async () => {
+      const rawContext = buildCompanyContext(workspace);
+      const companyContext = rawContext ? companyContextSchema.parse(rawContext) : undefined;
+      
       return evaluateCallWithLlm(transcriptText, {
         evaluationPrompt,
-        companyContext: buildCompanyContext(workspace),
+        companyContext,
       });
     });
 
