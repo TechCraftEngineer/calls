@@ -1,30 +1,14 @@
 /**
- * Inngest функция: Обработка завершённой транскрипции.
- *
- * Получает результаты от GigaAM и оркестрирует дальнейшую обработку:
- * - LLM коррекция (если включена)
- * - Сохранение результатов
- * - Отправка webhook
- *
- * Вся оркестрация здесь, Python сервисы только выполняют свои задачи.
+ * LLM коррекция транскрипции
  */
 
 import { generateWithAi } from "@calls/ai";
 import { env } from "@calls/config";
 import { Output } from "ai";
 import { z } from "zod";
-import { createLogger } from "../../logger";
-import { inngest } from "../client";
+import { createLogger } from "../../../logger";
 
-const logger = createLogger("transcription-completed");
-
-interface Segment {
-  start: number;
-  end: number;
-  speaker: string;
-  text: string;
-  confidence?: number;
-}
+const logger = createLogger("transcribe-llm-correction");
 
 // Схема для структурированного вывода LLM
 const CorrectionOutputSchema = z.object({
@@ -39,9 +23,20 @@ const CorrectionOutputSchema = z.object({
 });
 
 // LLM коррекция включена по умолчанию (можно отключить через env)
-const LLM_CORRECTION_ENABLED = process.env.ENABLE_DUAL_ASR_LLM_CORRECTION !== "false";
+const LLM_CORRECTION_ENABLED = env.ENABLE_DUAL_ASR_LLM_CORRECTION;
 
-function buildCorrectionPrompt(fullTranscript: string, diarizedSegments: Segment[]): string {
+export interface TranscriptionSegment {
+  start: number;
+  end: number;
+  speaker: string;
+  text: string;
+  confidence?: number;
+}
+
+export function buildCorrectionPrompt(
+  fullTranscript: string,
+  diarizedSegments: TranscriptionSegment[],
+): string {
   const segmentsText = diarizedSegments
     .map(
       (seg, i) =>
@@ -76,7 +71,10 @@ ${segmentsText}
 - Только улучшай текст (text)`;
 }
 
-async function correctTranscriptionWithLLM(prompt: string, requestId: string): Promise<Segment[]> {
+export async function correctTranscriptionWithLLM(
+  prompt: string,
+  requestId: string,
+): Promise<{ start: number; end: number; speaker: string; text: string }[]> {
   const { output } = await generateWithAi({
     system:
       "Ты эксперт по обработке транскрипций аудио. " +
@@ -98,15 +96,18 @@ async function correctTranscriptionWithLLM(prompt: string, requestId: string): P
   return output.segments;
 }
 
-function validateAndMergeCorrections(
-  originalSegments: Segment[],
-  correctedSegments: Segment[],
-): { segments: Segment[]; correctionsApplied: number } {
+export function validateAndMergeCorrections(
+  originalSegments: TranscriptionSegment[],
+  correctedSegments: { start: number; end: number; speaker: string; text: string }[],
+): {
+  segments: TranscriptionSegment[];
+  correctionsApplied: number;
+} {
   if (correctedSegments.length !== originalSegments.length) {
     return { segments: originalSegments, correctionsApplied: 0 };
   }
 
-  const validated: Segment[] = [];
+  const validated: TranscriptionSegment[] = [];
   let correctionsApplied = 0;
 
   for (let i = 0; i < originalSegments.length; i++) {
@@ -115,7 +116,7 @@ function validateAndMergeCorrections(
 
     if (!orig || !corr) continue;
 
-    const validatedSeg: Segment = {
+    const validatedSeg: TranscriptionSegment = {
       start: orig.start,
       end: orig.end,
       speaker: orig.speaker,
@@ -137,77 +138,49 @@ function validateAndMergeCorrections(
   return { segments: validated, correctionsApplied };
 }
 
-export const transcriptionCompletedFn = inngest.createFunction(
-  {
-    id: "transcription-completed",
-    name: "Обработка завершённой транскрипции (оркестрация)",
-    retries: 2,
-    concurrency: {
-      limit: 5,
-    },
-    triggers: [{ event: "asr/transcription.completed" }],
-  },
-  async ({ event, step }) => {
-    const { requestId, fullTranscript, diarizedSegments, metadata } = event.data;
+export async function applyLLMCorrection(
+  segments: TranscriptionSegment[],
+  fullTranscript: string,
+  requestId: string,
+): Promise<{ segments: TranscriptionSegment[]; correctionsApplied: boolean }> {
+  // Проверяем, включена ли LLM коррекция и доступен ли AI провайдер
+  const hasAiProvider = !!(env.OPENAI_API_KEY || env.OPENROUTER_API_KEY || env.DEEPSEEK_API_KEY);
 
-    await step.run("validate/input", async () => {
-      if (!requestId) throw new Error("requestId required");
-      if (!fullTranscript) throw new Error("fullTranscript required");
-      if (!diarizedSegments?.length) throw new Error("diarizedSegments required");
+  if (!LLM_CORRECTION_ENABLED || !hasAiProvider) {
+    logger.info("LLM correction skipped", {
+      requestId,
+      enabled: LLM_CORRECTION_ENABLED,
+      hasAiProvider,
+    });
+    return { segments, correctionsApplied: false };
+  }
+
+  try {
+    logger.info("Starting LLM correction", { requestId });
+
+    const prompt = buildCorrectionPrompt(fullTranscript, segments);
+
+    logger.info("Calling LLM via AI SDK", {
+      requestId,
+      provider: env.AI_PROVIDER,
+      model: env.AI_MODEL,
     });
 
-    let finalSegments = diarizedSegments;
-    let llmCorrectionApplied = false;
+    const correctedSegments = await correctTranscriptionWithLLM(prompt, requestId);
+    const result = validateAndMergeCorrections(segments, correctedSegments);
 
-    // LLM коррекция (если включена и AI провайдер настроен)
-    const hasAiProvider = !!(env.OPENAI_API_KEY || env.OPENROUTER_API_KEY || env.DEEPSEEK_API_KEY);
-
-    if (LLM_CORRECTION_ENABLED && hasAiProvider) {
-      const prompt = await step.run("llm/build-prompt", async () => {
-        logger.info("Building LLM prompt", { requestId });
-        return buildCorrectionPrompt(fullTranscript, diarizedSegments);
-      });
-
-      const correctedSegments = await step.run("llm/correct", async () => {
-        logger.info("Calling LLM via AI SDK", {
-          requestId,
-          provider: env.AI_PROVIDER,
-          model: env.AI_MODEL,
-        });
-        try {
-          return await correctTranscriptionWithLLM(prompt, requestId);
-        } catch (error) {
-          logger.error("LLM correction failed", { requestId, error });
-          // Возвращаем оригинальные сегменты при ошибке
-          return diarizedSegments;
-        }
-      });
-
-      const result = await step.run("llm/validate", async () => {
-        return validateAndMergeCorrections(diarizedSegments, correctedSegments);
-      });
-
-      finalSegments = result.segments;
-      llmCorrectionApplied = result.correctionsApplied > 0;
-
-      logger.info("LLM correction done", {
-        requestId,
-        corrections: result.correctionsApplied,
-        provider: env.AI_PROVIDER,
-      });
-    } else {
-      logger.info("LLM correction skipped", {
-        requestId,
-        enabled: LLM_CORRECTION_ENABLED,
-        hasAiProvider,
-      });
-    }
+    logger.info("LLM correction completed", {
+      requestId,
+      corrections: result.correctionsApplied,
+      provider: env.AI_PROVIDER,
+    });
 
     return {
-      requestId,
-      segments: finalSegments,
-      llmCorrectionApplied,
-      metadata,
+      segments: result.segments,
+      correctionsApplied: result.correctionsApplied > 0,
     };
-  },
-);
+  } catch (error) {
+    logger.error("LLM correction failed", { requestId, error });
+    return { segments, correctionsApplied: false };
+  }
+}

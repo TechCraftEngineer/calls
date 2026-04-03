@@ -52,8 +52,8 @@ class DiarizationService:
             )
             if response.status_code == 200:
                 data = response.json()
-                pyannote_loaded = data.get("pyannote_loaded", False)
-                if pyannote_loaded:
+                pyannote_available = data.get("pyannote_available", False)
+                if pyannote_available:
                     logger.info(
                         f"Remote diarization service доступен: {self._remote_url}"
                     )
@@ -84,7 +84,7 @@ class DiarizationService:
             )
             if response.status_code == 200:
                 data = response.json()
-                return data.get("pyannote_loaded", False)
+                return data.get("pyannote_available", False)
         except Exception:
             pass
         

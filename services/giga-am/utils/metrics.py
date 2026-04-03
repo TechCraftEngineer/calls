@@ -128,6 +128,14 @@ class MetricsCollector:
             if request_id in self.active_requests:
                 self.active_requests[request_id].audio_duration = duration
     
+    def record_result_retrieval(self, request_id: str) -> None:
+        """Запрос результатов из хранилища"""
+        with self._lock:
+            self.result_retrievals += 1
+            if request_id in self.active_requests:
+                self.active_requests[request_id].result_retrieval = True
+        logger.info(f"Result retrieval recorded for request: {request_id}")
+    
     def get_current_stats(self) -> Dict[str, Any]:
         """Получение текущей статистики"""
         with self._lock:

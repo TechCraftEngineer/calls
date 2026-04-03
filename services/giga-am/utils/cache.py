@@ -68,7 +68,8 @@ class TranscriptionCache:
         """
         Получение текущей конфигурации pipeline.
         
-        LLM коррекция теперь в Inngest, не влияет на кэш Python сервиса.
+        Включены только те параметры, которые влияют на результат Python сервиса.
+        LLM коррекция выполняется в Inngest и не влияет на кэш этого сервиса.
         """
         from config import settings
         
@@ -76,7 +77,6 @@ class TranscriptionCache:
             "model_name": settings.model_name,
             "alignment_enabled": settings.alignment_enabled,
             "diarization_enabled": settings.diarization_enabled,
-            "enable_dual_asr_llm_correction": settings.enable_dual_asr_llm_correction,
         }
     
     def get(self, file_hash: str) -> Optional[Dict[str, Any]]:
