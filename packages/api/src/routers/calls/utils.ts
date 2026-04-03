@@ -68,24 +68,31 @@ export function getDisplayNameFromUser(u: {
   return getDisplayName(u);
 }
 
-export function getInternalNumbersForUser(user: Record<string, unknown>): string[] | undefined {
-  const nums = user.internalExtensions as string | undefined;
+export type UserWithInternalExtensions = {
+  id: string;
+  givenName?: string | null;
+  familyName?: string | null;
+  name?: string | null;
+  internalExtensions?: string | null;
+  mobilePhones?: string | null;
+};
+
+export function getInternalNumbersForUser(user: UserWithInternalExtensions): string[] | undefined {
+  const nums = user.internalExtensions;
   if (!nums || String(nums).trim().toLowerCase() === "all") return undefined;
-  return (
-    nums
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean) || undefined
-  );
+  const result = nums
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return result.length > 0 ? result : undefined;
 }
 
-export function getMobileNumbersForUser(user: Record<string, unknown>): string[] | undefined {
-  const nums = user.mobilePhones as string | undefined;
+export function getMobileNumbersForUser(user: UserWithInternalExtensions): string[] | undefined {
+  const nums = user.mobilePhones;
   if (!nums?.trim()) return undefined;
-  return (
-    nums
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean) || undefined
-  );
+  const result = nums
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return result.length > 0 ? result : undefined;
 }

@@ -131,6 +131,7 @@ export class CallsService {
     callType?: string | null;
     callTopic?: string | null;
     metadata?: Record<string, unknown> | null;
+    customerName?: string | null;
   }): Promise<string> {
     return this.callsRepository.upsertTranscript(data);
   }
@@ -351,13 +352,37 @@ export class CallsService {
   async calculateMetrics(
     workspaceId?: string,
     excludePhoneNumbers?: string[],
+    additionalFilters?: {
+      dateFrom?: string;
+      dateTo?: string;
+      internalNumbers?: string[];
+      mobileNumbers?: string[];
+      directions?: ("inbound" | "outbound")[];
+      managerInternalNumbers?: string[];
+      statuses?: ("missed" | "answered" | "voicemail" | "failed")[];
+      managerInternalNumbersForQuery?: string[];
+      q?: string;
+    },
   ): Promise<{
     totalCalls: number;
     transcribed: number;
     avgDuration: number;
     lastSync: string | null;
   }> {
-    return this.callsRepository.getMetrics(workspaceId, excludePhoneNumbers);
+    return this.callsRepository.getMetrics({
+      workspaceId,
+      excludePhoneNumbers,
+      ...additionalFilters,
+    });
+  }
+
+  async markTranscriptionFailed(callId: string, errorMessage: string): Promise<void> {
+    // Используем существующий метод updatePbxBinding для обновления статуса
+    await this.callsRepository.updatePbxBinding(callId, {
+      transcriptionStatus: "failed",
+      transcriptionError: errorMessage,
+      transcribedAt: new Date(),
+    } as any);
   }
 
   async getEvaluationsStats(params: {
@@ -407,5 +432,24 @@ export class CallsService {
     reportType?: "daily" | "weekly" | "monthly",
   ): Promise<Record<string, EnrichedManagerStats>> {
     return this.callsRepository.enrichStatsWithKpi(stats, workspaceId, reportType);
+  }
+
+  async getDailyKpiStats(input: {
+    workspaceId: string;
+    employeeExternalId: string;
+    dateFrom: string;
+    dateTo: string;
+    excludePhoneNumbers?: string[];
+  }): Promise<
+    Array<{
+      date: string;
+      totalDurationSeconds: number;
+      totalCalls: number;
+      incoming: number;
+      outgoing: number;
+      missed: number;
+    }>
+  > {
+    return this.callsRepository.getDailyKpiStats(input);
   }
 }

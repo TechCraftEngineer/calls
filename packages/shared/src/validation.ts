@@ -43,3 +43,53 @@ export function isValidEmail(email: string): boolean {
   if (typeof email !== "string") return false;
   return emailSchema.safeParse(email.trim()).success;
 }
+
+// Company context validation
+const INJECTION_PATTERNS = [
+  /\bignore\s+(previous|prior|all)\s+(instructions?|prompts?)\b/i,
+  /\bforget\s+(everything|all|your)\b/i,
+  /\bdo\s+not\s+follow\s+(instructions?|prompts?)\b/i,
+  /\bsystem\s+prompt\b/i,
+  /\binstructions?\s*:\s*\w/i,
+  /\byou\s+are\s+[\w\s]+\s+now\b/i,
+  /\bdisregard\s+(previous|prior)\b/i,
+  /\boverride\s+(instructions?|prompts?)\b/i,
+  /\bnew\s+instructions?\s*:\s*\w/i,
+];
+
+function sanitizeCompanyContext(s: string): string {
+  const trimmed = s.trim();
+  let out = "";
+  for (let i = 0; i < trimmed.length; i++) {
+    const code = trimmed.charCodeAt(i);
+    if (code > 31 && code !== 127) out += trimmed[i];
+  }
+  const lines = out.split(/\n/).filter((line) => {
+    const l = line.trim();
+    if (!l) return true;
+    if (/^>>\s*\w/.test(l) || /^#\s*instruction\b/i.test(l)) return false;
+    if (/^(ignore|forget|disregard|override|you\s+are)\b/i.test(l)) return false;
+    if (/^system\s*[:]/i.test(l)) return false;
+    if (/^new\s+instructions?\s*[:]/i.test(l)) return false;
+    return true;
+  });
+  const result = lines.join("\n").trim();
+  return result.length > 2000 ? result.slice(0, 2000) : result;
+}
+
+function hasInjectionPatterns(s: string): boolean {
+  return INJECTION_PATTERNS.some((re) => re.test(s));
+}
+
+/** Zod-схема для валидации company context */
+export const companyContextSchema = z
+  .string()
+  .transform(sanitizeCompanyContext)
+  .pipe(
+    z
+      .string()
+      .max(2000)
+      .refine((s) => !hasInjectionPatterns(s), {
+        message: "Контекст содержит недопустимое содержимое",
+      }),
+  );

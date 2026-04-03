@@ -87,20 +87,6 @@ export async function createBackendContext(opts: { headers: Headers; auth?: Auth
     }
   }
 
-  if (!user) {
-    const cookie = opts.headers.get("cookie");
-    const match = cookie?.match(/\bsession=([^;]+)/);
-    const cookieSessionValue = match?.[1] ? decodeURIComponent(match[1].trim()) : null;
-    const parsed = z.string().email().safeParse(cookieSessionValue);
-    if (parsed.success) {
-      const foundUser = await usersService.getUserByEmail(parsed.data);
-      if (foundUser) {
-        sessionEmail = sessionEmail ?? parsed.data;
-        user = foundUser;
-      }
-    }
-  }
-
   let workspaceId = getWorkspaceIdFromHeaders(opts.headers);
   // Fallback: если нет cookie/header, но пользователь авторизован — берём из БД
   if (workspaceId == null && authUserId) {

@@ -33,6 +33,7 @@ export const callsRepository = {
   getLowRatedCallsCount: callsStats.getLowRatedCallsCount,
   getCallSummariesByManager: callsStats.getCallSummariesByManager,
   getKpiStats: callsStats.getKpiStats,
+  getDailyKpiStats: callsStats.getDailyKpiStats,
 
   // Enrichment operations
   enrichStatsWithKpi: callsEnrichStats.enrichStatsWithKpi,

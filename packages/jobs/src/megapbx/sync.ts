@@ -6,9 +6,10 @@ import {
   pbxRepository,
   pbxService,
 } from "@calls/db";
-import { inngest, transcribeRequested } from "../inngest/client";
-import { createLogger } from "../logger";
-import { MegaPbxClient } from "./client";
+import pLimit from "p-limit";
+import { inngest, transcribeRequested } from "~/inngest/client";
+import { createLogger } from "~/logger";
+import { MegaPbxClient } from "~/megapbx/client";
 import {
   type NormalizedCall,
   type NormalizedEmployee,
@@ -16,7 +17,7 @@ import {
   normalizeCall,
   normalizeEmployee,
   normalizeNumber,
-} from "./normalize";
+} from "~/megapbx/normalize";
 
 const logger = createLogger("megapbx-sync");
 const PROVIDER = "megapbx";
@@ -310,6 +311,9 @@ export async function syncMegaPbxCalls(
       .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
     const excludePhoneNumbers = config.excludePhoneNumbers ?? [];
 
+    // Собираем все callIds для батчинговой отправки событий
+    const callIdsForTranscription: string[] = [];
+
     for (const call of calls) {
       if (shouldSkipCallByExcludedPhoneNumbers(call, excludePhoneNumbers)) {
         stats.skipped += 1;
@@ -338,44 +342,42 @@ export async function syncMegaPbxCalls(
         fileId: null,
       });
 
-      const canonicalCall =
-        (await callsService.getCallByExternalId(workspaceId, PROVIDER, call.externalId)) ??
-        (await callsService.getCallByFilename(filename, workspaceId));
-
-      if (!canonicalCall) {
-        throw new Error(
-          `Canonical call not found after create (workspaceId=${workspaceId}, provider=${PROVIDER}, externalId=${call.externalId}, filename=${filename})`,
-        );
-      }
+      // Используем ID из результата создания
+      const callId = createResult.id;
 
       // На повторных синках запись звонка может уже существовать с пустой PBX-привязкой.
       // Дозаполняем связь и вспомогательные поля, когда появились данные из directory.
       if (!createResult.created) {
-        const internalNumber = !canonicalCall.internalNumber?.trim()
-          ? (normalizePhoneForMatch(call.internalNumber) ??
-            normalizePhoneForMatch(number?.extension) ??
+        let internalNumber: string | undefined;
+        
+        // Если у call есть непустой internalNumber, то не устанавливаем PBX привязку
+        if (call.internalNumber?.trim()) {
+          internalNumber = undefined;
+        } else {
+          // Иначе вычисляем fallback из доступных данных
+          internalNumber = normalizePhoneForMatch(number?.extension) ??
             normalizePhoneForMatch(employee?.extension) ??
-            null)
-          : undefined;
-        const source = isEmptyOrMegaPbxPlaceholder(canonicalCall.source)
-          ? (employee?.externalId ?? number?.externalId ?? "megapbx")
-          : undefined;
-        const name = isEmptyOrMegaPbxPlaceholder(canonicalCall.name)
-          ? (employee?.displayName ?? number?.label ?? "MegaPBX")
-          : undefined;
+            undefined;
+        }
+        
+        // Для source и name используем данные из employee/number, так как в NormalizedCall их нет
+        const source = employee?.externalId ?? number?.externalId ?? "megapbx";
+        const name = employee?.displayName ?? number?.label ?? "MegaPBX";
 
         // Используем транзакционный метод для атомарного обновления
-        if (internalNumber || source || name) {
-          await callsService.updateCallPbxBinding(canonicalCall.id, {
+        // Обновляем только если есть meaningful internalNumber
+        if (internalNumber) {
+          await callsService.updateCallPbxBinding(callId, {
             internalNumber,
             source,
             name,
           });
         }
       }
-      let recordingFileId: string | null = canonicalCall.fileId;
+      // NormalizedCall не имеет fileId, всегда null для записи
+      let recordingFileId: string | null = null;
 
-      if (config.syncRecordings && call.recordingUrl && !canonicalCall.fileId) {
+      if (config.syncRecordings && call.recordingUrl) {
         try {
           const uploaded = await uploadRecordingIfNeeded(
             client,
@@ -384,7 +386,7 @@ export async function syncMegaPbxCalls(
             call.recordingUrl,
           );
           if (uploaded.fileId) {
-            await callsService.updateCallRecording(canonicalCall.id, {
+            await callsService.updateCallRecording(callId, {
               fileId: uploaded.fileId,
             });
             recordingFileId = uploaded.fileId;
@@ -396,7 +398,7 @@ export async function syncMegaPbxCalls(
           logger.warn("Ошибка загрузки записи MegaPBX", {
             workspaceId,
             callId: call.externalId,
-            callRecordId: canonicalCall.id,
+            callRecordId: callId,
             createResultId: createResult.id,
             error: message,
           });
@@ -404,8 +406,7 @@ export async function syncMegaPbxCalls(
       }
 
       if (createResult.created && recordingFileId) {
-        await inngest.send(transcribeRequested.create({ callId: canonicalCall.id }));
-        stats.transcriptionsQueued += 1;
+        callIdsForTranscription.push(callId);
       }
 
       if (createResult.created) {
@@ -414,6 +415,14 @@ export async function syncMegaPbxCalls(
         stats.skipped += 1;
       }
       stats.latestCursor = call.timestamp;
+    }
+
+    // Батчевая отправка событий транскрипции
+    if (callIdsForTranscription.length > 0) {
+      await inngest.send(
+        callIdsForTranscription.map(callId => transcribeRequested.create({ callId }))
+      );
+      stats.transcriptionsQueued += callIdsForTranscription.length;
     }
 
     const previousCursor = syncState?.cursor ?? config.syncFromDate ?? null;
@@ -471,23 +480,30 @@ export async function runActiveMegaPbxSync() {
   const integrations = await pbxService.listActiveIntegrations();
   const results: Array<{ workspaceId: string; ok: boolean; error?: string }> = [];
 
-  for (const integration of integrations) {
-    try {
-      await syncMegaPbxWorkspace(integration.workspaceId, integration);
-      results.push({ workspaceId: integration.workspaceId, ok: true });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      results.push({
-        workspaceId: integration.workspaceId,
-        ok: false,
-        error: message,
-      });
-      logger.error("Ошибка фонового синка MegaPBX", {
-        workspaceId: integration.workspaceId,
-        error: message,
-      });
-    }
-  }
+  // Ограничиваем одновременную обработку до 3 workspace'ов
+  const limit = pLimit(3);
+  
+  await Promise.all(
+    integrations.map(integration =>
+      limit(async () => {
+        try {
+          await syncMegaPbxWorkspace(integration.workspaceId, integration);
+          results.push({ workspaceId: integration.workspaceId, ok: true });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          results.push({
+            workspaceId: integration.workspaceId,
+            ok: false,
+            error: message,
+          });
+          logger.error("Ошибка фонового синка MegaPBX", {
+            workspaceId: integration.workspaceId,
+            error: message,
+          });
+        }
+      })
+    )
+  );
 
   return results;
 }

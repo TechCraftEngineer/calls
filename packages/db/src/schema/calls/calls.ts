@@ -3,9 +3,10 @@
  */
 
 import { sql } from "drizzle-orm";
-import { boolean, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, pgTable, text, timestamp, unique, uuid, check } from "drizzle-orm/pg-core";
 import { files } from "../files/files";
 import { workspaces } from "../workspace/workspaces";
+import { callDirectionEnum, callStatusEnum } from "./enums";
 
 export const calls = pgTable(
   "calls",
@@ -18,8 +19,8 @@ export const calls = pgTable(
     number: text("number"),
     timestamp: timestamp("timestamp", { withTimezone: true }).notNull(),
     name: text("name"),
-    direction: text("direction"),
-    status: text("status"),
+    direction: callDirectionEnum("direction"),
+    status: callStatusEnum("status"),
     fileId: uuid("file_id").references(() => files.id, {
       onDelete: "set null",
     }),
@@ -42,6 +43,9 @@ export const calls = pgTable(
       .notNull(),
   },
   (table) => [
+    // Используем pgEnum для валидации значений
+    check("calls_status_check", sql`status IN ('missed', 'answered', 'voicemail', 'failed')`),
+    check("calls_direction_check", sql`direction IN ('inbound', 'outbound', 'incoming', 'outgoing')`),
     unique("calls_workspace_filename_unique").on(table.workspaceId, table.filename),
     unique("calls_workspace_provider_external_id_unique").on(
       table.workspaceId,

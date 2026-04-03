@@ -2,6 +2,8 @@
  * Statistics and analytics operations for calls
  */
 
+import type { DailyKpiStat, GetDailyKpiStatsInput } from "./get-daily-kpi-stats";
+import { getDailyKpiStats as getDailyKpiStatsFn } from "./get-daily-kpi-stats";
 import type { ManagerStatsRow } from "./get-evaluations-stats";
 import {
   getCallSummariesByManager as getCallSummariesByManagerFn,
@@ -12,8 +14,20 @@ import { getKpiStats as getKpiStatsFn } from "./get-kpi-stats";
 import { getCallsMetrics } from "./get-metrics";
 
 export const callsStats = {
-  async getMetrics(workspaceId?: string, excludePhoneNumbers?: string[]) {
-    return getCallsMetrics(workspaceId, excludePhoneNumbers);
+  async getMetrics(params?: {
+    workspaceId?: string;
+    excludePhoneNumbers?: string[];
+    dateFrom?: string;
+    dateTo?: string;
+    internalNumbers?: string[];
+    mobileNumbers?: string[];
+    directions?: ("inbound" | "outbound")[];
+    managerInternalNumbers?: string[];
+    statuses?: ("missed" | "answered" | "voicemail" | "failed")[];
+    managerInternalNumbersForQuery?: string[];
+    q?: string;
+  }) {
+    return getCallsMetrics(params);
   },
 
   async getEvaluationsStats(params: {
@@ -55,5 +69,9 @@ export const callsStats = {
     excludePhoneNumbers?: string[];
   }) {
     return getKpiStatsFn(params);
+  },
+
+  async getDailyKpiStats(input: GetDailyKpiStatsInput): Promise<DailyKpiStat[]> {
+    return getDailyKpiStatsFn(input);
   },
 };

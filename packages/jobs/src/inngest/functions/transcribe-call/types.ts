@@ -2,6 +2,9 @@
  * Типы для транскрибации звонков
  */
 
+import type { z } from "zod";
+import type { TranscriptionSegmentSchema } from "./schemas";
+
 export interface Call {
   id: string;
   workspaceId: string;
@@ -36,8 +39,8 @@ export interface GigaAmSegment {
   start: number;
   end: number;
   text: string;
-  embedding?: unknown;
-  confidence?: unknown;
+  embedding?: number[] | null;
+  confidence?: number | null;
 }
 
 export interface SpeakerTimelineItem {
@@ -52,6 +55,18 @@ export interface GigaAmResult {
   segments?: GigaAmSegment[];
   final_transcript?: string;
   speakerTimeline?: SpeakerTimelineItem[];
+  diarization?: {
+    success?: boolean;
+    mapping?: Record<string, string>;
+    usedEmbeddings?: boolean;
+    clusterCount?: number;
+    reason?: string;
+    truncatedForAnalysis?: boolean;
+    fallbackReason?: string;
+    fallbackAttempted?: boolean;
+    errorCode?: string;
+    error?: string;
+  };
 }
 
 export interface AsrLog {
@@ -65,7 +80,7 @@ export interface TranscriptionResult {
   transcript: string;
   metadata: {
     asrLogs: AsrLog[];
-    confidence?: unknown;
+    confidence?: number;
     processingTimeMs?: number;
     asrSource?: string;
   };
@@ -98,4 +113,35 @@ export interface SpeakerIdentificationResult {
 
 export interface PipelineAudioResult {
   preprocessedFileId: string;
+}
+
+export interface AsrResult {
+  segments: Array<{
+    speaker: string;
+    start: number;
+    end: number;
+    text: string;
+    embedding?: number[] | null;
+    confidence?: number;
+  }>;
+  transcript: string;
+  validationFailed?: boolean;
+  validationError?: string;
+  metadata: {
+    asrLogs: Array<{
+      provider: string;
+      utterances: z.infer<typeof TranscriptionSegmentSchema>[];
+      raw: unknown;
+    }>;
+  };
+}
+
+export interface AudioFileResult {
+  buffer: ArrayBuffer;
+  filename: string;
+}
+
+export interface AudioBufferLegacyResult {
+  buffer: string;
+  filename: string;
 }

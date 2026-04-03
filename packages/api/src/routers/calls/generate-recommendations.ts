@@ -7,6 +7,7 @@ import {
   OPENROUTER_API_KEY,
 } from "@calls/config";
 import type { Call, callsService } from "@calls/db";
+import { buildCompanyContext, companyContextSchema } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
@@ -16,74 +17,6 @@ const DEFAULT_RECOMMENDATIONS_MODEL =
   AI_RECOMMENDATIONS_MODEL ?? AI_MODEL_PREMIUM ?? AI_MODEL ?? "anthropic/claude-sonnet-4.6";
 
 const DEFAULT_RECOMMENDATIONS_PROMPT = `Ты эксперт по оценке качества телефонных переговоров. На основе транскрипта звонка и имеющейся оценки сформируй 3–5 конкретных рекомендаций для менеджера по улучшению качества общения с клиентом. Отвечай строго JSON-массивом строк на русском, например: ["Рекомендация 1", "Рекомендация 2"].`;
-
-const INJECTION_PATTERNS = [
-  /\bignore\s+(previous|prior|all)\s+(instructions?|prompts?)\b/i,
-  /\bforget\s+(everything|all|your)\b/i,
-  /\bdo\s+not\s+follow\s+(instructions?|prompts?)\b/i,
-  /\bsystem\s+prompt\b/i,
-  /\binstructions?\s*:\s*\w/i,
-  /\byou\s+are\s+[\w\s]+\s+now\b/i,
-  /\bdisregard\s+(previous|prior)\b/i,
-  /\boverride\s+(instructions?|prompts?)\b/i,
-  /\bnew\s+instructions?\s*:\s*\w/i,
-];
-
-function sanitizeCompanyContext(s: string): string {
-  const trimmed = s.trim();
-  let out = "";
-  for (let i = 0; i < trimmed.length; i++) {
-    const code = trimmed.charCodeAt(i);
-    if (code > 31 && code !== 127) out += trimmed[i];
-  }
-  const lines = out.split(/\n/).filter((line) => {
-    const l = line.trim();
-    if (!l) return true;
-    if (/^>>\s*\w/.test(l) || /^#\s*instruction\b/i.test(l)) return false;
-    if (/^(ignore|forget|disregard|override|you\s+are)\b/i.test(l)) return false;
-    return true;
-  });
-  const result = lines.join("\n").trim();
-  return result.length > 2000 ? result.slice(0, 2000) : result;
-}
-
-function hasInjectionPatterns(s: string): boolean {
-  return INJECTION_PATTERNS.some((re) => re.test(s));
-}
-
-function buildCompanyContext(workspace: {
-  name?: string | null;
-  description?: string | null;
-}): string | undefined {
-  const parts: string[] = [];
-  const companyName = workspace.name?.trim();
-  const companyDescription = workspace.description?.trim();
-
-  if (companyName) {
-    parts.push(`Название компании: ${companyName}`);
-  }
-  if (companyDescription) {
-    parts.push(`Описание компании: ${companyDescription}`);
-  }
-
-  if (parts.length === 0) {
-    return undefined;
-  }
-
-  return companyContextSchema.parse(parts.join("\n"));
-}
-
-const companyContextSchema = z
-  .string()
-  .transform(sanitizeCompanyContext)
-  .pipe(
-    z
-      .string()
-      .max(2000)
-      .refine((s) => !hasInjectionPatterns(s), {
-        message: "Контекст содержит недопустимое содержимое",
-      }),
-  );
 
 function parseRecommendationsJson(text: string): string[] {
   if (!text || typeof text !== "string") {
@@ -254,8 +187,16 @@ export const generateRecommendationsProcedure = workspaceProcedure
 
     let companyContext: string | undefined;
     try {
-      companyContext = buildCompanyContext(workspace);
-    } catch {
+      const rawContext = buildCompanyContext(workspace);
+      if (rawContext) {
+        companyContext = companyContextSchema.parse(rawContext);
+      }
+    } catch (error) {
+      logger.error("Company context validation failed", {
+        workspaceId: context.workspaceId,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      });
       throw new ORPCError("BAD_REQUEST", {
         message:
           "Описание рабочей области содержит недопустимое содержимое. Проверьте и удалите подозрительные инструкции.",

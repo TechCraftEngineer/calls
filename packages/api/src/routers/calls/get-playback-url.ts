@@ -5,7 +5,7 @@ import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 
 export const getPlaybackUrl = workspaceProcedure
-  .input(z.object({ call_id: z.string() }))
+  .input(z.object({ call_id: z.string().uuid() }))
   .handler(async ({ input, context }) => {
     const call = await context.callsService.getCall(input.call_id);
     if (!call) {

@@ -114,7 +114,16 @@ export function validateAndMergeCorrections(
     const orig = originalSegments[i];
     const corr = correctedSegments[i];
 
-    if (!orig || !corr) continue;
+    if (!orig || !corr) {
+      logger.warn("Пропуск сегмента при валидации", {
+        index: i,
+        hasOriginal: !!orig,
+        hasCorrected: !!corr,
+        originalText: orig?.text?.substring(0, 50),
+        correctedText: corr?.text?.substring(0, 50),
+      });
+      continue;
+    }
 
     const validatedSeg: TranscriptionSegment = {
       start: orig.start,
@@ -180,7 +189,23 @@ export async function applyLLMCorrection(
       correctionsApplied: result.correctionsApplied > 0,
     };
   } catch (error) {
-    logger.error("LLM correction failed", { requestId, error });
+    // Type guard для проверки error с кодом
+    const isErrorWithCode = (err: unknown): err is { code?: string } => 
+      err instanceof Error && 'code' in err;
+    
+    // Проверяем на timeout ошибки
+    if (error instanceof Error && (
+      error.name === 'TimeoutError' || 
+      (isErrorWithCode(error) && error.code === 'ETIMEDOUT') ||
+      error.message.includes('timeout')
+    )) {
+      // Объединяем логи для предотвращения дублирования
+      logger.error(`Таймаут исправления LLM: ${error.message}`, { requestId });
+      // Возвращаем fallback вместо пробрасывания ошибки
+      return { segments, correctionsApplied: false };
+    }
+    
+    logger.error("Сбой исправления LLM", { requestId, error });
     return { segments, correctionsApplied: false };
   }
 }

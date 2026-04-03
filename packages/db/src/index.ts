@@ -12,6 +12,10 @@ export {
   createWorkspaceNullResponse,
   handleWorkspaceError,
 } from "./lib/workspace-utils";
+export type {
+  DailyKpiStat,
+  GetDailyKpiStatsInput,
+} from "./repositories/calls/get-daily-kpi-stats";
 export type { ManagerStatsRow } from "./repositories/calls/get-evaluations-stats";
 export { evaluationTemplatesRepository } from "./repositories/evaluation-templates.repository";
 export { megaPbxRepository } from "./repositories/megapbx.repository";

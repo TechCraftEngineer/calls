@@ -3,8 +3,22 @@
  */
 
 import { createLogger } from "../../../logger";
+import { z } from "zod";
 
 const logger = createLogger("transcribe-call-validation");
+
+// Схема для валидации описания workspace
+const WorkspaceDescriptionSchema = z.string().max(2000, "Описание должно быть не более 2000 символов");
+
+// Схема для валидации workspace для LLM
+const WorkspaceLlmInputSchema = z.object({
+  message: z.string().min(1).max(2000, "Сообщение должно быть от 1 до 2000 символов"),
+  context: z.string().optional(),
+  history: z.array(z.object({
+    role: z.enum(["user", "assistant"]),
+    content: z.string()
+  })).max(20, "История диалога не может содержать более 20 сообщений").optional()
+});
 
 export interface ValidationError {
   field: string;
@@ -68,9 +82,54 @@ export function validateWorkspace(workspace: {
   id: string;
   name?: string | null;
   description?: string | null;
-}): void {
-  if (!workspace.id) {
-    throw new TranscriptionError("Workspace не найден", "WORKSPACE_NOT_FOUND", "workspace");
+}): typeof workspace | void {
+  // Validate UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(workspace.id)) {
+    throw new TranscriptionError(
+      `Invalid workspace id format: ${workspace.id}`,
+      "INVALID_WORKSPACE_ID",
+      "workspace.id"
+    );
+  }
+
+  // Warn if name is missing (used for LLM context building)
+  if (!workspace.name) {
+    logger.warn(`Workspace has no name, LLM context will be degraded (workspaceId: ${workspace.id})`);
+  }
+
+  // Validate and normalize description length (LLM context optimization)
+  if (workspace.description) {
+    if (workspace.description.length > 2000) {
+      // Создаем новый workspace объект с обрезанным описанием
+      const originalLength = workspace.description.length;
+      const truncatedDescription = workspace.description.slice(0, 2000);
+      
+      // Логируем изменение
+      logger.warn(
+        `Workspace description обрезан с ${originalLength} до 2000 символов (workspaceId: ${workspace.id})`
+      );
+      
+      // Возвращаем новый workspace объект с обрезанным описанием
+      return {
+        ...workspace,
+        description: truncatedDescription
+      };
+    }
+    
+    // Дополнительная валидация контента для LLM
+    try {
+      WorkspaceDescriptionSchema.parse(workspace.description);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new TranscriptionError(
+          `Описание workspace не проходит валидацию: ${error.issues.map((e: z.ZodIssue) => e.message).join(", ")}`,
+          "INVALID_WORKSPACE_DESCRIPTION",
+          "workspace.description"
+        );
+      }
+      throw error;
+    }
   }
 }
 
@@ -143,7 +202,12 @@ export function handleAsyncError<T>(operation: () => Promise<T>, context: string
       throw error;
     }
 
-    throw new TranscriptionError(`Внутренняя ошибка в ${context}`, "INTERNAL_ERROR", context);
+    // Сохраняем оригинальную ошибку как cause
+    const transcriptionError = new TranscriptionError(`Внутренняя ошибка в ${context}`, "INTERNAL_ERROR", context);
+    if (error instanceof Error) {
+      transcriptionError.cause = error;
+    }
+    throw transcriptionError;
   });
 }
 

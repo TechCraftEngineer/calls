@@ -50,8 +50,8 @@ export interface IdentifySpeakersWithEmbeddingsOptions {
     start?: number;
     end?: number;
     text?: string;
-    embedding?: number[];
-    confidence?: number;
+    embedding?: number[] | null;
+    confidence?: number | null;
   }>;
 }
 
@@ -88,8 +88,8 @@ function analyzeSpeakerClusters(
     start?: number;
     end?: number;
     text?: string;
-    embedding?: number[];
-    confidence?: number;
+    embedding?: number[] | null;
+    confidence?: number | null;
   }>,
 ): Map<string, SpeakerCluster> {
   const clusters = new Map<string, SpeakerCluster>();
@@ -359,7 +359,6 @@ ${analysisText}
       try {
         const simpleResponse = await generateWithAi({
           modelProfile: "cheap",
-          provider: "deepseek", // Используем более стабильный провайдер для фоллбека
           system:
             "Определи роль спикеров в транскрипте. Верни JSON: {speakers: [{speakerId, role, name, confidence}], operatorName, customerName}",
           prompt: `Транскрипт:\n${analysisText.slice(0, 5000)}\n\nОпредели роли спикеров.`,

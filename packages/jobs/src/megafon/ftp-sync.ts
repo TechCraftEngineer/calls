@@ -6,12 +6,191 @@
 import { Writable } from "node:stream";
 import { getAudioDurationFromBuffer } from "@calls/asr/audio/get-audio-duration";
 import { callsService, filesService } from "@calls/db";
+import pLimit from "p-limit";
 import { validateFtpCredentials } from "@calls/shared";
 import { Client } from "basic-ftp";
-import { createLogger } from "../logger";
-import { parseMegafonFilename } from "./parse-filename";
+import { createLogger } from "~/logger";
+import { parseMegafonFilename } from "~/megafon/parse-filename";
 
 const logger = createLogger("ftp-sync");
+
+// Модуль-уровневая константа таймаута для операций
+const OPERATION_TIMEOUT = 30_000; // 30 секунд для отдельных операций
+
+/**
+ * Обрабатывает один файл с FTP
+ */
+async function processFile(
+  client: Client,
+  file: { name: string },
+  dateDir: string,
+  workspaceId: string,
+  options: { excludePhoneNumbers?: string[] } | undefined,
+  result: SyncResult,
+): Promise<void> {
+  const relativePath = `${dateDir}/${file.name}`;
+
+  const existing = await callsService.getCallByFilename(relativePath, workspaceId);
+  if (existing) {
+    result.skipped++;
+    return;
+  }
+
+  const parsed = parseMegafonFilename(relativePath);
+  if (!parsed) {
+    const errorMsg = `Не удалось разобрать имя: ${relativePath}`;
+    result.errors.push(errorMsg);
+    logger.warn("Ошибка парсинга имени файла", {
+      filename: relativePath,
+    });
+    return;
+  }
+
+  const excludeList = options?.excludePhoneNumbers ?? [];
+  if (excludeList.length > 0) {
+    const internalNorm = normalizePhoneForMatch(parsed.internalNumber);
+    const externalNorm = normalizePhoneForMatch(parsed.externalNumber);
+    const isExcluded = excludeList.some((excl) => {
+      const exclNorm = normalizePhoneForMatch(excl);
+      if (!exclNorm) return false;
+      return (
+        internalNorm === exclNorm ||
+        externalNorm === exclNorm ||
+        internalNorm.endsWith(exclNorm) ||
+        externalNorm.endsWith(exclNorm)
+      );
+    });
+    if (isExcluded) {
+      result.skipped++;
+      logger.info("Файл пропущен (номер в списке исключений)", {
+        filename: relativePath,
+        internalNumber: parsed.internalNumber,
+        externalNumber: parsed.externalNumber,
+      });
+      return;
+    }
+  }
+
+  try {
+    // Скачиваем файл напрямую в буфер
+    const chunks: Buffer[] = [];
+    const writable = new Writable({
+      write(chunk, _encoding, callback) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        callback();
+      },
+    });
+    const downloadBuffer = await Promise.race([
+      (async () => {
+        await client.downloadTo(writable, file.name);
+        return Buffer.concat(chunks);
+      })(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout downloading file")), OPERATION_TIMEOUT),
+      ),
+    ]);
+
+    // Валидация размера файла
+    const MIN_FILE_SIZE = 1024; // 1KB
+    const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
+    if (downloadBuffer.length < MIN_FILE_SIZE) {
+      result.errors.push(
+        `${relativePath}: Файл слишком маленький (${downloadBuffer.length} bytes)`,
+      );
+      logger.warn("Файл слишком маленький", {
+        filename: relativePath,
+        size: downloadBuffer.length,
+      });
+      return;
+    }
+
+    if (downloadBuffer.length > MAX_FILE_SIZE) {
+      result.errors.push(
+        `${relativePath}: Файл слишком большой (${downloadBuffer.length} bytes)`,
+      );
+      logger.warn("Файл слишком большой", {
+        filename: relativePath,
+        size: downloadBuffer.length,
+      });
+      return;
+    }
+
+    // Длительность определяем по уже скачанному буферу.
+    let fileDurationSeconds: number | null = null;
+
+    const duration = await getAudioDurationFromBuffer(downloadBuffer);
+    if (typeof duration === "number" && Number.isFinite(duration) && duration > 0) {
+      fileDurationSeconds = duration;
+    } else {
+      logger.warn("Не удалось определить длительность записи", {
+        filename: relativePath,
+        duration,
+      });
+    }
+
+    // Загрузка файла в S3 через FilesService
+    let fileId: string | null = null;
+    let storageKey: string | null = null;
+    try {
+      const uploadResult = await filesService.uploadCallRecording(
+        workspaceId,
+        relativePath,
+        downloadBuffer,
+        "ftp",
+        fileDurationSeconds,
+      );
+      fileId = uploadResult.id;
+      storageKey = uploadResult.storageKey;
+      result.s3Uploaded++;
+      logger.info("Файл успешно загружен в S3", {
+        filename: relativePath,
+        storageKey,
+        fileId,
+        size: downloadBuffer.length,
+      });
+    } catch (s3Error) {
+      const errorMsg = `${relativePath}: Критическая ошибка загрузки в S3: ${s3Error instanceof Error ? s3Error.message : String(s3Error)}`;
+      result.errors.push(errorMsg);
+      logger.error("Критическая ошибка загрузки в S3", {
+        filename: relativePath,
+        error: s3Error instanceof Error ? s3Error.message : String(s3Error),
+      });
+      return;
+    }
+
+    const callId = await callsService.createCall({
+      workspaceId,
+      filename: relativePath,
+      number: parsed.externalNumber,
+      internalNumber: parsed.internalNumber,
+      timestamp: parsed.timestamp,
+      direction: parsed.direction,
+      source: parsed.internalNumber,
+      name: parsed.internalNumber,
+      fileId: fileId ?? null,
+    });
+
+    result.downloaded++;
+    if (callId) {
+      result.createdCallIds.push(callId);
+    }
+    logger.info("Файл успешно обработан", {
+      filename: relativePath,
+      size: downloadBuffer.length,
+      direction: parsed.direction,
+      storageKey,
+      s3Uploaded: !!storageKey,
+    });
+  } catch (e) {
+    const errorMsg = `${relativePath}: ${e instanceof Error ? e.message : String(e)}`;
+    result.errors.push(errorMsg);
+    logger.error("Ошибка загрузки файла", {
+      filename: relativePath,
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
+}
 
 export interface FtpConfig {
   host: string;
@@ -53,7 +232,8 @@ export async function testFtpConnection(
       host: config.host,
       user: config.user,
       password: config.password,
-      secure: false,
+      secure: true,
+      secureOptions: { rejectUnauthorized: true },
     });
     return { success: true };
   } catch (e) {
@@ -110,9 +290,6 @@ export async function syncFtp(
   const client = new Client(60_000);
   client.ftp.verbose = false;
 
-  // Устанавливаем таймауты для отдельных операций
-  const OPERATION_TIMEOUT = 30_000; // 30 секунд для отдельных операций
-
   try {
     logger.info("Подключение к FTP", { host: config.host, user: config.user });
 
@@ -120,7 +297,8 @@ export async function syncFtp(
       host: config.host,
       user: config.user,
       password: config.password,
-      secure: false,
+      secure: true,
+      secureOptions: { rejectUnauthorized: true },
     });
 
     logger.info("Успешное подключение к FTP");
@@ -208,172 +386,43 @@ export async function syncFtp(
         continue;
       }
 
-      for (const file of files) {
-        const relativePath = `${dateDir}/${file.name}`;
-
-        const existing = await callsService.getCallByFilename(relativePath, workspaceId);
-        if (existing) {
-          result.skipped++;
-          continue;
-        }
-
-        const parsed = parseMegafonFilename(relativePath);
-        if (!parsed) {
-          const errorMsg = `Не удалось разобрать имя: ${relativePath}`;
-          result.errors.push(errorMsg);
-          logger.warn("Ошибка парсинга имени файла", {
-            filename: relativePath,
-          });
-          continue;
-        }
-
-        const excludeList = options?.excludePhoneNumbers ?? [];
-        if (excludeList.length > 0) {
-          const internalNorm = normalizePhoneForMatch(parsed.internalNumber);
-          const externalNorm = normalizePhoneForMatch(parsed.externalNumber);
-          const isExcluded = excludeList.some((excl) => {
-            const exclNorm = normalizePhoneForMatch(excl);
-            if (!exclNorm) return false;
-            return (
-              internalNorm === exclNorm ||
-              externalNorm === exclNorm ||
-              internalNorm.endsWith(exclNorm) ||
-              externalNorm.endsWith(exclNorm)
-            );
-          });
-          if (isExcluded) {
-            result.skipped++;
-            logger.info("Файл пропущен (номер в списке исключений)", {
-              filename: relativePath,
-              internalNumber: parsed.internalNumber,
-              externalNumber: parsed.externalNumber,
-            });
-            continue;
-          }
-        }
-
-        try {
-          // Скачиваем файл напрямую в буфер
-          const chunks: Buffer[] = [];
-          const writable = new Writable({
-            write(chunk, _encoding, callback) {
-              chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-              callback();
-            },
-          });
-          const downloadBuffer = await Promise.race([
-            (async () => {
-              await client.downloadTo(writable, file.name);
-              return Buffer.concat(chunks);
-            })(),
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error("Timeout downloading file")), OPERATION_TIMEOUT),
-            ),
-          ]);
-
-          // Валидация размера файла
-          const MIN_FILE_SIZE = 1024; // 1KB
-          const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
-
-          if (downloadBuffer.length < MIN_FILE_SIZE) {
-            result.errors.push(
-              `${relativePath}: Файл слишком маленький (${downloadBuffer.length} bytes)`,
-            );
-            logger.warn("Файл слишком маленький", {
-              filename: relativePath,
-              size: downloadBuffer.length,
-            });
-            continue;
-          }
-
-          if (downloadBuffer.length > MAX_FILE_SIZE) {
-            result.errors.push(
-              `${relativePath}: Файл слишком большой (${downloadBuffer.length} bytes)`,
-            );
-            logger.warn("Файл слишком большой", {
-              filename: relativePath,
-              size: downloadBuffer.length,
-            });
-            continue;
-          }
-
-          // Длительность определяем по уже скачанному буферу.
-          // fileDurationSeconds храним в `files`.
-          let fileDurationSeconds: number | null = null;
-
-          const duration = await getAudioDurationFromBuffer(downloadBuffer);
-          if (typeof duration === "number" && Number.isFinite(duration) && duration > 0) {
-            fileDurationSeconds = duration;
-          } else {
-            logger.warn("Не удалось определить длительность записи", {
-              filename: relativePath,
-              duration,
-            });
-          }
-
-          // Загрузка файла в S3 через FilesService
-          let fileId: string | null = null;
-          let storageKey: string | null = null;
-          try {
-            const uploadResult = await filesService.uploadCallRecording(
-              workspaceId,
-              relativePath,
-              downloadBuffer,
-              "ftp",
-              fileDurationSeconds,
-            );
-            fileId = uploadResult.id;
-            storageKey = uploadResult.storageKey;
-            result.s3Uploaded++;
-            logger.info("Файл успешно загружен в S3", {
-              filename: relativePath,
-              storageKey,
-              fileId,
-              size: downloadBuffer.length,
-            });
-          } catch (s3Error) {
-            const errorMsg = `${relativePath}: Критическая ошибка загрузки в S3: ${s3Error instanceof Error ? s3Error.message : String(s3Error)}`;
-            result.errors.push(errorMsg);
-            logger.error("Критическая ошибка загрузки в S3", {
-              filename: relativePath,
-              error: s3Error instanceof Error ? s3Error.message : String(s3Error),
-            });
-            // Прерываем обработку файла, так как без S3 транскрибация невозможна
-            continue;
-          }
-
-          const callId = await callsService.createCall({
-            workspaceId,
-            filename: relativePath,
-            number: parsed.externalNumber,
-            internalNumber: parsed.internalNumber,
-            timestamp: parsed.timestamp,
-            direction: parsed.direction,
-            source: parsed.internalNumber,
-            name: parsed.internalNumber,
-            fileId: fileId ?? null,
-          });
-
-          result.downloaded++;
-          if (callId) {
-            result.createdCallIds.push(callId);
-          }
-          logger.info("Файл успешно обработан", {
-            filename: relativePath,
-            size: downloadBuffer.length,
-            direction: parsed.direction,
-            storageKey,
-            s3Uploaded: !!storageKey,
-          });
-        } catch (e) {
-          const errorMsg = `${relativePath}: ${e instanceof Error ? e.message : String(e)}`;
-          result.errors.push(errorMsg);
-          logger.error("Ошибка загрузки файла", {
-            filename: relativePath,
-            error: e instanceof Error ? e.message : String(e),
-          });
-        }
-      }
+      // Ограничиваем одновременную обработку файлов до 5
+      const fileLimit = pLimit(5);
+      
+      await Promise.all(
+        files.map(file =>
+          fileLimit(async () => {
+            // Создаем отдельный FTP клиент для каждой задачи
+            const taskClient = new Client(OPERATION_TIMEOUT);
+            taskClient.ftp.verbose = false;
+            
+            try {
+              await taskClient.access({
+                host: config.host,
+                user: config.user,
+                password: config.password,
+                secure: true,
+                secureOptions: { rejectUnauthorized: true },
+              });
+              
+              // Переходим в директорию с файлами
+              await taskClient.cd(dateDir);
+              
+              // Обрабатываем файл
+              await processFile(taskClient, file, dateDir, workspaceId, options, result);
+            } catch (error) {
+              const errorMsg = `${dateDir}/${file.name}: ${error instanceof Error ? error.message : String(error)}`;
+              result.errors.push(errorMsg);
+              logger.error("Ошибка обработки файла", {
+                filename: `${dateDir}/${file.name}`,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            } finally {
+              taskClient.close();
+            }
+          })
+        )
+      );
 
       // Возврат в recordings для следующей итерации
       await client.cd("..");

@@ -350,8 +350,13 @@ export async function transcribeWithGigaAm(
   const totalDuration = apiResponse.total_duration;
   const finalTranscript = apiResponse.final_transcript?.trim() ?? "";
 
-  // Временное логирование для отладки
-  logger.info("Giga AM API ответ", apiResponse);
+  // Выборочное логирование для отладки (без полных данных сегментов)
+  logger.info("Giga AM API ответ", {
+    pipeline: apiResponse.pipeline,
+    segmentsCount: apiResponse.segments.length,
+    hasSpeakerTimeline: Boolean(apiResponse.speaker_timeline?.length),
+    stages: apiResponse.stages,
+  });
 
   // Приоритет: speaker_timeline > final_transcript > segments
   const speakerText =
