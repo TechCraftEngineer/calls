@@ -15,9 +15,7 @@ from services.alignment_service import AlignmentService
 from services.attribution_service import AttributionService
 from services.audio_preprocessing import preprocess_audio_for_diarization, cleanup_processed_audio
 from services.diarization_service import DiarizationService
-from services.inngest_client import inngest_client
 from services.postprocess_service import PostprocessService
-from services.storage import transcription_storage
 from services.transcription_service import transcription_service
 from utils.metrics import metrics
 
@@ -28,6 +26,40 @@ diarization_service = DiarizationService()
 alignment_service = AlignmentService()
 attribution_service = AttributionService()
 postprocess_service = PostprocessService()
+
+
+async def process_audio_sync(self, audio_data: bytes, filename: str) -> Dict[str, Any]:
+    """
+    Синхронная обработка аудио файла.
+    
+    Вызывается из Inngest и ждет завершения транскрипции.
+    
+    Args:
+        audio_data: Байты аудио файла
+        filename: Имя файла
+        
+    Returns:
+        Результат транскрипции
+    """
+    request_id = f"sync-{int(time.time())}"
+    
+    try:
+        logger.info(f"[{request_id}] Начало синхронной обработки аудио: {filename}")
+        
+        # Сохраняем аудио во временный файл
+        with tempfile.NamedTemporaryFile(delete=False, suffix=filename) as tmp_file:
+            tmp_path = tmp_file.name
+            tmp_file.write(audio_data)
+        
+        # Запускаем полную обработку
+        result = await self.process_audio(tmp_path, request_id)
+        
+        logger.info(f"[{request_id}] Синхронная обработка завершена")
+        return result
+        
+    except Exception as e:
+        logger.error(f"[{request_id}] Ошибка синхронной обработки: {e}")
+        raise
 
 
 def run_ultra_pipeline(
@@ -232,16 +264,8 @@ def run_ultra_pipeline(
             "dual_asr_enabled": False,
         }
         
-        # Сохраняем результат в хранилище для Inngest
+        # Сохраняем результат в хранилище
         transcription_storage.store_result(request_id, result)
-        
-        # Отправляем событие в Inngest
-        if inngest_client.is_available:
-            try:
-                inngest_client.send_transcription_completed(request_id, result)
-                logger.info(f"[{request_id}] Результаты отправлены в Inngest")
-            except Exception as e:
-                logger.error(f"[{request_id}] Ошибка отправки в Inngest: {e}")
         
         # Очистка временного файла
         cleanup_processed_audio(processed_audio_path, audio_path, request_id)
@@ -255,3 +279,46 @@ def run_ultra_pipeline(
         # Очистка временного файла в случае ошибки
         cleanup_processed_audio(processed_audio_path, audio_path, request_id)
         raise
+
+
+class PipelineService:
+    """Сервис для выполнения pipeline транскрипции."""
+    
+    async def process_audio_sync(self, audio_data: bytes, filename: str) -> Dict[str, Any]:
+        """
+        Синхронная обработка аудио файла.
+        
+        Вызывается из Inngest и ждет завершения транскрипции.
+        
+        Args:
+            audio_data: Байты аудио файла
+            filename: Имя файла
+            
+        Returns:
+            Результат транскрипции
+        """
+        import tempfile
+        
+        request_id = f"sync-{int(time.time())}"
+        
+        try:
+            logger.info(f"[{request_id}] Начало синхронной обработки аудио: {filename}")
+            
+            # Сохраняем аудио во временный файл
+            with tempfile.NamedTemporaryFile(delete=False, suffix=filename) as tmp_file:
+                tmp_path = tmp_file.name
+                tmp_file.write(audio_data)
+            
+            # Запускаем полную обработку
+            result = await self._process_audio_internal(tmp_path, request_id)
+            
+            logger.info(f"[{request_id}] Синхронная обработка завершена")
+            return result
+            
+        except Exception as e:
+            logger.error(f"[{request_id}] Ошибка синхронной обработки: {e}")
+            raise
+    
+    async def _process_audio_internal(self, audio_path: str, request_id: str) -> Dict[str, Any]:
+        """Внутренний метод обработки аудио."""
+        return await run_ultra_pipeline(audio_path, None, request_id)

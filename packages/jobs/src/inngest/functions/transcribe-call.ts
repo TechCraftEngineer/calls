@@ -4,7 +4,6 @@
  */
 
 import { identifySpeakersWithEmbeddings } from "@calls/asr/llm/identify-speakers-with-embeddings";
-import { runTranscriptionPipelineFromAsrAudio } from "@calls/asr/pipeline/run-transcription-pipeline";
 import { runPipelineAudioPreprocess } from "@calls/asr/pipeline/transcribe-pipeline-audio";
 import {
   callsService,
@@ -158,16 +157,52 @@ export const transcribeCallFn = inngest.createFunction(
     });
 
     const result = await step.run("pipeline/asr:transcribe", async () => {
-      logger.info("Inngest: giga-am ASR pipeline", { callId });
+      logger.info("Inngest: прямой вызов GigaAM Python сервиса", { callId });
       const f = await filesService.getFileById(pipelineAudio.preprocessedFileId);
       if (!f) {
         throw new Error(`Файл после preprocess не найден: ${pipelineAudio.preprocessedFileId}`);
       }
       const asrAudioUrl = await getDownloadUrlForAsr(f.storageKey);
-      return runTranscriptionPipelineFromAsrAudio(asrAudioUrl, pipelineAudio.preprocessingResult, {
-        companyContext: buildCompanyContext(workspace),
-        gigaPreprocessMetadata: pipelineAudio.preprocessMetadata,
+
+      // Скачиваем аудио файл
+      const audioResponse = await fetch(asrAudioUrl);
+      if (!audioResponse.ok) {
+        throw new Error(`Не удалось скачать аудио: ${audioResponse.status}`);
+      }
+      const audioBuffer = await audioResponse.arrayBuffer();
+
+      // Отправляем в Python сервис GigaAM
+      const gigaAmUrl = process.env.GIGA_AM_URL || "http://localhost:8000";
+      const formData = new FormData();
+      const blob = new Blob([audioBuffer], { type: "audio/wav" });
+      formData.append("file", blob, "audio.wav");
+      formData.append("filename", f.filename || "audio.wav");
+
+      const response = await fetch(`${gigaAmUrl}/api/transcribe-sync`, {
+        method: "POST",
+        body: formData,
       });
+
+      if (!response.ok) {
+        throw new Error(`GigaAM API error: ${response.status} ${response.statusText}`);
+      }
+
+      const gigaResult = await response.json();
+
+      // Преобразуем результат в формат ожидаемый дальнейшим кодом
+      return {
+        segments: gigaResult.segments || [],
+        transcript: gigaResult.final_transcript || "",
+        metadata: {
+          asrLogs: [
+            {
+              provider: "gigaam",
+              utterances: gigaResult.segments || [],
+              raw: gigaResult,
+            },
+          ],
+        },
+      };
     });
 
     // Логирование детального ответа от giga-am через step.run

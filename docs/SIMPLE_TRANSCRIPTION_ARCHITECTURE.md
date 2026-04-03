@@ -2,120 +2,142 @@
 
 ## Обзор
 
-Простая и надежная архитектура обработки транскрипции:
+Максимально простая архитектура:
 
-1. **GigaAM** обрабатывает аудио и отправляет результат в Inngest
-2. **Inngest** получает результат и выполняет LLM коррекцию
-3. **Никаких опросов** - прямая передача результатов
+1. **Inngest** вызывает **GigaAM** синхронно
+2. **GigaAM** выполняет транскрипцию и возвращает результат
+3. **Inngest** продолжает работу с полученным результатом
 
 ## Процесс работы
 
-### 1. Клиент → GigaAM
-```bash
-POST /api/transcribe
-Content-Type: multipart/form-data
-
-file: [audio_file]
-```
-
-**Ответ GigaAM (мгновенно):**
-```json
-{
-  "request_id": "abc-123-def-456",
-  "status": "processing",
-  "message": "Транскрипция началась",
-  "results_url": "/api/results/abc-123-def-456"
-}
-```
-
-### 2. GigaAM → Inngest (фоновая обработка)
-GigaAM обрабатывает аудио в фоне и отправляет событие:
-```json
-{
-  "name": "asr/transcription.completed",
-  "data": {
-    "requestId": "abc-123-def-456",
-    "transcriptionResult": {
-      "success": true,
-      "segments": [...],
-      "final_transcript": "...",
-      "pipeline": "pyannote-diarization-sota-2026"
-    }
+### 1. Inngest → GigaAM (синхронный вызов)
+```typescript
+// Inngest функция вызывает GigaAM
+await inngest.send({
+  name: "asr/transcription.sync-request",
+  data: {
+    audioData: "base64-encoded-audio",
+    filename: "meeting.wav"
   }
-}
+});
 ```
 
-### 3. Inngest → LLM коррекция → Сохранение
-Inngest функция `transcription-completed` обрабатывает результат:
-- Валидация данных
-- LLM коррекция (если включена)
-- Сохранение в базу
-- Отправка вебхуков
+### 2. GigaAM обработка
+1. Получает аудио данные
+2. Выполняет полный pipeline транскрипции
+3. Возвращает полный результат
+
+### 3. Inngest продолжает работу
+```typescript
+// Результат доступен в step.run()
+const result = await step.run("transcribe-audio", async () => {
+  // GigaAM вернул полный результат
+  return transcriptionResult;
+});
+
+// Можно продолжить обработку
+await step.run("process-results", async () => {
+  // LLM коррекция, сохранение и т.д.
+});
+```
 
 ## API эндпоинты
 
 ### GigaAM
-- `POST /api/transcribe` - Загрузка аудио
-- `GET /api/results/{request_id}` - Получение результатов (для отладки)
-- `DELETE /api/results/{request_id}` - Очистка результатов
+- `POST /api/transcribe-sync` - Синхронная транскрипция для Inngest
+- `POST /api/transcribe` - Асинхронная транскрипция (legacy)
+- `GET /api/results/{request_id}` - Получение результатов
+- `DELETE /api/results/{request_id}` - Удаление результатов
 
 ### Inngest
-- `asr/transcription.completed` - Обработка завершенной транскрипции
+- `asr/transcription.sync-request` - Запуск синхронной транскрипции
 
 ## Преимущества
 
-✅ **Простота** - Минимум компонентов и зависимостей  
-✅ **Надежность** - Прямая передача данных без потерь  
-✅ **Производительность** - GigaAM не блокируется ожиданием  
-✅ **Масштабируемость** - Легко обрабатывать много запросов  
+✅ **Максимальная простота** - Inngest вызывает сервис и ждет  
+✅ **Синхронность** - никаких опросов и событий  
+✅ **Надежность** - прямой вызов с обработкой ошибок  
+✅ **Прозрачность** - полный контроль процесса  
+✅ **Гибкость** - можно использовать любой код после транскрипции  
 
 ## Конфигурация
 
 ### GigaAM (.env)
 ```bash
-# Inngest подключение
-INNGEST_API_URL=http://localhost:3001
-INNGEST_EVENT_KEY=your-event-key
+# Базовые настройки
+TARGET_SAMPLE_RATE=16000
+SPEAKER_EMBEDDINGS_URL=http://speaker-embeddings:7860
 ```
 
 ### Inngest (.env)
 ```bash
+# GigaAM URL для вызова
+GIGA_AM_URL=http://localhost:8000
+
 # AI провайдеры для LLM коррекции
 OPENAI_API_KEY=sk-...
-OPENROUTER_API_KEY=sk-...
-DEEPSEEK_API_KEY=sk-...
-
-# GigaAM URL
-GIGA_AM_URL=http://localhost:8000
 ```
 
 ## Использование
 
-### Простой вызов
+### Запуск из Inngest
 ```typescript
-// Клиент загружает аудио
-const response = await fetch('http://localhost:8000/api/transcribe', {
-  method: 'POST',
-  body: formData
+import { inngest } from "../client";
+
+// Отправляем запрос на транскрипцию
+await inngest.send({
+  name: "asr/transcription.sync-request",
+  data: {
+    audioData: base64AudioData,
+    filename: "meeting.wav"
+  }
 });
 
-const { request_id } = await response.json();
-console.log('Транскрипция началась:', request_id);
-// Результат будет обработан автоматически в Inngest
+// Inngest функция transcription-sync обработает автоматически
 ```
 
-### Отладка
-```typescript
-// Проверить статус (опционально)
-const result = await fetch(`http://localhost:8000/api/results/${request_id}`);
-const data = await result.json();
-console.log('Статус:', data.status);
+### Прямой вызов GigaAM (для тестов)
+```bash
+curl -X POST http://localhost:8000/api/transcribe-sync \
+  -F "file=@audio.wav" \
+  -F "filename=audio.wav"
+```
+
+## Архитектура
+
+### Python сервис (GigaAM)
+```
+routes/transcribe_sync.py     # Синхронный эндпоинт для Inngest
+services/pipeline_service.py  # Обработка аудио
+services/storage.py         # Хранение результатов
+routes/transcribe.py        # Асинхронный эндпоинт (legacy)
+routes/results.py          # API результатов
+```
+
+### TypeScript (Inngest)
+```
+functions/transcription-sync.ts      # Основная функция
+functions/transcription-completed.ts  # LLM коррекция (опционально)
+```
+
+## Поток данных
+
+```
+Inngest функция
+    ↓ (HTTP POST)
+GigaAM /api/transcribe-sync
+    ↓ (синхронная обработка)
+Pipeline: Diarization → ASR → Alignment → Postprocess
+    ↓ (результат)
+Inngest продолжает работу
+    ↓ (опционально)
+LLM коррекция → Сохранение → Вебхуки
 ```
 
 ## Мониторинг
 
-- **GigaAM**: логи обработки аудио
-- **Inngest**: логи LLM коррекции и сохранения
-- **Метрики**: время обработки, количество запросов
+- **GigaAM**: логи pipeline, время выполнения
+- **Inngest**: логи вызовов и ошибок
+- **Производительность**: полный pipeline за один вызов
 
-Эта архитектура обеспечивает максимальную простоту и надежность!
+Эта архитектура обеспечивает максимальную простоту и контроль!
