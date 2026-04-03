@@ -379,7 +379,7 @@ export class CallsService {
   async markTranscriptionFailed(callId: string, errorMessage: string): Promise<void> {
     // Используем существующий метод updatePbxBinding для обновления статуса
     await this.callsRepository.updatePbxBinding(callId, {
-      transcriptionStatus: 'failed',
+      transcriptionStatus: "failed",
       transcriptionError: errorMessage,
       transcribedAt: new Date(),
     } as any);
@@ -432,5 +432,24 @@ export class CallsService {
     reportType?: "daily" | "weekly" | "monthly",
   ): Promise<Record<string, EnrichedManagerStats>> {
     return this.callsRepository.enrichStatsWithKpi(stats, workspaceId, reportType);
+  }
+
+  async getDailyKpiStats(input: {
+    workspaceId: string;
+    employeeExternalId: string;
+    dateFrom: string;
+    dateTo: string;
+    excludePhoneNumbers?: string[];
+  }): Promise<
+    Array<{
+      date: string;
+      totalDurationSeconds: number;
+      totalCalls: number;
+      incoming: number;
+      outgoing: number;
+      missed: number;
+    }>
+  > {
+    return this.callsRepository.getDailyKpiStats(input);
   }
 }

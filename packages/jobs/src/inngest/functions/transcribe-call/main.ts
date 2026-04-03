@@ -167,13 +167,11 @@ export const transcribeCallFn = inngest.createFunction(
     const asrResults = await step.run("asr:process", async () => {
       // Загружаем аудио файл
       const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
-      
-    const audioBuffer = buffer;
-      
+
       // Параллельный запуск двух ASR с fallback механизмом
       const [nonDiarizedSettled, diarizedSettled] = await Promise.allSettled([
-        processAudioWithoutDiarization(audioBuffer, filename),
-        processAudioWithDiarization(audioBuffer, filename),
+        processAudioWithoutDiarization(buffer, filename),
+        processAudioWithDiarization(buffer, filename),
       ]);
 
       // Проверяем, что оба провайдера не упали

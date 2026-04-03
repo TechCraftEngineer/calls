@@ -6,7 +6,7 @@ import { env } from "@calls/config";
 import { createLogger } from "../../../../logger";
 import { GigaAmResponseSchema } from "../schemas";
 import type { AsrResult } from "../types";
-import type { z } from "zod";
+import { z } from "zod";
 
 const logger = createLogger("gigaam-client");
 
@@ -42,6 +42,7 @@ export async function fetchWithRetry(
 export async function processAudioWithGigaAm(
   audioBuffer: ArrayBuffer,
   filename: string,
+  /** @deprecated Параметр сохранен для обратной совместимости, но не используется - функция всегда возвращает non-diarized результат */
   diarization: boolean,
 ): Promise<AsrResult> {
   const gigaAmUrl = env.GIGA_AM_TRANSCRIBE_URL;
@@ -134,6 +135,35 @@ export async function processAudioWithoutDiarization(
   return result;
 }
 
+// Zod схема для валидации DiarizedTranscriptionResult
+const DiarizedTranscriptionSegmentSchema = z.object({
+  text: z.string(),
+  start: z.number(),
+  end: z.number(),
+  speaker: z.string(),
+  confidence: z.number(),
+});
+
+const SpeakerTimelineItemSchema = z.object({
+  speaker: z.string(),
+  start: z.number(),
+  end: z.number(),
+  text: z.string(),
+});
+
+const DiarizedTranscriptionResultSchema = z.object({
+  success: z.boolean(),
+  final_transcript: z.string(),
+  segments: z.array(DiarizedTranscriptionSegmentSchema),
+  speakerTimeline: z.array(SpeakerTimelineItemSchema),
+  speaker_timeline: z.array(SpeakerTimelineItemSchema).optional(),
+  num_speakers: z.number(),
+  speakers: z.array(z.string()),
+  processing_time: z.number(),
+  pipeline: z.string(),
+  error: z.string().optional(),
+});
+
 /**
  * Интерфейс сегмента диаризации
  */
@@ -156,7 +186,14 @@ export interface DiarizedTranscriptionResult {
     speaker: string;
     confidence: number;
   }>;
-  speaker_timeline: Array<{
+  speakerTimeline: Array<{
+    speaker: string;
+    start: number;
+    end: number;
+    text: string;
+  }>;
+  /** @deprecated Используйте speakerTimeline (camelCase) */
+  speaker_timeline?: Array<{
     speaker: string;
     start: number;
     end: number;
@@ -209,15 +246,27 @@ export async function processDiarizedAudioWithGigaAm(
 
   const result: DiarizedTranscriptionResult = await response.json();
 
-  if (!result.success) {
-    throw new Error(`GigaAM diarized transcription failed: ${result.error || "Unknown error"}`);
+  // Zod валидация результата
+  const validationResult = DiarizedTranscriptionResultSchema.safeParse(result);
+  if (!validationResult.success) {
+    logger.error("Ошибка валидации ответа диаризированной транскрипции", {
+      filename: audioFilename,
+      error: validationResult.error,
+    });
+    throw new Error(`Ошибка валидации ответа: ${validationResult.error.message}`);
+  }
+
+  const validatedResult = validationResult.data;
+
+  if (!validatedResult.success) {
+    throw new Error(`GigaAM diarized transcription failed: ${validatedResult.error || "Unknown error"}`);
   }
 
   logger.info("Диаризированная транскрипция завершена", {
     filename: audioFilename,
-    segmentsCount: result.segments.length,
-    processingTime: result.processing_time,
+    segmentsCount: validatedResult.segments.length,
+    processingTime: validatedResult.processing_time,
   });
 
-  return result;
+  return validatedResult;
 }

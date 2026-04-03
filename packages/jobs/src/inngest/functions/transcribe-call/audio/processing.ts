@@ -3,12 +3,11 @@
  */
 
 import { spawn } from "child_process";
-import { createReadStream, mkdirSync, unlinkSync, writeFileSync } from "fs";
+import { createReadStream, mkdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { randomUUID } from "crypto";
 import { createLogger } from "../../../../logger";
-import * as fs from "fs";
 
 const logger = createLogger("audio-processing");
 
@@ -31,8 +30,8 @@ function createTempDir(): string {
  */
 function cleanupTempDir(tempDir: string): void {
   try {
-    // Используем fs.rmSync с recursive для удаления директории и содержимого
-    (fs as unknown as { rmSync: (path: string, options: { recursive: boolean; force: boolean }) => void }).rmSync(tempDir, { recursive: true, force: true });
+    // Используем rmSync с recursive для удаления директории и содержимого
+    rmSync(tempDir, { recursive: true, force: true });
   } catch {
     // Игнорируем ошибки при очистке
   }

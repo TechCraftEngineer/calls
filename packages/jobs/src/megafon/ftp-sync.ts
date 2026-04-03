@@ -14,6 +14,9 @@ import { parseMegafonFilename } from "~/megafon/parse-filename";
 
 const logger = createLogger("ftp-sync");
 
+// Модуль-уровневая константа таймаута для операций
+const OPERATION_TIMEOUT = 30_000; // 30 секунд для отдельных операций
+
 /**
  * Обрабатывает один файл с FTP
  */
@@ -77,7 +80,6 @@ async function processFile(
         callback();
       },
     });
-    const OPERATION_TIMEOUT = 30000; // 30 секунд
     const downloadBuffer = await Promise.race([
       (async () => {
         await client.downloadTo(writable, file.name);
@@ -287,9 +289,6 @@ export async function syncFtp(
 
   const client = new Client(60_000);
   client.ftp.verbose = false;
-
-  // Устанавливаем таймауты для отдельных операций
-  const OPERATION_TIMEOUT = 30_000; // 30 секунд для отдельных операций
 
   try {
     logger.info("Подключение к FTP", { host: config.host, user: config.user });
