@@ -99,7 +99,7 @@ class DiarizedTranscriptionService:
                 "num_speakers": 0,
                 "speakers": [],
                 "processing_time": 0,
-                "pipeline": None,
+                "pipeline": "gigaam-diarized",
             }
         
         # Проверяем размер файла
@@ -208,7 +208,7 @@ class DiarizedTranscriptionService:
                 "num_speakers": 0,
                 "speakers": [],
                 "processing_time": 0,
-                "pipeline": None,
+                "pipeline": "gigaam-diarized",
             }
         finally:
             # Очистка временных файлов
@@ -258,9 +258,16 @@ class DiarizedTranscriptionService:
         
         # Параллельная нарезка (I/O bound, можно все сразу)
         tasks = [extract_one(i, seg) for i, seg in enumerate(segments)]
-        segment_files = await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        logger.debug(f"[{request_id}] Нарезано {len(segment_files)} сегментов")
+        segment_files = []
+        for i, r in enumerate(results):
+            if isinstance(r, Exception):
+                logger.error(f"[{request_id}] Ошибка нарезки сегмента {i}: {r}")
+            else:
+                segment_files.append(r)
+        
+        logger.debug(f"[{request_id}] Нарезано {len(segment_files)} сегментов из {len(segments)}")
         return segment_files
     
     async def _transcribe_segments_parallel(

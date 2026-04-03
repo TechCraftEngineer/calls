@@ -1,4 +1,5 @@
 import { callsService, pbxService, settingsService } from "@calls/db";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../orpc";
 
@@ -69,7 +70,9 @@ export const getKpiDaily = workspaceAdminProcedure
     const employee = pbxEmployees.find((emp) => emp.externalId === employeeExternalId);
 
     if (!employee) {
-      throw new Error(`Сотрудник с ID ${employeeExternalId} не найден`);
+      throw new ORPCError("NOT_FOUND", {
+        message: `Сотрудник с ID ${employeeExternalId} не найден`,
+      });
     }
 
     // Получаем настройки исключения номеров

@@ -4,7 +4,7 @@
 
 import { identifySpeakersWithEmbeddings } from "@calls/asr/llm/identify-speakers-with-embeddings";
 import { z } from "zod";
-import { createLogger } from "../../../logger";
+import { createLogger } from "~/logger";
 import { extractSegmentsFromUtterances, extractSpeakerTimeline } from "./extraction";
 
 const logger = createLogger("speaker-identification");
@@ -42,39 +42,39 @@ export async function identifySpeakers(
   // Валидация и truncation входного текста
   let normalizedText = result.normalizedText;
   const originalLength = normalizedText.length;
-  
+
   if (normalizedText.length > MAX_MESSAGE_LENGTH) {
     normalizedText = normalizedText.substring(0, MAX_MESSAGE_LENGTH);
     logger.warn(`Текст обрезан с ${originalLength} до ${MAX_MESSAGE_LENGTH} символов`, {
       event: "speaker-identification.truncate",
       originalLength,
       truncatedTo: MAX_MESSAGE_LENGTH,
-      messagePreview: normalizedText.slice(0, 100),
+      previewLength: Math.min(100, normalizedText.length),
     });
   }
-  
+
   // Zod валидация входных данных
   const validationResult = IdentifySpeakersInputSchema.safeParse({
     message: normalizedText,
     context: fallbackManagerName || undefined,
     conversationHistory: undefined,
   });
-  
+
   if (!validationResult.success) {
     logger.error("Ошибка валидации входных данных", {
       event: "speaker-identification.validation_error",
-      error: validationResult.error,
-      input: {
-        messageLength: normalizedText.length,
-        context: fallbackManagerName,
-      },
+      errorCode: validationResult.error?.issues?.[0]?.code,
+      errorPath: validationResult.error?.issues?.[0]?.path?.join("."),
+      inputLength: normalizedText.length,
+      hasContext: !!fallbackManagerName,
     });
     // Продолжаем с обрезанным текстом, но логируем ошибку
   }
 
   // Извлекаем данные из giga-am результата - сначала ищем diarized, затем fallback на обычный
-  const gigaAmLog = result.metadata.asrLogs?.find((log) => log.provider === "gigaam-diarized") 
-    ?? result.metadata.asrLogs?.find((log) => log.provider === "gigaam");
+  const gigaAmLog =
+    result.metadata.asrLogs?.find((log) => log.provider === "gigaam-diarized") ??
+    result.metadata.asrLogs?.find((log) => log.provider === "gigaam");
   const gigaAmRaw = gigaAmLog?.raw;
 
   // Безопасно извлекаем speaker_timeline

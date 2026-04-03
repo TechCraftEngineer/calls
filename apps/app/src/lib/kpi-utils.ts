@@ -25,7 +25,7 @@ export function calculateDailyTarget(monthlyTarget: number, year: number, month:
 export function calculateCompletionPercentage(actual: number, target: number): number {
   if (target <= 0) return 0;
   const percentage = Math.round((actual / target) * 100);
-  return Math.min(100, percentage);
+  return Math.max(0, Math.min(100, percentage));
 }
 
 /**
@@ -58,6 +58,10 @@ export function formatCurrency(value: number): string {
  * @returns Отформатированная строка даты
  */
 export function formatDateISO(date: string | Date): string {
+  // Для строк в формате YYYY-MM-DD парсим без timezone conversion
+  if (typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return date;
+  }
   const d = typeof date === "string" ? new Date(date) : date;
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");

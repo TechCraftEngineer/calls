@@ -3,13 +3,15 @@
  */
 
 import { spawn } from "child_process";
+import { randomUUID } from "crypto";
 import { createReadStream, mkdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { randomUUID } from "crypto";
 import { createLogger } from "../../../../logger";
 
 const logger = createLogger("audio-processing");
+
+const FFMPEG_TIMEOUT_MS = 120_000;
 
 /**
  * Создает уникальный временный каталог для обработки аудио
@@ -20,8 +22,13 @@ function createTempDir(): string {
     mkdirSync(tempDir, { recursive: true });
     return tempDir;
   } catch (error) {
-    logger.error("Ошибка создания временного каталога", { tempDir, error: error instanceof Error ? error.message : String(error) });
-    throw new Error(`Не удалось создать временный каталог: ${error instanceof Error ? error.message : String(error)}`);
+    logger.error("Ошибка создания временного каталога", {
+      tempDir,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw new Error(
+      `Не удалось создать временный каталог: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 }
 
@@ -62,7 +69,7 @@ export async function extractAudioSegment(
     // Записываем входной буфер во временный файл
     writeFileSync(inputPath, new Uint8Array(audioBuffer));
 
-    // Запускаем ffmpeg
+    // Запускаем ffmpeg с таймаутом
     await new Promise<void>((resolve, reject) => {
       const ffmpeg = spawn("ffmpeg", [
         "-i",
@@ -83,12 +90,18 @@ export async function extractAudioSegment(
         outputPath,
       ]);
 
+      const timer = setTimeout(() => {
+        ffmpeg.kill("SIGKILL");
+        reject(new Error(`ffmpeg timeout after ${FFMPEG_TIMEOUT_MS}ms`));
+      }, FFMPEG_TIMEOUT_MS);
+
       let stderr = "";
       ffmpeg.stderr.on("data", (data) => {
         stderr += data.toString();
       });
 
       ffmpeg.on("close", (code) => {
+        clearTimeout(timer);
         if (code === 0) {
           resolve();
         } else {
@@ -97,6 +110,7 @@ export async function extractAudioSegment(
       });
 
       ffmpeg.on("error", (err: Error) => {
+        clearTimeout(timer);
         reject(err);
       });
     });
@@ -128,7 +142,9 @@ export async function extractAudioSegment(
     });
 
     // НЕ возвращаем полный буфер - это приведет к неверной транскрипции
-    throw new Error(`Failed to extract audio segment ${startTime}-${endTime}s: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Failed to extract audio segment ${startTime}-${endTime}s: ${error instanceof Error ? error.message : String(error)}`,
+    );
   } finally {
     // Очистка временного каталога
     cleanupTempDir(tempDir);

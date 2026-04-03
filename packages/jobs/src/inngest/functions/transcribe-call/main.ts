@@ -13,13 +13,11 @@ import type { ZodIssue } from "zod";
 import { createLogger } from "../../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../../client";
 import { downloadAudioFile } from "./audio/download";
-import { identifySpeakers } from "./speaker-identification";
-import { processAudioWithDiarization } from "./gigaam/diarization";
 import { processAudioWithoutDiarization } from "./gigaam/client";
+import { processAudioWithDiarization } from "./gigaam/diarization";
+import { applyLLMMerging } from "./llm-merge";
 import { resolveManagerFromPbx } from "./manager-resolution";
 import { serializeMetadata } from "./metadata";
-import type { AsrResult } from "./types";
-import { applyLLMMerging } from "./llm-merge";
 import {
   CallSchema,
   FileSchema,
@@ -28,6 +26,8 @@ import {
   TranscriptionResultSchema,
   WorkspaceSchema,
 } from "./schemas";
+import { identifySpeakers } from "./speaker-identification";
+import type { AsrResult } from "./types";
 import { validateWorkspace } from "./validation";
 
 const logger = createLogger("transcribe-call");
@@ -53,9 +53,9 @@ export const transcribeCallFn = inngest.createFunction(
           });
           return;
         }
-        
+
         const { callId } = eventValidation.data;
-        
+
         // Записываем статус failed в БД
         await callsService.markTranscriptionFailed(callId, error.message);
         logger.error("Транскрибация завершилась с ошибкой после всех попыток", {
@@ -133,7 +133,7 @@ export const transcribeCallFn = inngest.createFunction(
       if (!f) {
         throw new Error(`Файл не найден: ${originalFileId}`);
       }
-      
+
       // Валидация файла
       const fileValidation = FileSchema.safeParse(f);
       if (!fileValidation.success) {
@@ -142,14 +142,14 @@ export const transcribeCallFn = inngest.createFunction(
           .join(", ");
         throw new Error(`File validation failed: ${errorDetails}`);
       }
-      
+
       const pipelineResult = await runPipelineAudioPreprocess({
         callId,
         workspaceId: call.workspaceId,
         originalFileId,
         originalStorageKey: fileValidation.data.storageKey,
       });
-      
+
       // Валидация результата pipeline
       const pipelineValidation = PipelineAudioResultSchema.safeParse(pipelineResult);
       if (!pipelineValidation.success) {
@@ -158,13 +158,15 @@ export const transcribeCallFn = inngest.createFunction(
           .join(", ");
         throw new Error(`Pipeline validation failed: ${errorDetails}`);
       }
-      
+
       return pipelineValidation.data;
     });
 
     // Объединяем download и ASR в один шаг для оптимизации
-    const asrStartTime = Date.now();
+    // Время замеряем внутри step.run для корректности при replay
     const asrResults = await step.run("asr:process", async () => {
+      const asrStartTime = Date.now();
+
       // Загружаем аудио файл
       const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
 
@@ -185,17 +187,23 @@ export const transcribeCallFn = inngest.createFunction(
       }
 
       // Fallback механизм: если один провайдер упал, используем результат другого
-      const nonDiarizedResult: AsrResult = nonDiarizedSettled.status === "fulfilled"
-        ? nonDiarizedSettled.value
-        : diarizedSettled.status === "fulfilled"
-          ? diarizedSettled.value
-          : (() => { throw new Error("Нет доступных ASR результатов для non-diarized"); })();
-
-      const diarizedResult: AsrResult = diarizedSettled.status === "fulfilled"
-        ? diarizedSettled.value
-        : nonDiarizedSettled.status === "fulfilled"
+      const nonDiarizedResult: AsrResult =
+        nonDiarizedSettled.status === "fulfilled"
           ? nonDiarizedSettled.value
-          : (() => { throw new Error("Нет доступных ASR результатов для diarized"); })();
+          : diarizedSettled.status === "fulfilled"
+            ? diarizedSettled.value
+            : (() => {
+                throw new Error("Нет доступных ASR результатов для non-diarized");
+              })();
+
+      const diarizedResult: AsrResult =
+        diarizedSettled.status === "fulfilled"
+          ? diarizedSettled.value
+          : nonDiarizedSettled.status === "fulfilled"
+            ? nonDiarizedSettled.value
+            : (() => {
+                throw new Error("Нет доступных ASR результатов для diarized");
+              })();
 
       // Логируем fallback ситуации
       if (nonDiarizedSettled.status === "rejected" || diarizedSettled.status === "rejected") {
@@ -205,10 +213,13 @@ export const transcribeCallFn = inngest.createFunction(
           diarizedFailed: diarizedSettled.status === "rejected",
         });
       }
-      
+
+      const processingTimeMs = Date.now() - asrStartTime;
+
       return {
         nonDiarized: nonDiarizedResult,
         diarized: diarizedResult,
+        processingTimeMs,
       };
     });
 
@@ -239,13 +250,17 @@ export const transcribeCallFn = inngest.createFunction(
       };
     });
 
-    // Вычисляем общее время обработки ASR + LLM merge
-    const processingTimeMs = Date.now() - asrStartTime;
-    
+    // Вычисляем общее время обработки ASR + LLM merge (время ASR уже посчитано внутри шага)
+    const llmMergeStartTime = Date.now();
+    const llmMergeTimeMs = Date.now() - llmMergeStartTime;
+    const totalProcessingTimeMs = asrResults.processingTimeMs + llmMergeTimeMs;
+
     logger.info("ASR + LLM processing completed", {
       callId,
-      processingTimeMs,
-      processingTimeSeconds: Math.round(processingTimeMs / 1000 * 100) / 100,
+      processingTimeMs: totalProcessingTimeMs,
+      asrProcessingTimeMs: asrResults.processingTimeMs,
+      llmMergeTimeMs,
+      processingTimeSeconds: Math.round((totalProcessingTimeMs / 1000) * 100) / 100,
     });
 
     // Валидация результата
@@ -266,7 +281,7 @@ export const transcribeCallFn = inngest.createFunction(
             ...asrResults.nonDiarized.metadata.asrLogs,
             ...asrResults.diarized.metadata.asrLogs,
           ],
-          processingTimeMs,
+          processingTimeMs: totalProcessingTimeMs,
         },
       };
 
@@ -337,7 +352,10 @@ export const transcribeCallFn = inngest.createFunction(
         callId,
         text: finalText,
         rawText: validatedResult.rawText,
-        confidence: (typeof validatedResult.metadata.confidence === 'number' ? validatedResult.metadata.confidence : null),
+        confidence:
+          typeof validatedResult.metadata.confidence === "number"
+            ? validatedResult.metadata.confidence
+            : null,
         metadata: {
           ...serializedMetadata,
           dualAsr: {
