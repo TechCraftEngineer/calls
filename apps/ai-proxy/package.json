@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
-    "@types/node": "25.5.0",
+    "@types/node": "25.5.1",
     "@types/react": "19.2.14",
     "typescript": "6.0.2"
   }

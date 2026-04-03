@@ -141,6 +141,7 @@ export const transcribeCallFn = inngest.createFunction(
     );
 
     // Параллельный запуск двух ASR с общим buffer
+    const asrStartTime = Date.now();
     const [nonDiarizedResult, diarizedResult] = await Promise.all([
       step.run("asr:non-diarized", () => processAudioWithGigaAmNonDiarized(buffer, filename)),
       step.run("asr:diarized", () => processAudioWithGigaAmDiarized(buffer, filename)),
@@ -152,15 +153,13 @@ export const transcribeCallFn = inngest.createFunction(
     };
 
     // Логирование результатов ASR
-    await step.run("debug/asr-results", async () => {
-      return {
-        callId,
-        nonDiarizedProvider: asrResults.nonDiarized.metadata.asrLogs[0]?.provider,
-        nonDiarizedTranscriptLength: asrResults.nonDiarized.transcript.length,
-        diarizedProvider: asrResults.diarized.metadata.asrLogs[0]?.provider,
-        diarizedSegmentsCount: asrResults.diarized.segments.length,
-        diarizedTranscriptLength: asrResults.diarized.transcript.length,
-      };
+    logger.info("ASR results", {
+      callId,
+      nonDiarizedProvider: asrResults.nonDiarized.metadata.asrLogs[0]?.provider,
+      nonDiarizedTranscriptLength: asrResults.nonDiarized.transcript.length,
+      diarizedProvider: asrResults.diarized.metadata.asrLogs[0]?.provider,
+      diarizedSegmentsCount: asrResults.diarized.segments.length,
+      diarizedTranscriptLength: asrResults.diarized.transcript.length,
     });
 
     // LLM Merging двух ASR результатов
@@ -180,6 +179,15 @@ export const transcribeCallFn = inngest.createFunction(
       };
     });
 
+    // Вычисляем общее время обработки ASR + LLM merge
+    const processingTimeMs = Date.now() - asrStartTime;
+    
+    logger.info("ASR + LLM processing completed", {
+      callId,
+      processingTimeMs,
+      processingTimeSeconds: Math.round(processingTimeMs / 1000 * 100) / 100,
+    });
+
     // Валидация результата
     const validatedResult = await step.run("validate/transcription", async () => {
       const resultForValidation = {
@@ -197,7 +205,7 @@ export const transcribeCallFn = inngest.createFunction(
             ...asrResults.nonDiarized.metadata.asrLogs,
             ...asrResults.diarized.metadata.asrLogs,
           ],
-          processingTimeMs: 0,
+          processingTimeMs,
         },
       };
 
@@ -232,30 +240,28 @@ export const transcribeCallFn = inngest.createFunction(
     const { text: finalText, customerName, operatorName } = identifyResult;
 
     // Логирование результатов идентификации
-    await step.run("debug/identify-results", async () => {
-      const originalText = validatedResult.normalizedText || "";
-      const debugData = {
-        callId,
-        finalTextLength: finalText.length,
-        originalTextLength: originalText.length,
-        customerName,
-        operatorName,
-        identificationSuccess: identifyResult.metadata?.success || false,
-        speakerMapping: identifyResult.metadata?.mapping || {},
-        usedEmbeddings: identifyResult.metadata?.usedEmbeddings || false,
-        clusterCount: identifyResult.metadata?.clusterCount || 0,
-        identificationReason: identifyResult.metadata?.reason,
-        llmMergeApplied: mergedResult.applied,
-        llmMergeQuality: mergedResult.qualityScore,
-        llmMergeFallbackReason: mergedResult.fallbackReason,
-      };
+    const originalText = validatedResult.normalizedText || "";
+    const debugData = {
+      callId,
+      finalTextLength: finalText.length,
+      originalTextLength: originalText.length,
+      customerName,
+      operatorName,
+      identificationSuccess: identifyResult.metadata?.success || false,
+      speakerMapping: identifyResult.metadata?.mapping || {},
+      usedEmbeddings: identifyResult.metadata?.usedEmbeddings || false,
+      clusterCount: identifyResult.metadata?.clusterCount || 0,
+      identificationReason: identifyResult.metadata?.reason,
+      llmMergeApplied: mergedResult.applied,
+      llmMergeQuality: mergedResult.qualityScore,
+      llmMergeFallbackReason: mergedResult.fallbackReason,
+    };
 
-      if (identifyResult.metadata?.fallbackAttempted) {
-        logger.warn("LLM идентификация спикеров использовала фоллбек", debugData);
-      }
-
-      return debugData;
-    });
+    if (identifyResult.metadata?.fallbackAttempted) {
+      logger.warn("LLM идентификация спикеров использовала фоллбек", debugData);
+    } else {
+      logger.info("Speaker identification results", debugData);
+    }
 
     // Сохранение транскрипта
     await step.run("persist/transcript:upsert", async () => {
@@ -286,11 +292,8 @@ export const transcribeCallFn = inngest.createFunction(
         title: validatedResult.title,
         callType: normalizedCallType,
         callTopic: validatedResult.callTopic,
+        customerName: customerName ?? undefined, // Атомарное обновление с transcript
       });
-
-      if (customerName) {
-        await callsService.updateCustomerName(callId, customerName);
-      }
     });
 
     await step.sendEvent("event/call.evaluate.requested", evaluateRequested.create({ callId }));

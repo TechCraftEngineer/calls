@@ -69,8 +69,24 @@ export function validateWorkspace(workspace: {
   name?: string | null;
   description?: string | null;
 }): void {
-  if (!workspace.id) {
-    throw new TranscriptionError("Workspace не найден", "WORKSPACE_NOT_FOUND", "workspace");
+  // Validate UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(workspace.id)) {
+    throw new TranscriptionError(
+      `Invalid workspace id format: ${workspace.id}`,
+      "INVALID_WORKSPACE_ID",
+      "workspace.id"
+    );
+  }
+
+  // Warn if name is missing (used for LLM context building)
+  if (!workspace.name) {
+    logger.warn(`Workspace has no name, LLM context will be degraded (workspaceId: ${workspace.id})`);
+  }
+
+  // Validate description length (LLM context optimization)
+  if (workspace.description && workspace.description.length > 2000) {
+    logger.warn(`Workspace description too long, may cause LLM context issues (workspaceId: ${workspace.id}, descriptionLength: ${workspace.description.length})`);
   }
 }
 

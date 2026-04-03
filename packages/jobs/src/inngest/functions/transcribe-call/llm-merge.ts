@@ -12,6 +12,14 @@ import { createLogger } from "../../../logger";
 
 const logger = createLogger("transcribe-llm-merge");
 
+// Максимальное количество токенов для LLM промпта
+export const MAX_PROMPT_TOKENS = 12000;
+
+// Оценка количества токенов (приблизительно: 1 токен ≈ 4 символа)
+export function estimateTokenCount(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
 export interface AsrSegment {
   speaker: string;
   start: number;
@@ -56,34 +64,59 @@ export function buildMergingPrompt(
   const segmentsText = diarizedSegments
     .map(
       (seg, i) =>
-        `[${i}] ${seg.speaker} (${seg.start.toFixed(2)}s - ${seg.end.toFixed(2)}s): "${seg.text}"`,
+        `[${i}] Говорящий ${seg.speaker} (${seg.start.toFixed(2)}s - ${seg.end.toFixed(2)}s): "${seg.text}"`,
     )
     .join("\n");
 
-  return `Задача: Создать идеальную транскрипцию аудио разговора путем объединения двух ASR результатов.
+  return `ЗАДАЧА: Создать идеальную транскрипцию аудио разговора путем объединения двух результатов распознавания речи.
 
-У меня есть два результата распознавания одного и того же аудио:
-
-1. ASR БЕЗ ДИАРИЗАЦИИ (более точное распознавание речи, больше контекста):
+ИСХОДНЫЕ ДАННЫЕ:
+1. РЕЗУЛЬТАТ БЕЗ ДИАРИЗАЦИИ (более точное распознавание речи, больше контекста):
 "${nonDiarizedTranscript}"
 
-2. ASR С ДИАРИЗАЦИЕЙ (есть разделение по спикерам, но текст менее точный):
+2. РЕЗУЛЬТАТ С ДИАРИЗАЦИЕЙ (есть разделение по говорящим, но текст менее точный):
 ${segmentsText}
 
+ОПРЕДЕЛЕНИЯ:
+- Спикеры - участники разговора (оператор, клиент и т.д.)
+- Диаризация - автоматическое разделение речи по говорящим
+- Сегменты - фрагменты речи с временными метками и идентификаторами говорящих
+
 ИНСТРУКЦИИ:
-1. Используй текст из ASR БЕЗ ДИАРИЗАЦИИ как основу - он более точный
-2. Примени разделение по спикерам из ASR С ДИАРИЗАЦИЕЙ
+1. Используй текст из результата БЕЗ ДИАРИЗАЦИИ как основу - он более точный
+2. Примени разделение по говорящим из результата С ДИАРИЗАЦИЕЙ
 3. Разбей текст из (1) на сегменты согласно временным меткам из (2)
-4. Исправь ошибки на границах между спикерами используя контекст из (1)
-5. Улучши пунктуацию и форматирование
-6. Сохрани временные метки (start, end) из диаризированной версии
-7. Если спикеры не распознаны четко - используй SPEAKER_00 и SPEAKER_01
+4. Исправь ошибки на границах между говорящими, используя контекст из (1)
+5. Улучши пунктуацию и форматирование русского текста
+6. Сохрани временные метки (start, end) из диаризированной версии точно
+7. Если говорящие не распознаны четко - используй SPEAKER_00 и SPEAKER_01
+8. Создай плавный, грамотный русский текст в mergedTranscript
 
 ВАЖНО:
 - Сохрани все временные метки максимально точно
 - Количество сегментов должно соответствовать диаризированной версии
-- Используй текст из non-diarized версии где возможно
-- Оцени качество результата от 0 до 1`;
+- Используй текст из non-diarized версии где возможно для повышения точности
+- НЕ выдумывай новых говорящих - используй только те, что есть в диаризации
+- mergedTranscript должен быть цельным, связным русским текстом с правильной пунктуацией
+
+ВЫВОД:
+Верни JSON объект со следующей структурой:
+{
+  "segments": [
+    {
+      "start": 0.00,
+      "end": 5.30,
+      "speaker": "SPEAKER_00",
+      "text": "пример текста",
+      "confidence": 0.95
+    }
+  ],
+  "mergedTranscript": "Цельный, грамотный русский текст разговора",
+  "quality": {
+    "score": 0.85,
+    "improvements": ["улучшение 1", "улучшение 2"]
+  }
+}`;
 }
 
 export async function mergeAsrResultsWithLLM(
@@ -94,14 +127,30 @@ export async function mergeAsrResultsWithLLM(
   segments: AsrSegment[];
   mergedTranscript: string;
   quality: { score: number; improvements: string[] };
+  fallbackReason?: string;
 }> {
   const prompt = buildMergingPrompt(nonDiarized.transcript, diarized.segments, diarized.transcript);
+  const estimatedTokens = estimateTokenCount(prompt);
+
+  // Проверяем лимит токенов
+  if (estimatedTokens > MAX_PROMPT_TOKENS) {
+    logger.warn(`Prompt too large for LLM merge, using diarized fallback (estimatedTokens: ${estimatedTokens}, requestId: ${requestId})`);
+    return {
+      segments: diarized.segments,
+      mergedTranscript: diarized.transcript,
+      quality: {
+        score: 0.3, // Низкое качество для fallback
+        improvements: [`Fallback к диаризированному результату: промпт слишком большой (${estimatedTokens} токенов)`],
+      },
+      fallbackReason: `prompt_too_large:${estimatedTokens}_tokens`,
+    };
+  }
 
   const { output } = await generateWithAi({
     system:
-      "Ты эксперт по обработке транскрипций аудио. " +
-      "Твоя задача - объединить результаты двух ASR систем: одна дала точный текст, другая дала разделение по спикерам. " +
-      "Создай идеальный результат с точным текстом и правильным разделением по спикерам.",
+      "Ты эксперт по обработке транскрипций аудио на русском языке. " +
+      "Твоя задача - объединить результаты двух систем распознавания речи: одна дала точный текст, другая дала разделение по говорящим. " +
+      "Создай идеальный результат с точным русским текстом и правильным разделением по говорящим.",
     prompt,
     temperature: 0.1,
     maxOutputTokens: 8000,
@@ -171,6 +220,7 @@ export async function applyLLMMerging(
       mergedTranscript: result.mergedTranscript,
       applied: true,
       quality: result.quality,
+      fallbackReason: result.fallbackReason,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

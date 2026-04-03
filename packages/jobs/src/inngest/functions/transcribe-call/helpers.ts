@@ -160,6 +160,28 @@ export async function downloadAudioBuffer(fileId: string): Promise<{ buffer: str
   };
 }
 
+export async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  retries = 3,
+  baseDelayMs = 1000
+): Promise<Response> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok || attempt === retries) return response;
+      // retry on 5xx only
+      if (response.status < 500) return response;
+      logger.warn(`GigaAM transient error, retrying (attempt: ${attempt}, status: ${response.status}, url: ${url})`);
+    } catch (err) {
+      if (attempt === retries) throw err;
+      logger.warn(`GigaAM network error, retrying (attempt: ${attempt}, err: ${err}, url: ${url})`);
+    }
+    await new Promise(resolve => setTimeout(resolve, baseDelayMs * 2 ** attempt));
+  }
+  throw new Error("fetchWithRetry: unreachable");
+}
+
 async function processAudioWithGigaAm(
   bufferBase64: string,
   filename: string,
@@ -175,10 +197,10 @@ async function processAudioWithGigaAm(
   formData.append("filename", filename);
   formData.append("diarization", diarization.toString());
 
-  const response = await fetch(`${gigaAmUrl}/api/transcribe-sync`, {
+  const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-sync`, {
     method: "POST",
     body: formData,
-    signal: AbortSignal.timeout(300000), // 5 минут таймаут
+    signal: AbortSignal.timeout(env.GIGA_AM_TIMEOUT_MS),
   });
 
   if (!response.ok) {

@@ -57,6 +57,7 @@ export const env = createEnv({
     /** Giga AM (HTTP) sync endpoint */
     GIGA_AM_TRANSCRIBE_URL: z.url().default("https://vnggncb-giga-am.hf.space/api/transcribe"),
     GIGA_AM_ENABLED: z.coerce.boolean().default(true),
+    GIGA_AM_TIMEOUT_MS: z.coerce.number().default(300000),
     /** Оценка себестоимости ASR (руб/сек) для расчёта в UI */
     GIGA_AM_RATE_RUB_PER_SECOND: z.coerce.number().positive().default(0.01),
     ASSEMBLYAI_RATE_USD_PER_HOUR: z.coerce.number().positive().default(0.23),
@@ -127,6 +128,7 @@ export const env = createEnv({
     YANDEX_SPEECHKIT_ENABLED: process.env.YANDEX_SPEECHKIT_ENABLED,
     GIGA_AM_TRANSCRIBE_URL: process.env.GIGA_AM_TRANSCRIBE_URL,
     GIGA_AM_ENABLED: process.env.GIGA_AM_ENABLED,
+    GIGA_AM_TIMEOUT_MS: process.env.GIGA_AM_TIMEOUT_MS,
     GIGA_AM_RATE_RUB_PER_SECOND: process.env.GIGA_AM_RATE_RUB_PER_SECOND,
     ASSEMBLYAI_RATE_USD_PER_HOUR: process.env.ASSEMBLYAI_RATE_USD_PER_HOUR,
     RUB_PER_USD: process.env.RUB_PER_USD,
