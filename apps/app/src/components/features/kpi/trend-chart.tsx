@@ -13,7 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { getColorByPercentage } from "@/lib/kpi-utils";
+import { formatDateISO, getColorByPercentage } from "@/lib/kpi-utils";
 
 interface TrendChartProps {
   data: DailyKpiRow[];
@@ -27,6 +27,14 @@ function ChartSkeleton() {
       <Skeleton className="h-[400px] w-full" />
     </Card>
   );
+}
+
+// Утилита для получения HSL цвета по проценту выполнения
+function getHslColor(percentage: number): string {
+  const color = getColorByPercentage(percentage);
+  if (color === "green") return "hsl(142, 76%, 36%)";
+  if (color === "yellow") return "hsl(48, 96%, 53%)";
+  return "hsl(0, 84%, 60%)";
 }
 
 // Кастомный tooltip
@@ -52,17 +60,30 @@ const CustomTooltip = React.memo(function CustomTooltip({ active, payload }: Cus
   const data = payload[0]?.payload;
   if (!data) return null;
 
-  const date = new Date(data.date);
-  const formattedDate = date.toLocaleDateString("ru-RU", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+  const formattedDate = formatDateISO(data.date);
+  const displayDate =
+    formattedDate !== data.date
+      ? new Date(data.date).toLocaleDateString("ru-RU", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        })
+      : new Date(
+          Date.UTC(
+            Number.parseInt(data.date.slice(0, 4)),
+            Number.parseInt(data.date.slice(5, 7)) - 1,
+            Number.parseInt(data.date.slice(8, 10)),
+          ),
+        ).toLocaleDateString("ru-RU", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        });
 
   return (
     <Card className="border-border bg-background p-3 shadow-lg">
       <div className="space-y-2">
-        <p className="text-sm font-semibold">{formattedDate}</p>
+        <p className="text-sm font-semibold">{displayDate}</p>
         <div className="space-y-1 text-sm">
           <div className="flex items-center justify-between gap-4">
             <span className="text-muted-foreground">Фактическое время:</span>
@@ -77,12 +98,7 @@ const CustomTooltip = React.memo(function CustomTooltip({ active, payload }: Cus
             <span
               className="font-semibold"
               style={{
-                color:
-                  data.completionPercentage >= 100
-                    ? "hsl(142, 76%, 36%)"
-                    : data.completionPercentage >= 80
-                      ? "hsl(48, 96%, 53%)"
-                      : "hsl(0, 84%, 60%)",
+                color: getHslColor(data.completionPercentage),
               }}
             >
               {data.completionPercentage}%
@@ -106,13 +122,7 @@ interface CustomDotProps {
 const CustomDot = React.memo(function CustomDot({ cx, cy, payload }: CustomDotProps) {
   if (!cx || !cy || !payload) return null;
 
-  const color = getColorByPercentage(payload.completionPercentage);
-  const fillColor =
-    color === "green"
-      ? "hsl(142, 76%, 36%)"
-      : color === "yellow"
-        ? "hsl(48, 96%, 53%)"
-        : "hsl(0, 84%, 60%)";
+  const fillColor = getHslColor(payload.completionPercentage);
 
   return <circle cx={cx} cy={cy} r={4} fill={fillColor} stroke="white" strokeWidth={2} />;
 });
@@ -130,6 +140,28 @@ export const TrendChart = React.memo(function TrendChart({ data, loading }: Tren
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Подготовка данных для графика - useMemo должен быть до условных return
+  const chartData = React.useMemo(
+    () =>
+      data?.map((row) => {
+        // Парсим дату в UTC для корректного отображения
+        const [year, month, day] = row.date.split("-").map(Number);
+        const utcDate = new Date(Date.UTC(year, month - 1, day));
+        return {
+          date: row.date,
+          actualTalkTimeMinutes: row.actualTalkTimeMinutes,
+          targetTalkTimeMinutes: row.targetTalkTimeMinutes,
+          completionPercentage: row.completionPercentage,
+          // Форматированная дата для оси X
+          formattedDate: utcDate.toLocaleDateString("ru-RU", {
+            day: "2-digit",
+            month: "2-digit",
+          }),
+        };
+      }) || [],
+    [data],
+  );
+
   if (loading) {
     return <ChartSkeleton />;
   }
@@ -137,23 +169,6 @@ export const TrendChart = React.memo(function TrendChart({ data, loading }: Tren
   if (!data || data.length === 0) {
     return null;
   }
-
-  // Подготовка данных для графика
-  const chartData = React.useMemo(
-    () =>
-      data.map((row) => ({
-        date: row.date,
-        actualTalkTimeMinutes: row.actualTalkTimeMinutes,
-        targetTalkTimeMinutes: row.targetTalkTimeMinutes,
-        completionPercentage: row.completionPercentage,
-        // Форматированная дата для оси X
-        formattedDate: new Date(row.date).toLocaleDateString("ru-RU", {
-          day: "2-digit",
-          month: isMobile ? "2-digit" : "2-digit",
-        }),
-      })),
-    [data, isMobile],
-  );
 
   const chartHeight = isMobile ? 300 : 400;
 

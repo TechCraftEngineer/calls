@@ -65,7 +65,7 @@ export function ExportButton({ data, employeeName, startDate, endDate }: ExportB
       {isLoading ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Экспорт...
+          Экспорт в CSV…
         </>
       ) : (
         <>

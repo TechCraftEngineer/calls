@@ -4,7 +4,13 @@ import Sidebar from "@/components/layout/sidebar";
 
 export default function DailyViewLoading() {
   return (
-    <div className="app-container">
+    <div
+      className="app-container"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label="Загрузка данных..."
+    >
       <Sidebar />
       <Header user={null} />
 

@@ -227,7 +227,7 @@ class DiarizedTranscriptionService:
         segments: List[DiarizationSegment],
         temp_dir: str,
         request_id: str
-    ) -> List[str]:
+    ) -> List[Optional[str]]:
         """
         Нарезает аудио на сегменты параллельно.
         

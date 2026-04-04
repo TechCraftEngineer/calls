@@ -5,7 +5,7 @@
  */
 
 import type { DailyKpiRow } from "@calls/api/routers/statistics/get-kpi-daily";
-import { ExportButton } from "./export-button";
+import { ExportButton } from "@/components/features/kpi";
 
 // Пример данных
 const mockData: DailyKpiRow[] = [

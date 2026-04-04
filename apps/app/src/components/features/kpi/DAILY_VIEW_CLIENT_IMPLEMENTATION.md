@@ -197,21 +197,29 @@ DailyKpiRow[] → DailyStatsTable / TrendChart
 
 ## Использование
 
-### В Server Component
+### В Server Component (Next.js 16 async route props)
 
 ```tsx
 // app/statistics/kpi/daily/[employeeId]/page.tsx
 import { DailyViewClient } from "@/components/features/kpi";
 
-export default function DailyViewPage({ params, searchParams }) {
-  const startDate = searchParams.startDate || getCurrentMonthStart();
-  const endDate = searchParams.endDate || getCurrentMonthEnd();
+interface PageProps {
+  params: Promise<{ employeeId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function DailyViewPage({ params, searchParams }: PageProps) {
+  const { employeeId } = await params;
+  const { startDate, endDate } = await searchParams;
+  
+  const initialStartDate = typeof startDate === "string" ? startDate : getCurrentMonthStart();
+  const initialEndDate = typeof endDate === "string" ? endDate : getCurrentMonthEnd();
   
   return (
     <DailyViewClient
-      employeeId={params.employeeId}
-      initialStartDate={startDate}
-      initialEndDate={endDate}
+      employeeId={employeeId}
+      initialStartDate={initialStartDate}
+      initialEndDate={initialEndDate}
     />
   );
 }

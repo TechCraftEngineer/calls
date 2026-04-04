@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Badge,
   Button,
@@ -46,6 +48,7 @@ import {
   Settings2,
   TrendingUp,
 } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
@@ -144,11 +147,22 @@ const monthLabel = (monthValue: string) => {
 
 const KPI_TABLE_STATE_KEY = "kpi-table-state";
 
-interface KpiTableState {
-  month: string;
-  sorting: Array<{ id: string; desc: boolean }>;
-  pagination: { pageSize: number; pageIndex: number };
-}
+// Zod schema для валидации состояния таблицы
+const sortingItemSchema = z.object({
+  id: z.string(),
+  desc: z.boolean(),
+});
+
+const kpiTableStateSchema = z.object({
+  month: z.string(),
+  sorting: z.array(sortingItemSchema),
+  pagination: z.object({
+    pageSize: z.number().int().positive(),
+    pageIndex: z.number().int().nonnegative(),
+  }),
+});
+
+type KpiTableState = z.infer<typeof kpiTableStateSchema>;
 
 const saveKpiTableState = (state: KpiTableState) => {
   try {
@@ -162,7 +176,13 @@ const loadKpiTableState = (): KpiTableState | null => {
   try {
     const stored = sessionStorage.getItem(KPI_TABLE_STATE_KEY);
     if (!stored) return null;
-    return JSON.parse(stored) as KpiTableState;
+    const parsed = JSON.parse(stored);
+    const result = kpiTableStateSchema.safeParse(parsed);
+    if (!result.success) {
+      console.error("Invalid KPI table state in sessionStorage:", result.error);
+      return null;
+    }
+    return result.data;
   } catch (error) {
     console.error("Failed to load KPI table state", error);
     return null;
@@ -196,22 +216,24 @@ export default function KpiTable() {
   const skipInvalidateOnSuccessRef = useRef(false);
   const tableRef = useRef<ReturnType<typeof useReactTable<KpiRow>> | null>(null);
 
-  const navigateToDailyView = useCallback(
-    (employeeExternalId: string) => {
-      // Сохраняем текущее состояние таблицы
-      const currentTable = tableRef.current;
-      if (currentTable) {
-        saveKpiTableState({
-          month: normalizedMonthValue,
-          sorting: currentTable.getState().sorting,
-          pagination: currentTable.getState().pagination,
-        });
-      }
+  // Функция для сохранения состояния таблицы перед навигацией
+  const saveStateBeforeNavigation = useCallback(() => {
+    const currentTable = tableRef.current;
+    if (currentTable) {
+      saveKpiTableState({
+        month: normalizedMonthValue,
+        sorting: currentTable.getState().sorting,
+        pagination: currentTable.getState().pagination,
+      });
+    }
+  }, [normalizedMonthValue]);
 
-      // Навигация к daily view с текущим периодом
-      router.push(`/statistics/kpi/daily/${employeeExternalId}?startDate=${dFrom}&endDate=${dTo}`);
+  // Получаем данные для навигации
+  const getDailyViewHref = useCallback(
+    (employeeExternalId: string) => {
+      return `/statistics/kpi/daily/${employeeExternalId}?startDate=${dFrom}&endDate=${dTo}`;
     },
-    [normalizedMonthValue, dFrom, dTo, router],
+    [dFrom, dTo],
   );
 
   const { data = [], isPending: loading } = useQuery(
@@ -662,19 +684,20 @@ export default function KpiTable() {
           />
         ),
         enableSorting: false,
-        cell: ({ row }) => (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="touch-action-manipulation"
-            aria-label={`Просмотр KPI по дням для ${row.original.name}`}
-            onClick={() => navigateToDailyView(row.original.employeeExternalId)}
-          >
-            <Eye className="size-4 mr-2" aria-hidden />
-            По дням
-          </Button>
-        ),
+        cell: ({ row }) => {
+          const href = getDailyViewHref(row.original.employeeExternalId);
+          return (
+            <Link
+              href={href}
+              onClick={saveStateBeforeNavigation}
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-8 px-3 touch-action-manipulation"
+              aria-label={`Просмотр KPI по дням для ${row.original.name}`}
+            >
+              <Eye className="size-4 mr-2" aria-hidden />
+              По дням
+            </Link>
+          );
+        },
         meta: { headerTitle: "По дням" },
       },
       {
@@ -717,7 +740,8 @@ export default function KpiTable() {
     [
       formatRub,
       isApplyingBulkKpi,
-      navigateToDailyView,
+      getDailyViewHref,
+      saveStateBeforeNavigation,
       savingEmployeeId,
       updateKpiMutation.isPending,
     ],
@@ -749,7 +773,7 @@ export default function KpiTable() {
     initialState: initialTableState,
   });
 
-  // Сохраняем ссылку на table для использования в navigateToDailyView
+  // Сохраняем ссылку на table для использования при навигации
   tableRef.current = table;
 
   const exportCurrentMonthCsv = useCallback(() => {

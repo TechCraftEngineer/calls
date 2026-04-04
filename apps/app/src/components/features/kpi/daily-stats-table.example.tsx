@@ -97,20 +97,28 @@ export function DailyStatsTableEmpty() {
 
 // Пример 4: Большой набор данных (для демонстрации пагинации)
 export function DailyStatsTableWithPagination() {
-  const largeData: DailyKpiRow[] = Array.from({ length: 60 }, (_, i) => ({
-    date: `2024-01-${String(i + 1).padStart(2, "0")}`,
-    employeeExternalId: "emp-001",
-    employeeName: "Иван Иванов",
-    employeeEmail: "ivan@example.com",
-    totalCalls: 40 + Math.floor(Math.random() * 20),
-    incoming: 20 + Math.floor(Math.random() * 10),
-    outgoing: 15 + Math.floor(Math.random() * 10),
-    missed: Math.floor(Math.random() * 5),
-    actualTalkTimeMinutes: 150 + Math.floor(Math.random() * 100),
-    targetTalkTimeMinutes: 200,
-    completionPercentage: 75 + Math.floor(Math.random() * 35),
-    dailyBonus: 3750 + Math.floor(Math.random() * 2500),
-  }));
+  const largeData: DailyKpiRow[] = Array.from({ length: 60 }, (_, i) => {
+    // Создаем реальные календарные даты, начиная с 2024-01-01
+    const baseDate = new Date(2024, 0, 1); // 1 января 2024
+    const currentDate = new Date(baseDate);
+    currentDate.setDate(baseDate.getDate() + i);
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
+
+    return {
+      date: dateStr,
+      employeeExternalId: "emp-001",
+      employeeName: "Иван Иванов",
+      employeeEmail: "ivan@example.com",
+      totalCalls: 40 + Math.floor(Math.random() * 20),
+      incoming: 20 + Math.floor(Math.random() * 10),
+      outgoing: 15 + Math.floor(Math.random() * 10),
+      missed: Math.floor(Math.random() * 5),
+      actualTalkTimeMinutes: 150 + Math.floor(Math.random() * 100),
+      targetTalkTimeMinutes: 200,
+      completionPercentage: 75 + Math.floor(Math.random() * 35),
+      dailyBonus: 3750 + Math.floor(Math.random() * 2500),
+    };
+  });
 
   return (
     <DailyStatsTable

@@ -25,7 +25,7 @@ import {
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
-import { formatCurrency, getColorByPercentage } from "@/lib/kpi-utils";
+import { formatCurrency, formatDateISO, getColorByPercentage } from "@/lib/kpi-utils";
 import { ExportButton } from "./export-button";
 
 interface DailyStatsTableProps {
@@ -162,8 +162,10 @@ export const DailyStatsTable = React.memo(function DailyStatsTable({
           );
         },
         cell: ({ row }) => {
-          const date = new Date(row.original.date);
-          return date.toLocaleDateString("ru-RU", {
+          // Используем UTC-safe парсинг для корректного отображения дат
+          const [year, month, day] = row.original.date.split("-").map(Number);
+          const utcDate = new Date(Date.UTC(year, month - 1, day));
+          return utcDate.toLocaleDateString("ru-RU", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
@@ -408,8 +410,25 @@ export const DailyStatsTable = React.memo(function DailyStatsTable({
           <div>
             <h3 className="text-lg font-semibold">{employeeName}</h3>
             <p className="text-muted-foreground text-sm">
-              {new Date(startDate).toLocaleDateString("ru-RU")} -{" "}
-              {new Date(endDate).toLocaleDateString("ru-RU")}
+              {formatDateISO(startDate) !== startDate
+                ? new Date(startDate).toLocaleDateString("ru-RU")
+                : new Date(
+                    Date.UTC(
+                      Number(startDate.slice(0, 4)),
+                      Number(startDate.slice(5, 7)) - 1,
+                      Number(startDate.slice(8, 10)),
+                    ),
+                  ).toLocaleDateString("ru-RU")}{" "}
+              -{" "}
+              {formatDateISO(endDate) !== endDate
+                ? new Date(endDate).toLocaleDateString("ru-RU")
+                : new Date(
+                    Date.UTC(
+                      Number(endDate.slice(0, 4)),
+                      Number(endDate.slice(5, 7)) - 1,
+                      Number(endDate.slice(8, 10)),
+                    ),
+                  ).toLocaleDateString("ru-RU")}
             </p>
           </div>
           <ExportButton
@@ -427,11 +446,14 @@ export const DailyStatsTable = React.memo(function DailyStatsTable({
               <div className="space-y-3">
                 <div className="flex items-center justify-between border-b pb-2">
                   <span className="font-semibold">
-                    {new Date(row.date).toLocaleDateString("ru-RU", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
+                    {(() => {
+                      const [y, m, d] = row.date.split("-").map(Number);
+                      return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("ru-RU", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      });
+                    })()}
                   </span>
                   <span
                     className={cn(
@@ -539,8 +561,25 @@ export const DailyStatsTable = React.memo(function DailyStatsTable({
         <div>
           <h3 className="text-lg font-semibold">{employeeName}</h3>
           <p className="text-muted-foreground text-sm">
-            {new Date(startDate).toLocaleDateString("ru-RU")} -{" "}
-            {new Date(endDate).toLocaleDateString("ru-RU")}
+            {formatDateISO(startDate) !== startDate
+              ? new Date(startDate).toLocaleDateString("ru-RU")
+              : new Date(
+                  Date.UTC(
+                    Number(startDate.slice(0, 4)),
+                    Number(startDate.slice(5, 7)) - 1,
+                    Number(startDate.slice(8, 10)),
+                  ),
+                ).toLocaleDateString("ru-RU")}{" "}
+            -{" "}
+            {formatDateISO(endDate) !== endDate
+              ? new Date(endDate).toLocaleDateString("ru-RU")
+              : new Date(
+                  Date.UTC(
+                    Number(endDate.slice(0, 4)),
+                    Number(endDate.slice(5, 7)) - 1,
+                    Number(endDate.slice(8, 10)),
+                  ),
+                ).toLocaleDateString("ru-RU")}
           </p>
         </div>
         <ExportButton

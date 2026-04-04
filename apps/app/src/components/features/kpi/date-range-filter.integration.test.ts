@@ -4,6 +4,7 @@
  * Проверяет интеграцию с date-range-utils и корректность валидации
  */
 
+import { describe, expect, it } from "bun:test";
 import { getQuickFilterDates, type QuickFilter } from "@/lib/date-range-utils";
 
 describe("DateRangeFilter Integration", () => {

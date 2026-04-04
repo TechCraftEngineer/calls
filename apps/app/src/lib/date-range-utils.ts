@@ -1,4 +1,6 @@
-/** Utility functions for date range serialization and quick filters. */
+/** Утилиты для сериализации диапазонов дат и быстрых фильтров. */
+
+import { z } from "zod";
 
 /**
  * Модель диапазона дат.
@@ -27,6 +29,12 @@ export function serializeDateRange(startDate: string, endDate: string): Record<s
   };
 }
 
+// Zod схема для валидации диапазона дат
+const dateRangeSchema = z.object({
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
+});
+
 /**
  * Десериализует диапазон дат из URL параметров.
  *
@@ -41,16 +49,33 @@ export function deserializeDateRange(params: Record<string, string | undefined>)
     return null;
   }
 
-  // Проверяем формат дат (YYYY-MM-DD)
-  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+  // Валидируем через Zod
+  const result = dateRangeSchema.safeParse({ startDate, endDate });
+  if (!result.success) {
     return null;
   }
 
-  // Проверяем валидность дат
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+  // Проверяем, что даты реальные (например, не 2024-99-99)
+  const [startYear, startMonth, startDay] = startDate.split("-").map(Number);
+  const [endYear, endMonth, endDay] = endDate.split("-").map(Number);
+
+  const startDateObj = new Date(Date.UTC(startYear, startMonth - 1, startDay));
+  const endDateObj = new Date(Date.UTC(endYear, endMonth - 1, endDay));
+
+  // Проверяем, что компоненты даты совпадают после парсинга
+  if (
+    startDateObj.getUTCFullYear() !== startYear ||
+    startDateObj.getUTCMonth() + 1 !== startMonth ||
+    startDateObj.getUTCDate() !== startDay ||
+    endDateObj.getUTCFullYear() !== endYear ||
+    endDateObj.getUTCMonth() + 1 !== endMonth ||
+    endDateObj.getUTCDate() !== endDay
+  ) {
+    return null;
+  }
+
+  // Проверяем инвариант startDate <= endDate
+  if (startDateObj.getTime() > endDateObj.getTime()) {
     return null;
   }
 
@@ -109,7 +134,7 @@ export function getQuickFilterDates(filter: QuickFilter): DateRange {
     default: {
       // Exhaustive check
       const _exhaustive: never = filter;
-      throw new Error(`Unknown filter: ${_exhaustive}`);
+      throw new Error(`Неизвестный фильтр: ${_exhaustive}`);
     }
   }
 }
