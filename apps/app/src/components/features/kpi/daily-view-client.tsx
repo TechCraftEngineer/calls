@@ -3,6 +3,7 @@
 import { Button, Card } from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, BarChart3, Table as TableIcon } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useORPC } from "@/orpc/react";
@@ -92,11 +93,6 @@ export function DailyViewClient({
     setEndDate(newEndDate);
   }, []);
 
-  // Обработчик возврата к общему виду
-  const handleBackToOverview = React.useCallback(() => {
-    router.push("/statistics/kpi");
-  }, [router]);
-
   // Получаем имя сотрудника из данных
   const employeeName = data && data.length > 0 ? data[0].employeeName : "Сотрудник";
 
@@ -105,17 +101,15 @@ export function DailyViewClient({
       {/* Заголовок с кнопкой "Назад" */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBackToOverview}
+          <Link
+            href="/statistics/kpi"
             aria-label="Назад к общему виду"
-            className="min-h-[44px]"
+            className="inline-flex items-center gap-2 min-h-[44px] text-sm font-medium text-foreground hover:text-foreground/80 transition-colors"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" />
             <span className="hidden sm:inline">Назад к общему виду</span>
             <span className="sm:hidden">Назад</span>
-          </Button>
+          </Link>
         </div>
       </div>
 

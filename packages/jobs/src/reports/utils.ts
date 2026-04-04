@@ -5,8 +5,10 @@
 import { z } from "zod";
 
 // Zod schema для валидации параметров отчета
+const StatsValueSchema = z.union([z.number(), z.string()]);
+
 const ReportParamsSchema = z.object({
-  stats: z.record(z.string(), z.any()),
+  stats: z.record(z.string(), StatsValueSchema),
   dateFrom: z.date(),
   dateTo: z.date(),
   reportType: z.enum(["daily", "weekly", "monthly"]),
@@ -38,8 +40,13 @@ export function pluralizeCalls(n: number): string {
   return "звонков";
 }
 
-export function getReportTypeLabel(): string {
-  return "Звонки";
+export function getReportTypeLabel(reportType: string): string {
+  const labels: Record<string, string> = {
+    daily: "Звонки за день",
+    weekly: "Звонки за неделю",
+    monthly: "Звонки за месяц",
+  };
+  return labels[reportType] || "Звонки";
 }
 
 export function validateReportParams(params: unknown): string | null {

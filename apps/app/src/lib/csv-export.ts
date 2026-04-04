@@ -117,7 +117,7 @@ function validateAndSanitizeDate(dateStr: string): string {
   // Проверяем формат YYYY-MM-DD
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!dateRegex.test(dateStr)) {
-    return "invalid";
+    return "невалидная_дата";
   }
 
   // Проверяем, что дата реальная
@@ -129,7 +129,7 @@ function validateAndSanitizeDate(dateStr: string): string {
     dateObj.getUTCMonth() + 1 !== month ||
     dateObj.getUTCDate() !== day
   ) {
-    return "invalid";
+    return "невалидная_дата";
   }
 
   return dateStr;

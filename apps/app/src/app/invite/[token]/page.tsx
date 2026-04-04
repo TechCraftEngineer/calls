@@ -14,7 +14,7 @@ import {
   PasswordInput,
 } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { skipToken, useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -90,27 +90,25 @@ export default function InviteAcceptPage() {
     isLoading,
     error: fetchError,
   } = useQuery({
-    ...orpc.workspaces.getInvitationByToken.queryOptions({ input: { token } }),
-    enabled: !!token,
+    ...orpc.workspaces.getInvitationByToken.queryOptions(token ? { input: { token } } : skipToken),
   });
 
   useEffect(() => {
     setIsLinkInvitation(invitation?.invitationType === "link");
   }, [invitation]);
 
-  // Update form resolver when isLinkInvitation changes
+  // Update form when invitation type changes - combined effect
   useEffect(() => {
-    form.reset({
-      name: "",
-      password: "",
-      email: "",
-    });
-  }, [form]);
-
-  // Update form resolver when invitation type changes
-  useEffect(() => {
-    form.resetField("email");
-  }, [form]);
+    if (isLinkInvitation) {
+      form.resetField("email");
+    } else {
+      form.reset({
+        name: "",
+        password: "",
+        email: "",
+      });
+    }
+  }, [isLinkInvitation, form]);
 
   // Проверяем наличие пароля у пользователя, если он авторизован и email совпадает (или это link-приглашение)
   const { data: passwordCheck, isLoading: checkingPasswordQuery } = useQuery<{
@@ -224,7 +222,7 @@ export default function InviteAcceptPage() {
           <p className="text-gray-600 mb-6">Ссылка приглашения некорректна или отсутствует</p>
           <Link
             href={paths.auth.signin}
-            className="inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white no-underline hover:bg-gray-800 transition-colors min-h-[44px] flex items-center justify-center"
+            className="inline-flex rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white no-underline hover:bg-gray-800 transition-colors min-h-[44px] items-center justify-center"
           >
             Перейти ко входу
           </Link>
@@ -272,7 +270,7 @@ export default function InviteAcceptPage() {
           </p>
           <Link
             href={paths.auth.signin}
-            className="inline-block rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white no-underline hover:bg-gray-800 transition-colors min-h-[44px] flex items-center justify-center"
+            className="inline-flex rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white no-underline hover:bg-gray-800 transition-colors min-h-[44px] items-center justify-center"
           >
             Перейти ко входу
           </Link>

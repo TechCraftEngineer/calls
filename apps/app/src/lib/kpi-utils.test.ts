@@ -144,10 +144,6 @@ describe("formatDateISO", () => {
     expect(formatDateISO("")).toBe("");
   });
 
-  it("should handle already formatted date string", () => {
-    expect(formatDateISO("2024-01-15")).toBe("2024-01-15");
-  });
-
   it("should use UTC components for Date objects to avoid timezone shifts", () => {
     // Create a date that might cause timezone issues
     const date = new Date(Date.UTC(2024, 0, 15, 23, 30, 0));

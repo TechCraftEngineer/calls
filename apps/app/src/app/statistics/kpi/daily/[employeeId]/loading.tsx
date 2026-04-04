@@ -9,7 +9,7 @@ export default function DailyViewLoading() {
       role="status"
       aria-live="polite"
       aria-busy="true"
-      aria-label="Загрузка данных..."
+      aria-label="Загрузка данных…"
     >
       <Sidebar />
       <Header user={null} />
