@@ -49,10 +49,19 @@ export async function getDailyKpiStats(input: GetDailyKpiStatsInput): Promise<Da
     .filter((num): num is string => num != null && num.trim() !== "");
 
   // Вычисляем nextDay(endDate) для half-open period семантики
-  // Сначала нормализуем к midnight, затем добавляем день
-  const dateToExclusive = new Date(dateTo);
-  dateToExclusive.setHours(0, 0, 0, 0);
-  dateToExclusive.setDate(dateToExclusive.getDate() + 1);
+  // Сначала нормализуем к midnight UTC, затем добавляем день
+  const dateToDate = new Date(dateTo);
+  const dateToExclusive = new Date(
+    Date.UTC(
+      dateToDate.getUTCFullYear(),
+      dateToDate.getUTCMonth(),
+      dateToDate.getUTCDate() + 1,
+      0,
+      0,
+      0,
+      0,
+    ),
+  );
 
   const conditions = [
     eq(schema.calls.workspaceId, workspaceId),

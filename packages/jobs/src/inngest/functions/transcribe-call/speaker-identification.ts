@@ -68,7 +68,10 @@ export async function identifySpeakers(
       inputLength: normalizedText.length,
       hasContext: !!fallbackManagerName,
     });
-    // Продолжаем с обрезанным текстом, но логируем ошибку
+    // Fail-fast: не продолжаем с невалидными входными данными
+    throw new Error(
+      `Ошибка валидации входных данных для идентификации спикеров: ${validationResult.error.message} (inputLength: ${normalizedText.length}, hasContext: ${!!fallbackManagerName})`,
+    );
   }
 
   // Извлекаем данные из giga-am результата - сначала ищем diarized, затем fallback на обычный

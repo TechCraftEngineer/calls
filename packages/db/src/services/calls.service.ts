@@ -362,6 +362,8 @@ export class CallsService {
       statuses?: ("missed" | "answered" | "voicemail" | "failed")[];
       managerInternalNumbersForQuery?: string[];
       q?: string;
+      includeArchived?: boolean;
+      onlyArchived?: boolean;
     },
   ): Promise<{
     totalCalls: number;
@@ -382,6 +384,7 @@ export class CallsService {
       transcriptionStatus: "failed",
       transcriptionError: errorMessage,
       transcribedAt: new Date(),
+      // biome-ignore lint/suspicious/noExplicitAny: поля требуют добавления в схему БД
     } as any);
   }
 

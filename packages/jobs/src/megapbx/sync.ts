@@ -22,7 +22,7 @@ import {
 const logger = createLogger("megapbx-sync");
 const PROVIDER = "megapbx";
 
-function isEmptyOrMegaPbxPlaceholder(value: string | null | undefined): boolean {
+function _isEmptyOrMegaPbxPlaceholder(value: string | null | undefined): boolean {
   const normalized = value?.trim().toLowerCase() ?? "";
   return normalized.length === 0 || normalized === "megapbx";
 }
@@ -349,17 +349,18 @@ export async function syncMegaPbxCalls(
       // Дозаполняем связь и вспомогательные поля, когда появились данные из directory.
       if (!createResult.created) {
         let internalNumber: string | undefined;
-        
+
         // Если у call есть непустой internalNumber, то не устанавливаем PBX привязку
         if (call.internalNumber?.trim()) {
           internalNumber = undefined;
         } else {
           // Иначе вычисляем fallback из доступных данных
-          internalNumber = normalizePhoneForMatch(number?.extension) ??
+          internalNumber =
+            normalizePhoneForMatch(number?.extension) ??
             normalizePhoneForMatch(employee?.extension) ??
             undefined;
         }
-        
+
         // Для source и name используем данные из employee/number, так как в NormalizedCall их нет
         const source = employee?.externalId ?? number?.externalId ?? "megapbx";
         const name = employee?.displayName ?? number?.label ?? "MegaPBX";
@@ -420,7 +421,7 @@ export async function syncMegaPbxCalls(
     // Батчевая отправка событий транскрипции
     if (callIdsForTranscription.length > 0) {
       await inngest.send(
-        callIdsForTranscription.map(callId => transcribeRequested.create({ callId }))
+        callIdsForTranscription.map((callId) => transcribeRequested.create({ callId })),
       );
       stats.transcriptionsQueued += callIdsForTranscription.length;
     }
@@ -482,9 +483,9 @@ export async function runActiveMegaPbxSync() {
 
   // Ограничиваем одновременную обработку до 3 workspace'ов
   const limit = pLimit(3);
-  
+
   await Promise.all(
-    integrations.map(integration =>
+    integrations.map((integration) =>
       limit(async () => {
         try {
           await syncMegaPbxWorkspace(integration.workspaceId, integration);
@@ -501,8 +502,8 @@ export async function runActiveMegaPbxSync() {
             error: message,
           });
         }
-      })
-    )
+      }),
+    ),
   );
 
   return results;

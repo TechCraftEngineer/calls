@@ -2,22 +2,29 @@
  * Функции валидации и обработки ошибок для транскрибации
  */
 
-import { createLogger } from "../../../logger";
 import { z } from "zod";
+import { createLogger } from "../../../logger";
 
 const logger = createLogger("transcribe-call-validation");
 
 // Схема для валидации описания workspace
-const WorkspaceDescriptionSchema = z.string().max(2000, "Описание должно быть не более 2000 символов");
+const WorkspaceDescriptionSchema = z
+  .string()
+  .max(2000, "Описание должно быть не более 2000 символов");
 
 // Схема для валидации workspace для LLM
-const WorkspaceLlmInputSchema = z.object({
+const _WorkspaceLlmInputSchema = z.object({
   message: z.string().min(1).max(2000, "Сообщение должно быть от 1 до 2000 символов"),
   context: z.string().optional(),
-  history: z.array(z.object({
-    role: z.enum(["user", "assistant"]),
-    content: z.string()
-  })).max(20, "История диалога не может содержать более 20 сообщений").optional()
+  history: z
+    .array(
+      z.object({
+        role: z.enum(["user", "assistant"]),
+        content: z.string(),
+      }),
+    )
+    .max(20, "История диалога не может содержать более 20 сообщений")
+    .optional(),
 });
 
 export interface ValidationError {
@@ -89,13 +96,15 @@ export function validateWorkspace(workspace: {
     throw new TranscriptionError(
       `Invalid workspace id format: ${workspace.id}`,
       "INVALID_WORKSPACE_ID",
-      "workspace.id"
+      "workspace.id",
     );
   }
 
   // Warn if name is missing (used for LLM context building)
   if (!workspace.name) {
-    logger.warn(`Workspace has no name, LLM context will be degraded (workspaceId: ${workspace.id})`);
+    logger.warn(
+      `Workspace has no name, LLM context will be degraded (workspaceId: ${workspace.id})`,
+    );
   }
 
   // Validate and normalize description length (LLM context optimization)
@@ -104,19 +113,19 @@ export function validateWorkspace(workspace: {
       // Создаем новый workspace объект с обрезанным описанием
       const originalLength = workspace.description.length;
       const truncatedDescription = workspace.description.slice(0, 2000);
-      
+
       // Логируем изменение
       logger.warn(
-        `Workspace description обрезан с ${originalLength} до 2000 символов (workspaceId: ${workspace.id})`
+        `Workspace description обрезан с ${originalLength} до 2000 символов (workspaceId: ${workspace.id})`,
       );
-      
+
       // Возвращаем новый workspace объект с обрезанным описанием
       return {
         ...workspace,
-        description: truncatedDescription
+        description: truncatedDescription,
       };
     }
-    
+
     // Дополнительная валидация контента для LLM
     try {
       WorkspaceDescriptionSchema.parse(workspace.description);
@@ -125,7 +134,7 @@ export function validateWorkspace(workspace: {
         throw new TranscriptionError(
           `Описание workspace не проходит валидацию: ${error.issues.map((e: z.ZodIssue) => e.message).join(", ")}`,
           "INVALID_WORKSPACE_DESCRIPTION",
-          "workspace.description"
+          "workspace.description",
         );
       }
       throw error;
@@ -203,7 +212,11 @@ export function handleAsyncError<T>(operation: () => Promise<T>, context: string
     }
 
     // Сохраняем оригинальную ошибку как cause
-    const transcriptionError = new TranscriptionError(`Внутренняя ошибка в ${context}`, "INTERNAL_ERROR", context);
+    const transcriptionError = new TranscriptionError(
+      `Внутренняя ошибка в ${context}`,
+      "INTERNAL_ERROR",
+      context,
+    );
     if (error instanceof Error) {
       transcriptionError.cause = error;
     }

@@ -92,7 +92,7 @@ export async function extractAudioSegment(
 
       const timer = setTimeout(() => {
         ffmpeg.kill("SIGKILL");
-        reject(new Error(`ffmpeg timeout after ${FFMPEG_TIMEOUT_MS}ms`));
+        reject(new Error(`таймаут ffmpeg через ${FFMPEG_TIMEOUT_MS} мс`));
       }, FFMPEG_TIMEOUT_MS);
 
       let stderr = "";
@@ -105,7 +105,7 @@ export async function extractAudioSegment(
         if (code === 0) {
           resolve();
         } else {
-          reject(new Error(`ffmpeg exited with code ${code}: ${stderr}`));
+          reject(new Error(`ffmpeg завершился с кодом ${code}: ${stderr}`));
         }
       });
 
@@ -143,7 +143,7 @@ export async function extractAudioSegment(
 
     // НЕ возвращаем полный буфер - это приведет к неверной транскрипции
     throw new Error(
-      `Failed to extract audio segment ${startTime}-${endTime}s: ${error instanceof Error ? error.message : String(error)}`,
+      `Не удалось извлечь аудио сегмент ${startTime}-${endTime}с: ${error instanceof Error ? error.message : String(error)}`,
     );
   } finally {
     // Очистка временного каталога
