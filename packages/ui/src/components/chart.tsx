@@ -146,9 +146,10 @@ function ChartTooltipContent({
         : itemConfig?.label;
 
     if (labelFormatter) {
+      const safeValue = typeof value === "string" ? value : String(value ?? "");
       return (
         <div className={cn("font-medium", labelClassName)}>
-          {labelFormatter(value as string, payload)}
+          {labelFormatter(safeValue, payload)}
         </div>
       );
     }
@@ -238,7 +239,7 @@ function ChartTooltipContent({
                           {itemConfig?.label || item.name}
                         </span>
                       </div>
-                      {item.value && (
+                      {item.value !== null && item.value !== undefined && (
                         <span className="text-foreground font-mono font-medium tabular-nums">
                           {item.value.toLocaleString()}
                         </span>
