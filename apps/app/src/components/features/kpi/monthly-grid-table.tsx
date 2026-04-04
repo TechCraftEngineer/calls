@@ -64,7 +64,7 @@ function getCellColor(percentage: number): string {
 }
 
 export default function MonthlyGridTable() {
-  const { workspace } = useWorkspace();
+  const { activeWorkspace } = useWorkspace();
   const orpc = useORPC();
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthValue());
 
@@ -77,7 +77,7 @@ export default function MonthlyGridTable() {
       startDate,
       endDate,
     },
-    enabled: !!workspace?.id,
+    enabled: !!activeWorkspace?.id,
   });
   const { data: gridData, isLoading, error } = useQuery(queryOptions);
 

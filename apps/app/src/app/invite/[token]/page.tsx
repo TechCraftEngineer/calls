@@ -14,7 +14,7 @@ import {
   PasswordInput,
 } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { skipToken, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -71,7 +71,7 @@ export default function InviteAcceptPage() {
   }, []);
 
   const resolver = useMemo(
-    () => zodResolver(createInviteSchema(isLinkInvitation)),
+    () => zodResolver(createInviteSchema(isLinkInvitation === true)),
     [isLinkInvitation, createInviteSchema],
   );
 
@@ -89,9 +89,11 @@ export default function InviteAcceptPage() {
     data: invitation,
     isLoading,
     error: fetchError,
-  } = useQuery({
-    ...orpc.workspaces.getInvitationByToken.queryOptions(token ? { input: { token } } : skipToken),
-  });
+  } = useQuery<Invitation | undefined>(
+    token
+      ? orpc.workspaces.getInvitationByToken.queryOptions({ input: { token } })
+      : { queryKey: ["disabled"], enabled: false },
+  );
 
   useEffect(() => {
     setIsLinkInvitation(invitation?.invitationType === "link");
