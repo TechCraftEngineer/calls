@@ -18,6 +18,9 @@ export const callsRepository = {
   getTranscriptByCallId: callsTranscripts.getTranscriptByCallId,
   upsertTranscript: callsTranscripts.upsertTranscript,
 
+  // Transcription status operations
+  markTranscriptionFailed: callsCrud.markTranscriptionFailed,
+
   // Evaluation operations
   getEvaluation: callsEvaluations.getEvaluation,
   addEvaluation: callsEvaluations.addEvaluation,

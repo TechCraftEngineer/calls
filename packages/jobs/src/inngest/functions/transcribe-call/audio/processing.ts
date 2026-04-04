@@ -7,7 +7,7 @@ import { randomUUID } from "crypto";
 import { createReadStream, mkdirSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
-import { createLogger } from "../../../../logger";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("audio-processing");
 
@@ -92,7 +92,10 @@ export async function extractAudioSegment(
 
       const timer = setTimeout(() => {
         ffmpeg.kill("SIGKILL");
-        reject(new Error(`таймаут ffmpeg через ${FFMPEG_TIMEOUT_MS} мс`));
+        const timeoutError = new Error(`таймаут ffmpeg через ${FFMPEG_TIMEOUT_MS} мс`);
+        timeoutError.name = "TimeoutError";
+        (timeoutError as Error & { code: string }).code = "ETIMEDOUT";
+        reject(timeoutError);
       }, FFMPEG_TIMEOUT_MS);
 
       let stderr = "";
@@ -143,7 +146,7 @@ export async function extractAudioSegment(
 
     // НЕ возвращаем полный буфер - это приведет к неверной транскрипции
     throw new Error(
-      `Не удалось извлечь аудио сегмент ${startTime}-${endTime}с: ${error instanceof Error ? error.message : String(error)}`,
+      `Не удалось извлечь аудио сегмент ${startTime}-${endTime} с: ${error instanceof Error ? error.message : String(error)}`,
     );
   } finally {
     // Очистка временного каталога

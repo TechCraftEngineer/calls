@@ -3,6 +3,7 @@
  */
 
 import { identifySpeakersWithEmbeddings } from "@calls/asr/llm/identify-speakers-with-embeddings";
+import { NonRetriableError } from "inngest";
 import { z } from "zod";
 import { createLogger } from "~/logger";
 import { extractSegmentsFromUtterances, extractSpeakerTimeline } from "./extraction";
@@ -69,7 +70,7 @@ export async function identifySpeakers(
       hasContext: !!fallbackManagerName,
     });
     // Fail-fast: не продолжаем с невалидными входными данными
-    throw new Error(
+    throw new NonRetriableError(
       `Ошибка валидации входных данных для идентификации спикеров: ${validationResult.error.message} (inputLength: ${normalizedText.length}, hasContext: ${!!fallbackManagerName})`,
     );
   }

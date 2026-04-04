@@ -277,7 +277,7 @@ class DiarizedTranscriptionService:
     
     async def _transcribe_segments_parallel(
         self,
-        segment_files: List[str],
+        segment_files: List[Optional[str]],
         segments: List[DiarizationSegment],
         request_id: str
     ) -> List[TranscribedSegment]:
@@ -364,14 +364,12 @@ class DiarizedTranscriptionService:
         results = await asyncio.gather(*tasks)
 
         # Создаем полный список результатов с None для failed сегментов
-        full_results = [None] * len(segments)
+        full_results: List[Optional[TranscribedSegment]] = [None] * len(segment_files)
+        result_idx = 0
         for i, file_path in enumerate(segment_files):
-            if file_path is not None:
-                # Находим соответствующий результат по исходному индексу
-                for res in results:
-                    if res.start == segments[i].start and res.end == segments[i].end:
-                        full_results[i] = res
-                        break
+            if file_path is not None and result_idx < len(results):
+                full_results[i] = results[result_idx]
+                result_idx += 1
 
         # Фильтруем None значения
         return [r for r in full_results if r is not None]
