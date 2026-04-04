@@ -89,7 +89,7 @@ export function validateWorkspace(workspace: {
   id: string;
   name?: string | null;
   description?: string | null;
-}): typeof workspace | void {
+}): typeof workspace | undefined {
   // Validate UUID format
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(workspace.id)) {

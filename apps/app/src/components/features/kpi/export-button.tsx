@@ -1,6 +1,6 @@
 "use client";
 
-import type { DailyKpiRow } from "@calls/api/routers/statistics/get-kpi-daily";
+import type { DailyKpiRow } from "@calls/shared";
 import { Button } from "@calls/ui";
 import { Download, Loader2 } from "lucide-react";
 import * as React from "react";

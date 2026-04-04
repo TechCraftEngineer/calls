@@ -1,4 +1,5 @@
 import { callsService, pbxService, settingsService } from "@calls/db";
+import type { DailyKpiRow } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../orpc";
@@ -18,21 +19,6 @@ function calculateDaysInPeriod(startDate: string, endDate: string): number {
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate();
-}
-
-export interface DailyKpiRow {
-  date: string;
-  employeeExternalId: string;
-  employeeName: string;
-  employeeEmail: string;
-  totalCalls: number;
-  incoming: number;
-  outgoing: number;
-  missed: number;
-  actualTalkTimeMinutes: number;
-  targetTalkTimeMinutes: number;
-  completionPercentage: number;
-  dailyBonus: number;
 }
 
 export const getKpiDaily = workspaceAdminProcedure

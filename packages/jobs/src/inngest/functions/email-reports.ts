@@ -12,7 +12,7 @@ import {
   settingsService,
   workspaceSettingsRepository,
 } from "@calls/db";
-import { type ManagerStats, ReportEmail, type ReportEmailProps, sendEmail } from "@calls/emails";
+import { type ManagerStats, ReportEmail, sendEmail } from "@calls/emails";
 import { subMonths } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { inngest } from "../client";

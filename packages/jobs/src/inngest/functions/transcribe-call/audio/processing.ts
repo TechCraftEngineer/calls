@@ -2,11 +2,11 @@
  * Обработка аудио с помощью ffmpeg
  */
 
-import { spawn } from "child_process";
-import { randomUUID } from "crypto";
-import { createReadStream, mkdirSync, rmSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
+import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { createReadStream, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createLogger } from "~/logger";
 
 const logger = createLogger("audio-processing");

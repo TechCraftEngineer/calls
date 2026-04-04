@@ -6,7 +6,6 @@
 import { callsService, systemRepository, usersService, workspacesService } from "@calls/db";
 import { isValidWorkspaceId } from "@calls/shared";
 import { ORPCError, os } from "@orpc/server";
-import { z } from "zod";
 import { isAdminUser } from "./user-profile";
 
 export { createBackendContext as createContext };

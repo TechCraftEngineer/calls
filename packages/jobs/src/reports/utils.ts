@@ -38,34 +38,36 @@ export function pluralizeCalls(n: number): string {
   return "звонков";
 }
 
-export function getReportTypeLabel(reportType: "daily" | "weekly" | "monthly"): string {
+export function getReportTypeLabel(): string {
   return "Звонки";
 }
 
-
 export function validateReportParams(params: unknown): string | null {
   const result = ReportParamsSchema.safeParse(params);
-  
+
   if (!result.success) {
     const error = result.error;
     if (error.issues.length > 0) {
       const firstIssue = error.issues[0];
       if (!firstIssue) return "❌ Ошибка: неверные параметры отчета";
-      
-      const field = firstIssue.path.join('.');
+
+      const field = firstIssue.path.join(".");
       const message = firstIssue.message;
-      
+
       // Определяем тип ошибки на основе сообщения
-      if (message.includes('Expected') && message.includes('date')) {
+      if (message.includes("Expected") && message.includes("date")) {
         return `❌ Ошибка: поле '${field}' должно быть датой`;
       }
-      if (message.includes('Expected') && message.includes('object')) {
+      if (message.includes("Expected") && message.includes("object")) {
         return `❌ Ошибка: поле '${field}' должно быть объектом`;
       }
-      if (message.includes('Invalid') && (message.includes('enum') || message.includes('literal'))) {
+      if (
+        message.includes("Invalid") &&
+        (message.includes("enum") || message.includes("literal"))
+      ) {
         return `❌ Ошибка: поле '${field}' должно быть одним из: daily, weekly, monthly`;
       }
-      
+
       return `❌ Ошибка: поле '${field}' - ${message}`;
     }
     return "❌ Ошибка: неверные параметры отчета";

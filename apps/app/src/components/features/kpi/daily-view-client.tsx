@@ -1,6 +1,5 @@
 "use client";
 
-import type { DailyKpiRow } from "@calls/api/routers/statistics/get-kpi-daily";
 import { Button, Card } from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, BarChart3, Table as TableIcon } from "lucide-react";

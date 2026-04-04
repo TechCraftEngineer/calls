@@ -2,6 +2,7 @@
  * Shared utilities and types
  */
 
+export type { DailyKpiRow } from "./kpi";
 export { generateWorkspaceSlug } from "./slug";
 export { buildCompanyContext } from "./utils/company-context";
 export {

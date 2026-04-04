@@ -1,6 +1,6 @@
 "use client";
 
-import type { DailyKpiRow } from "@calls/api/routers/statistics/get-kpi-daily";
+import type { DailyKpiRow } from "@calls/shared";
 import { Card, Skeleton } from "@calls/ui";
 import * as React from "react";
 import {
@@ -70,9 +70,9 @@ const CustomTooltip = React.memo(function CustomTooltip({ active, payload }: Cus
         })
       : new Date(
           Date.UTC(
-            Number.parseInt(data.date.slice(0, 4)),
-            Number.parseInt(data.date.slice(5, 7)) - 1,
-            Number.parseInt(data.date.slice(8, 10)),
+            Number.parseInt(data.date.slice(0, 4), 10),
+            Number.parseInt(data.date.slice(5, 7), 10) - 1,
+            Number.parseInt(data.date.slice(8, 10), 10),
           ),
         ).toLocaleDateString("ru-RU", {
           day: "2-digit",

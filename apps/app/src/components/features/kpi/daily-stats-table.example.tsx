@@ -7,7 +7,7 @@
  * - Пустое состояние
  */
 
-import type { DailyKpiRow } from "@calls/api/routers/statistics/get-kpi-daily";
+import type { DailyKpiRow } from "@calls/shared";
 import { DailyStatsTable } from "./daily-stats-table";
 
 // Пример данных
