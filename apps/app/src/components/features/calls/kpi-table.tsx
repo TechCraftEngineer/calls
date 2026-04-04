@@ -164,7 +164,8 @@ const kpiTableStateSchema = z.object({
 
 type KpiTableState = z.infer<typeof kpiTableStateSchema>;
 
-const saveKpiTableState = (state: KpiTableState) => {
+const saveKpiTableState = (state: KpiTableState): void => {
+  if (typeof window === "undefined") return;
   try {
     sessionStorage.setItem(KPI_TABLE_STATE_KEY, JSON.stringify(state));
   } catch (error) {
@@ -173,6 +174,7 @@ const saveKpiTableState = (state: KpiTableState) => {
 };
 
 const loadKpiTableState = (): KpiTableState | null => {
+  if (typeof window === "undefined") return null;
   try {
     const stored = sessionStorage.getItem(KPI_TABLE_STATE_KEY);
     if (!stored) return null;

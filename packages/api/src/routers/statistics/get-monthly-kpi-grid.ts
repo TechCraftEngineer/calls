@@ -31,9 +31,20 @@ export const getMonthlyKpiGrid = workspaceAdminProcedure
 
     // Получаем всех активных сотрудников с настройками KPI
     const employees = await pbxService.listEmployees(workspaceId);
+    console.log(
+      `[getMonthlyKpiGrid] Total employees: ${employees.length}`,
+      employees.map((e) => ({
+        id: e.externalId,
+        name: e.displayName,
+        isActive: e.isActive,
+        kpiTarget: e.kpiTargetTalkTimeMinutes,
+      })),
+    );
+
     const activeEmployees = employees.filter(
       (emp) => emp.isActive && (emp.kpiTargetTalkTimeMinutes || 0) > 0,
     );
+    console.log(`[getMonthlyKpiGrid] Active employees with KPI: ${activeEmployees.length}`);
 
     if (activeEmployees.length === 0) {
       return [];
