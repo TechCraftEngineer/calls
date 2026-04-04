@@ -3,7 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import { boolean, index, pgTable, text, timestamp, unique, uuid, check } from "drizzle-orm/pg-core";
+import { boolean, check, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { files } from "../files/files";
 import { workspaces } from "../workspace/workspaces";
 import { callDirectionEnum, callStatusEnum } from "./enums";
@@ -36,6 +36,10 @@ export const calls = pgTable(
     isArchived: boolean("is_archived").default(false).notNull(),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
 
+    transcriptionStatus: text("transcription_status"),
+    transcriptionError: text("transcription_error"),
+    transcribedAt: timestamp("transcribed_at", { withTimezone: true }),
+
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
@@ -45,7 +49,7 @@ export const calls = pgTable(
   (table) => [
     // Используем pgEnum для валидации значений
     check("calls_status_check", sql`status IN ('missed', 'answered', 'voicemail', 'failed')`),
-    check("calls_direction_check", sql`direction IN ('inbound', 'outbound', 'incoming', 'outgoing')`),
+    check("calls_direction_check", sql`direction IN ('inbound', 'outbound')`),
     unique("calls_workspace_filename_unique").on(table.workspaceId, table.filename),
     unique("calls_workspace_provider_external_id_unique").on(
       table.workspaceId,

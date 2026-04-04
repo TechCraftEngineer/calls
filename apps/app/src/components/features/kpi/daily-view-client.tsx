@@ -62,9 +62,11 @@ export function DailyViewClient({
   // Загрузка данных с TanStack Query
   const { data, isLoading, error, refetch } = useQuery({
     ...orpc.statistics.getKpiDaily.queryOptions({
-      employeeExternalId: employeeId,
-      startDate,
-      endDate,
+      input: {
+        employeeExternalId: employeeId,
+        startDate,
+        endDate,
+      },
     }),
     staleTime: 5 * 60 * 1000, // 5 минут
     gcTime: 10 * 60 * 1000, // 10 минут (в TanStack Query v5 переименовано из cacheTime)

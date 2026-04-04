@@ -2,7 +2,7 @@
 
 import { paths } from "@calls/config";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { DailyViewClient } from "@/components/features/kpi/daily-view-client";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
@@ -10,7 +10,7 @@ import Sidebar from "@/components/layout/sidebar";
 import { useSession } from "@/lib/better-auth";
 
 interface PageProps {
-  params: { employeeId: string };
+  params: Promise<{ employeeId: string }>;
 }
 
 // Функция для получения текущего месяца (первый и последний день)
@@ -40,7 +40,7 @@ function getCurrentMonthRange(): { startDate: string; endDate: string } {
 }
 
 export default function DailyViewPage({ params }: PageProps) {
-  const { employeeId } = params;
+  const { employeeId } = React.use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, isPending: sessionPending } = useSession();

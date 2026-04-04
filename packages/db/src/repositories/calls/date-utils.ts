@@ -14,7 +14,7 @@ export function parseDateToUTC(dateStr: string): Date {
     const day = Number(dayStr);
     const date = new Date(Date.UTC(year, month - 1, day));
     if (Number.isNaN(date.getTime())) {
-      throw new Error(`Invalid date: ${dateStr}`);
+      throw new Error(`Неверная дата: ${dateStr}`);
     }
     // Round-trip проверка: убеждаемся что Date.UTC не нормализовал невалидные значения
     if (
@@ -22,7 +22,7 @@ export function parseDateToUTC(dateStr: string): Date {
       date.getUTCMonth() + 1 !== month ||
       date.getUTCDate() !== day
     ) {
-      throw new Error(`Invalid date: ${dateStr}`);
+      throw new Error(`Неверная дата: ${dateStr}`);
     }
     return date;
   }
@@ -32,7 +32,7 @@ export function parseDateToUTC(dateStr: string): Date {
   if (hasTimezone) {
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) {
-      throw new Error(`Invalid date: ${dateStr}`);
+      throw new Error(`Неверная дата: ${dateStr}`);
     }
     return date;
   }
@@ -41,7 +41,7 @@ export function parseDateToUTC(dateStr: string): Date {
   const dateWithZ = dateStr.endsWith("Z") ? dateStr : `${dateStr}Z`;
   const date = new Date(dateWithZ);
   if (Number.isNaN(date.getTime())) {
-    throw new Error(`Invalid date: ${dateStr}`);
+    throw new Error(`Неверная дата: ${dateStr}`);
   }
   return date;
 }

@@ -1,3 +1,5 @@
+CREATE TYPE "public"."call_direction" AS ENUM('inbound', 'outbound');--> statement-breakpoint
+CREATE TYPE "public"."call_status" AS ENUM('missed', 'answered', 'voicemail', 'failed');--> statement-breakpoint
 CREATE TYPE "public"."subscription_plan" AS ENUM('free', 'starter', 'pro', 'enterprise');--> statement-breakpoint
 CREATE TYPE "public"."subscription_status" AS ENUM('active', 'trialing', 'past_due', 'canceled', 'unpaid', 'incomplete');--> statement-breakpoint
 CREATE TYPE "public"."workspace_member_role" AS ENUM('owner', 'admin', 'member');--> statement-breakpoint
@@ -65,11 +67,10 @@ CREATE TABLE "calls" (
 	"number" text,
 	"timestamp" timestamp with time zone NOT NULL,
 	"name" text,
-	"direction" text,
-	"status" text,
+	"direction" "call_direction",
+	"status" "call_status",
 	"file_id" uuid,
 	"enhanced_audio_file_id" uuid,
-	"pbx_number_id" uuid,
 	"internal_number" text,
 	"provider" text,
 	"external_id" text,
@@ -77,10 +78,15 @@ CREATE TABLE "calls" (
 	"customer_name" text,
 	"is_archived" boolean DEFAULT false NOT NULL,
 	"archived_at" timestamp with time zone,
+	"transcription_status" text,
+	"transcription_error" text,
+	"transcribed_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "calls_workspace_filename_unique" UNIQUE("workspace_id","filename"),
-	CONSTRAINT "calls_workspace_provider_external_id_unique" UNIQUE("workspace_id","provider","external_id")
+	CONSTRAINT "calls_workspace_provider_external_id_unique" UNIQUE("workspace_id","provider","external_id"),
+	CONSTRAINT "calls_status_check" CHECK (status IN ('missed', 'answered', 'voicemail', 'failed')),
+	CONSTRAINT "calls_direction_check" CHECK (direction IN ('inbound', 'outbound'))
 );
 --> statement-breakpoint
 CREATE TABLE "evaluation_templates" (
@@ -131,7 +137,8 @@ CREATE TABLE "files" (
 CREATE TABLE "invitations" (
 	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
 	"workspace_id" text NOT NULL,
-	"email" text NOT NULL,
+	"invitation_type" text DEFAULT 'email' NOT NULL,
+	"email" text,
 	"role" "workspace_member_role" DEFAULT 'member' NOT NULL,
 	"token" text NOT NULL,
 	"invited_by" text NOT NULL,
@@ -209,6 +216,8 @@ CREATE TABLE "transcripts" (
 	"call_type" text,
 	"call_topic" text,
 	"metadata" jsonb,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "transcripts_call_id_unique" UNIQUE("call_id")
 );
 --> statement-breakpoint
@@ -268,6 +277,7 @@ CREATE TABLE "user_workspace_settings" (
         "detailed": false,
         "includeAvgValue": false,
         "includeAvgRating": false,
+        "kpi": false,
         "managedUserIds": []
       }'::jsonb NOT NULL,
 	"kpi_settings" jsonb DEFAULT '{
@@ -435,7 +445,6 @@ ALTER TABLE "call_evaluations" ADD CONSTRAINT "call_evaluations_call_id_calls_id
 ALTER TABLE "calls" ADD CONSTRAINT "calls_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "calls" ADD CONSTRAINT "calls_file_id_files_id_fk" FOREIGN KEY ("file_id") REFERENCES "public"."files"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "calls" ADD CONSTRAINT "calls_enhanced_audio_file_id_files_id_fk" FOREIGN KEY ("enhanced_audio_file_id") REFERENCES "public"."files"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "calls" ADD CONSTRAINT "calls_pbx_number_id_workspace_pbx_numbers_id_fk" FOREIGN KEY ("pbx_number_id") REFERENCES "public"."workspace_pbx_numbers"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "evaluation_templates" ADD CONSTRAINT "evaluation_templates_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "files" ADD CONSTRAINT "files_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "invitations" ADD CONSTRAINT "invitations_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -482,7 +491,6 @@ CREATE INDEX "calls_workspace_id_idx" ON "calls" USING btree ("workspace_id");--
 CREATE INDEX "calls_workspace_timestamp_idx" ON "calls" USING btree ("workspace_id","timestamp");--> statement-breakpoint
 CREATE INDEX "calls_workspace_archived_idx" ON "calls" USING btree ("workspace_id","is_archived");--> statement-breakpoint
 CREATE INDEX "calls_number_idx" ON "calls" USING btree ("number");--> statement-breakpoint
-CREATE INDEX "calls_pbx_number_id_idx" ON "calls" USING btree ("pbx_number_id");--> statement-breakpoint
 CREATE INDEX "calls_enhanced_audio_file_id_idx" ON "calls" USING btree ("enhanced_audio_file_id");--> statement-breakpoint
 CREATE INDEX "calls_status_idx" ON "calls" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "idx_calls_workspace_id_name_internal_number" ON "calls" USING btree ("workspace_id","name","internal_number");--> statement-breakpoint
@@ -498,6 +506,7 @@ CREATE INDEX "invitations_workspace_idx" ON "invitations" USING btree ("workspac
 CREATE INDEX "invitations_email_idx" ON "invitations" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "invitations_token_idx" ON "invitations" USING btree ("token");--> statement-breakpoint
 CREATE INDEX "invitations_expires_at_idx" ON "invitations" USING btree ("expires_at");--> statement-breakpoint
+CREATE INDEX "invitations_type_idx" ON "invitations" USING btree ("invitation_type");--> statement-breakpoint
 CREATE INDEX "invitations_workspace_email_idx" ON "invitations" USING btree ("workspace_id","email");--> statement-breakpoint
 CREATE INDEX "invoices_workspace_idx" ON "invoices" USING btree ("workspace_id");--> statement-breakpoint
 CREATE INDEX "invoices_stripe_invoice_idx" ON "invoices" USING btree ("stripe_invoice_id");--> statement-breakpoint

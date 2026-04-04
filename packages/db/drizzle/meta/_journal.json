@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1774781360496,
-      "tag": "0000_big_blur",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1774871543627,
-      "tag": "0001_wealthy_kat_farrell",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1774890233690,
-      "tag": "0002_jazzy_wind_dancer",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1774955220800,
-      "tag": "0003_fresh_microchip",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1775222973392,
-      "tag": "0004_useful_alex_wilder",
+      "when": 1775331384316,
+      "tag": "0000_spotty_human_robot",
       "breakpoints": true
     }
   ]

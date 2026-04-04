@@ -57,12 +57,26 @@ export async function getCallsMetrics(params?: GetCallsMetricsParams): Promise<{
   }
 
   if (dateFrom) {
-    const parsedDateFrom = parseDateToUTC(dateFrom);
+    let parsedDateFrom: Date;
+    try {
+      parsedDateFrom = parseDateToUTC(dateFrom);
+    } catch (error) {
+      throw new Error(
+        `Неверный формат даты: ${error instanceof Error ? error.message : "Неизвестная ошибка"}`,
+      );
+    }
     conditions.push(gte(schema.calls.timestamp, parsedDateFrom));
   }
 
   if (dateTo) {
-    const parsedDateTo = parseDateToUTC(dateTo);
+    let parsedDateTo: Date;
+    try {
+      parsedDateTo = parseDateToUTC(dateTo);
+    } catch (error) {
+      throw new Error(
+        `Неверный формат даты: ${error instanceof Error ? error.message : "Неизвестная ошибка"}`,
+      );
+    }
     // Создаем следующий день в UTC midnight
     const nextDayMidnight = new Date(
       Date.UTC(
