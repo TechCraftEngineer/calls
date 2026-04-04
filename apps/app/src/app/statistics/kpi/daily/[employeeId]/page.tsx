@@ -1,0 +1,90 @@
+"use client";
+
+import { paths } from "@calls/config";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo } from "react";
+import { DailyViewClient } from "@/components/features/kpi/daily-view-client";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
+import Header from "@/components/layout/header";
+import Sidebar from "@/components/layout/sidebar";
+import { useSession } from "@/lib/better-auth";
+
+interface PageProps {
+  params: { employeeId: string };
+}
+
+// Функция для получения текущего месяца (первый и последний день)
+function getCurrentMonthRange(): { startDate: string; endDate: string } {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  // Первый день месяца
+  const startDate = new Date(year, month, 1);
+
+  // Последний день месяца
+  const endDate = new Date(year, month + 1, 0);
+
+  return {
+    startDate: startDate.toISOString().split("T")[0],
+    endDate: endDate.toISOString().split("T")[0],
+  };
+}
+
+export default function DailyViewPage({ params }: PageProps) {
+  const { employeeId } = params;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { data: session, isPending: sessionPending } = useSession();
+  const { activeWorkspace } = useWorkspace();
+
+  const user = session?.user ?? null;
+  const userLoading = sessionPending;
+
+  // Проверяем права администратора workspace
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+
+  // Получаем даты из searchParams или используем текущий месяц по умолчанию
+  const defaultRange = useMemo(() => getCurrentMonthRange(), []);
+  const startDate = searchParams.get("startDate") || defaultRange.startDate;
+  const endDate = searchParams.get("endDate") || defaultRange.endDate;
+
+  // Проверяем авторизацию
+  useEffect(() => {
+    if (!userLoading && !user) {
+      router.push(paths.auth.signin);
+    }
+  }, [userLoading, user, router]);
+
+  // Проверяем права администратора
+  useEffect(() => {
+    if (!userLoading && user && !isWorkspaceAdmin) {
+      router.push(paths.forbidden);
+    }
+  }, [userLoading, user, isWorkspaceAdmin, router]);
+
+  // Показываем loading state пока проверяем авторизацию
+  if (userLoading || !user || !isWorkspaceAdmin) {
+    return null;
+  }
+
+  return (
+    <div className="app-container">
+      <Sidebar />
+      <Header user={user} />
+
+      <main className="main-content">
+        <header className="page-header mb-8">
+          <h1 className="page-title">KPI по дням</h1>
+          <p className="page-subtitle">Детализированная статистика по дням</p>
+        </header>
+
+        <DailyViewClient
+          employeeId={employeeId}
+          initialStartDate={startDate}
+          initialEndDate={endDate}
+        />
+      </main>
+    </div>
+  );
+}

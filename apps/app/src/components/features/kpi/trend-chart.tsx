@@ -2,6 +2,7 @@
 
 import type { DailyKpiRow } from "@calls/api/routers/statistics/get-kpi-daily";
 import { Card, Skeleton } from "@calls/ui";
+import * as React from "react";
 import {
   CartesianGrid,
   Legend,
@@ -43,7 +44,7 @@ interface CustomTooltipProps {
   }>;
 }
 
-function CustomTooltip({ active, payload }: CustomTooltipProps) {
+const CustomTooltip = React.memo(function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload || payload.length === 0) {
     return null;
   }
@@ -91,7 +92,7 @@ function CustomTooltip({ active, payload }: CustomTooltipProps) {
       </div>
     </Card>
   );
-}
+});
 
 // Кастомная точка с цветовым кодированием
 interface CustomDotProps {
@@ -102,7 +103,7 @@ interface CustomDotProps {
   };
 }
 
-function CustomDot({ cx, cy, payload }: CustomDotProps) {
+const CustomDot = React.memo(function CustomDot({ cx, cy, payload }: CustomDotProps) {
   if (!cx || !cy || !payload) return null;
 
   const color = getColorByPercentage(payload.completionPercentage);
@@ -114,9 +115,21 @@ function CustomDot({ cx, cy, payload }: CustomDotProps) {
         : "hsl(0, 84%, 60%)";
 
   return <circle cx={cx} cy={cy} r={4} fill={fillColor} stroke="white" strokeWidth={2} />;
-}
+});
 
-export function TrendChart({ data, loading }: TrendChartProps) {
+export const TrendChart = React.memo(function TrendChart({ data, loading }: TrendChartProps) {
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  // Определяем мобильное устройство
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   if (loading) {
     return <ChartSkeleton />;
   }
@@ -126,49 +139,65 @@ export function TrendChart({ data, loading }: TrendChartProps) {
   }
 
   // Подготовка данных для графика
-  const chartData = data.map((row) => ({
-    date: row.date,
-    actualTalkTimeMinutes: row.actualTalkTimeMinutes,
-    targetTalkTimeMinutes: row.targetTalkTimeMinutes,
-    completionPercentage: row.completionPercentage,
-    // Форматированная дата для оси X
-    formattedDate: new Date(row.date).toLocaleDateString("ru-RU", {
-      day: "2-digit",
-      month: "2-digit",
-    }),
-  }));
+  const chartData = React.useMemo(
+    () =>
+      data.map((row) => ({
+        date: row.date,
+        actualTalkTimeMinutes: row.actualTalkTimeMinutes,
+        targetTalkTimeMinutes: row.targetTalkTimeMinutes,
+        completionPercentage: row.completionPercentage,
+        // Форматированная дата для оси X
+        formattedDate: new Date(row.date).toLocaleDateString("ru-RU", {
+          day: "2-digit",
+          month: isMobile ? "2-digit" : "2-digit",
+        }),
+      })),
+    [data, isMobile],
+  );
+
+  const chartHeight = isMobile ? 300 : 400;
 
   return (
-    <Card className="p-6">
+    <Card className="p-4 md:p-6">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold">Динамика времени разговоров</h3>
-        <p className="text-muted-foreground text-sm">
+        <h3 className="text-base md:text-lg font-semibold">Динамика времени разговоров</h3>
+        <p className="text-muted-foreground text-xs md:text-sm">
           Фактическое время разговоров и целевые показатели по дням
         </p>
       </div>
 
-      <ResponsiveContainer width="100%" height={400}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <LineChart
           data={chartData}
-          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          margin={{
+            top: 5,
+            right: isMobile ? 10 : 30,
+            left: isMobile ? 0 : 20,
+            bottom: 5,
+          }}
           aria-label="График динамики времени разговоров"
         >
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
           <XAxis
             dataKey="formattedDate"
             className="text-xs"
-            tick={{ fill: "hsl(var(--muted-foreground))" }}
+            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: isMobile ? 10 : 12 }}
             aria-label="Дата"
+            interval={isMobile ? "preserveStartEnd" : "preserveEnd"}
           />
           <YAxis
             className="text-xs"
-            tick={{ fill: "hsl(var(--muted-foreground))" }}
-            label={{
-              value: "Минуты",
-              angle: -90,
-              position: "insideLeft",
-              style: { fill: "hsl(var(--muted-foreground))" },
-            }}
+            tick={{ fill: "hsl(var(--muted-foreground))", fontSize: isMobile ? 10 : 12 }}
+            label={
+              isMobile
+                ? undefined
+                : {
+                    value: "Минуты",
+                    angle: -90,
+                    position: "insideLeft",
+                    style: { fill: "hsl(var(--muted-foreground))" },
+                  }
+            }
             aria-label="Время в минутах"
           />
           <Tooltip content={<CustomTooltip />} />
@@ -200,4 +229,4 @@ export function TrendChart({ data, loading }: TrendChartProps) {
       </ResponsiveContainer>
     </Card>
   );
-}
+});

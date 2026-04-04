@@ -1,9 +1,6 @@
 "use client";
 
-import { cn } from "@calls/ui";
-import { Button } from "@calls/ui/components/button";
-import { Calendar } from "@calls/ui/components/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@calls/ui/components/popover";
+import { Button, Calendar, cn, Popover, PopoverContent, PopoverTrigger } from "@calls/ui";
 import { CalendarIcon } from "lucide-react";
 import * as React from "react";
 import { getQuickFilterDates, type QuickFilter } from "@/lib/date-range-utils";
@@ -41,7 +38,11 @@ function formatDateForDisplay(dateStr: string): string {
   });
 }
 
-export function DateRangeFilter({ startDate, endDate, onChange }: DateRangeFilterProps) {
+export const DateRangeFilter = React.memo(function DateRangeFilter({
+  startDate,
+  endDate,
+  onChange,
+}: DateRangeFilterProps) {
   const [open, setOpen] = React.useState(false);
   const [tempRange, setTempRange] = React.useState<{
     from: Date | undefined;
@@ -59,6 +60,17 @@ export function DateRangeFilter({ startDate, endDate, onChange }: DateRangeFilte
       to: endDate ? new Date(endDate) : undefined,
     });
   }, [startDate, endDate]);
+
+  // Обработка Escape для закрытия
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && open) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [open]);
 
   const handleQuickFilter = (filter: QuickFilter) => {
     const dates = getQuickFilterDates(filter);
@@ -110,7 +122,7 @@ export function DateRangeFilter({ startDate, endDate, onChange }: DateRangeFilte
           <Button
             variant="outline"
             className={cn(
-              "w-full justify-start text-left font-normal md:w-[300px]",
+              "w-full justify-start text-left font-normal md:w-[300px] min-h-[44px]",
               !startDate && "text-muted-foreground",
             )}
             aria-label="Выбрать период дат"
@@ -127,14 +139,14 @@ export function DateRangeFilter({ startDate, endDate, onChange }: DateRangeFilte
               <div className="text-sm font-medium text-muted-foreground px-2 py-1">
                 Быстрый выбор
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {QUICK_FILTERS.map((filter) => (
                   <Button
                     key={filter.value}
                     variant="outline"
                     size="sm"
                     onClick={() => handleQuickFilter(filter.value)}
-                    className="justify-start"
+                    className="justify-start min-h-[44px]"
                     aria-label={`Выбрать период: ${filter.label}`}
                   >
                     {filter.label}
@@ -154,7 +166,7 @@ export function DateRangeFilter({ startDate, endDate, onChange }: DateRangeFilte
               mode="range"
               selected={tempRange}
               onSelect={handleCalendarSelect}
-              numberOfMonths={2}
+              numberOfMonths={window.innerWidth >= 768 ? 2 : 1}
               disabled={(date) => date > new Date()}
               aria-label="Календарь для выбора периода"
             />
@@ -174,4 +186,4 @@ export function DateRangeFilter({ startDate, endDate, onChange }: DateRangeFilte
       </Popover>
     </div>
   );
-}
+});

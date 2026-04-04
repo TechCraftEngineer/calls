@@ -60,7 +60,7 @@ function TableSkeleton() {
 }
 
 // Empty state
-function EmptyState() {
+const EmptyState = React.memo(function EmptyState() {
   return (
     <Card className="p-12 text-center">
       <div className="flex flex-col items-center gap-2">
@@ -69,9 +69,9 @@ function EmptyState() {
       </div>
     </Card>
   );
-}
+});
 
-export function DailyStatsTable({
+export const DailyStatsTable = React.memo(function DailyStatsTable({
   data,
   loading,
   employeeName,
@@ -79,6 +79,17 @@ export function DailyStatsTable({
   endDate,
 }: DailyStatsTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  // Определяем мобильное устройство
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Вычисляем накопительные итоги
   const totals = React.useMemo(() => {
@@ -388,6 +399,139 @@ export function DailyStatsTable({
     return <EmptyState />;
   }
 
+  // Мобильная версия с карточками
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        {/* Заголовок с кнопкой экспорта */}
+        <div className="flex flex-col gap-3">
+          <div>
+            <h3 className="text-lg font-semibold">{employeeName}</h3>
+            <p className="text-muted-foreground text-sm">
+              {new Date(startDate).toLocaleDateString("ru-RU")} -{" "}
+              {new Date(endDate).toLocaleDateString("ru-RU")}
+            </p>
+          </div>
+          <ExportButton
+            data={data}
+            employeeName={employeeName}
+            startDate={startDate}
+            endDate={endDate}
+          />
+        </div>
+
+        {/* Карточки для мобильных */}
+        <div className="space-y-3">
+          {data.map((row, index) => (
+            <Card key={index} className={cn("p-4", getRowColorClass(row.completionPercentage))}>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <span className="font-semibold">
+                    {new Date(row.date).toLocaleDateString("ru-RU", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-sm font-semibold",
+                      row.completionPercentage >= 100
+                        ? "text-green-600 dark:text-green-400"
+                        : row.completionPercentage >= 80
+                          ? "text-yellow-600 dark:text-yellow-400"
+                          : "text-red-600 dark:text-red-400",
+                    )}
+                  >
+                    {row.completionPercentage}%
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <div className="text-muted-foreground text-xs">Входящие</div>
+                    <div className="font-medium">{row.incoming}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground text-xs">Исходящие</div>
+                    <div className="font-medium">{row.outgoing}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground text-xs">Пропущенные</div>
+                    <div className="font-medium">{row.missed}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground text-xs">Всего</div>
+                    <div className="font-medium">{row.totalCalls}</div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-3 space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Время разговоров:</span>
+                    <span className="font-medium">{row.actualTalkTimeMinutes} мин</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Цель:</span>
+                    <span className="font-medium">{row.targetTalkTimeMinutes} мин</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Бонус:</span>
+                    <span className="font-medium">{formatCurrency(row.dailyBonus)}</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        {/* Итоговая карточка */}
+        <Card className="bg-muted/50 p-4">
+          <div className="space-y-3">
+            <div className="font-semibold border-b pb-2">Итого за период</div>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <div className="text-muted-foreground text-xs">Входящие</div>
+                <div className="font-medium">{totals.incoming}</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground text-xs">Исходящие</div>
+                <div className="font-medium">{totals.outgoing}</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground text-xs">Пропущенные</div>
+                <div className="font-medium">{totals.missed}</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground text-xs">Всего</div>
+                <div className="font-medium">{totals.totalCalls}</div>
+              </div>
+            </div>
+            <div className="border-t pt-3 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Время разговоров:</span>
+                <span className="font-medium">{totals.actualTalkTimeMinutes} мин</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Цель:</span>
+                <span className="font-medium">{totals.targetTalkTimeMinutes} мин</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Выполнение:</span>
+                <span className="font-medium">{totals.completionPercentage}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Бонус:</span>
+                <span className="font-medium">{formatCurrency(totals.dailyBonus)}</span>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Десктопная версия с таблицей
   return (
     <div className="space-y-4">
       {/* Заголовок с кнопкой экспорта */}
@@ -470,6 +614,7 @@ export function DailyStatsTable({
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               aria-label="Предыдущая страница"
+              className="min-h-[44px] min-w-[44px]"
             >
               <ChevronLeft className="h-4 w-4" />
               Назад
@@ -483,6 +628,7 @@ export function DailyStatsTable({
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               aria-label="Следующая страница"
+              className="min-h-[44px] min-w-[44px]"
             >
               Вперед
               <ChevronRight className="h-4 w-4" />
@@ -492,4 +638,4 @@ export function DailyStatsTable({
       )}
     </div>
   );
-}
+});
