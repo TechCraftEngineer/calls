@@ -1,5 +1,5 @@
 {
-  "id": "59cce133-98de-46f6-96d7-08b073180b05",
+  "id": "c4660f03-b256-4d99-94b3-20248918847f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -4389,6 +4389,24 @@
     }
   },
   "enums": {
+    "public.call_direction": {
+      "name": "call_direction",
+      "schema": "public",
+      "values": [
+        "inbound",
+        "outbound"
+      ]
+    },
+    "public.call_status": {
+      "name": "call_status",
+      "schema": "public",
+      "values": [
+        "missed",
+        "answered",
+        "voicemail",
+        "failed"
+      ]
+    },
     "public.subscription_plan": {
       "name": "subscription_plan",
       "schema": "public",

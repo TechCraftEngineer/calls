@@ -22,7 +22,7 @@ export {
 } from "./billing";
 
 // Calls
-export { callEvaluations, calls, transcripts } from "./calls";
+export { callDirectionEnum, callEvaluations, callStatusEnum, calls, transcripts } from "./calls";
 
 // Files
 export type { FileType } from "./files";
