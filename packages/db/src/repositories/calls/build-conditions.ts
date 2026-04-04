@@ -88,30 +88,13 @@ export function buildCallConditions({
       .map((direction) => direction.trim().toLowerCase())
       .filter((d) => d.length > 0);
 
-    const expandedDirections = [
-      ...new Set(
-        normalizedDirections.flatMap((d) => {
-          if (d === "inbound") {
-            return ["inbound", "incoming"];
-          }
-          if (d === "outbound") {
-            return ["outbound", "outgoing"];
-          }
-          if (d === "incoming") {
-            return ["incoming", "inbound"];
-          }
-          if (d === "outgoing") {
-            return ["outgoing", "outbound"];
-          }
-          return [d];
-        }),
-      ),
-    ];
+    // Only allow valid direction values
+    const validDirections = normalizedDirections.filter((d) => d === "inbound" || d === "outbound");
 
-    // Only add SQL predicate when we actually have expanded values
-    if (expandedDirections.length > 0) {
+    // Only add SQL predicate when we actually have valid direction values
+    if (validDirections.length > 0) {
       conditions.push(
-        inArray(sql<string>`LOWER(COALESCE(${schema.calls.direction}, ''))`, expandedDirections),
+        inArray(sql<string>`LOWER(COALESCE(${schema.calls.direction}, ''))`, validDirections),
       );
     }
   }

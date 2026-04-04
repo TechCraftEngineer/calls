@@ -1,5 +1,5 @@
 {
-  "id": "9fdc8108-83af-4a6b-b1eb-4837dc190cc2",
+  "id": "59cce133-98de-46f6-96d7-08b073180b05",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -94,8 +94,12 @@
           "name": "accounts_user_id_users_id_fk",
           "tableFrom": "accounts",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -221,8 +225,12 @@
           "name": "activity_log_workspace_id_workspaces_id_fk",
           "tableFrom": "activity_log",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -427,8 +435,12 @@
           "name": "audit_log_workspace_id_workspaces_id_fk",
           "tableFrom": "audit_log",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -436,8 +448,12 @@
           "name": "audit_log_user_id_users_id_fk",
           "tableFrom": "audit_log",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -581,8 +597,12 @@
           "name": "call_evaluations_call_id_calls_id_fk",
           "tableFrom": "call_evaluations",
           "tableTo": "calls",
-          "columnsFrom": ["call_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "call_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -592,7 +612,9 @@
         "call_evaluations_call_id_unique": {
           "name": "call_evaluations_call_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["call_id"]
+          "columns": [
+            "call_id"
+          ]
         }
       },
       "policies": {},
@@ -642,13 +664,15 @@
         },
         "direction": {
           "name": "direction",
-          "type": "text",
+          "type": "call_direction",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false
         },
         "status": {
           "name": "status",
-          "type": "text",
+          "type": "call_status",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false
         },
@@ -660,12 +684,6 @@
         },
         "enhanced_audio_file_id": {
           "name": "enhanced_audio_file_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "pbx_number_id": {
-          "name": "pbx_number_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -709,6 +727,24 @@
         },
         "archived_at": {
           "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "transcription_status": {
+          "name": "transcription_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "transcription_error": {
+          "name": "transcription_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "transcribed_at": {
+          "name": "transcribed_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
@@ -831,21 +867,6 @@
           "method": "btree",
           "with": {}
         },
-        "calls_pbx_number_id_idx": {
-          "name": "calls_pbx_number_id_idx",
-          "columns": [
-            {
-              "expression": "pbx_number_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "calls_enhanced_audio_file_id_idx": {
           "name": "calls_enhanced_audio_file_id_idx",
           "columns": [
@@ -909,8 +930,12 @@
           "name": "calls_workspace_id_workspaces_id_fk",
           "tableFrom": "calls",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -918,8 +943,12 @@
           "name": "calls_file_id_files_id_fk",
           "tableFrom": "calls",
           "tableTo": "files",
-          "columnsFrom": ["file_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "file_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -927,17 +956,12 @@
           "name": "calls_enhanced_audio_file_id_files_id_fk",
           "tableFrom": "calls",
           "tableTo": "files",
-          "columnsFrom": ["enhanced_audio_file_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "calls_pbx_number_id_workspace_pbx_numbers_id_fk": {
-          "name": "calls_pbx_number_id_workspace_pbx_numbers_id_fk",
-          "tableFrom": "calls",
-          "tableTo": "workspace_pbx_numbers",
-          "columnsFrom": ["pbx_number_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "enhanced_audio_file_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -947,16 +971,32 @@
         "calls_workspace_filename_unique": {
           "name": "calls_workspace_filename_unique",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id", "filename"]
+          "columns": [
+            "workspace_id",
+            "filename"
+          ]
         },
         "calls_workspace_provider_external_id_unique": {
           "name": "calls_workspace_provider_external_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id", "provider", "external_id"]
+          "columns": [
+            "workspace_id",
+            "provider",
+            "external_id"
+          ]
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "calls_status_check": {
+          "name": "calls_status_check",
+          "value": "status IN ('missed', 'answered', 'voicemail', 'failed')"
+        },
+        "calls_direction_check": {
+          "name": "calls_direction_check",
+          "value": "direction IN ('inbound', 'outbound')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.evaluation_templates": {
@@ -1037,8 +1077,12 @@
           "name": "evaluation_templates_workspace_id_workspaces_id_fk",
           "tableFrom": "evaluation_templates",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1048,7 +1092,10 @@
         "evaluation_templates_workspace_slug_unique": {
           "name": "evaluation_templates_workspace_slug_unique",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id", "slug"]
+          "columns": [
+            "workspace_id",
+            "slug"
+          ]
         }
       },
       "policies": {},
@@ -1175,7 +1222,9 @@
         "feature_flags_key_unique": {
           "name": "feature_flags_key_unique",
           "nullsNotDistinct": false,
-          "columns": ["key"]
+          "columns": [
+            "key"
+          ]
         }
       },
       "policies": {},
@@ -1350,8 +1399,12 @@
           "name": "files_workspace_id_workspaces_id_fk",
           "tableFrom": "files",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1361,7 +1414,9 @@
         "files_storage_key_unique": {
           "name": "files_storage_key_unique",
           "nullsNotDistinct": false,
-          "columns": ["storage_key"]
+          "columns": [
+            "storage_key"
+          ]
         }
       },
       "policies": {},
@@ -1390,11 +1445,18 @@
           "primaryKey": false,
           "notNull": true
         },
+        "invitation_type": {
+          "name": "invitation_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'email'"
+        },
         "email": {
           "name": "email",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "role": {
           "name": "role",
@@ -1509,6 +1571,21 @@
           "method": "btree",
           "with": {}
         },
+        "invitations_type_idx": {
+          "name": "invitations_type_idx",
+          "columns": [
+            {
+              "expression": "invitation_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "invitations_workspace_email_idx": {
           "name": "invitations_workspace_email_idx",
           "columns": [
@@ -1536,8 +1613,12 @@
           "name": "invitations_workspace_id_workspaces_id_fk",
           "tableFrom": "invitations",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1545,8 +1626,12 @@
           "name": "invitations_invited_by_users_id_fk",
           "tableFrom": "invitations",
           "tableTo": "users",
-          "columnsFrom": ["invited_by"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "invited_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1554,8 +1639,12 @@
           "name": "invitations_accepted_by_users_id_fk",
           "tableFrom": "invitations",
           "tableTo": "users",
-          "columnsFrom": ["accepted_by"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "accepted_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1565,7 +1654,9 @@
         "invitations_token_unique": {
           "name": "invitations_token_unique",
           "nullsNotDistinct": false,
-          "columns": ["token"]
+          "columns": [
+            "token"
+          ]
         }
       },
       "policies": {},
@@ -1750,8 +1841,12 @@
           "name": "invoices_workspace_id_workspaces_id_fk",
           "tableFrom": "invoices",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1761,7 +1856,9 @@
         "invoices_stripe_invoice_id_unique": {
           "name": "invoices_stripe_invoice_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["stripe_invoice_id"]
+          "columns": [
+            "stripe_invoice_id"
+          ]
         }
       },
       "policies": {},
@@ -1828,8 +1925,12 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1839,7 +1940,9 @@
         "sessions_token_unique": {
           "name": "sessions_token_unique",
           "nullsNotDistinct": false,
-          "columns": ["token"]
+          "columns": [
+            "token"
+          ]
         }
       },
       "policies": {},
@@ -2028,8 +2131,12 @@
           "name": "subscriptions_workspace_id_workspaces_id_fk",
           "tableFrom": "subscriptions",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2039,7 +2146,9 @@
         "subscriptions_workspace_id_unique": {
           "name": "subscriptions_workspace_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id"]
+          "columns": [
+            "workspace_id"
+          ]
         }
       },
       "policies": {},
@@ -2122,6 +2231,20 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {
@@ -2176,8 +2299,12 @@
           "name": "transcripts_call_id_calls_id_fk",
           "tableFrom": "transcripts",
           "tableTo": "calls",
-          "columnsFrom": ["call_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "call_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2187,7 +2314,9 @@
         "transcripts_call_id_unique": {
           "name": "transcripts_call_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["call_id"]
+          "columns": [
+            "call_id"
+          ]
         }
       },
       "policies": {},
@@ -2308,8 +2437,12 @@
           "name": "usage_metrics_workspace_id_workspaces_id_fk",
           "tableFrom": "usage_metrics",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2319,7 +2452,11 @@
         "usage_metrics_workspace_type_period_unique": {
           "name": "usage_metrics_workspace_type_period_unique",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id", "metric_type", "period"]
+          "columns": [
+            "workspace_id",
+            "metric_type",
+            "period"
+          ]
         }
       },
       "policies": {},
@@ -2510,7 +2647,9 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         }
       },
       "policies": {},
@@ -2547,8 +2686,12 @@
           "name": "user_preferences_user_id_users_id_fk",
           "tableFrom": "user_preferences",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2556,8 +2699,12 @@
           "name": "user_preferences_active_workspace_id_workspaces_id_fk",
           "tableFrom": "user_preferences",
           "tableTo": "workspaces",
-          "columnsFrom": ["active_workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "active_workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2603,7 +2750,7 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true,
-          "default": "'{\n        \"includeCallSummaries\": false,\n        \"detailed\": false,\n        \"includeAvgValue\": false,\n        \"includeAvgRating\": false,\n        \"managedUserIds\": []\n      }'::jsonb"
+          "default": "'{\n        \"includeCallSummaries\": false,\n        \"detailed\": false,\n        \"includeAvgValue\": false,\n        \"includeAvgRating\": false,\n        \"kpi\": false,\n        \"managedUserIds\": []\n      }'::jsonb"
         },
         "kpi_settings": {
           "name": "kpi_settings",
@@ -2708,8 +2855,12 @@
           "name": "user_workspace_settings_user_id_users_id_fk",
           "tableFrom": "user_workspace_settings",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2717,8 +2868,12 @@
           "name": "user_workspace_settings_workspace_id_workspaces_id_fk",
           "tableFrom": "user_workspace_settings",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2728,7 +2883,10 @@
         "user_workspace_settings_user_workspace_unique": {
           "name": "user_workspace_settings_user_workspace_unique",
           "nullsNotDistinct": false,
-          "columns": ["user_id", "workspace_id"]
+          "columns": [
+            "user_id",
+            "workspace_id"
+          ]
         }
       },
       "policies": {},
@@ -2889,8 +3047,12 @@
           "name": "workspace_integrations_workspace_id_workspaces_id_fk",
           "tableFrom": "workspace_integrations",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2900,7 +3062,10 @@
         "workspace_integrations_workspace_type_unique": {
           "name": "workspace_integrations_workspace_type_unique",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id", "integration_type"]
+          "columns": [
+            "workspace_id",
+            "integration_type"
+          ]
         }
       },
       "policies": {},
@@ -3089,8 +3254,12 @@
           "name": "workspace_pbx_employees_workspace_id_workspaces_id_fk",
           "tableFrom": "workspace_pbx_employees",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3100,7 +3269,11 @@
         "workspace_pbx_employees_workspace_provider_external_unique": {
           "name": "workspace_pbx_employees_workspace_provider_external_unique",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id", "provider", "external_id"]
+          "columns": [
+            "workspace_id",
+            "provider",
+            "external_id"
+          ]
         }
       },
       "policies": {},
@@ -3275,8 +3448,12 @@
           "name": "workspace_pbx_links_workspace_id_workspaces_id_fk",
           "tableFrom": "workspace_pbx_links",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3284,8 +3461,12 @@
           "name": "workspace_pbx_links_user_id_users_id_fk",
           "tableFrom": "workspace_pbx_links",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3293,8 +3474,12 @@
           "name": "workspace_pbx_links_invitation_id_invitations_id_fk",
           "tableFrom": "workspace_pbx_links",
           "tableTo": "invitations",
-          "columnsFrom": ["invitation_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "invitation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3302,8 +3487,12 @@
           "name": "workspace_pbx_links_linked_by_user_id_users_id_fk",
           "tableFrom": "workspace_pbx_links",
           "tableTo": "users",
-          "columnsFrom": ["linked_by_user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "linked_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -3313,7 +3502,12 @@
         "workspace_pbx_links_workspace_provider_target_unique": {
           "name": "workspace_pbx_links_workspace_provider_target_unique",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id", "provider", "target_type", "target_external_id"]
+          "columns": [
+            "workspace_id",
+            "provider",
+            "target_type",
+            "target_external_id"
+          ]
         }
       },
       "policies": {},
@@ -3481,8 +3675,12 @@
           "name": "workspace_pbx_numbers_workspace_id_workspaces_id_fk",
           "tableFrom": "workspace_pbx_numbers",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3492,7 +3690,11 @@
         "workspace_pbx_numbers_workspace_provider_external_unique": {
           "name": "workspace_pbx_numbers_workspace_provider_external_unique",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id", "provider", "external_id"]
+          "columns": [
+            "workspace_id",
+            "provider",
+            "external_id"
+          ]
         }
       },
       "policies": {},
@@ -3638,8 +3840,12 @@
           "name": "workspace_pbx_sync_state_workspace_id_workspaces_id_fk",
           "tableFrom": "workspace_pbx_sync_state",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3649,7 +3855,11 @@
         "workspace_pbx_sync_state_workspace_provider_type_unique": {
           "name": "workspace_pbx_sync_state_workspace_provider_type_unique",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id", "provider", "sync_type"]
+          "columns": [
+            "workspace_id",
+            "provider",
+            "sync_type"
+          ]
         }
       },
       "policies": {},
@@ -3791,8 +4001,12 @@
           "name": "workspace_pbx_webhook_events_workspace_id_workspaces_id_fk",
           "tableFrom": "workspace_pbx_webhook_events",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3802,7 +4016,11 @@
         "workspace_pbx_webhook_events_workspace_provider_event_unique": {
           "name": "workspace_pbx_webhook_events_workspace_provider_event_unique",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id", "provider", "event_id"]
+          "columns": [
+            "workspace_id",
+            "provider",
+            "event_id"
+          ]
         }
       },
       "policies": {},
@@ -3961,8 +4179,12 @@
           "name": "workspace_members_workspace_id_workspaces_id_fk",
           "tableFrom": "workspace_members",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3970,8 +4192,12 @@
           "name": "workspace_members_user_id_users_id_fk",
           "tableFrom": "workspace_members",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3979,8 +4205,12 @@
           "name": "workspace_members_invited_by_users_id_fk",
           "tableFrom": "workspace_members",
           "tableTo": "users",
-          "columnsFrom": ["invited_by"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "invited_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -3990,7 +4220,10 @@
         "workspace_members_workspace_user_unique": {
           "name": "workspace_members_workspace_user_unique",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id", "user_id"]
+          "columns": [
+            "workspace_id",
+            "user_id"
+          ]
         }
       },
       "policies": {},
@@ -4077,8 +4310,12 @@
           "name": "workspace_settings_workspace_id_workspaces_id_fk",
           "tableFrom": "workspace_settings",
           "tableTo": "workspaces",
-          "columnsFrom": ["workspace_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4088,7 +4325,10 @@
         "workspace_settings_workspace_key_unique": {
           "name": "workspace_settings_workspace_key_unique",
           "nullsNotDistinct": false,
-          "columns": ["workspace_id", "key"]
+          "columns": [
+            "workspace_id",
+            "key"
+          ]
         }
       },
       "policies": {},
@@ -4152,17 +4392,33 @@
     "public.subscription_plan": {
       "name": "subscription_plan",
       "schema": "public",
-      "values": ["free", "starter", "pro", "enterprise"]
+      "values": [
+        "free",
+        "starter",
+        "pro",
+        "enterprise"
+      ]
     },
     "public.subscription_status": {
       "name": "subscription_status",
       "schema": "public",
-      "values": ["active", "trialing", "past_due", "canceled", "unpaid", "incomplete"]
+      "values": [
+        "active",
+        "trialing",
+        "past_due",
+        "canceled",
+        "unpaid",
+        "incomplete"
+      ]
     },
     "public.workspace_member_role": {
       "name": "workspace_member_role",
       "schema": "public",
-      "values": ["owner", "admin", "member"]
+      "values": [
+        "owner",
+        "admin",
+        "member"
+      ]
     }
   },
   "schemas": {},
