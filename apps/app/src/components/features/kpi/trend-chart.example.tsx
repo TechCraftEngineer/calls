@@ -1,4 +1,4 @@
-import type { DailyKpiRow } from "@calls/api/routers/statistics/get-kpi-daily";
+import type { DailyKpiRow } from "@calls/shared";
 import { TrendChart } from "./trend-chart";
 
 // Пример данных для демонстрации

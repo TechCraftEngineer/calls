@@ -11,6 +11,9 @@ export default function DailyViewError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // Логируем полную информацию об ошибке для диагностики
+  console.error("DailyViewError:", error);
+
   return (
     <div className="app-container">
       <Sidebar />
@@ -25,9 +28,7 @@ export default function DailyViewError({
         <div className="flex flex-col items-center justify-center py-12">
           <div className="text-center max-w-md">
             <h2 className="text-xl font-bold mb-4 text-gray-900">Что-то пошло не так</h2>
-            <p className="text-gray-600 mb-6">
-              {error.message || "Произошла ошибка при загрузке данных KPI по дням"}
-            </p>
+            <p className="text-gray-600 mb-6">Произошла ошибка при загрузке данных KPI по дням</p>
             <Button onClick={reset} variant="default" aria-label="Попробовать снова">
               Попробовать снова
             </Button>

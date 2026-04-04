@@ -53,10 +53,24 @@ export async function getDailyKpiStats(input: GetDailyKpiStatsInput): Promise<Da
   const parseDateToUTC = (dateStr: string): Date => {
     // Если строка содержит только дату (YYYY-MM-DD), парсим как UTC midnight
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-      const [year, month, day] = dateStr.split("-").map(Number);
+      const [yearStr, monthStr, dayStr] = dateStr.split("-");
+      const year = Number(yearStr);
+      const month = Number(monthStr);
+      const day = Number(dayStr);
       return new Date(Date.UTC(year, month - 1, day));
     }
-    // Для полных datetime строк добавляем Z для UTC парсинга если её нет
+    // Для полных datetime строк с T или space парсим явно
+    const datetimeMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/);
+    if (datetimeMatch) {
+      const year = Number(datetimeMatch[1]);
+      const month = Number(datetimeMatch[2]);
+      const day = Number(datetimeMatch[3]);
+      const hour = Number(datetimeMatch[4]);
+      const minute = Number(datetimeMatch[5]);
+      const second = Number(datetimeMatch[6]);
+      return new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+    }
+    // Fallback: добавляем Z для UTC парсинга если её нет
     const utcStr = dateStr.endsWith("Z") ? dateStr : `${dateStr}Z`;
     return new Date(utcStr);
   };

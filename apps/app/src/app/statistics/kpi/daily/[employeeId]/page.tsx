@@ -25,9 +25,17 @@ function getCurrentMonthRange(): { startDate: string; endDate: string } {
   // Последний день месяца
   const endDate = new Date(year, month + 1, 0);
 
+  // Форматируем даты в YYYY-MM-DD используя локальные компоненты (не UTC)
+  const formatLocalDate = (date: Date): string => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
   return {
-    startDate: startDate.toISOString().split("T")[0],
-    endDate: endDate.toISOString().split("T")[0],
+    startDate: formatLocalDate(startDate),
+    endDate: formatLocalDate(endDate),
   };
 }
 
@@ -65,7 +73,23 @@ export default function DailyViewPage({ params }: PageProps) {
 
   // Показываем loading state пока проверяем авторизацию
   if (userLoading || !user || !isWorkspaceAdmin) {
-    return null;
+    return (
+      <div
+        className="app-container"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+        aria-label="Загрузка..."
+      >
+        <Sidebar />
+        <Header user={null} />
+        <main className="main-content">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (

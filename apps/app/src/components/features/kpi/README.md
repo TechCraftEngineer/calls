@@ -305,10 +305,10 @@ bg-red-50 hover:bg-red-100 dark:bg-red-950/20
 
 ### Accessibility
 
-- Все кнопки сортировки имеют `aria-label` с описанием действия
-- Кнопки пагинации имеют `aria-label`
-- Таблица использует семантические HTML элементы (`<table>`, `<thead>`, `<tbody>`, `<tfoot>`)
-- Keyboard navigation поддерживается через TanStack Table
+- **Кнопки сортировки** имеют `aria-label` с описанием действия
+- **Кнопки пагинации** имеют `aria-label`
+- **Таблица** использует семантические HTML элементы (`<table>`, `<thead>`, `<tbody>`, `<tfoot>`)
+- **Keyboard navigation** поддерживается через TanStack Table
 
 ### Зависимости
 

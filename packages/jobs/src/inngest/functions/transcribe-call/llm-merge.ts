@@ -18,19 +18,19 @@ export const MAX_PROMPT_TOKENS = 12000;
 // Оценка количества токенов с учетом кириллицы
 export function estimateTokenCount(text: string): number {
   if (!text || text.length === 0) return 0;
-  
+
   // Считаем долю не-ASCII символов (кириллица и др.)
   let nonAsciiCount = 0;
   for (let i = 0; i < text.length; i++) {
     if (text.charCodeAt(i) > 127) nonAsciiCount++;
   }
-  
+
   const nonAsciiRatio = nonAsciiCount / text.length;
-  
+
   // Используем blended characters-per-token значение
   // 1.8 для кириллицы, 4.0 для ASCII
   const avgCPT = nonAsciiRatio * 1.8 + (1 - nonAsciiRatio) * 4.0;
-  
+
   return Math.ceil(text.length / avgCPT);
 }
 
@@ -73,7 +73,6 @@ const MergedOutputSchema = z.object({
 export function buildMergingPrompt(
   nonDiarizedTranscript: string,
   diarizedSegments: AsrSegment[],
-  diarizedTranscript: string,
 ): string {
   const segmentsText = diarizedSegments
     .map(
@@ -143,18 +142,22 @@ export async function mergeAsrResultsWithLLM(
   quality: { score: number; improvements: string[] };
   fallbackReason?: string;
 }> {
-  const prompt = buildMergingPrompt(nonDiarized.transcript, diarized.segments, diarized.transcript);
+  const prompt = buildMergingPrompt(nonDiarized.transcript, diarized.segments);
   const estimatedTokens = estimateTokenCount(prompt);
 
   // Проверяем лимит токенов
   if (estimatedTokens > MAX_PROMPT_TOKENS) {
-    logger.warn(`Prompt too large for LLM merge, using diarized fallback (estimatedTokens: ${estimatedTokens}, requestId: ${requestId})`);
+    logger.warn(
+      `Prompt too large for LLM merge, using diarized fallback (estimatedTokens: ${estimatedTokens}, requestId: ${requestId})`,
+    );
     return {
       segments: diarized.segments,
       mergedTranscript: diarized.transcript,
       quality: {
         score: 0.3, // Низкое качество для fallback
-        improvements: [`Fallback к диаризированному результату: промпт слишком большой (${estimatedTokens} токенов)`],
+        improvements: [
+          `Fallback к диаризированному результату: промпт слишком большой (${estimatedTokens} токенов)`,
+        ],
       },
       fallbackReason: `prompt_too_large:${estimatedTokens}_tokens`,
     };

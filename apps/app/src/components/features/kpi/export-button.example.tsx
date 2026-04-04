@@ -4,8 +4,8 @@
  * Этот файл демонстрирует, как использовать ExportButton в вашем приложении.
  */
 
-import type { DailyKpiRow } from "@calls/api/routers/statistics/get-kpi-daily";
-import { ExportButton } from "./export-button";
+import type { DailyKpiRow } from "@calls/shared";
+import { ExportButton } from "@/components/features/kpi";
 
 // Пример данных
 const mockData: DailyKpiRow[] = [

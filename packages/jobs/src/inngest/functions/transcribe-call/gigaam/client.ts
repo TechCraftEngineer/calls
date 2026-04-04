@@ -50,7 +50,7 @@ export async function processAudioWithGigaAm(
   const blob = new Blob([audioBuffer], { type: "audio/wav" });
 
   // Используем реальное имя файла или fallback на "audio.wav"
-  const audioFilename = filename && filename.trim() ? filename : "audio.wav";
+  const audioFilename = filename?.trim() ? filename : "audio.wav";
   formData.append("file", blob, audioFilename);
   formData.append("filename", audioFilename);
   formData.append("diarization", diarization.toString());
@@ -217,7 +217,7 @@ export async function processDiarizedAudioWithGigaAm(
   const formData = new FormData();
   const blob = new Blob([audioBuffer], { type: "audio/wav" });
 
-  const audioFilename = filename && filename.trim() ? filename : "audio.wav";
+  const audioFilename = filename?.trim() ? filename : "audio.wav";
   formData.append("file", blob, audioFilename);
   formData.append("filename", audioFilename);
   formData.append("segments", JSON.stringify(segments));

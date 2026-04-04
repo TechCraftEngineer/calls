@@ -1,4 +1,4 @@
-import type { DailyKpiRow } from "@calls/api/routers/statistics/get-kpi-daily";
+import type { DailyKpiRow } from "@calls/shared";
 
 /**
  * CSV Export utilities for Employee KPI Daily View
@@ -109,6 +109,33 @@ export function generateCSV(data: DailyKpiRow[]): string {
 }
 
 /**
+ * Валидирует и очищает дату для использования в имени файла
+ * @param dateStr - Строка даты в формате YYYY-MM-DD
+ * @returns Очищенная дата или 'invalid' если дата невалидна
+ */
+function validateAndSanitizeDate(dateStr: string): string {
+  // Проверяем формат YYYY-MM-DD
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(dateStr)) {
+    return "invalid";
+  }
+
+  // Проверяем, что дата реальная
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const dateObj = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    dateObj.getUTCFullYear() !== year ||
+    dateObj.getUTCMonth() + 1 !== month ||
+    dateObj.getUTCDate() !== day
+  ) {
+    return "invalid";
+  }
+
+  return dateStr;
+}
+
+/**
  * Генерирует имя файла для CSV экспорта
  * Формат: kpi-daily-{sanitizedEmployeeName}-{startDate}-{endDate}.csv
  */
@@ -118,5 +145,7 @@ export function generateCSVFileName(
   endDate: string,
 ): string {
   const sanitizedName = sanitizeFileName(employeeName);
-  return `kpi-daily-${sanitizedName}-${startDate}-${endDate}.csv`;
+  const sanitizedStartDate = validateAndSanitizeDate(startDate);
+  const sanitizedEndDate = validateAndSanitizeDate(endDate);
+  return `kpi-daily-${sanitizedName}-${sanitizedStartDate}-${sanitizedEndDate}.csv`;
 }

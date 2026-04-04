@@ -108,8 +108,11 @@ describe("getQuickFilterDates", () => {
     expect(result.endDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
     // Проверяем, что разница составляет 6 дней (включая сегодня = 7 дней)
-    const start = new Date(result.startDate);
-    const end = new Date(result.endDate);
+    // Используем UTC-safe парсинг для избежания проблем с DST
+    const [startYear, startMonth, startDay] = result.startDate.split("-").map(Number);
+    const [endYear, endMonth, endDay] = result.endDate.split("-").map(Number);
+    const start = new Date(Date.UTC(startYear, startMonth - 1, startDay));
+    const end = new Date(Date.UTC(endYear, endMonth - 1, endDay));
     const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     expect(diffDays).toBe(6);
   });
@@ -120,8 +123,11 @@ describe("getQuickFilterDates", () => {
     expect(result.endDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
     // Проверяем, что разница составляет 29 дней (включая сегодня = 30 дней)
-    const start = new Date(result.startDate);
-    const end = new Date(result.endDate);
+    // Используем UTC-safe парсинг для избежания проблем с DST
+    const [startYear, startMonth, startDay] = result.startDate.split("-").map(Number);
+    const [endYear, endMonth, endDay] = result.endDate.split("-").map(Number);
+    const start = new Date(Date.UTC(startYear, startMonth - 1, startDay));
+    const end = new Date(Date.UTC(endYear, endMonth - 1, endDay));
     const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     expect(diffDays).toBe(29);
   });
@@ -132,14 +138,15 @@ describe("getQuickFilterDates", () => {
     expect(result.endDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
     // Проверяем, что startDate - это первый день месяца
-    const start = new Date(result.startDate);
-    expect(start.getDate()).toBe(1);
+    // Используем UTC-safe парсинг для избежания проблем с DST
+    const [startYear, startMonth, startDay] = result.startDate.split("-").map(Number);
+    const start = new Date(Date.UTC(startYear, startMonth - 1, startDay));
+    expect(start.getUTCDate()).toBe(1);
 
     // Проверяем, что endDate - это последний день месяца
-    const end = new Date(result.endDate);
-    const nextDay = new Date(end);
-    nextDay.setDate(nextDay.getDate() + 1);
-    expect(nextDay.getDate()).toBe(1); // Следующий день - первое число следующего месяца
+    const [endYear, endMonth, endDay] = result.endDate.split("-").map(Number);
+    const nextDay = new Date(Date.UTC(endYear, endMonth - 1, endDay + 1));
+    expect(nextDay.getUTCDate()).toBe(1); // Следующий день - первое число следующего месяца
   });
 });
 

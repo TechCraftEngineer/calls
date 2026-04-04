@@ -1,6 +1,5 @@
 "use client";
 
-import type { DailyKpiRow } from "@calls/api/routers/statistics/get-kpi-daily";
 import { Button, Card } from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, BarChart3, Table as TableIcon } from "lucide-react";
@@ -74,6 +73,14 @@ export function DailyViewClient({
   // Синхронизация с URL при изменении периода
   React.useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
+    const currentStartDate = params.get("startDate");
+    const currentEndDate = params.get("endDate");
+
+    // Пропускаем навигацию, если URL уже содержит нужные значения
+    if (currentStartDate === startDate && currentEndDate === endDate) {
+      return;
+    }
+
     params.set("startDate", startDate);
     params.set("endDate", endDate);
     router.replace(`?${params.toString()}`, { scroll: false });
@@ -89,11 +96,6 @@ export function DailyViewClient({
   const handleBackToOverview = React.useCallback(() => {
     router.push("/statistics/kpi");
   }, [router]);
-
-  // Обработчик retry
-  const handleRetry = React.useCallback(() => {
-    refetch();
-  }, [refetch]);
 
   // Получаем имя сотрудника из данных
   const employeeName = data && data.length > 0 ? data[0].employeeName : "Сотрудник";
@@ -150,17 +152,17 @@ export function DailyViewClient({
 
       {/* Контент */}
       {error ? (
-        <ErrorState error={error as Error} onRetry={handleRetry} />
+        <ErrorState error={error as Error} onRetry={refetch} />
       ) : viewMode === "table" ? (
         <DailyStatsTable
-          data={(data as DailyKpiRow[]) || []}
+          data={data ?? []}
           loading={isLoading}
           employeeName={employeeName}
           startDate={startDate}
           endDate={endDate}
         />
       ) : (
-        <TrendChart data={(data as DailyKpiRow[]) || []} loading={isLoading} />
+        <TrendChart data={data ?? []} loading={isLoading} />
       )}
     </div>
   );

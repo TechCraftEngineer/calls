@@ -21,16 +21,22 @@ const QUICK_FILTERS: Array<{ value: QuickFilter; label: string }> = [
 
 const MAX_DAYS = 90;
 
+// Утилита для парсинга даты из строки YYYY-MM-DD в локальную дату (без UTC сдвига)
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 function calculateDaysBetween(start: string, end: string): number {
-  const startDate = new Date(start);
-  const endDate = new Date(end);
+  const startDate = parseLocalDate(start);
+  const endDate = parseLocalDate(end);
   const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return diffDays + 1; // Включаем оба дня
 }
 
 function formatDateForDisplay(dateStr: string): string {
-  const date = new Date(dateStr);
+  const date = parseLocalDate(dateStr);
   return date.toLocaleDateString("ru-RU", {
     day: "2-digit",
     month: "2-digit",
@@ -44,22 +50,33 @@ export const DateRangeFilter = React.memo(function DateRangeFilter({
   onChange,
 }: DateRangeFilterProps) {
   const [open, setOpen] = React.useState(false);
+  const [numberOfMonths, setNumberOfMonths] = React.useState(1);
   const [tempRange, setTempRange] = React.useState<{
     from: Date | undefined;
     to: Date | undefined;
   }>({
-    from: startDate ? new Date(startDate) : undefined,
-    to: endDate ? new Date(endDate) : undefined,
+    from: undefined,
+    to: undefined,
   });
   const [warning, setWarning] = React.useState<string | null>(null);
 
-  // Синхронизация с внешним состоянием
+  // Инициализация и обновление tempRange при изменении startDate/endDate
   React.useEffect(() => {
     setTempRange({
-      from: startDate ? new Date(startDate) : undefined,
-      to: endDate ? new Date(endDate) : undefined,
+      from: startDate ? parseLocalDate(startDate) : undefined,
+      to: endDate ? parseLocalDate(endDate) : undefined,
     });
   }, [startDate, endDate]);
+
+  // Обновление numberOfMonths на клиенте (избегаем hydration mismatch)
+  React.useEffect(() => {
+    const updateMonths = () => {
+      setNumberOfMonths(window.innerWidth >= 768 ? 2 : 1);
+    };
+    updateMonths();
+    window.addEventListener("resize", updateMonths);
+    return () => window.removeEventListener("resize", updateMonths);
+  }, []);
 
   // Обработка Escape для закрытия
   React.useEffect(() => {
@@ -85,7 +102,7 @@ export const DateRangeFilter = React.memo(function DateRangeFilter({
       return;
     }
 
-    setTempRange(range);
+    setTempRange({ from: range.from, to: range.to });
 
     // Если выбраны обе даты, проверяем валидацию
     if (range.from && range.to) {
@@ -166,7 +183,7 @@ export const DateRangeFilter = React.memo(function DateRangeFilter({
               mode="range"
               selected={tempRange}
               onSelect={handleCalendarSelect}
-              numberOfMonths={window.innerWidth >= 768 ? 2 : 1}
+              numberOfMonths={numberOfMonths}
               disabled={(date) => date > new Date()}
               aria-label="Календарь для выбора периода"
             />

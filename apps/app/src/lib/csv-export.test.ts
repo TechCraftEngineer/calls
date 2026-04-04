@@ -1,7 +1,7 @@
 /** Unit tests for CSV export functions. */
 
 import { describe, expect, it } from "bun:test";
-import type { DailyKpiRow } from "@calls/api/routers/statistics/get-kpi-daily";
+import type { DailyKpiRow } from "@calls/shared";
 import { generateCSV, generateCSVFileName, sanitizeFileName } from "@/lib/csv-export";
 
 describe("sanitizeFileName", () => {

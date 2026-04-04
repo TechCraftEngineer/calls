@@ -189,7 +189,7 @@ export const list = workspaceProcedure
       ? Array.from(
           new Set(
             Array.from(managerPhoneNumbers.entries())
-              .filter(([employeeId, phoneNumbers]) => {
+              .filter(([employeeId, _phoneNumbers]) => {
                 const employee = employeeById.get(employeeId);
                 if (!employee) return false;
 
@@ -211,10 +211,14 @@ export const list = workspaceProcedure
 
     const internalNumbers = isAdminOrOwner
       ? undefined
-      : getInternalNumbersForUser(user as { id: string; internalExtensions?: string | null; mobilePhones?: string | null });
+      : getInternalNumbersForUser(
+          user as { id: string; internalExtensions?: string | null; mobilePhones?: string | null },
+        );
     const mobileNumbers = isAdminOrOwner
       ? undefined
-      : getMobileNumbersForUser(user as { id: string; internalExtensions?: string | null; mobilePhones?: string | null });
+      : getMobileNumbersForUser(
+          user as { id: string; internalExtensions?: string | null; mobilePhones?: string | null },
+        );
 
     const ftpSettings = await settingsService.getFtpSettings(workspaceId);
     const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
@@ -298,9 +302,11 @@ export const list = workspaceProcedure
           internalNumbers,
           mobileNumbers,
           directions: normalizedDirections?.length ? normalizedDirections : undefined,
-          managerInternalNumbers: managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
+          managerInternalNumbers:
+            managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
           statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
-          managerInternalNumbersForQuery: managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
+          managerInternalNumbersForQuery:
+            managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
           q: trimmedQuery,
         },
       ),
