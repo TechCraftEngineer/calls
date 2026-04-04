@@ -146,7 +146,7 @@ export const updatePbxBindingWithCustomerSchema = z.object({
  */
 export const markTranscriptionFailedSchema = z.object({
   transcriptionStatus: z.enum(["failed", "completed", "pending"]).optional(),
-  transcriptionError: z.string().nullable().optional(),
+  transcriptionError: z.string().max(1000).nullable().optional(),
   transcribedAt: z.preprocess(
     (value) => (value instanceof Date ? value.toISOString() : value),
     z.string().datetime().nullable().optional(),

@@ -16,6 +16,14 @@ export function parseDateToUTC(dateStr: string): Date {
     if (Number.isNaN(date.getTime())) {
       throw new Error(`Invalid date: ${dateStr}`);
     }
+    // Round-trip проверка: убеждаемся что Date.UTC не нормализовал невалидные значения
+    if (
+      date.getUTCFullYear() !== year ||
+      date.getUTCMonth() + 1 !== month ||
+      date.getUTCDate() !== day
+    ) {
+      throw new Error(`Invalid date: ${dateStr}`);
+    }
     return date;
   }
 

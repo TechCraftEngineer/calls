@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import KpiTable from "@/components/features/calls/kpi-table";
+import MonthlyGridTable from "@/components/features/kpi/monthly-grid-table";
 import { ReportSettingsPanel } from "@/components/features/settings";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
@@ -20,10 +21,11 @@ import { StatisticsTable } from "../statistics-table";
 const TAB_STYLE =
   "rounded-none border-b-2 border-transparent -mb-0.5 data-[state=active]:border-[#FF6B35] data-[state=active]:text-[#FF6B35] text-[#666] bg-transparent shadow-none py-3 px-6";
 
-function getActiveTab(pathname: string): "statistics" | "kpi" | "settings" {
+function getActiveTab(pathname: string): "statistics" | "kpi" | "grid" | "settings" {
   const segments = pathname.replace(/\/$/, "").split("/");
   const last = segments[segments.length - 1];
   if (last === "kpi") return "kpi";
+  if (last === "grid") return "grid";
   if (last === "settings") return "settings";
   return "statistics";
 }
@@ -69,7 +71,7 @@ function StatisticsPageContent() {
 
   useEffect(() => {
     const segments = pathname.replace(/\/$/, "").split("/");
-    if (segments.length >= 3 && !["kpi", "settings"].includes(segments[2])) {
+    if (segments.length >= 3 && !["kpi", "grid", "settings"].includes(segments[2])) {
       router.replace(paths.statistics.root);
     }
   }, [pathname, router]);
@@ -105,6 +107,9 @@ function StatisticsPageContent() {
             <TabsTrigger value="kpi" asChild className={TAB_STYLE}>
               <Link href={paths.statistics.kpi}>Расчет KPI</Link>
             </TabsTrigger>
+            <TabsTrigger value="grid" asChild className={TAB_STYLE}>
+              <Link href={paths.statistics.grid}>Календарь KPI</Link>
+            </TabsTrigger>
             <TabsTrigger value="settings" asChild className={TAB_STYLE}>
               <Link href={paths.statistics.settings}>Настройки отчетов</Link>
             </TabsTrigger>
@@ -125,6 +130,8 @@ function StatisticsPageContent() {
         {activeTab === "statistics" && <StatisticsTable stats={stats} loading={loading} />}
 
         {activeTab === "kpi" && <KpiTable />}
+
+        {activeTab === "grid" && <MonthlyGridTable />}
 
         {activeTab === "settings" && userLoading && <StatisticsSettingsSkeleton />}
         {activeTab === "settings" && !userLoading && user && <ReportSettingsPanel user={user} />}

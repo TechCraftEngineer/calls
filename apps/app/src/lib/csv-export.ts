@@ -111,7 +111,7 @@ export function generateCSV(data: DailyKpiRow[]): string {
 /**
  * Валидирует и очищает дату для использования в имени файла
  * @param dateStr - Строка даты в формате YYYY-MM-DD
- * @returns Очищенная дата или 'invalid' если дата невалидна
+ * @returns Очищенная дата или 'невалидная_дата' если дата невалидна
  */
 function validateAndSanitizeDate(dateStr: string): string {
   // Проверяем формат YYYY-MM-DD
