@@ -12,6 +12,7 @@ export {
   createWorkspaceNullResponse,
   handleWorkspaceError,
 } from "./lib/workspace-utils";
+export { parseDateToUTC } from "./repositories/calls/date-utils";
 export type {
   DailyKpiStat,
   GetDailyKpiStatsInput,

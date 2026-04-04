@@ -11,18 +11,11 @@ import {
   TableHeader,
   TableRow,
 } from "@calls/ui";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { useORPC } from "@/orpc/react";
-
-interface DayCell {
-  date: string; // YYYY-MM-DD
-  actualMinutes: number;
-  targetMinutes: number;
-  completionPercentage: number;
-  totalCalls: number;
-}
 
 // Утилиты для работы с датами
 const pad2 = (value: number) => value.toString().padStart(2, "0");
@@ -31,9 +24,11 @@ const getCurrentMonthValue = () => toMonthValue(new Date());
 
 function getMonthRange(monthValue: string) {
   const [year, month] = monthValue.split("-").map(Number);
-  const startDate = new Date(year, month - 1, 1);
-  const endDate = new Date(year, month, 0, 23, 59, 59, 999);
-  return { startDate, endDate };
+  const lastDay = new Date(year, month, 0).getDate();
+  return {
+    startDate: `${year}-${pad2(month)}-01`,
+    endDate: `${year}-${pad2(month)}-${pad2(lastDay)}`,
+  };
 }
 
 function getDaysInMonth(monthValue: string): string[] {
@@ -77,13 +72,14 @@ export default function MonthlyGridTable() {
   const daysInMonth = useMemo(() => getDaysInMonth(selectedMonth), [selectedMonth]);
 
   // Загружаем данные для всех сотрудников за месяц
-  const { data: gridData, isLoading } = orpc.statistics.getMonthlyKpiGrid.useQuery({
+  const queryOptions = orpc.statistics.getMonthlyKpiGrid.queryOptions({
     input: {
-      startDate: startDate.toISOString().split("T")[0],
-      endDate: endDate.toISOString().split("T")[0],
+      startDate,
+      endDate,
     },
     enabled: !!workspace?.id,
   });
+  const { data: gridData, isLoading, error } = useQuery(queryOptions);
 
   const handlePrevMonth = () => setSelectedMonth(shiftMonth(selectedMonth, -1));
   const handleNextMonth = () => setSelectedMonth(shiftMonth(selectedMonth, 1));
@@ -95,6 +91,16 @@ export default function MonthlyGridTable() {
         <div className="space-y-4">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-96 w-full" />
+        </div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="card p-6 mt-6">
+        <div className="text-center py-12">
+          <p className="text-red-500">Ошибка загрузки данных</p>
         </div>
       </Card>
     );
@@ -131,6 +137,7 @@ export default function MonthlyGridTable() {
             size="sm"
             onClick={handleCurrentMonth}
             disabled={selectedMonth === getCurrentMonthValue()}
+            aria-label="Текущий месяц"
           >
             Текущий месяц
           </Button>

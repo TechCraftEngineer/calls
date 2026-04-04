@@ -5,7 +5,7 @@
 import { filesService } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
 import type { ZodIssue } from "zod";
-import { createLogger } from "~/logger";
+import { createLogger } from "../../../../logger";
 import { FileSchema } from "../schemas";
 import type { AudioBufferLegacyResult, AudioFileResult } from "../types";
 

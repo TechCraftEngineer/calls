@@ -3,8 +3,8 @@
  */
 
 import { env } from "@calls/config";
-import { createLogger } from "~/logger";
 import { z } from "zod";
+import { createLogger } from "../../../logger";
 
 const logger = createLogger("speaker-diarization");
 
@@ -49,17 +49,17 @@ export async function performDiarization(
     numSpeakers?: number;
     minSpeakers?: number;
     maxSpeakers?: number;
-  } = {}
+  } = {},
 ): Promise<DiarizationResult> {
   const speakerEmbeddingsUrl = env.SPEAKER_EMBEDDINGS_URL;
-  
+
   if (!speakerEmbeddingsUrl) {
     logger.warn("SPEAKER_EMBEDDINGS_URL не настроен, диаризация пропущена");
     return {
       success: false,
       segments: [],
       num_speakers: 0,
-      speakers: []
+      speakers: [],
     };
   }
 
@@ -67,9 +67,9 @@ export async function performDiarization(
     // Подготавливаем FormData для отправки
     const formData = new FormData();
     const blob = new Blob([audioBuffer], { type: "audio/wav" });
-    
+
     formData.append("file", blob, filename);
-    
+
     if (options.numSpeakers !== undefined) {
       formData.append("num_speakers", options.numSpeakers.toString());
     }
@@ -82,7 +82,7 @@ export async function performDiarization(
 
     logger.info("Запрос диаризации к speaker-embeddings", {
       filename,
-      options
+      options,
     });
 
     const response = await fetch(`${speakerEmbeddingsUrl}/api/diarize`, {
@@ -96,7 +96,7 @@ export async function performDiarization(
     }
 
     const result = await response.json();
-    
+
     // Zod валидация ответа
     let validatedResult: z.infer<typeof DiarizationResponseSchema>;
     try {
@@ -111,34 +111,33 @@ export async function performDiarization(
         success: false,
         segments: [],
         num_speakers: 0,
-        speakers: []
+        speakers: [],
       };
     }
-    
+
     logger.info("Диаризация завершена", {
       segmentsCount: validatedResult.segments.length,
       numSpeakers: validatedResult.num_speakers,
-      speakers: validatedResult.speakers
+      speakers: validatedResult.speakers,
     });
 
     return {
       success: validatedResult.success,
       segments: validatedResult.segments,
       num_speakers: validatedResult.num_speakers,
-      speakers: validatedResult.speakers
+      speakers: validatedResult.speakers,
     };
-
   } catch (error) {
     logger.error("Ошибка диаризации", {
       filename,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
 
     return {
       success: false,
       segments: [],
       num_speakers: 0,
-      speakers: []
+      speakers: [],
     };
   }
 }
@@ -148,7 +147,7 @@ export async function performDiarization(
  */
 export async function checkSpeakerEmbeddingsHealth(): Promise<boolean> {
   const speakerEmbeddingsUrl = env.SPEAKER_EMBEDDINGS_URL;
-  
+
   if (!speakerEmbeddingsUrl) {
     return false;
   }
@@ -172,7 +171,7 @@ export async function checkSpeakerEmbeddingsHealth(): Promise<boolean> {
     return false;
   } catch (error) {
     logger.warn("Ошибка проверки здоровья speaker-embeddings", {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     });
     return false;
   }
