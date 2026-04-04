@@ -49,8 +49,23 @@ export async function getDailyKpiStats(input: GetDailyKpiStatsInput): Promise<Da
     .map((row) => row.phoneNumber)
     .filter((num): num is string => num != null && num.trim() !== "");
 
+  // Нормализуем даты (заменяем пробел на T если нужно) и парсим
+  const normalizedDateFrom = dateFrom.replace(" ", "T");
+  const normalizedDateTo = dateTo.replace(" ", "T");
+
+  let dateFromDate: Date;
+  let dateToDate: Date;
+
+  try {
+    dateFromDate = parseDateToUTC(normalizedDateFrom);
+    dateToDate = parseDateToUTC(normalizedDateTo);
+  } catch (error) {
+    throw new Error(
+      `Invalid date format: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+
   // Вычисляем nextDay(endDate) для half-open period семантики
-  const dateToDate = parseDateToUTC(dateTo);
   const dateToExclusive = new Date(
     Date.UTC(
       dateToDate.getUTCFullYear(),
@@ -62,8 +77,6 @@ export async function getDailyKpiStats(input: GetDailyKpiStatsInput): Promise<Da
       0,
     ),
   );
-
-  const dateFromDate = parseDateToUTC(dateFrom);
 
   const conditions = [
     eq(schema.calls.workspaceId, workspaceId),

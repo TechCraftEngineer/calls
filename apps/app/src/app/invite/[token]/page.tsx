@@ -99,9 +99,19 @@ export default function InviteAcceptPage() {
 
   // Update form when invitation type changes - combined effect
   useEffect(() => {
+    // Ждем пока тип приглашения будет известен
+    if (typeof isLinkInvitation !== "boolean") return;
+
     if (isLinkInvitation) {
-      form.resetField("email");
+      // Для link-приглашений НЕ очищаем email (пользователь должен его ввести)
+      // Сбрасываем только name и password
+      form.reset({
+        name: "",
+        password: "",
+        email: form.getValues("email") || "",
+      });
     } else {
+      // Для email-приглашений очищаем email (он будет из invitation.email)
       form.reset({
         name: "",
         password: "",

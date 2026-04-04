@@ -24,7 +24,18 @@ const MAX_DAYS = 90;
 // Утилита для парсинга даты из строки YYYY-MM-DD в локальную дату (без UTC сдвига)
 // Возвращает null для невалидных дат
 function parseLocalDate(dateStr: string): Date | null {
-  const [year, month, day] = dateStr.split("-").map(Number);
+  // Строгая проверка формата YYYY-MM-DD
+  const dateRegex = /^(\d{4})-(\d{2})-(\d{2})$/;
+  const match = dateStr.match(dateRegex);
+
+  if (!match) {
+    return null;
+  }
+
+  const [, yearStr, monthStr, dayStr] = match;
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
 
   // Валидация базовых требований
   if (
@@ -39,16 +50,15 @@ function parseLocalDate(dateStr: string): Date | null {
     return null;
   }
 
-  // Проверка максимального количества дней в месяце (с учётом високосного года)
-  const daysInMonth = new Date(year, month, 0).getDate();
-  if (day > daysInMonth) {
-    return null;
-  }
-
   const date = new Date(year, month - 1, day);
 
   // Дополнительная проверка что Date объект валиден
   if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  // Round-trip проверка: убеждаемся что компоненты даты совпадают
+  if (date.getFullYear() !== year || date.getMonth() + 1 !== month || date.getDate() !== day) {
     return null;
   }
 

@@ -40,8 +40,10 @@ export function pluralizeCalls(n: number): string {
   return "звонков";
 }
 
-export function getReportTypeLabel(reportType: string): string {
-  const labels: Record<string, string> = {
+export type ReportType = z.infer<typeof ReportParamsSchema>["reportType"];
+
+export function getReportTypeLabel(reportType: ReportType): string {
+  const labels: Record<ReportType, string> = {
     daily: "Звонки за день",
     weekly: "Звонки за неделю",
     monthly: "Звонки за месяц",
