@@ -49,8 +49,19 @@ export async function getDailyKpiStats(input: GetDailyKpiStatsInput): Promise<Da
     .filter((num): num is string => num != null && num.trim() !== "");
 
   // Вычисляем nextDay(endDate) для half-open period семантики
-  // Сначала нормализуем к midnight UTC, затем добавляем день
-  const dateToDate = new Date(dateTo);
+  // Парсим входные строки как UTC даты
+  const parseDateToUTC = (dateStr: string): Date => {
+    // Если строка содержит только дату (YYYY-MM-DD), парсим как UTC midnight
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [year, month, day] = dateStr.split("-").map(Number);
+      return new Date(Date.UTC(year, month - 1, day));
+    }
+    // Для полных datetime строк добавляем Z для UTC парсинга если её нет
+    const utcStr = dateStr.endsWith("Z") ? dateStr : `${dateStr}Z`;
+    return new Date(utcStr);
+  };
+
+  const dateToDate = parseDateToUTC(dateTo);
   const dateToExclusive = new Date(
     Date.UTC(
       dateToDate.getUTCFullYear(),
@@ -63,10 +74,12 @@ export async function getDailyKpiStats(input: GetDailyKpiStatsInput): Promise<Da
     ),
   );
 
+  const dateFromDate = parseDateToUTC(dateFrom);
+
   const conditions = [
     eq(schema.calls.workspaceId, workspaceId),
     sql`${schema.calls.internalNumber} = ANY(${internalNumbers})`,
-    gte(schema.calls.timestamp, new Date(dateFrom)),
+    gte(schema.calls.timestamp, dateFromDate),
     lt(schema.calls.timestamp, dateToExclusive),
   ];
 

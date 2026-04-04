@@ -379,13 +379,12 @@ export class CallsService {
   }
 
   async markTranscriptionFailed(callId: string, errorMessage: string): Promise<void> {
-    // Используем существующий метод updatePbxBinding для обновления статуса
-    await this.callsRepository.updatePbxBinding(callId, {
+    // Используем dedicated метод для обновления статуса транскрипции
+    await this.callsRepository.markTranscriptionFailed(callId, {
       transcriptionStatus: "failed",
       transcriptionError: errorMessage,
       transcribedAt: new Date(),
-      // biome-ignore lint/suspicious/noExplicitAny: поля требуют добавления в схему БД
-    } as any);
+    });
   }
 
   async getEvaluationsStats(params: {

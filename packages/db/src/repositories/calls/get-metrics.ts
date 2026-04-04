@@ -60,10 +60,33 @@ export async function getCallsMetrics(params?: GetCallsMetricsParams): Promise<{
   }
 
   if (dateTo) {
-    // Используем half-open interval: добавляем день к dateTo и используем lt
-    const dateToPlusOne = new Date(dateTo);
-    dateToPlusOne.setDate(dateToPlusOne.getDate() + 1);
-    conditions.push(lt(schema.calls.timestamp, dateToPlusOne));
+    // Используем half-open interval: следующий день в UTC midnight
+    // Парсим dateTo как UTC дату
+    const parseDateToUTC = (dateStr: string): Date => {
+      // Если строка содержит только дату (YYYY-MM-DD), парсим как UTC midnight
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        const [year, month, day] = dateStr.split("-").map(Number);
+        return new Date(Date.UTC(year, month - 1, day));
+      }
+      // Для полных datetime строк добавляем Z для UTC парсинга если её нет
+      const utcStr = dateStr.endsWith("Z") ? dateStr : `${dateStr}Z`;
+      return new Date(utcStr);
+    };
+
+    const parsedDateTo = parseDateToUTC(dateTo);
+    // Создаем следующий день в UTC midnight
+    const nextDayMidnight = new Date(
+      Date.UTC(
+        parsedDateTo.getUTCFullYear(),
+        parsedDateTo.getUTCMonth(),
+        parsedDateTo.getUTCDate() + 1,
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
+    conditions.push(lt(schema.calls.timestamp, nextDayMidnight));
   }
 
   if (internalNumbers?.length) {

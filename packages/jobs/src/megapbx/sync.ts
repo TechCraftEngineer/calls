@@ -22,11 +22,6 @@ import {
 const logger = createLogger("megapbx-sync");
 const PROVIDER = "megapbx";
 
-function _isEmptyOrMegaPbxPlaceholder(value: string | null | undefined): boolean {
-  const normalized = value?.trim().toLowerCase() ?? "";
-  return normalized.length === 0 || normalized === "megapbx";
-}
-
 type SyncStats = {
   employees: number;
   numbers: number;

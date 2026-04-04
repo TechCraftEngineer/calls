@@ -40,6 +40,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  Eye,
   Loader2,
   Phone,
   Settings2,
@@ -141,6 +142,33 @@ const monthLabel = (monthValue: string) => {
   });
 };
 
+const KPI_TABLE_STATE_KEY = "kpi-table-state";
+
+interface KpiTableState {
+  month: string;
+  sorting: Array<{ id: string; desc: boolean }>;
+  pagination: { pageSize: number; pageIndex: number };
+}
+
+const saveKpiTableState = (state: KpiTableState) => {
+  try {
+    sessionStorage.setItem(KPI_TABLE_STATE_KEY, JSON.stringify(state));
+  } catch (error) {
+    console.error("Failed to save KPI table state", error);
+  }
+};
+
+const loadKpiTableState = (): KpiTableState | null => {
+  try {
+    const stored = sessionStorage.getItem(KPI_TABLE_STATE_KEY);
+    if (!stored) return null;
+    return JSON.parse(stored) as KpiTableState;
+  } catch (error) {
+    console.error("Failed to load KPI table state", error);
+    return null;
+  }
+};
+
 export default function KpiTable() {
   const orpc = useORPC();
   const queryClient = useQueryClient();
@@ -166,6 +194,25 @@ export default function KpiTable() {
     targetTalkTimeMinutes: "",
   });
   const skipInvalidateOnSuccessRef = useRef(false);
+  const tableRef = useRef<ReturnType<typeof useReactTable<KpiRow>> | null>(null);
+
+  const navigateToDailyView = useCallback(
+    (employeeExternalId: string) => {
+      // Сохраняем текущее состояние таблицы
+      const currentTable = tableRef.current;
+      if (currentTable) {
+        saveKpiTableState({
+          month: normalizedMonthValue,
+          sorting: currentTable.getState().sorting,
+          pagination: currentTable.getState().pagination,
+        });
+      }
+
+      // Навигация к daily view с текущим периодом
+      router.push(`/statistics/kpi/daily/${employeeExternalId}?startDate=${dFrom}&endDate=${dTo}`);
+    },
+    [normalizedMonthValue, dFrom, dTo, router],
+  );
 
   const { data = [], isPending: loading } = useQuery(
     orpc.statistics.getKpi.queryOptions({
@@ -184,7 +231,14 @@ export default function KpiTable() {
 
   useEffect(() => {
     const monthFromUrl = searchParams.get("month");
-    if (!monthFromUrl) return;
+    if (!monthFromUrl) {
+      // Проверяем сохраненное состояние только если нет параметра в URL
+      const savedState = loadKpiTableState();
+      if (savedState?.month) {
+        setSelectedMonth(savedState.month);
+      }
+      return;
+    }
     const { normalizedMonthValue: normalizedFromUrl } = getMonthRange(monthFromUrl);
     setSelectedMonth((prev) => (prev === normalizedFromUrl ? prev : normalizedFromUrl));
   }, [searchParams]);
@@ -596,6 +650,34 @@ export default function KpiTable() {
         meta: { headerTitle: "Итого, ₽" },
       },
       {
+        id: "dailyView",
+        accessorKey: "employeeExternalId",
+        header: ({ column }) => (
+          <DataGridColumnHeader
+            column={column}
+            title="По дням"
+            className="min-w-32"
+            tooltip="Просмотр детализации KPI по дням"
+            visibility={false}
+          />
+        ),
+        enableSorting: false,
+        cell: ({ row }) => (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="touch-action-manipulation"
+            aria-label={`Просмотр KPI по дням для ${row.original.name}`}
+            onClick={() => navigateToDailyView(row.original.employeeExternalId)}
+          >
+            <Eye className="size-4 mr-2" aria-hidden />
+            По дням
+          </Button>
+        ),
+        meta: { headerTitle: "По дням" },
+      },
+      {
         id: "kpiSettings",
         accessorKey: "employeeExternalId",
         header: ({ column }) => (
@@ -632,8 +714,31 @@ export default function KpiTable() {
         meta: { headerTitle: "Настройки" },
       },
     ],
-    [formatRub, isApplyingBulkKpi, savingEmployeeId, updateKpiMutation.isPending],
+    [
+      formatRub,
+      isApplyingBulkKpi,
+      navigateToDailyView,
+      savingEmployeeId,
+      updateKpiMutation.isPending,
+    ],
   );
+
+  // Восстановление состояния таблицы из sessionStorage
+  const initialTableState = useMemo(() => {
+    const savedState = loadKpiTableState();
+    if (savedState) {
+      return {
+        sorting: savedState.sorting,
+        pagination: savedState.pagination,
+        columnPinning: { left: ["employee"] },
+      };
+    }
+    return {
+      sorting: [{ id: "employee", desc: false }],
+      pagination: { pageSize: 10, pageIndex: 0 },
+      columnPinning: { left: ["employee"] },
+    };
+  }, []);
 
   const table = useReactTable({
     data: rows,
@@ -641,12 +746,11 @@ export default function KpiTable() {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      sorting: [{ id: "employee", desc: false }],
-      pagination: { pageSize: 10, pageIndex: 0 },
-      columnPinning: { left: ["employee"] },
-    },
+    initialState: initialTableState,
   });
+
+  // Сохраняем ссылку на table для использования в navigateToDailyView
+  tableRef.current = table;
 
   const exportCurrentMonthCsv = useCallback(() => {
     if (rows.length === 0) {
