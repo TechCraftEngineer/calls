@@ -99,9 +99,9 @@ export async function getDailyKpiStats(input: GetDailyKpiStatsInput): Promise<Da
       date: sql<string>`DATE(${schema.calls.timestamp} AT TIME ZONE 'UTC')`,
       totalDuration: sql<number>`COALESCE(SUM(${schema.files.durationSeconds}), 0)::int`,
       totalCalls: sql<number>`COUNT(*)::int`,
-      incoming: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) = 'inbound' AND COALESCE(${schema.files.durationSeconds}, 0) > 0)::int`,
-      outgoing: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) = 'outbound')::int`,
-      missed: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) = 'inbound' AND COALESCE(${schema.files.durationSeconds}, 0) = 0)::int`,
+      incoming: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, 'unknown')) = 'inbound' AND COALESCE(${schema.files.durationSeconds}, 0) > 0)::int`,
+      outgoing: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, 'unknown')) = 'outbound')::int`,
+      missed: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, 'unknown')) = 'inbound' AND COALESCE(${schema.files.durationSeconds}, 0) = 0)::int`,
     })
     .from(schema.calls)
     .leftJoin(schema.files, eq(schema.calls.fileId, schema.files.id))

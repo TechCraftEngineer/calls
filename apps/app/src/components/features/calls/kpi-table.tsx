@@ -215,6 +215,7 @@ export default function KpiTable() {
   });
   const skipInvalidateOnSuccessRef = useRef(false);
   const tableRef = useRef<ReturnType<typeof useReactTable<KpiRow>> | null>(null);
+  const processedEmployeeIdsRef = useRef<Set<string>>(new Set());
 
   // Функция для сохранения состояния таблицы перед навигацией
   const saveStateBeforeNavigation = useCallback(() => {
@@ -242,7 +243,7 @@ export default function KpiTable() {
     }),
   );
 
-  const rows = Array.isArray(data) ? (data as KpiRow[]) : [];
+  const rows = useMemo(() => (Array.isArray(data) ? (data as KpiRow[]) : []), [data]);
   const kpiQueryKey = useMemo(
     () =>
       orpc.statistics.getKpi.queryKey({
@@ -281,18 +282,27 @@ export default function KpiTable() {
   }, [currentMonthValue, pathname, router, searchParams, selectedMonth]);
 
   useEffect(() => {
+    // Проверяем, есть ли новые сотрудники для инициализации
+    const newIds = rows.filter(
+      (row) => !processedEmployeeIdsRef.current.has(row.employeeExternalId),
+    );
+    if (newIds.length === 0) return;
+
+    // Обновляем ref с новыми id
+    for (const row of newIds) {
+      processedEmployeeIdsRef.current.add(row.employeeExternalId);
+    }
+
     setDraftsByEmployeeId((prev) => {
-      const next = { ...prev };
-      for (const row of rows) {
-        if (!next[row.employeeExternalId]) {
-          next[row.employeeExternalId] = {
-            baseSalary: row.baseSalary,
-            targetBonus: row.targetBonus,
-            targetTalkTimeMinutes: row.targetTalkTimeMinutes,
-          };
-        }
+      const next: Record<string, KpiDraft> = {};
+      for (const row of newIds) {
+        next[row.employeeExternalId] = {
+          baseSalary: row.baseSalary,
+          targetBonus: row.targetBonus,
+          targetTalkTimeMinutes: row.targetTalkTimeMinutes,
+        };
       }
-      return next;
+      return { ...prev, ...next };
     });
   }, [rows]);
 
