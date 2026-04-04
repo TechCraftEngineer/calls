@@ -4,6 +4,19 @@ import * as schema from "../../schema";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
 import { parseDateToUTC } from "./date-utils";
 
+/**
+ * Helper to parse date string or throw a descriptive error
+ */
+function parseDateOrThrow(dateStr: string, fieldName: string): Date {
+  try {
+    return parseDateToUTC(dateStr);
+  } catch (error) {
+    throw new Error(
+      `Неверный формат даты ${fieldName}: ${error instanceof Error ? error.message : "Неизвестная ошибка"}`,
+    );
+  }
+}
+
 interface GetCallsMetricsParams {
   workspaceId?: string;
   excludePhoneNumbers?: string[];
@@ -57,26 +70,12 @@ export async function getCallsMetrics(params?: GetCallsMetricsParams): Promise<{
   }
 
   if (dateFrom) {
-    let parsedDateFrom: Date;
-    try {
-      parsedDateFrom = parseDateToUTC(dateFrom);
-    } catch (error) {
-      throw new Error(
-        `Неверный формат даты: ${error instanceof Error ? error.message : "Неизвестная ошибка"}`,
-      );
-    }
+    const parsedDateFrom = parseDateOrThrow(dateFrom, "dateFrom");
     conditions.push(gte(schema.calls.timestamp, parsedDateFrom));
   }
 
   if (dateTo) {
-    let parsedDateTo: Date;
-    try {
-      parsedDateTo = parseDateToUTC(dateTo);
-    } catch (error) {
-      throw new Error(
-        `Неверный формат даты: ${error instanceof Error ? error.message : "Неизвестная ошибка"}`,
-      );
-    }
+    const parsedDateTo = parseDateOrThrow(dateTo, "dateTo");
     // Создаем следующий день в UTC midnight
     const nextDayMidnight = new Date(
       Date.UTC(

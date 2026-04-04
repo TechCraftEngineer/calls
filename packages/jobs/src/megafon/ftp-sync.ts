@@ -9,8 +9,8 @@ import { callsService, filesService } from "@calls/db";
 import { validateFtpCredentials } from "@calls/shared";
 import { Client } from "basic-ftp";
 import pLimit from "p-limit";
-import { createLogger } from "../logger";
-import { parseMegafonFilename } from "./parse-filename";
+import { createLogger } from "~/logger";
+import { parseMegafonFilename } from "~/megafon/parse-filename";
 
 const logger = createLogger("ftp-sync");
 

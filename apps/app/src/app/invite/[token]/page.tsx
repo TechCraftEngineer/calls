@@ -89,11 +89,10 @@ export default function InviteAcceptPage() {
     data: invitation,
     isLoading,
     error: fetchError,
-  } = useQuery<Invitation | undefined>(
-    token
-      ? orpc.workspaces.getInvitationByToken.queryOptions({ input: { token } })
-      : { queryKey: ["disabled"], enabled: false },
-  );
+  } = useQuery({
+    ...orpc.workspaces.getInvitationByToken.queryOptions({ input: { token } }),
+    enabled: !!token,
+  });
 
   useEffect(() => {
     setIsLinkInvitation(invitation?.invitationType === "link");

@@ -77,9 +77,15 @@ export default function MonthlyGridTable() {
       startDate,
       endDate,
     },
+  });
+  const {
+    data: gridData,
+    isLoading,
+    error,
+  } = useQuery({
+    ...queryOptions,
     enabled: !!activeWorkspace?.id,
   });
-  const { data: gridData, isLoading, error } = useQuery(queryOptions);
 
   const handlePrevMonth = () => setSelectedMonth(shiftMonth(selectedMonth, -1));
   const handleNextMonth = () => setSelectedMonth(shiftMonth(selectedMonth, 1));
@@ -99,8 +105,19 @@ export default function MonthlyGridTable() {
   if (error) {
     return (
       <Card className="card p-6 mt-6">
-        <div className="text-center py-12">
-          <p className="text-red-500">Ошибка загрузки данных</p>
+        <div className="text-center py-12 space-y-4">
+          <p className="text-red-500 font-medium">Ошибка загрузки данных</p>
+          <p className="text-sm text-gray-600">
+            {error instanceof Error ? error.message : String(error)}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.reload()}
+            className="mt-2"
+          >
+            Повторить
+          </Button>
         </div>
       </Card>
     );

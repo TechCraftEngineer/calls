@@ -7,9 +7,9 @@ import {
   pbxService,
 } from "@calls/db";
 import pLimit from "p-limit";
-import { inngest, transcribeRequested } from "../inngest/client";
-import { createLogger } from "../logger";
-import { MegaPbxClient } from "../megapbx/client";
+import { inngest, transcribeRequested } from "~/inngest/client";
+import { createLogger } from "~/logger";
+import { MegaPbxClient } from "~/megapbx/client";
 import {
   type NormalizedCall,
   type NormalizedEmployee,
@@ -17,7 +17,7 @@ import {
   normalizeCall,
   normalizeEmployee,
   normalizeNumber,
-} from "../megapbx/normalize";
+} from "~/megapbx/normalize";
 
 const logger = createLogger("megapbx-sync");
 const PROVIDER = "megapbx";

@@ -4,7 +4,7 @@
 
 import { env } from "@calls/config";
 import { z } from "zod";
-import { createLogger } from "../../../logger";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("speaker-diarization");
 

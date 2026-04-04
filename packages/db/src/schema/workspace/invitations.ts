@@ -3,7 +3,7 @@
  */
 
 import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { check, index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { user } from "../auth/user";
 import type {
   EvaluationSettings,
@@ -50,6 +50,7 @@ export const invitations = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
+    check("invitations_email_type_check", sql`invitation_type <> 'email' OR email IS NOT NULL`),
     index("invitations_workspace_idx").on(table.workspaceId),
     index("invitations_email_idx").on(table.email),
     index("invitations_token_idx").on(table.token),

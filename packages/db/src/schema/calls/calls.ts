@@ -50,6 +50,10 @@ export const calls = pgTable(
     // Используем pgEnum для валидации значений
     check("calls_status_check", sql`status IN ('missed', 'answered', 'voicemail', 'failed')`),
     check("calls_direction_check", sql`direction IN ('inbound', 'outbound')`),
+    check(
+      "calls_transcription_status_check",
+      sql`transcription_status IS NULL OR transcription_status IN ('pending', 'processing', 'completed', 'failed')`,
+    ),
     unique("calls_workspace_filename_unique").on(table.workspaceId, table.filename),
     unique("calls_workspace_provider_external_id_unique").on(
       table.workspaceId,
