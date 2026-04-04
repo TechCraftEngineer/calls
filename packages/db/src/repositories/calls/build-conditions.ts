@@ -94,7 +94,7 @@ export function buildCallConditions({
     );
     if (invalidDirections.length > 0) {
       throw new Error(
-        `Invalid direction values: ${invalidDirections.join(", ")}. Allowed values: inbound, outbound`,
+        `Неверные значения направления: ${invalidDirections.join(", ")}. Допустимые значения: inbound, outbound`,
       );
     }
 

@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@calls/ui";
-import { useQuery } from "@tanstack/react-query";
+import { skipToken, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
@@ -73,18 +73,20 @@ export default function MonthlyGridTable() {
 
   // Загружаем данные для всех сотрудников за месяц
   const queryOptions = orpc.statistics.getMonthlyKpiGrid.queryOptions({
-    input: {
-      startDate,
-      endDate,
-    },
+    input: activeWorkspace?.id
+      ? {
+          startDate,
+          endDate,
+        }
+      : skipToken,
   });
   const {
     data: gridData,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     ...queryOptions,
-    enabled: !!activeWorkspace?.id,
   });
 
   const handlePrevMonth = () => setSelectedMonth(shiftMonth(selectedMonth, -1));
@@ -113,10 +115,11 @@ export default function MonthlyGridTable() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.location.reload()}
+            onClick={() => refetch()}
+            disabled={isLoading}
             className="mt-2"
           >
-            Повторить
+            {isLoading ? "Загрузка…" : "Повторить"}
           </Button>
         </div>
       </Card>
