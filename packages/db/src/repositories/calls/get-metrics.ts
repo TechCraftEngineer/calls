@@ -2,6 +2,7 @@ import { and, avg, count, desc, eq, gte, ilike, lt, or } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
+import { parseDateToUTC } from "./date-utils";
 
 interface GetCallsMetricsParams {
   workspaceId?: string;
@@ -56,63 +57,11 @@ export async function getCallsMetrics(params?: GetCallsMetricsParams): Promise<{
   }
 
   if (dateFrom) {
-    // Используем тот же парсер UTC дат что и для dateTo
-    const parseDateToUTC = (dateStr: string): Date => {
-      // Если строка содержит только дату (YYYY-MM-DD), парсим как UTC midnight
-      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-        const [yearStr, monthStr, dayStr] = dateStr.split("-");
-        const year = Number(yearStr);
-        const month = Number(monthStr);
-        const day = Number(dayStr);
-        return new Date(Date.UTC(year, month - 1, day));
-      }
-      // Для полных datetime строк с T или space парсим явно
-      const datetimeMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/);
-      if (datetimeMatch) {
-        const year = Number(datetimeMatch[1]);
-        const month = Number(datetimeMatch[2]);
-        const day = Number(datetimeMatch[3]);
-        const hour = Number(datetimeMatch[4]);
-        const minute = Number(datetimeMatch[5]);
-        const second = Number(datetimeMatch[6]);
-        return new Date(Date.UTC(year, month - 1, day, hour, minute, second));
-      }
-      // Fallback: добавляем Z для UTC парсинга если её нет
-      const utcStr = dateStr.endsWith("Z") ? dateStr : `${dateStr}Z`;
-      return new Date(utcStr);
-    };
     const parsedDateFrom = parseDateToUTC(dateFrom);
     conditions.push(gte(schema.calls.timestamp, parsedDateFrom));
   }
 
   if (dateTo) {
-    // Используем half-open interval: следующий день в UTC midnight
-    // Парсим dateTo как UTC дату
-    const parseDateToUTC = (dateStr: string): Date => {
-      // Если строка содержит только дату (YYYY-MM-DD), парсим как UTC midnight
-      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-        const [yearStr, monthStr, dayStr] = dateStr.split("-");
-        const year = Number(yearStr);
-        const month = Number(monthStr);
-        const day = Number(dayStr);
-        return new Date(Date.UTC(year, month - 1, day));
-      }
-      // Для полных datetime строк с T или space парсим явно
-      const datetimeMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})/);
-      if (datetimeMatch) {
-        const year = Number(datetimeMatch[1]);
-        const month = Number(datetimeMatch[2]);
-        const day = Number(datetimeMatch[3]);
-        const hour = Number(datetimeMatch[4]);
-        const minute = Number(datetimeMatch[5]);
-        const second = Number(datetimeMatch[6]);
-        return new Date(Date.UTC(year, month - 1, day, hour, minute, second));
-      }
-      // Fallback: добавляем Z для UTC парсинга если её нет
-      const utcStr = dateStr.endsWith("Z") ? dateStr : `${dateStr}Z`;
-      return new Date(utcStr);
-    };
-
     const parsedDateTo = parseDateToUTC(dateTo);
     // Создаем следующий день в UTC midnight
     const nextDayMidnight = new Date(

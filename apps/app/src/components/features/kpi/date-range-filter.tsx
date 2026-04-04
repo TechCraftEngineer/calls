@@ -22,14 +22,43 @@ const QUICK_FILTERS: Array<{ value: QuickFilter; label: string }> = [
 const MAX_DAYS = 90;
 
 // Утилита для парсинга даты из строки YYYY-MM-DD в локальную дату (без UTC сдвига)
-function parseLocalDate(dateStr: string): Date {
+// Возвращает null для невалидных дат
+function parseLocalDate(dateStr: string): Date | null {
   const [year, month, day] = dateStr.split("-").map(Number);
-  return new Date(year, month - 1, day);
+
+  // Валидация базовых требований
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    !Number.isInteger(day) ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31
+  ) {
+    return null;
+  }
+
+  // Проверка максимального количества дней в месяце (с учётом високосного года)
+  const daysInMonth = new Date(year, month, 0).getDate();
+  if (day > daysInMonth) {
+    return null;
+  }
+
+  const date = new Date(year, month - 1, day);
+
+  // Дополнительная проверка что Date объект валиден
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date;
 }
 
 function calculateDaysBetween(start: string, end: string): number {
   const startDate = parseLocalDate(start);
   const endDate = parseLocalDate(end);
+  if (!startDate || !endDate) return 0;
   const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return diffDays + 1; // Включаем оба дня
@@ -37,6 +66,7 @@ function calculateDaysBetween(start: string, end: string): number {
 
 function formatDateForDisplay(dateStr: string): string {
   const date = parseLocalDate(dateStr);
+  if (!date) return dateStr; // Возвращаем оригинал если дата невалидна
   return date.toLocaleDateString("ru-RU", {
     day: "2-digit",
     month: "2-digit",
@@ -62,9 +92,11 @@ export const DateRangeFilter = React.memo(function DateRangeFilter({
 
   // Инициализация и обновление tempRange при изменении startDate/endDate
   React.useEffect(() => {
+    const fromDate = startDate ? parseLocalDate(startDate) : null;
+    const toDate = endDate ? parseLocalDate(endDate) : null;
     setTempRange({
-      from: startDate ? parseLocalDate(startDate) : undefined,
-      to: endDate ? parseLocalDate(endDate) : undefined,
+      from: fromDate || undefined,
+      to: toDate || undefined,
     });
   }, [startDate, endDate]);
 

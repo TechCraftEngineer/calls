@@ -179,7 +179,7 @@ const loadKpiTableState = (): KpiTableState | null => {
     const parsed = JSON.parse(stored);
     const result = kpiTableStateSchema.safeParse(parsed);
     if (!result.success) {
-      console.error("Invalid KPI table state in sessionStorage:", result.error);
+      console.error("Неверное состояние таблицы KPI в sessionStorage:", result.error);
       return null;
     }
     return result.data;
@@ -228,10 +228,10 @@ export default function KpiTable() {
     }
   }, [normalizedMonthValue]);
 
-  // Получаем данные для навигации
   const getDailyViewHref = useCallback(
     (employeeExternalId: string) => {
-      return `/statistics/kpi/daily/${employeeExternalId}?startDate=${dFrom}&endDate=${dTo}`;
+      const encodedId = encodeURIComponent(employeeExternalId);
+      return `/statistics/kpi/daily/${encodedId}?startDate=${dFrom}&endDate=${dTo}`;
     },
     [dFrom, dTo],
   );

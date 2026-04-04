@@ -13,7 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { formatDateISO, getColorByPercentage } from "@/lib/kpi-utils";
+import { getColorByPercentage } from "@/lib/kpi-utils";
 
 interface TrendChartProps {
   data: DailyKpiRow[];
@@ -35,6 +35,54 @@ function getHslColor(percentage: number): string {
   if (color === "green") return "hsl(142, 76%, 36%)";
   if (color === "yellow") return "hsl(48, 96%, 53%)";
   return "hsl(0, 84%, 60%)";
+}
+
+// Русские названия месяцев для ручного форматирования (без зависимости от таймзоны)
+const RUSSIAN_MONTH_NAMES = [
+  "января",
+  "февраля",
+  "марта",
+  "апреля",
+  "мая",
+  "июня",
+  "июля",
+  "августа",
+  "сентября",
+  "октября",
+  "ноября",
+  "декабря",
+];
+
+const RUSSIAN_MONTH_NAMES_SHORT = [
+  "01",
+  "02",
+  "03",
+  "04",
+  "05",
+  "06",
+  "07",
+  "08",
+  "09",
+  "10",
+  "11",
+  "12",
+];
+
+// Утилита для форматирования даты из YYYY-MM-DD в русский формат без timezone сдвигов
+function formatRussianDate(dateStr: string, shortMonth = false): string {
+  const year = Number.parseInt(dateStr.slice(0, 4), 10);
+  const month = Number.parseInt(dateStr.slice(5, 7), 10);
+  const day = Number.parseInt(dateStr.slice(8, 10), 10);
+
+  const paddedDay = day.toString().padStart(2, "0");
+
+  if (shortMonth) {
+    const monthShort = RUSSIAN_MONTH_NAMES_SHORT[month - 1] ?? String(month).padStart(2, "0");
+    return `${paddedDay}.${monthShort}`;
+  }
+
+  const monthName = RUSSIAN_MONTH_NAMES[month - 1] ?? String(month);
+  return `${paddedDay} ${monthName} ${year}`;
 }
 
 // Кастомный tooltip
@@ -60,25 +108,8 @@ const CustomTooltip = React.memo(function CustomTooltip({ active, payload }: Cus
   const data = payload[0]?.payload;
   if (!data) return null;
 
-  const formattedDate = formatDateISO(data.date);
-  const displayDate =
-    formattedDate !== data.date
-      ? new Date(data.date).toLocaleDateString("ru-RU", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        })
-      : new Date(
-          Date.UTC(
-            Number.parseInt(data.date.slice(0, 4), 10),
-            Number.parseInt(data.date.slice(5, 7), 10) - 1,
-            Number.parseInt(data.date.slice(8, 10), 10),
-          ),
-        ).toLocaleDateString("ru-RU", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        });
+  // Используем ручное форматирование без timezone сдвигов
+  const displayDate = formatRussianDate(data.date, false);
 
   return (
     <Card className="border-border bg-background p-3 shadow-lg">
@@ -144,19 +175,13 @@ export const TrendChart = React.memo(function TrendChart({ data, loading }: Tren
   const chartData = React.useMemo(
     () =>
       data?.map((row) => {
-        // Парсим дату в UTC для корректного отображения
-        const [year, month, day] = row.date.split("-").map(Number);
-        const utcDate = new Date(Date.UTC(year, month - 1, day));
         return {
           date: row.date,
           actualTalkTimeMinutes: row.actualTalkTimeMinutes,
           targetTalkTimeMinutes: row.targetTalkTimeMinutes,
           completionPercentage: row.completionPercentage,
-          // Форматированная дата для оси X
-          formattedDate: utcDate.toLocaleDateString("ru-RU", {
-            day: "2-digit",
-            month: "2-digit",
-          }),
+          // Форматированная дата для оси X (ручное форматирование без timezone)
+          formattedDate: formatRussianDate(row.date, true),
         };
       }) || [],
     [data],
