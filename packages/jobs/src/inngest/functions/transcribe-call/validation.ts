@@ -3,7 +3,7 @@
  */
 
 import { z } from "zod";
-import { createLogger } from "../../../logger";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("transcribe-call-validation");
 
@@ -94,7 +94,7 @@ export function validateWorkspace(workspace: {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(workspace.id)) {
     throw new TranscriptionError(
-      `Invalid workspace id format: ${workspace.id}`,
+      `Неверный формат идентификатора рабочего пространства: ${workspace.id}`,
       "INVALID_WORKSPACE_ID",
       "workspace.id",
     );
@@ -103,7 +103,7 @@ export function validateWorkspace(workspace: {
   // Warn if name is missing (used for LLM context building)
   if (!workspace.name) {
     logger.warn(
-      `Workspace has no name, LLM context will be degraded (workspaceId: ${workspace.id})`,
+      `В рабочем пространстве отсутствует имя, контекст LLM будет ограничен (workspaceId: ${workspace.id})`,
     );
   }
 

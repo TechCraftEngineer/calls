@@ -9,6 +9,7 @@ import type { CreateCallData } from "../../types/calls.types";
 import { normalizeCallStatus } from "../../utils/call-status";
 import {
   createCallSchema,
+  markTranscriptionFailedSchema,
   updateCustomerNameSchema,
   updateEnhancedAudioSchema,
   updatePbxBindingSchema,
@@ -224,6 +225,36 @@ export const callsCrud = {
   },
 
   /**
+   * Обновление статуса транскрипции (например, при ошибке)
+   */
+  async markTranscriptionFailed(
+    callId: string,
+    data: {
+      transcriptionStatus?: "failed" | "completed" | "pending";
+      transcriptionError?: string | null;
+      transcribedAt?: Date | null;
+    },
+  ): Promise<void> {
+    // Валидация callId как UUID
+    validateCallId(callId);
+
+    // Валидация данных с помощью Zod
+    const validatedData = validateWithSchema(markTranscriptionFailedSchema, data);
+
+    const patch: Partial<schema.NewCall> = {};
+    if (validatedData.transcriptionStatus !== undefined)
+      patch.transcriptionStatus = validatedData.transcriptionStatus;
+    if (validatedData.transcriptionError !== undefined)
+      patch.transcriptionError = validatedData.transcriptionError;
+    if (validatedData.transcribedAt !== undefined)
+      patch.transcribedAt = validatedData.transcribedAt
+        ? new Date(validatedData.transcribedAt)
+        : null;
+
+    await db.update(schema.calls).set(patch).where(eq(schema.calls.id, callId));
+  },
+
+  /**
    * Транзакционное обновление записи звонка и файла
    */
   async updateWithRecording(
@@ -267,7 +298,7 @@ export const callsCrud = {
       source?: string | null;
       name?: string | null;
       customerName?: string | null;
-    }
+    },
   ) {
     // Валидация callId как UUID
     validateCallId(callId);

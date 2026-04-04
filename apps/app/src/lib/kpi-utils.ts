@@ -78,6 +78,11 @@ export function formatDateISO(date: string | Date): string {
     // Если дата невалидна, продолжаем к обычному парсингу (вызовет Invalid Date)
   }
   const d = typeof date === "string" ? new Date(date) : date;
+  // Проверяем валидность даты
+  if (Number.isNaN(d.getTime())) {
+    // Возвращаем исходную строку для строковых входных данных, иначе пустую строку
+    return typeof date === "string" ? date : "";
+  }
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");

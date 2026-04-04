@@ -4,12 +4,12 @@
 
 import { filesService } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
-import type { z } from "zod";
-import { createLogger } from "../../../../logger";
+import type { ZodIssue } from "zod";
+import { createLogger } from "~/logger";
 import { FileSchema } from "../schemas";
 import type { AudioBufferLegacyResult, AudioFileResult } from "../types";
 
-const _logger = createLogger("audio-download");
+const logger = createLogger("audio-download");
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 async function streamWithSizeLimit(url: string, maxBytes: number): Promise<ArrayBuffer> {
@@ -66,20 +66,26 @@ async function streamWithSizeLimit(url: string, maxBytes: number): Promise<Array
 }
 
 export async function downloadAudioFile(fileId: string): Promise<AudioFileResult> {
+  logger.info("Начало загрузки аудио файла", { fileId });
+
   const file = await filesService.getFileById(fileId);
   if (!file) {
     throw new Error(`Файл не найден: ${fileId}`);
   }
 
+  logger.info("Файл найден", { fileId, filename: file.filename });
+
   const fileValidation = FileSchema.safeParse(file);
   if (!fileValidation.success) {
     const errorDetails = fileValidation.error.issues
-      .map((issue: z.ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+      .map((issue: ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
       .join(", ");
     throw new Error(`File validation failed: ${errorDetails}`);
   }
 
   const asrAudioUrl = await getDownloadUrlForAsr(file.storageKey);
+
+  logger.info("Начало скачивания аудио", { fileId, storageKey: file.storageKey });
 
   // Проверяем размер файла перед загрузкой через HEAD запрос
   const headResponse = await fetch(asrAudioUrl, { method: "HEAD" });
@@ -99,6 +105,12 @@ export async function downloadAudioFile(fileId: string): Promise<AudioFileResult
 
   // Потоковая загрузка с проверкой размера
   const buffer = await streamWithSizeLimit(asrAudioUrl, MAX_FILE_SIZE);
+
+  logger.info("Аудио успешно загружено", {
+    fileId,
+    size: buffer.byteLength,
+    filename: file.filename || "audio.wav",
+  });
 
   return {
     buffer,

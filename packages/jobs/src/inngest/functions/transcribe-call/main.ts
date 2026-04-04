@@ -98,7 +98,8 @@ export const transcribeCallFn = inngest.createFunction(
       return validationResult.data;
     });
 
-    const _workspace = await step.run("db/workspaces:get", async () => {
+    // Шаг валидации workspace - выполняется только для проверки существования и валидности
+    const _workspaceValidation = await step.run("db/workspaces:get", async () => {
       const ws = await workspacesService.getById(call.workspaceId);
       if (!ws) {
         logger.warn("Workspace not found for call transcription", {
@@ -234,14 +235,14 @@ export const transcribeCallFn = inngest.createFunction(
     });
 
     // LLM Merging двух ASR результатов
-    const llmMergeStartTime = Date.now();
-
     const mergedResult = await step.run("llm/merge-asr", async () => {
+      const llmMergeStartTime = Date.now();
       const mergeResult = await applyLLMMerging(
         asrResults.nonDiarized,
         asrResults.diarized,
         callId,
       );
+      const llmMergeTimeMs = Date.now() - llmMergeStartTime;
 
       return {
         segments: mergeResult.segments,
@@ -249,11 +250,12 @@ export const transcribeCallFn = inngest.createFunction(
         applied: mergeResult.applied,
         qualityScore: mergeResult.quality?.score,
         fallbackReason: mergeResult.fallbackReason,
+        llmMergeTimeMs,
       };
     });
 
-    // Вычисляем время LLM merge и общее время обработки
-    const llmMergeTimeMs = Date.now() - llmMergeStartTime;
+    // Вычисляем общее время обработки
+    const llmMergeTimeMs = mergedResult.llmMergeTimeMs;
     const totalProcessingTimeMs = asrResults.processingTimeMs + llmMergeTimeMs;
 
     logger.info("ASR + LLM processing completed", {

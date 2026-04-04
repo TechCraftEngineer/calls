@@ -262,7 +262,21 @@ function formatBytesRu(bytes: number): string {
   const sizes = ["байт", "КБ", "МБ", "ГБ"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   const size = Math.round((bytes / k ** i) * 100) / 100;
-  return `${size} ${sizes[i]}`;
+  // Склонение для единицы "байт"
+  let unit = sizes[i];
+  if (i === 0) {
+    // Только для байтов применяем склонение по числу
+    const lastTwo = Math.floor(size) % 100;
+    const lastOne = lastTwo % 10;
+    if (lastOne === 1 && lastTwo !== 11) {
+      unit = "байт"; // 1, 21, 31... байт
+    } else if (lastOne >= 2 && lastOne <= 4 && (lastTwo < 10 || lastTwo > 20)) {
+      unit = "байта"; // 2-4, 22-24... байта
+    } else {
+      unit = "байтов"; // 0, 5-20, 25-30... байтов
+    }
+  }
+  return `${size} ${unit}`;
 }
 
 /** Нормализация номера для сравнения (только цифры) */

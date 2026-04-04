@@ -142,8 +142,16 @@ export const updatePbxBindingWithCustomerSchema = z.object({
 });
 
 /**
- * Типы данных из схем
+ * Схема для обновления статуса транскрипции (failed)
  */
+export const markTranscriptionFailedSchema = z.object({
+  transcriptionStatus: z.enum(["failed", "completed", "pending"]).optional(),
+  transcriptionError: z.string().nullable().optional(),
+  transcribedAt: z.preprocess(
+    (value) => (value instanceof Date ? value.toISOString() : value),
+    z.string().datetime().nullable().optional(),
+  ),
+});
 export type CreateCallInput = z.infer<typeof createCallSchema>;
 export type UpdateCustomerNameInput = z.infer<typeof updateCustomerNameSchema>;
 export type UpdateRecordingInput = z.infer<typeof updateRecordingSchema>;
@@ -151,6 +159,7 @@ export type UpdateEnhancedAudioInput = z.infer<typeof updateEnhancedAudioSchema>
 export type UpdatePbxBindingInput = z.infer<typeof updatePbxBindingSchema>;
 export type UpdateWithRecordingInput = z.infer<typeof updateWithRecordingSchema>;
 export type UpdatePbxBindingWithCustomerInput = z.infer<typeof updatePbxBindingWithCustomerSchema>;
+export type MarkTranscriptionFailedInput = z.infer<typeof markTranscriptionFailedSchema>;
 
 /**
  * Утилиты для валидации
