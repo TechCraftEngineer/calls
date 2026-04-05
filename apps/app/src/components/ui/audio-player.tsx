@@ -5,7 +5,7 @@ import { Loader2, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface AudioPlayerProps {
-  src: string;
+  src?: string | null;
   autoPlay?: boolean;
   className?: string;
   /**
@@ -31,6 +31,12 @@ export default function AudioPlayer({
   const [isMuted, setIsMuted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  // Если нет src, сразу показываем ошибку
+  useEffect(() => {
+    setHasError(!src);
+  }, [src]);
 
   useEffect(() => {
     if (resolvedDurationOverride != null) {
@@ -78,6 +84,10 @@ export default function AudioPlayer({
     const onCanPlay = () => setIsLoading(false);
     const onWaiting = () => setIsLoading(true);
     const onPlaying = () => setIsLoading(false);
+    const onError = () => {
+      setHasError(true);
+      setIsLoading(false);
+    };
 
     audio.addEventListener("timeupdate", updateTime);
     audio.addEventListener("loadedmetadata", updateDuration);
@@ -85,6 +95,7 @@ export default function AudioPlayer({
     audio.addEventListener("canplay", onCanPlay);
     audio.addEventListener("waiting", onWaiting);
     audio.addEventListener("playing", onPlaying);
+    audio.addEventListener("error", onError);
 
     if (autoPlay) {
       const playPromise = audio.play();
@@ -105,6 +116,7 @@ export default function AudioPlayer({
       audio.removeEventListener("canplay", onCanPlay);
       audio.removeEventListener("waiting", onWaiting);
       audio.removeEventListener("playing", onPlaying);
+      audio.removeEventListener("error", onError);
     };
   }, [autoPlay, isDragging, resolvedDurationOverride]);
 
@@ -179,9 +191,18 @@ export default function AudioPlayer({
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // Если нет аудио или ошибка загрузки - показываем сообщение
+  if (hasError) {
+    return (
+      <div className={cn("w-full flex items-center justify-center py-6", className)}>
+        <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>
+      </div>
+    );
+  }
+
   return (
     <div className={cn("w-full", className)}>
-      <audio ref={audioRef} src={src} />
+      <audio ref={audioRef} src={src ?? undefined} />
 
       <div className="flex flex-col gap-4 w-full">
         <div className="flex items-center gap-3 justify-center">

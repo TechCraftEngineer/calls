@@ -1,5 +1,5 @@
 ---
-title: Speaker Embeddings Service
+title: Speaker Diarization Service
 emoji: "🎙️"
 colorFrom: blue
 colorTo: indigo
@@ -9,51 +9,45 @@ app_file: app.py
 pinned: false
 ---
 
-# Speaker Embeddings Service
+# Speaker Diarization Service
 
-Отдельный сервис для батч-вычисления speaker embeddings (HF-friendly).
+Сервис для диаризации аудио (определения "кто говорил когда") с использованием pyannote.audio 4.x.
+
+## Особенности
+
+- **Community версия**: Работает локально без API ключей и токенов
+- **Бесплатно**: Не требует подписки pyannoteAI
+- **Модель**: `pyannote/speaker-diarization-community-1`
 
 ## Hugging Face Space (Docker)
 
 - Рекомендуемый `SDK`: `Docker`
 - Сервис слушает `PORT` из окружения (по умолчанию `7860`)
-- Для приватных моделей pyannote добавьте секрет Space:
-  - `HF_TOKEN=<your_hf_token>`
+- **HF_TOKEN не требуется** для community модели
 
 ### Быстрый чек-лист деплоя
 
 - Создайте новый Space с `SDK = Docker`.
 - Загрузите содержимое папки `services/speaker-embeddings` в корень Space.
-- В `Settings -> Variables and secrets` добавьте:
-  - `Secret`: `HF_TOKEN` (если используете `pyannote/embedding` с доступом по токену).
 - Убедитесь, что Space собрался без ошибок (статус `Running`).
 - Проверьте здоровье сервиса:
   - `GET /health` должен вернуть `{"status":"healthy", ...}`.
 - Проверьте основной endpoint:
-  - `POST /api/embed-batch` с `multipart/form-data` (`file` + `segments_json`).
-- В `giga-am` установите:
-  - `SPEAKER_EMBEDDINGS_URL=https://<your-space>.hf.space`
-  - `SPEAKER_EMBEDDINGS_TIMEOUT=60`
+  - `POST /api/diarize` с `multipart/form-data` (`file` + опциональные `num_speakers`, `min_speakers`, `max_speakers`).
 
 ## Локальный запуск
-
-### Требования
-
-1. Получите токен HuggingFace: https://huggingface.co/settings/tokens
-2. Примите условия доступа к модели: https://huggingface.co/pyannote/embedding
 
 ### Docker Compose
 
 ```bash
-# Скопируйте .env.example в .env и добавьте ваш токен
+# Скопируйте .env.example в .env (HF_TOKEN не требуется для community)
 cp .env.example .env
-# Отредактируйте .env и установите HF_TOKEN
 
 # Запуск
 docker-compose up -d
 
 # Проверка
-curl http://localhost:7861/health
+curl http://localhost:7860/health
 ```
 
 ### Прямой запуск
@@ -62,126 +56,95 @@ curl http://localhost:7861/health
 # Установите зависимости
 pip install -r requirements.txt
 
-# Установите переменные окружения
-export HF_TOKEN=your_token_here
+# Запуск (HF_TOKEN не требуется)
 export PORT=7860
-
-# Запуск
 python app.py
 ```
 
-## Endpoint
+## Endpoints
 
-- `POST /api/embed-batch`
-  - `file`: audio file
-  - `segments_json`: JSON string вида:
+### `POST /api/diarize`
 
-    ```json
-    { "segments": [ { "start": 0.0, "end": 1.2, "text": "..." } ] }
-    ```
+Диаризация аудио файла - определение "кто говорил когда".
 
-  - Ответ:
+**Параметры:**
+- `file`: аудио файл (multipart/form-data, обязательный)
+- `num_speakers` (опционально): точное количество спикеров (int)
+- `min_speakers` (опционально): минимальное количество спикеров (int)
+- `max_speakers` (опционально): максимальное количество спикеров (int)
 
-    ```json
-    {
-      "success": true,
-      "embedding_dim": 222,
-      "count": 1,
-      "embeddings": [[...]]
-    }
-    ```
+**Пример ответа:**
 
-- `GET /health`
-  - Проверка работоспособности сервиса.
-  - Ответ:
+```json
+{
+  "success": true,
+  "segments": [
+    {"start": 0.0, "end": 3.5, "speaker": "SPEAKER_00"},
+    {"start": 3.7, "end": 7.2, "speaker": "SPEAKER_01"}
+  ],
+  "num_speakers": 2,
+  "speakers": ["SPEAKER_00", "SPEAKER_01"],
+  "total_speech_duration": 10.7,
+  "audio_duration": 12.0
+}
+```
 
-    ```json
-    { "status": "healthy", "pyannote_loaded": true }
-    ```
+### `GET /health`
+
+Проверка работоспособности сервиса.
+
+**Ответ для community модели:**
+
+```json
+{
+  "status": "healthy",
+  "pyannote_available": true,
+  "requires_hf_token": false,
+  "model": "pyannote/speaker-diarization-community-1"
+}
+```
+
+### `GET /api/diagnostics`
+
+Диагностическая информация о конфигурации.
+
+### `GET /`
+
+Информация о сервисе и доступных endpoints.
 
 ## Интеграция
 
-В `giga-am` задайте:
-
-- `SPEAKER_EMBEDDINGS_URL=https://<speaker-embeddings>.hf.space`
-- `SPEAKER_EMBEDDINGS_TIMEOUT=60`
-
-При недоступности сервиса `giga-am` автоматически использует локальный embedding fallback.
-
-## Использование в транскрибации
-
-Сервис `speaker-embeddings` интегрирован в полный pipeline транскрибации:
-
-1. `giga-am` использует эмбеддинги для кластеризации спикеров (диаризация)
-2. Результаты кластеризации передаются в `packages/jobs` через `speaker_timeline` и `segments` с эмбеддингами
-3. `identifySpeakersWithEmbeddings` анализирует кластеры и определяет роли (оператор/клиент) с помощью LLM
-4. Финальный транскрипт содержит точные метки спикеров с именами
-
-Преимущества использования эмбеддингов:
-
-- Более точная идентификация спикеров по голосовым характеристикам
-- Учёт длительности и количества сегментов каждого спикера
-- Комбинация акустических данных с контекстным анализом LLM
-
-## Современные улучшения (2024-2025)
-
-### Adaptive Clustering
-
-Система использует адаптивные пороги кластеризации:
-- Динамический порог на основе длительности сегмента и качества эмбеддинга
-- Короткие сегменты (<0.3с) требуют более строгого порога
-- Настраивается через `CLUSTERING_BASE_THRESHOLD` (по умолчанию: 0.40)
-
-### Temporal Coherence
-
-Учёт временной структуры разговора:
-- Бонус за временную близость сегментов
-- Уменьшает ошибки переключения спикеров
-- Настраивается через `CLUSTERING_TEMPORAL_WEIGHT` (по умолчанию: 0.1)
-
-### Confidence Scoring
-
-Оценка надёжности кластеризации:
-- Каждый сегмент получает confidence score (0-1)
-- Используется в LLM для взвешенного анализа
-- Позволяет фильтровать низкоуверенные сегменты
-
-### Unreliable Segment Filtering
-
-Обработка коротких сегментов:
-- Фильтрация перед основной кластеризацией
-- Переназначение после кластеризации надёжных сегментов
-- Снижает speaker confusion на 15-20%
-
-## Ожидаемые метрики
-
-- **DER (Diarization Error Rate):** <15% (цель: 12-13%)
-- **Speaker Confusion:** -20-30% по сравнению со старой версией
-- **Точность идентификации ролей:** +10-15%
-
-## Настройка параметров
-
-Параметры кластеризации настраиваются в `giga-am` через переменные окружения:
+В `giga-am` установите URL сервиса диаризации:
 
 ```bash
-# Базовый порог для кластеризации (0.1-0.9)
-CLUSTERING_BASE_THRESHOLD=0.40
-
-# Минимальная длительность надёжного сегмента (0.1-2.0 сек)
-CLUSTERING_MIN_SEGMENT_DURATION=0.3
-
-# Вес временной близости (0.0-0.5)
-CLUSTERING_TEMPORAL_WEIGHT=0.1
-
-# Порог уверенности (0.0-1.0)
-CLUSTERING_CONFIDENCE_THRESHOLD=0.6
+SPEAKER_DIARIZATION_URL=http://speaker-embeddings:7860
+# или для Hugging Face Space:
+SPEAKER_DIARIZATION_URL=https://<your-space>.hf.space
 ```
 
-Подробная документация: [CLUSTERING_TUNING.md](../giga-am/docs/CLUSTERING_TUNING.md)
+При недоступности сервиса `giga-am` может использовать fallback диаризацию.
+
+## Использование не-community моделей
+
+Если вы хотите использовать другие модели pyannote (например, `pyannote/speaker-diarization-3.1`), установите `HF_TOKEN`:
+
+```bash
+export HF_TOKEN=your_token_here
+export PYANNOTE_DIARIZATION_MODEL=pyannote/speaker-diarization-3.1
+```
+
+## Требования
+
+- Python 3.11+
+- pyannote.audio >= 4.0.0 (для поддержки community модели)
+- PyTorch (CPU версия достаточна)
+- 2GB+ RAM для загрузки модели
+
+## Лицензия
+
+Community модель распространяется под лицензией, разрешающей коммерческое использование без необходимости API ключей.
 
 ## Источники и исследования
 
-Улучшения основаны на современных исследованиях 2024-2025:
+- [pyannote.audio 4.x](https://github.com/pyannote/pyannote-audio) - Speaker diarization toolkit
 - [PyannoteAI Benchmarks](https://arxiv.org/html/2509.26177v1) - SOTA: 11.2% DER
-- [EEND-VC](https://arxiv.org/html/2510.14551v1) - End-to-End Neural Diarization
-- [Filtering Unreliable Embeddings](https://arxiv.org/html/2510.19572v1)
