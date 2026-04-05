@@ -75,7 +75,7 @@ async function processFile(
     // Скачиваем файл напрямую в буфер
     const chunks: Buffer[] = [];
     const writable = new Writable({
-      write(chunk, _encoding, callback) {
+      write(chunk, _, callback) {
         chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
         callback();
       },

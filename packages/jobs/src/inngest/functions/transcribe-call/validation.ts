@@ -18,21 +18,6 @@ const WorkspaceDescriptionSchema = z
   .string()
   .max(2000, "Описание должно быть не более 2000 символов");
 
-// Схема для валидации workspace для LLM
-const _WorkspaceLlmInputSchema = z.object({
-  message: z.string().min(1).max(2000, "Сообщение должно быть от 1 до 2000 символов"),
-  context: z.string().optional(),
-  history: z
-    .array(
-      z.object({
-        role: z.enum(["user", "assistant"]),
-        content: z.string(),
-      }),
-    )
-    .max(20, "История диалога не может содержать более 20 сообщений")
-    .optional(),
-});
-
 export interface ValidationError {
   field: string;
   message: string;
