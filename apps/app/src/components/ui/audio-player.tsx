@@ -34,9 +34,9 @@ export default function AudioPlayer({
   const [hasError, setHasError] = useState(false);
 
   // Если нет src, сразу показываем ошибку
-  useEffect(() => {
-    setHasError(!src);
-  }, [src]);
+  // useEffect(() => {
+  //   setHasError(!src);
+  // }, [src]);
 
   useEffect(() => {
     if (resolvedDurationOverride != null) {
@@ -212,6 +212,7 @@ export default function AudioPlayer({
             className="text-muted-foreground hover:text-foreground"
             onClick={toggleMute}
             title={isMuted ? "Включить звук" : "Выключить звук"}
+            aria-label={isMuted ? "Включить звук" : "Выключить звук"}
           >
             {isMuted ? <VolumeX className="size-4.5" /> : <Volume2 className="size-4.5" />}
           </Button>
@@ -223,6 +224,7 @@ export default function AudioPlayer({
             onClick={togglePlay}
             disabled={isLoading}
             title={isPlaying ? "Пауза" : "Воспроизвести"}
+            aria-label={isLoading ? "Загрузка" : isPlaying ? "Пауза" : "Воспроизвести"}
           >
             {isLoading ? (
               <Loader2 className="size-6 animate-spin" />
