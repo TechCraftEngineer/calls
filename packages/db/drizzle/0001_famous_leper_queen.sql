@@ -1,2 +1,0 @@
-ALTER TABLE "calls" ADD CONSTRAINT "calls_transcription_status_check" CHECK (transcription_status IS NULL OR transcription_status IN ('pending', 'processing', 'completed', 'failed'));--> statement-breakpoint
-ALTER TABLE "invitations" ADD CONSTRAINT "invitations_email_type_check" CHECK (invitation_type <> 'email' OR email IS NOT NULL);
