@@ -21,6 +21,8 @@ export interface DayData {
   targetMinutes: number;
   completionPercentage: number;
   totalCalls: number;
+  dailyTargetBonus: number;
+  calculatedBonus: number;
 }
 
 export const getMonthlyKpiGrid = workspaceAdminProcedure
@@ -66,14 +68,17 @@ export const getMonthlyKpiGrid = workspaceAdminProcedure
           });
 
           const targetTalkTimeMinutes = employee.kpiTargetTalkTimeMinutes || 0;
+          const targetBonus = employee.kpiTargetBonus || 0;
           // Примечание: дневная цель = месячная цель / кол-во календарных дней
           // В будущем может потребоваться учёт только рабочих дней
           const dailyTargetMinutes = Math.round(targetTalkTimeMinutes / daysInMonth);
+          const dailyTargetBonus = Math.round(targetBonus / daysInMonth);
 
           const days: DayData[] = dailyStats.map((stat) => {
             const actualMinutes = Math.round(stat.totalDurationSeconds / 60);
             const completionPercentage =
               dailyTargetMinutes > 0 ? Math.round((actualMinutes / dailyTargetMinutes) * 100) : 0;
+            const calculatedBonus = Math.round(dailyTargetBonus * (completionPercentage / 100));
 
             return {
               date: stat.date,
@@ -81,6 +86,8 @@ export const getMonthlyKpiGrid = workspaceAdminProcedure
               targetMinutes: dailyTargetMinutes,
               completionPercentage,
               totalCalls: stat.totalCalls,
+              dailyTargetBonus,
+              calculatedBonus,
             };
           });
 

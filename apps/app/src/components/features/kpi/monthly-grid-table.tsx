@@ -55,7 +55,15 @@ function monthLabel(monthValue: string) {
   return date.toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
 }
 
-// Цветовое кодирование по проценту выполнения
+// Форматирование денег
+function formatMoney(value: number): string {
+  return new Intl.NumberFormat("ru-RU", {
+    style: "currency",
+    currency: "RUB",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 function getCellColor(percentage: number): string {
   if (percentage >= 100) return "bg-green-50 text-green-900";
   if (percentage >= 80) return "bg-yellow-50 text-yellow-900";
@@ -188,6 +196,9 @@ export default function MonthlyGridTable() {
                   </TableHead>
                 );
               })}
+              <TableHead className="text-center min-w-[100px] p-2 bg-gray-50 border-l font-semibold">
+                <div className="text-xs">Итого</div>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -219,13 +230,110 @@ export default function MonthlyGridTable() {
                           {dayData.completionPercentage.toFixed(0)}%
                         </div>
                         <div className="text-[10px] text-gray-600">{dayData.actualMinutes}м</div>
+                        {dayData.calculatedBonus > 0 && (
+                          <div className="text-[10px] font-medium text-green-700">
+                            +{formatMoney(dayData.calculatedBonus)}
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                   );
                 })}
+                {/* Итоговая ячейка с суммарными данными по сотруднику */}
+                {(() => {
+                  const totalMinutes = employee.days.reduce((sum, d) => sum + d.actualMinutes, 0);
+                  const totalBonus = employee.days.reduce((sum, d) => sum + d.calculatedBonus, 0);
+                  const avgPercentage =
+                    employee.days.length > 0
+                      ? Math.round(
+                          employee.days.reduce((sum, d) => sum + d.completionPercentage, 0) /
+                            employee.days.length,
+                        )
+                      : 0;
+                  const colorClass = getCellColor(avgPercentage);
+
+                  return (
+                    <TableCell className={`text-center p-2 bg-gray-50 border-l ${colorClass}`}>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="text-xs font-semibold">{avgPercentage}%</div>
+                        <div className="text-[10px] text-gray-600">{totalMinutes}м</div>
+                        {totalBonus > 0 && (
+                          <div className="text-[10px] font-bold text-green-700">
+                            {formatMoney(totalBonus)}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                  );
+                })()}
               </TableRow>
             ))}
           </TableBody>
+          {/* Итоговая строка по всем сотрудникам */}
+          <tfoot className="bg-gray-100 border-t-2">
+            <TableRow>
+              <TableCell className="sticky left-0 z-10 bg-gray-100 border-r font-bold text-sm">
+                <div className="flex flex-col">
+                  <span className="text-gray-900">Всего по отделу</span>
+                  <span className="text-xs text-gray-500">{gridData.length} сотрудников</span>
+                </div>
+              </TableCell>
+              {daysInMonth.map((date) => {
+                const dayTotalMinutes = gridData.reduce((sum, emp) => {
+                  const day = emp.days.find((d) => d.date === date);
+                  return sum + (day?.actualMinutes || 0);
+                }, 0);
+                const dayTotalBonus = gridData.reduce((sum, emp) => {
+                  const day = emp.days.find((d) => d.date === date);
+                  return sum + (day?.calculatedBonus || 0);
+                }, 0);
+                const hasData = dayTotalMinutes > 0;
+
+                return (
+                  <TableCell key={date} className="text-center p-2">
+                    {hasData ? (
+                      <div className="flex flex-col gap-0.5">
+                        <div className="text-xs font-semibold text-gray-700">
+                          {dayTotalMinutes}м
+                        </div>
+                        {dayTotalBonus > 0 && (
+                          <div className="text-[10px] font-bold text-green-700">
+                            {formatMoney(dayTotalBonus)}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400">—</div>
+                    )}
+                  </TableCell>
+                );
+              })}
+              {/* Итоговая ячейка для всего отдела */}
+              {(() => {
+                const totalMinutes = gridData.reduce(
+                  (sum, emp) => sum + emp.days.reduce((dSum, d) => dSum + d.actualMinutes, 0),
+                  0,
+                );
+                const totalBonus = gridData.reduce(
+                  (sum, emp) => sum + emp.days.reduce((dSum, d) => dSum + d.calculatedBonus, 0),
+                  0,
+                );
+
+                return (
+                  <TableCell className="text-center p-2 bg-gray-200 border-l font-bold">
+                    <div className="flex flex-col gap-0.5">
+                      <div className="text-xs text-gray-800">{totalMinutes}м</div>
+                      {totalBonus > 0 && (
+                        <div className="text-[10px] font-bold text-green-800">
+                          {formatMoney(totalBonus)}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                );
+              })()}
+            </TableRow>
+          </tfoot>
         </Table>
       </div>
 
