@@ -1,6 +1,6 @@
 import { eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
 import * as schema from "../../schema";
-import { ANSWERED_ALIASES, MISSED_ALIASES } from "../../utils/call-status";
+import { ANSWERED_ALIASES, MISSED_ALIASES, TECHNICAL_ERROR_ALIASES } from "../../utils/call-status";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
 
 export interface CallConditionsParams {
@@ -119,10 +119,15 @@ export function buildCallConditions({
         ANSWERED_ALIASES.map((alias) => sql`${alias}`),
         sql`, `,
       );
+      const technicalErrorAliasesSql = sql.join(
+        TECHNICAL_ERROR_ALIASES.map((alias) => sql`${alias}`),
+        sql`, `,
+      );
       const canonicalStatus = sql<string>`
         CASE
           WHEN ${statusValue} IN (${missedAliasesSql}) THEN 'missed'
           WHEN ${statusValue} IN (${answeredAliasesSql}) THEN 'answered'
+          WHEN ${statusValue} IN (${technicalErrorAliasesSql}) THEN 'technical_error'
           ELSE ${statusValue}
         END
       `;

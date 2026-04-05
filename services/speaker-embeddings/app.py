@@ -1,5 +1,4 @@
 import io
-import functools
 import logging
 import os
 from typing import Any
@@ -216,8 +215,19 @@ async def diarize(
         raise HTTPException(status_code=500, detail="diarization failed") from exc
 
 
+# Module-level cache for diarization pipelines
+_pipeline_cache: dict[tuple[str, str | None], Any] = {}
+
+
 def _get_diarization_pipeline(diarization_model: str, token: str | None):
     """Get cached diarization pipeline instance."""
+    cache_key = (diarization_model, token)
+    
+    # Return cached pipeline if available
+    if cache_key in _pipeline_cache:
+        logger.info(f"Using cached diarization pipeline: {diarization_model}")
+        return _pipeline_cache[cache_key]
+    
     try:
         from pyannote.audio import Pipeline
         
@@ -246,6 +256,8 @@ def _get_diarization_pipeline(diarization_model: str, token: str | None):
             try:
                 pipeline = Pipeline.from_pretrained(diarization_model, **kwargs)
                 logger.info(f"Successfully loaded diarization pipeline: {diarization_model}")
+                # Cache the pipeline
+                _pipeline_cache[cache_key] = pipeline
                 return pipeline
             except TypeError:
                 continue

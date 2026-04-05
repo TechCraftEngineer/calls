@@ -48,7 +48,10 @@ export const calls = pgTable(
   },
   (table) => [
     // Используем pgEnum для валидации значений
-    check("calls_status_check", sql`status IN ('missed', 'answered', 'voicemail', 'failed')`),
+    check(
+      "calls_status_check",
+      sql`status IN ('missed', 'answered', 'voicemail', 'failed', 'technical_error')`,
+    ),
     check("calls_direction_check", sql`direction IN ('inbound', 'outbound')`),
     check(
       "calls_transcription_status_check",

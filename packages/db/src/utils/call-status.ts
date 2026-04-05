@@ -11,6 +11,7 @@ export const MISSED_ALIASES = [
   "unanswered",
   "noanswer",
   "no answer",
+  "cancelled",
   "пропущен",
   "не принят",
   "не отвечен",
@@ -23,6 +24,7 @@ export const ANSWERED_ALIASES = [
   "accepted",
   "completed",
   "connected",
+  "success",
   "принят",
 ] as const;
 
@@ -32,6 +34,12 @@ export const TECHNICAL_ERROR_ALIASES = [
   "ошибка",
   "technical_error",
   "errored",
+  "busy",
+  "notavailable",
+  "notallowed",
+  "занят",
+  "недоступен",
+  "запрещено",
 ] as const;
 
 const STATUS_ALIASES: Record<string, CallStatus> = {
