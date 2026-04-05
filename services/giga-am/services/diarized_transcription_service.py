@@ -138,7 +138,7 @@ class DiarizedTranscriptionService:
                 DiarizationSegment(
                     start=seg.get("start", 0),
                     end=seg.get("end", 0),
-                    speaker=seg.get("speaker", "unknown")
+                    speaker=seg.get("speaker") or "unknown"
                 )
                 for seg in segments
             ]

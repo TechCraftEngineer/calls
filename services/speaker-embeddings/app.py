@@ -80,7 +80,7 @@ async def health() -> dict[str, Any]:
         from pyannote.audio import Pipeline
         pyannote_available = True
     except Exception:
-        pass
+        logger.exception("pyannote.audio import failed")
     
     # Для community версии токен не требуется
     diarization_model = os.getenv("PYANNOTE_DIARIZATION_MODEL", "pyannote/speaker-diarization-community-1")
@@ -216,7 +216,6 @@ async def diarize(
         raise HTTPException(status_code=500, detail="diarization failed") from exc
 
 
-@functools.lru_cache(maxsize=1)
 def _get_diarization_pipeline(diarization_model: str, token: str | None):
     """Get cached diarization pipeline instance."""
     try:
@@ -251,8 +250,8 @@ def _get_diarization_pipeline(diarization_model: str, token: str | None):
             except TypeError:
                 continue
             except Exception as exc:
-                logger.error(f"Failed to load diarization pipeline: {exc}")
-                break
+                logger.error(f"Failed to load diarization pipeline with kwargs {kwargs}: {exc}")
+                continue
         
         return None
         
