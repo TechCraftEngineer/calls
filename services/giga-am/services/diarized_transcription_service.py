@@ -158,6 +158,21 @@ class DiarizedTranscriptionService:
                 seg.text for seg in transcribed_segments if seg.text
             ).strip()
             
+            # Логируем статистику по текстам сегментов
+            empty_segments = sum(1 for seg in transcribed_segments if not seg.text)
+            non_empty_segments = len(transcribed_segments) - empty_segments
+            total_text_length = sum(len(seg.text) for seg in transcribed_segments)
+            
+            logger.info(
+                f"[{request_id}] Формирование итогового текста: "
+                f"всего_сегментов={len(transcribed_segments)}, "
+                f"пустых={empty_segments}, "
+                f"непустых={non_empty_segments}, "
+                f"total_text_length={total_text_length}, "
+                f"full_transcript_length={len(full_transcript)}, "
+                f"full_transcript_preview='{full_transcript[:100]}...'"
+            )
+            
             # Получаем уникальных спикеров
             speakers = list(set(seg.speaker for seg in transcribed_segments))
             
@@ -234,7 +249,17 @@ class DiarizedTranscriptionService:
         Returns:
             Список путей к файлам сегментов
         """
-        async def extract_one(idx: int, segment: DiarizationSegment) -> str:
+        async def extract_one(idx: int, segment: DiarizationSegment) -> Optional[str]:
+            # Проверяем минимальную длительность сегмента
+            segment_duration = segment.end - segment.start
+            MIN_SEGMENT_DURATION = 0.3  # минимум 300ms для распознавания
+            
+            if segment_duration < MIN_SEGMENT_DURATION:
+                logger.debug(
+                    f"[{request_id}] Сегмент {idx} слишком короткий: {segment_duration:.3f}s, пропускаем"
+                )
+                return None
+            
             start_sample = int(segment.start * sample_rate)
             end_sample = int(segment.end * sample_rate)
             
@@ -244,6 +269,11 @@ class DiarizedTranscriptionService:
             
             segment_audio = audio_array[start_sample:end_sample]
             
+            # Дополнительная проверка - аудио не пустое
+            if len(segment_audio) == 0:
+                logger.warning(f"[{request_id}] Сегмент {idx}: пустое аудио после нарезки")
+                return None
+            
             output_path = os.path.join(temp_dir, f"segment_{idx:04d}.wav")
             
             await asyncio.to_thread(
@@ -252,6 +282,13 @@ class DiarizedTranscriptionService:
                 segment_audio,
                 sample_rate,
                 subtype='PCM_16'
+            )
+            
+            # Логируем размер созданного файла
+            file_size = os.path.getsize(output_path)
+            logger.debug(
+                f"[{request_id}] Сегмент {idx}: сохранен файл {output_path}, размер={file_size} bytes, "
+                f"длительность={segment_duration:.3f}s, samples={len(segment_audio)}"
             )
             
             return output_path
@@ -310,6 +347,10 @@ class DiarizedTranscriptionService:
                     
                     if result.get("success"):
                         segments_data = result.get("segments", [])
+                        logger.debug(
+                            f"[{request_id}] Сегмент {idx}: получено {len(segments_data)} подсегментов, "
+                            f"raw_result={result}"
+                        )
                         if segments_data:
                             # Объединяем все сегменты в один текст
                             texts = []
@@ -322,9 +363,16 @@ class DiarizedTranscriptionService:
                             text = " ".join(texts).strip()
                             # Вычисляем среднюю уверенность
                             confidence = sum(confidences) / len(confidences) if confidences else 1.0
+                            
+                            logger.debug(
+                                f"[{request_id}] Сегмент {idx}: текст='{text[:50]}...', длина={len(text)}"
+                            )
                         else:
                             text = ""
                             confidence = 0.0
+                            logger.warning(
+                                f"[{request_id}] Сегмент {idx}: нет подсегментов в результате"
+                            )
                     else:
                         text = ""
                         confidence = 0.0

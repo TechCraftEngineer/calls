@@ -365,8 +365,30 @@ class TranscriptionService:
         # Сначала пробуем передать путь к файлу
         try:
             with self._model_lock:
-                result = self.model.transcribe_longform(audio_path)
+                raw_result = self.model.transcribe_longform(audio_path)
+                
+                # Конвертируем результат в список если это объект LongformTranscriptionResult
+                if not isinstance(raw_result, (list, tuple)):
+                    # Пробуем итерироваться по объекту или извлечь сегменты
+                    try:
+                        result = list(raw_result)
+                    except TypeError:
+                        # Если объект не итерируемый, проверяем есть ли атрибут segments или utterances
+                        if hasattr(raw_result, 'segments'):
+                            result = list(raw_result.segments)
+                        elif hasattr(raw_result, 'utterances'):
+                            result = list(raw_result.utterances)
+                        else:
+                            # Последний fallback - оборачиваем в список
+                            result = [raw_result]
+                else:
+                    result = list(raw_result)
+                
                 logger.info(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
+                # Логируем первые 3 сегмента для диагностики
+                if result and len(result) > 0:
+                    sample = result[:3]
+                    logger.debug(f"Пример результата модели: {sample}")
                 return result
         except (RuntimeError, ValueError, OSError) as model_error:
             # Для ошибок модели/обработки используем fallback с librosa
@@ -380,8 +402,27 @@ class TranscriptionService:
             
             # Передаем загруженные данные в модель под блокировкой
             with self._model_lock:
-                result = self.model.transcribe_longform(audio_data)
+                raw_result = self.model.transcribe_longform(audio_data)
+                
+                # Конвертируем результат в список если это объект LongformTranscriptionResult
+                if not isinstance(raw_result, (list, tuple)):
+                    try:
+                        result = list(raw_result)
+                    except TypeError:
+                        if hasattr(raw_result, 'segments'):
+                            result = list(raw_result.segments)
+                        elif hasattr(raw_result, 'utterances'):
+                            result = list(raw_result.utterances)
+                        else:
+                            result = [raw_result]
+                else:
+                    result = list(raw_result)
+                
                 logger.info(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
+                # Логируем первые 3 сегмента для диагностики
+                if result and len(result) > 0:
+                    sample = result[:3]
+                    logger.debug(f"Пример результата модели (fallback): {sample}")
                 return result
     
     def format_transcription_text(self, result: Dict[str, Any]) -> str:
