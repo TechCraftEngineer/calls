@@ -2,11 +2,7 @@
   "extends": "@calls/tsconfig/base.json",
   "compilerOptions": {
     "types": ["node", "bun"],
-    "baseUrl": "./src",
-    "paths": {
-      "~/*": ["./*"],
-      "~": ["."]
-    }
+    "baseUrl": "./src"
   },
   "include": ["src"],
   "exclude": ["node_modules"]

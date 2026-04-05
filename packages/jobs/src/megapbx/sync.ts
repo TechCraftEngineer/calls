@@ -7,9 +7,9 @@ import {
   pbxService,
 } from "@calls/db";
 import pLimit from "p-limit";
-import { inngest, transcribeRequested } from "~/inngest/client";
-import { createLogger } from "~/logger";
-import { MegaPbxClient } from "~/megapbx/client";
+import { inngest, transcribeRequested } from "../inngest/client";
+import { createLogger } from "../logger";
+import { MegaPbxClient } from "./client";
 import {
   type NormalizedCall,
   type NormalizedEmployee,
@@ -17,7 +17,7 @@ import {
   normalizeCall,
   normalizeEmployee,
   normalizeNumber,
-} from "~/megapbx/normalize";
+} from "./normalize";
 
 const logger = createLogger("megapbx-sync");
 const PROVIDER = "megapbx";
@@ -197,16 +197,16 @@ export async function syncMegaPbxDirectory(
 
     const employees = employeesRaw
       .map(normalizeEmployee)
-      .filter((item): item is NormalizedEmployee => Boolean(item));
+      .filter((item: NormalizedEmployee | null): item is NormalizedEmployee => Boolean(item));
     const numbers = numbersRaw
       .map(normalizeNumber)
-      .filter((item): item is NormalizedNumber => Boolean(item));
+      .filter((item: NormalizedNumber | null): item is NormalizedNumber => Boolean(item));
 
     await pbxRepository.upsertEmployees(
-      employees.map((item) => ({ ...item, workspaceId, provider: PROVIDER })),
+      employees.map((item: NormalizedEmployee) => ({ ...item, workspaceId, provider: PROVIDER })),
     );
     await pbxRepository.upsertNumbers(
-      numbers.map((item) => ({ ...item, workspaceId, provider: PROVIDER })),
+      numbers.map((item: NormalizedNumber) => ({ ...item, workspaceId, provider: PROVIDER })),
     );
 
     stats.employees = employees.length;
@@ -302,8 +302,8 @@ export async function syncMegaPbxCalls(
 
     const calls = rawCalls
       .map(normalizeCall)
-      .filter((item): item is NormalizedCall => Boolean(item))
-      .sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+      .filter((item: NormalizedCall | null): item is NormalizedCall => Boolean(item))
+      .sort((a: NormalizedCall, b: NormalizedCall) => a.timestamp.localeCompare(b.timestamp));
     const excludePhoneNumbers = config.excludePhoneNumbers ?? [];
 
     // Собираем все callIds для батчинговой отправки событий
