@@ -4,7 +4,7 @@
 
 import { filesService } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
-import type { ZodIssue } from "zod";
+import type { z } from "zod";
 import { createLogger } from "../../../../logger";
 import { FileSchema } from "../schemas";
 import type { AudioBufferLegacyResult, AudioFileResult } from "../types";
@@ -78,7 +78,7 @@ export async function downloadAudioFile(fileId: string): Promise<AudioFileResult
   const fileValidation = FileSchema.safeParse(file);
   if (!fileValidation.success) {
     const errorDetails = fileValidation.error.issues
-      .map((issue: ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+      .map((issue: z.ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
       .join(", ");
     throw new Error(`File validation failed: ${errorDetails}`);
   }
