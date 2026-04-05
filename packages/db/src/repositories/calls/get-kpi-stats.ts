@@ -48,9 +48,9 @@ export async function getKpiStats(params: GetKpiStatsParams): Promise<KpiStatsBy
       internalNumber: schema.calls.internalNumber,
       totalDuration: sql<number>`COALESCE(SUM(${schema.files.durationSeconds}), 0)::int`,
       totalCalls: sql<number>`COUNT(*)::int`,
-      incoming: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) = 'inbound' AND COALESCE(${schema.files.durationSeconds}, 0) > 0)::int`,
-      outgoing: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) = 'outbound')::int`,
-      missed: sql<number>`COUNT(*) FILTER (WHERE LOWER(COALESCE(${schema.calls.direction}, '')) = 'inbound' AND COALESCE(${schema.files.durationSeconds}, 0) = 0)::int`,
+      incoming: sql<number>`COUNT(*) FILTER (WHERE LOWER(${schema.calls.direction}::text) = 'inbound' AND COALESCE(${schema.files.durationSeconds}, 0) > 0)::int`,
+      outgoing: sql<number>`COUNT(*) FILTER (WHERE LOWER(${schema.calls.direction}::text) = 'outbound')::int`,
+      missed: sql<number>`COUNT(*) FILTER (WHERE LOWER(${schema.calls.direction}::text) = 'inbound' AND COALESCE(${schema.files.durationSeconds}, 0) = 0)::int`,
     })
     .from(schema.calls)
     .leftJoin(schema.files, eq(schema.calls.fileId, schema.files.id))
