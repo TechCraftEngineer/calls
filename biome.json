@@ -53,6 +53,9 @@
         "noUnusedVariables": {
           "level": "error"
         },
+        "noUnusedImports": "error",
+        "noUnusedFunctionParameters": "warn",
+        "noUnreachableSuper": "error",
         "noChildrenProp": "off",
         "noUnreachable": "error",
         "noUndeclaredVariables": "error"

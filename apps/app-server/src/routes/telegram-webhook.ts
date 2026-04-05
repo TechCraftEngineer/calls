@@ -1,11 +1,18 @@
 import { createLogger } from "@calls/api";
 import { env } from "@calls/config";
-import { isValidWorkspaceId, settingsService, usersService } from "@calls/db";
+import { settingsService, usersService } from "@calls/db";
+import { workspaceIdSchema } from "@calls/shared";
 import { createWebhookHandler } from "@calls/telegram-bot";
 import type { Hono } from "hono";
+import { z } from "zod";
 import { webhookRateLimit } from "../lib/webhook-rate-limit";
 
 const backendLogger = createLogger("backend-server");
+
+// Zod схема для валидации параметров маршрута
+const WebhookParamsSchema = z.object({
+  workspaceId: workspaceIdSchema,
+});
 
 function extractStartPayloadFromUpdate(update: unknown): string | null {
   if (!update || typeof update !== "object") return null;
@@ -19,15 +26,16 @@ function extractStartPayloadFromUpdate(update: unknown): string | null {
 export const registerTelegramWebhookRoutes = (app: Hono) => {
   // Telegram webhook: /api/telegram-webhook/:workspaceId (SaaS, каждый workspace — свой URL)
   app.post("/api/telegram-webhook/:workspaceId", webhookRateLimit, async (c) => {
-    const workspaceId = c.req.param("workspaceId");
-    if (!workspaceId || !isValidWorkspaceId(workspaceId)) {
+    const paramsResult = WebhookParamsSchema.safeParse({ workspaceId: c.req.param("workspaceId") });
+    if (!paramsResult.success) {
       backendLogger.warn("Invalid workspace ID in webhook request", {
-        workspaceId,
+        workspaceId: c.req.param("workspaceId"),
         userAgent: c.req.header("user-agent"),
         ip: c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "unknown",
       });
       return c.json({ error: "Некорректное рабочее пространство" }, 400);
     }
+    const { workspaceId } = paramsResult.data;
 
     const handler = createWebhookHandler(async () => {
       try {

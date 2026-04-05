@@ -1,13 +1,21 @@
 import { timingSafeEqual } from "node:crypto";
 import { createLogger } from "@calls/api";
-import { callsService, isValidWorkspaceId, pbxService } from "@calls/db";
+import { callsService, pbxService } from "@calls/db";
 import { inngest, pbxSyncRequested } from "@calls/jobs";
+import { workspaceIdSchema } from "@calls/shared";
 import type { Context, Hono } from "hono";
 import { z } from "zod";
 import { webhookRateLimit } from "../lib/webhook-rate-limit";
 
 const backendLogger = createLogger("backend-server");
 const SUPPORTED_COMMANDS = new Set(["history", "event", "contact", "rating"]);
+
+// Zod схема для валидации параметров маршрута
+const WebhookParamsSchema = z.object({
+  workspaceId: workspaceIdSchema,
+});
+
+// Zod схема для валидации payload вебхука
 const webhookPayloadSchema = z
   .object({
     cmd: z.string().min(1),
@@ -92,10 +100,11 @@ const handlePbxWebhook = async (c: Context) => {
   // Invoked by /api/pbx-webhook and /api/megapbx-webhook.
   // История звонков приходит от АТС в формате requests#history:
   // https://api.megapbx.ru/#/docs/crmapi/v1/requests#history
-  const workspaceId = c.req.param("workspaceId");
-  if (!workspaceId || !isValidWorkspaceId(workspaceId)) {
+  const paramsResult = WebhookParamsSchema.safeParse({ workspaceId: c.req.param("workspaceId") });
+  if (!paramsResult.success) {
     return c.json({ error: "Некорректное рабочее пространство" }, 400);
   }
+  const { workspaceId } = paramsResult.data;
 
   const config = await pbxService.getConfigWithSecrets(workspaceId);
   if (!config) {

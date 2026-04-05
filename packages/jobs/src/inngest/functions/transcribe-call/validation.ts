@@ -2,10 +2,16 @@
  * Функции валидации и обработки ошибок для транскрибации
  */
 
+import { workspaceIdSchema } from "@calls/shared";
 import { z } from "zod";
 import { createLogger } from "~/logger";
 
 const logger = createLogger("transcribe-call-validation");
+
+// Zod схемы для валидации
+const CallIdSchema = z.string().min(1, "callId обязателен");
+const StorageKeySchema = z.string().min(1, "storageKey обязателен");
+const PreprocessedFileIdSchema = z.string().min(1, "preprocessedFileId обязателен");
 
 // Схема для валидации описания workspace
 const WorkspaceDescriptionSchema = z
@@ -45,19 +51,15 @@ export class TranscriptionError extends Error {
 }
 
 export function validateCallId(callId: unknown): string {
-  if (!callId || typeof callId !== "string") {
+  const result = CallIdSchema.safeParse(callId);
+  if (!result.success) {
     throw new TranscriptionError(
-      "callId обязателен и должен быть строкой",
+      "callId обязателен и должен быть непустой строкой",
       "INVALID_CALL_ID",
       "callId",
     );
   }
-
-  if (callId.trim().length === 0) {
-    throw new TranscriptionError("callId не может быть пустым", "EMPTY_CALL_ID", "callId");
-  }
-
-  return callId.trim();
+  return result.data.trim();
 }
 
 export function validateCall(call: {
@@ -76,10 +78,11 @@ export function validateCall(call: {
     );
   }
 
-  if (!call.workspaceId) {
+  const workspaceResult = workspaceIdSchema.safeParse(call.workspaceId);
+  if (!workspaceResult.success) {
     throw new TranscriptionError(
-      `У звонка ${call.id} не указан workspaceId`,
-      "MISSING_WORKSPACE_ID",
+      `У звонка ${call.id} указан неверный workspaceId`,
+      "INVALID_WORKSPACE_ID",
       "workspaceId",
     );
   }
@@ -90,9 +93,9 @@ export function validateWorkspace(workspace: {
   name?: string | null;
   description?: string | null;
 }): typeof workspace | undefined {
-  // Validate UUID format
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(workspace.id)) {
+  // Validate workspace ID format using Zod schema
+  const result = workspaceIdSchema.safeParse(workspace.id);
+  if (!result.success) {
     throw new TranscriptionError(
       `Неверный формат идентификатора рабочего пространства: ${workspace.id}`,
       "INVALID_WORKSPACE_ID",
@@ -147,7 +150,8 @@ export function validateFile(file: {
   storageKey?: string | null;
   filename?: string | null;
 }): void {
-  if (!file.storageKey) {
+  const result = StorageKeySchema.safeParse(file.storageKey);
+  if (!result.success) {
     throw new TranscriptionError(
       `У файла ${file.id} отсутствует storageKey`,
       "MISSING_STORAGE_KEY",
@@ -157,7 +161,8 @@ export function validateFile(file: {
 }
 
 export function validatePipelineResult(result: { preprocessedFileId?: string | null }): void {
-  if (!result.preprocessedFileId) {
+  const parseResult = PreprocessedFileIdSchema.safeParse(result.preprocessedFileId);
+  if (!parseResult.success) {
     throw new TranscriptionError(
       "Pipeline не вернул preprocessedFileId",
       "MISSING_PREPROCESSED_FILE",

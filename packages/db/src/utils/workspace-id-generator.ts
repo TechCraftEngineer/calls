@@ -17,7 +17,7 @@ export const uuidv7 = sql`uuidv7()`;
 /**
  * Валидация формата workspace ID
  * @param id - ID для проверки
- * @returns true если ID соответствует формату ws_*
+ * @returns true если ID соответствует формату ws_ + 32 hex
  */
 export function isValidWorkspaceId(id: string): boolean {
   return /^ws_[a-f0-9]{32}$/i.test(id);

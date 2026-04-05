@@ -4,12 +4,11 @@ import { z } from "zod";
  * Утилиты для валидации ID
  */
 
-/** Регулярка: ws_ + 32 hex (формат БД) или ws_ + UUIDv7 с дефисами */
-const WORKSPACE_ID_REGEX =
-  /^ws_([0-9a-fA-F]{32}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-7[0-9a-fA-F]{3}-[89ab][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$/;
+/** Регулярка: ws_ + 32 hex (единый формат БД) */
+const WORKSPACE_ID_REGEX = /^ws_[a-f0-9]{32}$/i;
 
 /**
- * Проверяет, является ли строка валидным workspace ID (ws_ + 32 hex или ws_ + UUIDv7)
+ * Проверяет, является ли строка валидным workspace ID (ws_ + 32 hex)
  */
 export function isValidWorkspaceId(id: string): boolean {
   if (typeof id !== "string") return false;
@@ -21,7 +20,7 @@ export const workspaceIdSchema = z
   .string()
   .regex(
     WORKSPACE_ID_REGEX,
-    "Неверный формат ID рабочего пространства. Ожидается ws_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx или ws_xxxxxxxx-xxxx-7xxx-yxxx-xxxxxxxxxxxx",
+    "Неверный формат ID рабочего пространства. Ожидается ws_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
   );
 
 /**
