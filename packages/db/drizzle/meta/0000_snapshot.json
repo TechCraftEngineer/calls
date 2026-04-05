@@ -1,5 +1,5 @@
 {
-  "id": "c4660f03-b256-4d99-94b3-20248918847f",
+  "id": "3f2cbd76-14d4-4ddf-8d07-003ea3930664",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -995,6 +995,10 @@
         "calls_direction_check": {
           "name": "calls_direction_check",
           "value": "direction IN ('inbound', 'outbound')"
+        },
+        "calls_transcription_status_check": {
+          "name": "calls_transcription_status_check",
+          "value": "transcription_status IS NULL OR transcription_status IN ('pending', 'processing', 'completed', 'failed')"
         }
       },
       "isRLSEnabled": false
@@ -1660,7 +1664,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "invitations_email_type_check": {
+          "name": "invitations_email_type_check",
+          "value": "invitation_type <> 'email' OR email IS NOT NULL"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.invoices": {

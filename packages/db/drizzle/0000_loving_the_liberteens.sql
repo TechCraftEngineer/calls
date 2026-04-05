@@ -86,7 +86,8 @@ CREATE TABLE "calls" (
 	CONSTRAINT "calls_workspace_filename_unique" UNIQUE("workspace_id","filename"),
 	CONSTRAINT "calls_workspace_provider_external_id_unique" UNIQUE("workspace_id","provider","external_id"),
 	CONSTRAINT "calls_status_check" CHECK (status IN ('missed', 'answered', 'voicemail', 'failed')),
-	CONSTRAINT "calls_direction_check" CHECK (direction IN ('inbound', 'outbound'))
+	CONSTRAINT "calls_direction_check" CHECK (direction IN ('inbound', 'outbound')),
+	CONSTRAINT "calls_transcription_status_check" CHECK (transcription_status IS NULL OR transcription_status IN ('pending', 'processing', 'completed', 'failed'))
 );
 --> statement-breakpoint
 CREATE TABLE "evaluation_templates" (
@@ -147,7 +148,8 @@ CREATE TABLE "invitations" (
 	"accepted_at" timestamp,
 	"accepted_by" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "invitations_token_unique" UNIQUE("token")
+	CONSTRAINT "invitations_token_unique" UNIQUE("token"),
+	CONSTRAINT "invitations_email_type_check" CHECK (invitation_type <> 'email' OR email IS NOT NULL)
 );
 --> statement-breakpoint
 CREATE TABLE "invoices" (
