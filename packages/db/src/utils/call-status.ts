@@ -13,6 +13,11 @@ export const MISSED_ALIASES = [
   "пропущен",
   "не принят",
   "не отвечен",
+  "не состоялся",
+  "failed",
+  "fail",
+  "error",
+  "ошибка",
 ] as const;
 
 export const ANSWERED_ALIASES = [

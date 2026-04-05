@@ -78,32 +78,39 @@ async def health() -> dict[str, Any]:
     pyannote_available = False
     try:
         from pyannote.audio import Pipeline
-        token = os.getenv("HF_TOKEN", "").strip() or None
-        if token:
-            pyannote_available = True
+        pyannote_available = True
     except Exception:
         pass
     
+    # Для community версии токен не требуется
+    diarization_model = os.getenv("PYANNOTE_DIARIZATION_MODEL", "pyannote/speaker-diarization-community-1")
+    is_community = "community" in diarization_model.lower()
     hf_token_set = bool(os.getenv("HF_TOKEN", "").strip())
     
-    # Если либо pyannote недоступен, либо HF_TOKEN не установлен - сервис нездоров
-    if not pyannote_available or not hf_token_set:
-        raise HTTPException(
-            status_code=503,
-            detail={
-                "status": "unhealthy",
-                "pyannote_available": pyannote_available,
-                "pyannote_loaded": pyannote_available,  # Backward compatibility
-                "hf_token_set": hf_token_set,
-                "reason": "Service prerequisites not met"
-            }
-        )
+    # Community версия работает без токена
+    requires_token = not is_community
+    
+    # Если pyannote недоступен, или требуется токен но он не установлен - сервис нездоров
+    if not pyannote_available or (requires_token and not hf_token_set):
+        detail = {
+            "status": "unhealthy",
+            "pyannote_available": pyannote_available,
+            "pyannote_loaded": pyannote_available,
+            "hf_token_set": hf_token_set,
+            "requires_hf_token": requires_token,
+            "model": diarization_model,
+        }
+        if requires_token and not hf_token_set:
+            detail["reason"] = "HF_TOKEN required for non-community model"
+        raise HTTPException(status_code=503, detail=detail)
     
     return {
         "status": "healthy",
         "pyannote_available": pyannote_available,
-        "pyannote_loaded": pyannote_available,  # Backward compatibility
+        "pyannote_loaded": pyannote_available,
         "hf_token_set": hf_token_set,
+        "requires_hf_token": requires_token,
+        "model": diarization_model,
     }
 
 
@@ -210,16 +217,31 @@ async def diarize(
 
 
 @functools.lru_cache(maxsize=1)
-def _get_diarization_pipeline(diarization_model: str, token: str):
+def _get_diarization_pipeline(diarization_model: str, token: str | None):
     """Get cached diarization pipeline instance."""
     try:
         from pyannote.audio import Pipeline
         
+        # Для community модели токен не требуется
+        is_community = "community" in diarization_model.lower()
+        
         # Пробуем загрузить pipeline с retry логикой
-        init_attempts = [
-            {"use_auth_token": token},
-            {"token": token},
-        ]
+        init_attempts = []
+        
+        if is_community:
+            # Community модель работает без токена
+            init_attempts = [
+                {},  # Без параметров токена
+            ]
+        elif token:
+            # Для не-community моделей с токеном
+            init_attempts = [
+                {"use_auth_token": token},
+                {"token": token},
+            ]
+        else:
+            logger.error(f"Non-community model {diarization_model} requires HF_TOKEN")
+            return None
         
         for kwargs in init_attempts:
             try:
@@ -251,19 +273,21 @@ def _process_diarization(
     try:
         import torch
         
-        # Проверяем наличие токена
-        token = os.getenv("HF_TOKEN", "").strip() or None
-        if not token:
-            raise HTTPException(
-                status_code=503,
-                detail="HF_TOKEN not configured. Set HF_TOKEN environment variable."
-            )
-        
-        # Используем последнюю community модель (сентябрь 2025)
+        # Используем последнюю community модель (работает без токена)
         diarization_model = os.getenv(
             "PYANNOTE_DIARIZATION_MODEL",
             "pyannote/speaker-diarization-community-1"
         )
+        
+        # Проверяем токен только для не-community моделей
+        is_community = "community" in diarization_model.lower()
+        token = os.getenv("HF_TOKEN", "").strip() or None
+        
+        if not is_community and not token:
+            raise HTTPException(
+                status_code=503,
+                detail="HF_TOKEN not configured. Set HF_TOKEN environment variable for non-community models."
+            )
         
         # Получаем кешированный pipeline
         pipeline = _get_diarization_pipeline(diarization_model, token)
