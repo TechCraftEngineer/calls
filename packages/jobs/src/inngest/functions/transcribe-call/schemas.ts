@@ -40,7 +40,7 @@ export const PipelineAudioResultSchema = z.object({
 
 // Схема для валидации сегмента транскрипции
 export const TranscriptionSegmentSchema = z.object({
-  speaker: z.string(),
+  speaker: z.string().optional(),
   start: z.number(),
   end: z.number(),
   text: z.string(),

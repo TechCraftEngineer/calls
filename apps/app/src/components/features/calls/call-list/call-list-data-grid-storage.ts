@@ -13,7 +13,6 @@ export const DEFAULT_COLUMN_IDS = [
   "score",
   "summary",
   "record",
-  "analysisCost",
 ] as const;
 
 export type ColumnSchema = {
@@ -24,9 +23,7 @@ export type ColumnSchema = {
 export function getDefaultSchema(): ColumnSchema {
   return {
     columnOrder: [...DEFAULT_COLUMN_IDS],
-    columnVisibility: Object.fromEntries(
-      DEFAULT_COLUMN_IDS.map((id) => [id, id !== "analysisCost"]),
-    ),
+    columnVisibility: Object.fromEntries(DEFAULT_COLUMN_IDS.map((id) => [id, true])),
   };
 }
 
@@ -37,7 +34,7 @@ function validateAndMerge(saved: ColumnSchema, validIds: Set<string>): ColumnSch
 
   const columnVisibility: Record<string, boolean> = {};
   for (const id of DEFAULT_COLUMN_IDS) {
-    columnVisibility[id] = saved.columnVisibility?.[id] ?? id !== "analysisCost";
+    columnVisibility[id] = saved.columnVisibility?.[id] ?? true;
   }
 
   return { columnOrder, columnVisibility };

@@ -44,12 +44,6 @@ export const COLUMNS: ColumnConfig[] = [
     sortKey: "summary",
   },
   {
-    key: "analysisCost",
-    label: "Стоимость анализа",
-    tooltip: "Суммарная стоимость распознавания звонка в рублях",
-    sortKey: "analysisCost",
-  },
-  {
     key: "record",
     label: "Запись",
     tooltip: "Нажмите, чтобы прослушать запись разговора",
