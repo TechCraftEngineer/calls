@@ -137,7 +137,7 @@ const DiarizedTranscriptionSegmentSchema = z.object({
   text: z.string(),
   start: z.number(),
   end: z.number(),
-  speaker: z.string(),
+  speaker: z.string().optional(),
   confidence: z.number(),
 });
 
@@ -180,7 +180,7 @@ export interface DiarizedTranscriptionResult {
     text: string;
     start: number;
     end: number;
-    speaker: string;
+    speaker?: string;
     confidence: number;
   }>;
   speakerTimeline: Array<{

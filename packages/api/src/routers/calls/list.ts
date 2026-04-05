@@ -9,7 +9,6 @@ import {
 } from "@calls/db";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
-import { calculateAnalysisCostRub } from "./analysis-cost";
 import { getInternalNumbersForUser, getMobileNumbersForUser } from "./utils";
 
 const transcriptMetadataSchema = z.object({ operatorName: z.string().optional() }).passthrough();
@@ -337,8 +336,6 @@ export const list = workspaceProcedure
 
         const { filename: _filename, ...publicCall } = item.call;
 
-        const isLlmProcessed = Boolean(item.transcript?.summary?.trim() || item.evaluation);
-
         return {
           ...item,
           call: {
@@ -351,15 +348,6 @@ export const list = workspaceProcedure
             operatorName,
             duration: item.fileDuration ?? item.transcript?.metadata?.durationInSeconds ?? null,
           },
-          analysisCostRub: isLlmProcessed
-            ? calculateAnalysisCostRub(
-                typeof item.fileDuration === "number" && item.fileDuration > 0
-                  ? item.fileDuration
-                  : typeof item.transcript?.metadata?.durationInSeconds === "number"
-                    ? item.transcript.metadata.durationInSeconds
-                    : null,
-              )
-            : null,
         };
       }),
     );

@@ -224,10 +224,6 @@ function sortCalls(
         valA = a.transcript?.summary || "";
         valB = b.transcript?.summary || "";
         break;
-      case "analysisCost":
-        valA = a.analysisCostRub || 0;
-        valB = b.analysisCostRub || 0;
-        break;
       case "duration":
         valA = a.call.duration || 0;
         valB = b.call.duration || 0;

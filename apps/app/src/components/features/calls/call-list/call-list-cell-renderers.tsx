@@ -27,13 +27,6 @@ const linkButtonStyle = {
   font: "inherit",
 } as const;
 
-const analysisCostFormatter = new Intl.NumberFormat("ru-RU", {
-  style: "currency",
-  currency: "RUB",
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
 export function createLinkOrButton(
   onSelectCall: (callId: string) => void,
 ): (item: CallWithDetails, content: ReactNode, extraStyle?: object) => ReactNode {
@@ -225,17 +218,5 @@ export function renderSummaryCell(transcript: CallWithDetails["transcript"]) {
 export function renderDurationCell(call: CallWithDetails["call"]) {
   return (
     <span style={{ fontWeight: 600, color: "#444" }}>{formatDuration(call.duration ?? 0)}</span>
-  );
-}
-
-export function renderAnalysisCostCell(analysisCostRub?: number | null) {
-  if (analysisCostRub == null) {
-    return <span style={{ color: "#ccc" }}>—</span>;
-  }
-
-  return (
-    <span style={{ fontWeight: 600, color: "#444", whiteSpace: "nowrap" }}>
-      {analysisCostFormatter.format(analysisCostRub)}
-    </span>
   );
 }
