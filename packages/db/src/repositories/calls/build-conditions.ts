@@ -100,7 +100,9 @@ export function buildCallConditions({
 
     // Only add SQL predicate when we actually have valid direction values
     if (normalizedDirections.length > 0) {
-      conditions.push(inArray(sql<string>`LOWER(${schema.calls.direction})`, normalizedDirections));
+      conditions.push(
+        inArray(sql<string>`LOWER(${schema.calls.direction}::text)`, normalizedDirections),
+      );
     }
   }
   if (statuses?.length) {
@@ -108,7 +110,7 @@ export function buildCallConditions({
       .map((status) => status.trim().toLowerCase())
       .filter((status) => status.length > 0);
     if (normalizedStatuses.length > 0) {
-      const statusValue = sql<string>`LOWER(${schema.calls.status})`;
+      const statusValue = sql<string>`LOWER(${schema.calls.status}::text)`;
       const missedAliasesSql = sql.join(
         MISSED_ALIASES.map((alias) => sql`${alias}`),
         sql`, `,

@@ -169,7 +169,7 @@ const saveKpiTableState = (state: KpiTableState): void => {
   try {
     sessionStorage.setItem(KPI_TABLE_STATE_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error("Failed to save KPI table state", error);
+    console.error("Не удалось сохранить состояние таблицы KPI", error);
   }
 };
 
@@ -186,7 +186,7 @@ const loadKpiTableState = (): KpiTableState | null => {
     }
     return result.data;
   } catch (error) {
-    console.error("Failed to load KPI table state", error);
+    console.error("Не удалось загрузить состояние таблицы KPI", error);
     return null;
   }
 };
@@ -217,7 +217,14 @@ export default function KpiTable() {
   });
   const skipInvalidateOnSuccessRef = useRef(false);
   const tableRef = useRef<ReturnType<typeof useReactTable<KpiRow>> | null>(null);
-  const processedEmployeeIdsRef = useRef<Set<string>>(new Set());
+  // Map to track processed employees with a version token based on their KPI data
+  // This allows re-processing when server data changes but preserves drafts during editing
+  const processedEmployeeVersionsRef = useRef<Map<string, string>>(new Map());
+
+  // Helper to create a version token from row data
+  const getRowVersion = useCallback((row: KpiRow): string => {
+    return `${row.baseSalary}|${row.targetBonus}|${row.targetTalkTimeMinutes}`;
+  }, []);
 
   // Функция для сохранения состояния таблицы перед навигацией
   const saveStateBeforeNavigation = useCallback(() => {
@@ -284,29 +291,36 @@ export default function KpiTable() {
   }, [currentMonthValue, pathname, router, searchParams, selectedMonth]);
 
   useEffect(() => {
-    // Проверяем, есть ли новые сотрудники для инициализации
-    const newIds = rows.filter(
-      (row) => !processedEmployeeIdsRef.current.has(row.employeeExternalId),
-    );
-    if (newIds.length === 0) return;
-
-    // Обновляем ref с новыми id
-    for (const row of newIds) {
-      processedEmployeeIdsRef.current.add(row.employeeExternalId);
-    }
-
+    // Re-process all rows on each data update, but only update drafts
+    // when the server data has actually changed (version token differs)
     setDraftsByEmployeeId((prev) => {
-      const next: Record<string, KpiDraft> = {};
-      for (const row of newIds) {
-        next[row.employeeExternalId] = {
-          baseSalary: row.baseSalary,
-          targetBonus: row.targetBonus,
-          targetTalkTimeMinutes: row.targetTalkTimeMinutes,
-        };
+      const next: Record<string, KpiDraft> = { ...prev };
+      let hasChanges = false;
+
+      for (const row of rows) {
+        const currentVersion = getRowVersion(row);
+        const previousVersion = processedEmployeeVersionsRef.current.get(row.employeeExternalId);
+
+        // Skip if already processed with the same version
+        if (previousVersion === currentVersion) continue;
+
+        // Update the version tracking
+        processedEmployeeVersionsRef.current.set(row.employeeExternalId, currentVersion);
+
+        // Initialize draft if not already present (don't overwrite user's edits)
+        if (!next[row.employeeExternalId]) {
+          next[row.employeeExternalId] = {
+            baseSalary: row.baseSalary,
+            targetBonus: row.targetBonus,
+            targetTalkTimeMinutes: row.targetTalkTimeMinutes,
+          };
+          hasChanges = true;
+        }
       }
-      return { ...prev, ...next };
+
+      return hasChanges ? next : prev;
     });
-  }, [rows]);
+  }, [rows, getRowVersion]);
 
   const updateKpiMutation = useMutation(
     orpc.statistics.updateKpiEmployee.mutationOptions({
