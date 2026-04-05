@@ -34,9 +34,9 @@ export default function AudioPlayer({
   const [hasError, setHasError] = useState(false);
 
   // Если нет src, сразу показываем ошибку
-  // useEffect(() => {
-  //   setHasError(!src);
-  // }, [src]);
+  useEffect(() => {
+    setHasError(!src);
+  }, [src]);
 
   useEffect(() => {
     if (resolvedDurationOverride != null) {
@@ -191,14 +191,8 @@ export default function AudioPlayer({
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Если нет аудио или ошибка загрузки - показываем сообщение
-  if (hasError) {
-    return (
-      <div className={cn("w-full flex items-center justify-center py-6", className)}>
-        <p className="text-muted-foreground text-[13px]">Файл записи не найден</p>
-      </div>
-    );
-  }
+  // Если нет аудио или ошибка загрузки - показываем UI но без возможности воспроизведения
+  const hasNoAudio = !src || hasError;
 
   return (
     <div className={cn("w-full", className)}>
@@ -222,12 +216,22 @@ export default function AudioPlayer({
               "size-14 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:scale-105 active:scale-95 hover:from-green-600 hover:to-emerald-700 hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed disabled:bg-muted disabled:shadow-none disabled:hover:scale-100 border-0 transition-all duration-200",
             )}
             onClick={togglePlay}
-            disabled={isLoading}
-            title={isPlaying ? "Пауза" : "Воспроизвести"}
-            aria-label={isLoading ? "Загрузка" : isPlaying ? "Пауза" : "Воспроизвести"}
+            disabled={isLoading || hasNoAudio}
+            title={hasNoAudio ? "Запись отсутствует" : isPlaying ? "Пауза" : "Воспроизвести"}
+            aria-label={
+              hasNoAudio
+                ? "Запись отсутствует"
+                : isLoading
+                  ? "Загрузка"
+                  : isPlaying
+                    ? "Пауза"
+                    : "Воспроизвести"
+            }
           >
             {isLoading ? (
               <Loader2 className="size-6 animate-spin" />
+            ) : hasNoAudio ? (
+              <span className="text-[10px] font-medium">Нет записи</span>
             ) : isPlaying ? (
               <Pause className="size-6" />
             ) : (
@@ -237,7 +241,7 @@ export default function AudioPlayer({
           <div className="w-8" />
         </div>
 
-        <div className="flex items-center gap-3 w-full">
+        <div className={cn("flex items-center gap-3 w-full", hasNoAudio && "opacity-50")}>
           <span className="text-[11px] text-muted-foreground font-semibold w-10 tabular-nums text-center">
             {formatTime(currentTime)}
           </span>
@@ -254,7 +258,9 @@ export default function AudioPlayer({
               onTouchStart={handleSeekStart}
               onMouseUp={handleSeekEnd}
               onTouchEnd={handleSeekEnd}
-              className="w-full h-full appearance-none bg-muted rounded-sm outline-none cursor-pointer relative z-2 m-0 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-transform [&:hover::-webkit-slider-thumb]:scale-110"
+              disabled={hasNoAudio}
+              aria-label="Позиция воспроизведения"
+              className="w-full h-full appearance-none bg-muted rounded-sm outline-none cursor-pointer relative z-2 m-0 disabled:cursor-not-allowed [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background [&::-webkit-slider-thumb]:shadow-sm [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:transition-transform [&:hover::-webkit-slider-thumb]:scale-110"
             />
             <div
               className="absolute left-0 top-0 h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-sm z-1 pointer-events-none"
