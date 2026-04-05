@@ -87,11 +87,11 @@ export const TranscriptionResultSchema = z.object({
   metadata: AsrMetadataSchema,
   normalizedText: z.string().optional(),
   rawText: z.string().optional(),
-  summary: z.string().optional(),
-  sentiment: z.string().optional(),
-  title: z.string().optional(),
-  callType: z.string().optional(),
-  callTopic: z.string().optional(),
+  summary: z.string().nullable().optional(),
+  sentiment: z.string().nullable().optional(),
+  title: z.string().nullable().optional(),
+  callType: z.string().nullable().optional(),
+  callTopic: z.string().nullable().optional(),
 });
 
 // Схема для валидации результата идентификации спикеров

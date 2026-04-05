@@ -64,7 +64,7 @@ class PipelineService:
                 
                 # Запускаем только транскрипцию
                 result = await asyncio.to_thread(
-                    transcription_service.transcribe_audio_file, 
+                    transcription_service.transcribe_audio, 
                     tmp_path
                 )
                 
