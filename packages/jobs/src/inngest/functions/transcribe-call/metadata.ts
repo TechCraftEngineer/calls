@@ -34,6 +34,7 @@ export function serializeMetadata(
         "fallbackAttempted",
         "fallbackReason",
         "truncatedForAnalysis",
+        "mapping", // Сохраняем маппинг спикеров (SPEAKER_00 -> Оператор/Клиент)
       ];
       for (const key of allowedIdentifyFields) {
         if (key in identifyResultMetadata) {

@@ -53,16 +53,23 @@ export const get = workspaceProcedure
       null;
 
     // Извлекаем маппинг спикеров из metadata для замены SPEAKER_00/SPEAKER_01
+    // mapping теперь сохраняется на верхнем уровне metadata (добавлен в serializeMetadata)
     const speakerMapping =
       transcript?.metadata &&
       typeof transcript.metadata === "object" &&
-      "diarization" in transcript.metadata &&
-      transcript.metadata.diarization &&
-      typeof transcript.metadata.diarization === "object" &&
-      "mapping" in transcript.metadata.diarization &&
-      typeof transcript.metadata.diarization.mapping === "object"
-        ? (transcript.metadata.diarization.mapping as Record<string, string>)
-        : undefined;
+      "mapping" in transcript.metadata &&
+      typeof transcript.metadata.mapping === "object"
+        ? (transcript.metadata.mapping as Record<string, string>)
+        : // Поддержка старого формата: diarization.mapping
+          transcript?.metadata &&
+            typeof transcript.metadata === "object" &&
+            "diarization" in transcript.metadata &&
+            transcript.metadata.diarization &&
+            typeof transcript.metadata.diarization === "object" &&
+            "mapping" in transcript.metadata.diarization &&
+            typeof transcript.metadata.diarization.mapping === "object"
+          ? (transcript.metadata.diarization.mapping as Record<string, string>)
+          : undefined;
 
     const { filename: _filename, ...publicCall } = call;
 

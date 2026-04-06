@@ -274,6 +274,11 @@ ${analysisText}
       || result.speakers?.find(s => s.role === 'client')?.name?.trim() 
       || undefined;
 
+    // Если у нас есть известное имя менеджера из системы, используем его как operatorName
+    // Это предотвращает путаницу когда LLM присваивает имя менеджера клиенту
+    const finalOperatorName = operatorName ?? options.managerName ?? undefined;
+    const finalCustomerName = customerName; // customerName определяется только из разговора
+
     const sanitizedMapping: Record<string, string> = {};
     for (const s of result.speakers ?? []) {
       const id = s.speakerId?.trim();
@@ -294,14 +299,14 @@ ${analysisText}
       logger.info("Маппинг спикеров пуст, возвращаем исходный текст");
       return {
         text: normalizedText,
-        operatorName,
-        customerName,
+        operatorName: finalOperatorName,
+        customerName: finalCustomerName,
         metadata: {
           success: true,
           mapping: sanitizedMapping,
           speakers: result.speakers,
-          operatorName: operatorName ?? null,
-          customerName: customerName ?? null,
+          operatorName: finalOperatorName ?? null,
+          customerName: finalCustomerName ?? null,
           truncatedForAnalysis: normalizedText.length > analysisText.length,
           usedEmbeddings: hasEmbeddingData,
           clusterCount: clusters.size,
@@ -317,22 +322,23 @@ ${analysisText}
       processingTimeMs: Date.now() - start,
       mappingKeys: Object.keys(sanitizedMapping).length,
       truncatedForAnalysis: normalizedText.length > analysisText.length,
-      operatorName: operatorName ?? null,
-      customerName: customerName ?? null,
+      operatorName: finalOperatorName ?? null,
+      customerName: finalCustomerName ?? null,
+      managerNameFromOptions: options.managerName ?? null,
       usedEmbeddings: hasEmbeddingData,
       clusterCount: clusters.size,
     });
 
     return {
       text: resultText.trim(),
-      operatorName,
-      customerName,
+      operatorName: finalOperatorName,
+      customerName: finalCustomerName,
       metadata: {
         success: true,
         mapping: sanitizedMapping,
         speakers: result.speakers,
-        operatorName: operatorName ?? null,
-        customerName: customerName ?? null,
+        operatorName: finalOperatorName ?? null,
+        customerName: finalCustomerName ?? null,
         truncatedForAnalysis: normalizedText.length > analysisText.length,
         usedEmbeddings: hasEmbeddingData,
         clusterCount: clusters.size,
@@ -374,21 +380,25 @@ ${analysisText}
         const operatorName = result.operatorName?.trim() || result.speakers?.find((s: { role: string; }) => s.role === 'operator')?.name?.trim() || undefined;
         const customerName = result.customerName?.trim() || result.speakers?.find((s: { role: string; }) => s.role === 'client')?.name?.trim() || undefined;
 
+        // Используем известное имя менеджера как fallback для operatorName
+        const finalOperatorName = operatorName ?? options.managerName ?? undefined;
+        const finalCustomerName = customerName;
+
         logger.info("Упрощенный анализ спикеров завершен успешно", {
-          operatorName,
-          customerName,
+          operatorName: finalOperatorName,
+          customerName: finalCustomerName,
         });
 
         return {
           text: normalizedText,
-          operatorName,
-          customerName,
+          operatorName: finalOperatorName,
+          customerName: finalCustomerName,
           metadata: {
             success: true,
             reason: "fallback_simple",
             speakers: result.speakers,
-            operatorName: operatorName ?? null,
-            customerName: customerName ?? null,
+            operatorName: finalOperatorName ?? null,
+            customerName: finalCustomerName ?? null,
             usedEmbeddings: false,
             clusterCount: 0,
             fallbackReason: "timeout",

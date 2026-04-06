@@ -206,18 +206,23 @@ ${analysisText}
       sanitizedMapping[id] = label;
     }
 
+    // Если у нас есть известное имя менеджера из системы, используем его как operatorName
+    // Это предотвращает путаницу когда LLM присваивает имя менеджера клиенту
+    const finalOperatorName = operatorName ?? options.managerName ?? undefined;
+    const finalCustomerName = customerName; // customerName определяется только из разговора
+
     if (Object.keys(sanitizedMapping).length === 0) {
       logger.info("Маппинг спикеров пуст, возвращаем исходный текст");
       return {
         text: normalizedText,
-        operatorName,
-        customerName,
+        operatorName: finalOperatorName,
+        customerName: finalCustomerName,
         metadata: {
           success: true,
           mapping: sanitizedMapping,
           speakers: result.speakers,
-          operatorName: operatorName ?? null,
-          customerName: customerName ?? null,
+          operatorName: finalOperatorName ?? null,
+          customerName: finalCustomerName ?? null,
           truncatedForAnalysis: normalizedText.length > analysisText.length,
         },
       };
@@ -231,20 +236,21 @@ ${analysisText}
       processingTimeMs: Date.now() - start,
       mappingKeys: Object.keys(sanitizedMapping).length,
       truncatedForAnalysis: normalizedText.length > analysisText.length,
-      operatorName: operatorName ?? null,
-      customerName: customerName ?? null,
+      operatorName: finalOperatorName ?? null,
+      customerName: finalCustomerName ?? null,
+      managerNameFromOptions: options.managerName ?? null,
     });
 
     return {
       text: resultText.trim(),
-      operatorName,
-      customerName,
+      operatorName: finalOperatorName,
+      customerName: finalCustomerName,
       metadata: {
         success: true,
         mapping: sanitizedMapping,
         speakers: result.speakers,
-        operatorName: operatorName ?? null,
-        customerName: customerName ?? null,
+        operatorName: finalOperatorName ?? null,
+        customerName: finalCustomerName ?? null,
         truncatedForAnalysis: normalizedText.length > analysisText.length,
       },
     };
