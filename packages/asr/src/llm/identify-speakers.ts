@@ -187,8 +187,8 @@ ${analysisText}
       }
     }
 
-    const operatorName = result.operatorName?.trim() || undefined;
-    const customerName = result.customerName?.trim() || undefined;
+    const operatorName = result.operatorName?.trim() || result.speakers?.find(s => s.role === 'operator')?.name?.trim() || undefined;
+    const customerName = result.customerName?.trim() || result.speakers?.find(s => s.role === 'client')?.name?.trim() || undefined;
 
     const sanitizedMapping: Record<string, string> = {};
     for (const s of result.speakers ?? []) {
