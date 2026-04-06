@@ -121,8 +121,11 @@ class TranscriptionService:
                     logger.warning("Получите токен на https://huggingface.co/settings/tokens")
                     logger.warning("Примите условия: https://huggingface.co/pyannote/segmentation-3.0")
                 
-                # Предзагрузка pyannote модели
-                self._preload_pyannote_model()
+                # Предзагрузка pyannote модели (опционально)
+                if settings.preload_pyannote_model:
+                    self._preload_pyannote_model()
+                else:
+                    logger.info("Предзагрузка pyannote отключена (preload_pyannote_model=false). Модель загрузится при первом использовании longform.")
                 
                 self.model = self._load_model_with_recovery()
                 self._model_initialized = True
@@ -404,20 +407,31 @@ class TranscriptionService:
                 return result
         except (RuntimeError, ValueError, OSError) as model_error:
             # Для ошибок модели/обработки используем fallback с librosa
+            # Используем обычный transcribe вместо transcribe_longform, чтобы избежать загрузки pyannote
             logger.info(f"Не удалось распознать по пути к файлу (ошибка модели): {model_error}")
-            logger.info("Пробуем загрузить аудиоданные и передать их в модель")
+            logger.info("Пробуем использовать обычный transcribe с загруженными аудиоданными")
             
             # Загружаем аудиоданные с помощью librosa ВНЕ блокировки
             import librosa
+            import torch
             audio_data, sample_rate = librosa.load(audio_path, sr=16000, mono=True)
             logger.info(f"Аудиоданные загружены: длина={len(audio_data)}, sample_rate={sample_rate}")
             
-            # Передаем загруженные данные в модель под блокировкой
+            # Конвертируем в тензор torch и передаем в обычный transcribe
             with self._model_lock:
-                raw_result = self.model.transcribe_longform(audio_data)
+                audio_tensor = torch.from_numpy(audio_data).float()
+                raw_result = self.model.transcribe(audio_tensor)
                 
-                # Конвертируем результат в список если это объект LongformTranscriptionResult
-                if not isinstance(raw_result, (list, tuple)):
+                # Обычный transcribe возвращает строку, конвертируем в формат сегментов
+                if isinstance(raw_result, str):
+                    # Создаем один сегмент с полным текстом
+                    duration = len(audio_data) / sample_rate
+                    result = [{
+                        "start": 0.0,
+                        "end": duration,
+                        "text": raw_result
+                    }]
+                elif not isinstance(raw_result, (list, tuple)):
                     try:
                         result = list(raw_result)
                     except TypeError:
@@ -431,7 +445,6 @@ class TranscriptionService:
                     result = list(raw_result)
                 
                 logger.info(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
-                # Логируем первые 3 сегмента для диагностики
                 if result and len(result) > 0:
                     sample = result[:3]
                     logger.debug(f"Пример результата модели (fallback): {sample}")

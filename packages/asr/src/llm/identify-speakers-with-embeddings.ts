@@ -233,7 +233,7 @@ export async function identifySpeakersWithEmbeddings(
 
   const clusterAnalysis = clusters.size > 0 ? buildClusterAnalysisPrompt(clusters) : "";
 
-  const systemPrompt = `${SYSTEM_PROMPT}${options.managerName ? `\n\nПодсказка: оператор может представляться как ${options.managerName}.` : ""}${options.direction ? `\nНаправление звонка: ${options.direction}` : ""}`;
+  const systemPrompt = `${SYSTEM_PROMPT}${options.managerName ? `\n\nИЗВЕСТНЫЕ ДАННЫЕ ИЗ СИСТЕМЫ:\n- Имя менеджера/оператора: "${options.managerName}"\n\nИспользуй эту информацию для определения ролей: спикер, который представляется как "${options.managerName}" или отвечает на звонок как представитель компании, является ОПЕРАТОРОМ. Другой спикер — КЛИЕНТ.` : ""}${options.direction ? `\n\nНаправление звонка: ${options.direction}` : ""}`;
 
   const start = Date.now();
 

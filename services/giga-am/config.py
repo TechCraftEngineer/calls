@@ -68,7 +68,11 @@ class Settings(BaseSettings):
     model_workers: int = Field(default=2, ge=1)
     model_loading_timeout: int = Field(default=600, ge=1)  # seconds
     
-    # Admin settings
+    # Preloading settings
+    preload_pyannote_model: bool = Field(
+        default=False,
+        description="Preload pyannote model at startup (may cause rate limiting)"
+    )
     admin_token: str = Field(default="", description="Admin token for protected endpoints")
     enable_cache_clear: bool = Field(default=False, description="Enable cache clear endpoint")
     
