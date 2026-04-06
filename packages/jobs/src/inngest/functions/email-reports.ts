@@ -11,6 +11,7 @@ import {
   type ManagerStatsRow,
   settingsService,
   workspaceSettingsRepository,
+  workspacesService,
 } from "@calls/db";
 import { type ManagerStats, ReportEmail, sendEmail } from "@calls/emails";
 import { subMonths } from "date-fns";
@@ -98,6 +99,8 @@ export const emailReportsFn = inngest.createFunction(
 
     for (const workspaceId of workspaceIds) {
       const result = await step.run(`process-workspace-email-${workspaceId}`, async () => {
+        const ws = await workspacesService.getById(workspaceId);
+        const workspaceName = ws?.name ?? undefined;
         const schedule = await getReportScheduleSettings(workspaceSettingsRepository, workspaceId);
 
         const reportTypesToRun: Array<"daily" | "weekly" | "monthly"> = [];
@@ -184,6 +187,19 @@ export const emailReportsFn = inngest.createFunction(
               reportType,
             )) as Record<string, ManagerStats>;
 
+            // Получаем список звонков с низкой оценкой для менеджерских отчетов
+            let lowRatedCalls: Record<string, number> = {};
+            if (r.isManagerReport) {
+              lowRatedCalls = await callsService.getLowRatedCallsCount({
+                workspaceId,
+                dateFrom: dateFromDb,
+                dateTo: dateToDb,
+                internalNumbers: r.internalNumbers ?? undefined,
+                excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+                maxScore: 3,
+              });
+            }
+
             try {
               await sendEmail({
                 to: [r.email],
@@ -195,6 +211,9 @@ export const emailReportsFn = inngest.createFunction(
                   includeKpi: r.reportSettings.kpi,
                   dateFrom,
                   dateTo,
+                  isManagerReport: r.isManagerReport,
+                  lowRatedCalls,
+                  workspaceName,
                 }),
               });
               sent++;

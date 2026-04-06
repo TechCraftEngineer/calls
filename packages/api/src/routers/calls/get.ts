@@ -52,6 +52,18 @@ export const get = workspaceProcedure
       call.name ??
       null;
 
+    // Извлекаем маппинг спикеров из metadata для замены SPEAKER_00/SPEAKER_01
+    const speakerMapping =
+      transcript?.metadata &&
+      typeof transcript.metadata === "object" &&
+      "diarization" in transcript.metadata &&
+      transcript.metadata.diarization &&
+      typeof transcript.metadata.diarization === "object" &&
+      "mapping" in transcript.metadata.diarization &&
+      typeof transcript.metadata.diarization.mapping === "object"
+        ? (transcript.metadata.diarization.mapping as Record<string, string>)
+        : undefined;
+
     const { filename: _filename, ...publicCall } = call;
 
     return {
@@ -64,7 +76,12 @@ export const get = workspaceProcedure
         operatorName,
         managerId: managerFromWorkspace?.id ?? null,
       },
-      transcript,
+      transcript: transcript
+        ? {
+            ...transcript,
+            speakerMapping,
+          }
+        : null,
       evaluation,
     };
   });

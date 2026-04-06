@@ -39,6 +39,7 @@ export class UsersService {
     email: string;
     givenName: string;
     familyName: string;
+    role: string;
     internalExtensions: string;
     mobilePhones: string;
     telegramChatId: string;
@@ -69,6 +70,24 @@ export class UsersService {
   } | null> {
     const user = await this.usersRepository.findById(userId);
     if (!user) return null;
+
+    // Получаем роль пользователя в workspace
+    const { db } = await import("../client");
+    const { eq, and } = await import("drizzle-orm");
+    const schema = await import("../schema");
+    
+    const memberRow = await db
+      .select({ role: schema.workspaceMembers.role })
+      .from(schema.workspaceMembers)
+      .where(
+        and(
+          eq(schema.workspaceMembers.userId, userId),
+          eq(schema.workspaceMembers.workspaceId, workspaceId),
+        ),
+      )
+      .limit(1);
+    
+    const role = memberRow[0]?.role ?? "member";
 
     const settings = await userWorkspaceSettingsRepository.findByUserAndWorkspace(
       userId,
@@ -135,6 +154,7 @@ export class UsersService {
       email: (user.email ?? "") as string,
       givenName: user.givenName ?? "",
       familyName: user.familyName ?? "",
+      role,
       internalExtensions: user.internalExtensions ?? "",
       mobilePhones: user.mobilePhones ?? "",
       telegramChatId: user.telegramChatId ?? "",

@@ -49,6 +49,12 @@ export interface ReportEmailProps {
   dateFrom?: Date;
   /** Дата конца периода */
   dateTo?: Date;
+  /** Является ли отчет менеджерским (для отображения низких оценок) */
+  isManagerReport?: boolean;
+  /** Звонки с низкой оценкой по менеджерам (оценка < 3) */
+  lowRatedCalls?: Record<string, number>;
+  /** Название workspace */
+  workspaceName?: string;
 }
 
 const reportTypeLabels = {
@@ -65,6 +71,14 @@ function formatValue(value: number): string {
 function formatScore(value: number | null | undefined): string {
   if (typeof value !== "number" || Number.isNaN(value)) return "—";
   return value.toFixed(1);
+}
+
+function pluralizeCalls(count: number): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) return "звонок";
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return "звонка";
+  return "звонков";
 }
 
 
@@ -199,6 +213,9 @@ export const ReportEmail = ({
   avgManagerScore = false,
   dateFrom,
   dateTo,
+  isManagerReport = false,
+  lowRatedCalls = {},
+  workspaceName,
 }: ReportEmailProps) => {
   const typeLabel = reportTypeLabels[reportType] ?? "Отчёт по звонкам";
   
@@ -269,6 +286,12 @@ export const ReportEmail = ({
             <Heading className="mx-0 my-[24px] p-0 text-[20px] font-semibold text-black">
               {title}
             </Heading>
+
+            {workspaceName && (
+              <Text className="text-[14px] leading-[24px] text-gray-600 mb-[16px]">
+                🏢 {workspaceName}
+              </Text>
+            )}
 
             <Text className="text-[14px] leading-[24px] text-black">
               {username ? <>Здравствуйте, {username}.</> : <>Здравствуйте.</>}
@@ -502,6 +525,53 @@ export const ReportEmail = ({
                 <Text className="text-[14px] text-gray-600">Нет данных для отображения KPI</Text>
               )}
             </Section>
+
+            {isManagerReport && kpiTable && (
+              <Section className="my-[24px]">
+                <Heading className="mx-0 my-[16px] p-0 text-[16px] font-semibold text-black">
+                  📊 Итоги по всем сотрудникам
+                </Heading>
+                <Text className="text-[14px] leading-[24px] text-black">
+                  • Входящие: {kpiTable.totals.incomingCount} звонков
+                  <br />
+                  • Исходящие: {kpiTable.totals.outgoingCount} звонков
+                  <br />
+                  • Всего: {kpiTable.totals.totalCount} звонков
+                  {kpiTable.totals.evaluatedCount > 0 && (
+                    <>
+                      <br />
+                      • Оценено: {kpiTable.totals.evaluatedCount} из {kpiTable.totals.totalCount} звонков
+                    </>
+                  )}
+                  {avgManagerScore && kpiTable.overallAvgManagerScore != null && (
+                    <>
+                      <br />
+                      • Средняя оценка качества: {formatScore(kpiTable.overallAvgManagerScore)} ⭐
+                    </>
+                  )}
+                </Text>
+              </Section>
+            )}
+
+            {isManagerReport && Object.entries(lowRatedCalls).filter(([, n]) => n > 0).length > 0 && (
+              <Section className="my-[24px]">
+                <Heading className="mx-0 my-[16px] p-0 text-[16px] font-semibold text-red-600">
+                  ⚠️ Требуют внимания (оценка &lt; 3)
+                </Heading>
+                <Text className="text-[14px] leading-[24px] text-black">
+                  {Object.entries(lowRatedCalls)
+                    .filter(([, n]) => n > 0)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 10)
+                    .map(([manager, count]) => (
+                      <span key={manager}>
+                        • {manager}: {count} {pluralizeCalls(count)}
+                        <br />
+                      </span>
+                    ))}
+                </Text>
+              </Section>
+            )}
 
             <Hr className="mx-0 my-[26px] w-full border border-solid border-[#eaeaea]" />
 

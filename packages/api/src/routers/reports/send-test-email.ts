@@ -1,4 +1,4 @@
-import { callsService, type ManagerStatsRow, settingsService, usersService } from "@calls/db";
+import { callsService, type ManagerStatsRow, settingsService, usersService, workspacesService } from "@calls/db";
 import { type ManagerStats, ReportEmail, sendEmail } from "@calls/emails";
 import { ORPCError } from "@orpc/server";
 import { subDays, subMonths, subWeeks } from "date-fns";
@@ -138,6 +138,26 @@ export const sendTestEmail = workspaceProcedure
       ManagerStats
     >;
 
+    // Определяем является ли пользователь админом для менеджерского отчета
+    const isManagerReport = userForEdit.role === "owner" || userForEdit.role === "admin";
+
+    // Получаем список звонков с низкой оценкой для менеджерских отчетов
+    let lowRatedCalls: Record<string, number> = {};
+    if (isManagerReport) {
+      lowRatedCalls = await callsService.getLowRatedCallsCount({
+        workspaceId,
+        dateFrom: dateFromDb,
+        dateTo: dateToDb,
+        internalNumbers: internalNumbers ?? undefined,
+        excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+        maxScore: 3,
+      });
+    }
+
+    // Получаем название workspace
+    const ws = await workspacesService.getById(workspaceId);
+    const workspaceName = ws?.name ?? undefined;
+
     try {
       await sendEmail({
         to: [userEmail],
@@ -147,8 +167,12 @@ export const sendTestEmail = workspaceProcedure
           username: userForEdit.givenName ?? undefined,
           stats: enrichedStats,
           includeKpi: true,
+          avgManagerScore: true,
           dateFrom,
           dateTo,
+          isManagerReport,
+          lowRatedCalls,
+          workspaceName,
         }),
       });
       return { success: true };

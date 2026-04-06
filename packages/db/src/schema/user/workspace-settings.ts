@@ -11,6 +11,7 @@ import { workspaces } from "../workspace/workspaces";
 export interface NotificationSettings {
   email: {
     dailyReport: boolean;
+    managerReport: boolean;
     weeklyReport: boolean;
     monthlyReport: boolean;
   };

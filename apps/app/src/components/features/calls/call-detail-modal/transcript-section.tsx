@@ -38,6 +38,8 @@ function parseMessages(transcript: TranscriptDetail | null, managerName?: string
   const sourceText = transcript?.text;
   if (!sourceText) return [];
 
+  const speakerMapping = transcript?.speakerMapping;
+
   return sourceText
     .split("\n")
     .filter((l) => l.trim())
@@ -47,7 +49,9 @@ function parseMessages(transcript: TranscriptDetail | null, managerName?: string
       let text = line;
 
       if (parts.length >= 2) {
-        speaker = parts[0].trim().replace(/\*\*/g, "");
+        const rawSpeaker = parts[0].trim().replace(/\*\*/g, "");
+        // Применяем маппинг спикера, если есть
+        speaker = speakerMapping?.[rawSpeaker] ?? rawSpeaker;
         text = parts.slice(1).join(":").trim();
       }
 

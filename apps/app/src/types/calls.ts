@@ -21,6 +21,7 @@ export interface TranscriptDetail {
   callType: string;
   callTopic: string;
   sentiment: string;
+  speakerMapping?: Record<string, string>;
 }
 
 export interface EvaluationDetail {

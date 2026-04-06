@@ -29,6 +29,8 @@ export function TranscriptCard({ call, transcript }: Props) {
     const sourceText = showRaw ? transcript?.rawText || transcript?.text : transcript?.text;
     if (!sourceText) return [];
 
+    const speakerMapping = transcript?.speakerMapping;
+
     return sourceText
       .split("\n")
       .filter((l) => l.trim())
@@ -38,7 +40,9 @@ export function TranscriptCard({ call, transcript }: Props) {
         let text = line;
 
         if (parts.length >= 2) {
-          speaker = parts[0].trim().replace(/\*\*/g, "");
+          const rawSpeaker = parts[0].trim().replace(/\*\*/g, "");
+          // Применяем маппинг спикера, если есть
+          speaker = speakerMapping?.[rawSpeaker] ?? rawSpeaker;
           text = parts.slice(1).join(":").trim();
         }
 
