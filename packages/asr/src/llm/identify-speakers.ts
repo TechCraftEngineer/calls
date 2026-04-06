@@ -227,7 +227,7 @@ ${analysisText}
     for (const [from, to] of Object.entries(sanitizedMapping)) {
       if (from && to) {
         const regex = new RegExp(`^(${escapeRegex(from)}):\\s*`, "gm");
-        resultText = resultText.replace(regex, `${to}: `);
+        resultText = resultText.replace(regex, `${to} `);
       }
     }
 
