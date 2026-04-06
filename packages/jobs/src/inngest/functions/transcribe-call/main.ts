@@ -7,6 +7,7 @@
  * 4. Идентификация спикеров через LLM
  */
 
+import { summarizeWithLlm } from "@calls/asr/llm/summarize";
 import { runPipelineAudioPreprocess } from "@calls/asr/pipeline/transcribe-pipeline-audio";
 import { callsService, filesService, workspacesService } from "@calls/db";
 import type { ZodIssue } from "zod";
@@ -321,6 +322,28 @@ export const transcribeCallFn = inngest.createFunction(
 
     const { text: finalText, customerName, operatorName } = identifyResult;
 
+    // Генерация summary через LLM
+    const summaryResult = await step.run("llm/summarize", async () => {
+      const summarizeStartTime = Date.now();
+      const result = await summarizeWithLlm(finalText, {
+        maxChars: 20_000,
+      });
+      const summarizeTimeMs = Date.now() - summarizeStartTime;
+
+      logger.info("LLM summarization completed", {
+        callId,
+        summarizeTimeMs,
+        hasSummary: !!result.summary,
+        sentiment: result.sentiment,
+        title: result.title,
+      });
+
+      return {
+        ...result,
+        summarizeTimeMs,
+      };
+    });
+
     // Логирование результатов идентификации
     const originalText = validatedResult.normalizedText || "";
     const debugData = {
@@ -347,7 +370,6 @@ export const transcribeCallFn = inngest.createFunction(
 
     // Сохранение транскрипта
     await step.run("persist/transcript:upsert", async () => {
-      const normalizedCallType = validatedResult.callType?.trim() || null;
       const serializedMetadata = serializeMetadata(
         validatedResult.metadata,
         identifyResult.metadata,
@@ -372,11 +394,11 @@ export const transcribeCallFn = inngest.createFunction(
             llmMergeFallbackReason: mergedResult.fallbackReason,
           },
         },
-        summary: validatedResult.summary,
-        sentiment: validatedResult.sentiment,
-        title: validatedResult.title,
-        callType: normalizedCallType,
-        callTopic: validatedResult.callTopic,
+        summary: summaryResult.summary,
+        sentiment: summaryResult.sentiment,
+        title: summaryResult.title,
+        callType: summaryResult.callType ?? null,
+        callTopic: summaryResult.callTopic ?? null,
         customerName: customerName ?? undefined, // Атомарное обновление с transcript
       });
     });

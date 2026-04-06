@@ -164,6 +164,7 @@ export async function mergeAsrResultsWithLLM(
   }
 
   const { output } = await generateWithAi({
+    modelProfile: "cheap",
     system:
       "Ты эксперт по обработке транскрипций аудио на русском языке. " +
       "Твоя задача - объединить результаты двух систем распознавания речи: одна дала точный текст, другая дала разделение по говорящим. " +
