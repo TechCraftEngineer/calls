@@ -250,9 +250,9 @@ ${analysisText}
       output: Output.object({ schema }),
       temperature: 0.2,
       maxRetries: 3,
-      abortSignal: AbortSignal.timeout(60_000),
+      abortSignal: AbortSignal.timeout(120_000),
       functionId: "asr-identify-speakers-embeddings",
-      timeout: 60_000,
+      timeout: 120_000,
     });
 
     let result: z.infer<typeof schema>;
@@ -365,8 +365,8 @@ ${analysisText}
           output: Output.object({ schema }),
           temperature: 0.1,
           maxRetries: 2,
-          abortSignal: AbortSignal.timeout(45_000),
-          timeout: 45_000,
+          abortSignal: AbortSignal.timeout(90_000),
+          timeout: 90_000,
           functionId: "asr-identify-speakers-simple",
         });
 

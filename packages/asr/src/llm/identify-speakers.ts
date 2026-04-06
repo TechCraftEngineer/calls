@@ -153,7 +153,7 @@ ${analysisText}
         output: Output.object({ schema }),
         temperature: 0.2,
         maxRetries: 2,
-        abortSignal: AbortSignal.timeout(30_000),
+        abortSignal: AbortSignal.timeout(60_000),
         functionId: "asr-identify-speakers",
       });
     } catch (primaryError) {
@@ -170,7 +170,7 @@ ${analysisText}
         output: Output.object({ schema }),
         temperature: 0.1,
         maxRetries: 0,
-        abortSignal: AbortSignal.timeout(20_000),
+        abortSignal: AbortSignal.timeout(45_000),
         functionId: "asr-identify-speakers-fallback",
       });
     }

@@ -75,7 +75,7 @@ ${transcriptBlocks}
 --- Итоговый объединённый транскрипт ---`,
       temperature: 0.2,
       maxRetries: 2,
-      abortSignal: AbortSignal.timeout(90_000),
+      abortSignal: AbortSignal.timeout(180_000),
       functionId: "asr-merge",
     });
 

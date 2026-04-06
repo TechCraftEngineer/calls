@@ -53,7 +53,7 @@ export async function normalizeWithLlm(rawText: string): Promise<string> {
       prompt: `Нормализуй следующий транскрипт:\n\n${rawText}`,
       temperature: 0.2,
       maxRetries: 2,
-      abortSignal: AbortSignal.timeout(60_000),
+      abortSignal: AbortSignal.timeout(120_000),
       functionId: "asr-normalize",
     });
 
