@@ -86,6 +86,7 @@ async def transcribe_diarized(
         ```
     """
     request_id = f"diarized-req-{id(file) % 10000}"
+    logger.warning(f"[TRANSCRIBE-DIARIZED] Начало обработки: {filename}, request_id={request_id}")
     
     try:
         logger.info(f"[{request_id}] Получен запрос на транскрипцию диаризированного аудио: {filename}")

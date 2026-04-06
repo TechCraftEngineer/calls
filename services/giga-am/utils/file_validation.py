@@ -92,7 +92,7 @@ class FileValidator:
                     expected_mimes=expected_mimes
                 )
         else:
-            logger.warning(f"MIME тип отсутствует для файла {file.filename}")
+            logger.debug(f"MIME тип отсутствует для файла {file.filename}")
             # Попытка определить MIME тип из данных файла
             try:
                 # Читаем первые 512 байт для определения MIME типа
@@ -112,9 +112,9 @@ class FileValidator:
                         expected_mimes=expected_mimes
                     )
             except ImportError:
-                logger.warning("python-magic не установлен, пропускаем глубокую проверку MIME")
+                logger.debug("python-magic не установлен, пропускаем глубокую проверку MIME")
             except Exception as e:
-                logger.warning(f"Ошибка при определении MIME типа: {e}")
+                logger.debug(f"Ошибка при определении MIME типа: {e}")
         
         return True
     
@@ -235,11 +235,11 @@ class FileValidator:
                     "subtype": info.subtype
                 }
             except Exception as e:
-                logger.warning(f"Не удалось получить метаданные аудиофайла: {e}")
+                logger.debug(f"Не удалось получить метаданные аудиофайла: {e}")
                 return {"duration": duration}
                 
         except ImportError:
-            logger.warning("librosa или soundfile не установлены, пропускаем глубокую проверку аудио")
+            logger.debug("librosa или soundfile не установлены, пропускаем глубокую проверку аудио")
             return {}
     
     @staticmethod

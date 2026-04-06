@@ -78,7 +78,7 @@ export async function downloadAudioFile(fileId: string): Promise<AudioFileResult
   const fileValidation = FileSchema.safeParse(file);
   if (!fileValidation.success) {
     const errorDetails = fileValidation.error.issues
-      .map((issue: z.ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+      .map((issue: z.core.$ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
       .join(", ");
     throw new Error(`File validation failed: ${errorDetails}`);
   }

@@ -54,8 +54,6 @@ class TranscriptionService:
             self._initialize_model()
         except Exception as e:
             logger.error(f"Ошибка при фоновой загрузке модели: {e}")
-            self._model_error = e
-        finally:
             self._initialization_event.set()
             self._model_loading = False
     
@@ -236,7 +234,7 @@ class TranscriptionService:
                 "skipped_segments": []  # Информация о пропущенных сегментах
             }
             
-            logger.warning(
+            logger.info(
                 f"Получено utterances от модели: {len(utterances) if utterances else 0}, "
                 f"тип: {type(utterances).__name__}"
             )
@@ -269,7 +267,7 @@ class TranscriptionService:
                 result["segments"].append(segment)
                 result["total_duration"] = max(result["total_duration"], end)
             
-            logger.warning(
+            logger.info(
                 f"Распознавание завершено. Сегментов: {len(result['segments'])}, "
                 f"пропущено: {len(result['skipped_segments'])}, "
                 f"всего utterances: {len(utterances) if utterances else 0}"
@@ -361,7 +359,7 @@ class TranscriptionService:
     
     def _transcribe_sync(self, audio_path: str):
         """Синхронное распознавание в отдельном потоке"""
-        logger.warning(f"Начало распознавания: {audio_path}")
+        logger.info(f"Начало распознавания: {audio_path}")
         
         # Проверяем существование файла
         if not os.path.exists(audio_path):
@@ -369,7 +367,7 @@ class TranscriptionService:
         
         # Проверяем размер файла
         file_size = os.path.getsize(audio_path)
-        logger.warning(f"Размер аудиофайла: {file_size} bytes")
+        logger.info(f"Размер аудиофайла: {file_size} bytes")
         
         # Сначала пробуем передать путь к файлу
         try:
@@ -390,7 +388,7 @@ class TranscriptionService:
                 else:
                     result = list(raw_result)
                 
-                logger.warning(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
+                logger.info(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
                 # Логируем первые 3 сегмента для диагностики
                 if result and len(result) > 0:
                     sample = result[:3]
@@ -398,13 +396,13 @@ class TranscriptionService:
                 return result
         except (RuntimeError, ValueError, OSError) as model_error:
             # Для ошибок модели/обработки используем fallback с librosa
-            logger.warning(f"Не удалось распознать по пути к файлу (ошибка модели): {model_error}")
-            logger.warning("Пробуем загрузить аудиоданные и передать их в модель")
+            logger.info(f"Не удалось распознать по пути к файлу (ошибка модели): {model_error}")
+            logger.info("Пробуем загрузить аудиоданные и передать их в модель")
             
             # Загружаем аудиоданные с помощью librosa ВНЕ блокировки
             import librosa
             audio_data, sample_rate = librosa.load(audio_path, sr=16000, mono=True)
-            logger.warning(f"Аудиоданные загружены: длина={len(audio_data)}, sample_rate={sample_rate}")
+            logger.info(f"Аудиоданные загружены: длина={len(audio_data)}, sample_rate={sample_rate}")
             
             # Передаем загруженные данные в модель под блокировкой
             with self._model_lock:
@@ -424,7 +422,6 @@ class TranscriptionService:
                 else:
                     result = list(raw_result)
                 
-                logger.warning(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
                 logger.info(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
                 # Логируем первые 3 сегмента для диагностики
                 if result and len(result) > 0:

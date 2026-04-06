@@ -42,8 +42,6 @@ export async function fetchWithRetry(
 export async function processAudioWithGigaAm(
   audioBuffer: ArrayBuffer,
   filename: string,
-  /** @deprecated Параметр сохранен для обратной совместимости, но не используется - функция всегда возвращает non-diarized результат */
-  diarization: boolean,
 ): Promise<AsrResult> {
   const gigaAmUrl = env.GIGA_AM_TRANSCRIBE_URL;
   const formData = new FormData();
@@ -53,7 +51,7 @@ export async function processAudioWithGigaAm(
   const audioFilename = filename?.trim() ? filename : "audio.wav";
   formData.append("file", blob, audioFilename);
   formData.append("filename", audioFilename);
-  formData.append("diarization", diarization.toString());
+  formData.append("diarization", "false");
 
   const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-sync`, () => ({
     method: "POST",
@@ -71,7 +69,7 @@ export async function processAudioWithGigaAm(
   const gigaValidation = GigaAmResponseSchema.safeParse(rawResult);
   if (!gigaValidation.success) {
     const errorDetails = gigaValidation.error.issues
-      .map((issue: z.ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+      .map((issue: z.core.$ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
       .join(", ");
     logger.warn("Ошибка валидации ответа GigaAM", {
       filename,
@@ -128,8 +126,7 @@ export async function processAudioWithoutDiarization(
   audioBuffer: ArrayBuffer,
   filename: string,
 ): Promise<AsrResult> {
-  const result = await processAudioWithGigaAm(audioBuffer, filename, false);
-  return result;
+  return processAudioWithGigaAm(audioBuffer, filename);
 }
 
 // Zod схема для валидации DiarizedTranscriptionResult

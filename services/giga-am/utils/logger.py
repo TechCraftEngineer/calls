@@ -29,7 +29,7 @@ def setup_logging():
             root_logger.addHandler(file_handler)
         except Exception as e:
             # Если не можем создать файловый лог, продолжаем без него
-            print(f"Warning: Could not create file logger: {e}")
+            logging.warning(f"Could not create file logger: {e}")
     
     # Устанавливаем уровень для конкретных логгеров
     logging.getLogger("uvicorn").setLevel(logging.INFO)

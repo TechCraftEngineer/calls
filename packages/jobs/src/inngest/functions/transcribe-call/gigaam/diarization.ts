@@ -8,13 +8,13 @@
  */
 
 import { createLogger } from "../../../../logger";
-import {
-  processDiarizedAudioWithGigaAm,
-  processAudioWithoutDiarization,
-  type DiarizationSegmentInput,
-} from "./client";
-import { performDiarization, checkSpeakerEmbeddingsHealth } from "../speaker-diarization";
+import { checkSpeakerEmbeddingsHealth, performDiarization } from "../speaker-diarization";
 import type { AsrResult } from "../types";
+import {
+  type DiarizationSegmentInput,
+  processAudioWithoutDiarization,
+  processDiarizedAudioWithGigaAm,
+} from "./client";
 
 const logger = createLogger("gigaam-diarization");
 
@@ -75,7 +75,7 @@ export async function processAudioWithDiarization(
 
     // Конвертируем результат в стандартный AsrResult формат
     const transcribedSegments = diarizedResult.segments.map((seg) => ({
-      speaker: seg.speaker,
+      speaker: seg.speaker ?? "UNKNOWN",
       start: seg.start,
       end: seg.end,
       text: seg.text,

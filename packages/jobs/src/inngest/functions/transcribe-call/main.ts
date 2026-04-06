@@ -268,10 +268,13 @@ export const transcribeCallFn = inngest.createFunction(
 
     // Валидация результата
     const validatedResult = await step.run("validate/transcription", async () => {
+      // Строим диаризированный текст из сегментов с метками спикеров
+      const diarizedText = mergedResult.segments.map((s) => `${s.speaker}: ${s.text}`).join("\n");
+
       const resultForValidation = {
         segments: mergedResult.segments,
-        transcript: mergedResult.mergedTranscript,
-        normalizedText: mergedResult.mergedTranscript,
+        transcript: diarizedText,
+        normalizedText: diarizedText,
         rawText: asrResults.nonDiarized.transcript,
         summary: null,
         sentiment: null,
