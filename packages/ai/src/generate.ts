@@ -323,9 +323,9 @@ export async function generateWithAi(
     const experimental_telemetry = langfuseTracing
       ? {
           ...DEFAULT_TELEMETRY,
-          functionId,
           metadata: {
             ...metadata,
+            functionId,
             ...(typeof metadata.provider === "string"
               ? { requestedProvider: metadata.provider }
               : {}),
