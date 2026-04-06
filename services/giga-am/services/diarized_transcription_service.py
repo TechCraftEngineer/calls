@@ -347,9 +347,10 @@ class DiarizedTranscriptionService:
                     
                     if result.get("success"):
                         segments_data = result.get("segments", [])
-                        logger.debug(
+                        logger.warning(
                             f"[{request_id}] Сегмент {idx}: получено {len(segments_data)} подсегментов, "
-                            f"raw_result={result}"
+                            f"success={result.get('success')}, "
+                            f"segments_data={segments_data}"
                         )
                         if segments_data:
                             # Объединяем все сегменты в один текст
@@ -364,14 +365,15 @@ class DiarizedTranscriptionService:
                             # Вычисляем среднюю уверенность
                             confidence = sum(confidences) / len(confidences) if confidences else 1.0
                             
-                            logger.debug(
+                            logger.warning(
                                 f"[{request_id}] Сегмент {idx}: текст='{text[:50]}...', длина={len(text)}"
                             )
                         else:
                             text = ""
                             confidence = 0.0
                             logger.warning(
-                                f"[{request_id}] Сегмент {idx}: нет подсегментов в результате"
+                                f"[{request_id}] Сегмент {idx}: нет подсегментов в результате, "
+                                f"result={result}"
                             )
                     else:
                         text = ""

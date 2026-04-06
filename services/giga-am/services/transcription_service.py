@@ -236,9 +236,10 @@ class TranscriptionService:
                 "skipped_segments": []  # Информация о пропущенных сегментах
             }
             
-            logger.info(f"Получено utterances от модели: {len(utterances) if utterances else 0}")
-            if utterances and len(utterances) > 0:
-                logger.debug(f"Тип первого utterance: {type(utterances[0])}, пример: {utterances[0]}")
+            logger.warning(
+                f"Получено utterances от модели: {len(utterances) if utterances else 0}, "
+                f"тип: {type(utterances).__name__}"
+            )
             
             for utt in utterances:
                 try:
@@ -268,7 +269,7 @@ class TranscriptionService:
                 result["segments"].append(segment)
                 result["total_duration"] = max(result["total_duration"], end)
             
-            logger.info(
+            logger.warning(
                 f"Распознавание завершено. Сегментов: {len(result['segments'])}, "
                 f"пропущено: {len(result['skipped_segments'])}, "
                 f"всего utterances: {len(utterances) if utterances else 0}"
@@ -360,7 +361,7 @@ class TranscriptionService:
     
     def _transcribe_sync(self, audio_path: str):
         """Синхронное распознавание в отдельном потоке"""
-        logger.info(f"Начало распознавания: {audio_path}")
+        logger.warning(f"Начало распознавания: {audio_path}")
         
         # Проверяем существование файла
         if not os.path.exists(audio_path):
@@ -368,7 +369,7 @@ class TranscriptionService:
         
         # Проверяем размер файла
         file_size = os.path.getsize(audio_path)
-        logger.info(f"Размер аудиофайла: {file_size} bytes")
+        logger.warning(f"Размер аудиофайла: {file_size} bytes")
         
         # Сначала пробуем передать путь к файлу
         try:
@@ -377,22 +378,19 @@ class TranscriptionService:
                 
                 # Конвертируем результат в список если это объект LongformTranscriptionResult
                 if not isinstance(raw_result, (list, tuple)):
-                    # Пробуем итерироваться по объекту или извлечь сегменты
                     try:
                         result = list(raw_result)
                     except TypeError:
-                        # Если объект не итерируемый, проверяем есть ли атрибут segments или utterances
                         if hasattr(raw_result, 'segments'):
                             result = list(raw_result.segments)
                         elif hasattr(raw_result, 'utterances'):
                             result = list(raw_result.utterances)
                         else:
-                            # Последний fallback - оборачиваем в список
                             result = [raw_result]
                 else:
                     result = list(raw_result)
                 
-                logger.info(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
+                logger.warning(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
                 # Логируем первые 3 сегмента для диагностики
                 if result and len(result) > 0:
                     sample = result[:3]
@@ -401,12 +399,12 @@ class TranscriptionService:
         except (RuntimeError, ValueError, OSError) as model_error:
             # Для ошибок модели/обработки используем fallback с librosa
             logger.warning(f"Не удалось распознать по пути к файлу (ошибка модели): {model_error}")
-            logger.info("Пробуем загрузить аудиоданные и передать их в модель")
+            logger.warning("Пробуем загрузить аудиоданные и передать их в модель")
             
             # Загружаем аудиоданные с помощью librosa ВНЕ блокировки
             import librosa
             audio_data, sample_rate = librosa.load(audio_path, sr=16000, mono=True)
-            logger.info(f"Аудиоданные загружены: длина={len(audio_data)}, sample_rate={sample_rate}")
+            logger.warning(f"Аудиоданные загружены: длина={len(audio_data)}, sample_rate={sample_rate}")
             
             # Передаем загруженные данные в модель под блокировкой
             with self._model_lock:
@@ -426,6 +424,7 @@ class TranscriptionService:
                 else:
                     result = list(raw_result)
                 
+                logger.warning(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
                 logger.info(f"Распознавание успешно завершено, сегментов: {len(result) if result else 0}")
                 # Логируем первые 3 сегмента для диагностики
                 if result and len(result) > 0:
