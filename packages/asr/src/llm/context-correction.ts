@@ -73,7 +73,7 @@ ${chunk}
 --- ИСПРАВЛЕННЫЙ ТРАНСКРИПТ ---`,
     temperature: 0.1,
     maxRetries: 2,
-    abortSignal: AbortSignal.timeout(120_000),
+    abortSignal: AbortSignal.timeout(600_000),
     functionId: "asr-context-correction-chunk",
   });
 
@@ -287,7 +287,7 @@ ${normalizedText}
 --- ИСПРАВЛЕННЫЙ ТРАНСКРИПТ ---`,
       temperature: 0.1, // Низкая температура для консервативных исправлений
       maxRetries: 2,
-      abortSignal: AbortSignal.timeout(120_000),
+      abortSignal: AbortSignal.timeout(600_000),
       functionId: "asr-context-correction",
     });
 

@@ -163,7 +163,7 @@ export async function summarizeWithLlm(
       system: systemPrompt,
       prompt: `Проанализируй следующий разговор:\n\n${sanitizedText}`,
       output: Output.object({ schema }),
-      abortSignal: AbortSignal.timeout(120_000),
+      abortSignal: AbortSignal.timeout(600_000),
       functionId: "asr-summarize",
     });
 
