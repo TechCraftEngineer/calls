@@ -74,7 +74,7 @@ export const AsrLogSchema = z.object({
 
 // Схема для валидации метаданных ASR
 export const AsrMetadataSchema = z.object({
-  asrLogs: z.array(AsrLogSchema),
+  asrLogs: z.array(AsrLogSchema).default([]),
   confidence: z.number().optional(),
   processingTimeMs: z.number().optional(),
   asrSource: z.string().optional(),
