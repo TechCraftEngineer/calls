@@ -171,6 +171,9 @@ export async function mergeAsrResultsWithLLM(
     prompt,
     temperature: 0.1,
     maxOutputTokens: 8000,
+    maxRetries: 2,
+    timeout: 120_000,
+    abortSignal: AbortSignal.timeout(120_000),
     output: Output.object({
       schema: MergedOutputSchema,
     }),
