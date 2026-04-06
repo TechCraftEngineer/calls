@@ -7,7 +7,7 @@ export const megafonSyncFn = inngest.createFunction(
     id: "megafon-ftp-sync",
     name: "Загрузка записей FTP",
     retries: 2,
-    triggers: [{ cron: "TZ=Europe/Moscow */15 * * * *" }],
+    triggers: [{ cron: "TZ=Europe/Moscow */45 * * * *" }],
   },
   async ({ step }) => {
     try {

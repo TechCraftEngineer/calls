@@ -10,7 +10,7 @@ export const pbxSyncFn = inngest.createFunction(
     id: "pbx-api-sync",
     name: "PBX API синхронизация",
     retries: 1,
-    triggers: [{ cron: "TZ=Europe/Moscow */15 * * * *" }],
+    triggers: [{ cron: "TZ=Europe/Moscow */45 * * * *" }],
   },
   async () => {
     const results = await runActivePbxSync();
