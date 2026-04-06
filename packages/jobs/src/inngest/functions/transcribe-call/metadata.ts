@@ -11,18 +11,39 @@ export function serializeMetadata(
   identifyResultMetadata: unknown,
   operatorName?: string | null,
 ): Record<string, unknown> {
-  let serializedMetadata: Record<string, unknown> = {};
+  const serializedMetadata: Record<string, unknown> = {};
 
   try {
-    // Безопасная сериализация с фильтрацией опасных полей
+    // Копируем только нужные поля из resultMetadata (без asrLogs и других больших полей)
     if (resultMetadata && typeof resultMetadata === "object") {
-      serializedMetadata = safeDeepClone(resultMetadata) as Record<string, unknown>;
+      const allowedFields = ["asrSource", "processingTimeMs", "confidence"];
+      for (const key of allowedFields) {
+        if (key in resultMetadata) {
+          serializedMetadata[key] = (resultMetadata as Record<string, unknown>)[key];
+        }
+      }
     }
+
+    // Копируем только нужные поля из identifyResultMetadata (без speakers)
+    if (identifyResultMetadata && typeof identifyResultMetadata === "object") {
+      const allowedIdentifyFields = [
+        "success",
+        "reason",
+        "usedEmbeddings",
+        "clusterCount",
+        "fallbackAttempted",
+        "fallbackReason",
+        "truncatedForAnalysis",
+      ];
+      for (const key of allowedIdentifyFields) {
+        if (key in identifyResultMetadata) {
+          serializedMetadata[key] = (identifyResultMetadata as Record<string, unknown>)[key];
+        }
+      }
+    }
+
     if (operatorName != null && operatorName !== "") {
       serializedMetadata.operatorName = operatorName;
-    }
-    if (identifyResultMetadata && typeof identifyResultMetadata === "object") {
-      serializedMetadata.diarization = safeDeepClone(identifyResultMetadata);
     }
   } catch (error) {
     logger.warn("Ошибка сериализации метаданных", {
@@ -31,37 +52,4 @@ export function serializeMetadata(
   }
 
   return serializedMetadata;
-}
-
-/**
- * Безопасное глубокое клонирование объекта с защитой от prototype pollution
- */
-function safeDeepClone(obj: unknown): unknown {
-  if (obj === null || typeof obj !== "object") {
-    return obj;
-  }
-
-  if (obj instanceof Date) {
-    return new Date(obj.getTime());
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map((item) => safeDeepClone(item));
-  }
-
-  if (typeof obj === "object") {
-    const cloned: Record<string, unknown> = {};
-    for (const key in obj) {
-      // Защита от prototype pollution
-      if (key === "__proto__" || key === "constructor" || key === "prototype") {
-        continue;
-      }
-      if (Object.hasOwn(obj, key)) {
-        cloned[key] = safeDeepClone((obj as Record<string, unknown>)[key]);
-      }
-    }
-    return cloned;
-  }
-
-  return obj;
 }

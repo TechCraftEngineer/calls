@@ -284,10 +284,6 @@ export const transcribeCallFn = inngest.createFunction(
         callTopic: null,
         metadata: {
           asrSource: "dual-gigaam-llm-merged",
-          asrLogs: [
-            ...asrResults.nonDiarized.metadata.asrLogs,
-            ...asrResults.diarized.metadata.asrLogs,
-          ],
           processingTimeMs: totalProcessingTimeMs,
         },
       };
@@ -386,13 +382,9 @@ export const transcribeCallFn = inngest.createFunction(
             : null,
         metadata: {
           ...serializedMetadata,
-          dualAsr: {
-            nonDiarizedTranscript: asrResults.nonDiarized.transcript,
-            diarizedTranscript: asrResults.diarized.transcript,
-            llmMergeApplied: mergedResult.applied,
-            llmMergeQuality: mergedResult.qualityScore,
-            llmMergeFallbackReason: mergedResult.fallbackReason,
-          },
+          processingTimeMs: totalProcessingTimeMs,
+          llmMergeApplied: mergedResult.applied,
+          llmMergeQuality: mergedResult.qualityScore,
         },
         summary: summaryResult.summary,
         sentiment: summaryResult.sentiment,
