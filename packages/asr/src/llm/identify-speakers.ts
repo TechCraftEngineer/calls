@@ -223,13 +223,9 @@ ${analysisText}
       };
     }
 
-    let resultText = normalizedText;
-    for (const [from, to] of Object.entries(sanitizedMapping)) {
-      if (from && to) {
-        const regex = new RegExp(`^(${escapeRegex(from)}):\\s*`, "gm");
-        resultText = resultText.replace(regex, `${to} `);
-      }
-    }
+    // Не заменяем speakerId в тексте, оставляем оригинальные метки
+    // Роли и имена для отображения передаются в metadata.mapping
+    const resultText = normalizedText;
 
     logger.info("Анализ спикеров завершён", {
       processingTimeMs: Date.now() - start,
