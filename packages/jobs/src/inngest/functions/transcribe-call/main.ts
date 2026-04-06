@@ -299,29 +299,12 @@ export const transcribeCallFn = inngest.createFunction(
       return validationResult.data;
     });
 
-    // Идентификация спикеров через LLM
-    const identifyResult = await step.run("llm/identify-speakers", async () => {
-      const normalizedText = validatedResult.normalizedText || "";
-      return identifySpeakers(
-        {
-          direction: call.direction || "unknown",
-          name: call.name,
-          workspaceId: call.workspaceId,
-        },
-        {
-          normalizedText,
-          metadata: validatedResult.metadata,
-        },
-        managerNameFromPbx,
-      );
-    });
+    const normalizedText = validatedResult.normalizedText || "";
 
-    const { text: finalText, customerName, operatorName } = identifyResult;
-
-    // Генерация summary через LLM
+    // Генерация summary через LLM (ДО идентификации спикеров)
     const summaryResult = await step.run("llm/summarize", async () => {
       const summarizeStartTime = Date.now();
-      const result = await summarizeWithLlm(finalText, {
+      const result = await summarizeWithLlm(normalizedText, {
         maxChars: 20_000,
       });
       const summarizeTimeMs = Date.now() - summarizeStartTime;
@@ -339,6 +322,25 @@ export const transcribeCallFn = inngest.createFunction(
         summarizeTimeMs,
       };
     });
+
+    // Идентификация спикеров через LLM (с использованием summary для лучшей точности)
+    const identifyResult = await step.run("llm/identify-speakers", async () => {
+      return identifySpeakers(
+        {
+          direction: call.direction || "unknown",
+          name: call.name,
+          workspaceId: call.workspaceId,
+        },
+        {
+          normalizedText,
+          metadata: validatedResult.metadata,
+        },
+        managerNameFromPbx,
+        summaryResult.summary || undefined,
+      );
+    });
+
+    const { text: finalText, customerName, operatorName } = identifyResult;
 
     // Логирование результатов идентификации
     const originalText = validatedResult.normalizedText || "";

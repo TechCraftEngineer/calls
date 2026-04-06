@@ -53,6 +53,7 @@ export interface IdentifySpeakersWithEmbeddingsOptions {
     embedding?: number[] | null;
     confidence?: number | null;
   }>;
+  summary?: string;
 }
 
 export interface IdentifySpeakersWithEmbeddingsResult {
@@ -233,7 +234,12 @@ export async function identifySpeakersWithEmbeddings(
 
   const clusterAnalysis = clusters.size > 0 ? buildClusterAnalysisPrompt(clusters) : "";
 
-  const systemPrompt = `${SYSTEM_PROMPT}${options.managerName ? `\n\nИЗВЕСТНЫЕ ДАННЫЕ ИЗ СИСТЕМЫ:\n- Имя менеджера/оператора: "${options.managerName}"\n\nИспользуй эту информацию для определения ролей: спикер, который представляется как "${options.managerName}" или отвечает на звонок как представитель компании, является ОПЕРАТОРОМ. Другой спикер — КЛИЕНТ.` : ""}${options.direction ? `\n\nНаправление звонка: ${options.direction}` : ""}`;
+  // Используем summary как основной контекст, если он есть
+  const summaryContext = options.summary
+    ? `\n\nКРАТКОЕ СОДЕРЖАНИЕ РАЗГОВОРА (используй для определения ролей):\n${options.summary}`
+    : ""; 
+
+  const systemPrompt = `${SYSTEM_PROMPT}${options.managerName ? `\n\nИЗВЕСТНЫЕ ДАННЫЕ ИЗ СИСТЕМЫ:\n- Имя менеджера/оператора: "${options.managerName}"\n\nИспользуй эту информацию для определения ролей: спикер, который представляется как "${options.managerName}" или отвечает на звонок как представитель компании, является ОПЕРАТОРОМ. Другой спикер — КЛИЕНТ.` : ""}${options.direction ? `\n\nНаправление звонка: ${options.direction}` : ""}${summaryContext}`;
 
   const start = Date.now();
 

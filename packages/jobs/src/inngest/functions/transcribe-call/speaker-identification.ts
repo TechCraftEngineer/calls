@@ -37,6 +37,7 @@ export async function identifySpeakers(
     };
   },
   managerNameFromPbx: string | null,
+  summary?: string,
 ) {
   const fallbackManagerName = call.name?.trim() || null;
 
@@ -94,5 +95,6 @@ export async function identifySpeakers(
     workspaceId: call.workspaceId,
     speakerTimeline,
     segments: segments || [],
+    summary,
   });
 }
