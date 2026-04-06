@@ -9,6 +9,7 @@ import { env } from "@calls/config";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import type { LanguageModel } from "ai";
 import { generateText as aiGenerateText } from "ai";
+import { getLangfuse } from "./tracing";
 
 /** Провайдер AI: openai | openrouter | deepseek */
 export type AiProvider = "openai" | "openrouter" | "deepseek";
@@ -323,9 +324,9 @@ export async function generateWithAi(
     const experimental_telemetry = langfuseTracing
       ? {
           ...DEFAULT_TELEMETRY,
+          functionId, // functionId на уровне telemetry, не в metadata
           metadata: {
             ...metadata,
-            functionId,
             ...(typeof metadata.provider === "string"
               ? { requestedProvider: metadata.provider }
               : {}),
