@@ -267,10 +267,18 @@ class TranscriptionService:
                 result["segments"].append(segment)
                 result["total_duration"] = max(result["total_duration"], end)
             
+            # Формируем final_transcript из сегментов
+            full_text_parts = []
+            for segment in result["segments"]:
+                seg_text = segment.get("text", "").strip()
+                if seg_text:
+                    full_text_parts.append(seg_text)
+            result["final_transcript"] = " ".join(full_text_parts).strip()
+            
             logger.info(
                 f"Распознавание завершено. Сегментов: {len(result['segments'])}, "
                 f"пропущено: {len(result['skipped_segments'])}, "
-                f"всего utterances: {len(utterances) if utterances else 0}"
+                f"final_transcript_length: {len(result.get('final_transcript', ''))}"
             )
             return result
             

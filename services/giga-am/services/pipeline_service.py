@@ -72,7 +72,7 @@ class PipelineService:
                 if result.get("success"):
                     result = {
                         "success": True,
-                        "final_transcript": result.get("text", ""),
+                        "final_transcript": result.get("final_transcript", ""),
                         "segments": result.get("segments", []),
                         "pipeline": "gigam-asr-only",
                         "dual_asr_enabled": False,
