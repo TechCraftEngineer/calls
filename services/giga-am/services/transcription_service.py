@@ -236,6 +236,10 @@ class TranscriptionService:
                 "skipped_segments": []  # Информация о пропущенных сегментах
             }
             
+            logger.info(f"Получено utterances от модели: {len(utterances) if utterances else 0}")
+            if utterances and len(utterances) > 0:
+                logger.debug(f"Тип первого utterance: {type(utterances[0])}, пример: {utterances[0]}")
+            
             for utt in utterances:
                 try:
                     start, end, text = self._extract_utterance_fields(utt)
@@ -264,7 +268,11 @@ class TranscriptionService:
                 result["segments"].append(segment)
                 result["total_duration"] = max(result["total_duration"], end)
             
-            logger.info(f"Распознавание завершено. Сегментов: {len(result['segments'])}")
+            logger.info(
+                f"Распознавание завершено. Сегментов: {len(result['segments'])}, "
+                f"пропущено: {len(result['skipped_segments'])}, "
+                f"всего utterances: {len(utterances) if utterances else 0}"
+            )
             return result
             
         except (ModelLoadError, GigaTimeoutError) as e:

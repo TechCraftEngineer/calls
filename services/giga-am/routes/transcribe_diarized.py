@@ -44,13 +44,17 @@ class DiarizedTranscriptionResponse(BaseModel):
     segments: List[TranscribedSegmentOutput] = Field(..., description="Список транскрибированных сегментов")
     speaker_timeline: List[Dict[str, Any]] = Field(
         default_factory=list,
-        description="Таймлайн спикеров с текстом"
+        description="Таймлайн спикеров с текстом",
+        alias="speakerTimeline"
     )
     num_speakers: int = Field(default=0, description="Количество уникальных спикеров")
     speakers: List[str] = Field(default_factory=list, description="Список спикеров")
     processing_time: float = Field(default=0.0, description="Время обработки в секундах")
     pipeline: str = Field(default="gigaam-diarized", description="Использованный pipeline")
     error: str = Field(default="", description="Описание ошибки (если success=false)")
+
+    class Config:
+        populate_by_name = True
 
 
 @router.post("/transcribe-diarized", response_model=DiarizedTranscriptionResponse)
@@ -154,7 +158,7 @@ async def transcribe_diarized(
             f"{response_data.processing_time:.2f}s"
         )
         
-        return JSONResponse(content=response_data.model_dump())
+        return JSONResponse(content=response_data.model_dump(by_alias=True))
         
     except FileSizeError as fse:
         logger.error(f"[{request_id}] Ошибка размера файла: {fse}")
