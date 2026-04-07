@@ -1,7 +1,7 @@
 import { callsService, type ManagerStatsRow, settingsService, usersService, workspacesService } from "@calls/db";
 import { type ManagerStats, ReportEmail, sendEmail } from "@calls/emails";
+import { formatReportSubject } from "@calls/shared";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
 import { ORPCError } from "@orpc/server";
 import { subDays, subMonths, subWeeks } from "date-fns";
 import { z } from "zod";
@@ -9,18 +9,6 @@ import { workspaceProcedure } from "../../orpc";
 
 const TZ = "Europe/Moscow";
 
-function formatReportSubject(reportType: "daily" | "weekly" | "monthly", dateFrom: Date, dateTo: Date): string {
-  const formatDate = (d: Date) => format(d, "dd.MM.yyyy", { locale: ru });
-
-  if (reportType === "daily") {
-    const dayOfWeek = format(dateFrom, "EEEE", { locale: ru });
-    const capitalizedDay = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
-    return `Отчёт по звонкам за ${capitalizedDay} ${formatDate(dateFrom)}`;
-  }
-
-  const typeLabel = reportType === "weekly" ? "Еженедельный" : "Ежемесячный";
-  return `Отчёт по звонкам (${typeLabel}): ${formatDate(dateFrom)} — ${formatDate(dateTo)}`;
-}
 const reportTypeSchema = z.object({
   reportType: z.enum(["daily", "weekly", "monthly"]),
 });
