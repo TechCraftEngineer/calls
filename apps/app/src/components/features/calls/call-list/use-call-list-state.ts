@@ -34,7 +34,9 @@ export function useCallListState(props: CallListProps) {
   const [recommendationsCallId, setRecommendationsCallId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
 
-  // Сортировка выполняется на клиенте (server-side sorting требует передачи sort_by/sort_order в query)
+  // NOTE: Сортировка выполняется на клиенте. Server-side sorting доступен через API (sort_by/sort_order),
+  // но текущая реализация использует client-side sortConfig для мгновенной сортировки без повторных запросов.
+  // Для перехода на server-side: добавьте sort_by/sort_order в callsListInput и уберите sortedCalls.
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
 
   const sortedCalls = useMemo(() => {
@@ -92,9 +94,9 @@ export function useCallListState(props: CallListProps) {
         return multiplier * (valueA - valueB);
       }
 
-      // Handle null/undefined values (place them at the end)
-      if (valueA == null && valueB != null) return multiplier;
-      if (valueA != null && valueB == null) return -multiplier;
+      // Handle null/undefined values (place them at the end regardless of sort direction)
+      if (valueA == null && valueB != null) return 1;
+      if (valueA != null && valueB == null) return -1;
 
       return 0;
     });

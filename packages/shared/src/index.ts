@@ -3,6 +3,7 @@
  */
 
 export type { DailyKpiRow } from "./kpi";
+export { formatReportSubject, type ReportType } from "./reports";
 export { generateWorkspaceSlug } from "./slug";
 export { buildCompanyContext } from "./utils/company-context";
 export {

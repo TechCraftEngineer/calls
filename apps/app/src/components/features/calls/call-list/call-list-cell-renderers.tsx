@@ -237,7 +237,7 @@ export function renderScoreCell(evaluation: CallWithDetails["evaluation"]) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="op-tooltip flex items-center" aria-label="Аномальное значение оценки: 0">
+          <div className="op-tooltip flex items-center">
             <Rating rating={0} size="sm" aria-label="Оценка: 0 звезд" />
             <span className="ml-1 text-xs text-amber-600" aria-hidden="true">⚠️</span>
             <span className="sr-only">Аномальное значение оценки</span>
@@ -251,16 +251,19 @@ export function renderScoreCell(evaluation: CallWithDetails["evaluation"]) {
   }
 
   return (
-    <div className="op-tooltip">
-      <Rating rating={score} size="sm" />
-      {evaluation?.valueExplanation && (
-        <div className="tooltip-content">
-          <strong>Обоснование:</strong>
-          <br />
-          {evaluation.valueExplanation}
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex items-center">
+          <Rating rating={score} size="sm" />
         </div>
+      </TooltipTrigger>
+      {evaluation?.valueExplanation && (
+        <TooltipContent side="top" className="max-w-xs">
+          <p className="font-medium">Обоснование:</p>
+          <p>{evaluation.valueExplanation}</p>
+        </TooltipContent>
       )}
-    </div>
+    </Tooltip>
   );
 }
 

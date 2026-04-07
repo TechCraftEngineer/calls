@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
-import { setActiveWorkspaceCookie } from "@/lib/cookies";
+import { clearActiveWorkspaceCookie, setActiveWorkspaceCookie } from "@/lib/cookies";
 
 const createWorkspaceSchema = z.object({
   name: workspaceNameSchema,
@@ -80,7 +80,7 @@ function CreateWorkspaceForm() {
 
   // Очищаем чужую cookie workspace при монтировании (защита от утечки)
   useEffect(() => {
-    setActiveWorkspaceCookie("");
+    clearActiveWorkspaceCookie();
   }, []);
 
   useEffect(() => {
