@@ -2,7 +2,7 @@
  * Query operations for calls - search, filtering, and aggregation
  */
 
-import { and, asc, count, desc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import type {
@@ -11,6 +11,31 @@ import type {
   GetCallsParams,
 } from "../../types/calls.types";
 import { buildCallConditions } from "./build-conditions";
+
+/**
+ * Строит ORDER BY выражение для динамической сортировки звонков
+ */
+function buildOrderBy(
+  sortBy: GetCallsParams["sortBy"],
+  sortOrder: GetCallsParams["sortOrder"],
+): ReturnType<typeof desc> | ReturnType<typeof asc> | ReturnType<typeof sql> {
+  const order = sortOrder === "asc" ? asc : desc;
+
+  switch (sortBy) {
+    case "direction":
+      return order(schema.calls.direction);
+    case "number":
+      return order(schema.calls.number);
+    case "name":
+      return order(schema.calls.name);
+    case "value_score":
+      // Для сортировки по value_score используем поле из evaluation
+      return order(schema.callEvaluations.valueScore);
+    case "timestamp":
+    default:
+      return order(schema.calls.timestamp);
+  }
+}
 
 export const callsQueries = {
   async findWithTranscriptsAndEvaluations(
@@ -30,6 +55,8 @@ export const callsQueries = {
       statuses,
       valueScores,
       workspaceId,
+      sortBy,
+      sortOrder,
       excludePhoneNumbers,
     } = params;
 
@@ -53,6 +80,8 @@ export const callsQueries = {
       excludePhoneNumbers,
     });
 
+    const orderByClause = buildOrderBy(sortBy, sortOrder);
+
     const result = await db
       .select({
         call: schema.calls,
@@ -66,7 +95,7 @@ export const callsQueries = {
       .leftJoin(schema.callEvaluations, eq(schema.callEvaluations.callId, schema.calls.id))
       .leftJoin(schema.files, eq(schema.files.id, schema.calls.fileId))
       .where(and(...conditions))
-      .orderBy(desc(schema.calls.timestamp))
+      .orderBy(orderByClause)
       .limit(limit)
       .offset(offset);
 

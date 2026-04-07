@@ -77,6 +77,12 @@ function CreateWorkspaceForm() {
 
   const checking = checkingWorkspaces || checkingInvitations;
 
+  // Очищаем чужую cookie workspace при монтировании (защита от утечки)
+  useEffect(() => {
+    // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
+    document.cookie = "active_workspace_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  }, []);
+
   useEffect(() => {
     if (checking) return;
 

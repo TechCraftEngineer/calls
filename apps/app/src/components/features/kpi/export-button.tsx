@@ -1,10 +1,9 @@
 "use client";
 
 import type { DailyKpiRow } from "@calls/shared";
-import { Button } from "@calls/ui";
+import { Button, toast } from "@calls/ui";
 import { Download, Loader2 } from "lucide-react";
 import * as React from "react";
-import { useToast } from "@/components/ui/toast";
 import { generateCSV, generateCSVFileName } from "@/lib/csv-export";
 
 interface ExportButtonProps {
@@ -16,7 +15,6 @@ interface ExportButtonProps {
 
 export function ExportButton({ data, employeeName, startDate, endDate }: ExportButtonProps) {
   const [isLoading, setIsLoading] = React.useState(false);
-  const { showToast } = useToast();
 
   const handleExport = React.useCallback(async () => {
     try {
@@ -24,7 +22,7 @@ export function ExportButton({ data, employeeName, startDate, endDate }: ExportB
 
       // Проверка на пустые данные
       if (!data || data.length === 0) {
-        showToast("Нет данных для экспорта", "error");
+        toast.error("Нет данных для экспорта");
         return;
       }
 
@@ -45,14 +43,14 @@ export function ExportButton({ data, employeeName, startDate, endDate }: ExportB
       // Очищаем URL
       URL.revokeObjectURL(url);
 
-      showToast("CSV файл успешно экспортирован", "success");
+      toast.success("CSV файл успешно экспортирован");
     } catch (error) {
       console.error("Ошибка при экспорте CSV:", error);
-      showToast(error instanceof Error ? error.message : "Ошибка при генерации CSV файла", "error");
+      toast.error(error instanceof Error ? error.message : "Ошибка при генерации CSV файла");
     } finally {
       setIsLoading(false);
     }
-  }, [data, employeeName, startDate, endDate, showToast]);
+  }, [data, employeeName, startDate, endDate]);
 
   return (
     <Button

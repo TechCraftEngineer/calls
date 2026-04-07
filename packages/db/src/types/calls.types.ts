@@ -30,6 +30,10 @@ export interface GetCallsParams {
   /** Internal numbers найденных сотрудников по текстовому поиску q */
   managerInternalNumbersForQuery?: string[];
   q?: string;
+  /** Поле для сортировки */
+  sortBy?: "timestamp" | "direction" | "number" | "name" | "value_score";
+  /** Направление сортировки */
+  sortOrder?: "asc" | "desc";
 }
 
 export interface GetCallManagersParams

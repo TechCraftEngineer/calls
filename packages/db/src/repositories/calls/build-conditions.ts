@@ -1,4 +1,4 @@
-import { eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
+import { eq, gte, ilike, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import * as schema from "../../schema";
 import { ANSWERED_ALIASES, MISSED_ALIASES, TECHNICAL_ERROR_ALIASES } from "../../utils/call-status";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
@@ -140,7 +140,27 @@ export function buildCallConditions({
     conditions.push(inArray(schema.calls.internalNumber, managerInternalNumbers));
   }
   if (valueScores?.length) {
-    conditions.push(inArray(schema.callEvaluations.valueScore, valueScores));
+    const hasZero = valueScores.includes(0);
+    const nonZeroScores = valueScores.filter((s) => s !== 0);
+
+    if (hasZero && nonZeroScores.length === 0) {
+      // Только 0 - ищем null или 0 (неоцененные + нулевая ценность)
+      const zeroCondition = or(
+        isNull(schema.callEvaluations.valueScore),
+        eq(schema.callEvaluations.valueScore, 0),
+      );
+      if (zeroCondition) conditions.push(zeroCondition);
+    } else if (hasZero) {
+      // 0 и другие значения - ищем null или любое из выбранных значений
+      const mixedCondition = or(
+        isNull(schema.callEvaluations.valueScore),
+        inArray(schema.callEvaluations.valueScore, valueScores),
+      );
+      if (mixedCondition) conditions.push(mixedCondition);
+    } else {
+      // Только ненулевые значения
+      conditions.push(inArray(schema.callEvaluations.valueScore, valueScores));
+    }
   }
   if (q) {
     const qCond = or(
