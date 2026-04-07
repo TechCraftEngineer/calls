@@ -43,11 +43,6 @@ const managerStatsSchema = z.object({
 });
 
 const statsSchema = z.record(z.string(), managerStatsSchema);
-const REPORT_TYPE_LABELS = {
-  daily: "Ежедневный",
-  weekly: "Еженедельный",
-  monthly: "Ежемесячный",
-} as const satisfies Record<z.infer<typeof reportTypeSchema>["reportType"], string>;
 
 function parseInternalExtensions(ext: string | null): string[] | null {
   if (!ext || String(ext).trim().toLowerCase() === "all") return null;
@@ -103,7 +98,6 @@ export const sendTestEmail = workspaceProcedure
     const { formatInTimeZone } = await import("date-fns-tz");
     const now = new Date();
     const { reportType } = input;
-    const reportTypeLabel = REPORT_TYPE_LABELS[reportType];
 
     let dateFrom: Date;
     let dateTo: Date;

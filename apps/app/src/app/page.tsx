@@ -106,14 +106,28 @@ export default function HomePage() {
   useEffect(() => {
     if (callsError && typeof callsError === "object" && "code" in callsError) {
       const errorCode = (callsError as { code?: string }).code;
+      const errorData = (callsError as { data?: Record<string, unknown> }).data;
       const errorMessage = (callsError as { message?: string }).message ?? "";
+
       if (errorCode === "UNAUTHORIZED") {
         router.push(paths.auth.signin);
-      } else if (
+        return;
+      }
+
+      // Проверяем структурированные поля ошибки для определения проблемы с workspace
+      const isWorkspaceError =
+        errorData?.reason === "no_active_workspace" ||
+        errorData?.reason === "workspace_not_found" ||
+        errorData?.code === "WORKSPACE_REQUIRED" ||
+        errorData?.code === "NO_ACTIVE_WORKSPACE";
+
+      // Fallback на проверку message только если структурированные поля отсутствуют
+      const isWorkspaceMessageError =
+        !isWorkspaceError &&
         errorCode === "BAD_REQUEST" &&
-        /workspace|no active workspace/i.test(errorMessage)
-      ) {
-        // Нет активного workspace - редирект на создание
+        /workspace|no active workspace/i.test(errorMessage);
+
+      if (isWorkspaceError || isWorkspaceMessageError) {
         router.push(paths.onboarding.createWorkspace);
       }
     }

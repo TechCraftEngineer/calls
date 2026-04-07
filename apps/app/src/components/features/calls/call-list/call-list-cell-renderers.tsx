@@ -194,11 +194,11 @@ export function renderNumberCell(
 export function renderStatusCell(call: CallWithDetails["call"]) {
   const status = call.status;
   const duration = call.duration ?? 0;
-  
+
   // Статусы из БД: missed, answered, voicemail, failed, technical_error
-  // Если статус не заполнен, вычисляем по duration (для обратной совместимости)
+  // Если статус не заполнен (null/undefined), вычисляем по duration (для обратной совместимости)
   const computedStatus = status ?? ((duration === 0 && call.direction === "inbound") ? "missed" : "answered");
-  
+
   const statusConfig: Record<string, { label: string; className: string }> = {
     missed: { label: "ПРОПУЩЕН", className: "badge-red-op" },
     answered: { label: "ПРИНЯТ", className: "badge-green-op" },
@@ -206,9 +206,10 @@ export function renderStatusCell(call: CallWithDetails["call"]) {
     failed: { label: "ОШИБКА", className: "badge-red-op" },
     technical_error: { label: "ОШИБКА", className: "badge-red-op" },
   };
-  
-  const config = statusConfig[computedStatus ?? "answered"] ?? { label: "ПРИНЯТ", className: "badge-green-op" };
-  
+
+  // Для неизвестных статусов возвращаем явный unknown badge
+  const config = statusConfig[computedStatus] ?? { label: "НЕИЗВЕСТНО", className: "badge-gray-op" };
+
   return (
     <span className={`op-badge ${config.className}`}>
       {config.label}
@@ -234,10 +235,18 @@ export function renderScoreCell(evaluation: CallWithDetails["evaluation"]) {
   if (score === 0) {
     console.warn(`[renderScoreCell] Обнаружено аномальное значение score=0 для evaluation id=${evaluation?.id ?? "unknown"}`);
     return (
-      <div className="op-tooltip">
-        <Rating rating={0} size="sm" />
-        <span className="ml-1 text-xs text-amber-600" title="Аномальное значение оценки">⚠️</span>
-      </div>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="op-tooltip flex items-center" aria-label="Аномальное значение оценки: 0">
+            <Rating rating={0} size="sm" aria-label="Оценка: 0 звезд" />
+            <span className="ml-1 text-xs text-amber-600" aria-hidden="true">⚠️</span>
+            <span className="sr-only">Аномальное значение оценки</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top">
+          <p>Аномальное значение оценки: 0</p>
+        </TooltipContent>
+      </Tooltip>
     );
   }
 

@@ -6,6 +6,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from "react";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
+import {
+  setActiveWorkspaceCookie,
+  clearActiveWorkspaceCookie,
+} from "@/lib/cookies";
+
+// Re-export для обратной совместимости
+export { clearActiveWorkspaceCookie };
 
 interface Workspace {
   id: string;
@@ -22,20 +29,6 @@ interface WorkspaceContextType {
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
-
-function setActiveWorkspaceCookie(workspaceId: string) {
-  if (typeof document === "undefined") return;
-  const isSecure = window.location.protocol === "https:";
-  const cookieString = `active_workspace_id=${workspaceId}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${isSecure ? "; Secure" : ""}`;
-  // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
-  document.cookie = cookieString;
-}
-
-export function clearActiveWorkspaceCookie() {
-  if (typeof document === "undefined") return;
-  // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
-  document.cookie = "active_workspace_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-}
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { data: session, isPending: sessionPending } = useSession();
@@ -78,7 +71,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const loading = sessionPending || (shouldFetchWorkspaces && workspacesPending);
 
   // Проверяем, находимся ли мы на странице создания workspace
-  const isOnboardingCreateWorkspace = pathname?.includes("/onboarding/create-workspace");
+  const isOnboardingCreateWorkspace = pathname?.startsWith("/onboarding/create-workspace") ?? false;
 
   useEffect(() => {
     // Не устанавливаем cookie на странице создания workspace, т.к. страница сама управляет этим

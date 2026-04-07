@@ -1,6 +1,7 @@
 export const CALL_STATUS = {
   MISSED: "missed",
   ANSWERED: "answered",
+  VOICEMAIL: "voicemail",
   TECHNICAL_ERROR: "technical_error",
 } as const;
 
@@ -42,12 +43,23 @@ export const TECHNICAL_ERROR_ALIASES = [
   "запрещено",
 ] as const;
 
+export const VOICEMAIL_ALIASES = [
+  "voicemail",
+  "voice_mail",
+  "voice mail",
+  "автоответчик",
+  "голосовая почта",
+  "голос. почта",
+  "запись",
+] as const;
+
 const STATUS_ALIASES: Record<string, CallStatus> = {
   ...Object.fromEntries(MISSED_ALIASES.map((alias) => [alias, CALL_STATUS.MISSED])),
   ...Object.fromEntries(ANSWERED_ALIASES.map((alias) => [alias, CALL_STATUS.ANSWERED])),
   ...Object.fromEntries(
     TECHNICAL_ERROR_ALIASES.map((alias) => [alias, CALL_STATUS.TECHNICAL_ERROR]),
   ),
+  ...Object.fromEntries(VOICEMAIL_ALIASES.map((alias) => [alias, CALL_STATUS.VOICEMAIL])),
 };
 
 /**
