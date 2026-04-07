@@ -134,6 +134,7 @@ export function CallsFilters({
                       ? filters.direction.length === 0
                       : filters.direction.includes(option.value)
                   }
+                  disabled={option.value === "all" && filters.direction.length === 0}
                   onCheckedChange={(checked) => {
                     if (option.value === "all" && checked === true) {
                       updateFilters((prev) => ({ ...prev, direction: [] }));
@@ -290,7 +291,11 @@ export function CallsFilters({
             <Button variant="outline" className="h-9">
               <Funnel className="size-4" />
               Период
-              {(filters.dateFrom || filters.dateTo) && <Badge variant="secondary">1</Badge>}
+              {(filters.dateFrom || filters.dateTo) && (
+                <Badge variant="secondary">
+                  {[filters.dateFrom, filters.dateTo].filter(Boolean).length}
+                </Badge>
+              )}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-72 space-y-3">

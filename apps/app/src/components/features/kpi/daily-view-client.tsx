@@ -57,8 +57,20 @@ export function DailyViewClient({
   );
   const [endDate, setEndDate] = React.useState(searchParams.get("endDate") || initialEndDate);
 
-  // State для режима отображения (таблица/график)
-  const [viewMode, setViewMode] = React.useState<ViewMode>("table");
+  // State для режима отображения (таблица/график/календарь) - синхронизируется с URL
+  const [viewMode, setViewMode] = React.useState<ViewMode>(
+    (searchParams.get("view") as ViewMode) || "table",
+  );
+
+  // Синхронизация viewMode с URL при изменении
+  React.useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const currentView = params.get("view") as ViewMode;
+    if (currentView !== viewMode && ["table", "chart", "calendar"].includes(viewMode)) {
+      params.set("view", viewMode);
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }
+  }, [viewMode, router, searchParams]);
 
   // Загрузка данных с TanStack Query
   const { data, isLoading, error, refetch } = useQuery({

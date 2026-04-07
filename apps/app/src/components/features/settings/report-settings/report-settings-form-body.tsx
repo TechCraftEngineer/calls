@@ -328,9 +328,6 @@ export default function ReportSettingsFormBody({
         await updateReportParamsMutation.mutateAsync({
           user_id: userId,
           data: {
-            filterExcludeAnsweringMachine: form.filterExcludeAnsweringMachine,
-            filterMinDuration: toNonNegInt(form.filterMinDuration),
-            filterMinReplicas: toNonNegInt(form.filterMinReplicas),
             kpiBaseSalary: toNonNegInt(form.kpiBaseSalary),
             kpiTargetBonus: toNonNegInt(form.kpiTargetBonus),
             kpiTargetTalkTimeMinutes: toNonNegInt(form.kpiTargetTalkTimeMinutes),
