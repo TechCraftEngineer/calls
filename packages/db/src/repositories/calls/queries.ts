@@ -90,12 +90,6 @@ export const callsQueries = {
         evaluation: schema.callEvaluations,
         fileDuration: schema.files.durationSeconds,
         fileSizeBytes: schema.files.sizeBytes,
-        // Добавляем вычисляемое поле для определения типа звонка
-        callType: sql`${schema.callEvaluations.notAnalyzableReason} = 'autoanswerer' 
-      ? 'Автоответчик' 
-      : ${schema.calls.status} = 'voicemail' 
-        ? 'Голосовое сообщение' 
-        : 'Обычный звонок'`,
       })
       .from(schema.calls)
       .leftJoin(schema.transcripts, eq(schema.transcripts.callId, schema.calls.id))
@@ -112,7 +106,6 @@ export const callsQueries = {
       evaluation: row.evaluation,
       fileDuration: row.fileDuration,
       fileSizeBytes: row.fileSizeBytes,
-      callType: row.callType, // Добавляем поле в результат
     }));
   },
 
