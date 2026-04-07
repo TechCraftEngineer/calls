@@ -2,6 +2,7 @@ import { filesService, usersRepository } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
+import { translateCallType, translateNotAnalyzableReason } from "./translations";
 import { getDisplayNameFromUser } from "./utils";
 
 export const get = workspaceProcedure
@@ -86,9 +87,15 @@ export const get = workspaceProcedure
       transcript: transcript
         ? {
             ...transcript,
+            callType: translateCallType(transcript.callType),
             speakerMapping,
           }
         : null,
-      evaluation,
+      evaluation: evaluation
+        ? {
+            ...evaluation,
+            notAnalyzableReason: translateNotAnalyzableReason(evaluation.notAnalyzableReason),
+          }
+        : null,
     };
   });

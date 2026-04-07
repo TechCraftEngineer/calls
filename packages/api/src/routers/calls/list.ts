@@ -9,6 +9,7 @@ import {
 } from "@calls/db";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
+import { translateCallType, translateNotAnalyzableReason } from "./translations";
 import { getInternalNumbersForUser, getMobileNumbersForUser } from "./utils";
 
 const transcriptMetadataSchema = z.object({ operatorName: z.string().optional() }).passthrough();
@@ -364,6 +365,18 @@ export const list = workspaceProcedure
             duration: item.fileDuration ?? item.transcript?.metadata?.durationInSeconds ?? null,
             status: item.call.status,
           },
+          transcript: item.transcript
+            ? {
+                ...item.transcript,
+                callType: translateCallType(item.transcript.callType),
+              }
+            : null,
+          evaluation: item.evaluation
+            ? {
+                ...item.evaluation,
+                notAnalyzableReason: translateNotAnalyzableReason(item.evaluation.notAnalyzableReason),
+              }
+            : null,
         };
       }),
     );
