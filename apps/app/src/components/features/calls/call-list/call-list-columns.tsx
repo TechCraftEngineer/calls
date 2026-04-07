@@ -42,7 +42,7 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
 
   const columnTooltips: Record<string, string> = {
     status: "Результат звонка (отвечен, пропущен и т.д.)",
-    score: "Оценка качества звонка",
+    score: "Ценность звонка (0 = не оценено, 1-5 = оценка сделки)",
     summary: "Краткое резюме разговора",
     record: "Быстрые действия по звонку: запись, транскрипция, рекомендации",
   };
@@ -199,14 +199,14 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
-          title="Оценка"
+          title="Ценность"
           className={headerClassName}
           tooltip={columnTooltips.score}
           visibility={true}
         />
       ),
       cell: ({ row }) => renderScoreCell(row.original.evaluation),
-      meta: { headerTitle: "Оценка" },
+      meta: { headerTitle: "Ценность" },
     },
     {
       accessorKey: "transcript.summary",

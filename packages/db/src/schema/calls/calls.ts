@@ -71,6 +71,8 @@ export const calls = pgTable(
     index("calls_number_idx").on(table.number),
     index("calls_enhanced_audio_file_id_idx").on(table.enhancedAudioFileId),
     index("calls_status_idx").on(table.status),
+    index("calls_direction_idx").on(table.direction),
+    index("calls_workspace_direction_idx").on(table.workspaceId, table.direction),
     index("idx_calls_workspace_id_name_internal_number").on(
       table.workspaceId,
       table.name,

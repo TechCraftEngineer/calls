@@ -82,6 +82,8 @@ const listCallsSchema = z.object({
   manager: maybeStringOrArraySchema,
   status: maybeStatusOrArraySchema,
   value: z.array(z.number()).optional(),
+  sort_by: z.enum(["timestamp", "direction", "number", "name", "value_score"]).optional(),
+  sort_order: z.enum(["asc", "desc"]).optional(),
 });
 
 export const list = workspaceProcedure
@@ -278,6 +280,8 @@ export const list = workspaceProcedure
         managerInternalNumbersForQuery:
           managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
         q: trimmedQuery,
+        sortBy: input.sort_by,
+        sortOrder: input.sort_order,
       }),
       callsService.countCalls({
         workspaceId,
@@ -374,6 +378,8 @@ export const list = workspaceProcedure
         status: statusFilters,
         manager: finalManagerFilters,
         value: input.value ?? [],
+        sort_by: input.sort_by ?? "timestamp",
+        sort_order: input.sort_order ?? "desc",
       },
       metrics: {
         total_calls: totalItems,

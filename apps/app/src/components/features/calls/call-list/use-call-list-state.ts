@@ -44,7 +44,9 @@ export function useCallListState(props: CallListProps) {
     setSortConfig({ key, order });
   };
 
-  const sortedCalls = useMemo(() => sortCalls(props.calls, sortConfig), [props.calls, sortConfig]);
+  // Сортировка теперь выполняется на сервере через параметры sort_by/sort_order
+  // sortedCalls просто возвращает calls без изменений
+  const sortedCalls = props.calls;
 
   useEffect(() => {
     saveColumnOrder(columnOrder);
@@ -183,57 +185,4 @@ export function useCallListState(props: CallListProps) {
     handleTranscribe,
     handleCallDeleted,
   };
-}
-
-function sortCalls(
-  calls: CallWithDetails[],
-  sortConfig: { key: SortKey; order: SortOrder } | null,
-): CallWithDetails[] {
-  if (!sortConfig) return calls;
-
-  return calls.toSorted((a, b) => {
-    let valA: string | number;
-    let valB: string | number;
-
-    switch (sortConfig.key) {
-      case "type":
-        valA = a.call.direction || "";
-        valB = b.call.direction || "";
-        break;
-      case "number":
-        valA = a.call.number || "";
-        valB = b.call.number || "";
-        break;
-      case "manager":
-        valA = a.call.managerName || "";
-        valB = b.call.managerName || "";
-        break;
-      case "status":
-        valA = a.call.duration || 0;
-        valB = b.call.duration || 0;
-        break;
-      case "date":
-        valA = new Date(a.call.timestamp).getTime();
-        valB = new Date(b.call.timestamp).getTime();
-        break;
-      case "score":
-        valA = a.evaluation?.valueScore || 0;
-        valB = b.evaluation?.valueScore || 0;
-        break;
-      case "summary":
-        valA = a.transcript?.summary || "";
-        valB = b.transcript?.summary || "";
-        break;
-      case "duration":
-        valA = a.call.duration || 0;
-        valB = b.call.duration || 0;
-        break;
-      default:
-        return 0;
-    }
-
-    if (valA < valB) return sortConfig.order === "asc" ? -1 : 1;
-    if (valA > valB) return sortConfig.order === "asc" ? 1 : -1;
-    return 0;
-  });
 }

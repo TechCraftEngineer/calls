@@ -207,7 +207,13 @@ export function renderDateCell(call: CallWithDetails["call"]) {
 }
 
 export function renderScoreCell(evaluation: CallWithDetails["evaluation"]) {
-  const score = evaluation?.valueScore ?? 0;
+  const score = evaluation?.valueScore;
+  const hasScore = score !== null && score !== undefined && score > 0;
+
+  if (!hasScore) {
+    return <span style={{ color: "#ccc" }}>Не оценено</span>;
+  }
+
   return (
     <div className="op-tooltip">
       <Rating rating={score} size="sm" />

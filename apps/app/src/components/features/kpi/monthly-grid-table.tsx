@@ -64,6 +64,9 @@ function formatMoney(value: number): string {
     maximumFractionDigits: 0,
   }).format(value);
 }
+
+const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+
 function getCellColor(percentage: number): string {
   if (percentage >= 100) return "bg-green-50 text-green-900";
   if (percentage >= 80) return "bg-yellow-50 text-yellow-900";
@@ -190,9 +193,20 @@ export default function MonthlyGridTable() {
               </TableHead>
               {daysInMonth.map((date) => {
                 const day = date.split("-")[2];
+                const dateObj = new Date(date);
+                const weekdayIndex = (dateObj.getDay() + 6) % 7; // 0 = Пн, 6 = Вс
+                const isWeekend = weekdayIndex >= 5; // Сб = 5, Вс = 6
                 return (
-                  <TableHead key={date} className="text-center min-w-[80px] p-2">
-                    <div className="text-xs font-medium">{day}</div>
+                  <TableHead
+                    key={date}
+                    className={`text-center min-w-[80px] p-2 ${isWeekend ? "bg-amber-50/50" : ""}`}
+                  >
+                    <div className={`text-xs font-medium ${isWeekend ? "text-amber-700" : ""}`}>{day}</div>
+                    <div
+                      className={`text-[10px] ${isWeekend ? "text-amber-600 font-medium" : "text-muted-foreground"}`}
+                    >
+                      {WEEKDAYS[weekdayIndex]}
+                    </div>
                   </TableHead>
                 );
               })}

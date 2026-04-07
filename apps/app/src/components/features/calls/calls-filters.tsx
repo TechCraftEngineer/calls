@@ -52,7 +52,14 @@ const statusOptions = [
   { value: "technical_error", label: "Ошибки" },
 ] as const;
 
-const valueOptions = [1, 2, 3, 4, 5] as const;
+const valueOptions = [
+  { value: 0, label: "0 (Не оценено)" },
+  { value: 1, label: "1" },
+  { value: 2, label: "2" },
+  { value: 3, label: "3" },
+  { value: 4, label: "4" },
+  { value: 5, label: "5" },
+] as const;
 
 export function CallsFilters({
   filters,
@@ -263,23 +270,23 @@ export function CallsFilters({
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-48 space-y-3">
-            {valueOptions.map((value) => (
-              <div key={value} className="flex items-center gap-2.5">
+            {valueOptions.map((option) => (
+              <div key={option.value} className="flex items-center gap-2.5">
                 <Checkbox
-                  id={`value-${value}`}
-                  checked={filters.value.includes(value)}
+                  id={`value-${option.value}`}
+                  checked={filters.value.includes(option.value)}
                   onCheckedChange={(checked) =>
                     updateFilters((prev) => ({
                       ...prev,
                       value:
                         checked === true
-                          ? [...prev.value, value]
-                          : prev.value.filter((v) => v !== value),
+                          ? [...prev.value, option.value]
+                          : prev.value.filter((v) => v !== option.value),
                     }))
                   }
                 />
-                <Label htmlFor={`value-${value}`} className="font-normal">
-                  {value}
+                <Label htmlFor={`value-${option.value}`} className="font-normal">
+                  {option.label}
                 </Label>
               </div>
             ))}

@@ -29,6 +29,9 @@ function LoginForm() {
       const result = await login(data.email, data.password);
 
       if (result.success) {
+        // Очищаем cookie чужого workspace перед входом
+        // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
+        document.cookie = "active_workspace_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         setTimeout(() => {
           router.push(paths.root);
         }, 100);
