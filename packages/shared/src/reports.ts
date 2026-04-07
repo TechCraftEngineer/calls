@@ -23,6 +23,15 @@ export function formatReportSubject(
     return `Отчёт по звонкам за ${capitalizedDay} ${formatDate(dateFrom)}`;
   }
 
-  const typeLabel = reportType === "weekly" ? "Еженедельный" : "Ежемесячный";
+  const typeLabelMap: Record<Exclude<ReportType, "daily">, string> = {
+    weekly: "Еженедельный",
+    monthly: "Ежемесячный",
+  };
+
+  const typeLabel = typeLabelMap[reportType];
+  if (!typeLabel) {
+    throw new Error(`Unknown report type: ${reportType}`);
+  }
+
   return `Отчёт по звонкам (${typeLabel}): ${formatDate(dateFrom)} — ${formatDate(dateTo)}`;
 }
