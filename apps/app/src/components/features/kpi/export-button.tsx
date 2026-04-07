@@ -46,7 +46,7 @@ export function ExportButton({ data, employeeName, startDate, endDate }: ExportB
       toast.success("CSV файл успешно экспортирован");
     } catch (error) {
       console.error("Ошибка при экспорте CSV:", error);
-      toast.error(error instanceof Error ? error.message : "Ошибка при генерации CSV файла");
+      toast.error("Ошибка при генерации CSV файла");
     } finally {
       setIsLoading(false);
     }

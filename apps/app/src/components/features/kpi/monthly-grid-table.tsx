@@ -193,7 +193,8 @@ export default function MonthlyGridTable() {
               </TableHead>
               {daysInMonth.map((date) => {
                 const day = date.split("-")[2];
-                const dateObj = new Date(date);
+                const [year, month, dayNum] = date.split("-").map(Number);
+                const dateObj = new Date(year, month - 1, dayNum);
                 const weekdayIndex = (dateObj.getDay() + 6) % 7; // 0 = Пн, 6 = Вс
                 const isWeekend = weekdayIndex >= 5; // Сб = 5, Вс = 6
                 return (

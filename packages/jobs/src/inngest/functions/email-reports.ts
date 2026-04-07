@@ -14,11 +14,25 @@ import {
   workspacesService,
 } from "@calls/db";
 import { type ManagerStats, ReportEmail, sendEmail } from "@calls/emails";
-import { subMonths } from "date-fns";
+import { format, subMonths } from "date-fns";
+import { ru } from "date-fns/locale";
 import { toZonedTime } from "date-fns-tz";
 import { inngest } from "../client";
 
 const TZ = "Europe/Moscow";
+
+function formatReportSubject(reportType: "daily" | "weekly" | "monthly", dateFrom: Date, dateTo: Date): string {
+  const formatDate = (d: Date) => format(d, "dd.MM.yyyy", { locale: ru });
+
+  if (reportType === "daily") {
+    const dayOfWeek = format(dateFrom, "EEEE", { locale: ru });
+    const capitalizedDay = dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1);
+    return `Отчёт по звонкам за ${capitalizedDay} ${formatDate(dateFrom)}`;
+  }
+
+  const typeLabel = reportType === "weekly" ? "Еженедельный" : "Ежемесячный";
+  return `Отчёт по звонкам (${typeLabel}): ${formatDate(dateFrom)} — ${formatDate(dateTo)}`;
+}
 
 function formatDateInMoscow(date: Date): string {
   const year = date.getFullYear();
@@ -201,9 +215,10 @@ export const emailReportsFn = inngest.createFunction(
             }
 
             try {
+              const subject = formatReportSubject(reportType, dateFrom, dateTo);
               await sendEmail({
                 to: [r.email],
-                subject: `Отчёт по звонкам: ${dateFromString} — ${dateToString}`,
+                subject,
                 react: ReportEmail({
                   reportType,
                   username: undefined,

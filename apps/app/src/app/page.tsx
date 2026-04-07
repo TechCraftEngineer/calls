@@ -106,9 +106,13 @@ export default function HomePage() {
   useEffect(() => {
     if (callsError && typeof callsError === "object" && "code" in callsError) {
       const errorCode = (callsError as { code?: string }).code;
+      const errorMessage = (callsError as { message?: string }).message ?? "";
       if (errorCode === "UNAUTHORIZED") {
         router.push(paths.auth.signin);
-      } else if (errorCode === "BAD_REQUEST") {
+      } else if (
+        errorCode === "BAD_REQUEST" &&
+        /workspace|no active workspace/i.test(errorMessage)
+      ) {
         // Нет активного workspace - редирект на создание
         router.push(paths.onboarding.createWorkspace);
       }

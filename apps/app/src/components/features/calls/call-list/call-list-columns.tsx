@@ -41,7 +41,7 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
   const renderLinkOrButton = createLinkOrButton(onSelectCall);
 
   const columnTooltips: Record<string, string> = {
-    status: "Результат звонка (отвечен, пропущен и т.д.)",
+    status: "Статус звонка (принят, пропущен, ошибка и т.д.)",
     score: "Ценность звонка (0 = не оценено, 1-5 = оценка сделки)",
     summary: "Краткое резюме разговора",
     record: "Быстрые действия по звонку: запись, транскрипция, рекомендации",
@@ -167,14 +167,14 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}
-          title="Результат"
+          title="Статус"
           className={headerClassName}
           tooltip={columnTooltips.status}
           visibility={true}
         />
       ),
       cell: ({ row }) => renderStatusCell(row.original.call),
-      meta: { headerTitle: "Результат" },
+      meta: { headerTitle: "Статус" },
       enableSorting: false,
     },
     {

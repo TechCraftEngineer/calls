@@ -2,7 +2,7 @@
 
 import { toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from "react";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
@@ -31,11 +31,18 @@ function setActiveWorkspaceCookie(workspaceId: string) {
   document.cookie = cookieString;
 }
 
+export function clearActiveWorkspaceCookie() {
+  if (typeof document === "undefined") return;
+  // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
+  document.cookie = "active_workspace_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+}
+
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { data: session, isPending: sessionPending } = useSession();
   const orpc = useORPC();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const pathname = usePathname();
 
   const isAuthenticated = !!session?.user;
   const shouldFetchWorkspaces = isAuthenticated && !sessionPending;
@@ -70,11 +77,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const loading = sessionPending || (shouldFetchWorkspaces && workspacesPending);
 
+  // Проверяем, находимся ли мы на странице создания workspace
+  const isOnboardingCreateWorkspace = pathname?.includes("/onboarding/create-workspace");
+
   useEffect(() => {
+    // Не устанавливаем cookie на странице создания workspace, т.к. страница сама управляет этим
+    if (isOnboardingCreateWorkspace) return;
     if (activeWorkspace) {
       setActiveWorkspaceCookie(activeWorkspace.id);
     }
-  }, [activeWorkspace]);
+  }, [activeWorkspace, isOnboardingCreateWorkspace]);
 
   const setActiveWorkspace = useCallback(
     async (workspaceId: string) => {

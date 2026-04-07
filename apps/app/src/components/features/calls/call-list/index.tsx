@@ -43,7 +43,7 @@ export default function CallList(props: CallListProps) {
                     onDrop={(e) => state.handleDrop(e, col.key)}
                     className="select-none relative transition-colors duration-200"
                     style={{
-                      cursor: col.sortKey ? "pointer" : "move",
+                      cursor: "move",
                       backgroundColor:
                         state.dragOverColumn === col.key
                           ? "#f0f8ff"
@@ -52,7 +52,6 @@ export default function CallList(props: CallListProps) {
                             : "transparent",
                       opacity: state.draggedColumn === col.key ? 0.5 : 1,
                     }}
-                    onClick={() => col.sortKey && state.handleSort(col.sortKey)}
                   >
                     <div className="flex items-center gap-1">
                       <span
@@ -83,11 +82,6 @@ export default function CallList(props: CallListProps) {
                           {col.tooltip}
                         </div>
                       </div>
-                      {col.sortKey && state.sortConfig?.key === col.sortKey && (
-                        <span className="text-[10px] text-gray-800">
-                          {state.sortConfig.order === "asc" ? "▲" : "▼"}
-                        </span>
-                      )}
                     </div>
                   </TableHead>
                 ),

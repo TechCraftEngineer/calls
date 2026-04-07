@@ -355,6 +355,7 @@ export const list = workspaceProcedure
             managerName,
             operatorName,
             duration: item.fileDuration ?? item.transcript?.metadata?.durationInSeconds ?? null,
+            status: item.call.status,
           },
         };
       }),

@@ -18,8 +18,9 @@ import { buildCallConditions } from "./build-conditions";
 function buildOrderBy(
   sortBy: GetCallsParams["sortBy"],
   sortOrder: GetCallsParams["sortOrder"],
-): ReturnType<typeof desc> | ReturnType<typeof asc> | ReturnType<typeof sql> {
+): ReturnType<typeof desc> | ReturnType<typeof asc> | ReturnType<typeof sql<unknown>> {
   const order = sortOrder === "asc" ? asc : desc;
+  const nullsClause = sortOrder === "asc" ? "NULLS LAST" : "NULLS FIRST";
 
   switch (sortBy) {
     case "direction":
@@ -29,8 +30,8 @@ function buildOrderBy(
     case "name":
       return order(schema.calls.name);
     case "value_score":
-      // Для сортировки по value_score используем поле из evaluation
-      return order(schema.callEvaluations.valueScore);
+      // Для сортировки по value_score используем явное указание NULLS для детерминированности
+      return sql`${schema.callEvaluations.valueScore} ${sortOrder === "asc" ? "ASC" : "DESC"} ${nullsClause}`;
     case "timestamp":
     default:
       return order(schema.calls.timestamp);

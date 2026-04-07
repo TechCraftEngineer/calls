@@ -192,10 +192,26 @@ export function renderNumberCell(
 }
 
 export function renderStatusCell(call: CallWithDetails["call"]) {
-  const isMissed = (call.duration ?? 0) === 0 && call.direction === "inbound";
+  const status = call.status;
+  const duration = call.duration ?? 0;
+  
+  // Статусы из БД: missed, answered, voicemail, failed, technical_error
+  // Если статус не заполнен, вычисляем по duration (для обратной совместимости)
+  const computedStatus = status ?? ((duration === 0 && call.direction === "inbound") ? "missed" : "answered");
+  
+  const statusConfig: Record<string, { label: string; className: string }> = {
+    missed: { label: "ПРОПУЩЕН", className: "badge-red-op" },
+    answered: { label: "ПРИНЯТ", className: "badge-green-op" },
+    voicemail: { label: "ГОЛОС. ПОЧТА", className: "badge-yellow-op" },
+    failed: { label: "ОШИБКА", className: "badge-red-op" },
+    technical_error: { label: "ОШИБКА", className: "badge-red-op" },
+  };
+  
+  const config = statusConfig[computedStatus ?? "answered"] ?? { label: "ПРИНЯТ", className: "badge-green-op" };
+  
   return (
-    <span className={`op-badge ${isMissed ? "badge-red-op" : "badge-green-op"}`}>
-      {isMissed ? "ПРОПУЩЕН" : "ПРИНЯТ"}
+    <span className={`op-badge ${config.className}`}>
+      {config.label}
     </span>
   );
 }
@@ -208,10 +224,21 @@ export function renderDateCell(call: CallWithDetails["call"]) {
 
 export function renderScoreCell(evaluation: CallWithDetails["evaluation"]) {
   const score = evaluation?.valueScore;
-  const hasScore = score !== null && score !== undefined && score > 0;
+  const hasScore = score != null; // Проверяем на null и undefined
 
   if (!hasScore) {
     return <span style={{ color: "#ccc" }}>Не оценено</span>;
+  }
+
+  // Аномальное значение score === 0 - логируем для диагностики
+  if (score === 0) {
+    console.warn(`[renderScoreCell] Обнаружено аномальное значение score=0 для evaluation id=${evaluation?.id ?? "unknown"}`);
+    return (
+      <div className="op-tooltip">
+        <Rating rating={0} size="sm" />
+        <span className="ml-1 text-xs text-amber-600" title="Аномальное значение оценки">⚠️</span>
+      </div>
+    );
   }
 
   return (

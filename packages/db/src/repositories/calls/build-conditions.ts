@@ -151,10 +151,11 @@ export function buildCallConditions({
       );
       if (zeroCondition) conditions.push(zeroCondition);
     } else if (hasZero) {
-      // 0 и другие значения - ищем null или любое из выбранных значений
+      // 0 и другие значения - ищем null, 0, или любое из выбранных ненулевых значений
       const mixedCondition = or(
         isNull(schema.callEvaluations.valueScore),
-        inArray(schema.callEvaluations.valueScore, valueScores),
+        eq(schema.callEvaluations.valueScore, 0),
+        inArray(schema.callEvaluations.valueScore, nonZeroScores),
       );
       if (mixedCondition) conditions.push(mixedCondition);
     } else {

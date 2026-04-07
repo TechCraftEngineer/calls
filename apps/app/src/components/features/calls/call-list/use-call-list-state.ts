@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useORPC } from "@/orpc/react";
 import { loadColumnOrder, saveColumnOrder } from "./column-storage";
 import { COLUMN_ORDER_STORAGE_KEY, COLUMNS, DEFAULT_COLUMN_ORDER } from "./constants";
-import type { CallListProps, CallWithDetails, ColumnConfig, SortKey, SortOrder } from "./types";
+import type { CallListProps, CallWithDetails, ColumnConfig } from "./types";
 
 export function useCallListState(props: CallListProps) {
   const { onPlay, onCallDeleted, onRecommendationsGenerated } = props;
@@ -27,10 +27,6 @@ export function useCallListState(props: CallListProps) {
 
   const [columnOrder, setColumnOrder] = useState<string[]>(loadColumnOrder);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(COLUMNS.map((c) => c.key));
-  const [sortConfig, setSortConfig] = useState<{
-    key: SortKey;
-    order: SortOrder;
-  } | null>(null);
   const [showColumnToggle, setShowColumnToggle] = useState(false);
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
@@ -38,14 +34,7 @@ export function useCallListState(props: CallListProps) {
   const [recommendationsCallId, setRecommendationsCallId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
 
-  const handleSort = (key: SortKey) => {
-    const order: SortOrder =
-      sortConfig?.key === key && sortConfig.order === "desc" ? "asc" : "desc";
-    setSortConfig({ key, order });
-  };
-
-  // Сортировка теперь выполняется на сервере через параметры sort_by/sort_order
-  // sortedCalls просто возвращает calls без изменений
+  // Сортировка выполняется на сервере через параметры sort_by/sort_order
   const sortedCalls = props.calls;
 
   useEffect(() => {
@@ -161,7 +150,6 @@ export function useCallListState(props: CallListProps) {
     columnOrder,
     visibleColumns,
     orderedColumns,
-    sortConfig,
     showColumnToggle,
     setShowColumnToggle,
     selectedCallId,
@@ -173,7 +161,6 @@ export function useCallListState(props: CallListProps) {
     recommendations,
     isLoadingRecommendations: generateRecommendationsMutation.isPending,
     onPlay,
-    handleSort,
     handleDragStart,
     handleDragEnd,
     handleDragOver,
