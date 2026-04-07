@@ -78,8 +78,9 @@ export default function HomePage() {
     enabled: !!session?.user && !sessionPending,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    staleTime: 2 * 60 * 1000, // 2 минуты для списка звонков
-    gcTime: 5 * 60 * 1000, // 5 минут
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   const updateFilters = (updater: (prev: typeof filters) => typeof filters) => {
