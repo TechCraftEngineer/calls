@@ -59,8 +59,25 @@ export function TranscriptCard({ call, transcript }: Props) {
 
   const handleDownloadTxt = () => {
     if (!transcript?.text) return;
+    
+    const speakerMapping = transcript?.speakerMapping;
+    const processedText = transcript.text
+      .split("\n")
+      .filter((line) => line.trim())
+      .map((line) => {
+        const parts = line.split(":");
+        if (parts.length >= 2) {
+          const rawSpeaker = parts[0].trim().replace(/\*\*/g, "");
+          const mappedSpeaker = speakerMapping?.[rawSpeaker] ?? rawSpeaker;
+          const text = parts.slice(1).join(":").trim();
+          return `${mappedSpeaker}: ${text}`;
+        }
+        return line;
+      })
+      .join("\n");
+    
     const element = document.createElement("a");
-    const file = new Blob([transcript.text], { type: "text/plain" });
+    const file = new Blob([processedText], { type: "text/plain" });
     element.href = URL.createObjectURL(file);
     element.download = `call_${call?.number || call?.id}_transcript.txt`;
     document.body.appendChild(element);
