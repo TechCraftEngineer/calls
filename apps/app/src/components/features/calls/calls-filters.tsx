@@ -14,7 +14,7 @@ import {
 import { Funnel, Search, X } from "lucide-react";
 
 export type DirectionFilter = "inbound" | "outbound";
-export type StatusFilter = "missed" | "answered";
+export type StatusFilter = "missed" | "answered" | "technical_error";
 
 export interface CallsFiltersState {
   q: string;
@@ -49,6 +49,7 @@ const statusOptions = [
   { value: "all", label: "Все" },
   { value: "missed", label: "Не принятые" },
   { value: "answered", label: "Принятые" },
+  { value: "technical_error", label: "Ошибки" },
 ] as const;
 
 const valueOptions = [1, 2, 3, 4, 5] as const;

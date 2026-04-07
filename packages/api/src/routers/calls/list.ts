@@ -26,15 +26,19 @@ const directionSchema = z.enum([
 const statusSchema = z.enum([
   "missed",
   "answered",
+  "technical_error",
   "accepted",
   "completed",
   "connected",
   "Пропущен",
   "Принят",
+  "Ошибка",
   "пропущен",
   "принят",
+  "ошибка",
   "ПРОПУЩЕН",
   "ПРИНЯТ",
+  "ОШИБКА",
 ]);
 const maybeDirectionOrArraySchema = z.union([directionSchema, z.array(directionSchema)]).optional();
 const maybeStatusOrArraySchema = z.union([statusSchema, z.array(statusSchema)]).optional();

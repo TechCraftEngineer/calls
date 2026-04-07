@@ -2,11 +2,12 @@
 
 import { Button, Card } from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BarChart3, Table as TableIcon } from "lucide-react";
+import { ArrowLeft, BarChart3, CalendarDays, Table as TableIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useORPC } from "@/orpc/react";
+import { KpiCalendar } from "./kpi-calendar";
 import { DailyStatsTable } from "./daily-stats-table";
 import { DateRangeFilter } from "./date-range-filter";
 import { TrendChart } from "./trend-chart";
@@ -17,7 +18,7 @@ interface DailyViewClientProps {
   initialEndDate: string;
 }
 
-type ViewMode = "table" | "chart";
+type ViewMode = "table" | "chart" | "calendar";
 
 // Error state с retry
 interface ErrorStateProps {
@@ -119,7 +120,7 @@ export function DailyViewClient({
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <DateRangeFilter startDate={startDate} endDate={endDate} onChange={handleDateRangeChange} />
 
-        {/* Переключатель таблица/график */}
+        {/* Переключатель таблица/график/календарь */}
         <div className="flex items-center gap-2">
           <Button
             variant={viewMode === "table" ? "default" : "outline"}
@@ -131,6 +132,17 @@ export function DailyViewClient({
           >
             <TableIcon className="mr-2 h-4 w-4" />
             Таблица
+          </Button>
+          <Button
+            variant={viewMode === "calendar" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewMode("calendar")}
+            aria-label="Показать календарь"
+            aria-pressed={viewMode === "calendar"}
+            className="min-h-[44px] flex-1 sm:flex-none"
+          >
+            <CalendarDays className="mr-2 h-4 w-4" />
+            Календарь
           </Button>
           <Button
             variant={viewMode === "chart" ? "default" : "outline"}
@@ -154,6 +166,13 @@ export function DailyViewClient({
           data={data ?? []}
           loading={isLoading}
           employeeName={employeeName}
+          startDate={startDate}
+          endDate={endDate}
+        />
+      ) : viewMode === "calendar" ? (
+        <KpiCalendar
+          data={data ?? []}
+          loading={isLoading}
           startDate={startDate}
           endDate={endDate}
         />

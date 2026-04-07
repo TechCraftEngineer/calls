@@ -66,7 +66,22 @@ export function renderCallTypeCell(transcript: CallWithDetails["transcript"]) {
     return <span style={{ color: "#ccc" }}>—</span>;
   }
 
-  return <span style={{ color: "#555", fontWeight: 500 }}>{callType}</span>;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="block min-w-0 max-w-full truncate cursor-default text-[#555] font-medium">
+          {callType}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="max-w-md max-h-80 overflow-y-auto whitespace-pre-wrap text-left"
+      >
+        <div className="font-medium mb-1">Тип звонка</div>
+        {callType}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 export function renderManagerNameCell(call: CallWithDetails["call"]) {
@@ -75,7 +90,22 @@ export function renderManagerNameCell(call: CallWithDetails["call"]) {
     return <span style={{ color: "#ccc" }}>—</span>;
   }
 
-  return <span style={{ color: "#555", fontWeight: 500 }}>{managerName}</span>;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="block min-w-0 max-w-full truncate cursor-default text-[#555] font-medium">
+          {managerName}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="max-w-md whitespace-pre-wrap text-left"
+      >
+        <div className="font-medium mb-1">Менеджер</div>
+        {managerName}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 export function renderCallTopicCell(transcript: CallWithDetails["transcript"]) {
