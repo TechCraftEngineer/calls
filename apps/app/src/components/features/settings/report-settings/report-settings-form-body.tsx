@@ -70,6 +70,10 @@ export default function ReportSettingsFormBody({
 
   const telegramAuthUrlMutation = useMutation(
     orpc.users.telegramAuthUrl.mutationOptions({
+      onMutate: () => {
+        setTelegramAuthUrl("");
+        setTelegramConnectToken("");
+      },
       onSuccess: (res) => {
         if (res?.url) {
           // Сохраняем URL и извлекаем токен для диалога
@@ -83,7 +87,11 @@ export default function ReportSettingsFormBody({
           toast.error("Не удалось получить ссылку для подключения");
         }
       },
-      onError: () => toast.error("Ошибка при создании ссылки для Telegram"),
+      onError: () => {
+        setTelegramAuthUrl("");
+        setTelegramConnectToken("");
+        toast.error("Ошибка при создании ссылки для Telegram");
+      },
     }),
   );
 

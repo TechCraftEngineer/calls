@@ -34,9 +34,18 @@ export function TelegramConnectDialog({
   const [copied, setCopied] = useState(false);
 
   // tg:// deeplink для desktop приложения
-  const tgDeepLink = url
-    ? url.replace("https://t.me/", "tg://resolve?domain=")
-    : null;
+  // https://t.me/bot?start=token -> tg://resolve?domain=bot&start=token
+  const tgDeepLink = (() => {
+    if (!url) return null;
+    try {
+      const parsed = new URL(url);
+      const bot = parsed.pathname.replace(/^\/+/, "");
+      const qs = parsed.search.replace(/^\?/, "");
+      return `tg://resolve?domain=${bot}${qs ? `&${qs}` : ""}`;
+    } catch {
+      return null;
+    }
+  })();
 
   const handleCopyLink = async () => {
     if (!url) return;
@@ -57,14 +66,14 @@ export function TelegramConnectDialog({
     // Fallback: если tg:// не сработал, через 500мс открываем https
     setTimeout(() => {
       if (url && document.visibilityState === "visible") {
-        window.open(url, "_blank");
+        window.open(url, "_blank", "noopener,noreferrer");
       }
     }, 500);
   };
 
   const handleOpenWeb = () => {
     if (!url) return;
-    window.open(url, "_blank");
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -82,7 +91,7 @@ export function TelegramConnectDialog({
 
         {loading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="text-muted-foreground">Генерация ссылки...</div>
+            <div className="text-muted-foreground">Генерация ссылки…</div>
           </div>
         ) : url ? (
           <div className="space-y-6">

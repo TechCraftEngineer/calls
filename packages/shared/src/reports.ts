@@ -30,7 +30,7 @@ export function formatReportSubject(
 
   const typeLabel = typeLabelMap[reportType];
   if (!typeLabel) {
-    throw new Error(`Unknown report type: ${reportType}`);
+    throw new Error(`Неизвестный тип отчёта: ${reportType}`);
   }
 
   return `Отчёт по звонкам (${typeLabel}): ${formatDate(dateFrom)} — ${formatDate(dateTo)}`;

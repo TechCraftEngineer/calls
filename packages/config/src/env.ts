@@ -45,15 +45,6 @@ export const env = createEnv({
     AUTH_GOOGLE_ID: z.string().optional(),
     AUTH_GOOGLE_SECRET: z.string().optional(),
 
-    // Megafon PBX FTP
-    MEGAFON_FTP_HOST: z.string().optional(),
-    MEGAFON_FTP_USER: z.string().optional(),
-    MEGAFON_FTP_PASSWORD: z.string().optional(),
-
-    // ASR (Speech-to-Text) - at least one required
-    ASSEMBLYAI_API_KEY: z.string().optional(),
-    YANDEX_SPEECHKIT_API_KEY: z.string().optional(),
-    YANDEX_SPEECHKIT_ENABLED: z.coerce.boolean().default(true),
     /** Giga AM (HTTP) sync endpoint */
     GIGA_AM_TRANSCRIBE_URL: z.url().default("https://vnggncb-giga-am.hf.space"),
     GIGA_AM_ENABLED: z.coerce.boolean().default(true),
@@ -126,12 +117,6 @@ export const env = createEnv({
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     AUTH_GOOGLE_ID: process.env.AUTH_GOOGLE_ID,
     AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
-    MEGAFON_FTP_HOST: process.env.MEGAFON_FTP_HOST,
-    MEGAFON_FTP_USER: process.env.MEGAFON_FTP_USER,
-    MEGAFON_FTP_PASSWORD: process.env.MEGAFON_FTP_PASSWORD,
-    ASSEMBLYAI_API_KEY: process.env.ASSEMBLYAI_API_KEY,
-    YANDEX_SPEECHKIT_API_KEY: process.env.YANDEX_SPEECHKIT_API_KEY,
-    YANDEX_SPEECHKIT_ENABLED: process.env.YANDEX_SPEECHKIT_ENABLED,
     GIGA_AM_TRANSCRIBE_URL: process.env.GIGA_AM_TRANSCRIBE_URL,
     GIGA_AM_ENABLED: process.env.GIGA_AM_ENABLED,
     GIGA_AM_TIMEOUT_MS: process.env.GIGA_AM_TIMEOUT_MS,
