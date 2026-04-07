@@ -11,9 +11,10 @@
 import { summarizeWithLlm } from "@calls/asr/llm/summarize";
 import { runPipelineAudioPreprocess } from "@calls/asr/pipeline/transcribe-pipeline-audio";
 import { callsService, filesService, workspacesService } from "@calls/db";
+import { buildCompanyContext } from "@calls/shared";
 import type { ZodIssue } from "zod";
-import { createLogger } from "../../../logger";
 import { shouldSkipExpensiveProcessing } from "../../../evaluation";
+import { createLogger } from "../../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../../client";
 import { downloadAudioFile } from "./audio/download";
 import { processAudioWithoutDiarization } from "./gigaam/client";
@@ -102,7 +103,7 @@ export const transcribeCallFn = inngest.createFunction(
     });
 
     // Шаг валидации workspace - выполняется только для проверки существования и валидности
-    const _workspaceValidation = await step.run("db/workspaces:get", async () => {
+    const workspace = await step.run("db/workspaces:get", async () => {
       const ws = await workspacesService.getById(call.workspaceId);
       if (!ws) {
         logger.warn("Workspace not found for call transcription", {
@@ -284,7 +285,8 @@ export const transcribeCallFn = inngest.createFunction(
           isQualityAnalyzable: false,
           notAnalyzableReason: "autoanswerer",
           valueScore: null,
-          valueExplanation: "Автоответчик или голосовое меню - оценка качества менеджера не применима",
+          valueExplanation:
+            "Автоответчик или голосовое меню - оценка качества менеджера не применима",
           managerScore: null,
           managerFeedback: "Звонок не подлежит анализу (автоответчик)",
         });
@@ -382,8 +384,11 @@ export const transcribeCallFn = inngest.createFunction(
     // Генерация summary через LLM (ДО идентификации спикеров)
     const summaryResult = await step.run("llm/summarize", async () => {
       const summarizeStartTime = Date.now();
+      const companyContext = buildCompanyContext(workspace);
       const result = await summarizeWithLlm(normalizedText, {
         maxChars: 20_000,
+        companyContext,
+        managerName: managerNameFromPbx,
       });
       const summarizeTimeMs = Date.now() - summarizeStartTime;
 

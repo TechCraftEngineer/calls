@@ -16,6 +16,7 @@ const logger = createLogger("asr-summarize");
 export interface SummarizeOptions {
   summaryPrompt?: string;
   companyContext?: string | null;
+  managerName?: string | null;
   model?: string;
   maxChars?: number;
   hardMaxChars?: number;
@@ -41,6 +42,7 @@ const summarizeInputSchema = z
       .object({
         summaryPrompt: z.string().trim().max(REQUEST_FIELD_MAX_CHARS).optional(),
         companyContext: z.string().trim().max(REQUEST_FIELD_MAX_CHARS).nullable().optional(),
+        managerName: z.string().trim().max(100).nullable().optional(),
         model: z.string().optional(),
         maxChars: z.number().int().positive().max(DEFAULT_HARD_MAX_CHARS).optional(),
         hardMaxChars: z.number().int().positive().max(DEFAULT_HARD_MAX_CHARS).optional(),
@@ -53,7 +55,9 @@ const summarizeInputSchema = z
     const maxChars = Math.min(options.maxChars ?? DEFAULT_MAX_CHARS, hardMaxChars);
     const summaryLength = options.summaryPrompt?.length ?? 0;
     const companyContextLength = options.companyContext?.length ?? 0;
-    const totalRequestChars = data.text.length + summaryLength + companyContextLength;
+    const managerNameLength = options.managerName?.length ?? 0;
+    const totalRequestChars =
+      data.text.length + summaryLength + companyContextLength + managerNameLength;
 
     if (totalRequestChars > hardMaxChars) {
       ctx.addIssue({
@@ -116,6 +120,10 @@ export async function summarizeWithLlm(
     ? `КОНТЕКСТ КОМПАНИИ:\n${inputOptions.companyContext.trim()}\n\nКРИТИЧЕСКИ ВАЖНО: Используй ТОЧНО это название компании в summary. НЕ изменяй написание, НЕ транслитерируй, НЕ переводи. Учитывай это при определении темы (topic), заголовка (title) и sentiment.\n\n`
     : "";
 
+  const managerBlock = inputOptions.managerName?.trim()
+    ? `МЕНЕДЖЕР:\nИмя менеджера (владелец номера): ${inputOptions.managerName.trim()}\n\n`
+    : "";
+
   const defaultPrompt = `Проанализируй телефонный разговор и извлеки ключевую информацию:
 
 1. summary — краткое содержание (2-3 предложения): что обсуждалось, какие решения приняты
@@ -144,7 +152,7 @@ export async function summarizeWithLlm(
 
 Отвечай только на русском языке. Будь конкретным и лаконичным.`;
 
-  const systemPrompt = companyBlock + (normalizedSummaryPrompt || defaultPrompt);
+  const systemPrompt = companyBlock + managerBlock + (normalizedSummaryPrompt || defaultPrompt);
 
   const schema = z.object({
     summary: z.string().describe("Краткое содержание разговора (1-3 предложения)"),
