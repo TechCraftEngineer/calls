@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { signUp } from "@/lib/auth";
 import { authClient, toRussianAuthMessage } from "@/lib/better-auth";
+import { clearActiveWorkspaceCookie } from "@/components/features/workspaces/workspace-provider";
 import { type CreateUserData, createUserSchema } from "@/lib/validations";
 
 export function SignUpForm() {
@@ -37,8 +38,7 @@ export function SignUpForm() {
         });
       } else {
         // Очищаем cookie чужого workspace перед созданием своего
-        // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
-        document.cookie = "active_workspace_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        clearActiveWorkspaceCookie();
         setTimeout(() => {
           router.push(paths.onboarding.createWorkspace);
         }, 100);

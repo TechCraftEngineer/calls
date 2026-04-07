@@ -10,6 +10,7 @@ export interface Call {
   managerId?: string | null;
   duration?: number | null;
   customerName?: string;
+  status?: string | null;
 }
 
 export interface Transcript {
@@ -41,21 +42,8 @@ export interface CallListProps {
   onRecommendationsGenerated?: (callId: string, recommendations: string[]) => void;
 }
 
-export type SortKey =
-  | "type"
-  | "number"
-  | "manager"
-  | "status"
-  | "date"
-  | "score"
-  | "summary"
-  | "duration";
-
-export type SortOrder = "asc" | "desc";
-
 export interface ColumnConfig {
   key: string;
   label: string;
   tooltip: string;
-  sortKey?: SortKey;
 }

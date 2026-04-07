@@ -13,6 +13,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
+import { clearActiveWorkspaceCookie } from "@/components/features/workspaces/workspace-provider";
 
 const createWorkspaceSchema = z.object({
   name: workspaceNameSchema,
@@ -79,8 +80,7 @@ function CreateWorkspaceForm() {
 
   // Очищаем чужую cookie workspace при монтировании (защита от утечки)
   useEffect(() => {
-    // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
-    document.cookie = "active_workspace_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    clearActiveWorkspaceCookie();
   }, []);
 
   useEffect(() => {

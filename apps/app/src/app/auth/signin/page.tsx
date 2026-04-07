@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { authClient, login, toRussianAuthMessage } from "@/lib/better-auth";
+import { clearActiveWorkspaceCookie } from "@/components/features/workspaces/workspace-provider";
 import { type LoginFormData, loginSchema } from "@/lib/validations";
 
 function LoginForm() {
@@ -30,8 +31,7 @@ function LoginForm() {
 
       if (result.success) {
         // Очищаем cookie чужого workspace перед входом
-        // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
-        document.cookie = "active_workspace_id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        clearActiveWorkspaceCookie();
         setTimeout(() => {
           router.push(paths.root);
         }, 100);
