@@ -1,6 +1,7 @@
 import { and, avg, count, desc, eq, gte, ilike, lt, or } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
+import type { CallStatus } from "../../utils/call-status";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
 import { parseDateToUTC } from "./date-utils";
 
@@ -26,7 +27,7 @@ interface GetCallsMetricsParams {
   mobileNumbers?: string[];
   directions?: ("inbound" | "outbound")[];
   managerInternalNumbers?: string[];
-  statuses?: ("missed" | "answered" | "voicemail" | "failed")[];
+  statuses?: CallStatus[];
   managerInternalNumbersForQuery?: string[];
   q?: string;
   includeArchived?: boolean;

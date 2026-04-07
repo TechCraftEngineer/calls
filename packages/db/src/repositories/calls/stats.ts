@@ -12,6 +12,7 @@ import {
 } from "./get-evaluations-stats";
 import { getKpiStats as getKpiStatsFn } from "./get-kpi-stats";
 import { getCallsMetrics } from "./get-metrics";
+import type { CallStatus } from "../../utils/call-status";
 
 export const callsStats = {
   async getMetrics(params?: {
@@ -23,7 +24,7 @@ export const callsStats = {
     mobileNumbers?: string[];
     directions?: ("inbound" | "outbound")[];
     managerInternalNumbers?: string[];
-    statuses?: ("missed" | "answered" | "voicemail" | "failed")[];
+    statuses?: CallStatus[];
     managerInternalNumbersForQuery?: string[];
     q?: string;
   }) {

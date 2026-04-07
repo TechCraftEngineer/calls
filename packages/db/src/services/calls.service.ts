@@ -7,6 +7,7 @@ import type { ManagerStatsRow } from "../repositories/calls/get-evaluations-stat
 import type { CallsRepository } from "../repositories/calls.repository";
 import type { SystemRepository } from "../repositories/system.repository";
 import type { Call, CallEvaluation, Transcript } from "../schema";
+import type { CallStatus } from "../utils/call-status";
 import type {
   CallWithTranscript,
   CreateCallData,
@@ -359,7 +360,7 @@ export class CallsService {
       mobileNumbers?: string[];
       directions?: ("inbound" | "outbound")[];
       managerInternalNumbers?: string[];
-      statuses?: ("missed" | "answered" | "voicemail" | "failed")[];
+      statuses?: CallStatus[];
       managerInternalNumbersForQuery?: string[];
       q?: string;
       includeArchived?: boolean;
