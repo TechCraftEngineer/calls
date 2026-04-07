@@ -85,7 +85,6 @@ function getCalendarDays(year: number, month: number): Array<{
   firstWeekday = firstWeekday === 0 ? 6 : firstWeekday - 1;
 
   // Добавляем дни из предыдущего месяца
-  const prevMonth = new Date(year, month, 0);
   for (let i = firstWeekday - 1; i >= 0; i--) {
     const date = new Date(year, month, -i);
     const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -257,10 +256,22 @@ export const KpiCalendar = React.memo(function KpiCalendar({
           </Button>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="outline" size="icon" onClick={goToPreviousMonth} className="h-9 w-9">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToPreviousMonth}
+            aria-label="Предыдущий месяц"
+            className="h-11 w-11"
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" onClick={goToNextMonth} className="h-9 w-9">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToNextMonth}
+            aria-label="Следующий месяц"
+            className="h-11 w-11"
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -286,21 +297,26 @@ export const KpiCalendar = React.memo(function KpiCalendar({
           const completionPercentage = kpiData?.completionPercentage || 0;
           const isSelected = selectedDate === day.dateStr;
 
-          return (
+          const isInteractive = !!onDateClick;
+          const dayCellClassName = cn(
+            "relative aspect-square p-2 rounded-lg border transition-all duration-200 text-left flex flex-col gap-1 min-h-[80px] sm:min-h-[100px]",
+            day.isCurrentMonth
+              ? "bg-card border-border"
+              : "bg-muted/30 border-transparent text-muted-foreground",
+            day.isToday && "ring-2 ring-primary ring-offset-1",
+            hasData && day.isCurrentMonth && getCompletionBgColor(completionPercentage),
+            isSelected && "ring-2 ring-offset-2 ring-indigo-500",
+            isInteractive && [
+              "hover:shadow-md hover:z-10",
+              "focus:outline-none focus:ring-2 focus:ring-ring",
+            ],
+          );
+
+          return isInteractive ? (
             <button
               key={day.dateStr}
-              onClick={() => onDateClick?.(day.dateStr)}
-              className={cn(
-                "relative aspect-square p-2 rounded-lg border transition-all duration-200 text-left flex flex-col gap-1 min-h-[80px] sm:min-h-[100px]",
-                day.isCurrentMonth
-                  ? "bg-card border-border"
-                  : "bg-muted/30 border-transparent text-muted-foreground",
-                day.isToday && "ring-2 ring-primary ring-offset-1",
-                hasData && day.isCurrentMonth && getCompletionBgColor(completionPercentage),
-                isSelected && "ring-2 ring-offset-2 ring-indigo-500",
-                "hover:shadow-md hover:z-10",
-                "focus:outline-none focus:ring-2 focus:ring-ring"
-              )}
+              onClick={() => onDateClick(day.dateStr)}
+              className={dayCellClassName}
             >
               {/* Номер дня */}
               <span
@@ -357,6 +373,63 @@ export const KpiCalendar = React.memo(function KpiCalendar({
                 <div className="absolute inset-0 bg-amber-50/30 dark:bg-amber-950/10 rounded-lg pointer-events-none" />
               )}
             </button>
+          ) : (
+            <div key={day.dateStr} className={dayCellClassName}>
+              {/* Номер дня */}
+              <span
+                className={cn(
+                  "text-sm font-semibold",
+                  day.isCurrentMonth ? "text-foreground" : "text-muted-foreground/60",
+                  day.isToday && "text-primary"
+                )}
+              >
+                {day.date.getDate()}
+              </span>
+
+              {/* Индикаторы KPI */}
+              {hasData && (
+                <div className="flex-1 flex flex-col justify-end gap-1 min-w-0">
+                  {/* Индикатор выполнения */}
+                  <div className="flex items-center gap-1">
+                    <div className={cn("w-2 h-2 rounded-full", getCompletionColor(completionPercentage))} />
+                    <span
+                      className={cn(
+                        "text-xs font-bold truncate",
+                        getCompletionTextColor(completionPercentage)
+                      )}
+                    >
+                      {completionPercentage}%
+                    </span>
+                  </div>
+
+                  {/* Количество звонков */}
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground truncate">
+                    <Circle className="h-2 w-2 fill-current" />
+                    <span className="truncate">{kpiData.totalCalls} звнк</span>
+                  </div>
+
+                  {/* Время разговоров */}
+                  <div className="text-xs text-muted-foreground truncate">
+                    {kpiData.actualTalkTimeMinutes} мин
+                  </div>
+                </div>
+              )}
+
+              {/* Индикатор дня с данными (точка) */}
+              {hasData && (
+                <div
+                  className={cn(
+                    "absolute top-2 right-2 w-2 h-2 rounded-full",
+                    getCompletionColor(completionPercentage)
+                  )}
+                />
+              )}
+
+              {/* Выходные дни */}
+              {(index % 7 === 5 || index % 7 === 6) && day.isCurrentMonth && !hasData && (
+                <div className="absolute inset-0 bg-amber-50/30 dark:bg-amber-950/10 rounded-lg pointer-events-none" />
+              )}
+            </div>
           );
         })}
       </div>

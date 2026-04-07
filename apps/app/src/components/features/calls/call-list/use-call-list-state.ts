@@ -205,8 +205,8 @@ function sortCalls(
         valB = b.call.number || "";
         break;
       case "manager":
-        valA = a.call.customerName || "";
-        valB = b.call.customerName || "";
+        valA = a.call.managerName || "";
+        valB = b.call.managerName || "";
         break;
       case "status":
         valA = a.call.duration || 0;

@@ -10,9 +10,6 @@ export interface ReportSettingsForm {
   telegramWeeklyReport: boolean;
   telegramMonthlyReport: boolean;
   telegramSkipWeekends: boolean;
-  filterExcludeAnsweringMachine: boolean;
-  filterMinDuration: string;
-  filterMinReplicas: string;
   reportDailyTime: string;
   reportWeeklyDay: string;
   reportWeeklyTime: string;

@@ -68,6 +68,19 @@ function formatValue(value: number): string {
   return new Intl.NumberFormat("ru-RU").format(Math.round(value));
 }
 
+function getWeekdayName(date: Date): string {
+  const weekdays = [
+    "воскресенье",
+    "понедельник",
+    "вторник",
+    "среда",
+    "четверг",
+    "пятница",
+    "суббота",
+  ];
+  return weekdays[date.getDay()];
+}
+
 function formatScore(value: number | null | undefined): string {
   if (typeof value !== "number" || Number.isNaN(value)) return "—";
   return value.toFixed(1);
@@ -232,7 +245,13 @@ export const ReportEmail = ({
   let periodText = '';
   if (dateFrom && dateTo) {
     if (formatDate(dateFrom) === formatDate(dateTo)) {
-      periodText = ` за ${formatDate(dateFrom)}`;
+      // Однодневный отчет - добавляем день недели для ежедневных отчетов
+      if (reportType === "daily") {
+        const weekday = getWeekdayName(dateFrom);
+        periodText = ` за ${weekday}, ${formatDate(dateFrom)}`;
+      } else {
+        periodText = ` за ${formatDate(dateFrom)}`;
+      }
     } else {
       periodText = ` за ${formatDate(dateFrom)} — ${formatDate(dateTo)}`;
     }

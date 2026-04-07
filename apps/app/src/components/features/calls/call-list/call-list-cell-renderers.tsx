@@ -60,28 +60,42 @@ export function renderDirectionCell(call: CallWithDetails["call"]) {
   return <span className={`op-badge ${directionClass}`}>{directionLabel}</span>;
 }
 
-export function renderCallTypeCell(transcript: CallWithDetails["transcript"]) {
-  const callType = transcript?.callType?.trim();
-  if (!callType) {
-    return <span style={{ color: "#ccc" }}>—</span>;
-  }
-
+function CallTooltipCell({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="block min-w-0 max-w-full truncate cursor-default text-[#555] font-medium">
-          {callType}
+        <span
+          tabIndex={0}
+          role="button"
+          className="block min-w-0 max-w-full truncate cursor-default text-[#555] font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {children}
         </span>
       </TooltipTrigger>
       <TooltipContent
         side="top"
         className="max-w-md max-h-80 overflow-y-auto whitespace-pre-wrap text-left"
       >
-        <div className="font-medium mb-1">Тип звонка</div>
-        {callType}
+        <div className="font-medium mb-1">{title}</div>
+        {children}
       </TooltipContent>
     </Tooltip>
   );
+}
+
+export function renderCallTypeCell(transcript: CallWithDetails["transcript"]) {
+  const callType = transcript?.callType?.trim();
+  if (!callType) {
+    return <span style={{ color: "#ccc" }}>—</span>;
+  }
+
+  return <CallTooltipCell title="Тип звонка">{callType}</CallTooltipCell>;
 }
 
 export function renderManagerNameCell(call: CallWithDetails["call"]) {
@@ -90,22 +104,7 @@ export function renderManagerNameCell(call: CallWithDetails["call"]) {
     return <span style={{ color: "#ccc" }}>—</span>;
   }
 
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="block min-w-0 max-w-full truncate cursor-default text-[#555] font-medium">
-          {managerName}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent
-        side="top"
-        className="max-w-md whitespace-pre-wrap text-left"
-      >
-        <div className="font-medium mb-1">Менеджер</div>
-        {managerName}
-      </TooltipContent>
-    </Tooltip>
-  );
+  return <CallTooltipCell title="Менеджер">{managerName}</CallTooltipCell>;
 }
 
 export function renderCallTopicCell(transcript: CallWithDetails["transcript"]) {
