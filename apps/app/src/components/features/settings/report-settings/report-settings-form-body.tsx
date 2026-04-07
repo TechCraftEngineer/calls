@@ -47,6 +47,10 @@ export default function ReportSettingsFormBody({
   const userId = String(user.id);
   const queryClient = useQueryClient();
 
+  // Состояние для диалога подключения Telegram
+  const [telegramAuthUrl, setTelegramAuthUrl] = useState<string | null>(null);
+  const [telegramConnectToken, setTelegramConnectToken] = useState<string>("");
+
   const invalidateUser = () => {
     queryClient.invalidateQueries({
       queryKey: orpc.users.getForEdit.queryKey({ input: { user_id: userId } }),
@@ -68,9 +72,12 @@ export default function ReportSettingsFormBody({
     orpc.users.telegramAuthUrl.mutationOptions({
       onSuccess: (res) => {
         if (res?.url) {
-          window.open(res.url, "_blank");
+          // Сохраняем URL и извлекаем токен для диалога
+          setTelegramAuthUrl(res.url);
+          const tokenMatch = res.url.match(/start=([^&]+)/);
+          setTelegramConnectToken(tokenMatch?.[1] ?? "");
           toast.success(
-            "Откройте Telegram и нажмите «Старт» в чате с ботом. Затем нажмите «Проверить подключение».",
+            "Выберите удобный способ подключения в открывшемся окне",
           );
         } else {
           toast.error("Не удалось получить ссылку для подключения");
@@ -387,6 +394,9 @@ export default function ReportSettingsFormBody({
             sendTestSuccess={Boolean(sendTestMessage)}
             sendTestReportType={null}
             sendTestMessage={sendTestMessage}
+            telegramAuthUrl={telegramAuthUrl}
+            telegramBotUsername={telegramAuthUrl ? telegramAuthUrl.replace("https://t.me/", "").split("?")[0] : undefined}
+            telegramConnectToken={telegramConnectToken}
           />
           <MaxReportSection
             form={form}

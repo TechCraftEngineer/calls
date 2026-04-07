@@ -13,11 +13,13 @@ import {
   Separator,
 } from "@calls/ui";
 import type React from "react";
+import { useState } from "react";
 import type { User } from "@/lib/auth";
 import { SendTestReportButton } from "../telegram/send-test-report-button";
 import { REPORT_TYPE_LABELS, type ReportType } from "../types";
 import type { ReportSettingsForm } from "./report-settings-types";
 import { ReportDeliveryFrequency, ReportTimeSettings } from "./shared-report-controls";
+import { TelegramConnectDialog } from "./telegram-connect-dialog";
 
 interface TelegramSectionProps {
   form: ReportSettingsForm;
@@ -36,6 +38,10 @@ interface TelegramSectionProps {
   onCheckConnection?: () => void;
   connectLoading?: boolean;
   disconnectLoading?: boolean;
+  // Новые пропсы для диалога подключения
+  telegramAuthUrl?: string | null;
+  telegramBotUsername?: string;
+  telegramConnectToken?: string;
   // Alias props (used by older call sites)
   connecting?: boolean;
   disconnecting?: boolean;
@@ -59,10 +65,14 @@ export function TelegramReportSection({
   onCheckConnection,
   connectLoading,
   disconnectLoading,
+  telegramAuthUrl,
+  telegramBotUsername,
+  telegramConnectToken,
   connecting,
   disconnecting,
   checkConnectionLoading,
 }: TelegramSectionProps) {
+  const [dialogOpen, setDialogOpen] = useState(false);
   const sendTestLoadingSafe = sendTestLoading ?? false;
   const sendTestMessageSafe = sendTestMessage ?? "";
   const sendTestSuccessSafe = sendTestSuccess ?? false;
@@ -74,6 +84,14 @@ export function TelegramReportSection({
   const hasTelegram = !!form.telegramChatId?.trim();
   const primaryReportType = sendTestReportType ?? "daily";
   const primaryReportLabel = REPORT_TYPE_LABELS[primaryReportType] ?? REPORT_TYPE_LABELS.daily;
+
+  // Обработчик открытия диалога подключения
+  const handleConnectClick = () => {
+    // Сначала вызываем onConnect для генерации URL
+    onConnect?.();
+    // Открываем диалог
+    setDialogOpen(true);
+  };
 
   return (
     <Card className="border-border/50 bg-card/50">
@@ -126,7 +144,7 @@ export function TelegramReportSection({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={onConnect}
+                    onClick={handleConnectClick}
                     disabled={effectiveConnectLoading}
                   >
                     {effectiveConnectLoading ? "…" : "Подключить Telegram"}
@@ -202,6 +220,16 @@ export function TelegramReportSection({
           {saving ? "Сохранение…" : "Сохранить"}
         </Button>
       </CardFooter>
+
+      {/* Диалог подключения Telegram */}
+      <TelegramConnectDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        url={telegramAuthUrl}
+        botUsername={telegramBotUsername ?? "mango_react_bot"}
+        token={telegramConnectToken ?? ""}
+        loading={effectiveConnectLoading}
+      />
     </Card>
   );
 }

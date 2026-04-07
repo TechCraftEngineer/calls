@@ -45,6 +45,7 @@ export interface CallWithTranscript {
   evaluation: CallEvaluation | null;
   fileDuration: number | null;
   fileSizeBytes: number | null;
+  callType: string; // Добавляем поле типа звонка
 }
 
 export interface CreateCallData {

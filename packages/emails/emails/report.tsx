@@ -78,7 +78,7 @@ function getWeekdayName(date: Date): string {
     "пятница",
     "суббота",
   ];
-  return weekdays[date.getDay()];
+  return weekdays[date.getDay()] as string;
 }
 
 function formatScore(value: number | null | undefined): string {

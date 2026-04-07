@@ -8,4 +8,5 @@ export type {
   ReportSettingsForm,
   ReportSettingsUserOption,
 } from "./report-settings-types";
+export { TelegramConnectDialog } from "./telegram-connect-dialog";
 export { TelegramReportSection } from "./telegram-section";
