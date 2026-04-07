@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useORPC } from "@/orpc/react";
 import { loadColumnOrder, saveColumnOrder } from "./column-storage";
 import { COLUMN_ORDER_STORAGE_KEY, COLUMNS, DEFAULT_COLUMN_ORDER } from "./constants";
-import type { CallListProps, CallWithDetails, ColumnConfig } from "./types";
+import type { CallListProps, ColumnConfig } from "./types";
 
 export function useCallListState(props: CallListProps) {
   const { onPlay, onCallDeleted, onRecommendationsGenerated } = props;
@@ -34,8 +34,71 @@ export function useCallListState(props: CallListProps) {
   const [recommendationsCallId, setRecommendationsCallId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
 
-  // Сортировка выполняется на сервере через параметры sort_by/sort_order
-  const sortedCalls = props.calls;
+  // Сортировка выполняется на клиенте (server-side sorting требует передачи sort_by/sort_order в query)
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" } | null>(null);
+
+  const sortedCalls = useMemo(() => {
+    if (!sortConfig) return props.calls;
+
+    const sorted = [...props.calls];
+    const { key, direction } = sortConfig;
+    const multiplier = direction === "asc" ? 1 : -1;
+
+    return sorted.sort((a, b) => {
+      let valueA: unknown;
+      let valueB: unknown;
+
+      // Map column keys to object properties
+      switch (key) {
+        case "date":
+          valueA = a.call.timestamp;
+          valueB = b.call.timestamp;
+          break;
+        case "direction":
+          valueA = a.call.direction;
+          valueB = b.call.direction;
+          break;
+        case "number":
+          valueA = a.call.number;
+          valueB = b.call.number;
+          break;
+        case "manager":
+          valueA = a.call.managerName || a.call.operatorName;
+          valueB = b.call.managerName || b.call.operatorName;
+          break;
+        case "status":
+          valueA = a.call.status;
+          valueB = b.call.status;
+          break;
+        case "score":
+          valueA = a.evaluation?.valueScore ?? -1;
+          valueB = b.evaluation?.valueScore ?? -1;
+          break;
+        case "duration":
+          valueA = a.call.duration ?? 0;
+          valueB = b.call.duration ?? 0;
+          break;
+        default:
+          return 0;
+      }
+
+      // Handle string comparison
+      if (typeof valueA === "string" && typeof valueB === "string") {
+        return multiplier * valueA.localeCompare(valueB, "ru");
+      }
+
+      // Handle number comparison
+      if (typeof valueA === "number" && typeof valueB === "number") {
+        return multiplier * (valueA - valueB);
+      }
+
+      // Handle null/undefined values (place them at the end)
+      if (valueA == null && valueB != null) return multiplier;
+      if (valueA != null && valueB == null) return -multiplier;
+
+      return 0;
+    });
+  }, [props.calls, sortConfig]);
 
   useEffect(() => {
     saveColumnOrder(columnOrder);
@@ -147,6 +210,8 @@ export function useCallListState(props: CallListProps) {
   return {
     calls: props.calls,
     sortedCalls,
+    sortConfig,
+    setSortConfig,
     columnOrder,
     visibleColumns,
     orderedColumns,

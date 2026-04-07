@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
-import { clearActiveWorkspaceCookie } from "@/components/features/workspaces/workspace-provider";
+import { setActiveWorkspaceCookie } from "@/lib/cookies";
 
 const createWorkspaceSchema = z.object({
   name: workspaceNameSchema,
@@ -80,7 +80,7 @@ function CreateWorkspaceForm() {
 
   // Очищаем чужую cookie workspace при монтировании (защита от утечки)
   useEffect(() => {
-    clearActiveWorkspaceCookie();
+    setActiveWorkspaceCookie("");
   }, []);
 
   useEffect(() => {
@@ -129,8 +129,7 @@ function CreateWorkspaceForm() {
     orpc.workspaces.create.mutationOptions({
       onSuccess: async (workspace) => {
         toast.success("Компания создана");
-        // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
-        document.cookie = `active_workspace_id=${workspace.id}; path=/; max-age=31536000; SameSite=Lax`;
+        setActiveWorkspaceCookie(workspace.id);
         await queryClient.invalidateQueries({
           queryKey: orpc.workspaces.list.queryKey(),
         });
