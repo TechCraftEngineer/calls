@@ -1,10 +1,11 @@
 /**
  * Inngest функция: транскрибация звонка по callId.
- * Новая архитектура:
+ * Архитектура:
  * 1. ASR без диаризации (точный текст)
  * 2. ASR с диаризацией (разделение по спикерам)
- * 3. LLM merging объединяет оба результата
- * 4. Идентификация спикеров через LLM
+ * 3. Проверка на автоответчик (пропуск дорогих операций если это автоответчик)
+ * 4. LLM merging объединяет оба результата (только для не-автоответчиков)
+ * 5. Идентификация спикеров через LLM (только для не-автоответчиков)
  */
 
 import { summarizeWithLlm } from "@calls/asr/llm/summarize";
@@ -12,6 +13,7 @@ import { runPipelineAudioPreprocess } from "@calls/asr/pipeline/transcribe-pipel
 import { callsService, filesService, workspacesService } from "@calls/db";
 import type { ZodIssue } from "zod";
 import { createLogger } from "../../../logger";
+import { shouldSkipExpensiveProcessing } from "../../../evaluation";
 import { evaluateRequested, inngest, transcribeRequested } from "../../client";
 import { downloadAudioFile } from "./audio/download";
 import { processAudioWithoutDiarization } from "./gigaam/client";
@@ -235,7 +237,83 @@ export const transcribeCallFn = inngest.createFunction(
       diarizedTranscriptLength: asrResults.diarized.transcript.length,
     });
 
-    // LLM Merging двух ASR результатов
+    // Проверка на автоответчик сразу после базового ASR
+    // Это позволяет пропустить дорогие операции (diarization, speaker identification, evaluation)
+    const isAnsweringMachine = await step.run("detect/answering-machine", async () => {
+      const shouldSkip = await shouldSkipExpensiveProcessing(asrResults.nonDiarized.transcript);
+      logger.info("Проверка автоответчика", {
+        callId,
+        isAnsweringMachine: shouldSkip,
+        transcriptLength: asrResults.nonDiarized.transcript.length,
+      });
+      return shouldSkip;
+    });
+
+    // Если это автоответчик - используем упрощённый pipeline
+    if (isAnsweringMachine) {
+      const answeringMachineProcessingTimeMs = asrResults.processingTimeMs;
+
+      // Сохраняем упрощённый transcript без speaker identification
+      await step.run("persist/answering-machine", async () => {
+        await callsService.upsertTranscript({
+          callId,
+          text: asrResults.nonDiarized.transcript,
+          rawText: asrResults.nonDiarized.transcript,
+          confidence: null, // ASR без диаризации не предоставляет confidence
+          metadata: {
+            asrSource: "gigaam-non-diarized",
+            processingTimeMs: answeringMachineProcessingTimeMs,
+            isAnsweringMachine: true,
+            llmMergeApplied: false,
+            llmMergeQuality: null,
+            speakerIdentificationApplied: false,
+          },
+          summary: null,
+          sentiment: null,
+          title: "Автоответчик / Голосовое меню",
+          callType: "autoanswerer",
+          callTopic: null,
+          customerName: undefined,
+        });
+      });
+
+      // Сразу создаём evaluation что звонок не подлежит анализу
+      await step.run("persist/autoanswerer-evaluation", async () => {
+        await callsService.addEvaluation({
+          callId,
+          isQualityAnalyzable: false,
+          notAnalyzableReason: "autoanswerer",
+          valueScore: null,
+          valueExplanation: "Автоответчик или голосовое меню - оценка качества менеджера не применима",
+          managerScore: null,
+          managerFeedback: "Звонок не подлежит анализу (автоответчик)",
+        });
+        logger.info("Создана оценка для автоответчика", { callId });
+      });
+
+      logger.info("Обработка автоответчика завершена (упрощённый pipeline)", {
+        callId,
+        processingTimeMs: answeringMachineProcessingTimeMs,
+        skippedSteps: [
+          "llm/merge-asr",
+          "llm/summarize",
+          "llm/identify-speakers",
+          "call.evaluate.requested",
+        ],
+      });
+
+      return {
+        callId,
+        processingTimeMs: answeringMachineProcessingTimeMs,
+        asrSource: "gigaam-non-diarized",
+        textLength: asrResults.nonDiarized.transcript.length,
+        customerName: null,
+        llmMergeApplied: false,
+        isAnsweringMachine: true,
+      };
+    }
+
+    // LLM Merging двух ASR результатов (только для не-автоответчиков)
     const mergedResult = await step.run("llm/merge-asr", async () => {
       const llmMergeStartTime = Date.now();
       const mergeResult = await applyLLMMerging(

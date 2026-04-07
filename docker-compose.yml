@@ -128,9 +128,6 @@ services:
       AWS_ACCESS_KEY_ID: minio
       AWS_SECRET_ACCESS_KEY: password
       AWS_S3_BUCKET: files.acme.com
-      MEGAFON_FTP_HOST: ${MEGAFON_FTP_HOST:-}
-      MEGAFON_FTP_USER: ${MEGAFON_FTP_USER:-}
-      MEGAFON_FTP_PASSWORD: ${MEGAFON_FTP_PASSWORD:-}
       AUDIO_ENHANCER_URL: http://audio-enhancer:8080
     volumes:
       - ./records:/app/records

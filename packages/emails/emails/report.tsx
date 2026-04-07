@@ -78,7 +78,9 @@ function getWeekdayName(date: Date): string {
     "пятница",
     "суббота",
   ];
-  return weekdays[date.getDay()];
+  if (Number.isNaN(date.getTime())) return "Unknown";
+  const index = date.getDay();
+  return weekdays[index] ?? "Unknown";
 }
 
 function formatScore(value: number | null | undefined): string {

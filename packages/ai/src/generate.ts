@@ -13,7 +13,7 @@ import { getLangfuse } from "./tracing";
 
 /** Провайдер AI: openai | openrouter | deepseek */
 export type AiProvider = "openai" | "openrouter" | "deepseek";
-export type AiModelProfile = "default" | "premium" | "longContext" | "cheap";
+export type AiModelProfile = "default" | "premium" | "longContext" | "cheap" | "fast";
 
 /** Опции для getAIModel */
 export interface GetAIModelOptions {
@@ -79,6 +79,7 @@ function getRawAIModelId(profile: AiModelProfile = "default"): string {
     case "longContext":
       return env.AI_MODEL_LONG_CONTEXT || env.AI_MODEL;
     case "cheap":
+    case "fast":
       return env.AI_MODEL_CHEAP || env.AI_MODEL;
     default:
       return env.AI_MODEL;
