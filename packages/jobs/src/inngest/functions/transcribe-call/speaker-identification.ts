@@ -2,6 +2,7 @@
  * Идентификация спикеров через LLM
  */
 
+import type { IdentifySpeakersWithEmbeddingsResult } from "@calls/asr/llm/identify-speakers-with-embeddings";
 import { identifySpeakersWithEmbeddings } from "@calls/asr/llm/identify-speakers-with-embeddings";
 import { NonRetriableError } from "inngest";
 import { z } from "zod";
@@ -19,6 +20,9 @@ const IdentifySpeakersInputSchema = z.object({
 
 // Максимальная длина текста для идентификации спикеров
 const MAX_MESSAGE_LENGTH = 2000;
+
+// Тип результата идентификации спикеров (для совместимости с main.ts)
+export type IdentifySpeakersResult = IdentifySpeakersWithEmbeddingsResult;
 
 export async function identifySpeakers(
   call: {
@@ -44,6 +48,30 @@ export async function identifySpeakers(
   // Валидация и truncation входного текста
   let normalizedText = result.normalizedText;
   const originalLength = normalizedText.length;
+
+  // Ранний возврат для пустого текста - пропускаем идентификацию спикеров
+  if (!normalizedText || normalizedText.trim().length === 0) {
+    logger.warn("Пустой текст для идентификации спикеров, пропускаем шаг", {
+      event: "speaker-identification.empty_input",
+      originalLength,
+    });
+    return {
+      text: normalizedText || "",
+      operatorName: fallbackManagerName || undefined,
+      customerName: undefined,
+      metadata: {
+        success: false,
+        reason: "empty_input",
+        mapping: {},
+        speakers: [],
+        operatorName: fallbackManagerName || null,
+        customerName: null,
+        usedEmbeddings: false,
+        clusterCount: 0,
+        fallbackAttempted: false,
+      },
+    };
+  }
 
   if (normalizedText.length > MAX_MESSAGE_LENGTH) {
     normalizedText = normalizedText.substring(0, MAX_MESSAGE_LENGTH);

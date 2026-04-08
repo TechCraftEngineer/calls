@@ -58,7 +58,7 @@ export function ReportDeliveryFrequency({
   const monthlyKey = isEmail ? "emailMonthlyReport" : "telegramMonthlyReport";
 
   return (
-    <div className="rounded-lg border bg-muted/30 p-3 flex flex-col gap-2">
+    <div className="space-y-2">
       <Label className="flex cursor-pointer items-center gap-2 text-sm font-normal">
         <Checkbox
           checked={Boolean(form[dailyKey])}

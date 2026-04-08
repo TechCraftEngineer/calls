@@ -1,14 +1,15 @@
 "use client";
 
-import { Card, CardContent, Skeleton } from "@calls/ui";
+import { Card, CardContent, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger } from "@calls/ui";
 import { skipToken, useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { Clock, FileText, Mail } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import type { User } from "@/lib/auth";
-import { getFamilyName, getGivenName } from "@/lib/user-profile";
 import { useORPC } from "@/orpc/react";
-import type { UserLike } from "@/types/user";
-import ReportSettingsFormBody from "./report-settings-form-body";
+import { ReportChannelsTab } from "./report-channels-tab";
+import { ReportContentTab } from "./report-content-tab";
+import { ReportScheduleTab } from "./report-schedule-tab";
 import type { ReportSettingsForm } from "./report-settings-types";
 
 interface UserSettingsData {
@@ -37,6 +38,9 @@ interface UserSettingsData {
   kpiTargetTalkTimeMinutes?: number;
 }
 
+const TAB_STYLE =
+  "rounded-none border-b-2 border-transparent -mb-0.5 data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground bg-transparent shadow-none py-3 px-4 gap-2";
+
 export default function ReportSettingsPanel({ user }: { user: User }) {
   const orpc = useORPC();
   const { activeWorkspace } = useWorkspace();
@@ -53,15 +57,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
   );
   const userData = usersQuery.data;
 
-  const usersListQuery = useQuery(
-    userId && isWorkspaceAdmin
-      ? orpc.users.list.queryOptions()
-      : {
-          queryKey: ["report-settings", "users-list", "skip"],
-          queryFn: skipToken,
-        },
-  );
-  const usersList = usersListQuery.data ?? [];
   const scheduleQuery = useQuery(
     activeWorkspace?.id
       ? orpc.settings.getReportScheduleSettings.queryOptions()
@@ -85,6 +80,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     reportIncludeCallSummaries: false,
     reportDetailed: false,
     reportIncludeAvgRating: false,
+    reportIncludeAvgValue: false,
     reportDailyTime: "18:00",
     reportWeeklyDay: "fri",
     reportWeeklyTime: "18:10",
@@ -139,39 +135,26 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     }));
   }, [schedule]);
 
-  const allUsers = useMemo(
-    () =>
-      (usersList as UserLike[]).map((u) => ({
-        id: String(u.id),
-        email: String((u as Record<string, unknown>).email ?? ""),
-        givenName: getGivenName(u) ?? "",
-        familyName: getFamilyName(u) ?? "",
-      })),
-    [usersList],
-  );
-
   if (!userData) {
     return (
       <div aria-busy="true" className="space-y-6 animate-pulse">
-        <Card className="card">
+        <div className="flex gap-4 border-b">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-32" />
+          ))}
+        </div>
+        <Card>
           <CardContent className="pt-6 space-y-6">
-            <div className="space-y-2">
-              <Skeleton className="h-6 w-56" />
-              <Skeleton className="h-4 w-full max-w-md" />
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="h-4 w-32" />
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="space-y-3">
+                <Skeleton className="h-5 w-48" />
+                <Skeleton className="h-4 w-full max-w-md" />
+                <div className="flex gap-4">
                   <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-24" />
                 </div>
-              ))}
-            </div>
-            <div className="space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
@@ -179,12 +162,33 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
   }
 
   return (
-    <ReportSettingsFormBody
-      form={form}
-      setForm={setForm}
-      user={user}
-      isAdmin={isWorkspaceAdmin}
-      allUsers={allUsers}
-    />
+    <Tabs defaultValue="channels" className="space-y-6">
+      <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0 h-auto">
+        <TabsTrigger value="channels" className={TAB_STYLE}>
+          <Mail className="h-4 w-4" />
+          Каналы
+        </TabsTrigger>
+        <TabsTrigger value="schedule" className={TAB_STYLE}>
+          <Clock className="h-4 w-4" />
+          Расписание
+        </TabsTrigger>
+        <TabsTrigger value="content" className={TAB_STYLE}>
+          <FileText className="h-4 w-4" />
+          Содержание
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="channels" className="space-y-6">
+        <ReportChannelsTab form={form} setForm={setForm} user={user} isAdmin={isWorkspaceAdmin} />
+      </TabsContent>
+
+      <TabsContent value="schedule" className="space-y-6">
+        <ReportScheduleTab form={form} setForm={setForm} isAdmin={isWorkspaceAdmin} />
+      </TabsContent>
+
+      <TabsContent value="content" className="space-y-6">
+        <ReportContentTab form={form} setForm={setForm} />
+      </TabsContent>
+    </Tabs>
   );
 }

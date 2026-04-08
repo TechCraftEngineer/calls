@@ -25,6 +25,7 @@ export interface ReportSettingsForm {
   reportDetailed: boolean;
   reportIncludeCallSummaries: boolean;
   reportIncludeAvgRating: boolean;
+  reportIncludeAvgValue: boolean;
 }
 
 export interface ReportSettingsUserOption {

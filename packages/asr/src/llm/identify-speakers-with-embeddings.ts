@@ -204,10 +204,14 @@ export async function identifySpeakersWithEmbeddings(
 ): Promise<IdentifySpeakersWithEmbeddingsResult> {
   if (!normalizedText?.trim()) {
     return {
-      text: normalizedText,
+      text: normalizedText || "",
+      operatorName: undefined,
+      customerName: undefined,
       metadata: {
         success: false,
         reason: "empty_input",
+        operatorName: null,
+        customerName: null,
       },
     };
   }
@@ -216,9 +220,13 @@ export async function identifySpeakersWithEmbeddings(
     logger.warn("API ключ AI не задан, пропускаем анализ спикеров");
     return {
       text: normalizedText,
+      operatorName: undefined,
+      customerName: undefined,
       metadata: {
         success: false,
         reason: "ai_provider_not_configured",
+        operatorName: null,
+        customerName: null,
       },
     };
   }
@@ -237,7 +245,7 @@ export async function identifySpeakersWithEmbeddings(
   // Используем summary как основной контекст, если он есть
   const summaryContext = options.summary
     ? `\n\nКРАТКОЕ СОДЕРЖАНИЕ РАЗГОВОРА (используй для определения ролей):\n${options.summary}`
-    : ""; 
+    : "";
 
   const systemPrompt = `${SYSTEM_PROMPT}${options.managerName ? `\n\nИЗВЕСТНЫЕ ДАННЫЕ ИЗ СИСТЕМЫ:\n- Имя менеджера/оператора: "${options.managerName}"\n\nИспользуй эту информацию для определения ролей: спикер, который представляется как "${options.managerName}" или отвечает на звонок как представитель компании, является ОПЕРАТОРОМ. Другой спикер — КЛИЕНТ.` : ""}${options.direction ? `\n\nНаправление звонка: ${options.direction}` : ""}${summaryContext}`;
 
@@ -273,12 +281,14 @@ ${analysisText}
       }
     }
 
-    const operatorName = result.operatorName?.trim() 
-      || result.speakers?.find(s => s.role === 'operator')?.name?.trim() 
-      || undefined;
-    const customerName = result.customerName?.trim() 
-      || result.speakers?.find(s => s.role === 'client')?.name?.trim() 
-      || undefined;
+    const operatorName =
+      result.operatorName?.trim() ||
+      result.speakers?.find((s) => s.role === "operator")?.name?.trim() ||
+      undefined;
+    const customerName =
+      result.customerName?.trim() ||
+      result.speakers?.find((s) => s.role === "client")?.name?.trim() ||
+      undefined;
 
     // Если у нас есть известное имя менеджера из системы, используем его как operatorName
     // Это предотвращает путаницу когда LLM присваивает имя менеджера клиенту
@@ -383,8 +393,14 @@ ${analysisText}
         });
 
         const result = simpleResponse.output;
-        const operatorName = result.operatorName?.trim() || result.speakers?.find((s: { role: string; }) => s.role === 'operator')?.name?.trim() || undefined;
-        const customerName = result.customerName?.trim() || result.speakers?.find((s: { role: string; }) => s.role === 'client')?.name?.trim() || undefined;
+        const operatorName =
+          result.operatorName?.trim() ||
+          result.speakers?.find((s: { role: string }) => s.role === "operator")?.name?.trim() ||
+          undefined;
+        const customerName =
+          result.customerName?.trim() ||
+          result.speakers?.find((s: { role: string }) => s.role === "client")?.name?.trim() ||
+          undefined;
 
         // Используем известное имя менеджера как fallback для operatorName
         const finalOperatorName = operatorName ?? options.managerName ?? undefined;
@@ -420,6 +436,8 @@ ${analysisText}
 
     return {
       text: normalizedText,
+      operatorName: undefined,
+      customerName: undefined,
       metadata: {
         success: false,
         reason: isTimeout ? "timeout" : "error",
@@ -428,11 +446,9 @@ ${analysisText}
         usedEmbeddings: hasEmbeddingData,
         clusterCount: clusters.size,
         fallbackAttempted: isTimeout && hasEmbeddingData,
+        operatorName: null,
+        customerName: null,
       },
     };
   }
-}
-
-function escapeRegex(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

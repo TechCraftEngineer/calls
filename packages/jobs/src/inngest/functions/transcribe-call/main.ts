@@ -48,12 +48,17 @@ export const transcribeCallFn = inngest.createFunction(
     triggers: [transcribeRequested],
     onFailure: async ({ event, error }) => {
       try {
-        // Валидируем event перед использованием
-        const eventValidation = TranscribeCallEventSchema.safeParse(event.data);
+        // Пытаемся получить callId из разных источников (Inngest может передавать по-разному)
+        const rawEventData =
+          event.data ||
+          (event as unknown as { event?: { data?: { callId?: string } } }).event?.data;
+        const eventValidation = TranscribeCallEventSchema.safeParse(rawEventData);
+
         if (!eventValidation.success) {
           logger.error("Ошибка валидации event в onFailure handler", {
             error: eventValidation.error.message,
-            eventData: event.data,
+            eventData: rawEventData,
+            fullEvent: event,
           });
           return;
         }
@@ -423,7 +428,9 @@ export const transcribeCallFn = inngest.createFunction(
       );
     });
 
-    const { text: finalText, customerName, operatorName } = identifyResult;
+    const finalText = identifyResult.text || "";
+    const customerName = (identifyResult as { customerName?: string }).customerName;
+    const operatorName = (identifyResult as { operatorName?: string }).operatorName;
 
     // Логирование результатов идентификации
     const originalText = validatedResult.normalizedText || "";
