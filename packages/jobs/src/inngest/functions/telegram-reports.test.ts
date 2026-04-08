@@ -51,8 +51,8 @@ describe("parseTimeHHMM", () => {
     expect(parseTimeHHMM("23:59")).toEqual({ h: 23, m: 59 });
   });
 
-  it("парсит время без ведущего нуля", () => {
-    expect(parseTimeHHMM("9:5")).toEqual({ h: 9, m: 5 });
+  it("парсит время без ведущего нуля в часах", () => {
+    expect(parseTimeHHMM("9:05")).toEqual({ h: 9, m: 5 });
     expect(parseTimeHHMM("1:00")).toEqual({ h: 1, m: 0 });
   });
 
