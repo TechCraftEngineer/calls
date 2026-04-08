@@ -70,7 +70,6 @@ function CallTooltipCell({ title, children }: { title: string; children: ReactNo
         <button
           type="button"
           className="block min-w-0 max-w-full truncate cursor-default text-[#555] font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-describedby={labelId}
         >
           <span id={labelId} className="sr-only">{title}: </span>
           {children}

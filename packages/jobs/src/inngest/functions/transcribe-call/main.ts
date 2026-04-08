@@ -205,7 +205,7 @@ export const transcribeCallFn = inngest.createFunction(
             logger.info("Быстрая проверка определила автоответчик", {
               callId,
               confidence: quickCheck.confidence,
-              transcriptPreview: quickCheck.transcript.substring(0, 100),
+              transcriptLength: quickCheck.transcript.length,
             });
 
             // Это автоответчик - возвращаем результат быстрой проверки
@@ -220,7 +220,8 @@ export const transcribeCallFn = inngest.createFunction(
 
           logger.info("Быстрая проверка: не автоответчик, продолжаем полный pipeline", {
             callId,
-            transcriptPreview: quickCheck.transcript.substring(0, 100),
+            transcriptLength: quickCheck.transcript.length,
+            confidence: quickCheck.confidence,
           });
         } catch (quickCheckError) {
           logger.warn("Ошибка быстрой проверки, продолжаем полный pipeline", {

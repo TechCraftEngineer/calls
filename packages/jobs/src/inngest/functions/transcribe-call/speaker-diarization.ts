@@ -88,7 +88,7 @@ export async function performDiarization(
     const response = await fetch(`${speakerEmbeddingsUrl}/api/diarize`, {
       method: "POST",
       body: formData,
-      signal: AbortSignal.timeout(900_000), // 15 минут
+      signal: AbortSignal.timeout(env.SPEAKER_EMBEDDINGS_TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -155,7 +155,7 @@ export async function checkSpeakerEmbeddingsHealth(): Promise<boolean> {
   try {
     const response = await fetch(`${speakerEmbeddingsUrl}/health`, {
       method: "GET",
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(env.SPEAKER_EMBEDDINGS_HEALTH_TIMEOUT_MS),
     });
 
     if (response.ok) {

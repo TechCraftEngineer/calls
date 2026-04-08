@@ -28,7 +28,7 @@ export interface AddPendingMemberData {
   invitedBy: string;
 }
 
-type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /**
  * Transaction helper for atomic operations

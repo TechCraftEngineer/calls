@@ -12,6 +12,7 @@ import type { UserForEdit } from "./types";
 const UuidSchema = z.string().uuid();
 const EmailSchema = z.string().email().max(255);
 const NameSchema = z.string().min(1).max(100);
+const OptionalStringSchema = z.string().max(255).nullable();
 
 const CreateUserDataSchema = z.object({
   email: EmailSchema,
@@ -72,7 +73,7 @@ export class UsersService {
       UuidSchema.parse(workspaceId);
     }
     if (actor !== undefined) {
-      z.string().uuid().parse(actor);
+      UuidSchema.parse(actor);
     }
     return this.base.createUser(validatedData as import("../../types/users.types").CreateUserData, workspaceId, actor);
   }
@@ -85,13 +86,13 @@ export class UsersService {
 
   async updateUserInternalExtensions(userId: string, internalExtensions: string | null) {
     UuidSchema.parse(userId);
-    z.string().max(255).nullable().parse(internalExtensions);
+    OptionalStringSchema.parse(internalExtensions);
     return this.base.updateUserInternalExtensions(userId, internalExtensions);
   }
 
   async updateUserMobilePhones(userId: string, mobilePhones: string | null) {
     UuidSchema.parse(userId);
-    z.string().max(255).nullable().parse(mobilePhones);
+    OptionalStringSchema.parse(mobilePhones);
     return this.base.updateUserMobilePhones(userId, mobilePhones);
   }
 
@@ -106,7 +107,8 @@ export class UsersService {
   async updateUserPassword(userId: string, newPassword: string) {
     UuidSchema.parse(userId);
     z.string().min(8).max(100).parse(newPassword);
-    return this.base.updateUserPassword(userId, newPassword);
+    // Обновление пароля должно выполняться через Better Auth API, не напрямую через сервис
+    throw new Error("Обновление пароля должно выполняться через Better Auth API, не напрямую через сервис");
   }
 
   async deleteUser(userId: string) {

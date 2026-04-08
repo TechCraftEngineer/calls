@@ -1,30 +1,13 @@
 "use client";
 
-import {
-  Badge,
-  Button,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@calls/ui";
+import { Badge, Button } from "@calls/ui";
+import { Link2, Link2Off } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { PbxEmployeeItem } from "../types";
 import { LinkStatus } from "./link-status";
 
-export type EmployeeLinkOption = { value: string; label: string };
-
 export function getEmployeeColumns(
-  employeeLinkOptions: Record<string, EmployeeLinkOption[]>,
-  selectedLinks: Record<string, string>,
-  setSelectedLinks: React.Dispatch<React.SetStateAction<Record<string, string>>>,
-  onLink: (input: {
-    targetType: "employee";
-    targetExternalId: string;
-    userId?: string | null;
-    invitationId?: string | null;
-  }) => Promise<void>,
+  onOpenLinkDialog: (employee: PbxEmployeeItem) => void,
   onUnlink: (input: { targetType: "employee"; targetExternalId: string }) => Promise<void>,
   linkingEmployeeIds: Record<string, boolean>,
   unlinkingEmployeeIds: Record<string, boolean>,
@@ -70,66 +53,31 @@ export function getEmployeeColumns(
       enableSorting: false,
       cell: ({ row }) => {
         const employee = row.original;
-        const options = employeeLinkOptions[employee.externalId] ?? [];
+        const isLinking = linkingEmployeeIds[employee.externalId];
+        const isUnlinking = unlinkingEmployeeIds[employee.externalId];
+        const isProcessing = isLinking || isUnlinking;
 
         return (
-          <div className="flex min-w-65 flex-wrap items-center gap-2">
-            {options.length > 0 && (
-              <Select
-                value={selectedLinks[employee.externalId] ?? ""}
-                onValueChange={(value) =>
-                  setSelectedLinks((prev) => ({
-                    ...prev,
-                    [employee.externalId]: value,
-                  }))
-                }
+          <div className="flex items-center gap-2">
+            {!employee.link ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={isProcessing}
+                onClick={() => onOpenLinkDialog(employee)}
               >
-                <SelectTrigger className="w-65">
-                  <SelectValue placeholder="Выберите связь" />
-                </SelectTrigger>
-                <SelectContent>
-                  {options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={
-                !selectedLinks[employee.externalId] ||
-                linkingEmployeeIds[employee.externalId] ||
-                unlinkingEmployeeIds[employee.externalId]
-              }
-              onClick={async () => {
-                const selected = selectedLinks[employee.externalId];
-                if (!selected) return;
-                const colonIdx = selected.indexOf(":");
-                const kind = colonIdx >= 0 ? selected.slice(0, colonIdx) : "user";
-                const id = colonIdx >= 0 ? selected.slice(colonIdx + 1) : selected;
-                await onLink({
-                  targetType: "employee",
-                  targetExternalId: employee.externalId,
-                  userId: kind === "user" ? id : null,
-                  invitationId: kind === "invite" ? id : null,
-                });
-              }}
-            >
-              {linkingEmployeeIds[employee.externalId] ? "Привязка…" : "Привязать"}
-            </Button>
-            {employee.link && (
+                <Link2 className="h-4 w-4" />
+                {isLinking ? "Привязка…" : "Привязать"}
+              </Button>
+            ) : (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                disabled={
-                  unlinkingEmployeeIds[employee.externalId] ||
-                  linkingEmployeeIds[employee.externalId]
-                }
+                className="gap-2 text-destructive hover:text-destructive"
+                disabled={isProcessing}
                 onClick={async () =>
                   onUnlink({
                     targetType: "employee",
@@ -137,7 +85,8 @@ export function getEmployeeColumns(
                   })
                 }
               >
-                {unlinkingEmployeeIds[employee.externalId] ? "Отвязка…" : "Отвязать"}
+                <Link2Off className="h-4 w-4" />
+                {isUnlinking ? "Отвязка…" : "Отвязать"}
               </Button>
             )}
           </div>
