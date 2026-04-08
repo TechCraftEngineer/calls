@@ -2,9 +2,10 @@ import { systemRepository, usersService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../orpc";
+import { userIdSchema } from "@calls/shared";
 
 export const deleteUser = workspaceAdminProcedure
-  .input(z.object({ user_id: z.string() }))
+  .input(z.object({ user_id: userIdSchema }))
   .handler(async ({ input, context }) => {
     const user = await usersService.getUser(input.user_id);
     if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });

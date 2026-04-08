@@ -1,6 +1,6 @@
 import { settingsService, usersService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
-import { uuidSchema } from "@calls/shared";
+import { userIdSchema } from "@calls/shared";
 import { z } from "zod";
 import { workspaceProcedure } from "../../../orpc";
 import { REPORT_PROMPTS_CAMEL_TO_SNAKE } from "../../settings/constants";
@@ -8,7 +8,7 @@ import { updateTelegramSettingsSchema } from "../schemas";
 import { canAccessUser, logUpdate } from "../utils";
 
 export const updateTelegramSettings = workspaceProcedure
-  .input(z.object({ user_id: uuidSchema, data: updateTelegramSettingsSchema }))
+  .input(z.object({ user_id: userIdSchema, data: updateTelegramSettingsSchema }))
   .handler(async ({ input, context }) => {
     const authUser = context.user;
     const userId =

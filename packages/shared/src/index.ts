@@ -17,8 +17,10 @@ export { pluralize } from "./utils/pluralize";
 export {
   companyContextSchema,
   isValidEmail,
+  isValidUserId,
   isValidUuid,
   isValidWorkspaceId,
+  userIdSchema,
   uuidSchema,
   workspaceIdSchema,
 } from "./validation";

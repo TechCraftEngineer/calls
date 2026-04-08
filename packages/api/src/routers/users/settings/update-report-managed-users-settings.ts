@@ -1,5 +1,6 @@
 import { usersService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
+import { userIdSchema } from "@calls/shared";
 import { z } from "zod";
 import { workspaceProcedure } from "../../../orpc";
 import { updateReportManagedUsersSettingsSchema } from "../schemas";
@@ -8,7 +9,7 @@ import { canAccessUser, logUpdate } from "../utils";
 export const updateReportManagedUsersSettings = workspaceProcedure
   .input(
     z.object({
-      user_id: z.string(),
+      user_id: userIdSchema,
       data: updateReportManagedUsersSettingsSchema,
     }),
   )

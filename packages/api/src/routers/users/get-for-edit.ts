@@ -1,6 +1,6 @@
 import { usersService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
-import { uuidSchema } from "@calls/shared";
+import { userIdSchema } from "@calls/shared";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 import { canAccessUser } from "./utils";
@@ -36,7 +36,7 @@ const getForEditOutputSchema = z.object({
 });
 
 export const getForEdit = workspaceProcedure
-  .input(z.object({ user_id: uuidSchema }))
+  .input(z.object({ user_id: userIdSchema }))
   .output(getForEditOutputSchema)
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)

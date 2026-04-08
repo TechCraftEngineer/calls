@@ -1,12 +1,13 @@
 import { usersService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
+import { userIdSchema } from "@calls/shared";
 import { z } from "zod";
 import { workspaceProcedure } from "../../../orpc";
 import { updateMaxSettingsSchema } from "../schemas";
 import { canAccessUser, logUpdate } from "../utils";
 
 export const updateMaxSettings = workspaceProcedure
-  .input(z.object({ user_id: z.string(), data: updateMaxSettingsSchema }))
+  .input(z.object({ user_id: userIdSchema, data: updateMaxSettingsSchema }))
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
       throw new ORPCError("BAD_REQUEST", {

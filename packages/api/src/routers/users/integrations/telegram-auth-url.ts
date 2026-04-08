@@ -2,13 +2,13 @@ import { randomBytes } from "node:crypto";
 import { settingsService, usersService } from "@calls/db";
 import { getBotUsername } from "@calls/telegram-bot";
 import { ORPCError } from "@orpc/server";
-import { uuidSchema } from "@calls/shared";
+import { userIdSchema } from "@calls/shared";
 import { z } from "zod";
 import { workspaceProcedure } from "../../../orpc";
 import { canAccessUser } from "../utils";
 
 export const telegramAuthUrl = workspaceProcedure
-  .input(z.object({ user_id: uuidSchema }))
+  .input(z.object({ user_id: userIdSchema }))
   .handler(async ({ input, context }) => {
     const { workspaceId } = context;
     const userId = (context.user as Record<string, unknown>).id as string;

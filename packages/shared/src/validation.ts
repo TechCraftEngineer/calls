@@ -33,9 +33,25 @@ export function isValidUuid(id: string): boolean {
   return uuidPattern.test(id);
 }
 
+/**
+ * Проверяет, является ли строка валидным user_id (32 символа base64-like)
+ */
+export function isValidUserId(id: string): boolean {
+  if (typeof id !== "string") return false;
+  
+  // 32 символа base64-like (буквы и цифры)
+  const userIdPattern = /^[A-Za-z0-9]{32}$/;
+  return userIdPattern.test(id);
+}
+
 /** Zod-схема для UUID. Использовать везде, где нужна валидация UUID */
 export const uuidSchema = z.string().refine((id) => isValidUuid(id), {
   message: "Неверный формат ID. Ожидается UUIDv7",
+});
+
+/** Zod-схема для user_id. Использовать везде, где нужна валидация user_id */
+export const userIdSchema = z.string().refine((id) => isValidUserId(id), {
+  message: "Неверный формат user_id. Ожидается 32 символа",
 });
 
 const emailSchema = z.string().email();

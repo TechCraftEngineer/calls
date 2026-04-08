@@ -1,13 +1,13 @@
 import { usersService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
-import { uuidSchema } from "@calls/shared";
+import { userIdSchema } from "@calls/shared";
 import { z } from "zod";
 import { workspaceProcedure } from "../../../orpc";
 import { updateEmailSettingsSchema } from "../schemas";
 import { canAccessUser, logUpdate } from "../utils";
 
 export const updateEmailSettings = workspaceProcedure
-  .input(z.object({ user_id: uuidSchema, data: updateEmailSettingsSchema }))
+  .input(z.object({ user_id: userIdSchema, data: updateEmailSettingsSchema }))
   .handler(async ({ input, context }) => {
     const userId = (context.user as Record<string, unknown>).id as string;
     if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
