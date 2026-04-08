@@ -302,6 +302,25 @@ export const pbxRepository = {
         ),
       );
   },
+
+  async getLinkByUserId(
+    workspaceId: string,
+    provider: string,
+    userId: string,
+  ): Promise<schema.WorkspacePbxLink | null> {
+    const rows = await db
+      .select()
+      .from(schema.workspacePbxLinks)
+      .where(
+        and(
+          eq(schema.workspacePbxLinks.workspaceId, workspaceId),
+          eq(schema.workspacePbxLinks.provider, provider),
+          eq(schema.workspacePbxLinks.userId, userId),
+        ),
+      )
+      .limit(1);
+    return rows[0] ?? null;
+  },
 };
 
 export type PbxRepository = typeof pbxRepository;
