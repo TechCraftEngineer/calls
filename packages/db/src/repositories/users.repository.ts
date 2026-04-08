@@ -9,6 +9,7 @@ import { and, desc, eq, isNull } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 import type { CreateUserData, UpdateUserData } from "../types/users.types";
+import type { Transaction } from "./workspaces.repository";
 
 function parseInternalExtensions(ext: string | null): string[] | null {
   if (!ext || String(ext).trim().toLowerCase() === "all") return null;
@@ -158,8 +159,9 @@ export const usersRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
-  async disconnectTelegram(userId: string): Promise<boolean> {
-    const result = await db
+  async disconnectTelegram(userId: string, tx?: Transaction): Promise<boolean> {
+    const client = tx ?? db;
+    const result = await client
       .update(schema.user)
       .set({
         telegramChatId: null,

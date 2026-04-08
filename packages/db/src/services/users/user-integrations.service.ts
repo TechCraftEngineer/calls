@@ -3,6 +3,7 @@
  */
 
 import { userWorkspaceSettingsRepository } from "../../repositories/user-workspace-settings.repository";
+import { withTransaction } from "../../repositories/workspaces.repository";
 import type { UsersRepository } from "../../repositories/users.repository";
 import type { SystemRepository } from "../../repositories/system.repository";
 import type { User } from "./types";
@@ -48,20 +49,22 @@ export class UserIntegrationsService {
   }
 
   async disconnectTelegram(userId: string): Promise<boolean> {
-    const result = await this.usersRepository.disconnectTelegram(userId);
+    return await withTransaction(async (tx) => {
+      const result = await this.usersRepository.disconnectTelegram(userId, tx as any);
 
-    // Also clear workspace-level Telegram connect token
-    await userWorkspaceSettingsRepository.disconnectTelegram(userId);
+      // Also clear workspace-level Telegram connect token (atomic operation)
+      await userWorkspaceSettingsRepository.disconnectTelegram(userId, tx as any);
 
-    if (result) {
-      await this.systemRepository.addActivityLog(
-        "INFO",
-        `User ${userId} Telegram disconnected`,
-        "user",
-      );
-    }
+      if (result) {
+        await this.systemRepository.addActivityLog(
+          "INFO",
+          `User ${userId} Telegram disconnected`,
+          "user",
+        );
+      }
 
-    return result;
+      return result;
+    });
   }
 
   // MAX integration

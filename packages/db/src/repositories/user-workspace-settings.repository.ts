@@ -12,6 +12,7 @@ import type {
   NotificationSettings,
   ReportSettings,
 } from "../schema/user/workspace-settings";
+import type { Transaction } from "./workspaces.repository";
 
 export const userWorkspaceSettingsRepository = {
   async findByUserAndWorkspace(
@@ -235,9 +236,10 @@ export const userWorkspaceSettingsRepository = {
     return true;
   },
 
-  async disconnectTelegram(userId: string): Promise<boolean> {
-    return await db.transaction(async (tx) => {
-      const rows = await tx
+  async disconnectTelegram(userId: string, tx?: Transaction): Promise<boolean> {
+    const client = tx ?? db;
+    const executeWithinTransaction = async (trx: Transaction | typeof db) => {
+      const rows = await trx
         .select()
         .from(schema.userWorkspaceSettings)
         .where(eq(schema.userWorkspaceSettings.userId, userId));
@@ -245,7 +247,7 @@ export const userWorkspaceSettingsRepository = {
       for (const row of rows) {
         const ns = row.notificationSettings as NotificationSettings;
         if (ns?.telegram?.connectToken) {
-          await tx
+          await trx
             .update(schema.userWorkspaceSettings)
             .set({
               notificationSettings: {
@@ -265,7 +267,12 @@ export const userWorkspaceSettingsRepository = {
         }
       }
       return true;
-    });
+    };
+
+    if (tx) {
+      return await executeWithinTransaction(tx);
+    }
+    return await db.transaction(async (trx) => executeWithinTransaction(trx));
   },
 
   async updateEvaluationTemplateForWorkspace(

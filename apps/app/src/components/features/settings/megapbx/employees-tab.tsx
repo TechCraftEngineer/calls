@@ -10,14 +10,15 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { SearchInput } from "@/components/ui/search-input";
 import type { PbxEmployeeItem } from "../types";
-import { type EmployeeLinkOptions, getEmployeeColumns } from "./employee-columns";
+import { getEmployeeColumns } from "./employee-columns";
+import { EmployeeLinkDialog } from "./employee-link-dialog";
 
 interface EmployeesTabProps {
   employees: PbxEmployeeItem[];
   employeesLoading: boolean;
   employeeSearch: string;
   onEmployeeSearchChange: (value: string) => void;
-  employeeLinkOptions: Record<string, EmployeeLinkOptions>;
+  employeeLinkOptions: Record<string, { users: { id: string; email: string; name: string | null; givenName: string | null; familyName: string | null; internalExtensions: string | null }[]; invitations: { id: string; email: string; role: string }[] }>;
   onLink: (input: {
     targetType: "employee";
     targetExternalId: string;
@@ -36,21 +37,35 @@ export function EmployeesTab({
   onLink,
   onUnlink,
 }: EmployeesTabProps) {
-  const [selectedLinks, setSelectedLinks] = useState<Record<string, string>>({});
   const [linkingEmployeeIds, setLinkingEmployeeIds] = useState<Record<string, boolean>>({});
   const [unlinkingEmployeeIds, setUnlinkingEmployeeIds] = useState<Record<string, boolean>>({});
 
+  // Состояние модального окна
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<PbxEmployeeItem | null>(null);
+
+  // Открыть диалог привязки
+  const handleOpenLinkDialog = useCallback((employee: PbxEmployeeItem) => {
+    setSelectedEmployee(employee);
+    setDialogOpen(true);
+  }, []);
+
+  // Обработка привязки из диалога
   const handleLink = useCallback(
-    async (input: {
-      targetType: "employee";
-      targetExternalId: string;
-      userId?: string | null;
-      invitationId?: string | null;
-    }) => {
-      const id = input.targetExternalId;
+    async (input: { userId?: string | null; invitationId?: string | null }) => {
+      if (!selectedEmployee) return;
+
+      const id = selectedEmployee.externalId;
       setLinkingEmployeeIds((prev) => ({ ...prev, [id]: true }));
       try {
-        await onLink(input);
+        await onLink({
+          targetType: "employee",
+          targetExternalId: id,
+          userId: input.userId,
+          invitationId: input.invitationId,
+        });
+        setDialogOpen(false);
+        setSelectedEmployee(null);
       } finally {
         setLinkingEmployeeIds((prev) => {
           const { [id]: _removed, ...rest } = prev;
@@ -58,7 +73,7 @@ export function EmployeesTab({
         });
       }
     },
-    [onLink],
+    [onLink, selectedEmployee],
   );
 
   const handleUnlink = useCallback(
@@ -98,18 +113,13 @@ export function EmployeesTab({
   const employeeColumns = useMemo(
     () =>
       getEmployeeColumns(
-        employeeLinkOptions,
-        selectedLinks,
-        setSelectedLinks,
-        handleLink,
+        handleOpenLinkDialog,
         handleUnlink,
         linkingEmployeeIds,
         unlinkingEmployeeIds,
       ),
     [
-      employeeLinkOptions,
-      selectedLinks,
-      handleLink,
+      handleOpenLinkDialog,
       handleUnlink,
       linkingEmployeeIds,
       unlinkingEmployeeIds,
@@ -179,6 +189,20 @@ export function EmployeesTab({
           </div>
         </DataGridContainer>
       </DataGrid>
+
+      {/* Модальное окно привязки */}
+      <EmployeeLinkDialog
+        employee={selectedEmployee}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        options={
+          selectedEmployee
+            ? employeeLinkOptions[selectedEmployee.externalId] ?? { users: [], invitations: [] }
+            : { users: [], invitations: [] }
+        }
+        onLink={handleLink}
+        linking={selectedEmployee ? linkingEmployeeIds[selectedEmployee.externalId] : false}
+      />
     </div>
   );
 }
