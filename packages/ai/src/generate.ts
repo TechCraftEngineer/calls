@@ -9,7 +9,6 @@ import { env } from "@calls/config";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import type { LanguageModel } from "ai";
 import { generateText as aiGenerateText } from "ai";
-import { getLangfuse } from "./tracing";
 
 /** Провайдер AI: openai | openrouter | deepseek */
 export type AiProvider = "openai" | "openrouter" | "deepseek";

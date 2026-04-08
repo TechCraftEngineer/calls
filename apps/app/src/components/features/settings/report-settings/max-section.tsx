@@ -1,11 +1,9 @@
 "use client";
 
 import {
-  Button,
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
   Checkbox,
@@ -25,8 +23,6 @@ interface MaxReportSectionProps {
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   isAdmin: boolean;
-  onSave: () => void;
-  saving: boolean;
   onSendTest?: (reportType: ReportType) => void;
   sendTestLoading?: boolean;
   sendTestMessage?: string;
@@ -43,8 +39,6 @@ export function MaxReportSection({
   form,
   setForm,
   isAdmin,
-  onSave,
-  saving,
   onSendTest,
   sendTestLoading = false,
   sendTestMessage = "",

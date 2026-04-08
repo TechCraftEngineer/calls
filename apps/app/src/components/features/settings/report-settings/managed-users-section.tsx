@@ -1,9 +1,7 @@
 import {
-  Button,
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
   Checkbox,
@@ -22,18 +20,9 @@ interface ManagedUsersSectionProps {
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   user: { id: string };
   allUsers: ReportSettingsUserOption[];
-  onSave: () => void;
-  saving: boolean;
 }
 
-export function ManagedUsersSection({
-  form,
-  setForm,
-  user,
-  allUsers,
-  onSave,
-  saving,
-}: ManagedUsersSectionProps) {
+export function ManagedUsersSection({ form, setForm, user, allUsers }: ManagedUsersSectionProps) {
   const selectedCount = form.reportManagedUserIds?.length ?? 0;
 
   return (

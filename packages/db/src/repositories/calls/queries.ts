@@ -32,7 +32,6 @@ function buildOrderBy(
     case "value_score":
       // Для сортировки по value_score используем явное указание NULLS для детерминированности
       return sql`${schema.callEvaluations.valueScore} ${sql.raw(sortOrder === "asc" ? "ASC" : "DESC")} ${sql.raw(nullsClause)}`;
-    case "timestamp":
     default:
       return order(schema.calls.timestamp);
   }

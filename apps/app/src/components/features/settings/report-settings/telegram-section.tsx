@@ -1,16 +1,13 @@
 import {
-  Button,
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
   Field,
   FieldLabel,
   Input,
   Label,
-  Separator,
 } from "@calls/ui";
 import type React from "react";
 import { useState } from "react";
@@ -25,8 +22,6 @@ interface TelegramSectionProps {
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   isAdmin: boolean;
-  onSave: () => void;
-  saving: boolean;
   sendTestLoading?: boolean;
   sendTestSuccess?: boolean;
   sendTestReportType?: ReportType | null;
@@ -52,8 +47,6 @@ export function TelegramReportSection({
   form,
   setForm,
   isAdmin,
-  onSave,
-  saving,
   sendTestLoading,
   sendTestSuccess,
   sendTestReportType,

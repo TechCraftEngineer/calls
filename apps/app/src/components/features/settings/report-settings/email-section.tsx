@@ -1,9 +1,7 @@
 import {
-  Button,
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
   Field,
@@ -21,8 +19,6 @@ interface EmailSectionProps {
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   isAdmin: boolean;
-  onSave: () => void;
-  saving: boolean;
   onSendTest?: (reportType: ReportType) => void;
   sendTestLoading?: boolean;
   sendTestMessage?: string;
@@ -34,8 +30,6 @@ export function EmailReportSection({
   form,
   setForm,
   isAdmin,
-  onSave,
-  saving,
   onSendTest,
   sendTestLoading = false,
   sendTestMessage = "",
