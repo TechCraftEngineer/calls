@@ -85,11 +85,11 @@ export function EmployeeLinkDialog({
   // Сброс фокуса при изменении фильтра
   useEffect(() => {
     setFocusedUserIndex(0);
-  }, [filteredUsers.length]);
+  }, [filteredUsers]);
 
   useEffect(() => {
     setFocusedInvitationIndex(0);
-  }, [filteredInvitations.length]);
+  }, [filteredInvitations]);
 
   const selectedUser = useMemo(() => {
     if (!selectedUserId) return null;

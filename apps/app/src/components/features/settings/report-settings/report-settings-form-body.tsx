@@ -9,7 +9,6 @@ import {
 } from "./index";
 import type { ReportSettingsForm, ReportSettingsUserOption } from "./report-settings-types";
 import { useReportSettingsMutations } from "./use-report-settings-mutations";
-import { getReportWeeklyDay } from "./utils";
 
 interface ReportSettingsFormBodyProps {
   form: ReportSettingsForm;
@@ -34,7 +33,6 @@ export default function ReportSettingsFormBody({
     telegramBotUsername,
     sendTestMessage,
     sendTestEmailMessage,
-    isSavingCombined,
     isSavingAny,
     telegramAuthUrlMutation,
     disconnectTelegramMutation,
@@ -50,125 +48,6 @@ export default function ReportSettingsFormBody({
     handleSendTestEmail,
     performUpdates,
   } = useReportSettingsMutations({ user, setForm });
-
-  const handleSaveEmail = async () => {
-    const email = form.email.trim();
-    await performUpdates({
-      successMessage: "Настройки email сохранены",
-      errorMessage: "Не удалось сохранить настройки email",
-      invalidateScheduleAfter: isAdmin,
-      run: async () => {
-        const tasks: Promise<unknown>[] = [
-          updateEmailMutation.mutateAsync({
-            userId: userId,
-            data: {
-              email: email ? email : null,
-              emailDailyReport: form.emailDailyReport,
-              emailWeeklyReport: form.emailWeeklyReport,
-              emailMonthlyReport: form.emailMonthlyReport,
-            },
-          }),
-        ];
-        if (isAdmin) {
-          tasks.push(
-            updateTelegramMutation.mutateAsync({
-              userId: userId,
-              data: {
-                reportDailyTime: form.reportDailyTime,
-                reportWeeklyDay: getReportWeeklyDay(form.reportWeeklyDay),
-                reportWeeklyTime: form.reportWeeklyTime,
-                reportMonthlyDay: form.reportMonthlyDay,
-                reportMonthlyTime: form.reportMonthlyTime,
-              },
-            }),
-          );
-        }
-        await Promise.all(tasks);
-      },
-    });
-  };
-
-  const handleSaveTelegram = async () => {
-    const telegramChatId = form.telegramChatId.trim();
-    const reportWeeklyDay = getReportWeeklyDay(form.reportWeeklyDay);
-    await performUpdates({
-      successMessage: "Настройки Telegram сохранены",
-      errorMessage: "Не удалось сохранить настройки Telegram",
-      invalidateScheduleAfter: isAdmin,
-      run: async () => {
-        await updateTelegramMutation.mutateAsync({
-          userId: userId,
-          data: {
-            telegramDailyReport: form.telegramDailyReport,
-            telegramWeeklyReport: form.telegramWeeklyReport,
-            telegramMonthlyReport: form.telegramMonthlyReport,
-            telegramSkipWeekends: form.telegramSkipWeekends,
-            telegramChatId: telegramChatId ? telegramChatId : null,
-            ...(isAdmin
-              ? {
-                  reportDailyTime: form.reportDailyTime,
-                  reportWeeklyDay,
-                  reportWeeklyTime: form.reportWeeklyTime,
-                  reportMonthlyDay: form.reportMonthlyDay,
-                  reportMonthlyTime: form.reportMonthlyTime,
-                }
-              : {}),
-          },
-        });
-      },
-    });
-  };
-
-  const handleSaveMax = async () => {
-    const maxChatId = form.maxChatId.trim();
-    await performUpdates({
-      successMessage: "Настройки MAX сохранены",
-      errorMessage: "Не удалось сохранить настройки MAX",
-      invalidateScheduleAfter: isAdmin,
-      run: async () => {
-        const tasks: Promise<unknown>[] = [
-          updateMaxMutation.mutateAsync({
-            userId: userId,
-            data: {
-              maxChatId: maxChatId ? maxChatId : null,
-              maxDailyReport: form.maxDailyReport,
-              maxManagerReport: form.maxManagerReport,
-            },
-          }),
-        ];
-        if (isAdmin) {
-          tasks.push(
-            updateTelegramMutation.mutateAsync({
-              userId: userId,
-              data: {
-                reportDailyTime: form.reportDailyTime,
-                reportWeeklyDay: getReportWeeklyDay(form.reportWeeklyDay),
-                reportWeeklyTime: form.reportWeeklyTime,
-                reportMonthlyDay: form.reportMonthlyDay,
-                reportMonthlyTime: form.reportMonthlyTime,
-              },
-            }),
-          );
-        }
-        await Promise.all(tasks);
-      },
-    });
-  };
-
-  const handleSaveManagedUsers = async () => {
-    await performUpdates({
-      successMessage: "Сводные менеджеры сохранены",
-      errorMessage: "Не удалось сохранить сводные настройки менеджеров",
-      run: async () => {
-        await updateReportManagedUsersMutation.mutateAsync({
-          userId: userId,
-          data: {
-            reportManagedUserIds: form.reportManagedUserIds ?? [],
-          },
-        });
-      },
-    });
-  };
 
   const handleSaveAll = async () => {
     await performUpdates({
@@ -258,11 +137,7 @@ export default function ReportSettingsFormBody({
             telegramBotUsername={telegramBotUsername}
             telegramConnectToken={telegramConnectToken}
           />
-          <MaxReportSection
-            form={form}
-            setForm={setForm}
-            isAdmin={isAdmin}
-          />
+          <MaxReportSection form={form} setForm={setForm} isAdmin={isAdmin} />
           {isAdmin && (
             <ManagedUsersSection
               form={form}

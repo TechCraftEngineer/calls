@@ -89,7 +89,7 @@ jobs:
         run: bun --filter @calls/e2e install
 
       - name: Build applications
-        run: bun build
+        run: bun run build
 
       - name: Setup database
         run: |
@@ -101,7 +101,7 @@ jobs:
 
       - name: Start application
         run: |
-          bun dev:next &
+          bun run dev:next &
           sleep 10
 
       - name: Wait for application to be ready
@@ -109,7 +109,7 @@ jobs:
           timeout 60 bash -c 'until curl -f http://localhost:3000/auth/signin; do sleep 2; done'
 
       - name: Run E2E tests
-        run: bun test:e2e
+        run: bun run test:e2e
         env:
           CI: true
           BASE_URL: http://localhost:3000
@@ -168,7 +168,7 @@ jobs:
         run: bun --filter @calls/e2e install
 
       - name: Build applications
-        run: bun build
+        run: bun run build
 
       - name: Setup database
         run: |
@@ -180,7 +180,7 @@ jobs:
 
       - name: Start application
         run: |
-          bun dev:next &
+          bun run dev:next &
           sleep 10
 
       - name: Wait for application to be ready
@@ -188,7 +188,7 @@ jobs:
           timeout 60 bash -c 'until curl -f http://localhost:3000/auth/signin; do sleep 2; done'
 
       - name: Run E2E auth tests
-        run: bun test:e2e:auth
+        run: bun run test:e2e:auth
         env:
           CI: true
           BASE_URL: http://localhost:3000

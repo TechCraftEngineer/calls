@@ -55,7 +55,7 @@ export function NumberLinkSelector({
   // Сброс фокуса при изменении фильтра
   useEffect(() => {
     setFocusedIndex(0);
-  }, [filteredUsers.length]);
+  }, [filteredUsers]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const maxIndex = filteredUsers.length - 1;

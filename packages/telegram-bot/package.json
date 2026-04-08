@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@calls/db": "workspace:*",
-    "grammy": "1.41.1",
-    "hono": "4.12.10"
+    "grammy": "1.42.0",
+    "hono": "4.12.12"
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
