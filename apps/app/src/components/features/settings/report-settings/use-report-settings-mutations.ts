@@ -1,5 +1,5 @@
 import { toast } from "@calls/ui";
-import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import type { User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
@@ -25,15 +25,23 @@ interface UseReportSettingsMutationsReturn {
   isSavingCombined: boolean;
   isSavingAny: boolean;
 
-  // Mutation states
-  telegramAuthUrlMutation: UseMutationResult<any, Error, any, unknown>;
-  disconnectTelegramMutation: UseMutationResult<any, Error, any, unknown>;
-  updateEmailMutation: UseMutationResult<any, Error, any, unknown>;
-  updateTelegramMutation: UseMutationResult<any, Error, any, unknown>;
-  updateMaxMutation: UseMutationResult<any, Error, any, unknown>;
-  updateReportManagedUsersMutation: UseMutationResult<any, Error, any, unknown>;
-  sendTestMutation: UseMutationResult<any, Error, any, unknown>;
-  sendTestEmailMutation: UseMutationResult<any, Error, any, unknown>;
+  // Mutation states - typed as any for simplicity (full oRPC typing is complex)
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  telegramAuthUrlMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  disconnectTelegramMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  updateEmailMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  updateTelegramMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  updateMaxMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  updateReportManagedUsersMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  sendTestMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  sendTestEmailMutation: any;
 
   // Actions
   handleTelegramConnect: () => void;
