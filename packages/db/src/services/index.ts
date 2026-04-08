@@ -25,7 +25,12 @@ import { WorkspacesService } from "./workspaces.service";
 export const callsService = new CallsService(callsRepository, systemRepository);
 export const filesService = new FilesService(filesRepository, systemRepository);
 export const workspacesService = new WorkspacesService(workspacesRepository);
-export const usersService = new UsersService(usersRepository, systemRepository);
+export const usersService = new UsersService(
+  usersRepository,
+  systemRepository,
+  workspacesRepository,
+  userWorkspaceSettingsRepository,
+);
 export const invitationsService = new InvitationsService(
   workspacesService,
   usersService,

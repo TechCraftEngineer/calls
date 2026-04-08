@@ -1,34 +1,30 @@
-/**
- * Users service - refactored into modular components
- */
-
 import type { SystemRepository } from "../../repositories/system.repository";
+import type { UserWorkspaceSettingsRepository } from "../../repositories/user-workspace-settings.repository";
 import type { UsersRepository } from "../../repositories/users.repository";
+import type { WorkspacesRepository } from "../../repositories/workspaces.repository";
 import { UserBaseService } from "./user-base.service";
 import { UserIntegrationsService } from "./user-integrations.service";
 import { UserSettingsService } from "./user-settings.service";
+import type { UserForEdit } from "./types";
 
-// Export types
-export type { User, UserForEdit, UserUpdateData, WorkspaceMember } from "./types";
-
-// Export services
-export { UserBaseService } from "./user-base.service";
-export { UserIntegrationsService } from "./user-integrations.service";
-export { UserSettingsService } from "./user-settings.service";
-
-/**
- * Unified Users Service - facade that delegates to specialized services
- * This maintains backward compatibility while providing modular architecture
- */
 export class UsersService {
   public readonly base: UserBaseService;
   public readonly settings: UserSettingsService;
   public readonly integrations: UserIntegrationsService;
+  private workspacesRepository: WorkspacesRepository;
+  private userWorkspaceSettingsRepository: UserWorkspaceSettingsRepository;
 
-  constructor(usersRepository: UsersRepository, systemRepository: SystemRepository) {
+  constructor(
+    usersRepository: UsersRepository,
+    systemRepository: SystemRepository,
+    workspacesRepository: WorkspacesRepository,
+    userWorkspaceSettingsRepository: UserWorkspaceSettingsRepository,
+  ) {
     this.base = new UserBaseService(usersRepository, systemRepository);
     this.settings = new UserSettingsService(systemRepository);
     this.integrations = new UserIntegrationsService(usersRepository, systemRepository);
+    this.workspacesRepository = workspacesRepository;
+    this.userWorkspaceSettingsRepository = userWorkspaceSettingsRepository;
   }
 
   // === Delegate base methods for backward compatibility ===
@@ -79,27 +75,38 @@ export class UsersService {
 
   // === Delegate settings methods ===
 
-  async getUserForEdit(
-    userId: string,
-    workspaceId: string,
-    user: {
-      email: string | null;
-      givenName: string | null;
-      familyName: string | null;
-      internalExtensions: string | null;
-      mobilePhones: string | null;
-      telegramChatId: string | null;
-    },
-    role: string,
-    settings: {
-      notificationSettings?: unknown;
-      filterSettings?: unknown;
-      reportSettings?: unknown;
-      kpiSettings?: unknown;
-      evaluationSettings?: unknown;
-    } | null,
-  ) {
-    return this.settings.getUserForEdit(userId, workspaceId, user, role, settings);
+  async getUserForEdit(userId: string, workspaceId: string): Promise<UserForEdit | null> {
+    // Fetch user basic data
+    const user = await this.base.getUser(userId);
+    if (!user) {
+      return null;
+    }
+
+    // Fetch user role in the workspace
+    const member = await this.workspacesRepository.getMember(workspaceId, userId);
+    const role = member?.role ?? "member";
+
+    // Fetch user settings for the workspace
+    const settings = await this.userWorkspaceSettingsRepository.findByUserAndWorkspace(
+      userId,
+      workspaceId,
+    );
+
+    // Delegate to settings service to build the UserForEdit object
+    return this.settings.getUserForEdit(
+      userId,
+      workspaceId,
+      {
+        email: user.email ?? null,
+        givenName: user.givenName ?? null,
+        familyName: user.familyName ?? null,
+        internalExtensions: user.internalExtensions ?? null,
+        mobilePhones: user.mobilePhones ?? null,
+        telegramChatId: user.telegramChatId ?? null,
+      },
+      role,
+      settings,
+    );
   }
 
   async updateUserFilters(
