@@ -33,6 +33,11 @@ export function isValidUuid(id: string): boolean {
   return uuidPattern.test(id);
 }
 
+/** Zod-схема для UUID. Использовать везде, где нужна валидация UUID */
+export const uuidSchema = z.string().refine((id) => isValidUuid(id), {
+  message: "Неверный формат ID. Ожидается UUIDv7",
+});
+
 const emailSchema = z.string().email();
 
 /**

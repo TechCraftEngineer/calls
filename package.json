@@ -26,7 +26,7 @@
     "postinstall": "bun lint:ws",
     "typecheck": "turbo run typecheck",
     "ui-add": "turbo run ui-add",
-    "test": "bun test --path-ignore-patterns='**/e2e/**'",
+    "test": "bun run test.mjs",
     "test:e2e": "turbo -F @calls/e2e test",
     "test:e2e:ui": "turbo -F @calls/e2e test:ui",
     "test:e2e:auth": "turbo -F @calls/e2e test:auth",

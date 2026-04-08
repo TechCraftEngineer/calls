@@ -19,6 +19,7 @@ export {
   isValidEmail,
   isValidUuid,
   isValidWorkspaceId,
+  uuidSchema,
   workspaceIdSchema,
 } from "./validation";
 export { isValidCalendarIsoDate } from "./validation/date";

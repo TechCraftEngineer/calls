@@ -7,6 +7,7 @@ import { UserBaseService } from "./user-base.service";
 import { UserIntegrationsService } from "./user-integrations.service";
 import { UserSettingsService } from "./user-settings.service";
 import type { UserForEdit } from "./types";
+import { workspaceIdSchema } from "@calls/shared";
 
 // Zod validation schemas
 const UuidSchema = z.string().uuid();
@@ -121,7 +122,7 @@ export class UsersService {
   async getUserForEdit(userId: string, workspaceId: string): Promise<UserForEdit | null> {
     // Validate input parameters
     UuidSchema.parse(userId);
-    UuidSchema.parse(workspaceId);
+    workspaceIdSchema.parse(workspaceId);
 
     // Fetch user basic data
     const user = await this.base.getUser(userId);
