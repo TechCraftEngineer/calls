@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger } from "@calls/ui";
-import { skipToken, useQuery } from "@tanstack/react-query";
+import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Clock, FileText, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
@@ -43,9 +43,20 @@ const TAB_STYLE =
 
 export default function ReportSettingsPanel({ user }: { user: User }) {
   const orpc = useORPC();
+  const queryClient = useQueryClient();
   const { activeWorkspace } = useWorkspace();
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const userId = user?.id ? String(user.id) : "";
+
+  const updateScheduleMutation = useMutation(
+    orpc.users.updateTelegramSettings.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.getReportScheduleSettings.queryKey(),
+        });
+      },
+    }),
+  );
 
   const usersQuery = useQuery(
     userId
@@ -183,7 +194,24 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       </TabsContent>
 
       <TabsContent value="schedule" className="space-y-6">
-        <ReportScheduleTab form={form} setForm={setForm} isAdmin={isWorkspaceAdmin} />
+        <ReportScheduleTab
+          form={form}
+          setForm={setForm}
+          isAdmin={isWorkspaceAdmin}
+          saving={updateScheduleMutation.isPending}
+          onSave={() =>
+            updateScheduleMutation.mutate({
+              user_id: userId,
+              data: {
+                reportDailyTime: form.reportDailyTime,
+                reportWeeklyDay: form.reportWeeklyDay,
+                reportWeeklyTime: form.reportWeeklyTime,
+                reportMonthlyDay: form.reportMonthlyDay,
+                reportMonthlyTime: form.reportMonthlyTime,
+              },
+            })
+          }
+        />
       </TabsContent>
 
       <TabsContent value="content" className="space-y-6">
