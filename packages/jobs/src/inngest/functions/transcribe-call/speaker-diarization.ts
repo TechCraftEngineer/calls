@@ -88,7 +88,7 @@ export async function performDiarization(
     const response = await fetch(`${speakerEmbeddingsUrl}/api/diarize`, {
       method: "POST",
       body: formData,
-      signal: AbortSignal.timeout(300000), // 5 минут
+      signal: AbortSignal.timeout(900_000), // 15 минут
     });
 
     if (!response.ok) {
