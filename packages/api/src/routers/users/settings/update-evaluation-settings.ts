@@ -11,7 +11,7 @@ const updateEvaluationSettingsSchema = z.object({
 });
 
 export const updateEvaluationSettings = workspaceProcedure
-  .input(z.object({ user_id: userIdSchema, data: updateEvaluationSettingsSchema }))
+  .input(z.object({ userId: userIdSchema, data: updateEvaluationSettingsSchema }))
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
       throw new ORPCError("BAD_REQUEST", {
@@ -19,17 +19,17 @@ export const updateEvaluationSettings = workspaceProcedure
       });
 
     const userId = (context.user as Record<string, unknown>).id as string;
-    if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+    if (!(await canAccessUser(userId, input.userId, context.workspaceRole)))
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
 
-    const user = await usersService.getUser(input.user_id);
+    const user = await usersService.getUser(input.userId);
     if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
-        evaluationTemplateSlug: input.data.evaluationTemplateSlug,
+      await usersService.updateUserReportKpiSettings(input.userId, context.workspaceId, {
+        evaluationTemplateSlug: input.data.evaluationTemplateSlug as "sales" | "support" | "general" | null,
         evaluationCustomInstructions: input.data.evaluationCustomInstructions,
       });
 
@@ -41,7 +41,7 @@ export const updateEvaluationSettings = workspaceProcedure
         context.workspaceId,
       );
 
-      return await usersService.getUserForEdit(input.user_id, context.workspaceId);
+      return await usersService.getUserForEdit(input.userId, context.workspaceId);
     } catch (error) {
       await logUpdate(
         "update user evaluation settings",

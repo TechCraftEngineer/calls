@@ -2,6 +2,7 @@ import type { SystemRepository } from "../../repositories/system.repository";
 import type { UserWorkspaceSettingsRepository } from "../../repositories/user-workspace-settings.repository";
 import type { UsersRepository } from "../../repositories/users.repository";
 import type { WorkspacesRepository } from "../../repositories/workspaces.repository";
+import type { CreateUserData, UpdateUserData, UserUpdateData } from "../../types/users.types";
 import { z } from "zod";
 import { UserBaseService } from "./user-base.service";
 import { UserIntegrationsService } from "./user-integrations.service";
@@ -64,7 +65,7 @@ export class UsersService {
   }
 
   async createUser(
-    data: import("../../types/users.types").CreateUserData,
+    data: CreateUserData,
     workspaceId?: string | null,
     actor?: string,
   ) {
@@ -76,13 +77,13 @@ export class UsersService {
     if (actor !== undefined) {
       UuidSchema.parse(actor);
     }
-    return this.base.createUser(validatedData as import("../../types/users.types").CreateUserData, workspaceId, actor);
+    return this.base.createUser(validatedData as CreateUserData, workspaceId, actor);
   }
 
-  async updateUserName(userId: string, data: import("../../types/users.types").UpdateUserData) {
+  async updateUserName(userId: string, data: UpdateUserData) {
     UuidSchema.parse(userId);
     const validatedData = UpdateUserDataSchema.parse(data);
-    return this.base.updateUserName(userId, validatedData as import("../../types/users.types").UpdateUserData);
+    return this.base.updateUserName(userId, validatedData as UpdateUserData);
   }
 
   async updateUserInternalExtensions(userId: string, internalExtensions: string | null) {
@@ -177,7 +178,7 @@ export class UsersService {
   async updateUserReportKpiSettings(
     userId: string,
     workspaceId: string,
-    data: import("./types").UserUpdateData,
+    data: UserUpdateData,
   ) {
     return this.settings.updateUserReportKpiSettings(userId, workspaceId, data);
   }

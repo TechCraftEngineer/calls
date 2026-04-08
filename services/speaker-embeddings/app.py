@@ -1,6 +1,7 @@
 import io
 import logging
 import os
+import time
 from typing import Any
 
 import librosa
@@ -142,7 +143,13 @@ async def diarize(
     Определяет "кто говорил когда" в аудио файле.
     Возвращает список сегментов с временными метками и ID спикеров.
     """
+    # Замер общего времени выполнения endpoint
+    request_start_time = time.time()
+    
     try:
+        # Замер времени загрузки и предобработки аудио
+        audio_processing_start = time.time()
+        
         # Загружаем аудио напрямую из файла (потоковое чтение)
         audio, sr = sf.read(file.file, dtype="float32")
         if audio.ndim > 1:
@@ -153,6 +160,14 @@ async def diarize(
         if sr != 16000:
             audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
             sr = 16000
+        
+        audio_processing_end = time.time()
+        audio_processing_time = audio_processing_end - audio_processing_start
+        
+        logger.info(
+            f"Audio loaded and preprocessed in {audio_processing_time:.2f}s "
+            f"(duration: {len(audio)/sr:.2f}s, sample_rate: {sr}Hz)"
+        )
         
         # Валидация параметров количества спикеров
         if num_speakers is not None:
@@ -206,12 +221,27 @@ async def diarize(
             max_speakers,
         )
         
+        # Завершение замера времени выполнения endpoint
+        request_end_time = time.time()
+        total_request_time = request_end_time - request_start_time
+        
+        logger.info(
+            f"Total request completed in {total_request_time:.2f}s "
+            f"(audio: {len(audio)/sr:.2f}s, "
+            f"real_time_factor: {total_request_time/(len(audio)/sr):.2f}x)"
+        )
+        
         return result
         
     except HTTPException:
+        request_end_time = time.time()
+        total_request_time = request_end_time - request_start_time
+        logger.warning(f"Request failed after {total_request_time:.2f}s")
         raise
     except Exception as exc:
-        logger.exception("diarization failed: %s", exc)
+        request_end_time = time.time()
+        total_request_time = request_end_time - request_start_time
+        logger.exception(f"diarization failed after {total_request_time:.2f}s: %s", exc)
         raise HTTPException(status_code=500, detail="diarization failed") from exc
 
 
@@ -332,13 +362,26 @@ def _process_diarization(
             f"Starting diarization: duration={len(audio)/sr:.2f}s, params={diarization_params}"
         )
         
+        # Замер времени выполнения диаризации
+        diarization_start_time = time.time()
+        
         # Выполнение диаризации
         diarization = pipeline(audio_dict, **diarization_params)
+        
+        diarization_end_time = time.time()
+        diarization_duration = diarization_end_time - diarization_start_time
+        
+        logger.info(
+            f"Diarization processing completed in {diarization_duration:.2f}s"
+        )
         
         # Конвертация результатов (новый API pyannote 4.x)
         segments = []
         
         logger.info(f"Diarization output type: {type(diarization)}")
+        
+        # Замер времени извлечения сегментов
+        extraction_start_time = time.time()
         
         # DiarizeOutput в pyannote 4.x имеет атрибут speaker_diarization (Annotation объект)
         try:
@@ -374,6 +417,10 @@ def _process_diarization(
                 detail="Failed to extract diarization segments"
             )
         
+        # Завершение замера времени извлечения сегментов
+        extraction_end_time = time.time()
+        extraction_duration = extraction_end_time - extraction_start_time
+        
         if not segments:
             raise HTTPException(
                 status_code=500,
@@ -388,10 +435,20 @@ def _process_diarization(
         total_duration = sum(s["end"] - s["start"] for s in segments)
         
         logger.info(
+            f"Segment extraction completed in {extraction_duration:.2f}s"
+        )
+        
+        logger.info(
             f"Diarization completed: {len(segments)} segments, "
             f"{len(unique_speakers)} speakers, "
-            f"total_speech={total_duration:.2f}s"
+            f"total_speech={total_duration:.2f}s, "
+            f"processing_time={diarization_duration:.2f}s, "
+            f"extraction_time={extraction_duration:.2f}s, "
+            f"total_time={diarization_duration + extraction_duration:.2f}s"
         )
+        
+        # Общее время выполнения диаризации
+        total_processing_time = diarization_duration + extraction_duration
         
         return {
             "success": True,
@@ -400,6 +457,12 @@ def _process_diarization(
             "speakers": sorted(unique_speakers),
             "total_speech_duration": total_duration,
             "audio_duration": len(audio) / sr,
+            "processing_stats": {
+                "diarization_time": round(diarization_duration, 2),
+                "extraction_time": round(extraction_duration, 2),
+                "total_time": round(total_processing_time, 2),
+                "real_time_factor": round(total_processing_time / (len(audio) / sr), 2)
+            }
         }
         
     except HTTPException:

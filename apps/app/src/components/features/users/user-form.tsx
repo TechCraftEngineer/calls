@@ -87,7 +87,7 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
   const onSubmit = (data: CreateUserData | UpdateUserData) => {
     if (isEditing && user) {
       updateMutation.mutate({
-        user_id: String(user.id),
+        userId: String(user.id),
         data: data as UpdateUserData,
       });
     } else {

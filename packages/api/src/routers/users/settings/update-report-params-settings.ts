@@ -7,7 +7,7 @@ import { updateReportParamsSettingsSchema } from "../schemas";
 import { canAccessUser, logUpdate } from "../utils";
 
 export const updateReportParamsSettings = workspaceProcedure
-  .input(z.object({ user_id: userIdSchema, data: updateReportParamsSettingsSchema }))
+  .input(z.object({ userId: userIdSchema, data: updateReportParamsSettingsSchema }))
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
       throw new ORPCError("BAD_REQUEST", {
@@ -15,16 +15,16 @@ export const updateReportParamsSettings = workspaceProcedure
       });
 
     const userId = (context.user as Record<string, unknown>).id as string;
-    if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+    if (!(await canAccessUser(userId, input.userId, context.workspaceRole)))
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
 
-    const user = await usersService.getUser(input.user_id);
+    const user = await usersService.getUser(input.userId);
     if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+      await usersService.updateUserReportKpiSettings(input.userId, context.workspaceId, {
         filterExcludeAnsweringMachine: input.data.filterExcludeAnsweringMachine,
         filterMinDuration: input.data.filterMinDuration,
         filterMinReplicas: input.data.filterMinReplicas,
@@ -42,7 +42,7 @@ export const updateReportParamsSettings = workspaceProcedure
         context.workspaceId,
       );
 
-      return await usersService.getUser(input.user_id);
+      return await usersService.getUser(input.userId);
     } catch (error) {
       await logUpdate(
         "update report params settings",

@@ -7,7 +7,7 @@ import { updateFilterSettingsSchema } from "../schemas";
 import { canAccessUser, logUpdate } from "../utils";
 
 export const updateFilterSettings = workspaceProcedure
-  .input(z.object({ user_id: userIdSchema, data: updateFilterSettingsSchema }))
+  .input(z.object({ userId: userIdSchema, data: updateFilterSettingsSchema }))
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
       throw new ORPCError("BAD_REQUEST", {
@@ -15,17 +15,17 @@ export const updateFilterSettings = workspaceProcedure
       });
 
     const userId = (context.user as Record<string, unknown>).id as string;
-    if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+    if (!(await canAccessUser(userId, input.userId, context.workspaceRole)))
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
 
-    const user = await usersService.getUser(input.user_id);
+    const user = await usersService.getUser(input.userId);
     if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
       await usersService.updateUserFilters(
-        input.user_id,
+        input.userId,
         context.workspaceId,
         input.data.filterExcludeAnsweringMachine ?? false,
         input.data.filterMinDuration ?? 0,
@@ -40,7 +40,7 @@ export const updateFilterSettings = workspaceProcedure
         context.workspaceId,
       );
 
-      return await usersService.getUser(input.user_id);
+      return await usersService.getUser(input.userId);
     } catch (error) {
       await logUpdate(
         "update user filter settings",

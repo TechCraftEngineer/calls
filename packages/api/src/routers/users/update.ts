@@ -7,7 +7,7 @@ import { userUpdateSchema } from "./schemas";
 import { canAccessUser, logUpdate } from "./utils";
 
 export const update = workspaceProcedure
-  .input(z.object({ user_id: userIdSchema, data: userUpdateSchema }))
+  .input(z.object({ userId: userIdSchema, data: userUpdateSchema }))
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
       throw new ORPCError("BAD_REQUEST", {
@@ -15,12 +15,12 @@ export const update = workspaceProcedure
       });
 
     const userId = (context.user as Record<string, unknown>).id as string;
-    if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+    if (!(await canAccessUser(userId, input.userId, context.workspaceRole)))
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
 
-    const user = await usersService.getUser(input.user_id);
+    const user = await usersService.getUser(input.userId);
     if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     const d = input.data;
@@ -31,21 +31,21 @@ export const update = workspaceProcedure
       const familyName = (d.familyName ?? u.familyName ?? "").toString().trim();
       if (!givenName) throw new Error("Given name is required");
 
-      await usersService.updateUserName(input.user_id, {
+      await usersService.updateUserName(input.userId, {
         givenName,
         familyName,
       });
 
       if (d.internalExtensions !== undefined) {
-        await usersService.updateUserInternalExtensions(input.user_id, d.internalExtensions);
+        await usersService.updateUserInternalExtensions(input.userId, d.internalExtensions);
       }
 
       if (d.mobilePhones !== undefined) {
-        await usersService.updateUserMobilePhones(input.user_id, d.mobilePhones);
+        await usersService.updateUserMobilePhones(input.userId, d.mobilePhones);
       }
 
       if (d.email !== undefined) {
-        await usersService.updateUserEmail(input.user_id, d.email);
+        await usersService.updateUserEmail(input.userId, d.email);
       }
 
       const hasFilterUpdates =
@@ -54,7 +54,7 @@ export const update = workspaceProcedure
         d.filterMinReplicas !== undefined;
       if (hasFilterUpdates) {
         await usersService.updateUserFilters(
-          input.user_id,
+          input.userId,
           context.workspaceId,
           d.filterExcludeAnsweringMachine ?? (u.filterExcludeAnsweringMachine as boolean) ?? false,
           d.filterMinDuration ?? (u.filterMinDuration as number) ?? 0,
@@ -62,7 +62,7 @@ export const update = workspaceProcedure
         );
       }
 
-      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+      await usersService.updateUserReportKpiSettings(input.userId, context.workspaceId, {
         filterExcludeAnsweringMachine: d.filterExcludeAnsweringMachine,
         filterMinDuration: d.filterMinDuration,
         filterMinReplicas: d.filterMinReplicas,
@@ -86,7 +86,7 @@ export const update = workspaceProcedure
         d.telegramDailyReport !== undefined || d.telegramManagerReport !== undefined;
       if (hasTelegramUpdates) {
         await usersService.updateUserTelegramSettings(
-          input.user_id,
+          input.userId,
           context.workspaceId,
           d.telegramDailyReport ?? (u.telegramDailyReport as boolean) ?? false,
           d.telegramManagerReport ?? (u.telegramManagerReport as boolean) ?? false,
@@ -101,7 +101,7 @@ export const update = workspaceProcedure
         context.workspaceId,
       );
 
-      const updated = await usersService.getUser(input.user_id);
+      const updated = await usersService.getUser(input.userId);
       if (!updated)
         throw new ORPCError("INTERNAL_SERVER_ERROR", {
           message: "Не удалось получить обновлённые данные",

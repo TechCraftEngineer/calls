@@ -43,7 +43,7 @@ export default function UserEditPage() {
     isPending,
     isFetching,
   } = useQuery({
-    ...orpc.users.getForEdit.queryOptions({ input: { user_id: userId } }),
+    ...orpc.users.getForEdit.queryOptions({ input: { userId: userId } }),
     enabled: !!userId,
   });
 
@@ -62,7 +62,7 @@ export default function UserEditPage() {
 
   const invalidateUser = () => {
     queryClient.invalidateQueries({
-      queryKey: orpc.users.getForEdit.queryKey({ input: { user_id: userId } }),
+      queryKey: orpc.users.getForEdit.queryKey({ input: { userId: userId } }),
     });
   };
 
@@ -172,7 +172,7 @@ export default function UserEditPage() {
     if (!form) return;
     setBlockState("basic", "saving");
     updateBasicInfoMutation.mutate({
-      user_id: userId,
+      userId: userId,
       data: {
         givenName: form.givenName,
         familyName: form.familyName,
@@ -186,7 +186,7 @@ export default function UserEditPage() {
     if (!form) return;
     setBlockState("telegram", "saving");
     updateTelegramMutation.mutate({
-      user_id: userId,
+      userId: userId,
       data: {
         telegramDailyReport: form.telegramDailyReport,
         telegramManagerReport: form.telegramManagerReport,
@@ -198,11 +198,11 @@ export default function UserEditPage() {
 
   const handleDisconnectTelegram = () => {
     if (!form) return;
-    disconnectTelegramMutation.mutate({ user_id: userId });
+    disconnectTelegramMutation.mutate({ userId: userId });
   };
 
   const handleConnectTelegram = () => {
-    telegramAuthUrlMutation.mutate({ user_id: userId });
+    telegramAuthUrlMutation.mutate({ userId: userId });
   };
 
   const handleCheckTelegramConnection = () => {
@@ -213,7 +213,7 @@ export default function UserEditPage() {
     if (!form) return;
     setBlockState("email", "saving");
     updateEmailMutation.mutate({
-      user_id: userId,
+      userId: userId,
       data: {
         email: form.email,
         emailDailyReport: form.emailDailyReport,
@@ -227,7 +227,7 @@ export default function UserEditPage() {
     if (!form) return;
     setBlockState("max", "saving");
     updateMaxMutation.mutate({
-      user_id: userId,
+      userId: userId,
       data: {
         maxChatId: form.maxChatId,
         maxDailyReport: form.maxDailyReport,
@@ -240,7 +240,7 @@ export default function UserEditPage() {
     if (!form) return;
     setBlockState("kpi", "saving");
     updateKpiMutation.mutate({
-      user_id: userId,
+      userId: userId,
       data: {
         kpiBaseSalary: form.kpiBaseSalary,
         kpiTargetBonus: form.kpiTargetBonus,
@@ -253,7 +253,7 @@ export default function UserEditPage() {
     if (!form) return;
     setBlockState("filters", "saving");
     updateFilterMutation.mutate({
-      user_id: userId,
+      userId: userId,
       data: {
         filterExcludeAnsweringMachine: form.filterExcludeAnsweringMachine,
         filterMinDuration: form.filterMinDuration,
@@ -266,7 +266,7 @@ export default function UserEditPage() {
     if (!form) return;
     setBlockState("evaluation", "saving");
     updateEvaluationMutation.mutate({
-      user_id: userId,
+      userId: userId,
       data: {
         evaluationTemplateSlug: form.evaluationTemplateSlug,
         evaluationCustomInstructions: form.evaluationCustomInstructions,

@@ -7,7 +7,7 @@ import { updateMaxSettingsSchema } from "../schemas";
 import { canAccessUser, logUpdate } from "../utils";
 
 export const updateMaxSettings = workspaceProcedure
-  .input(z.object({ user_id: userIdSchema, data: updateMaxSettingsSchema }))
+  .input(z.object({ userId: userIdSchema, data: updateMaxSettingsSchema }))
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
       throw new ORPCError("BAD_REQUEST", {
@@ -15,16 +15,16 @@ export const updateMaxSettings = workspaceProcedure
       });
 
     const userId = (context.user as Record<string, unknown>).id as string;
-    if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+    if (!(await canAccessUser(userId, input.userId, context.workspaceRole)))
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
 
-    const user = await usersService.getUser(input.user_id);
+    const user = await usersService.getUser(input.userId);
     if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+      await usersService.updateUserReportKpiSettings(input.userId, context.workspaceId, {
         maxChatId: input.data.maxChatId,
         maxDailyReport: input.data.maxDailyReport,
         maxManagerReport: input.data.maxManagerReport,
@@ -38,7 +38,7 @@ export const updateMaxSettings = workspaceProcedure
         context.workspaceId,
       );
 
-      return await usersService.getUser(input.user_id);
+      return await usersService.getUser(input.userId);
     } catch (error) {
       await logUpdate(
         "update user max settings",

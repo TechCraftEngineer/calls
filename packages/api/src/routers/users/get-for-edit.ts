@@ -36,7 +36,7 @@ const getForEditOutputSchema = z.object({
 });
 
 export const getForEdit = workspaceProcedure
-  .input(z.object({ user_id: userIdSchema }))
+  .input(z.object({ userId: userIdSchema }))
   .output(getForEditOutputSchema)
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
@@ -45,12 +45,12 @@ export const getForEdit = workspaceProcedure
       });
 
     const userId = (context.user as Record<string, unknown>).id as string;
-    if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+    if (!(await canAccessUser(userId, input.userId, context.workspaceRole)))
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
 
-    const data = await usersService.getUserForEdit(input.user_id, context.workspaceId);
+    const data = await usersService.getUserForEdit(input.userId, context.workspaceId);
     if (!data) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     return data;

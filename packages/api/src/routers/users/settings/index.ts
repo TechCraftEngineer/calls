@@ -18,4 +18,4 @@ export const userSettingsRouter = {
   updateFilterSettings,
   updateReportManagedUsersSettings,
   updateEvaluationSettings,
-};
+} as const;

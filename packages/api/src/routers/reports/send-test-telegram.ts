@@ -151,9 +151,7 @@ export const sendTestTelegram = workspaceProcedure
       reportType,
       isManagerReport,
       workspaceName,
-      _callSummariesByManager: callSummariesByManager,
       lowRatedCalls,
-      includeKpi: true,
     });
 
     const success = await sendMessage(token, chatId, text, {

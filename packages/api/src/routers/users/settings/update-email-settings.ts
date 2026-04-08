@@ -7,10 +7,10 @@ import { updateEmailSettingsSchema } from "../schemas";
 import { canAccessUser, logUpdate } from "../utils";
 
 export const updateEmailSettings = workspaceProcedure
-  .input(z.object({ user_id: userIdSchema, data: updateEmailSettingsSchema }))
+  .input(z.object({ userId: userIdSchema, data: updateEmailSettingsSchema }))
   .handler(async ({ input, context }) => {
     const userId = (context.user as Record<string, unknown>).id as string;
-    if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+    if (!(await canAccessUser(userId, input.userId, context.workspaceRole)))
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
@@ -19,15 +19,15 @@ export const updateEmailSettings = workspaceProcedure
         message: "Требуется активное рабочее пространство",
       });
 
-    const user = await usersService.getUser(input.user_id);
+    const user = await usersService.getUser(input.userId);
     if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
       if (input.data.email !== undefined) {
-        await usersService.updateUserEmail(input.user_id, input.data.email?.trim() || null);
+        await usersService.updateUserEmail(input.userId, input.data.email?.trim() || null);
       }
 
-      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+      await usersService.updateUserReportKpiSettings(input.userId, context.workspaceId, {
         emailDailyReport: input.data.emailDailyReport,
         emailWeeklyReport: input.data.emailWeeklyReport,
         emailMonthlyReport: input.data.emailMonthlyReport,
@@ -41,7 +41,7 @@ export const updateEmailSettings = workspaceProcedure
         context.workspaceId,
       );
 
-      return await usersService.getUser(input.user_id);
+      return await usersService.getUser(input.userId);
     } catch (error) {
       await logUpdate(
         "update user email settings",

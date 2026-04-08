@@ -8,7 +8,7 @@ import { updateTelegramSettingsSchema } from "../schemas";
 import { canAccessUser, logUpdate } from "../utils";
 
 export const updateTelegramSettings = workspaceProcedure
-  .input(z.object({ user_id: userIdSchema, data: updateTelegramSettingsSchema }))
+  .input(z.object({ userId: userIdSchema, data: updateTelegramSettingsSchema }))
   .handler(async ({ input, context }) => {
     const authUser = context.user;
     const userId =
@@ -24,7 +24,7 @@ export const updateTelegramSettings = workspaceProcedure
       throw new ORPCError("UNAUTHORIZED", {
         message: "Не удалось определить пользователя",
       });
-    if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+    if (!(await canAccessUser(userId, input.userId, context.workspaceRole)))
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
@@ -33,11 +33,11 @@ export const updateTelegramSettings = workspaceProcedure
         message: "Требуется активное рабочее пространство",
       });
 
-    const user = await usersService.getUser(input.user_id);
+    const user = await usersService.getUser(input.userId);
     if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+      await usersService.updateUserReportKpiSettings(input.userId, context.workspaceId, {
         telegramDailyReport: input.data.telegramDailyReport,
         telegramManagerReport: input.data.telegramManagerReport,
         telegramWeeklyReport: input.data.telegramWeeklyReport,
@@ -48,9 +48,9 @@ export const updateTelegramSettings = workspaceProcedure
       if (input.data.telegramChatId !== undefined) {
         const trimmed = input.data.telegramChatId?.trim() ?? "";
         if (trimmed) {
-          await usersService.saveTelegramChatId(input.user_id, trimmed);
+          await usersService.saveTelegramChatId(input.userId, trimmed);
         } else {
-          await usersService.disconnectTelegram(input.user_id);
+          await usersService.disconnectTelegram(input.userId);
         }
       }
 
@@ -119,7 +119,7 @@ export const updateTelegramSettings = workspaceProcedure
         context.workspaceId,
       );
 
-      return await usersService.getUser(input.user_id);
+      return await usersService.getUser(input.userId);
     } catch (error) {
       await logUpdate(
         "update user telegram settings",

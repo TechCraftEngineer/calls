@@ -77,7 +77,7 @@ export function ReportChannelsTab({ form, setForm, user, isAdmin }: ReportChanne
       run: async () => {
         const tasks: Promise<unknown>[] = [
           updateEmailMutation.mutateAsync({
-            user_id: userId,
+            userId: userId,
             data: {
               email: email ? email : null,
               emailDailyReport: form.emailDailyReport,
@@ -89,7 +89,7 @@ export function ReportChannelsTab({ form, setForm, user, isAdmin }: ReportChanne
         if (isAdmin) {
           tasks.push(
             updateTelegramMutation.mutateAsync({
-              user_id: userId,
+              userId: userId,
               data: {
                 reportDailyTime: form.reportDailyTime,
                 reportWeeklyDay: getReportWeeklyDay(form.reportWeeklyDay),
@@ -114,7 +114,7 @@ export function ReportChannelsTab({ form, setForm, user, isAdmin }: ReportChanne
       invalidateScheduleAfter: isAdmin,
       run: async () => {
         await updateTelegramMutation.mutateAsync({
-          user_id: userId,
+          userId: userId,
           data: {
             telegramDailyReport: form.telegramDailyReport,
             telegramWeeklyReport: form.telegramWeeklyReport,
@@ -145,7 +145,7 @@ export function ReportChannelsTab({ form, setForm, user, isAdmin }: ReportChanne
       run: async () => {
         const tasks: Promise<unknown>[] = [
           updateMaxMutation.mutateAsync({
-            user_id: userId,
+            userId: userId,
             data: {
               maxChatId: maxChatId ? maxChatId : null,
               maxDailyReport: form.maxDailyReport,
@@ -156,7 +156,7 @@ export function ReportChannelsTab({ form, setForm, user, isAdmin }: ReportChanne
         if (isAdmin) {
           tasks.push(
             updateTelegramMutation.mutateAsync({
-              user_id: userId,
+              userId: userId,
               data: {
                 reportDailyTime: form.reportDailyTime,
                 reportWeeklyDay: getReportWeeklyDay(form.reportWeeklyDay),
