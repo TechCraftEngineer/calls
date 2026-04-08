@@ -4,12 +4,35 @@
 
 import { z } from "zod";
 
-// Strict schema for stats values (string, number, boolean, or null)
-const StatsValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+// Zod schema для валидации структуры звонков (incoming/outgoing)
+const CallStatsSchema = z.object({
+  count: z.number(),
+  duration: z.number(),
+  totalDuration: z.number().optional(),
+});
+
+// Zod schema для валидации данных менеджера
+const ManagerStatsSchema = z.object({
+  name: z.string(),
+  internalNumber: z.string().nullable(),
+  incoming: CallStatsSchema,
+  outgoing: CallStatsSchema,
+  avgManagerScore: z.number().nullish(),
+  evaluatedCount: z.number().optional(),
+  // KPI данные (опциональные)
+  kpiBaseSalary: z.number().optional(),
+  kpiTargetBonus: z.number().optional(),
+  kpiTargetTalkTimeMinutes: z.number().optional(),
+  kpiActualTalkTimeMinutes: z.number().optional(),
+  kpiCompletionPercentage: z.number().optional(),
+  kpiCalculatedBonus: z.number().optional(),
+  kpiTotalSalary: z.number().optional(),
+  kpiActualPerformanceRubles: z.number().optional(),
+});
 
 // Zod schema для валидации параметров отчета
 const ReportParamsSchema = z.object({
-  stats: z.record(z.string(), StatsValueSchema),
+  stats: z.record(z.string(), ManagerStatsSchema),
   dateFrom: z.date(),
   dateTo: z.date(),
   reportType: z.enum(["daily", "weekly", "monthly"]),
