@@ -170,11 +170,11 @@ export default function EditUserModal({ user, onClose, onSubmit, onRefresh }: Ed
 
   const handleDisconnectTelegram = useCallback(() => {
     if (!confirm("Отвязать Telegram аккаунт?")) return;
-    void disconnectTelegramMutation.mutate({ user_id: String(editUser.id) });
+    void disconnectTelegramMutation.mutate({ userId: String(editUser.id) });
   }, [editUser.id, disconnectTelegramMutation]);
 
   const handleConnectTelegram = useCallback(() => {
-    void telegramAuthUrlMutation.mutate({ user_id: String(editUser.id) });
+    void telegramAuthUrlMutation.mutate({ userId: String(editUser.id) });
   }, [editUser.id, telegramAuthUrlMutation]);
 
   const handleCheckTelegramConnection = useCallback(async () => {
@@ -202,11 +202,11 @@ export default function EditUserModal({ user, onClose, onSubmit, onRefresh }: Ed
 
   const handleDisconnectMax = useCallback(() => {
     if (!confirm("Отвязать MAX аккаунт?")) return;
-    void disconnectMaxMutation.mutate({ user_id: String(editUser.id) });
+    void disconnectMaxMutation.mutate({ userId: String(editUser.id) });
   }, [editUser.id, disconnectMaxMutation]);
 
   const handleConnectMax = useCallback(() => {
-    void maxAuthUrlMutation.mutate({ user_id: String(editUser.id) });
+    void maxAuthUrlMutation.mutate({ userId: String(editUser.id) });
   }, [editUser.id, maxAuthUrlMutation]);
 
   return (

@@ -60,7 +60,7 @@ export default function ReportSettingsFormBody({
       run: async () => {
         const tasks: Promise<unknown>[] = [
           updateEmailMutation.mutateAsync({
-            user_id: userId,
+            userId: userId,
             data: {
               email: email ? email : null,
               emailDailyReport: form.emailDailyReport,
@@ -72,7 +72,7 @@ export default function ReportSettingsFormBody({
         if (isAdmin) {
           tasks.push(
             updateTelegramMutation.mutateAsync({
-              user_id: userId,
+              userId: userId,
               data: {
                 reportDailyTime: form.reportDailyTime,
                 reportWeeklyDay: getReportWeeklyDay(form.reportWeeklyDay),
@@ -97,7 +97,7 @@ export default function ReportSettingsFormBody({
       invalidateScheduleAfter: isAdmin,
       run: async () => {
         await updateTelegramMutation.mutateAsync({
-          user_id: userId,
+          userId: userId,
           data: {
             telegramDailyReport: form.telegramDailyReport,
             telegramWeeklyReport: form.telegramWeeklyReport,
@@ -128,7 +128,7 @@ export default function ReportSettingsFormBody({
       run: async () => {
         const tasks: Promise<unknown>[] = [
           updateMaxMutation.mutateAsync({
-            user_id: userId,
+            userId: userId,
             data: {
               maxChatId: maxChatId ? maxChatId : null,
               maxDailyReport: form.maxDailyReport,
@@ -139,7 +139,7 @@ export default function ReportSettingsFormBody({
         if (isAdmin) {
           tasks.push(
             updateTelegramMutation.mutateAsync({
-              user_id: userId,
+              userId: userId,
               data: {
                 reportDailyTime: form.reportDailyTime,
                 reportWeeklyDay: getReportWeeklyDay(form.reportWeeklyDay),
@@ -161,7 +161,7 @@ export default function ReportSettingsFormBody({
       errorMessage: "Не удалось сохранить сводные настройки менеджеров",
       run: async () => {
         await updateReportManagedUsersMutation.mutateAsync({
-          user_id: userId,
+          userId: userId,
           data: {
             reportManagedUserIds: form.reportManagedUserIds ?? [],
           },
@@ -178,7 +178,7 @@ export default function ReportSettingsFormBody({
         const tasks: Promise<unknown>[] = [];
         tasks.push(
           updateEmailMutation.mutateAsync({
-            user_id: userId,
+            userId: userId,
             data: {
               email: form.email,
               emailDaily: form.emailDaily,
@@ -189,7 +189,7 @@ export default function ReportSettingsFormBody({
         );
         tasks.push(
           updateTelegramMutation.mutateAsync({
-            user_id: userId,
+            userId: userId,
             data: {
               telegramChatId: form.telegramChatId,
               telegramDaily: form.telegramDaily,
@@ -200,7 +200,7 @@ export default function ReportSettingsFormBody({
         );
         tasks.push(
           updateMaxMutation.mutateAsync({
-            user_id: userId,
+            userId: userId,
             data: {
               maxChatId: form.maxChatId,
               maxDaily: form.maxDaily,
@@ -213,7 +213,7 @@ export default function ReportSettingsFormBody({
         if (isAdmin) {
           tasks.push(
             updateReportManagedUsersMutation.mutateAsync({
-              user_id: userId,
+              userId: userId,
               data: {
                 reportManagedUserIds: form.reportManagedUserIds ?? [],
               },

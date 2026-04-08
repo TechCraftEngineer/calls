@@ -29,3 +29,4 @@ concurrentScripts = 16 # (cpu count or GOMAXPROCS) x2
 # - configVersion = 1: "isolated" if using workspaces, otherwise "hoisted"
 # - configVersion = 0: "hoisted"
 linker = "hoisted"
+

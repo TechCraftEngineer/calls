@@ -55,7 +55,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
 
   const usersQuery = useQuery(
     userId
-      ? orpc.users.getForEdit.queryOptions({ input: { user_id: userId } })
+      ? orpc.users.getForEdit.queryOptions({ input: { userId: userId } })
       : {
           queryKey: ["report-settings", "user", "skip"],
           queryFn: skipToken,
@@ -184,7 +184,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
           saving={updateScheduleMutation.isPending}
           onSave={() =>
             updateScheduleMutation.mutate({
-              user_id: userId,
+              userId: userId,
               data: {
                 reportDailyTime: form.reportDailyTime,
                 reportWeeklyDay: form.reportWeeklyDay,

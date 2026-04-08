@@ -50,10 +50,10 @@ export class UserIntegrationsService {
 
   async disconnectTelegram(userId: string): Promise<boolean> {
     return await withTransaction(async (tx) => {
-      const result = await this.usersRepository.disconnectTelegram(userId, tx as any);
+      const result = await this.usersRepository.disconnectTelegram(userId, tx);
 
       // Also clear workspace-level Telegram connect token (atomic operation)
-      await userWorkspaceSettingsRepository.disconnectTelegram(userId, tx as any);
+      await userWorkspaceSettingsRepository.disconnectTelegram(userId, tx);
 
       if (result) {
         await this.systemRepository.addActivityLog(

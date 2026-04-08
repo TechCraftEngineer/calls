@@ -8,7 +8,19 @@ import { updateReportManagedUsersSettings } from "./update-report-managed-users-
 import { updateReportParamsSettings } from "./update-report-params-settings";
 import { updateTelegramSettings } from "./update-telegram-settings";
 
-export const userSettingsRouter = {
+interface UserSettingsRouter {
+  updateBasicInfo: typeof updateBasicInfo;
+  updateEmailSettings: typeof updateEmailSettings;
+  updateTelegramSettings: typeof updateTelegramSettings;
+  updateMaxSettings: typeof updateMaxSettings;
+  updateReportParamsSettings: typeof updateReportParamsSettings;
+  updateKpiSettings: typeof updateKpiSettings;
+  updateFilterSettings: typeof updateFilterSettings;
+  updateReportManagedUsersSettings: typeof updateReportManagedUsersSettings;
+  updateEvaluationSettings: typeof updateEvaluationSettings;
+}
+
+export const userSettingsRouter: UserSettingsRouter = {
   updateBasicInfo,
   updateEmailSettings,
   updateTelegramSettings,

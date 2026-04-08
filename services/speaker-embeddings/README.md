@@ -85,9 +85,43 @@ python app.py
   "num_speakers": 2,
   "speakers": ["SPEAKER_00", "SPEAKER_01"],
   "total_speech_duration": 10.7,
-  "audio_duration": 12.0
+  "audio_duration": 12.0,
+  "processing_stats": {
+    "diarization_time": 2.34,
+    "extraction_time": 0.12,
+    "total_time": 2.46,
+    "real_time_factor": 0.21
+  }
 }
 ```
+
+## Логирование времени выполнения
+
+Сервис предоставляет детальное логирование всех этапов обработки:
+
+### Уровни логирования
+
+1. **Загрузка аудио**: время загрузки и предобработки аудио файла
+2. **Диаризация**: время выполнения основной модели pyannote
+3. **Извлечение сегментов**: время парсинга результатов
+4. **Общий запрос**: полное время обработки HTTP запроса
+
+### Пример логов
+
+```
+2025-04-08 12:34:56 - speaker-embeddings - INFO - Audio loaded and preprocessed in 0.15s (duration: 30.45s, sample_rate: 16000Hz)
+2025-04-08 12:34:56 - speaker-embeddings - INFO - Starting diarization: duration=30.45s, params={'num_speakers': 2}
+2025-04-08 12:34:58 - speaker-embeddings - INFO - Diarization processing completed in 2.34s
+2025-04-08 12:34:58 - speaker-embeddings - INFO - Segment extraction completed in 0.12s
+2025-04-08 12:34:58 - speaker-embeddings - INFO - Diarization completed: 5 segments, 2 speakers, total_speech=28.90s, processing_time=2.34s, extraction_time=0.12s, total_time=2.46s
+2025-04-08 12:34:58 - speaker-embeddings - INFO - Total request completed in 2.73s (audio: 30.45s, real_time_factor: 0.09x)
+```
+
+### Метрики производительности
+
+- **Real-time factor**: отношение времени обработки к длительности аудио (меньше 1.0 = быстрее реального времени)
+- **Processing stats** в ответе API содержит детальную разбивку времени
+- При ошибках также логируется время до сбоя
 
 ### `GET /health`
 

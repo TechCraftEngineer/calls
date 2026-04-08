@@ -14,6 +14,7 @@ import {
 import { Check, ChevronDown, Search, User } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { PbxCandidateUser } from "../types";
+import { getInitials } from "./utils";
 
 interface NumberLinkSelectorProps {
   options: PbxCandidateUser[];
@@ -56,16 +57,6 @@ export function NumberLinkSelector({
     setSearch("");
   };
 
-  const getInitials = (name?: string | null) => {
-    if (!name) return "?";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -106,13 +97,18 @@ export function NumberLinkSelector({
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <Input
             placeholder="Поиск по имени, email..."
+            aria-label="Поиск по имени или email"
             className="h-8 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        <div className="max-h-[300px] overflow-auto p-1">
+        <div
+          className="max-h-[300px] overflow-auto p-1"
+          role="listbox"
+          aria-label="Пользователи"
+        >
           {filteredUsers.length > 0 ? (
             <>
               <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1">
@@ -127,6 +123,9 @@ export function NumberLinkSelector({
                   <button
                     key={user.id}
                     onClick={() => handleSelect(user.id)}
+                    role="option"
+                    aria-selected={isSelected}
+                    tabIndex={isSelected ? 0 : -1}
                     className={cn(
                       "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none transition-colors",
                       isSelected

@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-table";
 import { useCallback, useMemo, useState } from "react";
 import { SearchInput } from "@/components/ui/search-input";
-import type { PbxEmployeeItem } from "../types";
+import type { PbxCandidateInvitation, PbxCandidateUser, PbxEmployeeItem } from "../types";
 import { getEmployeeColumns } from "./employee-columns";
 import { EmployeeLinkDialog } from "./employee-link-dialog";
 
@@ -18,7 +18,7 @@ interface EmployeesTabProps {
   employeesLoading: boolean;
   employeeSearch: string;
   onEmployeeSearchChange: (value: string) => void;
-  employeeLinkOptions: Record<string, { users: { id: string; email: string; name: string | null; givenName: string | null; familyName: string | null; internalExtensions: string | null }[]; invitations: { id: string; email: string; role: string }[] }>;
+  employeeLinkOptions: Record<string, { users: PbxCandidateUser[]; invitations: PbxCandidateInvitation[] }>;
   onLink: (input: {
     targetType: "employee";
     targetExternalId: string;

@@ -78,7 +78,7 @@ export function useReportSettingsMutations({
 
   const invalidateUser = () => {
     queryClient.invalidateQueries({
-      queryKey: orpc.users.getForEdit.queryKey({ input: { user_id: userId } }),
+      queryKey: orpc.users.getForEdit.queryKey({ input: { userId: userId } }),
     });
   };
 
@@ -222,11 +222,11 @@ export function useReportSettingsMutations({
   };
 
   const handleTelegramConnect = () => {
-    telegramAuthUrlMutation.mutate({ user_id: userId });
+    telegramAuthUrlMutation.mutate({ userId: userId });
   };
 
   const handleTelegramDisconnect = () => {
-    disconnectTelegramMutation.mutate({ user_id: userId });
+    disconnectTelegramMutation.mutate({ userId: userId });
   };
 
   const telegramBotUsername = telegramAuthUrl

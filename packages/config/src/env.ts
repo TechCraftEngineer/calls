@@ -65,8 +65,14 @@ export const env = createEnv({
 
     // Speaker diarization service
     SPEAKER_EMBEDDINGS_URL: z.url().default("https://vnggncb-speaker-embeddings.hf.space/"),
-    SPEAKER_EMBEDDINGS_TIMEOUT_MS: z.coerce.number().positive().default(900_000), // 15 минут
-    SPEAKER_EMBEDDINGS_HEALTH_TIMEOUT_MS: z.coerce.number().positive().default(15_000), // 15 секунд
+    SPEAKER_EMBEDDINGS_TIMEOUT_MS: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.coerce.number().positive().default(1_800_000), // 30 минут
+    ),
+    SPEAKER_EMBEDDINGS_HEALTH_TIMEOUT_MS: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.coerce.number().positive().default(15_000), // 15 секунд
+    ),
 
     // LLM correction for dual ASR
     ENABLE_DUAL_ASR_LLM_CORRECTION: z.coerce.boolean().default(true),

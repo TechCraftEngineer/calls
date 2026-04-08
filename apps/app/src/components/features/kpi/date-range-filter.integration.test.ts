@@ -73,7 +73,7 @@ describe("DateRangeFilter Integration", () => {
 
     it("should accept periods within 90 days", () => {
       const start = "2024-01-01";
-      const end = "2024-03-31"; // 90 дней
+      const end = "2024-03-30"; // 90 дней (31 + 29 + 30)
       const days = calculateDaysBetween(start, end);
 
       expect(days).toBeLessThanOrEqual(90);

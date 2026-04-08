@@ -12,13 +12,16 @@ export {
   normalizeId,
   type SafeId,
   safeId,
-} from "./utils/id-utils";  
+} from "./utils/id-utils";
 export { pluralize } from "./utils/pluralize";
 export {
   companyContextSchema,
   isValidEmail,
+  isValidUserId,
   isValidUuid,
   isValidWorkspaceId,
+  userIdSchema,
+  uuidSchema,
   workspaceIdSchema,
 } from "./validation";
 export { isValidCalendarIsoDate } from "./validation/date";

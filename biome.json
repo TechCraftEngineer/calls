@@ -29,6 +29,7 @@
   },
   "linter": {
     "enabled": true,
+    "globals": ["Bun"],
     "rules": {
       "recommended": true,
       "suspicious": {

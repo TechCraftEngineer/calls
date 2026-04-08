@@ -39,7 +39,7 @@ export function createBackendApiWithContext(ctx: BackendContext) {
     },
     users: {
       list: () => callProc(backendRouter.users.list as ProcedureWithCallable, ctx),
-      get: (input: { user_id: string }) =>
+      get: (input: { userId: string }) =>
         callProc(backendRouter.users.get as ProcedureWithCallable, ctx, input),
       create: (input: {
         email: string;
@@ -49,17 +49,17 @@ export function createBackendApiWithContext(ctx: BackendContext) {
         internalExtensions?: string | null;
         mobilePhones?: string | null;
       }) => callProc(backendRouter.users.create as ProcedureWithCallable, ctx, input),
-      update: (input: { user_id: string; data: Record<string, unknown> }) =>
+      update: (input: { userId: string; data: Record<string, unknown> }) =>
         callProc(backendRouter.users.update as ProcedureWithCallable, ctx, input),
-      delete: (input: { user_id: string }) =>
+      delete: (input: { userId: string }) =>
         callProc(backendRouter.users.delete as ProcedureWithCallable, ctx, input),
-      telegramAuthUrl: (input: { user_id: string }) =>
+      telegramAuthUrl: (input: { userId: string }) =>
         callProc(backendRouter.users.telegramAuthUrl as ProcedureWithCallable, ctx, input),
-      disconnectTelegram: (input: { user_id: string }) =>
+      disconnectTelegram: (input: { userId: string }) =>
         callProc(backendRouter.users.disconnectTelegram as ProcedureWithCallable, ctx, input),
-      maxAuthUrl: (input: { user_id: string }) =>
+      maxAuthUrl: (input: { userId: string }) =>
         callProc(backendRouter.users.maxAuthUrl as ProcedureWithCallable, ctx, input),
-      disconnectMax: (input: { user_id: string }) =>
+      disconnectMax: (input: { userId: string }) =>
         callProc(backendRouter.users.disconnectMax as ProcedureWithCallable, ctx, input),
     },
     settings: {

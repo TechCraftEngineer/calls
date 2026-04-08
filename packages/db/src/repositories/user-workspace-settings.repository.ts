@@ -237,7 +237,6 @@ export const userWorkspaceSettingsRepository = {
   },
 
   async disconnectTelegram(userId: string, tx?: Transaction): Promise<boolean> {
-    const client = tx ?? db;
     const executeWithinTransaction = async (trx: Transaction | typeof db) => {
       const rows = await trx
         .select()

@@ -1,5 +1,6 @@
 import { usersService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
+import { userIdSchema } from "@calls/shared";
 import { z } from "zod";
 import { workspaceProcedure } from "../../../orpc";
 import { updateReportManagedUsersSettingsSchema } from "../schemas";
@@ -8,7 +9,7 @@ import { canAccessUser, logUpdate } from "../utils";
 export const updateReportManagedUsersSettings = workspaceProcedure
   .input(
     z.object({
-      user_id: z.string(),
+      userId: userIdSchema,
       data: updateReportManagedUsersSettingsSchema,
     }),
   )
@@ -19,16 +20,16 @@ export const updateReportManagedUsersSettings = workspaceProcedure
       });
 
     const userId = (context.user as Record<string, unknown>).id as string;
-    if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
+    if (!(await canAccessUser(userId, input.userId, context.workspaceRole)))
       throw new ORPCError("FORBIDDEN", {
         message: "Нет доступа к этому пользователю",
       });
 
-    const user = await usersService.getUser(input.user_id);
+    const user = await usersService.getUser(input.userId);
     if (!user) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
 
     try {
-      await usersService.updateUserReportKpiSettings(input.user_id, context.workspaceId, {
+      await usersService.updateUserReportKpiSettings(input.userId, context.workspaceId, {
         // Флаг "по менеджерам" зависит от наличия выбранных пользователей.
         telegramManagerReport: input.data.reportManagedUserIds.length > 0,
         reportManagedUserIds: JSON.stringify(input.data.reportManagedUserIds),
@@ -42,7 +43,7 @@ export const updateReportManagedUsersSettings = workspaceProcedure
         context.workspaceId,
       );
 
-      return await usersService.getUser(input.user_id);
+      return await usersService.getUser(input.userId);
     } catch (error) {
       await logUpdate(
         "update report managed users settings",
