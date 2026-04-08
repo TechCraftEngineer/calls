@@ -53,7 +53,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:15
+        image: postgres:18
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -97,7 +97,7 @@ jobs:
           echo "NEXT_PUBLIC_API_URL=http://localhost:3000" >> .env.local
           echo "NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000" >> .env.local
           echo "NODE_ENV=test" >> .env.local
-          bun db:push
+          TURBO_UI=true bun db:push
 
       - name: Start application
         run: |
@@ -176,7 +176,7 @@ jobs:
           echo "NEXT_PUBLIC_API_URL=http://localhost:3000" >> .env.local
           echo "NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000" >> .env.local
           echo "NODE_ENV=test" >> .env.local
-          bun db:push
+          TURBO_UI=true bun db:push
 
       - name: Start application
         run: |
