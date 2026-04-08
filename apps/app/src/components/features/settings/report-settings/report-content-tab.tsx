@@ -38,28 +38,30 @@ const settings = [
 
 export function ReportContentTab({ form, setForm }: ReportContentTabProps) {
   return (
-    <div className="mx-auto w-full max-w-lg">
-      <p className="mb-3 text-sm font-medium">Содержание отчётов</p>
-      <Separator />
-      <div className="flex flex-col">
-        {settings.map((setting) => (
-          <label
-            key={setting.id}
-            htmlFor={setting.id}
-            className="flex cursor-pointer items-center justify-between border-b py-3 last:border-b-0"
-          >
-            <div className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium">{setting.label}</span>
-              <span className="text-muted-foreground text-xs">{setting.description}</span>
-            </div>
-            <Switch
-              id={setting.id}
-              checked={form[setting.key]}
-              onCheckedChange={(checked) => setForm((f) => ({ ...f, [setting.key]: checked }))}
-              size="sm"
-            />
-          </label>
-        ))}
+    <div className="w-full">
+      <div className="mx-auto max-w-lg bg-white rounded-lg p-6 shadow-sm border">
+        <p className="mb-3 text-sm font-medium">Содержание отчётов</p>
+        <Separator />
+        <div className="flex flex-col">
+          {settings.map((setting) => (
+            <label
+              key={setting.id}
+              htmlFor={setting.id}
+              className="flex cursor-pointer items-center justify-between border-b py-3 last:border-b-0"
+            >
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium">{setting.label}</span>
+                <span className="text-muted-foreground text-xs">{setting.description}</span>
+              </div>
+              <Switch
+                id={setting.id}
+                checked={form[setting.key]}
+                onCheckedChange={(checked) => setForm((f) => ({ ...f, [setting.key]: checked }))}
+                size="sm"
+              />
+            </label>
+          ))}
+        </div>
       </div>
     </div>
   );
