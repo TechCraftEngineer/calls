@@ -323,6 +323,41 @@ export const pbxRepository = {
       );
   },
 
+  async findAllWorkspaceUsers(workspaceId: string) {
+    const members = await db
+      .select({ memberId: schema.workspaceMembers.id, user: schema.user })
+      .from(schema.workspaceMembers)
+      .innerJoin(schema.user, eq(schema.workspaceMembers.userId, schema.user.id))
+      .where(
+        and(
+          eq(schema.workspaceMembers.workspaceId, workspaceId),
+          isNull(schema.user.deletedAt),
+        ),
+      );
+
+    return members.map(({ user, memberId }) => ({
+      id: user.id,
+      memberId,
+      email: user.email,
+      name: user.name,
+      givenName: user.givenName,
+      familyName: user.familyName,
+      internalExtensions: user.internalExtensions,
+    }));
+  },
+
+  async findAllWorkspaceInvitations(workspaceId: string) {
+    return db
+      .select()
+      .from(schema.invitations)
+      .where(
+        and(
+          eq(schema.invitations.workspaceId, workspaceId),
+          isNull(schema.invitations.acceptedAt),
+        ),
+      );
+  },
+
   async getLinkMap(
     workspaceId: string,
     provider: string,

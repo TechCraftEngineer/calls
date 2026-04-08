@@ -13,6 +13,7 @@ export {
   type SafeId,
   safeId,
 } from "./utils/id-utils";
+export { pluralize } from "./utils/pluralize";
 export {
   companyContextSchema,
   isValidEmail,

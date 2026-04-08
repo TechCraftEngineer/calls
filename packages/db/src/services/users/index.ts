@@ -2,10 +2,30 @@ import type { SystemRepository } from "../../repositories/system.repository";
 import type { UserWorkspaceSettingsRepository } from "../../repositories/user-workspace-settings.repository";
 import type { UsersRepository } from "../../repositories/users.repository";
 import type { WorkspacesRepository } from "../../repositories/workspaces.repository";
+import { z } from "zod";
 import { UserBaseService } from "./user-base.service";
 import { UserIntegrationsService } from "./user-integrations.service";
 import { UserSettingsService } from "./user-settings.service";
 import type { UserForEdit } from "./types";
+
+// Zod validation schemas
+const UuidSchema = z.string().uuid();
+const EmailSchema = z.string().email().max(255);
+const NameSchema = z.string().min(1).max(100);
+
+const CreateUserDataSchema = z.object({
+  email: EmailSchema,
+  givenName: NameSchema.optional(),
+  familyName: NameSchema.optional(),
+  internalExtensions: z.string().max(255).nullable().optional(),
+  mobilePhones: z.string().max(255).nullable().optional(),
+  password: z.string().min(8).max(100).optional(),
+});
+
+const UpdateUserDataSchema = z.object({
+  givenName: NameSchema.optional(),
+  familyName: NameSchema.optional(),
+});
 
 export class UsersService {
   public readonly base: UserBaseService;
@@ -46,51 +66,77 @@ export class UsersService {
     workspaceId?: string | null,
     actor?: string,
   ) {
-    return this.base.createUser(data, workspaceId, actor);
+    // Validate input data with Zod
+    const validatedData = CreateUserDataSchema.parse(data);
+    if (workspaceId !== undefined && workspaceId !== null) {
+      UuidSchema.parse(workspaceId);
+    }
+    if (actor !== undefined) {
+      z.string().uuid().parse(actor);
+    }
+    return this.base.createUser(validatedData as import("../../types/users.types").CreateUserData, workspaceId, actor);
   }
 
   async updateUserName(userId: string, data: import("../../types/users.types").UpdateUserData) {
-    return this.base.updateUserName(userId, data);
+    UuidSchema.parse(userId);
+    const validatedData = UpdateUserDataSchema.parse(data);
+    return this.base.updateUserName(userId, validatedData as import("../../types/users.types").UpdateUserData);
   }
 
   async updateUserInternalExtensions(userId: string, internalExtensions: string | null) {
+    UuidSchema.parse(userId);
+    z.string().max(255).nullable().parse(internalExtensions);
     return this.base.updateUserInternalExtensions(userId, internalExtensions);
   }
 
   async updateUserMobilePhones(userId: string, mobilePhones: string | null) {
+    UuidSchema.parse(userId);
+    z.string().max(255).nullable().parse(mobilePhones);
     return this.base.updateUserMobilePhones(userId, mobilePhones);
   }
 
   async updateUserEmail(userId: string, email: string | null) {
+    UuidSchema.parse(userId);
+    if (email !== null) {
+      EmailSchema.parse(email);
+    }
     return this.base.updateUserEmail(userId, email);
   }
 
   async updateUserPassword(userId: string, newPassword: string) {
+    UuidSchema.parse(userId);
+    z.string().min(8).max(100).parse(newPassword);
     return this.base.updateUserPassword(userId, newPassword);
   }
 
   async deleteUser(userId: string) {
+    UuidSchema.parse(userId);
     return this.base.deleteUser(userId);
   }
 
   // === Delegate settings methods ===
 
   async getUserForEdit(userId: string, workspaceId: string): Promise<UserForEdit | null> {
+    // Validate input parameters
+    UuidSchema.parse(userId);
+    UuidSchema.parse(workspaceId);
+
     // Fetch user basic data
     const user = await this.base.getUser(userId);
     if (!user) {
       return null;
     }
 
-    // Fetch user role in the workspace
-    const member = await this.workspacesRepository.getMember(workspaceId, userId);
-    const role = member?.role ?? "member";
+    // Fetch member and settings in parallel
+    const [member, settings] = await Promise.all([
+      this.workspacesRepository.getMember(workspaceId, userId),
+      this.userWorkspaceSettingsRepository.findByUserAndWorkspace(userId, workspaceId),
+    ]);
 
-    // Fetch user settings for the workspace
-    const settings = await this.userWorkspaceSettingsRepository.findByUserAndWorkspace(
-      userId,
-      workspaceId,
-    );
+    if (!member) {
+      return null; // User is not a member of this workspace
+    }
+    const role = member.role;
 
     // Delegate to settings service to build the UserForEdit object
     return this.settings.getUserForEdit(

@@ -50,7 +50,7 @@ export const env = createEnv({
     GIGA_AM_ENABLED: z.coerce.boolean().default(true),
     GIGA_AM_TIMEOUT_MS: z.preprocess(
       (value) => (value === "" ? undefined : value),
-      z.coerce.number().positive().default(300000),
+      z.coerce.number().positive().default(900_000), // 15 минут
     ),
     /** Оценка себестоимости ASR (руб/сек) для расчёта в UI */
     GIGA_AM_RATE_RUB_PER_SECOND: z.coerce.number().positive().default(0.01),

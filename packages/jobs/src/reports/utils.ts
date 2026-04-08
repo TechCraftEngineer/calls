@@ -4,9 +4,12 @@
 
 import { z } from "zod";
 
+// Strict schema for stats values (string, number, boolean, or null)
+const StatsValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+
 // Zod schema для валидации параметров отчета
 const ReportParamsSchema = z.object({
-  stats: z.record(z.string(), z.any()),
+  stats: z.record(z.string(), StatsValueSchema),
   dateFrom: z.date(),
   dateTo: z.date(),
   reportType: z.enum(["daily", "weekly", "monthly"]),

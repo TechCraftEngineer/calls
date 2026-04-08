@@ -103,10 +103,12 @@ export default function MegaPbxSection({
       Object.fromEntries(
         numbers.map((number) => [
           number.externalId,
-          number.candidates.map((candidate) => ({
-            value: `user:${candidate.id}`,
-            label: `${candidate.name || candidate.email} (${candidate.email})`,
-          })),
+          [
+            ...number.candidates.map((candidate) => ({
+              value: `user:${candidate.id}`,
+              label: `${candidate.name || candidate.email} (${candidate.email})`,
+            })),
+          ],
         ]),
       ),
     [numbers],

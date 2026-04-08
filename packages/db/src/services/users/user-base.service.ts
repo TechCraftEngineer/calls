@@ -48,7 +48,7 @@ export class UserBaseService {
 
     await this.systemRepository.addActivityLog(
       "INFO",
-      `User ${data.email} created`,
+      `User ${userId} created`,
       actor || "admin",
       workspaceId,
     );
@@ -89,13 +89,10 @@ export class UserBaseService {
     return this.usersRepository.updateEmail(userId, email);
   }
 
-  async updateUserPassword(userId: string, _newPassword: string): Promise<boolean> {
-    await this.systemRepository.addActivityLog(
-      "INFO",
-      `User ${userId} password updated`,
-      "admin",
-    );
-    return true;
+  async updateUserPassword(_userId: string, _newPassword: string): Promise<boolean> {
+    // Password updates should be handled through Better Auth API
+    // This method is a placeholder - use auth.api.setPassword or similar Better Auth endpoint
+    throw new Error("Password updates must be done through Better Auth API, not directly through repository");
   }
 
   // Delete operations

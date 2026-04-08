@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from "@calls/ui";
 import Link from "next/link";
+import * as React from "react";
 import type { ReactNode } from "react";
 import { isMobileDevice } from "@/lib/utils";
 import { formatDuration, formatTimestamp } from "./call-list-cells";
@@ -61,15 +62,17 @@ export function renderDirectionCell(call: CallWithDetails["call"]) {
 }
 
 function CallTooltipCell({ title, children }: { title: string; children: ReactNode }) {
+  const id = React.useId();
+  const labelId = `${id}-label`;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <button
           type="button"
-          tabIndex={0}
           className="block min-w-0 max-w-full truncate cursor-default text-[#555] font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label={title}
+          aria-describedby={labelId}
         >
+          <span id={labelId} className="sr-only">{title}: </span>
           {children}
         </button>
       </TooltipTrigger>

@@ -170,7 +170,6 @@ export const sendTestEmail = workspaceProcedure
           reportType,
           username: userForEdit.givenName ?? undefined,
           stats: enrichedStats,
-          includeKpi: true,
           avgManagerScore: true,
           dateFrom,
           dateTo,
