@@ -71,55 +71,6 @@ function shouldSkipCallByExcludedPhoneNumbers(
   return false;
 }
 
-async function autoLinkEmployees(
-  workspaceId: string,
-  employees: NormalizedEmployee[],
-): Promise<number> {
-  let linked = 0;
-  const existingLinks = await pbxRepository.getLinkMap(workspaceId, PROVIDER, "employee");
-
-  for (const employee of employees) {
-    if (existingLinks.has(employee.externalId)) continue;
-
-    const candidates = await pbxRepository.findCandidateUsers(
-      workspaceId,
-      employee.extension ? [employee.extension] : [],
-      employee.email ? [employee.email] : [],
-    );
-
-    if (candidates.length === 1) {
-      await pbxRepository.upsertLink({
-        workspaceId,
-        provider: PROVIDER,
-        targetType: "employee",
-        targetExternalId: employee.externalId,
-        userId: candidates[0]?.id ?? null,
-        linkSource: employee.extension ? "auto_extension" : "auto_email",
-        confidence: employee.extension ? 100 : 85,
-      });
-      linked += 1;
-      continue;
-    }
-
-    if (!employee.email) continue;
-    const invites = await pbxRepository.findCandidateInvitations(workspaceId, [employee.email]);
-    if (invites.length === 1) {
-      await pbxRepository.upsertLink({
-        workspaceId,
-        provider: PROVIDER,
-        targetType: "employee",
-        targetExternalId: employee.externalId,
-        invitationId: invites[0]?.id ?? null,
-        linkSource: "auto_invitation_email",
-        confidence: 80,
-      });
-      linked += 1;
-    }
-  }
-
-  return linked;
-}
-
 async function uploadRecordingIfNeeded(
   client: MegaPbxClient,
   workspaceId: string,
@@ -211,7 +162,8 @@ export async function syncMegaPbxDirectory(
 
     stats.employees = employees.length;
     stats.numbers = numbers.length;
-    stats.autoLinked = await autoLinkEmployees(workspaceId, employees);
+    // autoLinked больше не используется - номера напрямую привязаны к сотрудникам через employeeExternalId
+    stats.autoLinked = 0;
 
     await pbxRepository.updateSyncState({
       workspaceId,

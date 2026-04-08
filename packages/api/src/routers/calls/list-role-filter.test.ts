@@ -1,5 +1,4 @@
 import { describe, expect, it } from "bun:test";
-import type { CallStatus } from "@calls/db";
 
 // Типы для тестирования
 interface WorkspaceRoleContext {
@@ -31,10 +30,7 @@ function getInternalNumbersForUser(user: {
     .filter(Boolean);
 }
 
-function getMobileNumbersForUser(user: {
-  id: string;
-  mobilePhones?: string | null;
-}): string[] {
+function getMobileNumbersForUser(user: { id: string; mobilePhones?: string | null }): string[] {
   if (!user.mobilePhones) return [];
   return user.mobilePhones
     .split(",")
@@ -43,12 +39,8 @@ function getMobileNumbersForUser(user: {
 }
 
 // Функция фильтрации звонков по роли (логика из list.ts)
-function filterCallsByRole(
-  calls: MockCall[],
-  context: WorkspaceRoleContext
-): MockCall[] {
-  const isAdminOrOwner =
-    context.workspaceRole === "admin" || context.workspaceRole === "owner";
+function filterCallsByRole(calls: MockCall[], context: WorkspaceRoleContext): MockCall[] {
+  const isAdminOrOwner = context.workspaceRole === "admin" || context.workspaceRole === "owner";
 
   if (isAdminOrOwner) {
     return calls; // Админ видит все
@@ -68,10 +60,9 @@ function filterCallsByRole(
 // Функция проверки доступности менеджеров для фильтра
 function getAvailableManagersForRole(
   allManagers: { id: string; name: string }[],
-  context: WorkspaceRoleContext
+  context: WorkspaceRoleContext,
 ): { id: string; name: string }[] {
-  const isAdminOrOwner =
-    context.workspaceRole === "admin" || context.workspaceRole === "owner";
+  const isAdminOrOwner = context.workspaceRole === "admin" || context.workspaceRole === "owner";
 
   if (isAdminOrOwner) {
     return allManagers; // Админ видит всех менеджеров
@@ -140,13 +131,7 @@ describe("calls list role-based filtering", () => {
       const result = filterCallsByRole(mockCalls, context);
 
       expect(result).toHaveLength(5);
-      expect(result.map((c) => c.id)).toEqual([
-        "call-1",
-        "call-2",
-        "call-3",
-        "call-4",
-        "call-5",
-      ]);
+      expect(result.map((c) => c.id)).toEqual(["call-1", "call-2", "call-3", "call-4", "call-5"]);
     });
 
     it("returns all calls for owner", () => {
@@ -232,7 +217,7 @@ describe("calls list role-based filtering", () => {
       const result = getAvailableManagersForRole(allManagers, context);
 
       expect(result).toHaveLength(1);
-      expect(result[0].id).toBe("member-1");
+      expect(result[0]?.id).toBe("member-1");
     });
 
     it("filters calls with multiple extensions correctly", () => {
@@ -248,11 +233,7 @@ describe("calls list role-based filtering", () => {
 
       // Должен видеть звонки с номеров 101 и 201
       expect(result).toHaveLength(4);
-      expect(result.map((c) => c.id)).toEqual([
-        "call-1",
-        "call-3",
-        "call-4",
-      ]);
+      expect(result.map((c) => c.id)).toEqual(["call-1", "call-3", "call-4"]);
     });
   });
 
@@ -279,8 +260,7 @@ describe("calls list role-based filtering", () => {
       };
 
       const managerFilters = ["admin-1", "member-1", "other-1"];
-      const isAdminOrOwner =
-        context.workspaceRole === "admin" || context.workspaceRole === "owner";
+      const isAdminOrOwner = context.workspaceRole === "admin" || context.workspaceRole === "owner";
       const finalFilters = isAdminOrOwner
         ? managerFilters
         : managerFilters.filter((m) => m === context.user.id);
@@ -296,12 +276,9 @@ describe("calls list role-based filtering", () => {
 
       // Симулируем запрос member с фильтром по другому менеджеру
       const requestedFilter = "admin-1";
-      const isAdminOrOwner =
-        context.workspaceRole === "admin" || context.workspaceRole === "owner";
+      const isAdminOrOwner = context.workspaceRole === "admin" || context.workspaceRole === "owner";
       const allowedFilter =
-        isAdminOrOwner || requestedFilter === context.user.id
-          ? requestedFilter
-          : null;
+        isAdminOrOwner || requestedFilter === context.user.id ? requestedFilter : null;
 
       expect(allowedFilter).toBeNull();
     });

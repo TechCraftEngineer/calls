@@ -22,8 +22,6 @@ export default function SettingsPbxMegafonPage() {
     handleTestPbx,
     handleSyncPbxDirectory,
     handleSyncPbxCalls,
-    handleLinkPbxTarget,
-    handleUnlinkPbxTarget,
     setMegaPbxEnabled,
   } = useSettings();
 
@@ -97,8 +95,6 @@ export default function SettingsPbxMegafonPage() {
         onTest={handleTestPbx}
         onSyncDirectory={handleSyncPbxDirectory}
         onSyncCalls={handleSyncPbxCalls}
-        onLink={handleLinkPbxTarget}
-        onUnlink={handleUnlinkPbxTarget}
         saving={
           state.megaPbxAccessSaving || state.megaPbxSyncOptionsSaving || state.megaPbxWebhookSaving
         }

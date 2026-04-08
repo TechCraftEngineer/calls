@@ -68,22 +68,3 @@ export const testPbxInputSchema = z.object({
   baseUrl: z.string().trim().optional(),
   apiKey: z.string().trim().optional(),
 });
-
-export const pbxLinkSchema = z
-  .object({
-    targetType: z.enum(["employee", "number"]),
-    targetExternalId: z.string().min(1),
-    userId: z.string().optional().nullable(),
-    invitationId: z.string().optional().nullable(),
-  })
-  .refine((value) => Boolean(value.userId || value.invitationId), {
-    message: "Нужно указать пользователя или приглашение",
-  })
-  .refine((value) => !(value.userId && value.invitationId), {
-    message: "Можно указать только пользователя или приглашение",
-  });
-
-export const pbxUnlinkSchema = z.object({
-  targetType: z.enum(["employee", "number"]),
-  targetExternalId: z.string().min(1),
-});

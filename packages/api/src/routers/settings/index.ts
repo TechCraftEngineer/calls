@@ -29,8 +29,6 @@ export const settingsRouter = {
   syncPbxRecordings: pbxRouter.syncPbxRecordings,
   listPbxEmployees: pbxRouter.listPbxEmployees,
   listPbxNumbers: pbxRouter.listPbxNumbers,
-  linkPbxUser: pbxRouter.linkPbxUser,
-  unlinkPbxUser: pbxRouter.unlinkPbxUser,
   getEvaluationTemplates: evaluationRouter.getEvaluationTemplates,
   getEvaluationTemplate: evaluationRouter.getEvaluationTemplate,
   getEvaluationTemplateBySlug: evaluationRouter.getEvaluationTemplateBySlug,

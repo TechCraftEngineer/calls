@@ -106,17 +106,6 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
     }));
   }, [orpc, queryClient, setState]);
 
-  const linkPbxUserMutation = useMutation(
-    orpc.settings.linkPbxUser.mutationOptions({
-      onSuccess: refetchPbxLists,
-    }),
-  );
-  const unlinkPbxUserMutation = useMutation(
-    orpc.settings.unlinkPbxUser.mutationOptions({
-      onSuccess: refetchPbxLists,
-    }),
-  );
-
   const megaPbxPayload = () => ({
     excludePhoneNumbers: (state.megaPbx.excludePhoneNumbers ?? "")
       .split(/[\n,;]+/)
@@ -363,22 +352,6 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
     }
   };
 
-  const handleLinkPbxTarget = async (input: {
-    targetType: "employee" | "number";
-    targetExternalId: string;
-    userId?: string | null;
-    invitationId?: string | null;
-  }) => {
-    await linkPbxUserMutation.mutateAsync(input);
-  };
-
-  const handleUnlinkPbxTarget = async (input: {
-    targetType: "employee" | "number";
-    targetExternalId: string;
-  }) => {
-    await unlinkPbxUserMutation.mutateAsync(input);
-  };
-
   const setMegaPbxEnabled = (checked: boolean) => {
     setState((prev: SettingsState) => ({
       ...prev,
@@ -415,14 +388,10 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
     handleTestPbx,
     handleSyncPbxDirectory: () => runPbxSync("directory"),
     handleSyncPbxCalls: () => runPbxSync("calls"),
-    handleLinkPbxTarget,
-    handleUnlinkPbxTarget,
     handleSaveMegaPbx: handleSavePbx,
     handleTestMegaPbx: handleTestPbx,
     handleSyncMegaPbxDirectory: () => runPbxSync("directory"),
     handleSyncMegaPbxCalls: () => runPbxSync("calls"),
-    handleLinkMegaPbxTarget: handleLinkPbxTarget,
-    handleUnlinkMegaPbxTarget: handleUnlinkPbxTarget,
     setMegaPbxEnabled,
   };
 }

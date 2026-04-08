@@ -39,8 +39,6 @@ export default function MegaPbxSection({
   onTest,
   onSyncDirectory,
   onSyncCalls,
-  onLink,
-  onUnlink,
   saving,
   savingAccess,
   savingSyncOptions,
@@ -68,8 +66,6 @@ export default function MegaPbxSection({
   const baseUrl = megaPbx.baseUrl;
   const apiKeySet = megaPbx.apiKeySet;
   const hasConnection = Boolean(baseUrl.trim()) && apiKeySet;
-  const linkedEmployees = employees.filter((item) => Boolean(item.link)).length;
-  const linkedNumbers = numbers.filter((item) => Boolean(item.link)).length;
   const activeEmployees = employees.filter((item) => item.isActive).length;
   const configuredFeatures = [
     megaPbx.syncEmployees ? "Сотрудники" : null,
@@ -78,27 +74,6 @@ export default function MegaPbxSection({
     megaPbx.webhooksEnabled ? "Вебхуки" : null,
   ].filter(Boolean) as string[];
 
-  const employeeLinkOptions = useMemo(
-    () =>
-      Object.fromEntries(
-        employees.map((employee) => [
-          employee.externalId,
-          {
-            users: employee.candidates,
-            invitations: employee.invitationCandidates,
-          },
-        ]),
-      ),
-    [employees],
-  );
-
-  const numberLinkOptions = useMemo(
-    () =>
-      Object.fromEntries(
-        numbers.map((number) => [number.externalId, number.candidates]),
-      ),
-    [numbers],
-  );
   const excludedPhoneNumbers = useMemo(() => {
     const raw = megaPbx.excludePhoneNumbers;
     return raw
@@ -137,8 +112,8 @@ export default function MegaPbxSection({
               АТС
             </CardTitle>
             <CardDescription className="mt-1">
-              Подключение провайдера телефонии, синхронизация сотрудников, номеров и звонков, а
-              также ручная привязка к пользователям компании.
+              Подключение провайдера телефонии и синхронизация сотрудников, номеров и звонков.
+              Номера автоматически привязаны к сотрудникам.
             </CardDescription>
           </div>
           <label
@@ -172,12 +147,12 @@ export default function MegaPbxSection({
           <SummaryTile
             label="Сотрудники"
             value={String(employees.length)}
-            hint={`Активных: ${activeEmployees}, привязано: ${linkedEmployees}`}
+            hint={`Активных: ${activeEmployees}`}
           />
           <SummaryTile
             label="Номера"
             value={String(numbers.length)}
-            hint={`Привязано: ${linkedNumbers}`}
+            hint={`Всего: ${numbers.length}`}
           />
         </div>
 
@@ -228,9 +203,6 @@ export default function MegaPbxSection({
             employeesLoading={employeesLoading}
             employeeSearch={employeeSearch}
             onEmployeeSearchChange={setEmployeeSearch}
-            employeeLinkOptions={employeeLinkOptions}
-            onLink={onLink}
-            onUnlink={onUnlink}
           />
         )}
 
@@ -240,9 +212,6 @@ export default function MegaPbxSection({
             numbersLoading={numbersLoading}
             numberSearch={numberSearch}
             onNumberSearchChange={setNumberSearch}
-            numberLinkOptions={numberLinkOptions}
-            onLink={onLink}
-            onUnlink={onUnlink}
             excludedPhoneNumbers={excludedPhoneNumbers}
             savingExcludedNumbers={savingExcludedNumbers}
             onSaveExcludedNumbers={onSaveExcludedNumbers}

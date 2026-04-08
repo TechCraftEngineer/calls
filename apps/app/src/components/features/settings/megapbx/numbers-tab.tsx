@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
 import { SearchInput } from "@/components/ui/search-input";
-import type { PbxCandidateUser, PbxNumberItem } from "../types";
+import type { PbxNumberItem } from "../types";
 import { getNumberColumns } from "./number-columns";
 
 const normalizePhone = (value: string | null | undefined): string =>
@@ -20,16 +20,9 @@ interface NumbersTabProps {
   numbersLoading: boolean;
   numberSearch: string;
   onNumberSearchChange: (value: string) => void;
-  numberLinkOptions: Record<string, PbxCandidateUser[]>;
   excludedPhoneNumbers: string[];
   savingExcludedNumbers: boolean;
   onSaveExcludedNumbers: (excludePhoneNumbers: string[]) => Promise<void>;
-  onLink: (input: {
-    targetType: "number";
-    targetExternalId: string;
-    userId?: string | null;
-  }) => Promise<void>;
-  onUnlink: (input: { targetType: "number"; targetExternalId: string }) => Promise<void>;
 }
 
 export function NumbersTab({
@@ -37,14 +30,10 @@ export function NumbersTab({
   numbersLoading,
   numberSearch,
   onNumberSearchChange,
-  numberLinkOptions,
   excludedPhoneNumbers,
   savingExcludedNumbers,
   onSaveExcludedNumbers,
-  onLink,
-  onUnlink,
 }: NumbersTabProps) {
-  const [selectedLinks, setSelectedLinks] = useState<Record<string, string>>({});
   const [excludedSet, setExcludedSet] = useState<Set<string>>(
     () => new Set(excludedPhoneNumbers.map((value) => normalizePhone(value))),
   );
@@ -58,14 +47,7 @@ export function NumbersTab({
     if (!query) return numbers;
 
     return numbers.filter((number) =>
-      [
-        number.phoneNumber,
-        number.extension,
-        number.employee?.displayName,
-        number.linkedUser?.email,
-        number.linkedUser?.name,
-        number.linkedInvitation?.email,
-      ]
+      [number.phoneNumber, number.extension, number.employee?.displayName]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(query)),
     );
@@ -73,26 +55,13 @@ export function NumbersTab({
 
   const numberColumns = useMemo(
     () =>
-      getNumberColumns(
-        numberLinkOptions,
-        selectedLinks,
-        setSelectedLinks,
+      getNumberColumns({
         excludedSet,
         setExcludedSet,
         savingExcludedNumbers,
         onSaveExcludedNumbers,
-        onLink,
-        onUnlink,
-      ),
-    [
-      numberLinkOptions,
-      selectedLinks,
-      excludedSet,
-      savingExcludedNumbers,
-      onSaveExcludedNumbers,
-      onLink,
-      onUnlink,
-    ],
+      }),
+    [excludedSet, savingExcludedNumbers, onSaveExcludedNumbers],
   );
 
   const excludedRowsCount = useMemo(() => {
@@ -124,10 +93,9 @@ export function NumbersTab({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h4 className="font-semibold">Привязка номеров</h4>
+          <h4 className="font-semibold">Номера АТС</h4>
           <p className="text-sm text-muted-foreground">
-            Используйте сопоставление номеров, если звонки нужно жёстко привязать к конкретным
-            пользователям.
+            Список номеров, синхронизированных из АТС. Номера автоматически привязаны к сотрудникам.
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:items-end">

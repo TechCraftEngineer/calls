@@ -94,10 +94,6 @@ export function createBackendApiWithContext(ctx: BackendContext) {
         callProc(backendRouter.settings.listPbxEmployees as ProcedureWithCallable, ctx),
       listPbxNumbers: () =>
         callProc(backendRouter.settings.listPbxNumbers as ProcedureWithCallable, ctx),
-      linkPbxUser: (input: ProcInput<typeof backendRouter.settings.linkPbxUser>) =>
-        callProc(backendRouter.settings.linkPbxUser as ProcedureWithCallable, ctx, input),
-      unlinkPbxUser: (input: ProcInput<typeof backendRouter.settings.unlinkPbxUser>) =>
-        callProc(backendRouter.settings.unlinkPbxUser as ProcedureWithCallable, ctx, input),
       updateFtp: (input: {
         enabled: boolean;
         host: string;
