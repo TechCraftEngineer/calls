@@ -67,7 +67,7 @@ export const env = createEnv({
     SPEAKER_EMBEDDINGS_URL: z.url().default("https://vnggncb-speaker-embeddings.hf.space/"),
     SPEAKER_EMBEDDINGS_TIMEOUT_MS: z.preprocess(
       (value) => (value === "" ? undefined : value),
-      z.coerce.number().positive().default(900_000), // 15 минут
+      z.coerce.number().positive().default(1_800_000), // 30 минут
     ),
     SPEAKER_EMBEDDINGS_HEALTH_TIMEOUT_MS: z.preprocess(
       (value) => (value === "" ? undefined : value),
