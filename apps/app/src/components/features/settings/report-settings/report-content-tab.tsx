@@ -1,6 +1,6 @@
 "use client";
 
-import { Separator, Switch } from "@calls/ui";
+import { Switch } from "@calls/ui";
 import type React from "react";
 import type { ReportSettingsForm } from "./report-settings-types";
 
@@ -39,15 +39,14 @@ const settings = [
 export function ReportContentTab({ form, setForm }: ReportContentTabProps) {
   return (
     <div className="w-full">
-      <div className="mx-auto max-w-lg bg-white rounded-lg p-6 shadow-sm border">
-        <p className="mb-3 text-sm font-medium">Содержание отчётов</p>
-        <Separator />
-        <div className="flex flex-col">
+      <div className="mx-auto max-w-lg bg-white rounded-lg p-6">
+        <p className="mb-4 text-sm font-medium">Содержание отчётов</p>
+        <div className="flex flex-col gap-1">
           {settings.map((setting) => (
             <label
               key={setting.id}
               htmlFor={setting.id}
-              className="flex cursor-pointer items-center justify-between border-b py-3 last:border-b-0"
+              className="flex cursor-pointer items-center justify-between py-3"
             >
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium">{setting.label}</span>
