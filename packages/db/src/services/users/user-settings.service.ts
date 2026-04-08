@@ -2,18 +2,18 @@
  * User settings service - handles settings operations
  */
 
-import { userWorkspaceSettingsRepository } from "../../repositories/user-workspace-settings.repository";
 import type { SystemRepository } from "../../repositories/system.repository";
+import { userWorkspaceSettingsRepository } from "../../repositories/user-workspace-settings.repository";
 import type { NotificationSettings } from "../../schema";
-import type { UserUpdateData, UserForEdit } from "./types";
 import { buildUpsertData, hasAnySettingsUpdate, parseUserUpdateData } from "./settings-helpers";
+import type { UserForEdit, UserUpdateData } from "./types";
 
 export class UserSettingsService {
   constructor(private systemRepository: SystemRepository) {}
 
   async getUserForEdit(
-    userId: string,
-    workspaceId: string,
+    _userId: string,
+    _workspaceId: string,
     user: {
       email: string | null;
       givenName: string | null;

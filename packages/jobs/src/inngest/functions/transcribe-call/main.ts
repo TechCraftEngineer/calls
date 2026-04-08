@@ -17,13 +17,12 @@ import { shouldSkipExpensiveProcessing } from "../../../evaluation";
 import { createLogger } from "../../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../../client";
 import { downloadAudioFile } from "./audio/download";
-import { extractAudioSegment } from "./audio/processing";
 import { processAudioWithoutDiarization } from "./gigaam/client";
 import { processAudioWithDiarization } from "./gigaam/diarization";
 import { applyLLMMerging } from "./llm-merge";
-import { quickAnsweringMachineCheck } from "./quick-am-check";
 import { resolveManagerFromPbx } from "./manager-resolution";
 import { serializeMetadata } from "./metadata";
+import { quickAnsweringMachineCheck } from "./quick-am-check";
 import {
   CallSchema,
   FileSchema,

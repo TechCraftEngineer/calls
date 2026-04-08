@@ -2,19 +2,19 @@
  * Users service - refactored into modular components
  */
 
-import type { UsersRepository } from "../../repositories/users.repository";
 import type { SystemRepository } from "../../repositories/system.repository";
+import type { UsersRepository } from "../../repositories/users.repository";
 import { UserBaseService } from "./user-base.service";
-import { UserSettingsService } from "./user-settings.service";
 import { UserIntegrationsService } from "./user-integrations.service";
+import { UserSettingsService } from "./user-settings.service";
 
 // Export types
-export type { User, WorkspaceMember, UserForEdit, UserUpdateData } from "./types";
+export type { User, UserForEdit, UserUpdateData, WorkspaceMember } from "./types";
 
 // Export services
 export { UserBaseService } from "./user-base.service";
-export { UserSettingsService } from "./user-settings.service";
 export { UserIntegrationsService } from "./user-integrations.service";
+export { UserSettingsService } from "./user-settings.service";
 
 /**
  * Unified Users Service - facade that delegates to specialized services
@@ -25,10 +25,7 @@ export class UsersService {
   public readonly settings: UserSettingsService;
   public readonly integrations: UserIntegrationsService;
 
-  constructor(
-    private usersRepository: UsersRepository,
-    private systemRepository: SystemRepository,
-  ) {
+  constructor(usersRepository: UsersRepository, systemRepository: SystemRepository) {
     this.base = new UserBaseService(usersRepository, systemRepository);
     this.settings = new UserSettingsService(systemRepository);
     this.integrations = new UserIntegrationsService(usersRepository, systemRepository);
