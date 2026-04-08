@@ -104,7 +104,7 @@ export class UsersService {
     return this.base.updateUserEmail(userId, email);
   }
 
-  async updateUserPassword(userId: string, newPassword: string) {
+  async updateUserPassword(userId: string, newPassword: string): Promise<boolean> {
     UuidSchema.parse(userId);
     z.string().min(8).max(100).parse(newPassword);
     // Обновление пароля должно выполняться через Better Auth API, не напрямую через сервис

@@ -39,11 +39,15 @@ async function gracefulShutdown(signal: string) {
 
   console.log(`\n${signal} received. Starting graceful shutdown...`);
 
-  // Stop accepting new connections
-  server.stop(true);
+  // Stop accepting new connections (graceful - allow active jobs to complete)
+  server.stop();
 
-  // Give ongoing Inngest functions time to complete (up to 25s for checkpointing maxRuntime)
-  const shutdownTimeout = Number(process.env.SHUTDOWN_TIMEOUT_MS) || 25000;
+  // IMPORTANT: Inngest checkpointing is configured with maxRuntime: 50s
+  // We must wait longer than that to allow ongoing steps to complete and checkpoint
+  // If a function is interrupted mid-step, Inngest Cloud will retry it from the last checkpoint
+  const shutdownTimeout = Number(process.env.SHUTDOWN_TIMEOUT_MS) || 70000; // 70s > 50s maxRuntime
+
+  console.log(`Waiting ${shutdownTimeout}ms for Inngest functions to checkpoint...`);
 
   setTimeout(() => {
     console.log("Graceful shutdown complete");

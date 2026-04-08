@@ -20,8 +20,9 @@ import {
   cn,
 } from "@calls/ui";
 import { Building2, Check, Phone, Search, User, UserPlus, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { PbxCandidateInvitation, PbxCandidateUser, PbxEmployeeItem } from "../types";
+import { getInitials } from "./utils";
 
 interface EmployeeLinkDialogProps {
   employee: PbxEmployeeItem | null;
@@ -50,6 +51,14 @@ export function EmployeeLinkDialog({
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("users");
+
+  // Сброс состояния при смене сотрудника
+  useEffect(() => {
+    setSelectedUserId(null);
+    setSelectedInvitationId(null);
+    setSearch("");
+    setActiveTab("users");
+  }, [employee?.externalId]);
 
   const filteredUsers = useMemo(() => {
     const query = search.toLowerCase().trim();
@@ -102,6 +111,8 @@ export function EmployeeLinkDialog({
       userId: selectedUserId,
       invitationId: selectedInvitationId,
     });
+    // Close dialog after successful link
+    onOpenChange(false);
     // Reset after successful link
     setSelectedUserId(null);
     setSelectedInvitationId(null);
@@ -113,16 +124,6 @@ export function EmployeeLinkDialog({
     setSelectedInvitationId(null);
     setSearch("");
     onOpenChange(false);
-  };
-
-  const getInitials = (name?: string | null) => {
-    if (!name) return "?";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
   };
 
   if (!employee) return null;
@@ -214,6 +215,7 @@ export function EmployeeLinkDialog({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Поиск по имени, email, внутреннему номеру..."
+              aria-label="Поиск по имени, email или внутреннему номеру"
               className="pl-10"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -239,16 +241,23 @@ export function EmployeeLinkDialog({
             </TabsList>
 
             <TabsContent value="users" className="mt-0 pt-4">
-              <div className="h-[320px] overflow-y-auto pr-4">
+              <div
+                className="h-[320px] overflow-y-auto pr-4"
+                role="listbox"
+                aria-label="Пользователи"
+              >
                 {filteredUsers.length > 0 ? (
                   <div className="space-y-2">
-                    {filteredUsers.map((user) => {
+                    {filteredUsers.map((user, index) => {
                       const isSelected = selectedUserId === user.id;
 
                       return (
                         <button
                           key={user.id}
                           onClick={() => handleSelectUser(user.id)}
+                          role="option"
+                          aria-selected={isSelected}
+                          tabIndex={isSelected ? 0 : -1}
                           className={cn(
                             "w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-all",
                             isSelected
@@ -303,7 +312,11 @@ export function EmployeeLinkDialog({
             </TabsContent>
 
             <TabsContent value="invitations" className="mt-0 pt-4">
-              <div className="h-[320px] overflow-y-auto pr-4">
+              <div
+                className="h-[320px] overflow-y-auto pr-4"
+                role="listbox"
+                aria-label="Приглашения"
+              >
                 {filteredInvitations.length > 0 ? (
                   <div className="space-y-2">
                     {filteredInvitations.map((inv) => {
@@ -313,6 +326,9 @@ export function EmployeeLinkDialog({
                         <button
                           key={inv.id}
                           onClick={() => handleSelectInvitation(inv.id)}
+                          role="option"
+                          aria-selected={isSelected}
+                          tabIndex={isSelected ? 0 : -1}
                           className={cn(
                             "w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-all",
                             isSelected

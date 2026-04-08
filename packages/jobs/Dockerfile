@@ -26,6 +26,8 @@ RUN mkdir -p /app/records
 
 ENV JOBS_PORT=8000
 ENV DEPLOYMENT_ENV=docker
+# IMPORTANT: For Kubernetes, set terminationGracePeriodSeconds: 90
+# Must be > SHUTDOWN_TIMEOUT_MS (70s) to allow graceful Inngest checkpointing
 
 EXPOSE 8000
 
