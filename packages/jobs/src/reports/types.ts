@@ -51,17 +51,8 @@ export interface FormatReportParams {
   reportType: "daily" | "weekly" | "monthly";
   isManagerReport: boolean;
   workspaceName?: string;
-  detailed?: boolean;
-  includeAvgRating?: boolean;
-  includeAvgValue?: boolean;
   /** Звонки с низкой оценкой по менеджерам (managerScore < 3) */
   lowRatedCalls?: Record<string, number>;
-  /** Включать KPI данные в отчет */
-  includeKpi?: boolean;
-  /** Включать саммари звонков (внутреннее поле) */
-  _includeCallSummaries?: boolean;
-  /** Саммари по менеджерам (внутреннее поле) */
-  _callSummariesByManager?: Record<string, string[]>;
 }
 
 export interface StatsTotals {

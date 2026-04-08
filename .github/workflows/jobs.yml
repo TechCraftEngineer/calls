@@ -1,7 +1,7 @@
 name: Deploy Jobs
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - 'packages/**'
 concurrency:

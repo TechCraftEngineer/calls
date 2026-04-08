@@ -17,21 +17,13 @@ export interface EmailReportRecipient {
   isManagerReport: boolean;
   internalNumbers: string[] | null;
   reportSettings: {
-    includeCallSummaries: boolean;
-    detailed: boolean;
-    includeAvgValue: boolean;
-    includeAvgRating: boolean;
-    kpi: boolean;
+    managedUserIds: string[];
   };
 }
 
 function buildReportSettings(rs: ReportSettings) {
   return {
-    includeCallSummaries: rs?.includeCallSummaries ?? false,
-    detailed: rs?.detailed ?? false,
-    includeAvgValue: rs?.includeAvgValue ?? false,
-    includeAvgRating: rs?.includeAvgRating ?? false,
-    kpi: rs?.kpi ?? false,
+    managedUserIds: rs?.managedUserIds ?? [],
   };
 }
 

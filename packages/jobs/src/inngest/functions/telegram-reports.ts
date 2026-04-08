@@ -241,19 +241,6 @@ export const telegramReportsFn = inngest.createFunction(
               });
             }
 
-            let callSummariesByManager: Record<string, string[]> = {};
-            if (r.reportSettings?.includeCallSummaries) {
-              callSummariesByManager = await callsService.getCallSummariesByManager({
-                workspaceId,
-                dateFrom: dateFromDb,
-                dateTo: dateToDb,
-                internalNumbers: r.internalNumbers ?? undefined,
-                excludePhoneNumbers:
-                  excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
-                limitPerManager: 2,
-              });
-            }
-
             const text = formatTelegramReportHtml({
               stats,
               dateFrom,
@@ -261,12 +248,6 @@ export const telegramReportsFn = inngest.createFunction(
               reportType,
               isManagerReport: r.isManagerReport,
               workspaceName: reportWorkspaceName,
-              detailed: r.reportSettings?.detailed ?? false,
-              _includeCallSummaries: r.reportSettings?.includeCallSummaries ?? false,
-              includeAvgRating: r.reportSettings?.includeAvgRating ?? false,
-              includeAvgValue: r.reportSettings?.includeAvgValue ?? false,
-              includeKpi: true,
-              _callSummariesByManager: callSummariesByManager,
               lowRatedCalls,
             });
 

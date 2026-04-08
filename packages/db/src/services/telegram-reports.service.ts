@@ -10,11 +10,7 @@ import type { NotificationSettings, ReportSettings } from "../schema/user/worksp
 export type ReportType = "daily" | "weekly" | "monthly";
 
 export interface ReportSettingsForRecipient {
-  includeCallSummaries: boolean;
-  detailed: boolean;
-  includeAvgRating: boolean;
-  includeAvgValue: boolean;
-  kpi: boolean;
+  managedUserIds: string[];
 }
 
 export interface TelegramReportRecipient {
@@ -40,11 +36,7 @@ function parseInternalExtensions(ext: string | null): string[] | null {
 
 function buildReportSettings(rs: ReportSettings): ReportSettingsForRecipient {
   return {
-    includeCallSummaries: rs?.includeCallSummaries ?? false,
-    detailed: rs?.detailed ?? false,
-    includeAvgRating: rs?.includeAvgRating ?? false,
-    includeAvgValue: rs?.includeAvgValue ?? false,
-    kpi: rs?.kpi ?? false,
+    managedUserIds: rs?.managedUserIds ?? [],
   };
 }
 

@@ -210,7 +210,6 @@ export const emailReportsFn = inngest.createFunction(
                   reportType,
                   username: undefined,
                   stats: enrichedStats,
-                  includeKpi: r.reportSettings.kpi,
                   dateFrom,
                   dateTo,
                   isManagerReport: r.isManagerReport,

@@ -18,7 +18,7 @@ import { InvitationsService } from "./invitations.service";
 import { PbxService } from "./pbx.service";
 
 import { SettingsService } from "./settings.service";
-import { UsersService } from "./users.service";
+import { UsersService } from "./users";
 import { WorkspacesService } from "./workspaces.service";
 
 // Initialize services with dependency injection

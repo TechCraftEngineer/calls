@@ -11,7 +11,7 @@ import { z } from "zod";
 import type { InvitationsRepository } from "../repositories/invitations.repository";
 import { generateInviteToken, getDefaultExpiresAt } from "../repositories/invitations.repository";
 import type { UserWorkspaceSettingsRepository } from "../repositories/user-workspace-settings.repository";
-import type { UsersService } from "./users.service";
+import type { UsersService } from "./users";
 import type { WorkspacesService } from "./workspaces.service";
 
 export class InvitationsService {

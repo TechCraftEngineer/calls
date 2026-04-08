@@ -24,7 +24,6 @@ export const usersRouter = {
   updateEmailSettings: userSettingsRouter.updateEmailSettings,
   updateTelegramSettings: userSettingsRouter.updateTelegramSettings,
   updateMaxSettings: userSettingsRouter.updateMaxSettings,
-  updateReportSettings: userSettingsRouter.updateReportSettings,
   updateReportParamsSettings: userSettingsRouter.updateReportParamsSettings,
   updateKpiSettings: userSettingsRouter.updateKpiSettings,
   updateFilterSettings: userSettingsRouter.updateFilterSettings,
