@@ -90,8 +90,14 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
   );
   const refetchPbxLists = useCallback(async () => {
     const [employees, numbers] = await Promise.all([
-      queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
-      queryClient.fetchQuery(orpc.settings.listPbxNumbers.queryOptions()),
+      queryClient.fetchQuery({
+        ...orpc.settings.listPbxEmployees.queryOptions(),
+        staleTime: 0,
+      }),
+      queryClient.fetchQuery({
+        ...orpc.settings.listPbxNumbers.queryOptions(),
+        staleTime: 0,
+      }),
     ]);
     setState((prev: SettingsState) => ({
       ...prev,
