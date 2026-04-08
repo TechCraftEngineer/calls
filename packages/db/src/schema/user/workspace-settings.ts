@@ -32,11 +32,6 @@ export interface NotificationSettings {
 }
 
 export interface ReportSettings {
-  includeCallSummaries: boolean;
-  detailed: boolean;
-  includeAvgValue: boolean;
-  includeAvgRating: boolean;
-  kpi: boolean;
   managedUserIds: string[];
 }
 
@@ -81,11 +76,6 @@ export const userWorkspaceSettings = pgTable(
       .$type<ReportSettings>()
       .notNull()
       .default(sql`'{
-        "includeCallSummaries": false,
-        "detailed": false,
-        "includeAvgValue": false,
-        "includeAvgRating": false,
-        "kpi": false,
         "managedUserIds": []
       }'::jsonb`),
 

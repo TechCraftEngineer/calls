@@ -15,6 +15,11 @@ export { extractSpeakerTimeline, extractSegmentsFromUtterances } from "./extract
 export { identifySpeakers } from "./speaker-identification";
 export { resolveManagerFromPbx } from "./manager-resolution";
 export { serializeMetadata } from "./metadata";
+export {
+  quickAnsweringMachineCheck,
+  shouldRunQuickCheck,
+  type QuickCheckResult,
+} from "./quick-am-check";
 export * from "./llm-correction";
 export * from "./llm-merge";
 export * from "./main";

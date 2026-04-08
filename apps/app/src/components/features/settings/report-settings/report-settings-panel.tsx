@@ -31,7 +31,7 @@ interface UserSettingsData {
   maxManagerReport?: boolean;
   reportIncludeCallSummaries?: boolean;
   reportDetailed?: boolean;
-  reportIncludeAvgValue?: boolean;
+  reportIncludeKpi?: boolean;
   reportIncludeAvgRating?: boolean;
   kpiBaseSalary?: number;
   kpiTargetBonus?: number;
@@ -91,7 +91,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     reportIncludeCallSummaries: false,
     reportDetailed: false,
     reportIncludeAvgRating: false,
-    reportIncludeAvgValue: false,
+    reportIncludeKpi: false,
     reportDailyTime: "18:00",
     reportWeeklyDay: "fri",
     reportWeeklyTime: "18:10",
@@ -122,7 +122,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       telegramSkipWeekends: d.telegramSkipWeekends ?? false,
       reportIncludeCallSummaries: d.reportIncludeCallSummaries ?? false,
       reportDetailed: d.reportDetailed ?? false,
-      reportIncludeAvgValue: d.reportIncludeAvgValue ?? false,
+      reportIncludeKpi: d.reportIncludeKpi ?? false,
       reportIncludeAvgRating: d.reportIncludeAvgRating ?? false,
       reportManagedUserIds: d.reportManagedUserIds ?? [],
       maxChatId: d.maxChatId ?? "",
@@ -215,7 +215,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       </TabsContent>
 
       <TabsContent value="content" className="space-y-6">
-        <ReportContentTab form={form} setForm={setForm} />
+        <ReportContentTab userId={userId} form={form} setForm={setForm} />
       </TabsContent>
     </Tabs>
   );

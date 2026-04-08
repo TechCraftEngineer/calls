@@ -17,6 +17,7 @@ export const CallSchema = z.object({
   internalNumber: z.string().nullable().optional(),
   direction: z.string().nullable().optional(),
   name: z.string().nullable().optional(),
+  durationSeconds: z.number().nullable().optional(),
 });
 
 // Схема для валидации workspace
@@ -36,6 +37,7 @@ export const FileSchema = z.object({
 // Схема для валидации результата pipeline аудио
 export const PipelineAudioResultSchema = z.object({
   preprocessedFileId: z.string().min(1, "preprocessedFileId не может быть пустым"),
+  durationSeconds: z.number().nullable().optional(),
 });
 
 // Схема для валидации сегмента транскрипции
