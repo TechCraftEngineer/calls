@@ -1,18 +1,15 @@
-import { Card, CardContent, CardHeader, CardTitle, toast } from "@calls/ui";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button, Card, CardContent, CardFooter, CardHeader, CardTitle } from "@calls/ui";
 import type React from "react";
-import { useRef, useState } from "react";
 import type { User } from "@/lib/auth";
-import { useORPC } from "@/orpc/react";
-import { getReportTypeLabel, type ReportType } from "../types";
 import {
   EmailReportSection,
   ManagedUsersSection,
   MaxReportSection,
-  ReportParamsSection,
   TelegramReportSection,
 } from "./index";
 import type { ReportSettingsForm, ReportSettingsUserOption } from "./report-settings-types";
+import { useReportSettingsMutations } from "./use-report-settings-mutations";
+import { getReportWeeklyDay } from "./utils";
 
 interface ReportSettingsFormBodyProps {
   form: ReportSettingsForm;
@@ -22,20 +19,6 @@ interface ReportSettingsFormBodyProps {
   allUsers: ReportSettingsUserOption[];
 }
 
-type WeekDay = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat";
-
-const WEEK_DAYS: WeekDay[] = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-
-function getReportWeeklyDay(day: string): WeekDay {
-  if (WEEK_DAYS.includes(day as WeekDay)) return day as WeekDay;
-  if (process.env.NODE_ENV !== "production") {
-    console.warn(
-      `[report-settings] getReportWeeklyDay: некорректное значение дня "${day}", используется значение по умолчанию "fri"`,
-    );
-  }
-  return "fri";
-}
-
 export default function ReportSettingsFormBody({
   form,
   setForm,
@@ -43,185 +26,30 @@ export default function ReportSettingsFormBody({
   isAdmin,
   allUsers,
 }: ReportSettingsFormBodyProps) {
-  const orpc = useORPC();
   const userId = String(user.id);
-  const queryClient = useQueryClient();
 
-  // Состояние для диалога подключения Telegram
-  const [telegramAuthUrl, setTelegramAuthUrl] = useState<string | null>(null);
-  const [telegramConnectToken, setTelegramConnectToken] = useState<string>("");
-
-  const invalidateUser = () => {
-    queryClient.invalidateQueries({
-      queryKey: orpc.users.getForEdit.queryKey({ input: { user_id: userId } }),
-    });
-  };
-
-  const invalidateSchedule = () => {
-    queryClient.invalidateQueries({
-      queryKey: orpc.settings.getReportScheduleSettings.queryKey(),
-    });
-  };
-
-  const handleMutationError = (err: unknown, fallback: string) => {
-    const msg = err instanceof Error ? err.message : fallback;
-    toast.error(msg);
-  };
-
-  const telegramAuthUrlMutation = useMutation(
-    orpc.users.telegramAuthUrl.mutationOptions({
-      onMutate: () => {
-        setTelegramAuthUrl("");
-        setTelegramConnectToken("");
-      },
-      onSuccess: (res) => {
-        if (res?.url) {
-          // Сохраняем URL и извлекаем токен для диалога
-          setTelegramAuthUrl(res.url);
-          const tokenMatch = res.url.match(/start=([^&]+)/);
-          setTelegramConnectToken(tokenMatch?.[1] ?? "");
-          toast.success(
-            "Выберите удобный способ подключения в открывшемся окне",
-          );
-        } else {
-          toast.error("Не удалось получить ссылку для подключения");
-        }
-      },
-      onError: () => {
-        setTelegramAuthUrl("");
-        setTelegramConnectToken("");
-        toast.error("Ошибка при создании ссылки для Telegram");
-      },
-    }),
-  );
-
-  const disconnectTelegramMutation = useMutation(
-    orpc.users.disconnectTelegram.mutationOptions({
-      onSuccess: () => {
-        setForm((f) => ({ ...f, telegramChatId: "" }));
-        toast.success("Telegram отвязан");
-      },
-      onError: () => toast.error("Ошибка при отвязке Telegram"),
-    }),
-  );
-
-  const updateEmailMutation = useMutation(orpc.users.updateEmailSettings.mutationOptions());
-
-  const updateTelegramMutation = useMutation(orpc.users.updateTelegramSettings.mutationOptions());
-
-  const updateMaxMutation = useMutation(orpc.users.updateMaxSettings.mutationOptions());
-
-  const updateReportParamsMutation = useMutation(
-    orpc.users.updateReportParamsSettings.mutationOptions(),
-  );
-
-  const updateReportManagedUsersMutation = useMutation(
-    orpc.users.updateReportManagedUsersSettings.mutationOptions(),
-  );
-
-  const sendTestTelegramTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sendTestTelegramMessageRef = useRef("");
-  const sendTestEmailTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sendTestEmailMessageRef = useRef("");
-  const saveOperationKeyRef = useRef("");
-  const [isSavingCombined, setIsSavingCombined] = useState(false);
-
-  const sendTestMutation = useMutation(
-    orpc.reports.sendTestTelegram.mutationOptions({
-      onSuccess: (_, variables) => {
-        const reportType = variables.reportType;
-        const reportTypeLabel = getReportTypeLabel(reportType);
-        toast.success(`${reportTypeLabel} отчёт отправлен в Telegram`);
-        const scheduledMsg = `${reportTypeLabel} отчёт отправлен`;
-        setSendTestMessage(scheduledMsg);
-        sendTestTelegramMessageRef.current = scheduledMsg;
-        if (sendTestTelegramTimeoutRef.current != null)
-          clearTimeout(sendTestTelegramTimeoutRef.current);
-        sendTestTelegramTimeoutRef.current = setTimeout(() => {
-          if (sendTestTelegramMessageRef.current === scheduledMsg) {
-            setSendTestMessage("");
-            sendTestTelegramMessageRef.current = "";
-          }
-        }, 4000);
-      },
-      onError: (err) => {
-        const msg = err instanceof Error ? err.message : "Не удалось отправить отчёт";
-        toast.error(msg);
-      },
-    }),
-  );
-
-  const [sendTestMessage, setSendTestMessage] = useState("");
-  const [sendTestEmailMessage, setSendTestEmailMessage] = useState("");
-
-  const sendTestEmailMutation = useMutation(
-    orpc.reports.sendTestEmail.mutationOptions({
-      onSuccess: (_, variables) => {
-        const reportTypeLabel = getReportTypeLabel(variables.reportType);
-        const msg = `${reportTypeLabel} отчёт отправлен на email`;
-        toast.success(msg);
-        setSendTestEmailMessage(msg);
-        sendTestEmailMessageRef.current = msg;
-        if (sendTestEmailTimeoutRef.current != null) clearTimeout(sendTestEmailTimeoutRef.current);
-        sendTestEmailTimeoutRef.current = setTimeout(() => {
-          if (sendTestEmailMessageRef.current === msg) {
-            setSendTestEmailMessage("");
-            sendTestEmailMessageRef.current = "";
-          }
-        }, 4000);
-      },
-      onError: (err) => {
-        const msg = err instanceof Error ? err.message : "Не удалось отправить отчёт";
-        toast.error(msg);
-      },
-    }),
-  );
-
-  const handleSendTest = (reportType: ReportType) => {
-    sendTestMutation.mutate({ reportType });
-  };
-  const handleSendTestEmail = (reportType: ReportType) => {
-    sendTestEmailMutation.mutate({ reportType });
-  };
-
-  const handleTelegramConnect = () => {
-    telegramAuthUrlMutation.mutate({ user_id: userId });
-  };
-
-  const handleTelegramDisconnect = () => {
-    disconnectTelegramMutation.mutate({ user_id: userId });
-  };
-
-  const performUpdates = async ({
-    run,
-    successMessage,
-    errorMessage,
-    invalidateScheduleAfter = false,
-  }: {
-    run: () => Promise<void>;
-    successMessage: string;
-    errorMessage: string;
-    invalidateScheduleAfter?: boolean;
-  }) => {
-    const operationKey =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `${Date.now()}`;
-    saveOperationKeyRef.current = operationKey;
-    setIsSavingCombined(true);
-    try {
-      await run();
-      toast.success(successMessage);
-      invalidateUser();
-      if (invalidateScheduleAfter) invalidateSchedule();
-    } catch (err) {
-      handleMutationError(err, errorMessage);
-    } finally {
-      if (saveOperationKeyRef.current === operationKey) {
-        setIsSavingCombined(false);
-      }
-    }
-  };
+  const {
+    telegramAuthUrl,
+    telegramConnectToken,
+    telegramBotUsername,
+    sendTestMessage,
+    sendTestEmailMessage,
+    isSavingCombined,
+    isSavingAny,
+    telegramAuthUrlMutation,
+    disconnectTelegramMutation,
+    updateEmailMutation,
+    updateTelegramMutation,
+    updateMaxMutation,
+    updateReportManagedUsersMutation,
+    sendTestMutation,
+    sendTestEmailMutation,
+    handleTelegramConnect,
+    handleTelegramDisconnect,
+    handleSendTest,
+    handleSendTestEmail,
+    performUpdates,
+  } = useReportSettingsMutations({ user, setForm });
 
   const handleSaveEmail = async () => {
     const email = form.email.trim();
@@ -268,27 +96,25 @@ export default function ReportSettingsFormBody({
       errorMessage: "Не удалось сохранить настройки Telegram",
       invalidateScheduleAfter: isAdmin,
       run: async () => {
-        await Promise.all([
-          updateTelegramMutation.mutateAsync({
-            user_id: userId,
-            data: {
-              telegramDailyReport: form.telegramDailyReport,
-              telegramWeeklyReport: form.telegramWeeklyReport,
-              telegramMonthlyReport: form.telegramMonthlyReport,
-              telegramSkipWeekends: form.telegramSkipWeekends,
-              telegramChatId: telegramChatId ? telegramChatId : null,
-              ...(isAdmin
-                ? {
-                    reportDailyTime: form.reportDailyTime,
-                    reportWeeklyDay,
-                    reportWeeklyTime: form.reportWeeklyTime,
-                    reportMonthlyDay: form.reportMonthlyDay,
-                    reportMonthlyTime: form.reportMonthlyTime,
-                  }
-                : {}),
-            },
-          }),
-        ]);
+        await updateTelegramMutation.mutateAsync({
+          user_id: userId,
+          data: {
+            telegramDailyReport: form.telegramDailyReport,
+            telegramWeeklyReport: form.telegramWeeklyReport,
+            telegramMonthlyReport: form.telegramMonthlyReport,
+            telegramSkipWeekends: form.telegramSkipWeekends,
+            telegramChatId: telegramChatId ? telegramChatId : null,
+            ...(isAdmin
+              ? {
+                  reportDailyTime: form.reportDailyTime,
+                  reportWeeklyDay,
+                  reportWeeklyTime: form.reportWeeklyTime,
+                  reportMonthlyDay: form.reportMonthlyDay,
+                  reportMonthlyTime: form.reportMonthlyTime,
+                }
+              : {}),
+          },
+        });
       },
     });
   };
@@ -329,29 +155,6 @@ export default function ReportSettingsFormBody({
     });
   };
 
-  const toNonNegInt = (value: string) => {
-    const n = Number(value);
-    if (!Number.isFinite(n) || Number.isNaN(n)) return 0;
-    return Math.max(0, Math.trunc(n));
-  };
-
-  const handleSaveParams = async () => {
-    await performUpdates({
-      successMessage: "Параметры отчетов сохранены",
-      errorMessage: "Не удалось сохранить параметры отчетов",
-      run: async () => {
-        await updateReportParamsMutation.mutateAsync({
-          user_id: userId,
-          data: {
-            kpiBaseSalary: toNonNegInt(form.kpiBaseSalary),
-            kpiTargetBonus: toNonNegInt(form.kpiTargetBonus),
-            kpiTargetTalkTimeMinutes: toNonNegInt(form.kpiTargetTalkTimeMinutes),
-          },
-        });
-      },
-    });
-  };
-
   const handleSaveManagedUsers = async () => {
     await performUpdates({
       successMessage: "Сводные менеджеры сохранены",
@@ -363,6 +166,61 @@ export default function ReportSettingsFormBody({
             reportManagedUserIds: form.reportManagedUserIds ?? [],
           },
         });
+      },
+    });
+  };
+
+  const handleSaveAll = async () => {
+    await performUpdates({
+      successMessage: "Настройки отчётов сохранены",
+      errorMessage: "Не удалось сохранить настройки отчётов",
+      run: async () => {
+        const tasks: Promise<unknown>[] = [];
+        tasks.push(
+          updateEmailMutation.mutateAsync({
+            user_id: userId,
+            data: {
+              email: form.email,
+              emailDaily: form.emailDaily,
+              emailWeekly: form.emailWeekly,
+              emailMonthly: form.emailMonthly,
+            },
+          }),
+        );
+        tasks.push(
+          updateTelegramMutation.mutateAsync({
+            user_id: userId,
+            data: {
+              telegramChatId: form.telegramChatId,
+              telegramDaily: form.telegramDaily,
+              telegramWeekly: form.telegramWeekly,
+              telegramMonthly: form.telegramMonthly,
+            },
+          }),
+        );
+        tasks.push(
+          updateMaxMutation.mutateAsync({
+            user_id: userId,
+            data: {
+              maxChatId: form.maxChatId,
+              maxDaily: form.maxDaily,
+              maxWeekly: form.maxWeekly,
+              maxMonthly: form.maxMonthly,
+              maxManagerReport: form.maxManagerReport,
+            },
+          }),
+        );
+        if (isAdmin) {
+          tasks.push(
+            updateReportManagedUsersMutation.mutateAsync({
+              user_id: userId,
+              data: {
+                reportManagedUserIds: form.reportManagedUserIds ?? [],
+              },
+            }),
+          );
+        }
+        await Promise.all(tasks);
       },
     });
   };
@@ -403,7 +261,7 @@ export default function ReportSettingsFormBody({
             sendTestReportType={null}
             sendTestMessage={sendTestMessage}
             telegramAuthUrl={telegramAuthUrl}
-            telegramBotUsername={telegramAuthUrl ? telegramAuthUrl.replace("https://t.me/", "").split("?")[0] : undefined}
+            telegramBotUsername={telegramBotUsername}
             telegramConnectToken={telegramConnectToken}
           />
           <MaxReportSection
@@ -412,12 +270,6 @@ export default function ReportSettingsFormBody({
             isAdmin={isAdmin}
             saving={isSavingCombined || updateMaxMutation.isPending}
             onSave={handleSaveMax}
-          />
-          <ReportParamsSection
-            form={form}
-            setForm={setForm}
-            saving={isSavingCombined || updateReportParamsMutation.isPending}
-            onSave={handleSaveParams}
           />
           {isAdmin && (
             <ManagedUsersSection
@@ -430,6 +282,16 @@ export default function ReportSettingsFormBody({
             />
           )}
         </CardContent>
+        <CardFooter className="flex justify-end border-t pt-6">
+          <Button
+            type="button"
+            onClick={handleSaveAll}
+            disabled={isSavingAny}
+            className="w-full sm:w-auto"
+          >
+            {isSavingAny ? "Сохранение…" : "Сохранить все настройки"}
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );

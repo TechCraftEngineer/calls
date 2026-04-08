@@ -165,17 +165,6 @@ export function MaxReportSection({
           </div>
         )}
       </CardContent>
-      <CardFooter className="px-4 pt-0 flex justify-end">
-        <Button
-          type="button"
-          size="sm"
-          onClick={onSave}
-          disabled={saving}
-          className="w-full sm:w-auto"
-        >
-          {saving ? "Сохранение…" : "Сохранить"}
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
