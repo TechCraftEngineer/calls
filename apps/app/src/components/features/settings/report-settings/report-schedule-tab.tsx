@@ -24,6 +24,8 @@ interface ReportScheduleTabProps {
   form: ReportSettingsForm;
   setForm: React.Dispatch<React.SetStateAction<ReportSettingsForm>>;
   isAdmin: boolean;
+  onSave: () => void;
+  saving?: boolean;
 }
 
 const WEEKDAYS = [
@@ -52,7 +54,13 @@ function timeOptionsWithFallback(currentValue: string) {
   return TIME_OPTIONS;
 }
 
-export function ReportScheduleTab({ form, setForm, isAdmin }: ReportScheduleTabProps) {
+export function ReportScheduleTab({
+  form,
+  setForm,
+  isAdmin,
+  onSave,
+  saving,
+}: ReportScheduleTabProps) {
   if (!isAdmin) {
     return (
       <Card>
@@ -188,9 +196,9 @@ export function ReportScheduleTab({ form, setForm, isAdmin }: ReportScheduleTabP
           </div>
 
           <div className="flex justify-end pt-2">
-            <Button size="sm">
+            <Button size="sm" onClick={onSave} disabled={saving}>
               <Save className="h-4 w-4 mr-2" />
-              Сохранить расписание
+              {saving ? "Сохранение..." : "Сохранить расписание"}
             </Button>
           </div>
         </CardContent>
