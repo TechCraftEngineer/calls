@@ -18,14 +18,19 @@ import { InvitationsService } from "./invitations.service";
 import { PbxService } from "./pbx.service";
 
 import { SettingsService } from "./settings.service";
-import { UsersService } from "./users.service";
+import { UsersService } from "./users";
 import { WorkspacesService } from "./workspaces.service";
 
 // Initialize services with dependency injection
 export const callsService = new CallsService(callsRepository, systemRepository);
 export const filesService = new FilesService(filesRepository, systemRepository);
 export const workspacesService = new WorkspacesService(workspacesRepository);
-export const usersService = new UsersService(usersRepository, systemRepository);
+export const usersService = new UsersService(
+  usersRepository,
+  systemRepository,
+  workspacesRepository,
+  userWorkspaceSettingsRepository,
+);
 export const invitationsService = new InvitationsService(
   workspacesService,
   usersService,

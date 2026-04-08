@@ -22,6 +22,7 @@ import { processAudioWithDiarization } from "./gigaam/diarization";
 import { applyLLMMerging } from "./llm-merge";
 import { resolveManagerFromPbx } from "./manager-resolution";
 import { serializeMetadata } from "./metadata";
+import { quickAnsweringMachineCheck } from "./quick-am-check";
 import {
   CallSchema,
   FileSchema,
@@ -153,6 +154,9 @@ export const transcribeCallFn = inngest.createFunction(
         throw new Error(`File validation failed: ${errorDetails}`);
       }
 
+      // Сохраняем длительность файла для последующей проверки
+      const durationSeconds = f.durationSeconds ?? null;
+
       const pipelineResult = await runPipelineAudioPreprocess({
         callId,
         workspaceId: call.workspaceId,
@@ -169,7 +173,10 @@ export const transcribeCallFn = inngest.createFunction(
         throw new Error(`Pipeline validation failed: ${errorDetails}`);
       }
 
-      return pipelineValidation.data;
+      return {
+        ...pipelineValidation.data,
+        durationSeconds,
+      };
     });
 
     // Объединяем download и ASR в один шаг для оптимизации
@@ -179,6 +186,38 @@ export const transcribeCallFn = inngest.createFunction(
 
       // Загружаем аудио файл
       const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
+
+      // === БЫСТРАЯ ПРОВЕРКА НА АВТООТВЕТЧИК ДЛЯ ВСЕХ ЗВОНКОВ ===
+      // Проверяем первые 30 секунд перед запуском дорогих операций
+      // Это экономит ресурсы на автоответчиках любой длительности
+      logger.info("Запуск быстрой проверки на автоответчик (первые 30 секунд)", {
+        callId,
+        durationSeconds: pipelineAudio.durationSeconds,
+      });
+
+      const quickCheck = await quickAnsweringMachineCheck(buffer, filename);
+
+      if (quickCheck.isAnsweringMachine) {
+        logger.info("Быстрая проверка определила автоответчик", {
+          callId,
+          confidence: quickCheck.confidence,
+          transcriptPreview: quickCheck.transcript.substring(0, 100),
+        });
+
+        // Это автоответчик - возвращаем результат быстрой проверки
+        // Пропускаем дорогие операции (diarization, speaker identification, evaluation)
+        return {
+          isAnsweringMachine: true as const,
+          quickTranscript: quickCheck.transcript,
+          processingTimeMs: Date.now() - asrStartTime,
+          fromQuickCheck: true as const,
+        };
+      }
+
+      logger.info("Быстрая проверка: не автоответчик, продолжаем полный pipeline", {
+        callId,
+        transcriptPreview: quickCheck.transcript.substring(0, 100),
+      });
 
       // Параллельный запуск двух ASR с fallback механизмом
       const [nonDiarizedSettled, diarizedSettled] = await Promise.allSettled([
@@ -230,8 +269,88 @@ export const transcribeCallFn = inngest.createFunction(
         nonDiarized: nonDiarizedResult,
         diarized: diarizedResult,
         processingTimeMs,
+        fromQuickCheck: false as const,
+        isAnsweringMachine: false as const,
       };
     });
+
+    // === ОБРАБОТКА БЫСТРОЙ ПРОВЕРКИ ===
+    // Если была быстрая проверка и это автоответчик - используем упрощенный pipeline
+    if (asrResults.fromQuickCheck && asrResults.isAnsweringMachine) {
+      logger.info("Обработка результата быстрой проверки (автоответчик)", {
+        callId,
+        processingTimeMs: asrResults.processingTimeMs,
+      });
+
+      // Сохраняем транскрипт от быстрой проверки
+      await step.run("persist/quick-check-transcript", async () => {
+        await callsService.upsertTranscript({
+          callId,
+          text: asrResults.quickTranscript,
+          rawText: asrResults.quickTranscript,
+          confidence: null,
+          metadata: {
+            asrSource: "gigaam-non-diarized-quick-check",
+            processingTimeMs: asrResults.processingTimeMs,
+            isAnsweringMachine: true,
+            llmMergeApplied: false,
+            llmMergeQuality: null,
+            speakerIdentificationApplied: false,
+            fromQuickCheck: true,
+          },
+          summary: null,
+          sentiment: null,
+          title: "Автоответчик / Голосовое меню",
+          callType: "autoanswerer",
+          callTopic: null,
+          customerName: undefined,
+        });
+      });
+
+      // Создаём evaluation что звонок не подлежит анализу
+      await step.run("persist/quick-check-evaluation", async () => {
+        await callsService.addEvaluation({
+          callId,
+          isQualityAnalyzable: false,
+          notAnalyzableReason: "autoanswerer",
+          valueScore: null,
+          valueExplanation:
+            "Автоответчик или голосовое меню (определено по быстрой проверке первых 30 секунд) - оценка качества менеджера не применима",
+          managerScore: null,
+          managerFeedback: "Звонок не подлежит анализу (автоответчик)",
+        });
+        logger.info("Создана оценка для автоответчика (быстрая проверка)", { callId });
+      });
+
+      logger.info("Обработка автоответчика завершена (быстрая проверка)", {
+        callId,
+        processingTimeMs: asrResults.processingTimeMs,
+        skippedSteps: [
+          "llm/merge-asr",
+          "llm/summarize",
+          "llm/identify-speakers",
+          "call.evaluate.requested",
+        ],
+      });
+
+      return {
+        callId,
+        processingTimeMs: asrResults.processingTimeMs,
+        asrSource: "gigaam-non-diarized-quick-check",
+        textLength: asrResults.quickTranscript.length,
+        customerName: null,
+        llmMergeApplied: false,
+        isAnsweringMachine: true,
+        fromQuickCheck: true,
+      };
+    }
+
+    // === ОБЫЧНАЯ ОБРАБОТКА (не быстрая проверка) ===
+    // Type guard: проверяем что это обычный ASR результат (не быстрая проверка)
+    if (asrResults.fromQuickCheck) {
+      // Этот случай уже обработан выше, но TypeScript нужен guard
+      throw new Error("Unexpected fromQuickCheck after early return");
+    }
 
     // Логирование результатов ASR
     logger.info("ASR results", {

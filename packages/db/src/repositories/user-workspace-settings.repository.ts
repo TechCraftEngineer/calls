@@ -130,11 +130,6 @@ export const userWorkspaceSettingsRepository = {
       minReplicas: 0,
     };
     const defaultReport: ReportSettings = {
-      includeCallSummaries: false,
-      detailed: false,
-      includeAvgValue: false,
-      includeAvgRating: false,
-      kpi: false,
       managedUserIds: [],
     };
     const defaultKpi: KpiSettings = {

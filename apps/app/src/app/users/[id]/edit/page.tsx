@@ -135,17 +135,6 @@ export default function UserEditPage() {
     }),
   );
 
-  const updateReportMutation = useMutation(
-    orpc.users.updateReportSettings.mutationOptions({
-      onSuccess: () => {
-        setBlockState("reports", "success");
-        clearBlockChanges("reports");
-        invalidateUser();
-      },
-      onError: () => setBlockState("reports", "error"),
-    }),
-  );
-
   const updateKpiMutation = useMutation(
     orpc.users.updateKpiSettings.mutationOptions({
       onSuccess: () => {
@@ -243,19 +232,6 @@ export default function UserEditPage() {
         maxChatId: form.maxChatId,
         maxDailyReport: form.maxDailyReport,
         maxManagerReport: form.maxManagerReport,
-      },
-    });
-  };
-
-  const handleSaveReportSettings = () => {
-    if (!form) return;
-    setBlockState("reports", "saving");
-    updateReportMutation.mutate({
-      user_id: userId,
-      data: {
-        reportIncludeCallSummaries: form.reportIncludeCallSummaries,
-        reportDetailed: form.reportDetailed,
-        reportIncludeAvgRating: form.reportIncludeAvgRating,
       },
     });
   };
@@ -395,24 +371,6 @@ export default function UserEditPage() {
             isSaving={getBlockState("max") === "saving"}
             state={getBlockState("max")}
             onSave={handleSaveMaxSettings}
-            disabled={false}
-          />
-
-          <CheckboxBlock
-            title="Параметры отчетов"
-            form={form}
-            setForm={setForm}
-            fields={["reportIncludeCallSummaries", "reportDetailed", "reportIncludeAvgRating"]}
-            labels={[
-              "Включать тексты звонков",
-              "Детальный отчет",
-              "Включать среднюю длительность",
-              "Включать среднюю оценку",
-            ]}
-            hasChanges={hasBlockChanges("reports", form)}
-            isSaving={getBlockState("reports") === "saving"}
-            state={getBlockState("reports")}
-            onSave={handleSaveReportSettings}
             disabled={false}
           />
 

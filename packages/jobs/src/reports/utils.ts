@@ -5,10 +5,8 @@
 import { z } from "zod";
 
 // Zod schema для валидации параметров отчета
-const StatsValueSchema = z.union([z.number(), z.string()]);
-
 const ReportParamsSchema = z.object({
-  stats: z.record(z.string(), StatsValueSchema),
+  stats: z.record(z.string(), z.any()),
   dateFrom: z.date(),
   dateTo: z.date(),
   reportType: z.enum(["daily", "weekly", "monthly"]),

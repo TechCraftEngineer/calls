@@ -22,10 +22,6 @@ export interface ReportSettingsForm {
   kpiBaseSalary: string;
   kpiTargetBonus: string;
   kpiTargetTalkTimeMinutes: string;
-  reportDetailed: boolean;
-  reportIncludeCallSummaries: boolean;
-  reportIncludeAvgRating: boolean;
-  reportIncludeAvgValue: boolean;
 }
 
 export interface ReportSettingsUserOption {

@@ -1,7 +1,12 @@
-import { callsService, type ManagerStatsRow, settingsService, usersService, workspacesService } from "@calls/db";
+import {
+  callsService,
+  type ManagerStatsRow,
+  settingsService,
+  usersService,
+  workspacesService,
+} from "@calls/db";
 import { type ManagerStats, ReportEmail, sendEmail } from "@calls/emails";
 import { formatReportSubject } from "@calls/shared";
-import { format } from "date-fns";
 import { ORPCError } from "@orpc/server";
 import { subDays, subMonths, subWeeks } from "date-fns";
 import { z } from "zod";
@@ -130,10 +135,11 @@ export const sendTestEmail = workspaceProcedure
       });
     }
     const stats = parseResult.data as Record<string, ManagerStatsRow>;
-    const enrichedStats = (await callsService.enrichStatsWithKpi(stats, workspaceId, reportType)) as Record<
-      string,
-      ManagerStats
-    >;
+    const enrichedStats = (await callsService.enrichStatsWithKpi(
+      stats,
+      workspaceId,
+      reportType,
+    )) as Record<string, ManagerStats>;
 
     // Определяем является ли пользователь админом для менеджерского отчета
     const isManagerReport = userForEdit.role === "owner" || userForEdit.role === "admin";

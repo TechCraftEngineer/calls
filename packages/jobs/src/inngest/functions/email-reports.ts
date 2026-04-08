@@ -15,7 +15,7 @@ import {
 } from "@calls/db";
 import { type ManagerStats, ReportEmail, sendEmail } from "@calls/emails";
 import { formatReportSubject } from "@calls/shared";
-import { format, subMonths } from "date-fns";
+import { subMonths } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { inngest } from "../client";
 
@@ -196,7 +196,8 @@ export const emailReportsFn = inngest.createFunction(
                 dateFrom: dateFromDb,
                 dateTo: dateToDb,
                 internalNumbers: r.internalNumbers ?? undefined,
-                excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
+                excludePhoneNumbers:
+                  excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
                 maxScore: 3,
               });
             }
@@ -210,7 +211,6 @@ export const emailReportsFn = inngest.createFunction(
                   reportType,
                   username: undefined,
                   stats: enrichedStats,
-                  includeKpi: r.reportSettings.kpi,
                   dateFrom,
                   dateTo,
                   isManagerReport: r.isManagerReport,

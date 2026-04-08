@@ -9,7 +9,6 @@ interface KpiCalendarProps {
   data: DailyKpiRow[];
   loading: boolean;
   startDate: string;
-  endDate: string;
   onDateClick?: (date: string) => void;
   selectedDate?: string | null;
 }
@@ -58,7 +57,10 @@ function createDataMap(data: DailyKpiRow[]): Map<string, DailyKpiRow> {
 }
 
 // Получить массив дней для календарной сетки
-function getCalendarDays(year: number, month: number): Array<{
+function getCalendarDays(
+  year: number,
+  month: number,
+): Array<{
   date: Date;
   dateStr: string;
   isCurrentMonth: boolean;
@@ -179,7 +181,6 @@ export const KpiCalendar = React.memo(function KpiCalendar({
   data,
   loading,
   startDate,
-  endDate,
   onDateClick,
   selectedDate,
 }: KpiCalendarProps) {
@@ -207,7 +208,7 @@ export const KpiCalendar = React.memo(function KpiCalendar({
   // Дни для отображения
   const days = React.useMemo(
     () => getCalendarDays(currentYear, currentMonth),
-    [currentYear, currentMonth]
+    [currentYear, currentMonth],
   );
 
   // Навигация
@@ -280,10 +281,7 @@ export const KpiCalendar = React.memo(function KpiCalendar({
       {/* Заголовки дней недели */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {WEEKDAYS.map((day) => (
-          <div
-            key={day}
-            className="text-center text-sm font-medium text-muted-foreground py-2"
-          >
+          <div key={day} className="text-center text-sm font-medium text-muted-foreground py-2">
             {day}
           </div>
         ))}
@@ -323,7 +321,7 @@ export const KpiCalendar = React.memo(function KpiCalendar({
                 className={cn(
                   "text-sm font-semibold",
                   day.isCurrentMonth ? "text-foreground" : "text-muted-foreground/60",
-                  day.isToday && "text-primary"
+                  day.isToday && "text-primary",
                 )}
               >
                 {day.date.getDate()}
@@ -334,11 +332,16 @@ export const KpiCalendar = React.memo(function KpiCalendar({
                 <div className="flex-1 flex flex-col justify-end gap-1 min-w-0">
                   {/* Индикатор выполнения */}
                   <div className="flex items-center gap-1">
-                    <div className={cn("w-2 h-2 rounded-full", getCompletionColor(completionPercentage))} />
+                    <div
+                      className={cn(
+                        "w-2 h-2 rounded-full",
+                        getCompletionColor(completionPercentage),
+                      )}
+                    />
                     <span
                       className={cn(
                         "text-xs font-bold truncate",
-                        getCompletionTextColor(completionPercentage)
+                        getCompletionTextColor(completionPercentage),
                       )}
                     >
                       {completionPercentage}%
@@ -363,7 +366,7 @@ export const KpiCalendar = React.memo(function KpiCalendar({
                 <div
                   className={cn(
                     "absolute top-2 right-2 w-2 h-2 rounded-full",
-                    getCompletionColor(completionPercentage)
+                    getCompletionColor(completionPercentage),
                   )}
                 />
               )}
@@ -380,7 +383,7 @@ export const KpiCalendar = React.memo(function KpiCalendar({
                 className={cn(
                   "text-sm font-semibold",
                   day.isCurrentMonth ? "text-foreground" : "text-muted-foreground/60",
-                  day.isToday && "text-primary"
+                  day.isToday && "text-primary",
                 )}
               >
                 {day.date.getDate()}
@@ -391,11 +394,16 @@ export const KpiCalendar = React.memo(function KpiCalendar({
                 <div className="flex-1 flex flex-col justify-end gap-1 min-w-0">
                   {/* Индикатор выполнения */}
                   <div className="flex items-center gap-1">
-                    <div className={cn("w-2 h-2 rounded-full", getCompletionColor(completionPercentage))} />
+                    <div
+                      className={cn(
+                        "w-2 h-2 rounded-full",
+                        getCompletionColor(completionPercentage),
+                      )}
+                    />
                     <span
                       className={cn(
                         "text-xs font-bold truncate",
-                        getCompletionTextColor(completionPercentage)
+                        getCompletionTextColor(completionPercentage),
                       )}
                     >
                       {completionPercentage}%
@@ -420,7 +428,7 @@ export const KpiCalendar = React.memo(function KpiCalendar({
                 <div
                   className={cn(
                     "absolute top-2 right-2 w-2 h-2 rounded-full",
-                    getCompletionColor(completionPercentage)
+                    getCompletionColor(completionPercentage),
                   )}
                 />
               )}

@@ -58,12 +58,6 @@ function buildEditForm(u: WorkspaceMemberUser): EditUserForm {
     emailMonthlyReport: toBool(u.emailMonthlyReport ?? ext.email_monthly_report),
     telegramWeeklyReport: toBool(u.telegramWeeklyReport ?? ext.telegram_weekly_report),
     telegramMonthlyReport: toBool(u.telegramMonthlyReport ?? ext.telegram_monthly_report),
-    reportIncludeCallSummaries: toBool(
-      u.reportIncludeCallSummaries ?? ext.report_include_call_summaries,
-    ),
-    reportDetailed: toBool(u.reportDetailed ?? ext.report_detailed),
-    reportIncludeAvgRating: toBool(u.reportIncludeAvgRating ?? ext.report_include_avg_rating),
-    reportIncludeKpi: toBool(u.reportIncludeKpi ?? ext.report_include_kpi),
     kpiBaseSalary: toNum(u.kpiBaseSalary ?? ext.kpi_base_salary),
     kpiTargetBonus: toNum(u.kpiTargetBonus ?? ext.kpi_target_bonus),
     kpiTargetTalkTimeMinutes: toNum(u.kpiTargetTalkTimeMinutes ?? ext.kpi_target_talk_time_minutes),

@@ -158,7 +158,7 @@ export {
   getTelegramReportRecipients,
   getWorkspaceIdsWithTelegramReportRecipients,
 } from "./services/telegram-reports.service";
-export { UsersService } from "./services/users.service";
+export { UsersService } from "./services/users";
 // Types
 export type {
   CallWithTranscript,

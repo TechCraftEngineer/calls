@@ -88,13 +88,6 @@ export const updateMaxSettingsSchema = z.object({
   maxManagerReport: z.boolean().optional(),
 });
 
-export const updateReportSettingsSchema = z.object({
-  reportDetailed: z.boolean().optional(),
-  reportIncludeCallSummaries: z.boolean().optional(),
-  reportIncludeAvgRating: z.boolean().optional(),
-  reportIncludeKpi: z.boolean().optional(),
-});
-
 export const updateKpiSettingsSchema = z.object({
   kpiBaseSalary: z.number().min(0, "Значение не может быть отрицательным").optional(),
   kpiTargetBonus: z.number().min(0, "Значение не может быть отрицательным").optional(),

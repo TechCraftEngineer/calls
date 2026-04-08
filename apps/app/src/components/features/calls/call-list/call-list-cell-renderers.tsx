@@ -60,23 +60,18 @@ export function renderDirectionCell(call: CallWithDetails["call"]) {
   return <span className={`op-badge ${directionClass}`}>{directionLabel}</span>;
 }
 
-function CallTooltipCell({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
+function CallTooltipCell({ title, children }: { title: string; children: ReactNode }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span
+        <button
+          type="button"
           tabIndex={0}
-          role="button"
           className="block min-w-0 max-w-full truncate cursor-default text-[#555] font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={title}
         >
           {children}
-        </span>
+        </button>
       </TooltipTrigger>
       <TooltipContent
         side="top"
@@ -197,7 +192,8 @@ export function renderStatusCell(call: CallWithDetails["call"]) {
 
   // Статусы из БД: missed, answered, voicemail, failed, technical_error
   // Если статус не заполнен (null/undefined), вычисляем по duration (для обратной совместимости)
-  const computedStatus = status ?? ((duration === 0 && call.direction === "inbound") ? "missed" : "answered");
+  const computedStatus =
+    status ?? (duration === 0 && call.direction === "inbound" ? "missed" : "answered");
 
   const statusConfig: Record<string, { label: string; className: string }> = {
     missed: { label: "ПРОПУЩЕН", className: "badge-red-op" },
@@ -208,13 +204,12 @@ export function renderStatusCell(call: CallWithDetails["call"]) {
   };
 
   // Для неизвестных статусов возвращаем явный unknown badge
-  const config = statusConfig[computedStatus] ?? { label: "НЕИЗВЕСТНО", className: "badge-gray-op" };
+  const config = statusConfig[computedStatus] ?? {
+    label: "НЕИЗВЕСТНО",
+    className: "badge-gray-op",
+  };
 
-  return (
-    <span className={`op-badge ${config.className}`}>
-      {config.label}
-    </span>
-  );
+  return <span className={`op-badge ${config.className}`}>{config.label}</span>;
 }
 
 export function renderDateCell(call: CallWithDetails["call"]) {
@@ -233,13 +228,17 @@ export function renderScoreCell(evaluation: CallWithDetails["evaluation"]) {
 
   // Аномальное значение score === 0 - логируем для диагностики
   if (score === 0) {
-    console.warn(`[renderScoreCell] Обнаружено аномальное значение score=0 для evaluation id=${evaluation?.id ?? "unknown"}`);
+    console.warn(
+      `[renderScoreCell] Обнаружено аномальное значение score=0 для evaluation id=${evaluation?.id ?? "unknown"}`,
+    );
     return (
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="op-tooltip flex items-center">
             <Rating rating={0} size="sm" aria-label="Оценка: 0 звезд" />
-            <span className="ml-1 text-xs text-amber-600" aria-hidden="true">⚠️</span>
+            <span className="ml-1 text-xs text-amber-600" aria-hidden="true">
+              ⚠️
+            </span>
             <span className="sr-only">Аномальное значение оценки</span>
           </div>
         </TooltipTrigger>

@@ -67,29 +67,6 @@ export function ReportSettingsSection({ form, onFormChange }: ReportSettingsSect
         </div>
       </div>
 
-      {/* Параметры отчетов */}
-      <div className="mb-4 p-4 bg-[#f5f7fa] rounded-lg">
-        <h3 className="m-0 mb-3 text-sm font-bold">Параметры отчетов</h3>
-        <div className="flex flex-col gap-2">
-          {(
-            [
-              ["reportDetailed", "Подробный отчет (доп. метрики)"],
-              ["reportIncludeCallSummaries", "Включать ИИ-саммари звонков (Email)"],
-              ["reportIncludeAvgRating", "Средняя оценка качества"],
-              ["reportIncludeKpi", "Включать KPI данные (оклад, бонус)"],
-            ] as const
-          ).map(([key, label]) => (
-            <label key={key} className="flex items-center gap-2 text-[13px] cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form[key]}
-                onChange={(e) => onFormChange({ [key]: e.target.checked })}
-              />
-              {label}
-            </label>
-          ))}
-        </div>
-      </div>
     </>
   );
 }

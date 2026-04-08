@@ -2,13 +2,12 @@
 
 import { Card, CardContent, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger } from "@calls/ui";
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock, FileText, Mail } from "lucide-react";
+import { Clock, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import type { User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 import { ReportChannelsTab } from "./report-channels-tab";
-import { ReportContentTab } from "./report-content-tab";
 import { ReportScheduleTab } from "./report-schedule-tab";
 import type { ReportSettingsForm } from "./report-settings-types";
 
@@ -29,10 +28,6 @@ interface UserSettingsData {
   maxChatId?: string;
   maxDailyReport?: boolean;
   maxManagerReport?: boolean;
-  reportIncludeCallSummaries?: boolean;
-  reportDetailed?: boolean;
-  reportIncludeAvgValue?: boolean;
-  reportIncludeAvgRating?: boolean;
   kpiBaseSalary?: number;
   kpiTargetBonus?: number;
   kpiTargetTalkTimeMinutes?: number;
@@ -88,10 +83,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     telegramWeeklyReport: false,
     telegramMonthlyReport: false,
     telegramSkipWeekends: false,
-    reportIncludeCallSummaries: false,
-    reportDetailed: false,
-    reportIncludeAvgRating: false,
-    reportIncludeAvgValue: false,
     reportDailyTime: "18:00",
     reportWeeklyDay: "fri",
     reportWeeklyTime: "18:10",
@@ -120,10 +111,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       telegramWeeklyReport: d.telegramWeeklyReport ?? false,
       telegramMonthlyReport: d.telegramMonthlyReport ?? false,
       telegramSkipWeekends: d.telegramSkipWeekends ?? false,
-      reportIncludeCallSummaries: d.reportIncludeCallSummaries ?? false,
-      reportDetailed: d.reportDetailed ?? false,
-      reportIncludeAvgValue: d.reportIncludeAvgValue ?? false,
-      reportIncludeAvgRating: d.reportIncludeAvgRating ?? false,
       reportManagedUserIds: d.reportManagedUserIds ?? [],
       maxChatId: d.maxChatId ?? "",
       maxDailyReport: d.maxDailyReport ?? false,
@@ -183,10 +170,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
           <Clock className="h-4 w-4" />
           Расписание
         </TabsTrigger>
-        <TabsTrigger value="content" className={TAB_STYLE}>
-          <FileText className="h-4 w-4" />
-          Содержание
-        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="channels" className="space-y-6">
@@ -214,9 +197,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         />
       </TabsContent>
 
-      <TabsContent value="content" className="space-y-6">
-        <ReportContentTab form={form} setForm={setForm} />
-      </TabsContent>
     </Tabs>
   );
 }
