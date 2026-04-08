@@ -10,7 +10,7 @@ const updateEvaluationSettingsSchema = z.object({
   evaluationCustomInstructions: z.string().optional().nullable(),
 });
 
-export const updateEvaluationSettings = workspaceProcedure
+export const updateEvaluationSettings: any = workspaceProcedure
   .input(z.object({ userId: userIdSchema, data: updateEvaluationSettingsSchema }))
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
