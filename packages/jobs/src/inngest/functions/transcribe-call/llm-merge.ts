@@ -5,7 +5,7 @@
  */
 
 import { generateWithAi } from "@calls/ai";
-import { env } from "@calls/config";
+import { env, LLM_CONFIG } from "@calls/config";
 import { Output } from "ai";
 import { z } from "zod";
 import { createLogger } from "../../../logger";
@@ -171,10 +171,9 @@ export async function mergeAsrResultsWithLLM(
       "Создай идеальный результат с точным русским текстом и правильным разделением по говорящим.",
     prompt,
     temperature: 0.1,
-    maxOutputTokens: 8000,
     maxRetries: 2,
-    timeout: 600_000,
-    abortSignal: AbortSignal.timeout(600_000),
+    timeout: LLM_CONFIG.MERGE_TIMEOUT_MS,
+    abortSignal: AbortSignal.timeout(LLM_CONFIG.MERGE_TIMEOUT_MS),
     output: Output.object({
       schema: MergedOutputSchema,
     }),

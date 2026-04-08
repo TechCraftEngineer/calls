@@ -7,6 +7,7 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
+import { LLM_CONFIG } from "@calls/config";
 import { createLogger } from "@calls/logger";
 import { Output } from "ai";
 import { z } from "zod";
@@ -171,7 +172,7 @@ export async function summarizeWithLlm(
       system: systemPrompt,
       prompt: `Проанализируй следующий разговор:\n\n${sanitizedText}`,
       output: Output.object({ schema }),
-      abortSignal: AbortSignal.timeout(600_000),
+      abortSignal: AbortSignal.timeout(LLM_CONFIG.SUMMARIZE_TIMEOUT_MS),
       functionId: "asr-summarize",
     });
 

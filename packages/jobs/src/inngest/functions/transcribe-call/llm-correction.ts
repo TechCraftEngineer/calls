@@ -82,7 +82,6 @@ export async function correctTranscriptionWithLLM(
       "исправляя ошибки распознавания речи и улучшая форматирование.",
     prompt,
     temperature: 0.1,
-    maxOutputTokens: 4000,
     output: Output.object({
       schema: CorrectionOutputSchema,
     }),

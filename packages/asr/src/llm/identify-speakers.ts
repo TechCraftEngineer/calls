@@ -4,6 +4,7 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
+import { LLM_CONFIG } from "@calls/config";
 import { createLogger } from "@calls/logger";
 import { Output } from "ai";
 import { z } from "zod";
@@ -153,7 +154,7 @@ ${analysisText}
         output: Output.object({ schema }),
         temperature: 0.2,
         maxRetries: 2,
-        abortSignal: AbortSignal.timeout(600_000),
+        abortSignal: AbortSignal.timeout(LLM_CONFIG.SPEAKER_IDENTIFICATION_TIMEOUT_MS),
         functionId: "asr-identify-speakers",
       });
     } catch (primaryError) {
@@ -170,7 +171,7 @@ ${analysisText}
         output: Output.object({ schema }),
         temperature: 0.1,
         maxRetries: 0,
-        abortSignal: AbortSignal.timeout(600_000),
+        abortSignal: AbortSignal.timeout(LLM_CONFIG.SPEAKER_IDENTIFICATION_TIMEOUT_MS),
         functionId: "asr-identify-speakers-fallback",
       });
     }

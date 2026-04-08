@@ -4,6 +4,7 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
+import { LLM_CONFIG } from "@calls/config";
 import { createLogger } from "@calls/logger";
 
 const logger = createLogger("asr-merge");
@@ -75,7 +76,7 @@ ${transcriptBlocks}
 --- Итоговый объединённый транскрипт ---`,
       temperature: 0.2,
       maxRetries: 2,
-      abortSignal: AbortSignal.timeout(600_000),
+      abortSignal: AbortSignal.timeout(LLM_CONFIG.MERGE_TIMEOUT_MS),
       functionId: "asr-merge",
     });
 

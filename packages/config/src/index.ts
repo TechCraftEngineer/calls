@@ -1,4 +1,4 @@
-export { APP_CONFIG } from "./constants";
+export { APP_CONFIG, LLM_CONFIG } from "./constants";
 export { env } from "./env";
 
 import { env } from "./env";

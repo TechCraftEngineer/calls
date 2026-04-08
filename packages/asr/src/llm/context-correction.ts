@@ -5,6 +5,7 @@
  */
 
 import { generateWithAi, hasAiProviderConfigured } from "@calls/ai";
+import { LLM_CONFIG } from "@calls/config";
 import { createLogger } from "@calls/logger";
 import { z } from "zod";
 
@@ -73,7 +74,7 @@ ${chunk}
 --- ИСПРАВЛЕННЫЙ ТРАНСКРИПТ ---`,
     temperature: 0.1,
     maxRetries: 2,
-    abortSignal: AbortSignal.timeout(600_000),
+    abortSignal: AbortSignal.timeout(LLM_CONFIG.CORRECTION_TIMEOUT_MS),
     functionId: "asr-context-correction-chunk",
   });
 
@@ -287,7 +288,7 @@ ${normalizedText}
 --- ИСПРАВЛЕННЫЙ ТРАНСКРИПТ ---`,
       temperature: 0.1, // Низкая температура для консервативных исправлений
       maxRetries: 2,
-      abortSignal: AbortSignal.timeout(600_000),
+      abortSignal: AbortSignal.timeout(LLM_CONFIG.CORRECTION_TIMEOUT_MS),
       functionId: "asr-context-correction",
     });
 
