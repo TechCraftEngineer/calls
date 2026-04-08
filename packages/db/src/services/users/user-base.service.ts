@@ -90,9 +90,9 @@ export class UserBaseService {
   }
 
   async updateUserPassword(_userId: string, _newPassword: string): Promise<boolean> {
-    // Password updates should be handled through Better Auth API
-    // This method is a placeholder - use auth.api.setPassword or similar Better Auth endpoint
-    throw new Error("Password updates must be done through Better Auth API, not directly through repository");
+    // Обновление пароля должно выполняться через Better Auth API
+    // Этот метод - placeholder, используйте auth.api.setPassword или аналогичный Better Auth endpoint
+    throw new Error("Обновление пароля должно выполняться через Better Auth API, не напрямую через репозиторий");
   }
 
   // Delete operations

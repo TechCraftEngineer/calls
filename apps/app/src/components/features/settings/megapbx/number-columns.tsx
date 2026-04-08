@@ -1,19 +1,10 @@
 "use client";
 
-import {
-  Button,
-  Checkbox,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@calls/ui";
+import { Button, Checkbox } from "@calls/ui";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { PbxNumberItem } from "../types";
+import type { PbxCandidateUser, PbxNumberItem } from "../types";
 import { LinkStatus } from "./link-status";
-
-export type NumberLinkOption = { value: string; label: string };
+import { NumberLinkSelector } from "./number-link-selector";
 
 function normalizePhone(value: string | null | undefined): string {
   if (!value) return "";
@@ -21,7 +12,7 @@ function normalizePhone(value: string | null | undefined): string {
 }
 
 export function getNumberColumns(
-  numberLinkOptions: Record<string, NumberLinkOption[]>,
+  numberLinkOptions: Record<string, PbxCandidateUser[]>,
   selectedLinks: Record<string, string>,
   setSelectedLinks: React.Dispatch<React.SetStateAction<Record<string, string>>>,
   excludedSet: Set<string>,
@@ -110,28 +101,19 @@ export function getNumberColumns(
         const options = numberLinkOptions[number.externalId] ?? [];
 
         return (
-          <div className="flex min-w-65 flex-wrap items-center gap-2">
+          <div className="flex min-w-[280px] flex-wrap items-center gap-2">
             {options.length > 0 && (
-              <Select
+              <NumberLinkSelector
+                options={options}
                 value={selectedLinks[number.externalId] ?? ""}
-                onValueChange={(value) =>
+                onChange={(value) =>
                   setSelectedLinks((prev) => ({
                     ...prev,
                     [number.externalId]: value,
                   }))
                 }
-              >
-                <SelectTrigger className="w-65">
-                  <SelectValue placeholder="Выберите пользователя" />
-                </SelectTrigger>
-                <SelectContent>
-                  {options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Выберите пользователя..."
+              />
             )}
             <Button
               type="button"

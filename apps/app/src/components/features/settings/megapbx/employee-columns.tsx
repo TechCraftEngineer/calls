@@ -1,22 +1,18 @@
 "use client";
 
-import {
-  Badge,
-  Button,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@calls/ui";
+import { Badge, Button } from "@calls/ui";
 import type { ColumnDef } from "@tanstack/react-table";
-import type { PbxEmployeeItem } from "../types";
+import type { PbxCandidateInvitation, PbxCandidateUser, PbxEmployeeItem } from "../types";
+import { EmployeeLinkSelector } from "./employee-link-selector";
 import { LinkStatus } from "./link-status";
 
-export type EmployeeLinkOption = { value: string; label: string };
+export interface EmployeeLinkOptions {
+  users: PbxCandidateUser[];
+  invitations: PbxCandidateInvitation[];
+}
 
 export function getEmployeeColumns(
-  employeeLinkOptions: Record<string, EmployeeLinkOption[]>,
+  employeeLinkOptions: Record<string, EmployeeLinkOptions>,
   selectedLinks: Record<string, string>,
   setSelectedLinks: React.Dispatch<React.SetStateAction<Record<string, string>>>,
   onLink: (input: {
@@ -70,31 +66,27 @@ export function getEmployeeColumns(
       enableSorting: false,
       cell: ({ row }) => {
         const employee = row.original;
-        const options = employeeLinkOptions[employee.externalId] ?? [];
+        const options = employeeLinkOptions[employee.externalId] ?? { users: [], invitations: [] };
+        const hasOptions = options.users.length > 0 || options.invitations.length > 0;
 
         return (
-          <div className="flex min-w-65 flex-wrap items-center gap-2">
-            {options.length > 0 && (
-              <Select
+          <div className="flex min-w-[280px] flex-wrap items-center gap-2">
+            {hasOptions && (
+              <EmployeeLinkSelector
+                options={options}
                 value={selectedLinks[employee.externalId] ?? ""}
-                onValueChange={(value) =>
+                onChange={(value) =>
                   setSelectedLinks((prev) => ({
                     ...prev,
                     [employee.externalId]: value,
                   }))
                 }
-              >
-                <SelectTrigger className="w-65">
-                  <SelectValue placeholder="Выберите связь" />
-                </SelectTrigger>
-                <SelectContent>
-                  {options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                disabled={
+                  linkingEmployeeIds[employee.externalId] ||
+                  unlinkingEmployeeIds[employee.externalId]
+                }
+                placeholder="Выберите пользователя..."
+              />
             )}
             <Button
               type="button"

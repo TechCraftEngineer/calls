@@ -83,16 +83,10 @@ export default function MegaPbxSection({
       Object.fromEntries(
         employees.map((employee) => [
           employee.externalId,
-          [
-            ...employee.candidates.map((candidate) => ({
-              value: `user:${candidate.id}`,
-              label: `${candidate.name || candidate.email} (${candidate.email})`,
-            })),
-            ...employee.invitationCandidates.map((candidate) => ({
-              value: `invite:${candidate.id}`,
-              label: `Инвайт: ${candidate.email}`,
-            })),
-          ],
+          {
+            users: employee.candidates,
+            invitations: employee.invitationCandidates,
+          },
         ]),
       ),
     [employees],
@@ -101,15 +95,7 @@ export default function MegaPbxSection({
   const numberLinkOptions = useMemo(
     () =>
       Object.fromEntries(
-        numbers.map((number) => [
-          number.externalId,
-          [
-            ...number.candidates.map((candidate) => ({
-              value: `user:${candidate.id}`,
-              label: `${candidate.name || candidate.email} (${candidate.email})`,
-            })),
-          ],
-        ]),
+        numbers.map((number) => [number.externalId, number.candidates]),
       ),
     [numbers],
   );

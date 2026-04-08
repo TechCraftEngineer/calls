@@ -9,8 +9,8 @@ import {
 } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
 import { SearchInput } from "@/components/ui/search-input";
-import type { PbxNumberItem } from "../types";
-import { getNumberColumns, type NumberLinkOption } from "./number-columns";
+import type { PbxCandidateUser, PbxNumberItem } from "../types";
+import { getNumberColumns } from "./number-columns";
 
 const normalizePhone = (value: string | null | undefined): string =>
   (value ?? "").replace(/\D/g, "");
@@ -20,7 +20,7 @@ interface NumbersTabProps {
   numbersLoading: boolean;
   numberSearch: string;
   onNumberSearchChange: (value: string) => void;
-  numberLinkOptions: Record<string, NumberLinkOption[]>;
+  numberLinkOptions: Record<string, PbxCandidateUser[]>;
   excludedPhoneNumbers: string[];
   savingExcludedNumbers: boolean;
   onSaveExcludedNumbers: (excludePhoneNumbers: string[]) => Promise<void>;

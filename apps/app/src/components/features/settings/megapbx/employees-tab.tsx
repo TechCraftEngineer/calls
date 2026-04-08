@@ -10,14 +10,14 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { SearchInput } from "@/components/ui/search-input";
 import type { PbxEmployeeItem } from "../types";
-import { type EmployeeLinkOption, getEmployeeColumns } from "./employee-columns";
+import { type EmployeeLinkOptions, getEmployeeColumns } from "./employee-columns";
 
 interface EmployeesTabProps {
   employees: PbxEmployeeItem[];
   employeesLoading: boolean;
   employeeSearch: string;
   onEmployeeSearchChange: (value: string) => void;
-  employeeLinkOptions: Record<string, EmployeeLinkOption[]>;
+  employeeLinkOptions: Record<string, EmployeeLinkOptions>;
   onLink: (input: {
     targetType: "employee";
     targetExternalId: string;

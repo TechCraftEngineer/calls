@@ -48,7 +48,7 @@ function getCompletionTextColor(percentage: number): string {
   return "text-rose-700";
 }
 
-// Memoized day cell content component to eliminate duplication
+// Мемоизированный компонент содержимого ячейки дня
 interface DayCellContentProps {
   day: {
     date: Date;
@@ -103,7 +103,7 @@ const DayCellContent = React.memo(function DayCellContent({
 
           {/* Количество звонков */}
           <div className="flex items-center gap-1 text-xs text-muted-foreground truncate">
-            <Circle className="h-2 w-2 fill-current" />
+            <Circle className="h-2 w-2 fill-current" aria-hidden="true" />
             <span className="truncate">{kpiData.totalCalls} {pluralize(kpiData.totalCalls, 'звонок', 'звонка', 'звонков')}</span>
           </div>
 

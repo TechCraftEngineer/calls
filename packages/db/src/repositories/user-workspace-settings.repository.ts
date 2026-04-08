@@ -236,34 +236,36 @@ export const userWorkspaceSettingsRepository = {
   },
 
   async disconnectTelegram(userId: string): Promise<boolean> {
-    const rows = await db
-      .select()
-      .from(schema.userWorkspaceSettings)
-      .where(eq(schema.userWorkspaceSettings.userId, userId));
+    return await db.transaction(async (tx) => {
+      const rows = await tx
+        .select()
+        .from(schema.userWorkspaceSettings)
+        .where(eq(schema.userWorkspaceSettings.userId, userId));
 
-    for (const row of rows) {
-      const ns = row.notificationSettings as NotificationSettings;
-      if (ns?.telegram?.connectToken) {
-        await db
-          .update(schema.userWorkspaceSettings)
-          .set({
-            notificationSettings: {
-              ...ns,
-              telegram: {
-                ...ns.telegram,
-                connectToken: undefined,
+      for (const row of rows) {
+        const ns = row.notificationSettings as NotificationSettings;
+        if (ns?.telegram?.connectToken) {
+          await tx
+            .update(schema.userWorkspaceSettings)
+            .set({
+              notificationSettings: {
+                ...ns,
+                telegram: {
+                  ...ns.telegram,
+                  connectToken: undefined,
+                },
               },
-            },
-          })
-          .where(
-            and(
-              eq(schema.userWorkspaceSettings.userId, userId),
-              eq(schema.userWorkspaceSettings.workspaceId, row.workspaceId),
-            ),
-          );
+            })
+            .where(
+              and(
+                eq(schema.userWorkspaceSettings.userId, userId),
+                eq(schema.userWorkspaceSettings.workspaceId, row.workspaceId),
+              ),
+            );
+        }
       }
-    }
-    return true;
+      return true;
+    });
   },
 
   async updateEvaluationTemplateForWorkspace(
