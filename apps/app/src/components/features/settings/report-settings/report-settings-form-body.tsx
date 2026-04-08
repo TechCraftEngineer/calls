@@ -181,9 +181,9 @@ export default function ReportSettingsFormBody({
             userId: userId,
             data: {
               email: form.email,
-              emailDaily: form.emailDaily,
-              emailWeekly: form.emailWeekly,
-              emailMonthly: form.emailMonthly,
+              emailDailyReport: form.emailDailyReport,
+              emailWeeklyReport: form.emailWeeklyReport,
+              emailMonthlyReport: form.emailMonthlyReport,
             },
           }),
         );
@@ -192,9 +192,9 @@ export default function ReportSettingsFormBody({
             userId: userId,
             data: {
               telegramChatId: form.telegramChatId,
-              telegramDaily: form.telegramDaily,
-              telegramWeekly: form.telegramWeekly,
-              telegramMonthly: form.telegramMonthly,
+              telegramDailyReport: form.telegramDailyReport,
+              telegramWeeklyReport: form.telegramWeeklyReport,
+              telegramMonthlyReport: form.telegramMonthlyReport,
             },
           }),
         );
@@ -203,9 +203,7 @@ export default function ReportSettingsFormBody({
             userId: userId,
             data: {
               maxChatId: form.maxChatId,
-              maxDaily: form.maxDaily,
-              maxWeekly: form.maxWeekly,
-              maxMonthly: form.maxMonthly,
+              maxDailyReport: form.maxDailyReport,
               maxManagerReport: form.maxManagerReport,
             },
           }),
@@ -236,8 +234,6 @@ export default function ReportSettingsFormBody({
             form={form}
             setForm={setForm}
             isAdmin={isAdmin}
-            saving={isSavingCombined || updateEmailMutation.isPending}
-            onSave={handleSaveEmail}
             onSendTest={handleSendTestEmail}
             sendTestLoading={sendTestEmailMutation.isPending}
             sendTestSuccess={Boolean(sendTestEmailMessage)}
@@ -253,8 +249,6 @@ export default function ReportSettingsFormBody({
             onDisconnect={handleTelegramDisconnect}
             connecting={telegramAuthUrlMutation.isPending}
             disconnecting={disconnectTelegramMutation.isPending}
-            saving={isSavingCombined || updateTelegramMutation.isPending}
-            onSave={handleSaveTelegram}
             onSendTest={handleSendTest}
             sendTestLoading={sendTestMutation.isPending}
             sendTestSuccess={Boolean(sendTestMessage)}
@@ -268,8 +262,6 @@ export default function ReportSettingsFormBody({
             form={form}
             setForm={setForm}
             isAdmin={isAdmin}
-            saving={isSavingCombined || updateMaxMutation.isPending}
-            onSave={handleSaveMax}
           />
           {isAdmin && (
             <ManagedUsersSection
@@ -277,8 +269,6 @@ export default function ReportSettingsFormBody({
               setForm={setForm}
               user={{ id: String(user.id) }}
               allUsers={allUsers}
-              saving={isSavingCombined || updateReportManagedUsersMutation.isPending}
-              onSave={handleSaveManagedUsers}
             />
           )}
         </CardContent>

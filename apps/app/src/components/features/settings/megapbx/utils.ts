@@ -8,8 +8,10 @@ export function generateWebhookSecret(): string {
 
 export function getInitials(name?: string | null): string {
   if (!name) return "?";
-  return name
-    .split(" ")
+  const trimmedName = name.trim();
+  if (!trimmedName) return "?";
+  return trimmedName
+    .split(/\s+/)
     .map((n) => n[0])
     .join("")
     .toUpperCase()

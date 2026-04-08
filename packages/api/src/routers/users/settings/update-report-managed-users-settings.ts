@@ -1,6 +1,6 @@
 import { usersService } from "@calls/db";
-import { ORPCError } from "@orpc/server";
 import { userIdSchema } from "@calls/shared";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../../orpc";
 import { updateReportManagedUsersSettingsSchema } from "../schemas";
@@ -32,7 +32,7 @@ export const updateReportManagedUsersSettings = workspaceProcedure
       await usersService.updateUserReportKpiSettings(input.userId, context.workspaceId, {
         // Флаг "по менеджерам" зависит от наличия выбранных пользователей.
         telegramManagerReport: input.data.reportManagedUserIds.length > 0,
-        reportManagedUserIds: JSON.stringify(input.data.reportManagedUserIds),
+        reportManagedUserIds: input.data.reportManagedUserIds,
       });
 
       await logUpdate(

@@ -1,5 +1,5 @@
 import { toast } from "@calls/ui";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import type { User } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
@@ -26,14 +26,14 @@ interface UseReportSettingsMutationsReturn {
   isSavingAny: boolean;
 
   // Mutation states
-  telegramAuthUrlMutation: ReturnType<typeof useMutation>;
-  disconnectTelegramMutation: ReturnType<typeof useMutation>;
-  updateEmailMutation: ReturnType<typeof useMutation>;
-  updateTelegramMutation: ReturnType<typeof useMutation>;
-  updateMaxMutation: ReturnType<typeof useMutation>;
-  updateReportManagedUsersMutation: ReturnType<typeof useMutation>;
-  sendTestMutation: ReturnType<typeof useMutation>;
-  sendTestEmailMutation: ReturnType<typeof useMutation>;
+  telegramAuthUrlMutation: UseMutationResult<any, Error, any, unknown>;
+  disconnectTelegramMutation: UseMutationResult<any, Error, any, unknown>;
+  updateEmailMutation: UseMutationResult<any, Error, any, unknown>;
+  updateTelegramMutation: UseMutationResult<any, Error, any, unknown>;
+  updateMaxMutation: UseMutationResult<any, Error, any, unknown>;
+  updateReportManagedUsersMutation: UseMutationResult<any, Error, any, unknown>;
+  sendTestMutation: UseMutationResult<any, Error, any, unknown>;
+  sendTestEmailMutation: UseMutationResult<any, Error, any, unknown>;
 
   // Actions
   handleTelegramConnect: () => void;

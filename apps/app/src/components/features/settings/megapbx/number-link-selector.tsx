@@ -5,14 +5,14 @@ import {
   AvatarFallback,
   AvatarImage,
   Button,
+  cn,
   Input,
   Popover,
   PopoverContent,
   PopoverTrigger,
-  cn,
 } from "@calls/ui";
 import { Check, ChevronDown, Search, User } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { PbxCandidateUser } from "../types";
 import { getInitials } from "./utils";
 
@@ -33,6 +33,7 @@ export function NumberLinkSelector({
 }: NumberLinkSelectorProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [focusedIndex, setFocusedIndex] = useState(0);
 
   const selectedUser = useMemo(() => {
     if (!value) return null;
@@ -51,6 +52,41 @@ export function NumberLinkSelector({
     );
   }, [search, options]);
 
+  // Сброс фокуса при изменении фильтра
+  useEffect(() => {
+    setFocusedIndex(0);
+  }, [filteredUsers.length]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const maxIndex = filteredUsers.length - 1;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev < maxIndex ? prev + 1 : 0));
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setFocusedIndex((prev) => (prev > 0 ? prev - 1 : maxIndex));
+        break;
+      case "Home":
+        e.preventDefault();
+        setFocusedIndex(0);
+        break;
+      case "End":
+        e.preventDefault();
+        setFocusedIndex(maxIndex);
+        break;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        if (filteredUsers[focusedIndex]) {
+          handleSelect(filteredUsers[focusedIndex].id);
+        }
+        break;
+    }
+  };
+
   const handleSelect = (id: string) => {
     onChange(`user:${id}`);
     setOpen(false);
@@ -65,10 +101,7 @@ export function NumberLinkSelector({
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
-          className={cn(
-            "w-full justify-between",
-            !selectedUser && "text-muted-foreground",
-          )}
+          className={cn("w-full justify-between", !selectedUser && "text-muted-foreground")}
         >
           {selectedUser ? (
             <span className="flex items-center gap-2 truncate">
@@ -81,9 +114,7 @@ export function NumberLinkSelector({
                   {getInitials(selectedUser.name)}
                 </AvatarFallback>
               </Avatar>
-              <span className="truncate">
-                {selectedUser.name || selectedUser.email}
-              </span>
+              <span className="truncate">{selectedUser.name || selectedUser.email}</span>
             </span>
           ) : (
             <span className="truncate">{placeholder}</span>
@@ -108,6 +139,8 @@ export function NumberLinkSelector({
           className="max-h-[300px] overflow-auto p-1"
           role="listbox"
           aria-label="Пользователи"
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
         >
           {filteredUsers.length > 0 ? (
             <>
@@ -115,7 +148,7 @@ export function NumberLinkSelector({
                 <User className="h-3 w-3" />
                 Пользователи ({filteredUsers.length})
               </div>
-              {filteredUsers.map((user) => {
+              {filteredUsers.map((user, index) => {
                 const userValue = `user:${user.id}`;
                 const isSelected = value === userValue;
 
@@ -125,7 +158,7 @@ export function NumberLinkSelector({
                     onClick={() => handleSelect(user.id)}
                     role="option"
                     aria-selected={isSelected}
-                    tabIndex={isSelected ? 0 : -1}
+                    tabIndex={index === focusedIndex ? 0 : -1}
                     className={cn(
                       "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-2 text-sm outline-none transition-colors",
                       isSelected
@@ -144,9 +177,7 @@ export function NumberLinkSelector({
                     </Avatar>
 
                     <div className="flex flex-col items-start overflow-hidden">
-                      <span className="truncate font-medium">
-                        {user.name || user.email}
-                      </span>
+                      <span className="truncate font-medium">{user.name || user.email}</span>
                       {user.name && (
                         <span className="truncate text-xs text-muted-foreground">
                           {user.email}
@@ -159,9 +190,7 @@ export function NumberLinkSelector({
                       )}
                     </div>
 
-                    {isSelected && (
-                      <Check className="ml-auto h-4 w-4 shrink-0" />
-                    )}
+                    {isSelected && <Check className="ml-auto h-4 w-4 shrink-0" />}
                   </button>
                 );
               })}

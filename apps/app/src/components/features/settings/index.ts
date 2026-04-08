@@ -21,7 +21,6 @@ export {
   EmailReportSection,
   ManagedUsersSection,
   MaxReportSection,
-  ReportParamsSection,
   ReportSettingsFormBody,
   ReportSettingsPanel,
   TelegramReportSection,

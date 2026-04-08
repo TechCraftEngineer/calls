@@ -230,31 +230,7 @@ export default function HomePage() {
               onPlay={(callId, number) => setActiveAudio({ callId, number })}
               onCallDeleted={() => invalidateCalls()}
               onCallsDeleted={() => invalidateCalls()}
-              onRecommendationsGenerated={(callId, recommendations) => {
-                queryClient.setQueryData(
-                  orpc.calls.list.queryKey({ input: callsListInput }),
-                  (prev) => {
-                    if (!prev) return prev;
-                    const updated = prev.calls.map((item) =>
-                      item.call.id === callId
-                        ? {
-                            ...item,
-                            evaluation: item.evaluation
-                              ? {
-                                  ...item.evaluation,
-                                  managerRecommendations: recommendations,
-                                }
-                              : ({
-                                  id: callId,
-                                  managerRecommendations: recommendations,
-                                } as (typeof item)["evaluation"]),
-                          }
-                        : item,
-                    );
-                    return { ...prev, calls: updated };
-                  },
-                );
-              }}
+              onRecommendationsGenerated={() => invalidateCalls()}
             />
           </section>
         </div>

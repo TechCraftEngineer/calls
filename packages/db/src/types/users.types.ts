@@ -17,7 +17,7 @@ export interface UserUpdateData {
   emailDailyReport?: boolean;
   emailWeeklyReport?: boolean;
   emailMonthlyReport?: boolean;
-  reportManagedUserIds?: string[] | string;
+  reportManagedUserIds?: string[];
   kpiBaseSalary?: number;
   kpiTargetBonus?: number;
   kpiTargetTalkTimeMinutes?: number;

@@ -92,7 +92,7 @@ export interface AddUserForm {
   kpiBaseSalary: number;
   kpiTargetBonus: number;
   kpiTargetTalkTimeMinutes: number;
-  evaluationTemplateSlug: string | null;
+  evaluationTemplateSlug: "sales" | "support" | "general" | null;
   evaluationCustomInstructions: string | null;
 }
 

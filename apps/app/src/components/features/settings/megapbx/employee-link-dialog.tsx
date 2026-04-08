@@ -5,6 +5,7 @@ import {
   AvatarFallback,
   AvatarImage,
   Button,
+  cn,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -17,7 +18,6 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  cn,
 } from "@calls/ui";
 import { Building2, Check, Phone, Search, User, UserPlus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -32,10 +32,7 @@ interface EmployeeLinkDialogProps {
     users: PbxCandidateUser[];
     invitations: PbxCandidateInvitation[];
   };
-  onLink: (input: {
-    userId?: string | null;
-    invitationId?: string | null;
-  }) => Promise<void>;
+  onLink: (input: { userId?: string | null; invitationId?: string | null }) => Promise<void>;
   linking?: boolean;
 }
 
@@ -51,6 +48,8 @@ export function EmployeeLinkDialog({
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedInvitationId, setSelectedInvitationId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("users");
+  const [focusedUserIndex, setFocusedUserIndex] = useState(0);
+  const [focusedInvitationIndex, setFocusedInvitationIndex] = useState(0);
 
   // Сброс состояния при смене сотрудника
   useEffect(() => {
@@ -58,6 +57,8 @@ export function EmployeeLinkDialog({
     setSelectedInvitationId(null);
     setSearch("");
     setActiveTab("users");
+    setFocusedUserIndex(0);
+    setFocusedInvitationIndex(0);
   }, [employee?.externalId]);
 
   const filteredUsers = useMemo(() => {
@@ -77,11 +78,18 @@ export function EmployeeLinkDialog({
     const query = search.toLowerCase().trim();
     if (!query) return options.invitations;
     return options.invitations.filter(
-      (inv) =>
-        inv.email.toLowerCase().includes(query) ||
-        inv.role.toLowerCase().includes(query),
+      (inv) => inv.email.toLowerCase().includes(query) || inv.role.toLowerCase().includes(query),
     );
   }, [search, options.invitations]);
+
+  // Сброс фокуса при изменении фильтра
+  useEffect(() => {
+    setFocusedUserIndex(0);
+  }, [filteredUsers.length]);
+
+  useEffect(() => {
+    setFocusedInvitationIndex(0);
+  }, [filteredInvitations.length]);
 
   const selectedUser = useMemo(() => {
     if (!selectedUserId) return null;
@@ -95,13 +103,73 @@ export function EmployeeLinkDialog({
 
   const hasSelection = selectedUserId || selectedInvitationId;
 
-  const handleSelectUser = (id: string) => {
-    setSelectedUserId(id);
+  const handleUserKeyDown = (e: React.KeyboardEvent) => {
+    const maxIndex = filteredUsers.length - 1;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setFocusedUserIndex((prev) => (prev < maxIndex ? prev + 1 : 0));
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setFocusedUserIndex((prev) => (prev > 0 ? prev - 1 : maxIndex));
+        break;
+      case "Home":
+        e.preventDefault();
+        setFocusedUserIndex(0);
+        break;
+      case "End":
+        e.preventDefault();
+        setFocusedUserIndex(maxIndex);
+        break;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        if (filteredUsers[focusedUserIndex]) {
+          handleSelectUser(filteredUsers[focusedUserIndex].id);
+        }
+        break;
+    }
+  };
+
+  const handleInvitationKeyDown = (e: React.KeyboardEvent) => {
+    const maxIndex = filteredInvitations.length - 1;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setFocusedInvitationIndex((prev) => (prev < maxIndex ? prev + 1 : 0));
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setFocusedInvitationIndex((prev) => (prev > 0 ? prev - 1 : maxIndex));
+        break;
+      case "Home":
+        e.preventDefault();
+        setFocusedInvitationIndex(0);
+        break;
+      case "End":
+        e.preventDefault();
+        setFocusedInvitationIndex(maxIndex);
+        break;
+      case "Enter":
+      case " ":
+        e.preventDefault();
+        if (filteredInvitations[focusedInvitationIndex]) {
+          handleSelectInvitation(filteredInvitations[focusedInvitationIndex].id);
+        }
+        break;
+    }
+  };
+
+  const handleSelectUser = (userId: string) => {
+    setSelectedUserId(userId);
     setSelectedInvitationId(null);
   };
 
-  const handleSelectInvitation = (id: string) => {
-    setSelectedInvitationId(id);
+  const handleSelectInvitation = (invitationId: string) => {
+    setSelectedInvitationId(invitationId);
     setSelectedUserId(null);
   };
 
@@ -139,9 +207,7 @@ export function EmployeeLinkDialog({
                 <Building2 className="h-6 w-6" />
               </div>
               <div>
-                <DialogTitle className="text-xl font-semibold">
-                  Привязка сотрудника АТС
-                </DialogTitle>
+                <DialogTitle className="text-xl font-semibold">Привязка сотрудника АТС</DialogTitle>
                 <DialogDescription className="text-base">
                   Выберите пользователя воркспейса для привязки
                 </DialogDescription>
@@ -165,9 +231,7 @@ export function EmployeeLinkDialog({
                         Вн. номер: {employee.extension}
                       </span>
                     )}
-                    {employee.email && (
-                      <span className="truncate">{employee.email}</span>
-                    )}
+                    {employee.email && <span className="truncate">{employee.email}</span>}
                   </div>
                 </div>
               </div>
@@ -183,9 +247,7 @@ export function EmployeeLinkDialog({
                 <Check className="h-4 w-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-green-900">
-                  Будет привязан:
-                </p>
+                <p className="text-sm font-medium text-green-900">Будет привязан:</p>
                 <p className="text-sm text-green-700 truncate">
                   {selectedUser
                     ? `${selectedUser.name || selectedUser.email} (${selectedUser.email})`
@@ -227,9 +289,7 @@ export function EmployeeLinkDialog({
               <TabsTrigger value="users" className="gap-2">
                 <User className="h-4 w-4" />
                 Пользователи
-                <span className="ml-1 text-xs text-muted-foreground">
-                  ({filteredUsers.length})
-                </span>
+                <span className="ml-1 text-xs text-muted-foreground">({filteredUsers.length})</span>
               </TabsTrigger>
               <TabsTrigger value="invitations" className="gap-2">
                 <UserPlus className="h-4 w-4" />
@@ -245,6 +305,8 @@ export function EmployeeLinkDialog({
                 className="h-[320px] overflow-y-auto pr-4"
                 role="listbox"
                 aria-label="Пользователи"
+                tabIndex={0}
+                onKeyDown={handleUserKeyDown}
               >
                 {filteredUsers.length > 0 ? (
                   <div className="space-y-2">
@@ -257,7 +319,7 @@ export function EmployeeLinkDialog({
                           onClick={() => handleSelectUser(user.id)}
                           role="option"
                           aria-selected={isSelected}
-                          tabIndex={isSelected ? 0 : -1}
+                          tabIndex={index === focusedUserIndex ? 0 : -1}
                           className={cn(
                             "w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-all",
                             isSelected
@@ -280,9 +342,7 @@ export function EmployeeLinkDialog({
                               <span className="font-medium truncate">
                                 {user.name || user.email}
                               </span>
-                              {isSelected && (
-                                <Check className="h-4 w-4 text-primary shrink-0" />
-                              )}
+                              {isSelected && <Check className="h-4 w-4 text-primary shrink-0" />}
                             </div>
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                               <span className="truncate">{user.email}</span>
@@ -316,10 +376,12 @@ export function EmployeeLinkDialog({
                 className="h-[320px] overflow-y-auto pr-4"
                 role="listbox"
                 aria-label="Приглашения"
+                tabIndex={0}
+                onKeyDown={handleInvitationKeyDown}
               >
                 {filteredInvitations.length > 0 ? (
                   <div className="space-y-2">
-                    {filteredInvitations.map((inv) => {
+                    {filteredInvitations.map((inv, index) => {
                       const isSelected = selectedInvitationId === inv.id;
 
                       return (
@@ -328,7 +390,7 @@ export function EmployeeLinkDialog({
                           onClick={() => handleSelectInvitation(inv.id)}
                           role="option"
                           aria-selected={isSelected}
-                          tabIndex={isSelected ? 0 : -1}
+                          tabIndex={index === focusedInvitationIndex ? 0 : -1}
                           className={cn(
                             "w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-all",
                             isSelected
@@ -345,9 +407,7 @@ export function EmployeeLinkDialog({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="font-medium truncate">{inv.email}</span>
-                              {isSelected && (
-                                <Check className="h-4 w-4 text-primary shrink-0" />
-                              )}
+                              {isSelected && <Check className="h-4 w-4 text-primary shrink-0" />}
                             </div>
                             <div className="text-xs text-muted-foreground">
                               Роль: {inv.role} · Ожидает приглашения
@@ -379,11 +439,7 @@ export function EmployeeLinkDialog({
           <Button variant="outline" onClick={handleClose}>
             Отмена
           </Button>
-          <Button
-            onClick={handleLink}
-            disabled={!hasSelection || linking}
-            className="gap-2"
-          >
+          <Button onClick={handleLink} disabled={!hasSelection || linking} className="gap-2">
             {linking ? (
               <>
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

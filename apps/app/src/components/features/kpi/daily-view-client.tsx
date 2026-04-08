@@ -186,7 +186,6 @@ export function DailyViewClient({
           data={data ?? []}
           loading={isLoading}
           startDate={startDate}
-          endDate={endDate}
         />
       ) : (
         <TrendChart data={data ?? []} loading={isLoading} />

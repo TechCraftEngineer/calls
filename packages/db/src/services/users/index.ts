@@ -1,18 +1,17 @@
+import { z } from "zod";
 import type { SystemRepository } from "../../repositories/system.repository";
 import type { UserWorkspaceSettingsRepository } from "../../repositories/user-workspace-settings.repository";
 import type { UsersRepository } from "../../repositories/users.repository";
 import type { WorkspacesRepository } from "../../repositories/workspaces.repository";
 import type { CreateUserData, UpdateUserData, UserUpdateData } from "../../types/users.types";
-import { z } from "zod";
+import type { UserForEdit } from "./types";
 import { UserBaseService } from "./user-base.service";
 import { UserIntegrationsService } from "./user-integrations.service";
 import { UserSettingsService } from "./user-settings.service";
-import type { UserForEdit } from "./types";
-import { workspaceIdSchema } from "@calls/shared";
 
 // Zod validation schemas
-const UuidSchema = z.string().uuid();
-const EmailSchema = z.string().email().max(255);
+const UuidSchema = z.uuid();
+const EmailSchema = z.email().max(255);
 const NameSchema = z.string().min(1).max(100);
 const OptionalStringSchema = z.string().max(255).nullable();
 
@@ -64,11 +63,7 @@ export class UsersService {
     return this.base.getUser(id);
   }
 
-  async createUser(
-    data: CreateUserData,
-    workspaceId?: string | null,
-    actor?: string,
-  ) {
+  async createUser(data: CreateUserData, workspaceId?: string | null, actor?: string) {
     // Validate input data with Zod
     const validatedData = CreateUserDataSchema.parse(data);
     if (workspaceId !== undefined && workspaceId !== null) {
@@ -110,7 +105,9 @@ export class UsersService {
     UuidSchema.parse(userId);
     z.string().min(8).max(100).parse(newPassword);
     // Обновление пароля должно выполняться через Better Auth API, не напрямую через сервис
-    throw new Error("Обновление пароля должно выполняться через Better Auth API, не напрямую через сервис");
+    throw new Error(
+      "Обновление пароля должно выполняться через Better Auth API, не напрямую через сервис",
+    );
   }
 
   async deleteUser(userId: string) {
@@ -121,10 +118,6 @@ export class UsersService {
   // === Delegate settings methods ===
 
   async getUserForEdit(userId: string, workspaceId: string): Promise<UserForEdit | null> {
-    // Validate input parameters
-    UuidSchema.parse(userId);
-    workspaceIdSchema.parse(workspaceId);
-
     // Fetch user basic data
     const user = await this.base.getUser(userId);
     if (!user) {
@@ -175,11 +168,7 @@ export class UsersService {
     );
   }
 
-  async updateUserReportKpiSettings(
-    userId: string,
-    workspaceId: string,
-    data: UserUpdateData,
-  ) {
+  async updateUserReportKpiSettings(userId: string, workspaceId: string, data: UserUpdateData) {
     return this.settings.updateUserReportKpiSettings(userId, workspaceId, data);
   }
 
