@@ -1,13 +1,13 @@
 import { randomBytes } from "node:crypto";
 import { usersService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
-import { uuidSchema } from "@calls/shared";
+import { userIdSchema } from "@calls/shared";
 import { z } from "zod";
 import { workspaceProcedure } from "../../../orpc";
 import { canAccessUser } from "../utils";
 
 export const maxAuthUrl = workspaceProcedure
-  .input(z.object({ user_id: uuidSchema }))
+  .input(z.object({ user_id: userIdSchema }))
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
       throw new ORPCError("BAD_REQUEST", {

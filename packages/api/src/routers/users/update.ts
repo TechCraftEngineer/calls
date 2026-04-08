@@ -74,7 +74,7 @@ export const update = workspaceProcedure
         emailDailyReport: d.emailDailyReport,
         emailWeeklyReport: d.emailWeeklyReport,
         emailMonthlyReport: d.emailMonthlyReport,
-        reportManagedUserIds: d.reportManagedUserIds,
+        reportManagedUserIds: Array.isArray(d.reportManagedUserIds) ? d.reportManagedUserIds : JSON.parse(d.reportManagedUserIds || '[]'),
         kpiBaseSalary: d.kpiBaseSalary,
         kpiTargetBonus: d.kpiTargetBonus,
         kpiTargetTalkTimeMinutes: d.kpiTargetTalkTimeMinutes,

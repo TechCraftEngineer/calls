@@ -1,12 +1,12 @@
 import { usersService } from "@calls/db";
 import { canAccessUser } from "../utils";
-import { uuidSchema } from "@calls/shared";
+import { userIdSchema } from "@calls/shared";
 import { z } from "zod";
 import { workspaceProcedure } from "../../../orpc";
 import { ORPCError } from "@orpc/server";
 
 export const disconnectMax = workspaceProcedure
-  .input(z.object({ user_id: uuidSchema }))
+  .input(z.object({ user_id: userIdSchema }))
   .handler(async ({ input, context }) => {
     const userId = (context.user as Record<string, unknown>).id as string;
     if (!(await canAccessUser(userId, input.user_id, context.workspaceRole)))
