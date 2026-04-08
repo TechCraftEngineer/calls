@@ -124,16 +124,18 @@ export function parseUserUpdateData(data: UserUpdateData): ParsedSettings {
     kpiSettings.targetTalkTimeMinutes = data.kpiTargetTalkTimeMinutes;
   }
 
-  // Evaluation settings
-  const evaluationSettings =
-    data.evaluationTemplateSlug !== undefined
-      ? data.evaluationTemplateSlug === null
-        ? null
-        : {
-            templateSlug: data.evaluationTemplateSlug,
-            customInstructions: data.evaluationCustomInstructions?.trim() || undefined,
-          }
-      : undefined;
+  // Evaluation settings - build when either templateSlug OR customInstructions is provided
+  let evaluationSettings: EvaluationSettings | null | undefined = undefined;
+  if (data.evaluationTemplateSlug !== undefined || data.evaluationCustomInstructions !== undefined) {
+    if (data.evaluationTemplateSlug === null) {
+      evaluationSettings = null;
+    } else {
+      evaluationSettings = {
+        templateSlug: data.evaluationTemplateSlug ?? "general",
+        customInstructions: data.evaluationCustomInstructions?.trim() || undefined,
+      };
+    }
+  }
 
   return {
     filterSettings,

@@ -22,7 +22,7 @@ import { processAudioWithDiarization } from "./gigaam/diarization";
 import { applyLLMMerging } from "./llm-merge";
 import { resolveManagerFromPbx } from "./manager-resolution";
 import { serializeMetadata } from "./metadata";
-import { quickAnsweringMachineCheck } from "./quick-am-check";
+import { quickAnsweringMachineCheck, shouldRunQuickCheck } from "./quick-am-check";
 import {
   CallSchema,
   FileSchema,
@@ -187,37 +187,54 @@ export const transcribeCallFn = inngest.createFunction(
       // Загружаем аудио файл
       const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
 
-      // === БЫСТРАЯ ПРОВЕРКА НА АВТООТВЕТЧИК ДЛЯ ВСЕХ ЗВОНКОВ ===
-      // Проверяем первые 30 секунд перед запуском дорогих операций
-      // Это экономит ресурсы на автоответчиках любой длительности
-      logger.info("Запуск быстрой проверки на автоответчик (первые 30 секунд)", {
-        callId,
-        durationSeconds: pipelineAudio.durationSeconds,
-      });
+      // === БЫСТРАЯ ПРОВЕРКА НА АВТООТВЕТЧИК ===
+      // Проверяем первые 30 секунд только для звонков < 2 минут
+      // Это экономит ресурсы на автоответчиках коротких звонков
+      let quickCheck: { isAnsweringMachine: boolean; transcript: string; confidence: "high" | "medium" | "low" } | null = null;
 
-      const quickCheck = await quickAnsweringMachineCheck(buffer, filename);
-
-      if (quickCheck.isAnsweringMachine) {
-        logger.info("Быстрая проверка определила автоответчик", {
+      if (shouldRunQuickCheck(pipelineAudio.durationSeconds)) {
+        logger.info("Запуск быстрой проверки на автоответчик (первые 30 секунд)", {
           callId,
-          confidence: quickCheck.confidence,
-          transcriptPreview: quickCheck.transcript.substring(0, 100),
+          durationSeconds: pipelineAudio.durationSeconds,
         });
 
-        // Это автоответчик - возвращаем результат быстрой проверки
-        // Пропускаем дорогие операции (diarization, speaker identification, evaluation)
-        return {
-          isAnsweringMachine: true as const,
-          quickTranscript: quickCheck.transcript,
-          processingTimeMs: Date.now() - asrStartTime,
-          fromQuickCheck: true as const,
-        };
-      }
+        try {
+          quickCheck = await quickAnsweringMachineCheck(buffer, filename);
 
-      logger.info("Быстрая проверка: не автоответчик, продолжаем полный pipeline", {
-        callId,
-        transcriptPreview: quickCheck.transcript.substring(0, 100),
-      });
+          if (quickCheck.isAnsweringMachine) {
+            logger.info("Быстрая проверка определила автоответчик", {
+              callId,
+              confidence: quickCheck.confidence,
+              transcriptPreview: quickCheck.transcript.substring(0, 100),
+            });
+
+            // Это автоответчик - возвращаем результат быстрой проверки
+            // Пропускаем дорогие операции (diarization, speaker identification, evaluation)
+            return {
+              isAnsweringMachine: true as const,
+              quickTranscript: quickCheck.transcript,
+              processingTimeMs: Date.now() - asrStartTime,
+              fromQuickCheck: true as const,
+            };
+          }
+
+          logger.info("Быстрая проверка: не автоответчик, продолжаем полный pipeline", {
+            callId,
+            transcriptPreview: quickCheck.transcript.substring(0, 100),
+          });
+        } catch (quickCheckError) {
+          logger.warn("Ошибка быстрой проверки, продолжаем полный pipeline", {
+            callId,
+            error: quickCheckError instanceof Error ? quickCheckError.message : String(quickCheckError),
+          });
+          // Продолжаем основной pipeline при ошибке быстрой проверки
+        }
+      } else {
+        logger.info("Быстрая проверка пропущена (звонок > 2 минут), сразу запускаем полный pipeline", {
+          callId,
+          durationSeconds: pipelineAudio.durationSeconds,
+        });
+      }
 
       // Параллельный запуск двух ASR с fallback механизмом
       const [nonDiarizedSettled, diarizedSettled] = await Promise.allSettled([
@@ -349,7 +366,7 @@ export const transcribeCallFn = inngest.createFunction(
     // Type guard: проверяем что это обычный ASR результат (не быстрая проверка)
     if (asrResults.fromQuickCheck) {
       // Этот случай уже обработан выше, но TypeScript нужен guard
-      throw new Error("Unexpected fromQuickCheck after early return");
+      throw new Error("Неожиданное значение fromQuickCheck после раннего возврата");
     }
 
     // Логирование результатов ASR

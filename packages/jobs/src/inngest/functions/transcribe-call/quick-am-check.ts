@@ -4,10 +4,10 @@
  * лишних затрат на полную транскрибацию если это автоответчик.
  */
 
-import { shouldSkipExpensiveProcessing } from "../../../evaluation";
-import { createLogger } from "../../../logger";
-import { extractAudioSegment } from "./audio/processing";
-import { processAudioWithoutDiarization } from "./gigaam/client";
+import { shouldSkipExpensiveProcessing } from "~/evaluation";
+import { createLogger } from "~/logger";
+import { extractAudioSegment } from "~/inngest/functions/transcribe-call/audio/processing";
+import { processAudioWithoutDiarization } from "~/inngest/functions/transcribe-call/gigaam/client";
 
 const logger = createLogger("quick-am-check");
 
@@ -85,7 +85,7 @@ export async function quickAnsweringMachineCheck(
       filename,
       isAnsweringMachine: shouldSkip,
       confidence,
-      transcriptPreview: transcript.substring(0, 100),
+      transcriptLength: transcript.length,
       totalTimeMs,
     });
 

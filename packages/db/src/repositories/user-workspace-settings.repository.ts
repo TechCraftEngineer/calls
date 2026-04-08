@@ -235,6 +235,37 @@ export const userWorkspaceSettingsRepository = {
     return true;
   },
 
+  async disconnectTelegram(userId: string): Promise<boolean> {
+    const rows = await db
+      .select()
+      .from(schema.userWorkspaceSettings)
+      .where(eq(schema.userWorkspaceSettings.userId, userId));
+
+    for (const row of rows) {
+      const ns = row.notificationSettings as NotificationSettings;
+      if (ns?.telegram?.connectToken) {
+        await db
+          .update(schema.userWorkspaceSettings)
+          .set({
+            notificationSettings: {
+              ...ns,
+              telegram: {
+                ...ns.telegram,
+                connectToken: undefined,
+              },
+            },
+          })
+          .where(
+            and(
+              eq(schema.userWorkspaceSettings.userId, userId),
+              eq(schema.userWorkspaceSettings.workspaceId, row.workspaceId),
+            ),
+          );
+      }
+    }
+    return true;
+  },
+
   async updateEvaluationTemplateForWorkspace(
     workspaceId: string,
     fromTemplateSlug: string,

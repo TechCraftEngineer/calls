@@ -137,7 +137,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     return (
       <div aria-busy="true" className="space-y-6 animate-pulse">
         <div className="flex gap-4 border-b">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 2 }).map((_, i) => (
             <Skeleton key={i} className="h-10 w-32" />
           ))}
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import type { DailyKpiRow } from "@calls/shared";
+import { pluralize } from "@calls/shared";
 import { Button, Card, cn, Skeleton } from "@calls/ui";
 import { ChevronLeft, ChevronRight, Circle } from "lucide-react";
 import * as React from "react";
@@ -46,6 +47,85 @@ function getCompletionTextColor(percentage: number): string {
   if (percentage >= 50) return "text-amber-700";
   return "text-rose-700";
 }
+
+// Memoized day cell content component to eliminate duplication
+interface DayCellContentProps {
+  day: {
+    date: Date;
+    dateStr: string;
+    isCurrentMonth: boolean;
+    isToday: boolean;
+  };
+  kpiData?: DailyKpiRow;
+  hasData: boolean;
+  completionPercentage: number;
+}
+
+const DayCellContent = React.memo(function DayCellContent({
+  day,
+  kpiData,
+  hasData,
+  completionPercentage,
+}: DayCellContentProps) {
+  return (
+    <>
+      {/* Номер дня */}
+      <span
+        className={cn(
+          "text-sm font-semibold",
+          day.isCurrentMonth ? "text-foreground" : "text-muted-foreground/60",
+          day.isToday && "text-primary",
+        )}
+      >
+        {day.date.getDate()}
+      </span>
+
+      {/* Индикаторы KPI */}
+      {hasData && kpiData && (
+        <div className="flex-1 flex flex-col justify-end gap-1 min-w-0">
+          {/* Индикатор выполнения */}
+          <div className="flex items-center gap-1">
+            <div
+              className={cn(
+                "w-2 h-2 rounded-full",
+                getCompletionColor(completionPercentage),
+              )}
+            />
+            <span
+              className={cn(
+                "text-xs font-bold truncate",
+                getCompletionTextColor(completionPercentage),
+              )}
+            >
+              {completionPercentage}%
+            </span>
+          </div>
+
+          {/* Количество звонков */}
+          <div className="flex items-center gap-1 text-xs text-muted-foreground truncate">
+            <Circle className="h-2 w-2 fill-current" />
+            <span className="truncate">{kpiData.totalCalls} {pluralize(kpiData.totalCalls, 'звонок', 'звонка', 'звонков')}</span>
+          </div>
+
+          {/* Время разговоров */}
+          <div className="text-xs text-muted-foreground truncate">
+            {kpiData.actualTalkTimeMinutes} мин
+          </div>
+        </div>
+      )}
+
+      {/* Индикатор дня с данными (точка) */}
+      {hasData && (
+        <div
+          className={cn(
+            "absolute top-2 right-2 w-2 h-2 rounded-full",
+            getCompletionColor(completionPercentage),
+          )}
+        />
+      )}
+    </>
+  );
+});
 
 // Создать карту данных по датам
 function createDataMap(data: DailyKpiRow[]): Map<string, DailyKpiRow> {
@@ -316,60 +396,12 @@ export const KpiCalendar = React.memo(function KpiCalendar({
               onClick={() => onDateClick(day.dateStr)}
               className={dayCellClassName}
             >
-              {/* Номер дня */}
-              <span
-                className={cn(
-                  "text-sm font-semibold",
-                  day.isCurrentMonth ? "text-foreground" : "text-muted-foreground/60",
-                  day.isToday && "text-primary",
-                )}
-              >
-                {day.date.getDate()}
-              </span>
-
-              {/* Индикаторы KPI */}
-              {hasData && (
-                <div className="flex-1 flex flex-col justify-end gap-1 min-w-0">
-                  {/* Индикатор выполнения */}
-                  <div className="flex items-center gap-1">
-                    <div
-                      className={cn(
-                        "w-2 h-2 rounded-full",
-                        getCompletionColor(completionPercentage),
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        "text-xs font-bold truncate",
-                        getCompletionTextColor(completionPercentage),
-                      )}
-                    >
-                      {completionPercentage}%
-                    </span>
-                  </div>
-
-                  {/* Количество звонков */}
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground truncate">
-                    <Circle className="h-2 w-2 fill-current" />
-                    <span className="truncate">{kpiData.totalCalls} звнк</span>
-                  </div>
-
-                  {/* Время разговоров */}
-                  <div className="text-xs text-muted-foreground truncate">
-                    {kpiData.actualTalkTimeMinutes} мин
-                  </div>
-                </div>
-              )}
-
-              {/* Индикатор дня с данными (точка) */}
-              {hasData && (
-                <div
-                  className={cn(
-                    "absolute top-2 right-2 w-2 h-2 rounded-full",
-                    getCompletionColor(completionPercentage),
-                  )}
-                />
-              )}
+              <DayCellContent
+                day={day}
+                kpiData={kpiData}
+                hasData={hasData}
+                completionPercentage={completionPercentage}
+              />
 
               {/* Выходные дни */}
               {(index % 7 === 5 || index % 7 === 6) && day.isCurrentMonth && !hasData && (
@@ -378,60 +410,12 @@ export const KpiCalendar = React.memo(function KpiCalendar({
             </button>
           ) : (
             <div key={day.dateStr} className={dayCellClassName}>
-              {/* Номер дня */}
-              <span
-                className={cn(
-                  "text-sm font-semibold",
-                  day.isCurrentMonth ? "text-foreground" : "text-muted-foreground/60",
-                  day.isToday && "text-primary",
-                )}
-              >
-                {day.date.getDate()}
-              </span>
-
-              {/* Индикаторы KPI */}
-              {hasData && (
-                <div className="flex-1 flex flex-col justify-end gap-1 min-w-0">
-                  {/* Индикатор выполнения */}
-                  <div className="flex items-center gap-1">
-                    <div
-                      className={cn(
-                        "w-2 h-2 rounded-full",
-                        getCompletionColor(completionPercentage),
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        "text-xs font-bold truncate",
-                        getCompletionTextColor(completionPercentage),
-                      )}
-                    >
-                      {completionPercentage}%
-                    </span>
-                  </div>
-
-                  {/* Количество звонков */}
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground truncate">
-                    <Circle className="h-2 w-2 fill-current" />
-                    <span className="truncate">{kpiData.totalCalls} звнк</span>
-                  </div>
-
-                  {/* Время разговоров */}
-                  <div className="text-xs text-muted-foreground truncate">
-                    {kpiData.actualTalkTimeMinutes} мин
-                  </div>
-                </div>
-              )}
-
-              {/* Индикатор дня с данными (точка) */}
-              {hasData && (
-                <div
-                  className={cn(
-                    "absolute top-2 right-2 w-2 h-2 rounded-full",
-                    getCompletionColor(completionPercentage),
-                  )}
-                />
-              )}
+              <DayCellContent
+                day={day}
+                kpiData={kpiData}
+                hasData={hasData}
+                completionPercentage={completionPercentage}
+              />
 
               {/* Выходные дни */}
               {(index % 7 === 5 || index % 7 === 6) && day.isCurrentMonth && !hasData && (

@@ -190,11 +190,11 @@ ${analysisText}
 
     const operatorName =
       result.operatorName?.trim() ||
-      result.speakers?.find((s) => s.role === "operator")?.name?.trim() ||
+      result.speakers?.find((s) => s.role === "operator" && s.name?.trim())?.name?.trim() ||
       undefined;
     const customerName =
       result.customerName?.trim() ||
-      result.speakers?.find((s) => s.role === "client")?.name?.trim() ||
+      result.speakers?.find((s) => s.role === "client" && s.name?.trim())?.name?.trim() ||
       undefined;
 
     const sanitizedMapping: Record<string, string> = {};

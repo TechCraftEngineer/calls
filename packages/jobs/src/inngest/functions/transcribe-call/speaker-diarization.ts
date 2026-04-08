@@ -155,7 +155,7 @@ export async function checkSpeakerEmbeddingsHealth(): Promise<boolean> {
   try {
     const response = await fetch(`${speakerEmbeddingsUrl}/health`, {
       method: "GET",
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (response.ok) {
