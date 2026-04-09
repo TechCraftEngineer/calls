@@ -2,7 +2,7 @@
  * Извлечение данных из результатов ASR
  */
 
-import type { GigaAmSegment, SpeakerTimelineItem } from "./types";
+import type { GigaAmSegment, SpeakerTimelineItem } from "~/inngest/functions/transcribe-call/types";
 
 export function extractSpeakerTimeline(gigaAmRaw: unknown):
   | SpeakerTimelineItem[]

@@ -1,39 +1,45 @@
 """Middleware для FastAPI приложения."""
-from fastapi import HTTPException, Request
+from fastapi import Request
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 
 class MaxContentSizeMiddleware(BaseHTTPMiddleware):
     """Middleware для ограничения максимального размера контента запроса"""
 
-    def __init__(self, app, max_size: int = 100 * 1024 * 1024):  # 100MB по умолчанию
+    def __init__(self, app, max_size: int = 100 * 1024 * 1024):  # 100MB default
         super().__init__(app)
         self.max_size = max_size
 
     async def dispatch(self, request: Request, call_next):
-        # Проверяем Content-Length только для методов с телом
+        # Check Content-Length only for methods with body
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
             content_length = request.headers.get("content-length")
             if content_length:
                 try:
                     content_length_int = int(content_length)
+                    if content_length_int < 0:
+                        return JSONResponse(
+                            status_code=400,
+                            content={"detail": "Content-Length header cannot be negative"}
+                        )
                     if content_length_int > self.max_size:
-                        raise HTTPException(
+                        return JSONResponse(
                             status_code=413,
-                            detail=f"Request entity too large. Maximum size is {self.max_size // (1024*1024)}MB"
+                            content={"detail": f"Request entity too large. Maximum size is {self.max_size // (1024*1024)}MB"}
                         )
                 except (ValueError, TypeError):
-                    # Если Content-Length не является валидным числом, отклоняем запрос
-                    raise HTTPException(
+                    # If Content-Length is not a valid number, reject request
+                    return JSONResponse(
                         status_code=400,
-                        detail="Invalid Content-Length header"
-                    ) from None
+                        content={"detail": "Invalid Content-Length header"}
+                    )
             else:
-                # Если Content-Length отсутствует для методов с телом, отклоняем запрос для безопасности
-                # Это предотвращает обход через Transfer-Encoding: chunked
-                raise HTTPException(
+                # If Content-Length is missing for methods with body, reject request for security
+                # This prevents bypass via Transfer-Encoding: chunked
+                return JSONResponse(
                     status_code=411,
-                    detail="Content-Length header is required"
+                    content={"detail": "Content-Length header is required"}
                 )
 
         return await call_next(request)

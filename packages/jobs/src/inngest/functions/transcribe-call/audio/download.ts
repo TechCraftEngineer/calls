@@ -5,9 +5,9 @@
 import { filesService } from "@calls/db";
 import { getDownloadUrlForAsr } from "@calls/lib";
 import type { z } from "zod";
-import { createLogger } from "../../../../logger";
-import { FileSchema } from "../schemas";
-import type { AudioBufferLegacyResult, AudioFileResult } from "../types";
+import { createLogger } from "~/logger";
+import { FileSchema } from "~/inngest/functions/transcribe-call/schemas";
+import type { AudioBufferLegacyResult, AudioFileResult } from "~/inngest/functions/transcribe-call/types";
 
 const logger = createLogger("audio-download");
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB

@@ -6,8 +6,8 @@ import type { IdentifySpeakersWithEmbeddingsResult } from "@calls/asr/llm/identi
 import { identifySpeakersWithEmbeddings } from "@calls/asr/llm/identify-speakers-with-embeddings";
 import { NonRetriableError } from "inngest";
 import { z } from "zod";
-import { createLogger } from "../../../logger";
-import { extractSegmentsFromUtterances, extractSpeakerTimeline } from "./extraction";
+import { createLogger } from "~/logger";
+import { extractSegmentsFromUtterances, extractSpeakerTimeline } from "~/inngest/functions/transcribe-call/utils/extraction";
 
 const logger = createLogger("speaker-identification");
 

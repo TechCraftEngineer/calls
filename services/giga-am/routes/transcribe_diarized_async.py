@@ -2,6 +2,7 @@
 Асинхронный эндпоинт транскрипции с диаризацией и поддержкой Inngest callback.
 """
 import asyncio
+import io
 import json
 import logging
 from typing import Dict, Any, Optional, Set, List
@@ -9,7 +10,7 @@ from typing import Dict, Any, Optional, Set, List
 import httpx
 from fastapi import APIRouter, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from config import settings
 from services.diarized_transcription_service import diarized_transcription_service
@@ -29,6 +30,21 @@ class DiarizationSegmentInput(BaseModel):
     start: float = Field(..., description="Начало сегмента в секундах", ge=0)
     end: float = Field(..., description="Конец сегмента в секундах", ge=0)
     speaker: str = Field(..., description="Идентификатор спикера")
+
+    @field_validator("speaker")
+    @classmethod
+    def validate_speaker_non_empty(cls, v: str) -> str:
+        """Проверяет что speaker не пустой"""
+        if not v or not v.strip():
+            raise ValueError("speaker не может быть пустым")
+        return v.strip()
+
+    @model_validator(mode="after")
+    def validate_end_greater_than_start(self) -> "DiarizationSegmentInput":
+        """Проверяет что end больше start"""
+        if self.end <= self.start:
+            raise ValueError("end должен быть больше start")
+        return self
 
 
 async def send_inngest_event(
@@ -56,38 +72,45 @@ async def send_inngest_event(
     # Всегда используем зарегистрированное событие "giga-am/transcription.completed"
     # Статус передается в payload
     event_name = "giga-am/transcription.completed"
-    
+
+    # Формируем payload динамически, добавляя ключи только когда значение не None
     payload = {
         "task_id": task_id,
         "status": status,
-        "result": result,
-        "error": error,
     }
+    if result is not None:
+        payload["result"] = result
+    if error is not None:
+        payload["error"] = error
     
+    # Формируем тело запроса для логирования
+    request_body = {
+        "name": event_name,
+        "data": payload,
+    }
+
     try:
+        logger.info(f"[Inngest] Отправка события: {request_body}")
+
         async with httpx.AsyncClient(timeout=settings.callback_timeout) as client:
             response = await client.post(
-                f"{settings.inngest_api_url}/v1/events",
+                f"{settings.inngest_api_url}/e/{settings.inngest_event_key}",
                 headers={
-                    "Authorization": f"Bearer {settings.inngest_event_key}",
                     "Content-Type": "application/json",
                 },
-                json={
-                    "name": event_name,
-                    "data": payload,
-                }
+                json=request_body
             )
-            
+
             if response.status_code == 200:
-                logger.info(f"Sent Inngest event {event_name} for task {task_id}")
+                logger.info(f"[Inngest] Событие отправлено: {event_name} для task {task_id}")
                 return True
             else:
                 logger.error(
-                    f"Failed to send Inngest event: {response.status_code} {response.text}"
+                    f"[Inngest] Ошибка отправки: {response.status_code} {response.text}"
                 )
                 return False
     except Exception as e:
-        logger.error(f"Error sending Inngest event: {e}", exc_info=True)
+        logger.error(f"[Inngest] Ошибка отправки события: {e}", exc_info=True)
         return False
 
 
@@ -191,34 +214,57 @@ async def transcribe_diarized_async(
                 status_code=400,
                 detail=str(e)
             ) from e
-        
-        # Валидируем сегменты
-        for i, seg in enumerate(segments_data):
-            if not all(k in seg for k in ["start", "end", "speaker"]):
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Сегмент {i} должен содержать поля: start, end, speaker"
-                )
+
+        # Проверяем что список сегментов не пустой
+        if len(segments_data) == 0:
+            logger.error(f"[{request_id}] Список сегментов пуст")
+            raise HTTPException(
+                status_code=400,
+                detail="Список сегментов не может быть пустым"
+            )
+
+        # Валидируем сегменты с помощью Pydantic
+        try:
+            from pydantic import parse_obj_as
+            validated_segments = parse_obj_as(List[DiarizationSegmentInput], segments_data)
+            segments_data = [seg.model_dump() for seg in validated_segments]
+        except Exception as e:
+            logger.error(f"[{request_id}] Ошибка валидации сегментов: {e}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Невалидные сегменты: {e}"
+            ) from e
         
         logger.info(f"[{request_id}] Парсинг сегментов успешен: {len(segments_data)} сегментов")
-        
-        # Читаем файл
-        audio_data = await file.read()
-        
-        # Проверяем размер файла
+
+        # Читаем файл чанками с проверкой размера во время чтения
+        CHUNK_SIZE = 64 * 1024  # 64KB
         max_size = settings.max_file_size
-        if len(audio_data) > max_size:
-            raise HTTPException(
-                status_code=413,
-                detail=f"Размер файла ({len(audio_data)} bytes) превышает лимит ({max_size} bytes)"
-            )
-        
+        audio_buffer = io.BytesIO()
+        total_size = 0
+
+        while True:
+            chunk = await file.read(CHUNK_SIZE)
+            if not chunk:
+                break
+
+            total_size += len(chunk)
+            if total_size > max_size:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"Размер файла ({total_size} bytes) превышает лимит ({max_size} bytes)"
+                )
+
+            audio_buffer.write(chunk)
+
+        audio_data = audio_buffer.getvalue()
+
         if not audio_data:
             raise HTTPException(
                 status_code=400,
                 detail="Аудио файл пуст"
             )
-        
+
         logger.info(f"[{request_id}] Аудио файл прочитан: {len(audio_data)} bytes")
         
         # Создаем задачу

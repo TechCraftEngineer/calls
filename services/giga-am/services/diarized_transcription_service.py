@@ -284,12 +284,7 @@ class DiarizedTranscriptionService:
                 subtype='PCM_16'
             )
             
-            # Логируем размер созданного файла
-            file_size = os.path.getsize(output_path)
-            logger.debug(
-                f"[{request_id}] Сегмент {idx}: сохранен файл {output_path}, размер={file_size} bytes, "
-                f"длительность={segment_duration:.3f}s, samples={len(segment_audio)}"
-            )
+            # Файл сегмента сохранен
             
             return output_path
         
@@ -334,24 +329,14 @@ class DiarizedTranscriptionService:
         ) -> TranscribedSegment:
             async with self._semaphore:
                 try:
-                    logger.debug(
-                        f"[{request_id}] Транскрипция сегмента {idx}: "
-                        f"{segment.start:.2f}-{segment.end:.2f}s"
-                    )
-                    
                     # Вызываем синхронный метод в отдельном потоке
                     result = await asyncio.to_thread(
                         transcription_service.transcribe_audio,
                         file_path
                     )
-                    
+
                     if result.get("success"):
                         segments_data = result.get("segments", [])
-                        logger.warning(
-                            f"[{request_id}] Сегмент {idx}: получено {len(segments_data)} подсегментов, "
-                            f"success={result.get('success')}, "
-                            f"segments_data={segments_data}"
-                        )
                         if segments_data:
                             # Объединяем все сегменты в один текст
                             texts = []
@@ -364,17 +349,9 @@ class DiarizedTranscriptionService:
                             text = " ".join(texts).strip()
                             # Вычисляем среднюю уверенность
                             confidence = sum(confidences) / len(confidences) if confidences else 1.0
-                            
-                            logger.warning(
-                                f"[{request_id}] Сегмент {idx}: текст='{text[:50]}...', длина={len(text)}"
-                            )
                         else:
                             text = ""
                             confidence = 0.0
-                            logger.warning(
-                                f"[{request_id}] Сегмент {idx}: нет подсегментов в результате, "
-                                f"result={result}"
-                            )
                     else:
                         text = ""
                         confidence = 0.0
