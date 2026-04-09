@@ -5,7 +5,6 @@ interface WorkspaceRoleContext {
   workspaceRole: "admin" | "owner" | "member";
   user: {
     id: string;
-    internalExtensions?: string | null;
     mobilePhones?: string | null;
   };
 }
@@ -13,21 +12,8 @@ interface WorkspaceRoleContext {
 interface MockCall {
   id: string;
   number: string;
-  internalNumber: string | null;
   managerId: string;
   managerName: string | null;
-}
-
-// Функция для получения внутренних номеров пользователя (копия из utils.ts для тестов)
-function getInternalNumbersForUser(user: {
-  id: string;
-  internalExtensions?: string | null;
-}): string[] {
-  if (!user.internalExtensions) return [];
-  return user.internalExtensions
-    .split(",")
-    .map((n) => n.trim())
-    .filter(Boolean);
 }
 
 function getMobileNumbersForUser(user: { id: string; mobilePhones?: string | null }): string[] {
@@ -46,14 +32,13 @@ function filterCallsByRole(calls: MockCall[], context: WorkspaceRoleContext): Mo
     return calls; // Админ видит все
   }
 
-  // Для member фильтруем по internalNumbers и mobileNumbers
-  const internalNumbers = getInternalNumbersForUser(context.user);
+  // Для member фильтруем по mobileNumbers
+  const mobileNumbers = getMobileNumbersForUser(context.user);
 
   return calls.filter((call) => {
-    // Участник видит только звонки со своими внутренними номерами
-    const hasMatchingExtension =
-      call.internalNumber && internalNumbers.includes(call.internalNumber);
-    return hasMatchingExtension;
+    // Участник видит только звонки со своими мобильными номерами
+    const hasMatchingPhone = call.number && mobileNumbers.includes(call.number);
+    return hasMatchingPhone;
   });
 }
 
@@ -78,35 +63,30 @@ describe("calls list role-based filtering", () => {
     {
       id: "call-1",
       number: "+74951234567",
-      internalNumber: "101",
       managerId: "admin-1",
       managerName: "Admin User",
     },
     {
       id: "call-2",
       number: "+74951234568",
-      internalNumber: "102",
       managerId: "admin-1",
       managerName: "Admin User",
     },
     {
       id: "call-3",
       number: "+74959876543",
-      internalNumber: "201",
       managerId: "member-1",
       managerName: "Member User",
     },
     {
       id: "call-4",
       number: "+74959876544",
-      internalNumber: "201",
       managerId: "member-1",
       managerName: "Member User",
     },
     {
       id: "call-5",
       number: "+74951111111",
-      internalNumber: "301",
       managerId: "other-1",
       managerName: "Other User",
     },
@@ -124,7 +104,6 @@ describe("calls list role-based filtering", () => {
         workspaceRole: "admin",
         user: {
           id: "admin-1",
-          internalExtensions: "101,102",
         },
       };
 
@@ -139,7 +118,6 @@ describe("calls list role-based filtering", () => {
         workspaceRole: "owner",
         user: {
           id: "owner-1",
-          internalExtensions: "100",
         },
       };
 
@@ -169,7 +147,7 @@ describe("calls list role-based filtering", () => {
         workspaceRole: "member",
         user: {
           id: "member-1",
-          internalExtensions: "201",
+          mobilePhones: "+74959876543",
         },
       };
 
@@ -180,12 +158,12 @@ describe("calls list role-based filtering", () => {
       expect(result.every((c) => c.managerId === "member-1")).toBe(true);
     });
 
-    it("returns empty array when member has no matching extensions", () => {
+    it("returns empty array when member has no matching phones", () => {
       const context: WorkspaceRoleContext = {
         workspaceRole: "member",
         user: {
           id: "member-2",
-          internalExtensions: "999",
+          mobilePhones: "+79991234567",
         },
       };
 
@@ -194,12 +172,12 @@ describe("calls list role-based filtering", () => {
       expect(result).toHaveLength(0);
     });
 
-    it("returns empty array when member has no extensions", () => {
+    it("returns empty array when member has no phones", () => {
       const context: WorkspaceRoleContext = {
         workspaceRole: "member",
         user: {
           id: "member-3",
-          internalExtensions: null,
+          mobilePhones: null,
         },
       };
 
@@ -220,18 +198,18 @@ describe("calls list role-based filtering", () => {
       expect(result[0]?.id).toBe("member-1");
     });
 
-    it("filters calls with multiple extensions correctly", () => {
+    it("filters calls with multiple phones correctly", () => {
       const context: WorkspaceRoleContext = {
         workspaceRole: "member",
         user: {
           id: "member-multi",
-          internalExtensions: "101,201",
+          mobilePhones: "+74951234567,+74959876543",
         },
       };
 
       const result = filterCallsByRole(mockCalls, context);
 
-      // Должен видеть звонки с номеров 101 и 201
+      // Должен видеть звонки с номеров +74951234567 и +74959876543
       expect(result).toHaveLength(3);
       expect(result.map((c) => c.id)).toEqual(["call-1", "call-3", "call-4"]);
     });
@@ -282,62 +260,6 @@ describe("calls list role-based filtering", () => {
 
       expect(allowedFilter).toBeNull();
     });
-  });
-});
-
-describe("getInternalNumbersForUser utility", () => {
-  it("parses comma-separated extensions", () => {
-    const user = {
-      id: "user-1",
-      internalExtensions: "101,102,103",
-    };
-
-    const result = getInternalNumbersForUser(user);
-
-    expect(result).toEqual(["101", "102", "103"]);
-  });
-
-  it("handles single extension", () => {
-    const user = {
-      id: "user-1",
-      internalExtensions: "201",
-    };
-
-    const result = getInternalNumbersForUser(user);
-
-    expect(result).toEqual(["201"]);
-  });
-
-  it("returns empty array for null extensions", () => {
-    const user = {
-      id: "user-1",
-      internalExtensions: null,
-    };
-
-    const result = getInternalNumbersForUser(user);
-
-    expect(result).toEqual([]);
-  });
-
-  it("returns empty array for undefined extensions", () => {
-    const user = {
-      id: "user-1",
-    };
-
-    const result = getInternalNumbersForUser(user);
-
-    expect(result).toEqual([]);
-  });
-
-  it("trims whitespace from extensions", () => {
-    const user = {
-      id: "user-1",
-      internalExtensions: " 101 , 102 , 103 ",
-    };
-
-    const result = getInternalNumbersForUser(user);
-
-    expect(result).toEqual(["101", "102", "103"]);
   });
 });
 

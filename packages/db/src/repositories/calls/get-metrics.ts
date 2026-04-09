@@ -23,12 +23,11 @@ interface GetCallsMetricsParams {
   excludePhoneNumbers?: string[];
   dateFrom?: string;
   dateTo?: string;
-  internalNumbers?: string[];
   mobileNumbers?: string[];
   directions?: ("inbound" | "outbound")[];
-  managerInternalNumbers?: string[];
+  managerPhoneNumbers?: string[];
   statuses?: CallStatus[];
-  managerInternalNumbersForQuery?: string[];
+  managerPhoneNumbersForQuery?: string[];
   q?: string;
   includeArchived?: boolean;
   onlyArchived?: boolean;
@@ -45,12 +44,11 @@ export async function getCallsMetrics(params?: GetCallsMetricsParams): Promise<{
     excludePhoneNumbers,
     dateFrom,
     dateTo,
-    internalNumbers,
     mobileNumbers,
     directions,
-    managerInternalNumbers,
+    managerPhoneNumbers,
     statuses,
-    managerInternalNumbersForQuery,
+    managerPhoneNumbersForQuery,
     q,
     includeArchived,
     onlyArchived,
@@ -92,10 +90,6 @@ export async function getCallsMetrics(params?: GetCallsMetricsParams): Promise<{
     conditions.push(lt(schema.calls.timestamp, nextDayMidnight));
   }
 
-  if (internalNumbers?.length) {
-    conditions.push(or(...internalNumbers.map((num) => eq(schema.calls.internalNumber, num))));
-  }
-
   if (mobileNumbers?.length) {
     conditions.push(or(...mobileNumbers.map((num) => eq(schema.calls.number, num))));
   }
@@ -113,30 +107,20 @@ export async function getCallsMetrics(params?: GetCallsMetricsParams): Promise<{
   //   );
   // }
 
-  if (managerInternalNumbers?.length) {
-    conditions.push(
-      or(...managerInternalNumbers.map((num) => eq(schema.calls.internalNumber, num))),
-    );
+  if (managerPhoneNumbers?.length) {
+    conditions.push(or(...managerPhoneNumbers.map((num) => eq(schema.calls.number, num))));
   }
 
   if (statuses?.length) {
     conditions.push(or(...statuses.map((status) => eq(schema.calls.status, status))));
   }
 
-  if (managerInternalNumbersForQuery?.length) {
-    conditions.push(
-      or(...managerInternalNumbersForQuery.map((num) => eq(schema.calls.internalNumber, num))),
-    );
+  if (managerPhoneNumbersForQuery?.length) {
+    conditions.push(or(...managerPhoneNumbersForQuery.map((num) => eq(schema.calls.number, num))));
   }
 
   if (q) {
-    conditions.push(
-      or(
-        ilike(schema.calls.name, `%${q}%`),
-        ilike(schema.calls.number, `%${q}%`),
-        ilike(schema.calls.internalNumber, `%${q}%`),
-      ),
-    );
+    conditions.push(or(ilike(schema.calls.name, `%${q}%`), ilike(schema.calls.number, `%${q}%`)));
   }
 
   const excludeCondition = excludePhoneNumbers?.length

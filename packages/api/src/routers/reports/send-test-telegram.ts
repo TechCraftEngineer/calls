@@ -1,10 +1,4 @@
-import {
-  callsService,
-  getInternalNumbersForUserIds,
-  settingsService,
-  usersService,
-  workspacesService,
-} from "@calls/db";
+import { callsService, settingsService, usersService, workspacesService } from "@calls/db";
 import { formatTelegramReportHtml } from "@calls/jobs";
 import { sendMessage } from "@calls/telegram-bot";
 import { ORPCError } from "@orpc/server";
@@ -41,14 +35,6 @@ function getTelegramChatId(value: unknown): string {
   });
 }
 
-function parseInternalExtensions(ext: string | null): string[] | null {
-  if (!ext || String(ext).trim().toLowerCase() === "all") return null;
-  return ext
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
 export const sendTestTelegram = workspaceProcedure
   .input(reportTypeSchema)
   .handler(async ({ context, input }) => {
@@ -76,16 +62,6 @@ export const sendTestTelegram = workspaceProcedure
       });
     const isAdmin = workspaceRole === "admin" || workspaceRole === "owner";
     const isManagerReport = isAdmin && (userForEdit.telegramManagerReport ?? false);
-
-    let internalNumbers: string[] | null = null;
-    if (isManagerReport) {
-      internalNumbers = await getInternalNumbersForUserIds(
-        workspaceId,
-        userForEdit.reportManagedUserIds ?? null,
-      );
-    } else {
-      internalNumbers = parseInternalExtensions(userForEdit.internalExtensions ?? null);
-    }
 
     const { reportType } = input;
     const now = nowInMoscow();
@@ -120,7 +96,6 @@ export const sendTestTelegram = workspaceProcedure
       workspaceId,
       dateFrom: dateFromDb,
       dateTo: dateToDb,
-      internalNumbers: internalNumbers ?? undefined,
       excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
     });
 
@@ -132,7 +107,6 @@ export const sendTestTelegram = workspaceProcedure
         workspaceId,
         dateFrom: dateFromDb,
         dateTo: dateToDb,
-        internalNumbers: internalNumbers ?? undefined,
         excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
         maxScore: 3,
       });

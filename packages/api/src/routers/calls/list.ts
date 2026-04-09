@@ -10,7 +10,7 @@ import {
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 import { translateCallType, translateNotAnalyzableReason } from "./translations";
-import { getInternalNumbersForUser, getMobileNumbersForUser } from "./utils";
+import { getMobileNumbersForUser } from "./utils";
 
 const transcriptMetadataSchema = z.object({ operatorName: z.string().optional() }).passthrough();
 const PBX_PROVIDER = "megapbx";
@@ -149,7 +149,7 @@ export const list = workspaceProcedure
 
     // Строим менеджеров из PBX данных и получаем связанные phone_number
     const managerDisplayNameById = new Map<string, string>();
-    const managerPhoneNumbers = new Map<string, Set<string>>(); // employeeId -> Set<phone_number>
+    const managerPhoneNumbersMap = new Map<string, Set<string>>(); // employeeId -> Set<phone_number>
 
     for (const employee of pbxEmployees) {
       if (!employee.isActive) continue;
@@ -167,13 +167,13 @@ export const list = workspaceProcedure
       const relatedNumbers = phoneNumbersByEmployeeExternalId.get(employee.externalId) || [];
 
       if (relatedNumbers.length > 0) {
-        const phoneNumbers = managerPhoneNumbers.get(employeeId) || new Set<string>();
+        const phoneNumbers = managerPhoneNumbersMap.get(employeeId) || new Set<string>();
         for (const number of relatedNumbers) {
           if (number.phoneNumber) {
             phoneNumbers.add(number.phoneNumber);
           }
         }
-        managerPhoneNumbers.set(employeeId, phoneNumbers);
+        managerPhoneNumbersMap.set(employeeId, phoneNumbers);
       }
     }
 
@@ -189,11 +189,11 @@ export const list = workspaceProcedure
         : [];
 
     // Получаем phone_numbers для фильтрации по менеджерам
-    const managerInternalNumbers = finalManagerFilters.length
+    const managerPhoneNumbers = finalManagerFilters.length
       ? Array.from(
           new Set(
             finalManagerFilters.flatMap((managerId) => {
-              const phoneNumbers = managerPhoneNumbers.get(managerId.trim());
+              const phoneNumbers = managerPhoneNumbersMap.get(managerId.trim());
               return phoneNumbers ? Array.from(phoneNumbers) : [];
             }),
           ),
@@ -201,10 +201,10 @@ export const list = workspaceProcedure
       : [];
 
     // Для поиска по текстовому запросу используем phone_numbers связанных сотрудников
-    const managerInternalNumbersForQuery = trimmedQuery
+    const managerPhoneNumbersForQuery = trimmedQuery
       ? Array.from(
           new Set(
-            Array.from(managerPhoneNumbers.entries())
+            Array.from(managerPhoneNumbersMap.entries())
               .filter(([employeeId, _phoneNumbers]) => {
                 const employee = employeeById.get(employeeId);
                 if (!employee) return false;
@@ -226,7 +226,6 @@ export const list = workspaceProcedure
       : [];
 
     // Для member получаем номера через привязку к сотруднику или из профиля пользователя
-    let internalNumbers: string[] | undefined;
     let mobileNumbers: string[] | undefined;
 
     if (!isAdminOrOwner) {
@@ -242,38 +241,27 @@ export const list = workspaceProcedure
           // Получаем все номера этого сотрудника
           const relatedNumbers = phoneNumbersByEmployeeExternalId.get(employee.externalId) || [];
           const phoneNums: string[] = [];
-          const extNums: string[] = [];
 
           for (const num of relatedNumbers) {
             if (num.phoneNumber) phoneNums.push(num.phoneNumber);
-            if (num.extension) extNums.push(num.extension);
-          }
-
-          // Также добавляем extension самого сотрудника
-          if (employee.extension) {
-            extNums.push(employee.extension);
           }
 
           mobileNumbers = phoneNums.length > 0 ? phoneNums : undefined;
-          internalNumbers = extNums.length > 0 ? extNums : undefined;
         }
       }
       // Если нет привязки к сотруднику, используем номера из профиля пользователя
-      if (!internalNumbers && !mobileNumbers) {
-        internalNumbers = getInternalNumbersForUser(
-          user as { id: string; internalExtensions?: string | null; mobilePhones?: string | null },
-        );
+      if (!mobileNumbers) {
         mobileNumbers = getMobileNumbersForUser(
-          user as { id: string; internalExtensions?: string | null; mobilePhones?: string | null },
+          user as { id: string; mobilePhones?: string | null },
         );
       }
     }
 
     const ftpSettings = await settingsService.getFtpSettings(workspaceId);
     const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
-    // Участник (member) видит только свои звонки — при отсутствии internalExtensions/mobilePhones возвращаем пустой список
+    // Участник (member) видит только свои звонки — при отсутствии mobilePhones возвращаем пустой список
     if (context.workspaceRole === "member") {
-      const hasIdentifiers = (internalNumbers?.length ?? 0) > 0 || (mobileNumbers?.length ?? 0) > 0;
+      const hasIdentifiers = (mobileNumbers?.length ?? 0) > 0;
       if (!hasIdentifiers) {
         return {
           calls: [],
@@ -313,16 +301,14 @@ export const list = workspaceProcedure
         offset,
         dateFrom,
         dateTo,
-        internalNumbers,
         mobileNumbers,
         excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
         directions: normalizedDirections?.length ? normalizedDirections : undefined,
         valueScores: input.value?.length ? input.value : undefined,
-        managerInternalNumbers:
-          managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
+        managerPhoneNumbers: managerPhoneNumbers.length > 0 ? managerPhoneNumbers : undefined,
         statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
-        managerInternalNumbersForQuery:
-          managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
+        managerPhoneNumbersForQuery:
+          managerPhoneNumbersForQuery.length > 0 ? managerPhoneNumbersForQuery : undefined,
         q: trimmedQuery,
         sortBy: input.sortBy,
         sortOrder: input.sortOrder,
@@ -331,16 +317,14 @@ export const list = workspaceProcedure
         workspaceId,
         dateFrom,
         dateTo,
-        internalNumbers,
         mobileNumbers,
         excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
         directions: normalizedDirections?.length ? normalizedDirections : undefined,
         valueScores: input.value?.length ? input.value : undefined,
-        managerInternalNumbers:
-          managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
+        managerPhoneNumbers: managerPhoneNumbers.length > 0 ? managerPhoneNumbers : undefined,
         statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
-        managerInternalNumbersForQuery:
-          managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
+        managerPhoneNumbersForQuery:
+          managerPhoneNumbersForQuery.length > 0 ? managerPhoneNumbersForQuery : undefined,
         q: trimmedQuery,
       }),
       // Исправлено: calculateMetrics теперь учитывает все текущие фильтры
@@ -350,14 +334,12 @@ export const list = workspaceProcedure
         {
           dateFrom,
           dateTo,
-          internalNumbers,
           mobileNumbers,
           directions: normalizedDirections?.length ? normalizedDirections : undefined,
-          managerInternalNumbers:
-            managerInternalNumbers.length > 0 ? managerInternalNumbers : undefined,
+          managerPhoneNumbers: managerPhoneNumbers.length > 0 ? managerPhoneNumbers : undefined,
           statuses: normalizedStatuses?.length ? normalizedStatuses : undefined,
-          managerInternalNumbersForQuery:
-            managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
+          managerPhoneNumbersForQuery:
+            managerPhoneNumbersForQuery.length > 0 ? managerPhoneNumbersForQuery : undefined,
           q: trimmedQuery,
         },
       ),

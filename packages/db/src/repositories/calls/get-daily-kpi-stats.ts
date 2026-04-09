@@ -45,7 +45,7 @@ export async function getDailyKpiStats(input: GetDailyKpiStatsInput): Promise<Da
     return [];
   }
 
-  const internalNumbers = phoneNumbers
+  const phoneNums = phoneNumbers
     .map((row) => row.phoneNumber)
     .filter((num): num is string => num != null && num.trim() !== "");
 
@@ -80,7 +80,7 @@ export async function getDailyKpiStats(input: GetDailyKpiStatsInput): Promise<Da
 
   const conditions = [
     eq(schema.calls.workspaceId, workspaceId),
-    inArray(schema.calls.internalNumber, internalNumbers),
+    inArray(schema.calls.number, phoneNums),
     gte(schema.calls.timestamp, dateFromDate),
     lt(schema.calls.timestamp, dateToExclusive),
   ];

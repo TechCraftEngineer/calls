@@ -153,7 +153,6 @@ export type {
 } from "./services/telegram-reports.service";
 // Telegram reports
 export {
-  getInternalNumbersForUserIds,
   getReportScheduleSettings,
   getTelegramReportRecipients,
   getWorkspaceIdsWithTelegramReportRecipients,

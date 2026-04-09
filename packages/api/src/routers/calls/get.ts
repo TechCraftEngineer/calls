@@ -1,9 +1,8 @@
-import { filesService, usersRepository } from "@calls/db";
+import { filesService } from "@calls/db";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 import { translateCallType, translateNotAnalyzableReason } from "./translations";
-import { getDisplayNameFromUser } from "./utils";
 
 export const get = workspaceProcedure
   .input(z.object({ call_id: z.string() }))
@@ -35,9 +34,6 @@ export const get = workspaceProcedure
       }
     }
 
-    const managerFromWorkspace = call.internalNumber
-      ? await usersRepository.findUserByInternalNumber(call.workspaceId, call.internalNumber)
-      : null;
     const operatorName =
       (transcript?.metadata &&
       typeof transcript.metadata === "object" &&
@@ -47,11 +43,7 @@ export const get = workspaceProcedure
         : null) ??
       call.name ??
       null;
-    const managerName =
-      (managerFromWorkspace ? getDisplayNameFromUser(managerFromWorkspace) : null) ??
-      operatorName ??
-      call.name ??
-      null;
+    const managerName = operatorName ?? call.name ?? null;
 
     // Извлекаем маппинг спикеров из metadata для замены SPEAKER_00/SPEAKER_01
     // mapping теперь сохраняется на верхнем уровне metadata (добавлен в serializeMetadata)
@@ -82,7 +74,6 @@ export const get = workspaceProcedure
         sizeBytes: (sizeBytes === undefined ? null : sizeBytes) as number | null,
         managerName,
         operatorName,
-        managerId: managerFromWorkspace?.id ?? null,
       },
       transcript: transcript
         ? {

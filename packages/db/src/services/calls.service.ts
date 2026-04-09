@@ -7,7 +7,6 @@ import type { ManagerStatsRow } from "../repositories/calls/get-evaluations-stat
 import type { CallsRepository } from "../repositories/calls.repository";
 import type { SystemRepository } from "../repositories/system.repository";
 import type { Call, CallEvaluation, Transcript } from "../schema";
-import type { CallStatus } from "../utils/call-status";
 import type {
   CallWithTranscript,
   CreateCallData,
@@ -15,6 +14,7 @@ import type {
   GetCallManagersParams,
   GetCallsParams,
 } from "../types/calls.types";
+import type { CallStatus } from "../utils/call-status";
 import { ValidationError } from "../validation/call-schemas";
 
 export class CallsService {
@@ -356,12 +356,11 @@ export class CallsService {
     additionalFilters?: {
       dateFrom?: string;
       dateTo?: string;
-      internalNumbers?: string[];
       mobileNumbers?: string[];
       directions?: ("inbound" | "outbound")[];
-      managerInternalNumbers?: string[];
+      managerPhoneNumbers?: string[];
       statuses?: CallStatus[];
-      managerInternalNumbersForQuery?: string[];
+      managerPhoneNumbersForQuery?: string[];
       q?: string;
       includeArchived?: boolean;
       onlyArchived?: boolean;
@@ -392,7 +391,6 @@ export class CallsService {
     workspaceId?: string;
     dateFrom?: string;
     dateTo?: string;
-    internalNumbers?: string[];
     excludePhoneNumbers?: string[];
   }): Promise<Record<string, ManagerStatsRow>> {
     return this.callsRepository.getEvaluationsStats(params);
@@ -402,7 +400,6 @@ export class CallsService {
     workspaceId?: string;
     dateFrom?: string;
     dateTo?: string;
-    internalNumbers?: string[];
     excludePhoneNumbers?: string[];
     maxScore?: number;
   }): Promise<Record<string, number>> {
@@ -413,7 +410,6 @@ export class CallsService {
     workspaceId?: string;
     dateFrom?: string;
     dateTo?: string;
-    internalNumbers?: string[];
     excludePhoneNumbers?: string[];
     limitPerManager?: number;
   }): Promise<Record<string, string[]>> {
