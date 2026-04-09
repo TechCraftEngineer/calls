@@ -1,9 +1,12 @@
 /**
- * Диаризация через Speaker Embeddings Service
+ * Диаризация через Speaker Embeddings Service (Асинхронная модель)
+ * 
+ * Использует POST /diarize-async для запуска задачи.
+ * Результат приходит через Inngest callback (speaker-embeddings/diarization.completed).
+ * Polling на /status НЕ используется.
  */
 
 import { env, SPEAKER_CONFIG } from "@calls/config";
-import type { GigaAmSegment } from "~/inngest/functions/transcribe-call/types";
 import { createLogger } from "~/logger";
 
 const logger = createLogger("speaker-diarization");
@@ -60,11 +63,19 @@ export async function checkSpeakerEmbeddingsHealth(): Promise<boolean> {
 }
 
 /**
- * Запускает диаризацию через speaker embeddings сервис
+ * Запускает асинхронную диаризацию через speaker embeddings сервис.
+ * Отправляет аудио файл и callId, получает taskId.
+ * Результат будет отправлен через Inngest callback.
  */
 export async function startSpeakerDiarization(
   callId: string,
-  segments: GigaAmSegment[]
+  audioBuffer: ArrayBuffer,
+  filename: string,
+  options?: {
+    numSpeakers?: number;
+    minSpeakers?: number;
+    maxSpeakers?: number;
+  }
 ): Promise<{
   success: boolean;
   taskId?: string;
@@ -77,30 +88,39 @@ export async function startSpeakerDiarization(
       SPEAKER_EMBEDDINGS_TIMEOUT_MS
     );
 
-    // Отправляем только необходимые данные (без эмбеддингов для уменьшения размера)
-    const payload = {
-      callId,
-      segments: segments.map((s) => ({
-        speaker: s.speaker,
-        start: s.start,
-        end: s.end,
-        text: s.text,
-        // Эмбеддинги будут пересчитаны на стороне сервиса для консистентности
-      })),
-    };
+    // Создаем FormData для отправки аудио файла
+    const formData = new FormData();
+    const blob = new Blob([audioBuffer], { type: "audio/wav" });
+    const audioFilename = filename?.trim() ? filename : "audio.wav";
+    
+    formData.append("file", blob, audioFilename);
+    formData.append("call_id", callId);
+    
+    if (options?.numSpeakers !== undefined) {
+      formData.append("num_speakers", options.numSpeakers.toString());
+    }
+    if (options?.minSpeakers !== undefined) {
+      formData.append("min_speakers", options.minSpeakers.toString());
+    }
+    if (options?.maxSpeakers !== undefined) {
+      formData.append("max_speakers", options.maxSpeakers.toString());
+    }
 
-    const response = await fetch(`${SPEAKER_EMBEDDINGS_URL}/diarize`, {
+    logger.info("Запуск асинхронной диаризации", {
+      callId,
+      filename: audioFilename,
+      endpoint: `${SPEAKER_EMBEDDINGS_URL}/diarize-async`,
+    });
+
+    const response = await fetch(`${SPEAKER_EMBEDDINGS_URL}/diarize-async`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+      body: formData,
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
 
-    if (!response.ok) {
+    if (response.status !== 202) {
       const errorText = await response.text();
       return {
         success: false,
@@ -109,9 +129,15 @@ export async function startSpeakerDiarization(
     }
 
     const data = await response.json();
+    
+    logger.info("Асинхронная диаризация запущена", {
+      callId,
+      taskId: data.task_id,
+    });
+    
     return {
       success: true,
-      taskId: data.taskId,
+      taskId: data.task_id,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -127,7 +153,7 @@ export async function startSpeakerDiarization(
 }
 
 /**
- * Проверяет статус диаризации
+ * Проверяет статус диаризации через /status endpoint
  */
 export async function getDiarizationStatus(
   taskId: string
@@ -144,7 +170,7 @@ export async function getDiarizationStatus(
     );
 
     const response = await fetch(
-      `${SPEAKER_EMBEDDINGS_URL}/diarize/${taskId}`,
+      `${SPEAKER_EMBEDDINGS_URL}/status/${taskId}`,
       {
         method: "GET",
         signal: controller.signal,
@@ -198,142 +224,64 @@ export function shouldUseSpeakerEmbeddings(
 }
 
 /**
- * Результат диаризации для performDiarization
+ * Результат запуска диаризации (асинхронная модель)
  */
 export interface PerformDiarizationResult {
   success: boolean;
-  segments: Array<{
-    start: number;
-    end: number;
-    speaker: string;
-  }>;
-  num_speakers?: number;
-  speakers?: string[];
+  taskId?: string;
+  error?: string;
 }
 
 /**
- * Выполняет диаризацию аудио в асинхронном режиме
- * Запускает диаризацию и ожидает результат через polling
+ * Запускает асинхронную диаризацию аудио.
+ * Возвращает taskId сразу, результат придет через Inngest callback.
+ * Polling НЕ используется.
  */
 export async function performDiarization(
   audioBuffer: ArrayBuffer,
   filename: string,
   callId: string,
-  maxWaitMs = 120000,
-  pollIntervalMs = 2000
+  options?: {
+    numSpeakers?: number;
+    minSpeakers?: number;
+    maxSpeakers?: number;
+  }
 ): Promise<PerformDiarizationResult> {
-  const startTime = Date.now();
-  
   logger.info("Запуск асинхронной диаризации", { callId, filename });
-  
+
   try {
-    // Проверяем health сервиса
-    const isHealthy = await checkSpeakerEmbeddingsHealth();
-    if (!isHealthy) {
-      logger.warn("Speaker embeddings сервис недоступен", { callId });
+    // Запускаем асинхронную диаризацию
+    const result = await startSpeakerDiarization(callId, audioBuffer, filename, options);
+
+    if (!result.success || !result.taskId) {
+      logger.error("Не удалось запустить диаризацию", { callId, error: result.error });
       return {
         success: false,
-        segments: [],
+        error: result.error || "Failed to start diarization",
       };
     }
-    
-    // Отправляем аудио на диаризацию
-    // Создаем временные сегменты для запуска
-    const tempSegments = [{
-      speaker: "SPEAKER_00",
-      start: 0,
-      end: 0,
-      text: "",
-    }];
-    
-    const { success, taskId, error } = await startSpeakerDiarization(callId, tempSegments);
-    
-    if (!success || !taskId) {
-      logger.error("Не удалось запустить диаризацию", { callId, error });
-      return {
-        success: false,
-        segments: [],
-      };
-    }
-    
-    logger.info("Диаризация запущена, ожидание результата", { callId, taskId });
-    
-    // Polling для получения результата
-    while (Date.now() - startTime < maxWaitMs) {
-      const status = await getDiarizationStatus(taskId);
-      
-      if (status.status === "completed" && status.result) {
-        logger.info("Диаризация завершена", { callId, taskId, durationMs: Date.now() - startTime });
-        
-        // Преобразуем результат в формат PerformDiarizationResult
-        // Здесь нужно получить сегменты из другого источника или адаптировать логику
-        return {
-          success: true,
-          segments: [], // TODO: получить реальные сегменты
-          num_speakers: status.result.clusterCount,
-        };
-      }
-      
-      if (status.status === "failed") {
-        logger.error("Диаризация завершилась с ошибкой", { callId, taskId, error: status.error });
-        return {
-          success: false,
-          segments: [],
-        };
-      }
-      
-      // Ждем перед следующей проверкой
-      await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
-    }
-    
-    // Таймаут
-    logger.error("Таймаут ожидания диаризации", { callId, taskId, maxWaitMs });
+
+    logger.info("Диаризация запущена, ожидаем callback", {
+      callId,
+      taskId: result.taskId,
+    });
+
+    // Возвращаем taskId - результат придет через Inngest
     return {
-      success: false,
-      segments: [],
+      success: true,
+      taskId: result.taskId,
     };
-    
+
   } catch (error) {
-    logger.error("Ошибка при выполнении диаризации", {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error("Ошибка при запуске диаризации", {
       callId,
       filename,
-      error: error instanceof Error ? error.message : String(error),
+      error: errorMessage,
     });
     return {
       success: false,
-      segments: [],
-    };
-  }
-}
-
-/**
- * Выполняет автоматическую диаризацию (адаптер для совместимости)
- * @deprecated Используйте processAudioWithDiarization из gigaam/diarization
- */
-export async function performDiarizationAuto(
-  audioBuffer: ArrayBuffer,
-  filename: string
-): Promise<PerformDiarizationResult> {
-  logger.warn("performDiarizationAuto is deprecated, use processAudioWithDiarization from gigaam/diarization");
-  
-  // Делегируем к gigaam модулю если доступен
-  try {
-    const { processAudioWithDiarization } = await import("~/inngest/functions/transcribe-call/gigaam/diarization");
-    const result = await processAudioWithDiarization(audioBuffer, filename);
-    
-    return {
-      success: true,
-      segments: result.segments.map(s => ({
-        start: s.start,
-        end: s.end,
-        speaker: s.speaker,
-      })),
-    };
-  } catch (error) {
-    logger.error("performDiarizationAuto failed", { filename, error });
-    return {
-      success: false,
-      segments: [],
+      error: errorMessage,
     };
   }
 }

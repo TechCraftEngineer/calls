@@ -63,6 +63,7 @@ async def send_inngest_event(
     status: str,
     result: dict[str, Any] | None = None,
     error: str | None = None,
+    call_id: str | None = None,
 ) -> bool:
     """
     Отправка события в Inngest о завершении задачи диаризации (async версия).
@@ -72,6 +73,7 @@ async def send_inngest_event(
         status: Статус (completed/failed)
         result: Результат диаризации
         error: Ошибка если есть
+        call_id: ID звонка для связи с внешней системой
 
     Returns:
         True если успешно отправлено
@@ -87,6 +89,7 @@ async def send_inngest_event(
         "status": status,
         "result": result,
         "error": error,
+        "call_id": call_id,
     }
 
     try:
@@ -120,6 +123,7 @@ def send_inngest_event_sync(
     status: str,
     result: dict[str, Any] | None = None,
     error: str | None = None,
+    call_id: str | None = None,
 ) -> bool:
     """
     Отправка события в Inngest о завершении задачи диаризации (sync версия).
@@ -130,6 +134,7 @@ def send_inngest_event_sync(
         status: Статус (completed/failed)
         result: Результат диаризации
         error: Ошибка если есть
+        call_id: ID звонка для связи с внешней системой
 
     Returns:
         True если успешно отправлено
@@ -145,6 +150,7 @@ def send_inngest_event_sync(
         "status": status,
         "result": result,
         "error": error,
+        "call_id": call_id,
     }
 
     try:
@@ -180,6 +186,7 @@ def _run_diarization_task(
     num_speakers: int | None,
     min_speakers: int | None,
     max_speakers: int | None,
+    call_id: str | None = None,
 ):
     """Выполняет диаризацию в фоновом режиме и отправляет результат в Inngest."""
     try:
@@ -208,7 +215,7 @@ def _run_diarization_task(
         logger.info(f"Background diarization task completed: {task_id}")
 
         # Отправляем событие в Inngest
-        send_inngest_event_sync(task_id, "completed", result=result)
+        send_inngest_event_sync(task_id, "completed", result=result, call_id=call_id)
 
     except Exception as exc:
         logger.exception(f"Background diarization task failed: {task_id}")
@@ -219,10 +226,10 @@ def _run_diarization_task(
             _task_store[task_id]["updated_at"] = time.time()
 
         # Отправляем событие об ошибке в Inngest
-        send_inngest_event_sync(task_id, "failed", error=str(exc))
+        send_inngest_event_sync(task_id, "failed", error=str(exc), call_id=call_id)
 
 
-@router.post("/api/diarize")
+@router.post("/diarize")
 async def diarize(
     file: UploadFile = File(...),
     num_speakers: int | None = Form(None),
@@ -337,10 +344,11 @@ async def diarize(
         raise HTTPException(status_code=500, detail="diarization failed") from exc
 
 
-@router.post("/api/diarize-async")
+@router.post("/diarize-async")
 async def diarize_async(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
+    call_id: str | None = Form(None),
     num_speakers: int | None = Form(None),
     min_speakers: int | None = Form(None),
     max_speakers: int | None = Form(None),
@@ -349,7 +357,10 @@ async def diarize_async(
     Асинхронный speaker diarization endpoint.
 
     Запускает диаризацию в фоне и возвращает task_id для отслеживания.
-    Используйте /api/status/{task_id} для проверки статуса.
+    Используйте /status/{task_id} для проверки статуса или ожидайте callback в Inngest.
+    
+    Args:
+        call_id: ID звонка для передачи в Inngest callback
     """
     try:
         # Загружаем и предобрабатываем аудио
@@ -404,6 +415,7 @@ async def diarize_async(
             num_speakers,
             min_speakers,
             max_speakers,
+            call_id,
         )
 
         logger.info(f"Async diarization task created: {task_id}")
@@ -420,7 +432,7 @@ async def diarize_async(
         raise HTTPException(status_code=500, detail="Failed to create async task") from exc
 
 
-@router.get("/api/status/{task_id}")
+@router.get("/status/{task_id}")
 async def get_task_status(task_id: str):
     """
     Возвращает статус асинхронной задачи диаризации.

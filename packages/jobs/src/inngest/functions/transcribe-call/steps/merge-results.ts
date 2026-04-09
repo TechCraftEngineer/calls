@@ -5,7 +5,20 @@
 import { createLogger } from "~/logger";
 import { applyLLMMerging } from "~/inngest/functions/transcribe-call/llm/merge";
 import type { SyncTranscriptionResult } from "./sync-transcription";
-import type { DiarizeResult } from "./diarize-and-transcribe";
+
+// Локальный интерфейс (раньше импортировался из diarize-and-transcribe)
+interface DiarizeResult {
+  segments: Array<{
+    speaker: string;
+    text: string;
+    start: number;
+    end: number;
+  }>;
+  transcript: string;
+  processingTimeMs: number;
+  diarizationSuccess: boolean;
+  diarizationFailed: boolean;
+}
 
 const logger = createLogger("transcribe-call:merge");
 

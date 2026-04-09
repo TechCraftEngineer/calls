@@ -1,17 +1,13 @@
 /**
- * Диаризация аудио через speaker-embeddings сервис
+ * Диаризация и транскрибация аудио через GigaAM API
  *
- * ИСПОЛЬЗУЕТ АСИНХРОННЫЙ БАТЧЕВЫЙ ENDPOINT /api/transcribe-diarized-async
- * Вместо N+1 HTTP-запросов для каждого сегмента, отправляем один запрос
- * с полным аудио и сегментами. Python сервис нарезает и транскрибирует
- * параллельно с ограничением concurrency.
+ * Использует встроенную диаризацию GigaAM, без speaker-embeddings сервиса.
+ * Синхронная модель через performDiarization УБРАНА.
  */
 
 import { createLogger } from "~/logger";
-import { checkSpeakerEmbeddingsHealth, performDiarizationAuto } from "~/inngest/functions/transcribe-call/speakers/diarization";
 import type { AsrResult } from "~/inngest/functions/transcribe-call/types";
 import {
-  type DiarizationSegmentInput,
   processAudioWithoutDiarization,
   startAsyncDiarizedTranscription,
   waitForAsyncDiarizedResult,
@@ -19,6 +15,10 @@ import {
 
 const logger = createLogger("gigaam-diarization");
 
+/**
+ * Обрабатывает аудио с диаризацией через GigaAM
+ * Использует встроенную диаризацию GigaAM (без speaker-embeddings)
+ */
 export async function processAudioWithDiarization(
   audioBuffer: ArrayBuffer,
   filename: string,
@@ -26,51 +26,14 @@ export async function processAudioWithDiarization(
   const requestStartTime = Date.now();
 
   try {
-    logger.info("Начало диаризации аудио", { filename });
+    logger.info("Начало диаризации и транскрибации через GigaAM", { filename });
 
-    // Health check перед диаризацией
-    const healthStatus = await checkSpeakerEmbeddingsHealth();
-    if (!healthStatus) {
-      logger.warn("Speaker-embeddings сервис недоступен, пропускаем диаризацию");
-      return processAudioWithoutDiarization(audioBuffer, filename);
-    }
-
-    // Шаг 1: Диаризация через speaker-embeddings
-    const diarizationResult = await performDiarizationAuto(audioBuffer, filename);
-
-    if (!diarizationResult.success || diarizationResult.segments.length === 0) {
-      logger.warn("Диаризация не удалась, используем обычную транскрипцию", {
-        filename,
-        segmentsCount: diarizationResult.segments.length,
-      });
-
-      // Fallback на обычную транскрипцию
-      return processAudioWithoutDiarization(audioBuffer, filename);
-    }
-
-    logger.info("Диаризация завершена", {
-      segmentsCount: diarizationResult.segments.length,
-      numSpeakers: diarizationResult.num_speakers,
-      speakers: diarizationResult.speakers,
-    });
-
-    // Шаг 2: Транскрибируем все сегменты через батчевый endpoint (ОДИН HTTP-зАПРОС!)
-    const segmentsInput: DiarizationSegmentInput[] = diarizationResult.segments.map((seg) => ({
-      start: seg.start,
-      end: seg.end,
-      speaker: seg.speaker,
-    }));
-
-    logger.info("Отправка на батчевую транскрипцию", {
-      filename,
-      segmentsCount: segmentsInput.length,
-    });
-
-    // Используем асинхронную модель GigaAM
+    // Используем GigaAM диаризированную транскрибацию напрямую
+    // GigaAM имеет встроенную диаризацию
     const { taskId } = await startAsyncDiarizedTranscription(
       audioBuffer,
       filename,
-      segmentsInput,
+      [], // Пустые сегменты - GigaAM сам сделает диаризацию
     );
 
     const diarizedResult = await waitForAsyncDiarizedResult(taskId);
@@ -92,9 +55,10 @@ export async function processAudioWithDiarization(
       confidence: seg.confidence,
     }));
 
-    logger.info("Батчевая транскрипция завершена", {
+    logger.info("Диаризация и транскрибация завершена", {
       filename,
       segmentsCount: transcribedSegments.length,
+      numSpeakers: diarizedResult.num_speakers,
       processingTime,
       gigaProcessingTime: diarizedResult.processing_time,
     });
@@ -108,11 +72,9 @@ export async function processAudioWithDiarization(
             provider: "gigaam-diarized",
             utterances: transcribedSegments,
             raw: {
-              diarization: {
-                num_speakers: diarizationResult.num_speakers,
-                speakers: diarizationResult.speakers,
-                segments: transcribedSegments,
-              },
+              num_speakers: diarizedResult.num_speakers,
+              speakers: diarizedResult.speakers,
+              segments: transcribedSegments,
               processingTime,
               gigaProcessingTime: diarizedResult.processing_time,
               pipeline: diarizedResult.pipeline,

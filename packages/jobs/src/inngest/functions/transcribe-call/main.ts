@@ -17,7 +17,7 @@ import {
 } from "~/inngest/functions/transcribe-call/flows";
 import {
   checkAnsweringMachine,
-  diarizeAndTranscribe,
+  // diarizeAndTranscribe, // УБРАНО - используется асинхронная модель
   fetchCall,
   fetchWorkspace,
   handleFailure,
@@ -33,7 +33,7 @@ import {
 import { TranscriptionResultSchema } from "~/inngest/functions/transcribe-call/schemas";
 import type { ZodIssue } from "zod";
 import type { SyncTranscriptionResult } from "~/inngest/functions/transcribe-call/steps/sync-transcription";
-import type { DiarizeResult } from "~/inngest/functions/transcribe-call/steps/diarize-and-transcribe";
+// import type { DiarizeResult } from "~/inngest/functions/transcribe-call/steps/diarize-and-transcribe"; // УБРАНО
 import type { MergeResult } from "~/inngest/functions/transcribe-call/steps/merge-results";
 import type { SummarizeResult } from "~/inngest/functions/transcribe-call/steps/summarize";
 import type { IdentifyResult } from "~/inngest/functions/transcribe-call/steps/identify-speakers";
@@ -105,56 +105,21 @@ export const transcribeCallFn = inngest.createFunction(
       );
     }
 
-    // === ШАГ 8: Диаризация и асинхронная транскрибация ===
-    const diarizeResult = await step.run("asr:diarize-and-transcribe", () =>
-      diarizeAndTranscribe(pipelineAudio, callId),
-    ) as DiarizeResult;
+    // === ШАГ 8: Диаризация и асинхронная транскрибация (УБРАНО - асинхронная модель) ===
+    // const diarizeResult = await step.run("asr:diarize-and-transcribe", () =>
+    //   diarizeAndTranscribe(pipelineAudio, callId),
+    // ) as DiarizeResult;
 
-    // Fallback: если диаризация не удалась, используем только синхронный результат
-    if (diarizeResult.diarizationFailed) {
-      logger.warn("Диаризация не удалась, используем fallback без диаризации", {
-        callId,
-        diarizationSuccess: diarizeResult.diarizationSuccess,
-      });
+    // Временно используем синхронный результат без диаризации
+    const diarizeResult = {
+      segments: [],
+      transcript: fullTranscription.transcript,
+      processingTimeMs: 0,
+      diarizationSuccess: false,
+      diarizationFailed: true,
+    };
 
-      // Сохраняем транскрипт без диаризации
-      await step.run("persist/fallback-transcript", async () => {
-        const { callsService } = await import("@calls/db");
-        await callsService.upsertTranscript({
-          callId,
-          text: fullTranscript,
-          rawText: fullTranscript,
-          confidence: null,
-          metadata: {
-            asrSource: "gigaam-sync-full-no-diarization",
-            processingTimeMs: fullProcessingTimeMs,
-            isAnsweringMachine: false,
-            diarizationFallback: true,
-            llmMergeApplied: false,
-            llmMergeQuality: null,
-            speakerIdentificationApplied: false,
-          },
-          summary: null,
-          sentiment: null,
-          title: "Транскрипция без диаризации",
-          callType: "other",
-          callTopic: null,
-          customerName: undefined,
-        });
-      });
-
-      return {
-        callId,
-        processingTimeMs: fullProcessingTimeMs,
-        asrSource: "gigaam-sync-full-no-diarization",
-        textLength: fullTranscript.length,
-        customerName: null,
-        llmMergeApplied: false,
-        isAnsweringMachine: false,
-      };
-    }
-
-    // === ШАГ 9: LLM Merging ===
+    // === ШАГ 9: LLM Merging (упрощенный - без диаризации) ===
     const mergedResult = await step.run("llm/merge-asr", () =>
       mergeResults(fullTranscription, diarizeResult, callId),
     ) as MergeResult;
