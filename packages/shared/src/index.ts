@@ -2,6 +2,10 @@
  * Shared utilities and types
  */
 
+export {
+  DEFAULT_EVALUATION_TEMPLATE_SLUG,
+  EVALUATION_TEMPLATE_SLUGS,
+} from "./evaluation";
 export type { DailyKpiRow } from "./kpi";
 export { formatReportSubject, type ReportType } from "./reports";
 export { generateWorkspaceSlug } from "./slug";

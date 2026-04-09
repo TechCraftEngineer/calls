@@ -2,7 +2,7 @@
  * Helper функции для работы с speaker diarization
  */
 
-import { env } from "@calls/config";
+import { env, SPEAKER_CONFIG } from "@calls/config";
 import { z } from "zod";
 import { createLogger } from "../../../logger";
 
@@ -88,7 +88,7 @@ export async function performDiarization(
     const response = await fetch(`${speakerEmbeddingsUrl}/api/diarize`, {
       method: "POST",
       body: formData,
-      signal: AbortSignal.timeout(env.SPEAKER_EMBEDDINGS_TIMEOUT_MS),
+      signal: AbortSignal.timeout(SPEAKER_CONFIG.TIMEOUT_MS),
     });
 
     if (!response.ok) {
@@ -155,7 +155,7 @@ export async function checkSpeakerEmbeddingsHealth(): Promise<boolean> {
   try {
     const response = await fetch(`${speakerEmbeddingsUrl}/health`, {
       method: "GET",
-      signal: AbortSignal.timeout(env.SPEAKER_EMBEDDINGS_HEALTH_TIMEOUT_MS),
+      signal: AbortSignal.timeout(SPEAKER_CONFIG.HEALTH_TIMEOUT_MS),
     });
 
     if (response.ok) {

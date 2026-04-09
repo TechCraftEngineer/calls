@@ -21,3 +21,21 @@ export const LLM_CONFIG = {
   /** Таймаут для суммаризации (10 минут) */
   SUMMARIZE_TIMEOUT_MS: 600_000,
 } as const;
+
+/**
+ * Конфигурация для speaker embeddings сервиса
+ */
+export const SPEAKER_CONFIG = {
+  /** Таймаут для диаризации (30 минут) */
+  TIMEOUT_MS: 1_800_000,
+  /** Таймаут для health check (60 секунд) */
+  HEALTH_TIMEOUT_MS: 60_000,
+} as const;
+
+/**
+ * Конфигурация для Giga AM сервиса
+ */
+export const GIGA_AM_CONFIG = {
+  /** Таймаут для транскрибации (15 минут) */
+  TIMEOUT_MS: 900_000,
+} as const;

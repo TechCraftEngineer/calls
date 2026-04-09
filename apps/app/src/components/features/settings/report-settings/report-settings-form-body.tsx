@@ -74,6 +74,7 @@ export default function ReportSettingsFormBody({
               telegramDailyReport: form.telegramDailyReport,
               telegramWeeklyReport: form.telegramWeeklyReport,
               telegramMonthlyReport: form.telegramMonthlyReport,
+              telegramSkipWeekends: form.telegramSkipWeekends,
             },
           }),
         );
@@ -97,7 +98,13 @@ export default function ReportSettingsFormBody({
             }),
           );
         }
-        await Promise.all(tasks);
+        const results = await Promise.allSettled(tasks);
+        const failures = results.filter((r) => r.status === "rejected");
+        if (failures.length > 0) {
+          throw new Error(
+            `Не удалось сохранить ${failures.length} из ${tasks.length} настроек отчётов`,
+          );
+        }
       },
     });
   };

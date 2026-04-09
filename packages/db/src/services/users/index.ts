@@ -118,6 +118,10 @@ export class UsersService {
   // === Delegate settings methods ===
 
   async getUserForEdit(userId: string, workspaceId: string): Promise<UserForEdit | null> {
+    // Validate input IDs before any repository calls
+    UuidSchema.parse(userId);
+    UuidSchema.parse(workspaceId);
+
     // Fetch user basic data
     const user = await this.base.getUser(userId);
     if (!user) {

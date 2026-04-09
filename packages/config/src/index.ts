@@ -1,4 +1,4 @@
-export { APP_CONFIG, LLM_CONFIG } from "./constants";
+export { APP_CONFIG, GIGA_AM_CONFIG, LLM_CONFIG, SPEAKER_CONFIG } from "./constants";
 export { env } from "./env";
 
 import { env } from "./env";

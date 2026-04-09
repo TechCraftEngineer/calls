@@ -3,40 +3,26 @@
  */
 
 // Прямые экспорты из модулей (без helpers.ts barrel-экспорта)
-export { downloadAudioFile, downloadAudioBuffer } from "./audio/download";
+export { downloadAudioBuffer, downloadAudioFile } from "./audio/download";
 export { extractAudioSegment } from "./audio/processing";
+export { extractSegmentsFromUtterances, extractSpeakerTimeline } from "./extraction";
+export { gigaAmCompletedFn } from "./gigaam/callback-handler";
 export {
+  fetchWithRetry,
   processAudioWithGigaAm,
   processAudioWithoutDiarization,
-  fetchWithRetry,
 } from "./gigaam/client";
 export { processAudioWithDiarization } from "./gigaam/diarization";
-export { extractSpeakerTimeline, extractSegmentsFromUtterances } from "./extraction";
-export { identifySpeakers } from "./speaker-identification";
-export { resolveManagerFromPbx } from "./manager-resolution";
-export { serializeMetadata } from "./metadata";
-export {
-  quickAnsweringMachineCheck,
-  shouldRunQuickCheck,
-  type QuickCheckResult,
-} from "./quick-am-check";
 export * from "./llm-correction";
 export * from "./llm-merge";
 export * from "./main";
-export * from "./validation";
-
-// Экспорт типов
-export type {
-  AsrResult,
-  AudioFileResult,
-  AudioBufferLegacyResult,
-  Call,
-  PipelineAudioResult,
-  SpeakerIdentificationResult,
-  TranscriptionResult,
-  Workspace,
-} from "./types";
-
+export { resolveManagerFromPbx } from "./manager-resolution";
+export { serializeMetadata } from "./metadata";
+export {
+  type QuickCheckResult,
+  quickAnsweringMachineCheck,
+  shouldRunQuickCheck,
+} from "./quick-am-check";
 // Экспорт типов и схем с разрешением конфликтов
 export type {
   AsrLog as AsrLogType,
@@ -50,7 +36,6 @@ export type {
   TranscriptMetadata,
   Workspace as WorkspaceType,
 } from "./schemas";
-
 // Экспорт схем валидации
 export {
   AsrLogSchema,
@@ -66,3 +51,16 @@ export {
   TranscriptMetadataSchema,
   WorkspaceSchema,
 } from "./schemas";
+export { identifySpeakers } from "./speaker-identification";
+// Экспорт типов
+export type {
+  AsrResult,
+  AudioBufferLegacyResult,
+  AudioFileResult,
+  Call,
+  PipelineAudioResult,
+  SpeakerIdentificationResult,
+  TranscriptionResult,
+  Workspace,
+} from "./types";
+export * from "./validation";

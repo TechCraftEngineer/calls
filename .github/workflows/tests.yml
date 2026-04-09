@@ -92,12 +92,14 @@ jobs:
         run: bun run build
 
       - name: Setup database
+        env:
+          TURBO_UI: true
         run: |
           echo "POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/test_db" >> .env.local
           echo "NEXT_PUBLIC_API_URL=http://localhost:3000" >> .env.local
           echo "NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000" >> .env.local
           echo "NODE_ENV=test" >> .env.local
-          TURBO_UI=true bun db:push
+          bun db:push
 
       - name: Start application
         run: |
@@ -132,7 +134,7 @@ jobs:
     
     services:
       postgres:
-        image: postgres:15
+        image: postgres:18
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USER: postgres
@@ -171,12 +173,14 @@ jobs:
         run: bun run build
 
       - name: Setup database
+        env:
+          TURBO_UI: true
         run: |
           echo "POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/test_db" >> .env.local
           echo "NEXT_PUBLIC_API_URL=http://localhost:3000" >> .env.local
           echo "NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000" >> .env.local
           echo "NODE_ENV=test" >> .env.local
-          TURBO_UI=true bun db:push
+          bun db:push
 
       - name: Start application
         run: |

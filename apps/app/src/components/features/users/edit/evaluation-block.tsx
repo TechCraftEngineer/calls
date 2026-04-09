@@ -1,8 +1,9 @@
 "use client";
 
+import { EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
-import type { EditUserForm } from "@/components/features/users/types";
+import type { EditUserForm, EvaluationTemplateSlug } from "@/components/features/users/types";
 import { useORPC } from "@/orpc/react";
 
 interface EvaluationBlockProps {
@@ -95,12 +96,16 @@ export function EvaluationBlock({
         <label className="block mb-1 text-[13px] font-semibold">Шаблон оценки</label>
         <Select
           value={value}
-          onValueChange={(v: string) =>
+          onValueChange={(v: string) => {
             setForm({
               ...form,
-              evaluationTemplateSlug: v as "sales" | "support" | "general" | null,
-            })
-          }
+              evaluationTemplateSlug: EVALUATION_TEMPLATE_SLUGS.includes(
+                v as EvaluationTemplateSlug,
+              )
+                ? (v as EvaluationTemplateSlug)
+                : null,
+            });
+          }}
         >
           <SelectTrigger className="w-full max-w-xs">
             <SelectValue />

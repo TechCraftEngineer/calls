@@ -232,7 +232,7 @@ describe("calls list role-based filtering", () => {
       const result = filterCallsByRole(mockCalls, context);
 
       // Должен видеть звонки с номеров 101 и 201
-      expect(result).toHaveLength(4);
+      expect(result).toHaveLength(3);
       expect(result.map((c) => c.id)).toEqual(["call-1", "call-3", "call-4"]);
     });
   });

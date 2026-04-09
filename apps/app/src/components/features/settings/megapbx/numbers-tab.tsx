@@ -105,7 +105,7 @@ export function NumbersTab({
           <SearchInput
             value={numberSearch}
             onChange={onNumberSearchChange}
-            placeholder="Поиск по номеру, extension, сотруднику…"
+            placeholder="Поиск по номеру, внутреннему номеру, сотруднику…"
             className="w-full sm:w-[320px]"
           />
         </div>

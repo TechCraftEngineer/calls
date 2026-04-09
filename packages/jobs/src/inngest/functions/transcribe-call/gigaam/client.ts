@@ -2,7 +2,7 @@
  * HTTP клиент для GigaAM API с retry логикой
  */
 
-import { env } from "@calls/config";
+import { env, GIGA_AM_CONFIG } from "@calls/config";
 import { z } from "zod";
 import { createLogger } from "../../../../logger";
 import { GigaAmResponseSchema } from "../schemas";
@@ -56,7 +56,7 @@ export async function processAudioWithGigaAm(
   const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-sync`, () => ({
     method: "POST",
     body: formData,
-    signal: AbortSignal.timeout(env.GIGA_AM_TIMEOUT_MS),
+    signal: AbortSignal.timeout(GIGA_AM_CONFIG.TIMEOUT_MS),
   }));
 
   if (!response.ok) {
@@ -201,6 +201,79 @@ export interface DiarizedTranscriptionResult {
 }
 
 /**
+ * Запускает асинхронную транскрипцию аудио через GigaAM API.
+ * Возвращает task_id для отслеживания статуса.
+ */
+export async function startAsyncTranscription(
+  audioBuffer: ArrayBuffer,
+  filename: string,
+): Promise<{ taskId: string }> {
+  const gigaAmUrl = env.GIGA_AM_TRANSCRIBE_URL;
+
+  const formData = new FormData();
+  const blob = new Blob([audioBuffer], { type: "audio/wav" });
+
+  const audioFilename = filename?.trim() ? filename : "audio.wav";
+  formData.append("file", blob, audioFilename);
+  formData.append("filename", audioFilename);
+
+  logger.info("Запуск асинхронной транскрипции", {
+    filename: audioFilename,
+    endpoint: `${gigaAmUrl}/api/transcribe-async`,
+  });
+
+  const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-async`, () => ({
+    method: "POST",
+    body: formData,
+    // Без таймаута - сразу возвращает task_id
+  }));
+
+  if (response.status !== 202) {
+    throw new Error(`GigaAM async API error: ${response.status} ${response.statusText}`);
+  }
+
+  const result = await response.json();
+
+  if (!result.task_id) {
+    throw new Error("GigaAM async API не вернул task_id");
+  }
+
+  logger.info("Асинхронная транскрипция запущена", {
+    filename: audioFilename,
+    taskId: result.task_id,
+  });
+
+  return { taskId: result.task_id };
+}
+
+/**
+ * Проверяет статус асинхронной задачи транскрипции.
+ */
+export async function checkTranscriptionStatus(
+  taskId: string,
+): Promise<{ status: string; result?: DiarizedTranscriptionResult; error?: string }> {
+  const gigaAmUrl = env.GIGA_AM_TRANSCRIBE_URL;
+
+  const response = await fetch(`${gigaAmUrl}/api/status/${taskId}`, {
+    method: "GET",
+    signal: AbortSignal.timeout(10_000), // 10 секунд на статус
+  });
+
+  if (!response.ok) {
+    throw new Error(`GigaAM status API error: ${response.status} ${response.statusText}`);
+  }
+
+  const result = await response.json();
+
+  logger.info("Статус асинхронной транскрипции", {
+    taskId,
+    status: result.status,
+  });
+
+  return result;
+}
+
+/**
  * Транскрибирует диаризированное аудио через GigaAM API.
  * Использует единый endpoint вместо N+1 HTTP-запросов.
  */
@@ -228,7 +301,7 @@ export async function processDiarizedAudioWithGigaAm(
   const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-diarized`, () => ({
     method: "POST",
     body: formData,
-    signal: AbortSignal.timeout(env.GIGA_AM_TIMEOUT_MS),
+    signal: AbortSignal.timeout(GIGA_AM_CONFIG.TIMEOUT_MS),
   }));
 
   if (!response.ok) {
@@ -262,4 +335,56 @@ export async function processDiarizedAudioWithGigaAm(
   });
 
   return validatedResult;
+}
+
+/**
+ * Обертка для автоматического выбора режима транскрипции.
+ * Если GIGA_AM_ASYNC_MODE=true - использует асинхронный режим с polling.
+ * Иначе - использует синхронный режим.
+ */
+export async function processAudioWithGigaAmAuto(
+  audioBuffer: ArrayBuffer,
+  filename: string,
+): Promise<AsrResult> {
+  if (env.GIGA_AM_ASYNC_MODE) {
+    logger.info("Используется асинхронный режим GigaAM", { filename });
+
+    // Запускаем асинхронную задачу
+    const { taskId } = await startAsyncTranscription(audioBuffer, filename);
+
+    // Импортируем waitForAsyncTranscription только когда нужно (избегаем circular dependency)
+    const { waitForAsyncTranscription } = await import("./async-client");
+
+    // Ждем завершения через polling
+    const result = await waitForAsyncTranscription(taskId);
+
+    // Конвертируем DiarizedTranscriptionResult в AsrResult
+    return {
+      segments: result.segments.map((s) => ({
+        start: s.start,
+        end: s.end,
+        speaker: s.speaker || "unknown",
+        text: s.text,
+      })),
+      transcript: result.final_transcript,
+      validationFailed: false,
+      metadata: {
+        asrLogs: [
+          {
+            provider: "gigaam-async",
+            utterances: result.segments.map((s) => ({
+              speaker: s.speaker || "unknown",
+              text: s.text,
+              start: s.start,
+              end: s.end,
+            })),
+            raw: result,
+          },
+        ],
+      },
+    };
+  } else {
+    logger.info("Используется синхронный режим GigaAM", { filename });
+    return processAudioWithGigaAm(audioBuffer, filename);
+  }
 }

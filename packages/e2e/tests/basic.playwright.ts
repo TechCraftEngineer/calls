@@ -21,13 +21,7 @@ test("basic page load test", async ({ page }) => {
   );
 
   if (hasValidTitle) {
-    expect(
-      validTitles.some(
-        (validTitle) =>
-          title.toLowerCase().includes(validTitle.toLowerCase()) ||
-          validTitle.toLowerCase().includes(title.toLowerCase()),
-      ),
-    ).toBeTruthy();
+    expect(hasValidTitle).toBeTruthy();
   } else {
     // Если заголовок не соответствует ожидаемым, просто проверяем что страница загрузилась
     expect(await page.locator("body").textContent()).toBeTruthy();

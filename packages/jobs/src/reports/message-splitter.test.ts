@@ -53,8 +53,8 @@ describe("splitTelegramHtmlMessage", () => {
     for (const part of result) {
       const openTags = (part.match(/</g) || []).length;
       const _closeTags = (part.match(/>/g) || []).length;
-      // В каждой части теги должны быть закрыты или открыты
-      expect(openTags).toBeGreaterThanOrEqual(0);
+      // Проверяем баланс открывающих и закрывающих тегов
+      expect(openTags).toBe(_closeTags);
     }
   });
 

@@ -201,10 +201,7 @@ export const TrendChart = React.memo(function TrendChart({ data, loading }: Tren
     const totalTarget = data.reduce((sum, row) => sum + row.targetTalkTimeMinutes, 0);
     const totalCalls = data.reduce((sum, row) => sum + row.totalCalls, 0);
     const totalBonus = data.reduce((sum, row) => sum + row.dailyBonus, 0);
-    const avgCompletion =
-      data.length > 0
-        ? Math.round(data.reduce((sum, row) => sum + row.completionPercentage, 0) / data.length)
-        : 0;
+    const avgCompletion = totalTarget > 0 ? Math.round((totalTalkTime / totalTarget) * 100) : 0;
 
     return { totalTalkTime, totalTarget, totalCalls, totalBonus, avgCompletion };
   }, [data]);
@@ -341,7 +338,7 @@ export const TrendChart = React.memo(function TrendChart({ data, loading }: Tren
                 tick={{ fill: "hsl(var(--muted-foreground))", fontSize: isMobile ? 10 : 11 }}
                 width={isMobile ? 30 : 40}
               />
-              {(showCalls || showBonus) && (
+              {showCalls && (
                 <YAxis
                   yAxisId="right"
                   orientation="right"
@@ -349,6 +346,17 @@ export const TrendChart = React.memo(function TrendChart({ data, loading }: Tren
                   axisLine={false}
                   tick={{ fill: "hsl(var(--muted-foreground))", fontSize: isMobile ? 10 : 11 }}
                   width={isMobile ? 35 : 50}
+                />
+              )}
+              {showBonus && (
+                <YAxis
+                  yAxisId="right-bonus"
+                  orientation="right"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: isMobile ? 10 : 11 }}
+                  tickFormatter={(value) => formatCurrency(value as number)}
+                  width={isMobile ? 50 : 65}
                 />
               )}
 
@@ -506,7 +514,7 @@ export const TrendChart = React.memo(function TrendChart({ data, loading }: Tren
               {showBonus && (
                 <>
                   <Area
-                    yAxisId="right"
+                    yAxisId="right-bonus"
                     type="monotone"
                     dataKey="dailyBonus"
                     stroke="none"
@@ -514,7 +522,7 @@ export const TrendChart = React.memo(function TrendChart({ data, loading }: Tren
                     fillOpacity={0.3}
                   />
                   <Line
-                    yAxisId="right"
+                    yAxisId="right-bonus"
                     type="monotone"
                     dataKey="dailyBonus"
                     stroke={METRICS[2].color}

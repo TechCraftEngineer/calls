@@ -1,5 +1,6 @@
 "use client";
 
+import { EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
 import { Button, toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
@@ -7,6 +8,7 @@ import { editUserFormSchema } from "@/lib/validations";
 import { useORPC } from "@/orpc/react";
 import {
   type EditUserForm,
+  type EvaluationTemplateSlug,
   modalBoxClasses,
   modalOverlayClasses,
   type WorkspaceMemberUser,
@@ -61,9 +63,12 @@ function buildEditForm(u: WorkspaceMemberUser): EditUserForm {
     kpiBaseSalary: toNum(u.kpiBaseSalary ?? ext.kpi_base_salary),
     kpiTargetBonus: toNum(u.kpiTargetBonus ?? ext.kpi_target_bonus),
     kpiTargetTalkTimeMinutes: toNum(u.kpiTargetTalkTimeMinutes ?? ext.kpi_target_talk_time_minutes),
-    evaluationTemplateSlug:
-      u.evaluationTemplateSlug ??
-      ((toStr(ext.evaluation_template_slug) as "sales" | "support" | "general") || "general"),
+    evaluationTemplateSlug: (() => {
+      const raw = toStr(ext.evaluation_template_slug);
+      return EVALUATION_TEMPLATE_SLUGS.includes(raw as EvaluationTemplateSlug)
+        ? (raw as EvaluationTemplateSlug)
+        : "general";
+    })(),
     evaluationCustomInstructions:
       u.evaluationCustomInstructions ?? toStr(ext.evaluation_custom_instructions) ?? "",
   };

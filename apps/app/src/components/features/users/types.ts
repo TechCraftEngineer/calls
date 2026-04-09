@@ -1,4 +1,7 @@
+import type { EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
 import type { User } from "@/lib/auth";
+
+export type EvaluationTemplateSlug = (typeof EVALUATION_TEMPLATE_SLUGS)[number];
 
 /** Пользователь из API users.list (workspace members) */
 export interface WorkspaceMemberUser {
@@ -14,7 +17,7 @@ export interface WorkspaceMemberUser {
   mobilePhones: string | null;
   createdAt: string | null;
   telegramChatId: string | null;
-  evaluationTemplateSlug: "sales" | "support" | "general" | null;
+  evaluationTemplateSlug: EvaluationTemplateSlug | null;
   // Опциональные поля отчётов и настроек (camelCase и snake_case для совместимости с API)
   telegramDailyReport?: boolean;
   telegramManagerReport?: boolean;
@@ -92,7 +95,7 @@ export interface AddUserForm {
   kpiBaseSalary: number;
   kpiTargetBonus: number;
   kpiTargetTalkTimeMinutes: number;
-  evaluationTemplateSlug: "sales" | "support" | "general" | null;
+  evaluationTemplateSlug: EvaluationTemplateSlug | null;
   evaluationCustomInstructions: string | null;
 }
 

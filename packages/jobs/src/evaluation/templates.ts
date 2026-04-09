@@ -4,8 +4,9 @@
  * или workspace default.
  */
 
-export const EVALUATION_TEMPLATE_SLUGS = ["sales", "support", "general"] as const;
+import { EVALUATION_TEMPLATE_SLUGS as SHARED_EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
 
+export const EVALUATION_TEMPLATE_SLUGS = SHARED_EVALUATION_TEMPLATE_SLUGS;
 export type EvaluationTemplateSlug = (typeof EVALUATION_TEMPLATE_SLUGS)[number];
 
 export interface EvaluationTemplate {

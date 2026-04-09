@@ -3,11 +3,12 @@
  */
 
 import { randomBytes } from "node:crypto";
+import { EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 
-const BUILTIN_SLUGS = ["sales", "support", "general"] as const;
+const BUILTIN_SLUGS = EVALUATION_TEMPLATE_SLUGS;
 
 export const evaluationTemplatesRepository = {
   async listByWorkspace(workspaceId: string) {
