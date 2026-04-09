@@ -3,9 +3,12 @@
  * Запускает задачу и ждёт событие завершения через step.waitForEvent.
  */
 
-import { createLogger } from "~/logger";
 import { downloadAudioFile } from "~/inngest/functions/transcribe-call/audio/download";
-import { startAsyncTranscription, getAsyncResult } from "~/inngest/functions/transcribe-call/gigaam/client";
+import {
+  getAsyncResult,
+  startAsyncTranscription,
+} from "~/inngest/functions/transcribe-call/gigaam/client";
+import { createLogger } from "~/logger";
 import type { PreprocessResult } from "./preprocess-audio";
 import type { SyncTranscriptionResult } from "./sync-transcription";
 
@@ -28,7 +31,10 @@ export async function asyncTranscriptionWithCallback(
 ): Promise<AsyncTranscriptionResult> {
   const typedStep = step as {
     run: <T>(id: string, fn: () => Promise<T>) => Promise<T>;
-    waitForEvent: <T>(id: string, options: { event: string; timeout: string; if: string }) => Promise<T | null>;
+    waitForEvent: <T>(
+      id: string,
+      options: { event: string; timeout: string; if: string },
+    ) => Promise<T | null>;
   };
   // Шаг 1: Запускаем асинхронную транскрибацию
   const { taskId } = await typedStep.run("asr/async-start", async () => {
@@ -65,14 +71,11 @@ export async function asyncTranscriptionWithCallback(
       };
       error?: string;
     };
-  }>(
-    "asr/wait-for-completion",
-    {
-      event: "giga-am/transcription.completed",
-      timeout: "10m", // 10 минут максимальное ожидание
-      if: `async.data.task_id == "${taskId}"`,
-    },
-  );
+  }>("asr/wait-for-completion", {
+    event: "giga-am/transcription.completed",
+    timeout: "10m", // 10 минут максимальное ожидание
+    if: `async.data.task_id == "${taskId}"`,
+  });
 
   // Шаг 3: Обрабатываем результат
   return await typedStep.run("asr/process-result", async () => {
@@ -108,7 +111,9 @@ export async function asyncTranscriptionWithCallback(
     const eventData = completedEvent.data;
 
     if (eventData.status === "failed") {
-      throw new Error(`Асинхронная транскрипция завершилась с ошибкой: ${eventData.error || "Неизвестная ошибка"}`);
+      throw new Error(
+        `Асинхронная транскрипция завершилась с ошибкой: ${eventData.error || "Неизвестная ошибка"}`,
+      );
     }
 
     if (!eventData.result?.final_transcript) {
@@ -142,13 +147,20 @@ export async function asyncDiarizedTranscriptionWithCallback(
 ): Promise<AsyncTranscriptionResult> {
   const typedStep = step as {
     run: <T>(id: string, fn: () => Promise<T>) => Promise<T>;
-    waitForEvent: <T>(id: string, options: { event: string; timeout: string; if: string }) => Promise<T | null>;
+    waitForEvent: <T>(
+      id: string,
+      options: { event: string; timeout: string; if: string },
+    ) => Promise<T | null>;
   };
 
   // Шаг 1: Запускаем асинхронную диаризированную транскрибацию
   const { taskId } = await typedStep.run("asr/async-diarized-start", async () => {
-    const { downloadAudioFile } = await import("~/inngest/functions/transcribe-call/audio/download");
-    const { startAsyncDiarizedTranscription } = await import("~/inngest/functions/transcribe-call/gigaam/client");
+    const { downloadAudioFile } = await import(
+      "~/inngest/functions/transcribe-call/audio/download"
+    );
+    const { startAsyncDiarizedTranscription } = await import(
+      "~/inngest/functions/transcribe-call/gigaam/client"
+    );
     const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
 
     logger.info("Запуск асинхронной диаризированной транскрибации", {
@@ -156,10 +168,10 @@ export async function asyncDiarizedTranscriptionWithCallback(
       durationSeconds: pipelineAudio.durationSeconds,
     });
 
-    const diarizationSegments = segments.map(s => ({
+    const diarizationSegments = segments.map((s) => ({
       start: s.start,
       end: s.end,
-      speaker: s.speaker,
+      speaker: s.speaker || "UNKNOWN",
     }));
 
     const result = await startAsyncDiarizedTranscription(buffer, filename, diarizationSegments);
@@ -192,22 +204,24 @@ export async function asyncDiarizedTranscriptionWithCallback(
       };
       error?: string;
     };
-  }>(
-    "asr/wait-for-diarized-completion",
-    {
-      event: "giga-am/transcription.completed",
-      timeout: "15m", // 15 минут максимальное ожидание (диаризация дольше)
-      if: `async.data.task_id == "${taskId}"`,
-    },
-  );
+  }>("asr/wait-for-diarized-completion", {
+    event: "giga-am/transcription.completed",
+    timeout: "15m", // 15 минут максимальное ожидание (диаризация дольше)
+    if: `async.data.task_id == "${taskId}"`,
+  });
 
   // Шаг 3: Обрабатываем результат
   return await typedStep.run("asr/process-diarized-result", async () => {
     if (!completedEvent) {
       // Таймаут - получаем результат напрямую через polling
-      logger.warn("Таймаут ожидания события диаризации, переключаемся на polling", { callId, taskId });
+      logger.warn("Таймаут ожидания события диаризации, переключаемся на polling", {
+        callId,
+        taskId,
+      });
 
-      const { getAsyncDiarizedResult } = await import("~/inngest/functions/transcribe-call/gigaam/client");
+      const { getAsyncDiarizedResult } = await import(
+        "~/inngest/functions/transcribe-call/gigaam/client"
+      );
       const pollStartTime = Date.now();
       const result = await getAsyncDiarizedResult(taskId);
       const pollTimeMs = Date.now() - pollStartTime;
@@ -248,7 +262,9 @@ export async function asyncDiarizedTranscriptionWithCallback(
     const eventData = completedEvent.data;
 
     if (eventData.status === "failed") {
-      throw new Error(`Асинхронная диаризированная транскрипция завершилась с ошибкой: ${eventData.error || "Неизвестная ошибка"}`);
+      throw new Error(
+        `Асинхронная диаризированная транскрипция завершилась с ошибкой: ${eventData.error || "Неизвестная ошибка"}`,
+      );
     }
 
     if (!eventData.result?.final_transcript) {
@@ -313,13 +329,17 @@ export async function asyncTranscriptionWithPolling(
 
   while (attempts < maxAttempts) {
     const status = await typedStep.run(`asr/check-status-${attempts}`, async () => {
-      const { checkAsyncTaskStatus } = await import("~/inngest/functions/transcribe-call/gigaam/client");
+      const { checkAsyncTaskStatus } = await import(
+        "~/inngest/functions/transcribe-call/gigaam/client"
+      );
       return await checkAsyncTaskStatus(taskId);
     });
 
     if (status.status === "completed") {
       const result = await typedStep.run("asr/get-result", async () => {
-        const { getAsyncResult } = await import("~/inngest/functions/transcribe-call/gigaam/client");
+        const { getAsyncResult } = await import(
+          "~/inngest/functions/transcribe-call/gigaam/client"
+        );
         return await getAsyncResult(taskId);
       });
 
@@ -339,7 +359,9 @@ export async function asyncTranscriptionWithPolling(
     }
 
     if (status.status === "failed") {
-      throw new Error(`Асинхронная транскрипция завершилась с ошибкой: ${status.error || "Неизвестная ошибка"}`);
+      throw new Error(
+        `Асинхронная транскрипция завершилась с ошибкой: ${status.error || "Неизвестная ошибка"}`,
+      );
     }
 
     // Ждём 2 секунды перед следующей проверкой

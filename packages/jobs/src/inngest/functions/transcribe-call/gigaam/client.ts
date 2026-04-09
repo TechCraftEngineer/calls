@@ -291,6 +291,20 @@ export async function startAsyncDiarizedTranscription(
     throw new Error("Невозможно запустить диаризированную транскрипцию: сегменты не предоставлены");
   }
 
+  // Проверяем наличие поля speaker во всех сегментах
+  const segmentsWithoutSpeaker = segments.filter((s) => !s.speaker || s.speaker.trim() === "");
+  if (segmentsWithoutSpeaker.length > 0) {
+    logger.error("Некоторые сегменты не имеют поля speaker", {
+      filename,
+      segmentsWithoutSpeakerCount: segmentsWithoutSpeaker.length,
+      totalSegments: segments.length,
+      samples: segmentsWithoutSpeaker.slice(0, 3),
+    });
+    throw new Error(
+      "Невозможно запустить диаризированную транскрипцию: некоторые сегменты не имеют поля speaker",
+    );
+  }
+
   const formData = new FormData();
   const blob = new Blob([audioBuffer], { type: "audio/wav" });
 
