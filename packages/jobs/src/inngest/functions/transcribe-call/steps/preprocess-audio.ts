@@ -4,7 +4,7 @@
 
 import { filesService } from "@calls/db";
 import { runPipelineAudioPreprocess } from "@calls/asr/pipeline/transcribe-pipeline-audio";
-import type { ZodIssue } from "zod";
+import { z } from "zod";
 import { createLogger } from "~/logger";
 import { FileSchema, PipelineAudioResultSchema } from "~/inngest/functions/transcribe-call/schemas";
 import type { Call, PipelineAudioResult } from "~/inngest/functions/transcribe-call/schemas";
@@ -30,7 +30,7 @@ export async function preprocessAudio(call: Call, callId: string): Promise<Prepr
   const fileValidation = FileSchema.safeParse(f);
   if (!fileValidation.success) {
     const errorDetails = fileValidation.error.issues
-      .map((issue: ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+      .map((issue: z.core.$ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
       .join(", ");
     throw new Error(`File validation failed: ${errorDetails}`);
   }
@@ -49,7 +49,7 @@ export async function preprocessAudio(call: Call, callId: string): Promise<Prepr
   const pipelineValidation = PipelineAudioResultSchema.safeParse(pipelineResult);
   if (!pipelineValidation.success) {
     const errorDetails = pipelineValidation.error.issues
-      .map((issue: ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+      .map((issue: z.core.$ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
       .join(", ");
     throw new Error(`Pipeline validation failed: ${errorDetails}`);
   }

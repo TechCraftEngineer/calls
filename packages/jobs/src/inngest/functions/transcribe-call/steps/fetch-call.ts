@@ -3,7 +3,7 @@
  */
 
 import { callsService } from "@calls/db";
-import type { ZodIssue } from "zod";
+import { z } from "zod";
 import { createLogger } from "~/logger";
 import { CallSchema } from "~/inngest/functions/transcribe-call/schemas";
 import type { Call } from "~/inngest/functions/transcribe-call/schemas";
@@ -19,7 +19,7 @@ export async function fetchCall(callId: string): Promise<Call> {
   const validationResult = CallSchema.safeParse(c);
   if (!validationResult.success) {
     const errorDetails = validationResult.error.issues
-      .map((issue: ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+      .map((issue: z.core.$ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
       .join(", ");
     throw new Error(`Call validation failed: ${errorDetails}`);
   }

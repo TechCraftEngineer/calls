@@ -12,6 +12,7 @@ export { syncTranscription } from "./sync-transcription";
 export { asyncTranscriptionWithCallback, asyncTranscriptionWithPolling, asyncDiarizedTranscriptionWithCallback } from "./async-transcription";
 export { checkAnsweringMachine } from "./check-answering-machine";
 // export { diarizeAndTranscribe } from "./diarize-and-transcribe"; // УБРАНО - используется асинхронная модель
+export { speakerDiarizationWithCallback } from "./speaker-diarization-callback";
 export { mergeResults } from "./merge-results";
 export { summarize } from "./summarize";
 export { identifySpeakers } from "./identify-speakers";

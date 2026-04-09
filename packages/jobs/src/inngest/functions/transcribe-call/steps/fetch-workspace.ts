@@ -3,7 +3,7 @@
  */
 
 import { workspacesService } from "@calls/db";
-import type { ZodIssue } from "zod";
+import { z } from "zod";
 import { createLogger } from "~/logger";
 import { WorkspaceSchema } from "~/inngest/functions/transcribe-call/schemas";
 import { validateWorkspace } from "~/inngest/functions/transcribe-call/utils/validation";
@@ -24,7 +24,7 @@ export async function fetchWorkspace(workspaceId: string, callId: string): Promi
   const validationResult = WorkspaceSchema.safeParse(ws);
   if (!validationResult.success) {
     const errorDetails = validationResult.error.issues
-      .map((issue: ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+      .map((issue: z.core.$ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
       .join(", ");
     throw new Error(`Workspace validation failed: ${errorDetails}`);
   }
