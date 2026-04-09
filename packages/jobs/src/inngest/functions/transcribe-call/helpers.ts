@@ -5,7 +5,7 @@
  * - manager-resolution.ts - resolveManagerFromPbx
  * - audio/download.ts - downloadAudioFile, downloadAudioBuffer
  * - audio/processing.ts - extractAudioSegment
- * - gigaam/client.ts - processAudioWithGigaAm, processAudioWithoutDiarization, fetchWithRetry
+ * - gigaam/client.ts - startAsyncTranscription, waitForAsyncResult, startAsyncDiarizedTranscription, waitForAsyncDiarizedResult, fetchWithRetry
  * - gigaam/diarization.ts - processAudioWithDiarization
  * - extraction.ts - extractSpeakerTimeline, extractSegmentsFromUtterances
  * - speaker-identification.ts - identifySpeakers

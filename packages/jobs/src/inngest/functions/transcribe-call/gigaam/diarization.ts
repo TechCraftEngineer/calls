@@ -1,7 +1,7 @@
 /**
  * Диаризация аудио через speaker-embeddings сервис
  *
- * ИСПОЛЬЗУЕТ НОВЫЙ БАТЧЕВЫЙ ENDPOINT /api/transcribe-diarized
+ * ИСПОЛЬЗУЕТ АСИНХРОННЫЙ БАТЧЕВЫЙ ENDPOINT /api/transcribe-diarized-async
  * Вместо N+1 HTTP-запросов для каждого сегмента, отправляем один запрос
  * с полным аудио и сегментами. Python сервис нарезает и транскрибирует
  * параллельно с ограничением concurrency.
@@ -12,8 +12,9 @@ import { checkSpeakerEmbeddingsHealth, performDiarizationAuto } from "../speaker
 import type { AsrResult } from "../types";
 import {
   type DiarizationSegmentInput,
-  processDiarizedAudioWithGigaAm,
   processAudioWithoutDiarization,
+  startAsyncDiarizedTranscription,
+  waitForAsyncDiarizedResult,
 } from "./client";
 
 const logger = createLogger("gigaam-diarization");
@@ -65,16 +66,25 @@ export async function processAudioWithDiarization(
       segmentsCount: segmentsInput.length,
     });
 
-    const diarizedResult = await processDiarizedAudioWithGigaAm(
+    // Используем асинхронную модель GigaAM
+    const { taskId } = await startAsyncDiarizedTranscription(
       audioBuffer,
       filename,
       segmentsInput,
     );
 
+    const diarizedResult = await waitForAsyncDiarizedResult(taskId);
+
     const processingTime = Date.now() - requestStartTime;
 
     // Конвертируем результат в стандартный AsrResult формат
-    const transcribedSegments = diarizedResult.segments.map((seg) => ({
+    const transcribedSegments = diarizedResult.segments.map((seg: {
+      text: string;
+      start: number;
+      end: number;
+      speaker?: string;
+      confidence: number;
+    }) => ({
       speaker: seg.speaker ?? "UNKNOWN",
       start: seg.start,
       end: seg.end,

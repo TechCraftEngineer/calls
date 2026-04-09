@@ -9,9 +9,16 @@ export { extractSegmentsFromUtterances, extractSpeakerTimeline } from "./extract
 export { gigaAmCompletedFn } from "./gigaam/callback-handler";
 export { speakerEmbeddingsCompletedFn } from "./speaker-embeddings-callback-handler";
 export {
+  checkAsyncTaskStatus,
   fetchWithRetry,
+  getAsyncResult,
+  getAsyncDiarizedResult,
   processAudioWithGigaAm,
   processAudioWithoutDiarization,
+  startAsyncDiarizedTranscription,
+  startAsyncTranscription,
+  waitForAsyncDiarizedResult,
+  waitForAsyncResult,
 } from "./gigaam/client";
 export { processAudioWithDiarization } from "./gigaam/diarization";
 export {

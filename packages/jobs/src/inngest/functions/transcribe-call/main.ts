@@ -17,7 +17,10 @@ import { shouldSkipExpensiveProcessing } from "../../../evaluation";
 import { createLogger } from "../../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../../client";
 import { downloadAudioFile } from "./audio/download";
-import { processAudioWithGigaAm } from "./gigaam/client";
+import {
+  startAsyncTranscription,
+  waitForAsyncResult,
+} from "./gigaam/client";
 import { processAudioWithDiarization } from "./gigaam/diarization";
 import { applyLLMMerging } from "./llm-merge";
 import { resolveManagerFromPbx } from "./manager-resolution";
@@ -244,8 +247,12 @@ export const transcribeCallFn = inngest.createFunction(
       }
 
       // Параллельный запуск двух ASR с fallback механизмом
+      // Используем асинхронную модель GigaAM
       const [nonDiarizedSettled, diarizedSettled] = await Promise.allSettled([
-        processAudioWithGigaAm(buffer, filename),
+        (async () => {
+          const { taskId } = await startAsyncTranscription(buffer, filename);
+          return await waitForAsyncResult(taskId);
+        })(),
         processAudioWithDiarization(buffer, filename),
       ]);
 
