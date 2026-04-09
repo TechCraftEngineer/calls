@@ -3,6 +3,7 @@
 import { toast } from "@calls/ui";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { useORPC } from "@/orpc/react";
 import { loadColumnOrder, saveColumnOrder } from "./column-storage";
 import { COLUMN_ORDER_STORAGE_KEY, COLUMNS, DEFAULT_COLUMN_ORDER } from "./constants";
@@ -11,6 +12,8 @@ import type { CallListProps, ColumnConfig } from "./types";
 export function useCallListState(props: CallListProps) {
   const { onPlay, onCallDeleted, onRecommendationsGenerated } = props;
   const orpc = useORPC();
+  const { activeWorkspace } = useWorkspace();
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
   const generateRecommendationsMutation = useMutation(
     orpc.calls.generateRecommendations.mutationOptions({
@@ -230,6 +233,7 @@ export function useCallListState(props: CallListProps) {
     recommendations,
     isLoadingRecommendations: generateRecommendationsMutation.isPending,
     onPlay,
+    isWorkspaceAdmin,
     handleDragStart,
     handleDragEnd,
     handleDragOver,

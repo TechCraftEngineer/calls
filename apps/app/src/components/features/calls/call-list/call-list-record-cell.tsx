@@ -10,6 +10,7 @@ interface RecordColumnCellProps {
   onPlay?: (callId: string, number: string) => void;
   isLoadingRecommendations: boolean;
   recommendationsCallId: string | null;
+  isWorkspaceAdmin: boolean;
 }
 
 function RecommendationsIcon() {
@@ -87,6 +88,7 @@ export function RecordColumnCell({
   onPlay,
   isLoadingRecommendations,
   recommendationsCallId,
+  isWorkspaceAdmin,
 }: RecordColumnCellProps) {
   const { call, evaluation } = item;
 
@@ -116,36 +118,38 @@ export function RecordColumnCell({
         flexWrap: "wrap",
       }}
     >
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onGenerateRecommendations(call.id, evaluation?.managerRecommendations ?? undefined);
-        }}
-        disabled={isRecommendationsLoading}
-        title="Сформировать рекомендации"
-        aria-label="Сформировать рекомендации по звонку"
-        className="size-6 min-w-6 p-0"
-      >
-        {isRecommendationsLoading ? (
-          <div
-            style={{
-              width: "14px",
-              height: "14px",
-              border: "2px solid #f0f0f0",
-              borderTop: "2px solid #F7931E",
-              borderRadius: "50%",
-              animation: "spin 0.8s linear infinite",
-            }}
-          />
-        ) : (
-          <RecommendationsIcon />
-        )}
-      </Button>
-      {onTranscribe && (
+      {isWorkspaceAdmin && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onGenerateRecommendations(call.id, evaluation?.managerRecommendations ?? undefined);
+          }}
+          disabled={isRecommendationsLoading}
+          title="Сформировать рекомендации"
+          aria-label="Сформировать рекомендации по звонку"
+          className="size-6 min-w-6 p-0"
+        >
+          {isRecommendationsLoading ? (
+            <div
+              style={{
+                width: "14px",
+                height: "14px",
+                border: "2px solid #f0f0f0",
+                borderTop: "2px solid #F7931E",
+                borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+              }}
+            />
+          ) : (
+            <RecommendationsIcon />
+          )}
+        </Button>
+      )}
+      {isWorkspaceAdmin && onTranscribe && (
         <Button
           type="button"
           variant="ghost"

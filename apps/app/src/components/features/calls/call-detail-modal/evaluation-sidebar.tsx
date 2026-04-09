@@ -23,6 +23,7 @@ interface EvaluationSidebarProps {
   onReevaluate: () => void;
   onGenerateRecommendations: () => void;
   isGeneratingRecommendations: boolean;
+  isWorkspaceAdmin: boolean;
 }
 
 export default function EvaluationSidebar({
@@ -35,6 +36,7 @@ export default function EvaluationSidebar({
   onReevaluate,
   onGenerateRecommendations,
   isGeneratingRecommendations,
+  isWorkspaceAdmin,
 }: EvaluationSidebarProps) {
   const qualityScore = evaluation?.managerScore ?? 0;
   const qualityFeedback = evaluation?.managerFeedback ?? "";
@@ -124,7 +126,7 @@ export default function EvaluationSidebar({
               </>
             )}
           </div>
-          {transcript?.text && (
+          {isWorkspaceAdmin && transcript?.text && (
             <Button
               type="button"
               variant="default"
@@ -151,23 +153,25 @@ export default function EvaluationSidebar({
             <Lightbulb className="size-3.5 shrink-0" />
             Рекомендации
           </CardTitle>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full shrink-0 border-amber-600/50 text-amber-700 hover:bg-amber-100 sm:w-auto dark:border-amber-500/50 dark:text-amber-300 dark:hover:bg-amber-900/30"
-            onClick={onGenerateRecommendations}
-            disabled={isGeneratingRecommendations}
-          >
-            {isGeneratingRecommendations ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : evaluation?.managerRecommendations &&
-              evaluation.managerRecommendations.length > 0 ? (
-              "Обновить"
-            ) : (
-              "Сформировать"
-            )}
-          </Button>
+          {isWorkspaceAdmin && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full shrink-0 border-amber-600/50 text-amber-700 hover:bg-amber-100 sm:w-auto dark:border-amber-500/50 dark:text-amber-300 dark:hover:bg-amber-900/30"
+              onClick={onGenerateRecommendations}
+              disabled={isGeneratingRecommendations}
+            >
+              {isGeneratingRecommendations ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : evaluation?.managerRecommendations &&
+                evaluation.managerRecommendations.length > 0 ? (
+                "Обновить"
+              ) : (
+                "Сформировать"
+              )}
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="space-y-3 px-4 pb-4 sm:px-6 sm:pb-6">
           {evaluation?.managerRecommendations && evaluation.managerRecommendations.length > 0 ? (
@@ -222,24 +226,26 @@ export default function EvaluationSidebar({
             <p className="text-muted-foreground mb-4 text-sm leading-relaxed">
               {transcript?.summary || "Резюме отсутствует"}
             </p>
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              className="w-full min-w-0 gap-2 truncate sm:w-auto"
-              onClick={onRestartAnalysis}
-              disabled={restarting || reevaluating}
-              title="Перезапустить анализ"
-            >
-              {restarting ? (
-                <Loader2 className="size-3.5 shrink-0 animate-spin" />
-              ) : (
-                <RefreshCw className="size-3.5 shrink-0" />
-              )}
-              <span className="min-w-0 truncate">
-                {restarting ? "Перезапуск..." : "Перезапустить анализ"}
-              </span>
-            </Button>
+            {isWorkspaceAdmin && (
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                className="w-full min-w-0 gap-2 truncate sm:w-auto"
+                onClick={onRestartAnalysis}
+                disabled={restarting || reevaluating}
+                title="Перезапустить анализ"
+              >
+                {restarting ? (
+                  <Loader2 className="size-3.5 shrink-0 animate-spin" />
+                ) : (
+                  <RefreshCw className="size-3.5 shrink-0" />
+                )}
+                <span className="min-w-0 truncate">
+                  {restarting ? "Перезапуск..." : "Перезапустить анализ"}
+                </span>
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -144,7 +144,7 @@ export default function CallDetailModal({ callId, onClose, onCallDeleted }: Call
 
   const handleDownloadTxt = () => {
     if (!transcript?.text) return;
-    
+
     const speakerMapping = transcript?.speakerMapping;
     const processedText = transcript.text
       .split("\n")
@@ -160,7 +160,7 @@ export default function CallDetailModal({ callId, onClose, onCallDeleted }: Call
         return line;
       })
       .join("\n");
-    
+
     const element = document.createElement("a");
     const file = new Blob([processedText], { type: "text/plain" });
     element.href = URL.createObjectURL(file);
@@ -341,6 +341,7 @@ export default function CallDetailModal({ callId, onClose, onCallDeleted }: Call
                   onReevaluate={handleReevaluate}
                   onGenerateRecommendations={handleGenerateRecommendations}
                   isGeneratingRecommendations={generateRecommendationsMutation.isPending}
+                  isWorkspaceAdmin={isWorkspaceAdmin}
                 />
               </div>
             </>

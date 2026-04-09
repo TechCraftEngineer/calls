@@ -5,9 +5,11 @@ import { toast } from "@calls/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 import CallMetaHeader from "@/components/features/calls/call-meta-header";
 import CallSidebar from "@/components/features/calls/call-sidebar";
 import { TranscriptCard } from "@/components/features/calls/transcript-card";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import { useSession } from "@/lib/better-auth";
@@ -15,27 +17,32 @@ import { restartCallAnalysis } from "@/lib/restart-analysis";
 import { useORPC } from "@/orpc/react";
 import type { CallDetail, EvaluationDetail, TranscriptDetail } from "@/types/calls";
 
+const uuidV7Schema = z
+  .string()
+  .uuid()
+  .refine((uuid) => uuid.split("-")[2]?.startsWith("7"), {
+    message: "Требуется UUID v7",
+  });
+const uuidV7WithPrefixSchema = z
+  .string()
+  .regex(/^ws_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, {
+    message: "Неверный формат ID звонка с префиксом",
+  });
+const callIdSchema = z.union([uuidV7Schema, uuidV7WithPrefixSchema]);
+
 export default function CallDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const orpc = useORPC();
+  const { activeWorkspace } = useWorkspace();
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const { data: session, isPending: sessionPending } = useSession();
   const user = session?.user ?? null;
   const _userLoading = sessionPending;
   const [restarting, setRestarting] = useState(false);
 
-  // Валидация UUID v7 формата (ws_123456 или UUID)
-  const isValidCallId = (id: string): boolean => {
-    if (!id || typeof id !== "string") return false;
-    // UUID v7 с префиксом ws_ или обычный UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    const uuidWithPrefixRegex =
-      /^ws_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return uuidRegex.test(id) || uuidWithPrefixRegex.test(id);
-  };
-
   const rawCallId = Array.isArray(id) ? id[0] : (id ?? "");
-  const callId = isValidCallId(rawCallId) ? rawCallId : "";
+  const callId = callIdSchema.safeParse(rawCallId).success ? rawCallId : "";
 
   const {
     data: result,
@@ -204,6 +211,7 @@ export default function CallDetailPage() {
             onReevaluate={handleReevaluate}
             onGenerateRecommendations={handleGenerateRecommendations}
             isGeneratingRecommendations={generateRecommendationsMutation.isPending}
+            isWorkspaceAdmin={isWorkspaceAdmin}
           />
         </div>
       </main>

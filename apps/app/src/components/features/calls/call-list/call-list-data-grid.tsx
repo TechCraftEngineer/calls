@@ -19,6 +19,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import { classNames } from "@/lib/utils";
 import { useORPC } from "@/orpc/react";
@@ -57,6 +58,8 @@ export function CallListDataGrid({
   onPaginationChange,
 }: CallListDataGridProps) {
   const orpc = useORPC();
+  const { activeWorkspace } = useWorkspace();
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [recommendationsCallId, setRecommendationsCallId] = useState<string | null>(null);
@@ -159,38 +162,42 @@ export function CallListDataGrid({
 
   const columns = useMemo<ColumnDef<(typeof calls)[0]>[]>(
     () => [
-      {
-        id: "select",
-        header: ({ table }) => (
-          <div className="flex h-full w-full items-center justify-center ps-1">
-            <Checkbox
-              checked={
-                table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()
-                  ? "indeterminate"
-                  : table.getIsAllPageRowsSelected()
-              }
-              onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-              aria-label="Выбрать все звонки на странице"
-            />
-          </div>
-        ),
-        cell: ({ row }) => (
-          <div className="flex h-full w-full items-center justify-center ps-1">
-            <Checkbox
-              checked={row.getIsSelected()}
-              onCheckedChange={(value) => row.toggleSelected(!!value)}
-              aria-label="Выбрать звонок"
-              onClick={(event) => event.stopPropagation()}
-            />
-          </div>
-        ),
-        enableSorting: false,
-        enableHiding: false,
-        enableColumnOrdering: false,
-        enableResizing: false,
-        size: 60,
-        meta: { headerTitle: "Выбор" },
-      },
+      ...(isWorkspaceAdmin
+        ? [
+            {
+              id: "select",
+              header: ({ table }) => (
+                <div className="flex h-full w-full items-center justify-center ps-1">
+                  <Checkbox
+                    checked={
+                      table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()
+                        ? "indeterminate"
+                        : table.getIsAllPageRowsSelected()
+                    }
+                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                    aria-label="Выбрать все звонки на странице"
+                  />
+                </div>
+              ),
+              cell: ({ row }) => (
+                <div className="flex h-full w-full items-center justify-center ps-1">
+                  <Checkbox
+                    checked={row.getIsSelected()}
+                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    aria-label="Выбрать звонок"
+                    onClick={(event) => event.stopPropagation()}
+                  />
+                </div>
+              ),
+              enableSorting: false,
+              enableHiding: false,
+              enableColumnOrdering: false,
+              enableResizing: false,
+              size: 60,
+              meta: { headerTitle: "Выбор" },
+            } as ColumnDef<(typeof calls)[0]>,
+          ]
+        : []),
       ...getCallListColumns({
         onSelectCall: setSelectedCallId,
         onGenerateRecommendations: handleGenerateRecommendations,
@@ -198,9 +205,11 @@ export function CallListDataGrid({
         onPlay,
         isLoadingRecommendations: generateRecommendationsMutation.isPending,
         recommendationsCallId,
+        isWorkspaceAdmin,
       }),
     ],
     [
+      isWorkspaceAdmin,
       onPlay,
       handleGenerateRecommendations,
       handleTranscribe,
@@ -222,7 +231,7 @@ export function CallListDataGrid({
     getSortedRowModel: getSortedRowModel(),
     manualPagination: true,
     pageCount: pagination.totalPages || 1,
-    enableRowSelection: true,
+    enableRowSelection: isWorkspaceAdmin,
     enableColumnResizing: true,
     columnResizeMode: "onChange",
     state: {
@@ -315,14 +324,16 @@ export function CallListDataGrid({
                 : "Выберите звонки галочками для удаления"}
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={selectedCallIds.length === 0 || deleteManyMutation.isPending}
-                onClick={() => setShowBulkDeleteConfirm(true)}
-              >
-                Удалить выбранные…
-              </Button>
+              {isWorkspaceAdmin && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={selectedCallIds.length === 0 || deleteManyMutation.isPending}
+                  onClick={() => setShowBulkDeleteConfirm(true)}
+                >
+                  Удалить выбранные…
+                </Button>
+              )}
               <DataGridColumnVisibility
                 table={table}
                 trigger={

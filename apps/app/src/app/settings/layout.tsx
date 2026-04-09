@@ -112,6 +112,7 @@ const SETTINGS_NAV = [
         <line x1="12" y1="22.08" x2="12" y2="12" />
       </svg>
     ),
+    adminOnly: true,
   },
   {
     href: paths.settings.pbx,

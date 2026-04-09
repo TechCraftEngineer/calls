@@ -3,6 +3,7 @@
 import { paths } from "@calls/config";
 import { Badge, Button } from "@calls/ui";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import {
   MegaPbxSection,
@@ -10,8 +11,13 @@ import {
   SettingsPageShell,
   useSettings,
 } from "@/components/features/settings";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 
 export default function SettingsPbxMegafonPage() {
+  const router = useRouter();
+  const { activeWorkspace } = useWorkspace();
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+
   const {
     state,
     loadSettings,
@@ -26,8 +32,27 @@ export default function SettingsPbxMegafonPage() {
   } = useSettings();
 
   useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
+    if (!isWorkspaceAdmin) {
+      router.replace(paths.forbidden);
+      return;
+    }
+  }, [isWorkspaceAdmin, router]);
+
+  useEffect(() => {
+    if (isWorkspaceAdmin) {
+      loadSettings();
+    }
+  }, [isWorkspaceAdmin, loadSettings]);
+
+  if (!isWorkspaceAdmin) {
+    return (
+      <SettingsPageShell>
+        <div className="flex items-center justify-center py-24">
+          <div className="text-muted-foreground">Загрузка…</div>
+        </div>
+      </SettingsPageShell>
+    );
+  }
 
   if (state.loading) {
     return (

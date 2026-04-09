@@ -9,6 +9,7 @@ import { Suspense, useEffect, useState } from "react";
 import KpiTable from "@/components/features/calls/kpi-table";
 import MonthlyGridTable from "@/components/features/kpi/monthly-grid-table";
 import { ReportSettingsPanel } from "@/components/features/settings";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
 import Sidebar from "@/components/layout/sidebar";
 import { useSession } from "@/lib/better-auth";
@@ -39,6 +40,8 @@ function StatisticsPageContent() {
   const { data: session, isPending: sessionPending } = useSession();
   const user = session?.user ?? null;
   const userLoading = sessionPending;
+  const { activeWorkspace } = useWorkspace();
+  const workspaceRole = activeWorkspace?.role ?? "member";
   const [filters, setFilters] = useState({
     dateFrom: "",
     dateTo: "",
@@ -74,7 +77,11 @@ function StatisticsPageContent() {
     if (segments.length >= 3 && !["kpi", "grid", "settings"].includes(segments[2])) {
       router.replace(paths.statistics.root);
     }
-  }, [pathname, router]);
+    // Перенаправляем со вкладок KPI для пользователей с ролью member
+    if (workspaceRole === "member" && (activeTab === "kpi" || activeTab === "grid")) {
+      router.replace(paths.statistics.root);
+    }
+  }, [pathname, router, workspaceRole, activeTab]);
 
   useEffect(() => {
     if (statsError && typeof statsError === "object" && "code" in statsError) {
@@ -104,12 +111,16 @@ function StatisticsPageContent() {
             <TabsTrigger value="statistics" asChild className={TAB_STYLE}>
               <Link href={paths.statistics.root}>Сводная статистика</Link>
             </TabsTrigger>
-            <TabsTrigger value="kpi" asChild className={TAB_STYLE}>
-              <Link href={paths.statistics.kpi}>Расчет KPI</Link>
-            </TabsTrigger>
-            <TabsTrigger value="grid" asChild className={TAB_STYLE}>
-              <Link href={paths.statistics.grid}>Календарь KPI</Link>
-            </TabsTrigger>
+            {workspaceRole !== "member" && (
+              <>
+                <TabsTrigger value="kpi" asChild className={TAB_STYLE}>
+                  <Link href={paths.statistics.kpi}>Расчет KPI</Link>
+                </TabsTrigger>
+                <TabsTrigger value="grid" asChild className={TAB_STYLE}>
+                  <Link href={paths.statistics.grid}>Календарь KPI</Link>
+                </TabsTrigger>
+              </>
+            )}
             <TabsTrigger value="settings" asChild className={TAB_STYLE}>
               <Link href={paths.statistics.settings}>Настройки отчетов</Link>
             </TabsTrigger>

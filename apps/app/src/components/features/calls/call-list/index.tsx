@@ -109,6 +109,7 @@ export default function CallList(props: CallListProps) {
                     onPlay: state.onPlay,
                     isLoadingRecommendations: state.isLoadingRecommendations,
                     recommendationsCallId: state.recommendationsCallId,
+                    isWorkspaceAdmin: state.isWorkspaceAdmin,
                   }),
                 )}
               </TableRow>
