@@ -5,16 +5,16 @@ import { workspaceMemberProcedure } from "../../orpc";
 export const getStatistics = workspaceMemberProcedure
   .input(
     z.object({
-      date_from: z.string().optional(),
-      date_to: z.string().optional(),
+      dateFrom: z.string().optional(),
+      dateTo: z.string().optional(),
       sort: z.string().optional(),
       order: z.string().optional(),
     }),
   )
   .handler(async ({ input, context }) => {
     const { workspaceId } = context;
-    let dateFrom = input.date_from;
-    let dateTo = input.date_to;
+    let dateFrom = input.dateFrom;
+    let dateTo = input.dateTo;
     if (!dateFrom && !dateTo) {
       const now = new Date();
       dateTo = now.toISOString().slice(0, 10);
@@ -66,7 +66,7 @@ export const getStatistics = workspaceMemberProcedure
     });
     return {
       statistics: statsList,
-      date_from: dateFrom ?? "",
-      date_to: dateTo ?? "",
+      dateFrom: dateFrom ?? "",
+      dateTo: dateTo ?? "",
     };
   });

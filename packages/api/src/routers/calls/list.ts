@@ -82,16 +82,16 @@ type ManagerOption = {
 
 const listCallsSchema = z.object({
   page: z.number().min(1).default(1),
-  per_page: z.number().min(1).max(100).default(15),
+  perPage: z.number().min(1).max(100).default(15),
   q: z.string().optional(),
-  date_from: z.string().optional(),
-  date_to: z.string().optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
   direction: maybeDirectionOrArraySchema,
   manager: maybeStringOrArraySchema,
   status: maybeStatusOrArraySchema,
   value: z.array(z.number()).optional(),
-  sort_by: z.enum(["timestamp", "direction", "number", "name", "value_score"]).optional(),
-  sort_order: z.enum(["asc", "desc"]).optional(),
+  sortBy: z.enum(["timestamp", "direction", "number", "name", "value_score"]).optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
 });
 
 export const list = workspaceProcedure
@@ -99,13 +99,13 @@ export const list = workspaceProcedure
   .handler(async ({ input, context }) => {
     const { callsService, user, workspaceId } = context;
 
-    const offset = (input.page - 1) * input.per_page;
+    const offset = (input.page - 1) * input.perPage;
     const directionFilters = toStringArray(input.direction);
     const managerFilters = toStringArray(input.manager);
     const statusFilters = toStringArray(input.status);
 
-    const dateFrom = input.date_from ? `${input.date_from}T00:00:00` : undefined;
-    const dateTo = input.date_to ? `${input.date_to}T23:59:59` : undefined;
+    const dateFrom = input.dateFrom ? `${input.dateFrom}T00:00:00` : undefined;
+    const dateTo = input.dateTo ? `${input.dateTo}T23:59:59` : undefined;
     const normalizedStatuses = statusFilters
       ?.map(normalizeStatusFilter)
       .filter((status): status is CallStatus => status !== null);
@@ -235,7 +235,6 @@ export const list = workspaceProcedure
       const pbxLink = userId
         ? await pbxRepository.getLinkByUserId(workspaceId, PBX_PROVIDER, userId)
         : null;
-
       if (pbxLink?.targetType === "employee" && pbxLink.targetExternalId) {
         // Получаем сотрудника и его номера
         const employee = employeeByExternalId.get(pbxLink.targetExternalId);
@@ -259,7 +258,6 @@ export const list = workspaceProcedure
           internalNumbers = extNums.length > 0 ? extNums : undefined;
         }
       }
-
       // Если нет привязки к сотруднику, используем номера из профиля пользователя
       if (!internalNumbers && !mobileNumbers) {
         internalNumbers = getInternalNumbersForUser(
@@ -282,25 +280,25 @@ export const list = workspaceProcedure
           pagination: {
             page: input.page,
             total: 0,
-            per_page: input.per_page,
-            total_pages: 0,
-            has_next: false,
-            has_prev: false,
-            next_num: input.page + 1,
-            prev_num: input.page - 1,
+            perPage: input.perPage,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: false,
+            nextNum: input.page + 1,
+            prevNum: input.page - 1,
             query: input.q ?? "",
-            date_from: input.date_from ?? "",
-            date_to: input.date_to ?? "",
+            dateFrom: input.dateFrom ?? "",
+            dateTo: input.dateTo ?? "",
             direction: directionFilters,
             status: statusFilters,
             manager: finalManagerFilters,
             value: input.value ?? [],
           },
           metrics: {
-            total_calls: 0,
+            totalCalls: 0,
             transcribed: 0,
-            avg_duration: 0,
-            last_sync: null,
+            avgDuration: 0,
+            lastSync: null,
           },
           managers: [],
         };
@@ -311,7 +309,7 @@ export const list = workspaceProcedure
     const [rawCalls, totalItems, metrics] = await Promise.all([
       callsService.getCallsWithTranscripts({
         workspaceId,
-        limit: input.per_page,
+        limit: input.perPage,
         offset,
         dateFrom,
         dateTo,
@@ -326,8 +324,8 @@ export const list = workspaceProcedure
         managerInternalNumbersForQuery:
           managerInternalNumbersForQuery.length > 0 ? managerInternalNumbersForQuery : undefined,
         q: trimmedQuery,
-        sortBy: input.sort_by,
-        sortOrder: input.sort_order,
+        sortBy: input.sortBy,
+        sortOrder: input.sortOrder,
       }),
       callsService.countCalls({
         workspaceId,
@@ -365,7 +363,7 @@ export const list = workspaceProcedure
       ),
     ]);
 
-    const totalPages = Math.ceil(totalItems / input.per_page) || 1;
+    const totalPages = Math.ceil(totalItems / input.perPage) || 1;
     const managers: ManagerOption[] = Array.from(managerDisplayNameById.entries())
       .map(([id, name]) => ({ id, name }))
       .filter((item) => item.name.trim().length > 0)
@@ -426,27 +424,27 @@ export const list = workspaceProcedure
       pagination: {
         page: input.page,
         total: totalItems,
-        per_page: input.per_page,
-        total_pages: totalPages,
-        has_next: input.page < totalPages,
-        has_prev: input.page > 1,
-        next_num: input.page + 1,
-        prev_num: input.page - 1,
+        perPage: input.perPage,
+        totalPages: totalPages,
+        hasNext: input.page < totalPages,
+        hasPrev: input.page > 1,
+        nextNum: input.page + 1,
+        prevNum: input.page - 1,
         query: input.q ?? "",
-        date_from: input.date_from ?? "",
-        date_to: input.date_to ?? "",
+        dateFrom: input.dateFrom ?? "",
+        dateTo: input.dateTo ?? "",
         direction: directionFilters,
         status: statusFilters,
         manager: finalManagerFilters,
         value: input.value ?? [],
-        sort_by: input.sort_by ?? "timestamp",
-        sort_order: input.sort_order ?? "desc",
+        sortBy: input.sortBy ?? "timestamp",
+        sortOrder: input.sortOrder ?? "desc",
       },
       metrics: {
-        total_calls: totalItems,
+        totalCalls: totalItems,
         transcribed: metrics.transcribed,
-        avg_duration: metrics.avgDuration,
-        last_sync: metrics.lastSync,
+        avgDuration: metrics.avgDuration,
+        lastSync: metrics.lastSync,
       },
       managers,
     };

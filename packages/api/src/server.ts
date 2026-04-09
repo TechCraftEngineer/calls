@@ -104,8 +104,8 @@ export function createBackendApiWithContext(ctx: BackendContext) {
     },
     statistics: {
       getStatistics: (input?: {
-        date_from?: string;
-        date_to?: string;
+        dateFrom?: string;
+        dateTo?: string;
         sort?: string;
         order?: string;
       }) => callProc(backendRouter.statistics.getStatistics as ProcedureWithCallable, ctx, input),

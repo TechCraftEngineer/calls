@@ -9,16 +9,16 @@ interface CallsApiResponse {
   pagination: {
     page: number;
     total: number;
-    per_page: number;
-    total_pages: number;
-    has_next: boolean;
-    has_prev: boolean;
+    perPage: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
   };
   metrics: {
-    total_calls: number;
+    totalCalls: number;
     transcribed: number;
-    avg_duration: number;
-    last_sync: string | null;
+    avgDuration: number;
+    lastSync: string | null;
   };
   managers: { id: string; name: string }[];
 }
@@ -72,18 +72,18 @@ export class CallsHelpers {
         pagination: {
           page: 1,
           total: visibleCalls.length,
-          per_page: 15,
-          total_pages: Math.ceil(visibleCalls.length / 15) || 1,
-          has_next: false,
-          has_prev: false,
+          perPage: 15,
+          totalPages: Math.ceil(visibleCalls.length / 15) || 1,
+          hasNext: false,
+          hasPrev: false,
         },
         metrics: {
-          total_calls: visibleCalls.length,
+          totalCalls: visibleCalls.length,
           transcribed: visibleCalls.filter((c) => c.duration && c.duration > 0).length,
-          avg_duration:
+          avgDuration:
             visibleCalls.reduce((sum, c) => sum + (c.duration || 0), 0) /
             (visibleCalls.length || 1),
-          last_sync: new Date().toISOString(),
+          lastSync: new Date().toISOString(),
         },
         managers: this.extractManagers(visibleCalls, role, currentUser),
       };
@@ -106,16 +106,16 @@ export class CallsHelpers {
         pagination: {
           page: 1,
           total: 0,
-          per_page: 15,
-          total_pages: 1,
-          has_next: false,
-          has_prev: false,
+          perPage: 15,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
         },
         metrics: {
-          total_calls: 0,
+          totalCalls: 0,
           transcribed: 0,
-          avg_duration: 0,
-          last_sync: null,
+          avgDuration: 0,
+          lastSync: null,
         },
         managers: [],
       };

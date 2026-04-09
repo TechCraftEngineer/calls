@@ -38,9 +38,9 @@ import type { CallListProps } from "./types";
 export interface CallListDataGridProps extends CallListProps {
   pagination: {
     page: number;
-    per_page: number;
+    perPage: number;
     total: number;
-    total_pages: number;
+    totalPages: number;
   };
   isLoading?: boolean;
   onPaginationChange: (page: number, perPage: number) => void;
@@ -210,9 +210,9 @@ export function CallListDataGrid({
   );
 
   useEffect(() => {
-    if (pagination.page < 1 || pagination.per_page < 1) return;
+    if (pagination.page < 1 || pagination.perPage < 1) return;
     clearSelection();
-  }, [pagination.page, pagination.per_page, clearSelection]);
+  }, [pagination.page, pagination.perPage, clearSelection]);
 
   const table = useReactTable({
     data: calls,
@@ -221,14 +221,14 @@ export function CallListDataGrid({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     manualPagination: true,
-    pageCount: pagination.total_pages || 1,
+    pageCount: pagination.totalPages || 1,
     enableRowSelection: true,
     enableColumnResizing: true,
     columnResizeMode: "onChange",
     state: {
       pagination: {
         pageIndex: pagination.page - 1,
-        pageSize: pagination.per_page,
+        pageSize: pagination.perPage,
       },
       columnOrder: effectiveColumnOrder,
       columnVisibility: columnSchema.columnVisibility,
@@ -240,7 +240,7 @@ export function CallListDataGrid({
     onPaginationChange: (updater) => {
       const prev = {
         pageIndex: pagination.page - 1,
-        pageSize: pagination.per_page,
+        pageSize: pagination.perPage,
       };
       const next = typeof updater === "function" ? updater(prev) : prev;
       if (next) {

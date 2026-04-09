@@ -45,8 +45,8 @@ function StatisticsPageContent() {
   });
 
   const statsInput = {
-    date_from: filters.dateFrom || undefined,
-    date_to: filters.dateTo || undefined,
+    dateFrom: filters.dateFrom || undefined,
+    dateTo: filters.dateTo || undefined,
   };
 
   const {

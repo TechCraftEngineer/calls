@@ -1,9 +1,9 @@
 interface MetricsProps {
   metrics: {
-    total_calls: number;
+    totalCalls: number;
     transcribed: number;
-    avg_duration: number;
-    last_sync?: string | null;
+    avgDuration: number;
+    lastSync?: string | null;
   };
 }
 
@@ -18,7 +18,7 @@ export default function Metrics({ metrics }: MetricsProps) {
     <div className="metrics-grid">
       <div className="metric-card">
         <div className="metric-label">Всего звонков</div>
-        <div className="metric-value">{metrics.total_calls}</div>
+        <div className="metric-value">{metrics.totalCalls}</div>
       </div>
       <div className="metric-card">
         <div className="metric-label">Обработано AI</div>
@@ -26,13 +26,13 @@ export default function Metrics({ metrics }: MetricsProps) {
       </div>
       <div className="metric-card">
         <div className="metric-label">Среднее время</div>
-        <div className="metric-value">{formatDuration(metrics.avg_duration)}</div>
+        <div className="metric-value">{formatDuration(metrics.avgDuration)}</div>
       </div>
       <div className="metric-card">
         <div className="metric-label">Транскрибировано</div>
         <div className="metric-value">
-          {metrics.total_calls > 0
-            ? Math.round((metrics.transcribed / metrics.total_calls) * 100)
+          {metrics.totalCalls > 0
+            ? Math.round((metrics.transcribed / metrics.totalCalls) * 100)
             : 0}
           %
         </div>
