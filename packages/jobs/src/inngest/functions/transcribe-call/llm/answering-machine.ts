@@ -6,7 +6,7 @@
 import { generateWithAi } from "@calls/ai";
 import { Output } from "ai";
 import { z } from "zod";
-import { createLogger } from "../../../logger";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("answering-machine-llm");
 

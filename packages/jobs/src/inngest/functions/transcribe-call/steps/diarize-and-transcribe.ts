@@ -2,16 +2,16 @@
  * Диаризация и асинхронная транскрибация
  */
 
-import { createLogger } from "../../../../logger";
-import { downloadAudioFile } from "../audio/download";
+import { createLogger } from "~/logger";
+import { downloadAudioFile } from "~/inngest/functions/transcribe-call/audio/download";
 import {
   startAsyncDiarizedTranscription,
   waitForAsyncDiarizedResult,
-} from "../gigaam/client";
-import { performDiarization } from "../speaker-diarization";
-import type { PreprocessResult } from "./preprocess-audio";
-import type { AsrResult } from "../types";
-import type { TranscriptionSegmentSchema } from "../schemas";
+} from "~/inngest/functions/transcribe-call/gigaam/client";
+import { performDiarization } from "~/inngest/functions/transcribe-call/speakers/diarization";
+import type { PreprocessResult } from "~/inngest/functions/transcribe-call/steps/preprocess-audio";
+import type { AsrResult } from "~/inngest/functions/transcribe-call/types";
+import type { TranscriptionSegmentSchema } from "~/inngest/functions/transcribe-call/schemas";
 import type { z } from "zod";
 
 const logger = createLogger("transcribe-call:diarize");
@@ -36,8 +36,8 @@ export async function diarizeAndTranscribe(
   // Загружаем аудиофайл один раз
   const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
 
-  // Сначала получаем сегменты диаризации (только диаризация, без транскрибации)
-  const diarizationResult = await performDiarization(buffer, filename);
+  // Сначала получаем сегменты диаризации в асинхронном режиме (только диаризация, без транскрибации)
+  const diarizationResult = await performDiarization(buffer, filename, callId);
 
   // Если диаризация не удалась - возвращаем пустой результат
   if (!diarizationResult.success || diarizationResult.segments.length === 0) {

@@ -3,7 +3,7 @@
  */
 
 import { pbxRepository, workspaceIntegrationsRepository } from "@calls/db";
-import { createLogger } from "../../../logger";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("manager-resolution");
 

@@ -2,8 +2,8 @@
  * LLM Merging: объединение синхронного non-diarized с асинхронным diarized
  */
 
-import { createLogger } from "../../../../logger";
-import { applyLLMMerging } from "../llm-merge";
+import { createLogger } from "~/logger";
+import { applyLLMMerging } from "~/inngest/functions/transcribe-call/llm/merge";
 import type { SyncTranscriptionResult } from "./sync-transcription";
 import type { DiarizeResult } from "./diarize-and-transcribe";
 

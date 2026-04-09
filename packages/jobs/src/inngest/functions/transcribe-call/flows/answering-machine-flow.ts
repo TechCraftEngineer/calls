@@ -3,9 +3,9 @@
  */
 
 import { callsService } from "@calls/db";
-import { createLogger } from "../../../../logger";
-import type { SyncTranscriptionResult } from "../steps/sync-transcription";
-import type { AnsweringMachineCheckResult } from "../steps/check-answering-machine";
+import { createLogger } from "~/logger";
+import type { SyncTranscriptionResult } from "~/inngest/functions/transcribe-call/steps/sync-transcription";
+import type { AnsweringMachineCheckResult } from "~/inngest/functions/transcribe-call/steps/check-answering-machine";
 
 const logger = createLogger("transcribe-call:am-flow");
 

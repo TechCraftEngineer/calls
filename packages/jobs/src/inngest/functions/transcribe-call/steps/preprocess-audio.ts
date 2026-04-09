@@ -5,9 +5,9 @@
 import { filesService } from "@calls/db";
 import { runPipelineAudioPreprocess } from "@calls/asr/pipeline/transcribe-pipeline-audio";
 import type { ZodIssue } from "zod";
-import { createLogger } from "../../../../logger";
-import { FileSchema, PipelineAudioResultSchema } from "../schemas";
-import type { Call, PipelineAudioResult } from "../schemas";
+import { createLogger } from "~/logger";
+import { FileSchema, PipelineAudioResultSchema } from "~/inngest/functions/transcribe-call/schemas";
+import type { Call, PipelineAudioResult } from "~/inngest/functions/transcribe-call/schemas";
 
 const logger = createLogger("transcribe-call:preprocess");
 

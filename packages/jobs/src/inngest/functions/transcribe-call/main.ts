@@ -9,12 +9,12 @@
  * 6. Идентификация спикеров через LLM
  */
 
-import { createLogger } from "../../../logger";
-import { evaluateRequested, inngest, transcribeRequested } from "../../client";
+import { createLogger } from "~/logger";
+import { evaluateRequested, inngest, transcribeRequested } from "~/inngest/client";
 import {
   handleAnsweringMachineFlow,
   handleNoSpeechFlow,
-} from "./flows";
+} from "~/inngest/functions/transcribe-call/flows";
 import {
   checkAnsweringMachine,
   diarizeAndTranscribe,
@@ -29,15 +29,15 @@ import {
   summarize,
   syncTranscription,
   validateInput,
-} from "./steps";
-import { TranscriptionResultSchema } from "./schemas";
+} from "~/inngest/functions/transcribe-call/steps";
+import { TranscriptionResultSchema } from "~/inngest/functions/transcribe-call/schemas";
 import type { ZodIssue } from "zod";
-import type { SyncTranscriptionResult } from "./steps/sync-transcription";
-import type { DiarizeResult } from "./steps/diarize-and-transcribe";
-import type { MergeResult } from "./steps/merge-results";
-import type { SummarizeResult } from "./steps/summarize";
-import type { IdentifyResult } from "./steps/identify-speakers";
-import type { Call } from "./schemas";
+import type { SyncTranscriptionResult } from "~/inngest/functions/transcribe-call/steps/sync-transcription";
+import type { DiarizeResult } from "~/inngest/functions/transcribe-call/steps/diarize-and-transcribe";
+import type { MergeResult } from "~/inngest/functions/transcribe-call/steps/merge-results";
+import type { SummarizeResult } from "~/inngest/functions/transcribe-call/steps/summarize";
+import type { IdentifyResult } from "~/inngest/functions/transcribe-call/steps/identify-speakers";
+import type { Call } from "~/inngest/functions/transcribe-call/schemas";
 
 const logger = createLogger("transcribe-call");
 

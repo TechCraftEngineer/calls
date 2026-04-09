@@ -1,13 +1,21 @@
 /**
  * Индексный файл для модуля транскрибации
+ * Организован по принципу разделения ответственности:
+ * - audio/ - работа с аудио
+ * - flows/ - специальные флоу (автоответчик, отсутствие речи)
+ * - gigaam/ - интеграция с GigaAM API
+ * - llm/ - LLM операции (коррекция, слияние)
+ * - manager/ - работа с менеджерами
+ * - speakers/ - идентификация и диаризация спикеров
+ * - steps/ - шаги pipeline транскрибации
+ * - utils/ - утилиты и вспомогательные функции
  */
 
-// Прямые экспорты из модулей (без helpers.ts barrel-экспорта)
+// ============ Audio ============
 export { downloadAudioBuffer, downloadAudioFile } from "./audio/download";
 export { extractAudioSegment } from "./audio/processing";
-export { extractSegmentsFromUtterances, extractSpeakerTimeline } from "./extraction";
-export { gigaAmCompletedFn } from "./gigaam/callback-handler";
-export { speakerEmbeddingsCompletedFn } from "./speaker-embeddings-callback-handler";
+
+// ============ GigaAM ============
 export {
   checkAsyncTaskStatus,
   fetchWithRetry,
@@ -20,33 +28,82 @@ export {
   waitForAsyncDiarizedResult,
   waitForAsyncResult,
 } from "./gigaam/client";
+export { gigaAmCompletedFn } from "./gigaam/callback-handler";
 export { processAudioWithDiarization } from "./gigaam/diarization";
+
+// ============ LLM ============
+export {
+  isAnsweringMachineWithLlm,
+  type AnsweringMachineResult,
+} from "./llm";
 export {
   applyLLMCorrection,
   buildCorrectionPrompt,
   correctTranscriptionWithLLM,
   type TranscriptionSegment,
   validateAndMergeCorrections,
-} from "./llm-correction";
+} from "./llm/correction";
 export {
-  type AsrDiarizedResult,
-  type AsrNonDiarizedResult,
-  type AsrSegment,
   applyLLMMerging,
   buildMergingPrompt,
   estimateTokenCount,
   MAX_PROMPT_TOKENS,
   mergeAsrResultsWithLLM,
-} from "./llm-merge";
-export { transcribeCallFn } from "./main";
-export { resolveManagerFromPbx } from "./manager-resolution";
-export { serializeMetadata } from "./metadata";
+  type AsrDiarizedResult,
+  type AsrNonDiarizedResult,
+  type AsrSegment,
+} from "./llm/merge";
+
+// ============ Manager ============
+export { resolveManagerFromPbx } from "./manager";
+
+// ============ Speakers ============
 export {
-  type QuickCheckResult,
+  checkSpeakerEmbeddingsHealth,
+  getDiarizationStatus,
+  shouldUseSpeakerEmbeddings,
+  startSpeakerDiarization,
+  type SpeakerDiarizationResult,
+} from "./speakers";
+export {
+  createSpeakerEmbeddingsCompletedEvent,
+  handleSpeakerEmbeddingsCallback,
+  validateSpeakerEmbeddingsCallback,
+  type SpeakerEmbeddingsCallbackData,
+} from "./speakers/embeddings-handler";
+export {
+  identifySpeakers,
+  type IdentifySpeakersResult,
+} from "./speakers/identification";
+
+// ============ Utils ============
+export {
+  extractSegmentsFromUtterances,
+  extractSpeakerTimeline,
+} from "./utils";
+export {
+  createSafeResponse,
+  handleAsyncError,
+  TranscriptionError,
+  type ValidationError,
+  validateCall,
+  validateCallId,
+  validateFile,
+  validatePipelineResult,
+  validateTranscriptionResult,
+  validateWorkspace,
+} from "./utils/validation";
+export { serializeMetadata } from "./utils/metadata";
+export {
   quickAnsweringMachineCheck,
   shouldRunQuickCheck,
-} from "./quick-am-check";
-// Экспорт типов и схем с разрешением конфликтов
+  type QuickCheckResult,
+} from "./utils/quick-am-check";
+
+// ============ Main Function ============
+export { transcribeCallFn } from "./main";
+
+// ============ Schemas (типы и схемы валидации) ============
 export type {
   AsrLog as AsrLogType,
   Call as CallType,
@@ -59,7 +116,6 @@ export type {
   TranscriptMetadata,
   Workspace as WorkspaceType,
 } from "./schemas";
-// Экспорт схем валидации
 export {
   AsrLogSchema,
   AsrMetadataSchema,
@@ -74,8 +130,8 @@ export {
   TranscriptMetadataSchema,
   WorkspaceSchema,
 } from "./schemas";
-export { identifySpeakers } from "./speaker-identification";
-// Экспорт типов
+
+// ============ Types ============
 export type {
   AsrResult,
   AudioBufferLegacyResult,
@@ -86,15 +142,3 @@ export type {
   TranscriptionResult,
   Workspace,
 } from "./types";
-export {
-  createSafeResponse,
-  handleAsyncError,
-  TranscriptionError,
-  type ValidationError,
-  validateCall,
-  validateCallId,
-  validateFile,
-  validatePipelineResult,
-  validateTranscriptionResult,
-  validateWorkspace,
-} from "./validation";

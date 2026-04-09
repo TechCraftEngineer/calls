@@ -3,12 +3,12 @@
  */
 
 import { callsService } from "@calls/db";
-import { createLogger } from "../../../../logger";
-import { serializeMetadata } from "../metadata";
-import type { MergeResult } from "./merge-results";
+import { createLogger } from "~/logger";
+import { serializeMetadata } from "~/inngest/functions/transcribe-call/utils/metadata";
+import type { MergeResult } from "~/inngest/functions/transcribe-call/steps/merge-results";
 import type { SummarizeResult } from "./summarize";
 import type { IdentifyResult } from "./identify-speakers";
-import type { Call } from "../schemas";
+import type { Call } from "~/inngest/functions/transcribe-call/schemas";
 
 const logger = createLogger("transcribe-call:persist");
 

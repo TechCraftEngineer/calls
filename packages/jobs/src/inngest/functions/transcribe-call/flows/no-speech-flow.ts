@@ -3,8 +3,8 @@
  */
 
 import { callsService } from "@calls/db";
-import { createLogger } from "../../../../logger";
-import type { SyncTranscriptionResult } from "../steps/sync-transcription";
+import { createLogger } from "~/logger";
+import type { SyncTranscriptionResult } from "~/inngest/functions/transcribe-call/steps/sync-transcription";
 
 const logger = createLogger("transcribe-call:no-speech-flow");
 

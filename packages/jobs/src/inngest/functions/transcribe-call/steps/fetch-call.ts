@@ -4,9 +4,9 @@
 
 import { callsService } from "@calls/db";
 import type { ZodIssue } from "zod";
-import { createLogger } from "../../../../logger";
-import { CallSchema } from "../schemas";
-import type { Call } from "../schemas";
+import { createLogger } from "~/logger";
+import { CallSchema } from "~/inngest/functions/transcribe-call/schemas";
+import type { Call } from "~/inngest/functions/transcribe-call/schemas";
 
 const logger = createLogger("transcribe-call:fetch-call");
 

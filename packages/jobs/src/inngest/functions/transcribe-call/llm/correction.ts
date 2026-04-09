@@ -6,7 +6,7 @@ import { generateWithAi } from "@calls/ai";
 import { env } from "@calls/config";
 import { Output } from "ai";
 import { z } from "zod";
-import { createLogger } from "../../../logger";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("transcribe-llm-correction");
 
@@ -189,21 +189,20 @@ export async function applyLLMCorrection(
     };
   } catch (error) {
     // Type guard для проверки error с кодом
-    const isErrorWithCode = (err: unknown): err is { code?: string } => 
-      err instanceof Error && 'code' in err;
-    
+    const isErrorWithCode = (err: unknown): err is { code?: string } =>
+      err instanceof Error && "code" in err;
+
     // Проверяем на timeout ошибки
-    if (error instanceof Error && (
-      error.name === 'TimeoutError' || 
-      (isErrorWithCode(error) && error.code === 'ETIMEDOUT') ||
-      error.message.includes('timeout')
-    )) {
-      // Объединяем логи для предотвращения дублирования
+    if (
+      error instanceof Error &&
+      (error.name === "TimeoutError" ||
+        (isErrorWithCode(error) && error.code === "ETIMEDOUT") ||
+        error.message.includes("timeout"))
+    ) {
       logger.error(`Таймаут исправления LLM: ${error.message}`, { requestId });
-      // Возвращаем fallback вместо пробрасывания ошибки
       return { segments, correctionsApplied: false };
     }
-    
+
     logger.error("Сбой исправления LLM", { requestId, error });
     return { segments, correctionsApplied: false };
   }

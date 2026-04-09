@@ -7,15 +7,15 @@
  * параллельно с ограничением concurrency.
  */
 
-import { createLogger } from "../../../../logger";
-import { checkSpeakerEmbeddingsHealth, performDiarizationAuto } from "../speaker-diarization";
-import type { AsrResult } from "../types";
+import { createLogger } from "~/logger";
+import { checkSpeakerEmbeddingsHealth, performDiarizationAuto } from "~/inngest/functions/transcribe-call/speakers/diarization";
+import type { AsrResult } from "~/inngest/functions/transcribe-call/types";
 import {
   type DiarizationSegmentInput,
   processAudioWithoutDiarization,
   startAsyncDiarizedTranscription,
   waitForAsyncDiarizedResult,
-} from "./client";
+} from "~/inngest/functions/transcribe-call/gigaam/client";
 
 const logger = createLogger("gigaam-diarization");
 

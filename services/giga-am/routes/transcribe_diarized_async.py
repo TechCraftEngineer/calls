@@ -83,7 +83,15 @@ async def send_inngest_event(
     if error is not None:
         payload["error"] = error
     
+    # Формируем тело запроса для логирования
+    request_body = {
+        "name": event_name,
+        "data": payload,
+    }
+
     try:
+        logger.info(f"[Inngest] Отправка события: {request_body}")
+
         async with httpx.AsyncClient(timeout=settings.callback_timeout) as client:
             response = await client.post(
                 f"{settings.inngest_api_url}/v1/events",
@@ -91,22 +99,19 @@ async def send_inngest_event(
                     "Authorization": f"Bearer {settings.inngest_event_key}",
                     "Content-Type": "application/json",
                 },
-                json={
-                    "name": event_name,
-                    "data": payload,
-                }
+                json=request_body
             )
-            
+
             if response.status_code == 200:
-                logger.info(f"Sent Inngest event {event_name} for task {task_id}")
+                logger.info(f"[Inngest] Событие отправлено: {event_name} для task {task_id}")
                 return True
             else:
                 logger.error(
-                    f"Failed to send Inngest event: {response.status_code} {response.text}"
+                    f"[Inngest] Ошибка отправки: {response.status_code} {response.text}"
                 )
                 return False
     except Exception as e:
-        logger.error(f"Error sending Inngest event: {e}", exc_info=True)
+        logger.error(f"[Inngest] Ошибка отправки события: {e}", exc_info=True)
         return False
 
 

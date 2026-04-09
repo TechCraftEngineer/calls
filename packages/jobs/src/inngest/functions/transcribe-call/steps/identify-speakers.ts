@@ -2,9 +2,9 @@
  * Идентификация спикеров через LLM
  */
 
-import { createLogger } from "../../../../logger";
-import { identifySpeakers as identifyWithLlm } from "../speaker-identification";
-import type { Call } from "../schemas";
+import { createLogger } from "~/logger";
+import { identifySpeakers as identifyWithLlm } from "~/inngest/functions/transcribe-call/speakers/identification";
+import type { Call } from "~/inngest/functions/transcribe-call/schemas";
 
 const logger = createLogger("transcribe-call:identify-speakers");
 

@@ -8,7 +8,7 @@ import { generateWithAi } from "@calls/ai";
 import { env, LLM_CONFIG } from "@calls/config";
 import { Output } from "ai";
 import { z } from "zod";
-import { createLogger } from "../../../logger";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("transcribe-llm-merge");
 

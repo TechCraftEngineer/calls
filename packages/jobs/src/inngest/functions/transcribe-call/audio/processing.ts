@@ -7,7 +7,7 @@ import { randomUUID } from "node:crypto";
 import { createReadStream, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createLogger } from "../../../../logger";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("audio-processing");
 

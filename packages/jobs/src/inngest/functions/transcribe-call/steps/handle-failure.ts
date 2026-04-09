@@ -3,8 +3,8 @@
  */
 
 import { callsService } from "@calls/db";
-import { createLogger } from "../../../../logger";
-import { TranscribeCallEventSchema } from "../schemas";
+import { createLogger } from "~/logger";
+import { TranscribeCallEventSchema } from "~/inngest/functions/transcribe-call/schemas";
 import type { FailureEventArgs } from "inngest";
 
 const logger = createLogger("transcribe-call:failure");

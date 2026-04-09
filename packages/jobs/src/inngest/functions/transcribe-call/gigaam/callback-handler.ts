@@ -4,10 +4,10 @@
  */
 
 import { z } from "zod";
-import { createLogger } from "../../../../logger";
-import { gigaAmTranscriptionCompleted, inngest } from "../../../client";
-import type { AsrResult } from "../types";
-import type { DiarizedTranscriptionResult } from "./client";
+import { createLogger } from "~/logger";
+import { gigaAmTranscriptionCompleted, inngest } from "~/inngest/client";
+import type { AsrResult } from "~/inngest/functions/transcribe-call/types";
+import type { DiarizedTranscriptionResult } from "~/inngest/functions/transcribe-call/gigaam/client";
 
 const logger = createLogger("gigaam-callback-handler");
 
