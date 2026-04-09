@@ -15,6 +15,12 @@ const logger = createLogger("transcribe-llm-merge");
 // Максимальное количество токенов для LLM промпта
 export const MAX_PROMPT_TOKENS = 12000;
 
+// Максимальное количество токенов для одного чанка при чанкировании
+const CHUNK_TARGET_TOKENS = 8000;
+
+// Минимальное количество сегментов в чанке
+const MIN_SEGMENTS_PER_CHUNK = 3;
+
 // Оценка количества токенов с учетом кириллицы
 export function estimateTokenCount(text: string): number {
   if (!text || text.length === 0) return 0;
@@ -132,6 +138,276 @@ ${segmentsText}
 }`;
 }
 
+/**
+ * Разбивает сегменты на чанки по временным окнам для обработки больших транскрипций
+ */
+function splitIntoChunks(
+  segments: AsrSegment[],
+  nonDiarizedTranscript: string,
+  targetTokens: number,
+): Array<{ segments: AsrSegment[]; transcriptSlice: string; startTime: number; endTime: number }> {
+  if (segments.length === 0) return [];
+
+  const firstSegment = segments[0];
+  const lastSegment = segments[segments.length - 1];
+  if (!firstSegment || !lastSegment) return [];
+
+  const totalDuration = lastSegment.end - firstSegment.start;
+  const avgSegmentDuration = totalDuration / segments.length;
+
+  // Оцениваем сколько сегментов поместится в один чанк
+  const avgSegmentTextLength = segments.reduce((sum, s) => sum + s.text.length, 0) / segments.length;
+  const estimatedTokensPerSegment = estimateTokenCount("a".repeat(Math.round(avgSegmentTextLength)));
+  const segmentsPerChunk = Math.max(
+    MIN_SEGMENTS_PER_CHUNK,
+    Math.floor((targetTokens * 0.6) / Math.max(estimatedTokensPerSegment, 50)),
+  );
+
+  const chunks: Array<{ segments: AsrSegment[]; transcriptSlice: string; startTime: number; endTime: number }> = [];
+
+  for (let i = 0; i < segments.length; i += segmentsPerChunk) {
+    const chunkSegments = segments.slice(i, i + segmentsPerChunk);
+    const firstChunkSegment = chunkSegments[0];
+    const lastChunkSegment = chunkSegments[chunkSegments.length - 1];
+    if (!firstChunkSegment || !lastChunkSegment) continue;
+
+    const startTime = firstChunkSegment.start;
+    const endTime = lastChunkSegment.end;
+
+    // Извлекаем соответствующую часть текста из nonDiarized транскрипции
+    // Используем эвристику: делим transcript пропорционально времени
+    const transcriptSlice = extractTranscriptSlice(nonDiarizedTranscript, startTime, endTime, totalDuration);
+
+    chunks.push({
+      segments: chunkSegments,
+      transcriptSlice,
+      startTime,
+      endTime,
+    });
+  }
+
+  return chunks;
+}
+
+/**
+ * Извлекает срез транскрипции по временным меткам
+ * Использует пропорциональное деление текста с небольшим оверлапом
+ */
+function extractTranscriptSlice(
+  transcript: string,
+  startTime: number,
+  endTime: number,
+  totalDuration: number,
+): string {
+  if (totalDuration <= 0 || transcript.length === 0) return transcript;
+
+  const ratio = startTime / totalDuration;
+  const endRatio = endTime / totalDuration;
+
+  // Добавляем небольшой оверлап для контекста (5% с каждой стороны)
+  const overlap = 0.05;
+  const startIdx = Math.max(0, Math.floor(transcript.length * (ratio - overlap)));
+  const endIdx = Math.min(transcript.length, Math.ceil(transcript.length * (endRatio + overlap)));
+
+  return transcript.slice(startIdx, endIdx);
+}
+
+/**
+ * Обрабатывает один чанк через LLM
+ */
+async function processChunk(
+  chunk: { segments: AsrSegment[]; transcriptSlice: string; startTime: number; endTime: number },
+  chunkIndex: number,
+  totalChunks: number,
+  requestId: string,
+): Promise<{
+  segments: AsrSegment[];
+  chunkTranscript: string;
+  quality: { score: number; improvements: string[] };
+}> {
+  const prompt = buildMergingPrompt(chunk.transcriptSlice, chunk.segments);
+
+  const { output } = await generateWithAi({
+    modelProfile: "cheap",
+    system:
+      "Ты эксперт по обработке транскрипций аудио на русском языке. " +
+      "Твоя задача - объединить результаты двух систем распознавания речи: одна дала точный текст, другая дала разделение по говорящим. " +
+      "Создай идеальный результат с точным русским текстом и правильным разделением по говорящим. " +
+      `Это часть ${chunkIndex + 1} из ${totalChunks} фрагментов разговора.`,
+    prompt,
+    temperature: 0.1,
+    maxRetries: 2,
+    timeout: LLM_CONFIG.MERGE_TIMEOUT_MS,
+    abortSignal: AbortSignal.timeout(LLM_CONFIG.MERGE_TIMEOUT_MS),
+    output: Output.object({
+      schema: MergedOutputSchema,
+    }),
+    functionId: "transcription-llm-merge-chunk",
+    metadata: {
+      requestId,
+      chunkIndex: chunkIndex + 1,
+      totalChunks,
+      tags: ["transcription", "llm-merge", "chunk"],
+    },
+  });
+
+  // Преобразуем результат в AsrSegment[]
+  type MergedSegment = z.infer<typeof MergedOutputSchema>["segments"][number];
+  const segments: AsrSegment[] = output.segments.map((seg: MergedSegment) => ({
+    start: seg.start,
+    end: seg.end,
+    speaker: seg.speaker,
+    text: seg.text,
+    confidence: seg.confidence,
+  }));
+
+  return {
+    segments,
+    chunkTranscript: output.mergedTranscript,
+    quality: output.quality,
+  };
+}
+
+/**
+ * Объединяет результаты чанков в единый результат
+ */
+function combineChunkResults(
+  chunkResults: Array<{
+    segments: AsrSegment[];
+    chunkTranscript: string;
+    quality: { score: number; improvements: string[] };
+  }>,
+  originalSegments: AsrSegment[],
+  totalChunks: number,
+): {
+  segments: AsrSegment[];
+  mergedTranscript: string;
+  quality: { score: number; improvements: string[] };
+} {
+  if (chunkResults.length === 0) {
+    return {
+      segments: originalSegments,
+      mergedTranscript: originalSegments.map((s) => s.text).join(" "),
+      quality: { score: 0.5, improvements: ["Не удалось обработать ни один чанк"] },
+    };
+  }
+
+  // Объединяем все сегменты
+  const allSegments: AsrSegment[] = [];
+  for (const result of chunkResults) {
+    allSegments.push(...result.segments);
+  }
+
+  // Сортируем по времени
+  allSegments.sort((a, b) => a.start - b.start);
+
+  // Объединяем transcript
+  const mergedTranscript = chunkResults.map((r) => r.chunkTranscript).join("\n\n");
+
+  // Агрегируем quality score (среднее взвешенное)
+  const totalScore = chunkResults.reduce((sum, r) => sum + r.quality.score, 0);
+  const avgScore = totalScore / chunkResults.length;
+
+  // Собираем все улучшения
+  const allImprovements: string[] = [
+    `Обработано чанков: ${chunkResults.length}/${totalChunks}`,
+    ...chunkResults.flatMap((r) => r.quality.improvements),
+  ];
+
+  return {
+    segments: allSegments,
+    mergedTranscript,
+    quality: {
+      score: avgScore,
+      improvements: allImprovements,
+    },
+  };
+}
+
+/**
+ * Обрабатывает большую транскрипцию через чанкирование
+ */
+async function mergeWithChunking(
+  nonDiarized: AsrNonDiarizedResult,
+  diarized: AsrDiarizedResult,
+  requestId: string,
+  estimatedTokens: number,
+): Promise<{
+  segments: AsrSegment[];
+  mergedTranscript: string;
+  quality: { score: number; improvements: string[] };
+  fallbackReason?: string;
+}> {
+  logger.info(
+    `Starting chunked LLM merge (estimatedTokens: ${estimatedTokens}, segments: ${diarized.segments.length})`,
+    { requestId },
+  );
+
+  // Разбиваем на чанки
+  const chunks = splitIntoChunks(diarized.segments, nonDiarized.transcript, CHUNK_TARGET_TOKENS);
+
+  logger.info(`Split into ${chunks.length} chunks for processing`, {
+    requestId,
+    chunkCount: chunks.length,
+  });
+
+  // Обрабатываем чанки последовательно (для предсказуемости и контроля rate limits)
+  const chunkResults: Array<{
+    segments: AsrSegment[];
+    chunkTranscript: string;
+    quality: { score: number; improvements: string[] };
+  }> = [];
+
+  let failedChunks = 0;
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    if (!chunk) continue;
+
+    try {
+      const result = await processChunk(chunk, i, chunks.length, requestId);
+      chunkResults.push(result);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.error(`Chunk ${i + 1}/${chunks.length} failed`, {
+        requestId,
+        error: errorMessage,
+        chunkIndex: i,
+      });
+      failedChunks++;
+
+      // Для failed чанка используем оригинальные сегменты
+      const failedChunk = chunks[i];
+      if (failedChunk) {
+        chunkResults.push({
+          segments: failedChunk.segments,
+          chunkTranscript: failedChunk.segments.map((s) => s.text).join(" "),
+          quality: {
+            score: 0.5,
+            improvements: [`Чанк ${i + 1} обработан с ошибкой: ${errorMessage}`],
+          },
+        });
+      }
+    }
+  }
+
+  // Объединяем результаты
+  const combined = combineChunkResults(chunkResults, diarized.segments, chunks.length);
+
+  logger.info(`Chunked LLM merge completed`, {
+    requestId,
+    processedChunks: chunkResults.length,
+    failedChunks,
+    avgQualityScore: combined.quality.score,
+    totalSegments: combined.segments.length,
+  });
+
+  return {
+    ...combined,
+    fallbackReason: failedChunks > 0 ? `partial_chunk_failures:${failedChunks}/${chunks.length}` : undefined,
+  };
+}
+
 export async function mergeAsrResultsWithLLM(
   nonDiarized: AsrNonDiarizedResult,
   diarized: AsrDiarizedResult,
@@ -148,19 +424,11 @@ export async function mergeAsrResultsWithLLM(
   // Проверяем лимит токенов
   if (estimatedTokens > MAX_PROMPT_TOKENS) {
     logger.warn(
-      `Prompt too large for LLM merge, using diarized fallback (estimatedTokens: ${estimatedTokens}, requestId: ${requestId})`,
+      `Prompt too large for single LLM call, using chunking (estimatedTokens: ${estimatedTokens}, requestId: ${requestId})`,
     );
-    return {
-      segments: diarized.segments,
-      mergedTranscript: diarized.transcript,
-      quality: {
-        score: 0.3, // Низкое качество для fallback
-        improvements: [
-          `Fallback к диаризированному результату: промпт слишком большой (${estimatedTokens} токенов)`,
-        ],
-      },
-      fallbackReason: `prompt_too_large:${estimatedTokens}_tokens`,
-    };
+
+    // Используем чанкирование вместо полного fallback
+    return mergeWithChunking(nonDiarized, diarized, requestId, estimatedTokens);
   }
 
   const { output } = await generateWithAi({

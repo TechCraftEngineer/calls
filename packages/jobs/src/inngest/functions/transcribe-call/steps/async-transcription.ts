@@ -13,6 +13,8 @@ const logger = createLogger("transcribe-call:async-transcription");
 
 export interface AsyncTranscriptionResult extends SyncTranscriptionResult {
   taskId: string;
+  diarizationSuccess?: boolean;
+  diarizationFailed?: boolean;
 }
 
 /**
@@ -118,6 +120,137 @@ export async function asyncTranscriptionWithCallback(
       segments: eventData.result.segments || [],
       processingTimeMs: 0, // Неизвестно при callback-модели
       taskId,
+    };
+  });
+}
+
+/**
+ * Асинхронная диаризированная транскрибация через GigaAM API с callback-моделью.
+ * Запускает задачу и ждёт событие завершения через step.waitForEvent.
+ */
+export async function asyncDiarizedTranscriptionWithCallback(
+  pipelineAudio: PreprocessResult,
+  callId: string,
+  step: unknown,
+): Promise<AsyncTranscriptionResult> {
+  const typedStep = step as {
+    run: <T>(id: string, fn: () => Promise<T>) => Promise<T>;
+    waitForEvent: <T>(id: string, options: { event: string; timeout: string; if: string }) => Promise<T | null>;
+  };
+
+  // Шаг 1: Запускаем асинхронную диаризированную транскрибацию
+  const { taskId } = await typedStep.run("asr/async-diarized-start", async () => {
+    const { downloadAudioFile } = await import("~/inngest/functions/transcribe-call/audio/download");
+    const { startAsyncDiarizedTranscription } = await import("~/inngest/functions/transcribe-call/gigaam/client");
+    const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
+
+    logger.info("Запуск асинхронной диаризированной транскрибации", {
+      callId,
+      durationSeconds: pipelineAudio.durationSeconds,
+    });
+
+    const result = await startAsyncDiarizedTranscription(buffer, filename, []);
+
+    logger.info("Асинхронная диаризированная транскрибация запущена", {
+      callId,
+      taskId: result.taskId,
+    });
+
+    return result;
+  });
+
+  // Шаг 2: Ожидаем событие завершения от GigaAM сервиса
+  const completedEvent = await typedStep.waitForEvent<{
+    data: {
+      task_id: string;
+      status: "completed" | "failed";
+      result?: {
+        final_transcript?: string;
+        segments?: Array<{
+          speaker: string;
+          start: number;
+          end: number;
+          text: string;
+          confidence: number;
+        }>;
+        num_speakers?: number;
+        speakers?: string[];
+        processing_time?: number;
+      };
+      error?: string;
+    };
+  }>(
+    "asr/wait-for-diarized-completion",
+    {
+      event: "giga-am/transcription.completed",
+      timeout: "15m", // 15 минут максимальное ожидание (диаризация дольше)
+      if: `async.data.task_id == "${taskId}"`,
+    },
+  );
+
+  // Шаг 3: Обрабатываем результат
+  return await typedStep.run("asr/process-diarized-result", async () => {
+    if (!completedEvent) {
+      // Таймаут - получаем результат напрямую через polling
+      logger.warn("Таймаут ожидания события диаризации, переключаемся на polling", { callId, taskId });
+
+      const { getAsyncDiarizedResult } = await import("~/inngest/functions/transcribe-call/gigaam/client");
+      const pollStartTime = Date.now();
+      const result = await getAsyncDiarizedResult(taskId);
+      const pollTimeMs = Date.now() - pollStartTime;
+
+      logger.info("Результат диаризации получен через polling", {
+        callId,
+        taskId,
+        pollTimeMs,
+        transcriptLength: result.final_transcript.length,
+        segmentsCount: result.segments.length,
+      });
+
+      return {
+        transcript: result.final_transcript,
+        segments: result.segments.map((s) => ({
+          speaker: s.speaker ?? "UNKNOWN",
+          start: s.start,
+          end: s.end,
+          text: s.text,
+        })),
+        processingTimeMs: pollTimeMs,
+        taskId,
+        diarizationSuccess: true,
+        diarizationFailed: false,
+      };
+    }
+
+    const eventData = completedEvent.data;
+
+    if (eventData.status === "failed") {
+      throw new Error(`Асинхронная диаризированная транскрипция завершилась с ошибкой: ${eventData.error || "Неизвестная ошибка"}`);
+    }
+
+    if (!eventData.result?.final_transcript) {
+      throw new Error("GigaAM вернул completed статус без транскрипции");
+    }
+
+    logger.info("Асинхронная диаризированная транскрибация завершена через callback", {
+      callId,
+      taskId,
+      transcriptLength: eventData.result.final_transcript.length,
+      segmentsCount: eventData.result.segments?.length ?? 0,
+    });
+
+    return {
+      transcript: eventData.result.final_transcript,
+      segments: (eventData.result.segments || []).map((s) => ({
+        speaker: s.speaker ?? "UNKNOWN",
+        start: s.start,
+        end: s.end,
+        text: s.text,
+      })),
+      processingTimeMs: 0, // Неизвестно при callback-модели
+      taskId,
+      diarizationSuccess: true,
+      diarizationFailed: false,
     };
   });
 }

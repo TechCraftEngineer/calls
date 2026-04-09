@@ -16,6 +16,7 @@ import {
   handleNoSpeechFlow,
 } from "~/inngest/functions/transcribe-call/flows";
 import {
+  asyncDiarizedTranscriptionWithCallback,
   asyncTranscriptionWithCallback,
   checkAnsweringMachine,
   fetchCall,
@@ -105,23 +106,21 @@ export const transcribeCallFn = inngest.createFunction(
       );
     }
 
-    // === ШАГ 8: Диаризация и асинхронная транскрибация (УБРАНО - асинхронная модель) ===
-    // const diarizeResult = await step.run("asr:diarize-and-transcribe", () =>
-    //   diarizeAndTranscribe(pipelineAudio, callId),
-    // ) as DiarizeResult;
+    // === ШАГ 8: Асинхронная диаризированная транскрибация ===
+    const diarizeResult = await asyncDiarizedTranscriptionWithCallback(
+      pipelineAudio,
+      callId,
+      step,
+    );
 
-    // Временно используем синхронный результат без диаризации
-    const diarizeResult = {
-      segments: [],
-      transcript: fullTranscription.transcript,
-      processingTimeMs: 0,
-      diarizationSuccess: false,
-      diarizationFailed: true,
-    };
+    // === ШАГ 9: LLM Merging результатов ===
+    // Проверяем наличие segments перед мерджингом
+    if (!diarizeResult.segments) {
+      throw new Error(`Diarization failed: segments are undefined (diarizationFailed: ${diarizeResult.diarizationFailed})`);
+    }
 
-    // === ШАГ 9: LLM Merging (упрощенный - без диаризации) ===
     const mergedResult = await step.run("llm/merge-asr", () =>
-      mergeResults(fullTranscription, diarizeResult, callId),
+      mergeResults(fullTranscription, diarizeResult as { segments: Array<{ speaker: string; text: string; start: number; end: number; }>; transcript: string; processingTimeMs: number; diarizationSuccess: boolean; diarizationFailed: boolean; }, callId),
     ) as MergeResult;
 
     // Вычисляем общее время обработки с дефолтными значениями
@@ -133,7 +132,8 @@ export const transcribeCallFn = inngest.createFunction(
     logger.info("ASR + LLM processing completed", {
       callId,
       processingTimeMs: totalProcessingTimeMs,
-      asrProcessingTimeMs: (fullTranscription.processingTimeMs || 0) + (diarizeResult.processingTimeMs || 0),
+      fullTranscriptionTimeMs: fullTranscription.processingTimeMs || 0,
+      diarizationTimeMs: diarizeResult.processingTimeMs || 0,
       llmMergeTimeMs: mergedResult.llmMergeTimeMs,
       processingTimeSeconds: Math.round((totalProcessingTimeMs / 1000) * 100) / 100,
     });
