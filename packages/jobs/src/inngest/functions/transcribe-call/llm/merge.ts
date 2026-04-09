@@ -21,9 +21,21 @@ const CHUNK_TARGET_TOKENS = 8000;
 // Минимальное количество сегментов в чанке
 const MIN_SEGMENTS_PER_CHUNK = 3;
 
+// Тип для чанка
+interface Chunk {
+  segments: AsrSegment[];
+  transcriptSlice: string;
+  startTime: number;
+  endTime: number;
+}
+
 // Оценка количества токенов с учетом кириллицы
 export function estimateTokenCount(text: string): number {
   if (!text || text.length === 0) return 0;
+  if (text.length > 1000000) {
+    logger.warn("Text too long for token estimation, capping at 1M characters");
+    text = text.slice(0, 1000000);
+  }
 
   // Считаем долю не-ASCII символов (кириллица и др.)
   let nonAsciiCount = 0;
@@ -145,7 +157,7 @@ function splitIntoChunks(
   segments: AsrSegment[],
   nonDiarizedTranscript: string,
   targetTokens: number,
-): Array<{ segments: AsrSegment[]; transcriptSlice: string; startTime: number; endTime: number }> {
+): Chunk[] {
   if (segments.length === 0) return [];
 
   const firstSegment = segments[0];
@@ -153,8 +165,6 @@ function splitIntoChunks(
   if (!firstSegment || !lastSegment) return [];
 
   const totalDuration = lastSegment.end - firstSegment.start;
-  // Защита от деления на ноль
-  if (segments.length === 0) return [];
   const avgSegmentDuration = totalDuration / segments.length;
 
   // Оцениваем сколько сегментов поместится в один чанк
@@ -165,7 +175,7 @@ function splitIntoChunks(
     Math.floor((targetTokens * 0.6) / Math.max(estimatedTokensPerSegment, 50)),
   );
 
-  const chunks: Array<{ segments: AsrSegment[]; transcriptSlice: string; startTime: number; endTime: number }> = [];
+  const chunks: Chunk[] = [];
 
   for (let i = 0; i < segments.length; i += segmentsPerChunk) {
     const chunkSegments = segments.slice(i, i + segmentsPerChunk);
@@ -228,7 +238,7 @@ function extractTranscriptSlice(
  * Обрабатывает один чанк через LLM
  */
 async function processChunk(
-  chunk: { segments: AsrSegment[]; transcriptSlice: string; startTime: number; endTime: number },
+  chunk: Chunk,
   chunkIndex: number,
   totalChunks: number,
   requestId: string,
@@ -237,7 +247,17 @@ async function processChunk(
   chunkTranscript: string;
   quality: { score: number; improvements: string[] };
 }> {
+  const chunkStartTime = Date.now();
   const prompt = buildMergingPrompt(chunk.transcriptSlice, chunk.segments);
+
+  logger.info(`Processing chunk ${chunkIndex + 1}/${totalChunks}`, {
+    requestId,
+    chunkIndex: chunkIndex + 1,
+    totalChunks,
+    segmentsCount: chunk.segments.length,
+    transcriptSliceLength: chunk.transcriptSlice.length,
+    timeRange: `${chunk.startTime.toFixed(2)}s - ${chunk.endTime.toFixed(2)}s`,
+  });
 
   const { output } = await generateWithAi({
     modelProfile: "cheap",
@@ -273,6 +293,16 @@ async function processChunk(
     confidence: seg.confidence,
   }));
 
+  const chunkDurationMs = Date.now() - chunkStartTime;
+  logger.info(`Chunk ${chunkIndex + 1}/${totalChunks} completed`, {
+    requestId,
+    chunkIndex: chunkIndex + 1,
+    totalChunks,
+    durationMs: chunkDurationMs,
+    qualityScore: output.quality.score,
+    segmentsCount: segments.length,
+  });
+
   return {
     segments,
     chunkTranscript: output.mergedTranscript,
@@ -283,12 +313,14 @@ async function processChunk(
 /**
  * Объединяет результаты чанков в единый результат
  */
+interface ChunkResult {
+  segments: AsrSegment[];
+  chunkTranscript: string;
+  quality: { score: number; improvements: string[] };
+}
+
 function combineChunkResults(
-  chunkResults: Array<{
-    segments: AsrSegment[];
-    chunkTranscript: string;
-    quality: { score: number; improvements: string[] };
-  }>,
+  chunkResults: ChunkResult[],
   originalSegments: AsrSegment[],
   totalChunks: number,
 ): {
@@ -380,11 +412,7 @@ async function mergeWithChunking(
   });
 
   // Обрабатываем чанки последовательно (для предсказуемости и контроля rate limits)
-  const chunkResults: Array<{
-    segments: AsrSegment[];
-    chunkTranscript: string;
-    quality: { score: number; improvements: string[] };
-  }> = [];
+  const chunkResults: ChunkResult[] = [];
 
   let failedChunks = 0;
 
@@ -452,8 +480,17 @@ export async function mergeAsrResultsWithLLM(
   quality: { score: number; improvements: string[] };
   fallbackReason?: string;
 }> {
+  const mergeStartTime = Date.now();
   const prompt = buildMergingPrompt(nonDiarized.transcript, diarized.segments);
   const estimatedTokens = estimateTokenCount(prompt);
+
+  logger.info("Starting ASR merge", {
+    requestId,
+    estimatedTokens,
+    maxPromptTokens: MAX_PROMPT_TOKENS,
+    diarizedSegmentsCount: diarized.segments.length,
+    nonDiarizedTranscriptLength: nonDiarized.transcript.length,
+  });
 
   // Проверяем лимит токенов
   if (estimatedTokens > MAX_PROMPT_TOKENS) {
@@ -495,6 +532,15 @@ export async function mergeAsrResultsWithLLM(
     text: seg.text,
     confidence: seg.confidence,
   }));
+
+  const mergeDurationMs = Date.now() - mergeStartTime;
+  logger.info("ASR merge completed", {
+    requestId,
+    durationMs: mergeDurationMs,
+    segmentsCount: segments.length,
+    qualityScore: output.quality.score,
+    mergedTranscriptLength: output.mergedTranscript.length,
+  });
 
   return {
     segments,

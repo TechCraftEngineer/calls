@@ -84,11 +84,17 @@ export async function asyncTranscriptionWithCallback(
       const result = await getAsyncResult(taskId);
       const pollTimeMs = Date.now() - pollStartTime;
 
+      // Валидация результата polling
+      if (!result.transcript || result.transcript.length === 0) {
+        throw new Error("Polling вернул пустую транскрипцию");
+      }
+
       logger.info("Результат получен через polling", {
         callId,
         taskId,
         pollTimeMs,
         transcriptLength: result.transcript.length,
+        segmentsCount: result.segments?.length ?? 0,
       });
 
       return {
@@ -199,6 +205,15 @@ export async function asyncDiarizedTranscriptionWithCallback(
       const result = await getAsyncDiarizedResult(taskId);
       const pollTimeMs = Date.now() - pollStartTime;
 
+      // Валидация результата polling
+      if (!result.final_transcript || result.final_transcript.length === 0) {
+        throw new Error("Polling диаризации вернул пустую транскрипцию");
+      }
+
+      if (!result.segments || result.segments.length === 0) {
+        throw new Error("Polling диаризации вернул пустые сегменты");
+      }
+
       logger.info("Результат диаризации получен через polling", {
         callId,
         taskId,
@@ -214,6 +229,7 @@ export async function asyncDiarizedTranscriptionWithCallback(
           start: s.start,
           end: s.end,
           text: s.text,
+          confidence: s.confidence,
         })),
         processingTimeMs: pollTimeMs,
         taskId,
