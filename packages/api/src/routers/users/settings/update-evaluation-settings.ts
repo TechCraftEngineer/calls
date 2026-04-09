@@ -1,17 +1,53 @@
 import { usersService } from "@calls/db";
-import { ORPCError } from "@orpc/server";
 import { userIdSchema } from "@calls/shared";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../../orpc";
 import { canAccessUser, logUpdate } from "../utils";
 
 const updateEvaluationSettingsSchema = z.object({
-  evaluationTemplateSlug: z.string().min(1).optional().nullable(),
+  evaluationTemplateSlug: z.union([
+    z.literal("sales"),
+    z.literal("support"),
+    z.literal("general"),
+    z.null(),
+  ]),
   evaluationCustomInstructions: z.string().optional().nullable(),
 });
 
-export const updateEvaluationSettings: any = workspaceProcedure
+const updateEvaluationSettingsOutputSchema = z.object({
+  email: z.string(),
+  givenName: z.string(),
+  familyName: z.string(),
+  role: z.string(),
+  internalExtensions: z.string(),
+  mobilePhones: z.string(),
+  telegramChatId: z.string(),
+  telegramDailyReport: z.boolean(),
+  telegramManagerReport: z.boolean(),
+  maxChatId: z.string(),
+  maxDailyReport: z.boolean(),
+  maxManagerReport: z.boolean(),
+  filterExcludeAnsweringMachine: z.boolean(),
+  filterMinDuration: z.number(),
+  filterMinReplicas: z.number(),
+  emailDailyReport: z.boolean(),
+  emailWeeklyReport: z.boolean(),
+  emailMonthlyReport: z.boolean(),
+  telegramWeeklyReport: z.boolean(),
+  telegramMonthlyReport: z.boolean(),
+  telegramSkipWeekends: z.boolean(),
+  reportManagedUserIds: z.array(z.string()),
+  kpiBaseSalary: z.number(),
+  kpiTargetBonus: z.number(),
+  kpiTargetTalkTimeMinutes: z.number(),
+  evaluationTemplateSlug: z.string().nullable(),
+  evaluationCustomInstructions: z.string().nullable(),
+});
+
+export const updateEvaluationSettings = workspaceProcedure
   .input(z.object({ userId: userIdSchema, data: updateEvaluationSettingsSchema }))
+  .output(updateEvaluationSettingsOutputSchema)
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
       throw new ORPCError("BAD_REQUEST", {
@@ -29,7 +65,7 @@ export const updateEvaluationSettings: any = workspaceProcedure
 
     try {
       await usersService.updateUserReportKpiSettings(input.userId, context.workspaceId, {
-        evaluationTemplateSlug: input.data.evaluationTemplateSlug as "sales" | "support" | "general" | null,
+        evaluationTemplateSlug: input.data.evaluationTemplateSlug,
         evaluationCustomInstructions: input.data.evaluationCustomInstructions,
       });
 
@@ -41,7 +77,9 @@ export const updateEvaluationSettings: any = workspaceProcedure
         context.workspaceId,
       );
 
-      return await usersService.getUserForEdit(input.userId, context.workspaceId);
+      const updatedUser = await usersService.getUserForEdit(input.userId, context.workspaceId);
+      if (!updatedUser) throw new ORPCError("NOT_FOUND", { message: "Пользователь не найден" });
+      return updatedUser;
     } catch (error) {
       await logUpdate(
         "update user evaluation settings",

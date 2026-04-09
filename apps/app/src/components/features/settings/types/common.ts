@@ -50,41 +50,12 @@ export interface FtpConnectionStatus {
   message: string | null;
 }
 
-export interface PbxCandidateUser {
-  id: string;
-  email: string;
-  name: string;
-  givenName?: string | null;
-  familyName?: string | null;
-  internalExtensions?: string | null;
-}
-
-export interface PbxCandidateInvitation {
-  id: string;
-  email: string;
-  role: string;
-}
-
-export interface PbxLinkInfo {
-  id: string;
-  targetType: string;
-  targetExternalId: string;
-  userId: string | null;
-  invitationId: string | null;
-  linkSource: string;
-}
-
 export interface PbxEmployeeItem {
   externalId: string;
   displayName: string;
   extension: string | null;
   email: string | null;
   isActive: boolean;
-  linkedUser: { id: string; email: string; name: string } | null;
-  linkedInvitation: { id: string; email: string; role: string } | null;
-  link: PbxLinkInfo | null;
-  candidates: PbxCandidateUser[];
-  invitationCandidates: PbxCandidateInvitation[];
 }
 
 export interface PbxNumberItem {
@@ -98,10 +69,6 @@ export interface PbxNumberItem {
     displayName: string;
     extension: string | null;
   } | null;
-  linkedUser: { id: string; email: string; name: string } | null;
-  linkedInvitation: { id: string; email: string; role: string } | null;
-  link: PbxLinkInfo | null;
-  candidates: PbxCandidateUser[];
 }
 
 export type ReportType = "daily" | "weekly" | "monthly";
@@ -174,16 +141,6 @@ export interface PbxSectionProps {
   onTest: (baseUrl?: string, apiKey?: string) => Promise<void>;
   onSyncDirectory: () => Promise<void>;
   onSyncCalls: () => Promise<void>;
-  onLink: (input: {
-    targetType: "employee" | "number";
-    targetExternalId: string;
-    userId?: string | null;
-    invitationId?: string | null;
-  }) => Promise<void>;
-  onUnlink: (input: {
-    targetType: "employee" | "number";
-    targetExternalId: string;
-  }) => Promise<void>;
   saving: boolean;
   savingAccess: boolean;
   savingSyncOptions: boolean;

@@ -29,7 +29,6 @@
   },
   "linter": {
     "enabled": true,
-    "globals": ["Bun"],
     "rules": {
       "recommended": true,
       "suspicious": {
@@ -68,7 +67,8 @@
       "quoteStyle": "double",
       "trailingCommas": "all",
       "semicolons": "always"
-    }
+    },
+    "globals": ["Bun"]
   },
   "css": {
     "parser": {

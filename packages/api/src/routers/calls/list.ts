@@ -222,16 +222,51 @@ export const list = workspaceProcedure
         )
       : [];
 
-    const internalNumbers = isAdminOrOwner
-      ? undefined
-      : getInternalNumbersForUser(
+    // Для member получаем номера через привязку к сотруднику или из профиля пользователя
+    let internalNumbers: string[] | undefined;
+    let mobileNumbers: string[] | undefined;
+
+    if (!isAdminOrOwner) {
+      // Проверяем привязку к сотруднику PBX
+      const userId = typeof user.id === "string" ? user.id : "";
+      const pbxLink = userId
+        ? await pbxRepository.getLinkByUserId(workspaceId, PBX_PROVIDER, userId)
+        : null;
+
+      if (pbxLink?.targetType === "employee" && pbxLink.targetExternalId) {
+        // Получаем сотрудника и его номера
+        const employee = employeeByExternalId.get(pbxLink.targetExternalId);
+        if (employee) {
+          // Получаем все номера этого сотрудника
+          const relatedNumbers = phoneNumbersByEmployeeExternalId.get(employee.externalId) || [];
+          const phoneNums: string[] = [];
+          const extNums: string[] = [];
+
+          for (const num of relatedNumbers) {
+            if (num.phoneNumber) phoneNums.push(num.phoneNumber);
+            if (num.extension) extNums.push(num.extension);
+          }
+
+          // Также добавляем extension самого сотрудника
+          if (employee.extension) {
+            extNums.push(employee.extension);
+          }
+
+          mobileNumbers = phoneNums.length > 0 ? phoneNums : undefined;
+          internalNumbers = extNums.length > 0 ? extNums : undefined;
+        }
+      }
+
+      // Если нет привязки к сотруднику, используем номера из профиля пользователя
+      if (!internalNumbers && !mobileNumbers) {
+        internalNumbers = getInternalNumbersForUser(
           user as { id: string; internalExtensions?: string | null; mobilePhones?: string | null },
         );
-    const mobileNumbers = isAdminOrOwner
-      ? undefined
-      : getMobileNumbersForUser(
+        mobileNumbers = getMobileNumbersForUser(
           user as { id: string; internalExtensions?: string | null; mobilePhones?: string | null },
         );
+      }
+    }
 
     const ftpSettings = await settingsService.getFtpSettings(workspaceId);
     const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
@@ -374,7 +409,9 @@ export const list = workspaceProcedure
           evaluation: item.evaluation
             ? {
                 ...item.evaluation,
-                notAnalyzableReason: translateNotAnalyzableReason(item.evaluation.notAnalyzableReason),
+                notAnalyzableReason: translateNotAnalyzableReason(
+                  item.evaluation.notAnalyzableReason,
+                ),
               }
             : null,
         };

@@ -342,42 +342,8 @@ export class PbxService {
     return this.pbxRepository.listNumbers(workspaceId, MEGAPBX_PROVIDER);
   }
 
-  listLinks(workspaceId: string) {
-    return this.pbxRepository.listLinks(workspaceId, MEGAPBX_PROVIDER);
-  }
-
   listSyncStates(workspaceId: string) {
     return this.pbxRepository.listSyncStates(workspaceId, MEGAPBX_PROVIDER);
-  }
-
-  async linkTarget(input: {
-    workspaceId: string;
-    targetType: "employee" | "number";
-    targetExternalId: string;
-    userId?: string | null;
-    invitationId?: string | null;
-    linkedByUserId?: string | null;
-    linkSource?: string;
-    confidence?: number;
-    metadata?: Record<string, unknown>;
-  }) {
-    return this.pbxRepository.upsertLink({
-      ...input,
-      provider: MEGAPBX_PROVIDER,
-    });
-  }
-
-  async unlinkTarget(
-    workspaceId: string,
-    targetType: "employee" | "number",
-    targetExternalId: string,
-  ) {
-    return this.pbxRepository.deleteLink(
-      workspaceId,
-      MEGAPBX_PROVIDER,
-      targetType,
-      targetExternalId,
-    );
   }
 
   async updateEmployeeKpiSettings(input: {

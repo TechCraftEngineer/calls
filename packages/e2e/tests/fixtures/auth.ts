@@ -16,7 +16,7 @@ export interface AuthFixtures {
 
 // Расширяем базовый тест с фикстурами для аутентификации
 export const test = base.extend<AuthFixtures>({
-  validUser: async ({}, use) => {
+  validUser: async (_fixtures, use) => {
     const user: TestUser = {
       email: "test@example.com",
       password: "password123",
@@ -26,7 +26,7 @@ export const test = base.extend<AuthFixtures>({
     await use(user);
   },
 
-  invalidUser: async ({}, use) => {
+  invalidUser: async (_fixtures, use) => {
     const user: TestUser = {
       email: "invalid@example.com",
       password: "wrongpassword",
@@ -36,7 +36,7 @@ export const test = base.extend<AuthFixtures>({
     await use(user);
   },
 
-  testUsers: async ({}, use) => {
+  testUsers: async (_fixtures, use) => {
     const users: TestUser[] = [
       {
         email: "user1@example.com",

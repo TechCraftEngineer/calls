@@ -125,7 +125,7 @@ export function parseUserUpdateData(data: UserUpdateData): ParsedSettings {
   }
 
   // Evaluation settings - build when either templateSlug OR customInstructions is provided
-  let evaluationSettings: EvaluationSettings | null | undefined = undefined;
+  let evaluationSettings: EvaluationSettings | null | undefined ;
   if (data.evaluationTemplateSlug !== undefined || data.evaluationCustomInstructions !== undefined) {
     if (data.evaluationTemplateSlug === null) {
       evaluationSettings = null;

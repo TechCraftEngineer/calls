@@ -98,7 +98,7 @@ export function EvaluationBlock({
           onValueChange={(v: string) =>
             setForm({
               ...form,
-              evaluationTemplateSlug: v,
+              evaluationTemplateSlug: v as "sales" | "support" | "general" | null,
             })
           }
         >

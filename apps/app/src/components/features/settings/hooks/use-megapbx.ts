@@ -90,8 +90,14 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
   );
   const refetchPbxLists = useCallback(async () => {
     const [employees, numbers] = await Promise.all([
-      queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
-      queryClient.fetchQuery(orpc.settings.listPbxNumbers.queryOptions()),
+      queryClient.fetchQuery({
+        ...orpc.settings.listPbxEmployees.queryOptions(),
+        staleTime: 0,
+      }),
+      queryClient.fetchQuery({
+        ...orpc.settings.listPbxNumbers.queryOptions(),
+        staleTime: 0,
+      }),
     ]);
     setState((prev: SettingsState) => ({
       ...prev,
@@ -99,17 +105,6 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
       megaPbxNumbers: numbers as PbxNumberItem[],
     }));
   }, [orpc, queryClient, setState]);
-
-  const linkPbxUserMutation = useMutation(
-    orpc.settings.linkPbxUser.mutationOptions({
-      onSuccess: refetchPbxLists,
-    }),
-  );
-  const unlinkPbxUserMutation = useMutation(
-    orpc.settings.unlinkPbxUser.mutationOptions({
-      onSuccess: refetchPbxLists,
-    }),
-  );
 
   const megaPbxPayload = () => ({
     excludePhoneNumbers: (state.megaPbx.excludePhoneNumbers ?? "")
@@ -357,22 +352,6 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
     }
   };
 
-  const handleLinkPbxTarget = async (input: {
-    targetType: "employee" | "number";
-    targetExternalId: string;
-    userId?: string | null;
-    invitationId?: string | null;
-  }) => {
-    await linkPbxUserMutation.mutateAsync(input);
-  };
-
-  const handleUnlinkPbxTarget = async (input: {
-    targetType: "employee" | "number";
-    targetExternalId: string;
-  }) => {
-    await unlinkPbxUserMutation.mutateAsync(input);
-  };
-
   const setMegaPbxEnabled = (checked: boolean) => {
     setState((prev: SettingsState) => ({
       ...prev,
@@ -409,14 +388,10 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
     handleTestPbx,
     handleSyncPbxDirectory: () => runPbxSync("directory"),
     handleSyncPbxCalls: () => runPbxSync("calls"),
-    handleLinkPbxTarget,
-    handleUnlinkPbxTarget,
     handleSaveMegaPbx: handleSavePbx,
     handleTestMegaPbx: handleTestPbx,
     handleSyncMegaPbxDirectory: () => runPbxSync("directory"),
     handleSyncMegaPbxCalls: () => runPbxSync("calls"),
-    handleLinkMegaPbxTarget: handleLinkPbxTarget,
-    handleUnlinkMegaPbxTarget: handleUnlinkPbxTarget,
     setMegaPbxEnabled,
   };
 }

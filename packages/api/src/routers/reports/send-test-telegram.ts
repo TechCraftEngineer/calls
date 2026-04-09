@@ -138,9 +138,6 @@ export const sendTestTelegram = workspaceProcedure
       });
     }
 
-    const callSummariesByManager: Record<string, string[]> = {};
-    // ИИ-саммари отключены, всегда пустые
-
     const ws = await workspacesService.getById(workspaceId);
     const workspaceName = ws?.name ?? undefined;
 

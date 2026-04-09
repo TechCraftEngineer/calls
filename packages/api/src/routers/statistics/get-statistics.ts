@@ -1,8 +1,8 @@
 import { callsService, settingsService } from "@calls/db";
 import { z } from "zod";
-import { workspaceAdminProcedure } from "../../orpc";
+import { workspaceMemberProcedure } from "../../orpc";
 
-export const getStatistics = workspaceAdminProcedure
+export const getStatistics = workspaceMemberProcedure
   .input(
     z.object({
       date_from: z.string().optional(),

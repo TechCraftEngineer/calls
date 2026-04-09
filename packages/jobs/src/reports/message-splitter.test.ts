@@ -46,20 +46,20 @@ describe("splitTelegramHtmlMessage", () => {
   });
 
   it("сохраняет HTML теги целыми", () => {
-    const message = "<b>Очень длинный текст</b>" + " слово".repeat(100);
+    const message = `<b>Очень длинный текст</b>${" слово".repeat(100)}`;
     const result = splitTelegramHtmlMessage(message, 100);
 
     // Проверяем что теги не разрезаны
     for (const part of result) {
       const openTags = (part.match(/</g) || []).length;
-      const closeTags = (part.match(/>/g) || []).length;
+      const _closeTags = (part.match(/>/g) || []).length;
       // В каждой части теги должны быть закрыты или открыты
       expect(openTags).toBeGreaterThanOrEqual(0);
     }
   });
 
   it("сохраняет HTML entities целыми", () => {
-    const message = "&amp; очень длинный текст с entities &lt;b&gt;тест&lt;/b&gt; " + "x".repeat(200);
+    const message = `&amp; очень длинный текст с entities &lt;b&gt;тест&lt;/b&gt; ${"x".repeat(200)}`;
     const result = splitTelegramHtmlMessage(message, 100);
 
     // Проверяем что entities не разрезаны
@@ -76,7 +76,7 @@ describe("splitTelegramHtmlMessage", () => {
   });
 
   it("обрабатывает многострочное сообщение с разными длинами строк", () => {
-    const message = "К\n".repeat(50) + "Очень длинная строка " + "word ".repeat(100);
+    const message = `${"К\n".repeat(50)}Очень длинная строка ${"word ".repeat(100)}`;
     const result = splitTelegramHtmlMessage(message, 200);
 
     expect(result.length).toBeGreaterThan(1);
@@ -101,7 +101,7 @@ describe("splitTelegramHtmlMessage", () => {
   });
 
   it("обрабатывает очень длинную строку с HTML тегом в конце", () => {
-    const message = "a".repeat(95) + "<b>test</b>";
+    const message = `${"a".repeat(95)}<b>test</b>`;
     const result = splitTelegramHtmlMessage(message, 100);
 
     // Проверяем что тег не разрезан

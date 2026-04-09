@@ -62,7 +62,8 @@ function buildEditForm(u: WorkspaceMemberUser): EditUserForm {
     kpiTargetBonus: toNum(u.kpiTargetBonus ?? ext.kpi_target_bonus),
     kpiTargetTalkTimeMinutes: toNum(u.kpiTargetTalkTimeMinutes ?? ext.kpi_target_talk_time_minutes),
     evaluationTemplateSlug:
-      u.evaluationTemplateSlug ?? (toStr(ext.evaluation_template_slug) || "general"),
+      u.evaluationTemplateSlug ??
+      ((toStr(ext.evaluation_template_slug) as "sales" | "support" | "general") || "general"),
     evaluationCustomInstructions:
       u.evaluationCustomInstructions ?? toStr(ext.evaluation_custom_instructions) ?? "",
   };

@@ -25,15 +25,23 @@ interface UseReportSettingsMutationsReturn {
   isSavingCombined: boolean;
   isSavingAny: boolean;
 
-  // Mutation states
-  telegramAuthUrlMutation: ReturnType<typeof useMutation>;
-  disconnectTelegramMutation: ReturnType<typeof useMutation>;
-  updateEmailMutation: ReturnType<typeof useMutation>;
-  updateTelegramMutation: ReturnType<typeof useMutation>;
-  updateMaxMutation: ReturnType<typeof useMutation>;
-  updateReportManagedUsersMutation: ReturnType<typeof useMutation>;
-  sendTestMutation: ReturnType<typeof useMutation>;
-  sendTestEmailMutation: ReturnType<typeof useMutation>;
+  // Mutation states - typed as any for simplicity (full oRPC typing is complex)
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  telegramAuthUrlMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  disconnectTelegramMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  updateEmailMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  updateTelegramMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  updateMaxMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  updateReportManagedUsersMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  sendTestMutation: any;
+  // biome-ignore lint/suspicious/noExplicitAny: mutation types are inferred from oRPC
+  sendTestEmailMutation: any;
 
   // Actions
   handleTelegramConnect: () => void;
