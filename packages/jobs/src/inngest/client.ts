@@ -27,6 +27,13 @@ type GigaAmTranscriptionCompletedData = {
   error?: string;
 };
 
+type SpeakerEmbeddingsDiarizationCompletedData = {
+  task_id: string;
+  status: "completed" | "failed";
+  result?: Record<string, unknown>;
+  error?: string;
+};
+
 export const transcribeRequested = eventType("asr/transcribe.requested", {
   schema: staticSchema<TranscribeRequestedData>(),
 });
@@ -41,4 +48,8 @@ export const pbxSyncRequested = eventType("pbx/sync.requested", {
 
 export const gigaAmTranscriptionCompleted = eventType("giga-am/transcription.completed", {
   schema: staticSchema<GigaAmTranscriptionCompletedData>(),
+});
+
+export const speakerEmbeddingsDiarizationCompleted = eventType("speaker-embeddings/diarization.completed", {
+  schema: staticSchema<SpeakerEmbeddingsDiarizationCompletedData>(),
 });

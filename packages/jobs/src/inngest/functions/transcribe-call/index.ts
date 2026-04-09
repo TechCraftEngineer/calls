@@ -7,6 +7,7 @@ export { downloadAudioBuffer, downloadAudioFile } from "./audio/download";
 export { extractAudioSegment } from "./audio/processing";
 export { extractSegmentsFromUtterances, extractSpeakerTimeline } from "./extraction";
 export { gigaAmCompletedFn } from "./gigaam/callback-handler";
+export { speakerEmbeddingsCompletedFn } from "./speaker-embeddings-callback-handler";
 export {
   fetchWithRetry,
   processAudioWithGigaAm,

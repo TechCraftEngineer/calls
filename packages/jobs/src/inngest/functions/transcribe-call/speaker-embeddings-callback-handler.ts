@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 import { createLogger } from "../../../logger";
-import { inngest } from "../../client";
+import { inngest, speakerEmbeddingsDiarizationCompleted } from "../../client";
 import type { DiarizationResult } from "./speaker-diarization";
 
 const logger = createLogger("speaker-embeddings-callback-handler");
@@ -50,11 +50,7 @@ export const speakerEmbeddingsCompletedFn = inngest.createFunction(
   {
     id: "speaker-embeddings-completed",
     name: "Speaker Embeddings Diarization Completed (Callback)",
-    triggers: [
-      {
-        event: "speaker-embeddings/diarization.completed",
-      },
-    ],
+    triggers: [speakerEmbeddingsDiarizationCompleted],
     retries: 1,
   },
   async ({ event }: { event: { data: SpeakerEmbeddingsCompletedEvent } }) => {
