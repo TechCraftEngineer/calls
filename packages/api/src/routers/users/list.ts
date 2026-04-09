@@ -1,3 +1,4 @@
+import { EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { workspaceAdminProcedure } from "../../orpc";
 
@@ -46,7 +47,8 @@ export const list = workspaceAdminProcedure.handler(async ({ context }) => {
               : ((u.createdAt as string | null) ?? null),
           telegramChatId: u.telegramChatId ?? null,
           evaluationTemplateSlug:
-            es?.templateSlug && ["sales", "support", "general"].includes(es.templateSlug)
+            es?.templateSlug &&
+            (EVALUATION_TEMPLATE_SLUGS as readonly string[]).includes(es.templateSlug)
               ? es.templateSlug
               : null,
         };

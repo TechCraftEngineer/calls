@@ -34,6 +34,7 @@
   "dependencies": {
     "@calls/config": "workspace:*",
     "@calls/lib": "workspace:*",
+    "@calls/shared": "workspace:*",
     "@neondatabase/serverless": "1.0.2",
     "@vercel/postgres": "0.10.0",
     "drizzle-orm": "0.45.2",

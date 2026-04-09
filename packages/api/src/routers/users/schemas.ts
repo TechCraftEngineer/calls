@@ -1,3 +1,4 @@
+import { EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
 import { z } from "zod";
 
 export const userCreateSchema = z.object({
@@ -30,7 +31,10 @@ export const userUpdateSchema = z.object({
   kpiTargetTalkTimeMinutes: z.number().optional(),
   telegramSkipWeekends: z.boolean().optional(),
   reportManagedUserIds: z.string().optional().nullable(),
-  evaluationTemplateSlug: z.enum(["sales", "support", "general"]).optional().nullable(),
+  evaluationTemplateSlug: z
+    .enum([...EVALUATION_TEMPLATE_SLUGS] as const)
+    .optional()
+    .nullable(),
   evaluationCustomInstructions: z.string().optional().nullable(),
 });
 

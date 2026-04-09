@@ -2,6 +2,10 @@
  * Types related to users operations
  */
 
+import type { EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
+
+export type EvaluationTemplateSlug = (typeof EVALUATION_TEMPLATE_SLUGS)[number];
+
 export interface UserUpdateData {
   filterExcludeAnsweringMachine?: boolean;
   filterMinDuration?: number;
@@ -21,7 +25,7 @@ export interface UserUpdateData {
   kpiBaseSalary?: number;
   kpiTargetBonus?: number;
   kpiTargetTalkTimeMinutes?: number;
-  evaluationTemplateSlug?: "sales" | "support" | "general" | null;
+  evaluationTemplateSlug?: EvaluationTemplateSlug | null;
   evaluationCustomInstructions?: string | null;
 }
 

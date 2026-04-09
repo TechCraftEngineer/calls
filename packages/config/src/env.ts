@@ -48,6 +48,8 @@ export const env = createEnv({
     /** Giga AM (HTTP) sync endpoint */
     GIGA_AM_TRANSCRIBE_URL: z.url().default("https://vnggncb-giga-am.hf.space"),
     GIGA_AM_ENABLED: z.coerce.boolean().default(true),
+    /** Использовать асинхронный режим для GigaAM (рекомендуется для длинных аудио) */
+    GIGA_AM_ASYNC_MODE: z.coerce.boolean().default(true),
 
     // Audio preprocessing (optional Python service)
     AUDIO_ENHANCER_ENABLED: z.coerce.boolean().default(false),
