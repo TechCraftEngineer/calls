@@ -253,7 +253,7 @@ export class CallsHelpers {
     if (expectedCount === 0) {
       // Проверяем сообщение о пустом состоянии
       await expect(
-        this.page.locator("text=Нет звонков, text=Пока нет звонков, .op-empty-state").first(),
+        this.page.locator(".op-empty-state, [data-testid='call-list-empty']").first(),
       ).toBeVisible();
     } else {
       // Проверяем количество строк (исключаем заголовок)
@@ -318,7 +318,7 @@ export class CallsHelpers {
    * Получает список номеров из таблицы звонков
    */
   async getVisibleCallNumbers(): Promise<string[]> {
-    const cells = this.page.locator("td, [data-testid='call-number-cell']");
+    const cells = this.page.locator("[data-testid='call-number-cell']");
     const count = await cells.count();
     const numbers: string[] = [];
     for (let i = 0; i < count; i++) {

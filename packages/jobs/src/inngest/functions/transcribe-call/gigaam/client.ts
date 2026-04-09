@@ -2,7 +2,7 @@
  * HTTP клиент для GigaAM API с retry логикой
  */
 
-import { env } from "@calls/config";
+import { env, GIGA_AM_CONFIG } from "@calls/config";
 import { z } from "zod";
 import { createLogger } from "../../../../logger";
 import { GigaAmResponseSchema } from "../schemas";
@@ -56,7 +56,7 @@ export async function processAudioWithGigaAm(
   const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-sync`, () => ({
     method: "POST",
     body: formData,
-    signal: AbortSignal.timeout(env.GIGA_AM_TIMEOUT_MS),
+    signal: AbortSignal.timeout(GIGA_AM_CONFIG.TIMEOUT_MS),
   }));
 
   if (!response.ok) {
@@ -228,7 +228,7 @@ export async function processDiarizedAudioWithGigaAm(
   const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-diarized`, () => ({
     method: "POST",
     body: formData,
-    signal: AbortSignal.timeout(env.GIGA_AM_TIMEOUT_MS),
+    signal: AbortSignal.timeout(GIGA_AM_CONFIG.TIMEOUT_MS),
   }));
 
   if (!response.ok) {

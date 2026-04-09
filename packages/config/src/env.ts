@@ -48,16 +48,6 @@ export const env = createEnv({
     /** Giga AM (HTTP) sync endpoint */
     GIGA_AM_TRANSCRIBE_URL: z.url().default("https://vnggncb-giga-am.hf.space"),
     GIGA_AM_ENABLED: z.coerce.boolean().default(true),
-    GIGA_AM_TIMEOUT_MS: z.preprocess(
-      (value) => (value === "" ? undefined : value),
-      z.coerce.number().positive().default(900_000), // 15 минут
-    ),
-    /** Оценка себестоимости ASR (руб/сек) для расчёта в UI */
-    GIGA_AM_RATE_RUB_PER_SECOND: z.coerce.number().positive().default(0.01),
-    ASSEMBLYAI_RATE_USD_PER_HOUR: z.coerce.number().positive().default(0.23),
-    RUB_PER_USD: z.coerce.number().positive().default(90),
-    YANDEX_SPEECHKIT_RATE_RUB_PER_SECOND: z.coerce.number().positive().optional(),
-    YANDEX_SPEECHKIT_RATE_RUB_PER_MINUTE: z.coerce.number().positive().default(0.6),
 
     // Audio preprocessing (optional Python service)
     AUDIO_ENHANCER_ENABLED: z.coerce.boolean().default(false),
@@ -65,14 +55,6 @@ export const env = createEnv({
 
     // Speaker diarization service
     SPEAKER_EMBEDDINGS_URL: z.url().default("https://vnggncb-speaker-embeddings.hf.space/"),
-    SPEAKER_EMBEDDINGS_TIMEOUT_MS: z.preprocess(
-      (value) => (value === "" ? undefined : value),
-      z.coerce.number().positive().default(1_800_000), // 30 минут
-    ),
-    SPEAKER_EMBEDDINGS_HEALTH_TIMEOUT_MS: z.preprocess(
-      (value) => (value === "" ? undefined : value),
-      z.coerce.number().positive().default(15_000), // 15 секунд
-    ),
 
     // LLM correction for dual ASR
     ENABLE_DUAL_ASR_LLM_CORRECTION: z.coerce.boolean().default(true),
@@ -127,7 +109,6 @@ export const env = createEnv({
     AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
     GIGA_AM_TRANSCRIBE_URL: process.env.GIGA_AM_TRANSCRIBE_URL,
     GIGA_AM_ENABLED: process.env.GIGA_AM_ENABLED,
-    GIGA_AM_TIMEOUT_MS: process.env.GIGA_AM_TIMEOUT_MS,
     GIGA_AM_RATE_RUB_PER_SECOND: process.env.GIGA_AM_RATE_RUB_PER_SECOND,
     ASSEMBLYAI_RATE_USD_PER_HOUR: process.env.ASSEMBLYAI_RATE_USD_PER_HOUR,
     RUB_PER_USD: process.env.RUB_PER_USD,
@@ -136,8 +117,6 @@ export const env = createEnv({
     AUDIO_ENHANCER_ENABLED: process.env.AUDIO_ENHANCER_ENABLED,
     AUDIO_ENHANCER_URL: process.env.AUDIO_ENHANCER_URL,
     SPEAKER_EMBEDDINGS_URL: process.env.SPEAKER_EMBEDDINGS_URL,
-    SPEAKER_EMBEDDINGS_TIMEOUT_MS: process.env.SPEAKER_EMBEDDINGS_TIMEOUT_MS,
-    SPEAKER_EMBEDDINGS_HEALTH_TIMEOUT_MS: process.env.SPEAKER_EMBEDDINGS_HEALTH_TIMEOUT_MS,
     ENABLE_DUAL_ASR_LLM_CORRECTION: process.env.ENABLE_DUAL_ASR_LLM_CORRECTION,
     MIN_FILE_SIZE_BYTES: process.env.MIN_FILE_SIZE_BYTES,
     MAX_FILE_SIZE_BYTES: process.env.MAX_FILE_SIZE_BYTES,

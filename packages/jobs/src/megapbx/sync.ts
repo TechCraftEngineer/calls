@@ -25,7 +25,6 @@ const PROVIDER = "megapbx";
 type SyncStats = {
   employees: number;
   numbers: number;
-  autoLinked: number;
   calls: number;
   recordings: number;
   transcriptionsQueued: number;
@@ -123,7 +122,6 @@ export async function syncMegaPbxDirectory(
   const stats: SyncStats = {
     employees: 0,
     numbers: 0,
-    autoLinked: 0,
     calls: 0,
     recordings: 0,
     transcriptionsQueued: 0,
@@ -162,8 +160,6 @@ export async function syncMegaPbxDirectory(
 
     stats.employees = employees.length;
     stats.numbers = numbers.length;
-    // autoLinked больше не используется - номера напрямую привязаны к сотрудникам через employeeExternalId
-    stats.autoLinked = 0;
 
     await pbxRepository.updateSyncState({
       workspaceId,
@@ -225,7 +221,6 @@ export async function syncMegaPbxCalls(
   const stats: SyncStats = {
     employees: 0,
     numbers: 0,
-    autoLinked: 0,
     calls: 0,
     recordings: 0,
     transcriptionsQueued: 0,

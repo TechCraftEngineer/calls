@@ -95,12 +95,13 @@ export function EvaluationBlock({
         <label className="block mb-1 text-[13px] font-semibold">Шаблон оценки</label>
         <Select
           value={value}
-          onValueChange={(v: string) =>
+          onValueChange={(v: string) => {
+            const validValues = ["sales", "support", "general"];
             setForm({
               ...form,
-              evaluationTemplateSlug: v as "sales" | "support" | "general" | null,
-            })
-          }
+              evaluationTemplateSlug: validValues.includes(v) ? v : null,
+            });
+          }}
         >
           <SelectTrigger className="w-full max-w-xs">
             <SelectValue />

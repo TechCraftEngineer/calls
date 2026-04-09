@@ -46,10 +46,9 @@
 # Speaker-embeddings (диаризация)
 SPEAKER_EMBEDDINGS_URL=https://vnggncb-speaker-embeddings.hf.space
 
-# GigaAM (транскрипция) 
+# GigaAM (транскрипция)
 GIGA_AM_TRANSCRIBE_URL=https://vnggncb-giga-am.hf.space/api/transcribe-sync
 GIGA_AM_ENABLED=true
-GIGA_AM_TIMEOUT_MS=300000
 ```
 
 ## Deployment
@@ -242,7 +241,6 @@ HF_TOKEN=your_token
 PORT=7860
 
 # GigaAM
-GIGA_AM_TIMEOUT_MS=300000
 MAX_FILE_SIZE_BYTES=104857600
 ```
 

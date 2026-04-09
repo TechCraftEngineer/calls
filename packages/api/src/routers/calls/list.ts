@@ -115,11 +115,10 @@ export const list = workspaceProcedure
       .filter((direction): direction is "inbound" | "outbound" => direction !== null);
     const trimmedQuery = input.q?.trim() || undefined;
 
-    // Получаем PBX сотрудников всегда (для списка менеджеров), а номера только при необходимости
-    const needsPbxNumbers = managerFilters.length > 0 || trimmedQuery;
+    // Получаем PBX сотрудников и номера (номера нужны для member ветки для получения PBX данных через привязку к сотруднику)
     const [pbxEmployees, pbxNumbers] = await Promise.all([
       pbxRepository.listEmployees(workspaceId, PBX_PROVIDER),
-      needsPbxNumbers ? pbxRepository.listNumbers(workspaceId, PBX_PROVIDER) : Promise.resolve([]),
+      pbxRepository.listNumbers(workspaceId, PBX_PROVIDER),
     ]);
 
     // Создаем карты сотрудников для эффективного поиска

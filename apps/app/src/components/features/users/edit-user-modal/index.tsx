@@ -61,9 +61,11 @@ function buildEditForm(u: WorkspaceMemberUser): EditUserForm {
     kpiBaseSalary: toNum(u.kpiBaseSalary ?? ext.kpi_base_salary),
     kpiTargetBonus: toNum(u.kpiTargetBonus ?? ext.kpi_target_bonus),
     kpiTargetTalkTimeMinutes: toNum(u.kpiTargetTalkTimeMinutes ?? ext.kpi_target_talk_time_minutes),
-    evaluationTemplateSlug:
-      u.evaluationTemplateSlug ??
-      ((toStr(ext.evaluation_template_slug) as "sales" | "support" | "general") || "general"),
+    evaluationTemplateSlug: (() => {
+      const raw = toStr(ext.evaluation_template_slug);
+      const validValues = ["sales", "support", "general"];
+      return validValues.includes(raw) ? raw : "general";
+    })(),
     evaluationCustomInstructions:
       u.evaluationCustomInstructions ?? toStr(ext.evaluation_custom_instructions) ?? "",
   };
