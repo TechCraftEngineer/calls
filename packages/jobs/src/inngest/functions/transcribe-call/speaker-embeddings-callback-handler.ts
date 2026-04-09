@@ -17,13 +17,19 @@ const DiarizationResultSchema = z.object({
   success: z.boolean(),
   segments: z.array(
     z.object({
-      start: z.number(),
-      end: z.number(),
-      speaker: z.string(),
+      start: z.number().finite().nonnegative(),
+      end: z.number().finite().nonnegative(),
+      speaker: z.string().min(1),
+    }).refine((seg) => seg.end > seg.start, {
+      message: "end must be greater than start",
     }),
-  ),
-  num_speakers: z.number(),
-  speakers: z.array(z.string()),
+  ).min(1),
+  num_speakers: z.number().int().positive(),
+  speakers: z.array(z.string().min(1)).refine((speakers) => speakers.length > 0, {
+    message: "speakers array must not be empty",
+  }),
+}).refine((data) => data.speakers.length === data.num_speakers, {
+  message: "speakers array length must match num_speakers",
 });
 
 /**

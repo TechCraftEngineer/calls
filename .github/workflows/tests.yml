@@ -97,7 +97,7 @@ jobs:
           echo "NEXT_PUBLIC_API_URL=http://localhost:3000" >> .env.local
           echo "NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000" >> .env.local
           echo "NODE_ENV=test" >> .env.local
-          bun db:push:ci
+          bun --filter @calls/db run db:push:ci
 
       - name: Start application
         run: |
@@ -176,7 +176,7 @@ jobs:
           echo "NEXT_PUBLIC_API_URL=http://localhost:3000" >> .env.local
           echo "NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000" >> .env.local
           echo "NODE_ENV=test" >> .env.local
-          bun db:push:ci
+          bun --filter @calls/db run db:push:ci
 
       - name: Start application
         run: |

@@ -247,6 +247,7 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
       const msg =
         error instanceof Error ? error.message : "Не удалось сохранить исключённые номера";
       toast.error(msg);
+      throw error;
     } finally {
       setState((prev: SettingsState) => ({
         ...prev,

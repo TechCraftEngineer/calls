@@ -18,7 +18,18 @@ const MAX_POLL_ATTEMPTS = 60; // Максимум 30 минут (60 * 30 сек)
  * Non-transient ошибки: 4xx (client errors)
  */
 function isTransientError(error: unknown): boolean {
-  const errorMessage = error instanceof Error ? error.message : String(error);
+  let errorMessage: string;
+
+  // Явные type guards для каждого типа
+  if (typeof error === "string") {
+    errorMessage = error;
+  } else if (error instanceof Error) {
+    errorMessage = error.message;
+  } else if (typeof error === "object" && error !== null && "message" in error) {
+    errorMessage = (error as { message: string }).message;
+  } else {
+    return false;
+  }
 
   // Проверяем на network errors
   if (
