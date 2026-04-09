@@ -4,7 +4,7 @@
 
 import { env, GIGA_AM_CONFIG } from "@calls/config";
 import { z } from "zod";
-import { createLogger } from "~/logger";
+import { createLogger } from "../../../../logger";
 import { GigaAmResponseSchema } from "../schemas";
 import type { AsrResult } from "../types";
 

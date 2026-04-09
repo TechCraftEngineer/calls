@@ -3,7 +3,7 @@
  * Используется когда GIGA_AM_ASYNC_MODE=true и настроен INNGEST_EVENT_KEY.
  */
 
-import { createLogger } from "~/logger";
+import { createLogger } from "../../../../logger";
 import { gigaAmTranscriptionCompleted, inngest } from "../../../client";
 import type { AsrResult } from "../types";
 import type { DiarizedTranscriptionResult } from "./client";

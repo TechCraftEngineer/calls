@@ -4,7 +4,7 @@
  */
 
 import { env } from "@calls/config";
-import { createLogger } from "~/logger";
+import { createLogger } from "../../../../logger";
 import { checkTranscriptionStatus, type DiarizedTranscriptionResult } from "./client";
 
 const logger = createLogger("gigaam-async-client");
