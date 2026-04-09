@@ -313,32 +313,6 @@ export async function startAsyncDiarizedTranscription(
   }
 }
 
-/**
- * Проверяет статус асинхронной задачи транскрипции.
- */
-export async function checkTranscriptionStatus(
-  taskId: string,
-): Promise<{ status: string; result?: DiarizedTranscriptionResult; error?: string }> {
-  const gigaAmUrl = env.GIGA_AM_TRANSCRIBE_URL;
-
-  const response = await fetch(`${gigaAmUrl}/api/status/${taskId}`, {
-    method: "GET",
-    signal: AbortSignal.timeout(10_000), // 10 секунд на статус
-  });
-
-  if (!response.ok) {
-    throw new Error(`GigaAM status API error: ${response.status} ${response.statusText}`);
-  }
-
-  const result = await response.json();
-
-  logger.info("Статус асинхронной транскрипции", {
-    taskId,
-    status: result.status,
-  });
-
-  return result;
-}
 
 /**
  * Транскрибирует диаризированное аудио через GigaAM API.
@@ -404,120 +378,32 @@ export async function processDiarizedAudioWithGigaAm(
   return validatedResult;
 }
 
+
+
 /**
- * Обертка для автоматического выбора режима транскрипции.
- * Если GIGA_AM_ASYNC_MODE=true - использует асинхронный режим с callback.
- * Иначе - использует синхронный режим.
+ * Запускает асинхронную транскрипцию аудио через GigaAM API в callback режиме.
+ * Возвращает task_id, результат будет отправлен через Inngest событие.
  */
-export async function processAudioWithGigaAmAuto(
+export async function startAsyncTranscriptionCallback(
   audioBuffer: ArrayBuffer,
   filename: string,
-): Promise<AsrResult> {
-  if (env.GIGA_AM_ASYNC_MODE) {
-    logger.info("Используется асинхронный режим GigaAM (callback)", { filename });
-
-    // Запускаем асинхронную задачу
-    const { taskId } = await startAsyncTranscription(audioBuffer, filename);
-
-    // Проверяем доступен ли callback режим
-    const { isCallbackModeAvailable } = await import("./async-client");
-    const callbackAvailable = isCallbackModeAvailable();
-
-    if (callbackAvailable) {
-      logger.info("Callback режим доступен, Python сервис отправит результат в Inngest", {
-        taskId,
-      });
-      // В callback режиме Python сервис сам отправит событие в Inngest
-      // Здесь мы не можем ждать результат - это требует изменения архитектуры
-      // Для сейчас используем polling как fallback
-      const { waitForAsyncTranscription } = await import("./async-client");
-      const result = await waitForAsyncTranscription(taskId);
-
-      return {
-        segments: result.segments.map((s) => ({
-          start: s.start,
-          end: s.end,
-          speaker: s.speaker || "unknown",
-          text: s.text,
-        })),
-        transcript: result.final_transcript,
-        validationFailed: false,
-        metadata: {
-          asrLogs: [
-            {
-              provider: "gigaam-async-callback",
-              utterances: result.segments.map((s) => ({
-                speaker: s.speaker || "unknown",
-                text: s.text,
-                start: s.start,
-                end: s.end,
-              })),
-              raw: result,
-            },
-          ],
-        },
-      };
-    } else {
-      logger.info("Callback режим недоступен, используем polling", { taskId });
-      const { waitForAsyncTranscription } = await import("./async-client");
-      const result = await waitForAsyncTranscription(taskId);
-
-      return {
-        segments: result.segments.map((s) => ({
-          start: s.start,
-          end: s.end,
-          speaker: s.speaker || "unknown",
-          text: s.text,
-        })),
-        transcript: result.final_transcript,
-        validationFailed: false,
-        metadata: {
-          asrLogs: [
-            {
-              provider: "gigaam-async-polling",
-              utterances: result.segments.map((s) => ({
-                speaker: s.speaker || "unknown",
-                text: s.text,
-                start: s.start,
-                end: s.end,
-              })),
-              raw: result,
-            },
-          ],
-        },
-      };
-    }
-  } else {
-    logger.info("Используется синхронный режим GigaAM", { filename });
-    return processAudioWithGigaAm(audioBuffer, filename);
-  }
+): Promise<{ taskId: string }> {
+  logger.info("Запуск асинхронной транскрипции в callback режиме", { filename });
+  return startAsyncTranscription(audioBuffer, filename);
 }
 
 /**
- * Обертка для автоматического выбора режима диаризированной транскрипции.
- * Если GIGA_AM_ASYNC_MODE=true - использует асинхронный режим с polling.
- * Иначе - использует синхронный режим.
+ * Запускает асинхронную диаризированную транскрипцию аудио через GigaAM API в callback режиме.
+ * Возвращает task_id, результат будет отправлен через Inngest событие.
  */
-export async function processAudioWithDiarizationAuto(
+export async function startAsyncDiarizedTranscriptionCallback(
   audioBuffer: ArrayBuffer,
   filename: string,
   segments: DiarizationSegmentInput[],
-): Promise<DiarizedTranscriptionResult> {
-  if (env.GIGA_AM_ASYNC_MODE) {
-    logger.info("Используется асинхронный режим GigaAM для диаризации", { filename });
-
-    // Запускаем асинхронную задачу
-    const { taskId } = await startAsyncDiarizedTranscription(audioBuffer, filename, segments);
-
-    // Импортируем waitForAsyncTranscription только когда нужно (избегаем circular dependency)
-    const { waitForAsyncTranscription } = await import("./async-client");
-
-    // Ждем завершения через polling
-    const result = await waitForAsyncTranscription(taskId);
-
-    return result;
-  } else {
-    logger.info("Используется синхронный режим GigaAM для диаризации", { filename });
-    return processDiarizedAudioWithGigaAm(audioBuffer, filename, segments);
-  }
+): Promise<{ taskId: string }> {
+  logger.info("Запуск асинхронной диаризированной транскрипции в callback режиме", {
+    filename,
+    segmentsCount: segments.length,
+  });
+  return startAsyncDiarizedTranscription(audioBuffer, filename, segments);
 }

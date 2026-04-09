@@ -76,25 +76,21 @@ export class UsersService {
   }
 
   async updateUserName(userId: string, data: UpdateUserData) {
-    UuidSchema.parse(userId);
     const validatedData = UpdateUserDataSchema.parse(data);
     return this.base.updateUserName(userId, validatedData as UpdateUserData);
   }
 
   async updateUserInternalExtensions(userId: string, internalExtensions: string | null) {
-    UuidSchema.parse(userId);
     OptionalStringSchema.parse(internalExtensions);
     return this.base.updateUserInternalExtensions(userId, internalExtensions);
   }
 
   async updateUserMobilePhones(userId: string, mobilePhones: string | null) {
-    UuidSchema.parse(userId);
     OptionalStringSchema.parse(mobilePhones);
     return this.base.updateUserMobilePhones(userId, mobilePhones);
   }
 
   async updateUserEmail(userId: string, email: string | null) {
-    UuidSchema.parse(userId);
     if (email !== null) {
       EmailSchema.parse(email);
     }
@@ -102,8 +98,6 @@ export class UsersService {
   }
 
   async updateUserPassword(userId: string, newPassword: string): Promise<boolean> {
-    UuidSchema.parse(userId);
-    z.string().min(8).max(100).parse(newPassword);
     // Обновление пароля должно выполняться через Better Auth API, не напрямую через сервис
     throw new Error(
       "Обновление пароля должно выполняться через Better Auth API, не напрямую через сервис",
@@ -111,17 +105,13 @@ export class UsersService {
   }
 
   async deleteUser(userId: string) {
-    UuidSchema.parse(userId);
     return this.base.deleteUser(userId);
   }
 
   // === Delegate settings methods ===
 
   async getUserForEdit(userId: string, workspaceId: string): Promise<UserForEdit | null> {
-    // Validate input IDs before any repository calls
-    UuidSchema.parse(userId);
-    UuidSchema.parse(workspaceId);
-
+ 
     // Fetch user basic data
     const user = await this.base.getUser(userId);
     if (!user) {

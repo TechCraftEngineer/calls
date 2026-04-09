@@ -12,7 +12,7 @@ import { checkSpeakerEmbeddingsHealth, performDiarizationAuto } from "../speaker
 import type { AsrResult } from "../types";
 import {
   type DiarizationSegmentInput,
-  processAudioWithDiarizationAuto,
+  processDiarizedAudioWithGigaAm,
   processAudioWithoutDiarization,
 } from "./client";
 
@@ -65,7 +65,7 @@ export async function processAudioWithDiarization(
       segmentsCount: segmentsInput.length,
     });
 
-    const diarizedResult = await processAudioWithDiarizationAuto(
+    const diarizedResult = await processDiarizedAudioWithGigaAm(
       audioBuffer,
       filename,
       segmentsInput,

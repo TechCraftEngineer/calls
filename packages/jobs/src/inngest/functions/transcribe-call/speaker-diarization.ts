@@ -8,14 +8,6 @@ import { createLogger } from "../../../logger";
 
 const logger = createLogger("speaker-diarization");
 
-/**
- * Проверяет доступен ли callback режим (настроен INNGEST_EVENT_KEY в speaker-embeddings сервисе)
- */
-export function isCallbackModeAvailable(): boolean {
-  // Проверяем есть ли INNGEST_EVENT_KEY в конфигурации
-  // Это означает что speaker-embeddings сервис может отправлять callback события
-  return !!env.INNGEST_EVENT_KEY;
-}
 
 // Zod схемы для валидации ответов
 const DiarizationSegmentSchema = z.object({
@@ -262,133 +254,6 @@ export async function startAsyncDiarization(
   }
 }
 
-/**
- * Проверяет статус асинхронной задачи диаризации.
- */
-export async function checkDiarizationStatus(
-  taskId: string,
-): Promise<{ status: string; result?: DiarizationResult; error?: string }> {
-  const speakerEmbeddingsUrl = env.SPEAKER_EMBEDDINGS_URL;
-
-  if (!speakerEmbeddingsUrl) {
-    throw new Error("SPEAKER_EMBEDDINGS_URL не настроен");
-  }
-
-  const response = await fetch(`${speakerEmbeddingsUrl}/api/status/${taskId}`, {
-    method: "GET",
-    signal: AbortSignal.timeout(10_000), // 10 секунд на статус
-  });
-
-  if (!response.ok) {
-    throw new Error(
-      `Speaker-embeddings status API error: ${response.status} ${response.statusText}`,
-    );
-  }
-
-  const result = await response.json();
-
-  logger.info("Статус асинхронной диаризации", {
-    taskId,
-    status: result.status,
-  });
-
-  // Если результат готов, валидируем его
-  if (result.status === "completed" && result.result) {
-    try {
-      const validatedResult = DiarizationResponseSchema.parse(result.result);
-      return {
-        status: result.status,
-        result: {
-          success: validatedResult.success,
-          segments: validatedResult.segments,
-          num_speakers: validatedResult.num_speakers,
-          speakers: validatedResult.speakers,
-        },
-      };
-    } catch (validationError) {
-      logger.error("Ошибка валидации результата асинхронной диаризации", {
-        taskId,
-        error: validationError instanceof Error ? validationError.message : String(validationError),
-        response: result.result,
-      });
-      return {
-        status: "failed",
-        error: "Ошибка валидации результата",
-      };
-    }
-  }
-
-  return result;
-}
-
-/**
- * Ожидает завершения асинхронной диаризации через polling.
- * Используется как fallback когда callback режим недоступен.
- */
-export async function waitForAsyncDiarization(taskId: string): Promise<DiarizationResult> {
-  const POLL_INTERVAL_MS = 30_000; // 30 секунд
-  const MAX_POLL_ATTEMPTS = 60; // Максимум 30 минут (60 * 30 сек)
-
-  logger.info("Начало polling статуса асинхронной диаризации", {
-    taskId,
-    pollInterval: POLL_INTERVAL_MS,
-    maxAttempts: MAX_POLL_ATTEMPTS,
-    mode: "polling",
-  });
-
-  for (let attempt = 1; attempt <= MAX_POLL_ATTEMPTS; attempt++) {
-    let status: Awaited<ReturnType<typeof checkDiarizationStatus>>;
-    try {
-      status = await checkDiarizationStatus(taskId);
-    } catch (error) {
-      logger.error("Ошибка при проверке статуса асинхронной диаризации", {
-        taskId,
-        attempt,
-        error: error instanceof Error ? error.message : String(error),
-      });
-
-      // Если это не последняя попытка - пробуем еще раз
-      if (attempt < MAX_POLL_ATTEMPTS) {
-        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-        continue;
-      }
-
-      throw error;
-    }
-
-    // Проверка статуса вне try/catch - fatal ошибки не вызывают retry
-    if (status.status === "completed" && status.result) {
-      logger.info("Асинхронная диаризация завершена", {
-        taskId,
-        attempt,
-        segmentsCount: status.result.segments.length,
-        mode: "polling",
-      });
-      return status.result;
-    }
-
-    if (status.status === "failed") {
-      throw new Error(
-        `Асинхронная диаризация завершилась с ошибкой: ${status.error || "Неизвестная ошибка"}`,
-      );
-    }
-
-    // Все еще pending или processing - продолжаем polling
-    logger.info("Ожидание завершения асинхронной диаризации", {
-      taskId,
-      attempt,
-      status: status.status,
-    });
-
-    if (attempt < MAX_POLL_ATTEMPTS) {
-      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-    }
-  }
-
-  throw new Error(
-    `Таймаут ожидания асинхронной диаризации (taskId: ${taskId}, попыток: ${MAX_POLL_ATTEMPTS})`,
-  );
-}
 
 /**
  * Обертка для автоматического выбора режима диаризации.
@@ -404,31 +269,22 @@ export async function performDiarizationAuto(
     maxSpeakers?: number;
   } = {},
 ): Promise<DiarizationResult> {
-  if (env.SPEAKER_EMBEDDINGS_ASYNC_MODE) {
-    logger.info("Используется асинхронный режим speaker-embeddings (callback)", { filename });
+  logger.info("Используется асинхронный режим speaker-embeddings (callback)", { filename });
 
-    // Запускаем асинхронную задачу
-    const { taskId } = await startAsyncDiarization(audioBuffer, filename, options);
+  // Запускаем асинхронную задачу
+  const { taskId } = await startAsyncDiarization(audioBuffer, filename, options);
 
-    // Проверяем доступен ли callback режим
-    const callbackAvailable = isCallbackModeAvailable();
+  logger.info("Асинхронная диаризация запущена, результат придет через callback в Inngest", {
+    taskId,
+  });
 
-    if (callbackAvailable) {
-      logger.info("Callback режим доступен, Python сервис отправит результат в Inngest", {
-        taskId,
-      });
-      // В callback режиме Python сервис сам отправит событие в Inngest
-      // Здесь мы не можем ждать результат - это требует изменения архитектуры
-      // Для сейчас используем polling как fallback
-      const result = await waitForAsyncDiarization(taskId);
-      return result;
-    } else {
-      logger.info("Callback режим недоступен, используем polling", { taskId });
-      const result = await waitForAsyncDiarization(taskId);
-      return result;
-    }
-  } else {
-    logger.info("Используется синхронный режим speaker-embeddings", { filename });
-    return performDiarization(audioBuffer, filename, options);
-  }
+  // В callback режиме Python сервис отправит результат через событие speaker-embeddings/diarization.completed
+  // Результат будет обработан в speaker-embeddings-callback-handler.ts
+  // Возвращаем пустой результат, так как реальный результат придет асинхронно
+  return {
+    success: false,
+    segments: [],
+    num_speakers: 0,
+    speakers: [],
+  };
 }

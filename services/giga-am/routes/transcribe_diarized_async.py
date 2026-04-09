@@ -1,26 +1,34 @@
 """
-Асинхронный эндпоинт транскрипции с поддержкой Inngest callback.
+Асинхронный эндпоинт транскрипции с диаризацией и поддержкой Inngest callback.
 """
 import asyncio
+import json
 import logging
-from typing import Dict, Any, Optional, Set
+from typing import Dict, Any, Optional, Set, List
 
 import httpx
 from fastapi import APIRouter, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
 from config import settings
-from services.pipeline_service import PipelineService
+from services.diarized_transcription_service import diarized_transcription_service
 from services.task_manager import TaskManager, TaskStatus, task_manager
 from utils.exceptions import FileSizeError
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["async-transcription"])
-pipeline_service = PipelineService()
+router = APIRouter(tags=["async-diarized-transcription"])
 
 # Set для отслеживания background tasks
 BACKGROUND_TASKS: Set[asyncio.Task] = set()
+
+
+class DiarizationSegmentInput(BaseModel):
+    """Сегмент диаризации для входного запроса"""
+    start: float = Field(..., description="Начало сегмента в секундах", ge=0)
+    end: float = Field(..., description="Конец сегмента в секундах", ge=0)
+    speaker: str = Field(..., description="Идентификатор спикера")
 
 
 async def send_inngest_event(
@@ -83,12 +91,13 @@ async def send_inngest_event(
         return False
 
 
-async def process_task_background(task_id: str):
+async def process_diarized_task_background(task_id: str, segments: List[Dict[str, Any]]):
     """
-    Фоновая обработка задачи транскрипции.
+    Фоновая обработка задачи транскрипции с диаризацией.
     
     Args:
         task_id: ID задачи
+        segments: Сегменты диаризации
     """
     task = task_manager.get_task(task_id)
     if not task:
@@ -96,15 +105,16 @@ async def process_task_background(task_id: str):
         return
     
     try:
-        logger.info(f"Starting background processing for task {task_id}")
+        logger.info(f"Starting background processing for diarized task {task_id}")
         
         # Обновляем статус на processing
         task_manager.update_status(task_id, TaskStatus.PROCESSING)
         
-        # Запускаем транскрипцию
-        result = await pipeline_service.process_audio_sync(
+        # Запускаем транскрипцию с диаризацией
+        result = await diarized_transcription_service.transcribe_diarized_audio(
             audio_data=task.audio_data,
-            filename=task.filename
+            filename=task.filename,
+            segments=segments
         )
         
         # Обновляем статус на completed
@@ -113,10 +123,10 @@ async def process_task_background(task_id: str):
         # Отправляем событие в Inngest
         await send_inngest_event(task_id, "completed", result=result)
         
-        logger.info(f"Task {task_id} completed successfully")
+        logger.info(f"Diarized task {task_id} completed successfully")
         
     except Exception as e:
-        logger.error(f"Task {task_id} failed: {e}", exc_info=True)
+        logger.error(f"Diarized task {task_id} failed: {e}", exc_info=True)
         
         # Обновляем статус на failed
         task_manager.update_status(
@@ -129,14 +139,17 @@ async def process_task_background(task_id: str):
         await send_inngest_event(task_id, "failed", error=str(e))
 
 
-@router.post("/transcribe-async")
-async def transcribe_async(
+@router.post("/transcribe-diarized-async")
+async def transcribe_diarized_async(
     file: UploadFile,
-    filename: str = Form(...),
-    callback_url: Optional[str] = Form(None)
+    filename: str = Form(..., description="Имя аудио файла"),
+    segments: str = Form(
+        ...,
+        description='JSON массив сегментов: [{"start": 0.0, "end": 5.0, "speaker": "A"}, ...]'
+    )
 ) -> JSONResponse:
     """
-    Асинхронная транскрипция аудио файла.
+    Асинхронная транскрипция диаризированного аудио файла.
     
     Возвращает task_id сразу и обрабатывает в фоне.
     Результат будет отправлен через Inngest event или webhook.
@@ -144,11 +157,13 @@ async def transcribe_async(
     Args:
         file: Аудио файл
         filename: Имя файла
-        callback_url: Опциональный webhook URL для обратного вызова
+        segments: JSON строка с массивом сегментов диаризации
         
     Returns:
         JSONResponse с task_id
     """
+    request_id = f"diarized-async-req-{id(file) % 10000}"
+    
     # Проверяем конфигурацию Inngest перед созданием задачи
     if not settings.inngest_event_key or not settings.inngest_api_url:
         raise HTTPException(
@@ -157,7 +172,35 @@ async def transcribe_async(
         )
     
     try:
-        logger.info(f"Получен асинхронный запрос на транскрипцию: {filename}")
+        logger.info(f"[{request_id}] Получен асинхронный запрос на транскрипцию диаризированного аудио: {filename}")
+        
+        # Парсим сегменты из JSON
+        try:
+            segments_data = json.loads(segments)
+            if not isinstance(segments_data, list):
+                raise ValueError("segments должен быть массивом")
+        except json.JSONDecodeError as e:
+            logger.error(f"[{request_id}] Ошибка парсинга segments JSON: {e}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Невалидный JSON в segments: {e}"
+            ) from e
+        except ValueError as e:
+            logger.error(f"[{request_id}] Невалидный формат segments: {e}")
+            raise HTTPException(
+                status_code=400,
+                detail=str(e)
+            ) from e
+        
+        # Валидируем сегменты
+        for i, seg in enumerate(segments_data):
+            if not all(k in seg for k in ["start", "end", "speaker"]):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Сегмент {i} должен содержать поля: start, end, speaker"
+                )
+        
+        logger.info(f"[{request_id}] Парсинг сегментов успешен: {len(segments_data)} сегментов")
         
         # Читаем файл
         audio_data = await file.read()
@@ -170,13 +213,25 @@ async def transcribe_async(
                 detail=f"Размер файла ({len(audio_data)} bytes) превышает лимит ({max_size} bytes)"
             )
         
+        if not audio_data:
+            raise HTTPException(
+                status_code=400,
+                detail="Аудио файл пуст"
+            )
+        
+        logger.info(f"[{request_id}] Аудио файл прочитан: {len(audio_data)} bytes")
+        
         # Создаем задачу
         task = task_manager.create_task(filename, audio_data)
         
         # Запускаем фоновую обработку с отслеживанием
-        background_task = asyncio.create_task(process_task_background(task.task_id))
+        background_task = asyncio.create_task(
+            process_diarized_task_background(task.task_id, segments_data)
+        )
         BACKGROUND_TASKS.add(background_task)
         background_task.add_done_callback(BACKGROUND_TASKS.discard)
+        
+        logger.info(f"[{request_id}] Задача создана: {task.task_id}")
         
         return JSONResponse(
             status_code=202,
@@ -188,7 +243,7 @@ async def transcribe_async(
         )
         
     except FileSizeError as fse:
-        logger.error("Ошибка размера файла в асинхронной транскрипции: %s", fse)
+        logger.error(f"[{request_id}] Ошибка размера файла: {fse}")
         raise HTTPException(
             status_code=413,
             detail=str(fse)
@@ -196,42 +251,8 @@ async def transcribe_async(
     except HTTPException:
         raise
     except Exception as exc:
-        logger.exception("Ошибка асинхронной транскрипции: %s", exc)
+        logger.exception(f"[{request_id}] Ошибка асинхронной транскрипции с диаризацией: {exc}")
         raise HTTPException(
             status_code=500,
             detail="Внутренняя ошибка сервера при создании задачи"
         ) from exc
-
-
-@router.get("/status/{task_id}")
-async def get_task_status(task_id: str) -> JSONResponse:
-    """
-    Получение статуса задачи по ID.
-    
-    Args:
-        task_id: ID задачи
-        
-    Returns:
-        JSONResponse со статусом задачи
-    """
-    task = task_manager.get_task(task_id)
-    
-    if not task:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Task {task_id} not found"
-        )
-    
-    return JSONResponse(content=task.to_dict())
-
-
-@router.get("/tasks/stats")
-async def get_tasks_stats() -> JSONResponse:
-    """
-    Получение статистики по задачам.
-    
-    Returns:
-        JSONResponse со статистикой
-    """
-    stats = task_manager.get_stats()
-    return JSONResponse(content=stats)

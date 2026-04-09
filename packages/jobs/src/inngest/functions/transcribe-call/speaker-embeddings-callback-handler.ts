@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 import { createLogger } from "../../../logger";
-import { inngest } from "../../client";
+import { inngest, speakerEmbeddingsDiarizationCompleted } from "../../client";
 import type { DiarizationResult } from "./speaker-diarization";
 
 const logger = createLogger("speaker-embeddings-callback-handler");
@@ -17,13 +17,19 @@ const DiarizationResultSchema = z.object({
   success: z.boolean(),
   segments: z.array(
     z.object({
-      start: z.number(),
-      end: z.number(),
-      speaker: z.string(),
+      start: z.number().finite().nonnegative(),
+      end: z.number().finite().nonnegative(),
+      speaker: z.string().min(1),
+    }).refine((seg) => seg.end > seg.start, {
+      message: "end must be greater than start",
     }),
-  ),
-  num_speakers: z.number(),
-  speakers: z.array(z.string()),
+  ).min(1),
+  num_speakers: z.number().int().positive(),
+  speakers: z.array(z.string().min(1)).refine((speakers) => speakers.length > 0, {
+    message: "speakers array must not be empty",
+  }),
+}).refine((data) => data.speakers.length === data.num_speakers, {
+  message: "speakers array length must match num_speakers",
 });
 
 /**
@@ -44,11 +50,7 @@ export const speakerEmbeddingsCompletedFn = inngest.createFunction(
   {
     id: "speaker-embeddings-completed",
     name: "Speaker Embeddings Diarization Completed (Callback)",
-    triggers: [
-      {
-        event: "speaker-embeddings/diarization.completed",
-      },
-    ],
+    triggers: [speakerEmbeddingsDiarizationCompleted],
     retries: 1,
   },
   async ({ event }: { event: { data: SpeakerEmbeddingsCompletedEvent } }) => {

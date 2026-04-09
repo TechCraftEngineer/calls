@@ -233,8 +233,11 @@ def process_diarization(
         }
 
     except Exception as exc:
-        logger.error(f"Diarization error: {exc}", exc_info=True)
         from fastapi import HTTPException
+        # Перебрасываем HTTPException как есть, чтобы сохранить оригинальный статус и сообщение
+        if isinstance(exc, HTTPException):
+            raise
+        logger.error(f"Diarization error: {exc}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="Diarization failed"

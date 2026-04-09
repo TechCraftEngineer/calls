@@ -1,6 +1,6 @@
 /**
  * Inngest функция для обработки callback событий от GigaAM.
- * Используется когда GIGA_AM_ASYNC_MODE=true и настроен INNGEST_EVENT_KEY.
+ * Используется когда настроен INNGEST_EVENT_KEY в Python сервисе.
  */
 
 import { z } from "zod";
@@ -10,6 +10,16 @@ import type { AsrResult } from "../types";
 import type { DiarizedTranscriptionResult } from "./client";
 
 const logger = createLogger("gigaam-callback-handler");
+
+/**
+ * Zod схема для валидации всего события от GigaAM
+ */
+const GigaAmCompletedEventSchema = z.object({
+  task_id: z.string(),
+  status: z.enum(["completed", "failed"]),
+  result: z.any().optional(),
+  error: z.string().optional(),
+});
 
 /**
  * Zod схема для валидации DiarizedTranscriptionResult от внешнего сервиса
@@ -72,7 +82,18 @@ export const gigaAmCompletedFn = inngest.createFunction(
     retries: 1,
   },
   async ({ event }: { event: { data: GigaAmCompletedEvent } }) => {
-    const { task_id, status, result, error } = event.data;
+    // Runtime валидация всего входящего payload
+    const eventValidation = GigaAmCompletedEventSchema.safeParse(event.data);
+    if (!eventValidation.success) {
+      logger.error("GigaAM вернул невалидный payload", {
+        validationErrors: eventValidation.error.issues,
+      });
+      throw new Error(
+        `GigaAM вернул невалидный payload: ${JSON.stringify(eventValidation.error.issues)}`,
+      );
+    }
+
+    const { task_id, status, result, error } = eventValidation.data;
 
     logger.info("Получен callback от GigaAM", {
       task_id,

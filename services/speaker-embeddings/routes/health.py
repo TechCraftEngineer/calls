@@ -18,8 +18,9 @@ async def health() -> dict[str, Any]:
     try:
         from pyannote.audio import Pipeline
         pyannote_available = True
-    except ImportError:
-        logger.exception("pyannote.audio import failed")
+    except Exception as e:
+        pyannote_available = False
+        logger.exception("pyannote.audio initialization failed")
 
     # Для community версии токен не требуется
     diarization_model = os.getenv("PYANNOTE_DIARIZATION_MODEL", "pyannote/speaker-diarization-community-1")

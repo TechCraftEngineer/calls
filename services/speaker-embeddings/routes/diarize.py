@@ -12,6 +12,7 @@ import librosa
 import numpy as np
 import soundfile as sf
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
 
 from services.diarization_service import process_diarization
 
@@ -409,7 +410,10 @@ async def diarize_async(
 
         logger.info(f"Async diarization task created: {task_id}")
 
-        return {"task_id": task_id, "status": "pending"}, 202
+        return JSONResponse(
+            content={"task_id": task_id, "status": "pending"},
+            status_code=202
+        )
 
     except HTTPException:
         raise

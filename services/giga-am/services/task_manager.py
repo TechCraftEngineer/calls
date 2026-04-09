@@ -5,7 +5,7 @@
 import asyncio
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Dict, Any, Optional
 
@@ -37,7 +37,7 @@ class Task:
         self.status = TaskStatus.PENDING
         self.result: Optional[Dict[str, Any]] = None
         self.error: Optional[str] = None
-        self.created_at = datetime.now(datetime.UTC)
+        self.created_at = datetime.now(timezone.utc)
         self.started_at: Optional[datetime] = None
         self.completed_at: Optional[datetime] = None
     
@@ -97,7 +97,7 @@ class TaskManager:
     
     async def cleanup_old_tasks(self):
         """Удаление старых задач"""
-        now = datetime.now(datetime.UTC)
+        now = datetime.now(timezone.utc)
         old_tasks = [
             task_id for task_id, task in self.tasks.items()
             if now - task.created_at > self.max_age
@@ -144,9 +144,9 @@ class TaskManager:
             task.error = error
 
         if status == TaskStatus.PROCESSING and task.started_at is None:
-            task.started_at = datetime.now(datetime.UTC)
+            task.started_at = datetime.now(timezone.utc)
         elif status in (TaskStatus.COMPLETED, TaskStatus.FAILED):
-            task.completed_at = datetime.now(datetime.UTC)
+            task.completed_at = datetime.now(timezone.utc)
             # Освобождаем audio_data для экономии памяти
             task.audio_data = None
 
