@@ -10,8 +10,17 @@ import { createLogger } from "~/logger";
 
 const logger = createLogger("answering-machine-llm");
 
+const AnsweringMachineInputSchema = z.object({
+  transcript: z
+    .string()
+    .min(1, "Транскрипт не может быть пустым")
+    .max(2000, "Транскрипт слишком длинный (максимум 2000 символов)"),
+});
+
 const AnsweringMachineSchema = z.object({
-  isAnsweringMachine: z.boolean().describe("Является ли транскрипт автоответчиком или голосовым меню"),
+  isAnsweringMachine: z
+    .boolean()
+    .describe("Является ли транскрипт автоответчиком или голосовым меню"),
   confidence: z.enum(["high", "medium", "low"]).describe("Уверенность в определении"),
   reasoning: z.string().describe("Краткое объяснение почему это автоответчик или нет"),
 });
@@ -48,10 +57,14 @@ export async function isAnsweringMachineWithLlm(
   callId: string,
 ): Promise<AnsweringMachineResult> {
   try {
-    // Ограничиваем длину транскрипта для LLM (первые ~8000 токенов)
-    const truncatedTranscript = transcript.length > 30000
-      ? transcript.slice(0, 30000) + "... [транскрипт обрезан]"
-      : transcript;
+    // Валидация входных данных
+    AnsweringMachineInputSchema.parse({ transcript });
+
+    // Ограничиваем длину транскрипта для LLM (максимум 2000 символов)
+    const truncatedTranscript =
+      transcript.length > 2000
+        ? `${transcript.slice(0, 2000)}... [транскрипт обрезан]`
+        : transcript;
 
     const { output } = await generateWithAi({
       modelProfile: "cheap",

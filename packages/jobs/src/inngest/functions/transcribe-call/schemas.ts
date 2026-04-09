@@ -70,6 +70,7 @@ export const GigaAmResponseSchema = z.object({
 // Схема для валидации ASR логов
 export const AsrLogSchema = z.object({
   provider: z.string(),
+  success: z.boolean(),
   utterances: z.array(TranscriptionSegmentSchema).optional(),
   raw: z.unknown().optional(),
 });

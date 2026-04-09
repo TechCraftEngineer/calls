@@ -2,9 +2,10 @@
  * Идентификация спикеров через LLM
  */
 
-import { createLogger } from "~/logger";
-import { identifySpeakers as identifyWithLlm } from "~/inngest/functions/transcribe-call/speakers/identification";
+import type { AsrExecutionLog } from "@calls/asr";
 import type { Call } from "~/inngest/functions/transcribe-call/schemas";
+import { identifySpeakers as identifyWithLlm } from "~/inngest/functions/transcribe-call/speakers/identification";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("transcribe-call:identify-speakers");
 
@@ -29,11 +30,7 @@ export interface IdentifyResult {
 export async function identifySpeakers(
   call: Call,
   normalizedText: string,
-  asrLogs: Array<{
-    provider: string;
-    utterances?: unknown[];
-    raw?: unknown;
-  }>,
+  asrLogs: AsrExecutionLog[],
   managerNameFromPbx: string | null,
   summary?: string,
 ): Promise<IdentifyResult> {
@@ -52,8 +49,8 @@ export async function identifySpeakers(
   );
 
   const finalText = identifyResult.text || "";
-  const customerName = (identifyResult as { customerName?: string }).customerName;
-  const operatorName = (identifyResult as { operatorName?: string }).operatorName;
+  const customerName = identifyResult.customerName;
+  const operatorName = identifyResult.operatorName;
 
   const originalText = normalizedText || "";
   const debugData = {

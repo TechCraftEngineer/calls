@@ -3,13 +3,14 @@
  * Запускает задачу и ждёт событие завершения через step.waitForEvent.
  */
 
-import { createLogger } from "~/logger";
 import { downloadAudioFile } from "~/inngest/functions/transcribe-call/audio/download";
 import {
-  startSpeakerDiarization,
   shouldUseSpeakerEmbeddings,
+  startSpeakerDiarization,
 } from "~/inngest/functions/transcribe-call/speakers/diarization";
+import { createLogger } from "~/logger";
 import type { PreprocessResult } from "./preprocess-audio";
+import type { StepRunner } from "./step-runner";
 
 const logger = createLogger("transcribe-call:speaker-diarization-callback");
 
@@ -35,17 +36,10 @@ export async function speakerDiarizationWithCallback(
   fullTranscriptionSegments: Array<{ speaker: string; start: number; end: number; text: string }>,
   step: unknown,
 ): Promise<SpeakerDiarizationCallbackResult> {
-  const typedStep = step as {
-    run: <T>(id: string, fn: () => Promise<T>) => Promise<T>;
-    waitForEvent: <T>(id: string, options: { event: string; timeout: string; if: string }) => Promise<T | null>;
-  };
-
+  const typedStep = step as StepRunner;
   // Проверяем, стоит ли использовать speaker embeddings
   const durationSeconds = pipelineAudio.durationSeconds ?? 0;
-  const shouldUse = shouldUseSpeakerEmbeddings(
-    durationSeconds,
-    fullTranscriptionSegments.length,
-  );
+  const shouldUse = shouldUseSpeakerEmbeddings(durationSeconds, fullTranscriptionSegments.length);
 
   if (!shouldUse) {
     logger.info("Пропускаем speaker embeddings диаризацию (короткий звонок или мало сегментов)", {
@@ -63,33 +57,36 @@ export async function speakerDiarizationWithCallback(
   }
 
   // Шаг 1: Запускаем асинхронную диаризацию
-  const { taskId, success, error } = await typedStep.run("speaker-embeddings/async-start", async () => {
-    const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
+  const { taskId, success, error } = await typedStep.run(
+    "speaker-embeddings/async-start",
+    async () => {
+      const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
 
-    logger.info("Запуск асинхронной диаризации через Speaker Embeddings", {
-      callId,
-      durationSeconds,
-      segmentCount: fullTranscriptionSegments.length,
-    });
+      logger.info("Запуск асинхронной диаризации через Speaker Embeddings", {
+        callId,
+        durationSeconds,
+        segmentCount: fullTranscriptionSegments.length,
+      });
 
-    const result = await startSpeakerDiarization(callId, buffer, filename, {
-      // Определяем примерное количество спикеров на основе сегментов
-      minSpeakers: 2,
-      maxSpeakers: Math.min(4, Math.ceil(fullTranscriptionSegments.length / 3)),
-    });
+      const result = await startSpeakerDiarization(callId, buffer, filename, {
+        // Определяем примерное количество спикеров на основе сегментов
+        minSpeakers: 2,
+        maxSpeakers: Math.min(4, Math.ceil(fullTranscriptionSegments.length / 3)),
+      });
 
-    if (!result.success || !result.taskId) {
-      logger.error("Не удалось запустить диаризацию", { callId, error: result.error });
-      return { success: false, error: result.error || "Failed to start diarization" };
-    }
+      if (!result.success || !result.taskId) {
+        logger.error("Не удалось запустить диаризацию", { callId, error: result.error });
+        return { success: false, error: result.error || "Failed to start diarization" };
+      }
 
-    logger.info("Диаризация через Speaker Embeddings запущена", {
-      callId,
-      taskId: result.taskId,
-    });
+      logger.info("Диаризация через Speaker Embeddings запущена", {
+        callId,
+        taskId: result.taskId,
+      });
 
-    return { success: true, taskId: result.taskId };
-  });
+      return { success: true, taskId: result.taskId };
+    },
+  );
 
   if (!success || !taskId) {
     return {
@@ -115,14 +112,11 @@ export async function speakerDiarizationWithCallback(
       error?: string;
       processingTimeMs?: number;
     };
-  }>(
-    "speaker-embeddings/wait-for-completion",
-    {
-      event: "speaker-embeddings/diarization.completed",
-      timeout: "30m", // 10 минут максимальное ожидание
-      if: `async.data.task_id == "${taskId}"`,
-    },
-  );
+  }>("speaker-embeddings/wait-for-completion", {
+    event: "speaker-embeddings/diarization.completed",
+    timeout: "30m", // 10 минут максимальное ожидание
+    if: `async.data.task_id == "${taskId}"`,
+  });
 
   // Шаг 3: Обрабатываем результат
   return await typedStep.run("speaker-embeddings/process-result", async () => {

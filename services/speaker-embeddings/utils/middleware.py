@@ -12,8 +12,16 @@ class MaxContentSizeMiddleware(BaseHTTPMiddleware):
         self.max_size = max_size
 
     async def dispatch(self, request: Request, call_next):
-        # Check Content-Length only for methods with body
-        if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        # Check Content-Length only for POST, PUT, PATCH (methods with body)
+        if request.method in ("POST", "PUT", "PATCH"):
+            # Explicitly reject Transfer-Encoding to prevent chunked bypass
+            transfer_encoding = request.headers.get("transfer-encoding")
+            if transfer_encoding:
+                return JSONResponse(
+                    status_code=400,
+                    content={"detail": "Transfer-Encoding header is not supported. Use Content-Length instead."}
+                )
+
             content_length = request.headers.get("content-length")
             if content_length:
                 try:

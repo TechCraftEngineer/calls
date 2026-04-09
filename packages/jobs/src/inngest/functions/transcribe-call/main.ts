@@ -10,6 +10,7 @@
  * 7. Идентификация спикеров через LLM
  */
 
+import type { AsrExecutionLog } from "@calls/asr";
 import type { ZodIssue } from "zod";
 import { evaluateRequested, inngest, transcribeRequested } from "~/inngest/client";
 import {
@@ -191,6 +192,36 @@ export const transcribeCallFn = inngest.createFunction(
         .map((s: { speaker: string; text: string }) => `${s.speaker}: ${s.text}`)
         .join("\n");
 
+      // Создаем asrLogs на основе всех этапов обработки
+      const asrLogs = [
+        {
+          provider: "gigaam-async-full" as const,
+          success: true,
+          utterances: (fullTranscription.segments || []).map((s) => ({
+            text: s.text,
+            start: s.start,
+            end: s.end,
+            speaker: s.speaker,
+          })),
+          raw: fullTranscription,
+        },
+        {
+          provider: (diarizeResult.diarizationFailed
+            ? "gigaam-async-diarized-fallback"
+            : "gigaam-async-diarized") as
+            | "gigaam-async-diarized-fallback"
+            | "gigaam-async-diarized",
+          success: !diarizeResult.diarizationFailed,
+          utterances: (diarizeResult.segments || []).map((s) => ({
+            text: s.text,
+            start: s.start,
+            end: s.end,
+            speaker: s.speaker,
+          })),
+          raw: diarizeResult,
+        },
+      ];
+
       const resultForValidation = {
         segments: mergedResult.segments,
         transcript: diarizedText,
@@ -204,7 +235,7 @@ export const transcribeCallFn = inngest.createFunction(
         metadata: {
           asrSource: "gigaam-sync-full-async-diarized-llm-merged",
           processingTimeMs: totalProcessingTimeMs,
-          asrLogs: [],
+          asrLogs,
         },
       };
 
@@ -231,7 +262,7 @@ export const transcribeCallFn = inngest.createFunction(
       identifySpeakers(
         call,
         normalizedText,
-        validatedResult.metadata.asrLogs || [],
+        validatedResult.metadata.asrLogs as unknown as AsrExecutionLog[],
         managerNameFromPbx,
         summaryResult.summary || undefined,
       ),
@@ -252,6 +283,7 @@ export const transcribeCallFn = inngest.createFunction(
           typeof validatedResult.metadata.confidence === "number"
             ? validatedResult.metadata.confidence
             : null,
+        asrLogs: validatedResult.metadata.asrLogs,
       }),
     );
 

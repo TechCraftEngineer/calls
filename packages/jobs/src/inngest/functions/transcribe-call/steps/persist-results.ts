@@ -3,12 +3,12 @@
  */
 
 import { callsService } from "@calls/db";
-import { createLogger } from "~/logger";
-import { serializeMetadata } from "~/inngest/functions/transcribe-call/utils/metadata";
-import type { MergeResult } from "~/inngest/functions/transcribe-call/steps/merge-results";
-import type { SummarizeResult } from "./summarize";
-import type { IdentifyResult } from "./identify-speakers";
 import type { Call } from "~/inngest/functions/transcribe-call/schemas";
+import type { MergeResult } from "~/inngest/functions/transcribe-call/steps/merge-results";
+import { serializeMetadata } from "~/inngest/functions/transcribe-call/utils/metadata";
+import { createLogger } from "~/logger";
+import type { IdentifyResult } from "./identify-speakers";
+import type { SummarizeResult } from "./summarize";
 
 const logger = createLogger("transcribe-call:persist");
 
@@ -22,6 +22,11 @@ export interface PersistParams {
   totalProcessingTimeMs: number;
   asrSource: string;
   confidence?: number | null;
+  asrLogs?: Array<{
+    provider: string;
+    utterances?: unknown[];
+    raw?: unknown;
+  }>;
 }
 
 export async function persistResults({
@@ -34,10 +39,11 @@ export async function persistResults({
   totalProcessingTimeMs,
   asrSource,
   confidence,
+  asrLogs,
 }: PersistParams): Promise<void> {
   const serializedMetadata = serializeMetadata(
     {
-      asrLogs: [],
+      asrLogs: asrLogs || [],
       asrSource,
       processingTimeMs: totalProcessingTimeMs,
       confidence,
@@ -69,6 +75,6 @@ export async function persistResults({
     callId: call.id,
     textLength: finalText.length,
     hasSummary: !!summaryResult.summary,
-    customerName: identifyResult.customerName,
+    hasCustomerName: !!identifyResult.customerName,
   });
 }

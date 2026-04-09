@@ -89,8 +89,17 @@ async def send_inngest_event(
         "data": payload,
     }
 
+    # Минимальный лог объект без пользовательских данных
+    log_data = {
+        "task_id": task_id,
+        "status": status,
+        "has_result": result is not None,
+        "has_error": error is not None,
+        "payload_size": len(json.dumps(payload)) if payload else 0,
+    }
+
     try:
-        logger.info(f"[Inngest] Отправка события: {request_body}")
+        logger.info(f"[Inngest] Отправка события: {log_data}")
 
         async with httpx.AsyncClient(timeout=settings.callback_timeout) as client:
             response = await client.post(

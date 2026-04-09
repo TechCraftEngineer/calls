@@ -30,10 +30,17 @@ export async function handleFailure({ event, error }: FailureEventArgs): Promise
     const eventValidation = TranscribeCallEventSchema.safeParse(rawEventData);
 
     if (!eventValidation.success) {
+      // Извлекаем callId из rawEventData для логирования даже при ошибке валидации
+      const callIdFromRaw =
+        rawEventData && typeof rawEventData === "object" && "callId" in rawEventData
+          ? String((rawEventData as { callId?: unknown }).callId)
+          : "unknown";
+
       logger.error("Ошибка валидации event в onFailure handler", {
-        error: eventValidation.error.message,
-        eventData: rawEventData,
-        fullEvent: event,
+        callId: callIdFromRaw,
+        errorCode: eventValidation.error.issues[0]?.code,
+        errorMessage: eventValidation.error.message,
+        errorPath: eventValidation.error.issues[0]?.path?.join("."),
       });
       return;
     }

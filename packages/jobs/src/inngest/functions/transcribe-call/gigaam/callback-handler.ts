@@ -4,9 +4,9 @@
  */
 
 import { z } from "zod";
-import { createLogger } from "~/logger";
 import { gigaAmTranscriptionCompleted, inngest } from "~/inngest/client";
 import type { AsrResult } from "~/inngest/functions/transcribe-call/types";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("gigaam-callback-handler");
 
@@ -16,7 +16,10 @@ const logger = createLogger("gigaam-callback-handler");
 const GigaAmCompletedEventSchema = z.object({
   task_id: z.string(),
   status: z.enum(["completed", "failed"]),
-  result: z.union([z.looseObject({}), z.string(), z.number(), z.boolean()]).optional().nullable(),
+  result: z
+    .union([z.looseObject({}), z.string(), z.number(), z.boolean()])
+    .optional()
+    .nullable(),
   error: z.string().optional().nullable(),
 });
 
@@ -83,8 +86,8 @@ const DiarizedTranscriptionResultSchema = z.object({
  * Union схема для обоих типов результатов
  */
 const TranscriptionResultSchema = z.union([
-  NonDiarizedTranscriptionResultSchema,
   DiarizedTranscriptionResultSchema,
+  NonDiarizedTranscriptionResultSchema,
 ]);
 
 /**
@@ -164,12 +167,13 @@ export const gigaAmCompletedFn = inngest.createFunction(
     const isDiarized = "success" in transcriptionResult;
 
     // Конвертируем результат в AsrResult
-    const segments = transcriptionResult.segments?.map((s) => ({
-      start: s.start ?? 0,
-      end: s.end ?? 0,
-      speaker: s.speaker || "unknown",
-      text: s.text,
-    })) ?? [];
+    const segments =
+      transcriptionResult.segments?.map((s) => ({
+        start: s.start ?? 0,
+        end: s.end ?? 0,
+        speaker: s.speaker || "unknown",
+        text: s.text,
+      })) ?? [];
 
     const asrResult: AsrResult = {
       segments,
