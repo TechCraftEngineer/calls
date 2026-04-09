@@ -165,11 +165,13 @@ function splitIntoChunks(
   if (!firstSegment || !lastSegment) return [];
 
   const totalDuration = lastSegment.end - firstSegment.start;
-  const avgSegmentDuration = totalDuration / segments.length;
 
   // Оцениваем сколько сегментов поместится в один чанк
-  const avgSegmentTextLength = segments.reduce((sum, s) => sum + s.text.length, 0) / segments.length;
-  const estimatedTokensPerSegment = estimateTokenCount("a".repeat(Math.round(avgSegmentTextLength)));
+  const avgSegmentTextLength =
+    segments.reduce((sum, s) => sum + s.text.length, 0) / segments.length;
+  const estimatedTokensPerSegment = estimateTokenCount(
+    "a".repeat(Math.round(avgSegmentTextLength)),
+  );
   const segmentsPerChunk = Math.max(
     MIN_SEGMENTS_PER_CHUNK,
     Math.floor((targetTokens * 0.6) / Math.max(estimatedTokensPerSegment, 50)),
@@ -188,7 +190,12 @@ function splitIntoChunks(
 
     // Извлекаем соответствующую часть текста из nonDiarized транскрипции
     // Используем эвристику: делим transcript пропорционально времени
-    const transcriptSlice = extractTranscriptSlice(nonDiarizedTranscript, startTime, endTime, totalDuration);
+    const transcriptSlice = extractTranscriptSlice(
+      nonDiarizedTranscript,
+      startTime,
+      endTime,
+      totalDuration,
+    );
 
     chunks.push({
       segments: chunkSegments,
@@ -466,7 +473,8 @@ async function mergeWithChunking(
 
   return {
     ...combined,
-    fallbackReason: failedChunks > 0 ? `partial_chunk_failures:${failedChunks}/${chunks.length}` : undefined,
+    fallbackReason:
+      failedChunks > 0 ? `partial_chunk_failures:${failedChunks}/${chunks.length}` : undefined,
   };
 }
 

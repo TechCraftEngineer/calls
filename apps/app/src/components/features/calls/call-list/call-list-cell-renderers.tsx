@@ -1,19 +1,10 @@
 "use client";
 
 import { paths } from "@calls/config";
-import {
-  Button,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  Rating,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@calls/ui";
+import { Button, Rating, Tooltip, TooltipContent, TooltipTrigger } from "@calls/ui";
 import Link from "next/link";
-import * as React from "react";
 import type { ReactNode } from "react";
+import * as React from "react";
 import { isMobileDevice } from "@/lib/utils";
 import { formatDuration, formatTimestamp } from "./call-list-cells";
 import type { CallWithDetails } from "./types";
@@ -71,7 +62,9 @@ function CallTooltipCell({ title, children }: { title: string; children: ReactNo
           type="button"
           className="block min-w-0 max-w-full truncate cursor-default text-[#555] font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <span id={labelId} className="sr-only">{title}: </span>
+          <span id={labelId} className="sr-only">
+            {title}:{" "}
+          </span>
           {children}
         </button>
       </TooltipTrigger>
@@ -115,7 +108,7 @@ export function renderCallTopicCell(transcript: CallWithDetails["transcript"]) {
       <TooltipTrigger asChild>
         <button
           type="button"
-          className="block min-w-0 max-w-full truncate cursor-default bg-transparent border-0 p-0 text-[#555] font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="block min-h-[24px] min-w-[24px] max-w-full truncate cursor-default bg-transparent border-0 p-1 text-[#555] font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring md:min-h-[44px] md:min-w-[44px]"
         >
           {callTopic}
         </button>

@@ -2,7 +2,6 @@
  * LLM Merging: объединение синхронного non-diarized с асинхронным diarized
  */
 
-import { createLogger } from "~/logger";
 import { applyLLMMerging } from "~/inngest/functions/transcribe-call/llm/merge";
 import type { SyncTranscriptionResult } from "./sync-transcription";
 
@@ -20,8 +19,6 @@ export interface DiarizeResult {
   diarizationSuccess: boolean;
   diarizationFailed: boolean;
 }
-
-const logger = createLogger("transcribe-call:merge");
 
 export interface MergeResult {
   segments: Array<{

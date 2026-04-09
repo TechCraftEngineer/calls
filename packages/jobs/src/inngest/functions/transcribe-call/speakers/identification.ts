@@ -2,12 +2,16 @@
  * Идентификация спикеров через LLM
  */
 
+import type { AsrExecutionLog } from "@calls/asr";
 import type { IdentifySpeakersWithEmbeddingsResult } from "@calls/asr/llm/identify-speakers-with-embeddings";
 import { identifySpeakersWithEmbeddings } from "@calls/asr/llm/identify-speakers-with-embeddings";
 import { NonRetriableError } from "inngest";
 import { z } from "zod";
+import {
+  extractSegmentsFromUtterances,
+  extractSpeakerTimeline,
+} from "~/inngest/functions/transcribe-call/utils/extraction";
 import { createLogger } from "~/logger";
-import { extractSegmentsFromUtterances, extractSpeakerTimeline } from "~/inngest/functions/transcribe-call/utils/extraction";
 
 const logger = createLogger("speaker-identification");
 
@@ -33,11 +37,7 @@ export async function identifySpeakers(
   result: {
     normalizedText: string;
     metadata: {
-      asrLogs?: Array<{
-        provider: string;
-        utterances?: unknown[];
-        raw?: unknown;
-      }>;
+      asrLogs?: AsrExecutionLog[];
     };
   },
   managerNameFromPbx: string | null,
@@ -106,7 +106,7 @@ export async function identifySpeakers(
 
   // Извлекаем данные из giga-am результата - сначала ищем diarized, затем fallback на обычный
   const gigaAmLog =
-    result.metadata.asrLogs?.find((log) => log.provider === "gigaam-diarized") ??
+    result.metadata.asrLogs?.find((log) => (log.provider as string) === "gigaam-diarized") ??
     result.metadata.asrLogs?.find((log) => log.provider === "gigaam");
   const gigaAmRaw = gigaAmLog?.raw;
 

@@ -10,7 +10,7 @@
   "scripts": {
     "clean": "rm -rf *.tsbuildinfo .turbo dist",
     "dev": "tsc --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit --project tsconfig.json"
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",

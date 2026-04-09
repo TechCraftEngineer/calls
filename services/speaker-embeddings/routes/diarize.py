@@ -1,9 +1,9 @@
 """Diarization endpoints (sync and async)."""
+import asyncio
 import logging
 import os
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor
 import threading
 from typing import Any
 
@@ -27,8 +27,6 @@ _task_store_lock = threading.Lock()
 # Максимальное время хранения завершенных задач (в секундах)
 _TASK_RETENTION_SECONDS = 3600  # 1 час
 
-# ThreadPoolExecutor для фонового выполнения задач
-_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="diarization")
 
 # Inngest конфигурация
 INNGEST_API_URL = os.getenv("INNGEST_API_URL", "http://localhost:3001")
@@ -229,6 +227,68 @@ def _run_diarization_task(
         send_inngest_event_sync(task_id, "failed", error=str(exc), call_id=call_id)
 
 
+def _load_and_preprocess_audio(audio_bytes: bytes) -> tuple[np.ndarray, int]:
+    """Синхронная предобработка аудио — вызывается через asyncio.to_thread."""
+    import io
+    audio, sr = sf.read(io.BytesIO(audio_bytes), dtype="float32")
+    if audio.ndim > 1:
+        audio = np.mean(audio, axis=1)
+    audio = np.asarray(audio, dtype=np.float32)
+    if sr != 16000:
+        audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
+        sr = 16000
+    return audio, sr
+
+
+def _validate_speaker_params(
+    num_speakers: int | None,
+    min_speakers: int | None,
+    max_speakers: int | None
+) -> None:
+    """Валидация параметров количества спикеров."""
+    if num_speakers is not None:
+        if not isinstance(num_speakers, int) or num_speakers <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="num_speakers must be a positive integer"
+            )
+
+    if min_speakers is not None:
+        if not isinstance(min_speakers, int) or min_speakers <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="min_speakers must be a positive integer"
+            )
+
+    if max_speakers is not None:
+        if not isinstance(max_speakers, int) or max_speakers <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="max_speakers must be a positive integer"
+            )
+
+    # Проверка соотношения между min и max
+    if min_speakers is not None and max_speakers is not None:
+        if min_speakers > max_speakers:
+            raise HTTPException(
+                status_code=400,
+                detail="min_speakers must be less than or equal to max_speakers"
+            )
+
+    # Проверка, что num_speakers находится в диапазоне [min_speakers, max_speakers]
+    if num_speakers is not None:
+        if min_speakers is not None and num_speakers < min_speakers:
+            raise HTTPException(
+                status_code=400,
+                detail="num_speakers must be greater than or equal to min_speakers"
+            )
+        if max_speakers is not None and num_speakers > max_speakers:
+            raise HTTPException(
+                status_code=400,
+                detail="num_speakers must be less than or equal to max_speakers"
+            )
+
+
 @router.post("/diarize")
 async def diarize(
     file: UploadFile = File(...),
@@ -249,16 +309,13 @@ async def diarize(
         # Замер времени загрузки и предобработки аудио
         audio_processing_start = time.time()
 
-        # Загружаем аудио напрямую из файла (потоковое чтение)
-        audio, sr = sf.read(file.file, dtype="float32")
-        if audio.ndim > 1:
-            audio = np.mean(audio, axis=1)
-        audio = np.asarray(audio, dtype=np.float32)
+        # Читаем байты асинхронно
+        audio_bytes = await file.read()
 
-        # Ресемплируем если нужно
-        if sr != 16000:
-            audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
-            sr = 16000
+        # Перемещаем I/O + CPU-работу в thread pool
+        audio, sr = await asyncio.to_thread(
+            _load_and_preprocess_audio, audio_bytes
+        )
 
         audio_processing_end = time.time()
         audio_processing_time = audio_processing_end - audio_processing_start
@@ -268,56 +325,12 @@ async def diarize(
             f"(duration: {len(audio)/sr:.2f}s, sample_rate: {sr}Hz)"
         )
 
-        # Валидация параметров количества спикеров
-        if num_speakers is not None:
-            if not isinstance(num_speakers, int) or num_speakers <= 0:
-                raise HTTPException(
-                    status_code=400,
-                    detail="num_speakers must be a positive integer"
-                )
+        # Валидация параметров (лёгкая, оставляем в event loop)
+        _validate_speaker_params(num_speakers, min_speakers, max_speakers)
 
-        if min_speakers is not None:
-            if not isinstance(min_speakers, int) or min_speakers <= 0:
-                raise HTTPException(
-                    status_code=400,
-                    detail="min_speakers must be a positive integer"
-                )
-
-        if max_speakers is not None:
-            if not isinstance(max_speakers, int) or max_speakers <= 0:
-                raise HTTPException(
-                    status_code=400,
-                    detail="max_speakers must be a positive integer"
-                )
-
-        # Проверка соотношения между min и max
-        if min_speakers is not None and max_speakers is not None:
-            if min_speakers > max_speakers:
-                raise HTTPException(
-                    status_code=400,
-                    detail="min_speakers must be less than or equal to max_speakers"
-                )
-
-        # Проверка, что num_speakers находится в диапазоне [min_speakers, max_speakers]
-        if num_speakers is not None:
-            if min_speakers is not None and num_speakers < min_speakers:
-                raise HTTPException(
-                    status_code=400,
-                    detail="num_speakers must be greater than or equal to min_speakers"
-                )
-            if max_speakers is not None and num_speakers > max_speakers:
-                raise HTTPException(
-                    status_code=400,
-                    detail="num_speakers must be less than or equal to max_speakers"
-                )
-
-        # Выполняем диаризацию
-        result = process_diarization(
-            audio,
-            sr,
-            num_speakers,
-            min_speakers,
-            max_speakers,
+        # Тяжёлый ML inference — обязательно в thread pool
+        result = await asyncio.to_thread(
+            process_diarization, audio, sr, num_speakers, min_speakers, max_speakers
         )
 
         # Завершение замера времени выполнения endpoint
@@ -363,32 +376,16 @@ async def diarize_async(
         call_id: ID звонка для передачи в Inngest callback
     """
     try:
-        # Загружаем и предобрабатываем аудио
-        audio, sr = sf.read(file.file, dtype="float32")
-        if audio.ndim > 1:
-            audio = np.mean(audio, axis=1)
-        audio = np.asarray(audio, dtype=np.float32)
+        # Читаем байты асинхронно
+        audio_bytes = await file.read()
 
-        # Ресемплируем если нужно
-        if sr != 16000:
-            audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
-            sr = 16000
+        # Перемещаем I/O + CPU-работу в thread pool
+        audio, sr = await asyncio.to_thread(
+            _load_and_preprocess_audio, audio_bytes
+        )
 
         # Валидация параметров
-        if num_speakers is not None and (not isinstance(num_speakers, int) or num_speakers <= 0):
-            raise HTTPException(status_code=400, detail="num_speakers must be a positive integer")
-        if min_speakers is not None and (not isinstance(min_speakers, int) or min_speakers <= 0):
-            raise HTTPException(status_code=400, detail="min_speakers must be a positive integer")
-        if max_speakers is not None and (not isinstance(max_speakers, int) or max_speakers <= 0):
-            raise HTTPException(status_code=400, detail="max_speakers must be a positive integer")
-        if min_speakers is not None and max_speakers is not None and min_speakers > max_speakers:
-            raise HTTPException(status_code=400, detail="min_speakers must be less than or equal to max_speakers")
-        # Проверка, что num_speakers находится в диапазоне [min_speakers, max_speakers]
-        if num_speakers is not None:
-            if min_speakers is not None and num_speakers < min_speakers:
-                raise HTTPException(status_code=400, detail="num_speakers must be greater than or equal to min_speakers")
-            if max_speakers is not None and num_speakers > max_speakers:
-                raise HTTPException(status_code=400, detail="num_speakers must be less than or equal to max_speakers")
+        _validate_speaker_params(num_speakers, min_speakers, max_speakers)
 
         # Очищаем старые завершенные задачи для предотвращения memory leak
         _cleanup_old_tasks()

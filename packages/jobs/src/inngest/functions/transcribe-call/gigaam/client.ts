@@ -356,7 +356,7 @@ export async function startAsyncDiarizedTranscription(
       });
 
       throw new Error(
-        `GigaAM async diarized API error: ${response.status} ${response.statusText}${errorBody ? ` - ${errorBody}` : ""}`,
+        `Ошибка асинхронного диарирования GigaAM: ${response.status} ${response.statusText}${errorBody ? ` - ${errorBody}` : ""}`,
       );
     }
 

@@ -4,7 +4,7 @@
 
 import { workspaceIdSchema } from "@calls/shared";
 import { z } from "zod";
-import { createLogger } from "~/logger";
+import { createLogger } from "../../../../logger";
 
 const logger = createLogger("transcribe-call-validation");
 

@@ -3,8 +3,8 @@
  */
 
 import { z } from "zod";
-import { createLogger } from "~/logger";
-import { speakerEmbeddingsDiarizationCompleted, inngest } from "~/inngest/client";
+import { inngest, speakerEmbeddingsDiarizationCompleted } from "../../../../inngest/client";
+import { createLogger } from "../../../../logger";
 import type { SpeakerDiarizationResult } from "./diarization";
 
 const logger = createLogger("speaker-embeddings-callback");
@@ -13,19 +13,18 @@ const logger = createLogger("speaker-embeddings-callback");
  * Данные callback от speaker embeddings сервиса
  */
 export interface SpeakerEmbeddingsCallbackData {
-  callId: string;
-  workspaceId: string;
+  task_id: string;
+  call_id: string;
   status: "completed" | "failed";
   result?: SpeakerDiarizationResult;
   error?: string;
-  processingTimeMs?: number;
 }
 
 /**
  * Валидирует данные callback
  */
 export function validateSpeakerEmbeddingsCallback(
-  data: unknown
+  data: unknown,
 ): data is SpeakerEmbeddingsCallbackData {
   if (typeof data !== "object" || data === null) {
     return false;
@@ -33,11 +32,11 @@ export function validateSpeakerEmbeddingsCallback(
 
   const d = data as Record<string, unknown>;
 
-  if (typeof d.callId !== "string" || d.callId.length === 0) {
+  if (typeof d.task_id !== "string" || d.task_id.length === 0) {
     return false;
   }
 
-  if (typeof d.workspaceId !== "string" || d.workspaceId.length === 0) {
+  if (typeof d.call_id !== "string" || d.call_id.length === 0) {
     return false;
   }
 
@@ -52,22 +51,22 @@ export function validateSpeakerEmbeddingsCallback(
  * Обрабатывает callback от speaker embeddings сервиса
  */
 export async function handleSpeakerEmbeddingsCallback(
-  data: SpeakerEmbeddingsCallbackData
+  data: SpeakerEmbeddingsCallbackData,
 ): Promise<{
   success: boolean;
   error?: string;
 }> {
   try {
     logger.info("Received speaker embeddings callback", {
-      callId: data.callId,
-      workspaceId: data.workspaceId,
+      task_id: data.task_id,
+      call_id: data.call_id,
       status: data.status,
-      processingTimeMs: data.processingTimeMs,
     });
 
     if (data.status === "failed") {
       logger.warn("Speaker embeddings processing failed", {
-        callId: data.callId,
+        task_id: data.task_id,
+        call_id: data.call_id,
         error: data.error,
       });
       return {
@@ -78,7 +77,8 @@ export async function handleSpeakerEmbeddingsCallback(
 
     if (!data.result) {
       logger.error("Missing result in completed callback", {
-        callId: data.callId,
+        task_id: data.task_id,
+        call_id: data.call_id,
       });
       return {
         success: false,
@@ -89,7 +89,8 @@ export async function handleSpeakerEmbeddingsCallback(
     // Здесь можно добавить сохранение результата в базу данных
     // или отправку события в другой сервис
     logger.info("Speaker embeddings processing completed", {
-      callId: data.callId,
+      task_id: data.task_id,
+      call_id: data.call_id,
       mapping: data.result.mapping,
       usedEmbeddings: data.result.usedEmbeddings,
       clusterCount: data.result.clusterCount,
@@ -101,7 +102,8 @@ export async function handleSpeakerEmbeddingsCallback(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error("Error handling speaker embeddings callback", {
-      callId: data.callId,
+      task_id: data.task_id,
+      call_id: data.call_id,
       error: errorMessage,
     });
     return {
@@ -114,11 +116,9 @@ export async function handleSpeakerEmbeddingsCallback(
 /**
  * Создает Inngest event для обработки результатов speaker embeddings
  */
-export function createSpeakerEmbeddingsCompletedEvent(
-  data: SpeakerEmbeddingsCallbackData
-) {
+export function createSpeakerEmbeddingsCompletedEvent(data: SpeakerEmbeddingsCallbackData) {
   return {
-    name: "app/speaker.embeddings.completed",
+    name: "speaker-embeddings/diarization.completed",
     data,
   };
 }
@@ -128,6 +128,7 @@ export function createSpeakerEmbeddingsCompletedEvent(
  */
 const SpeakerEmbeddingsCallbackSchema = z.object({
   task_id: z.string(),
+  call_id: z.string(),
   status: z.enum(["completed", "failed"]),
   result: z.object({}).passthrough().optional().nullable(),
   error: z.string().optional().nullable(),
@@ -138,6 +139,7 @@ const SpeakerEmbeddingsCallbackSchema = z.object({
  */
 interface SpeakerEmbeddingsEvent {
   task_id: string;
+  call_id: string;
   status: "completed" | "failed";
   result?: Record<string, unknown>;
   error?: string;
@@ -165,10 +167,11 @@ export const speakerEmbeddingsCompletedFn = inngest.createFunction(
       );
     }
 
-    const { task_id, status, result, error } = eventValidation.data;
+    const { task_id, call_id, status, result, error } = eventValidation.data;
 
     logger.info("Получен callback от speaker embeddings", {
       task_id,
+      call_id,
       status,
       hasResult: !!result,
       hasError: !!error,
@@ -177,16 +180,16 @@ export const speakerEmbeddingsCompletedFn = inngest.createFunction(
     if (status === "failed") {
       logger.error("Speaker embeddings завершился с ошибкой", {
         task_id,
+        call_id,
         error,
       });
-      throw new Error(
-        `Speaker embeddings завершился с ошибкой: ${error || "Неизвестная ошибка"}`,
-      );
+      throw new Error(`Speaker embeddings завершился с ошибкой: ${error || "Неизвестная ошибка"}`);
     }
 
     if (!result) {
       logger.error("Speaker embeddings вернул статус completed но без результата", {
         task_id,
+        call_id,
       });
       throw new Error("Speaker embeddings вернул статус completed без результата");
     }
@@ -194,7 +197,8 @@ export const speakerEmbeddingsCompletedFn = inngest.createFunction(
     return {
       success: true,
       task_id,
+      call_id,
       result,
     };
-  }
+  },
 );

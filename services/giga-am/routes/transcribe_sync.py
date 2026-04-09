@@ -2,6 +2,7 @@
 Синхронный эндпоинт транскрипции.
 Для новой архитектуры: быстрая синхронная транскрибация без диаризации.
 """
+import io
 import logging
 from typing import Optional
 
@@ -33,7 +34,7 @@ async def transcribe_sync(
     Args:
         file: Аудио файл
         filename: Имя файла
-        diarization: Включить диаризацию (по умолчанию false)
+        diarization: Параметр не поддерживается (всегда должен быть "false")
 
     Returns:
         JSONResponse с результатом транскрипции
@@ -44,20 +45,45 @@ async def transcribe_sync(
             status_code=400,
             detail="diarization parameter must be 'true' or 'false'"
         )
+
+    # Синхронный эндпоинт не поддерживает диаризацию
+    if diarization == "true":
+        raise HTTPException(
+            status_code=400,
+            detail="Diarization is not supported in sync mode. Use async diarization endpoint instead."
+        )
+
     request_id = f"sync-req-{id(file) % 10000}"
     
     try:
         logger.info(f"[{request_id}] Получен синхронный запрос на транскрипцию: {filename}")
-        
-        # Читаем файл
-        audio_data = await file.read()
-        
-        # Проверяем размер файла
+
+        # Читаем файл чанками с проверкой размера во время чтения
+        CHUNK_SIZE = 64 * 1024  # 64KB
         max_size = settings.max_file_size
-        if len(audio_data) > max_size:
+        audio_buffer = io.BytesIO()
+        total_size = 0
+
+        while True:
+            chunk = await file.read(CHUNK_SIZE)
+            if not chunk:
+                break
+
+            total_size += len(chunk)
+            if total_size > max_size:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"Размер файла ({total_size} bytes) превышает лимит ({max_size} bytes)"
+                )
+
+            audio_buffer.write(chunk)
+
+        audio_data = audio_buffer.getvalue()
+
+        if not audio_data:
             raise HTTPException(
-                status_code=413,
-                detail=f"Размер файла ({len(audio_data)} bytes) превышает лимит ({max_size} bytes)"
+                status_code=400,
+                detail="Аудио файл пуст"
             )
         
         # Запускаем синхронную обработку

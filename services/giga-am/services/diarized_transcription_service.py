@@ -60,9 +60,15 @@ class DiarizedTranscriptionService:
             max_concurrent_segments: Максимальное количество параллельных транскрипций
         """
         self.max_concurrent = max_concurrent_segments
-        self._semaphore = asyncio.Semaphore(max_concurrent_segments)
+        self._semaphore: asyncio.Semaphore | None = None  # Ленивая инициализация
         self._executor = ThreadPoolExecutor(max_workers=max_concurrent_segments)
         logger.info(f"DiarizedTranscriptionService инициализирован (max_concurrent={max_concurrent_segments})")
+    
+    async def _get_semaphore(self) -> asyncio.Semaphore:
+        """Лениво инициализирует и возвращает семафор."""
+        if self._semaphore is None:
+            self._semaphore = asyncio.Semaphore(self.max_concurrent)
+        return self._semaphore
     
     async def transcribe_diarized_audio(
         self,
@@ -327,7 +333,8 @@ class DiarizedTranscriptionService:
             file_path: str,
             segment: DiarizationSegment
         ) -> TranscribedSegment:
-            async with self._semaphore:
+            semaphore = await self._get_semaphore()
+            async with semaphore:
                 try:
                     # Вызываем синхронный метод в отдельном потоке
                     result = await asyncio.to_thread(

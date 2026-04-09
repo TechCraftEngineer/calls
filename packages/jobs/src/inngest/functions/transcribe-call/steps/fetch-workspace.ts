@@ -3,7 +3,7 @@
  */
 
 import { workspacesService } from "@calls/db";
-import { z } from "zod";
+import type { z } from "zod";
 import { createLogger } from "~/logger";
 import { WorkspaceSchema } from "~/inngest/functions/transcribe-call/schemas";
 import { validateWorkspace } from "~/inngest/functions/transcribe-call/utils/validation";
