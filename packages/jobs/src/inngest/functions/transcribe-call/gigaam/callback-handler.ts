@@ -17,8 +17,8 @@ const logger = createLogger("gigaam-callback-handler");
 const GigaAmCompletedEventSchema = z.object({
   task_id: z.string(),
   status: z.enum(["completed", "failed"]),
-  result: z.any().optional(),
-  error: z.string().optional(),
+  result: z.union([z.object({}).passthrough(), z.string(), z.number(), z.boolean()]).optional().nullable(),
+  error: z.string().optional().nullable(),
 });
 
 /**
