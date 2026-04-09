@@ -16,6 +16,7 @@ export const CALL_TYPE_TRANSLATIONS: Record<string, string> = {
   technical: "Технический",
   general: "Общий",
   unknown: "Неизвестно",
+  other: "Другое",
 };
 
 export const NOT_ANALYZABLE_REASON_TRANSLATIONS: Record<string, string> = {
