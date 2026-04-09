@@ -3,8 +3,8 @@
  */
 
 import { z } from "zod";
-import { inngest, speakerEmbeddingsDiarizationCompleted } from "~/inngest/client";
-import { createLogger } from "~/logger";
+import { inngest, speakerEmbeddingsDiarizationCompleted } from "../../../../inngest/client";
+import { createLogger } from "../../../../logger";
 import type { SpeakerDiarizationResult } from "./diarization";
 
 const logger = createLogger("speaker-embeddings-callback");

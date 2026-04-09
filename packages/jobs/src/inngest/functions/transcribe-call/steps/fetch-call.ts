@@ -3,12 +3,9 @@
  */
 
 import { callsService } from "@calls/db";
-import { z } from "zod";
-import { createLogger } from "~/logger";
-import { CallSchema } from "~/inngest/functions/transcribe-call/schemas";
+import type { z } from "zod";
 import type { Call } from "~/inngest/functions/transcribe-call/schemas";
-
-const logger = createLogger("transcribe-call:fetch-call");
+import { CallSchema } from "~/inngest/functions/transcribe-call/schemas";
 
 export async function fetchCall(callId: string): Promise<Call> {
   const c = await callsService.getCall(callId);

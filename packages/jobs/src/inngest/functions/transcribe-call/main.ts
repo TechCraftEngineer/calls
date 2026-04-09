@@ -20,28 +20,27 @@ import {
 import type { Call } from "~/inngest/functions/transcribe-call/schemas";
 import { TranscriptionResultSchema } from "~/inngest/functions/transcribe-call/schemas";
 import {
+  type AsyncTranscriptionResult,
   asyncDiarizedTranscriptionWithCallback,
   asyncTranscriptionWithCallback,
   checkAnsweringMachine,
+  type DiarizeResult,
   fetchCall,
   fetchWorkspace,
   handleFailure,
+  type IdentifyResult,
   identifySpeakers,
+  type MergeResult,
   mergeResults,
   persistResults,
   preprocessAudio,
   resolveManager,
+  type SummarizeResult,
   speakerDiarizationWithCallback,
   summarize,
   validateInput,
 } from "~/inngest/functions/transcribe-call/steps";
-import type { AsyncTranscriptionResult } from "~/inngest/functions/transcribe-call/steps/async-transcription";
-import type { IdentifyResult } from "~/inngest/functions/transcribe-call/steps/identify-speakers";
-import type {
-  DiarizeResult,
-  MergeResult,
-} from "~/inngest/functions/transcribe-call/steps/merge-results";
-import type { SummarizeResult } from "~/inngest/functions/transcribe-call/steps/summarize";
+import type { GigaAmSegment } from "~/inngest/functions/transcribe-call/types";
 import { createLogger } from "~/logger";
 
 const logger = createLogger("transcribe-call");
@@ -197,7 +196,7 @@ export const transcribeCallFn = inngest.createFunction(
         {
           provider: "gigaam-async-full" as const,
           success: true,
-          utterances: (fullTranscription.segments || []).map((s) => ({
+          utterances: (fullTranscription.segments || []).map((s: GigaAmSegment) => ({
             text: s.text,
             start: s.start,
             end: s.end,
@@ -212,7 +211,7 @@ export const transcribeCallFn = inngest.createFunction(
             | "gigaam-async-diarized-fallback"
             | "gigaam-async-diarized",
           success: !diarizeResult.diarizationFailed,
-          utterances: (diarizeResult.segments || []).map((s) => ({
+          utterances: (diarizeResult.segments || []).map((s: GigaAmSegment) => ({
             text: s.text,
             start: s.start,
             end: s.end,

@@ -2,14 +2,11 @@
  * Предобработка аудио через pipeline
  */
 
-import { filesService } from "@calls/db";
 import { runPipelineAudioPreprocess } from "@calls/asr/pipeline/transcribe-pipeline-audio";
-import { z } from "zod";
-import { createLogger } from "~/logger";
-import { FileSchema, PipelineAudioResultSchema } from "~/inngest/functions/transcribe-call/schemas";
+import { filesService } from "@calls/db";
+import type { z } from "zod";
 import type { Call, PipelineAudioResult } from "~/inngest/functions/transcribe-call/schemas";
-
-const logger = createLogger("transcribe-call:preprocess");
+import { FileSchema, PipelineAudioResultSchema } from "~/inngest/functions/transcribe-call/schemas";
 
 export interface PreprocessResult extends PipelineAudioResult {
   durationSeconds: number | null;
