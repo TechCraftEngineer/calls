@@ -232,6 +232,10 @@ export async function asyncDiarizedTranscriptionWithCallback(
       throw new Error("GigaAM вернул completed статус без транскрипции");
     }
 
+    if (!eventData.result.segments || eventData.result.segments.length === 0) {
+      throw new Error("GigaAM вернул completed статус без сегментов диаризации");
+    }
+
     logger.info("Асинхронная диаризированная транскрибация завершена через callback", {
       callId,
       taskId,
@@ -246,6 +250,7 @@ export async function asyncDiarizedTranscriptionWithCallback(
         start: s.start,
         end: s.end,
         text: s.text,
+        confidence: s.confidence,
       })),
       processingTimeMs: 0, // Неизвестно при callback-модели
       taskId,

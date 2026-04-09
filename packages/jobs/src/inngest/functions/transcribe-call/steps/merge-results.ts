@@ -6,13 +6,14 @@ import { createLogger } from "~/logger";
 import { applyLLMMerging } from "~/inngest/functions/transcribe-call/llm/merge";
 import type { SyncTranscriptionResult } from "./sync-transcription";
 
-// Локальный интерфейс (раньше импортировался из diarize-and-transcribe)
-interface DiarizeResult {
+// Интерфейс результата диаризации
+export interface DiarizeResult {
   segments: Array<{
     speaker: string;
     text: string;
     start: number;
     end: number;
+    confidence?: number;
   }>;
   transcript: string;
   processingTimeMs: number;

@@ -111,30 +111,23 @@ export function renderCallTopicCell(transcript: CallWithDetails["transcript"]) {
   }
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <Tooltip>
+      <TooltipTrigger asChild>
         <button
           type="button"
-          onClick={(e) => e.stopPropagation()}
-          tabIndex={0}
-          aria-haspopup="dialog"
-          aria-label={callTopic}
-          className="block min-w-0 max-w-full truncate cursor-pointer bg-transparent border-0 p-0 text-[#555] font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              // `PopoverTrigger` с `asChild` (через `composeEventHandlers`) вешает обработчики клика
-              // на дочерний элемент, поэтому для Enter/Space полагаемся на нативную активацию кнопки.
-            }
-          }}
+          className="block min-w-0 max-w-full truncate cursor-default bg-transparent border-0 p-0 text-[#555] font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {callTopic}
         </button>
-      </PopoverTrigger>
-      <PopoverContent className="max-w-md whitespace-pre-wrap text-left">
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="max-w-md max-h-80 overflow-y-auto whitespace-pre-wrap text-left"
+      >
         <div className="font-medium mb-1">Тема звонка</div>
         {callTopic}
-      </PopoverContent>
-    </Popover>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

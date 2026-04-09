@@ -30,6 +30,7 @@ import {
   summarize,
   validateInput,
 } from "~/inngest/functions/transcribe-call/steps";
+import type { DiarizeResult } from "~/inngest/functions/transcribe-call/steps/merge-results";
 import { TranscriptionResultSchema } from "~/inngest/functions/transcribe-call/schemas";
 import type { ZodIssue } from "zod";
 import type { AsyncTranscriptionResult } from "~/inngest/functions/transcribe-call/steps/async-transcription";
@@ -120,7 +121,7 @@ export const transcribeCallFn = inngest.createFunction(
     }
 
     const mergedResult = await step.run("llm/merge-asr", () =>
-      mergeResults(fullTranscription, diarizeResult as { segments: Array<{ speaker: string; text: string; start: number; end: number; }>; transcript: string; processingTimeMs: number; diarizationSuccess: boolean; diarizationFailed: boolean; }, callId),
+      mergeResults(fullTranscription, diarizeResult as DiarizeResult, callId),
     ) as MergeResult;
 
     // Вычисляем общее время обработки с дефолтными значениями

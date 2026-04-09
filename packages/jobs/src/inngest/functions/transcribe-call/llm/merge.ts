@@ -153,6 +153,8 @@ function splitIntoChunks(
   if (!firstSegment || !lastSegment) return [];
 
   const totalDuration = lastSegment.end - firstSegment.start;
+  // Защита от деления на ноль
+  if (segments.length === 0) return [];
   const avgSegmentDuration = totalDuration / segments.length;
 
   // Оцениваем сколько сегментов поместится в один чанк
@@ -200,6 +202,16 @@ function extractTranscriptSlice(
   totalDuration: number,
 ): string {
   if (totalDuration <= 0 || transcript.length === 0) return transcript;
+
+  // Валидация параметров
+  if (startTime < 0 || endTime > totalDuration || startTime > endTime) {
+    logger.warn("Invalid time parameters for transcript slice", {
+      startTime,
+      endTime,
+      totalDuration,
+    });
+    return transcript;
+  }
 
   const ratio = startTime / totalDuration;
   const endRatio = endTime / totalDuration;
@@ -346,6 +358,22 @@ async function mergeWithChunking(
   // Разбиваем на чанки
   const chunks = splitIntoChunks(diarized.segments, nonDiarized.transcript, CHUNK_TARGET_TOKENS);
 
+  if (chunks.length === 0) {
+    logger.warn("No chunks created for processing, using fallback", {
+      requestId,
+      segmentsCount: diarized.segments.length,
+    });
+    return {
+      segments: diarized.segments,
+      mergedTranscript: diarized.transcript,
+      quality: {
+        score: 0.3,
+        improvements: ["Не удалось создать чанки для обработки"],
+      },
+      fallbackReason: "no_chunks_created",
+    };
+  }
+
   logger.info(`Split into ${chunks.length} chunks for processing`, {
     requestId,
     chunkCount: chunks.length,
@@ -380,7 +408,13 @@ async function mergeWithChunking(
       const failedChunk = chunks[i];
       if (failedChunk) {
         chunkResults.push({
-          segments: failedChunk.segments,
+          segments: failedChunk.segments.map((s) => ({
+            speaker: s.speaker,
+            start: s.start,
+            end: s.end,
+            text: s.text,
+            confidence: s.confidence, // Сохраняем confidence
+          })),
           chunkTranscript: failedChunk.segments.map((s) => s.text).join(" "),
           quality: {
             score: 0.5,
