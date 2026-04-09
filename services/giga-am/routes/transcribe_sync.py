@@ -24,26 +24,26 @@ async def transcribe_sync(
     filename: str = Form(...),
     diarization: Optional[str] = Form("false")
 ) -> JSONResponse:
+    """
+    Синхронная транскрипция аудио файла.
+
+    Возвращает результат сразу, без создания задачи в фоне.
+    Используется для первичной транскрибации в новой архитектуре.
+
+    Args:
+        file: Аудио файл
+        filename: Имя файла
+        diarization: Включить диаризацию (по умолчанию false)
+
+    Returns:
+        JSONResponse с результатом транскрипции
+    """
     # Валидация параметра diarization
     if diarization not in ["true", "false", None]:
         raise HTTPException(
             status_code=400,
             detail="diarization parameter must be 'true' or 'false'"
         )
-    """
-    Синхронная транскрипция аудио файла.
-    
-    Возвращает результат сразу, без создания задачи в фоне.
-    Используется для первичной транскрибации в новой архитектуре.
-    
-    Args:
-        file: Аудио файл
-        filename: Имя файла
-        diarization: Включить диаризацию (по умолчанию false)
-        
-    Returns:
-        JSONResponse с результатом транскрипции
-    """
     request_id = f"sync-req-{id(file) % 10000}"
     
     try:

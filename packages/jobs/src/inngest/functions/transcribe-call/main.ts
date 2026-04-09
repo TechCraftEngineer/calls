@@ -32,6 +32,12 @@ import {
 } from "./steps";
 import { TranscriptionResultSchema } from "./schemas";
 import type { ZodIssue } from "zod";
+import type { SyncTranscriptionResult } from "./steps/sync-transcription";
+import type { DiarizeResult } from "./steps/diarize-and-transcribe";
+import type { MergeResult } from "./steps/merge-results";
+import type { SummarizeResult } from "./steps/summarize";
+import type { IdentifyResult } from "./steps/identify-speakers";
+import type { Call } from "./schemas";
 
 const logger = createLogger("transcribe-call");
 
@@ -54,7 +60,7 @@ export const transcribeCallFn = inngest.createFunction(
     await step.run("validate/input", () => validateInput(callId));
 
     // === ШАГ 2: Получение данных звонка ===
-    const call = await step.run("db/calls:get", () => fetchCall(callId));
+    const call = await step.run("db/calls:get", () => fetchCall(callId)) as Call;
 
     // === ШАГ 3: Получение и валидация workspace ===
     const workspace = await step.run("db/workspaces:get", () =>
@@ -74,7 +80,7 @@ export const transcribeCallFn = inngest.createFunction(
     // === ШАГ 6: Синхронная полная транскрибация ===
     const fullTranscription = await step.run("asr:sync-full", () =>
       syncTranscription(pipelineAudio, callId),
-    ) as import("./steps/sync-transcription").SyncTranscriptionResult;
+    ) as SyncTranscriptionResult;
 
     // Сохраняем для использования в fallback
     const fullTranscript = fullTranscription.transcript;
@@ -102,7 +108,7 @@ export const transcribeCallFn = inngest.createFunction(
     // === ШАГ 8: Диаризация и асинхронная транскрибация ===
     const diarizeResult = await step.run("asr:diarize-and-transcribe", () =>
       diarizeAndTranscribe(pipelineAudio, callId),
-    );
+    ) as DiarizeResult;
 
     // Fallback: если диаризация не удалась, используем только синхронный результат
     if (diarizeResult.diarizationFailed) {
@@ -151,7 +157,7 @@ export const transcribeCallFn = inngest.createFunction(
     // === ШАГ 9: LLM Merging ===
     const mergedResult = await step.run("llm/merge-asr", () =>
       mergeResults(fullTranscription, diarizeResult, callId),
-    );
+    ) as MergeResult;
 
     // Вычисляем общее время обработки с дефолтными значениями
     const totalProcessingTimeMs =
@@ -162,7 +168,7 @@ export const transcribeCallFn = inngest.createFunction(
     logger.info("ASR + LLM processing completed", {
       callId,
       processingTimeMs: totalProcessingTimeMs,
-      asrProcessingTimeMs: fullTranscription.processingTimeMs + diarizeResult.processingTimeMs,
+      asrProcessingTimeMs: (fullTranscription.processingTimeMs || 0) + (diarizeResult.processingTimeMs || 0),
       llmMergeTimeMs: mergedResult.llmMergeTimeMs,
       processingTimeSeconds: Math.round((totalProcessingTimeMs / 1000) * 100) / 100,
     });
@@ -170,7 +176,7 @@ export const transcribeCallFn = inngest.createFunction(
     // === ШАГ 10: Валидация результата ===
     const validatedResult = await step.run("validate/transcription", () => {
       const diarizedText = mergedResult.segments
-        .map((s) => `${s.speaker}: ${s.text}`)
+        .map((s: { speaker: string; text: string }) => `${s.speaker}: ${s.text}`)
         .join("\n");
 
       const resultForValidation = {
@@ -186,6 +192,7 @@ export const transcribeCallFn = inngest.createFunction(
         metadata: {
           asrSource: "gigaam-sync-full-async-diarized-llm-merged",
           processingTimeMs: totalProcessingTimeMs,
+          asrLogs: [],
         },
       };
 
@@ -205,7 +212,7 @@ export const transcribeCallFn = inngest.createFunction(
     // === ШАГ 11: Генерация summary ===
     const summaryResult = await step.run("llm/summarize", () =>
       summarize(normalizedText, workspace, managerNameFromPbx, callId),
-    );
+    ) as SummarizeResult;
 
     // === ШАГ 12: Идентификация спикеров ===
     const identifyResult = await step.run("llm/identify-speakers", () =>
@@ -216,7 +223,7 @@ export const transcribeCallFn = inngest.createFunction(
         managerNameFromPbx,
         summaryResult.summary || undefined,
       ),
-    );
+    ) as IdentifyResult;
 
     // === ШАГ 13: Сохранение результатов ===
     await step.run("persist/transcript:upsert", () =>
