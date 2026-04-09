@@ -129,6 +129,7 @@ export const transcribeCallFn = inngest.createFunction(
     const diarizeResult = await asyncDiarizedTranscriptionWithCallback(
       pipelineAudio,
       callId,
+      fullTranscription.segments || [],
       step,
     );
 

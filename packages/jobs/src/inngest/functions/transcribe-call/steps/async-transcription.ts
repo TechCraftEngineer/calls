@@ -137,6 +137,7 @@ export async function asyncTranscriptionWithCallback(
 export async function asyncDiarizedTranscriptionWithCallback(
   pipelineAudio: PreprocessResult,
   callId: string,
+  segments: Array<{ speaker: string; start: number; end: number; text: string }>,
   step: unknown,
 ): Promise<AsyncTranscriptionResult> {
   const typedStep = step as {
@@ -155,7 +156,13 @@ export async function asyncDiarizedTranscriptionWithCallback(
       durationSeconds: pipelineAudio.durationSeconds,
     });
 
-    const result = await startAsyncDiarizedTranscription(buffer, filename, []);
+    const diarizationSegments = segments.map(s => ({
+      start: s.start,
+      end: s.end,
+      speaker: s.speaker,
+    }));
+
+    const result = await startAsyncDiarizedTranscription(buffer, filename, diarizationSegments);
 
     logger.info("Асинхронная диаризированная транскрибация запущена", {
       callId,
