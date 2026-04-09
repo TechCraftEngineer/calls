@@ -26,7 +26,7 @@ export async function asyncTranscriptionWithCallback(
 ): Promise<AsyncTranscriptionResult> {
   const typedStep = step as {
     run: <T>(id: string, fn: () => Promise<T>) => Promise<T>;
-    waitForEvent: <T>(eventName: string, options: { timeout: string; match: Record<string, string> }) => Promise<T | null>;
+    waitForEvent: <T>(id: string, options: { event: string; timeout: string; if: string }) => Promise<T | null>;
   };
   // Шаг 1: Запускаем асинхронную транскрибацию
   const { taskId } = await typedStep.run("asr/async-start", async () => {
@@ -49,23 +49,26 @@ export async function asyncTranscriptionWithCallback(
 
   // Шаг 2: Ожидаем событие завершения от GigaAM сервиса
   const completedEvent = await typedStep.waitForEvent<{
-    task_id: string;
-    status: "completed" | "failed";
-    result?: {
-      final_transcript?: string;
-      segments?: Array<{
-        speaker: string;
-        start: number;
-        end: number;
-        text: string;
-      }>;
+    data: {
+      task_id: string;
+      status: "completed" | "failed";
+      result?: {
+        final_transcript?: string;
+        segments?: Array<{
+          speaker: string;
+          start: number;
+          end: number;
+          text: string;
+        }>;
+      };
+      error?: string;
     };
-    error?: string;
   }>(
     "asr/wait-for-completion",
     {
+      event: "giga-am/transcription.completed",
       timeout: "10m", // 10 минут максимальное ожидание
-      match: { task_id: taskId },
+      if: `async.data.task_id == "${taskId}"`,
     },
   );
 
@@ -94,23 +97,25 @@ export async function asyncTranscriptionWithCallback(
       };
     }
 
-    if (completedEvent.status === "failed") {
-      throw new Error(`Асинхронная транскрипция завершилась с ошибкой: ${completedEvent.error || "Неизвестная ошибка"}`);
+    const eventData = completedEvent.data;
+
+    if (eventData.status === "failed") {
+      throw new Error(`Асинхронная транскрипция завершилась с ошибкой: ${eventData.error || "Неизвестная ошибка"}`);
     }
 
-    if (!completedEvent.result?.final_transcript) {
+    if (!eventData.result?.final_transcript) {
       throw new Error("GigaAM вернул completed статус без транскрипции");
     }
 
     logger.info("Асинхронная транскрибация завершена через callback", {
       callId,
       taskId,
-      transcriptLength: completedEvent.result.final_transcript.length,
+      transcriptLength: eventData.result.final_transcript.length,
     });
 
     return {
-      transcript: completedEvent.result.final_transcript,
-      segments: completedEvent.result.segments || [],
+      transcript: eventData.result.final_transcript,
+      segments: eventData.result.segments || [],
       processingTimeMs: 0, // Неизвестно при callback-модели
       taskId,
     };
