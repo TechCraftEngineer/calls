@@ -386,6 +386,77 @@ export const transcribeCallFn = inngest.createFunction(
       diarizedTranscriptLength: asrResults.diarized.transcript.length,
     });
 
+    // Проверка на пустой транскрипт (нет распознанной речи)
+    const hasNoSpeech = asrResults.nonDiarized.transcript.trim().length === 0 &&
+                       asrResults.diarized.transcript.trim().length === 0;
+
+    if (hasNoSpeech) {
+      logger.warn("ASR не распознал речь (пустой транскрипт)", {
+        callId,
+        processingTimeMs: asrResults.processingTimeMs,
+      });
+
+      // Сохраняем пустой транскрипт с меткой
+      await step.run("persist/no-speech-transcript", async () => {
+        await callsService.upsertTranscript({
+          callId,
+          text: "",
+          rawText: "",
+          confidence: null,
+          metadata: {
+            asrSource: "dual-gigaam-no-speech",
+            processingTimeMs: asrResults.processingTimeMs,
+            isAnsweringMachine: false,
+            llmMergeApplied: false,
+            llmMergeQuality: null,
+            speakerIdentificationApplied: false,
+            noSpeechDetected: true,
+          },
+          summary: null,
+          sentiment: "Не определено",
+          title: "Нет распознанной речи",
+          callType: "other",
+          callTopic: null,
+          customerName: undefined,
+        });
+      });
+
+      // Создаём evaluation что звонок не подлежит анализу
+      await step.run("persist/no-speech-evaluation", async () => {
+        await callsService.addEvaluation({
+          callId,
+          isQualityAnalyzable: false,
+          notAnalyzableReason: "no_speech_detected",
+          valueScore: null,
+          valueExplanation: "ASR не распознал речь в аудиофайле - возможно, файл поврежден, слишком тихий или не содержит речи",
+          managerScore: null,
+          managerFeedback: "Звонок не подлежит анализу (нет распознанной речи)",
+        });
+        logger.info("Создана оценка для звонка без речи", { callId });
+      });
+
+      logger.info("Обработка звонка без речи завершена", {
+        callId,
+        processingTimeMs: asrResults.processingTimeMs,
+        skippedSteps: [
+          "llm/merge-asr",
+          "llm/summarize",
+          "llm/identify-speakers",
+          "call.evaluate.requested",
+        ],
+      });
+
+      return {
+        callId,
+        processingTimeMs: asrResults.processingTimeMs,
+        asrSource: "dual-gigaam-no-speech",
+        textLength: 0,
+        customerName: null,
+        llmMergeApplied: false,
+        isAnsweringMachine: false,
+      };
+    }
+
     // Проверка на автоответчик сразу после базового ASR
     // Это позволяет пропустить дорогие операции (diarization, speaker identification, evaluation)
     const isAnsweringMachine = await step.run("detect/answering-machine", async () => {
