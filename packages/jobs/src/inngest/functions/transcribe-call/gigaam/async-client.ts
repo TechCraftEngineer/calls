@@ -34,7 +34,7 @@ function isTransientError(error: unknown): boolean {
 
   // Проверяем на 5xx ошибки из GigaAM API
   const statusMatch = errorMessage.match(/status (\d{3})/);
-  if (statusMatch) {
+  if (statusMatch && statusMatch[1]) {
     const status = parseInt(statusMatch[1], 10);
     return status >= 500;
   }

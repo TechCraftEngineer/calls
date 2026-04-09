@@ -23,12 +23,38 @@ router = APIRouter()
 _task_store: dict[str, dict[str, Any]] = {}
 _task_store_lock = threading.Lock()
 
+# Максимальное время хранения завершенных задач (в секундах)
+_TASK_RETENTION_SECONDS = 3600  # 1 час
+
 # ThreadPoolExecutor для фонового выполнения задач
 _executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="diarization")
 
 # Inngest конфигурация
 INNGEST_API_URL = os.getenv("INNGEST_API_URL", "http://localhost:3001")
 INNGEST_EVENT_KEY = os.getenv("INNGEST_EVENT_KEY", "")
+
+
+def _cleanup_old_tasks():
+    """
+    Удаляет старые завершенные задачи из хранилища для предотвращения memory leak.
+    Задачи удаляются если они завершены (completed/failed) и старше _TASK_RETENTION_SECONDS.
+    """
+    current_time = time.time()
+    tasks_to_remove = []
+
+    with _task_store_lock:
+        for task_id, task_data in _task_store.items():
+            # Удаляем только завершенные задачи
+            if task_data["status"] in ("completed", "failed"):
+                age_seconds = current_time - task_data["updated_at"]
+                if age_seconds > _TASK_RETENTION_SECONDS:
+                    tasks_to_remove.append(task_id)
+
+        for task_id in tasks_to_remove:
+            del _task_store[task_id]
+
+    if tasks_to_remove:
+        logger.info(f"Cleaned up {len(tasks_to_remove)} old tasks from task store")
 
 
 async def send_inngest_event(
@@ -38,7 +64,7 @@ async def send_inngest_event(
     error: str | None = None,
 ) -> bool:
     """
-    Отправка события в Inngest о завершении задачи диаризации.
+    Отправка события в Inngest о завершении задачи диаризации (async версия).
 
     Args:
         task_id: ID задачи
@@ -65,6 +91,65 @@ async def send_inngest_event(
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
             response = await client.post(
+                f"{INNGEST_API_URL}/v1/events",
+                headers={
+                    "Authorization": f"Bearer {INNGEST_EVENT_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "name": event_name,
+                    "data": payload,
+                },
+            )
+
+            if response.status_code == 200:
+                logger.info(f"Sent Inngest event {event_name} for task {task_id}")
+                return True
+            else:
+                logger.error(
+                    f"Failed to send Inngest event: {response.status_code} {response.text}"
+                )
+                return False
+    except Exception as e:
+        logger.error(f"Error sending Inngest event: {e}", exc_info=True)
+        return False
+
+
+def send_inngest_event_sync(
+    task_id: str,
+    status: str,
+    result: dict[str, Any] | None = None,
+    error: str | None = None,
+) -> bool:
+    """
+    Отправка события в Inngest о завершении задачи диаризации (sync версия).
+    Используется в фоновых задачах без event loop.
+
+    Args:
+        task_id: ID задачи
+        status: Статус (completed/failed)
+        result: Результат диаризации
+        error: Ошибка если есть
+
+    Returns:
+        True если успешно отправлено
+    """
+    if not INNGEST_EVENT_KEY:
+        logger.warning("INNGEST_EVENT_KEY not configured, skipping callback")
+        return False
+
+    event_name = "speaker-embeddings/diarization.completed"
+
+    payload = {
+        "task_id": task_id,
+        "status": status,
+        "result": result,
+        "error": error,
+    }
+
+    try:
+        with httpx.Client(timeout=20.0) as client:
+            response = client.post(
                 f"{INNGEST_API_URL}/v1/events",
                 headers={
                     "Authorization": f"Bearer {INNGEST_EVENT_KEY}",
@@ -124,8 +209,7 @@ def _run_diarization_task(
         logger.info(f"Background diarization task completed: {task_id}")
 
         # Отправляем событие в Inngest
-        import asyncio
-        asyncio.run(send_inngest_event(task_id, "completed", result=result))
+        send_inngest_event_sync(task_id, "completed", result=result)
 
     except Exception as exc:
         logger.exception(f"Background diarization task failed: {task_id}")
@@ -136,8 +220,7 @@ def _run_diarization_task(
             _task_store[task_id]["updated_at"] = time.time()
 
         # Отправляем событие об ошибке в Inngest
-        import asyncio
-        asyncio.run(send_inngest_event(task_id, "failed", error=str(exc)))
+        send_inngest_event_sync(task_id, "failed", error=str(exc))
 
 
 @router.post("/api/diarize")
@@ -290,6 +373,15 @@ async def diarize_async(
             raise HTTPException(status_code=400, detail="max_speakers must be a positive integer")
         if min_speakers is not None and max_speakers is not None and min_speakers > max_speakers:
             raise HTTPException(status_code=400, detail="min_speakers must be less than or equal to max_speakers")
+        # Проверка, что num_speakers находится в диапазоне [min_speakers, max_speakers]
+        if num_speakers is not None:
+            if min_speakers is not None and num_speakers < min_speakers:
+                raise HTTPException(status_code=400, detail="num_speakers must be greater than or equal to min_speakers")
+            if max_speakers is not None and num_speakers > max_speakers:
+                raise HTTPException(status_code=400, detail="num_speakers must be less than or equal to max_speakers")
+
+        # Очищаем старые завершенные задачи для предотвращения memory leak
+        _cleanup_old_tasks()
 
         # Генерируем task_id
         task_id = str(uuid.uuid4())
@@ -317,7 +409,7 @@ async def diarize_async(
 
         logger.info(f"Async diarization task created: {task_id}")
 
-        return {"task_id": task_id, "status": "pending"}
+        return {"task_id": task_id, "status": "pending"}, 202
 
     except HTTPException:
         raise
