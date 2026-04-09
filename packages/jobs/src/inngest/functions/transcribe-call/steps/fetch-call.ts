@@ -4,8 +4,8 @@
 
 import { callsService } from "@calls/db";
 import type { z } from "zod";
-import type { Call } from "~/inngest/functions/transcribe-call/schemas";
-import { CallSchema } from "~/inngest/functions/transcribe-call/schemas";
+import type { Call } from "../schemas";
+import { CallSchema } from "../schemas";
 
 export async function fetchCall(callId: string): Promise<Call> {
   const c = await callsService.getCall(callId);

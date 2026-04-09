@@ -10,8 +10,8 @@ import { z } from "zod";
 import {
   extractSegmentsFromUtterances,
   extractSpeakerTimeline,
-} from "~/inngest/functions/transcribe-call/utils/extraction";
-import { createLogger } from "~/logger";
+} from "../../../../inngest/functions/transcribe-call/utils/extraction";
+import { createLogger } from "../../../../logger";
 
 const logger = createLogger("speaker-identification");
 

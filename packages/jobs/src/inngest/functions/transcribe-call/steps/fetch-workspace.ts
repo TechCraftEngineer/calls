@@ -4,10 +4,10 @@
 
 import { workspacesService } from "@calls/db";
 import type { z } from "zod";
-import { createLogger } from "~/logger";
-import { WorkspaceSchema } from "~/inngest/functions/transcribe-call/schemas";
-import { validateWorkspace } from "~/inngest/functions/transcribe-call/utils/validation";
-import type { Workspace } from "~/inngest/functions/transcribe-call/schemas";
+import { createLogger } from "../../../../logger";
+import type { Workspace } from "../schemas";
+import { WorkspaceSchema } from "../schemas";
+import { validateWorkspace } from "../utils/validation";
 
 const logger = createLogger("transcribe-call:fetch-workspace");
 

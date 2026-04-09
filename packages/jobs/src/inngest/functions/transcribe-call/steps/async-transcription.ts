@@ -3,12 +3,9 @@
  * Запускает задачу и ждёт событие завершения через step.waitForEvent.
  */
 
-import { downloadAudioFile } from "~/inngest/functions/transcribe-call/audio/download";
-import {
-  getAsyncResult,
-  startAsyncTranscription,
-} from "~/inngest/functions/transcribe-call/gigaam/client";
-import { createLogger } from "~/logger";
+import { createLogger } from "../../../../logger";
+import { downloadAudioFile } from "../audio/download";
+import { getAsyncResult, startAsyncTranscription } from "../gigaam/client";
 import type { PreprocessResult } from "./preprocess-audio";
 import type { StepRunner, StepRunnerWithSleep } from "./step-runner";
 import type { SyncTranscriptionResult } from "./sync-transcription";
@@ -211,12 +208,8 @@ export async function asyncDiarizedTranscriptionWithCallback(
 
   // Шаг 1: Запускаем асинхронную диаризированную транскрибацию
   const { taskId } = await typedStep.run("asr/async-diarized-start", async () => {
-    const { downloadAudioFile } = await import(
-      "~/inngest/functions/transcribe-call/audio/download"
-    );
-    const { startAsyncDiarizedTranscription } = await import(
-      "~/inngest/functions/transcribe-call/gigaam/client"
-    );
+    const { downloadAudioFile } = await import("../audio/download");
+    const { startAsyncDiarizedTranscription } = await import("../gigaam/client");
     const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
 
     logger.info("Запуск асинхронной диаризированной транскрибации", {
@@ -275,9 +268,7 @@ export async function asyncDiarizedTranscriptionWithCallback(
         taskId,
       });
 
-      const { getAsyncDiarizedResult } = await import(
-        "~/inngest/functions/transcribe-call/gigaam/client"
-      );
+      const { getAsyncDiarizedResult } = await import("../gigaam/client");
 
       const { result, pollTimeMs } = await pollWithRetry(
         taskId,
@@ -384,17 +375,13 @@ export async function asyncTranscriptionWithPolling(
 
   while (attempts < maxAttempts) {
     const status = await typedStep.run(`asr/check-status-${attempts}`, async () => {
-      const { checkAsyncTaskStatus } = await import(
-        "~/inngest/functions/transcribe-call/gigaam/client"
-      );
+      const { checkAsyncTaskStatus } = await import("../gigaam/client");
       return await checkAsyncTaskStatus(taskId);
     });
 
     if (status.status === "completed") {
       const result = await typedStep.run("asr/get-result", async () => {
-        const { getAsyncResult } = await import(
-          "~/inngest/functions/transcribe-call/gigaam/client"
-        );
+        const { getAsyncResult } = await import("../gigaam/client");
         return await getAsyncResult(taskId);
       });
 

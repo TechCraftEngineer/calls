@@ -2,11 +2,12 @@
  * Извлечение данных из результатов ASR
  */
 
-import type { GigaAmSegment, SpeakerTimelineItem } from "~/inngest/functions/transcribe-call/types";
+import type {
+  GigaAmSegment,
+  SpeakerTimelineItem,
+} from "../../../../inngest/functions/transcribe-call/types";
 
-export function extractSpeakerTimeline(gigaAmRaw: unknown):
-  | SpeakerTimelineItem[]
-  | undefined {
+export function extractSpeakerTimeline(gigaAmRaw: unknown): SpeakerTimelineItem[] | undefined {
   const raw = gigaAmRaw as { diarization?: { segments?: unknown } } | undefined;
 
   if (!raw?.diarization?.segments || !Array.isArray(raw.diarization.segments)) {
@@ -33,9 +34,7 @@ export function extractSpeakerTimeline(gigaAmRaw: unknown):
   });
 }
 
-export function extractSegmentsFromUtterances(utterances: unknown[]):
-  | GigaAmSegment[]
-  | undefined {
+export function extractSegmentsFromUtterances(utterances: unknown[]): GigaAmSegment[] | undefined {
   if (!Array.isArray(utterances)) {
     return undefined;
   }

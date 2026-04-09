@@ -5,8 +5,8 @@
 import { runPipelineAudioPreprocess } from "@calls/asr/pipeline/transcribe-pipeline-audio";
 import { filesService } from "@calls/db";
 import type { z } from "zod";
-import type { Call, PipelineAudioResult } from "~/inngest/functions/transcribe-call/schemas";
-import { FileSchema, PipelineAudioResultSchema } from "~/inngest/functions/transcribe-call/schemas";
+import type { Call, PipelineAudioResult } from "../schemas";
+import { FileSchema, PipelineAudioResultSchema } from "../schemas";
 
 export interface PreprocessResult extends PipelineAudioResult {
   durationSeconds: number | null;

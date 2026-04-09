@@ -5,13 +5,13 @@
  * Синхронная модель через performDiarization УБРАНА.
  */
 
-import { createLogger } from "~/logger";
-import type { AsrResult } from "~/inngest/functions/transcribe-call/types";
+import { createLogger } from "../../../../logger";
+import type { AsrResult } from "../types";
 import {
   processAudioWithoutDiarization,
   startAsyncDiarizedTranscription,
   waitForAsyncDiarizedResult,
-} from "~/inngest/functions/transcribe-call/gigaam/client";
+} from "./client";
 
 const logger = createLogger("gigaam-diarization");
 
@@ -41,19 +41,21 @@ export async function processAudioWithDiarization(
     const processingTime = Date.now() - requestStartTime;
 
     // Конвертируем результат в стандартный AsrResult формат
-    const transcribedSegments = diarizedResult.segments.map((seg: {
-      text: string;
-      start: number;
-      end: number;
-      speaker?: string;
-      confidence: number;
-    }) => ({
-      speaker: seg.speaker ?? "UNKNOWN",
-      start: seg.start,
-      end: seg.end,
-      text: seg.text,
-      confidence: seg.confidence,
-    }));
+    const transcribedSegments = diarizedResult.segments.map(
+      (seg: {
+        text: string;
+        start: number;
+        end: number;
+        speaker?: string;
+        confidence: number;
+      }) => ({
+        speaker: seg.speaker ?? "UNKNOWN",
+        start: seg.start,
+        end: seg.end,
+        text: seg.text,
+        confidence: seg.confidence,
+      }),
+    );
 
     logger.info("Диаризация и транскрибация завершена", {
       filename,

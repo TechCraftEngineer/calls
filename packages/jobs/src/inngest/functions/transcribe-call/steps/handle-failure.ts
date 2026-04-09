@@ -4,8 +4,8 @@
 
 import { callsService } from "@calls/db";
 import type { FailureEventArgs } from "inngest";
-import { TranscribeCallEventSchema } from "~/inngest/functions/transcribe-call/schemas";
-import { createLogger } from "~/logger";
+import { createLogger } from "../../../../logger";
+import { TranscribeCallEventSchema } from "../schemas";
 
 const logger = createLogger("transcribe-call:failure");
 

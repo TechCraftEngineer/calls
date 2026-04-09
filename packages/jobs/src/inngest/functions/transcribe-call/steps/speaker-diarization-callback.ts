@@ -3,12 +3,9 @@
  * Запускает задачу и ждёт событие завершения через step.waitForEvent.
  */
 
-import { downloadAudioFile } from "~/inngest/functions/transcribe-call/audio/download";
-import {
-  shouldUseSpeakerEmbeddings,
-  startSpeakerDiarization,
-} from "~/inngest/functions/transcribe-call/speakers/diarization";
-import { createLogger } from "~/logger";
+import { createLogger } from "../../../../logger";
+import { downloadAudioFile } from "../audio/download";
+import { shouldUseSpeakerEmbeddings, startSpeakerDiarization } from "../speakers/diarization";
 import type { PreprocessResult } from "./preprocess-audio";
 import type { StepRunner } from "./step-runner";
 

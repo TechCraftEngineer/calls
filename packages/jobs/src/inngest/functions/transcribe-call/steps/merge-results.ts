@@ -2,7 +2,7 @@
  * LLM Merging: объединение синхронного non-diarized с асинхронным diarized
  */
 
-import { applyLLMMerging } from "~/inngest/functions/transcribe-call/llm/merge";
+import { applyLLMMerging } from "../llm/merge";
 import type { SyncTranscriptionResult } from "./sync-transcription";
 
 // Интерфейс результата диаризации
