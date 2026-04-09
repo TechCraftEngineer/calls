@@ -1,6 +1,6 @@
 /**
- * Асинхронный клиент для GigaAM с polling статуса.
- * Используется как fallback если Inngest callback не настроен.
+ * Асинхронный клиент для GigaAM с callback или polling.
+ * Приоритет: callback > polling
  */
 
 import { env } from "@calls/config";

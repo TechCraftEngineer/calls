@@ -57,6 +57,8 @@ export const env = createEnv({
 
     // Speaker diarization service
     SPEAKER_EMBEDDINGS_URL: z.url().default("https://vnggncb-speaker-embeddings.hf.space/"),
+    /** Использовать асинхронный режим для speaker-embeddings (рекомендуется для длинных аудио) */
+    SPEAKER_EMBEDDINGS_ASYNC_MODE: z.coerce.boolean().default(true),
 
     // LLM correction for dual ASR
     ENABLE_DUAL_ASR_LLM_CORRECTION: z.coerce.boolean().default(true),
@@ -66,6 +68,7 @@ export const env = createEnv({
     MAX_FILE_SIZE_BYTES: z.coerce.number().default(100 * 1024 * 1024), // 100MB
 
     // Inngest
+    INNGEST_API_URL: z.string().default("http://localhost:3001"),
     INNGEST_SIGNING_KEY: z.string().optional(),
     INNGEST_EVENT_KEY: z.string().optional(),
 
@@ -115,9 +118,11 @@ export const env = createEnv({
     AUDIO_ENHANCER_ENABLED: process.env.AUDIO_ENHANCER_ENABLED,
     AUDIO_ENHANCER_URL: process.env.AUDIO_ENHANCER_URL,
     SPEAKER_EMBEDDINGS_URL: process.env.SPEAKER_EMBEDDINGS_URL,
+    SPEAKER_EMBEDDINGS_ASYNC_MODE: process.env.SPEAKER_EMBEDDINGS_ASYNC_MODE,
     ENABLE_DUAL_ASR_LLM_CORRECTION: process.env.ENABLE_DUAL_ASR_LLM_CORRECTION,
     MIN_FILE_SIZE_BYTES: process.env.MIN_FILE_SIZE_BYTES,
     MAX_FILE_SIZE_BYTES: process.env.MAX_FILE_SIZE_BYTES,
+    INNGEST_API_URL: process.env.INNGEST_API_URL,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
     INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
     AWS_S3_ENDPOINT: process.env.AWS_S3_ENDPOINT,

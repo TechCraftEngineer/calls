@@ -42,11 +42,7 @@ export async function quickAnsweringMachineCheck(
 
   try {
     // Шаг 1: Обрезаем первые 30 секунд
-    const segmentBuffer = await extractAudioSegment(
-      audioBuffer,
-      0,
-      QUICK_CHECK_DURATION_SECONDS,
-    );
+    const segmentBuffer = await extractAudioSegment(audioBuffer, 0, QUICK_CHECK_DURATION_SECONDS);
 
     logger.info("Аудио сегмент извлечен", {
       filename,
@@ -116,15 +112,10 @@ export async function quickAnsweringMachineCheck(
 /**
  * Проверяет, нужно ли запускать быструю проверку на основе длительности звонка.
  *
- * @param durationSeconds - Длительность звонка в секундах
- * @returns true если нужна быстрая проверка
+ * @param durationSeconds - Длительность звонка в секундах (не используется, проверка всегда запускается)
+ * @returns true если нужна быстрая проверка (всегда true)
  */
-export function shouldRunQuickCheck(durationSeconds: number | null | undefined): boolean {
-  // Если длительность неизвестна, запускаем быструю проверку на всякий случай
-  if (durationSeconds === null || durationSeconds === undefined) {
-    return true;
-  }
-
-  // Быстрая проверка для звонков менее 2 минут (120 секунд)
-  return durationSeconds < 120;
+export function shouldRunQuickCheck(_durationSeconds: number | null | undefined): boolean {
+  // Быстрая проверка запускается для всех звонков независимо от длительности
+  return true;
 }

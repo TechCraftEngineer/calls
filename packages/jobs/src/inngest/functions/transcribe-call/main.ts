@@ -17,7 +17,7 @@ import { shouldSkipExpensiveProcessing } from "../../../evaluation";
 import { createLogger } from "../../../logger";
 import { evaluateRequested, inngest, transcribeRequested } from "../../client";
 import { downloadAudioFile } from "./audio/download";
-import { processAudioWithoutDiarization } from "./gigaam/client";
+import { processAudioWithGigaAmAuto } from "./gigaam/client";
 import { processAudioWithDiarization } from "./gigaam/diarization";
 import { applyLLMMerging } from "./llm-merge";
 import { resolveManagerFromPbx } from "./manager-resolution";
@@ -188,9 +188,13 @@ export const transcribeCallFn = inngest.createFunction(
       const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
 
       // === БЫСТРАЯ ПРОВЕРКА НА АВТООТВЕТЧИК ===
-      // Проверяем первые 30 секунд только для звонков < 2 минут
-      // Это экономит ресурсы на автоответчиках коротких звонков
-      let quickCheck: { isAnsweringMachine: boolean; transcript: string; confidence: "high" | "medium" | "low" } | null = null;
+      // Проверяем первые 30 секунд для всех звонков
+      // Это экономит ресурсы на автоответчиках
+      let quickCheck: {
+        isAnsweringMachine: boolean;
+        transcript: string;
+        confidence: "high" | "medium" | "low";
+      } | null = null;
 
       if (shouldRunQuickCheck(pipelineAudio.durationSeconds)) {
         logger.info("Запуск быстрой проверки на автоответчик (первые 30 секунд)", {
@@ -226,12 +230,14 @@ export const transcribeCallFn = inngest.createFunction(
         } catch (quickCheckError) {
           logger.warn("Ошибка быстрой проверки, продолжаем полный pipeline", {
             callId,
-            error: quickCheckError instanceof Error ? quickCheckError.message : String(quickCheckError),
+            error:
+              quickCheckError instanceof Error ? quickCheckError.message : String(quickCheckError),
           });
           // Продолжаем основной pipeline при ошибке быстрой проверки
         }
       } else {
-        logger.info("Быстрая проверка пропущена (звонок > 2 минут), сразу запускаем полный pipeline", {
+        // Fallback: если логика shouldRunQuickCheck изменится в будущем
+        logger.info("Быстрая проверка пропущена, сразу запускаем полный pipeline", {
           callId,
           durationSeconds: pipelineAudio.durationSeconds,
         });
@@ -239,7 +245,7 @@ export const transcribeCallFn = inngest.createFunction(
 
       // Параллельный запуск двух ASR с fallback механизмом
       const [nonDiarizedSettled, diarizedSettled] = await Promise.allSettled([
-        processAudioWithoutDiarization(buffer, filename),
+        processAudioWithGigaAmAuto(buffer, filename),
         processAudioWithDiarization(buffer, filename),
       ]);
 

@@ -8,12 +8,12 @@
  */
 
 import { createLogger } from "../../../../logger";
-import { checkSpeakerEmbeddingsHealth, performDiarization } from "../speaker-diarization";
+import { checkSpeakerEmbeddingsHealth, performDiarizationAuto } from "../speaker-diarization";
 import type { AsrResult } from "../types";
 import {
   type DiarizationSegmentInput,
+  processAudioWithDiarizationAuto,
   processAudioWithoutDiarization,
-  processDiarizedAudioWithGigaAm,
 } from "./client";
 
 const logger = createLogger("gigaam-diarization");
@@ -35,7 +35,7 @@ export async function processAudioWithDiarization(
     }
 
     // Шаг 1: Диаризация через speaker-embeddings
-    const diarizationResult = await performDiarization(audioBuffer, filename);
+    const diarizationResult = await performDiarizationAuto(audioBuffer, filename);
 
     if (!diarizationResult.success || diarizationResult.segments.length === 0) {
       logger.warn("Диаризация не удалась, используем обычную транскрипцию", {
@@ -65,7 +65,7 @@ export async function processAudioWithDiarization(
       segmentsCount: segmentsInput.length,
     });
 
-    const diarizedResult = await processDiarizedAudioWithGigaAm(
+    const diarizedResult = await processAudioWithDiarizationAuto(
       audioBuffer,
       filename,
       segmentsInput,

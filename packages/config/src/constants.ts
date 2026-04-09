@@ -30,6 +30,8 @@ export const SPEAKER_CONFIG = {
   TIMEOUT_MS: 1_800_000,
   /** Таймаут для health check (60 секунд) */
   HEALTH_TIMEOUT_MS: 60_000,
+  /** Таймаут для асинхронного запроса (60 секунд) - учитывает холодный старт сервиса */
+  ASYNC_REQUEST_TIMEOUT_MS: 60_000,
 } as const;
 
 /**
