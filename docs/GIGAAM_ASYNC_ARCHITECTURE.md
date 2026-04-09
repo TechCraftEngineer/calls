@@ -9,9 +9,9 @@
 
 ## Решение
 
-Реализована асинхронная архитектура с двумя режимами работы:
+Реализована асинхронная архитектура с callback режимом.
 
-### Режим 1: Inngest Callback (рекомендуется)
+### Inngest Callback режим
 
 GigaAM сервис отправляет событие в Inngest когда транскрипция завершена.
 
@@ -36,25 +36,9 @@ import { gigaAmCompletedFn } from "@calls/jobs";
 // Слушает событие giga-am/transcription.completed
 ```
 
-### Режим 2: Polling (fallback)
+### Примечание
 
-Если Inngest callback не настроен (нет `INNGEST_EVENT_KEY`), используется polling.
-
-**Поток:**
-1. Inngest вызывает `/api/transcribe-async` → получает `task_id`
-2. Inngest опрашивает `/api/status/{task_id}` каждые 30 сек
-3. Максимум 60 попыток (30 минут)
-4. Когда статус `completed` - продолжаем pipeline
-
-**Автоматическое переключение:**
-```typescript
-import { processAudioWithGigaAmAuto } from "./gigaam/client";
-
-// Автоматически выбирает режим:
-// - Если INNGEST_EVENT_KEY настроен → callback режим
-// - Иначе → polling режим
-const result = await processAudioWithGigaAmAuto(audioBuffer, filename);
-```
+Polling режим был удален. Теперь используется только callback режим через Inngest события.
 
 ## Новые API эндпоинты
 
@@ -79,25 +63,6 @@ const result = await processAudioWithGigaAmAuto(audioBuffer, filename);
 }
 ```
 
-### GET /api/status/{task_id}
-
-Проверяет статус задачи.
-
-**Response:**
-```json
-{
-  "task_id": "uuid",
-  "filename": "audio.wav",
-  "status": "completed",  // pending | processing | completed | failed
-  "result": { ... },      // только если status == completed
-  "error": "...",         // только если status == failed
-  "created_at": "2024-01-01T00:00:00",
-  "started_at": "2024-01-01T00:00:05",
-  "completed_at": "2024-01-01T00:05:30",
-  "processing_time_seconds": 325
-}
-```
-
 ### GET /api/tasks/stats
 
 Статистика по задачам.
@@ -115,39 +80,31 @@ const result = await processAudioWithGigaAmAuto(audioBuffer, filename);
 
 ## Использование в коде
 
-### Автоматический выбор режима (рекомендуется)
+### Запуск асинхронной транскрипции (callback режим)
 
 ```typescript
-import { processAudioWithGigaAmAuto } from "./gigaam/client";
-
-// Автоматически использует callback если настроен INNGEST_EVENT_KEY
-// Иначе использует polling
-const result = await processAudioWithGigaAmAuto(audioBuffer, filename);
-```
-
-### Принудительный polling
-
-```typescript
-import { startAsyncTranscription } from "./gigaam/client";
-import { waitForAsyncTranscription } from "./gigaam/async-client";
+import { startAsyncTranscriptionCallback } from "./gigaam/client";
 
 // Запуск асинхронной задачи
-const { taskId } = await startAsyncTranscription(audioBuffer, filename);
+const { taskId } = await startAsyncTranscriptionCallback(audioBuffer, filename);
 
-// Ожидание завершения через polling
-const result = await waitForAsyncTranscription(taskId);
+// Результат будет отправлен через Inngest событие giga-am/transcription.completed
+// Обработка результата происходит в callback-handler.ts
 ```
 
-### Проверка доступности callback режима
+### Запуск асинхронной диаризированной транскрипции (callback режим)
 
 ```typescript
-import { isCallbackModeAvailable } from "./gigaam/async-client";
+import { startAsyncDiarizedTranscriptionCallback } from "./gigaam/client";
 
-if (isCallbackModeAvailable()) {
-  console.log("Callback режим доступен");
-} else {
-  console.log("Используется polling режим");
-}
+// Запуск асинхронной задачи с диаризацией
+const { taskId } = await startAsyncDiarizedTranscriptionCallback(
+  audioBuffer,
+  filename,
+  segments
+);
+
+// Результат будет отправлен через Inngest событие giga-am/transcription.completed
 ```
 
 ## Inngest Callback Handler

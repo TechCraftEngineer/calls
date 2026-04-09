@@ -1,6 +1,6 @@
 /**
  * Inngest функция для обработки callback событий от GigaAM.
- * Используется когда GIGA_AM_ASYNC_MODE=true и настроен INNGEST_EVENT_KEY.
+ * Используется когда настроен INNGEST_EVENT_KEY в Python сервисе.
  */
 
 import { z } from "zod";
