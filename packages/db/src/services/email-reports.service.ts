@@ -18,12 +18,21 @@ export interface EmailReportRecipient {
   reportSettings: {
     managedUserIds: string[];
   };
+  internalNumbers?: string[] | null;
 }
 
 function buildReportSettings(rs: ReportSettings) {
   return {
     managedUserIds: rs?.managedUserIds ?? [],
   };
+}
+
+function parseInternalExtensions(ext: string | null): string[] | null {
+  if (!ext || String(ext).trim().toLowerCase() === "all") return null;
+  return ext
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 /**
@@ -38,6 +47,7 @@ export async function getEmailReportRecipients(
       userId: schema.workspaceMembers.userId,
       role: schema.workspaceMembers.role,
       email: schema.user.email,
+      internalExtensions: schema.user.internalExtensions,
       notificationSettings: schema.userWorkspaceSettings.notificationSettings,
       reportSettings: schema.userWorkspaceSettings.reportSettings,
     })
@@ -76,6 +86,8 @@ export async function getEmailReportRecipients(
 
     const isAdmin = m.role === "owner" || m.role === "admin";
 
+    const internalNumbers = parseInternalExtensions(m.internalExtensions ?? null);
+
     if (reportType === "daily") {
       if (dailyEnabled) {
         recipients.push({
@@ -84,6 +96,7 @@ export async function getEmailReportRecipients(
           reportType: "daily",
           isManagerReport: false,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
       if (managerEnabled && isAdmin) {
@@ -93,6 +106,7 @@ export async function getEmailReportRecipients(
           reportType: "daily",
           isManagerReport: true,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
     } else if (reportType === "weekly") {
@@ -103,6 +117,7 @@ export async function getEmailReportRecipients(
           reportType: "weekly",
           isManagerReport: false,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
       if (managerEnabled && isAdmin) {
@@ -112,6 +127,7 @@ export async function getEmailReportRecipients(
           reportType: "weekly",
           isManagerReport: true,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
     } else if (reportType === "monthly") {
@@ -122,6 +138,7 @@ export async function getEmailReportRecipients(
           reportType: "monthly",
           isManagerReport: false,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
       if (managerEnabled && isAdmin) {
@@ -131,6 +148,7 @@ export async function getEmailReportRecipients(
           reportType: "monthly",
           isManagerReport: true,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
     }

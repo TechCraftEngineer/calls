@@ -22,12 +22,21 @@ export interface TelegramReportRecipient {
   skipWeekends: boolean;
   /** Настройки отчёта (только для isManagerReport) */
   reportSettings?: ReportSettingsForRecipient;
+  internalNumbers?: string[] | null;
 }
 
 function buildReportSettings(rs: ReportSettings): ReportSettingsForRecipient {
   return {
     managedUserIds: rs?.managedUserIds ?? [],
   };
+}
+
+function parseInternalExtensions(ext: string | null): string[] | null {
+  if (!ext || String(ext).trim().toLowerCase() === "all") return null;
+  return ext
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 /**
@@ -42,6 +51,7 @@ export async function getTelegramReportRecipients(
       userId: schema.workspaceMembers.userId,
       role: schema.workspaceMembers.role,
       telegramChatId: schema.user.telegramChatId,
+      internalExtensions: schema.user.internalExtensions,
       notificationSettings: schema.userWorkspaceSettings.notificationSettings,
       reportSettings: schema.userWorkspaceSettings.reportSettings,
     })
@@ -80,6 +90,8 @@ export async function getTelegramReportRecipients(
 
     const isAdmin = m.role === "owner" || m.role === "admin";
 
+    const internalNumbers = parseInternalExtensions(m.internalExtensions ?? null);
+
     if (reportType === "daily") {
       if (dailyEnabled) {
         recipients.push({
@@ -89,6 +101,7 @@ export async function getTelegramReportRecipients(
           isManagerReport: false,
           skipWeekends,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
       if (managerEnabled && isAdmin) {
@@ -99,6 +112,7 @@ export async function getTelegramReportRecipients(
           isManagerReport: true,
           skipWeekends,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
     } else if (reportType === "weekly") {
@@ -110,6 +124,7 @@ export async function getTelegramReportRecipients(
           isManagerReport: false,
           skipWeekends,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
       if (managerEnabled && isAdmin) {
@@ -120,6 +135,7 @@ export async function getTelegramReportRecipients(
           isManagerReport: true,
           skipWeekends,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
     } else if (reportType === "monthly") {
@@ -131,6 +147,7 @@ export async function getTelegramReportRecipients(
           isManagerReport: false,
           skipWeekends,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
       if (managerEnabled && isAdmin) {
@@ -141,6 +158,7 @@ export async function getTelegramReportRecipients(
           isManagerReport: true,
           skipWeekends,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
     }

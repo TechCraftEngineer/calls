@@ -59,6 +59,7 @@ export interface CreateCallData {
   fileId?: string | null;
   source?: string | null;
   customerName?: string | null;
+  internalNumber?: string | null;
 }
 
 export interface EvaluationData {

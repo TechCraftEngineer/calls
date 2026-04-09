@@ -8,6 +8,7 @@ export interface GetEvaluationsStatsParams {
   dateFrom?: string;
   dateTo?: string;
   excludePhoneNumbers?: string[];
+  internalNumbers?: string[];
 }
 
 export interface ManagerStatsRow {
@@ -22,7 +23,7 @@ export interface ManagerStatsRow {
 export async function getEvaluationsStats(
   params: GetEvaluationsStatsParams,
 ): Promise<Record<string, ManagerStatsRow>> {
-  const { workspaceId, dateFrom, dateTo, excludePhoneNumbers } = params;
+  const { workspaceId, dateFrom, dateTo, excludePhoneNumbers, internalNumbers } = params;
 
   const conditions = [];
   if (workspaceId != null) conditions.push(eq(schema.calls.workspaceId, workspaceId));
@@ -31,6 +32,11 @@ export async function getEvaluationsStats(
   const excludeConditionStats = buildExcludePhoneCondition(excludePhoneNumbers, schema.calls);
   if (excludeConditionStats) {
     conditions.push(excludeConditionStats);
+  }
+  if (internalNumbers && internalNumbers.length > 0) {
+    conditions.push(
+      sql`${schema.calls.internalNumber} IN ${sql.raw(internalNumbers.map((n) => `'${n}'`).join(", "))}`,
+    );
   }
 
   const query = db
@@ -76,6 +82,11 @@ export async function getEvaluationsStats(
 
   // Агрегаты оценок по менеджерам (avg rating, avg value, evaluated count)
   const evalConditions = [...conditions];
+  if (internalNumbers && internalNumbers.length > 0) {
+    evalConditions.push(
+      sql`${schema.calls.internalNumber} IN ${sql.raw(internalNumbers.map((n) => `'${n}'`).join(", "))}`,
+    );
+  }
   evalConditions.push(eq(schema.callEvaluations.isQualityAnalyzable, true));
   const evalQuery = db
     .select({
@@ -108,6 +119,7 @@ export interface GetLowRatedCallsParams {
   dateFrom?: string;
   dateTo?: string;
   excludePhoneNumbers?: string[];
+  internalNumbers?: string[];
   maxScore?: number;
 }
 
@@ -189,7 +201,14 @@ export async function getCallSummariesByManager(
 export async function getLowRatedCallsCount(
   params: GetLowRatedCallsParams,
 ): Promise<Record<string, number>> {
-  const { workspaceId, dateFrom, dateTo, excludePhoneNumbers, maxScore = 3 } = params;
+  const {
+    workspaceId,
+    dateFrom,
+    dateTo,
+    excludePhoneNumbers,
+    internalNumbers,
+    maxScore = 3,
+  } = params;
 
   if (workspaceId == null) return {};
 
@@ -203,6 +222,11 @@ export async function getLowRatedCallsCount(
   const excludeConditionLowRated = buildExcludePhoneCondition(excludePhoneNumbers, schema.calls);
   if (excludeConditionLowRated) {
     conditions.push(excludeConditionLowRated);
+  }
+  if (internalNumbers && internalNumbers.length > 0) {
+    conditions.push(
+      sql`${schema.calls.internalNumber} IN ${sql.raw(internalNumbers.map((n) => `'${n}'`).join(", "))}`,
+    );
   }
 
   const rows = await db
