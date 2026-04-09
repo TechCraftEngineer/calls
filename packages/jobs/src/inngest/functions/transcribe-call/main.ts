@@ -1,7 +1,7 @@
 /**
  * Inngest функция: транскрибация звонка по callId.
  * Новая архитектура:
- * 1. Синхронная полная транскрибация (без диаризации)
+ * 1. Асинхронная полная транскрибация (callback модель, без диаризации)
  * 2. Сохранение транскрипта
  * 3. LLM проверка на автоответчик
  * 4. Если НЕ автоответчик → асинхронная диаризированная транскрибация
@@ -16,8 +16,8 @@ import {
   handleNoSpeechFlow,
 } from "~/inngest/functions/transcribe-call/flows";
 import {
+  asyncTranscriptionWithCallback,
   checkAnsweringMachine,
-  // diarizeAndTranscribe, // УБРАНО - используется асинхронная модель
   fetchCall,
   fetchWorkspace,
   handleFailure,
@@ -27,13 +27,11 @@ import {
   preprocessAudio,
   resolveManager,
   summarize,
-  syncTranscription,
   validateInput,
 } from "~/inngest/functions/transcribe-call/steps";
 import { TranscriptionResultSchema } from "~/inngest/functions/transcribe-call/schemas";
 import type { ZodIssue } from "zod";
-import type { SyncTranscriptionResult } from "~/inngest/functions/transcribe-call/steps/sync-transcription";
-// import type { DiarizeResult } from "~/inngest/functions/transcribe-call/steps/diarize-and-transcribe"; // УБРАНО
+import type { AsyncTranscriptionResult } from "~/inngest/functions/transcribe-call/steps/async-transcription";
 import type { MergeResult } from "~/inngest/functions/transcribe-call/steps/merge-results";
 import type { SummarizeResult } from "~/inngest/functions/transcribe-call/steps/summarize";
 import type { IdentifyResult } from "~/inngest/functions/transcribe-call/steps/identify-speakers";
@@ -44,7 +42,7 @@ const logger = createLogger("transcribe-call");
 export const transcribeCallFn = inngest.createFunction(
   {
     id: "transcribe-call",
-    name: "Транскрибация: Sync Full + LLM AM Check + Async Diarization",
+    name: "Транскрибация: Async Full + LLM AM Check + Async Diarization",
     retries: 2,
     concurrency: {
       limit: 3,
@@ -77,10 +75,12 @@ export const transcribeCallFn = inngest.createFunction(
       preprocessAudio(call, callId),
     );
 
-    // === ШАГ 6: Синхронная полная транскрибация ===
-    const fullTranscription = await step.run("asr:sync-full", () =>
-      syncTranscription(pipelineAudio, callId),
-    ) as SyncTranscriptionResult;
+    // === ШАГ 6: Асинхронная полная транскрибация (callback модель) ===
+    const fullTranscription = await asyncTranscriptionWithCallback(
+      pipelineAudio,
+      callId,
+      step,
+    ) as AsyncTranscriptionResult;
 
     // Сохраняем для использования в fallback
     const fullTranscript = fullTranscription.transcript;

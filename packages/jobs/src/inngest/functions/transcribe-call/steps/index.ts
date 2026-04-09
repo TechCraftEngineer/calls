@@ -9,6 +9,7 @@ export { fetchWorkspace } from "./fetch-workspace";
 export { resolveManager } from "./resolve-manager";
 export { preprocessAudio } from "./preprocess-audio";
 export { syncTranscription } from "./sync-transcription";
+export { asyncTranscriptionWithCallback, asyncTranscriptionWithPolling } from "./async-transcription";
 export { checkAnsweringMachine } from "./check-answering-machine";
 // export { diarizeAndTranscribe } from "./diarize-and-transcribe"; // УБРАНО - используется асинхронная модель
 export { mergeResults } from "./merge-results";
