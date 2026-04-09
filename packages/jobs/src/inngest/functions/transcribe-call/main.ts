@@ -10,12 +10,14 @@
  * 7. Идентификация спикеров через LLM
  */
 
-import { createLogger } from "~/logger";
+import type { ZodIssue } from "zod";
 import { evaluateRequested, inngest, transcribeRequested } from "~/inngest/client";
 import {
   handleAnsweringMachineFlow,
   handleNoSpeechFlow,
 } from "~/inngest/functions/transcribe-call/flows";
+import type { Call } from "~/inngest/functions/transcribe-call/schemas";
+import { TranscriptionResultSchema } from "~/inngest/functions/transcribe-call/schemas";
 import {
   asyncDiarizedTranscriptionWithCallback,
   asyncTranscriptionWithCallback,
@@ -32,14 +34,14 @@ import {
   summarize,
   validateInput,
 } from "~/inngest/functions/transcribe-call/steps";
-import type { DiarizeResult } from "~/inngest/functions/transcribe-call/steps/merge-results";
-import { TranscriptionResultSchema } from "~/inngest/functions/transcribe-call/schemas";
-import type { ZodIssue } from "zod";
 import type { AsyncTranscriptionResult } from "~/inngest/functions/transcribe-call/steps/async-transcription";
-import type { MergeResult } from "~/inngest/functions/transcribe-call/steps/merge-results";
-import type { SummarizeResult } from "~/inngest/functions/transcribe-call/steps/summarize";
 import type { IdentifyResult } from "~/inngest/functions/transcribe-call/steps/identify-speakers";
-import type { Call } from "~/inngest/functions/transcribe-call/schemas";
+import type {
+  DiarizeResult,
+  MergeResult,
+} from "~/inngest/functions/transcribe-call/steps/merge-results";
+import type { SummarizeResult } from "~/inngest/functions/transcribe-call/steps/summarize";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("transcribe-call");
 
@@ -62,7 +64,7 @@ export const transcribeCallFn = inngest.createFunction(
     await step.run("validate/input", () => validateInput(callId));
 
     // === ШАГ 2: Получение данных звонка ===
-    const call = await step.run("db/calls:get", () => fetchCall(callId)) as Call;
+    const call = (await step.run("db/calls:get", () => fetchCall(callId))) as Call;
 
     // === ШАГ 3: Получение и валидация workspace ===
     const workspace = await step.run("db/workspaces:get", () =>
@@ -70,9 +72,7 @@ export const transcribeCallFn = inngest.createFunction(
     );
 
     // === ШАГ 4: Определение менеджера из PBX ===
-    const managerNameFromPbx = await step.run("pbx/manager:resolve", () =>
-      resolveManager(call),
-    );
+    const managerNameFromPbx = await step.run("pbx/manager:resolve", () => resolveManager(call));
 
     // === ШАГ 5: Предобработка аудио ===
     const pipelineAudio = await step.run("pipeline/audio:preprocess", () =>
@@ -80,21 +80,18 @@ export const transcribeCallFn = inngest.createFunction(
     );
 
     // === ШАГ 6: Асинхронная полная транскрибация (callback модель) ===
-    const fullTranscription = await asyncTranscriptionWithCallback(
+    const fullTranscription = (await asyncTranscriptionWithCallback(
       pipelineAudio,
       callId,
       step,
-    ) as AsyncTranscriptionResult;
+    )) as AsyncTranscriptionResult;
 
     // Сохраняем для использования в fallback
     const fullTranscript = fullTranscription.transcript;
-    const fullProcessingTimeMs = fullTranscription.processingTimeMs;
 
     // === Проверка: Пустой транскрипт ===
     if (!fullTranscript || fullTranscript.trim().length === 0) {
-      return await step.run("flow/no-speech", () =>
-        handleNoSpeechFlow(callId, fullTranscription),
-      );
+      return await step.run("flow/no-speech", () => handleNoSpeechFlow(callId, fullTranscription));
     }
 
     // === ШАГ 7: LLM проверка на автоответчик ===
@@ -126,22 +123,52 @@ export const transcribeCallFn = inngest.createFunction(
     });
 
     // === ШАГ 9: Асинхронная диаризированная транскрибация ===
-    const diarizeResult = await asyncDiarizedTranscriptionWithCallback(
-      pipelineAudio,
-      callId,
-      fullTranscription.segments || [],
-      step,
-    );
+    let diarizeResult: Awaited<ReturnType<typeof asyncDiarizedTranscriptionWithCallback>>;
+    try {
+      diarizeResult = await asyncDiarizedTranscriptionWithCallback(
+        pipelineAudio,
+        callId,
+        fullTranscription.segments || [],
+        step,
+      );
+    } catch (diarizationError) {
+      logger.error(
+        "Диаризированная транскрипция завершилась с ошибкой, используем fallback на обычную транскрипцию",
+        {
+          callId,
+          error:
+            diarizationError instanceof Error ? diarizationError.message : String(diarizationError),
+        },
+      );
 
-    // === ШАГ 10: LLM Merging результатов ===
-    // Проверяем наличие segments перед мерджингом
-    if (!diarizeResult.segments) {
-      throw new Error(`Diarization failed: segments are undefined (diarizationFailed: ${diarizeResult.diarizationFailed})`);
+      // Fallback: создаём объект результата на основе обычной транскрипции
+      diarizeResult = {
+        transcript: fullTranscription.transcript,
+        segments: fullTranscription.segments || [],
+        processingTimeMs: fullTranscription.processingTimeMs || 0,
+        taskId: "",
+        diarizationFailed: true,
+      } as Awaited<ReturnType<typeof asyncDiarizedTranscriptionWithCallback>>;
     }
 
-    const mergedResult = await step.run("llm/merge-asr", () =>
-      mergeResults(fullTranscription, diarizeResult as DiarizeResult, callId),
-    ) as MergeResult;
+    // === ШАГ 10: LLM Merging результатов ===
+    // Если диаризация не удалась, пропускаем мерджинг и используем обычную транскрипцию
+    let mergedResult: MergeResult;
+    if (diarizeResult.diarizationFailed || !diarizeResult.segments) {
+      logger.info("Диаризация не удалась, используем обычную транскрипцию без мерджинга", {
+        callId,
+      });
+
+      mergedResult = {
+        segments: fullTranscription.segments || [],
+        applied: false,
+        llmMergeTimeMs: 0,
+      } as MergeResult;
+    } else {
+      mergedResult = (await step.run("llm/merge-asr", () =>
+        mergeResults(fullTranscription, diarizeResult as DiarizeResult, callId),
+      )) as MergeResult;
+    }
 
     // Вычисляем общее время обработки с дефолтными значениями
     const totalProcessingTimeMs =
@@ -195,12 +222,12 @@ export const transcribeCallFn = inngest.createFunction(
     const normalizedText = validatedResult.normalizedText || "";
 
     // === ШАГ 12: Генерация summary ===
-    const summaryResult = await step.run("llm/summarize", () =>
+    const summaryResult = (await step.run("llm/summarize", () =>
       summarize(normalizedText, workspace, managerNameFromPbx, callId),
-    ) as SummarizeResult;
+    )) as SummarizeResult;
 
     // === ШАГ 13: Идентификация спикеров ===
-    const identifyResult = await step.run("llm/identify-speakers", () =>
+    const identifyResult = (await step.run("llm/identify-speakers", () =>
       identifySpeakers(
         call,
         normalizedText,
@@ -208,7 +235,7 @@ export const transcribeCallFn = inngest.createFunction(
         managerNameFromPbx,
         summaryResult.summary || undefined,
       ),
-    ) as IdentifyResult;
+    )) as IdentifyResult;
 
     // === ШАГ 14: Сохранение результатов ===
     await step.run("persist/transcript:upsert", () =>

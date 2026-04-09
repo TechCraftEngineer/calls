@@ -4,9 +4,9 @@
 
 import { env, GIGA_AM_CONFIG } from "@calls/config";
 import { z } from "zod";
-import { createLogger } from "~/logger";
 import { GigaAmResponseSchema } from "~/inngest/functions/transcribe-call/schemas";
 import type { AsrResult } from "~/inngest/functions/transcribe-call/types";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("gigaam-client");
 
@@ -283,6 +283,14 @@ export async function startAsyncDiarizedTranscription(
 ): Promise<{ taskId: string }> {
   const gigaAmUrl = env.GIGA_AM_TRANSCRIBE_URL;
 
+  // Валидация сегментов
+  if (!segments || segments.length === 0) {
+    logger.warn("Попытка запуска диаризированной транскрипции с пустыми сегментами", {
+      filename,
+    });
+    throw new Error("Невозможно запустить диаризированную транскрипцию: сегменты не предоставлены");
+  }
+
   const formData = new FormData();
   const blob = new Blob([audioBuffer], { type: "audio/wav" });
 
@@ -301,6 +309,13 @@ export async function startAsyncDiarizedTranscription(
   const timeoutId = setTimeout(() => controller.abort(), GIGA_AM_CONFIG.ASYNC_REQUEST_TIMEOUT_MS);
 
   try {
+    logger.info("Отправка запроса на диаризированную транскрипцию", {
+      filename: audioFilename,
+      segmentsCount: segments.length,
+      endpoint: `${gigaAmUrl}/api/transcribe-diarized-async`,
+      segmentsPreview: segments.slice(0, 3),
+    });
+
     const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-diarized-async`, () => ({
       method: "POST",
       body: formData,
@@ -310,7 +325,25 @@ export async function startAsyncDiarizedTranscription(
     clearTimeout(timeoutId);
 
     if (response.status !== 202) {
-      throw new Error(`GigaAM async diarized API error: ${response.status} ${response.statusText}`);
+      // Пытаемся прочитать тело ответа для диагностики
+      let errorBody = "";
+      try {
+        errorBody = await response.text();
+      } catch {
+        // Игнорируем ошибку чтения тела
+      }
+
+      logger.error("GigaAM async diarized API вернул ошибку", {
+        status: response.status,
+        statusText: response.statusText,
+        errorBody,
+        segmentsCount: segments.length,
+        filename: audioFilename,
+      });
+
+      throw new Error(
+        `GigaAM async diarized API error: ${response.status} ${response.statusText}${errorBody ? ` - ${errorBody}` : ""}`,
+      );
     }
 
     const result = await response.json();
@@ -550,7 +583,9 @@ export async function waitForAsyncDiarizedResult(
         attempt,
         error: status.error,
       });
-      throw new Error(`Асинхронная диаризированная транскрипция завершилась с ошибкой: ${status.error}`);
+      throw new Error(
+        `Асинхронная диаризированная транскрипция завершилась с ошибкой: ${status.error}`,
+      );
     }
 
     // Log каждые 30 попыток (1 минута)
@@ -565,9 +600,10 @@ export async function waitForAsyncDiarizedResult(
     await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
   }
 
-  throw new Error(`Таймаут ожидания результата асинхронной диаризированной транскрипции (taskId: ${taskId})`);
+  throw new Error(
+    `Таймаут ожидания результата асинхронной диаризированной транскрипции (taskId: ${taskId})`,
+  );
 }
-
 
 /**
  * @deprecated Используйте startAsyncDiarizedTranscription + waitForAsyncDiarizedResult для асинхронной модели
@@ -633,8 +669,6 @@ export async function processDiarizedAudioWithGigaAm(
 
   return validatedResult;
 }
-
-
 
 /**
  * Запускает асинхронную транскрипцию аудио через GigaAM API в callback режиме.

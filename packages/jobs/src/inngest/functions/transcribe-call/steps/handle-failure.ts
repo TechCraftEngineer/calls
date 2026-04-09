@@ -3,18 +3,30 @@
  */
 
 import { callsService } from "@calls/db";
-import { createLogger } from "~/logger";
-import { TranscribeCallEventSchema } from "~/inngest/functions/transcribe-call/schemas";
 import type { FailureEventArgs } from "inngest";
+import { TranscribeCallEventSchema } from "~/inngest/functions/transcribe-call/schemas";
+import { createLogger } from "~/logger";
 
 const logger = createLogger("transcribe-call:failure");
 
 export async function handleFailure({ event, error }: FailureEventArgs): Promise<void> {
   try {
-    // Пытаемся получить callId из разных источников (Inngest может передавать по-разному)
-    const rawEventData =
-      event.data ||
-      (event as unknown as { event?: { data?: { callId?: string } } }).event?.data;
+    // В onFailure handler Inngest передаёт событие в другой структуре:
+    // event.data.event - исходное событие
+    // event.data.event.data - данные исходного события
+    let rawEventData: unknown;
+
+    // Сначала пробуем структуру onFailure
+    if (event.data && typeof event.data === "object" && "event" in event.data) {
+      const failureEvent = event.data as { event?: { data?: unknown } };
+      rawEventData = failureEvent.event?.data;
+    }
+
+    // Если не получилось, пробуем обычную структуру
+    if (!rawEventData) {
+      rawEventData = event.data;
+    }
+
     const eventValidation = TranscribeCallEventSchema.safeParse(rawEventData);
 
     if (!eventValidation.success) {
