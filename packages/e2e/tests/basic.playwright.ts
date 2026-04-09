@@ -14,11 +14,15 @@ test("basic page load test", async ({ page }) => {
 
   // Более гибкая проверка заголовка
   const validTitles = ["QBS", "Звонки", "Вход", "Авторизация", "Sign In"];
-  const hasValidTitle = validTitles.some(
-    (validTitle) =>
-      title.toLowerCase().includes(validTitle.toLowerCase()) ||
-      validTitle.toLowerCase().includes(title.toLowerCase()),
-  );
+  const trimmedTitle = title?.trim();
+  const hasValidTitle =
+    trimmedTitle &&
+    trimmedTitle.length > 0 &&
+    validTitles.some(
+      (validTitle) =>
+        trimmedTitle.toLowerCase().includes(validTitle.toLowerCase()) ||
+        validTitle.toLowerCase().includes(trimmedTitle.toLowerCase()),
+    );
 
   expect(hasValidTitle).toBeTruthy();
 });

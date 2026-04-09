@@ -13,6 +13,42 @@ const POLL_INTERVAL_MS = 30_000; // 30 секунд
 const MAX_POLL_ATTEMPTS = 60; // Максимум 30 минут (60 * 30 сек)
 
 /**
+ * Проверяет, является ли ошибка transient (временной) и должна быть ретраена.
+ * Transient ошибки: 5xx, network errors, timeouts
+ * Non-transient ошибки: 4xx (client errors)
+ */
+function isTransientError(error: unknown): boolean {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+
+  // Проверяем на network errors
+  if (
+    errorMessage.includes("ECONNREFUSED") ||
+    errorMessage.includes("ETIMEDOUT") ||
+    errorMessage.includes("ENOTFOUND") ||
+    errorMessage.includes("ECONNRESET") ||
+    errorMessage.includes("fetch failed") ||
+    errorMessage.includes("network")
+  ) {
+    return true;
+  }
+
+  // Проверяем на 5xx ошибки из GigaAM API
+  const statusMatch = errorMessage.match(/status (\d{3})/);
+  if (statusMatch && statusMatch[1]) {
+    const status = parseInt(statusMatch[1], 10);
+    return status >= 500;
+  }
+
+  // Timeout ошибки
+  if (errorMessage.includes("timeout") || errorMessage.includes("AbortError")) {
+    return true;
+  }
+
+  // По умолчанию считаем non-transient
+  return false;
+}
+
+/**
  * Проверяет доступен ли callback режим (настроен INNGEST_EVENT_KEY в giga-am сервисе)
  */
 export function isCallbackModeAvailable(): boolean {
@@ -40,19 +76,27 @@ export async function waitForAsyncTranscription(
     try {
       status = await checkTranscriptionStatus(taskId);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      // Проверяем, является ли ошибка transient (5xx, network errors)
+      // Для 4xx ошибок сразу выбрасываем исключение без retry
+      const isTransient = isTransientError(error);
+
       logger.error("Ошибка при проверке статуса асинхронной транскрипции", {
         taskId,
         attempt,
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMessage,
+        isTransient,
       });
 
-      // Если это не последняя попытка - пробуем еще раз (только для transient ошибок)
-      if (attempt < MAX_POLL_ATTEMPTS) {
-        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-        continue;
+      // Если это не transient ошибка или последняя попытка - выбрасываем исключение
+      if (!isTransient || attempt === MAX_POLL_ATTEMPTS) {
+        throw error;
       }
 
-      throw error;
+      // Для transient ошибок retry
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+      continue;
     }
 
     // Проверка статуса вне try/catch - fatal ошибки не вызывают retry

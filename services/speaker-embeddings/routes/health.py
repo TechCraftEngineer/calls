@@ -18,7 +18,7 @@ async def health() -> dict[str, Any]:
     try:
         from pyannote.audio import Pipeline
         pyannote_available = True
-    except Exception:
+    except ImportError:
         logger.exception("pyannote.audio import failed")
 
     # Для community версии токен не требуется
@@ -34,7 +34,6 @@ async def health() -> dict[str, Any]:
         detail = {
             "status": "unhealthy",
             "pyannote_available": pyannote_available,
-            "pyannote_loaded": pyannote_available,
             "hf_token_set": hf_token_set,
             "requires_hf_token": requires_token,
             "model": diarization_model,
@@ -46,7 +45,6 @@ async def health() -> dict[str, Any]:
     return {
         "status": "healthy",
         "pyannote_available": pyannote_available,
-        "pyannote_loaded": pyannote_available,
         "hf_token_set": hf_token_set,
         "requires_hf_token": requires_token,
         "model": diarization_model,

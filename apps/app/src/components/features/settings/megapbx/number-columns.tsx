@@ -68,8 +68,26 @@ export function getNumberColumns({
                   } else {
                     for (const key of keys) next.delete(key);
                   }
-                  void onSaveExcludedNumbers(Array.from(next));
                   return next;
+                });
+                // Вызываем API после обновления состояния
+                const nextSet = new Set(excludedSet);
+                if (checked === true) {
+                  for (const key of keys) nextSet.add(key);
+                } else {
+                  for (const key of keys) nextSet.delete(key);
+                }
+                void onSaveExcludedNumbers(Array.from(nextSet)).catch((_error) => {
+                  // При ошибке откатываем состояние
+                  setExcludedSet((prev) => {
+                    const rollback = new Set(prev);
+                    if (checked === true) {
+                      for (const key of keys) rollback.delete(key);
+                    } else {
+                      for (const key of keys) rollback.add(key);
+                    }
+                    return rollback;
+                  });
                 });
               }}
             />

@@ -3,12 +3,52 @@
  * Используется когда GIGA_AM_ASYNC_MODE=true и настроен INNGEST_EVENT_KEY.
  */
 
+import { z } from "zod";
 import { createLogger } from "../../../../logger";
 import { gigaAmTranscriptionCompleted, inngest } from "../../../client";
 import type { AsrResult } from "../types";
 import type { DiarizedTranscriptionResult } from "./client";
 
 const logger = createLogger("gigaam-callback-handler");
+
+/**
+ * Zod схема для валидации DiarizedTranscriptionResult от внешнего сервиса
+ */
+const DiarizedTranscriptionResultSchema = z.object({
+  success: z.boolean(),
+  final_transcript: z.string(),
+  segments: z.array(
+    z.object({
+      text: z.string(),
+      start: z.number(),
+      end: z.number(),
+      speaker: z.string().optional(),
+      confidence: z.number(),
+    }),
+  ),
+  speakerTimeline: z.array(
+    z.object({
+      speaker: z.string(),
+      start: z.number(),
+      end: z.number(),
+      text: z.string(),
+    }),
+  ),
+  speaker_timeline: z
+    .array(
+      z.object({
+        speaker: z.string(),
+        start: z.number(),
+        end: z.number(),
+        text: z.string(),
+      }),
+    )
+    .optional(),
+  num_speakers: z.number(),
+  speakers: z.array(z.string()),
+  processing_time: z.number(),
+  pipeline: z.string(),
+});
 
 /**
  * Событие завершения транскрипции от GigaAM
@@ -58,8 +98,19 @@ export const gigaAmCompletedFn = inngest.createFunction(
       throw new Error("GigaAM вернул статус completed без результата");
     }
 
-    // Type assertion для result - данные приходят от внешнего сервиса
-    const transcriptionResult = result as DiarizedTranscriptionResult;
+    // Runtime валидация результата с помощью Zod
+    const validationResult = DiarizedTranscriptionResultSchema.safeParse(result);
+    if (!validationResult.success) {
+      logger.error("GigaAM вернул невалидный результат", {
+        task_id,
+        validationErrors: validationResult.error.issues,
+      });
+      throw new Error(
+        `GigaAM вернул невалидный результат: ${JSON.stringify(validationResult.error.issues)}`,
+      );
+    }
+
+    const transcriptionResult = validationResult.data;
 
     // Конвертируем DiarizedTranscriptionResult в AsrResult
     const asrResult: AsrResult = {

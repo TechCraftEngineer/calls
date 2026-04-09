@@ -14,7 +14,7 @@ router = APIRouter()
 async def diagnostics() -> dict[str, Any]:
     """Диагностическая информация о сервисе"""
     return {
-        "service": "speaker-diarization",
+        "service": "Speaker Diarization API",
         "version": "2.0.0",
         "pyannote": {
             "diarization_model": os.getenv("PYANNOTE_DIARIZATION_MODEL", "pyannote/speaker-diarization-community-1"),

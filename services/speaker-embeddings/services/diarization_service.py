@@ -160,7 +160,7 @@ def process_diarization(
             elif hasattr(diarization, 'itertracks'):
                 # Старый API (pyannote < 4.0) - diarization это уже Annotation
                 annotation = diarization
-                logger.info(f"Using diarization directly as Annotation")
+                logger.info("Using diarization directly as Annotation")
             else:
                 raise ValueError(f"Cannot extract annotation from {type(diarization)}")
 
@@ -181,7 +181,7 @@ def process_diarization(
             raise HTTPException(
                 status_code=500,
                 detail="Failed to extract diarization segments"
-            )
+            ) from e
 
         # Завершение замера времени извлечения сегментов
         extraction_end_time = time.time()

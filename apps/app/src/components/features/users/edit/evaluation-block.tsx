@@ -1,6 +1,6 @@
 "use client";
 
-import { EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
+import { DEFAULT_EVALUATION_TEMPLATE_SLUG, EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
 import type { EditUserForm, EvaluationTemplateSlug } from "@/components/features/users/types";
@@ -41,7 +41,7 @@ export function EvaluationBlock({
     }
   };
 
-  const value = form.evaluationTemplateSlug ?? "general";
+  const value = form.evaluationTemplateSlug ?? DEFAULT_EVALUATION_TEMPLATE_SLUG;
 
   return (
     <div
@@ -103,7 +103,7 @@ export function EvaluationBlock({
                 v as EvaluationTemplateSlug,
               )
                 ? (v as EvaluationTemplateSlug)
-                : "general",
+                : DEFAULT_EVALUATION_TEMPLATE_SLUG,
             });
           }}
         >
