@@ -15,6 +15,7 @@ export {
 export {
   createSpeakerEmbeddingsCompletedEvent,
   handleSpeakerEmbeddingsCallback,
+  speakerEmbeddingsCompletedFn,
   validateSpeakerEmbeddingsCallback,
   type SpeakerEmbeddingsCallbackData,
 } from "./embeddings-handler";

@@ -61,13 +61,16 @@ export { resolveManagerFromPbx } from "./manager";
 export {
   checkSpeakerEmbeddingsHealth,
   getDiarizationStatus,
+  performDiarization,
   shouldUseSpeakerEmbeddings,
   startSpeakerDiarization,
+  type PerformDiarizationResult,
   type SpeakerDiarizationResult,
 } from "./speakers";
 export {
   createSpeakerEmbeddingsCompletedEvent,
   handleSpeakerEmbeddingsCallback,
+  speakerEmbeddingsCompletedFn,
   validateSpeakerEmbeddingsCallback,
   type SpeakerEmbeddingsCallbackData,
 } from "./speakers/embeddings-handler";

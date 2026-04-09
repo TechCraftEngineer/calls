@@ -12,7 +12,7 @@ import { pbxSyncFn, pbxSyncRequestedFn } from "./inngest/functions/pbx-sync";
 import { telegramReportsFn } from "./inngest/functions/telegram-reports";
 import { transcribeCallFn } from "./inngest/functions/transcribe-call";
 import { gigaAmCompletedFn } from "./inngest/functions/transcribe-call/gigaam/callback-handler";
-import { speakerEmbeddingsCompletedFn } from "./inngest/functions/transcribe-call/speaker-embeddings-callback-handler";
+import { speakerEmbeddingsCompletedFn } from "./inngest/functions/transcribe-call/speakers/embeddings-handler";
 
 export const inngestHandler = serve({
   client: inngest,

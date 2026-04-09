@@ -92,9 +92,8 @@ async def send_inngest_event(
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
             response = await client.post(
-                f"{INNGEST_API_URL}/v1/events",
+                f"{INNGEST_API_URL}/e/{INNGEST_EVENT_KEY}",
                 headers={
-                    "Authorization": f"Bearer {INNGEST_EVENT_KEY}",
                     "Content-Type": "application/json",
                 },
                 json={
@@ -151,9 +150,8 @@ def send_inngest_event_sync(
     try:
         with httpx.Client(timeout=20.0) as client:
             response = client.post(
-                f"{INNGEST_API_URL}/v1/events",
+                f"{INNGEST_API_URL}/e/{INNGEST_EVENT_KEY}",
                 headers={
-                    "Authorization": f"Bearer {INNGEST_EVENT_KEY}",
                     "Content-Type": "application/json",
                 },
                 json={

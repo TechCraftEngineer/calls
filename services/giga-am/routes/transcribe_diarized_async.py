@@ -94,9 +94,8 @@ async def send_inngest_event(
 
         async with httpx.AsyncClient(timeout=settings.callback_timeout) as client:
             response = await client.post(
-                f"{settings.inngest_api_url}/v1/events",
+                f"{settings.inngest_api_url}/e/{settings.inngest_event_key}",
                 headers={
-                    "Authorization": f"Bearer {settings.inngest_event_key}",
                     "Content-Type": "application/json",
                 },
                 json=request_body

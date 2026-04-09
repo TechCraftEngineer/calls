@@ -2,7 +2,9 @@
  * Обработчик callback от speaker embeddings сервиса
  */
 
+import { z } from "zod";
 import { createLogger } from "~/logger";
+import { speakerEmbeddingsDiarizationCompleted, inngest } from "~/inngest/client";
 import type { SpeakerDiarizationResult } from "./diarization";
 
 const logger = createLogger("speaker-embeddings-callback");
@@ -120,3 +122,79 @@ export function createSpeakerEmbeddingsCompletedEvent(
     data,
   };
 }
+
+/**
+ * Zod схема для валидации события от speaker embeddings
+ */
+const SpeakerEmbeddingsCallbackSchema = z.object({
+  task_id: z.string(),
+  status: z.enum(["completed", "failed"]),
+  result: z.object({}).passthrough().optional().nullable(),
+  error: z.string().optional().nullable(),
+});
+
+/**
+ * Тип события от speaker embeddings
+ */
+interface SpeakerEmbeddingsEvent {
+  task_id: string;
+  status: "completed" | "failed";
+  result?: Record<string, unknown>;
+  error?: string;
+}
+
+/**
+ * Inngest функция для обработки callback событий от speaker embeddings сервиса
+ */
+export const speakerEmbeddingsCompletedFn = inngest.createFunction(
+  {
+    id: "speaker-embeddings-completed",
+    name: "Speaker Embeddings: Callback Handler",
+    triggers: [speakerEmbeddingsDiarizationCompleted],
+    retries: 2,
+  },
+  async ({ event }: { event: { data: SpeakerEmbeddingsEvent } }) => {
+    // Runtime валидация входящего payload
+    const eventValidation = SpeakerEmbeddingsCallbackSchema.safeParse(event.data);
+    if (!eventValidation.success) {
+      logger.error("Speaker embeddings вернул невалидный payload", {
+        validationErrors: eventValidation.error.issues,
+      });
+      throw new Error(
+        `Speaker embeddings вернул невалидный payload: ${JSON.stringify(eventValidation.error.issues)}`,
+      );
+    }
+
+    const { task_id, status, result, error } = eventValidation.data;
+
+    logger.info("Получен callback от speaker embeddings", {
+      task_id,
+      status,
+      hasResult: !!result,
+      hasError: !!error,
+    });
+
+    if (status === "failed") {
+      logger.error("Speaker embeddings завершился с ошибкой", {
+        task_id,
+        error,
+      });
+      throw new Error(
+        `Speaker embeddings завершился с ошибкой: ${error || "Неизвестная ошибка"}`,
+      );
+    }
+
+    if (!result) {
+      logger.error("Speaker embeddings вернул статус completed но без результата", {
+        task_id,
+      });
+      throw new Error("Speaker embeddings вернул статус completed без результата");
+    }
+
+    return {
+      success: true,
+      task_id,
+      result,
+    };
+  }
+);
