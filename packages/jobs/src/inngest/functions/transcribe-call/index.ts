@@ -13,9 +13,24 @@ export {
   processAudioWithoutDiarization,
 } from "./gigaam/client";
 export { processAudioWithDiarization } from "./gigaam/diarization";
-export * from "./llm-correction";
-export * from "./llm-merge";
-export * from "./main";
+export {
+  applyLLMCorrection,
+  buildCorrectionPrompt,
+  correctTranscriptionWithLLM,
+  type TranscriptionSegment,
+  validateAndMergeCorrections,
+} from "./llm-correction";
+export {
+  type AsrDiarizedResult,
+  type AsrNonDiarizedResult,
+  type AsrSegment,
+  applyLLMMerging,
+  buildMergingPrompt,
+  estimateTokenCount,
+  MAX_PROMPT_TOKENS,
+  mergeAsrResultsWithLLM,
+} from "./llm-merge";
+export { transcribeCallFn } from "./main";
 export { resolveManagerFromPbx } from "./manager-resolution";
 export { serializeMetadata } from "./metadata";
 export {
@@ -63,4 +78,15 @@ export type {
   TranscriptionResult,
   Workspace,
 } from "./types";
-export * from "./validation";
+export {
+  createSafeResponse,
+  handleAsyncError,
+  TranscriptionError,
+  type ValidationError,
+  validateCall,
+  validateCallId,
+  validateFile,
+  validatePipelineResult,
+  validateTranscriptionResult,
+  validateWorkspace,
+} from "./validation";

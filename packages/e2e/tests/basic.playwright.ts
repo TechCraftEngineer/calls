@@ -20,12 +20,7 @@ test("basic page load test", async ({ page }) => {
       validTitle.toLowerCase().includes(title.toLowerCase()),
   );
 
-  if (hasValidTitle) {
-    expect(hasValidTitle).toBeTruthy();
-  } else {
-    // Если заголовок не соответствует ожидаемым, просто проверяем что страница загрузилась
-    expect(await page.locator("body").textContent()).toBeTruthy();
-  }
+  expect(hasValidTitle).toBeTruthy();
 });
 
 test("page loads without errors", async ({ page }) => {

@@ -66,7 +66,7 @@ export interface ManagedUser extends Omit<User, "id" | "email" | "createdAt"> {
   kpiBaseSalary?: number;
   kpiTargetBonus?: number;
   kpiTargetTalkTimeMinutes?: number;
-  evaluationTemplateSlug?: string | null;
+  evaluationTemplateSlug?: EvaluationTemplateSlug | null;
   evaluationCustomInstructions?: string | null;
 }
 

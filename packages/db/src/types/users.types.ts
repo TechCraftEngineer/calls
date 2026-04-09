@@ -2,7 +2,8 @@
  * Types related to users operations
  */
 
-import type { EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
+// Evaluation template slugs (defined locally to avoid dependency on @calls/shared)
+const EVALUATION_TEMPLATE_SLUGS = ["sales", "support", "general"] as const;
 
 export type EvaluationTemplateSlug = (typeof EVALUATION_TEMPLATE_SLUGS)[number];
 

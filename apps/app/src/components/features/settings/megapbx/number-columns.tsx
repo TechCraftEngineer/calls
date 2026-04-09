@@ -68,15 +68,9 @@ export function getNumberColumns({
                   } else {
                     for (const key of keys) next.delete(key);
                   }
+                  void onSaveExcludedNumbers(Array.from(next));
                   return next;
                 });
-                const updatedSet = new Set(excludedSet);
-                if (checked === true) {
-                  for (const key of keys) updatedSet.add(key);
-                } else {
-                  for (const key of keys) updatedSet.delete(key);
-                }
-                void onSaveExcludedNumbers(Array.from(updatedSet));
               }}
             />
             <span className="text-muted-foreground text-xs">{isExcluded ? "Да" : "Нет"}</span>

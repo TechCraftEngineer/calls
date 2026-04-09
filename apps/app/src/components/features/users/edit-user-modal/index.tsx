@@ -1,6 +1,6 @@
 "use client";
 
-import { EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
+import { DEFAULT_EVALUATION_TEMPLATE_SLUG, EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
 import { Button, toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
@@ -67,7 +67,7 @@ function buildEditForm(u: WorkspaceMemberUser): EditUserForm {
       const raw = toStr(ext.evaluation_template_slug);
       return EVALUATION_TEMPLATE_SLUGS.includes(raw as EvaluationTemplateSlug)
         ? (raw as EvaluationTemplateSlug)
-        : "general";
+        : DEFAULT_EVALUATION_TEMPLATE_SLUG;
     })(),
     evaluationCustomInstructions:
       u.evaluationCustomInstructions ?? toStr(ext.evaluation_custom_instructions) ?? "",

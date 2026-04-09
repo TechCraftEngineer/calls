@@ -318,7 +318,7 @@ export class CallsHelpers {
    * Получает список номеров из таблицы звонков
    */
   async getVisibleCallNumbers(): Promise<string[]> {
-    const cells = this.page.locator("[data-testid='call-number-cell']");
+    const cells = this.page.locator(".call-link");
     const count = await cells.count();
     const numbers: string[] = [];
     for (let i = 0; i < count; i++) {
