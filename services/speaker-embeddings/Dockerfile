@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
-COPY app.py /app/app.py
+COPY . /app/
 RUN adduser --disabled-password --gecos "" --home /home/appuser --shell /usr/sbin/nologin appuser \
     && mkdir -p /home/appuser/.cache/torch \
     && mkdir -p /home/appuser/.cache/huggingface/transformers \
