@@ -40,7 +40,8 @@ export async function fetchWithRetry(
 }
 
 /**
- * @deprecated Используйте startAsyncTranscription + waitForAsyncResult для асинхронной модели
+ * Синхронная транскрибация аудио через GigaAM API.
+ * Используется для быстрой первичной транскрибации без диаризации.
  */
 export async function processAudioWithGigaAm(
   audioBuffer: ArrayBuffer,

@@ -6,7 +6,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
-from services.task_manager import task_manager
+from services.task_manager import task_manager, TaskStatus
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ async def get_task_result(task_id: str) -> JSONResponse:
         )
 
     # Возвращаем результат только если задача завершена
-    if task.status.value == "completed":
+    if task.status == TaskStatus.COMPLETED:
         if task.result is None:
             raise HTTPException(
                 status_code=500,
@@ -71,7 +71,7 @@ async def get_task_result(task_id: str) -> JSONResponse:
                 "result": task.result
             }
         )
-    elif task.status.value == "failed":
+    elif task.status == TaskStatus.FAILED:
         return JSONResponse(
             status_code=200,
             content={

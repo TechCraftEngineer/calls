@@ -39,7 +39,7 @@ async def transcribe_sync(
         JSONResponse с результатом транскрипции
     """
     # Валидация параметра diarization
-    if diarization not in ["true", "false", None]:
+    if diarization not in ["true", "false"]:
         raise HTTPException(
             status_code=400,
             detail="diarization parameter must be 'true' or 'false'"
