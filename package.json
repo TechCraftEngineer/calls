@@ -11,7 +11,7 @@
     "clean:workspaces": "turbo run clean",
     "clean:modules": "bunx rimraf --glob \"**/node_modules\"",
     "auth:generate": "bun --filter @calls/auth generate",
-    "db:push": "turbo -F @calls/db push",
+    "db:push": "turbo -F @calls/db push --ui=stream",
     "db:reset": "turbo -F @calls/db db:reset",
     "db:studio": "turbo -F @calls/db studio",
     "dev": "turbo watch dev --continue --concurrency 20",

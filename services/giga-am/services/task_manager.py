@@ -37,7 +37,7 @@ class Task:
         self.status = TaskStatus.PENDING
         self.result: Optional[Dict[str, Any]] = None
         self.error: Optional[str] = None
-        self.created_at = datetime.utcnow()
+        self.created_at = datetime.now(datetime.UTC)
         self.started_at: Optional[datetime] = None
         self.completed_at: Optional[datetime] = None
     
@@ -97,7 +97,7 @@ class TaskManager:
     
     async def cleanup_old_tasks(self):
         """Удаление старых задач"""
-        now = datetime.utcnow()
+        now = datetime.now(datetime.UTC)
         old_tasks = [
             task_id for task_id, task in self.tasks.items()
             if now - task.created_at > self.max_age
@@ -136,18 +136,20 @@ class TaskManager:
         task = self.tasks.get(task_id)
         if not task:
             return False
-        
+
         task.status = status
         if result is not None:
             task.result = result
         if error is not None:
             task.error = error
-        
+
         if status == TaskStatus.PROCESSING and task.started_at is None:
-            task.started_at = datetime.utcnow()
+            task.started_at = datetime.now(datetime.UTC)
         elif status in (TaskStatus.COMPLETED, TaskStatus.FAILED):
-            task.completed_at = datetime.utcnow()
-        
+            task.completed_at = datetime.now(datetime.UTC)
+            # Освобождаем audio_data для экономии памяти
+            task.audio_data = None
+
         logger.info(f"Updated task {task_id} status to {status.value}")
         return True
     

@@ -4,7 +4,7 @@
 
 import { env, GIGA_AM_CONFIG } from "@calls/config";
 import { z } from "zod";
-import { createLogger } from "../../../../logger";
+import { createLogger } from "~/logger";
 import { GigaAmResponseSchema } from "../schemas";
 import type { AsrResult } from "../types";
 
@@ -222,28 +222,37 @@ export async function startAsyncTranscription(
     endpoint: `${gigaAmUrl}/api/transcribe-async`,
   });
 
-  const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-async`, () => ({
-    method: "POST",
-    body: formData,
-    // Без таймаута - сразу возвращает task_id
-  }));
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), GIGA_AM_CONFIG.ASYNC_REQUEST_TIMEOUT_MS);
 
-  if (response.status !== 202) {
-    throw new Error(`GigaAM async API error: ${response.status} ${response.statusText}`);
+  try {
+    const response = await fetchWithRetry(`${gigaAmUrl}/api/transcribe-async`, () => ({
+      method: "POST",
+      body: formData,
+      signal: controller.signal,
+    }));
+
+    clearTimeout(timeoutId);
+
+    if (response.status !== 202) {
+      throw new Error(`GigaAM async API error: ${response.status} ${response.statusText}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.task_id) {
+      throw new Error("GigaAM async API не вернул task_id");
+    }
+
+    logger.info("Асинхронная транскрипция запущена", {
+      filename: audioFilename,
+      taskId: result.task_id,
+    });
+
+    return { taskId: result.task_id };
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const result = await response.json();
-
-  if (!result.task_id) {
-    throw new Error("GigaAM async API не вернул task_id");
-  }
-
-  logger.info("Асинхронная транскрипция запущена", {
-    filename: audioFilename,
-    taskId: result.task_id,
-  });
-
-  return { taskId: result.task_id };
 }
 
 /**

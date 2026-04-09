@@ -174,10 +174,9 @@ export const test = base.extend<CallsFixtures>({
     await use(calls);
   },
 
-  // Звонки администратора (что должен видеть admin)
+  // Звонки администратора (что должен видеть admin - все звонки)
   adminUserCalls: async ({ mockCalls }, use) => {
-    const calls = mockCalls.filter((c) => c.managerId === ADMIN_ID);
-    await use(calls);
+    await use(mockCalls);
   },
 
   // Звонки участника (что должен видеть member)

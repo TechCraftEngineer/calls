@@ -103,7 +103,7 @@ export function EvaluationBlock({
                 v as EvaluationTemplateSlug,
               )
                 ? (v as EvaluationTemplateSlug)
-                : null,
+                : "general",
             });
           }}
         >

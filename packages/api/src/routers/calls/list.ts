@@ -115,11 +115,10 @@ export const list = workspaceProcedure
       .filter((direction): direction is "inbound" | "outbound" => direction !== null);
     const trimmedQuery = input.q?.trim() || undefined;
 
-    // Получаем PBX сотрудников и номера (номера нужны для member ветки для получения PBX данных через привязку к сотруднику)
-    const [pbxEmployees, pbxNumbers] = await Promise.all([
-      pbxRepository.listEmployees(workspaceId, PBX_PROVIDER),
-      pbxRepository.listNumbers(workspaceId, PBX_PROVIDER),
-    ]);
+    const isAdminOrOwner = context.workspaceRole === "admin" || context.workspaceRole === "owner";
+
+    // Получаем PBX сотрудников
+    const pbxEmployees = await pbxRepository.listEmployees(workspaceId, PBX_PROVIDER);
 
     // Создаем карты сотрудников для эффективного поиска
     const employeeByExternalId = new Map<string, WorkspacePbxEmployee>();
@@ -131,13 +130,20 @@ export const list = workspaceProcedure
       }
     }
 
-    // Группируем PBX номера по employeeExternalId для эффективного поиска
+    // Определяем, нужны ли PBX номера
+    const needsPbxNumbers =
+      !isAdminOrOwner || managerFilters.length > 0 || trimmedQuery !== undefined;
+
+    // Получаем PBX номера только если нужны
     const phoneNumbersByEmployeeExternalId = new Map<string, WorkspacePbxNumber[]>();
-    for (const number of pbxNumbers) {
-      if (number.isActive && number.employeeExternalId) {
-        const numbers = phoneNumbersByEmployeeExternalId.get(number.employeeExternalId) || [];
-        numbers.push(number);
-        phoneNumbersByEmployeeExternalId.set(number.employeeExternalId, numbers);
+    if (needsPbxNumbers) {
+      const pbxNumbers = await pbxRepository.listNumbers(workspaceId, PBX_PROVIDER);
+      for (const number of pbxNumbers) {
+        if (number.isActive && number.employeeExternalId) {
+          const numbers = phoneNumbersByEmployeeExternalId.get(number.employeeExternalId) || [];
+          numbers.push(number);
+          phoneNumbersByEmployeeExternalId.set(number.employeeExternalId, numbers);
+        }
       }
     }
 
@@ -170,8 +176,6 @@ export const list = workspaceProcedure
         managerPhoneNumbers.set(employeeId, phoneNumbers);
       }
     }
-
-    const isAdminOrOwner = context.workspaceRole === "admin" || context.workspaceRole === "owner";
 
     // Ограничиваем фильтр по менеджерам для обычных пользователей
     const finalManagerFilters = isAdminOrOwner

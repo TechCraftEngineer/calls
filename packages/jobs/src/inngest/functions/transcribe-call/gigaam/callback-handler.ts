@@ -1,9 +1,9 @@
 /**
- * Inngest функция для обработки callback событий от GigaAM сервиса.
+ * Inngest функция для обработки callback событий от GigaAM.
  * Используется когда GIGA_AM_ASYNC_MODE=true и настроен INNGEST_EVENT_KEY.
  */
 
-import { createLogger } from "../../../../logger";
+import { createLogger } from "~/logger";
 import { gigaAmTranscriptionCompleted, inngest } from "../../../client";
 import type { AsrResult } from "../types";
 import type { DiarizedTranscriptionResult } from "./client";
@@ -32,8 +32,7 @@ export const gigaAmCompletedFn = inngest.createFunction(
     retries: 1,
   },
   async ({ event }: { event: { data: GigaAmCompletedEvent } }) => {
-    const data = event.data as GigaAmCompletedEvent;
-    const { task_id, status, result, error } = data;
+    const { task_id, status, result, error } = event.data;
 
     logger.info("Получен callback от GigaAM", {
       task_id,
@@ -47,31 +46,36 @@ export const gigaAmCompletedFn = inngest.createFunction(
         task_id,
         error,
       });
-      throw new Error(`GigaAM transcription failed: ${error || "Unknown error"}`);
+      throw new Error(
+        `Транскрипция GigaAM завершилась с ошибкой: ${error || "Неизвестная ошибка"}`,
+      );
     }
 
     if (!result) {
       logger.error("GigaAM вернул статус completed но без результата", {
         task_id,
       });
-      throw new Error("GigaAM returned completed status without result");
+      throw new Error("GigaAM вернул статус completed без результата");
     }
+
+    // Type assertion для result - данные приходят от внешнего сервиса
+    const transcriptionResult = result as DiarizedTranscriptionResult;
 
     // Конвертируем DiarizedTranscriptionResult в AsrResult
     const asrResult: AsrResult = {
-      segments: result.segments.map((s) => ({
+      segments: transcriptionResult.segments.map((s) => ({
         start: s.start,
         end: s.end,
         speaker: s.speaker || "unknown",
         text: s.text,
       })),
-      transcript: result.final_transcript,
+      transcript: transcriptionResult.final_transcript,
       validationFailed: false,
       metadata: {
         asrLogs: [
           {
             provider: "gigaam-async-callback",
-            utterances: result.segments.map((s) => ({
+            utterances: transcriptionResult.segments.map((s) => ({
               speaker: s.speaker || "unknown",
               text: s.text,
               start: s.start,
@@ -87,7 +91,7 @@ export const gigaAmCompletedFn = inngest.createFunction(
       task_id,
       transcriptLength: asrResult.transcript.length,
       segmentsCount: asrResult.segments.length,
-      processingTime: result.processing_time,
+      processingTime: transcriptionResult.processing_time,
     });
 
     return {

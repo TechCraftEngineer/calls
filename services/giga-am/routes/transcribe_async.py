@@ -3,8 +3,7 @@
 """
 import asyncio
 import logging
-import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Set
 
 import httpx
 from fastapi import APIRouter, Form, HTTPException, UploadFile
@@ -19,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["async-transcription"])
 pipeline_service = PipelineService()
+
+# Set для отслеживания background tasks
+BACKGROUND_TASKS: Set[asyncio.Task] = set()
 
 
 async def send_inngest_event(
@@ -43,7 +45,9 @@ async def send_inngest_event(
         logger.warning("Inngest credentials not configured, skipping callback")
         return False
     
-    event_name = f"giga-am/transcription.{status}"
+    # Всегда используем зарегистрированное событие "giga-am/transcription.completed"
+    # Статус передается в payload
+    event_name = "giga-am/transcription.completed"
     
     payload = {
         "task_id": task_id,
@@ -162,8 +166,10 @@ async def transcribe_async(
         # Создаем задачу
         task = task_manager.create_task(filename, audio_data)
         
-        # Запускаем фоновую обработку
-        asyncio.create_task(process_task_background(task.task_id))
+        # Запускаем фоновую обработку с отслеживанием
+        background_task = asyncio.create_task(process_task_background(task.task_id))
+        BACKGROUND_TASKS.add(background_task)
+        background_task.add_done_callback(BACKGROUND_TASKS.discard)
         
         return JSONResponse(
             status_code=202,

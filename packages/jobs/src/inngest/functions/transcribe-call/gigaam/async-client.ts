@@ -4,7 +4,7 @@
  */
 
 import { env } from "@calls/config";
-import { createLogger } from "../../../../logger";
+import { createLogger } from "~/logger";
 import { checkTranscriptionStatus, type DiarizedTranscriptionResult } from "./client";
 
 const logger = createLogger("gigaam-async-client");
@@ -36,35 +36,9 @@ export async function waitForAsyncTranscription(
   });
 
   for (let attempt = 1; attempt <= MAX_POLL_ATTEMPTS; attempt++) {
+    let status: Awaited<ReturnType<typeof checkTranscriptionStatus>>;
     try {
-      const status = await checkTranscriptionStatus(taskId);
-
-      if (status.status === "completed" && status.result) {
-        logger.info("Асинхронная транскрипция завершена", {
-          taskId,
-          attempt,
-          processingTime: status.result.processing_time,
-          mode: "polling",
-        });
-        return status.result;
-      }
-
-      if (status.status === "failed") {
-        throw new Error(
-          `Асинхронная транскрипция завершилась с ошибкой: ${status.error || "Неизвестная ошибка"}`,
-        );
-      }
-
-      // Все еще pending или processing - продолжаем polling
-      logger.info("Ожидание завершения асинхронной транскрипции", {
-        taskId,
-        attempt,
-        status: status.status,
-      });
-
-      if (attempt < MAX_POLL_ATTEMPTS) {
-        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-      }
+      status = await checkTranscriptionStatus(taskId);
     } catch (error) {
       logger.error("Ошибка при проверке статуса асинхронной транскрипции", {
         taskId,
@@ -72,13 +46,41 @@ export async function waitForAsyncTranscription(
         error: error instanceof Error ? error.message : String(error),
       });
 
-      // Если это не последняя попытка - пробуем еще раз
+      // Если это не последняя попытка - пробуем еще раз (только для transient ошибок)
       if (attempt < MAX_POLL_ATTEMPTS) {
         await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
         continue;
       }
 
       throw error;
+    }
+
+    // Проверка статуса вне try/catch - fatal ошибки не вызывают retry
+    if (status.status === "completed" && status.result) {
+      logger.info("Асинхронная транскрипция завершена", {
+        taskId,
+        attempt,
+        processingTime: status.result.processing_time,
+        mode: "polling",
+      });
+      return status.result;
+    }
+
+    if (status.status === "failed") {
+      throw new Error(
+        `Асинхронная транскрипция завершилась с ошибкой: ${status.error || "Неизвестная ошибка"}`,
+      );
+    }
+
+    // Все еще pending или processing - продолжаем polling
+    logger.info("Ожидание завершения асинхронной транскрипции", {
+      taskId,
+      attempt,
+      status: status.status,
+    });
+
+    if (attempt < MAX_POLL_ATTEMPTS) {
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
     }
   }
 

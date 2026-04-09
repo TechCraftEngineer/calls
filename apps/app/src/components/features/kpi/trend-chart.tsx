@@ -213,6 +213,20 @@ export const TrendChart = React.memo(function TrendChart({ data, loading }: Tren
   const showCalls = activeMetrics.includes("calls");
   const showBonus = activeMetrics.includes("bonus");
 
+  // Динамически вычисляем правый margin в зависимости от количества осей
+  const rightAxisCount = (showCalls ? 1 : 0) + (showBonus ? 1 : 0);
+  const rightMargin = isMobile
+    ? rightAxisCount === 2
+      ? 90
+      : rightAxisCount === 1
+        ? 50
+        : 10
+    : rightAxisCount === 2
+      ? 120
+      : rightAxisCount === 1
+        ? 70
+        : 20;
+
   return (
     <div className="space-y-4">
       {/* Сводка показателей */}
@@ -298,7 +312,7 @@ export const TrendChart = React.memo(function TrendChart({ data, loading }: Tren
               data={chartData}
               margin={{
                 top: 10,
-                right: isMobile ? 10 : 20,
+                right: rightMargin,
                 left: isMobile ? 0 : 10,
                 bottom: 10,
               }}
