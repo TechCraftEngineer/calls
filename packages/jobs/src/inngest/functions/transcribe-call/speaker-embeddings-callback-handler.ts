@@ -3,11 +3,28 @@
  * Используется когда SPEAKER_EMBEDDINGS_ASYNC_MODE=true и настроен INNGEST_EVENT_KEY.
  */
 
+import { z } from "zod";
 import { createLogger } from "../../../logger";
 import { inngest } from "../../client";
 import type { DiarizationResult } from "./speaker-diarization";
 
 const logger = createLogger("speaker-embeddings-callback-handler");
+
+/**
+ * Zod схема для валидации DiarizationResult от внешнего сервиса
+ */
+const DiarizationResultSchema = z.object({
+  success: z.boolean(),
+  segments: z.array(
+    z.object({
+      start: z.number(),
+      end: z.number(),
+      speaker: z.string(),
+    }),
+  ),
+  num_speakers: z.number(),
+  speakers: z.array(z.string()),
+});
 
 /**
  * Событие завершения диаризации от speaker-embeddings
@@ -61,16 +78,30 @@ export const speakerEmbeddingsCompletedFn = inngest.createFunction(
       throw new Error("Speaker-embeddings вернул статус completed без результата");
     }
 
+    // Runtime валидация результата с помощью Zod
+    const validationResult = DiarizationResultSchema.safeParse(result);
+    if (!validationResult.success) {
+      logger.error("Speaker-embeddings вернул невалидный результат", {
+        task_id,
+        validationErrors: validationResult.error.issues,
+      });
+      throw new Error(
+        `Speaker-embeddings вернул невалидный результат: ${JSON.stringify(validationResult.error.issues)}`,
+      );
+    }
+
+    const validatedResult = validationResult.data;
+
     logger.info("Callback обработан успешно", {
       task_id,
-      segmentsCount: result.segments.length,
-      numSpeakers: result.num_speakers,
-      speakers: result.speakers,
+      segmentsCount: validatedResult.segments.length,
+      numSpeakers: validatedResult.num_speakers,
+      speakers: validatedResult.speakers,
     });
 
     return {
       task_id,
-      result,
+      result: validatedResult,
     };
   },
 );

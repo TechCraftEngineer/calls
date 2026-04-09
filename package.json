@@ -15,7 +15,7 @@
     "db:reset": "turbo -F @calls/db db:reset",
     "db:studio": "turbo -F @calls/db studio",
     "dev": "turbo watch dev --continue --concurrency 20",
-    "dev:next": "turbo watch dev -F @calls/app...",
+    "dev:next": "turbo watch dev -F @calls/app... --concurrency 20",
     "dev:backend": "bun --filter @calls/backend-server dev",
     "format": "biome format . --skip-parse-errors",
     "format:fix": "biome format --write . --skip-parse-errors",

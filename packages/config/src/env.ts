@@ -68,7 +68,7 @@ export const env = createEnv({
     MAX_FILE_SIZE_BYTES: z.coerce.number().default(100 * 1024 * 1024), // 100MB
 
     // Inngest
-    INNGEST_API_URL: z.string().default("http://localhost:3001"),
+    INNGEST_API_URL: z.url().default("http://localhost:3001"),
     INNGEST_SIGNING_KEY: z.string().optional(),
     INNGEST_EVENT_KEY: z.string().optional(),
 
