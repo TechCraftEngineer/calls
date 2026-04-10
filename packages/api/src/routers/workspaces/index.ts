@@ -1,4 +1,5 @@
 import { checkUserPassword } from "./check-user-password";
+import { completeOnboarding } from "./complete-onboarding";
 import { create } from "./create";
 import { deleteWorkspace } from "./delete";
 import { get } from "./get";
@@ -16,6 +17,7 @@ export const workspacesRouter = {
   delete: deleteWorkspace,
   setActive,
   checkUserPassword,
+  completeOnboarding,
 
   listMembers: membersRouter.listMembers,
   addMember: membersRouter.addMember,

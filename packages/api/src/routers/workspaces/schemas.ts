@@ -15,6 +15,7 @@ export const workspaceIdInputSchema = z.object({
 export const updateWorkspaceSchema = z.object({
   workspaceId: workspaceIdSchema,
   name: workspaceNameSchema.optional(),
+  nameEn: z.string().max(100, "Не более 100 символов").nullable().optional(),
   description: z.string().max(2000, "Не более 2000 символов").nullable().optional(),
 });
 
@@ -37,4 +38,8 @@ export const updateMemberRoleSchema = z.object({
 export const removeMemberSchema = z.object({
   workspaceId: workspaceIdSchema,
   userId: z.string().min(1, "userId обязателен"),
+});
+
+export const completeOnboardingSchema = z.object({
+  workspaceId: workspaceIdSchema,
 });

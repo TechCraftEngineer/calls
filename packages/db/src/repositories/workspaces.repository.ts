@@ -70,6 +70,7 @@ export const workspacesRepository = {
     id: string,
     data: {
       name?: string;
+      nameEn?: string | null;
       description?: string | null;
       metadata?: Record<string, unknown> | null;
     },
@@ -386,6 +387,16 @@ export const workspacesRepository = {
           updatedAt: new Date(),
         },
       });
+  },
+
+  async completeOnboarding(workspaceId: string): Promise<void> {
+    await db
+      .update(schema.workspaces)
+      .set({
+        isOnboarded: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.workspaces.id, workspaceId));
   },
 };
 
