@@ -48,7 +48,7 @@ const OTHER_USER_ID = "other-user-id";
  */
 export const test = base.extend<CallsFixtures>({
   // Администратор с полным доступом
-  adminUser: async (_, use) => {
+  adminUser: async ({}, use) => {
     const user: CallTestUser = {
       id: ADMIN_ID,
       email: "admin@example.com",
@@ -63,7 +63,7 @@ export const test = base.extend<CallsFixtures>({
   },
 
   // Участник с внутренними номерами
-  memberUser: async (_, use) => {
+  memberUser: async ({}, use) => {
     const user: CallTestUser = {
       id: MEMBER_ID,
       email: "member@example.com",
@@ -78,7 +78,7 @@ export const test = base.extend<CallsFixtures>({
   },
 
   // Участник без внутренних номеров (не должен видеть звонки)
-  memberUserWithoutExtensions: async (_, use) => {
+  memberUserWithoutExtensions: async ({}, use) => {
     const user: CallTestUser = {
       id: MEMBER_NO_EXT_ID,
       email: "member-no-ext@example.com",
@@ -93,7 +93,7 @@ export const test = base.extend<CallsFixtures>({
   },
 
   // Полный набор мок-звонков
-  mockCalls: async (_, use) => {
+  mockCalls: async ({}, use) => {
     const calls: MockCall[] = [
       // Звонки администратора
       {
