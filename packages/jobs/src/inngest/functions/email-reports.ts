@@ -149,7 +149,6 @@ export const emailReportsFn = inngest.createFunction(
 
           if (reportType === "daily") {
             const d = new Date(now);
-            d.setDate(d.getDate() - 1);
             dateFrom = d;
             dateTo = d;
             dateFromString = formatDateInMoscow(d);
