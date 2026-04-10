@@ -34,7 +34,7 @@
     "generate-favicon": "bun run scripts/generate-favicon.mjs"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.10",
+    "@biomejs/biome": "2.4.11",
     "@turbo/gen": "^2.9.5",
     "@types/fluent-ffmpeg": "^2.1.28",
     "to-ico": "^1.1.5",
