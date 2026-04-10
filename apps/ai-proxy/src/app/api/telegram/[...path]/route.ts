@@ -9,7 +9,14 @@ async function proxyRequest(request: NextRequest, path: string[], method: string
 
   // Telegram API формат: /bot{TOKEN}/METHOD
   // Наш прокси формат: /api/telegram/bot{TOKEN}/METHOD
-  const url = `${TELEGRAM_BASE}/${targetPath}`;
+  const url = new URL(`${TELEGRAM_BASE}/${targetPath}`);
+
+  // Передаем query parameters для GET запросов
+  if (method === "GET") {
+    request.nextUrl.searchParams.forEach((value, key) => {
+      url.searchParams.set(key, value);
+    });
+  }
 
   const headers: HeadersInit = {};
 
@@ -25,7 +32,7 @@ async function proxyRequest(request: NextRequest, path: string[], method: string
     }
   }
 
-  const res = await fetch(url, {
+  const res = await fetch(url.toString(), {
     method,
     headers: body instanceof FormData ? {} : headers,
     body,
