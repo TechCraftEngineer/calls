@@ -79,9 +79,7 @@ export default function ForbiddenPage() {
 
       <div className="mt-12 flex flex-col items-center gap-4 animate-fade-in">
         <div className="h-px w-12 bg-[#DDD]" />
-        <div className="text-[#999] text-xs font-bold uppercase tracking-[0.2em]">
-          Security Protocol Alpha
-        </div>
+        <div className="text-[#999] text-xs font-bold uppercase tracking-[0.2em]">QBS Звонки</div>
       </div>
     </div>
   );

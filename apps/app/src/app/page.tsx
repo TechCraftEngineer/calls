@@ -23,8 +23,8 @@ import { useORPC } from "@/orpc/react";
 interface Pagination {
   total: number;
   page: number;
-  per_page: number;
-  total_pages: number;
+  perPage: number;
+  totalPages: number;
 }
 
 /** Главная страница — список звонков. Доступна только авторизованным. */
@@ -38,8 +38,8 @@ export default function HomePage() {
   const [pagination, setPagination] = useState<Pagination>({
     total: 0,
     page: 1,
-    per_page: PAGINATION_CONSTANTS.DEFAULT_PER_PAGE,
-    total_pages: 0,
+    perPage: PAGINATION_CONSTANTS.DEFAULT_PER_PAGE,
+    totalPages: 0,
   });
   const [filters, setFilters] = useState<CallsFiltersState>({
     q: "",
@@ -59,10 +59,10 @@ export default function HomePage() {
 
   const callsListInput = {
     page: pagination.page,
-    per_page: pagination.per_page,
+    perPage: pagination.perPage,
     q: appliedFilters.q || undefined,
-    date_from: appliedFilters.dateFrom || undefined,
-    date_to: appliedFilters.dateTo || undefined,
+    dateFrom: appliedFilters.dateFrom || undefined,
+    dateTo: appliedFilters.dateTo || undefined,
     direction: appliedFilters.direction.length ? appliedFilters.direction : undefined,
     manager: appliedFilters.manager.length ? appliedFilters.manager : undefined,
     status: appliedFilters.status.length ? appliedFilters.status : undefined,
@@ -138,8 +138,8 @@ export default function HomePage() {
       setPagination({
         total: result.pagination?.total ?? 0,
         page: result.pagination?.page ?? 1,
-        per_page: result.pagination?.per_page ?? PAGINATION_CONSTANTS.DEFAULT_PER_PAGE,
-        total_pages: result.pagination?.total_pages ?? 0,
+        perPage: result.pagination?.perPage ?? PAGINATION_CONSTANTS.DEFAULT_PER_PAGE,
+        totalPages: result.pagination?.totalPages ?? 0,
       });
     }
   }, [result]);
@@ -173,7 +173,7 @@ export default function HomePage() {
     setPagination((prev) => ({
       ...prev,
       page,
-      per_page: perPage,
+      perPage,
     }));
   };
 

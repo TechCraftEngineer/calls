@@ -160,8 +160,21 @@ ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n
   }
 }
 
+const uuidV7Schema = z
+  .string()
+  .uuid()
+  .refine((uuid) => uuid.split("-")[2]?.startsWith("7"), {
+    message: "Требуется UUID v7",
+  });
+const uuidV7WithPrefixSchema = z
+  .string()
+  .regex(/^ws_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, {
+    message: "Неверный формат ID звонка с префиксом",
+  });
+const callIdSchema = z.union([uuidV7Schema, uuidV7WithPrefixSchema]);
+
 export const generateRecommendationsProcedure = workspaceProcedure
-  .input(z.object({ call_id: z.string() }))
+  .input(z.object({ call_id: callIdSchema }))
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
       throw new ORPCError("BAD_REQUEST", {
@@ -195,7 +208,7 @@ export const generateRecommendationsProcedure = workspaceProcedure
       logger.error("Company context validation failed", {
         workspaceId: context.workspaceId,
         error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       });
       throw new ORPCError("BAD_REQUEST", {
         message:

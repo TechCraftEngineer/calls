@@ -26,6 +26,7 @@ export interface CallListColumnsOptions {
   onPlay?: (callId: string, number: string) => void;
   isLoadingRecommendations: boolean;
   recommendationsCallId: string | null;
+  isWorkspaceAdmin: boolean;
 }
 
 export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<CallWithDetails>[] {
@@ -36,6 +37,7 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
     onPlay,
     isLoadingRecommendations,
     recommendationsCallId,
+    isWorkspaceAdmin,
   } = options;
 
   const renderLinkOrButton = createLinkOrButton(onSelectCall);
@@ -250,6 +252,7 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
           onPlay={onPlay}
           isLoadingRecommendations={isLoadingRecommendations}
           recommendationsCallId={recommendationsCallId}
+          isWorkspaceAdmin={isWorkspaceAdmin}
         />
       ),
       meta: { headerTitle: "Действия" },

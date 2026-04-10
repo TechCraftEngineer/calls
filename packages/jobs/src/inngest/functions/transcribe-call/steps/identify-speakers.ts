@@ -3,9 +3,9 @@
  */
 
 import type { AsrExecutionLog } from "@calls/asr";
-import type { Call } from "~/inngest/functions/transcribe-call/schemas";
-import { identifySpeakers as identifyWithLlm } from "~/inngest/functions/transcribe-call/speakers/identification";
-import { createLogger } from "~/logger";
+import { createLogger } from "../../../../logger";
+import type { Call } from "../schemas";
+import { identifySpeakers as identifyWithLlm } from "../speakers/identification";
 
 const logger = createLogger("transcribe-call:identify-speakers");
 

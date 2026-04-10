@@ -1,10 +1,17 @@
 "use client";
 
+import { paths } from "@calls/config";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { SettingsPageShell, useSettings } from "@/components/features/settings";
 import { FtpSection, IntegrationsSection } from "@/components/features/settings/integrations";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 
 export default function SettingsIntegrationsPage() {
+  const router = useRouter();
+  const { activeWorkspace } = useWorkspace();
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+
   const {
     state,
     loadSettings,
@@ -20,8 +27,27 @@ export default function SettingsIntegrationsPage() {
   } = useSettings();
 
   useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
+    if (!isWorkspaceAdmin) {
+      router.replace(paths.forbidden);
+      return;
+    }
+  }, [isWorkspaceAdmin, router]);
+
+  useEffect(() => {
+    if (isWorkspaceAdmin) {
+      loadSettings();
+    }
+  }, [isWorkspaceAdmin, loadSettings]);
+
+  if (!isWorkspaceAdmin) {
+    return (
+      <SettingsPageShell>
+        <div className="flex items-center justify-center py-24">
+          <div className="text-muted-foreground">Загрузка…</div>
+        </div>
+      </SettingsPageShell>
+    );
+  }
 
   if (state.loading) {
     return (

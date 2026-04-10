@@ -4,8 +4,8 @@
 
 import { summarizeWithLlm } from "@calls/asr/llm/summarize";
 import { buildCompanyContext } from "@calls/shared";
-import { createLogger } from "~/logger";
-import type { Workspace } from "~/inngest/functions/transcribe-call/schemas";
+import { createLogger } from "../../../../logger";
+import type { Workspace } from "../schemas";
 
 const logger = createLogger("transcribe-call:summarize");
 

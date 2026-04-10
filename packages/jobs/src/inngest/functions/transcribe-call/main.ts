@@ -12,13 +12,7 @@
 
 import type { AsrExecutionLog } from "@calls/asr";
 import type { ZodIssue } from "zod";
-import { evaluateRequested, inngest, transcribeRequested } from "~/inngest/client";
-import {
-  handleAnsweringMachineFlow,
-  handleNoSpeechFlow,
-} from "~/inngest/functions/transcribe-call/flows";
-import type { Call } from "~/inngest/functions/transcribe-call/schemas";
-import { TranscriptionResultSchema } from "~/inngest/functions/transcribe-call/schemas";
+import { evaluateRequested, inngest, transcribeRequested } from "../../../client";
 import {
   type AsyncTranscriptionResult,
   asyncDiarizedTranscriptionWithCallback,
@@ -39,9 +33,15 @@ import {
   speakerDiarizationWithCallback,
   summarize,
   validateInput,
-} from "~/inngest/functions/transcribe-call/steps";
-import type { GigaAmSegment } from "~/inngest/functions/transcribe-call/types";
-import { createLogger } from "~/logger";
+} from "../../../inngest/functions/transcribe-call/steps";
+import type { GigaAmSegment } from "../../../inngest/functions/transcribe-call/types";
+import { createLogger } from "../../../logger";
+import {
+  handleAnsweringMachineFlow,
+  handleNoSpeechFlow,
+} from "../../functions/transcribe-call/flows";
+import type { Call } from "../../functions/transcribe-call/schemas";
+import { TranscriptionResultSchema } from "../../functions/transcribe-call/schemas";
 
 const logger = createLogger("transcribe-call");
 

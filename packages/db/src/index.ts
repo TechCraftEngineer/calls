@@ -17,7 +17,11 @@ export type {
   DailyKpiStat,
   GetDailyKpiStatsInput,
 } from "./repositories/calls/get-daily-kpi-stats";
-export type { ManagerStatsRow } from "./repositories/calls/get-evaluations-stats";
+export type {
+  GetEvaluationsStatsParams,
+  GetLowRatedCallsParams,
+  ManagerStatsRow,
+} from "./repositories/calls/get-evaluations-stats";
 export { evaluationTemplatesRepository } from "./repositories/evaluation-templates.repository";
 export { megaPbxRepository } from "./repositories/megapbx.repository";
 export { pbxRepository } from "./repositories/pbx.repository";
@@ -153,7 +157,6 @@ export type {
 } from "./services/telegram-reports.service";
 // Telegram reports
 export {
-  getInternalNumbersForUserIds,
   getReportScheduleSettings,
   getTelegramReportRecipients,
   getWorkspaceIdsWithTelegramReportRecipients,

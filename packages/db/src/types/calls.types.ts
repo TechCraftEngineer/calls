@@ -18,17 +18,16 @@ export interface GetCallsParams {
   offset?: number;
   dateFrom?: string;
   dateTo?: string;
-  internalNumbers?: string[];
   mobileNumbers?: string[];
   /** Номера телефонов, исключённые из выборки */
   excludePhoneNumbers?: string[];
   directions?: string[];
   valueScores?: number[];
-  /** Internal numbers выбранных менеджеров по их id */
-  managerInternalNumbers?: string[];
+  /** Phone numbers выбранных менеджеров по их id */
+  managerPhoneNumbers?: string[];
   statuses?: string[];
-  /** Internal numbers найденных сотрудников по текстовому поиску q */
-  managerInternalNumbersForQuery?: string[];
+  /** Phone numbers найденных сотрудников по текстовому поиску q */
+  managerPhoneNumbersForQuery?: string[];
   q?: string;
   /** Поле для сортировки */
   sortBy?: "timestamp" | "direction" | "number" | "name" | "value_score";
@@ -58,9 +57,9 @@ export interface CreateCallData {
   direction?: string | null;
   status?: CallStatus | string | null;
   fileId?: string | null;
-  internalNumber?: string | null;
   source?: string | null;
   customerName?: string | null;
+  internalNumber?: string | null;
 }
 
 export interface EvaluationData {

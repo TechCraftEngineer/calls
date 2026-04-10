@@ -3,8 +3,8 @@
  */
 
 import { callsService } from "@calls/db";
-import { createLogger } from "~/logger";
-import type { SyncTranscriptionResult } from "~/inngest/functions/transcribe-call/steps/sync-transcription";
+import { createLogger } from "../../../../logger";
+import type { SyncTranscriptionResult } from "../steps/sync-transcription";
 
 const logger = createLogger("transcribe-call:no-speech-flow");
 
@@ -56,7 +56,8 @@ export async function handleNoSpeechFlow(
     isQualityAnalyzable: false,
     notAnalyzableReason: "no_speech_detected",
     valueScore: null,
-    valueExplanation: "ASR не распознал речь в аудиофайле - возможно, файл поврежден, слишком тихий или не содержит речи",
+    valueExplanation:
+      "ASR не распознал речь в аудиофайле - возможно, файл поврежден, слишком тихий или не содержит речи",
     managerScore: null,
     managerFeedback: "Звонок не подлежит анализу (нет распознанной речи)",
   });

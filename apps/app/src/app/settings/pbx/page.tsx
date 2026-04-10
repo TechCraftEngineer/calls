@@ -3,8 +3,10 @@
 import { paths } from "@calls/config";
 import { Badge, Card, CardContent } from "@calls/ui";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { PbxProviderLogo, SettingsPageShell, useSettings } from "@/components/features/settings";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 
 const PROVIDERS = [
   {
@@ -42,11 +44,33 @@ const PROVIDERS = [
 ] as const;
 
 export default function SettingsPbxProvidersPage() {
+  const router = useRouter();
+  const { activeWorkspace } = useWorkspace();
+  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const { state, loadSettings } = useSettings();
 
   useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
+    if (!isWorkspaceAdmin) {
+      router.replace(paths.forbidden);
+      return;
+    }
+  }, [isWorkspaceAdmin, router]);
+
+  useEffect(() => {
+    if (isWorkspaceAdmin) {
+      loadSettings();
+    }
+  }, [isWorkspaceAdmin, loadSettings]);
+
+  if (!isWorkspaceAdmin) {
+    return (
+      <SettingsPageShell>
+        <div className="flex items-center justify-center py-24">
+          <div className="text-muted-foreground">Загрузка…</div>
+        </div>
+      </SettingsPageShell>
+    );
+  }
 
   if (state.loading) {
     return (

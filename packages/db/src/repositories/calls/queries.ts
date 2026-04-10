@@ -47,9 +47,8 @@ export const callsQueries = {
       dateFrom,
       dateTo,
       directions,
-      internalNumbers,
-      managerInternalNumbers,
-      managerInternalNumbersForQuery,
+      managerPhoneNumbers,
+      managerPhoneNumbersForQuery,
       mobileNumbers,
       q,
       statuses,
@@ -69,9 +68,8 @@ export const callsQueries = {
       dateFrom,
       dateTo,
       directions,
-      internalNumbers,
-      managerInternalNumbers,
-      managerInternalNumbersForQuery,
+      managerPhoneNumbers,
+      managerPhoneNumbersForQuery,
       mobileNumbers,
       q,
       statuses,
@@ -82,7 +80,7 @@ export const callsQueries = {
 
     const orderByClause = buildOrderBy(sortBy, sortOrder);
 
-    const result = await db
+    const query = db
       .select({
         call: schema.calls,
         transcript: schema.transcripts,
@@ -98,6 +96,8 @@ export const callsQueries = {
       .orderBy(orderByClause)
       .limit(limit)
       .offset(offset);
+
+    const result = await query;
 
     return result.map((row) => ({
       call: row.call,
@@ -118,14 +118,13 @@ export const callsQueries = {
       workspaceId: params.workspaceId,
       dateFrom: params.dateFrom,
       dateTo: params.dateTo,
-      internalNumbers: params.internalNumbers,
       mobileNumbers: params.mobileNumbers,
       excludePhoneNumbers: params.excludePhoneNumbers,
       directions: params.directions,
       valueScores: params.valueScores,
-      managerInternalNumbers: params.managerInternalNumbers,
+      managerPhoneNumbers: params.managerPhoneNumbers,
       statuses: params.statuses,
-      managerInternalNumbersForQuery: params.managerInternalNumbersForQuery,
+      managerPhoneNumbersForQuery: params.managerPhoneNumbersForQuery,
       q: params.q,
     });
 
@@ -149,8 +148,7 @@ export const callsQueries = {
       dateFrom,
       dateTo,
       directions,
-      internalNumbers,
-      managerInternalNumbers,
+      managerPhoneNumbers,
       mobileNumbers,
       statuses,
       valueScores,
@@ -167,12 +165,11 @@ export const callsQueries = {
       workspaceId,
       dateFrom,
       dateTo,
-      internalNumbers,
       mobileNumbers,
       excludePhoneNumbers,
       directions,
       valueScores,
-      managerInternalNumbers,
+      managerPhoneNumbers,
       statuses,
     });
 

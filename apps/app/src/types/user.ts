@@ -167,7 +167,7 @@ export interface ApiError {
 // Типы для пагинации
 export interface PaginationInfo {
   page: number;
-  per_page: number;
+  perPage: number;
   total: number;
-  total_pages: number;
+  totalPages: number;
 }

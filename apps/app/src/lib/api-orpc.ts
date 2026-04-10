@@ -74,14 +74,14 @@ export interface CallsResponse {
   })[];
   pagination: {
     page: number;
-    per_page: number;
+    perPage: number;
     total: number;
-    total_pages: number;
+    totalPages: number;
   };
   metrics: {
-    total_calls: number;
+    totalCalls: number;
     transcribed: number;
-    avg_duration: number;
+    avgDuration: number;
   };
   managers: { id: string; name: string }[];
 }

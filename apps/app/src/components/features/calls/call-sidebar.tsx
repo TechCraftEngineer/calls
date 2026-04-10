@@ -40,6 +40,7 @@ interface CallSidebarProps {
   onReevaluate: () => void;
   onGenerateRecommendations: () => void;
   isGeneratingRecommendations: boolean;
+  isWorkspaceAdmin: boolean;
 }
 
 function formatFileSize(bytes?: number): string {
@@ -57,6 +58,7 @@ export default function CallSidebar({
   onRestartAnalysis,
   onReevaluate,
   onGenerateRecommendations,
+  isWorkspaceAdmin,
 }: CallSidebarProps) {
   const qualityScore = evaluation?.managerScore ?? 0;
   const qualityFeedback = evaluation?.managerFeedback ?? "";
@@ -170,19 +172,21 @@ export default function CallSidebar({
           <CardTitle className="sidebar-card-title text-[#975A16] flex items-center gap-2 m-0">
             💡 РЕКОМЕНДАЦИИ
           </CardTitle>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={onGenerateRecommendations}
-            disabled={isGeneratingRecommendations}
-            className="border-[#975A16] text-[#975A16] rounded px-2 py-1 text-[11px] h-auto bg-transparent hover:bg-[#975A16]/10"
-          >
-            {isGeneratingRecommendations
-              ? "Загрузка…"
-              : evaluation?.managerRecommendations && evaluation.managerRecommendations.length > 0
-                ? "Обновить"
-                : "Сформировать"}
-          </Button>
+          {isWorkspaceAdmin && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onGenerateRecommendations}
+              disabled={isGeneratingRecommendations}
+              className="border-[#975A16] text-[#975A16] rounded px-2 py-1 text-[11px] h-auto bg-transparent hover:bg-[#975A16]/10"
+            >
+              {isGeneratingRecommendations
+                ? "Загрузка…"
+                : evaluation?.managerRecommendations && evaluation.managerRecommendations.length > 0
+                  ? "Обновить"
+                  : "Сформировать"}
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="px-6 pb-6 pt-0">
           {evaluation?.managerRecommendations && evaluation.managerRecommendations.length > 0 ? (
@@ -253,30 +257,32 @@ export default function CallSidebar({
           <p className="text-[13px] text-[#666] leading-relaxed mb-5">
             {transcript?.summary || "Резюме отсутствует"}
           </p>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1"
-              onClick={onRestartAnalysis}
-              disabled={restarting || reevaluating}
-            >
-              <span className="text-sm">🔄</span>
-              {restarting ? "Перезапуск…" : "Перезапустить анализ"}
-            </Button>
-            {(transcript?.text || transcript?.summary) && (
+          {isWorkspaceAdmin && (
+            <div className="flex gap-2">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onReevaluate}
+                className="flex-1"
+                onClick={onRestartAnalysis}
                 disabled={restarting || reevaluating}
-                title="Переоценить звонок"
               >
-                <span className="text-sm">📊</span>
-                {reevaluating ? "Оценка…" : "Переоценить"}
+                <span className="text-sm">🔄</span>
+                {restarting ? "Перезапуск…" : "Перезапустить анализ"}
               </Button>
-            )}
-          </div>
+              {(transcript?.text || transcript?.summary) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onReevaluate}
+                  disabled={restarting || reevaluating}
+                  title="Переоценить звонок"
+                >
+                  <span className="text-sm">📊</span>
+                  {reevaluating ? "Оценка…" : "Переоценить"}
+                </Button>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

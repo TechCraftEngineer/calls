@@ -4,9 +4,9 @@
 
 import { env, GIGA_AM_CONFIG } from "@calls/config";
 import { z } from "zod";
-import { GigaAmResponseSchema } from "~/inngest/functions/transcribe-call/schemas";
-import type { AsrResult } from "~/inngest/functions/transcribe-call/types";
-import { createLogger } from "~/logger";
+import { createLogger } from "../../../../logger";
+import { GigaAmResponseSchema } from "../schemas";
+import type { AsrResult } from "../types";
 
 const logger = createLogger("gigaam-client");
 

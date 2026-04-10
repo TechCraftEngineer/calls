@@ -43,6 +43,7 @@ interface CellRendererProps {
   onPlay?: (callId: string, number: string) => void;
   isLoadingRecommendations: boolean;
   recommendationsCallId: string | null;
+  isWorkspaceAdmin: boolean;
 }
 
 const linkButtonStyle = {
@@ -65,6 +66,7 @@ export function renderCallListCell({
   onPlay,
   isLoadingRecommendations,
   recommendationsCallId,
+  isWorkspaceAdmin,
 }: CellRendererProps): ReactNode {
   const { call, transcript, evaluation } = item;
 
@@ -192,55 +194,57 @@ export function renderCallListCell({
           >
             {call.fileId && (
               <>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onGenerateRecommendations(
-                      call.id,
-                      evaluation?.managerRecommendations ?? undefined,
-                    );
-                  }}
-                  disabled={isLoadingRecommendations && recommendationsCallId === call.id}
-                  title="Сформировать рекомендации"
-                  aria-label="Сформировать рекомендации по звонку"
-                  className="size-6 min-w-6 p-0"
-                >
-                  {isLoadingRecommendations && recommendationsCallId === call.id ? (
-                    <div
-                      style={{
-                        width: "14px",
-                        height: "14px",
-                        border: "2px solid #f0f0f0",
-                        borderTop: "2px solid #F7931E",
-                        borderRadius: "50%",
-                        animation: "spin 0.8s linear infinite",
-                      }}
-                    />
-                  ) : (
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      style={{ color: "#F7931E" }}
-                    >
-                      <path
-                        d="M9 21h6M12 3a6 6 0 0 1 6 6c0 2.22-1.21 4.15-3 5.19V17H9v-2.81c-1.79-1.04-3-2.97-3-5.19a6 6 0 0 1 6-6z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        fill="none"
+                {isWorkspaceAdmin && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onGenerateRecommendations(
+                        call.id,
+                        evaluation?.managerRecommendations ?? undefined,
+                      );
+                    }}
+                    disabled={isLoadingRecommendations && recommendationsCallId === call.id}
+                    title="Сформировать рекомендации"
+                    aria-label="Сформировать рекомендации по звонку"
+                    className="size-6 min-w-6 p-0"
+                  >
+                    {isLoadingRecommendations && recommendationsCallId === call.id ? (
+                      <div
+                        style={{
+                          width: "14px",
+                          height: "14px",
+                          border: "2px solid #f0f0f0",
+                          borderTop: "2px solid #F7931E",
+                          borderRadius: "50%",
+                          animation: "spin 0.8s linear infinite",
+                        }}
                       />
-                    </svg>
-                  )}
-                </Button>
-                {onTranscribe && (
+                    ) : (
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        style={{ color: "#F7931E" }}
+                      >
+                        <path
+                          d="M9 21h6M12 3a6 6 0 0 1 6 6c0 2.22-1.21 4.15-3 5.19V17H9v-2.81c-1.79-1.04-3-2.97-3-5.19a6 6 0 0 1 6-6z"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill="none"
+                        />
+                      </svg>
+                    )}
+                  </Button>
+                )}
+                {isWorkspaceAdmin && onTranscribe && (
                   <Button
                     type="button"
                     variant="ghost"

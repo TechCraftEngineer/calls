@@ -2,9 +2,9 @@
  * Синхронная полная транскрибация (без диаризации)
  */
 
-import { createLogger } from "~/logger";
-import { downloadAudioFile } from "~/inngest/functions/transcribe-call/audio/download";
-import { processAudioWithGigaAm } from "~/inngest/functions/transcribe-call/gigaam/client";
+import { createLogger } from "../../../../logger";
+import { downloadAudioFile } from "../audio/download";
+import { processAudioWithGigaAm } from "../gigaam/client";
 import type { PreprocessResult } from "./preprocess-audio";
 
 const logger = createLogger("transcribe-call:sync-transcription");

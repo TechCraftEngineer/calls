@@ -7,15 +7,14 @@ export interface CallConditionsParams {
   workspaceId?: string;
   dateFrom?: string;
   dateTo?: string;
-  internalNumbers?: string[];
   mobileNumbers?: string[];
   /** Номера телефонов, исключённые из выборки (внутренние или внешние) */
   excludePhoneNumbers?: string[];
   directions?: string[];
   valueScores?: number[];
-  managerInternalNumbers?: string[];
+  managerPhoneNumbers?: string[];
   statuses?: string[];
-  managerInternalNumbersForQuery?: string[];
+  managerPhoneNumbersForQuery?: string[];
   q?: string;
   /** Включить архивированные звонки (по умолчанию false - только неархивированные) */
   includeArchived?: boolean;
@@ -27,14 +26,13 @@ export function buildCallConditions({
   workspaceId,
   dateFrom,
   dateTo,
-  internalNumbers,
   mobileNumbers,
   excludePhoneNumbers,
   directions,
   valueScores,
-  managerInternalNumbers,
+  managerPhoneNumbers,
   statuses,
-  managerInternalNumbersForQuery,
+  managerPhoneNumbersForQuery,
   q,
   includeArchived,
   onlyArchived,
@@ -60,27 +58,13 @@ export function buildCallConditions({
   if (dateTo) {
     conditions.push(lte(schema.calls.timestamp, new Date(dateTo)));
   }
-  if (internalNumbers !== undefined && mobileNumbers !== undefined) {
-    const hasInternal = internalNumbers.length > 0;
-    const hasMobile = mobileNumbers.length > 0;
-    if (hasInternal && hasMobile) {
-      const orCond = or(
-        inArray(schema.calls.internalNumber, internalNumbers),
-        inArray(schema.calls.number, mobileNumbers),
-      );
-      if (orCond) conditions.push(orCond);
-    } else if (hasInternal) {
-      conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
-    } else if (hasMobile) {
-      conditions.push(inArray(schema.calls.number, mobileNumbers));
+  if (mobileNumbers !== undefined) {
+    if (mobileNumbers.length > 0) {
+      conditions.push(inArray(schema.calls.internalNumber, mobileNumbers));
     } else {
-      // Оба пусты — участник без идентификаторов, не показываем звонки
+      // Пустой массив — участник без идентификаторов, не показываем звонки
       conditions.push(sql`false`);
     }
-  } else if (internalNumbers?.length) {
-    conditions.push(inArray(schema.calls.internalNumber, internalNumbers));
-  } else if (mobileNumbers?.length) {
-    conditions.push(inArray(schema.calls.number, mobileNumbers));
   }
   if (directions?.length) {
     // Normalize directions first to avoid pushing empty strings (e.g. from whitespace-only input)
@@ -134,10 +118,10 @@ export function buildCallConditions({
       conditions.push(inArray(canonicalStatus, normalizedStatuses));
     }
   }
-  // Фильтрация по менеджерам идет через internal_number -> phone_number
-  // managerInternalNumbers содержит phone_numbers из workspace_pbx_numbers
-  if (managerInternalNumbers?.length) {
-    conditions.push(inArray(schema.calls.internalNumber, managerInternalNumbers));
+  // Фильтрация по менеджерам идет через phone_number
+  // managerPhoneNumbers содержит phone_numbers из workspace_pbx_numbers
+  if (managerPhoneNumbers?.length) {
+    conditions.push(inArray(schema.calls.number, managerPhoneNumbers));
   }
   if (valueScores?.length) {
     const hasZero = valueScores.includes(0);
@@ -168,9 +152,8 @@ export function buildCallConditions({
       ilike(schema.calls.number, `%${q}%`),
       ilike(schema.calls.name, `%${q}%`),
       ilike(schema.calls.customerName, `%${q}%`),
-      ilike(schema.calls.internalNumber, `%${q}%`),
-      managerInternalNumbersForQuery?.length
-        ? inArray(schema.calls.internalNumber, managerInternalNumbersForQuery)
+      managerPhoneNumbersForQuery?.length
+        ? inArray(schema.calls.number, managerPhoneNumbersForQuery)
         : undefined,
     );
     if (qCond) conditions.push(qCond);

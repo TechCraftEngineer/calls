@@ -3,8 +3,8 @@
  */
 
 import { z } from "zod";
-import { isAnsweringMachineWithLlm } from "~/inngest/functions/transcribe-call/llm/answering-machine";
-import { createLogger } from "~/logger";
+import { createLogger } from "../../../../logger";
+import { isAnsweringMachineWithLlm } from "../llm/answering-machine";
 import type { SyncTranscriptionResult } from "./sync-transcription";
 
 const logger = createLogger("transcribe-call:am-check");

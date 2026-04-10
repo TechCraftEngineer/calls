@@ -2,6 +2,7 @@
  * Statistics and analytics operations for calls
  */
 
+import type { CallStatus } from "../../utils/call-status";
 import type { DailyKpiStat, GetDailyKpiStatsInput } from "./get-daily-kpi-stats";
 import { getDailyKpiStats as getDailyKpiStatsFn } from "./get-daily-kpi-stats";
 import type { ManagerStatsRow } from "./get-evaluations-stats";
@@ -12,7 +13,6 @@ import {
 } from "./get-evaluations-stats";
 import { getKpiStats as getKpiStatsFn } from "./get-kpi-stats";
 import { getCallsMetrics } from "./get-metrics";
-import type { CallStatus } from "../../utils/call-status";
 
 export const callsStats = {
   async getMetrics(params?: {
@@ -20,12 +20,11 @@ export const callsStats = {
     excludePhoneNumbers?: string[];
     dateFrom?: string;
     dateTo?: string;
-    internalNumbers?: string[];
     mobileNumbers?: string[];
     directions?: ("inbound" | "outbound")[];
-    managerInternalNumbers?: string[];
+    managerPhoneNumbers?: string[];
     statuses?: CallStatus[];
-    managerInternalNumbersForQuery?: string[];
+    managerPhoneNumbersForQuery?: string[];
     q?: string;
   }) {
     return getCallsMetrics(params);
@@ -35,7 +34,6 @@ export const callsStats = {
     workspaceId?: string;
     dateFrom?: string;
     dateTo?: string;
-    internalNumbers?: string[];
     excludePhoneNumbers?: string[];
   }): Promise<Record<string, ManagerStatsRow>> {
     return getEvaluationsStatsFn(params);
@@ -45,7 +43,6 @@ export const callsStats = {
     workspaceId?: string;
     dateFrom?: string;
     dateTo?: string;
-    internalNumbers?: string[];
     excludePhoneNumbers?: string[];
     maxScore?: number;
   }): Promise<Record<string, number>> {
@@ -56,7 +53,6 @@ export const callsStats = {
     workspaceId?: string;
     dateFrom?: string;
     dateTo?: string;
-    internalNumbers?: string[];
     excludePhoneNumbers?: string[];
     limitPerManager?: number;
   }): Promise<Record<string, string[]>> {

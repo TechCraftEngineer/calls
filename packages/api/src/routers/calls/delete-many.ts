@@ -5,10 +5,23 @@ import { workspaceAdminProcedure } from "../../orpc";
 
 const logger = createLogger("calls-delete-many");
 
+const uuidV7Schema = z
+  .string()
+  .uuid()
+  .refine((uuid) => uuid.split("-")[2]?.startsWith("7"), {
+    message: "Требуется UUID v7",
+  });
+const uuidV7WithPrefixSchema = z
+  .string()
+  .regex(/^ws_[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, {
+    message: "Неверный формат ID звонка с префиксом",
+  });
+const callIdSchema = z.union([uuidV7Schema, uuidV7WithPrefixSchema]);
+
 export const deleteManyCalls = workspaceAdminProcedure
   .input(
     z.object({
-      call_ids: z.array(z.string()).min(1).max(100),
+      call_ids: z.array(callIdSchema).min(1).max(100),
     }),
   )
   .handler(async ({ input, context }) => {

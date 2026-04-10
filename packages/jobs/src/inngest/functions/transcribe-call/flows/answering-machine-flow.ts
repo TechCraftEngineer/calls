@@ -3,9 +3,9 @@
  */
 
 import { callsService } from "@calls/db";
-import { createLogger } from "~/logger";
-import type { SyncTranscriptionResult } from "~/inngest/functions/transcribe-call/steps/sync-transcription";
-import type { AnsweringMachineCheckResult } from "~/inngest/functions/transcribe-call/steps/check-answering-machine";
+import { createLogger } from "../../../../logger";
+import type { AnsweringMachineCheckResult } from "../steps/check-answering-machine";
+import type { SyncTranscriptionResult } from "../steps/sync-transcription";
 
 const logger = createLogger("transcribe-call:am-flow");
 
@@ -24,7 +24,8 @@ export async function handleAnsweringMachineFlow(
   fullTranscription: SyncTranscriptionResult,
   answeringMachineCheck: AnsweringMachineCheckResult,
 ): Promise<AnsweringMachineResult> {
-  const totalProcessingTimeMs = fullTranscription.processingTimeMs + answeringMachineCheck.llmTimeMs;
+  const totalProcessingTimeMs =
+    fullTranscription.processingTimeMs + answeringMachineCheck.llmTimeMs;
 
   // Сохраняем транскрипт автоответчика
   await callsService.upsertTranscript({
@@ -67,7 +68,13 @@ export async function handleAnsweringMachineFlow(
   logger.info("Обработка автоответчика завершена", {
     callId,
     processingTimeMs: totalProcessingTimeMs,
-    skippedSteps: ["asr:async-diarized", "llm/merge-asr", "llm/summarize", "llm/identify-speakers", "call.evaluate.requested"],
+    skippedSteps: [
+      "asr:async-diarized",
+      "llm/merge-asr",
+      "llm/summarize",
+      "llm/identify-speakers",
+      "call.evaluate.requested",
+    ],
   });
 
   return {

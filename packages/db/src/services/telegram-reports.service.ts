@@ -2,7 +2,7 @@
  * Telegram reports service - получатели отчётов и настройки времени
  */
 
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "../client";
 import * as schema from "../schema";
 import type { NotificationSettings, ReportSettings } from "../schema/user/workspace-settings";
@@ -19,11 +19,16 @@ export interface TelegramReportRecipient {
   reportType: ReportType;
   /** managerReport = сводка по всем менеджерам (для админов) */
   isManagerReport: boolean;
-  /** internalNumbers для фильтрации (если isManagerReport — из managedUserIds) */
-  internalNumbers: string[] | null;
   skipWeekends: boolean;
   /** Настройки отчёта (только для isManagerReport) */
   reportSettings?: ReportSettingsForRecipient;
+  internalNumbers?: string[] | null;
+}
+
+function buildReportSettings(rs: ReportSettings): ReportSettingsForRecipient {
+  return {
+    managedUserIds: rs?.managedUserIds ?? [],
+  };
 }
 
 function parseInternalExtensions(ext: string | null): string[] | null {
@@ -32,12 +37,6 @@ function parseInternalExtensions(ext: string | null): string[] | null {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-}
-
-function buildReportSettings(rs: ReportSettings): ReportSettingsForRecipient {
-  return {
-    managedUserIds: rs?.managedUserIds ?? [],
-  };
 }
 
 /**
@@ -52,9 +51,9 @@ export async function getTelegramReportRecipients(
       userId: schema.workspaceMembers.userId,
       role: schema.workspaceMembers.role,
       telegramChatId: schema.user.telegramChatId,
+      internalExtensions: schema.user.internalExtensions,
       notificationSettings: schema.userWorkspaceSettings.notificationSettings,
       reportSettings: schema.userWorkspaceSettings.reportSettings,
-      internalExtensions: schema.user.internalExtensions,
     })
     .from(schema.workspaceMembers)
     .innerJoin(schema.user, eq(schema.workspaceMembers.userId, schema.user.id))
@@ -91,6 +90,8 @@ export async function getTelegramReportRecipients(
 
     const isAdmin = m.role === "owner" || m.role === "admin";
 
+    const internalNumbers = parseInternalExtensions(m.internalExtensions ?? null);
+
     if (reportType === "daily") {
       if (dailyEnabled) {
         recipients.push({
@@ -98,25 +99,20 @@ export async function getTelegramReportRecipients(
           chatId,
           reportType: "daily",
           isManagerReport: false,
-          internalNumbers: parseInternalExtensions(m.internalExtensions),
           skipWeekends,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
       if (managerEnabled && isAdmin) {
-        const managedIds = (rs?.managedUserIds ?? []) as string[];
-        const internalNumbers = await getInternalNumbersForUserIds(
-          workspaceId,
-          managedIds.length > 0 ? managedIds : null,
-        );
         recipients.push({
           userId: m.userId,
           chatId,
           reportType: "daily",
           isManagerReport: true,
-          internalNumbers,
           skipWeekends,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
     } else if (reportType === "weekly") {
@@ -126,25 +122,20 @@ export async function getTelegramReportRecipients(
           chatId,
           reportType: "weekly",
           isManagerReport: false,
-          internalNumbers: parseInternalExtensions(m.internalExtensions),
           skipWeekends,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
       if (managerEnabled && isAdmin) {
-        const managedIds = (rs?.managedUserIds ?? []) as string[];
-        const internalNumbers = await getInternalNumbersForUserIds(
-          workspaceId,
-          managedIds.length > 0 ? managedIds : null,
-        );
         recipients.push({
           userId: m.userId,
           chatId,
           reportType: "weekly",
           isManagerReport: true,
-          internalNumbers,
           skipWeekends,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
     } else if (reportType === "monthly") {
@@ -154,25 +145,20 @@ export async function getTelegramReportRecipients(
           chatId,
           reportType: "monthly",
           isManagerReport: false,
-          internalNumbers: parseInternalExtensions(m.internalExtensions),
           skipWeekends,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
       if (managerEnabled && isAdmin) {
-        const managedIds = (rs?.managedUserIds ?? []) as string[];
-        const internalNumbers = await getInternalNumbersForUserIds(
-          workspaceId,
-          managedIds.length > 0 ? managedIds : null,
-        );
         recipients.push({
           userId: m.userId,
           chatId,
           reportType: "monthly",
           isManagerReport: true,
-          internalNumbers,
           skipWeekends,
           reportSettings: buildReportSettings(rs),
+          internalNumbers,
         });
       }
     }
@@ -216,35 +202,6 @@ export async function getWorkspaceIdsWithTelegramReportRecipients(): Promise<str
     );
 
   return rows.map((r) => r.workspaceId).filter((id): id is string => Boolean(id));
-}
-
-export async function getInternalNumbersForUserIds(
-  workspaceId: string,
-  userIds: string[] | null,
-): Promise<string[] | null> {
-  if (!userIds?.length) return null;
-
-  const users = await db
-    .select({
-      internalExtensions: schema.user.internalExtensions,
-    })
-    .from(schema.user)
-    .innerJoin(schema.workspaceMembers, eq(schema.user.id, schema.workspaceMembers.userId))
-    .where(
-      and(
-        inArray(schema.user.id, userIds),
-        eq(schema.workspaceMembers.workspaceId, workspaceId),
-        eq(schema.workspaceMembers.status, "active"),
-        isNull(schema.user.deletedAt),
-      ),
-    );
-
-  const allNumbers: string[] = [];
-  for (const u of users) {
-    const nums = parseInternalExtensions(u.internalExtensions);
-    if (nums) allNumbers.push(...nums);
-  }
-  return allNumbers.length > 0 ? [...new Set(allNumbers)] : null;
 }
 
 export interface ReportScheduleSettings {

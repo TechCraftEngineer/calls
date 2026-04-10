@@ -1,13 +1,13 @@
 /**
  * Диаризация через Speaker Embeddings Service (Асинхронная модель)
- * 
+ *
  * Использует POST /diarize-async для запуска задачи.
  * Результат приходит через Inngest callback (speaker-embeddings/diarization.completed).
  * Polling на /status НЕ используется.
  */
 
 import { env, SPEAKER_CONFIG } from "@calls/config";
-import { createLogger } from "~/logger";
+import { createLogger } from "../../../../logger";
 
 const logger = createLogger("speaker-diarization");
 
@@ -16,8 +16,7 @@ const SPEAKER_EMBEDDINGS_TIMEOUT_MS = SPEAKER_CONFIG.TIMEOUT_MS || 30000;
 const SPEAKER_EMBEDDINGS_HEALTH_TIMEOUT_MS = SPEAKER_CONFIG.HEALTH_TIMEOUT_MS || 5000;
 
 // URL сервиса speaker embeddings
-const SPEAKER_EMBEDDINGS_URL =
-  env.SPEAKER_EMBEDDINGS_URL || "http://speaker-embeddings:8000";
+const SPEAKER_EMBEDDINGS_URL = env.SPEAKER_EMBEDDINGS_URL || "http://speaker-embeddings:8000";
 
 /**
  * Результат диаризации через speaker embeddings
@@ -41,10 +40,7 @@ export interface SpeakerDiarizationResult {
 export async function checkSpeakerEmbeddingsHealth(): Promise<boolean> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(
-      () => controller.abort(),
-      SPEAKER_EMBEDDINGS_HEALTH_TIMEOUT_MS
-    );
+    const timeoutId = setTimeout(() => controller.abort(), SPEAKER_EMBEDDINGS_HEALTH_TIMEOUT_MS);
 
     const response = await fetch(`${SPEAKER_EMBEDDINGS_URL}/health`, {
       method: "GET",
@@ -75,7 +71,7 @@ export async function startSpeakerDiarization(
     numSpeakers?: number;
     minSpeakers?: number;
     maxSpeakers?: number;
-  }
+  },
 ): Promise<{
   success: boolean;
   taskId?: string;
@@ -83,19 +79,16 @@ export async function startSpeakerDiarization(
 }> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(
-      () => controller.abort(),
-      SPEAKER_EMBEDDINGS_TIMEOUT_MS
-    );
+    const timeoutId = setTimeout(() => controller.abort(), SPEAKER_EMBEDDINGS_TIMEOUT_MS);
 
     // Создаем FormData для отправки аудио файла
     const formData = new FormData();
     const blob = new Blob([audioBuffer], { type: "audio/wav" });
     const audioFilename = filename?.trim() ? filename : "audio.wav";
-    
+
     formData.append("file", blob, audioFilename);
     formData.append("call_id", callId);
-    
+
     if (options?.numSpeakers !== undefined) {
       formData.append("num_speakers", options.numSpeakers.toString());
     }
@@ -129,12 +122,12 @@ export async function startSpeakerDiarization(
     }
 
     const data = await response.json();
-    
+
     logger.info("Асинхронная диаризация запущена", {
       callId,
       taskId: data.task_id,
     });
-    
+
     return {
       success: true,
       taskId: data.task_id,
@@ -155,27 +148,19 @@ export async function startSpeakerDiarization(
 /**
  * Проверяет статус диаризации через /status endpoint
  */
-export async function getDiarizationStatus(
-  taskId: string
-): Promise<{
+export async function getDiarizationStatus(taskId: string): Promise<{
   status: "pending" | "processing" | "completed" | "failed";
   result?: SpeakerDiarizationResult;
   error?: string;
 }> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(
-      () => controller.abort(),
-      SPEAKER_EMBEDDINGS_HEALTH_TIMEOUT_MS
-    );
+    const timeoutId = setTimeout(() => controller.abort(), SPEAKER_EMBEDDINGS_HEALTH_TIMEOUT_MS);
 
-    const response = await fetch(
-      `${SPEAKER_EMBEDDINGS_URL}/status/${taskId}`,
-      {
-        method: "GET",
-        signal: controller.signal,
-      }
-    );
+    const response = await fetch(`${SPEAKER_EMBEDDINGS_URL}/status/${taskId}`, {
+      method: "GET",
+      signal: controller.signal,
+    });
 
     clearTimeout(timeoutId);
 
@@ -209,18 +194,13 @@ export async function getDiarizationStatus(
  * Определяет, стоит ли использовать speaker embeddings
  * на основе длительности и количества сегментов
  */
-export function shouldUseSpeakerEmbeddings(
-  durationSeconds: number,
-  segmentCount: number
-): boolean {
+export function shouldUseSpeakerEmbeddings(durationSeconds: number, segmentCount: number): boolean {
   // Используем только для звонков длительностью более 30 секунд
   // и с более чем 2 сегментами (чтобы было что диаризировать)
   const MIN_DURATION_SECONDS = 30;
   const MIN_SEGMENTS = 2;
 
-  return (
-    durationSeconds >= MIN_DURATION_SECONDS && segmentCount >= MIN_SEGMENTS
-  );
+  return durationSeconds >= MIN_DURATION_SECONDS && segmentCount >= MIN_SEGMENTS;
 }
 
 /**
@@ -245,7 +225,7 @@ export async function performDiarization(
     numSpeakers?: number;
     minSpeakers?: number;
     maxSpeakers?: number;
-  }
+  },
 ): Promise<PerformDiarizationResult> {
   logger.info("Запуск асинхронной диаризации", { callId, filename });
 
@@ -271,7 +251,6 @@ export async function performDiarization(
       success: true,
       taskId: result.taskId,
     };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logger.error("Ошибка при запуске диаризации", {

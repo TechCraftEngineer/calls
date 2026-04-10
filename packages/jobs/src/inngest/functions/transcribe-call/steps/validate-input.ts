@@ -2,8 +2,8 @@
  * Валидация входных данных события
  */
 
-import { TranscribeCallEventSchema } from "~/inngest/functions/transcribe-call/schemas";
-import type { TranscribeCallEvent } from "~/inngest/functions/transcribe-call/schemas";
+import type { TranscribeCallEvent } from "../schemas";
+import { TranscribeCallEventSchema } from "../schemas";
 
 export function validateInput(callId: string): TranscribeCallEvent {
   const validationResult = TranscribeCallEventSchema.safeParse({ callId });
