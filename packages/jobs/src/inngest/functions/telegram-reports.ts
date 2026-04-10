@@ -14,10 +14,7 @@ import {
 } from "@calls/db";
 import { sendMessage } from "@calls/telegram-bot";
 import { subMonths } from "date-fns";
-import {
-  formatTelegramReportHtml,
-  splitTelegramHtmlMessage,
-} from "../../reports";
+import { formatTelegramReportHtml, splitTelegramHtmlMessage } from "../../reports";
 import { inngest } from "../client";
 
 const TZ = "Europe/Moscow";
@@ -226,7 +223,11 @@ export const telegramReportsFn = inngest.createFunction(
               excludePhoneNumbers: excludePhoneNumbers.length > 0 ? excludePhoneNumbers : undefined,
             });
 
-            const stats = await callsService.enrichStatsWithKpi(evaluationsStats, workspaceId, reportType);
+            const stats = await callsService.enrichStatsWithKpi(
+              evaluationsStats,
+              workspaceId,
+              reportType,
+            );
 
             let lowRatedCalls: Record<string, number> = {};
             if (r.isManagerReport) {

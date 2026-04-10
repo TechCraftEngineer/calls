@@ -5,22 +5,22 @@
 export {
   checkSpeakerEmbeddingsHealth,
   getDiarizationStatus,
+  type PerformDiarizationResult,
   performDiarization,
+  type SpeakerDiarizationResult,
   shouldUseSpeakerEmbeddings,
   startSpeakerDiarization,
-  type PerformDiarizationResult,
-  type SpeakerDiarizationResult,
 } from "./diarization";
 
 export {
   createSpeakerEmbeddingsCompletedEvent,
   handleSpeakerEmbeddingsCallback,
+  type SpeakerEmbeddingsCallbackData,
   speakerEmbeddingsCompletedFn,
   validateSpeakerEmbeddingsCallback,
-  type SpeakerEmbeddingsCallbackData,
 } from "./embeddings-handler";
 
 export {
-  identifySpeakers,
   type IdentifySpeakersResult,
+  identifySpeakers,
 } from "./identification";

@@ -7,9 +7,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useORPC } from "@/orpc/react";
-import { KpiCalendar } from "./kpi-calendar";
 import { DailyStatsTable } from "./daily-stats-table";
 import { DateRangeFilter } from "./date-range-filter";
+import { KpiCalendar } from "./kpi-calendar";
 import { TrendChart } from "./trend-chart";
 
 interface DailyViewClientProps {
@@ -182,11 +182,7 @@ export function DailyViewClient({
           endDate={endDate}
         />
       ) : viewMode === "calendar" ? (
-        <KpiCalendar
-          data={data ?? []}
-          loading={isLoading}
-          startDate={startDate}
-        />
+        <KpiCalendar data={data ?? []} loading={isLoading} startDate={startDate} />
       ) : (
         <TrendChart data={data ?? []} loading={isLoading} />
       )}

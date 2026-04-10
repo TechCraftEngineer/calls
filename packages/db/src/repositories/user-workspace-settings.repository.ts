@@ -139,7 +139,12 @@ export const userWorkspaceSettingsRepository = {
       targetTalkTimeMinutes: 0,
     };
     const defaultNotification: NotificationSettings = {
-      email: { dailyReport: false, managerReport: false, weeklyReport: false, monthlyReport: false },
+      email: {
+        dailyReport: false,
+        managerReport: false,
+        weeklyReport: false,
+        monthlyReport: false,
+      },
       telegram: {
         dailyReport: false,
         managerReport: false,

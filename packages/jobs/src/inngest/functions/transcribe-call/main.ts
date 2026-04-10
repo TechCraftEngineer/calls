@@ -125,10 +125,21 @@ export const transcribeCallFn = inngest.createFunction(
     // === ШАГ 9: Асинхронная диаризированная транскрибация ===
     let diarizeResult: Awaited<ReturnType<typeof asyncDiarizedTranscriptionWithCallback>>;
     try {
+      // Используем сегменты из speaker-embeddings диаризации, если они есть
+      // Иначе используем сегменты из обычной транскрипции
+      const segmentsForDiarization = speakerDiarizationResult.segments
+        ? speakerDiarizationResult.segments.map((s) => ({
+            speaker: s.speaker,
+            start: s.start,
+            end: s.end,
+            text: "", // Текст не нужен для giga-am диаризации
+          }))
+        : fullTranscription.segments || [];
+
       diarizeResult = await asyncDiarizedTranscriptionWithCallback(
         pipelineAudio,
         callId,
-        fullTranscription.segments || [],
+        segmentsForDiarization,
         step,
       );
     } catch (diarizationError) {

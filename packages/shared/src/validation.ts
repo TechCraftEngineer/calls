@@ -38,7 +38,7 @@ export function isValidUuid(id: string): boolean {
  */
 export function isValidUserId(id: string): boolean {
   if (typeof id !== "string") return false;
-  
+
   // 32 символа base64-like (буквы и цифры)
   const userIdPattern = /^[A-Za-z0-9]{32}$/;
   return userIdPattern.test(id);

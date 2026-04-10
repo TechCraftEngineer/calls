@@ -17,7 +17,7 @@ import {
 } from "@calls/ui";
 import { Clock, Phone, TrendingUp, Wallet } from "lucide-react";
 import * as React from "react";
-import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts";
+import { CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts";
 import { getColorByPercentage } from "@/lib/kpi-utils";
 
 interface TrendChartProps {
@@ -32,8 +32,6 @@ interface MetricConfig {
   label: string;
   icon: React.ReactNode;
   color: string;
-  gradientFrom: string;
-  gradientTo: string;
 }
 
 // Конфигурация метрик
@@ -43,24 +41,18 @@ const METRICS: MetricConfig[] = [
     label: "Время разговоров",
     icon: <Clock className="h-3.5 w-3.5" />,
     color: "hsl(var(--primary))",
-    gradientFrom: "hsl(var(--primary) / 0.3)",
-    gradientTo: "hsl(var(--primary) / 0.05)",
   },
   {
     key: "calls",
     label: "Звонки",
     icon: <Phone className="h-3.5 w-3.5" />,
     color: "hsl(217, 91%, 60%)",
-    gradientFrom: "hsl(217, 91%, 60% / 0.3)",
-    gradientTo: "hsl(217, 91%, 60% / 0.05)",
   },
   {
     key: "bonus",
     label: "Бонусы",
     icon: <Wallet className="h-3.5 w-3.5" />,
     color: "hsl(142, 76%, 36%)",
-    gradientFrom: "hsl(142, 76%, 36% / 0.3)",
-    gradientTo: "hsl(142, 76%, 36% / 0.05)",
   },
 ];
 
@@ -317,22 +309,6 @@ export const TrendChart = React.memo(function TrendChart({ data, loading }: Tren
                 bottom: 10,
               }}
             >
-              <defs>
-                {/* Градиенты для area */}
-                <linearGradient id="talkTimeGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={METRICS[0].gradientFrom} />
-                  <stop offset="95%" stopColor={METRICS[0].gradientTo} />
-                </linearGradient>
-                <linearGradient id="callsGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={METRICS[1].gradientFrom} />
-                  <stop offset="95%" stopColor={METRICS[1].gradientTo} />
-                </linearGradient>
-                <linearGradient id="bonusGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={METRICS[2].gradientFrom} />
-                  <stop offset="95%" stopColor={METRICS[2].gradientTo} />
-                </linearGradient>
-              </defs>
-
               <CartesianGrid
                 strokeDasharray="3 3"
                 vertical={false}
@@ -465,90 +441,70 @@ export const TrendChart = React.memo(function TrendChart({ data, loading }: Tren
                 />
               )}
 
-              {/* Фактическое время с градиентом */}
+              {/* Фактическое время */}
               {showTalkTime && (
-                <>
-                  <Area
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="actualTalkTime"
-                    stroke="none"
-                    fill="url(#talkTimeGradient)"
-                    fillOpacity={1}
-                  />
-                  <Line
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="actualTalkTime"
-                    stroke={METRICS[0].color}
-                    strokeWidth={2.5}
-                    dot={{
-                      r: 3,
-                      strokeWidth: 2,
-                      stroke: "white",
-                    }}
-                    activeDot={{
-                      r: 5,
-                      strokeWidth: 2,
-                      stroke: "white",
-                    }}
-                    name={chartConfig.actualTalkTime.label}
-                  />
-                </>
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="actualTalkTime"
+                  stroke={METRICS[0].color}
+                  strokeWidth={2.5}
+                  dot={{
+                    r: 3,
+                    strokeWidth: 2,
+                    stroke: "white",
+                  }}
+                  activeDot={{
+                    r: 5,
+                    strokeWidth: 2,
+                    stroke: "white",
+                  }}
+                  name={chartConfig.actualTalkTime.label}
+                />
               )}
 
               {/* Звонки */}
               {showCalls && (
-                <>
-                  <Area
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="totalCalls"
-                    stroke="none"
-                    fill="url(#callsGradient)"
-                    fillOpacity={0.3}
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="totalCalls"
-                    stroke={METRICS[1].color}
-                    strokeWidth={2}
-                    dot={{
-                      r: 3,
-                      strokeWidth: 2,
-                      stroke: "white",
-                    }}
-                    name={chartConfig.totalCalls.label}
-                  />
-                </>
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="totalCalls"
+                  stroke={METRICS[1].color}
+                  strokeWidth={2}
+                  dot={{
+                    r: 3,
+                    strokeWidth: 2,
+                    stroke: "white",
+                  }}
+                  activeDot={{
+                    r: 5,
+                    strokeWidth: 2,
+                    stroke: "white",
+                  }}
+                  name={chartConfig.totalCalls.label}
+                />
               )}
 
               {/* Бонусы */}
               {showBonus && (
-                <>
-                  <Area
-                    yAxisId="right-bonus"
-                    type="monotone"
-                    dataKey="dailyBonus"
-                    stroke="none"
-                    fill="url(#bonusGradient)"
-                    fillOpacity={0.3}
-                  />
-                  <Line
-                    yAxisId="right-bonus"
-                    type="monotone"
-                    dataKey="dailyBonus"
-                    stroke={METRICS[2].color}
-                    strokeWidth={2}
-                    dot={{
-                      r: 3,
-                      strokeWidth: 2,
-                      stroke: "white",
-                    }}
-                    name={chartConfig.dailyBonus.label}
-                  />
-                </>
+                <Line
+                  yAxisId="right-bonus"
+                  type="monotone"
+                  dataKey="dailyBonus"
+                  stroke={METRICS[2].color}
+                  strokeWidth={2}
+                  dot={{
+                    r: 3,
+                    strokeWidth: 2,
+                    stroke: "white",
+                  }}
+                  activeDot={{
+                    r: 5,
+                    strokeWidth: 2,
+                    stroke: "white",
+                  }}
+                  name={chartConfig.dailyBonus.label}
+                />
               )}
             </ComposedChart>
           </ChartContainer>

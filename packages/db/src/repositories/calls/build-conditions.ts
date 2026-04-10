@@ -118,10 +118,10 @@ export function buildCallConditions({
       conditions.push(inArray(canonicalStatus, normalizedStatuses));
     }
   }
-  // Фильтрация по менеджерам идет через phone_number
-  // managerPhoneNumbers содержит phone_numbers из workspace_pbx_numbers
+  // Фильтрация по менеджерам идет через internal_number
+  // managerPhoneNumbers содержит phone_numbers из workspace_pbx_numbers (внутренние номера)
   if (managerPhoneNumbers?.length) {
-    conditions.push(inArray(schema.calls.number, managerPhoneNumbers));
+    conditions.push(inArray(schema.calls.internalNumber, managerPhoneNumbers));
   }
   if (valueScores?.length) {
     const hasZero = valueScores.includes(0);
@@ -153,7 +153,7 @@ export function buildCallConditions({
       ilike(schema.calls.name, `%${q}%`),
       ilike(schema.calls.customerName, `%${q}%`),
       managerPhoneNumbersForQuery?.length
-        ? inArray(schema.calls.number, managerPhoneNumbersForQuery)
+        ? inArray(schema.calls.internalNumber, managerPhoneNumbersForQuery)
         : undefined,
     );
     if (qCond) conditions.push(qCond);

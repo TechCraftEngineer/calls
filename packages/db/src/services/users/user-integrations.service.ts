@@ -2,10 +2,10 @@
  * User integrations service - handles Telegram and MAX integrations
  */
 
-import { userWorkspaceSettingsRepository } from "../../repositories/user-workspace-settings.repository";
-import { withTransaction } from "../../repositories/workspaces.repository";
-import type { UsersRepository } from "../../repositories/users.repository";
 import type { SystemRepository } from "../../repositories/system.repository";
+import { userWorkspaceSettingsRepository } from "../../repositories/user-workspace-settings.repository";
+import type { UsersRepository } from "../../repositories/users.repository";
+import { withTransaction } from "../../repositories/workspaces.repository";
 import type { User } from "./types";
 
 export class UserIntegrationsService {
@@ -68,11 +68,7 @@ export class UserIntegrationsService {
   }
 
   // MAX integration
-  async saveMaxConnectToken(
-    userId: string,
-    workspaceId: string,
-    token: string,
-  ): Promise<boolean> {
+  async saveMaxConnectToken(userId: string, workspaceId: string, token: string): Promise<boolean> {
     return userWorkspaceSettingsRepository.saveMaxConnectToken(userId, workspaceId, token);
   }
 
@@ -80,11 +76,7 @@ export class UserIntegrationsService {
     const result = await userWorkspaceSettingsRepository.disconnectMax(userId);
 
     if (result) {
-      await this.systemRepository.addActivityLog(
-        "INFO",
-        `User ${userId} Max disconnected`,
-        "user",
-      );
+      await this.systemRepository.addActivityLog("INFO", `User ${userId} Max disconnected`, "user");
     }
 
     return result;

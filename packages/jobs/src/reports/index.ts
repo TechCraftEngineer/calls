@@ -2,32 +2,29 @@
  * Отчеты - модуль для форматирования отчетов
  */
 
-// Типы
-export type {
-  ManagerStats,
-  PreparedStats,
-  FormatReportParams,
-  StatsTotals,
-  PreparedStatsResult,
-} from "./types";
-
-// Основные функции форматирования
-export { formatTelegramReport } from "./telegram-formatter";
 export { formatTelegramReportHtml } from "./html-formatter";
 export { splitTelegramHtmlMessage } from "./message-splitter";
-
-// Утилиты
-export {
-  formatValue,
-  formatScore,
-  escapeHtml,
-  pluralizeCalls,
-  getReportTypeLabel,
-  validateReportParams,
-} from "./utils";
-
 // Обработка статистики
 export {
-  prepareStats,
   computeOverallAverages,
+  prepareStats,
 } from "./stats-processor";
+// Основные функции форматирования
+export { formatTelegramReport } from "./telegram-formatter";
+// Типы
+export type {
+  FormatReportParams,
+  ManagerStats,
+  PreparedStats,
+  PreparedStatsResult,
+  StatsTotals,
+} from "./types";
+// Утилиты
+export {
+  escapeHtml,
+  formatScore,
+  formatValue,
+  getReportTypeLabel,
+  pluralizeCalls,
+  validateReportParams,
+} from "./utils";

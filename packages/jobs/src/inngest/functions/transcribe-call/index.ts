@@ -14,13 +14,13 @@
 // ============ Audio ============
 export { downloadAudioBuffer, downloadAudioFile } from "./audio/download";
 export { extractAudioSegment } from "./audio/processing";
-
+export { gigaAmCompletedFn } from "./gigaam/callback-handler";
 // ============ GigaAM ============
 export {
   checkAsyncTaskStatus,
   fetchWithRetry,
-  getAsyncResult,
   getAsyncDiarizedResult,
+  getAsyncResult,
   processAudioWithGigaAm,
   processAudioWithoutDiarization,
   startAsyncDiarizedTranscription,
@@ -28,13 +28,12 @@ export {
   waitForAsyncDiarizedResult,
   waitForAsyncResult,
 } from "./gigaam/client";
-export { gigaAmCompletedFn } from "./gigaam/callback-handler";
 export { processAudioWithDiarization } from "./gigaam/diarization";
 
 // ============ LLM ============
 export {
-  isAnsweringMachineWithLlm,
   type AnsweringMachineResult,
+  isAnsweringMachineWithLlm,
 } from "./llm";
 export {
   applyLLMCorrection,
@@ -44,68 +43,19 @@ export {
   validateAndMergeCorrections,
 } from "./llm/correction";
 export {
+  type AsrDiarizedResult,
+  type AsrNonDiarizedResult,
+  type AsrSegment,
   applyLLMMerging,
   buildMergingPrompt,
   estimateTokenCount,
   MAX_PROMPT_TOKENS,
   mergeAsrResultsWithLLM,
-  type AsrDiarizedResult,
-  type AsrNonDiarizedResult,
-  type AsrSegment,
 } from "./llm/merge";
-
-// ============ Manager ============
-export { resolveManagerFromPbx } from "./manager";
-
-// ============ Speakers ============
-export {
-  checkSpeakerEmbeddingsHealth,
-  getDiarizationStatus,
-  performDiarization,
-  shouldUseSpeakerEmbeddings,
-  startSpeakerDiarization,
-  type PerformDiarizationResult,
-  type SpeakerDiarizationResult,
-} from "./speakers";
-export {
-  createSpeakerEmbeddingsCompletedEvent,
-  handleSpeakerEmbeddingsCallback,
-  speakerEmbeddingsCompletedFn,
-  validateSpeakerEmbeddingsCallback,
-  type SpeakerEmbeddingsCallbackData,
-} from "./speakers/embeddings-handler";
-export {
-  identifySpeakers,
-  type IdentifySpeakersResult,
-} from "./speakers/identification";
-
-// ============ Utils ============
-export {
-  extractSegmentsFromUtterances,
-  extractSpeakerTimeline,
-} from "./utils";
-export {
-  createSafeResponse,
-  handleAsyncError,
-  TranscriptionError,
-  type ValidationError,
-  validateCall,
-  validateCallId,
-  validateFile,
-  validatePipelineResult,
-  validateTranscriptionResult,
-  validateWorkspace,
-} from "./utils/validation";
-export { serializeMetadata } from "./utils/metadata";
-export {
-  quickAnsweringMachineCheck,
-  shouldRunQuickCheck,
-  type QuickCheckResult,
-} from "./utils/quick-am-check";
-
 // ============ Main Function ============
 export { transcribeCallFn } from "./main";
-
+// ============ Manager ============
+export { resolveManagerFromPbx } from "./manager";
 // ============ Schemas (типы и схемы валидации) ============
 export type {
   AsrLog as AsrLogType,
@@ -133,7 +83,27 @@ export {
   TranscriptMetadataSchema,
   WorkspaceSchema,
 } from "./schemas";
-
+// ============ Speakers ============
+export {
+  checkSpeakerEmbeddingsHealth,
+  getDiarizationStatus,
+  type PerformDiarizationResult,
+  performDiarization,
+  type SpeakerDiarizationResult,
+  shouldUseSpeakerEmbeddings,
+  startSpeakerDiarization,
+} from "./speakers";
+export {
+  createSpeakerEmbeddingsCompletedEvent,
+  handleSpeakerEmbeddingsCallback,
+  type SpeakerEmbeddingsCallbackData,
+  speakerEmbeddingsCompletedFn,
+  validateSpeakerEmbeddingsCallback,
+} from "./speakers/embeddings-handler";
+export {
+  type IdentifySpeakersResult,
+  identifySpeakers,
+} from "./speakers/identification";
 // ============ Types ============
 export type {
   AsrResult,
@@ -145,3 +115,26 @@ export type {
   TranscriptionResult,
   Workspace,
 } from "./types";
+// ============ Utils ============
+export {
+  extractSegmentsFromUtterances,
+  extractSpeakerTimeline,
+} from "./utils";
+export { serializeMetadata } from "./utils/metadata";
+export {
+  type QuickCheckResult,
+  quickAnsweringMachineCheck,
+  shouldRunQuickCheck,
+} from "./utils/quick-am-check";
+export {
+  createSafeResponse,
+  handleAsyncError,
+  TranscriptionError,
+  type ValidationError,
+  validateCall,
+  validateCallId,
+  validateFile,
+  validatePipelineResult,
+  validateTranscriptionResult,
+  validateWorkspace,
+} from "./utils/validation";

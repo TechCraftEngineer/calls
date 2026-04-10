@@ -187,7 +187,14 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
               userId: userId,
               data: {
                 reportDailyTime: form.reportDailyTime,
-                reportWeeklyDay: form.reportWeeklyDay as "fri" | "sun" | "mon" | "tue" | "wed" | "thu" | "sat",
+                reportWeeklyDay: form.reportWeeklyDay as
+                  | "fri"
+                  | "sun"
+                  | "mon"
+                  | "tue"
+                  | "wed"
+                  | "thu"
+                  | "sat",
                 reportWeeklyTime: form.reportWeeklyTime,
                 reportMonthlyDay: form.reportMonthlyDay,
                 reportMonthlyTime: form.reportMonthlyTime,
@@ -196,7 +203,6 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
           }
         />
       </TabsContent>
-
     </Tabs>
   );
 }

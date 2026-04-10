@@ -91,7 +91,7 @@ export async function getCallsMetrics(params?: GetCallsMetricsParams): Promise<{
   }
 
   if (mobileNumbers?.length) {
-    conditions.push(or(...mobileNumbers.map((num) => eq(schema.calls.number, num))));
+    conditions.push(or(...mobileNumbers.map((num) => eq(schema.calls.internalNumber, num))));
   }
 
   if (directions?.length) {
@@ -108,7 +108,7 @@ export async function getCallsMetrics(params?: GetCallsMetricsParams): Promise<{
   // }
 
   if (managerPhoneNumbers?.length) {
-    conditions.push(or(...managerPhoneNumbers.map((num) => eq(schema.calls.number, num))));
+    conditions.push(or(...managerPhoneNumbers.map((num) => eq(schema.calls.internalNumber, num))));
   }
 
   if (statuses?.length) {
@@ -116,7 +116,9 @@ export async function getCallsMetrics(params?: GetCallsMetricsParams): Promise<{
   }
 
   if (managerPhoneNumbersForQuery?.length) {
-    conditions.push(or(...managerPhoneNumbersForQuery.map((num) => eq(schema.calls.number, num))));
+    conditions.push(
+      or(...managerPhoneNumbersForQuery.map((num) => eq(schema.calls.internalNumber, num))),
+    );
   }
 
   if (q) {

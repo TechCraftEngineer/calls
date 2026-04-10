@@ -58,6 +58,7 @@ export const paths = {
   calls: {
     root: ROOTS.CALLS,
     call: (id: number | string) => `${ROOTS.CALLS}/${id}`,
+    callModal: (id: number | string) => `${ROOTS.CALLS}/${id}?modal=true`,
   },
   forbidden: ROOTS.FORBIDDEN,
 } as const;

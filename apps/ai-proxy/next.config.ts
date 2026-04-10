@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
+import "./src/env";
+
+/** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
-  async rewrites() {
+  rewrites() {
     return [
       {
         source: "/api/analytics/static/:path*",
@@ -13,7 +16,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  skipTrailingSlashRedirect: true,
 };
 
 export default nextConfig;

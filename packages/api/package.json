@@ -25,8 +25,8 @@
     "@calls/lib": "workspace:*",
     "@calls/shared": "workspace:*",
     "@calls/telegram-bot": "workspace:*",
-    "@orpc/client": "^1.13.13",
-    "@orpc/server": "^1.13.13",
+    "@orpc/client": "^1.13.14",
+    "@orpc/server": "^1.13.14",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "zod": "4.3.6"

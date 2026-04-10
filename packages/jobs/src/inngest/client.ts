@@ -50,6 +50,9 @@ export const gigaAmTranscriptionCompleted = eventType("giga-am/transcription.com
   schema: staticSchema<GigaAmTranscriptionCompletedData>(),
 });
 
-export const speakerEmbeddingsDiarizationCompleted = eventType("speaker-embeddings/diarization.completed", {
-  schema: staticSchema<SpeakerEmbeddingsDiarizationCompletedData>(),
-});
+export const speakerEmbeddingsDiarizationCompleted = eventType(
+  "speaker-embeddings/diarization.completed",
+  {
+    schema: staticSchema<SpeakerEmbeddingsDiarizationCompletedData>(),
+  },
+);

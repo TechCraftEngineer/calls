@@ -19,8 +19,8 @@
     "@calls/lib": "workspace:*",
     "@calls/telegram-bot": "workspace:*",
     "@calls/validators": "workspace:*",
-    "@orpc/server": "^1.13.13",
-    "better-auth": "1.6.1",
+    "@orpc/server": "^1.13.14",
+    "better-auth": "1.6.2",
     "grammy": "1.42.0",
     "hono": "4.12.12"
   },

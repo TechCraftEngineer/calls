@@ -80,13 +80,17 @@ export async function getDailyKpiStats(input: GetDailyKpiStatsInput): Promise<Da
 
   const conditions = [
     eq(schema.calls.workspaceId, workspaceId),
-    inArray(schema.calls.number, phoneNums),
+    inArray(schema.calls.internalNumber, phoneNums),
     gte(schema.calls.timestamp, dateFromDate),
     lt(schema.calls.timestamp, dateToExclusive),
   ];
 
   if (excludePhoneNumbers?.length) {
     const excludeCondition = and(
+      or(
+        isNull(schema.calls.internalNumber),
+        notInArray(schema.calls.internalNumber, excludePhoneNumbers),
+      ),
       or(isNull(schema.calls.number), notInArray(schema.calls.number, excludePhoneNumbers)),
     );
     if (excludeCondition) {

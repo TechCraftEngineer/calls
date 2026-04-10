@@ -1,7 +1,7 @@
 import { evaluateRequested, inngest } from "@calls/jobs";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
-import { workspaceProcedure } from "../../orpc";
+import { workspaceAdminProcedure } from "../../orpc";
 
 const uuidV7Schema = z
   .string()
@@ -16,7 +16,7 @@ const uuidV7WithPrefixSchema = z
   });
 const callIdSchema = z.union([uuidV7Schema, uuidV7WithPrefixSchema]);
 
-export const evaluate = workspaceProcedure
+export const evaluate = workspaceAdminProcedure
   .input(z.object({ call_id: callIdSchema }))
   .handler(async ({ input, context }) => {
     const call = await context.callsService.getCall(input.call_id);

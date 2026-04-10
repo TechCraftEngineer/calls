@@ -1,3 +1,4 @@
+import { env } from "@calls/config/env";
 import { Bot } from "grammy";
 
 /**
@@ -5,13 +6,16 @@ import { Bot } from "grammy";
  * @param token - Telegram Bot API token
  * @param chatId - Telegram chat ID (e.g. user's chat_id)
  * @param text - Message text
+ * @param options - Additional options (parseMode)
  * @returns Promise<boolean> - true if successful, false otherwise
  */
 export async function sendMessage(
   token: string,
   chatId: string,
   text: string,
-  options?: { parseMode?: "HTML" | "MarkdownV2" },
+  options?: {
+    parseMode?: "HTML" | "MarkdownV2";
+  },
 ): Promise<boolean> {
   try {
     if (!token?.trim()) {
@@ -29,7 +33,21 @@ export async function sendMessage(
       return false;
     }
 
-    const bot = new Bot(token);
+    // Настраиваем прокси если указан в env
+    const proxyUrl = env.TELEGRAM_PROXY_URL;
+    console.log(`[telegram-send] TELEGRAM_PROXY_URL: ${proxyUrl ?? "not set"}`);
+
+    const botConfig = proxyUrl
+      ? {
+          client: {
+            apiRoot: proxyUrl,
+          },
+        }
+      : undefined;
+    console.log(`[telegram-send] botConfig: ${botConfig ? `apiRoot=${proxyUrl}` : "no proxy"}`);
+
+    const bot = new Bot(token, botConfig);
+    console.log(`[telegram-send] Bot instance created`);
     await bot.api.sendMessage(chatId, text, {
       parse_mode: options?.parseMode,
     });

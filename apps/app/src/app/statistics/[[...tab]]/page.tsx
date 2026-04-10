@@ -42,6 +42,7 @@ function StatisticsPageContent() {
   const userLoading = sessionPending;
   const { activeWorkspace } = useWorkspace();
   const workspaceRole = activeWorkspace?.role ?? "member";
+
   const [filters, setFilters] = useState({
     dateFrom: "",
     dateTo: "",
@@ -78,10 +79,14 @@ function StatisticsPageContent() {
       router.replace(paths.statistics.root);
     }
     // Перенаправляем со вкладок KPI для пользователей с ролью member
-    if (workspaceRole === "member" && (activeTab === "kpi" || activeTab === "grid")) {
+    if (
+      activeWorkspace &&
+      workspaceRole === "member" &&
+      (activeTab === "kpi" || activeTab === "grid")
+    ) {
       router.replace(paths.statistics.root);
     }
-  }, [pathname, router, workspaceRole, activeTab]);
+  }, [pathname, router, workspaceRole, activeTab, activeWorkspace]);
 
   useEffect(() => {
     if (statsError && typeof statsError === "object" && "code" in statsError) {

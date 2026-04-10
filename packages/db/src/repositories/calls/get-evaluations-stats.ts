@@ -1,4 +1,4 @@
-import { and, asc, avg, count, eq, gte, isNotNull, lt, lte, sql, sum } from "drizzle-orm";
+import { and, asc, avg, count, eq, gte, inArray, isNotNull, lt, lte, sql, sum } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
@@ -25,6 +25,9 @@ export async function getEvaluationsStats(
 ): Promise<Record<string, ManagerStatsRow>> {
   const { workspaceId, dateFrom, dateTo, excludePhoneNumbers, internalNumbers } = params;
 
+  const safeInternalNumbers =
+    internalNumbers?.filter((n): n is string => n != null && n.trim().length > 0) ?? [];
+
   const conditions = [];
   if (workspaceId != null) conditions.push(eq(schema.calls.workspaceId, workspaceId));
   if (dateFrom) conditions.push(gte(schema.calls.timestamp, new Date(dateFrom)));
@@ -33,10 +36,8 @@ export async function getEvaluationsStats(
   if (excludeConditionStats) {
     conditions.push(excludeConditionStats);
   }
-  if (internalNumbers && internalNumbers.length > 0) {
-    conditions.push(
-      sql`${schema.calls.internalNumber} IN ${sql.raw(internalNumbers.map((n) => `'${n}'`).join(", "))}`,
-    );
+  if (safeInternalNumbers.length > 0) {
+    conditions.push(inArray(schema.calls.internalNumber, safeInternalNumbers));
   }
 
   const query = db
@@ -82,10 +83,8 @@ export async function getEvaluationsStats(
 
   // Агрегаты оценок по менеджерам (avg rating, avg value, evaluated count)
   const evalConditions = [...conditions];
-  if (internalNumbers && internalNumbers.length > 0) {
-    evalConditions.push(
-      sql`${schema.calls.internalNumber} IN ${sql.raw(internalNumbers.map((n) => `'${n}'`).join(", "))}`,
-    );
+  if (safeInternalNumbers.length > 0) {
+    evalConditions.push(inArray(schema.calls.internalNumber, safeInternalNumbers));
   }
   evalConditions.push(eq(schema.callEvaluations.isQualityAnalyzable, true));
   const evalQuery = db
@@ -212,6 +211,9 @@ export async function getLowRatedCallsCount(
 
   if (workspaceId == null) return {};
 
+  const safeInternalNumbers =
+    internalNumbers?.filter((n): n is string => n != null && n.trim().length > 0) ?? [];
+
   const conditions = [
     eq(schema.calls.workspaceId, workspaceId),
     lt(schema.callEvaluations.managerScore, maxScore),
@@ -223,10 +225,8 @@ export async function getLowRatedCallsCount(
   if (excludeConditionLowRated) {
     conditions.push(excludeConditionLowRated);
   }
-  if (internalNumbers && internalNumbers.length > 0) {
-    conditions.push(
-      sql`${schema.calls.internalNumber} IN ${sql.raw(internalNumbers.map((n) => `'${n}'`).join(", "))}`,
-    );
+  if (safeInternalNumbers.length > 0) {
+    conditions.push(inArray(schema.calls.internalNumber, safeInternalNumbers));
   }
 
   const rows = await db

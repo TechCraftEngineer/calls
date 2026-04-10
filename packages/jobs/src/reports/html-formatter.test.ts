@@ -58,7 +58,7 @@ describe("formatTelegramReportHtml", () => {
       ...baseParams,
       reportType: "monthly",
       stats: {
-        "Иван": {
+        Иван: {
           ...baseStats,
           kpiBaseSalary: 50000,
           kpiCalculatedBonus: 8330,
@@ -90,8 +90,8 @@ describe("formatTelegramReportHtml", () => {
     const result = formatTelegramReportHtml({
       ...baseParams,
       stats: {
-        "Иван": baseStats,
-        "Петр": { ...baseStats, name: "Петр", internalNumber: "102" },
+        Иван: baseStats,
+        Петр: { ...baseStats, name: "Петр", internalNumber: "102" },
       },
     });
 
@@ -105,14 +105,14 @@ describe("formatTelegramReportHtml", () => {
       ...baseParams,
       reportType: "monthly",
       stats: {
-        "Иван": { ...baseStats, kpiBaseSalary: 50000, kpiTargetBonus: 10000 },
+        Иван: { ...baseStats, kpiBaseSalary: 50000, kpiTargetBonus: 10000 },
       },
     });
     const dailyResult = formatTelegramReportHtml({
       ...baseParams,
       reportType: "daily",
       stats: {
-        "Иван": { ...baseStats, kpiBaseSalary: 50000, kpiTargetBonus: 10000 },
+        Иван: { ...baseStats, kpiBaseSalary: 50000, kpiTargetBonus: 10000 },
       },
     });
 
@@ -126,21 +126,21 @@ describe("formatTelegramReportHtml", () => {
       ...baseParams,
       reportType: "weekly",
       stats: {
-        "Иван": { ...baseStats, kpiTotalSalary: 55000 },
+        Иван: { ...baseStats, kpiTotalSalary: 55000 },
       },
     });
     const monthlyResult = formatTelegramReportHtml({
       ...baseParams,
       reportType: "monthly",
       stats: {
-        "Иван": { ...baseStats, kpiTotalSalary: 55000 },
+        Иван: { ...baseStats, kpiTotalSalary: 55000 },
       },
     });
     const dailyResult = formatTelegramReportHtml({
       ...baseParams,
       reportType: "daily",
       stats: {
-        "Иван": { ...baseStats, kpiTotalSalary: 55000 },
+        Иван: { ...baseStats, kpiTotalSalary: 55000 },
       },
     });
 
@@ -172,9 +172,9 @@ describe("formatTelegramReportHtml", () => {
       ...baseParams,
       isManagerReport: true,
       lowRatedCalls: {
-        "А": 2,
-        "Б": 10,
-        "В": 5,
+        А: 2,
+        Б: 10,
+        В: 5,
       },
     });
 
@@ -182,7 +182,7 @@ describe("formatTelegramReportHtml", () => {
     const aIndex = result.indexOf("<b>Б</b>");
     const bIndex = result.indexOf("<b>В</b>");
     const cIndex = result.indexOf("<b>А</b>");
-    
+
     expect(aIndex).toBeLessThan(bIndex);
     expect(bIndex).toBeLessThan(cIndex);
   });

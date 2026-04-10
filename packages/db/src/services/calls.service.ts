@@ -392,6 +392,7 @@ export class CallsService {
     dateFrom?: string;
     dateTo?: string;
     excludePhoneNumbers?: string[];
+    internalNumbers?: string[];
   }): Promise<Record<string, ManagerStatsRow>> {
     return this.callsRepository.getEvaluationsStats(params);
   }
@@ -401,6 +402,7 @@ export class CallsService {
     dateFrom?: string;
     dateTo?: string;
     excludePhoneNumbers?: string[];
+    internalNumbers?: string[];
     maxScore?: number;
   }): Promise<Record<string, number>> {
     return this.callsRepository.getLowRatedCallsCount(params);

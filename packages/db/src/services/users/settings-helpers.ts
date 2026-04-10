@@ -125,8 +125,11 @@ export function parseUserUpdateData(data: UserUpdateData): ParsedSettings {
   }
 
   // Evaluation settings - build when either templateSlug OR customInstructions is provided
-  let evaluationSettings: EvaluationSettings | null | undefined ;
-  if (data.evaluationTemplateSlug !== undefined || data.evaluationCustomInstructions !== undefined) {
+  let evaluationSettings: EvaluationSettings | null | undefined;
+  if (
+    data.evaluationTemplateSlug !== undefined ||
+    data.evaluationCustomInstructions !== undefined
+  ) {
     if (data.evaluationTemplateSlug === null) {
       evaluationSettings = null;
     } else {
@@ -176,9 +179,7 @@ export function buildUpsertData(parsed: ParsedSettings) {
     filterSettings:
       Object.keys(parsed.filterSettings).length > 0 ? parsed.filterSettings : undefined,
     notificationSettings:
-      Object.keys(parsed.notificationSettings).length > 0
-        ? parsed.notificationSettings
-        : undefined,
+      Object.keys(parsed.notificationSettings).length > 0 ? parsed.notificationSettings : undefined,
     reportSettings:
       Object.keys(parsed.reportSettings).length > 0 ? parsed.reportSettings : undefined,
     kpiSettings: Object.keys(parsed.kpiSettings).length > 0 ? parsed.kpiSettings : undefined,

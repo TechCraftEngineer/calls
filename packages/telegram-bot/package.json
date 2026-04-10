@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
+    "@calls/config": "workspace:*",
     "@calls/db": "workspace:*",
     "grammy": "1.42.0",
     "hono": "4.12.12"

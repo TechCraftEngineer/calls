@@ -1,6 +1,6 @@
 import { usersService } from "@calls/db";
-import { ORPCError } from "@orpc/server";
 import { userIdSchema } from "@calls/shared";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 import { userUpdateSchema } from "./schemas";
@@ -74,7 +74,9 @@ export const update = workspaceProcedure
         emailDailyReport: d.emailDailyReport,
         emailWeeklyReport: d.emailWeeklyReport,
         emailMonthlyReport: d.emailMonthlyReport,
-        reportManagedUserIds: Array.isArray(d.reportManagedUserIds) ? d.reportManagedUserIds : JSON.parse(d.reportManagedUserIds || '[]'),
+        reportManagedUserIds: Array.isArray(d.reportManagedUserIds)
+          ? d.reportManagedUserIds
+          : JSON.parse(d.reportManagedUserIds || "[]"),
         kpiBaseSalary: d.kpiBaseSalary,
         kpiTargetBonus: d.kpiTargetBonus,
         kpiTargetTalkTimeMinutes: d.kpiTargetTalkTimeMinutes,

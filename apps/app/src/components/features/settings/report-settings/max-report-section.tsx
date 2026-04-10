@@ -1,6 +1,6 @@
+import { Label } from "@calls/ui";
 import type React from "react";
 import type { ReportSettingsForm } from "./report-settings-types";
-import { Label } from "@calls/ui";
 
 interface MaxReportSectionProps {
   form: ReportSettingsForm;

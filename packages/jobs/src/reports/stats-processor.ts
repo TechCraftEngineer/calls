@@ -120,4 +120,3 @@ export function computeOverallAverages(managers: PreparedStats[]): {
     avgManagerScore: scoreWeight > 0 ? scoreWeightedSum / scoreWeight : null,
   };
 }
-

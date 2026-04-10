@@ -11,8 +11,8 @@ import {
   toast,
 } from "@calls/ui";
 import { Copy, ExternalLink, MessageCircle, Smartphone } from "lucide-react";
-import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { useState } from "react";
 
 interface TelegramConnectDialogProps {
   open: boolean;
@@ -150,7 +150,10 @@ export function TelegramConnectDialog({
                   Откройте Telegram и найдите бота: <strong>@{botUsername}</strong>
                 </li>
                 <li>
-                  Отправьте команду: <code className="bg-background px-1.5 py-0.5 rounded text-xs">/start {token}</code>
+                  Отправьте команду:{" "}
+                  <code className="bg-background px-1.5 py-0.5 rounded text-xs">
+                    /start {token}
+                  </code>
                 </li>
                 <li>Нажмите кнопку «Проверить подключение» ниже</li>
               </ol>

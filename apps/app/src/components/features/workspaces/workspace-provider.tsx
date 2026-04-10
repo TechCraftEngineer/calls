@@ -5,11 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from "react";
 import { useSession } from "@/lib/better-auth";
+import { clearActiveWorkspaceCookie, setActiveWorkspaceCookie } from "@/lib/cookies";
 import { useORPC } from "@/orpc/react";
-import {
-  setActiveWorkspaceCookie,
-  clearActiveWorkspaceCookie,
-} from "@/lib/cookies";
 
 // Re-export для обратной совместимости
 export { clearActiveWorkspaceCookie };

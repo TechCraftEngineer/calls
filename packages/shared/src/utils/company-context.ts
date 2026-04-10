@@ -4,26 +4,26 @@
 
 /**
  * Формирует контекст компании из данных workspace для использования в AI промптах.
- * 
+ *
  * @param workspace - Объект workspace с полями name и description
  * @returns Отформатированная строка с контекстом компании или undefined если данных нет
- * 
+ *
  * @warning Возвращаемая строка может содержать неочищенный пользовательский контент.
  * НЕ является безопасной/экранированной. ДОЛЖНА быть провалидирована и/или очищена
  * вызывающим кодом перед встраиванием в AI промпты или недоверенные выводы.
- * 
+ *
  * @example
  * ```ts
  * // НЕБЕЗОПАСНОЕ использование:
  * const context = buildCompanyContext(workspace);
  * aiPrompt += context; // Опасно - может содержать инъекции
- * 
+ *
  * // БЕЗОПАСНОЕ использование:
  * const rawContext = buildCompanyContext(workspace);
  * const safeContext = companyContextSchema.parse(rawContext); // Валидация
  * aiPrompt += safeContext; // Безопасно
  * ```
- * 
+ *
  * @see companyContextSchema - схема валидации для безопасного использования
  */
 export function buildCompanyContext(workspace: {

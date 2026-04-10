@@ -46,6 +46,12 @@
     "db:drop": {
       "cache": false
     },
+    "db:push:ci": {
+      "cache": false
+    },
+    "db:setup": {
+      "cache": false
+    },
     "ui-add": {
       "cache": false,
       "interactive": true

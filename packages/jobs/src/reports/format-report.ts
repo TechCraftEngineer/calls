@@ -1,33 +1,30 @@
 /**
  * Форматирование текста отчёта по звонкам для Telegram
- * 
- * @deprecated Этот файл заменен модульной структурой. 
+ *
+ * @deprecated Этот файл заменен модульной структурой.
  * Используйте импорты из ./index.ts вместо прямого импорта из этого файла.
  */
 
 // Реэкспорт всех функций из новой модульной структуры для обратной совместимости
 export {
-  // Типы
-  type ManagerStats,
-  type PreparedStats,
+  computeOverallAverages,
+  escapeHtml,
   type FormatReportParams,
-  type StatsTotals,
-  type PreparedStatsResult,
-  
+  formatScore,
   // Основные функции
   formatTelegramReport,
   formatTelegramReportHtml,
-  splitTelegramHtmlMessage,
-  
   // Утилиты
   formatValue,
-  formatScore,
-  escapeHtml,
-  pluralizeCalls,
   getReportTypeLabel,
-  validateReportParams,
-  
+  // Типы
+  type ManagerStats,
+  type PreparedStats,
+  type PreparedStatsResult,
+  pluralizeCalls,
   // Обработка статистики
   prepareStats,
-  computeOverallAverages,
+  type StatsTotals,
+  splitTelegramHtmlMessage,
+  validateReportParams,
 } from "./index";
