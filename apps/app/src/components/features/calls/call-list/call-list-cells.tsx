@@ -44,6 +44,7 @@ interface CellRendererProps {
   isLoadingRecommendations: boolean;
   recommendationsCallId: string | null;
   isWorkspaceAdmin: boolean;
+  router: ReturnType<typeof import("next/navigation").useRouter>;
 }
 
 const linkButtonStyle = {
@@ -60,13 +61,14 @@ export function renderCallListCell({
   item,
   colKey,
   visibleColumns,
-  onSelectCall,
+  onSelectCall: _onSelectCall,
   onGenerateRecommendations,
   onTranscribe,
   onPlay,
   isLoadingRecommendations,
   recommendationsCallId,
   isWorkspaceAdmin,
+  router,
 }: CellRendererProps): ReactNode {
   const { call, transcript, evaluation } = item;
 
@@ -80,7 +82,7 @@ export function renderCallListCell({
   const renderLinkOrButton = (content: ReactNode, extraStyle?: object) =>
     isMobileDevice() ? (
       <Link
-        href={paths.calls.call(call.id)}
+        href={paths.calls.callModal(call.id)}
         className="call-link"
         style={{ ...linkButtonStyle, ...extraStyle } as object}
       >
@@ -90,7 +92,7 @@ export function renderCallListCell({
       <Button
         type="button"
         variant="link"
-        onClick={() => onSelectCall(call.id)}
+        onClick={() => router.push(paths.calls.callModal(call.id))}
         className="call-link h-auto p-0 font-inherit"
         style={{ ...linkButtonStyle, ...extraStyle } as object}
       >

@@ -1,6 +1,7 @@
 "use client";
 
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@calls/ui";
+import { useRouter } from "next/navigation";
 import CallDetailModal from "../call-detail-modal";
 import RecommendationsModal from "../recommendations-modal";
 import { getRowBackground, renderCallListCell } from "./call-list-cells";
@@ -10,6 +11,7 @@ import type { CallListProps } from "./types";
 import { useCallListState } from "./use-call-list-state";
 
 export default function CallList(props: CallListProps) {
+  const router = useRouter();
   const state = useCallListState(props);
 
   if (state.calls.length === 0) {
@@ -105,6 +107,7 @@ export default function CallList(props: CallListProps) {
                     visibleColumns: state.visibleColumns,
                     onSelectCall: state.setSelectedCallId,
                     onGenerateRecommendations: state.handleGenerateRecommendations,
+                    router,
                     onTranscribe: state.handleTranscribe,
                     onPlay: state.onPlay,
                     isLoadingRecommendations: state.isLoadingRecommendations,

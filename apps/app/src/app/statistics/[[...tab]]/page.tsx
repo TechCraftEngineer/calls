@@ -42,6 +42,7 @@ function StatisticsPageContent() {
   const userLoading = sessionPending;
   const { activeWorkspace } = useWorkspace();
   const workspaceRole = activeWorkspace?.role ?? "member";
+  console.log(activeWorkspace);
   const [filters, setFilters] = useState({
     dateFrom: "",
     dateTo: "",

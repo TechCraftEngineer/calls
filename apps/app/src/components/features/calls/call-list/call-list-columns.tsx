@@ -2,6 +2,7 @@
 
 import { DataGridColumnHeader } from "@calls/ui";
 import type { ColumnDef } from "@tanstack/react-table";
+import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import {
   createLinkOrButton,
   renderCallTopicCell,
@@ -27,6 +28,7 @@ export interface CallListColumnsOptions {
   isLoadingRecommendations: boolean;
   recommendationsCallId: string | null;
   isWorkspaceAdmin: boolean;
+  router: AppRouterInstance;
 }
 
 export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<CallWithDetails>[] {
@@ -38,9 +40,10 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
     isLoadingRecommendations,
     recommendationsCallId,
     isWorkspaceAdmin,
+    router,
   } = options;
 
-  const renderLinkOrButton = createLinkOrButton(onSelectCall);
+  const renderLinkOrButton = createLinkOrButton(router, onSelectCall);
 
   const columnTooltips: Record<string, string> = {
     status: "Статус звонка (принят, пропущен, ошибка и т.д.)",

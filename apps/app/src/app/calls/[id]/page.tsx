@@ -3,9 +3,10 @@
 import { paths } from "@calls/config";
 import { toast } from "@calls/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { z } from "zod";
+import CallDetailModal from "@/components/features/calls/call-detail-modal";
 import CallMetaHeader from "@/components/features/calls/call-meta-header";
 import CallSidebar from "@/components/features/calls/call-sidebar";
 import { TranscriptCard } from "@/components/features/calls/transcript-card";
@@ -33,6 +34,7 @@ const callIdSchema = z.union([uuidV7Schema, uuidV7WithPrefixSchema]);
 export default function CallDetailPage() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const orpc = useORPC();
   const { activeWorkspace } = useWorkspace();
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
@@ -43,6 +45,7 @@ export default function CallDetailPage() {
 
   const rawCallId = Array.isArray(id) ? id[0] : (id ?? "");
   const callId = callIdSchema.safeParse(rawCallId).success ? rawCallId : "";
+  const isModal = searchParams.get("modal") === "true";
 
   const {
     data: result,
@@ -167,6 +170,25 @@ export default function CallDetailPage() {
 
     evaluateMutation.mutate({ call_id: callId });
   };
+
+  const handleCloseModal = () => {
+    router.push(`/calls/${callId}`);
+  };
+
+  const handleCallDeleted = () => {
+    router.push("/calls");
+  };
+
+  // Модальный режим
+  if (isModal) {
+    return (
+      <CallDetailModal
+        callId={callId}
+        onClose={handleCloseModal}
+        onCallDeleted={handleCallDeleted}
+      />
+    );
+  }
 
   if (loading)
     return (

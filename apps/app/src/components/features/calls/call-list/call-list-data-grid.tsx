@@ -18,6 +18,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
@@ -58,6 +59,7 @@ export function CallListDataGrid({
   onPaginationChange,
 }: CallListDataGridProps) {
   const orpc = useORPC();
+  const router = useRouter();
   const { activeWorkspace } = useWorkspace();
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
@@ -204,6 +206,7 @@ export function CallListDataGrid({
         onTranscribe: handleTranscribe,
         onPlay,
         isLoadingRecommendations: generateRecommendationsMutation.isPending,
+        router,
         recommendationsCallId,
         isWorkspaceAdmin,
       }),
@@ -215,6 +218,7 @@ export function CallListDataGrid({
       handleTranscribe,
       generateRecommendationsMutation.isPending,
       recommendationsCallId,
+      router,
     ],
   );
 

@@ -16,7 +16,7 @@
   "dependencies": {
     "@calls/config": "workspace:*",
     "@calls/db": "workspace:*",
-    "better-auth": "1.6.1",
+    "better-auth": "1.6.2",
     "zod": "4.3.6"
   },
   "devDependencies": {

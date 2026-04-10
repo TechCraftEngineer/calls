@@ -2,6 +2,7 @@
 
 import { paths } from "@calls/config";
 import { Button, Rating, Tooltip, TooltipContent, TooltipTrigger } from "@calls/ui";
+import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import * as React from "react";
@@ -20,13 +21,19 @@ const linkButtonStyle = {
 } as const;
 
 export function createLinkOrButton(
-  onSelectCall: (callId: string) => void,
+  router: AppRouterInstance,
+  _onSelectCall?: (callId: string) => void,
 ): (item: CallWithDetails, content: ReactNode, extraStyle?: object) => ReactNode {
   return (item, content, extraStyle) => {
     const { call } = item;
+
+    const handleClick = () => {
+      router.push(paths.calls.callModal(call.id));
+    };
+
     return isMobileDevice() ? (
       <Link
-        href={paths.calls.call(call.id)}
+        href={paths.calls.callModal(call.id)}
         className="call-link"
         style={{ ...linkButtonStyle, ...extraStyle } as object}
       >
@@ -36,7 +43,7 @@ export function createLinkOrButton(
       <Button
         type="button"
         variant="link"
-        onClick={() => onSelectCall(call.id)}
+        onClick={handleClick}
         className="call-link h-auto p-0 font-inherit"
         style={{ ...linkButtonStyle, ...extraStyle } as object}
       >
