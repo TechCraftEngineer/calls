@@ -1,12 +1,20 @@
 import { pbxService } from "@calls/db";
 import { generateSecureSecret } from "@calls/shared";
+import { z } from "zod";
 import { workspaceAdminProcedure } from "../../../orpc";
+
+const getPbxWebhookSecretOutputSchema = z.object({
+  webhookSecret: z.string(),
+  isNew: z.boolean(),
+});
 
 /**
  * Get or generate webhook secret for PBX integration.
  * Returns existing secret if set, otherwise generates and persists a new one.
  */
-export const getPbxWebhookSecret = workspaceAdminProcedure.handler(async ({ context }) => {
+export const getPbxWebhookSecret = workspaceAdminProcedure
+  .output(getPbxWebhookSecretOutputSchema)
+  .handler(async ({ context }) => {
   const existingConfig = await pbxService.getConfigWithSecrets(context.workspaceId);
 
   // Return existing secret if available

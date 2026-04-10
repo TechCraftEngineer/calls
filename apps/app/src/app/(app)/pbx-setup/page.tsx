@@ -64,10 +64,6 @@ export default function PbxSetupPage() {
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
   const [selectedNumbers, setSelectedNumbers] = useState<Set<string>>(new Set());
 
-  // Derived selectAll flags
-  const allEmployeesSelected = employees.length > 0 && selectedEmployees.size === employees.length;
-  const allNumbersSelected = numbers.length > 0 && selectedNumbers.size === numbers.length;
-
   // Queries
   const { data: employeesData } = useQuery(
     orpc.settings.listPbxEmployees.queryOptions({})
@@ -78,6 +74,10 @@ export default function PbxSetupPage() {
     orpc.settings.listPbxNumbers.queryOptions({})
   );
   const numbers = (numbersData ?? []) as Number[];
+
+  // Derived selectAll flags (must be after employees/numbers declaration)
+  const allEmployeesSelected = employees.length > 0 && selectedEmployees.size === employees.length;
+  const allNumbersSelected = numbers.length > 0 && selectedNumbers.size === numbers.length;
 
   // Mutations
   const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
