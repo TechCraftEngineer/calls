@@ -137,7 +137,7 @@ export const TranscriptMetadataSchema = z
       })
       .optional(),
   })
-  .passthrough(); // Разрешаем дополнительные поля из ASR
+  .loose(); // Разрешаем дополнительные поля из ASR
 
 // Типы для использования в коде
 export type TranscribeCallEvent = z.infer<typeof TranscribeCallEventSchema>;

@@ -12,7 +12,7 @@ import { workspaceProcedure } from "../../orpc";
 import { translateCallType, translateNotAnalyzableReason } from "./translations";
 import { getMobileNumbersForUser } from "./utils";
 
-const transcriptMetadataSchema = z.object({ operatorName: z.string().optional() }).passthrough();
+const transcriptMetadataSchema = z.object({ operatorName: z.string().optional() }).loose();
 const PBX_PROVIDER = "megapbx";
 
 const maybeStringOrArraySchema = z.union([z.string(), z.array(z.string())]).optional();

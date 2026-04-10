@@ -130,7 +130,7 @@ const SpeakerEmbeddingsCallbackSchema = z.object({
   task_id: z.string(),
   call_id: z.string(),
   status: z.enum(["completed", "failed"]),
-  result: z.object({}).passthrough().optional().nullable(),
+  result: z.object({}).loose().optional().nullable(),
   error: z.string().optional().nullable(),
 });
 

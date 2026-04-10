@@ -23,7 +23,7 @@ const webhookPayloadSchema = z
     type: z.string().optional(),
     phone: z.string().optional(),
   })
-  .passthrough();
+  .loose();
 
 function isWebhookSecretValid(
   expectedSecret: string | undefined,
