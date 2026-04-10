@@ -1,6 +1,13 @@
 "use client";
 
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from "@calls/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useORPC } from "@/orpc/react";
 
@@ -36,6 +43,9 @@ export function ViewTemplateModal({ open, onClose, slug, onCreateFrom }: ViewTem
               <span className="ml-2 text-sm font-normal text-muted-foreground">(встроенный)</span>
             )}
           </DialogTitle>
+          <DialogDescription>
+            Просмотр системного промпта и структуры ответа AI для оценки звонков
+          </DialogDescription>
         </DialogHeader>
         {isPending ? (
           <div className="py-8 text-center text-muted-foreground">Загрузка…</div>

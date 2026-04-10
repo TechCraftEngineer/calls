@@ -172,11 +172,11 @@ export default function CallDetailPage() {
   };
 
   const handleCloseModal = () => {
-    router.push(`/calls/${callId}`);
+    router.push(`/`);
   };
 
   const handleCallDeleted = () => {
-    router.push("/calls");
+    router.push("/");
   };
 
   // Модальный режим

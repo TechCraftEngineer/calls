@@ -5,6 +5,7 @@ import {
   Button,
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   Separator,
@@ -302,6 +303,9 @@ export default function CallDetailModal({ callId, onClose, onCallDeleted }: Call
                     </Button>
                   )}
                 </div>
+                <DialogDescription className="hidden">
+                  Детальная информация о звонке: транскрипция, оценка и рекомендации
+                </DialogDescription>
                 <div className="text-muted-foreground flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="size-3.5" />
