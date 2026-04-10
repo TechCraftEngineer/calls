@@ -59,7 +59,7 @@ export function TranscriptCard({ call, transcript }: Props) {
 
   const handleDownloadTxt = () => {
     if (!transcript?.text) return;
-    
+
     const speakerMapping = transcript?.speakerMapping;
     const processedText = transcript.text
       .split("\n")
@@ -75,7 +75,7 @@ export function TranscriptCard({ call, transcript }: Props) {
         return line;
       })
       .join("\n");
-    
+
     const element = document.createElement("a");
     const file = new Blob([processedText], { type: "text/plain" });
     element.href = URL.createObjectURL(file);

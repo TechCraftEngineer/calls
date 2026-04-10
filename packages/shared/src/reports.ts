@@ -10,11 +10,7 @@ export type ReportType = "daily" | "weekly" | "monthly";
 /**
  * Формирует subject для email отчета на основе типа отчета и дат
  */
-export function formatReportSubject(
-  reportType: ReportType,
-  dateFrom: Date,
-  dateTo: Date,
-): string {
+export function formatReportSubject(reportType: ReportType, dateFrom: Date, dateTo: Date): string {
   const formatDate = (d: Date) => format(d, "dd.MM.yyyy", { locale: ru });
 
   if (reportType === "daily") {

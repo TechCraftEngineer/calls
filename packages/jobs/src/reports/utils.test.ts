@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import {
-  formatValue,
-  formatScore,
   escapeHtml,
-  pluralizeCalls,
+  formatScore,
+  formatValue,
   getReportTypeLabel,
+  pluralizeCalls,
   validateReportParams,
 } from "./utils";
 
@@ -110,7 +110,7 @@ describe("validateReportParams", () => {
   it("возвращает null для валидных параметров", () => {
     const validParams = {
       stats: {
-        "Иван": {
+        Иван: {
           name: "Иван",
           internalNumber: "101",
           incoming: { count: 5, duration: 300 },

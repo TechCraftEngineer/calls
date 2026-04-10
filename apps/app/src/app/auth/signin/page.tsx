@@ -7,8 +7,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useForm } from "react-hook-form";
-import { authClient, login, toRussianAuthMessage } from "@/lib/better-auth";
 import { clearActiveWorkspaceCookie } from "@/components/features/workspaces/workspace-provider";
+import { authClient, login, toRussianAuthMessage } from "@/lib/better-auth";
 import { type LoginFormData, loginSchema } from "@/lib/validations";
 
 function LoginForm() {

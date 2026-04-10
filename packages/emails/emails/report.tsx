@@ -94,7 +94,6 @@ function pluralizeCalls(count: number): string {
   return "звонков";
 }
 
-
 interface PreparedStats {
   id: string;
   name: string;
@@ -147,10 +146,9 @@ function prepareStats(entries: [string, ManagerStats][]): {
   let totalSalary = 0;
   let totalActualPerformanceRubles = 0;
 
-
   for (const [name, raw] of entries) {
     if (!raw || typeof raw !== "object") continue;
-    
+
     const inCount = raw.incoming?.count ?? 0;
     const outCount = raw.outgoing?.count ?? 0;
     const inTotalSec = raw.incoming?.totalDuration ?? (raw.incoming?.duration ?? 0) * inCount;
@@ -230,18 +228,18 @@ export const ReportEmail = ({
   workspaceName,
 }: ReportEmailProps) => {
   const typeLabel = reportTypeLabels[reportType] ?? "Отчёт по звонкам";
-  
+
   // Форматируем даты периода
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      timeZone: "Europe/Moscow"
+    return date.toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "Europe/Moscow",
     });
   };
-  
-  let periodText = '';
+
+  let periodText = "";
   if (dateFrom && dateTo) {
     if (formatDate(dateFrom) === formatDate(dateTo)) {
       // Однодневный отчет - добавляем день недели для ежедневных отчетов
@@ -255,7 +253,7 @@ export const ReportEmail = ({
       periodText = ` за ${formatDate(dateFrom)} — ${formatDate(dateTo)}`;
     }
   }
-  
+
   const title = `${typeLabel}${periodText}`;
   const previewText = `${title} · ${APP_CONFIG.shortName}`;
 
@@ -324,51 +322,87 @@ export const ReportEmail = ({
                 <table className="w-full border-collapse border border-gray-300">
                   <thead>
                     <tr className="bg-gray-50">
-                      <th className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold" rowSpan={2}>
+                      <th
+                        className="border border-gray-300 px-3 py-2 text-left text-sm font-semibold"
+                        rowSpan={2}
+                      >
                         Менеджер
                       </th>
-                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" colSpan={3}>
+                      <th
+                        className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold"
+                        colSpan={3}
+                      >
                         Звонки, шт.
                       </th>
-                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                      <th
+                        className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold"
+                        rowSpan={2}
+                      >
                         План, мин.
                       </th>
-                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" colSpan={3}>
+                      <th
+                        className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold"
+                        colSpan={3}
+                      >
                         Факт, мин.
                       </th>
-                      <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                      <th
+                        className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold"
+                        rowSpan={2}
+                      >
                         % выполнения
                       </th>
                       {avgManagerScore && (
-                        <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                        <th
+                          className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold"
+                          rowSpan={2}
+                        >
                           Рейтинг
                         </th>
                       )}
                       {reportType === "monthly" && (
                         <>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                          <th
+                            className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold"
+                            rowSpan={2}
+                          >
                             Оклад, ₽
                           </th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                          <th
+                            className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold"
+                            rowSpan={2}
+                          >
                             Бонус, ₽
                           </th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                          <th
+                            className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold"
+                            rowSpan={2}
+                          >
                             Итого, ₽
                           </th>
                         </>
                       )}
                       {reportType === "weekly" && (
                         <>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                          <th
+                            className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold"
+                            rowSpan={2}
+                          >
                             Бонус, ₽
                           </th>
-                          <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                          <th
+                            className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold"
+                            rowSpan={2}
+                          >
                             Итого, ₽
                           </th>
                         </>
                       )}
                       {reportType === "daily" && (
-                        <th className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold" rowSpan={2}>
+                        <th
+                          className="border border-gray-300 px-3 py-2 text-center text-sm font-semibold"
+                          rowSpan={2}
+                        >
                           Бонус, ₽
                         </th>
                       )}
@@ -482,7 +516,13 @@ export const ReportEmail = ({
                         {formatValue(Math.round(kpiTable.totals.outgoingTotalDurationSec / 60))}
                       </td>
                       <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
-                        {formatValue(Math.round((kpiTable.totals.incomingTotalDurationSec + kpiTable.totals.outgoingTotalDurationSec) / 60))}
+                        {formatValue(
+                          Math.round(
+                            (kpiTable.totals.incomingTotalDurationSec +
+                              kpiTable.totals.outgoingTotalDurationSec) /
+                              60,
+                          ),
+                        )}
                       </td>
                       <td className="border border-gray-300 px-3 py-2 text-sm text-center whitespace-nowrap">
                         -
@@ -521,7 +561,7 @@ export const ReportEmail = ({
                         </td>
                       )}
                     </tr>
-                                      </tbody>
+                  </tbody>
                 </table>
               ) : (
                 <Text className="text-[14px] text-gray-600">Нет данных для отображения KPI</Text>
@@ -535,45 +575,44 @@ export const ReportEmail = ({
                 </Heading>
                 <Text className="text-[14px] leading-[24px] text-black">
                   • Входящие: {kpiTable.totals.incomingCount} звонков
-                  <br />
-                  • Исходящие: {kpiTable.totals.outgoingCount} звонков
-                  <br />
-                  • Всего: {kpiTable.totals.totalCount} звонков
+                  <br />• Исходящие: {kpiTable.totals.outgoingCount} звонков
+                  <br />• Всего: {kpiTable.totals.totalCount} звонков
                   {kpiTable.totals.evaluatedCount > 0 && (
                     <>
-                      <br />
-                      • Оценено: {kpiTable.totals.evaluatedCount} из {kpiTable.totals.totalCount} звонков
+                      <br />• Оценено: {kpiTable.totals.evaluatedCount} из{" "}
+                      {kpiTable.totals.totalCount} звонков
                     </>
                   )}
                   {avgManagerScore && kpiTable.overallAvgManagerScore != null && (
                     <>
-                      <br />
-                      • Средняя оценка качества: {formatScore(kpiTable.overallAvgManagerScore)} ⭐
+                      <br />• Средняя оценка качества:{" "}
+                      {formatScore(kpiTable.overallAvgManagerScore)} ⭐
                     </>
                   )}
                 </Text>
               </Section>
             )}
 
-            {isManagerReport && Object.entries(lowRatedCalls).filter(([, n]) => n > 0).length > 0 && (
-              <Section className="my-[24px]">
-                <Heading className="mx-0 my-[16px] p-0 text-[16px] font-semibold text-red-600">
-                  ⚠️ Требуют внимания (оценка &lt; 3)
-                </Heading>
-                <Text className="text-[14px] leading-[24px] text-black">
-                  {Object.entries(lowRatedCalls)
-                    .filter(([, n]) => n > 0)
-                    .sort((a, b) => b[1] - a[1])
-                    .slice(0, 10)
-                    .map(([manager, count]) => (
-                      <span key={manager}>
-                        • {manager}: {count} {pluralizeCalls(count)}
-                        <br />
-                      </span>
-                    ))}
-                </Text>
-              </Section>
-            )}
+            {isManagerReport &&
+              Object.entries(lowRatedCalls).filter(([, n]) => n > 0).length > 0 && (
+                <Section className="my-[24px]">
+                  <Heading className="mx-0 my-[16px] p-0 text-[16px] font-semibold text-red-600">
+                    ⚠️ Требуют внимания (оценка &lt; 3)
+                  </Heading>
+                  <Text className="text-[14px] leading-[24px] text-black">
+                    {Object.entries(lowRatedCalls)
+                      .filter(([, n]) => n > 0)
+                      .sort((a, b) => b[1] - a[1])
+                      .slice(0, 10)
+                      .map(([manager, count]) => (
+                        <span key={manager}>
+                          • {manager}: {count} {pluralizeCalls(count)}
+                          <br />
+                        </span>
+                      ))}
+                  </Text>
+                </Section>
+              )}
 
             <Hr className="mx-0 my-[26px] w-full border border-solid border-[#eaeaea]" />
 

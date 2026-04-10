@@ -6,7 +6,7 @@
     "build": "bun with-env next build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
     "dev": "bun with-env next dev --port 3002",
-    "start": "next start",
+    "start": "bun with-env next start",
     "typecheck": "tsc --noEmit",
     "with-env": "bun run --env-file ../../.env"
   },

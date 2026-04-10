@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import {
   calculateMinutesFromSeconds,
-  prepareStats,
   computeOverallAverages,
+  prepareStats,
 } from "./stats-processor";
 import type { ManagerStats } from "./types";
 
@@ -23,14 +23,17 @@ describe("calculateMinutesFromSeconds", () => {
 describe("prepareStats", () => {
   it("подготавливает статистику одного менеджера", () => {
     const entries: [string, ManagerStats][] = [
-      ["Иван", {
-        name: "Иван",
-        internalNumber: "101",
-        incoming: { count: 10, duration: 60 }, // 60 сек средняя длительность
-        outgoing: { count: 5, duration: 30 }, // 30 сек средняя длительность
-        avgManagerScore: 4.5,
-        evaluatedCount: 15,
-      }],
+      [
+        "Иван",
+        {
+          name: "Иван",
+          internalNumber: "101",
+          incoming: { count: 10, duration: 60 }, // 60 сек средняя длительность
+          outgoing: { count: 5, duration: 30 }, // 30 сек средняя длительность
+          avgManagerScore: 4.5,
+          evaluatedCount: 15,
+        },
+      ],
     ];
 
     const result = prepareStats(entries);
@@ -43,7 +46,7 @@ describe("prepareStats", () => {
     expect(firstManager?.outgoingCount).toBe(5);
     expect(firstManager?.totalCount).toBe(15);
     expect(firstManager?.incomingMinutes).toBe(10); // 10 * 60 сек = 600 сек = 10 мин
-    expect(firstManager?.outgoingMinutes).toBe(3);  // 5 * 30 сек = 150 сек ≈ 3 мин (округление)
+    expect(firstManager?.outgoingMinutes).toBe(3); // 5 * 30 сек = 150 сек ≈ 3 мин (округление)
     expect(firstManager?.avgManagerScore).toBe(4.5);
     expect(firstManager?.evaluatedCount).toBe(15);
     expect(result.totals.totalCount).toBe(15);
@@ -51,18 +54,24 @@ describe("prepareStats", () => {
 
   it("подготавливает статистику нескольких менеджеров", () => {
     const entries: [string, ManagerStats][] = [
-      ["Иван", {
-        name: "Иван",
-        internalNumber: "101",
-        incoming: { count: 10, duration: 600 },
-        outgoing: { count: 5, duration: 300 },
-      }],
-      ["Петр", {
-        name: "Петр",
-        internalNumber: "102",
-        incoming: { count: 8, duration: 480 },
-        outgoing: { count: 12, duration: 720 },
-      }],
+      [
+        "Иван",
+        {
+          name: "Иван",
+          internalNumber: "101",
+          incoming: { count: 10, duration: 600 },
+          outgoing: { count: 5, duration: 300 },
+        },
+      ],
+      [
+        "Петр",
+        {
+          name: "Петр",
+          internalNumber: "102",
+          incoming: { count: 8, duration: 480 },
+          outgoing: { count: 12, duration: 720 },
+        },
+      ],
     ];
 
     const result = prepareStats(entries);
@@ -75,18 +84,24 @@ describe("prepareStats", () => {
 
   it("сортирует менеджеров по количеству звонков", () => {
     const entries: [string, ManagerStats][] = [
-      ["А", {
-        name: "А",
-        internalNumber: "101",
-        incoming: { count: 5, duration: 300 },
-        outgoing: { count: 0, duration: 0 },
-      }],
-      ["Б", {
-        name: "Б",
-        internalNumber: "102",
-        incoming: { count: 10, duration: 600 },
-        outgoing: { count: 0, duration: 0 },
-      }],
+      [
+        "А",
+        {
+          name: "А",
+          internalNumber: "101",
+          incoming: { count: 5, duration: 300 },
+          outgoing: { count: 0, duration: 0 },
+        },
+      ],
+      [
+        "Б",
+        {
+          name: "Б",
+          internalNumber: "102",
+          incoming: { count: 10, duration: 600 },
+          outgoing: { count: 0, duration: 0 },
+        },
+      ],
     ];
 
     const result = prepareStats(entries);
@@ -97,12 +112,15 @@ describe("prepareStats", () => {
 
   it("использует totalDuration если доступен", () => {
     const entries: [string, ManagerStats][] = [
-      ["Иван", {
-        name: "Иван",
-        internalNumber: "101",
-        incoming: { count: 2, duration: 60, totalDuration: 300 },
-        outgoing: { count: 0, duration: 0 },
-      }],
+      [
+        "Иван",
+        {
+          name: "Иван",
+          internalNumber: "101",
+          incoming: { count: 2, duration: 60, totalDuration: 300 },
+          outgoing: { count: 0, duration: 0 },
+        },
+      ],
     ];
 
     const result = prepareStats(entries);
@@ -113,12 +131,15 @@ describe("prepareStats", () => {
 
   it("обрабатывает null internalNumber", () => {
     const entries: [string, ManagerStats][] = [
-      ["Иван", {
-        name: "Иван",
-        internalNumber: null,
-        incoming: { count: 0, duration: 0 },
-        outgoing: { count: 0, duration: 0 },
-      }],
+      [
+        "Иван",
+        {
+          name: "Иван",
+          internalNumber: null,
+          incoming: { count: 0, duration: 0 },
+          outgoing: { count: 0, duration: 0 },
+        },
+      ],
     ];
 
     const result = prepareStats(entries);
@@ -129,20 +150,23 @@ describe("prepareStats", () => {
 
   it("обрабатывает KPI данные", () => {
     const entries: [string, ManagerStats][] = [
-      ["Иван", {
-        name: "Иван",
-        internalNumber: "101",
-        incoming: { count: 10, duration: 600 },
-        outgoing: { count: 5, duration: 300 },
-        kpiBaseSalary: 50000,
-        kpiTargetBonus: 10000,
-        kpiTargetTalkTimeMinutes: 120,
-        kpiActualTalkTimeMinutes: 100,
-        kpiCompletionPercentage: 83.3,
-        kpiCalculatedBonus: 8330,
-        kpiTotalSalary: 58330,
-        kpiActualPerformanceRubles: 8330,
-      }],
+      [
+        "Иван",
+        {
+          name: "Иван",
+          internalNumber: "101",
+          incoming: { count: 10, duration: 600 },
+          outgoing: { count: 5, duration: 300 },
+          kpiBaseSalary: 50000,
+          kpiTargetBonus: 10000,
+          kpiTargetTalkTimeMinutes: 120,
+          kpiActualTalkTimeMinutes: 100,
+          kpiCompletionPercentage: 83.3,
+          kpiCalculatedBonus: 8330,
+          kpiTotalSalary: 58330,
+          kpiActualPerformanceRubles: 8330,
+        },
+      ],
     ];
 
     const result = prepareStats(entries);
@@ -158,12 +182,15 @@ describe("prepareStats", () => {
   it("пропускает невалидные записи", () => {
     const entries: [string, ManagerStats][] = [
       ["Иван", null as unknown as ManagerStats],
-      ["Петр", {
-        name: "Петр",
-        internalNumber: "102",
-        incoming: { count: 5, duration: 300 },
-        outgoing: { count: 0, duration: 0 },
-      }],
+      [
+        "Петр",
+        {
+          name: "Петр",
+          internalNumber: "102",
+          incoming: { count: 5, duration: 300 },
+          outgoing: { count: 0, duration: 0 },
+        },
+      ],
     ];
 
     const result = prepareStats(entries);

@@ -115,12 +115,12 @@ export const evaluateCallFn = inngest.createFunction(
           workspaceId: call.workspaceId,
           callId,
           error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
+          stack: error instanceof Error ? error.stack : undefined,
         });
         // Продолжаем без companyContext
         companyContext = undefined;
       }
-      
+
       return evaluateCallWithLlm(transcriptText, {
         evaluationPrompt,
         companyContext,

@@ -2,9 +2,19 @@
  * Форматирование отчетов для Telegram
  */
 
+import {
+  calculateMinutesFromSeconds,
+  computeOverallAverages,
+  prepareStats,
+} from "./stats-processor";
 import type { FormatReportParams } from "./types";
-import { formatValue, formatScore, pluralizeCalls, getReportTypeLabel, validateReportParams } from "./utils";
-import { prepareStats, computeOverallAverages, calculateMinutesFromSeconds } from "./stats-processor";
+import {
+  formatScore,
+  formatValue,
+  getReportTypeLabel,
+  pluralizeCalls,
+  validateReportParams,
+} from "./utils";
 
 export function formatTelegramReport(params: FormatReportParams): string {
   const {
@@ -54,14 +64,16 @@ export function formatTelegramReport(params: FormatReportParams): string {
     const totalMinutes = s.kpiActualTalkTimeMinutes ?? 0;
     const targetPlan = s.kpiTargetTalkTimeMinutes ?? 0;
     const completionPercentage = s.kpiCompletionPercentage ?? 0;
-    
+
     // Используем precomputed минуты для согласованности
     const incomingMinutes = s.incomingMinutes;
     const outgoingMinutes = s.outgoingMinutes;
 
     lines.push(`👤 ${s.name}`);
-    lines.push(`   📞 Вх: ${s.incomingCount} (${incomingMinutes}мин) | Исх: ${s.outgoingCount} (${outgoingMinutes}мин) | Всего: ${s.totalCount} (${totalMinutes}мин)`);
-    
+    lines.push(
+      `   📞 Вх: ${s.incomingCount} (${incomingMinutes}мин) | Исх: ${s.outgoingCount} (${outgoingMinutes}мин) | Всего: ${s.totalCount} (${totalMinutes}мин)`,
+    );
+
     // Показываем оклад только в ежемесячных отчетах
     if (reportType === "monthly") {
       lines.push(
@@ -83,13 +95,9 @@ export function formatTelegramReport(params: FormatReportParams): string {
         `   🎁 Бонус: ${s.kpiCalculatedBonus !== null && s.kpiCalculatedBonus !== undefined ? formatValue(s.kpiCalculatedBonus) : "—"} ₽`,
       );
     }
-    
-    lines.push(
-      `   📊 План минут: ${formatValue(targetPlan)} | 📈 Факт: ${totalMinutes}`,
-    );
-    lines.push(
-      `   📊 % выполнения: ${completionPercentage}%`,
-    );
+
+    lines.push(`   📊 План минут: ${formatValue(targetPlan)} | 📈 Факт: ${totalMinutes}`);
+    lines.push(`   📊 % выполнения: ${completionPercentage}%`);
     lines.push("");
   }
   lines.push("");
@@ -98,7 +106,7 @@ export function formatTelegramReport(params: FormatReportParams): string {
   const totalMinutes = totals.totalKpiActualTalkTimeMinutes ?? 0;
   const totalIncomingMinutes = calculateMinutesFromSeconds(totals.incomingTotalDurationSec);
   const totalOutgoingMinutes = calculateMinutesFromSeconds(totals.outgoingTotalDurationSec);
-  
+
   lines.push(`📊 **Итоги по всем сотрудникам:**`);
   lines.push(`• Входящие: ${totals.incomingCount} (${totalIncomingMinutes}мин)`);
   lines.push(`• Исходящие: ${totals.outgoingCount} (${totalOutgoingMinutes}мин)`);
@@ -114,7 +122,7 @@ export function formatTelegramReport(params: FormatReportParams): string {
   // KPI итоги
   // Используем уже вычисленный план из totals
   const totalTargetPlan = totals.totalKpiTargetTalkTimeMinutes ?? 0;
-  
+
   // Показываем общий оклад и целевой бонус только в ежемесячных отчетах
   if (reportType === "monthly") {
     lines.push(`• Общий оклад: ${formatValue(totals.totalBaseSalary)} ₽`);
@@ -124,7 +132,7 @@ export function formatTelegramReport(params: FormatReportParams): string {
   lines.push(`• План минут: ${formatValue(totalTargetPlan)}`);
   lines.push(`• Факт минут: ${formatValue(totals.totalKpiActualTalkTimeMinutes)}`);
   lines.push(`• Факт выполнения: ${formatValue(totals.totalActualPerformanceRubles)} ₽`);
-  
+
   // Показываем итоговую сумму только для еженедельных и ежемесячных отчетов
   if (reportType !== "daily") {
     lines.push(`• Итого к выплате: ${formatValue(totals.totalSalary)} ₽`);

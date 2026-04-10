@@ -1,8 +1,8 @@
 import { systemRepository, usersService } from "@calls/db";
+import { userIdSchema } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../orpc";
-import { userIdSchema } from "@calls/shared";
 
 export const deleteUser = workspaceAdminProcedure
   .input(z.object({ userId: userIdSchema }))

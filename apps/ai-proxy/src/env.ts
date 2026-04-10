@@ -13,4 +13,5 @@ export const env = createEnv({
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
   },
+  skipValidation: process.env.SKIP_ENV_VALIDATION === "true" || process.env.VERCEL === "1",
 });

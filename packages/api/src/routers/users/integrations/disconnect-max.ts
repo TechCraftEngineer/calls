@@ -1,9 +1,9 @@
 import { usersService } from "@calls/db";
-import { canAccessUser } from "../utils";
 import { userIdSchema } from "@calls/shared";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../../orpc";
-import { ORPCError } from "@orpc/server";
+import { canAccessUser } from "../utils";
 
 export const disconnectMax = workspaceProcedure
   .input(z.object({ userId: userIdSchema }))

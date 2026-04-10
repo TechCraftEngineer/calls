@@ -87,7 +87,7 @@ async function checkWithLlm(text: string): Promise<DetectionResult> {
 
 /**
  * Определяет, является ли звонок автоответчиком через LLM.
- * 
+ *
  * @param text - Текст транскрипта (обычно non-diarized ASR результат)
  * @returns DetectionResult с результатом анализа
  */
@@ -100,9 +100,7 @@ export async function detectAnsweringMachine(text: string): Promise<DetectionRes
 
   // Обрезаем текст для быстрого анализа
   const analysisText =
-    trimmedText.length > MAX_TEXT_LENGTH
-      ? trimmedText.substring(0, MAX_TEXT_LENGTH)
-      : trimmedText;
+    trimmedText.length > MAX_TEXT_LENGTH ? trimmedText.substring(0, MAX_TEXT_LENGTH) : trimmedText;
 
   // Только LLM анализ
   return checkWithLlm(analysisText);
@@ -110,7 +108,7 @@ export async function detectAnsweringMachine(text: string): Promise<DetectionRes
 
 /**
  * Проверяет, нужно ли пропускать дорогие операции для этого звонка.
- * 
+ *
  * @param text - Текст транскрипта
  * @returns true если это автоответчик и нужно пропустить speaker identification и оценку
  */

@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { usersService } from "@calls/db";
-import { ORPCError } from "@orpc/server";
 import { userIdSchema } from "@calls/shared";
+import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceProcedure } from "../../../orpc";
 import { canAccessUser } from "../utils";

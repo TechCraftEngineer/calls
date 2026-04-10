@@ -66,7 +66,6 @@ export function ReportSettingsSection({ form, onFormChange }: ReportSettingsSect
           ))}
         </div>
       </div>
-
     </>
   );
 }

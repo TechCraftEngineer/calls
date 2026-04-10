@@ -85,12 +85,7 @@ const DayCellContent = React.memo(function DayCellContent({
         <div className="flex-1 flex flex-col justify-end gap-1 min-w-0">
           {/* Индикатор выполнения */}
           <div className="flex items-center gap-1">
-            <div
-              className={cn(
-                "w-2 h-2 rounded-full",
-                getCompletionColor(completionPercentage),
-              )}
-            />
+            <div className={cn("w-2 h-2 rounded-full", getCompletionColor(completionPercentage))} />
             <span
               className={cn(
                 "text-xs font-bold truncate",
@@ -104,7 +99,9 @@ const DayCellContent = React.memo(function DayCellContent({
           {/* Количество звонков */}
           <div className="flex items-center gap-1 text-xs text-muted-foreground truncate">
             <Circle className="h-2 w-2 fill-current" aria-hidden="true" />
-            <span className="truncate">{kpiData.totalCalls} {pluralize(kpiData.totalCalls, 'звонок', 'звонка', 'звонков')}</span>
+            <span className="truncate">
+              {kpiData.totalCalls} {pluralize(kpiData.totalCalls, "звонок", "звонка", "звонков")}
+            </span>
           </div>
 
           {/* Время разговоров */}

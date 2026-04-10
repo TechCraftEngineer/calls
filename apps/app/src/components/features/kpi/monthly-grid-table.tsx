@@ -202,7 +202,9 @@ export default function MonthlyGridTable() {
                     key={date}
                     className={`text-center min-w-[80px] p-2 ${isWeekend ? "bg-amber-50/50" : ""}`}
                   >
-                    <div className={`text-xs font-medium ${isWeekend ? "text-amber-700" : ""}`}>{day}</div>
+                    <div className={`text-xs font-medium ${isWeekend ? "text-amber-700" : ""}`}>
+                      {day}
+                    </div>
                     <div
                       className={`text-[10px] ${isWeekend ? "text-amber-600 font-medium" : "text-muted-foreground"}`}
                     >

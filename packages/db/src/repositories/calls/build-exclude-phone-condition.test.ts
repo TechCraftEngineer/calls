@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
 import * as schema from "../../schema";
+import { buildExcludePhoneCondition } from "./build-exclude-phone-condition";
 
 describe("buildExcludePhoneCondition", () => {
   it("возвращает undefined для пустого массива", () => {

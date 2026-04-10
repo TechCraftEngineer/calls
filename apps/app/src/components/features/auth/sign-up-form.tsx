@@ -6,9 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { clearActiveWorkspaceCookie } from "@/components/features/workspaces/workspace-provider";
 import { signUp } from "@/lib/auth";
 import { authClient, toRussianAuthMessage } from "@/lib/better-auth";
-import { clearActiveWorkspaceCookie } from "@/components/features/workspaces/workspace-provider";
 import { type CreateUserData, createUserSchema } from "@/lib/validations";
 
 export function SignUpForm() {

@@ -45,7 +45,7 @@ export function splitTelegramHtmlMessage(message: string, maxLength = 4000): str
         const searchStart = intendedEnd;
         const maxSearch = Math.min(searchStart + 100, text.length); // Ограничение для избежания бесконечного роста
         for (let i = searchStart; i < maxSearch; i++) {
-          if (text[i] === '>') {
+          if (text[i] === ">") {
             return i + 1; // Возвращаем индекс после '>'
           }
         }
@@ -59,7 +59,7 @@ export function splitTelegramHtmlMessage(message: string, maxLength = 4000): str
         const searchStart = intendedEnd;
         const maxSearch = Math.min(searchStart + 20, text.length); // Ограничение для entities
         for (let i = searchStart; i < maxSearch; i++) {
-          if (text[i] === ';') {
+          if (text[i] === ";") {
             return i + 1; // Возвращаем индекс после ';'
           }
         }

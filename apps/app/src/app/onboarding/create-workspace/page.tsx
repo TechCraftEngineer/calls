@@ -12,8 +12,8 @@ import { Suspense, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
-import { useORPC } from "@/orpc/react";
 import { clearActiveWorkspaceCookie, setActiveWorkspaceCookie } from "@/lib/cookies";
+import { useORPC } from "@/orpc/react";
 
 const createWorkspaceSchema = z.object({
   name: workspaceNameSchema,

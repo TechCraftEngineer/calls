@@ -133,21 +133,36 @@ describe("formatTelegramReport", () => {
       ...baseParams,
       reportType: "monthly",
       stats: {
-        "Иван": { ...baseStats, kpiBaseSalary: 50000, kpiCalculatedBonus: 5000, kpiTotalSalary: 55000 },
+        Иван: {
+          ...baseStats,
+          kpiBaseSalary: 50000,
+          kpiCalculatedBonus: 5000,
+          kpiTotalSalary: 55000,
+        },
       },
     });
     const weeklyResult = formatTelegramReport({
       ...baseParams,
       reportType: "weekly",
       stats: {
-        "Иван": { ...baseStats, kpiBaseSalary: 50000, kpiCalculatedBonus: 5000, kpiTotalSalary: 55000 },
+        Иван: {
+          ...baseStats,
+          kpiBaseSalary: 50000,
+          kpiCalculatedBonus: 5000,
+          kpiTotalSalary: 55000,
+        },
       },
     });
     const dailyResult = formatTelegramReport({
       ...baseParams,
       reportType: "daily",
       stats: {
-        "Иван": { ...baseStats, kpiBaseSalary: 50000, kpiCalculatedBonus: 5000, kpiTotalSalary: 55000 },
+        Иван: {
+          ...baseStats,
+          kpiBaseSalary: 50000,
+          kpiCalculatedBonus: 5000,
+          kpiTotalSalary: 55000,
+        },
       },
     });
 
@@ -161,21 +176,21 @@ describe("formatTelegramReport", () => {
       ...baseParams,
       reportType: "monthly",
       stats: {
-        "Иван": { ...baseStats, kpiTotalSalary: 55000 },
+        Иван: { ...baseStats, kpiTotalSalary: 55000 },
       },
     });
     const weeklyResult = formatTelegramReport({
       ...baseParams,
       reportType: "weekly",
       stats: {
-        "Иван": { ...baseStats, kpiTotalSalary: 55000 },
+        Иван: { ...baseStats, kpiTotalSalary: 55000 },
       },
     });
     const dailyResult = formatTelegramReport({
       ...baseParams,
       reportType: "daily",
       stats: {
-        "Иван": { ...baseStats, kpiTotalSalary: 55000 },
+        Иван: { ...baseStats, kpiTotalSalary: 55000 },
       },
     });
 
@@ -213,15 +228,27 @@ describe("formatTelegramReport", () => {
     const result = formatTelegramReport({
       ...baseParams,
       stats: {
-        "А (5 звонков)": { ...baseStats, incoming: { count: 5, duration: 300 }, outgoing: { count: 0, duration: 0 } },
-        "Б (15 звонков)": { ...baseStats, incoming: { count: 15, duration: 900 }, outgoing: { count: 0, duration: 0 } },
-        "В (10 звонков)": { ...baseStats, incoming: { count: 10, duration: 600 }, outgoing: { count: 0, duration: 0 } },
+        "А (5 звонков)": {
+          ...baseStats,
+          incoming: { count: 5, duration: 300 },
+          outgoing: { count: 0, duration: 0 },
+        },
+        "Б (15 звонков)": {
+          ...baseStats,
+          incoming: { count: 15, duration: 900 },
+          outgoing: { count: 0, duration: 0 },
+        },
+        "В (10 звонков)": {
+          ...baseStats,
+          incoming: { count: 10, duration: 600 },
+          outgoing: { count: 0, duration: 0 },
+        },
       },
     });
 
     const lines = result.split("\n");
-    const managerLines = lines.filter(line => line.startsWith("👤"));
-    
+    const managerLines = lines.filter((line) => line.startsWith("👤"));
+
     expect(managerLines[0]).toContain("Б (15 звонков)");
     expect(managerLines[1]).toContain("В (10 звонков)");
     expect(managerLines[2]).toContain("А (5 звонков)");

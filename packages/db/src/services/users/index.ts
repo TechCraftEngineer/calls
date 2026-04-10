@@ -111,7 +111,6 @@ export class UsersService {
   // === Delegate settings methods ===
 
   async getUserForEdit(userId: string, workspaceId: string): Promise<UserForEdit | null> {
- 
     // Fetch user basic data
     const user = await this.base.getUser(userId);
     if (!user) {

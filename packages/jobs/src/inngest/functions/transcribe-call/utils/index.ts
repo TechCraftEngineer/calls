@@ -8,7 +8,11 @@ export {
 } from "./extraction";
 
 export { serializeMetadata } from "./metadata";
-
+export {
+  type QuickCheckResult,
+  quickAnsweringMachineCheck,
+  shouldRunQuickCheck,
+} from "./quick-am-check";
 export {
   createSafeResponse,
   handleAsyncError,
@@ -21,9 +25,3 @@ export {
   validateTranscriptionResult,
   validateWorkspace,
 } from "./validation";
-
-export {
-  quickAnsweringMachineCheck,
-  shouldRunQuickCheck,
-  type QuickCheckResult,
-} from "./quick-am-check";

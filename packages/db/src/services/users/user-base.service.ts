@@ -2,15 +2,15 @@
  * User base service - handles basic CRUD operations
  */
 
-import type { UsersRepository } from "../../repositories/users.repository";
 import type { SystemRepository } from "../../repositories/system.repository";
+import type { UsersRepository } from "../../repositories/users.repository";
 import type { CreateUserData, UpdateUserData } from "../../types/users.types";
-import type { User } from "./types";
 import {
+  ValidationError,
   validateCreateUserData,
   validateUpdateUserData,
-  ValidationError,
 } from "../../validators/user.validators";
+import type { User } from "./types";
 
 export class UserBaseService {
   constructor(
@@ -92,7 +92,9 @@ export class UserBaseService {
   async updateUserPassword(_userId: string, _newPassword: string): Promise<boolean> {
     // Обновление пароля должно выполняться через Better Auth API
     // Этот метод - placeholder, используйте auth.api.setPassword или аналогичный Better Auth endpoint
-    throw new Error("Обновление пароля должно выполняться через Better Auth API, не напрямую через репозиторий");
+    throw new Error(
+      "Обновление пароля должно выполняться через Better Auth API, не напрямую через репозиторий",
+    );
   }
 
   // Delete operations
@@ -100,11 +102,7 @@ export class UserBaseService {
     const result = await this.usersRepository.softDelete(userId);
 
     if (result) {
-      await this.systemRepository.addActivityLog(
-        "WARNING",
-        `User ${userId} deactivated`,
-        "admin",
-      );
+      await this.systemRepository.addActivityLog("WARNING", `User ${userId} deactivated`, "admin");
     }
 
     return result;

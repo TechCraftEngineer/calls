@@ -85,10 +85,10 @@ ${chunk}
   if (!parsedResponse.success) {
     logger.warn("Ответ AI для чанка отклонён (пусто), возвращаем оригинал", {
       functionId: "asr-context-correction-chunk",
-      issues: parsedResponse.error.issues.map(issue => ({
+      issues: parsedResponse.error.issues.map((issue) => ({
         code: issue.code,
         message: issue.message,
-        path: issue.path.map(p => String(p)),
+        path: issue.path.map((p) => String(p)),
       })),
     });
     return chunk;
@@ -192,10 +192,10 @@ export async function correctWithContext(
     if (!messageValidation.success) {
       logger.warn("Текст не прошел валидацию, оставляем исходный текст", {
         functionId: "asr-context-correction",
-        issues: messageValidation.error.issues.map(issue => ({
+        issues: messageValidation.error.issues.map((issue) => ({
           code: issue.code,
           message: issue.message,
-          path: issue.path.map(p => String(p)),
+          path: issue.path.map((p) => String(p)),
         })),
       });
       return text;
@@ -301,10 +301,10 @@ ${normalizedText}
     if (!parsedResponse.success) {
       logger.warn("Ответ AI для контекстной коррекции отклонён (пусто), оставляем исходный текст", {
         functionId: "asr-context-correction",
-        issues: parsedResponse.error.issues.map(issue => ({
+        issues: parsedResponse.error.issues.map((issue) => ({
           code: issue.code,
           message: issue.message,
-          path: issue.path.map(p => String(p)),
+          path: issue.path.map((p) => String(p)),
         })),
       });
       return text;
