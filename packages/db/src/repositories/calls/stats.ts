@@ -35,6 +35,7 @@ export const callsStats = {
     dateFrom?: string;
     dateTo?: string;
     excludePhoneNumbers?: string[];
+    internalNumbers?: string[];
   }): Promise<Record<string, ManagerStatsRow>> {
     return getEvaluationsStatsFn(params);
   },
@@ -44,6 +45,7 @@ export const callsStats = {
     dateFrom?: string;
     dateTo?: string;
     excludePhoneNumbers?: string[];
+    internalNumbers?: string[];
     maxScore?: number;
   }): Promise<Record<string, number>> {
     return getLowRatedCallsCountFn(params);

@@ -10,7 +10,7 @@ import type { Call, callsService } from "@calls/db";
 import { buildCompanyContext, companyContextSchema } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
-import { workspaceProcedure } from "../../orpc";
+import { workspaceAdminProcedure } from "../../orpc";
 
 const logger = createLogger("generate-recommendations");
 const DEFAULT_RECOMMENDATIONS_MODEL =
@@ -173,7 +173,7 @@ const uuidV7WithPrefixSchema = z
   });
 const callIdSchema = z.union([uuidV7Schema, uuidV7WithPrefixSchema]);
 
-export const generateRecommendationsProcedure = workspaceProcedure
+export const generateRecommendationsProcedure = workspaceAdminProcedure
   .input(z.object({ call_id: callIdSchema }))
   .handler(async ({ input, context }) => {
     if (context.workspaceId == null)
