@@ -12,7 +12,6 @@ import InviteUserModal from "@/components/features/workspaces/invite-user-modal"
 import PendingInvitations from "@/components/features/workspaces/pending-invitations";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 
@@ -163,8 +162,7 @@ export default function UsersPage() {
   const activeUsersCount = (users as WorkspaceMemberUser[]).filter((u) => u.id).length;
 
   return (
-    <div className="app-container">
-      <Sidebar />
+    <>
       <Header user={user} />
 
       <main className="main-content">
@@ -224,31 +222,31 @@ export default function UsersPage() {
             isRevoking={revokeInvitationMutation.isPending}
           />
         )}
-      </main>
 
-      {showInviteModal && (
-        <InviteUserModal
-          onClose={() => setShowInviteModal(false)}
-          onSubmit={handleInviteSubmit}
-          onCreateLink={handleCreateLinkInvitation}
+        {showInviteModal && (
+          <InviteUserModal
+            onClose={() => setShowInviteModal(false)}
+            onSubmit={handleInviteSubmit}
+            onCreateLink={handleCreateLinkInvitation}
+          />
+        )}
+
+        <ConfirmDialog
+          open={!!confirmRemove}
+          onClose={() => setConfirmRemove(null)}
+          onConfirm={() => {
+            if (confirmRemove && workspaceId) {
+              removeMemberMutation.mutate({
+                workspaceId,
+                userId: confirmRemove.userId,
+              });
+              setConfirmRemove(null);
+            }
+          }}
+          title="Исключить участника?"
+          message={`Исключить ${confirmRemove?.email} из компании?`}
         />
-      )}
-
-      <ConfirmDialog
-        open={!!confirmRemove}
-        onClose={() => setConfirmRemove(null)}
-        onConfirm={() => {
-          if (confirmRemove && workspaceId) {
-            removeMemberMutation.mutate({
-              workspaceId,
-              userId: confirmRemove.userId,
-            });
-            setConfirmRemove(null);
-          }
-        }}
-        title="Исключить участника?"
-        message={`Исключить ${confirmRemove?.email} из компании?`}
-      />
-    </div>
+      </main>
+    </>
   );
 }

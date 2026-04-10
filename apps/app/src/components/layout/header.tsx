@@ -44,7 +44,7 @@ export default function Header({ user }: HeaderProps) {
   if (!user) return null;
 
   return (
-    <header className="sticky top-0 z-900 flex h-16 items-center justify-between overflow-visible border-b border-gray-200 bg-white px-4 pl-16 md:justify-end md:px-8">
+    <header className="sticky top-0 z-900 flex h-16 items-center justify-between overflow-visible border-b border-gray-200 bg-white px-4 md:justify-end md:px-8">
       <div className="min-w-0 pr-3 md:hidden">
         {loading ? (
           <>

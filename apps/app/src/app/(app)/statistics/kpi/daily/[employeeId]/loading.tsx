@@ -1,17 +1,9 @@
 import { Card, CardContent, Skeleton } from "@calls/ui";
 import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
 
 export default function DailyViewLoading() {
   return (
-    <div
-      className="app-container"
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-      aria-label="Загрузка данных…"
-    >
-      <Sidebar />
+    <>
       <Header user={null} />
 
       <main className="main-content">
@@ -71,6 +63,6 @@ export default function DailyViewLoading() {
           </Card>
         </div>
       </main>
-    </div>
+    </>
   );
 }

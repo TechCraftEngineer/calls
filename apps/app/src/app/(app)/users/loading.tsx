@@ -1,6 +1,9 @@
+"use client";
+
+
 export default function UsersLoading() {
   return (
-    <div className="app-container">
+    <>
       <div className="main-content">
         <header className="page-header mb-6">
           <div>
@@ -30,6 +33,6 @@ export default function UsersLoading() {
           ))}
         </div>
       </div>
-    </div>
+    </>
   );
 }

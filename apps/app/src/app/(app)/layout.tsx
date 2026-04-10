@@ -1,10 +1,9 @@
 "use client";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@calls/ui";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 
-import { AppSidebar } from "./app-sidebar";
-
-export function SidebarLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -17,9 +16,3 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-
-// Legacy export for backward compatibility
-export default function Sidebar() {
-  return null;
-}
-

@@ -2,7 +2,6 @@
 
 import { Button } from "@calls/ui";
 import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
 
 export default function DailyViewError({
   error,
@@ -15,8 +14,7 @@ export default function DailyViewError({
   console.error("DailyViewError:", error);
 
   return (
-    <div className="app-container">
-      <Sidebar />
+    <>
       <Header user={null} />
 
       <main className="main-content">
@@ -35,6 +33,6 @@ export default function DailyViewError({
           </div>
         </div>
       </main>
-    </div>
+    </>
   );
 }

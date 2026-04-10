@@ -16,7 +16,6 @@ import {
 } from "@/components/features/users/edit";
 import type { EditUserForm } from "@/components/features/users/types";
 import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
 import { useBlockStates } from "@/hooks/use-block-states";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
@@ -276,8 +275,7 @@ export default function UserEditPage() {
 
   if (userError) {
     return (
-      <div className="app-container">
-        <Sidebar />
+      <>
         <Header user={user} />
         <main className="main-content">
           <div className="p-6">
@@ -287,14 +285,13 @@ export default function UserEditPage() {
             </Button>
           </div>
         </main>
-      </div>
+      </>
     );
   }
 
   if (isPending || !form) {
     return (
-      <div className="app-container">
-        <Sidebar />
+      <>
         <Header user={user} />
         <main className="main-content">
           <div className="p-6">
@@ -302,13 +299,12 @@ export default function UserEditPage() {
             <div className="animate-pulse h-4 bg-gray-100 rounded w-full max-w-md" />
           </div>
         </main>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="app-container">
-      <Sidebar />
+    <>
       <Header user={user} />
 
       <main className="main-content">
@@ -412,6 +408,6 @@ export default function UserEditPage() {
           />
         </div>
       </main>
-    </div>
+    </>
   );
 }

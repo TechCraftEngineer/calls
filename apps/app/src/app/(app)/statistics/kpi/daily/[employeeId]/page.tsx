@@ -6,7 +6,6 @@ import React, { useEffect, useMemo } from "react";
 import { DailyViewClient } from "@/components/features/kpi/daily-view-client";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
 import { useSession } from "@/lib/better-auth";
 
 interface PageProps {
@@ -74,27 +73,19 @@ export default function DailyViewPage({ params }: PageProps) {
   // Показываем loading state пока проверяем авторизацию
   if (userLoading || !user || !isWorkspaceAdmin) {
     return (
-      <div
-        className="app-container"
-        role="status"
-        aria-live="polite"
-        aria-busy="true"
-        aria-label="Загрузка..."
-      >
-        <Sidebar />
+      <>
         <Header user={null} />
         <main className="main-content">
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
           </div>
         </main>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="app-container">
-      <Sidebar />
+    <>
       <Header user={user} />
 
       <main className="main-content">
@@ -109,6 +100,6 @@ export default function DailyViewPage({ params }: PageProps) {
           initialEndDate={endDate}
         />
       </main>
-    </div>
+    </>
   );
 }

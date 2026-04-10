@@ -10,6 +10,7 @@ export interface SetupStep {
   timeEstimate: string;
   actionLabel: string;
   skipLabel?: string;
+  editLabel?: string;
 }
 
 export interface ModalProps {

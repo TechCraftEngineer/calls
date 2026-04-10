@@ -14,7 +14,6 @@ import {
   type ManagerOption,
 } from "@/components/features/calls/calls-filters";
 import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSession } from "@/lib/better-auth";
@@ -34,7 +33,6 @@ export default function HomePage() {
   const queryClient = useQueryClient();
   const { data: session, isPending: sessionPending } = useSession();
   const user = session?.user ?? null;
-  const _userLoading = sessionPending;
   const [pagination, setPagination] = useState<Pagination>({
     total: 0,
     page: 1,
@@ -191,8 +189,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="app-container">
-      <Sidebar />
+    <>
       <Header user={user} />
 
       <main className="main-content">
@@ -243,6 +240,6 @@ export default function HomePage() {
           />
         )}
       </main>
-    </div>
+    </>
   );
 }

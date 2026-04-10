@@ -10,7 +10,7 @@ export default function UsersError({
   reset: () => void;
 }) {
   return (
-    <div className="app-container">
+    <>
       <div className="main-content">
         <div className="flex flex-col items-center justify-center py-12">
           <div className="text-center max-w-md">
@@ -24,6 +24,6 @@ export default function UsersError({
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

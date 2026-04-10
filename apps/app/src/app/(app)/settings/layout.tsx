@@ -6,7 +6,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
 import { useSession } from "@/lib/better-auth";
 
 const SETTINGS_NAV = [
@@ -141,7 +140,6 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const { activeWorkspace } = useWorkspace();
   const { data: session, isPending: sessionPending } = useSession();
   const user = session?.user ?? null;
-  const _userLoading = sessionPending;
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
   const navItems = SETTINGS_NAV.filter(
@@ -149,8 +147,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   );
 
   return (
-    <div className="app-container">
-      <Sidebar />
+    <>
       <Header user={user} />
 
       <main className="main-content">
@@ -205,6 +202,6 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
           <div className="flex-1 min-w-0">{children}</div>
         </div>
       </main>
-    </div>
+    </>
   );
 }

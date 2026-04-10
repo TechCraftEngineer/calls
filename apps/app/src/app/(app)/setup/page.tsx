@@ -1,13 +1,15 @@
 "use client";
 
+import { paths } from "@calls/config";
 import { Button, Card, toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bot, Building2, Calendar, Check, Globe, Loader2, SkipForward, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
+import Header from "@/components/layout/header";
 import { setOnboardedCookie } from "@/lib/cookies";
-import { paths } from "@calls/config";
+import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 import {
   ApiModal,
@@ -27,6 +29,7 @@ const SETUP_STEPS: SetupStep[] = [
     timeEstimate: "1 минута",
     actionLabel: "Выбрать",
     skipLabel: "Пропустить",
+    editLabel: "Изменить",
   },
   {
     id: "api",
@@ -36,6 +39,7 @@ const SETUP_STEPS: SetupStep[] = [
     timeEstimate: "3 минуты",
     actionLabel: "Подключить",
     skipLabel: "Позже",
+    editLabel: "Изменить",
   },
   {
     id: "directory",
@@ -45,6 +49,7 @@ const SETUP_STEPS: SetupStep[] = [
     timeEstimate: "5 минут",
     actionLabel: "Проверить",
     skipLabel: "Позже",
+    editLabel: "Изменить",
   },
   {
     id: "company",
@@ -53,6 +58,7 @@ const SETUP_STEPS: SetupStep[] = [
     icon: <Building2 className="size-[18px]" />,
     timeEstimate: "2 минуты",
     actionLabel: "Заполнить",
+    editLabel: "Изменить",
   },
   {
     id: "prompts",
@@ -61,15 +67,26 @@ const SETUP_STEPS: SetupStep[] = [
     icon: <Calendar className="size-[18px]" />,
     timeEstimate: "1 минута",
     actionLabel: "Просмотреть",
+    editLabel: "Изменить",
   },
 ];
 
 export default function SetupPage() {
-  const { activeWorkspace } = useWorkspace();
+  const router = useRouter();
+  const { data: session, isPending: sessionPending } = useSession();
+  const { activeWorkspace, loading: workspaceLoading } = useWorkspace();
   const orpc = useORPC();
   const queryClient = useQueryClient();
-  const router = useRouter();
   const [activeModal, setActiveModal] = useState<StepId | null>(null);
+
+  const user = session?.user ?? null;
+  const loading = sessionPending || workspaceLoading;
+
+  // Redirect if already onboarded
+  if (!loading && activeWorkspace?.isOnboarded) {
+    router.replace(paths.root);
+    return null;
+  }
 
   // Track completed steps in local state
   const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(() => {
@@ -120,9 +137,62 @@ export default function SetupPage() {
     });
   };
 
+  if (loading) {
+    return (
+      <>
+        <Header user={user} />
+        <main className="main-content flex items-center justify-center">
+          <div className="flex items-center gap-2 text-muted-foreground" role="status">
+            <Loader2 className="size-5 animate-spin" aria-hidden="true" />
+            <span>Загрузка...</span>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (!activeWorkspace) {
+    return (
+      <>
+        <Header user={user} />
+        <main className="main-content flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-xl font-semibold">Нет доступа</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              У вас нет активной компании. Сначала создайте компанию.
+            </p>
+            <div className="mt-6 flex flex-col items-center gap-3">
+              <button
+                type="button"
+                onClick={() => router.push(paths.onboarding.createWorkspace)}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Создать компанию
+              </button>
+              <p className="text-xs text-muted-foreground">
+                Нужна помощь?{" "}
+                <a href="/docs" className="underline hover:text-foreground">
+                  Документация
+                </a>{" "}
+                или{" "}
+                <a href="/support" className="underline hover:text-foreground">
+                  поддержка
+                </a>
+              </p>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
-      {/* Main Card */}
+      <Header user={user} />
+
+      <main className="main-content">
+        <div className="max-w-3xl">
+          {/* Main Card */}
       <Card className="mb-6 overflow-hidden border bg-card shadow-sm">
         {/* Header with progress */}
         <div className="border-b border-border p-4">
@@ -172,9 +242,19 @@ export default function SetupPage() {
                 {/* Actions */}
                 <div className="flex items-center gap-2">
                   {isCompleted ? (
-                    <div className="flex size-6 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50">
-                      <Check className="size-4 text-green-600 dark:text-green-400" />
-                    </div>
+                    <>
+                      <div className="flex size-6 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/50">
+                        <Check className="size-4 text-green-600 dark:text-green-400" />
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={() => setActiveModal(step.id)}
+                      >
+                        {step.editLabel}
+                      </Button>
+                    </>
                   ) : (
                     <>
                       <Button
@@ -242,6 +322,8 @@ export default function SetupPage() {
         onOpenChange={() => setActiveModal(null)}
         onComplete={() => handleCompleteStep("prompts")}
       />
+        </div>
+      </main>
     </>
   );
 }

@@ -12,7 +12,6 @@ import CallSidebar from "@/components/features/calls/call-sidebar";
 import { TranscriptCard } from "@/components/features/calls/transcript-card";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
 import { useSession } from "@/lib/better-auth";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
 import { useORPC } from "@/orpc/react";
@@ -40,7 +39,6 @@ export default function CallDetailPage() {
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const { data: session, isPending: sessionPending } = useSession();
   const user = session?.user ?? null;
-  const _userLoading = sessionPending;
   const [restarting, setRestarting] = useState(false);
 
   const rawCallId = Array.isArray(id) ? id[0] : (id ?? "");
@@ -192,29 +190,26 @@ export default function CallDetailPage() {
 
   if (loading)
     return (
-      <div className="app-container">
-        <Sidebar />
+      <>
         <Header user={user} />
         <main className="main-content flex items-center justify-center min-h-[200px]">
           <div className="text-[#666]">Загрузка…</div>
         </main>
-      </div>
+      </>
     );
 
   if (!call)
     return (
-      <div className="app-container">
-        <Sidebar />
+      <>
         <Header user={user} />
         <main className="main-content flex items-center justify-center min-h-[200px]">
           <div className="text-[#666]">Звонок не найден</div>
         </main>
-      </div>
+      </>
     );
 
   return (
-    <div className="app-container">
-      <Sidebar />
+    <>
       <Header user={user} />
 
       <main className="main-content">
@@ -237,6 +232,6 @@ export default function CallDetailPage() {
           />
         </div>
       </main>
-    </div>
+    </>
   );
 }

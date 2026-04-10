@@ -11,7 +11,6 @@ import MonthlyGridTable from "@/components/features/kpi/monthly-grid-table";
 import { ReportSettingsPanel } from "@/components/features/settings";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
-import Sidebar from "@/components/layout/sidebar";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 import { StatisticsFilters } from "../statistics-filters";
@@ -101,8 +100,7 @@ function StatisticsPageContent() {
   };
 
   return (
-    <div className="app-container">
-      <Sidebar />
+    <>
       <Header user={user} />
 
       <main className="main-content">
@@ -157,7 +155,7 @@ function StatisticsPageContent() {
           </div>
         )}
       </main>
-    </div>
+    </>
   );
 }
 
@@ -165,13 +163,12 @@ export default function StatisticsPage() {
   return (
     <Suspense
       fallback={
-        <div className="app-container">
-          <Sidebar />
+        <>
           <Header user={null} />
           <main className="main-content">
             <StatisticsPageSkeleton />
           </main>
-        </div>
+        </>
       }
     >
       <StatisticsPageContent />
