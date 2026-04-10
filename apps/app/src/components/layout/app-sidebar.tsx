@@ -22,6 +22,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarGroupAction,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
@@ -144,6 +145,8 @@ function WorkspaceSwitcher() {
 
 function SetupCard() {
   const { activeWorkspace } = useWorkspace();
+  const { state } = useSidebar();
+  const isCollapsed = state === "collapsed";
 
   // Compute progress from real workspace onboarding state
   // Use completed steps from sessionStorage (sync with setup page) or default to 0
@@ -166,6 +169,51 @@ function SetupCard() {
     return null;
   }
 
+  // Collapsed state - show only icon button with tooltip
+  if (isCollapsed) {
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton asChild tooltip={`Настройка сервиса (${completedSteps}/${totalSteps})`}>
+            <Link href="/setup" className="relative flex items-center justify-center">
+              <div className="relative h-5 w-5">
+                <svg
+                  className="h-5 w-5 -rotate-90 transform"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 32 32"
+                >
+                  <circle
+                    stroke="currentColor"
+                    strokeWidth="5"
+                    fill="none"
+                    r="11"
+                    cx="16"
+                    cy="16"
+                    className="text-gray-200 dark:text-gray-700"
+                  />
+                  <circle
+                    stroke="currentColor"
+                    strokeWidth="5"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    fill="none"
+                    r="11"
+                    cx="16"
+                    cy="16"
+                    className="text-green-500 transition-all duration-300 ease-in-out"
+                  />
+                </svg>
+              </div>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
+  }
+
+  // Expanded state - show full card
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -261,6 +309,9 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Навигация</SidebarGroupLabel>
+          <SidebarGroupAction onClick={toggleSidebar} title={state === "collapsed" ? "Развернуть" : "Свернуть"}>
+            {state === "collapsed" ? <PanelRight className="size-4" /> : <PanelLeft className="size-4" />}
+          </SidebarGroupAction>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
@@ -299,15 +350,6 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={toggleSidebar}
-              tooltip={state === "collapsed" ? "Развернуть" : "Свернуть"}
-            >
-              {state === "collapsed" ? <PanelRight /> : <PanelLeft />}
-              <span>{state === "collapsed" ? "Развернуть" : "Свернуть"}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Выход">
               <Link href={paths.auth.signout}>

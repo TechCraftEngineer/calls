@@ -3,7 +3,7 @@
 import { paths } from "@calls/config";
 import { Button, Card, toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bot, Building2, Calendar, Check, Globe, Loader2, SkipForward, Users } from "lucide-react";
+import { BarChart3, Bot, Building2, Check, Globe, Loader2, SkipForward, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -16,7 +16,6 @@ import {
   ApiModal,
   CompanyModal,
   DirectoryModal,
-  PromptsModal,
   ProviderModal,
 } from "./_components";
 import type { SetupStep, StepId } from "./_components/types";
@@ -41,7 +40,7 @@ const SETUP_STEPS: SetupStep[] = [
     actionLabel: "Подключить",
     skipLabel: "Позже",
     editLabel: "Изменить",
-    href: "/pbx-setup",
+    href: paths.setup.pbxSetup,
   },
   {
     id: "directory",
@@ -63,13 +62,14 @@ const SETUP_STEPS: SetupStep[] = [
     editLabel: "Изменить",
   },
   {
-    id: "prompts",
-    title: "Просмотрите системные промпты",
-    description: "Ознакомьтесь с настройками анализа звонков",
-    icon: <Calendar className="size-[18px]" />,
-    timeEstimate: "1 минута",
-    actionLabel: "Просмотреть",
+    id: "evaluation",
+    title: "Настройте оценку звонков",
+    description: "Выберите шаблон оценки по умолчанию и проверьте доступные шаблоны",
+    icon: <BarChart3 className="size-[18px]" />,
+    timeEstimate: "2 минуты",
+    actionLabel: "Настроить",
     editLabel: "Изменить",
+    href: "/settings/evaluation",
   },
 ];
 
@@ -319,11 +319,6 @@ export default function SetupPage() {
         open={activeModal === "company"}
         onOpenChange={() => setActiveModal(null)}
         onComplete={(_data?: unknown) => handleCompleteStep("company")}
-      />
-      <PromptsModal
-        open={activeModal === "prompts"}
-        onOpenChange={() => setActiveModal(null)}
-        onComplete={(_data?: unknown) => handleCompleteStep("prompts")}
       />
         </div>
       </main>
