@@ -3,6 +3,7 @@
 import { Button, Input, PasswordInput, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -19,8 +20,16 @@ type ApiCredentialsFormData = z.infer<typeof apiCredentialsSchema>;
 export default function ApiStepPage() {
   const router = useRouter();
   const orpc = useORPC();
+  const queryClient = useQueryClient();
   const [testing, setTesting] = useState(false);
   const [testMessage, setTestMessage] = useState<string>("");
+
+  const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
+  const updatePbxAccessMutation = useMutation(orpc.settings.updatePbxAccess.mutationOptions({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orpc.settings.getIntegrations.queryKey() });
+    },
+  }));
 
   const form = useForm<ApiCredentialsFormData>({
     resolver: zodResolver(apiCredentialsSchema),
@@ -41,7 +50,7 @@ export default function ApiStepPage() {
     setTestMessage("");
 
     try {
-      const result = await orpc.settings.testPbx.mutate({
+      const result = await testPbxMutation.mutateAsync({
         baseUrl: values.baseUrl.trim(),
         apiKey: values.apiKey.trim(),
       });
@@ -53,7 +62,7 @@ export default function ApiStepPage() {
         toast.success("Подключение успешно");
         
         // Save the credentials
-        await orpc.settings.updatePbxAccess.mutate({
+        await updatePbxAccessMutation.mutateAsync({
           enabled: true,
           baseUrl: values.baseUrl.trim(),
           apiKey: values.apiKey.trim(),

@@ -17,7 +17,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { getEmployeeColumns } from "@/components/features/settings/megapbx/employee-columns";
@@ -29,9 +29,6 @@ import type { ModalProps } from "./types";
 export function DirectoryModal({ open, onOpenChange, onComplete }: ModalProps) {
   const orpc = useORPC();
   const queryClient = useQueryClient();
-  const [syncing, setSyncing] = useState(false);
-  // TODO: reserved for future excluded numbers filter
-  const [_excludedNumbers, _setExcludedNumbers] = useState<Set<string>>(new Set());
   const [employeeSearch, setEmployeeSearch] = useState("");
 
   const { data: employees = [], isLoading: empLoading } = useQuery({
@@ -44,18 +41,19 @@ export function DirectoryModal({ open, onOpenChange, onComplete }: ModalProps) {
     enabled: open,
   });
 
-  const handleSync = async () => {
-    setSyncing(true);
-    try {
-      await orpc.settings.syncPbxDirectory.mutate();
+  const syncPbxDirectoryMutation = useMutation(orpc.settings.syncPbxDirectory.mutationOptions({
+    onSuccess: async () => {
       toast.success("Синхронизировано");
       await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxEmployees.queryKey() });
       await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
-    } catch (_err) {
+    },
+    onError: () => {
       toast.error("Ошибка синхронизации");
-    } finally {
-      setSyncing(false);
-    }
+    },
+  }));
+
+  const handleSync = async () => {
+    await syncPbxDirectoryMutation.mutateAsync({});
   };
 
   const filteredEmployees = useMemo(() => {
@@ -84,8 +82,8 @@ export function DirectoryModal({ open, onOpenChange, onComplete }: ModalProps) {
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSync} disabled={syncing}>
-              {syncing ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+            <Button variant="outline" onClick={handleSync} disabled={syncPbxDirectoryMutation.isPending}>
+              {syncPbxDirectoryMutation.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
               Синхронизировать
             </Button>
           </div>

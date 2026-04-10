@@ -138,7 +138,7 @@ const SETTINGS_NAV = [
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { activeWorkspace } = useWorkspace();
-  const { data: session, isPending: sessionPending } = useSession();
+  const { data: session } = useSession();
   const user = session?.user ?? null;
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 

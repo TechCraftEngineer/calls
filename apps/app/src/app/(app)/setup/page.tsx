@@ -34,12 +34,13 @@ const SETUP_STEPS: SetupStep[] = [
   {
     id: "api",
     title: "Подключите API телефонии",
-    description: "Настройте интеграцию с вашей АТС для загрузки звонков",
+    description: "Настройте интеграцию и импортируйте сотрудников и номера",
     icon: <Globe className="size-[18px]" />,
-    timeEstimate: "3 минуты",
+    timeEstimate: "5 минут",
     actionLabel: "Подключить",
     skipLabel: "Позже",
     editLabel: "Изменить",
+    href: "/pbx-setup",
   },
   {
     id: "directory",
@@ -79,6 +80,27 @@ export default function SetupPage() {
   const queryClient = useQueryClient();
   const [activeModal, setActiveModal] = useState<StepId | null>(null);
 
+  // Track completed steps in local state
+  const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(() => {
+    if (typeof window === "undefined") return new Set();
+    const saved = sessionStorage.getItem("setup_completed_steps");
+    return new Set(saved ? (JSON.parse(saved) as StepId[]) : []);
+  });
+
+  const completeOnboardingMutation = useMutation(
+    orpc.workspaces.completeOnboarding.mutationOptions({
+      onSuccess: async () => {
+        setOnboardedCookie(true);
+        toast.success("Настройка завершена!");
+        await queryClient.invalidateQueries({ queryKey: orpc.workspaces.list.queryKey() });
+        router.push(paths.root);
+      },
+      onError: () => {
+        toast.error("Не удалось завершить настройку");
+      },
+    }),
+  );
+
   const user = session?.user ?? null;
   const loading = sessionPending || workspaceLoading;
 
@@ -87,13 +109,6 @@ export default function SetupPage() {
     router.replace(paths.root);
     return null;
   }
-
-  // Track completed steps in local state
-  const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(() => {
-    if (typeof window === "undefined") return new Set();
-    const saved = sessionStorage.getItem("setup_completed_steps");
-    return new Set(saved ? (JSON.parse(saved) as StepId[]) : []);
-  });
 
   const saveCompletedSteps = (steps: Set<StepId>) => {
     setCompletedSteps(steps);
@@ -115,20 +130,6 @@ export default function SetupPage() {
   const handleSkipStep = (stepId: StepId) => {
     handleCompleteStep(stepId);
   };
-
-  const completeOnboardingMutation = useMutation(
-    orpc.workspaces.completeOnboarding.mutationOptions({
-      onSuccess: async () => {
-        setOnboardedCookie(true);
-        toast.success("Настройка завершена!");
-        await queryClient.invalidateQueries({ queryKey: orpc.workspaces.list.queryKey() });
-        router.push(paths.root);
-      },
-      onError: () => {
-        toast.error("Не удалось завершить настройку");
-      },
-    }),
-  );
 
   const handleFinishSetup = async () => {
     if (!activeWorkspace) return;
@@ -250,7 +251,7 @@ export default function SetupPage() {
                         size="sm"
                         variant="ghost"
                         className="text-muted-foreground hover:text-foreground"
-                        onClick={() => setActiveModal(step.id)}
+                        onClick={() => step.href ? router.push(step.href) : setActiveModal(step.id)}
                       >
                         {step.editLabel}
                       </Button>
@@ -260,7 +261,7 @@ export default function SetupPage() {
                       <Button
                         size="sm"
                         className="bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:hover:bg-blue-900/75"
-                        onClick={() => setActiveModal(step.id)}
+                        onClick={() => step.href ? router.push(step.href) : setActiveModal(step.id)}
                         disabled={isDisabled}
                       >
                         {step.actionLabel}

@@ -13,8 +13,8 @@ export function PromptsModal({ open, onOpenChange, onComplete }: ModalProps) {
     enabled: open,
   });
 
-  const valuePrompt = prompts?.find((p) => p.slug === "value-extraction");
-  const scriptPrompt = prompts?.find((p) => p.slug === "script-evaluation");
+  const valuePrompt = prompts?.find((p) => p.key === "valueExtraction");
+  const scriptPrompt = prompts?.find((p) => p.key === "scriptEvaluation");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -37,7 +37,7 @@ export function PromptsModal({ open, onOpenChange, onComplete }: ModalProps) {
                   </p>
                   {valuePrompt && (
                     <pre className="max-h-32 overflow-auto rounded bg-muted p-2 text-xs">
-                      {valuePrompt.prompt}
+                      {valuePrompt.value}
                     </pre>
                   )}
                 </CardContent>
@@ -50,7 +50,7 @@ export function PromptsModal({ open, onOpenChange, onComplete }: ModalProps) {
                   </p>
                   {scriptPrompt && (
                     <pre className="max-h-32 overflow-auto rounded bg-muted p-2 text-xs">
-                      {scriptPrompt.prompt}
+                      {scriptPrompt.value}
                     </pre>
                   )}
                 </CardContent>

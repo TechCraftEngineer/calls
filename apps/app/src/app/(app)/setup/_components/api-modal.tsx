@@ -3,6 +3,7 @@
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, PasswordInput, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Copy, Key, Loader2, Webhook } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,8 +18,16 @@ const apiSchema = z.object({
 
 export function ApiModal({ open, onOpenChange, onComplete }: ModalProps) {
   const orpc = useORPC();
+  const queryClient = useQueryClient();
   const { activeWorkspace } = useWorkspace();
   const [testing, setTesting] = useState(false);
+
+  const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
+  const updatePbxAccessMutation = useMutation(orpc.settings.updatePbxAccess.mutationOptions({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: orpc.settings.getIntegrations.queryKey() });
+    },
+  }));
 
   const webhookUrl = activeWorkspace
     ? `${window.location.origin}/api/webhooks/pbx/${activeWorkspace.id}`
@@ -48,13 +57,13 @@ export function ApiModal({ open, onOpenChange, onComplete }: ModalProps) {
     const values = form.getValues();
     setTesting(true);
     try {
-      const result = await orpc.settings.testPbx.mutate({
+      const result = await testPbxMutation.mutateAsync({
         baseUrl: values.baseUrl.trim(),
         apiKey: values.apiKey.trim(),
       });
       const ok = result && typeof result === "object" && "success" in result && result.success;
       if (ok) {
-        await orpc.settings.updatePbxAccess.mutate({
+        await updatePbxAccessMutation.mutateAsync({
           enabled: true,
           baseUrl: values.baseUrl.trim(),
           apiKey: values.apiKey.trim(),

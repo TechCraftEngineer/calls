@@ -11,6 +11,7 @@ export interface SetupStep {
   actionLabel: string;
   skipLabel?: string;
   editLabel?: string;
+  href?: string;
 }
 
 export interface ModalProps {
