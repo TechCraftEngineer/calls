@@ -21,6 +21,7 @@ export interface SpeakerDiarizationCallbackResult {
   skipReason?: string;
   taskId?: string;
   processingTimeMs: number;
+  segments?: Array<{ start: number; end: number; speaker: string }>;
 }
 
 /**
@@ -105,6 +106,7 @@ export async function speakerDiarizationWithCallback(
         clusterCount?: number;
         reason?: string;
         error?: string;
+        segments?: Array<{ start: number; end: number; speaker: string }>;
       };
       error?: string;
       processingTimeMs?: number;
@@ -172,6 +174,7 @@ export async function speakerDiarizationWithCallback(
       clusterCount: eventData.result.clusterCount,
       taskId,
       processingTimeMs: eventData.processingTimeMs || 0,
+      segments: eventData.result.segments,
     };
   });
 }
