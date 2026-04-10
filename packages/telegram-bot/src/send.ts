@@ -69,7 +69,9 @@ export async function sendMessage(
   }
 }
 
-function createProxyFetch(proxyUrl: string): typeof fetch {
+function createProxyFetch(
+  proxyUrl: string,
+): (input: string | URL | Request, init?: RequestInit) => Promise<Response> {
   return async (input, init) => {
     let url: string;
     if (typeof input === "string") {
