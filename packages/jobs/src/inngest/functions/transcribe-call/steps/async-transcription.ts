@@ -65,7 +65,7 @@ export async function asyncTranscriptionWithCallback(
     };
   }>("asr/wait-for-completion", {
     event: "giga-am/transcription.completed",
-    timeout: "10m", // 10 минут максимальное ожидание
+    timeout: "30m", // 30 минут максимальное ожидание
     if: `async.data.task_id == "${taskId}"`,
   });
 
@@ -75,7 +75,7 @@ export async function asyncTranscriptionWithCallback(
       // Таймаут waitForEvent - выбрасываем ошибку (polling не используем)
       throw new Error(
         `Таймаут ожидания события завершения транскрипции (taskId: ${taskId}). ` +
-          `Событие giga-am/transcription.completed не получено в течение 10 минут.`,
+          `Событие giga-am/transcription.completed не получено в течение 30 минут.`,
       );
     }
 
@@ -167,7 +167,7 @@ export async function asyncDiarizedTranscriptionWithCallback(
     };
   }>("asr/wait-for-diarized-completion", {
     event: "giga-am/transcription.completed",
-    timeout: "15m", // 15 минут максимальное ожидание (диаризация дольше)
+    timeout: "30m", // 30 минут максимальное ожидание
     if: `async.data.task_id == "${taskId}"`,
   });
 
@@ -177,7 +177,7 @@ export async function asyncDiarizedTranscriptionWithCallback(
       // Таймаут waitForEvent - выбрасываем ошибку (polling не используем)
       throw new Error(
         `Таймаут ожидания события завершения диаризации (taskId: ${taskId}). ` +
-          `Событие giga-am/transcription.completed не получено в течение 15 минут.`,
+          `Событие giga-am/transcription.completed не получено в течение 30 минут.`,
       );
     }
 
