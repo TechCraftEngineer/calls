@@ -13,7 +13,8 @@
   "dependencies": {
     "@calls/db": "workspace:*",
     "grammy": "1.42.0",
-    "hono": "4.12.12"
+    "hono": "4.12.12",
+    "socks-proxy-agent": "8.0.5"
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",

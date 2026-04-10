@@ -1,17 +1,22 @@
 import { Bot } from "grammy";
+import { SocksProxyAgent } from "socks-proxy-agent";
 
 /**
  * Sends a text message to a Telegram chat.
  * @param token - Telegram Bot API token
  * @param chatId - Telegram chat ID (e.g. user's chat_id)
  * @param text - Message text
+ * @param options - Additional options (parseMode, proxyUrl)
  * @returns Promise<boolean> - true if successful, false otherwise
  */
 export async function sendMessage(
   token: string,
   chatId: string,
   text: string,
-  options?: { parseMode?: "HTML" | "MarkdownV2" },
+  options?: {
+    parseMode?: "HTML" | "MarkdownV2";
+    proxyUrl?: string;
+  },
 ): Promise<boolean> {
   try {
     if (!token?.trim()) {
@@ -29,7 +34,19 @@ export async function sendMessage(
       return false;
     }
 
-    const bot = new Bot(token);
+    // Настраиваем прокси если указан
+    const botConfig = options?.proxyUrl
+      ? {
+          client: {
+            baseFetchConfig: {
+              agent: new SocksProxyAgent(options.proxyUrl),
+              compress: true,
+            },
+          },
+        }
+      : undefined;
+
+    const bot = new Bot(token, botConfig);
     await bot.api.sendMessage(chatId, text, {
       parse_mode: options?.parseMode,
     });
