@@ -7,7 +7,6 @@ export type { AsyncTranscriptionResult } from "./async-transcription";
 export {
   asyncDiarizedTranscriptionWithCallback,
   asyncTranscriptionWithCallback,
-  asyncTranscriptionWithPolling,
 } from "./async-transcription";
 export { checkAnsweringMachine } from "./check-answering-machine";
 export { fetchCall } from "./fetch-call";

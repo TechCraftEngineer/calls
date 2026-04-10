@@ -5,85 +5,17 @@
 
 import { createLogger } from "../../../../logger";
 import { downloadAudioFile } from "../audio/download";
-import { getAsyncResult, startAsyncTranscription } from "../gigaam/client";
+import { startAsyncTranscription } from "../gigaam/client";
 import type { PreprocessResult } from "./preprocess-audio";
-import type { StepRunner, StepRunnerWithSleep } from "./step-runner";
+import type { StepRunner } from "./step-runner";
 import type { SyncTranscriptionResult } from "./sync-transcription";
 
 const logger = createLogger("transcribe-call:async-transcription");
-
-// Конфигурация polling при таймауте waitForEvent
-const POLLING_CONFIG = {
-  maxPollingTimeoutMs: 5 * 60 * 1000, // 5 минут максимальное время polling
-  pollIntervalMs: 3000, // 3 секунды между попытками
-};
 
 export interface AsyncTranscriptionResult extends SyncTranscriptionResult {
   taskId: string;
   diarizationSuccess?: boolean;
   diarizationFailed?: boolean;
-}
-
-/**
- * Helper функция для polling с retry loop
- */
-async function pollWithRetry<T>(
-  taskId: string,
-  callId: string,
-  pollFn: () => Promise<T>,
-  validateFn: (result: T) => boolean,
-  context: string,
-): Promise<{ result: T; pollTimeMs: number }> {
-  const startTime = Date.now();
-  let attempts = 0;
-
-  while (true) {
-    attempts++;
-    const elapsedMs = Date.now() - startTime;
-
-    if (elapsedMs >= POLLING_CONFIG.maxPollingTimeoutMs) {
-      throw new Error(
-        `${context}: Превышен максимальный таймаут polling (${POLLING_CONFIG.maxPollingTimeoutMs}ms) после ${attempts} попыток`,
-      );
-    }
-
-    try {
-      logger.info(`${context}: Попытка ${attempts} получения результата`, {
-        callId,
-        taskId,
-        elapsedMs: Math.round(elapsedMs / 1000),
-      });
-
-      const result = await pollFn();
-
-      if (validateFn(result)) {
-        const pollTimeMs = Date.now() - startTime;
-        logger.info(`${context}: Результат успешно получен`, {
-          callId,
-          taskId,
-          attempts,
-          pollTimeMs,
-        });
-        return { result, pollTimeMs };
-      }
-
-      logger.warn(`${context}: Результат ещё не готов, повторная попытка`, {
-        callId,
-        taskId,
-        attempts,
-      });
-    } catch (error) {
-      logger.warn(`${context}: Ошибка при получении результата, повторная попытка`, {
-        callId,
-        taskId,
-        attempts,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-
-    // Задержка перед следующей попыткой
-    await new Promise((resolve) => setTimeout(resolve, POLLING_CONFIG.pollIntervalMs));
-  }
 }
 
 /**
@@ -140,31 +72,11 @@ export async function asyncTranscriptionWithCallback(
   // Шаг 3: Обрабатываем результат
   return await typedStep.run("asr/process-result", async () => {
     if (!completedEvent) {
-      // Таймаут - получаем результат напрямую через polling с retry
-      logger.warn("Таймаут ожидания события, переключаемся на polling с retry", { callId, taskId });
-
-      const { result, pollTimeMs } = await pollWithRetry(
-        taskId,
-        callId,
-        () => getAsyncResult(taskId),
-        (result) => !!(result.transcript && result.transcript.length > 0),
-        "AsyncTranscription",
+      // Таймаут waitForEvent - выбрасываем ошибку (polling не используем)
+      throw new Error(
+        `Таймаут ожидания события завершения транскрипции (taskId: ${taskId}). ` +
+          `Событие giga-am/transcription.completed не получено в течение 10 минут.`,
       );
-
-      logger.info("Результат получен через polling", {
-        callId,
-        taskId,
-        pollTimeMs,
-        transcriptLength: result.transcript.length,
-        segmentsCount: result.segments?.length ?? 0,
-      });
-
-      return {
-        transcript: result.transcript,
-        segments: result.segments || [],
-        processingTimeMs: pollTimeMs,
-        taskId,
-      };
     }
 
     const eventData = completedEvent.data;
@@ -262,50 +174,11 @@ export async function asyncDiarizedTranscriptionWithCallback(
   // Шаг 3: Обрабатываем результат
   return await typedStep.run("asr/process-diarized-result", async () => {
     if (!completedEvent) {
-      // Таймаут - получаем результат напрямую через polling с retry
-      logger.warn("Таймаут ожидания события диаризации, переключаемся на polling с retry", {
-        callId,
-        taskId,
-      });
-
-      const { getAsyncDiarizedResult } = await import("../gigaam/client");
-
-      const { result, pollTimeMs } = await pollWithRetry(
-        taskId,
-        callId,
-        () => getAsyncDiarizedResult(taskId),
-        (result) =>
-          !!(
-            result.final_transcript &&
-            result.final_transcript.length > 0 &&
-            result.segments &&
-            result.segments.length > 0
-          ),
-        "AsyncDiarizedTranscription",
+      // Таймаут waitForEvent - выбрасываем ошибку (polling не используем)
+      throw new Error(
+        `Таймаут ожидания события завершения диаризации (taskId: ${taskId}). ` +
+          `Событие giga-am/transcription.completed не получено в течение 15 минут.`,
       );
-
-      logger.info("Результат диаризации получен через polling", {
-        callId,
-        taskId,
-        pollTimeMs,
-        transcriptLength: result.final_transcript.length,
-        segmentsCount: result.segments.length,
-      });
-
-      return {
-        transcript: result.final_transcript,
-        segments: result.segments.map((s) => ({
-          speaker: s.speaker ?? "UNKNOWN",
-          start: s.start,
-          end: s.end,
-          text: s.text,
-          confidence: s.confidence,
-        })),
-        processingTimeMs: pollTimeMs,
-        taskId,
-        diarizationSuccess: true,
-        diarizationFailed: false,
-      };
     }
 
     const eventData = completedEvent.data;
@@ -346,70 +219,4 @@ export async function asyncDiarizedTranscriptionWithCallback(
       diarizationFailed: false,
     };
   });
-}
-
-/**
- * Fallback: Асинхронная транскрибация с polling (если callback недоступен).
- * Использует step.sleep между проверками статуса.
- */
-export async function asyncTranscriptionWithPolling(
-  pipelineAudio: PreprocessResult,
-  callId: string,
-  step: unknown,
-): Promise<AsyncTranscriptionResult> {
-  const typedStep = step as StepRunnerWithSleep;
-  const { taskId } = await typedStep.run("asr/async-start", async () => {
-    const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
-
-    logger.info("Запуск асинхронной транскрибации (polling режим)", {
-      callId,
-      durationSeconds: pipelineAudio.durationSeconds,
-    });
-
-    return await startAsyncTranscription(buffer, filename);
-  });
-
-  // Polling цикл с step.sleep
-  let attempts = 0;
-  const maxAttempts = 300; // 10 минут при 2 секундах
-
-  while (attempts < maxAttempts) {
-    const status = await typedStep.run(`asr/check-status-${attempts}`, async () => {
-      const { checkAsyncTaskStatus } = await import("../gigaam/client");
-      return await checkAsyncTaskStatus(taskId);
-    });
-
-    if (status.status === "completed") {
-      const result = await typedStep.run("asr/get-result", async () => {
-        const { getAsyncResult } = await import("../gigaam/client");
-        return await getAsyncResult(taskId);
-      });
-
-      logger.info("Асинхронная транскрипция завершена (polling)", {
-        callId,
-        taskId,
-        attempts,
-        transcriptLength: result.transcript.length,
-      });
-
-      return {
-        transcript: result.transcript,
-        segments: result.segments || [],
-        processingTimeMs: attempts * 2000,
-        taskId,
-      };
-    }
-
-    if (status.status === "failed") {
-      throw new Error(
-        `Асинхронная транскрипция завершилась с ошибкой: ${status.error || "Неизвестная ошибка"}`,
-      );
-    }
-
-    // Ждём 2 секунды перед следующей проверкой
-    await typedStep.sleep(`asr/sleep-${attempts}`, "2s");
-    attempts++;
-  }
-
-  throw new Error(`Таймаут ожидания асинхронной транскрипции (taskId: ${taskId})`);
 }
