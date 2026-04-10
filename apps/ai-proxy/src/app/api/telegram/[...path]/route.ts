@@ -11,6 +11,10 @@ async function proxyRequest(request: NextRequest, path: string[], method: string
   // Наш прокси формат: /api/telegram/bot{TOKEN}/METHOD
   const url = new URL(`${TELEGRAM_BASE}/${targetPath}`);
 
+  // Логируем входящий запрос
+  console.log(`[Telegram Proxy] ${method} ${targetPath}`);
+  console.log(`[Telegram Proxy] Query params:`, Object.fromEntries(request.nextUrl.searchParams));
+
   // Передаем query parameters для GET запросов
   if (method === "GET") {
     request.nextUrl.searchParams.forEach((value, key) => {
@@ -26,9 +30,37 @@ async function proxyRequest(request: NextRequest, path: string[], method: string
   if (method === "POST" && request.body) {
     if (contentType.includes("multipart/form-data")) {
       body = await request.formData();
+      console.log(`[Telegram Proxy] FormData body`);
     } else {
       body = await request.json();
+      console.log(`[Telegram Proxy] JSON body:`, body);
+
+      // Валидация: проверяем, что текст сообщения не пустой
+      if (typeof body === "object" && body !== null && "text" in body) {
+        if (!body.text || (typeof body.text === "string" && !body.text.trim())) {
+          console.error("[Telegram Proxy] Message text is empty");
+          return NextResponse.json(
+            { error: "Bad Request", description: "message text is empty" },
+            { status: 400 },
+          );
+        }
+      }
+
       headers["Content-Type"] = "application/json";
+    }
+  } else if (method === "POST") {
+    console.log(`[Telegram Proxy] POST request without body`);
+  } else if (method === "GET") {
+    console.log(`[Telegram Proxy] GET request with URL: ${url.toString()}`);
+
+    // Валидация для GET: проверяем text в query params
+    const textParam = url.searchParams.get("text");
+    if (!textParam?.trim()) {
+      console.error("[Telegram Proxy] Message text is empty in query params");
+      return NextResponse.json(
+        { error: "Bad Request", description: "message text is empty" },
+        { status: 400 },
+      );
     }
   }
 
