@@ -37,7 +37,7 @@ export default function CallDetailPage() {
   const orpc = useORPC();
   const { activeWorkspace } = useWorkspace();
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
-  const { data: session, isPending: sessionPending } = useSession();
+  const { data: session } = useSession();
   const user = session?.user ?? null;
   const [restarting, setRestarting] = useState(false);
 
