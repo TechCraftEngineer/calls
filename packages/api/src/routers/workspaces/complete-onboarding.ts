@@ -5,21 +5,22 @@ import { completeOnboardingSchema } from "./schemas";
 export const completeOnboarding = protectedProcedure
   .input(completeOnboardingSchema)
   .handler(async ({ input, context }) => {
-    if (!context.authUserId) {
+    const { workspaceId } = input;
+    const userId = context.authUserId;
+    if (!userId) {
       throw new ORPCError("UNAUTHORIZED", {
-        message: "Требуется авторизация через Better Auth",
+        message: "Пользователь не авторизован",
       });
     }
-    const { workspaceId } = input;
     const member = await context.workspacesService.getMemberWithRole(
       workspaceId,
-      context.authUserId,
+      userId,
     );
     if (!member || (member.role !== "owner" && member.role !== "admin")) {
       throw new ORPCError("FORBIDDEN", {
         message: "Недостаточно прав для изменения рабочего пространства",
       });
     }
-    await context.workspacesService.completeOnboarding(workspaceId, context.authUserId);
+    await context.workspacesService.completeOnboarding(workspaceId, userId);
     return context.workspacesService.getById(workspaceId);
   });

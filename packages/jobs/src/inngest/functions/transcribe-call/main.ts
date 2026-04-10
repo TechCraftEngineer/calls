@@ -198,8 +198,23 @@ export const transcribeCallFn = inngest.createFunction(
 
     // === ШАГ 11: Валидация результата ===
     const validatedResult = await step.run("validate/transcription", () => {
-      const diarizedText = mergedResult.segments
-        .map((s: { speaker: string; text: string }) => `${s.speaker}: ${s.text}`)
+      // Фильтруем сегменты с пустым текстом (или только пробелами)
+      const nonEmptySegments = mergedResult.segments.filter(
+        (s: { text: string; speaker: string; start: number; end: number }) =>
+          s.text && s.text.trim().length > 0
+      );
+
+      if (nonEmptySegments.length < mergedResult.segments.length) {
+        logger.info("Отфильтрованы пустые сегменты", {
+          callId,
+          originalCount: mergedResult.segments.length,
+          filteredCount: nonEmptySegments.length,
+          removedCount: mergedResult.segments.length - nonEmptySegments.length,
+        });
+      }
+
+      const diarizedText = nonEmptySegments
+        .map((s) => `${s.speaker}: ${s.text}`)
         .join("\n");
 
       // Создаем asrLogs на основе всех этапов обработки
@@ -233,7 +248,7 @@ export const transcribeCallFn = inngest.createFunction(
       ];
 
       const resultForValidation = {
-        segments: mergedResult.segments,
+        segments: nonEmptySegments,
         transcript: diarizedText,
         normalizedText: diarizedText,
         rawText: fullTranscription.transcript,

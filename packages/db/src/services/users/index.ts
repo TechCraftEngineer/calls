@@ -97,7 +97,7 @@ export class UsersService {
     return this.base.updateUserEmail(userId, email);
   }
 
-  async updateUserPassword(userId: string, newPassword: string): Promise<boolean> {
+  async updateUserPassword(_userId: string, _newPassword: string): Promise<boolean> {
     // Обновление пароля должно выполняться через Better Auth API, не напрямую через сервис
     throw new Error(
       "Обновление пароля должно выполняться через Better Auth API, не напрямую через сервис",

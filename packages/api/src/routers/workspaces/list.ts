@@ -13,26 +13,14 @@ export const list = protectedProcedure.handler(async ({ context }) => {
     context.workspacesService.getUserWorkspaces(authUserId),
     context.workspacesService.getActiveWorkspaceId(authUserId),
   ]);
-  const workspaces = rows.map(
-    (r: {
-      workspace: {
-        id: string;
-        name: string;
-        nameEn: string | null;
-        description: string | null;
-        isOnboarded: boolean;
-      };
-      role: string;
-      createdAt: Date;
-    }) => ({
-      id: r.workspace.id,
-      name: r.workspace.name,
-      nameEn: r.workspace.nameEn,
-      description: r.workspace.description,
-      isOnboarded: r.workspace.isOnboarded,
-      role: r.role,
-      memberSince: r.createdAt,
-    }),
-  );
+  const workspaces = rows.map((r) => ({
+    id: r.workspace.id,
+    name: r.workspace.name,
+    nameEn: r.workspace.nameEn,
+    description: r.workspace.description,
+    isOnboarded: r.workspace.isOnboarded,
+    role: r.role,
+    memberSince: r.createdAt,
+  }));
   return { workspaces, activeWorkspaceId };
 });

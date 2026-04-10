@@ -16,7 +16,7 @@ test.describe("Безопасность и производительность 
     await page.fill("#password", xssPayload);
 
     // Проверяем, что скрипт не выполняется
-    const alerts = [];
+    const alerts: string[] = [];
     page.on("dialog", (dialog) => {
       alerts.push(dialog.message());
       dialog.dismiss();
@@ -35,7 +35,7 @@ test.describe("Безопасность и производительность 
   });
 
   test("размер ресурсов страниц аутентификации", async ({ page }) => {
-    const responses = [];
+    const responses: Array<{ url: string; size?: string; type?: string }> = [];
 
     page.on("response", (response) => {
       responses.push({
@@ -75,17 +75,17 @@ test.describe("Безопасность и производительность 
     await expect(page.locator("#password")).toHaveAttribute("type", "password");
   });
 
-  test.skip("защита от автоматических атак (rate limiting)", async ({ page }) => {
+  test.skip("защита от автоматических атак (rate limiting)", async () => {
     // Тест пропущен - требует настройки rate limiting на сервере
     test.skip(true, "Requires server rate limiting configuration");
   });
 
-  test.skip("безопасные заголовки HTTP", async ({ page }) => {
+  test.skip("безопасные заголовки HTTP", async () => {
     // Тест пропущен - требует настройки сервера
     test.skip(true, "Requires server configuration");
   });
 
-  test.skip("производительность отправки форм", async ({ page }) => {
+  test.skip("производительность отправки форм", async () => {
     // Тест пропущен - нестабилен в CI среде
     test.skip(true, "Unstable in CI environment");
   });
@@ -113,7 +113,7 @@ test.describe("Безопасность и производительность 
     await expect(page.locator("text=Введите корректный email")).toBeVisible();
   });
 
-  test.skip("проверка утечек памяти при навигации", async ({ page }) => {
+  test.skip("проверка утечек памяти при навигации", async () => {
     // Тест пропущен - требует профилирования памяти
     test.skip(true, "Requires memory profiling");
   });

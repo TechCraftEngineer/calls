@@ -52,7 +52,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
-import { KpiTableSkeleton } from "@/app/statistics/statistics-skeletons";
+import { KpiTableSkeleton } from "@/app/(app)/statistics/statistics-skeletons";
 import { useORPC } from "@/orpc/react";
 
 interface KpiRow {

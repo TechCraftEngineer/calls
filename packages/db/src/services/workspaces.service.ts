@@ -228,7 +228,7 @@ export class WorkspacesService {
     workspaceCache.invalidateUserWorkspaces(userId);
   }
 
-  async completeOnboarding(workspaceId: string, userId?: string): Promise<void> {
+  async completeOnboarding(workspaceId: string, userId?: string) {
     const result = await this.workspacesRepository.completeOnboarding(workspaceId);
     // Invalidate cache for this workspace
     workspaceCache.invalidateWorkspace(workspaceId);

@@ -389,14 +389,15 @@ export const workspacesRepository = {
       });
   },
 
-  async completeOnboarding(workspaceId: string): Promise<void> {
-    await db
+  async completeOnboarding(workspaceId: string): Promise<boolean> {
+    const result = await db
       .update(schema.workspaces)
       .set({
         isOnboarded: true,
         updatedAt: new Date(),
       })
       .where(eq(schema.workspaces.id, workspaceId));
+    return (result.rowCount ?? 0) > 0;
   },
 };
 
