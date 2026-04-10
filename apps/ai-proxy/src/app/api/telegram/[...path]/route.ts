@@ -11,10 +11,6 @@ async function proxyRequest(request: NextRequest, path: string[], method: string
   // Наш прокси формат: /api/telegram/bot{TOKEN}/METHOD
   const url = new URL(`${TELEGRAM_BASE}/${targetPath}`);
 
-  // Логируем входящий запрос
-  console.log(`[Telegram Proxy] ${method} ${targetPath}`);
-  console.log(`[Telegram Proxy] Query params:`, Object.fromEntries(request.nextUrl.searchParams));
-
   // Передаем query parameters для GET запросов
   if (method === "GET") {
     request.nextUrl.searchParams.forEach((value, key) => {
@@ -30,10 +26,8 @@ async function proxyRequest(request: NextRequest, path: string[], method: string
   if (method === "POST" && request.body) {
     if (contentType.includes("multipart/form-data")) {
       body = await request.formData();
-      console.log(`[Telegram Proxy] FormData body`);
     } else {
       const jsonBody = await request.json();
-      console.log(`[Telegram Proxy] JSON body:`, jsonBody);
 
       // Валидация: проверяем, что текст сообщения не пустой
       if (typeof jsonBody === "object" && jsonBody !== null && "text" in jsonBody) {
@@ -49,11 +43,7 @@ async function proxyRequest(request: NextRequest, path: string[], method: string
       body = JSON.stringify(jsonBody);
       headers["Content-Type"] = "application/json";
     }
-  } else if (method === "POST") {
-    console.log(`[Telegram Proxy] POST request without body`);
   } else if (method === "GET") {
-    console.log(`[Telegram Proxy] GET request with URL: ${url.toString()}`);
-
     // Валидация для GET: проверяем text в query params
     const textParam = url.searchParams.get("text");
     if (!textParam?.trim()) {
@@ -64,13 +54,6 @@ async function proxyRequest(request: NextRequest, path: string[], method: string
       );
     }
   }
-
-  console.log(`[Telegram Proxy] Sending to Telegram: ${method} ${url.toString()}`);
-  console.log(`[Telegram Proxy] Request headers:`, headers);
-  console.log(
-    `[Telegram Proxy] Request body type:`,
-    body instanceof FormData ? "FormData" : typeof body,
-  );
 
   const res = await fetch(url.toString(), {
     method,
