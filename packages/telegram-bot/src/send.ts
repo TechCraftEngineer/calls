@@ -1,12 +1,12 @@
+import { env } from "@calls/config/env";
 import { Bot } from "grammy";
-import { SocksProxyAgent } from "socks-proxy-agent";
 
 /**
  * Sends a text message to a Telegram chat.
  * @param token - Telegram Bot API token
  * @param chatId - Telegram chat ID (e.g. user's chat_id)
  * @param text - Message text
- * @param options - Additional options (parseMode, proxyUrl)
+ * @param options - Additional options (parseMode)
  * @returns Promise<boolean> - true if successful, false otherwise
  */
 export async function sendMessage(
@@ -15,7 +15,6 @@ export async function sendMessage(
   text: string,
   options?: {
     parseMode?: "HTML" | "MarkdownV2";
-    proxyUrl?: string;
   },
 ): Promise<boolean> {
   try {
@@ -34,13 +33,13 @@ export async function sendMessage(
       return false;
     }
 
-    // Настраиваем прокси если указан
-    const botConfig = options?.proxyUrl
+    // Настраиваем прокси если указан в env
+    const proxyUrl = env.TELEGRAM_PROXY_URL;
+    const botConfig = proxyUrl
       ? {
           client: {
             baseFetchConfig: {
-              agent: new SocksProxyAgent(options.proxyUrl),
-              compress: true,
+              fetch: createProxyFetch(proxyUrl),
             },
           },
         }
@@ -68,4 +67,22 @@ export async function sendMessage(
 
     return false;
   }
+}
+
+function createProxyFetch(proxyUrl: string): typeof fetch {
+  return async (input, init) => {
+    let url: string;
+    if (typeof input === "string") {
+      url = input;
+    } else if (input instanceof URL) {
+      url = input.href;
+    } else {
+      url = input.url;
+    }
+
+    // Заменяем базовый URL Telegram API на URL прокси
+    const proxyApiUrl = url.replace("https://api.telegram.org", proxyUrl);
+
+    return fetch(proxyApiUrl, init);
+  };
 }
