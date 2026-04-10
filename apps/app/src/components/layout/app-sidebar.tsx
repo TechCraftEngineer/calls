@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { paths } from "@calls/config";
 import {
@@ -142,12 +143,28 @@ function WorkspaceSwitcher() {
 }
 
 function SetupCard() {
-  // Заглушка для данных прогресса - можно заменить на реальные данные
-  const completedSteps = 1;
-  const totalSteps = 4;
+  const { activeWorkspace } = useWorkspace();
+
+  // Compute progress from real workspace onboarding state
+  // Use completed steps from sessionStorage (sync with setup page) or default to 0
+  const [completedSteps, setCompletedSteps] = useState(0);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = sessionStorage.getItem("setup_completed_steps");
+      const steps = saved ? (JSON.parse(saved) as string[]).length : 0;
+      setCompletedSteps(steps);
+    }
+  }, []);
+
+  const totalSteps = 5; // Total number of onboarding steps
   const progressPercent = (completedSteps / totalSteps) * 100;
   const circumference = 2 * Math.PI * 11; // r=11
   const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
+
+  // Don't show setup card if onboarding is complete
+  if (activeWorkspace?.isOnboarded) {
+    return null;
+  }
 
   return (
     <SidebarMenu>

@@ -45,6 +45,7 @@ export const pbxAccessSchema = z.object({
     .refine((v) => v === undefined || v === "" || isValidCalendarIsoDate(v), {
       message: "Некорректная дата импорта. Используйте формат YYYY-MM-DD и реальную дату.",
     }),
+  webhookSecret: z.string().trim().optional(),
 });
 
 export const pbxSyncOptionsSchema = z.object({

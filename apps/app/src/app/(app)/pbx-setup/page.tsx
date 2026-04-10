@@ -5,7 +5,7 @@ import { Button, Card, Checkbox, Input, PasswordInput, Separator, toast } from "
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, Key, Loader2, Phone, RefreshCw, Users, Webhook } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
 import { useORPC } from "@/orpc/react";
@@ -48,17 +48,12 @@ export default function PbxSetupPage() {
     return `${typeof window !== "undefined" ? window.location.origin : ""}/api/webhooks/pbx/${activeWorkspace.id}`;
   }, [activeWorkspace]);
 
-  const [webhookSecret] = useState(() => {
-    const array = new Uint8Array(32);
-    if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-      crypto.getRandomValues(array);
-    } else {
-      for (let i = 0; i < 32; i++) {
-        array[i] = Math.floor(Math.random() * 256);
-      }
-    }
-    return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
+  // Fetch webhook secret from server
+  const { data: webhookSecretData, isLoading: webhookSecretLoading } = useQuery({
+    ...orpc.settings.getPbxWebhookSecret.queryOptions(),
+    enabled: Boolean(activeWorkspace),
   });
+  const webhookSecret = webhookSecretData?.webhookSecret ?? "";
 
   // API config form
   const [baseUrl, setBaseUrl] = useState("");
@@ -68,8 +63,10 @@ export default function PbxSetupPage() {
   // Selection state
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
   const [selectedNumbers, setSelectedNumbers] = useState<Set<string>>(new Set());
-  const [selectAllEmployees, setSelectAllEmployees] = useState(false);
-  const [selectAllNumbers, setSelectAllNumbers] = useState(false);
+
+  // Derived selectAll flags
+  const allEmployeesSelected = employees.length > 0 && selectedEmployees.size === employees.length;
+  const allNumbersSelected = numbers.length > 0 && selectedNumbers.size === numbers.length;
 
   // Queries
   const { data: employeesData } = useQuery(
@@ -166,21 +163,19 @@ export default function PbxSetupPage() {
   };
 
   const handleSelectAllEmployees = () => {
-    if (selectAllEmployees) {
+    if (allEmployeesSelected) {
       setSelectedEmployees(new Set());
     } else {
       setSelectedEmployees(new Set(employees.map((e) => e.id)));
     }
-    setSelectAllEmployees(!selectAllEmployees);
   };
 
   const handleSelectAllNumbers = () => {
-    if (selectAllNumbers) {
+    if (allNumbersSelected) {
       setSelectedNumbers(new Set());
     } else {
       setSelectedNumbers(new Set(numbers.map((n) => n.id)));
     }
-    setSelectAllNumbers(!selectAllNumbers);
   };
 
   const handleImport = () => {
@@ -221,6 +216,7 @@ export default function PbxSetupPage() {
                     variant="ghost"
                     onClick={() => handleCopy(webhookUrl, "URL")}
                     disabled={!webhookUrl}
+                    aria-label="Скопировать URL вебхука"
                   >
                     <Copy className="size-4" />
                   </Button>
@@ -231,7 +227,12 @@ export default function PbxSetupPage() {
                 <label className="mb-1 block text-sm font-medium">Секретный ключ (X-Webhook-Signature)</label>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 truncate rounded bg-muted px-3 py-2 text-sm font-mono">{webhookSecret}</code>
-                  <Button size="icon" variant="ghost" onClick={() => handleCopy(webhookSecret, "Секрет")}>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleCopy(webhookSecret, "Секрет")}
+                    aria-label="Скопировать секретный ключ"
+                  >
                     <Copy className="size-4" />
                   </Button>
                 </div>
@@ -322,7 +323,7 @@ export default function PbxSetupPage() {
                   </h2>
                   <div className="flex items-center gap-2">
                     <Checkbox
-                      checked={selectAllEmployees}
+                      checked={allEmployeesSelected}
                       onCheckedChange={handleSelectAllEmployees}
                       id="select-all-employees"
                     />
@@ -334,11 +335,13 @@ export default function PbxSetupPage() {
 
                 <div className="space-y-2">
                   {employees.map((employee) => (
-                    <div
+                    <label
                       key={employee.id}
-                      className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/50"
+                      htmlFor={`checkbox-employee-${employee.id}`}
+                      className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/50 cursor-pointer"
                     >
                       <Checkbox
+                        id={`checkbox-employee-${employee.id}`}
                         checked={selectedEmployees.has(employee.id)}
                         onCheckedChange={() => handleToggleEmployee(employee.id)}
                       />
@@ -349,7 +352,7 @@ export default function PbxSetupPage() {
                           {employee.email && ` • ${employee.email}`}
                         </div>
                       </div>
-                    </div>
+                    </label>
                   ))}
                 </div>
               </Card>
@@ -363,7 +366,7 @@ export default function PbxSetupPage() {
                   </h2>
                   <div className="flex items-center gap-2">
                     <Checkbox
-                      checked={selectAllNumbers}
+                      checked={allNumbersSelected}
                       onCheckedChange={handleSelectAllNumbers}
                       id="select-all-numbers"
                     />
@@ -375,11 +378,13 @@ export default function PbxSetupPage() {
 
                 <div className="space-y-2">
                   {numbers.map((number) => (
-                    <div
+                    <label
                       key={number.id}
-                      className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/50"
+                      htmlFor={`checkbox-number-${number.id}`}
+                      className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/50 cursor-pointer"
                     >
                       <Checkbox
+                        id={`checkbox-number-${number.id}`}
                         checked={selectedNumbers.has(number.id)}
                         onCheckedChange={() => handleToggleNumber(number.id)}
                       />
@@ -391,7 +396,7 @@ export default function PbxSetupPage() {
                           {number.lineType && ` • ${number.lineType}`}
                         </div>
                       </div>
-                    </div>
+                    </label>
                   ))}
                 </div>
               </Card>

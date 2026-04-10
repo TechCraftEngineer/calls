@@ -249,6 +249,7 @@ async function processChunk(
   chunkIndex: number,
   totalChunks: number,
   requestId: string,
+  companyContext?: string,
 ): Promise<{
   segments: AsrSegment[];
   chunkTranscript: string;
@@ -272,7 +273,8 @@ async function processChunk(
       "Ты эксперт по обработке транскрипций аудио на русском языке. " +
       "Твоя задача - объединить результаты двух систем распознавания речи: одна дала точный текст, другая дала разделение по говорящим. " +
       "Создай идеальный результат с точным русским текстом и правильным разделением по говорящим. " +
-      `Это часть ${chunkIndex + 1} из ${totalChunks} фрагментов разговора.`,
+      `Это часть ${chunkIndex + 1} из ${totalChunks} фрагментов разговора.` +
+      (companyContext ? `\n\nКОНТЕКСТ КОМПАНИИ:\n${companyContext}` : ""),
     prompt,
     temperature: 0.1,
     maxRetries: 2,
@@ -383,6 +385,7 @@ async function mergeWithChunking(
   diarized: AsrDiarizedResult,
   requestId: string,
   estimatedTokens: number,
+  companyContext?: string,
 ): Promise<{
   segments: AsrSegment[];
   mergedTranscript: string;
@@ -428,7 +431,7 @@ async function mergeWithChunking(
     if (!chunk) continue;
 
     try {
-      const result = await processChunk(chunk, i, chunks.length, requestId);
+      const result = await processChunk(chunk, i, chunks.length, requestId, companyContext);
       chunkResults.push(result);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -482,6 +485,7 @@ export async function mergeAsrResultsWithLLM(
   nonDiarized: AsrNonDiarizedResult,
   diarized: AsrDiarizedResult,
   requestId: string,
+  companyContext?: string,
 ): Promise<{
   segments: AsrSegment[];
   mergedTranscript: string;
@@ -507,7 +511,7 @@ export async function mergeAsrResultsWithLLM(
     );
 
     // Используем чанкирование вместо полного fallback
-    return mergeWithChunking(nonDiarized, diarized, requestId, estimatedTokens);
+    return mergeWithChunking(nonDiarized, diarized, requestId, estimatedTokens, companyContext);
   }
 
   const { output } = await generateWithAi({
@@ -515,7 +519,8 @@ export async function mergeAsrResultsWithLLM(
     system:
       "Ты эксперт по обработке транскрипций аудио на русском языке. " +
       "Твоя задача - объединить результаты двух систем распознавания речи: одна дала точный текст, другая дала разделение по говорящим. " +
-      "Создай идеальный результат с точным русским текстом и правильным разделением по говорящим.",
+      "Создай идеальный результат с точным русским текстом и правильным разделением по говорящим." +
+      (companyContext ? `\n\nКОНТЕКСТ КОМПАНИИ:\n${companyContext}` : ""),
     prompt,
     temperature: 0.1,
     maxRetries: 2,
@@ -561,6 +566,7 @@ export async function applyLLMMerging(
   nonDiarizedResult: AsrNonDiarizedResult,
   diarizedResult: AsrDiarizedResult,
   requestId: string,
+  companyContext?: string,
 ): Promise<{
   segments: AsrSegment[];
   mergedTranscript: string;

@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { useORPC } from "@/orpc/react";
-import type { ModalProps } from "./types";
+import type { ModalProps } from "@/components/features/setup";
 
 const companySchema = z.object({
   name: z.string().min(1, "Обязательно").max(100),
@@ -22,7 +22,11 @@ export function CompanyModal({ open, onOpenChange, onComplete }: ModalProps) {
 
   const form = useForm({
     resolver: zodResolver(companySchema),
-    defaultValues: { name: activeWorkspace?.name || "", nameEn: "", description: "" },
+    defaultValues: {
+      name: activeWorkspace?.name || "",
+      nameEn: activeWorkspace?.nameEn ?? "",
+      description: activeWorkspace?.description ?? "",
+    },
   });
 
   const handleSubmit = async (data: z.infer<typeof companySchema>) => {

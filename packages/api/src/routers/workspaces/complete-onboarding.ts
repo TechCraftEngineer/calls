@@ -21,6 +21,11 @@ export const completeOnboarding = protectedProcedure
         message: "Недостаточно прав для изменения рабочего пространства",
       });
     }
-    await context.workspacesService.completeOnboarding(workspaceId, userId);
+    const completed = await context.workspacesService.completeOnboarding(workspaceId, userId);
+    if (!completed) {
+      throw new ORPCError("NOT_FOUND", {
+        message: "Рабочее пространство не найдено или не удалось завершить настройку",
+      });
+    }
     return context.workspacesService.getById(workspaceId);
   });

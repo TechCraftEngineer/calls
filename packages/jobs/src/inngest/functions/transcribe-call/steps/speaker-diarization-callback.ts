@@ -153,7 +153,7 @@ export async function speakerDiarizationWithCallback(
       });
       return {
         success: false,
-        error: eventData.result?.reason || "Diarization returned unsuccessful result",
+        error: eventData.result?.reason || "Диаризация вернула неуспешный результат",
         taskId,
         processingTimeMs: eventData.processingTimeMs || 0,
       };

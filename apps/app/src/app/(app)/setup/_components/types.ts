@@ -14,8 +14,5 @@ export interface SetupStep {
   href?: string;
 }
 
-export interface ModalProps {
-  open: boolean;
-  onOpenChange: () => void;
-  onComplete: () => void;
-}
+// Re-export shared ModalProps to maintain compatibility
+export type { ModalProps } from "@/components/features/setup";

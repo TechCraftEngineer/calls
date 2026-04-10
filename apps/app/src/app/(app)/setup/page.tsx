@@ -4,8 +4,9 @@ import { paths } from "@calls/config";
 import { Button, Card, toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Bot, Building2, Calendar, Check, Globe, Loader2, SkipForward, Users } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
 import { setOnboardedCookie } from "@/lib/cookies";
@@ -105,10 +106,11 @@ export default function SetupPage() {
   const loading = sessionPending || workspaceLoading;
 
   // Redirect if already onboarded
-  if (!loading && activeWorkspace?.isOnboarded) {
-    router.replace(paths.root);
-    return null;
-  }
+  useEffect(() => {
+    if (!loading && activeWorkspace?.isOnboarded) {
+      router.replace(paths.root);
+    }
+  }, [loading, activeWorkspace?.isOnboarded, router]);
 
   const saveCompletedSteps = (steps: Set<StepId>) => {
     setCompletedSteps(steps);
@@ -270,8 +272,8 @@ export default function SetupPage() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          title={step.skipLabel}
-                          className="size-6 rounded-full"
+                          aria-label={step.skipLabel}
+                          className="size-8 rounded-full"
                           onClick={() => handleSkipStep(step.id)}
                           disabled={isDisabled}
                         >
@@ -301,27 +303,27 @@ export default function SetupPage() {
       <ProviderModal
         open={activeModal === "provider"}
         onOpenChange={() => setActiveModal(null)}
-        onComplete={() => handleCompleteStep("provider")}
+        onComplete={(_providerId?: unknown) => handleCompleteStep("provider")}
       />
       <ApiModal
         open={activeModal === "api"}
         onOpenChange={() => setActiveModal(null)}
-        onComplete={() => handleCompleteStep("api")}
+        onComplete={(_data?: unknown) => handleCompleteStep("api")}
       />
       <DirectoryModal
         open={activeModal === "directory"}
         onOpenChange={() => setActiveModal(null)}
-        onComplete={() => handleCompleteStep("directory")}
+        onComplete={(_data?: unknown) => handleCompleteStep("directory")}
       />
       <CompanyModal
         open={activeModal === "company"}
         onOpenChange={() => setActiveModal(null)}
-        onComplete={() => handleCompleteStep("company")}
+        onComplete={(_data?: unknown) => handleCompleteStep("company")}
       />
       <PromptsModal
         open={activeModal === "prompts"}
         onOpenChange={() => setActiveModal(null)}
-        onComplete={() => handleCompleteStep("prompts")}
+        onComplete={(_data?: unknown) => handleCompleteStep("prompts")}
       />
         </div>
       </main>

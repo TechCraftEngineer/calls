@@ -3,7 +3,7 @@
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle } from "@calls/ui";
 import { Check, Phone } from "lucide-react";
 import { useState } from "react";
-import type { ModalProps } from "./types";
+import type { ModalProps } from "@/components/features/setup";
 
 interface Provider {
   id: string;
@@ -63,6 +63,10 @@ const providers: Provider[] = [
 export function ProviderModal({ open, onOpenChange, onComplete }: ModalProps) {
   const [selected, setSelected] = useState<string | null>(null);
 
+  const handleComplete = () => {
+    onComplete(selected);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -110,7 +114,7 @@ export function ProviderModal({ open, onOpenChange, onComplete }: ModalProps) {
             </button>
           ))}
         </div>
-        <Button onClick={onComplete} disabled={!selected} className="w-full">
+        <Button onClick={handleComplete} disabled={!selected} className="w-full">
           Продолжить
         </Button>
       </DialogContent>

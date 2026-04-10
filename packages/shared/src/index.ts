@@ -37,6 +37,7 @@ export {
 } from "./validation/ftp";
 export { validateTelegramBotToken } from "./validation/telegram";
 export {
+  generateSecureSecret,
   WEBHOOK_SECRET_BYTES,
   WEBHOOK_SECRET_MIN_LENGTH,
 } from "./webhook";
