@@ -9,12 +9,8 @@ export const env = createEnv({
     /** OpenRouter — для chat completions через разные модели */
     OPENROUTER_API_KEY: z.string().optional(),
   },
-  client: {
-    NEXT_PUBLIC_POSTHOG_HOST: z.url().optional(),
-  },
   runtimeEnv: {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
-    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
   },
 });
