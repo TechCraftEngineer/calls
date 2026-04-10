@@ -16,7 +16,7 @@ test.describe("Безопасность и производительность 
     await page.fill("#password", xssPayload);
 
     // Проверяем, что скрипт не выполняется
-    const alerts = [];
+    const alerts: string[] = [];
     page.on("dialog", (dialog) => {
       alerts.push(dialog.message());
       dialog.dismiss();
@@ -35,7 +35,7 @@ test.describe("Безопасность и производительность 
   });
 
   test("размер ресурсов страниц аутентификации", async ({ page }) => {
-    const responses = [];
+    const responses: Array<{ url: string; size?: string; type?: string }> = [];
 
     page.on("response", (response) => {
       responses.push({
