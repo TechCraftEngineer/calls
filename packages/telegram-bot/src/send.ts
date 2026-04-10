@@ -40,15 +40,14 @@ export async function sendMessage(
     const botConfig = proxyUrl
       ? {
           client: {
-            baseFetchConfig: {
-              fetch: createProxyFetch(proxyUrl),
-            },
+            apiRoot: proxyUrl,
           },
         }
       : undefined;
-    console.log(`[telegram-send] botConfig: ${botConfig ? "configured with proxy" : "no proxy"}`);
+    console.log(`[telegram-send] botConfig: ${botConfig ? `apiRoot=${proxyUrl}` : "no proxy"}`);
 
     const bot = new Bot(token, botConfig);
+    console.log(`[telegram-send] Bot instance created`);
     await bot.api.sendMessage(chatId, text, {
       parse_mode: options?.parseMode,
     });
@@ -70,25 +69,4 @@ export async function sendMessage(
 
     return false;
   }
-}
-
-function createProxyFetch(
-  proxyUrl: string,
-): (input: string | URL | Request, init?: RequestInit) => Promise<Response> {
-  return async (input, init) => {
-    let url: string;
-    if (typeof input === "string") {
-      url = input;
-    } else if (input instanceof URL) {
-      url = input.href;
-    } else {
-      url = input.url;
-    }
-
-    // Заменяем базовый URL Telegram API на URL прокси
-    const proxyApiUrl = url.replace("https://api.telegram.org", proxyUrl);
-    console.log(`[telegram-send] Proxy fetch: ${url} -> ${proxyApiUrl}`);
-
-    return fetch(proxyApiUrl, init);
-  };
 }
