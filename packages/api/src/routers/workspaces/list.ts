@@ -14,9 +14,22 @@ export const list = protectedProcedure.handler(async ({ context }) => {
     context.workspacesService.getActiveWorkspaceId(authUserId),
   ]);
   const workspaces = rows.map(
-    (r: { workspace: { id: string; name: string }; role: string; createdAt: Date }) => ({
+    (r: {
+      workspace: {
+        id: string;
+        name: string;
+        nameEn: string | null;
+        description: string | null;
+        isOnboarded: boolean;
+      };
+      role: string;
+      createdAt: Date;
+    }) => ({
       id: r.workspace.id,
       name: r.workspace.name,
+      nameEn: r.workspace.nameEn,
+      description: r.workspace.description,
+      isOnboarded: r.workspace.isOnboarded,
       role: r.role,
       memberSince: r.createdAt,
     }),

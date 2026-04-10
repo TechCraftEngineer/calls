@@ -5,7 +5,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from "react";
 import { useSession } from "@/lib/better-auth";
-import { clearActiveWorkspaceCookie, setActiveWorkspaceCookie } from "@/lib/cookies";
+import {
+  clearActiveWorkspaceCookie,
+  setActiveWorkspaceCookie,
+  setOnboardedCookie,
+} from "@/lib/cookies";
 import { useORPC } from "@/orpc/react";
 
 // Re-export для обратной совместимости
@@ -15,6 +19,7 @@ interface Workspace {
   id: string;
   name: string;
   role: string;
+  isOnboarded: boolean;
 }
 
 interface WorkspaceContextType {
@@ -75,6 +80,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     if (isOnboardingCreateWorkspace) return;
     if (activeWorkspace) {
       setActiveWorkspaceCookie(activeWorkspace.id);
+      setOnboardedCookie(activeWorkspace.isOnboarded);
     }
   }, [activeWorkspace, isOnboardingCreateWorkspace]);
 

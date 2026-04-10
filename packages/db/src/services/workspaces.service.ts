@@ -58,6 +58,7 @@ export class WorkspacesService {
     id: string,
     data: {
       name?: string;
+      nameEn?: string | null;
       description?: string | null;
       metadata?: Record<string, unknown> | null;
     },
@@ -225,5 +226,16 @@ export class WorkspacesService {
     workspaceCache.set(cacheKey, workspaceId);
     // Invalidate user workspaces cache since active workspace changed
     workspaceCache.invalidateUserWorkspaces(userId);
+  }
+
+  async completeOnboarding(workspaceId: string, userId?: string): Promise<void> {
+    const result = await this.workspacesRepository.completeOnboarding(workspaceId);
+    // Invalidate cache for this workspace
+    workspaceCache.invalidateWorkspace(workspaceId);
+    // Invalidate user workspaces cache if userId is provided
+    if (userId) {
+      workspaceCache.invalidateUserWorkspaces(userId);
+    }
+    return result;
   }
 }
