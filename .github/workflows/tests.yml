@@ -96,6 +96,7 @@ jobs:
           echo "NEXT_PUBLIC_API_URL=http://localhost:3000" >> .env.local
           echo "NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000" >> .env.local
           echo "NODE_ENV=test" >> .env.local
+          bun turbo -F @calls/db db:setup
           bun turbo -F @calls/db db:push:ci
         env:
           POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/test_db
@@ -176,6 +177,7 @@ jobs:
           echo "NEXT_PUBLIC_API_URL=http://localhost:3000" >> .env.local
           echo "NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000" >> .env.local
           echo "NODE_ENV=test" >> .env.local
+          bun turbo -F @calls/db db:setup
           bun turbo -F @calls/db db:push:ci
         env:
           POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/test_db
