@@ -4,10 +4,10 @@ import { z } from "zod";
 export const env = createEnv({
   server: {
     /** OpenAI API — для chat, embeddings, Whisper */
-    OPENAI_API_KEY: z.string().min(1).optional(),
+    OPENAI_API_KEY: z.string().optional(),
     /** AssemblyAI — для транскрибации аудио */
     /** OpenRouter — для chat completions через разные модели */
-    OPENROUTER_API_KEY: z.string().min(1).optional(),
+    OPENROUTER_API_KEY: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_POSTHOG_HOST: z.url().optional(),
