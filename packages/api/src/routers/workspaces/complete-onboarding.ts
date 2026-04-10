@@ -5,17 +5,22 @@ import { completeOnboardingSchema } from "./schemas";
 export const completeOnboarding = protectedProcedure
   .input(completeOnboardingSchema)
   .handler(async ({ input, context }) => {
-    // Note: protectedProcedure already guarantees context.authUserId is set
     const { workspaceId } = input;
+    const userId = context.authUserId;
+    if (!userId) {
+      throw new ORPCError("UNAUTHORIZED", {
+        message: "Пользователь не авторизован",
+      });
+    }
     const member = await context.workspacesService.getMemberWithRole(
       workspaceId,
-      context.authUserId!,
+      userId,
     );
     if (!member || (member.role !== "owner" && member.role !== "admin")) {
       throw new ORPCError("FORBIDDEN", {
         message: "Недостаточно прав для изменения рабочего пространства",
       });
     }
-    await context.workspacesService.completeOnboarding(workspaceId, context.authUserId!);
+    await context.workspacesService.completeOnboarding(workspaceId, userId);
     return context.workspacesService.getById(workspaceId);
   });

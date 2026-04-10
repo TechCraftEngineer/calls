@@ -145,7 +145,7 @@ export async function speakerDiarizationWithCallback(
       };
     }
 
-    if (!eventData.result || !eventData.result.success) {
+    if (!eventData.result?.success) {
       logger.error("Диаризация вернула неуспешный результат", {
         callId,
         taskId,

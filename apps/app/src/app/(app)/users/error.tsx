@@ -10,8 +10,7 @@ export default function UsersError({
   reset: () => void;
 }) {
   return (
-    <>
-      <div className="main-content">
+    <div className="main-content">
         <div className="flex flex-col items-center justify-center py-12">
           <div className="text-center max-w-md">
             <h2 className="text-xl font-bold mb-4 text-gray-900">Что-то пошло не так</h2>
@@ -23,7 +22,6 @@ export default function UsersError({
             </Button>
           </div>
         </div>
-      </div>
-    </>
+    </div>
   );
 }
