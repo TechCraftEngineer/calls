@@ -35,6 +35,8 @@ export async function sendMessage(
 
     // Настраиваем прокси если указан в env
     const proxyUrl = env.TELEGRAM_PROXY_URL;
+    console.log(`[telegram-send] TELEGRAM_PROXY_URL: ${proxyUrl ?? "not set"}`);
+
     const botConfig = proxyUrl
       ? {
           client: {
@@ -44,6 +46,7 @@ export async function sendMessage(
           },
         }
       : undefined;
+    console.log(`[telegram-send] botConfig: ${botConfig ? "configured with proxy" : "no proxy"}`);
 
     const bot = new Bot(token, botConfig);
     await bot.api.sendMessage(chatId, text, {
@@ -84,6 +87,7 @@ function createProxyFetch(
 
     // Заменяем базовый URL Telegram API на URL прокси
     const proxyApiUrl = url.replace("https://api.telegram.org", proxyUrl);
+    console.log(`[telegram-send] Proxy fetch: ${url} -> ${proxyApiUrl}`);
 
     return fetch(proxyApiUrl, init);
   };
