@@ -32,12 +32,12 @@ async function proxyRequest(request: NextRequest, path: string[], method: string
       body = await request.formData();
       console.log(`[Telegram Proxy] FormData body`);
     } else {
-      body = await request.json();
-      console.log(`[Telegram Proxy] JSON body:`, body);
+      const jsonBody = await request.json();
+      console.log(`[Telegram Proxy] JSON body:`, jsonBody);
 
       // Валидация: проверяем, что текст сообщения не пустой
-      if (typeof body === "object" && body !== null && "text" in body) {
-        if (!body.text || (typeof body.text === "string" && !body.text.trim())) {
+      if (typeof jsonBody === "object" && jsonBody !== null && "text" in jsonBody) {
+        if (!jsonBody.text || (typeof jsonBody.text === "string" && !jsonBody.text.trim())) {
           console.error("[Telegram Proxy] Message text is empty");
           return NextResponse.json(
             { error: "Bad Request", description: "message text is empty" },
@@ -46,6 +46,7 @@ async function proxyRequest(request: NextRequest, path: string[], method: string
         }
       }
 
+      body = JSON.stringify(jsonBody);
       headers["Content-Type"] = "application/json";
     }
   } else if (method === "POST") {
@@ -63,6 +64,13 @@ async function proxyRequest(request: NextRequest, path: string[], method: string
       );
     }
   }
+
+  console.log(`[Telegram Proxy] Sending to Telegram: ${method} ${url.toString()}`);
+  console.log(`[Telegram Proxy] Request headers:`, headers);
+  console.log(
+    `[Telegram Proxy] Request body type:`,
+    body instanceof FormData ? "FormData" : typeof body,
+  );
 
   const res = await fetch(url.toString(), {
     method,
