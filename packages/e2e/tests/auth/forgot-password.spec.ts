@@ -30,12 +30,12 @@ test.describe("Страница восстановления пароля", () =
     await expect(page.locator("text=Введите корректный email")).toBeVisible();
   });
 
-  test.skip("отправляет запрос на восстановление пароля", async ({ page }) => {
+  test.skip("отправляет запрос на восстановление пароля", async () => {
     // Тест пропущен - требует мокирования API
     test.skip(true, "Requires API mocking");
   });
 
-  test.skip("показывает сообщение об успешной отправке", async ({ page }) => {
+  test.skip("показывает сообщение об успешной отправке", async () => {
     // Тест пропущен - требует мокирования API
     test.skip(true, "Requires API mocking");
   });

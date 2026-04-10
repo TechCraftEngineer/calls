@@ -46,7 +46,7 @@ export default function ApiStepPage() {
         apiKey: values.apiKey.trim(),
       });
 
-      const ok = result !== null && typeof result === "object" && "success" in result && result.success === true;
+      const ok = Boolean(result?.success);
 
       if (ok) {
         setTestMessage("Подключение к MegaPBX успешно");
@@ -98,6 +98,7 @@ export default function ApiStepPage() {
             {...form.register("baseUrl")}
             placeholder="https://vats919602.megapbx.ru/crmapi/v1"
             type="url"
+            autoComplete="url"
           />
           {form.formState.errors.baseUrl && (
             <p className="mt-1 text-xs text-red-600">{form.formState.errors.baseUrl.message}</p>
@@ -111,7 +112,8 @@ export default function ApiStepPage() {
           <label className="mb-2 block text-sm font-medium">API Key</label>
           <PasswordInput
             {...form.register("apiKey")}
-            placeholder="Ключ авторизации"
+            placeholder="sk-012345…"
+            autoComplete="one-time-code"
           />
           {form.formState.errors.apiKey && (
             <p className="mt-1 text-xs text-red-600">{form.formState.errors.apiKey.message}</p>

@@ -9,27 +9,27 @@ test.describe("Тесты аутентификации с фикстурами",
     authHelpers = new AuthHelpers(page);
   });
 
-  test.skip("успешный вход с валидными данными", async ({ page, validUser }) => {
+  test.skip("успешный вход с валидными данными", async () => {
     // Тест пропущен - требует мокирования API
     test.skip(true, "Requires API mocking");
   });
 
-  test.skip("ошибка входа с неверными данными", async ({ page, invalidUser }) => {
+  test.skip("ошибка входа с неверными данными", async () => {
     // Тест пропущен - требует мокирования API
     test.skip(true, "Requires API mocking");
   });
 
-  test.skip("успешная регистрация с валидными данными", async ({ page, validUser }) => {
+  test.skip("успешная регистрация с валидными данными", async () => {
     // Тест пропущен - требует мокирования API
     test.skip(true, "Requires API mocking");
   });
 
-  test.skip("регистрация без фамилии", async ({ page, validUser }) => {
+  test.skip("регистрация без фамилии", async () => {
     // Тест пропущен - требует мокирования API
     test.skip(true, "Requires API mocking");
   });
 
-  test.skip("тестирование с несколькими пользователями", async ({ page, testUsers }) => {
+  test.skip("тестирование с несколькими пользователями", async () => {
     // Тест пропущен - требует мокирования API
     test.skip(true, "Requires API mocking");
   });
@@ -65,7 +65,7 @@ test.describe("Тесты аутентификации с фикстурами",
     await authHelpers.testKeyboardNavigation();
   });
 
-  test.skip("восстановление пароля с валидным email", async ({ page, validUser }) => {
+  test.skip("восстановление пароля с валидным email", async () => {
     // Тест пропущен - требует мокирования API
     test.skip(true, "Requires API mocking");
   });

@@ -1,53 +1,22 @@
 "use client";
 
-import {
-  Button,
-  Card,
-  CardContent,
-  DataGrid,
-  DataGridContainer,
-  DataGridPagination,
-  DataGridTable,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  Input,
-  PasswordInput,
-  Textarea,
-  toast,
-  useReactTable,
-} from "@calls/ui";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bot, Building2, Calendar, Check, Globe, Loader2, Users, X } from "lucide-react";
+import { Button, Card, toast } from "@calls/ui";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Bot, Building2, Calendar, Check, Globe, Loader2, SkipForward, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { getEmployeeColumns } from "@/components/features/settings/megapbx/employee-columns";
-import { getNumberColumns } from "@/components/features/settings/megapbx/number-columns";
-import type { PbxEmployeeItem, PbxNumberItem } from "@/components/features/settings/types";
+import { useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import { SearchInput } from "@/components/ui/search-input";
 import { setOnboardedCookie } from "@/lib/cookies";
-import { paths } from "@/lib/paths";
+import { paths } from "@calls/config";
 import { useORPC } from "@/orpc/react";
-
-type StepId = "provider" | "api" | "directory" | "company" | "prompts";
-
-interface SetupStep {
-  id: StepId;
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  timeEstimate: string;
-  actionLabel: string;
-  skipLabel?: string;
-}
+import {
+  ApiModal,
+  CompanyModal,
+  DirectoryModal,
+  PromptsModal,
+  ProviderModal,
+} from "./_components";
+import type { SetupStep, StepId } from "./_components/types";
 
 const SETUP_STEPS: SetupStep[] = [
   {
@@ -130,19 +99,25 @@ export default function SetupPage() {
     handleCompleteStep(stepId);
   };
 
+  const completeOnboardingMutation = useMutation(
+    orpc.workspaces.completeOnboarding.mutationOptions({
+      onSuccess: async () => {
+        setOnboardedCookie(true);
+        toast.success("Настройка завершена!");
+        await queryClient.invalidateQueries({ queryKey: orpc.workspaces.list.queryKey() });
+        router.push(paths.root);
+      },
+      onError: () => {
+        toast.error("Не удалось завершить настройку");
+      },
+    }),
+  );
+
   const handleFinishSetup = async () => {
     if (!activeWorkspace) return;
-    try {
-      await orpc.workspaces.completeOnboarding.mutate({
-        workspaceId: activeWorkspace.id,
-      });
-      setOnboardedCookie(true);
-      toast.success("Настройка завершена!");
-      await queryClient.invalidateQueries({ queryKey: orpc.workspaces.list.queryKey() });
-      router.push(paths.root);
-    } catch (_err) {
-      toast.error("Не удалось завершить настройку");
-    }
+    completeOnboardingMutation.mutate({
+      workspaceId: activeWorkspace.id,
+    });
   };
 
   return (
@@ -211,14 +186,16 @@ export default function SetupPage() {
                         {step.actionLabel}
                       </Button>
                       {step.skipLabel && (
-                        <button
+                        <Button
+                          size="icon"
+                          variant="ghost"
                           title={step.skipLabel}
-                          className="flex size-6 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition-colors hover:bg-green-100 hover:text-green-600 dark:bg-slate-800 dark:text-slate-500 dark:hover:bg-green-900/50 dark:hover:text-green-400"
+                          className="size-6 rounded-full"
                           onClick={() => handleSkipStep(step.id)}
                           disabled={isDisabled}
                         >
-                          <Check className="size-4" />
-                        </button>
+                          <SkipForward className="size-4" />
+                        </Button>
                       )}
                     </>
                   )}
@@ -230,9 +207,10 @@ export default function SetupPage() {
       </Card>
 
       {/* Finish Button */}
-      {completedCount >= 3 && (
+      {completedCount === totalSteps && (
         <div className="flex justify-center">
-          <Button size="lg" onClick={handleFinishSetup} className="px-8">
+          <Button size="lg" onClick={handleFinishSetup} disabled={completeOnboardingMutation.isPending} className="px-8">
+            {completeOnboardingMutation.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
             Завершить настройку и перейти к дашборду
           </Button>
         </div>
@@ -265,371 +243,5 @@ export default function SetupPage() {
         onComplete={() => handleCompleteStep("prompts")}
       />
     </>
-  );
-}
-
-// --- Modals ---
-
-function ProviderModal({
-  open,
-  onOpenChange,
-  onComplete,
-}: {
-  open: boolean;
-  onOpenChange: () => void;
-  onComplete: () => void;
-}) {
-  const [selected, setSelected] = useState<string | null>(null);
-
-  const providers = [
-    { id: "megafon", name: "Мегафон", available: true },
-    { id: "mango", name: "Mango Office", available: false },
-    { id: "mts", name: "МТС Exolve", available: false },
-    { id: "beeline", name: "Билайн", available: false },
-  ];
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Выберите провайдера</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-2 py-4">
-          {providers.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => p.available && setSelected(p.id)}
-              disabled={!p.available}
-              className={`w-full rounded-lg border p-3 text-left transition-colors ${
-                selected === p.id ? "border-primary bg-primary/5" : "hover:bg-muted/50"
-              } ${!p.available ? "opacity-50 cursor-not-allowed" : ""}`}
-            >
-              <div className="font-medium">{p.name}</div>
-              {!p.available && <div className="text-xs text-muted-foreground">Скоро</div>}
-            </button>
-          ))}
-        </div>
-        <Button onClick={onComplete} disabled={!selected} className="w-full">
-          Продолжить
-        </Button>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-const apiSchema = z.object({
-  baseUrl: z.string().url("Введите корректный URL"),
-  apiKey: z.string().min(1, "API Key обязателен"),
-});
-
-function ApiModal({
-  open,
-  onOpenChange,
-  onComplete,
-}: {
-  open: boolean;
-  onOpenChange: () => void;
-  onComplete: () => void;
-}) {
-  const orpc = useORPC();
-  const [testing, setTesting] = useState(false);
-
-  const form = useForm({
-    resolver: zodResolver(apiSchema),
-    defaultValues: { baseUrl: "", apiKey: "" },
-  });
-
-  const handleTestAndSave = async () => {
-    const values = form.getValues();
-    setTesting(true);
-    try {
-      const result = await orpc.settings.testPbx.mutate({
-        baseUrl: values.baseUrl.trim(),
-        apiKey: values.apiKey.trim(),
-      });
-      const ok = result && typeof result === "object" && "success" in result && result.success;
-      if (ok) {
-        await orpc.settings.updatePbxAccess.mutate({
-          enabled: true,
-          baseUrl: values.baseUrl.trim(),
-          apiKey: values.apiKey.trim(),
-        });
-        onComplete();
-      } else {
-        toast.error("Проверка не пройдена");
-      }
-    } catch (_err) {
-      toast.error("Ошибка подключения");
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Подключение к API Мегафон</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Base URL</label>
-            <Input {...form.register("baseUrl")} placeholder="https://...megapbx.ru/crmapi/v1" />
-            {form.formState.errors.baseUrl && (
-              <p className="mt-1 text-xs text-red-600">{form.formState.errors.baseUrl.message}</p>
-            )}
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">API Key</label>
-            <PasswordInput {...form.register("apiKey")} placeholder="Ключ авторизации" />
-          </div>
-        </div>
-        <Button
-          onClick={handleTestAndSave}
-          disabled={testing || !form.formState.isValid}
-          className="w-full"
-        >
-          {testing ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-          Проверить и сохранить
-        </Button>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function DirectoryModal({
-  open,
-  onOpenChange,
-  onComplete,
-}: {
-  open: boolean;
-  onOpenChange: () => void;
-  onComplete: () => void;
-}) {
-  const orpc = useORPC();
-  const queryClient = useQueryClient();
-  const [syncing, setSyncing] = useState(false);
-  const [excludedNumbers, setExcludedNumbers] = useState<Set<string>>(new Set());
-  const [employeeSearch, setEmployeeSearch] = useState("");
-
-  const { data: employees = [], isLoading: empLoading } = useQuery({
-    ...orpc.settings.listPbxEmployees.queryOptions(),
-    enabled: open,
-  });
-  const { data: numbers = [], isLoading: numLoading } = useQuery({
-    ...orpc.settings.listPbxNumbers.queryOptions(),
-    enabled: open,
-  });
-
-  const handleSync = async () => {
-    setSyncing(true);
-    try {
-      await orpc.settings.syncPbxDirectory.mutate();
-      toast.success("Синхронизировано");
-      await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxEmployees.queryKey() });
-      await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
-    } catch (_err) {
-      toast.error("Ошибка синхронизации");
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const filteredEmployees = useMemo(() => {
-    if (!employeeSearch) return employees;
-    const q = employeeSearch.toLowerCase();
-    return employees.filter((e: PbxEmployeeItem) =>
-      [e.displayName, e.email, e.extension].some((v) => v?.toLowerCase().includes(q)),
-    );
-  }, [employees, employeeSearch]);
-
-  const employeeColumns = useMemo(() => getEmployeeColumns(), []);
-  const employeeTable = useReactTable({
-    data: filteredEmployees,
-    columns: employeeColumns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageIndex: 0, pageSize: 5 } },
-  });
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Сотрудники и номера</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSync} disabled={syncing}>
-              {syncing ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-              Синхронизировать
-            </Button>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium">Сотрудники ({filteredEmployees.length})</h4>
-            <SearchInput
-              value={employeeSearch}
-              onChange={setEmployeeSearch}
-              placeholder="Поиск..."
-              className="w-48"
-            />
-          </div>
-
-          <DataGrid
-            table={employeeTable}
-            recordCount={filteredEmployees.length}
-            isLoading={empLoading}
-            emptyMessage="Нет данных. Синхронизируйте справочник."
-            tableLayout={{ rowBorder: false, headerBorder: false, headerBackground: true }}
-          >
-            <DataGridContainer className="border rounded-lg">
-              <div className="overflow-x-auto max-h-48">
-                <DataGridTable<PbxEmployeeItem> />
-              </div>
-            </DataGridContainer>
-          </DataGrid>
-        </div>
-        <Button onClick={onComplete} className="w-full">
-          Утвердить справочник
-        </Button>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-const companySchema = z.object({
-  name: z.string().min(1, "Обязательно").max(100),
-  nameEn: z.string().max(100).optional(),
-  description: z.string().max(2000).optional(),
-});
-
-function CompanyModal({
-  open,
-  onOpenChange,
-  onComplete,
-}: {
-  open: boolean;
-  onOpenChange: () => void;
-  onComplete: () => void;
-}) {
-  const { activeWorkspace } = useWorkspace();
-  const orpc = useORPC();
-  const mutation = useMutation(orpc.workspaces.update.mutationOptions());
-
-  const form = useForm({
-    resolver: zodResolver(companySchema),
-    defaultValues: { name: activeWorkspace?.name || "", nameEn: "", description: "" },
-  });
-
-  const handleSubmit = async (data: z.infer<typeof companySchema>) => {
-    if (!activeWorkspace) return;
-    try {
-      await mutation.mutateAsync({
-        workspaceId: activeWorkspace.id,
-        name: data.name,
-        nameEn: data.nameEn || null,
-        description: data.description || null,
-      });
-      onComplete();
-    } catch (_err) {
-      toast.error("Ошибка сохранения");
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Данные компании</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 py-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Название (русский) *</label>
-            <Input {...form.register("name")} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Название (английский)</label>
-            <Input {...form.register("nameEn")} />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Описание</label>
-            <Textarea {...form.register("description")} rows={3} />
-          </div>
-          <Button type="submit" disabled={mutation.isPending} className="w-full">
-            {mutation.isPending ? "Сохранение..." : "Сохранить"}
-          </Button>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function PromptsModal({
-  open,
-  onOpenChange,
-  onComplete,
-}: {
-  open: boolean;
-  onOpenChange: () => void;
-  onComplete: () => void;
-}) {
-  const orpc = useORPC();
-  const { data: prompts, isLoading } = useQuery({
-    ...orpc.settings.getPrompts.queryOptions(),
-    enabled: open,
-  });
-
-  const valuePrompt = prompts?.find((p) => p.slug === "value-extraction");
-  const scriptPrompt = prompts?.find((p) => p.slug === "script-evaluation");
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Системные промпты</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="size-6 animate-spin" />
-            </div>
-          ) : (
-            <>
-              <Card>
-                <CardContent className="p-4">
-                  <h4 className="mb-2 font-medium">Ценность</h4>
-                  <p className="mb-2 text-sm text-muted-foreground">
-                    Используется для извлечения ценности из разговора
-                  </p>
-                  {valuePrompt && (
-                    <pre className="max-h-32 overflow-auto rounded bg-muted p-2 text-xs">
-                      {valuePrompt.prompt}
-                    </pre>
-                  )}
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <h4 className="mb-2 font-medium">Оценка скрипта</h4>
-                  <p className="mb-2 text-sm text-muted-foreground">
-                    Используется для оценки качества работы менеджера
-                  </p>
-                  {scriptPrompt && (
-                    <pre className="max-h-32 overflow-auto rounded bg-muted p-2 text-xs">
-                      {scriptPrompt.prompt}
-                    </pre>
-                  )}
-                </CardContent>
-              </Card>
-            </>
-          )}
-        </div>
-        <Button onClick={onComplete} className="w-full">
-          Продолжить
-        </Button>
-      </DialogContent>
-    </Dialog>
   );
 }
