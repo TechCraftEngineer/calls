@@ -33,8 +33,8 @@ const SETUP_STEPS: SetupStep[] = [
   },
   {
     id: "api",
-    title: "Подключите API Мегафон",
-    description: "Настройте интеграцию с MegaPBX для загрузки звонков",
+    title: "Подключите API телефонии",
+    description: "Настройте интеграцию с вашей АТС для загрузки звонков",
     icon: <Globe className="size-[18px]" />,
     timeEstimate: "3 минуты",
     actionLabel: "Подключить",
@@ -191,7 +191,7 @@ export default function SetupPage() {
       <Header user={user} />
 
       <main className="main-content">
-        <div className="max-w-3xl">
+        <div className="mx-auto max-w-3xl">
           {/* Main Card */}
       <Card className="mb-6 overflow-hidden border bg-card shadow-sm">
         {/* Header with progress */}

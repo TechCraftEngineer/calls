@@ -2,11 +2,12 @@
 
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, PasswordInput, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Copy, Key, Loader2, Webhook } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useORPC } from "@/orpc/react";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import type { ModalProps } from "./types";
 
 const apiSchema = z.object({
@@ -16,7 +17,26 @@ const apiSchema = z.object({
 
 export function ApiModal({ open, onOpenChange, onComplete }: ModalProps) {
   const orpc = useORPC();
+  const { activeWorkspace } = useWorkspace();
   const [testing, setTesting] = useState(false);
+
+  const webhookUrl = activeWorkspace
+    ? `${window.location.origin}/api/webhooks/pbx/${activeWorkspace.id}`
+    : "";
+
+  // Generate webhook secret on first render
+  const [webhookSecret] = useState(() => {
+    const array = new Uint8Array(32);
+    if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+      crypto.getRandomValues(array);
+    } else {
+      // Fallback for older browsers
+      for (let i = 0; i < 32; i++) {
+        array[i] = Math.floor(Math.random() * 256);
+      }
+    }
+    return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
+  });
 
   const form = useForm({
     resolver: zodResolver(apiSchema),
@@ -50,12 +70,72 @@ export function ApiModal({ open, onOpenChange, onComplete }: ModalProps) {
     }
   };
 
+  const handleCopyWebhook = () => {
+    if (webhookUrl) {
+      navigator.clipboard.writeText(webhookUrl);
+      toast.success("URL скопирован в буфер обмена");
+    }
+  };
+
+  const handleCopySecret = () => {
+    navigator.clipboard.writeText(webhookSecret);
+    toast.success("Секретный ключ скопирован в буфер обмена");
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Подключение к API Мегафон</DialogTitle>
+          <DialogTitle>Подключение к API телефонии</DialogTitle>
         </DialogHeader>
+
+        {/* Webhook URL Block */}
+        <div className="rounded-lg border bg-muted/30 p-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Webhook className="size-4 text-primary" />
+            URL для вебхука
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Укажите этот адрес в настройках вашей АТС для получения событий о звонках
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs">{webhookUrl || "Загрузка..."}</code>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-7 shrink-0"
+              onClick={handleCopyWebhook}
+              disabled={!webhookUrl}
+              title="Скопировать URL"
+            >
+              <Copy className="size-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Webhook Secret Block */}
+        <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Key className="size-4 text-primary" />
+            Секретный ключ вебхука
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Укажите этот ключ в настройках АТС для подписи вебхуков (X-Webhook-Signature)
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs font-mono">{webhookSecret}</code>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-7 shrink-0"
+              onClick={handleCopySecret}
+              title="Скопировать секрет"
+            >
+              <Copy className="size-4" />
+            </Button>
+          </div>
+        </div>
+
         <div className="space-y-4 py-4">
           <div>
             <label className="mb-1 block text-sm font-medium">Base URL</label>

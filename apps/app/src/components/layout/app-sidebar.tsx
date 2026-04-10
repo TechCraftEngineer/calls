@@ -7,6 +7,8 @@ import {
   ChevronUp,
   Home,
   LogOut,
+  PanelLeft,
+  PanelRight,
   Settings,
   Users,
 } from "lucide-react";
@@ -209,6 +211,7 @@ function SetupCard() {
 export function AppSidebar() {
   const pathname = usePathname();
   const { activeWorkspace } = useWorkspace();
+  const { toggleSidebar, state } = useSidebar();
   const isWorkspaceAdmin =
     activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
@@ -279,6 +282,15 @@ export function AppSidebar() {
 
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={toggleSidebar}
+              tooltip={state === "collapsed" ? "Развернуть" : "Свернуть"}
+            >
+              {state === "collapsed" ? <PanelRight /> : <PanelLeft />}
+              <span>{state === "collapsed" ? "Развернуть" : "Свернуть"}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip="Выход">
               <Link href={paths.auth.signout}>
