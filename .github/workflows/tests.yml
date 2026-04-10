@@ -93,11 +93,12 @@ jobs:
 
       - name: Setup database
         run: |
-          echo "POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/test_db" >> .env.local
           echo "NEXT_PUBLIC_API_URL=http://localhost:3000" >> .env.local
           echo "NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000" >> .env.local
           echo "NODE_ENV=test" >> .env.local
           bun turbo -F @calls/db db:push:ci
+        env:
+          POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/test_db
 
       - name: Start application
         run: |
@@ -172,11 +173,12 @@ jobs:
 
       - name: Setup database
         run: |
-          echo "POSTGRES_URL=postgresql://postgres:postgres@localhost:5432/test_db" >> .env.local
           echo "NEXT_PUBLIC_API_URL=http://localhost:3000" >> .env.local
           echo "NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000" >> .env.local
           echo "NODE_ENV=test" >> .env.local
           bun turbo -F @calls/db db:push:ci
+        env:
+          POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/test_db
 
       - name: Start application
         run: |
