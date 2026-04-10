@@ -2,7 +2,7 @@ import { callsService, settingsService, usersService, workspacesService } from "
 import { formatTelegramReportHtml } from "@calls/jobs";
 import { sendMessage } from "@calls/telegram-bot";
 import { ORPCError } from "@orpc/server";
-import { subDays, subMonths, subWeeks } from "date-fns";
+import { subMonths, subWeeks } from "date-fns";
 import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
@@ -71,9 +71,9 @@ export const sendTestTelegram = workspaceProcedure
     let dateToString: string;
 
     if (reportType === "daily") {
-      dateFrom = subDays(now, 1);
-      dateTo = dateFrom;
-      dateFromString = formatDateInMoscow(dateFrom);
+      dateFrom = now;
+      dateTo = now;
+      dateFromString = formatDateInMoscow(now);
       dateToString = dateFromString;
     } else if (reportType === "weekly") {
       dateFrom = subWeeks(now, 1);
