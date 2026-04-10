@@ -3,9 +3,12 @@
  */
 
 import { buildCompanyContext } from "@calls/shared";
+import { createLogger } from "../../../../logger";
 import { applyLLMMerging } from "../llm/merge";
 import type { SyncTranscriptionResult } from "./sync-transcription";
 import type { Workspace } from "../schemas";
+
+const logger = createLogger("transcribe-call:merge-results");
 
 // Интерфейс результата диаризации
 export interface DiarizeResult {
@@ -69,6 +72,12 @@ export async function mergeResults(
       ],
     },
   };
+
+  logger.info("Starting LLM merge with company context", {
+    callId,
+    hasCompanyContext: !!companyContext,
+    companyName: workspace.name,
+  });
 
   const mergeResult = await applyLLMMerging(
     {

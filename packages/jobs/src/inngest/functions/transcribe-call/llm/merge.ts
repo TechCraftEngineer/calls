@@ -274,7 +274,7 @@ async function processChunk(
       "Твоя задача - объединить результаты двух систем распознавания речи: одна дала точный текст, другая дала разделение по говорящим. " +
       "Создай идеальный результат с точным русским текстом и правильным разделением по говорящим. " +
       `Это часть ${chunkIndex + 1} из ${totalChunks} фрагментов разговора.` +
-      (companyContext ? `\n\nКОНТЕКСТ КОМПАНИИ:\n${companyContext}` : ""),
+      (companyContext ? `\n\n${companyContext}` : ""),
     prompt,
     temperature: 0.1,
     maxRetries: 2,
@@ -289,6 +289,7 @@ async function processChunk(
       chunkIndex: chunkIndex + 1,
       totalChunks,
       tags: ["transcription", "llm-merge", "chunk"],
+      hasCompanyContext: !!companyContext,
     },
   });
 
@@ -520,7 +521,7 @@ export async function mergeAsrResultsWithLLM(
       "Ты эксперт по обработке транскрипций аудио на русском языке. " +
       "Твоя задача - объединить результаты двух систем распознавания речи: одна дала точный текст, другая дала разделение по говорящим. " +
       "Создай идеальный результат с точным русским текстом и правильным разделением по говорящим." +
-      (companyContext ? `\n\nКОНТЕКСТ КОМПАНИИ:\n${companyContext}` : ""),
+      (companyContext ? `\n\n${companyContext}` : ""),
     prompt,
     temperature: 0.1,
     maxRetries: 2,
@@ -533,6 +534,7 @@ export async function mergeAsrResultsWithLLM(
     metadata: {
       requestId,
       tags: ["transcription", "llm-merge", "dual-asr"],
+      hasCompanyContext: !!companyContext,
     },
   });
 
@@ -589,7 +591,7 @@ export async function applyLLMMerging(
   try {
     logger.info("Starting LLM merging of ASR results", { requestId });
 
-    const result = await mergeAsrResultsWithLLM(nonDiarizedResult, diarizedResult, requestId);
+    const result = await mergeAsrResultsWithLLM(nonDiarizedResult, diarizedResult, requestId, companyContext);
 
     logger.info("LLM merging completed", {
       requestId,

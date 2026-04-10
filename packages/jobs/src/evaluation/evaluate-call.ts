@@ -103,7 +103,7 @@ export async function evaluateCallWithLlm(
   });
 
   const companyBlock = options.companyContext?.trim()
-    ? `КОНТЕКСТ КОМПАНИИ:\n${options.companyContext.trim()}\n\nКРИТИЧЕСКИ ВАЖНО: Используй ТОЧНО это название компании при оценке. НЕ изменяй написание, НЕ транслитерируй, НЕ переводи. Учитывай специфику бизнеса при оценке value_score и manager_score.\n\n`
+    ? `${options.companyContext.trim()}\n\nКРИТИЧЕСКИ ВАЖНО: Используй ТОЧНО это название компании при оценке. НЕ изменяй написание, НЕ транслитерируй, НЕ переводи. Учитывай специфику бизнеса при оценке value_score и manager_score.\n\n`
     : "";
 
   const evaluationPrompt = companyBlock + (options.evaluationPrompt || EVALUATION_SYSTEM_PROMPT);

@@ -7,12 +7,17 @@ import {
   OPENROUTER_API_KEY,
 } from "@calls/config";
 import type { Call, callsService } from "@calls/db";
-import { buildCompanyContext, companyContextSchema } from "@calls/shared";
+import {
+  buildCompanyContext,
+  companyContextSchema,
+  replaceSpeakersWithRoles,
+} from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../orpc";
 
 const logger = createLogger("generate-recommendations");
+
 const DEFAULT_RECOMMENDATIONS_MODEL =
   AI_RECOMMENDATIONS_MODEL ?? AI_MODEL_PREMIUM ?? AI_MODEL ?? "anthropic/claude-sonnet-4.6";
 
@@ -62,10 +67,19 @@ export async function generateRecommendations(
     const transcript = await calls.getTranscriptByCallId(callId);
     const evaluation = await calls.getEvaluation(callId);
 
-    let transcriptText = transcript?.text ?? transcript?.rawText ?? "";
+    // Извлекаем маппинг спикеров из метаданных и заменяем SPEAKER_XX на роли
+    const speakerMapping = (transcript?.metadata?.mapping as Record<string, "operator" | "client">) ?? {};
+    const rawTranscriptText = transcript?.text ?? transcript?.rawText ?? "";
+    const transcriptText = replaceSpeakersWithRoles(rawTranscriptText, speakerMapping);
+
     if (!transcriptText.trim()) {
       throw new Error("Транскрипт звонка пуст — невозможно сформировать рекомендации");
     }
+
+    // Обрезаем текст если слишком длинный
+    const finalTranscriptText = transcriptText.length > 50000
+      ? `${transcriptText.substring(0, 50000)}...`
+      : transcriptText;
 
     if (transcriptText.length > 50000) {
       logger.warn("Transcript too long, truncating", {
@@ -73,11 +87,10 @@ export async function generateRecommendations(
         workspaceId: _workspaceId,
         length: transcriptText.length,
       });
-      transcriptText = `${transcriptText.substring(0, 50000)}...`;
     }
 
     const companyBlock = companyContext?.trim()
-      ? `КОНТЕКСТ КОМПАНИИ:\n${companyContext.trim()}\n\nУчитывай специфику бизнеса при формировании рекомендаций.\n\n`
+      ? `${companyContext.trim()}\n\nУчитывай специфику бизнеса при формировании рекомендаций.\n\n`
       : "";
     const systemPrompt = companyBlock + DEFAULT_RECOMMENDATIONS_PROMPT;
 
@@ -96,7 +109,7 @@ export async function generateRecommendations(
 
     const userMessage = `Транскрипт звонка:
 ---
-${transcriptText}
+${finalTranscriptText}
 ---
 ${contextParts.length ? `Контекст оценки:\n${contextParts.join("\n")}` : ""}
 

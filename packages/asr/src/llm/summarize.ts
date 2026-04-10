@@ -118,7 +118,7 @@ export async function summarizeWithLlm(
   const normalizedModel = inputOptions.model?.trim() || undefined;
 
   const companyBlock = inputOptions.companyContext?.trim()
-    ? `КОНТЕКСТ КОМПАНИИ:\n${inputOptions.companyContext.trim()}\n\nКРИТИЧЕСКИ ВАЖНО: Используй ТОЧНО это название компании в summary. НЕ изменяй написание, НЕ транслитерируй, НЕ переводи. Учитывай это при определении темы (topic), заголовка (title) и sentiment.\n\n`
+    ? `${inputOptions.companyContext.trim()}\n\nКРИТИЧЕСКИ ВАЖНО: Используй ТОЧНО это название компании в summary. НЕ изменяй написание, НЕ транслитерируй, НЕ переводи. Учитывай это при определении темы (topic), заголовка (title) и sentiment.\n\n`
     : "";
 
   const managerBlock = inputOptions.managerName?.trim()
