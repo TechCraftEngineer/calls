@@ -250,6 +250,7 @@ export class InvitationsService {
     workspaceId: string;
     workspaceName: string;
     userExists: boolean;
+    requiresPassword: boolean;
     invitationType: "email" | "link";
   } | null> {
     // 1. Check workspace_members (existing users)
@@ -272,6 +273,7 @@ export class InvitationsService {
             workspaceId: member.workspaceId,
             workspaceName: workspace.name,
             userExists: true,
+            requiresPassword: false, // Существующий пользователь входит своим паролем
             invitationType: "email",
           };
         }
@@ -292,6 +294,7 @@ export class InvitationsService {
       workspaceId: inv.workspaceId,
       workspaceName: workspace.name,
       userExists: false,
+      requiresPassword: true, // Новый пользователь создаёт пароль при регистрации
       invitationType: (inv.invitationType as "email" | "link") ?? "email",
     };
   }
