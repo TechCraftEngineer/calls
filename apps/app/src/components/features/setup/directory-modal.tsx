@@ -24,7 +24,7 @@ import { getEmployeeColumns } from "@/components/features/settings/megapbx/emplo
 import type { PbxEmployeeItem } from "@/components/features/settings/types";
 import { SearchInput } from "@/components/ui/search-input";
 import { useORPC } from "@/orpc/react";
-import type { ModalProps } from "@/components/features/setup";
+import type { ModalProps } from "./types";
 
 export function DirectoryModal({ open, onOpenChange, onComplete }: ModalProps) {
   const orpc = useORPC();

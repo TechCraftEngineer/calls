@@ -40,7 +40,7 @@ import {
   handleAnsweringMachineFlow,
   handleNoSpeechFlow,
 } from "../../functions/transcribe-call/flows";
-import type { Call } from "../../functions/transcribe-call/schemas";
+import type { Call, Workspace } from "../../functions/transcribe-call/schemas";
 import { TranscriptionResultSchema } from "../../functions/transcribe-call/schemas";
 
 const logger = createLogger("transcribe-call");
@@ -177,7 +177,7 @@ export const transcribeCallFn = inngest.createFunction(
       } as MergeResult;
     } else {
       mergedResult = (await step.run("llm/merge-asr", () =>
-        mergeResults(fullTranscription, diarizeResult as DiarizeResult, callId),
+        mergeResults(fullTranscription, diarizeResult as DiarizeResult, callId, workspace),
       )) as MergeResult;
     }
 
@@ -213,9 +213,19 @@ export const transcribeCallFn = inngest.createFunction(
         });
       }
 
-      const diarizedText = nonEmptySegments
-        .map((s) => `${s.speaker}: ${s.text}`)
-        .join("\n");
+      // Fallback: если все сегменты пустые, используем исходный текст
+      let diarizedText: string;
+      if (nonEmptySegments.length === 0) {
+        logger.warn("Все сегменты пустые после фильтрации, используем fallback", {
+          callId,
+          originalTextLength: fullTranscription.transcript?.length ?? 0,
+        });
+        diarizedText = fullTranscription.transcript || "[нет распознаваемой речи]";
+      } else {
+        diarizedText = nonEmptySegments
+          .map((s) => `${s.speaker}: ${s.text}`)
+          .join("\n");
+      }
 
       // Создаем asrLogs на основе всех этапов обработки
       const asrLogs = [

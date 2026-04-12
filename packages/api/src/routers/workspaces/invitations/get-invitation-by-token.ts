@@ -24,6 +24,7 @@ export const getInvitationByToken = publicProcedure
         workspaceId: inv.workspaceId,
         workspaceName: workspace?.name ?? "Рабочее пространство",
         userExists: inv.userExists,
+        requiresPassword: inv.requiresPassword,
         invitationType: inv.invitationType,
       };
     } catch (e) {

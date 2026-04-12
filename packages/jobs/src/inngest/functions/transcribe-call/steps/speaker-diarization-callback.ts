@@ -60,16 +60,22 @@ export async function speakerDiarizationWithCallback(
     async () => {
       const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
 
+      // Определяем примерное количество спикеров на основе сегментов
+      const minSpeakers = 2;
+      const calculatedMax = Math.min(4, Math.ceil(fullTranscriptionSegments.length / 3));
+      const maxSpeakers = Math.max(minSpeakers, calculatedMax);
+
       logger.info("Запуск асинхронной диаризации через Speaker Embeddings", {
         callId,
         durationSeconds,
         segmentCount: fullTranscriptionSegments.length,
+        minSpeakers,
+        maxSpeakers,
       });
 
       const result = await startSpeakerDiarization(callId, buffer, filename, {
-        // Определяем примерное количество спикеров на основе сегментов
-        minSpeakers: 2,
-        maxSpeakers: Math.min(4, Math.ceil(fullTranscriptionSegments.length / 3)),
+        minSpeakers,
+        maxSpeakers,
       });
 
       if (!result.success || !result.taskId) {
@@ -153,7 +159,7 @@ export async function speakerDiarizationWithCallback(
       });
       return {
         success: false,
-        error: eventData.result?.reason || "Diarization returned unsuccessful result",
+        error: eventData.result?.reason || "Диаризация вернула неуспешный результат",
         taskId,
         processingTimeMs: eventData.processingTimeMs || 0,
       };

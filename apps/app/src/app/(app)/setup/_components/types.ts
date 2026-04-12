@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export type StepId = "provider" | "api" | "directory" | "company" | "prompts";
+export type StepId = "provider" | "api" | "directory" | "company" | "evaluation";
 
 export interface SetupStep {
   id: StepId;
@@ -14,8 +14,5 @@ export interface SetupStep {
   href?: string;
 }
 
-export interface ModalProps {
-  open: boolean;
-  onOpenChange: () => void;
-  onComplete: () => void;
-}
+// Re-export shared ModalProps to maintain compatibility
+export type { ModalProps } from "@/components/features/setup";

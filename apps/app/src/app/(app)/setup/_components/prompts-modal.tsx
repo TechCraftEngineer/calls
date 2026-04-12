@@ -4,7 +4,7 @@ import { Button, Card, CardContent, Dialog, DialogContent, DialogHeader, DialogT
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useORPC } from "@/orpc/react";
-import type { ModalProps } from "./types";
+import type { ModalProps } from "@/components/features/setup";
 
 export function PromptsModal({ open, onOpenChange, onComplete }: ModalProps) {
   const orpc = useORPC();

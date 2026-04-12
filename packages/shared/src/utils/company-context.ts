@@ -30,16 +30,36 @@ export function buildCompanyContext(workspace: {
   name?: string | null;
   description?: string | null;
 }): string | undefined {
-  const parts: string[] = [];
   const companyName = workspace.name?.trim();
   const companyDescription = workspace.description?.trim();
 
-  if (companyName) {
-    parts.push(`Название компании: ${companyName}`);
-  }
-  if (companyDescription) {
-    parts.push(`Описание компании: ${companyDescription}`);
+  if (!companyName && !companyDescription) {
+    return undefined;
   }
 
-  return parts.length > 0 ? parts.join("\n") : undefined;
+  const lines: string[] = [
+    "=== КОНТЕКСТ КОМПАНИИ ===",
+    "",
+    "Ты анализируешь телефонные разговоры для следующей компании:",
+    "",
+  ];
+
+  if (companyName) {
+    lines.push(`Название компании: ${companyName}`);
+  }
+  if (companyDescription) {
+    lines.push(`Описание деятельности: ${companyDescription}`);
+  }
+
+  lines.push(
+    "",
+    "Используй эту информацию для:",
+    "- Понимания специфики бизнеса при оценке звонков",
+    "- Корректной интерпретации терминов и названий",
+    "- Определения релевантности разговора деятельности компании",
+    "",
+    "========================",
+  );
+
+  return lines.join("\n");
 }

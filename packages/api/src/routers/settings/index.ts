@@ -18,6 +18,7 @@ export const settingsRouter = {
   testFtp: ftpRouter.testFtp,
   checkFtpStatus: ftpRouter.checkFtpStatus,
   getPbx: pbxRouter.getPbx,
+  getPbxWebhookSecret: pbxRouter.getPbxWebhookSecret,
   updatePbx: pbxRouter.updatePbx,
   updatePbxAccess: pbxRouter.updatePbxAccess,
   updatePbxExcludedNumbers: pbxRouter.updatePbxExcludedNumbers,

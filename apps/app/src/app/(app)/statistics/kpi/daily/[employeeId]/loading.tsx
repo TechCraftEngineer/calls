@@ -6,7 +6,8 @@ export default function DailyViewLoading() {
     <>
       <Header user={null} />
 
-      <main className="main-content">
+      <main className="main-content" aria-busy="true">
+        <span className="sr-only" role="status">Загрузка данных...</span>
         <header className="page-header mb-8">
           <Skeleton className="h-9 w-48 mb-2" />
           <Skeleton className="h-5 w-80" />

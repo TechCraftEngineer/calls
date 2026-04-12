@@ -11,7 +11,11 @@ import {
   workspaceSettingsRepository,
   workspacesService,
 } from "@calls/db";
-import { buildCompanyContext, companyContextSchema } from "@calls/shared";
+import {
+  buildCompanyContext,
+  companyContextSchema,
+  replaceSpeakersWithRoles,
+} from "@calls/shared";
 import { evaluateCallWithLlm, resolveEvaluationPrompt } from "../../evaluation";
 import { createLogger } from "../../logger";
 import { evaluateRequested, inngest } from "../client";
@@ -47,7 +51,13 @@ export const evaluateCallFn = inngest.createFunction(
       return callsService.getTranscriptByCallId(callId);
     });
 
-    const transcriptText = transcript?.text?.trim() ?? transcript?.rawText?.trim() ?? "";
+    // Извлекаем маппинг спикеров из метаданных транскрипта
+    const speakerMapping = (transcript?.metadata?.mapping as Record<string, "operator" | "client">) ?? {};
+
+    // Заменяем SPEAKER_XX на "оператор"/"клиент" в тексте транскрипта
+    const rawTranscriptText = transcript?.text?.trim() ?? transcript?.rawText?.trim() ?? "";
+    const transcriptText = replaceSpeakersWithRoles(rawTranscriptText, speakerMapping);
+
     if (!transcriptText) {
       logger.warn("Транскрипт пуст — пропускаем оценку", { callId });
       return { callId, skipped: true, reason: "empty_transcript" };

@@ -3,13 +3,13 @@
 import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, PasswordInput, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Copy, Key, Loader2, Webhook } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useORPC } from "@/orpc/react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import type { ModalProps } from "./types";
+import type { ModalProps } from "@/components/features/setup";
 
 const apiSchema = z.object({
   baseUrl: z.string().url("Введите корректный URL"),
@@ -29,23 +29,25 @@ export function ApiModal({ open, onOpenChange, onComplete }: ModalProps) {
     },
   }));
 
-  const webhookUrl = activeWorkspace
-    ? `${window.location.origin}/api/webhooks/pbx/${activeWorkspace.id}`
-    : "";
-
-  // Generate webhook secret on first render
-  const [webhookSecret] = useState(() => {
-    const array = new Uint8Array(32);
-    if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-      crypto.getRandomValues(array);
-    } else {
-      // Fallback for older browsers
-      for (let i = 0; i < 32; i++) {
-        array[i] = Math.floor(Math.random() * 256);
-      }
+  // Compute webhookUrl on client only to avoid SSR issues
+  const [origin, setOrigin] = useState("");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOrigin(window.location.origin);
     }
-    return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
+  }, []);
+
+  const webhookUrl = useMemo(() => {
+    if (!activeWorkspace || !origin) return "";
+    return `${origin}/api/webhooks/pbx/${activeWorkspace.id}`;
+  }, [activeWorkspace, origin]);
+
+  // Fetch webhook secret from server
+  const { data: webhookSecretData } = useQuery({
+    ...orpc.settings.getPbxWebhookSecret.queryOptions(),
+    enabled: Boolean(activeWorkspace),
   });
+  const webhookSecret = webhookSecretData?.webhookSecret ?? "";
 
   const form = useForm({
     resolver: zodResolver(apiSchema),
@@ -53,8 +55,7 @@ export function ApiModal({ open, onOpenChange, onComplete }: ModalProps) {
     defaultValues: { baseUrl: "", apiKey: "" },
   });
 
-  const handleTestAndSave = async () => {
-    const values = form.getValues();
+  const handleTestAndSave = async (values: z.infer<typeof apiSchema>) => {
     setTesting(true);
     try {
       const result = await testPbxMutation.mutateAsync({
@@ -67,6 +68,7 @@ export function ApiModal({ open, onOpenChange, onComplete }: ModalProps) {
           enabled: true,
           baseUrl: values.baseUrl.trim(),
           apiKey: values.apiKey.trim(),
+          webhookSecret,
         });
         onComplete();
       } else {
@@ -145,7 +147,7 @@ export function ApiModal({ open, onOpenChange, onComplete }: ModalProps) {
           </div>
         </div>
 
-        <div className="space-y-4 py-4">
+        <form onSubmit={form.handleSubmit(handleTestAndSave)} className="space-y-4 py-4">
           <div>
             <label className="mb-1 block text-sm font-medium">Base URL</label>
             <Input {...form.register("baseUrl")} placeholder="https://...megapbx.ru/crmapi/v1" />
@@ -157,15 +159,15 @@ export function ApiModal({ open, onOpenChange, onComplete }: ModalProps) {
             <label className="mb-1 block text-sm font-medium">API Key</label>
             <PasswordInput {...form.register("apiKey")} placeholder="Ключ авторизации" />
           </div>
-        </div>
-        <Button
-          onClick={handleTestAndSave}
-          disabled={testing || !form.formState.isValid}
-          className="w-full"
-        >
-          {testing ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-          Проверить и сохранить
-        </Button>
+          <Button
+            type="submit"
+            disabled={testing}
+            className="w-full"
+          >
+            {testing ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+            Проверить и сохранить
+          </Button>
+        </form>
       </DialogContent>
     </Dialog>
   );

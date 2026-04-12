@@ -6,6 +6,7 @@ const ROOTS = {
   STATISTICS: "/statistics",
   USERS: "/users",
   SETTINGS: "/settings",
+  SETUP: "/setup",
   CALLS: "/calls",
   FORBIDDEN: "/403",
 } as const;
@@ -54,6 +55,10 @@ export const paths = {
     appearance: `${ROOTS.SETTINGS}/appearance`,
     notifications: `${ROOTS.SETTINGS}/notifications`,
     display: `${ROOTS.SETTINGS}/display`,
+  },
+  setup: {
+    root: ROOTS.SETUP,
+    pbxSetup: `${ROOTS.SETUP}/pbx-setup`,
   },
   calls: {
     root: ROOTS.CALLS,

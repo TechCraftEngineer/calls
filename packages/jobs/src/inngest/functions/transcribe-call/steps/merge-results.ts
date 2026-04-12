@@ -2,8 +2,13 @@
  * LLM Merging: объединение синхронного non-diarized с асинхронным diarized
  */
 
+import { buildCompanyContext } from "@calls/shared";
+import { createLogger } from "../../../../logger";
 import { applyLLMMerging } from "../llm/merge";
 import type { SyncTranscriptionResult } from "./sync-transcription";
+import type { Workspace } from "../schemas";
+
+const logger = createLogger("transcribe-call:merge-results");
 
 // Интерфейс результата диаризации
 export interface DiarizeResult {
@@ -38,8 +43,10 @@ export async function mergeResults(
   fullTranscription: SyncTranscriptionResult,
   diarizedResult: DiarizeResult,
   callId: string,
+  workspace: Workspace,
 ): Promise<MergeResult> {
   const llmMergeStartTime = Date.now();
+  const companyContext = buildCompanyContext(workspace);
 
   // Конвертируем DiarizeResult в формат AsrResult для совместимости
   const diarizedAsrResult = {
@@ -66,12 +73,19 @@ export async function mergeResults(
     },
   };
 
+  logger.info("Starting LLM merge with company context", {
+    callId,
+    hasCompanyContext: !!companyContext,
+    companyName: workspace.name,
+  });
+
   const mergeResult = await applyLLMMerging(
     {
       transcript: fullTranscription.transcript,
     },
     diarizedAsrResult,
     callId,
+    companyContext,
   );
 
   const llmMergeTimeMs = Date.now() - llmMergeStartTime;

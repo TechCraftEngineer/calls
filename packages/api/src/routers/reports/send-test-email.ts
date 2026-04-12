@@ -8,7 +8,7 @@ import {
 import { type ManagerStats, ReportEmail, sendEmail } from "@calls/emails";
 import { formatReportSubject } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
-import { subDays, subMonths, subWeeks } from "date-fns";
+import { subMonths, subWeeks } from "date-fns";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 
@@ -98,10 +98,9 @@ export const sendTestEmail = workspaceProcedure
     let dateToString: string;
 
     if (reportType === "daily") {
-      const yesterday = subDays(now, 1);
-      dateFrom = yesterday;
-      dateTo = yesterday;
-      dateFromString = formatInTimeZone(yesterday, TZ, "yyyy-MM-dd");
+      dateFrom = now;
+      dateTo = now;
+      dateFromString = formatInTimeZone(now, TZ, "yyyy-MM-dd");
       dateToString = dateFromString;
     } else if (reportType === "weekly") {
       dateFrom = subWeeks(now, 1);

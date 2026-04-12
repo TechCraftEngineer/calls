@@ -18,6 +18,8 @@ export { clearActiveWorkspaceCookie };
 interface Workspace {
   id: string;
   name: string;
+  nameEn: string | null;
+  description: string | null;
   role: string;
   isOnboarded: boolean;
 }
