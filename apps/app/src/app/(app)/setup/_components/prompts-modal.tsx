@@ -14,7 +14,7 @@ import { Loader2 } from "lucide-react";
 import type { ModalProps } from "@/components/features/setup";
 import { useORPC } from "@/orpc/react";
 
-export function PromptsModal({ open, onOpenChange, onComplete }: ModalProps<{ promptId: string }>) {
+export function PromptsModal({ open, onOpenChange, onComplete }: ModalProps<void>) {
   const orpc = useORPC();
   const { data: prompts, isLoading } = useQuery({
     ...orpc.settings.getPrompts.queryOptions(),

@@ -79,6 +79,7 @@ export function ProviderModal({ open, onOpenChange, onComplete }: ModalProps<str
               key={p.id}
               onClick={() => p.available && setSelected(p.id)}
               disabled={!p.available}
+              aria-label={`Выбрать ${p.name}${!p.available ? ", недоступен" : ""}${selected === p.id ? ", выбран" : ""}`}
               className={`group flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all ${
                 selected === p.id
                   ? "border-primary bg-primary/5 ring-1 ring-primary/20"

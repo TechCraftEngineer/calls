@@ -20,8 +20,8 @@ export const importPbxDirectory = workspaceAdminProcedure
 
     try {
       // Get current lists from PBX to find full data for selected items
-      const employees = await pbxService.listEmployees(context.workspaceId, config);
-      const numbers = await pbxService.listNumbers(context.workspaceId, config);
+      const employees = await pbxService.listEmployees(context.workspaceId);
+      const numbers = await pbxService.listNumbers(context.workspaceId);
 
       // Filter selected items
       const selectedEmployees = employees.filter((e) => input.employeeIds.includes(e.id));

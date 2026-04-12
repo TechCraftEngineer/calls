@@ -61,8 +61,8 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         toast.success("Расписание сохранено");
       },
       onError: (error) => {
-        const message = error instanceof Error ? error.message : "Не удалось сохранить расписание";
-        toast.error(message);
+        console.error("Failed to save schedule:", error);
+        toast.error("Не удалось сохранить расписание");
       },
     }),
   );

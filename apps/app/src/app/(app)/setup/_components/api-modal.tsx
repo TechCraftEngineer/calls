@@ -25,7 +25,7 @@ const apiSchema = z.object({
   apiKey: z.string().min(1, "API Key обязателен"),
 });
 
-export function ApiModal({ open, onOpenChange, onComplete }: ModalProps<{ apiKey: string }>) {
+export function ApiModal({ open, onOpenChange, onComplete }: ModalProps<void>) {
   const orpc = useORPC();
   const queryClient = useQueryClient();
   const { activeWorkspace } = useWorkspace();
