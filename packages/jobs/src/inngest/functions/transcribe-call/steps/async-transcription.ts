@@ -92,8 +92,8 @@ export async function asyncTranscriptionWithCallback(
 
           return {
             transcript: directResult.transcript,
-            segments: [],
-            processingTimeMs: 0,
+            segments: directResult.segments ?? [],
+            processingTimeMs: directResult.processingTimeMs ?? 0,
             taskId,
           };
         }

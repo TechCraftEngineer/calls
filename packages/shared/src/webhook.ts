@@ -16,7 +16,7 @@ export function generateSecureSecret(bytes = 32): string {
     globalCrypto.getRandomValues(array);
   } else {
     throw new Error(
-      "Web Crypto API is not available. This environment does not support cryptographically secure random number generation.",
+      "API Web Crypto недоступен. Данная среда не поддерживает криптографически защищённую генерацию случайных чисел.",
     );
   }
 

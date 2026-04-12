@@ -114,7 +114,7 @@ export class InvitationHelpers {
    * Мокирует принятие приглашения
    */
   async mockAcceptInvitation(workspaceId: string) {
-    const response = {
+    const acceptInvitationResponse = {
       status: 200,
       contentType: "application/json",
       body: JSON.stringify({
@@ -127,13 +127,29 @@ export class InvitationHelpers {
       }),
     };
 
-    await this.page.route("**/api/workspaces.acceptInvitation**", async (route) => {
-      await route.fulfill(response);
+    const acceptInvitationForExistingUserResponse = {
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        result: {
+          data: {
+            workspaceId,
+            success: true,
+          },
+        },
+      }),
+    };
+
+    await this.page.route("**/api/orpc/workspaces.acceptInvitation**", async (route) => {
+      await route.fulfill(acceptInvitationResponse);
     });
 
-    await this.page.route("**/api/workspaces.acceptInvitationForExistingUser**", async (route) => {
-      await route.fulfill(response);
-    });
+    await this.page.route(
+      "**/api/orpc/workspaces.acceptInvitationForExistingUser**",
+      async (route) => {
+        await route.fulfill(acceptInvitationForExistingUserResponse);
+      },
+    );
   }
 
   /**

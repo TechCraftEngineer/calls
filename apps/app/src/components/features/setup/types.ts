@@ -18,7 +18,6 @@ export interface ModalProps<T = void> {
   onComplete: (data?: T) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface ProviderModalProps extends ModalProps {
+export interface ProviderModalProps extends ModalProps<string | null> {
   // Provider modal can pass provider ID on completion
 }
