@@ -1,6 +1,15 @@
 "use client";
 
-import { Card, CardContent, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger } from "@calls/ui";
+import {
+  Card,
+  CardContent,
+  Skeleton,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  toast,
+} from "@calls/ui";
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Clock, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -49,6 +58,11 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         queryClient.invalidateQueries({
           queryKey: orpc.settings.getReportScheduleSettings.queryKey(),
         });
+        toast.success("Расписание сохранено");
+      },
+      onError: (error) => {
+        const message = error instanceof Error ? error.message : "Не удалось сохранить расписание";
+        toast.error(message);
       },
     }),
   );
