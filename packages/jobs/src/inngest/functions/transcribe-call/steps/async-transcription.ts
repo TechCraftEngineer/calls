@@ -3,9 +3,9 @@
  * Запускает задачу и ждёт событие завершения через step.waitForEvent.
  */
 
-import { getAsyncResult, startAsyncTranscription } from "~/gigaam/client";
 import { createLogger } from "../../../../logger";
 import { downloadAudioFile } from "../audio/download";
+import { getAsyncResult, startAsyncTranscription } from "../gigaam/client";
 import type { PreprocessResult } from "./preprocess-audio";
 import type { StepRunner } from "./step-runner";
 import type { SyncTranscriptionResult } from "./sync-transcription";

@@ -66,7 +66,7 @@ export function PromptsModal({ open, onOpenChange, onComplete }: ModalProps<void
             </>
           )}
         </div>
-        <Button onClick={onComplete} className="w-full">
+        <Button onClick={() => onComplete()} className="w-full">
           Продолжить
         </Button>
       </DialogContent>

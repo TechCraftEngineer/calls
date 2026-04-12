@@ -53,7 +53,7 @@ export const importPbxDirectory = workspaceAdminProcedure
             extension: n.extension ?? null,
             label: n.label ?? null,
             lineType: n.lineType ?? null,
-            employeeExternalId: n.employee?.externalId ?? null,
+            employeeExternalId: n.employeeExternalId ?? null,
             isActive: n.isActive ?? true,
             rawData: n,
           })),
