@@ -24,6 +24,7 @@ export const updatePbxAccess = workspaceAdminProcedure
       baseUrl: string;
       apiKey?: string | null;
       syncFromDate?: string | null;
+      webhookSecret?: string | null;
     } = {
       enabled: input.enabled,
       baseUrl: input.baseUrl?.trim() ?? "",
@@ -34,6 +35,10 @@ export const updatePbxAccess = workspaceAdminProcedure
 
     if (syncFromDate) {
       partial.syncFromDate = syncFromDate;
+    }
+
+    if (input.webhookSecret !== undefined) {
+      partial.webhookSecret = input.webhookSecret?.trim() || null;
     }
 
     let ok: boolean;

@@ -30,12 +30,11 @@ test.describe("Управление приглашениями в рабочем
           'button:has-text("Пригласить"), button:has-text("Добавить"), [data-testid="invite-button"]',
         )
         .first();
-      if (await inviteButton.isVisible().catch(() => false)) {
-        await inviteButton.click();
+      await expect(inviteButton).toBeVisible();
+      await inviteButton.click();
 
-        // Проверяем, что модальное окно открылось
-        await expect(page.locator("text=Пригласить пользователя")).toBeVisible();
-      }
+      // Проверяем, что модальное окно открылось
+      await expect(page.locator("text=Пригласить пользователя")).toBeVisible();
     });
 
     test("создает email-приглашение", async ({ page }) => {
@@ -47,7 +46,7 @@ test.describe("Управление приглашениями в рабочем
         email: "newmember@example.com",
       });
 
-      await page.route("**/api/workspaces.createInvitation**", async (route) => {
+      await page.route("**/api/orpc/workspaces/createInvitation**", async (route) => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -66,22 +65,21 @@ test.describe("Управление приглашениями в рабочем
       await page.goto("/users");
 
       const inviteButton = page.locator('button:has-text("Пригласить")').first();
-      if (await inviteButton.isVisible().catch(() => false)) {
-        await inviteButton.click();
+      await expect(inviteButton).toBeVisible();
+      await inviteButton.click();
 
-        // Заполняем форму
-        await page.fill('input[type="email"]', "newmember@example.com");
-        await page.selectOption('select[name="role"]', "member");
+      // Заполняем форму
+      await page.fill('input[type="email"]', "newmember@example.com");
+      await page.selectOption('select[name="role"]', "member");
 
-        // Отправляем
-        const submitButton = page
-          .locator('button[type="submit"]:has-text("Отправить"), button:has-text("Пригласить")')
-          .first();
-        await submitButton.click();
+      // Отправляем
+      const submitButton = page
+        .locator('button[type="submit"]:has-text("Отправить"), button:has-text("Пригласить")')
+        .first();
+      await submitButton.click();
 
-        // Проверяем успех
-        await expect(page.locator("text=Приглашение отправлено")).toBeVisible();
-      }
+      // Проверяем успех
+      await expect(page.locator("text=Приглашение отправлено")).toBeVisible();
     });
 
     test("создает ссылку-приглашение", async ({ page }) => {
@@ -90,7 +88,7 @@ test.describe("Управление приглашениями в рабочем
 
       const invitation = InvitationFactory.createLinkInvitation();
 
-      await page.route("**/api/workspaces.createInvitation**", async (route) => {
+      await page.route("**/api/orpc/workspaces/createInvitation**", async (route) => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -109,35 +107,33 @@ test.describe("Управление приглашениями в рабочем
       await page.goto("/users");
 
       const inviteButton = page.locator('button:has-text("Пригласить")').first();
-      if (await inviteButton.isVisible().catch(() => false)) {
-        await inviteButton.click();
+      await expect(inviteButton).toBeVisible();
+      await inviteButton.click();
 
-        // Переключаемся на режим ссылки
-        const linkTab = page
-          .locator('button:has-text("Ссылка"), [role="tab"]:has-text("Ссылка")')
-          .first();
-        if (await linkTab.isVisible().catch(() => false)) {
-          await linkTab.click();
-        }
+      // Переключаемся на режим ссылки
+      const linkTab = page
+        .locator('button:has-text("Ссылка"), [role="tab"]:has-text("Ссылка")')
+        .first();
+      await expect(linkTab).toBeVisible();
+      await linkTab.click();
 
-        // Выбираем роль
-        await page.selectOption('select[name="role"]', "admin");
+      // Выбираем роль
+      await page.selectOption('select[name="role"]', "admin");
 
-        // Создаем ссылку
-        const createButton = page.locator('button:has-text("Создать ссылку")').first();
-        await createButton.click();
+      // Создаем ссылку
+      const createButton = page.locator('button:has-text("Создать ссылку")').first();
+      await createButton.click();
 
-        // Проверяем, что ссылка отображается
-        await expect(page.locator("text=Ссылка-приглашение")).toBeVisible();
-        await expect(page.locator(`text=${invitation.token}`)).toBeVisible();
-      }
+      // Проверяем, что ссылка отображается
+      await expect(page.locator("text=Ссылка-приглашение")).toBeVisible();
+      await expect(page.locator(`text=${invitation.token}`)).toBeVisible();
     });
 
     test("показывает ошибку для существующего члена команды", async ({ page }) => {
       const currentUser = InvitationFactory.createMockUser();
       await helpers.mockCurrentUser(currentUser);
 
-      await page.route("**/api/workspaces.createInvitation**", async (route) => {
+      await page.route("**/api/orpc/workspaces/createInvitation**", async (route) => {
         await route.fulfill({
           status: 400,
           contentType: "application/json",
@@ -150,14 +146,13 @@ test.describe("Управление приглашениями в рабочем
       await page.goto("/users");
 
       const inviteButton = page.locator('button:has-text("Пригласить")').first();
-      if (await inviteButton.isVisible().catch(() => false)) {
-        await inviteButton.click();
+      await expect(inviteButton).toBeVisible();
+      await inviteButton.click();
 
-        await page.fill('input[type="email"]', "existing@example.com");
-        await page.locator('button[type="submit"]').first().click();
+      await page.fill('input[type="email"]', "existing@example.com");
+      await page.locator('button[type="submit"]').first().click();
 
-        await expect(page.locator("text=уже является участником")).toBeVisible();
-      }
+      await expect(page.locator("text=уже является участником")).toBeVisible();
     });
 
     test("показывает ошибку для неправильного email", async ({ page }) => {
@@ -167,16 +162,15 @@ test.describe("Управление приглашениями в рабочем
       await page.goto("/users");
 
       const inviteButton = page.locator('button:has-text("Пригласить")').first();
-      if (await inviteButton.isVisible().catch(() => false)) {
-        await inviteButton.click();
+      await expect(inviteButton).toBeVisible();
+      await inviteButton.click();
 
-        // Вводим невалидный email
-        await page.fill('input[type="email"]', "not-an-email");
-        await page.locator('button[type="submit"]').first().click();
+      // Вводим невалидный email
+      await page.fill('input[type="email"]', "not-an-email");
+      await page.locator('button[type="submit"]').first().click();
 
-        // Проверяем ошибку валидации
-        await expect(page.locator("text=корректный email")).toBeVisible();
-      }
+      // Проверяем ошибку валидации
+      await expect(page.locator("text=корректный email")).toBeVisible();
     });
   });
 
@@ -192,7 +186,7 @@ test.describe("Управление приглашениями в рабочем
         InvitationFactory.createLinkInvitation(),
       ];
 
-      await page.route("**/api/workspaces.listInvitations**", async (route) => {
+      await page.route("**/api/orpc/workspaces/listInvitations**", async (route) => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -219,7 +213,7 @@ test.describe("Управление приглашениями в рабочем
         role: "admin",
       });
 
-      await page.route("**/api/workspaces.listInvitations**", async (route) => {
+      await page.route("**/api/orpc/workspaces/listInvitations**", async (route) => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -242,7 +236,7 @@ test.describe("Управление приглашениями в рабочем
       const currentUser = InvitationFactory.createMockUser();
       await helpers.mockCurrentUser(currentUser);
 
-      await page.route("**/api/workspaces.listInvitations**", async (route) => {
+      await page.route("**/api/orpc/workspaces/listInvitations**", async (route) => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -271,7 +265,7 @@ test.describe("Управление приглашениями в рабочем
         email: "tocancel@example.com",
       });
 
-      await page.route("**/api/workspaces.listInvitations**", async (route) => {
+      await page.route("**/api/orpc/workspaces/listInvitations**", async (route) => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -283,7 +277,7 @@ test.describe("Управление приглашениями в рабочем
         });
       });
 
-      await page.route("**/api/workspaces.revokeInvitation**", async (route) => {
+      await page.route("**/api/orpc/workspaces/revokeInvitation**", async (route) => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -301,24 +295,23 @@ test.describe("Управление приглашениями в рабочем
       const revokeButton = page
         .locator('button:has-text("Отменить"), button[aria-label="Отменить приглашение"]')
         .first();
-      if (await revokeButton.isVisible().catch(() => false)) {
-        await revokeButton.click();
+      await expect(revokeButton).toBeVisible();
+      await revokeButton.click();
 
-        // Подтверждаем отмену
-        const confirmButton = page
-          .locator('button:has-text("Да"), button:has-text("Отменить приглашение")')
-          .first();
-        await confirmButton.click();
+      // Подтверждаем отмену
+      const confirmButton = page
+        .locator('button:has-text("Да"), button:has-text("Отменить приглашение")')
+        .first();
+      await confirmButton.click();
 
-        await expect(page.locator("text=Приглашение отменено")).toBeVisible();
-      }
+      await expect(page.locator("text=Приглашение отменено")).toBeVisible();
     });
 
     test("показывает ошибку при отзыве несуществующего приглашения", async ({ page }) => {
       const currentUser = InvitationFactory.createMockUser();
       await helpers.mockCurrentUser(currentUser);
 
-      await page.route("**/api/workspaces.revokeInvitation**", async (route) => {
+      await page.route("**/api/orpc/workspaces/revokeInvitation**", async (route) => {
         await route.fulfill({
           status: 404,
           contentType: "application/json",
@@ -331,12 +324,10 @@ test.describe("Управление приглашениями в рабочем
       await page.goto("/users");
 
       const revokeButton = page.locator('button:has-text("Отменить")').first();
-      if (await revokeButton.isVisible().catch(() => false)) {
-        await revokeButton.click();
+      await expect(revokeButton).toBeVisible();
+      await revokeButton.click();
 
-        await expect(page.locator("text=не найдено")).toBeVisible();
-      }
-    });
+      await expect(page.locator("text=не найдено")).toBeVisible();
   });
 
   test.describe("Копирование ссылки приглашения", () => {
@@ -346,7 +337,7 @@ test.describe("Управление приглашениями в рабочем
 
       const invitation = InvitationFactory.createLinkInvitation();
 
-      await page.route("**/api/workspaces.listInvitations**", async (route) => {
+      await page.route("**/api/orpc/workspaces/listInvitations**", async (route) => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -366,14 +357,13 @@ test.describe("Управление приглашениями в рабочем
       const copyButton = page
         .locator('button:has-text("Копировать"), [data-testid="copy-link"]')
         .first();
-      if (await copyButton.isVisible().catch(() => false)) {
-        await copyButton.click();
+      await expect(copyButton).toBeVisible();
+      await copyButton.click();
 
-        // Проверяем уведомление об успешном копировании
-        await expect(
-          page.locator("text=Ссылка скопирована").or(page.locator("text=Скопировано")),
-        ).toBeVisible();
-      }
+      // Проверяем уведомление об успешном копировании
+      await expect(
+        page.locator("text=Ссылка скопирована").or(page.locator("text=Скопировано")),
+      ).toBeVisible();
     });
   });
 
@@ -382,7 +372,7 @@ test.describe("Управление приглашениями в рабочем
       const currentUser = InvitationFactory.createMockUser();
       await helpers.mockCurrentUser(currentUser);
 
-      await page.route("**/api/workspaces.createInvitation**", async (route) => {
+      await page.route("**/api/orpc/workspaces/createInvitation**", async (route) => {
         await route.fulfill({
           status: 403,
           contentType: "application/json",
@@ -395,13 +385,12 @@ test.describe("Управление приглашениями в рабочем
       await page.goto("/users");
 
       const inviteButton = page.locator('button:has-text("Пригласить")').first();
-      if (await inviteButton.isVisible().catch(() => false)) {
-        await inviteButton.click();
-        await page.fill('input[type="email"]', "test@example.com");
-        await page.locator('button[type="submit"]').first().click();
+      await expect(inviteButton).toBeVisible();
+      await inviteButton.click();
+      await page.fill('input[type="email"]', "test@example.com");
+      await page.locator('button[type="submit"]').first().click();
 
-        await expect(page.locator("text=Недостаточно прав")).toBeVisible();
-      }
+      await expect(page.locator("text=Недостаточно прав")).toBeVisible();
     });
 
     test("показывает только просмотр для обычных участников", async ({ page }) => {
@@ -426,7 +415,7 @@ test.describe("Управление приглашениями в рабочем
         expiresAt: expiresAt.toISOString(),
       });
 
-      await page.route("**/api/workspaces.listInvitations**", async (route) => {
+      await page.route("**/api/orpc/workspaces/listInvitations**", async (route) => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -458,7 +447,7 @@ test.describe("Управление приглашениями в рабочем
         expiresAt: expiredDate.toISOString(),
       });
 
-      await page.route("**/api/workspaces.listInvitations**", async (route) => {
+      await page.route("**/api/orpc/workspaces/listInvitations**", async (route) => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -478,7 +467,6 @@ test.describe("Управление приглашениями в рабочем
 
   test.describe("Роли в приглашениях", () => {
     const roles: Array<{ role: string; label: string }> = [
-      { role: "owner", label: "Владелец" },
       { role: "admin", label: "Администратор" },
       { role: "member", label: "Участник" },
     ];
@@ -489,13 +477,13 @@ test.describe("Управление приглашениями в рабочем
         await helpers.mockCurrentUser(currentUser);
 
         const invitation = InvitationFactory.createEmailInvitation({
-          role: role as "owner" | "admin" | "member",
+          role: role as "admin" | "member",
           email: `${role}@example.com`,
         });
 
         let capturedRole: string | null = null;
 
-        await page.route("**/api/workspaces.createInvitation**", async (route) => {
+        await page.route("**/api/orpc/workspaces/createInvitation**", async (route) => {
           const postData = route.request().postData();
           if (postData) {
             const body = JSON.parse(postData);
@@ -519,16 +507,15 @@ test.describe("Управление приглашениями в рабочем
         await page.goto("/users");
 
         const inviteButton = page.locator('button:has-text("Пригласить")').first();
-        if (await inviteButton.isVisible().catch(() => false)) {
-          await inviteButton.click();
+        await expect(inviteButton).toBeVisible();
+        await inviteButton.click();
 
-          await page.fill('input[type="email"]', `${role}@example.com`);
-          await page.selectOption('select[name="role"]', role);
-          await page.locator('button[type="submit"]').first().click();
+        await page.fill('input[type="email"]', `${role}@example.com`);
+        await page.selectOption('select[name="role"]', role);
+        await page.locator('button[type="submit"]').first().click();
 
-          // Проверяем, что правильная роль была отправлена
-          expect(capturedRole).toBe(role);
-        }
+        // Проверяем, что правильная роль была отправлена
+        expect(capturedRole).toBe(role);
       });
     }
   });

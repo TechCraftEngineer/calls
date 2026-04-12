@@ -11,22 +11,22 @@ import {
   DialogTitle,
   toast,
 } from "@calls/ui";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getCoreRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { getEmployeeColumns } from "@/components/features/settings/megapbx/employee-columns";
 import type { PbxEmployeeItem } from "@/components/features/settings/types";
+import type { ModalProps } from "@/components/features/setup";
 import { SearchInput } from "@/components/ui/search-input";
 import { useORPC } from "@/orpc/react";
-import type { ModalProps } from "@/components/features/setup";
 
-export function DirectoryModal({ open, onOpenChange, onComplete }: ModalProps) {
+export function DirectoryModal({ open, onOpenChange, onComplete }: ModalProps<void>) {
   const orpc = useORPC();
   const queryClient = useQueryClient();
   const [employeeSearch, setEmployeeSearch] = useState("");
@@ -41,16 +41,20 @@ export function DirectoryModal({ open, onOpenChange, onComplete }: ModalProps) {
     enabled: open,
   });
 
-  const syncPbxDirectoryMutation = useMutation(orpc.settings.syncPbxDirectory.mutationOptions({
-    onSuccess: async () => {
-      toast.success("Синхронизировано");
-      await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxEmployees.queryKey() });
-      await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
-    },
-    onError: () => {
-      toast.error("Ошибка синхронизации");
-    },
-  }));
+  const syncPbxDirectoryMutation = useMutation(
+    orpc.settings.syncPbxDirectory.mutationOptions({
+      onSuccess: async () => {
+        toast.success("Синхронизировано");
+        await queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+        });
+        await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
+      },
+      onError: () => {
+        toast.error("Ошибка синхронизации");
+      },
+    }),
+  );
 
   const handleSync = async () => {
     await syncPbxDirectoryMutation.mutateAsync({});
@@ -82,8 +86,14 @@ export function DirectoryModal({ open, onOpenChange, onComplete }: ModalProps) {
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSync} disabled={syncPbxDirectoryMutation.isPending}>
-              {syncPbxDirectoryMutation.isPending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+            <Button
+              variant="outline"
+              onClick={handleSync}
+              disabled={syncPbxDirectoryMutation.isPending}
+            >
+              {syncPbxDirectoryMutation.isPending ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : null}
               Синхронизировать
             </Button>
           </div>

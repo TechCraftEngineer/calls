@@ -196,10 +196,18 @@ export default function InviteAcceptPage() {
   }, [invitation, isLoading, currentUser, checkingAuth, userHasPassword]);
 
   useEffect(() => {
-    getCurrentUser().then((user) => {
-      setCurrentUser(user);
-      setCheckingAuth(false);
-    });
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await getCurrentUser();
+        setCurrentUser(user);
+      } catch {
+        setCurrentUser(null);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    fetchCurrentUser();
   }, []);
 
   useEffect(() => {

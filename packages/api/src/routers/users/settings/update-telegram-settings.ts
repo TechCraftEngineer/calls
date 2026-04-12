@@ -63,6 +63,7 @@ export const updateTelegramSettings = workspaceProcedure
         "reportWeeklyTime",
         "reportMonthlyDay",
         "reportMonthlyTime",
+        "reportSkipWeekends",
       ] as const;
 
       const hasScheduleUpdates = scheduleKeys.some((k) => input.data[k] !== undefined);
@@ -80,6 +81,7 @@ export const updateTelegramSettings = workspaceProcedure
         const reportWeeklyTimeKey = REPORT_PROMPTS_CAMEL_TO_SNAKE.reportWeeklyTime;
         const reportMonthlyDayKey = REPORT_PROMPTS_CAMEL_TO_SNAKE.reportMonthlyDay;
         const reportMonthlyTimeKey = REPORT_PROMPTS_CAMEL_TO_SNAKE.reportMonthlyTime;
+        const reportSkipWeekendsKey = REPORT_PROMPTS_CAMEL_TO_SNAKE.reportSkipWeekends;
 
         // Workspace settings use snake_case keys.
         const scheduleUpdates = [
@@ -102,6 +104,13 @@ export const updateTelegramSettings = workspaceProcedure
           {
             key: reportMonthlyTimeKey || "report_monthly_time",
             value: input.data.reportMonthlyTime,
+          },
+          {
+            key: reportSkipWeekendsKey || "report_skip_weekends",
+            value:
+              input.data.reportSkipWeekends === undefined
+                ? undefined
+                : String(input.data.reportSkipWeekends),
           },
         ];
         for (const { key, value } of scheduleUpdates) {

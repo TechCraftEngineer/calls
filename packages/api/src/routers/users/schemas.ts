@@ -84,6 +84,7 @@ export const updateTelegramSettingsSchema = z.object({
     .string()
     .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Некорректный формат времени. Ожидается HH:MM")
     .optional(),
+  reportSkipWeekends: z.boolean().optional(),
 });
 
 export const updateMaxSettingsSchema = z.object({

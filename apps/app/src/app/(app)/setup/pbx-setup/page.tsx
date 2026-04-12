@@ -5,7 +5,7 @@ import { Button, Card, Checkbox, Input, PasswordInput, Separator, toast } from "
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, Key, Loader2, Phone, RefreshCw, Search, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
 import { useORPC } from "@/orpc/react";
@@ -60,7 +60,11 @@ export default function PbxSetupPage() {
   // API config form
   const [baseUrl, setBaseUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
+  const [baseUrlError, setBaseUrlError] = useState<string | null>(null);
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
   const [configSaved, setConfigSaved] = useState(false);
+  const baseUrlInputRef = useRef<HTMLInputElement>(null);
+  const apiKeyInputRef = useRef<HTMLInputElement>(null);
 
   // Selection state
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
@@ -73,14 +77,10 @@ export default function PbxSetupPage() {
   const [numberPage, setNumberPage] = useState(0);
 
   // Queries
-  const { data: employeesData } = useQuery(
-    orpc.settings.listPbxEmployees.queryOptions({})
-  );
+  const { data: employeesData } = useQuery(orpc.settings.listPbxEmployees.queryOptions({}));
   const employees = (employeesData ?? []) as Employee[];
 
-  const { data: numbersData } = useQuery(
-    orpc.settings.listPbxNumbers.queryOptions({})
-  );
+  const { data: numbersData } = useQuery(orpc.settings.listPbxNumbers.queryOptions({}));
   const numbers = (numbersData ?? []) as Number[];
 
   // Filtered and paginated data
@@ -91,7 +91,7 @@ export default function PbxSetupPage() {
       (e) =>
         e.displayName.toLowerCase().includes(search) ||
         e.extension?.toLowerCase().includes(search) ||
-        e.email?.toLowerCase().includes(search)
+        e.email?.toLowerCase().includes(search),
     );
   }, [employees, employeeSearch]);
 
@@ -103,7 +103,7 @@ export default function PbxSetupPage() {
         n.phoneNumber.toLowerCase().includes(search) ||
         n.extension?.toLowerCase().includes(search) ||
         n.label?.toLowerCase().includes(search) ||
-        n.employee?.displayName.toLowerCase().includes(search)
+        n.employee?.displayName.toLowerCase().includes(search),
     );
   }, [numbers, numberSearch]);
 
@@ -122,23 +122,26 @@ export default function PbxSetupPage() {
 
   // Derived selectAll flags (only for current page)
   const allEmployeesSelected =
-    paginatedEmployees.length > 0 &&
-    paginatedEmployees.every((e) => selectedEmployees.has(e.id));
+    paginatedEmployees.length > 0 && paginatedEmployees.every((e) => selectedEmployees.has(e.id));
   const allNumbersSelected =
-    paginatedNumbers.length > 0 &&
-    paginatedNumbers.every((n) => selectedNumbers.has(n.id));
+    paginatedNumbers.length > 0 && paginatedNumbers.every((n) => selectedNumbers.has(n.id));
 
   // Mutations
   const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
   const updatePbxAccessMutation = useMutation(orpc.settings.updatePbxAccess.mutationOptions());
   const updatePbxWebhookMutation = useMutation(orpc.settings.updatePbxWebhook.mutationOptions());
   const syncPbxDirectoryMutation = useMutation(orpc.settings.syncPbxDirectory.mutationOptions());
+  const importPbxDirectoryMutation = useMutation(
+    orpc.settings.importPbxDirectory.mutationOptions(),
+  );
 
   const testAndSaveMutation = useMutation({
     mutationFn: async () => {
+      const idempotencyKey = `test-and-save-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
       const result = await testPbxMutation.mutateAsync({
         baseUrl: baseUrl.trim(),
         apiKey: apiKey.trim(),
+        idempotencyKey,
       });
       if (result && typeof result === "object" && "success" in result && result.success) {
         await updatePbxAccessMutation.mutateAsync({
@@ -168,12 +171,64 @@ export default function PbxSetupPage() {
       return result;
     },
     onSuccess: async () => {
-      toast.success("Синхронизация выполнена");
-      await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxEmployees.queryKey() });
-      await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
-      // Reset pagination when data changes
-      setEmployeePage(0);
-      setNumberPage(0);
+      toast.info("Синхронизация поставлена в очередь. Ожидание завершения...");
+
+      // Store initial counts to detect when sync completes
+      const initialEmployees =
+        queryClient.getQueryData<Employee[]>(orpc.settings.listPbxEmployees.queryKey()) ?? [];
+      const initialNumbers =
+        queryClient.getQueryData<Number[]>(orpc.settings.listPbxNumbers.queryKey()) ?? [];
+      const initialEmployeeCount = initialEmployees.length;
+      const initialNumberCount = initialNumbers.length;
+
+      // Poll for completion every 3 seconds
+      const pollInterval = setInterval(async () => {
+        try {
+          // Fetch latest data
+          const [employeesData, numbersData] = await Promise.all([
+            queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
+            queryClient.fetchQuery(orpc.settings.listPbxNumbers.queryOptions()),
+          ]);
+
+          const employees = (employeesData ?? []) as Employee[];
+          const numbers = (numbersData ?? []) as Number[];
+
+          // Check if data has changed (indicating sync completed)
+          const hasChanges =
+            employees.length !== initialEmployeeCount ||
+            numbers.length !== initialNumberCount ||
+            JSON.stringify(employees.map((e) => e.id)) !==
+              JSON.stringify(initialEmployees.map((e) => e.id));
+
+          if (hasChanges) {
+            clearInterval(pollInterval);
+
+            // Invalidate queries to refresh the UI
+            await queryClient.invalidateQueries({
+              queryKey: orpc.settings.listPbxEmployees.queryKey(),
+            });
+            await queryClient.invalidateQueries({
+              queryKey: orpc.settings.listPbxNumbers.queryKey(),
+            });
+
+            // Reset pagination when data changes
+            setEmployeePage(0);
+            setNumberPage(0);
+
+            toast.success("Синхронизация выполнена");
+          }
+        } catch {
+          // Continue polling on error
+        }
+      }, 3000);
+
+      // Stop polling after 5 minutes (max wait time)
+      setTimeout(
+        () => {
+          clearInterval(pollInterval);
+        },
+        5 * 60 * 1000,
+      );
     },
     onError: () => {
       toast.error("Ошибка синхронизации");
@@ -187,8 +242,43 @@ export default function PbxSetupPage() {
   }, []);
 
   const handleTestAndSave = useCallback(() => {
+    // Clear previous errors
+    setBaseUrlError(null);
+    setApiKeyError(null);
+
+    // Validate fields
+    let hasError = false;
+    const trimmedBaseUrl = baseUrl.trim();
+    const trimmedApiKey = apiKey.trim();
+
+    if (!trimmedBaseUrl) {
+      setBaseUrlError("Введите Base URL");
+      hasError = true;
+    } else if (!trimmedBaseUrl.startsWith("http://") && !trimmedBaseUrl.startsWith("https://")) {
+      setBaseUrlError("URL должен начинаться с http:// или https://");
+      hasError = true;
+    }
+
+    if (!trimmedApiKey) {
+      setApiKeyError("Введите API Key");
+      hasError = true;
+    }
+
+    if (hasError) {
+      // Focus the first invalid field
+      if (
+        !trimmedBaseUrl ||
+        (!trimmedBaseUrl.startsWith("http://") && !trimmedBaseUrl.startsWith("https://"))
+      ) {
+        baseUrlInputRef.current?.focus();
+      } else {
+        apiKeyInputRef.current?.focus();
+      }
+      return;
+    }
+
     testAndSaveMutation.mutate();
-  }, [testAndSaveMutation]);
+  }, [testAndSaveMutation, baseUrl, apiKey]);
 
   const handleSync = useCallback(() => {
     syncMutation.mutate();
@@ -274,10 +364,26 @@ export default function PbxSetupPage() {
     setNumberPage(0);
   }, []);
 
-  const handleImport = useCallback(() => {
-    toast.success(`Импортировано ${selectedEmployees.size} сотрудников и ${selectedNumbers.size} номеров`);
-    router.push(paths.root);
-  }, [selectedEmployees.size, selectedNumbers.size, router]);
+  const handleImport = useCallback(async () => {
+    if (selectedEmployees.size === 0 && selectedNumbers.size === 0) {
+      toast.error("Выберите хотя бы одного сотрудника или номер для импорта");
+      return;
+    }
+
+    try {
+      const result = await importPbxDirectoryMutation.mutateAsync({
+        employeeIds: Array.from(selectedEmployees),
+        numberIds: Array.from(selectedNumbers),
+      });
+
+      toast.success(
+        `Импортировано ${result.importedEmployees} сотрудников и ${result.importedNumbers} номеров`,
+      );
+      router.push(paths.root);
+    } catch {
+      toast.error("Ошибка при импорте. Попробуйте снова.");
+    }
+  }, [selectedEmployees, selectedNumbers, importPbxDirectoryMutation, router]);
 
   const hasData = employees.length > 0 || numbers.length > 0;
 
@@ -289,7 +395,9 @@ export default function PbxSetupPage() {
         <div className="mx-auto max-w-4xl">
           <div className="mb-6">
             <h1 className="text-2xl font-bold">Подключение API телефонии</h1>
-            <p className="text-muted-foreground">Настройте интеграцию и импортируйте сотрудников и номера</p>
+            <p className="text-muted-foreground">
+              Настройте интеграцию и импортируйте сотрудников и номера
+            </p>
           </div>
 
           {/* Webhook Config */}
@@ -322,7 +430,9 @@ export default function PbxSetupPage() {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">Секретный ключ (X-Webhook-Signature)</label>
+                <label className="mb-1 block text-sm font-medium">
+                  Секретный ключ (X-Webhook-Signature)
+                </label>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 truncate rounded bg-muted px-3 py-2 text-sm font-mono">
                     {webhookSecretLoading ? "Загрузка..." : webhookSecret}
@@ -352,26 +462,38 @@ export default function PbxSetupPage() {
               <div>
                 <label className="mb-1 block text-sm font-medium">Base URL</label>
                 <Input
+                  ref={baseUrlInputRef}
                   value={baseUrl}
-                  onChange={(e) => setBaseUrl(e.target.value)}
+                  onChange={(e) => {
+                    setBaseUrl(e.target.value);
+                    if (baseUrlError) setBaseUrlError(null);
+                  }}
                   placeholder="https://...megapbx.ru/crmapi/v1"
                   disabled={configSaved}
+                  aria-invalid={baseUrlError ? "true" : "false"}
                 />
+                {baseUrlError && <p className="mt-1 text-sm text-destructive">{baseUrlError}</p>}
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium">API Key</label>
                 <PasswordInput
+                  ref={apiKeyInputRef}
                   value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
+                  onChange={(e) => {
+                    setApiKey(e.target.value);
+                    if (apiKeyError) setApiKeyError(null);
+                  }}
                   placeholder="Ключ авторизации"
                   disabled={configSaved}
+                  aria-invalid={apiKeyError ? "true" : "false"}
                 />
+                {apiKeyError && <p className="mt-1 text-sm text-destructive">{apiKeyError}</p>}
               </div>
 
               <div className="flex items-center gap-3">
                 <Button
                   onClick={handleTestAndSave}
-                  disabled={!baseUrl || !apiKey || testAndSaveMutation.isPending || configSaved}
+                  disabled={testAndSaveMutation.isPending || configSaved}
                   className="flex-1"
                 >
                   {testAndSaveMutation.isPending ? (
@@ -400,7 +522,9 @@ export default function PbxSetupPage() {
                     <RefreshCw className="size-5 text-primary" />
                     Загрузка данных
                   </h2>
-                  <p className="text-sm text-muted-foreground">Получите список сотрудников и номеров из АТС</p>
+                  <p className="text-sm text-muted-foreground">
+                    Получите список сотрудников и номеров из АТС
+                  </p>
                 </div>
                 <Button onClick={handleSync} disabled={syncMutation.isPending}>
                   {syncMutation.isPending ? (
@@ -444,6 +568,7 @@ export default function PbxSetupPage() {
                           variant="ghost"
                           className="absolute right-1 top-1/2 size-6 -translate-y-1/2"
                           onClick={handleClearEmployeeSearch}
+                          aria-label="Очистить поиск сотрудников"
                         >
                           <X className="size-3" />
                         </Button>
@@ -463,7 +588,12 @@ export default function PbxSetupPage() {
                       Выбрать всех на странице ({paginatedEmployees.length})
                     </label>
                     {filteredEmployees.length > ITEMS_PER_PAGE && (
-                      <Button size="sm" variant="ghost" onClick={handleSelectAllFilteredEmployees} className="text-xs">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleSelectAllFilteredEmployees}
+                        className="text-xs"
+                      >
                         Выбрать все найденные ({filteredEmployees.length})
                       </Button>
                     )}
@@ -497,7 +627,8 @@ export default function PbxSetupPage() {
                 {totalEmployeePages > 1 && (
                   <div className="mt-4 flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
-                      Страница {employeePage + 1} из {totalEmployeePages} ({filteredEmployees.length} всего)
+                      Страница {employeePage + 1} из {totalEmployeePages} (
+                      {filteredEmployees.length} всего)
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
@@ -511,7 +642,9 @@ export default function PbxSetupPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setEmployeePage((p) => Math.min(totalEmployeePages - 1, p + 1))}
+                        onClick={() =>
+                          setEmployeePage((p) => Math.min(totalEmployeePages - 1, p + 1))
+                        }
                         disabled={employeePage >= totalEmployeePages - 1}
                       >
                         Вперёд
@@ -550,6 +683,7 @@ export default function PbxSetupPage() {
                           variant="ghost"
                           className="absolute right-1 top-1/2 size-6 -translate-y-1/2"
                           onClick={handleClearNumberSearch}
+                          aria-label="Очистить поиск номеров"
                         >
                           <X className="size-3" />
                         </Button>
@@ -569,7 +703,12 @@ export default function PbxSetupPage() {
                       Выбрать все на странице ({paginatedNumbers.length})
                     </label>
                     {filteredNumbers.length > ITEMS_PER_PAGE && (
-                      <Button size="sm" variant="ghost" onClick={handleSelectAllFilteredNumbers} className="text-xs">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleSelectAllFilteredNumbers}
+                        className="text-xs"
+                      >
                         Выбрать все найденные ({filteredNumbers.length})
                       </Button>
                     )}
@@ -604,7 +743,8 @@ export default function PbxSetupPage() {
                 {totalNumberPages > 1 && (
                   <div className="mt-4 flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
-                      Страница {numberPage + 1} из {totalNumberPages} ({filteredNumbers.length} всего)
+                      Страница {numberPage + 1} из {totalNumberPages} ({filteredNumbers.length}{" "}
+                      всего)
                     </div>
                     <div className="flex items-center gap-2">
                       <Button
@@ -641,7 +781,8 @@ export default function PbxSetupPage() {
                   className="px-8"
                 >
                   <Check className="mr-2 size-4" />
-                  Импортировать выбранное ({selectedEmployees.size} сотрудников, {selectedNumbers.size} номеров)
+                  Импортировать выбранное ({selectedEmployees.size} сотрудников,{" "}
+                  {selectedNumbers.size} номеров)
                 </Button>
               </div>
             </>

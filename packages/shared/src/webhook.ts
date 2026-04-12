@@ -11,17 +11,13 @@ export const WEBHOOK_SECRET_MIN_LENGTH = WEBHOOK_SECRET_BYTES * 2; // hex encodi
 export function generateSecureSecret(bytes = 32): string {
   const array = new Uint8Array(bytes);
 
-  // Use crypto.getRandomValues if available (browser and modern Node.js)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const globalCrypto = (globalThis as any).crypto;
+  const globalCrypto = globalThis.crypto as Crypto | undefined;
   if (globalCrypto?.getRandomValues) {
     globalCrypto.getRandomValues(array);
   } else {
-    // Fallback for older environments using Math.random
-    // Note: This is less secure and should only be used as a last resort
-    for (let i = 0; i < bytes; i++) {
-      array[i] = Math.floor(Math.random() * 256);
-    }
+    throw new Error(
+      "Web Crypto API is not available. This environment does not support cryptographically secure random number generation.",
+    );
   }
 
   return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");

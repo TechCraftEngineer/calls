@@ -88,6 +88,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     reportWeeklyTime: "18:10",
     reportMonthlyDay: "last",
     reportMonthlyTime: "18:20",
+    reportSkipWeekends: false,
     reportManagedUserIds: [],
     maxChatId: "",
     maxDailyReport: false,
@@ -130,6 +131,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       reportWeeklyTime: schedule.reportWeeklyTime,
       reportMonthlyDay: schedule.reportMonthlyDay,
       reportMonthlyTime: schedule.reportMonthlyTime,
+      reportSkipWeekends: schedule.reportSkipWeekends ?? false,
     }));
   }, [schedule]);
 
@@ -198,6 +200,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
                 reportWeeklyTime: form.reportWeeklyTime,
                 reportMonthlyDay: form.reportMonthlyDay,
                 reportMonthlyTime: form.reportMonthlyTime,
+                reportSkipWeekends: form.reportSkipWeekends,
               },
             })
           }

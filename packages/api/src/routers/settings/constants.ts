@@ -20,6 +20,7 @@ export const REPORT_SETTINGS_KEYS = [
   "report_weekly_time",
   "report_monthly_day",
   "report_monthly_time",
+  "report_skip_weekends",
 ] as const;
 
 /** Маппинг camelCase → snake_case для ключей prompts */
@@ -30,6 +31,7 @@ export const REPORT_PROMPTS_CAMEL_TO_SNAKE: Record<string, (typeof REPORT_SETTIN
     reportWeeklyTime: "report_weekly_time",
     reportMonthlyDay: "report_monthly_day",
     reportMonthlyTime: "report_monthly_time",
+    reportSkipWeekends: "report_skip_weekends",
   };
 
 /** Маппинг snake_case → camelCase для ключей prompts */
@@ -40,4 +42,5 @@ export const REPORT_PROMPTS_SNAKE_TO_CAMEL: Record<(typeof REPORT_SETTINGS_KEYS)
     report_weekly_time: "reportWeeklyTime",
     report_monthly_day: "reportMonthlyDay",
     report_monthly_time: "reportMonthlyTime",
+    report_skip_weekends: "reportSkipWeekends",
   };

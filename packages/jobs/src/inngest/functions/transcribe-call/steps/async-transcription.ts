@@ -5,7 +5,7 @@
 
 import { createLogger } from "../../../../logger";
 import { downloadAudioFile } from "../audio/download";
-import { startAsyncTranscription } from "../gigaam/client";
+import { getAsyncResult, startAsyncTranscription } from "../gigaam/client";
 import type { PreprocessResult } from "./preprocess-audio";
 import type { StepRunner } from "./step-runner";
 import type { SyncTranscriptionResult } from "./sync-transcription";
@@ -72,10 +72,42 @@ export async function asyncTranscriptionWithCallback(
   // Шаг 3: Обрабатываем результат
   return await typedStep.run("asr/process-result", async () => {
     if (!completedEvent) {
-      // Таймаут waitForEvent - выбрасываем ошибку (polling не используем)
+      // Таймаут waitForEvent - пробуем получить результат напрямую
+      logger.warn(
+        "Таймаут ожидания события завершения транскрипции, пробуем получить результат напрямую",
+        {
+          callId,
+          taskId,
+        },
+      );
+
+      try {
+        const directResult = await getAsyncResult(taskId);
+        if (directResult.transcript) {
+          logger.info("Транскрипция получена напрямую после таймаута события", {
+            callId,
+            taskId,
+            transcriptLength: directResult.transcript.length,
+          });
+
+          return {
+            transcript: directResult.transcript,
+            segments: [],
+            processingTimeMs: 0,
+            taskId,
+          };
+        }
+      } catch (fetchError) {
+        logger.error("Не удалось получить результат транскрипции напрямую", {
+          callId,
+          taskId,
+          error: fetchError,
+        });
+      }
+
       throw new Error(
         `Таймаут ожидания события завершения транскрипции (taskId: ${taskId}). ` +
-          `Событие giga-am/transcription.completed не получено в течение 30 минут.`,
+          `Событие giga-am/transcription.completed не получено в течение 30 минут и прямой запрос также не вернул результата.`,
       );
     }
 

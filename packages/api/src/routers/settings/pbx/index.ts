@@ -1,5 +1,6 @@
 import { getPbx } from "./get-pbx";
 import { getPbxWebhookSecret } from "./get-pbx-webhook-secret";
+import { importPbxDirectory } from "./import-pbx-directory";
 import { listPbxEmployees } from "./list-pbx-employees";
 import { listPbxNumbers } from "./list-pbx-numbers";
 import { syncPbxCallsRoute } from "./sync-pbx-calls";
@@ -15,6 +16,7 @@ import { updatePbxWebhook } from "./update-pbx-webhook";
 export const pbxRouter = {
   getPbx,
   getPbxWebhookSecret,
+  importPbxDirectory,
   updatePbx,
   updatePbxAccess,
   updatePbxExcludedNumbers,

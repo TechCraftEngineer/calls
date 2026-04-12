@@ -60,7 +60,7 @@ const providers: Provider[] = [
   },
 ];
 
-export function ProviderModal({ open, onOpenChange, onComplete }: ModalProps) {
+export function ProviderModal({ open, onOpenChange, onComplete }: ModalProps<string | null>) {
   const [selected, setSelected] = useState<string | null>(null);
 
   const handleComplete = () => {
@@ -100,9 +100,7 @@ export function ProviderModal({ open, onOpenChange, onComplete }: ModalProps) {
               {/* Name and status */}
               <div className="flex-1 min-w-0">
                 <div className="font-medium">{p.name}</div>
-                {!p.available && (
-                  <div className="text-xs text-muted-foreground">Скоро</div>
-                )}
+                {!p.available && <div className="text-xs text-muted-foreground">Скоро</div>}
               </div>
 
               {/* Selection indicator */}

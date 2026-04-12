@@ -1,13 +1,22 @@
 "use client";
 
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, Textarea, toast } from "@calls/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Textarea,
+  toast,
+} from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import type { ModalProps } from "@/components/features/setup";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { useORPC } from "@/orpc/react";
-import type { ModalProps } from "@/components/features/setup";
 
 const companySchema = z.object({
   name: z.string().min(1, "Обязательно").max(100),
@@ -15,15 +24,15 @@ const companySchema = z.object({
   description: z.string().max(2000).optional(),
 });
 
-export function CompanyModal({ open, onOpenChange, onComplete }: ModalProps) {
+export function CompanyModal({ open, onOpenChange, onComplete }: ModalProps<void>) {
   const { activeWorkspace } = useWorkspace();
   const orpc = useORPC();
   const mutation = useMutation(orpc.workspaces.update.mutationOptions());
 
   const form = useForm({
     resolver: zodResolver(companySchema),
-    defaultValues: {
-      name: activeWorkspace?.name || "",
+    values: {
+      name: activeWorkspace?.name ?? "",
       nameEn: activeWorkspace?.nameEn ?? "",
       description: activeWorkspace?.description ?? "",
     },
