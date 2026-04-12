@@ -12,10 +12,10 @@ export interface StepConfig {
   href?: string;
 }
 
-export interface ModalProps {
+export interface ModalProps<T = void> {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onComplete: (data?: unknown) => void;
+  onComplete: (data?: T) => void;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

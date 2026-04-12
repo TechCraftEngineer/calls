@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Checkbox,
   Field,
   Label,
   Select,
@@ -113,6 +114,22 @@ export function ReportScheduleTab({
                   ))}
                 </SelectContent>
               </Select>
+            </Field>
+          </div>
+
+          {/* Skip Weekends Option */}
+          <div className="space-y-2">
+            <Field orientation="horizontal" className="items-center gap-2">
+              <Checkbox
+                id="reportSkipWeekends"
+                checked={form.reportSkipWeekends}
+                onCheckedChange={(checked) =>
+                  setForm((f) => ({ ...f, reportSkipWeekends: checked === true }))
+                }
+              />
+              <Label htmlFor="reportSkipWeekends" className="text-sm font-normal cursor-pointer">
+                Не отправлять в выходные (суббота и воскресенье)
+              </Label>
             </Field>
           </div>
 

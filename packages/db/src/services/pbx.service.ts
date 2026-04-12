@@ -377,6 +377,50 @@ export class PbxService {
       provider: MEGAPBX_PROVIDER,
     });
   }
+
+  async upsertEmployees(
+    workspaceId: string,
+    items: Array<{
+      externalId: string;
+      extension?: string | null;
+      email?: string | null;
+      firstName?: string | null;
+      lastName?: string | null;
+      displayName: string;
+      isActive?: boolean;
+      rawData: Record<string, unknown>;
+    }>,
+  ) {
+    return this.pbxRepository.upsertEmployees(
+      items.map((item) => ({
+        ...item,
+        workspaceId,
+        provider: MEGAPBX_PROVIDER,
+      })),
+    );
+  }
+
+  async upsertNumbers(
+    workspaceId: string,
+    items: Array<{
+      externalId: string;
+      phoneNumber: string;
+      extension?: string | null;
+      label?: string | null;
+      lineType?: string | null;
+      employeeExternalId?: string | null;
+      isActive?: boolean;
+      rawData: Record<string, unknown>;
+    }>,
+  ) {
+    return this.pbxRepository.upsertNumbers(
+      items.map((item) => ({
+        ...item,
+        workspaceId,
+        provider: MEGAPBX_PROVIDER,
+      })),
+    );
+  }
 }
 
 export type MegaPbxService = PbxService;

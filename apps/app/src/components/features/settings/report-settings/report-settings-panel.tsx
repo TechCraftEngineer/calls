@@ -1,6 +1,15 @@
 "use client";
 
-import { Card, CardContent, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger } from "@calls/ui";
+import {
+  Card,
+  CardContent,
+  Skeleton,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  toast,
+} from "@calls/ui";
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Clock, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -49,6 +58,11 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
         queryClient.invalidateQueries({
           queryKey: orpc.settings.getReportScheduleSettings.queryKey(),
         });
+        toast.success("Расписание сохранено");
+      },
+      onError: (error) => {
+        const message = error instanceof Error ? error.message : "Не удалось сохранить расписание";
+        toast.error(message);
       },
     }),
   );
@@ -88,6 +102,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     reportWeeklyTime: "18:10",
     reportMonthlyDay: "last",
     reportMonthlyTime: "18:20",
+    reportSkipWeekends: false,
     reportManagedUserIds: [],
     maxChatId: "",
     maxDailyReport: false,
@@ -130,6 +145,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
       reportWeeklyTime: schedule.reportWeeklyTime,
       reportMonthlyDay: schedule.reportMonthlyDay,
       reportMonthlyTime: schedule.reportMonthlyTime,
+      reportSkipWeekends: schedule.reportSkipWeekends ?? false,
     }));
   }, [schedule]);
 
@@ -198,6 +214,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
                 reportWeeklyTime: form.reportWeeklyTime,
                 reportMonthlyDay: form.reportMonthlyDay,
                 reportMonthlyTime: form.reportMonthlyTime,
+                reportSkipWeekends: form.reportSkipWeekends,
               },
             })
           }

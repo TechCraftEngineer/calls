@@ -5,7 +5,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 FROM base AS prepare
-RUN bun add -g turbo@2.9.5
+RUN bun add -g turbo@2.9.6
 COPY . .
 RUN turbo prune @calls/app-server --docker
 

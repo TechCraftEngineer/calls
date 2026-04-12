@@ -1,33 +1,44 @@
 "use client";
 
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Input, PasswordInput, toast } from "@calls/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  PasswordInput,
+  toast,
+} from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Copy, Key, Loader2, Webhook } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Copy, Key, Loader2, Webhook } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useORPC } from "@/orpc/react";
-import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import type { ModalProps } from "@/components/features/setup";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
+import { useORPC } from "@/orpc/react";
 
 const apiSchema = z.object({
   baseUrl: z.string().url("Введите корректный URL"),
   apiKey: z.string().min(1, "API Key обязателен"),
 });
 
-export function ApiModal({ open, onOpenChange, onComplete }: ModalProps) {
+export function ApiModal({ open, onOpenChange, onComplete }: ModalProps<{ apiKey: string }>) {
   const orpc = useORPC();
   const queryClient = useQueryClient();
   const { activeWorkspace } = useWorkspace();
   const [testing, setTesting] = useState(false);
 
   const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
-  const updatePbxAccessMutation = useMutation(orpc.settings.updatePbxAccess.mutationOptions({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: orpc.settings.getIntegrations.queryKey() });
-    },
-  }));
+  const updatePbxAccessMutation = useMutation(
+    orpc.settings.updatePbxAccess.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpc.settings.getIntegrations.queryKey() });
+      },
+    }),
+  );
 
   // Compute webhookUrl on client only to avoid SSR issues
   const [origin, setOrigin] = useState("");
@@ -110,7 +121,9 @@ export function ApiModal({ open, onOpenChange, onComplete }: ModalProps) {
             Укажите этот адрес в настройках вашей АТС для получения событий о звонках
           </p>
           <div className="mt-2 flex items-center gap-2">
-            <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs">{webhookUrl || "Загрузка..."}</code>
+            <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs">
+              {webhookUrl || "Загрузка..."}
+            </code>
             <Button
               size="icon"
               variant="ghost"
@@ -134,7 +147,9 @@ export function ApiModal({ open, onOpenChange, onComplete }: ModalProps) {
             Укажите этот ключ в настройках АТС для подписи вебхуков (X-Webhook-Signature)
           </p>
           <div className="mt-2 flex items-center gap-2">
-            <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs font-mono">{webhookSecret}</code>
+            <code className="flex-1 truncate rounded bg-muted px-2 py-1 text-xs font-mono">
+              {webhookSecret}
+            </code>
             <Button
               size="icon"
               variant="ghost"
@@ -159,11 +174,7 @@ export function ApiModal({ open, onOpenChange, onComplete }: ModalProps) {
             <label className="mb-1 block text-sm font-medium">API Key</label>
             <PasswordInput {...form.register("apiKey")} placeholder="Ключ авторизации" />
           </div>
-          <Button
-            type="submit"
-            disabled={testing}
-            className="w-full"
-          >
+          <Button type="submit" disabled={testing} className="w-full">
             {testing ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
             Проверить и сохранить
           </Button>

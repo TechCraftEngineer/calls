@@ -1,12 +1,20 @@
 "use client";
 
-import { Button, Card, CardContent, Dialog, DialogContent, DialogHeader, DialogTitle } from "@calls/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@calls/ui";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useORPC } from "@/orpc/react";
 import type { ModalProps } from "@/components/features/setup";
+import { useORPC } from "@/orpc/react";
 
-export function PromptsModal({ open, onOpenChange, onComplete }: ModalProps) {
+export function PromptsModal({ open, onOpenChange, onComplete }: ModalProps<{ promptId: string }>) {
   const orpc = useORPC();
   const { data: prompts, isLoading } = useQuery({
     ...orpc.settings.getPrompts.queryOptions(),

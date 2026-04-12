@@ -15,6 +15,7 @@ export interface ReportSettingsForm {
   reportWeeklyTime: string;
   reportMonthlyDay: string;
   reportMonthlyTime: string;
+  reportSkipWeekends: boolean;
   reportManagedUserIds: string[];
   maxChatId: string;
   maxDailyReport: boolean;
