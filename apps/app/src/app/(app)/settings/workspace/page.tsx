@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import WorkspaceGeneralForm from "@/components/features/workspaces/workspace-general-form";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { getCurrentUser } from "@/lib/auth";
+import { clearActiveWorkspaceCookie } from "@/lib/cookies";
 import { useORPC } from "@/orpc/react";
 
 export default function WorkspaceSettingsPage() {
@@ -56,7 +57,24 @@ export default function WorkspaceSettingsPage() {
       onSuccess: async () => {
         await refreshWorkspaces();
         toast.success("Компания удалена");
-        router.replace(paths.onboarding.createWorkspace);
+
+        // Проверяем оставшиеся компании после обновления
+        const remainingWorkspaces = queryClient.getQueryData<{ workspaces: typeof workspaces.$inferSelect[]; activeWorkspaceId: string | null }>(
+          orpc.workspaces.list.queryKey()
+        );
+
+        const hasOtherWorkspaces = remainingWorkspaces && remainingWorkspaces.workspaces.length > 0;
+
+        if (hasOtherWorkspaces) {
+          // Если есть другие компании - очищаем куку и перезагружаем на корень
+          // Провайдер автоматически выберет первую доступную компанию
+          clearActiveWorkspaceCookie();
+          window.location.href = paths.dashboard.root;
+        } else {
+          // Если компаний больше нет - на onboarding
+          clearActiveWorkspaceCookie();
+          window.location.href = paths.onboarding.createWorkspace;
+        }
       },
       onError: (err) => {
         toast.error(err instanceof Error ? err.message : "Не удалось удалить компанию");
