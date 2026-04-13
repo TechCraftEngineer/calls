@@ -310,6 +310,42 @@ export default function InviteAcceptPage() {
     );
   }
 
+  // Сначала проверяем ошибку загрузки приглашения
+  if (fetchError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8F9FB] p-4">
+        <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              className="text-amber-600"
+              strokeWidth="2"
+            >
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </div>
+          <h1 className="mb-2 text-2xl font-bold text-gray-900">Приглашение не найдено</h1>
+          <p className="mb-6 text-sm text-gray-600">
+            Ссылка приглашения истекла или недействительна. Попросите администратора отправить новое
+            приглашение.
+          </p>
+          <Link
+            href={paths.auth.signin}
+            className="inline-flex rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white no-underline hover:bg-gray-800 transition-colors min-h-[44px] items-center justify-center"
+          >
+            Перейти ко входу
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (
     inviteMode === "loading" ||
     inviteMode === "checking-auth" ||
@@ -327,7 +363,7 @@ export default function InviteAcceptPage() {
     );
   }
 
-  if (fetchError || !invitation) {
+  if (!invitation) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F8F9FB] p-4">
         <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
