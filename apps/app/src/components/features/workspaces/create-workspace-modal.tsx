@@ -16,7 +16,7 @@ type CreateWorkspaceFormData = z.infer<typeof createWorkspaceSchema>;
 
 interface CreateWorkspaceModalProps {
   onClose: () => void;
-  onSuccess: (workspaceId: string) => void;
+  onSuccess: (workspaceId: string) => void | Promise<void>;
 }
 
 export default function CreateWorkspaceModal({ onClose, onSuccess }: CreateWorkspaceModalProps) {
@@ -34,9 +34,9 @@ export default function CreateWorkspaceModal({ onClose, onSuccess }: CreateWorks
 
   const createMutation = useMutation(
     orpc.workspaces.create.mutationOptions({
-      onSuccess: (workspace) => {
+      onSuccess: async (workspace) => {
         toast.success("Компания создана");
-        onSuccess(workspace.id);
+        await onSuccess(workspace.id);
       },
       onError: (err) => {
         const msg = err instanceof Error ? err.message : "Не удалось создать компанию";

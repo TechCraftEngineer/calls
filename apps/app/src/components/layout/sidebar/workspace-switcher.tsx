@@ -1,7 +1,7 @@
 "use client";
 
 import { AudioWaveform, ChevronUp, Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +20,15 @@ import { roleTranslations } from "./nav-items";
 
 export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
-  const { workspaces, activeWorkspace, setActiveWorkspace } = useWorkspace();
+  const { workspaces, activeWorkspace, setActiveWorkspace, refreshWorkspaces } = useWorkspace();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  useEffect(() => {
+    console.log("[WorkspaceSwitcher] render:", {
+      activeWorkspaceId: activeWorkspace?.id,
+      activeWorkspaceName: activeWorkspace?.name,
+    });
+  }, [activeWorkspace]);
 
   if (!activeWorkspace) {
     return null;
@@ -60,8 +67,11 @@ export function WorkspaceSwitcher() {
             {workspaces.map((ws) => (
               <DropdownMenuItem
                 key={ws.id}
-                onClick={() => setActiveWorkspace(ws.id)}
-                className="gap-2 p-2"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setActiveWorkspace(ws.id);
+                }}
+                className="gap-2 p-2 cursor-pointer"
               >
                 <div className="flex size-6 items-center justify-center rounded-sm border">
                   <AudioWaveform className="size-4 shrink-0" />
@@ -89,9 +99,10 @@ export function WorkspaceSwitcher() {
       {isCreateModalOpen && (
         <CreateWorkspaceModal
           onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={(workspaceId) => {
+          onSuccess={async (workspaceId) => {
             setIsCreateModalOpen(false);
-            setActiveWorkspace(workspaceId);
+            await refreshWorkspaces();
+            await setActiveWorkspace(workspaceId);
           }}
         />
       )}
