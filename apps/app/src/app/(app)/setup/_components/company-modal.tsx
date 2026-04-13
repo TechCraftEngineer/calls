@@ -40,6 +40,7 @@ export function CompanyModal({ open, onOpenChange, onComplete }: ModalProps<void
   });
 
   const prevWorkspaceIdRef = useRef<string | null>(null);
+  const prevOpenRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!activeWorkspace) return;
@@ -48,7 +49,7 @@ export function CompanyModal({ open, onOpenChange, onComplete }: ModalProps<void
     // 2. Workspace actually changed (different ID), or
     // 3. Form is pristine (not dirty - user hasn't modified anything)
     const workspaceChanged = prevWorkspaceIdRef.current !== activeWorkspace.id;
-    const modalJustOpened = open && prevWorkspaceIdRef.current === null;
+    const modalJustOpened = open && !prevOpenRef.current;
 
     if ((modalJustOpened || workspaceChanged || !form.formState.isDirty) && open) {
       form.reset({
@@ -56,9 +57,12 @@ export function CompanyModal({ open, onOpenChange, onComplete }: ModalProps<void
         nameEn: activeWorkspace.nameEn ?? "",
         description: activeWorkspace.description ?? "",
       });
+      // Only update prevWorkspaceIdRef when we actually reset the form (modal is open)
+      prevWorkspaceIdRef.current = activeWorkspace.id;
     }
 
-    prevWorkspaceIdRef.current = activeWorkspace.id;
+    // Track previous open state for next render
+    prevOpenRef.current = open;
   }, [activeWorkspace, form, open]);
 
   const handleSubmit = async (data: z.infer<typeof companySchema>) => {

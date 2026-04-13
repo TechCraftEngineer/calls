@@ -209,19 +209,19 @@ queryClient.setQueryData(
 
 ```tsx
 // Точная фильтрация
-queryClient.invalidateQueries(
-  orpc.brands.getById.queryFilter({ id: "123" })
-);
+queryClient.invalidateQueries({
+  queryKey: orpc.brands.getById.queryKey({ id: "123" })
+});
 
-// Весь роутер
-queryClient.invalidateQueries(
-  orpc.brands.pathFilter()
-);
+// Весь роутер (все запросы брендов)
+queryClient.invalidateQueries({
+  queryKey: orpc.brands.list.queryKey()
+});
 
 // Infinite queries
-queryClient.invalidateQueries(
-  orpc.brands.list.infiniteQueryFilter({ status: "active" })
-);
+queryClient.invalidateQueries({
+  queryKey: orpc.brands.list.infiniteQuery.queryKey({ status: "active" })
+});
 ```
 
 ## Subscriptions

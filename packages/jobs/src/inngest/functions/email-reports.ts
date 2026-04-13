@@ -16,7 +16,7 @@ import {
 import { type ManagerStats, ReportEmail, sendEmail } from "@calls/emails";
 import { formatReportSubject } from "@calls/shared";
 import { subMonths } from "date-fns";
-import { formatInTimeZone } from "date-fns-tz";
+import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { inngest } from "../client";
 
 const TZ = "Europe/Moscow";
@@ -38,7 +38,7 @@ function maskEmail(email: string): string {
 }
 
 function nowInMoscow(): Date {
-  return new Date();
+  return toZonedTime(new Date(), TZ);
 }
 
 function parseTimeHHMM(s: string): { h: number; m: number } {

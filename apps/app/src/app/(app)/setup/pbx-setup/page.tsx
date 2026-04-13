@@ -51,7 +51,9 @@ export default function PbxSetupPage() {
     setEmployeeSearch,
     numberSearch,
     setNumberSearch,
+    employeePage,
     setEmployeePage,
+    numberPage,
     setNumberPage,
     filteredEmployees,
     filteredNumbers,
@@ -126,7 +128,7 @@ export default function PbxSetupPage() {
                 employeeSearch={employeeSearch}
                 setEmployeeSearch={setEmployeeSearch}
                 setEmployeePage={setEmployeePage}
-                employeePage={0}
+                employeePage={employeePage}
                 totalEmployeePages={totalEmployeePages}
                 allEmployeesSelected={allEmployeesSelected}
                 onToggleEmployee={handleToggleEmployee}
@@ -143,7 +145,7 @@ export default function PbxSetupPage() {
                 numberSearch={numberSearch}
                 setNumberSearch={setNumberSearch}
                 setNumberPage={setNumberPage}
-                numberPage={0}
+                numberPage={numberPage}
                 totalNumberPages={totalNumberPages}
                 allNumbersSelected={allNumbersSelected}
                 onToggleNumber={handleToggleNumber}

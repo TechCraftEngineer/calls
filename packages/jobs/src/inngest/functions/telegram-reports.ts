@@ -14,7 +14,7 @@ import {
 } from "@calls/db";
 import { sendMessage } from "@calls/telegram-bot";
 import { subMonths } from "date-fns";
-import { formatInTimeZone } from "date-fns-tz";
+import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { formatTelegramReportHtml, splitTelegramHtmlMessage } from "../../reports";
 import { inngest } from "../client";
 
@@ -54,7 +54,7 @@ function formatDateInMoscow(date: Date): string {
 }
 
 function nowInMoscow(): Date {
-  return new Date();
+  return toZonedTime(new Date(), TZ);
 }
 
 function isWeekend(d: Date): boolean {
