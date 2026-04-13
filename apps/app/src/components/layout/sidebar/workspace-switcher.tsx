@@ -22,15 +22,21 @@ export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
   const { workspaces, activeWorkspace, setActiveWorkspace, refreshWorkspaces } = useWorkspace();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   if (!activeWorkspace) {
     return null;
   }
 
+  const handleSelectWorkspace = async (workspaceId: string) => {
+    setDropdownOpen(false);
+    await setActiveWorkspace(workspaceId);
+  };
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
+        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
@@ -62,7 +68,7 @@ export function WorkspaceSwitcher() {
                 key={ws.id}
                 onSelect={(e) => {
                   e.preventDefault();
-                  setActiveWorkspace(ws.id);
+                  handleSelectWorkspace(ws.id);
                 }}
                 className="gap-2 p-2 cursor-pointer"
               >

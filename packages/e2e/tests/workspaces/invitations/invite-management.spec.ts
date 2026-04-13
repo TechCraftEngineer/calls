@@ -328,6 +328,7 @@ test.describe("Управление приглашениями в рабочем
       await revokeButton.click();
 
       await expect(page.locator("text=не найдено")).toBeVisible();
+    });
   });
 
   test.describe("Копирование ссылки приглашения", () => {
@@ -519,3 +520,4 @@ test.describe("Управление приглашениями в рабочем
       });
     }
   });
+});
