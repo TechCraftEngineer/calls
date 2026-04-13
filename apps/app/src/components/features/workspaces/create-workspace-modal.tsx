@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Input, toast } from "@calls/ui";
+import { Button, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, X } from "lucide-react";

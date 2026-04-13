@@ -22,19 +22,13 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
-import { classNames } from "@/lib/utils";
 import { useORPC } from "@/orpc/react";
 import CallDetailModal from "../call-detail-modal";
 import RecommendationsModal from "../recommendations-modal";
 import { BulkDeleteConfirmModal } from "./bulk-delete-confirm-modal";
 import { getCallListColumns } from "./call-list-columns";
 import { CallListEmpty } from "./call-list-empty";
-import {
-  getLocalDateKey,
-  useCallListSelection,
-  useColumnSchema,
-  useDayToneByDate,
-} from "./call-list-hooks";
+import { useCallListSelection, useColumnSchema, useDayToneByDate } from "./call-list-hooks";
 import type { CallListProps } from "./types";
 
 export interface CallListDataGridProps extends CallListProps {
@@ -72,7 +66,7 @@ export function CallListDataGrid({
     useCallListSelection(calls);
 
   // Используем хук для управления тонами дат
-  const dayToneByDate = useDayToneByDate(calls);
+  const _dayToneByDate = useDayToneByDate(calls);
 
   // Используем хук для управления схемой колонок
   const {

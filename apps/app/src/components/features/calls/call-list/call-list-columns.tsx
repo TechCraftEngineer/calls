@@ -46,7 +46,7 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
 
   const renderLinkOrButton = createLinkOrButton(router, onSelectCall);
 
-  const columnTooltips: Record<string, string> = {
+  const _columnTooltips: Record<string, string> = {
     status: "Статус звонка (принят, пропущен, ошибка и т.д.)",
     score: "Ценность звонка (0 = не оценено, 1-5 = оценка сделки)",
     summary: "Краткое резюме разговора",
