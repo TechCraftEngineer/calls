@@ -38,12 +38,13 @@ export default function WorkspaceSettingsPage() {
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const isOwner = activeWorkspace?.role === "owner";
 
-  const { data: workspace } = useQuery<typeof workspaces.$inferSelect>({
-    ...orpc.workspaces.get.queryOptions({
-      input: { workspaceId: workspaceId ?? "" },
-    }),
-    enabled: !!workspaceId,
-  });
+  const { data: workspace } = useQuery<typeof workspaces.$inferSelect>(
+    workspaceId
+      ? orpc.workspaces.get.queryOptions({
+          input: { workspaceId },
+        })
+      : { queryKey: ["workspace-skip"], queryFn: () => null, enabled: false },
+  );
 
   const invalidateWorkspaceQueries = () => {
     if (!workspaceId) return;
@@ -117,6 +118,12 @@ export default function WorkspaceSettingsPage() {
     });
   }, [router]);
 
+  useEffect(() => {
+    if (activeWorkspace && !isWorkspaceAdmin) {
+      router.push(paths.forbidden);
+    }
+  }, [activeWorkspace, isWorkspaceAdmin, router]);
+
   if (!activeWorkspace) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -126,7 +133,6 @@ export default function WorkspaceSettingsPage() {
   }
 
   if (!isWorkspaceAdmin) {
-    router.push(paths.forbidden);
     return null;
   }
 
