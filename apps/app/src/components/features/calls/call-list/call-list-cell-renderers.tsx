@@ -1,10 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
-import {
-  PROCESSING_STATUS_CONFIG,
-  isValidProcessingStatus,
-} from "@calls/api";
+import { isValidProcessingStatus, PROCESSING_STATUS_CONFIG } from "@calls/db/shared";
 import { Button, Rating, Tooltip, TooltipContent, TooltipTrigger } from "@calls/ui";
 import { Loader2 } from "lucide-react";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
@@ -229,11 +226,7 @@ export function renderProcessingStatusCell(call: CallWithDetails["call"]) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <span
-            className="op-badge badge-gray-op"
-            role="status"
-            aria-label="Статус: не задан"
-          >
+          <span className="op-badge badge-gray-op" role="status" aria-label="Статус: не задан">
             —
           </span>
         </TooltipTrigger>

@@ -975,7 +975,7 @@ function DataGridTableBodyRow<TData>({
   )
 }
 
-function DataGridTableBodyRowExpandded<TData>({ row }: { row: Row<TData> }) {
+function DataGridTableBodyRowExpanded<TData>({ row }: { row: Row<TData> }) {
   const { props, table } = useDataGrid()
 
   return (
@@ -1083,7 +1083,7 @@ function DataGridTableRenderedRow<TData>({
           </DataGridTableBodyRowCell>
         ))}
       </DataGridTableBodyRow>
-      {row.getIsExpanded() && <DataGridTableBodyRowExpandded row={row} />}
+      {row.getIsExpanded() && <DataGridTableBodyRowExpanded row={row} />}
     </Fragment>
   )
 }
@@ -1410,7 +1410,7 @@ export {
   DataGridTableBody,
   DataGridTableBodyRow,
   DataGridTableBodyRowCell,
-  DataGridTableBodyRowExpandded,
+  DataGridTableBodyRowExpanded,
   DataGridTableRenderedRow,
   DataGridTableBodyRowSkeleton,
   DataGridTableBodyRowSkeletonCell,

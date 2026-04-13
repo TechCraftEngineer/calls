@@ -3,7 +3,7 @@
  */
 
 import { z } from "zod";
-import { PROCESSING_STATUS, type ProcessingStatus } from "../utils/call-processing-status";
+import { PROCESSING_STATUS } from "../utils/call-processing-status";
 
 /**
  * Схема для валидации UUID
@@ -158,13 +158,10 @@ export const markTranscriptionFailedSchema = z.object({
  * Схема для обновления статуса обработки звонка
  * Использует shared PROCESSING_STATUS для единообразия
  */
-const VALID_PROCESSING_STATUSES = Object.values(PROCESSING_STATUS) as string[];
-
 export const updateProcessingStatusSchema = z.object({
-  processingStatus: z.custom<ProcessingStatus>(
-    (val) => typeof val === "string" && VALID_PROCESSING_STATUSES.includes(val),
-    { message: `processingStatus должен быть одним из: ${VALID_PROCESSING_STATUSES.join(", ")}` }
-  ),
+  processingStatus: z.enum(PROCESSING_STATUS, {
+    message: `processingStatus должен быть одним из: ${Object.values(PROCESSING_STATUS).join(", ")}`,
+  }),
   processingError: z.string().max(2000).nullable().optional(),
   processingStartedAt: z.preprocess(
     (value) => (value instanceof Date ? value.toISOString() : value),

@@ -30,7 +30,7 @@ export {
   DataGridTableBody,
   DataGridTableBodyRow,
   DataGridTableBodyRowCell,
-  DataGridTableBodyRowExpandded,
+  DataGridTableBodyRowExpanded,
   DataGridTableRenderedRow,
   DataGridTableBodyRowSkeleton,
   DataGridTableBodyRowSkeletonCell,
