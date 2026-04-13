@@ -2,10 +2,24 @@
 
 import { paths } from "@calls/config";
 import type { workspaces } from "@calls/db/schema";
-import { Button, Card, CardContent, toast } from "@calls/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  toast,
+} from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import WorkspaceGeneralForm from "@/components/features/workspaces/workspace-general-form";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { getCurrentUser } from "@/lib/auth";
@@ -17,6 +31,8 @@ export default function WorkspaceSettingsPage() {
   const queryClient = useQueryClient();
   const orpc = useORPC();
   const { activeWorkspace, refreshWorkspaces } = useWorkspace();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const workspaceId = activeWorkspace?.id ?? null;
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
@@ -55,6 +71,8 @@ export default function WorkspaceSettingsPage() {
   const deleteMutation = useMutation(
     orpc.workspaces.delete.mutationOptions({
       onSuccess: async () => {
+        setIsDeleteDialogOpen(false);
+        setDeleteConfirmText("");
         toast.success("Компания удалена");
 
         try {
@@ -128,14 +146,11 @@ export default function WorkspaceSettingsPage() {
 
   const handleDeleteWorkspace = () => {
     if (!workspaceId) return;
-    if (
-      !confirm(
-        `Вы уверены, что хотите удалить компанию "${activeWorkspace.name}"? Это действие нельзя отменить.`,
-      )
-    )
-      return;
+    if (deleteConfirmText.trim() !== activeWorkspace.name) return;
     deleteMutation.mutate({ workspaceId });
   };
+
+  const isDeleteConfirmed = deleteConfirmText.trim() === activeWorkspace.name;
 
   return (
     <div className="space-y-8">
@@ -155,24 +170,83 @@ export default function WorkspaceSettingsPage() {
       ) : null}
 
       {isOwner && (
-        <Card className="border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20">
-          <CardContent className="p-6">
-            <h3 className="text-base font-bold text-red-800 dark:text-red-400 mb-2">
-              Опасная зона
-            </h3>
-            <p className="text-sm text-red-700 dark:text-red-300 mb-4">
-              Удаление компании необратимо. Все данные (звонки, настройки, участники) будут удалены.
-            </p>
-            <Button
-              variant="outline"
-              className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30"
-              onClick={handleDeleteWorkspace}
-              disabled={deleteMutation.isPending}
-            >
-              {deleteMutation.isPending ? "Удаление…" : "Удалить компанию"}
-            </Button>
-          </CardContent>
-        </Card>
+        <>
+          <Card className="border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20">
+            <CardContent className="p-6">
+              <h3 className="text-base font-bold text-red-800 dark:text-red-400 mb-2">
+                Опасная зона
+              </h3>
+              <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+                Удаление компании необратимо. Все данные (звонки, настройки, участники) будут
+                удалены.
+              </p>
+              <Button
+                variant="outline"
+                className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30"
+                onClick={() => setIsDeleteDialogOpen(true)}
+              >
+                Удалить компанию
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Dialog
+            open={isDeleteDialogOpen}
+            onOpenChange={(open) => {
+              setIsDeleteDialogOpen(open);
+              if (!open) setDeleteConfirmText("");
+            }}
+          >
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Удалить компанию?</DialogTitle>
+                <DialogDescription>
+                  Вы уверены, что хотите удалить компанию{" "}
+                  <span className="font-semibold text-foreground">"{activeWorkspace.name}"</span>?
+                  Это действие нельзя отменить. Все данные (звонки, настройки, участники) будут
+                  удалены навсегда.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-2">
+                <Label htmlFor="delete-confirm" className="text-sm font-medium">
+                  Введите <span className="font-mono font-semibold">{activeWorkspace.name}</span>{" "}
+                  для подтверждения
+                </Label>
+                <Input
+                  id="delete-confirm"
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={activeWorkspace.name}
+                  disabled={deleteMutation.isPending}
+                  autoComplete="off"
+                  spellCheck={false}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && isDeleteConfirmed) {
+                      handleDeleteWorkspace();
+                    }
+                  }}
+                />
+              </div>
+
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" disabled={deleteMutation.isPending}>
+                    Отмена
+                  </Button>
+                </DialogClose>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteWorkspace}
+                  disabled={deleteMutation.isPending || !isDeleteConfirmed}
+                >
+                  {deleteMutation.isPending ? "Удаление…" : "Удалить компанию"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
       )}
     </div>
   );
