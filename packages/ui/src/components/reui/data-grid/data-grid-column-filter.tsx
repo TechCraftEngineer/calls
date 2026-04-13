@@ -1,10 +1,10 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { Badge } from "../badge"
 import { Column } from "@tanstack/react-table"
 
 import { cn } from "../../../lib/utils"
-import { Badge } from "../badge"
 import { Button } from "../../button"
 import { Input } from "../../input"
 import {

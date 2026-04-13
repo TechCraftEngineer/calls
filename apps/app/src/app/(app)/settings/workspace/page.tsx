@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import { workspaces } from "@calls/db/schema";
 import { Button, Card, CardContent, toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";

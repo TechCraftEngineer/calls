@@ -357,10 +357,8 @@ export function CallListDataGrid({
               />
             </div>
           </div>
-          <DataGridContainer className="border-0">
-            <div className="max-h-[70vh] overflow-auto">
-              <DataGridTable<(typeof calls)[0]> />
-            </div>
+          <DataGridContainer className="border-0 max-h-[70vh] overflow-auto">
+            <DataGridTable<(typeof calls)[0]> />
             <div className="px-4 py-3">
               <DataGridPagination
                 sizes={[...PAGINATION_CONSTANTS.PER_PAGE_OPTIONS]}

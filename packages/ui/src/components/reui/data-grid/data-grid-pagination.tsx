@@ -66,7 +66,7 @@ function DataGridPagination(props: DataGridPaginationProps): React.JSX.Element {
         .replace("{from}", from.toString())
         .replace("{to}", to.toString())
         .replace("{count}", recordCount.toString())
-    : `${from} - ${to} of ${recordCount}`
+    : `${from} — ${to} из ${recordCount}`
 
   // Pagination limit logic
   const paginationMoreLimit = mergedProps?.moreLimit || 5
