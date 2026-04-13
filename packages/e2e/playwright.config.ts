@@ -42,4 +42,12 @@ export default defineConfig({
   expect: {
     timeout: 10000,
   },
+
+  // webServer запускается вручную для отладки
+  // webServer: {
+  //   command: "cd ../../apps/app && bun run dev",
+  //   url: "http://localhost:3000/api/health",
+  //   reuseExistingServer: !process.env.CI,
+  //   timeout: 180000,
+  // },
 });
