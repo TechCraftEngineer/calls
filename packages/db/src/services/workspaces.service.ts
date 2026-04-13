@@ -72,9 +72,22 @@ export class WorkspacesService {
   }
 
   async delete(id: string) {
+    // Get all members before deletion to invalidate their caches
+    const members = await this.workspacesRepository.getMembers(id);
+
     const result = await this.workspacesRepository.delete(id);
+
     // Invalidate cache for this workspace
     workspaceCache.invalidateWorkspace(id);
+
+    // Invalidate user workspaces cache for all members
+    for (const member of members) {
+      workspaceCache.invalidateUserWorkspaces(member.userId);
+      // Also invalidate active workspace cache
+      const activeKey = workspaceCache.createActiveWorkspaceKey(member.userId);
+      workspaceCache.delete(activeKey);
+    }
+
     return result;
   }
 

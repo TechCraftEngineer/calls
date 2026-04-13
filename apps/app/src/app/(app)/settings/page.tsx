@@ -73,33 +73,38 @@ export default function SettingsPage() {
       onSuccess: async () => {
         setIsDeleteDialogOpen(false);
         setDeleteConfirmText("");
-        toast.success("Компания удалена");
 
         try {
-          // Сначала инвалидируем кэш, затем получаем свежие данные
-          await queryClient.invalidateQueries({
-            queryKey: orpc.workspaces.list.queryKey(),
-          });
+          // Очищаем куку активной компании сразу
+          clearActiveWorkspaceCookie();
+
+          // Даем серверу время обработать удаление и инвалидировать кэш
+          await new Promise((resolve) => setTimeout(resolve, 300));
+
+          // Полностью очищаем весь кэш React Query
+          queryClient.clear();
+
+          // Получаем свежий список компаний с сервера
           const remainingWorkspaces = await queryClient.fetchQuery(
             orpc.workspaces.list.queryOptions(),
           );
 
+          toast.success("Компания удалена");
+
           const hasOtherWorkspaces =
             remainingWorkspaces && remainingWorkspaces.workspaces.length > 0;
 
+          // Используем window.location для полной перезагрузки страницы
+          // Это гарантирует, что все состояние приложения будет сброшено
           if (hasOtherWorkspaces) {
-            // Если есть другие компании - очищаем куку и перезагружаем на корень
-            // Провайдер автоматически выберет первую доступную компанию
-            clearActiveWorkspaceCookie();
             window.location.href = paths.dashboard.root;
           } else {
-            // Если компаний больше нет - на onboarding
-            clearActiveWorkspaceCookie();
             window.location.href = paths.onboarding.createWorkspace;
           }
-        } catch {
-          // При ошибке - fallback redirect
+        } catch (error) {
+          console.error("Error during workspace deletion redirect:", error);
           clearActiveWorkspaceCookie();
+          queryClient.clear();
           window.location.href = paths.dashboard.root;
         }
       },
