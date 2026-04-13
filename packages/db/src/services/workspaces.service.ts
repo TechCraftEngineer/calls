@@ -224,8 +224,8 @@ export class WorkspacesService {
     // Update cache
     const cacheKey = workspaceCache.createActiveWorkspaceKey(userId);
     workspaceCache.set(cacheKey, workspaceId);
-    // Invalidate user workspaces cache since active workspace changed
-    workspaceCache.invalidateUserWorkspaces(userId);
+    // НЕ инвалидируем user workspaces cache - он не содержит activeWorkspaceId
+    // activeWorkspaceId хранится в отдельном ключе который мы только что обновили
   }
 
   async completeOnboarding(workspaceId: string, userId?: string) {

@@ -2,6 +2,7 @@
 
 import { Button } from "@calls/ui";
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 
 interface RecommendationsModalProps {
   isOpen: boolean;
@@ -48,7 +49,7 @@ export default function RecommendationsModal({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="modal-overlay" ref={overlayRef} onClick={handleOverlayClick}>
       <div
         className="modal-container max-w-[600px] max-h-[80vh]"
@@ -102,6 +103,7 @@ export default function RecommendationsModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

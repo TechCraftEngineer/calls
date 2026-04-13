@@ -51,22 +51,45 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const setActiveMutation = useMutation(
     orpc.workspaces.setActive.mutationOptions({
-      onSuccess: (_, variables) => {
+      onMutate: async (variables) => {
+        // Сохраняем текущее значение для rollback при ошибке
+        const previousData = queryClient.getQueryData(orpc.workspaces.list.queryKey());
+
+        // Оптимистично обновляем кэш
+        queryClient.setQueryData(orpc.workspaces.list.queryKey(), (old) => {
+          if (!old || typeof old !== "object") return old;
+          return {
+            ...old,
+            activeWorkspaceId: variables.workspaceId,
+          };
+        });
+
         setActiveWorkspaceCookie(variables.workspaceId);
+
+        return { previousData };
+      },
+      onError: (_err, _variables, context) => {
+        // Возвращаем предыдущее значение при ошибке
+        if (context?.previousData) {
+          queryClient.setQueryData(orpc.workspaces.list.queryKey(), context.previousData);
+        }
+        toast.error("Не удалось переключить компанию. Повторите попытку.");
+      },
+      onSuccess: async () => {
+        toast.success("Компания выбрана");
+        // Ждём немного чтобы сервер точно успел обновить БД
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Инвалидируем для консистентности других компонентов
         queryClient.invalidateQueries({
           queryKey: orpc.workspaces.list.queryKey(),
         });
-        router.refresh();
-        toast.success("Компания выбрана");
-      },
-      onError: () => {
-        toast.error("Не удалось переключить компанию. Повторите попытку.");
       },
     }),
   );
 
   const workspaces = (workspacesData?.workspaces ?? []) as Workspace[];
   const activeWorkspaceId = workspacesData?.activeWorkspaceId ?? null;
+
   const activeWorkspace = useMemo(() => {
     if (!activeWorkspaceId) return workspaces[0] ?? null;
     return workspaces.find((w: Workspace) => w.id === activeWorkspaceId) ?? workspaces[0] ?? null;
@@ -102,7 +125,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   );
 
   const refreshWorkspaces = useCallback(async () => {
-    await queryClient.invalidateQueries({
+    await queryClient.refetchQueries({
       queryKey: orpc.workspaces.list.queryKey(),
     });
   }, [queryClient, orpc.workspaces.list]);

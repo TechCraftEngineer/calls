@@ -1,7 +1,7 @@
 "use client";
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@calls/ui";
-import { AppSidebar } from "@/components/layout/app-sidebar";
+import { AppSidebar } from "@/components/layout/sidebar/index";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (

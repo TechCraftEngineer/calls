@@ -2,7 +2,7 @@
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@calls/ui";
 
-import { AppSidebar } from "./app-sidebar";
+import { AppSidebar } from "./sidebar/index";
 
 export function SidebarLayout({ children }: { children: React.ReactNode }) {
   return (

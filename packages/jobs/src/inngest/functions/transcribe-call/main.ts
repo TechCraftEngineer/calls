@@ -40,7 +40,7 @@ import {
   handleAnsweringMachineFlow,
   handleNoSpeechFlow,
 } from "../../functions/transcribe-call/flows";
-import type { Call, Workspace } from "../../functions/transcribe-call/schemas";
+import type { Call } from "../../functions/transcribe-call/schemas";
 import { TranscriptionResultSchema } from "../../functions/transcribe-call/schemas";
 
 const logger = createLogger("transcribe-call");

@@ -4,7 +4,6 @@ import { paths } from "@calls/config";
 import { Button, Card, toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BarChart3, Bot, Building2, Check, Globe, Loader2, SkipForward, Users } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
