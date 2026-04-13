@@ -55,9 +55,8 @@ test.describe("Страница сброса пароля", () => {
     await expect(page.locator("text=Пароль должен содержать минимум 8 символов")).toBeVisible();
   });
 
-  test.skip("успешно сбрасывает пароль", async ({ page }) => {
+  test.skip("успешно сбрасывает пароль", async () => {
     // Тест пропущен - требует мокирования API
-    test.skip(true, "Requires API mocking");
   });
 
   test("показывает ссылку на страницу входа", async ({ page }) => {

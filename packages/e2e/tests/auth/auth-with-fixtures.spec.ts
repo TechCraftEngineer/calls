@@ -11,27 +11,22 @@ test.describe("Тесты аутентификации с фикстурами",
 
   test.skip("успешный вход с валидными данными", async () => {
     // Тест пропущен - требует мокирования API
-    test.skip(true, "Requires API mocking");
   });
 
   test.skip("ошибка входа с неверными данными", async () => {
     // Тест пропущен - требует мокирования API
-    test.skip(true, "Requires API mocking");
   });
 
   test.skip("успешная регистрация с валидными данными", async () => {
     // Тест пропущен - требует мокирования API
-    test.skip(true, "Requires API mocking");
   });
 
   test.skip("регистрация без фамилии", async () => {
     // Тест пропущен - требует мокирования API
-    test.skip(true, "Requires API mocking");
   });
 
   test.skip("тестирование с несколькими пользователями", async () => {
     // Тест пропущен - требует мокирования API
-    test.skip(true, "Requires API mocking");
   });
 
   test("проверка Google OAuth на всех страницах", async ({ page }) => {
@@ -67,6 +62,5 @@ test.describe("Тесты аутентификации с фикстурами",
 
   test.skip("восстановление пароля с валидным email", async () => {
     // Тест пропущен - требует мокирования API
-    test.skip(true, "Requires API mocking");
   });
 });

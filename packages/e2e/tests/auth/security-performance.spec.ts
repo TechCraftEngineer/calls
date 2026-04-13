@@ -1,9 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Безопасность и производительность аутентификации", () => {
-  test.skip("защита от CSRF атак", async ({ page }) => {
+  test.skip("защита от CSRF атак", async () => {
     // Тест пропущен - требует проверки конфигурации сервера
-    test.skip(true, "Requires server configuration check");
   });
 
   test("защита от XSS в полях ввода", async ({ page }) => {
@@ -29,9 +28,8 @@ test.describe("Безопасность и производительность 
     expect(alerts).toHaveLength(0);
   });
 
-  test.skip("время загрузки страниц аутентификации", async ({ page }) => {
+  test.skip("время загрузки страниц аутентификации", async () => {
     // Тест пропущен - нестабилен в CI среде
-    test.skip(true, "Unstable in CI environment");
   });
 
   test("размер ресурсов страниц аутентификации", async ({ page }) => {
@@ -77,17 +75,14 @@ test.describe("Безопасность и производительность 
 
   test.skip("защита от автоматических атак (rate limiting)", async () => {
     // Тест пропущен - требует настройки rate limiting на сервере
-    test.skip(true, "Requires server rate limiting configuration");
   });
 
   test.skip("безопасные заголовки HTTP", async () => {
     // Тест пропущен - требует настройки сервера
-    test.skip(true, "Requires server configuration");
   });
 
   test.skip("производительность отправки форм", async () => {
     // Тест пропущен - нестабилен в CI среде
-    test.skip(true, "Unstable in CI environment");
   });
 
   test("защита от SQL инъекций в полях", async ({ page }) => {
@@ -115,6 +110,5 @@ test.describe("Безопасность и производительность 
 
   test.skip("проверка утечек памяти при навигации", async () => {
     // Тест пропущен - требует профилирования памяти
-    test.skip(true, "Requires memory profiling");
   });
 });

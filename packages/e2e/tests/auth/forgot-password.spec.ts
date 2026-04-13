@@ -32,12 +32,10 @@ test.describe("Страница восстановления пароля", () =
 
   test.skip("отправляет запрос на восстановление пароля", async () => {
     // Тест пропущен - требует мокирования API
-    test.skip(true, "Requires API mocking");
   });
 
   test.skip("показывает сообщение об успешной отправке", async () => {
     // Тест пропущен - требует мокирования API
-    test.skip(true, "Requires API mocking");
   });
 
   test("показывает ссылку возврата ко входу", async ({ page }) => {
@@ -51,9 +49,8 @@ test.describe("Страница восстановления пароля", () =
     await expect(emailField).toHaveAttribute("autocomplete", "email");
   });
 
-  test.skip("поддерживает отправку формы по Enter", async ({ page }) => {
+  test.skip("поддерживает отправку формы по Enter", async () => {
     // Тест пропущен - требует мокирования API
-    test.skip(true, "Requires API mocking");
   });
 
   test("проверяет плейсхолдер поля email", async ({ page }) => {
@@ -65,8 +62,7 @@ test.describe("Страница восстановления пароля", () =
     await expect(page.locator(`text=© ${currentYear} QBS Звонки`)).toBeVisible();
   });
 
-  test.skip("скрывает форму после успешной отправки", async ({ page }) => {
+  test.skip("скрывает форму после успешной отправки", async () => {
     // Тест пропущен - требует мокирования API
-    test.skip(true, "Requires API mocking");
   });
 });
