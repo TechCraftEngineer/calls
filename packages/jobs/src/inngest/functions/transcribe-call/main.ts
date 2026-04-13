@@ -65,6 +65,7 @@ export const transcribeCallFn = inngest.createFunction(
     await step.run("db/calls:update-processing-status", () =>
       callsService.updateCallProcessingStatus(callId, PROCESSING_STATUS.TRANSCRIBING, {
         startedAt: new Date(),
+        error: null, // Очищаем предыдущую ошибку при ретрае
       }),
     );
 
@@ -209,7 +210,7 @@ export const transcribeCallFn = inngest.createFunction(
       // Фильтруем сегменты с пустым текстом (или только пробелами)
       const nonEmptySegments = mergedResult.segments.filter(
         (s: { text: string; speaker: string; start: number; end: number }) =>
-          s.text && s.text.trim().length > 0
+          s.text && s.text.trim().length > 0,
       );
 
       if (nonEmptySegments.length < mergedResult.segments.length) {
@@ -230,9 +231,7 @@ export const transcribeCallFn = inngest.createFunction(
         });
         diarizedText = fullTranscription.transcript || "[нет распознаваемой речи]";
       } else {
-        diarizedText = nonEmptySegments
-          .map((s) => `${s.speaker}: ${s.text}`)
-          .join("\n");
+        diarizedText = nonEmptySegments.map((s) => `${s.speaker}: ${s.text}`).join("\n");
       }
 
       // Создаем asrLogs на основе всех этапов обработки

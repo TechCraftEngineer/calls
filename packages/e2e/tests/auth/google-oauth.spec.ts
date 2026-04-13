@@ -42,15 +42,13 @@ test.describe("Google OAuth аутентификация", () => {
     await expect(googleIcon).toBeVisible();
   });
 
-  test.skip("клик по кнопке Google OAuth инициирует редирект", async ({ page }) => {
+  test.skip("клик по кнопке Google OAuth инициирует редирект", async () => {
     // Тест пропущен - требует реального OAuth провайдера
-    test.skip(true, "Requires real OAuth provider");
   });
 
-  test.skip("Google OAuth недоступен когда отключен", async ({ page }) => {
+  test.skip("Google OAuth недоступен когда отключен", async () => {
     // Тест пропущен - требует изменения конфигурации приложения
     // Env переменная NEXT_PUBLIC_AUTH_GOOGLE_ENABLED проверяется на этапе сборки
-    test.skip(true, "Requires app configuration change");
   });
 
   test('разделитель "или" отображается только с Google OAuth', async ({ page }) => {
@@ -76,9 +74,8 @@ test.describe("Google OAuth аутентификация", () => {
     await expect(googleButton).toHaveClass(/w-full/);
   });
 
-  test.skip("доступность кнопки Google OAuth", async ({ page }) => {
+  test.skip("доступность кнопки Google OAuth", async () => {
     // Тест пропущен - требует реального OAuth провайдера
-    test.skip(true, "Requires real OAuth provider");
   });
 
   test("мобильная версия кнопки Google OAuth", async ({ page }) => {
@@ -94,13 +91,11 @@ test.describe("Google OAuth аутентификация", () => {
     expect(buttonBox?.height).toBeGreaterThanOrEqual(36); // Минимальная высота для мобильных
   });
 
-  test.skip("обработка ошибок Google OAuth", async ({ page }) => {
+  test.skip("обработка ошибок Google OAuth", async () => {
     // Тест пропущен - требует реального OAuth провайдера
-    test.skip(true, "Requires real OAuth provider");
   });
 
-  test.skip("callback URL для Google OAuth", async ({ page }) => {
+  test.skip("callback URL для Google OAuth", async () => {
     // Тест пропущен - требует реального OAuth провайдера
-    test.skip(true, "Requires real OAuth provider");
   });
 });

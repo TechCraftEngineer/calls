@@ -181,9 +181,6 @@ export {
   DataGridColumnHeader,
   DataGridColumnVisibility,
   DataGridPagination,
-  DataGridTableDnd,
-  DataGridTableDndRowHandle,
-  DataGridTableDndRows,
   DataGridTable,
   DataGridTableBase,
   DataGridTableBody,
@@ -201,6 +198,8 @@ export {
   DataGridTableRowSelect,
   DataGridTableRowSelectAll,
   DataGridTableRowSpacer,
+  DataGridTableHeadRowCellDnd,
+  DataGridTableDndContext,
 } from "./reui/data-grid";
 export { Rating } from "./reui/rating";
 export type {
@@ -212,3 +211,6 @@ export type {
   DataGridColumnHeaderProps,
   DataGridPaginationProps,
 } from "./reui/data-grid";
+
+
+export { Spinner } from './spinner'

@@ -13,3 +13,12 @@ export const callStatusEnum = pgEnum("call_status", [
   "failed",
   "technical_error",
 ]);
+
+export const processingStatusEnum = pgEnum("processing_status", [
+  "pending",
+  "transcribing",
+  "transcribed",
+  "evaluating",
+  "completed",
+  "failed",
+]);

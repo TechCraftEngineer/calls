@@ -32,9 +32,8 @@ test.describe("Поток аутентификации", () => {
     await expect(page.locator("h1")).toContainText("С возвращением!");
   });
 
-  test.skip("редирект на создание workspace после входа", async ({ page }) => {
+  test.skip("редирект на создание workspace после входа", async () => {
     // Тест пропущен - требует мокирования API
-    test.skip(true, "Requires API mocking");
   });
 
   test("проверка доступности страниц аутентификации", async ({ page }) => {
@@ -128,8 +127,7 @@ test.describe("Поток аутентификации", () => {
     await expect(passwordField).toHaveAttribute("aria-invalid", "true");
   });
 
-  test.skip("проверка фокуса и навигации с клавиатуры", async ({ page }) => {
+  test.skip("проверка фокуса и навигации с клавиатуры", async () => {
     // Тест пропущен - порядок фокуса может отличаться
-    test.skip(true, "Focus order may vary");
   });
 });

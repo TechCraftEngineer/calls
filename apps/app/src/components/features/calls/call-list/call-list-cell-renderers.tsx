@@ -1,6 +1,10 @@
 "use client";
 
 import { paths } from "@calls/config";
+import {
+  PROCESSING_STATUS_CONFIG,
+  isValidProcessingStatus,
+} from "@calls/db/shared";
 import { Button, Rating, Tooltip, TooltipContent, TooltipTrigger } from "@calls/ui";
 import { Loader2 } from "lucide-react";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
@@ -10,6 +14,15 @@ import * as React from "react";
 import { isMobileDevice } from "@/lib/utils";
 import { formatDuration, formatTimestamp } from "./call-list-cells";
 import type { CallWithDetails } from "./types";
+
+// Маппинг цветов из PROCESSING_STATUS_CONFIG в CSS классы
+const COLOR_TO_CLASS: Record<string, string> = {
+  gray: "badge-gray-op",
+  blue: "badge-blue-op",
+  purple: "badge-purple-op",
+  green: "badge-green-op",
+  red: "badge-red-op",
+};
 
 const linkButtonStyle = {
   background: "none",
@@ -211,40 +224,58 @@ export function renderStatusCell(call: CallWithDetails["call"]) {
 export function renderProcessingStatusCell(call: CallWithDetails["call"]) {
   const processingStatus = call.processingStatus;
 
-  // Конфигурация статусов обработки
-  const statusConfig: Record<
-    string,
-    { label: string; className: string; showSpinner?: boolean }
-  > = {
-    pending: { label: "В очереди", className: "badge-gray-op" },
-    transcribing: { label: "Транскрипция...", className: "badge-blue-op", showSpinner: true },
-    transcribed: { label: "Транскрибирован", className: "badge-blue-op" },
-    evaluating: { label: "Оценка...", className: "badge-purple-op", showSpinner: true },
-    completed: { label: "Готов", className: "badge-green-op" },
-    failed: { label: "Ошибка", className: "badge-red-op" },
-  };
+  // Для null/undefined показываем "—"
+  if (!processingStatus) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="op-badge badge-gray-op focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            —
+          </button>
+        </TooltipTrigger>
+      </Tooltip>
+    );
+  }
 
-  // Для null/undefined показываем "Не обработан"
+  // Получаем конфигурацию из PROCESSING_STATUS_CONFIG
+  const config = isValidProcessingStatus(processingStatus)
+    ? PROCESSING_STATUS_CONFIG[processingStatus]
+    : null;
+
   // Для неизвестных статусов показываем явный индикатор
-  const config = processingStatus
-    ? (statusConfig[processingStatus] ?? {
-        label: `Неизвестно (${processingStatus})`,
-        className: "badge-gray-op",
-        showSpinner: false,
-      })
-    : { label: "—", className: "badge-gray-op", showSpinner: false };
+  if (!config) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="op-badge badge-gray-op focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Неизвестно ({processingStatus})
+          </button>
+        </TooltipTrigger>
+      </Tooltip>
+    );
+  }
+
+  const className = COLOR_TO_CLASS[config.color] ?? "badge-gray-op";
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className={`op-badge ${config.className} flex items-center gap-1`}>
-          {config.showSpinner && (
-            <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
-          )}
+        <button
+          type="button"
+          className={`op-badge ${className} flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+          aria-haspopup="dialog"
+        >
+          {config.showSpinner && <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />}
           {config.label}
-        </span>
+        </button>
       </TooltipTrigger>
-      {call.processingError && (
+      {call.processingError && processingStatus === "failed" && (
         <TooltipContent side="top" className="max-w-xs">
           <p className="font-medium text-red-600">Ошибка обработки:</p>
           <p className="text-sm">{call.processingError}</p>

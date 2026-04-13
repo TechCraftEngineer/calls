@@ -1,6 +1,14 @@
 "use client"
 
-import { CSSProperties, Fragment, useId, useRef } from "react"
+import {
+  CSSProperties,
+  Fragment,
+  ReactNode,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react"
 import { useDataGrid } from "./data-grid"
 import {
   DataGridTableBase,
@@ -11,12 +19,14 @@ import {
   DataGridTableBodyRowSkeleton,
   DataGridTableBodyRowSkeletonCell,
   DataGridTableEmpty,
+  DataGridTableFoot,
   DataGridTableHead,
   DataGridTableHeadRow,
   DataGridTableHeadRowCell,
   DataGridTableHeadRowCellResize,
   DataGridTableRowSpacer,
-} from "./data-grid-table-parts"
+  DataGridTableViewport,
+} from "./data-grid-table"
 import {
   closestCenter,
   DndContext,
@@ -29,13 +39,11 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core"
 import {
-  arrayMove,
   horizontalListSortingStrategy,
   SortableContext,
   useSortable,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import type { Table } from "@tanstack/react-table"
 import {
   Cell,
   flexRender,
@@ -44,8 +52,8 @@ import {
   Row,
 } from "@tanstack/react-table"
 
-import { Button } from "../../button"
-import { IconPlaceholder } from "../../icon-placeholder"
+import { Button } from "../.."
+import { IconPlaceholder } from "../.."
 
 function DataGridTableDndHeader<TData>({
   header,
@@ -76,8 +84,11 @@ function DataGridTableDndHeader<TData>({
     position: "relative",
     transform: CSS.Translate.toString(transform),
     transition,
+    cursor: isDragging ? "grabbing" : undefined,
     whiteSpace: "nowrap",
-    width: header.column.getSize(),
+    width: props.tableLayout?.columnsResizable
+      ? `calc(var(--header-${header.id}-size) * 1px)`
+      : header.column.getSize(),
     zIndex: isDragging ? 1 : 0,
   }
 
@@ -92,7 +103,7 @@ function DataGridTableDndHeader<TData>({
           <Button
             size="icon-sm"
             variant="ghost"
-            className="-ms-2 size-6 cursor-move"
+            className={`-ms-2 size-6 ${isDragging ? "cursor-grabbing" : "cursor-grab active:cursor-grabbing"}`}
             {...attributes}
             {...listeners}
             aria-label="Drag to reorder"
@@ -122,6 +133,7 @@ function DataGridTableDndHeader<TData>({
 }
 
 function DataGridTableDndCell<TData>({ cell }: { cell: Cell<TData, unknown> }) {
+  const { props } = useDataGrid()
   const { isDragging, setNodeRef, transform, transition } = useSortable({
     id: cell.column.id,
   })
@@ -131,7 +143,10 @@ function DataGridTableDndCell<TData>({ cell }: { cell: Cell<TData, unknown> }) {
     position: "relative",
     transform: CSS.Translate.toString(transform),
     transition,
-    width: cell.column.getSize(),
+    cursor: isDragging ? "grabbing" : undefined,
+    width: props.tableLayout?.columnsResizable
+      ? `calc(var(--col-${cell.column.id}-size) * 1px)`
+      : cell.column.getSize(),
     zIndex: isDragging ? 1 : 0,
   }
 
@@ -142,40 +157,39 @@ function DataGridTableDndCell<TData>({ cell }: { cell: Cell<TData, unknown> }) {
   )
 }
 
-function getEffectiveColumnOrder(table: Table<unknown>) {
-  const columnOrder = table.getState().columnOrder
-  if (columnOrder?.length) return columnOrder
-  return table.getVisibleFlatColumns().map((col) => col.id)
-}
-
 function DataGridTableDnd<TData>({
   handleDragEnd,
+  footerContent,
 }: {
-  handleDragEnd?: (event: DragEndEvent) => void
+  handleDragEnd: (event: DragEndEvent) => void
+  footerContent?: ReactNode
 }) {
   const { table, isLoading, props } = useDataGrid()
-  const columnOrder = getEffectiveColumnOrder(table)
-
-  const defaultHandleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    const order = getEffectiveColumnOrder(table)
-    const oldIndex = order.indexOf(active.id as string)
-    const newIndex = order.indexOf(over.id as string)
-    if (oldIndex === -1 || newIndex === -1) return
-    const newOrder = arrayMove(order, oldIndex, newIndex)
-    table.setColumnOrder(newOrder)
-  }
-
-  const onDragEnd = handleDragEnd ?? defaultHandleDragEnd
   const pagination = table.getState().pagination
   const containerRef = useRef<HTMLDivElement>(null)
+  const [isDraggingColumn, setIsDraggingColumn] = useState(false)
 
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
     useSensor(TouchSensor, {}),
     useSensor(KeyboardSensor, {})
   )
+
+  useEffect(() => {
+    if (!isDraggingColumn) return
+
+    const { body, documentElement } = document
+    const previousBodyCursor = body.style.cursor
+    const previousDocumentCursor = documentElement.style.cursor
+
+    body.style.cursor = "grabbing"
+    documentElement.style.cursor = "grabbing"
+
+    return () => {
+      body.style.cursor = previousBodyCursor
+      documentElement.style.cursor = previousDocumentCursor
+    }
+  }, [isDraggingColumn])
 
   // Custom modifier to restrict dragging within table bounds with edge offset
   const restrictToTableBounds: Modifier = ({ draggingNodeRect, transform }) => {
@@ -205,10 +219,22 @@ function DataGridTableDnd<TData>({
       collisionDetection={closestCenter}
       id={useId()}
       modifiers={[restrictToTableBounds]}
-      onDragEnd={onDragEnd}
+      onDragCancel={() => setIsDraggingColumn(false)}
+      onDragEnd={(event) => {
+        setIsDraggingColumn(false)
+        handleDragEnd(event)
+      }}
+      onDragStart={() => setIsDraggingColumn(true)}
       sensors={sensors}
     >
-      <div ref={containerRef}>
+      <DataGridTableViewport
+        viewportRef={containerRef}
+        className={
+          isDraggingColumn
+            ? "relative cursor-grabbing [&_*]:cursor-grabbing!"
+            : "relative"
+        }
+      >
         <DataGridTableBase>
           <DataGridTableHead>
             {table
@@ -217,7 +243,7 @@ function DataGridTableDnd<TData>({
                 return (
                   <DataGridTableHeadRow headerGroup={headerGroup} key={index}>
                     <SortableContext
-                      items={columnOrder}
+                      items={table.getState().columnOrder}
                       strategy={horizontalListSortingStrategy}
                     >
                       {headerGroup.headers.map((header) => (
@@ -265,7 +291,7 @@ function DataGridTableDnd<TData>({
                           return (
                             <SortableContext
                               key={cell.id}
-                              items={columnOrder}
+                              items={table.getState().columnOrder}
                               strategy={horizontalListSortingStrategy}
                             >
                               <DataGridTableDndCell cell={cell} />
@@ -283,8 +309,12 @@ function DataGridTableDnd<TData>({
               <DataGridTableEmpty />
             )}
           </DataGridTableBody>
+
+          {footerContent && (
+            <DataGridTableFoot>{footerContent}</DataGridTableFoot>
+          )}
         </DataGridTableBase>
-      </div>
+      </DataGridTableViewport>
     </DndContext>
   )
 }

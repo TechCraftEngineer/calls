@@ -1,19 +1,19 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { Badge } from "../.."
 import { Column } from "@tanstack/react-table"
 
-import { cn } from "../../../lib/utils"
-import { Badge } from "../badge"
-import { Button } from "../../button"
-import { Input } from "../../input"
+import { cn } from "../.."
+import { Button } from "../.."
+import { Input } from "../.."
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "../../popover"
-import { Separator } from "../../separator"
-import { IconPlaceholder } from "../../icon-placeholder"
+} from "../.."
+import { Separator } from "../.."
+import { IconPlaceholder } from "../.."
 
 interface DataGridColumnFilterProps<TData, TValue> {
   column?: Column<TData, TValue>
@@ -69,7 +69,7 @@ function DataGridColumnFilter<TData, TValue>({
                     variant="secondary"
                     className="rounded-sm px-1 font-normal"
                   >
-                    {selectedValues.size} выбрано
+                    {selectedValues.size} selected
                   </Badge>
                 ) : (
                   options
@@ -101,7 +101,7 @@ function DataGridColumnFilter<TData, TValue>({
         <div className="max-h-[300px] overflow-y-auto">
           {filteredOptions.length === 0 ? (
             <div className="text-muted-foreground py-6 text-center text-sm">
-              Ничего не найдено.
+              No results found.
             </div>
           ) : (
             <div className="p-1">
@@ -140,7 +140,7 @@ function DataGridColumnFilter<TData, TValue>({
                         hugeicons="Tick02Icon"
                         phosphor="CheckIcon"
                         remixicon="RiCheckLine"
-                        className="size-4"
+                        className="h-4 w-4"
                       />
                     </div>
                     {option.icon && (
@@ -165,7 +165,7 @@ function DataGridColumnFilter<TData, TValue>({
                   onClick={() => column?.setFilterValue(undefined)}
                   className="hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center justify-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none"
                 >
-                  Сбросить фильтры
+                  Clear filters
                 </div>
               </div>
             </>
