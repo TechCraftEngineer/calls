@@ -12,7 +12,7 @@ import {
 } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ModalProps } from "@/components/features/setup";
@@ -39,15 +39,27 @@ export function CompanyModal({ open, onOpenChange, onComplete }: ModalProps<void
     },
   });
 
+  const prevWorkspaceIdRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (activeWorkspace) {
+    if (!activeWorkspace) return;
+    // Only reset if:
+    // 1. Modal just opened (open changed from false to true), or
+    // 2. Workspace actually changed (different ID), or
+    // 3. Form is pristine (not dirty - user hasn't modified anything)
+    const workspaceChanged = prevWorkspaceIdRef.current !== activeWorkspace.id;
+    const modalJustOpened = open && prevWorkspaceIdRef.current === null;
+
+    if ((modalJustOpened || workspaceChanged || !form.formState.isDirty) && open) {
       form.reset({
         name: activeWorkspace.name ?? "",
         nameEn: activeWorkspace.nameEn ?? "",
         description: activeWorkspace.description ?? "",
       });
     }
-  }, [activeWorkspace, form]);
+
+    prevWorkspaceIdRef.current = activeWorkspace.id;
+  }, [activeWorkspace, form, open]);
 
   const handleSubmit = async (data: z.infer<typeof companySchema>) => {
     if (!activeWorkspace) return;
