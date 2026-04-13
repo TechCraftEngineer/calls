@@ -206,7 +206,9 @@ function MoveMenuSection<TData, TValue>({
           if (columnIndex > 0) {
             const newOrder = [...columnOrder]
             const [movedColumn] = newOrder.splice(columnIndex, 1)
-            newOrder.splice(columnIndex - 1, 0, movedColumn)
+            if (movedColumn) {
+              newOrder.splice(columnIndex - 1, 0, movedColumn)
+            }
             table.setColumnOrder(newOrder)
           }
         }}

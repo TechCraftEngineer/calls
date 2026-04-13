@@ -520,12 +520,7 @@ export default function KpiTable() {
         id: "baseSalary",
         accessorFn: (row) => row.baseSalary,
         header: ({ column }) => (
-          <DataGridColumnHeader
-            column={column}
-            title="Оклад, ₽"
-            className="min-w-28"
-            tooltip="Базовый оклад сотрудника в рублях"
-          />
+          <DataGridColumnHeader column={column} title="Оклад, ₽" className="min-w-28" />
         ),
         cell: ({ row }) => (
           <div className="font-medium tabular-nums">
@@ -538,12 +533,7 @@ export default function KpiTable() {
         id: "targetBonus",
         accessorFn: (row) => row.targetBonus,
         header: ({ column }) => (
-          <DataGridColumnHeader
-            column={column}
-            title="Бонус, ₽"
-            className="min-w-28"
-            tooltip="Целевой бонус при выполнении KPI"
-          />
+          <DataGridColumnHeader column={column} title="Бонус, ₽" className="min-w-28" />
         ),
         cell: ({ row }) => (
           <div className="font-medium tabular-nums text-emerald-600">
@@ -556,12 +546,7 @@ export default function KpiTable() {
         id: "targetTalkTimeMonthly",
         accessorFn: (row) => row.targetTalkTimeMinutes,
         header: ({ column }) => (
-          <DataGridColumnHeader
-            column={column}
-            title="Цель, мин/мес"
-            className="min-w-30"
-            tooltip="Целевое время разговоров в минутах за месяц"
-          />
+          <DataGridColumnHeader column={column} title="Цель, мин/мес" className="min-w-30" />
         ),
         cell: ({ row }) => (
           <div className="tabular-nums text-muted-foreground">
@@ -574,12 +559,7 @@ export default function KpiTable() {
         id: "actualTalkTimeMinutes",
         accessorFn: (row) => row.actualTalkTimeMinutes,
         header: ({ column }) => (
-          <DataGridColumnHeader
-            column={column}
-            title="Факт, мин"
-            className="min-w-28"
-            tooltip="Фактическое время разговоров за выбранный период"
-          />
+          <DataGridColumnHeader column={column} title="Факт, мин" className="min-w-28" />
         ),
         cell: ({ row }) => {
           const isOnTarget =
@@ -613,12 +593,7 @@ export default function KpiTable() {
         id: "kpiCompletion",
         accessorFn: (row) => row.kpiCompletionPercentage,
         header: ({ column }) => (
-          <DataGridColumnHeader
-            column={column}
-            title="Выполнение, %"
-            className="min-w-36"
-            tooltip="Процент выполнения KPI относительно плана периода"
-          />
+          <DataGridColumnHeader column={column} title="Выполнение, %" className="min-w-36" />
         ),
         cell: ({ row }) => {
           const percentage = row.original.kpiCompletionPercentage;
@@ -665,12 +640,7 @@ export default function KpiTable() {
         id: "calculatedBonus",
         accessorFn: (row) => row.calculatedBonus,
         header: ({ column }) => (
-          <DataGridColumnHeader
-            column={column}
-            title="Бонус за период, ₽"
-            className="min-w-40"
-            tooltip="Рассчитанный бонус за выбранный период"
-          />
+          <DataGridColumnHeader column={column} title="Бонус за период, ₽" className="min-w-40" />
         ),
         cell: ({ row }) => (
           <div className="font-semibold tabular-nums text-emerald-600">
@@ -683,12 +653,7 @@ export default function KpiTable() {
         id: "totalCalculatedSalary",
         accessorFn: (row) => row.totalCalculatedSalary,
         header: ({ column }) => (
-          <DataGridColumnHeader
-            column={column}
-            title="Итого, ₽"
-            className="min-w-28"
-            tooltip="Сумма оклада и бонуса за период"
-          />
+          <DataGridColumnHeader column={column} title="Итого, ₽" className="min-w-28" />
         ),
         cell: ({ row }) => (
           <div className="font-bold tabular-nums text-blue-600">
@@ -705,7 +670,6 @@ export default function KpiTable() {
             column={column}
             title="По дням"
             className="min-w-32"
-            tooltip="Просмотр детализации KPI по дням"
             visibility={false}
           />
         ),
@@ -734,7 +698,6 @@ export default function KpiTable() {
             column={column}
             title="Настройки"
             className="min-w-36"
-            tooltip="Редактирование KPI сотрудника"
             visibility={false}
           />
         ),

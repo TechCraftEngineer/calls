@@ -1,6 +1,6 @@
 "use client";
 
-import type { appRouter } from "@calls/api";
+import type { backendRouter as appRouter } from "@calls/api";
 import { createORPCClient } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import type { RouterClient } from "@orpc/server";

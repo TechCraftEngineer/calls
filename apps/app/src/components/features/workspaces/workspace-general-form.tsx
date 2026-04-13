@@ -7,6 +7,7 @@ import { z } from "zod";
 
 const workspaceGeneralSchema = z.object({
   name: z.string().min(1, "Введите название").max(100, "Не более 100 символов"),
+  nameEn: z.string().max(100, "Не более 100 символов").default(""),
   description: z.string().max(2000, "Не более 2000 символов").default(""),
 });
 
@@ -14,6 +15,7 @@ export type WorkspaceGeneralFormData = z.infer<typeof workspaceGeneralSchema>;
 
 interface WorkspaceGeneralFormProps {
   name: string;
+  nameEn?: string | null;
   description?: string | null;
   onSave: (data: WorkspaceGeneralFormData) => Promise<void>;
   saving?: boolean;
@@ -21,6 +23,7 @@ interface WorkspaceGeneralFormProps {
 
 export default function WorkspaceGeneralForm({
   name,
+  nameEn,
   description,
   onSave,
   saving = false,
@@ -33,7 +36,7 @@ export default function WorkspaceGeneralForm({
   } = useForm<WorkspaceGeneralFormData>({
     resolver: zodResolver(workspaceGeneralSchema) as never,
     mode: "onBlur",
-    defaultValues: { name, description: description ?? "" },
+    defaultValues: { name, nameEn: nameEn ?? "", description: description ?? "" },
   });
 
   const onSubmit = async (data: WorkspaceGeneralFormData) => {
@@ -78,6 +81,24 @@ export default function WorkspaceGeneralForm({
             />
             {errors.name && (
               <span className="text-xs text-red-500 mt-1 block">{errors.name.message}</span>
+            )}
+          </div>
+
+          <div className="filter-item">
+            <label className="filter-label" htmlFor="ws-name-en">
+              Название компании (English)
+            </label>
+            <Input
+              id="ws-name-en"
+              type="text"
+              className={`text-input ${errors.nameEn ? "border-red-500 bg-red-50" : ""}`}
+              placeholder="My Company…"
+              aria-invalid={!!errors.nameEn}
+              spellCheck={false}
+              {...register("nameEn")}
+            />
+            {errors.nameEn && (
+              <span className="text-xs text-red-500 mt-1 block">{errors.nameEn.message}</span>
             )}
           </div>
 

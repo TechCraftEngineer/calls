@@ -60,13 +60,14 @@ export default function WorkspaceSettingsPage() {
         try {
           // Сначала инвалидируем кэш, затем получаем свежие данные
           await queryClient.invalidateQueries({
-            queryKey: orpc.workspaces.list.getQueryKey(),
+            queryKey: orpc.workspaces.list.queryKey(),
           });
           const remainingWorkspaces = await queryClient.fetchQuery(
-            orpc.workspaces.list.queryOptions()
+            orpc.workspaces.list.queryOptions(),
           );
 
-          const hasOtherWorkspaces = remainingWorkspaces && remainingWorkspaces.workspaces.length > 0;
+          const hasOtherWorkspaces =
+            remainingWorkspaces && remainingWorkspaces.workspaces.length > 0;
 
           if (hasOtherWorkspaces) {
             // Если есть другие компании - очищаем куку и перезагружаем на корень
@@ -111,11 +112,16 @@ export default function WorkspaceSettingsPage() {
     return null;
   }
 
-  const handleSaveGeneral = async (data: { name: string; description?: string | null }) => {
+  const handleSaveGeneral = async (data: {
+    name: string;
+    nameEn?: string;
+    description?: string | null;
+  }) => {
     if (!workspaceId) return;
     await updateMutation.mutateAsync({
       workspaceId,
       name: data.name,
+      nameEn: data.nameEn?.trim() || null,
       description: data.description?.trim() || null,
     });
   };
@@ -141,6 +147,7 @@ export default function WorkspaceSettingsPage() {
       {workspace ? (
         <WorkspaceGeneralForm
           name={workspace.name}
+          nameEn={workspace.nameEn}
           description={workspace.description}
           onSave={handleSaveGeneral}
           saving={updateMutation.isPending}

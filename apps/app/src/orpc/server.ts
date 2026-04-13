@@ -1,6 +1,6 @@
 import "server-only";
 
-import { appRouter } from "@calls/api";
+import { backendRouter as appRouter } from "@calls/api";
 import { createContext } from "@calls/api/orpc";
 import { createRouterClient } from "@orpc/server";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";

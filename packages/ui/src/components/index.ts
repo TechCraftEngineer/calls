@@ -186,7 +186,7 @@ export {
   DataGridTableBody,
   DataGridTableBodyRow,
   DataGridTableBodyRowCell,
-  DataGridTableBodyRowExpandded,
+  DataGridTableBodyRowExpanded,
   DataGridTableBodyRowSkeleton,
   DataGridTableBodyRowSkeletonCell,
   DataGridTableEmpty,
@@ -198,8 +198,7 @@ export {
   DataGridTableRowSelect,
   DataGridTableRowSelectAll,
   DataGridTableRowSpacer,
-  DataGridTableHeadRowCellDnd,
-  DataGridTableDndContext,
+  DataGridTableDnd,
 } from "./reui/data-grid";
 export { Rating } from "./reui/rating";
 export type {

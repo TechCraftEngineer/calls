@@ -301,14 +301,6 @@ export function CallListDataGrid({
         recordCount={pagination.total}
         isLoading={isLoading}
         emptyMessage={<CallListEmpty />}
-        getRowClassName={(row) => {
-          const dateKey = getLocalDateKey(row.call.timestamp);
-          const tone = dayToneByDate.get(dateKey) ?? 0;
-
-          return classNames(
-            tone !== 0 && "bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/20 dark:hover:bg-sky-950/30",
-          );
-        }}
         tableLayout={{
           columnsVisibility: true,
           columnsResizable: true,

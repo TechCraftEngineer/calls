@@ -1,4 +1,4 @@
-import type { ProcessingStatus } from "@calls/api";
+import type { ProcessingStatus } from "@calls/db";
 
 export interface Call {
   id: string;
