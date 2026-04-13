@@ -182,6 +182,15 @@ export {
   type CallStatus,
   normalizeCallStatus,
 } from "./utils/call-status";
+export {
+  PROCESSING_STATUS,
+  PROCESSING_STATUS_CONFIG,
+  type ProcessingStatus,
+  getNextProcessingStatus,
+  isProcessing,
+  isProcessingFinished,
+  normalizeProcessingStatus,
+} from "./utils/call-processing-status";
 export { normalizePhoneNumberList } from "./utils/normalize-phone-number-list";
 export { isValidWorkspaceId } from "./utils/workspace-id-generator";
 // Validators

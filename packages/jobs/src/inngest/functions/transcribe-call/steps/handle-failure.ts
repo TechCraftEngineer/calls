@@ -2,7 +2,7 @@
  * Handler для ошибок транскрибации (onFailure)
  */
 
-import { callsService } from "@calls/db";
+import { callsService, PROCESSING_STATUS } from "@calls/db";
 import type { FailureEventArgs } from "inngest";
 import { createLogger } from "../../../../logger";
 import { TranscribeCallEventSchema } from "../schemas";
@@ -49,6 +49,13 @@ export async function handleFailure({ event, error }: FailureEventArgs): Promise
 
     // Записываем статус failed в БД
     await callsService.markTranscriptionFailed(callId, error.message);
+
+    // Обновляем общий статус обработки на failed
+    await callsService.updateCallProcessingStatus(callId, PROCESSING_STATUS.FAILED, {
+      error: error.message,
+      completedAt: new Date(),
+    });
+
     logger.error("Транскрибация завершилась с ошибкой после всех попыток", {
       callId,
       error: error.message,

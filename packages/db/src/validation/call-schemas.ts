@@ -152,6 +152,25 @@ export const markTranscriptionFailedSchema = z.object({
     z.string().datetime().nullable().optional(),
   ),
 });
+
+/**
+ * Схема для обновления статуса обработки звонка
+ */
+export const updateProcessingStatusSchema = z.object({
+  processingStatus: z.enum(["pending", "transcribing", "transcribed", "evaluating", "completed", "failed"], {
+    message: "processingStatus должен быть одним из: pending, transcribing, transcribed, evaluating, completed, failed",
+  }),
+  processingError: z.string().max(2000).nullable().optional(),
+  processingStartedAt: z.preprocess(
+    (value) => (value instanceof Date ? value.toISOString() : value),
+    z.string().datetime().nullable().optional(),
+  ),
+  processingCompletedAt: z.preprocess(
+    (value) => (value instanceof Date ? value.toISOString() : value),
+    z.string().datetime().nullable().optional(),
+  ),
+});
+
 export type CreateCallInput = z.infer<typeof createCallSchema>;
 export type UpdateCustomerNameInput = z.infer<typeof updateCustomerNameSchema>;
 export type UpdateRecordingInput = z.infer<typeof updateRecordingSchema>;
@@ -160,6 +179,7 @@ export type UpdatePbxBindingInput = z.infer<typeof updatePbxBindingSchema>;
 export type UpdateWithRecordingInput = z.infer<typeof updateWithRecordingSchema>;
 export type UpdatePbxBindingWithCustomerInput = z.infer<typeof updatePbxBindingWithCustomerSchema>;
 export type MarkTranscriptionFailedInput = z.infer<typeof markTranscriptionFailedSchema>;
+export type UpdateProcessingStatusInput = z.infer<typeof updateProcessingStatusSchema>;
 
 /**
  * Утилиты для валидации

@@ -11,6 +11,8 @@ export interface Call {
   duration?: number | null;
   customerName?: string;
   status?: string | null;
+  processingStatus?: string | null;
+  processingError?: string | null;
 }
 
 export interface Transcript {

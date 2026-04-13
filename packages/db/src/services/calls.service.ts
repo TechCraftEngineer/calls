@@ -15,6 +15,7 @@ import type {
   GetCallsParams,
 } from "../types/calls.types";
 import type { CallStatus } from "../utils/call-status";
+import type { ProcessingStatus } from "../utils/call-processing-status";
 import { ValidationError } from "../validation/call-schemas";
 
 export class CallsService {
@@ -452,5 +453,59 @@ export class CallsService {
     }>
   > {
     return this.callsRepository.getDailyKpiStats(input);
+  }
+
+  /**
+   * Обновление статуса обработки звонка
+   */
+  async updateCallProcessingStatus(
+    callId: string,
+    status: ProcessingStatus,
+    options?: {
+      error?: string | null;
+      startedAt?: Date | null;
+      completedAt?: Date | null;
+    },
+  ): Promise<void> {
+    try {
+      const startedAtStr: string | null | undefined = options?.startedAt instanceof Date ? options.startedAt.toISOString() : (options?.startedAt ?? undefined);
+      const completedAtStr: string | null | undefined = options?.completedAt instanceof Date ? options.completedAt.toISOString() : (options?.completedAt ?? undefined);
+      await this.callsRepository.updateProcessingStatus(callId, {
+        processingStatus: status,
+        processingError: options?.error,
+        processingStartedAt: startedAtStr,
+        processingCompletedAt: completedAtStr,
+      });
+
+      // Логируем изменение статуса
+      try {
+        const call = await this.callsRepository.findById(callId);
+        if (call) {
+          const logMessage = options?.error
+            ? `Processing status for call ${callId} changed to ${status} with error: ${options.error}`
+            : `Processing status for call ${callId} changed to ${status}`;
+          await this.systemRepository.addActivityLog("INFO", logMessage, "system", call.workspaceId);
+        }
+      } catch {
+        // Игнорируем ошибки логирования
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        try {
+          const call = await this.callsRepository.findById(callId);
+          if (call) {
+            await this.systemRepository.addActivityLog(
+              "ERROR",
+              `Failed to update processing status for call ${callId}: ${error.message}`,
+              "system",
+              call.workspaceId,
+            );
+          }
+        } catch {
+          // Игнорируем ошибки логирования
+        }
+      }
+      throw error;
+    }
   }
 }

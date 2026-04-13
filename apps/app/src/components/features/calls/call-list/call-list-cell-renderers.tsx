@@ -2,6 +2,7 @@
 
 import { paths } from "@calls/config";
 import { Button, Rating, Tooltip, TooltipContent, TooltipTrigger } from "@calls/ui";
+import { Loader2 } from "lucide-react";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -205,6 +206,52 @@ export function renderStatusCell(call: CallWithDetails["call"]) {
   };
 
   return <span className={`op-badge ${config.className}`}>{config.label}</span>;
+}
+
+export function renderProcessingStatusCell(call: CallWithDetails["call"]) {
+  const processingStatus = call.processingStatus;
+
+  // Конфигурация статусов обработки
+  const statusConfig: Record<
+    string,
+    { label: string; className: string; showSpinner?: boolean }
+  > = {
+    pending: { label: "В очереди", className: "badge-gray-op" },
+    transcribing: { label: "Транскрипция...", className: "badge-blue-op", showSpinner: true },
+    transcribed: { label: "Транскрибирован", className: "badge-blue-op" },
+    evaluating: { label: "Оценка...", className: "badge-purple-op", showSpinner: true },
+    completed: { label: "Готов", className: "badge-green-op" },
+    failed: { label: "Ошибка", className: "badge-red-op" },
+  };
+
+  // Для null/undefined показываем "Не обработан"
+  // Для неизвестных статусов показываем явный индикатор
+  const config = processingStatus
+    ? (statusConfig[processingStatus] ?? {
+        label: `Неизвестно (${processingStatus})`,
+        className: "badge-gray-op",
+        showSpinner: false,
+      })
+    : { label: "—", className: "badge-gray-op", showSpinner: false };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className={`op-badge ${config.className} flex items-center gap-1`}>
+          {config.showSpinner && (
+            <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+          )}
+          {config.label}
+        </span>
+      </TooltipTrigger>
+      {call.processingError && (
+        <TooltipContent side="top" className="max-w-xs">
+          <p className="font-medium text-red-600">Ошибка обработки:</p>
+          <p className="text-sm">{call.processingError}</p>
+        </TooltipContent>
+      )}
+    </Tooltip>
+  );
 }
 
 export function renderDateCell(call: CallWithDetails["call"]) {

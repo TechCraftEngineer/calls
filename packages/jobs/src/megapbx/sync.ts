@@ -5,6 +5,7 @@ import {
   type MegaPbxIntegrationConfig,
   pbxRepository,
   pbxService,
+  PROCESSING_STATUS,
 } from "@calls/db";
 import pLimit from "p-limit";
 import { inngest, transcribeRequested } from "../inngest/client";
@@ -286,6 +287,11 @@ export async function syncMegaPbxCalls(
 
       // Используем ID из результата создания
       const callId = createResult.id;
+
+      // Устанавливаем статус pending для новых звонков
+      if (createResult.created) {
+        await callsService.updateCallProcessingStatus(callId, PROCESSING_STATUS.PENDING);
+      }
 
       // На повторных синках запись звонка может уже существовать с пустой PBX-привязкой.
       // Дозаполняем связь и вспомогательные поля, когда появились данные из directory.

@@ -40,6 +40,11 @@ export const calls = pgTable(
     transcriptionError: text("transcription_error"),
     transcribedAt: timestamp("transcribed_at", { withTimezone: true }),
 
+    processingStatus: text("processing_status"),
+    processingError: text("processing_error"),
+    processingStartedAt: timestamp("processing_started_at", { withTimezone: true }),
+    processingCompletedAt: timestamp("processing_completed_at", { withTimezone: true }),
+
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
@@ -57,6 +62,10 @@ export const calls = pgTable(
       "calls_transcription_status_check",
       sql`transcription_status IS NULL OR transcription_status IN ('pending', 'processing', 'completed', 'failed')`,
     ),
+    check(
+      "calls_processing_status_check",
+      sql`processing_status IS NULL OR processing_status IN ('pending', 'transcribing', 'transcribed', 'evaluating', 'completed', 'failed')`,
+    ),
     unique("calls_workspace_filename_unique").on(table.workspaceId, table.filename),
     unique("calls_workspace_provider_external_id_unique").on(
       table.workspaceId,
@@ -72,6 +81,7 @@ export const calls = pgTable(
     index("calls_enhanced_audio_file_id_idx").on(table.enhancedAudioFileId),
     index("calls_status_idx").on(table.status),
     index("calls_direction_idx").on(table.direction),
+    index("calls_processing_status_idx").on(table.processingStatus),
     index("calls_workspace_direction_idx").on(table.workspaceId, table.direction),
     index("idx_calls_workspace_id_name_internal_number").on(
       table.workspaceId,
