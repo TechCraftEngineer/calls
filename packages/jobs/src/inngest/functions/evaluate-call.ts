@@ -12,11 +12,7 @@ import {
   workspaceSettingsRepository,
   workspacesService,
 } from "@calls/db";
-import {
-  buildCompanyContext,
-  companyContextSchema,
-  replaceSpeakersWithRoles,
-} from "@calls/shared";
+import { buildCompanyContext, companyContextSchema, replaceSpeakersWithRoles } from "@calls/shared";
 import { evaluateCallWithLlm, resolveEvaluationPrompt } from "../../evaluation";
 import { createLogger } from "../../logger";
 import { evaluateRequested, inngest } from "../client";
@@ -78,7 +74,9 @@ export const evaluateCallFn = inngest.createFunction(
 
     // Устанавливаем статус evaluating
     await step.run("update-status-evaluating", async () => {
-      await callsService.updateCallProcessingStatus(callId, PROCESSING_STATUS.EVALUATING);
+      await callsService.updateCallProcessingStatus(callId, PROCESSING_STATUS.EVALUATING, {
+        error: null, // Очищаем предыдущую ошибку при ретрае
+      });
     });
 
     const call = await step.run("get-call", async () => {
@@ -92,7 +90,8 @@ export const evaluateCallFn = inngest.createFunction(
     });
 
     // Извлекаем маппинг спикеров из метаданных транскрипта
-    const speakerMapping = (transcript?.metadata?.mapping as Record<string, "operator" | "client">) ?? {};
+    const speakerMapping =
+      (transcript?.metadata?.mapping as Record<string, "operator" | "client">) ?? {};
 
     // Заменяем SPEAKER_XX на "оператор"/"клиент" в тексте транскрипта
     const rawTranscriptText = transcript?.text?.trim() ?? transcript?.rawText?.trim() ?? "";

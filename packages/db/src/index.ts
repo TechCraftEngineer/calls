@@ -189,6 +189,7 @@ export {
   getNextProcessingStatus,
   isProcessing,
   isProcessingFinished,
+  isValidProcessingStatus,
   normalizeProcessingStatus,
 } from "./utils/call-processing-status";
 export { normalizePhoneNumberList } from "./utils/normalize-phone-number-list";

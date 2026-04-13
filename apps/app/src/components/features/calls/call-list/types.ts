@@ -1,3 +1,5 @@
+import type { ProcessingStatus } from "@calls/db";
+
 export interface Call {
   id: string;
   number?: string;
@@ -11,7 +13,7 @@ export interface Call {
   duration?: number | null;
   customerName?: string;
   status?: string | null;
-  processingStatus?: string | null;
+  processingStatus?: ProcessingStatus | null;
   processingError?: string | null;
 }
 

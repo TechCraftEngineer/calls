@@ -2,13 +2,31 @@
  * Basic CRUD operations for calls
  */
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import type { CreateCallData } from "../../types/calls.types";
 import { normalizeCallStatus } from "../../utils/call-status";
-import type { ProcessingStatus } from "../../utils/call-processing-status";
+import { PROCESSING_STATUS, type ProcessingStatus } from "../../utils/call-processing-status";
 import type { UpdateProcessingStatusInput } from "../../validation/call-schemas";
+
+/**
+ * Допустимые переходы статусов обработки
+ * Ключ - целевой статус, значение - разрешенные исходные статусы
+ */
+const ALLOWED_STATUS_TRANSITIONS: Record<ProcessingStatus, ProcessingStatus[]> = {
+  [PROCESSING_STATUS.PENDING]: [], // Начальный статус, нельзя перейти из других
+  [PROCESSING_STATUS.TRANSCRIBING]: [PROCESSING_STATUS.PENDING, PROCESSING_STATUS.FAILED],
+  [PROCESSING_STATUS.TRANSCRIBED]: [PROCESSING_STATUS.TRANSCRIBING],
+  [PROCESSING_STATUS.EVALUATING]: [PROCESSING_STATUS.TRANSCRIBED, PROCESSING_STATUS.PENDING, PROCESSING_STATUS.FAILED],
+  [PROCESSING_STATUS.COMPLETED]: [PROCESSING_STATUS.EVALUATING, PROCESSING_STATUS.TRANSCRIBED],
+  [PROCESSING_STATUS.FAILED]: [
+    PROCESSING_STATUS.PENDING,
+    PROCESSING_STATUS.TRANSCRIBING,
+    PROCESSING_STATUS.TRANSCRIBED,
+    PROCESSING_STATUS.EVALUATING,
+  ],
+};
 import {
   createCallSchema,
   markTranscriptionFailedSchema,
@@ -333,34 +351,89 @@ export const callsCrud = {
   },
 
   /**
-   * Обновление статуса обработки звонка
+   * Обновление статуса обработки звонка с условной проверкой
+   * Возвращает true если обновление выполнено, false если статус не позволяет обновление
    */
   async updateProcessingStatus(
     callId: string,
     data: UpdateProcessingStatusInput & { processingStatus: ProcessingStatus },
-  ): Promise<void> {
+  ): Promise<boolean> {
     // Валидация callId как UUID
     validateCallId(callId);
 
     // Валидация данных с помощью Zod
     const validatedData = validateWithSchema(updateProcessingStatusSchema, data);
 
-    const patch: Partial<schema.NewCall> = {};
-    patch.processingStatus = validatedData.processingStatus;
-    if (validatedData.processingError !== undefined) {
-      patch.processingError = validatedData.processingError;
-    }
-    if (validatedData.processingStartedAt !== undefined) {
-      patch.processingStartedAt = validatedData.processingStartedAt
-        ? new Date(validatedData.processingStartedAt)
-        : null;
-    }
-    if (validatedData.processingCompletedAt !== undefined) {
-      patch.processingCompletedAt = validatedData.processingCompletedAt
-        ? new Date(validatedData.processingCompletedAt)
-        : null;
-    }
+    return await db.transaction(async (tx) => {
+      // Получаем текущий статус с блокировкой строки
+      const currentCall = await tx
+        .select({ processingStatus: schema.calls.processingStatus })
+        .from(schema.calls)
+        .where(eq(schema.calls.id, callId))
+        .for("update")
+        .limit(1);
 
-    await db.update(schema.calls).set(patch).where(eq(schema.calls.id, callId));
+      const currentStatus = currentCall[0]?.processingStatus as ProcessingStatus | null;
+      const newStatus = validatedData.processingStatus;
+
+      // Проверяем допустимость перехода
+      const allowedSources = ALLOWED_STATUS_TRANSITIONS[newStatus];
+      const isValidTransition =
+        !currentStatus || // Если статус null - разрешаем любой переход
+        (currentStatus && allowedSources.includes(currentStatus)) || // Если текущий статус в списке разрешенных
+        allowedSources.length === 0; // Если нет ограничений на вход (например для pending)
+
+      if (!isValidTransition) {
+        // Переход недопустим - возвращаем false без обновления
+        return false;
+      }
+
+      // Формируем патч обновления
+      const patch: Partial<schema.NewCall> = {
+        processingStatus: newStatus,
+      };
+
+      // Сбрасываем ошибку при переходе в нетерминальный статус (кроме failed)
+      if (newStatus !== PROCESSING_STATUS.FAILED) {
+        patch.processingError = null;
+      } else if (validatedData.processingError !== undefined) {
+        patch.processingError = validatedData.processingError;
+      }
+
+      // Управляем временными метками
+      if (validatedData.processingStartedAt !== undefined) {
+        patch.processingStartedAt = validatedData.processingStartedAt
+          ? new Date(validatedData.processingStartedAt)
+          : null;
+      }
+
+      if (validatedData.processingCompletedAt !== undefined) {
+        patch.processingCompletedAt = validatedData.processingCompletedAt
+          ? new Date(validatedData.processingCompletedAt)
+          : null;
+      }
+
+      // Сбрасываем completedAt при переходе в активный статус (transcribing/evaluating)
+      if (newStatus === PROCESSING_STATUS.TRANSCRIBING || newStatus === PROCESSING_STATUS.EVALUATING) {
+        patch.processingCompletedAt = null;
+      }
+
+      // Выполняем условное обновление
+      const result = await tx
+        .update(schema.calls)
+        .set(patch)
+        .where(
+          and(
+            eq(schema.calls.id, callId),
+            // Условие: текущий статус должен совпадать с тем, что мы проверили
+            // Это предотвращает race conditions
+            currentStatus
+              ? eq(schema.calls.processingStatus, currentStatus)
+              : isNull(schema.calls.processingStatus), // Если статус null, проверяем IS NULL
+          ),
+        );
+
+      return (result.rowCount ?? 0) > 0;
+    });
   },
 };

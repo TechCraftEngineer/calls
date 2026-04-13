@@ -36,7 +36,7 @@ export class CallsService {
       try {
         await this.systemRepository.addActivityLog(
           "INFO",
-          `Call ${callId} deleted`,
+          `Звонок ${callId} удален`,
           "system",
           call.workspaceId,
         );
@@ -71,7 +71,7 @@ export class CallsService {
       try {
         await this.systemRepository.addActivityLog(
           "INFO",
-          `Call ${callId} created from file: ${data.filename}`,
+          `Создан звонок ${callId} из файла: ${data.filename}`,
           "system",
           data.workspaceId,
         );
@@ -84,12 +84,12 @@ export class CallsService {
       // Добавляем детальное логирование ошибок валидации
       if (error instanceof Error) {
         const errorMessage =
-          error instanceof ValidationError ? `Validation errors: ${error.message}` : error.message;
+          error instanceof ValidationError ? `Ошибки валидации: ${error.message}` : error.message;
 
         try {
           await this.systemRepository.addActivityLog(
             "ERROR",
-            `Failed to create call from file ${data.filename}: ${errorMessage}`,
+            `Не удалось создать звонок из файла ${data.filename}: ${errorMessage}`,
             "system",
             data.workspaceId,
           );
@@ -107,7 +107,9 @@ export class CallsService {
     try {
       await this.systemRepository.addActivityLog(
         "INFO",
-        `Call ${result.id} ${result.created ? "created" : "resolved"} from file: ${data.filename}`,
+        result.created
+          ? `Создан звонок ${result.id} из файла: ${data.filename}`
+          : `Найден существующий звонок ${result.id} для файла: ${data.filename}`,
         "system",
         data.workspaceId,
       );
@@ -148,7 +150,7 @@ export class CallsService {
           if (call) {
             await this.systemRepository.addActivityLog(
               "ERROR",
-              `Failed to update customer name for call ${callId}: ${error.message}`,
+              `Не удалось обновить имя клиента для звонка ${callId}: ${error.message}`,
               "system",
               call.workspaceId,
             );
@@ -171,7 +173,7 @@ export class CallsService {
           if (call) {
             await this.systemRepository.addActivityLog(
               "ERROR",
-              `Failed to update recording for call ${callId}: ${error.message}`,
+              `Не удалось обновить запись для звонка ${callId}: ${error.message}`,
               "system",
               call.workspaceId,
             );
@@ -194,7 +196,7 @@ export class CallsService {
           if (call) {
             await this.systemRepository.addActivityLog(
               "ERROR",
-              `Failed to update enhanced audio for call ${callId}: ${error.message}`,
+              `Не удалось обновить улучшенное аудио для звонка ${callId}: ${error.message}`,
               "system",
               call.workspaceId,
             );
@@ -238,7 +240,7 @@ export class CallsService {
         if (call) {
           await this.systemRepository.addActivityLog(
             "INFO",
-            `Call ${callId} updated with recording data (fileId: ${data.fileId}, enhancedAudio: ${data.enhancedAudioFileId})`,
+            `Звонок ${callId} обновлен данными записи (fileId: ${data.fileId}, enhancedAudio: ${data.enhancedAudioFileId})`,
             "system",
             call.workspaceId,
           );
@@ -253,7 +255,7 @@ export class CallsService {
           if (call) {
             await this.systemRepository.addActivityLog(
               "ERROR",
-              `Failed to update call ${callId} with recording data: ${error.message}`,
+              `Не удалось обновить звонок ${callId} данными записи: ${error.message}`,
               "system",
               call.workspaceId,
             );
@@ -287,7 +289,7 @@ export class CallsService {
         if (call) {
           await this.systemRepository.addActivityLog(
             "INFO",
-            `Call ${callId} updated with PBX binding and customer data`,
+            `Звонок ${callId} обновлен данными PBX привязки и клиента`,
             "system",
             call.workspaceId,
           );
@@ -302,7 +304,7 @@ export class CallsService {
           if (call) {
             await this.systemRepository.addActivityLog(
               "ERROR",
-              `Failed to update call ${callId} with PBX binding: ${error.message}`,
+              `Не удалось обновить звонок ${callId} данными PBX привязки: ${error.message}`,
               "system",
               call.workspaceId,
             );
@@ -339,7 +341,7 @@ export class CallsService {
       if (call) {
         await this.systemRepository.addActivityLog(
           "INFO",
-          `Evaluation added for call ${data.callId}`,
+          `Добавлена оценка для звонка ${data.callId}`,
           "system",
           call.workspaceId,
         );
@@ -467,40 +469,72 @@ export class CallsService {
       completedAt?: Date | null;
     },
   ): Promise<void> {
+    // Получаем информацию о звонке для логирования
+    let workspaceId: string | null = null;
     try {
-      const startedAtStr: string | null | undefined = options?.startedAt instanceof Date ? options.startedAt.toISOString() : (options?.startedAt ?? undefined);
-      const completedAtStr: string | null | undefined = options?.completedAt instanceof Date ? options.completedAt.toISOString() : (options?.completedAt ?? undefined);
-      await this.callsRepository.updateProcessingStatus(callId, {
+      const call = await this.callsRepository.findById(callId);
+      if (call) {
+        workspaceId = call.workspaceId;
+      }
+    } catch {
+      // Игнорируем ошибки получения данных для логирования
+    }
+
+    try {
+      const startedAtStr: string | null | undefined =
+        options?.startedAt instanceof Date
+          ? options.startedAt.toISOString()
+          : (options?.startedAt ?? undefined);
+      const completedAtStr: string | null | undefined =
+        options?.completedAt instanceof Date
+          ? options.completedAt.toISOString()
+          : (options?.completedAt ?? undefined);
+
+      // Условное атомарное обновление - возвращает true если обновление выполнено
+      const updated = await this.callsRepository.updateProcessingStatus(callId, {
         processingStatus: status,
         processingError: options?.error,
         processingStartedAt: startedAtStr,
         processingCompletedAt: completedAtStr,
       });
 
-      // Логируем изменение статуса
-      try {
-        const call = await this.callsRepository.findById(callId);
-        if (call) {
-          const logMessage = options?.error
-            ? `Processing status for call ${callId} changed to ${status} with error: ${options.error}`
-            : `Processing status for call ${callId} changed to ${status}`;
-          await this.systemRepository.addActivityLog("INFO", logMessage, "system", call.workspaceId);
+      // Если обновление не выполнено (конфликт статусов) - логируем и выходим
+      if (!updated) {
+        if (workspaceId) {
+          try {
+            await this.systemRepository.addActivityLog(
+              "INFO",
+              `Статус обработки звонка ${callId} не изменен - недопустимый переход или конфликт обновления`,
+              "system",
+              workspaceId,
+            );
+          } catch {
+            // Игнорируем ошибки логирования
+          }
         }
-      } catch {
-        // Игнорируем ошибки логирования
+        return;
+      }
+
+      // Логируем изменение статуса
+      if (workspaceId) {
+        try {
+          const logMessage = options?.error
+            ? `Статус обработки звонка ${callId} изменен на "${status}" с ошибкой: ${options.error}`
+            : `Статус обработки звонка ${callId} изменен на "${status}"`;
+          await this.systemRepository.addActivityLog("INFO", logMessage, "system", workspaceId);
+        } catch {
+          // Игнорируем ошибки логирования
+        }
       }
     } catch (error) {
-      if (error instanceof Error) {
+      if (error instanceof Error && workspaceId) {
         try {
-          const call = await this.callsRepository.findById(callId);
-          if (call) {
-            await this.systemRepository.addActivityLog(
-              "ERROR",
-              `Failed to update processing status for call ${callId}: ${error.message}`,
-              "system",
-              call.workspaceId,
-            );
-          }
+          await this.systemRepository.addActivityLog(
+            "ERROR",
+            `Не удалось обновить статус обработки для звонка ${callId}: ${error.message}`,
+            "system",
+            workspaceId,
+          );
         } catch {
           // Игнорируем ошибки логирования
         }

@@ -1,7 +1,6 @@
 "use client";
 
 import { paths } from "@calls/config";
-import type { workspaces } from "@calls/db";
 import { Button, Card, CardContent, toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -55,12 +54,11 @@ export default function WorkspaceSettingsPage() {
   const deleteMutation = useMutation(
     orpc.workspaces.delete.mutationOptions({
       onSuccess: async () => {
-        await refreshWorkspaces();
         toast.success("Компания удалена");
 
-        // Проверяем оставшиеся компании после обновления
-        const remainingWorkspaces = queryClient.getQueryData<{ workspaces: typeof workspaces.$inferSelect[]; activeWorkspaceId: string | null }>(
-          orpc.workspaces.list.queryKey()
+        // Получаем актуальный список компаний после удаления
+        const remainingWorkspaces = await queryClient.fetchQuery(
+          orpc.workspaces.list.queryOptions()
         );
 
         const hasOtherWorkspaces = remainingWorkspaces && remainingWorkspaces.workspaces.length > 0;
