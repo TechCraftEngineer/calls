@@ -52,22 +52,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const setActiveMutation = useMutation(
     orpc.workspaces.setActive.mutationOptions({
       onMutate: async (variables) => {
-        console.log("[setActiveMutation] onMutate:", variables.workspaceId);
-
-        // НЕ делаем cancelQueries - он инвалидирует кэш и триггерит refetch
-        // Просто сохраняем текущее значение для rollback при ошибке
+        // Сохраняем текущее значение для rollback при ошибке
         const previousData = queryClient.getQueryData(orpc.workspaces.list.queryKey());
-        console.log("[setActiveMutation] previousData:", previousData);
 
         // Оптимистично обновляем кэш
         queryClient.setQueryData(orpc.workspaces.list.queryKey(), (old) => {
           if (!old || typeof old !== "object") return old;
-          const newData = {
+          return {
             ...old,
             activeWorkspaceId: variables.workspaceId,
           };
-          console.log("[setActiveMutation] optimistic update:", newData);
-          return newData;
         });
 
         setActiveWorkspaceCookie(variables.workspaceId);
@@ -82,8 +76,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         toast.error("Не удалось переключить компанию. Повторите попытку.");
       },
       onSuccess: async () => {
-        console.log("[setActiveMutation] onSuccess - server confirmed");
-        // Успешное сохранение на сервере
         toast.success("Компания выбрана");
         // Ждём немного чтобы сервер точно успел обновить БД
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -98,24 +90,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const workspaces = (workspacesData?.workspaces ?? []) as Workspace[];
   const activeWorkspaceId = workspacesData?.activeWorkspaceId ?? null;
 
-  // Debug logging
-  useEffect(() => {
-    console.log("[WorkspaceProvider] workspacesData changed:", {
-      activeWorkspaceId,
-      workspacesCount: workspaces.length,
-      workspacesIds: workspaces.map((w) => w.id),
-    });
-  }, [workspacesData, activeWorkspaceId, workspaces]);
-
   const activeWorkspace = useMemo(() => {
     if (!activeWorkspaceId) return workspaces[0] ?? null;
-    const found = workspaces.find((w: Workspace) => w.id === activeWorkspaceId);
-    console.log("[WorkspaceProvider] activeWorkspace computed:", {
-      activeWorkspaceId,
-      found: found?.name ?? null,
-      fallback: !found ? workspaces[0]?.name ?? null : null,
-    });
-    return found ?? workspaces[0] ?? null;
+    return workspaces.find((w: Workspace) => w.id === activeWorkspaceId) ?? workspaces[0] ?? null;
   }, [workspaces, activeWorkspaceId]);
 
   const loading = sessionPending || (shouldFetchWorkspaces && workspacesPending);

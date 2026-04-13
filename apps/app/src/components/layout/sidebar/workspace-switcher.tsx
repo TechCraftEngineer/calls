@@ -1,7 +1,7 @@
 "use client";
 
 import { AudioWaveform, ChevronUp, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,13 +22,6 @@ export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
   const { workspaces, activeWorkspace, setActiveWorkspace, refreshWorkspaces } = useWorkspace();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  useEffect(() => {
-    console.log("[WorkspaceSwitcher] render:", {
-      activeWorkspaceId: activeWorkspace?.id,
-      activeWorkspaceName: activeWorkspace?.name,
-    });
-  }, [activeWorkspace]);
 
   if (!activeWorkspace) {
     return null;
