@@ -127,6 +127,7 @@ export interface AsrResult {
   transcript: string;
   validationFailed?: boolean;
   validationError?: string;
+  processingTimeMs?: number;
   metadata: {
     asrLogs: Array<{
       provider: string;

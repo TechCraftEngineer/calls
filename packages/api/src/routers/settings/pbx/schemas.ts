@@ -68,4 +68,5 @@ export const pbxWebhookSchema = z.object({
 export const testPbxInputSchema = z.object({
   baseUrl: z.string().trim().optional(),
   apiKey: z.string().trim().optional(),
+  idempotencyKey: z.string().trim().optional(),
 });

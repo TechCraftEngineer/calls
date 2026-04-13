@@ -117,7 +117,7 @@ export function ReportScheduleTab({
             </Field>
           </div>
 
-          {/* Skip Weekends Option */}
+          {/* Опция пропуска выходных */}
           <div className="space-y-2">
             <Field orientation="horizontal" className="items-center gap-2">
               <Checkbox

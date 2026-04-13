@@ -122,7 +122,7 @@ export function DirectoryModal({ open, onOpenChange, onComplete }: ModalProps<vo
             </DataGridContainer>
           </DataGrid>
         </div>
-        <Button onClick={onComplete} className="w-full">
+        <Button onClick={() => onComplete()} className="w-full">
           Утвердить справочник
         </Button>
       </DialogContent>

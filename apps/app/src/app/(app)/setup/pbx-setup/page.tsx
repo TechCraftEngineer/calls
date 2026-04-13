@@ -65,6 +65,8 @@ export default function PbxSetupPage() {
   const [configSaved, setConfigSaved] = useState(false);
   const baseUrlInputRef = useRef<HTMLInputElement>(null);
   const apiKeyInputRef = useRef<HTMLInputElement>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Selection state
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
@@ -75,6 +77,18 @@ export default function PbxSetupPage() {
   const [numberSearch, setNumberSearch] = useState("");
   const [employeePage, setEmployeePage] = useState(0);
   const [numberPage, setNumberPage] = useState(0);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   // Queries
   const { data: employeesData } = useQuery(orpc.settings.listPbxEmployees.queryOptions({}));
@@ -181,8 +195,16 @@ export default function PbxSetupPage() {
       const initialEmployeeCount = initialEmployees.length;
       const initialNumberCount = initialNumbers.length;
 
+      // Clear any existing polling
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
       // Poll for completion every 3 seconds
-      const pollInterval = setInterval(async () => {
+      pollIntervalRef.current = setInterval(async () => {
         try {
           // Fetch latest data
           const [employeesData, numbersData] = await Promise.all([
@@ -194,14 +216,48 @@ export default function PbxSetupPage() {
           const numbers = (numbersData ?? []) as Number[];
 
           // Check if data has changed (indicating sync completed)
+          // Compare stable serialization of relevant fields to detect content changes
+          const currentEmployeesHash = JSON.stringify(
+            employees.map((e) => ({
+              id: e.id,
+              displayName: e.displayName,
+              extension: e.extension,
+            })),
+          );
+          const initialEmployeesHash = JSON.stringify(
+            initialEmployees.map((e) => ({
+              id: e.id,
+              displayName: e.displayName,
+              extension: e.extension,
+            })),
+          );
+          const currentNumbersHash = JSON.stringify(
+            numbers.map((n) => ({
+              id: n.id,
+              phoneNumber: n.phoneNumber,
+              extension: n.extension,
+              label: n.label,
+            })),
+          );
+          const initialNumbersHash = JSON.stringify(
+            initialNumbers.map((n) => ({
+              id: n.id,
+              phoneNumber: n.phoneNumber,
+              extension: n.extension,
+              label: n.label,
+            })),
+          );
           const hasChanges =
             employees.length !== initialEmployeeCount ||
             numbers.length !== initialNumberCount ||
-            JSON.stringify(employees.map((e) => e.id)) !==
-              JSON.stringify(initialEmployees.map((e) => e.id));
+            currentEmployeesHash !== initialEmployeesHash ||
+            currentNumbersHash !== initialNumbersHash;
 
           if (hasChanges) {
-            clearInterval(pollInterval);
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+            }
 
             // Invalidate queries to refresh the UI
             await queryClient.invalidateQueries({
@@ -223,9 +279,12 @@ export default function PbxSetupPage() {
       }, 3000);
 
       // Stop polling after 5 minutes (max wait time)
-      setTimeout(
+      timeoutRef.current = setTimeout(
         () => {
-          clearInterval(pollInterval);
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
         },
         5 * 60 * 1000,
       );
@@ -365,6 +424,10 @@ export default function PbxSetupPage() {
   }, []);
 
   const handleImport = useCallback(async () => {
+    if (importPbxDirectoryMutation.isPending) {
+      return;
+    }
+
     if (selectedEmployees.size === 0 && selectedNumbers.size === 0) {
       toast.error("Выберите хотя бы одного сотрудника или номер для импорта");
       return;

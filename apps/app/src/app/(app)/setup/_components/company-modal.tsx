@@ -12,6 +12,7 @@ import {
 } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import type { ModalProps } from "@/components/features/setup";
@@ -31,12 +32,22 @@ export function CompanyModal({ open, onOpenChange, onComplete }: ModalProps<void
 
   const form = useForm({
     resolver: zodResolver(companySchema),
-    values: {
+    defaultValues: {
       name: activeWorkspace?.name ?? "",
       nameEn: activeWorkspace?.nameEn ?? "",
       description: activeWorkspace?.description ?? "",
     },
   });
+
+  useEffect(() => {
+    if (activeWorkspace) {
+      form.reset({
+        name: activeWorkspace.name ?? "",
+        nameEn: activeWorkspace.nameEn ?? "",
+        description: activeWorkspace.description ?? "",
+      });
+    }
+  }, [activeWorkspace, form]);
 
   const handleSubmit = async (data: z.infer<typeof companySchema>) => {
     if (!activeWorkspace) return;
