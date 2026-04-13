@@ -2,19 +2,3 @@
  * Backend API - main API layer for the project.
  * oRPC router with typed client. Use createBackendClient for frontend/HTTP consumers.
  */
-
-export { type BackendApiClient, createBackendClient } from "./client";
-export { createLogger } from "./logger";
-export {
-  type AuthLike,
-  type BackendContext,
-  createBackendContext,
-  createBackendContext as createContext,
-} from "./orpc";
-export {
-  type BackendRouter,
-  backendRouter,
-  backendRouter as appRouter,
-} from "./orpc-root";
-export { createBackendApiWithContext } from "./server";
-export { extractUserFields } from "./user-profile";

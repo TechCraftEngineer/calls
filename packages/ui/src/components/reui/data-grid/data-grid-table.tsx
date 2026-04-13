@@ -1100,7 +1100,7 @@ function DataGridTableEmpty() {
         colSpan={Math.max(visibleColumnCount, 1)}
         className="text-muted-foreground style-vega:text-sm style-maia:text-sm style-nova:text-sm style-lyra:text-xs style-mira:text-xs/relaxed py-6 text-center"
       >
-        {props.emptyMessage || "No data available"}
+        {props.emptyMessage || "Нет данных"}
       </td>
     </tr>
   )
@@ -1113,7 +1113,7 @@ function DataGridTableLoader() {
     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
       <div className="text-muted-foreground bg-card style-vega:rounded-md style-vega:text-sm style-vega:shadow-xs style-maia:rounded-2xl style-maia:text-sm style-nova:rounded-lg style-nova:text-sm style-lyra:rounded-none style-lyra:text-xs style-mira:rounded-md style-mira:text-xs/relaxed flex items-center gap-2 border px-4 py-2 leading-none font-medium">
         <Spinner className="size-5 opacity-60" />
-        {props.loadingMessage || "Loading..."}
+        {props.loadingMessage || "Загрузка..."}
       </div>
     </div>
   )
@@ -1125,7 +1125,7 @@ function DataGridTableRowPin<TData>({ row }: { row: Row<TData> }) {
   return (
     <button
       type="button"
-      aria-label={isPinned ? "Unpin row" : "Pin row"}
+      aria-label={isPinned ? "Открепить строку" : "Закрепить строку"}
       onClick={() => {
         if (isPinned) {
           row.pin(false)
@@ -1181,7 +1181,7 @@ function DataGridTableRowSelect<TData>({ row }: { row: Row<TData> }) {
       <Checkbox
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
+        aria-label="Выбрать строку"
         className="align-[inherit]"
       />
     </>
@@ -1201,7 +1201,7 @@ function DataGridTableRowSelectAll() {
       }
       disabled={isLoading || recordCount === 0}
       onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-      aria-label="Select all"
+      aria-label="Выбрать все"
       className="align-[inherit]"
     />
   )

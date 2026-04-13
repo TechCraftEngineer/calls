@@ -106,7 +106,7 @@ function DataGridTableDndHeader<TData>({
             className={`-ms-2 size-6 ${isDragging ? "cursor-grabbing" : "cursor-grab active:cursor-grabbing"}`}
             {...attributes}
             {...listeners}
-            aria-label="Drag to reorder"
+            aria-label="Перетащите для изменения порядка"
           >
             <IconPlaceholder
               lucide="GripVerticalIcon"

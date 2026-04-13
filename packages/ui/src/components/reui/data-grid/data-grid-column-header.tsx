@@ -156,7 +156,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             remixicon="RiArrowUpLine"
             className="size-3.5!"
           />
-          <span className="grow">Asc</span>
+          <span className="grow">По возрастанию</span>
           {isSorted === "asc" && (
             <IconPlaceholder
               lucide="CheckIcon"
@@ -187,7 +187,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             remixicon="RiArrowDownLine"
             className="size-3.5!"
           />
-          <span className="grow">Desc</span>
+          <span className="grow">По убыванию</span>
           {isSorted === "desc" && (
             <IconPlaceholder
               lucide="CheckIcon"
@@ -222,7 +222,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             className="size-3.5!"
             aria-hidden="true"
           />
-          <span className="grow">Pin to left</span>
+          <span className="grow">Закрепить слева</span>
           {isPinned === "left" && (
             <IconPlaceholder
               lucide="CheckIcon"
@@ -247,7 +247,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             className="size-3.5!"
             aria-hidden="true"
           />
-          <span className="grow">Pin to right</span>
+          <span className="grow">Закрепить справа</span>
           {isPinned === "right" && (
             <IconPlaceholder
               lucide="CheckIcon"
@@ -290,7 +290,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             className="size-3.5!"
             aria-hidden="true"
           />
-          <span>Move to Left</span>
+          <span>Переместить влево</span>
         </DropdownMenuItem>,
         <DropdownMenuItem
           key="move-right"
@@ -313,7 +313,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             className="size-3.5!"
             aria-hidden="true"
           />
-          <span>Move to Right</span>
+          <span>Переместить вправо</span>
         </DropdownMenuItem>
       )
       hasPreviousSection = true
@@ -335,7 +335,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
               remixicon="RiEqualizer2Line"
               className="size-3.5!"
             />
-            <span>Columns</span>
+            <span>Колонки</span>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             {table
@@ -403,8 +403,8 @@ function DataGridColumnHeaderInner<TData, TValue>({
             variant="ghost"
             className="-me-1 size-7 rounded-md"
             onClick={() => column.pin(false)}
-            aria-label={`Unpin ${resolvedTitle} column`}
-            title={`Unpin ${resolvedTitle} column`}
+            aria-label={`Открепить колонку ${resolvedTitle}`}
+            title={`Открепить колонку ${resolvedTitle}`}
           >
             <IconPlaceholder
               lucide="PinOffIcon"

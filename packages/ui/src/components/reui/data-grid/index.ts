@@ -53,7 +53,4 @@ export {
   getDataGridTableRowSections,
 } from "./data-grid-table"
 export type { DataGridTablePinnedBoundary } from "./data-grid-table"
-export {
-  DataGridTableHeadRowCellDnd,
-  DataGridTableDndContext,
-} from "./data-grid-table-dnd"
+export { DataGridTableDnd } from "./data-grid-table-dnd"

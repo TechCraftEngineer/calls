@@ -1,23 +1,20 @@
-import { test } from "@playwright/test";
 import { test as callsTest } from "../fixtures/calls";
 import { CallsHelpers } from "../helpers/calls-helpers";
 
-test.describe
-  .skip("Таблица звонков - различия отображения для ролей", () => {
-    test.skip(true, "Requires running application with data");
-    let callsHelpers: CallsHelpers;
+callsTest.describe.skip("Таблица звонков - различия отображения для ролей", () => {
+  let callsHelpers: CallsHelpers;
 
-    test.beforeEach(async ({ page }) => {
-      callsHelpers = new CallsHelpers(page);
-    });
+  callsTest.beforeEach(async ({ page }) => {
+    callsHelpers = new CallsHelpers(page);
+  });
 
-    test.afterEach(async () => {
-      await callsHelpers.clearMocks();
-    });
+  callsTest.afterEach(async () => {
+    await callsHelpers.clearMocks();
+  });
 
-    /**
-     * Тесты для администратора
-     */
+  /**
+   * Тесты для администратора
+   */
     callsTest.describe("Администратор", () => {
       callsTest("видит все звонки всех пользователей", async ({ page, adminUser, mockCalls }) => {
         callsHelpers = new CallsHelpers(page);

@@ -57,22 +57,31 @@ export default function WorkspaceSettingsPage() {
       onSuccess: async () => {
         toast.success("Компания удалена");
 
-        // Получаем актуальный список компаний после удаления
-        const remainingWorkspaces = await queryClient.fetchQuery(
-          orpc.workspaces.list.queryOptions()
-        );
+        try {
+          // Сначала инвалидируем кэш, затем получаем свежие данные
+          await queryClient.invalidateQueries({
+            queryKey: orpc.workspaces.list.getQueryKey(),
+          });
+          const remainingWorkspaces = await queryClient.fetchQuery(
+            orpc.workspaces.list.queryOptions()
+          );
 
-        const hasOtherWorkspaces = remainingWorkspaces && remainingWorkspaces.workspaces.length > 0;
+          const hasOtherWorkspaces = remainingWorkspaces && remainingWorkspaces.workspaces.length > 0;
 
-        if (hasOtherWorkspaces) {
-          // Если есть другие компании - очищаем куку и перезагружаем на корень
-          // Провайдер автоматически выберет первую доступную компанию
+          if (hasOtherWorkspaces) {
+            // Если есть другие компании - очищаем куку и перезагружаем на корень
+            // Провайдер автоматически выберет первую доступную компанию
+            clearActiveWorkspaceCookie();
+            window.location.href = paths.dashboard.root;
+          } else {
+            // Если компаний больше нет - на onboarding
+            clearActiveWorkspaceCookie();
+            window.location.href = paths.onboarding.createWorkspace;
+          }
+        } catch {
+          // При ошибке - fallback redirect
           clearActiveWorkspaceCookie();
           window.location.href = paths.dashboard.root;
-        } else {
-          // Если компаний больше нет - на onboarding
-          clearActiveWorkspaceCookie();
-          window.location.href = paths.onboarding.createWorkspace;
         }
       },
       onError: (err) => {

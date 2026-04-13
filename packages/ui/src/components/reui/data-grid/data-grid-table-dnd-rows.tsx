@@ -74,6 +74,7 @@ function DataGridTableDndRowHandle({ className }: { className?: string }) {
           className
         )}
         disabled
+        aria-label="Перетащить строку"
       >
         <IconPlaceholder
           lucide="GripHorizontalIcon"
@@ -94,6 +95,7 @@ function DataGridTableDndRowHandle({ className }: { className?: string }) {
         "size-7 cursor-grab opacity-70 hover:bg-transparent hover:opacity-100 active:cursor-grabbing",
         className
       )}
+      aria-label="Перетащить строку"
       {...context.attributes}
       {...context.listeners}
     >
