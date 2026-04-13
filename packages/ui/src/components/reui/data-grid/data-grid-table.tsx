@@ -27,6 +27,10 @@ import { cva } from "class-variance-authority"
 
 import { cn } from "../../../lib/utils"
 import { Checkbox } from "../../checkbox"
+import {
+  DataGridTableDndContext,
+  DataGridTableHeadRowCellDnd,
+} from "./data-grid-table-dnd"
 
 const headerCellSpacingVariants = cva("", {
   variants: {
@@ -1304,45 +1308,66 @@ const MemoizedDataGridTableBodyRows = memo(
 
 function DataGridTableHeader<TData>() {
   const { table, props } = useDataGrid()
+  const isDraggable = props.tableLayout?.columnsDraggable
+
+  const renderHeaderRow = (headerGroup: HeaderGroup<TData>, index: number) => {
+    const headers = headerGroup.headers
+
+    const headerCells = headers.map((header, hIndex) => {
+      const { column } = header
+      const cellContent = (
+        <>
+          {header.isPlaceholder ? null : props.tableLayout?.columnsResizable &&
+            column.getCanResize() ? (
+            <div className="truncate">
+              {flexRender(header.column.columnDef.header, header.getContext())}
+            </div>
+          ) : (
+            flexRender(header.column.columnDef.header, header.getContext())
+          )}
+          {props.tableLayout?.columnsResizable && column.getCanResize() && (
+            <DataGridTableHeadRowCellResize header={header} />
+          )}
+        </>
+      )
+
+      return isDraggable ? (
+        <DataGridTableHeadRowCellDnd key={hIndex} header={header}>
+          <DataGridTableHeadRowCell header={header}>
+            {cellContent}
+          </DataGridTableHeadRowCell>
+        </DataGridTableHeadRowCellDnd>
+      ) : (
+        <DataGridTableHeadRowCell header={header} key={hIndex}>
+          {cellContent}
+        </DataGridTableHeadRowCell>
+      )
+    })
+
+    return (
+      <DataGridTableHeadRow headerGroup={headerGroup} key={index}>
+        {headerCells}
+      </DataGridTableHeadRow>
+    )
+  }
+
+  const headerGroups = table.getHeaderGroups()
+
+  const headerContent = headerGroups.map((headerGroup, index) =>
+    renderHeaderRow(headerGroup, index)
+  )
 
   return (
     <DataGridTableViewport>
       <DataGridTableBase>
         <DataGridTableHead>
-          {table
-            .getHeaderGroups()
-            .map((headerGroup: HeaderGroup<TData>, index) => {
-              return (
-                <DataGridTableHeadRow headerGroup={headerGroup} key={index}>
-                  {headerGroup.headers.map((header, hIndex) => {
-                    const { column } = header
-
-                    return (
-                      <DataGridTableHeadRowCell header={header} key={hIndex}>
-                        {header.isPlaceholder ? null : props.tableLayout
-                            ?.columnsResizable && column.getCanResize() ? (
-                          <div className="truncate">
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                          </div>
-                        ) : (
-                          flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )
-                        )}
-                        {props.tableLayout?.columnsResizable &&
-                          column.getCanResize() && (
-                            <DataGridTableHeadRowCellResize header={header} />
-                          )}
-                      </DataGridTableHeadRowCell>
-                    )
-                  })}
-                </DataGridTableHeadRow>
-              )
-            })}
+          {isDraggable && headerGroups[0] ? (
+            <DataGridTableDndContext headers={headerGroups[0].headers}>
+              {headerContent}
+            </DataGridTableDndContext>
+          ) : (
+            headerContent
+          )}
         </DataGridTableHead>
       </DataGridTableBase>
     </DataGridTableViewport>
@@ -1357,48 +1382,71 @@ function DataGridTable<TData>({
   renderHeader?: boolean
 }) {
   const { table, props } = useDataGrid()
+  const isDraggable = props.tableLayout?.columnsDraggable
+
+  const renderHeaderRow = (headerGroup: HeaderGroup<TData>, index: number) => {
+    const headers = headerGroup.headers
+
+    const headerCells = headers.map((header, hIndex) => {
+      const { column } = header
+      const cellContent = (
+        <>
+          {header.isPlaceholder ? null : props.tableLayout?.columnsResizable &&
+            column.getCanResize() ? (
+            <div className="truncate">
+              {flexRender(header.column.columnDef.header, header.getContext())}
+            </div>
+          ) : (
+            flexRender(header.column.columnDef.header, header.getContext())
+          )}
+          {props.tableLayout?.columnsResizable && column.getCanResize() && (
+            <DataGridTableHeadRowCellResize header={header} />
+          )}
+        </>
+      )
+
+      return isDraggable ? (
+        <DataGridTableHeadRowCellDnd key={hIndex} header={header}>
+          <DataGridTableHeadRowCell header={header}>
+            {cellContent}
+          </DataGridTableHeadRowCell>
+        </DataGridTableHeadRowCellDnd>
+      ) : (
+        <DataGridTableHeadRowCell header={header} key={hIndex}>
+          {cellContent}
+        </DataGridTableHeadRowCell>
+      )
+    })
+
+    return (
+      <DataGridTableHeadRow headerGroup={headerGroup} key={index}>
+        {headerCells}
+      </DataGridTableHeadRow>
+    )
+  }
+
+  const headerGroups = table.getHeaderGroups()
+
+  const headerContent = renderHeader && (
+    <DataGridTableHead>
+      {isDraggable && headerGroups[0] ? (
+        <DataGridTableDndContext headers={headerGroups[0].headers}>
+          {headerGroups.map((headerGroup, index) =>
+            renderHeaderRow(headerGroup, index)
+          )}
+        </DataGridTableDndContext>
+      ) : (
+        headerGroups.map((headerGroup, index) =>
+          renderHeaderRow(headerGroup, index)
+        )
+      )}
+    </DataGridTableHead>
+  )
 
   return (
     <DataGridTableViewport>
       <DataGridTableBase>
-        {renderHeader && (
-          <DataGridTableHead>
-            {table
-              .getHeaderGroups()
-              .map((headerGroup: HeaderGroup<TData>, index) => {
-                return (
-                  <DataGridTableHeadRow headerGroup={headerGroup} key={index}>
-                    {headerGroup.headers.map((header, index) => {
-                      const { column } = header
-
-                      return (
-                        <DataGridTableHeadRowCell header={header} key={index}>
-                          {header.isPlaceholder ? null : props.tableLayout
-                              ?.columnsResizable && column.getCanResize() ? (
-                            <div className="truncate">
-                              {flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                            </div>
-                          ) : (
-                            flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )
-                          )}
-                          {props.tableLayout?.columnsResizable &&
-                            column.getCanResize() && (
-                              <DataGridTableHeadRowCellResize header={header} />
-                            )}
-                        </DataGridTableHeadRowCell>
-                      )
-                    })}
-                  </DataGridTableHeadRow>
-                )
-              })}
-          </DataGridTableHead>
-        )}
+        {headerContent}
 
         {renderHeader &&
           (props.tableLayout?.stripped || !props.tableLayout?.rowBorder) && (

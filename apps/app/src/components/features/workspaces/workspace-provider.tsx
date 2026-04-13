@@ -2,7 +2,7 @@
 
 import { toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from "react";
 import { useSession } from "@/lib/better-auth";
 import {
@@ -38,7 +38,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { data: session, isPending: sessionPending } = useSession();
   const orpc = useORPC();
   const queryClient = useQueryClient();
-  const router = useRouter();
   const pathname = usePathname();
 
   const isAuthenticated = !!session?.user;

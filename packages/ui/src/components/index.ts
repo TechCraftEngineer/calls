@@ -198,6 +198,8 @@ export {
   DataGridTableRowSelect,
   DataGridTableRowSelectAll,
   DataGridTableRowSpacer,
+  DataGridTableHeadRowCellDnd,
+  DataGridTableDndContext,
 } from "./reui/data-grid";
 export { Rating } from "./reui/rating";
 export type {

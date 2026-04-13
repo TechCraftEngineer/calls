@@ -4,7 +4,6 @@ import { paths } from "@calls/config";
 import {
   PROCESSING_STATUS_CONFIG,
   isValidProcessingStatus,
-  type ProcessingStatus,
 } from "@calls/db/shared";
 import { Button, Rating, Tooltip, TooltipContent, TooltipTrigger } from "@calls/ui";
 import { Loader2 } from "lucide-react";
