@@ -10,47 +10,7 @@ import { useSession } from "@/lib/better-auth";
 
 const SETTINGS_NAV = [
   {
-    href: paths.settings.profile,
-    label: "Аккаунт",
-    description: "Имя, пароль, профиль",
-    icon: (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
-    ),
-  },
-  {
     href: paths.settings.root,
-    label: "Общие",
-    description: "Отчёты и уведомления",
-    icon: (
-      <svg
-        width="18"
-        height="18"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M12 20h9" />
-        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-      </svg>
-    ),
-  },
-  {
-    href: paths.settings.workspace,
     label: "Компания",
     description: "Название и параметры",
     icon: (

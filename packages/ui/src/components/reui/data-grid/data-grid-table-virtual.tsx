@@ -306,9 +306,9 @@ function DataGridTableVirtual<TData>({
 
   const isVirtualizationEnabled = virtualizerOptions?.enabled !== false
   const loadingMoreMessage =
-    props.fetchingMoreMessage || props.loadingMessage || "Loading..."
+    props.fetchingMoreMessage || props.loadingMessage || "Загрузка..."
   const allRowsLoadedMessage =
-    props.allRowsLoadedMessage || "All records loaded"
+    props.allRowsLoadedMessage || "Все записи загружены"
 
   const handleViewportRef = useCallback((node: HTMLDivElement | null) => {
     setViewportElements({

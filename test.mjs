@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
 
 // Запускаем тесты с исключениями для e2e и spec файлов
-const { spawn } = await import("child_process");
-const { promisify } = await import("util");
+const { spawn } = await import("node:child_process");
+const { promisify } = await import("node:util");
 
 const exec = promisify(spawn);
 

@@ -15,7 +15,7 @@ import {
   DataGridTableBody,
   DataGridTableBodyRow,
   DataGridTableBodyRowCell,
-  DataGridTableBodyRowExpandded,
+  DataGridTableBodyRowExpanded,
   DataGridTableBodyRowSkeleton,
   DataGridTableBodyRowSkeletonCell,
   DataGridTableEmpty,
@@ -106,7 +106,7 @@ function DataGridTableDndHeader<TData>({
             className={`-ms-2 size-6 ${isDragging ? "cursor-grabbing" : "cursor-grab active:cursor-grabbing"}`}
             {...attributes}
             {...listeners}
-            aria-label="Drag to reorder"
+            aria-label="Перетащите для изменения порядка"
           >
             <IconPlaceholder
               lucide="GripVerticalIcon"
@@ -300,7 +300,7 @@ function DataGridTableDnd<TData>({
                         })}
                     </DataGridTableBodyRow>
                     {row.getIsExpanded() && (
-                      <DataGridTableBodyRowExpandded row={row} />
+                      <DataGridTableBodyRowExpanded row={row} />
                     )}
                   </Fragment>
                 )

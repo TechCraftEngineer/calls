@@ -37,16 +37,16 @@ function DataGridPagination(props: DataGridPaginationProps): React.JSX.Element {
 
   const defaultProps: Partial<DataGridPaginationProps> = {
     sizes: [5, 10, 25, 50, 100],
-    sizesLabel: "Show",
-    sizesDescription: "per page",
+    sizesLabel: "Показать",
+    sizesDescription: "на странице",
     sizesSkeleton: <Skeleton className="h-8 w-44" />,
     moreLimit: 5,
     more: false,
-    info: "{from} - {to} of {count}",
+    info: "{from} - {to} из {count}",
     infoSkeleton: <Skeleton className="h-8 w-60" />,
-    rowsPerPageLabel: "Rows per page",
-    previousPageLabel: "Go to previous page",
-    nextPageLabel: "Go to next page",
+    rowsPerPageLabel: "Строк на странице",
+    previousPageLabel: "Предыдущая страница",
+    nextPageLabel: "Следующая страница",
     ellipsisText: "...",
   }
 

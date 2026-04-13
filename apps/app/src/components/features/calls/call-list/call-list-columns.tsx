@@ -46,7 +46,7 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
 
   const renderLinkOrButton = createLinkOrButton(router, onSelectCall);
 
-  const columnTooltips: Record<string, string> = {
+  const _columnTooltips: Record<string, string> = {
     status: "Статус звонка (принят, пропущен, ошибка и т.д.)",
     score: "Ценность звонка (0 = не оценено, 1-5 = оценка сделки)",
     summary: "Краткое резюме разговора",
@@ -175,7 +175,6 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
           column={column}
           title="Статус"
           className={headerClassName}
-          tooltip={columnTooltips.status}
           visibility={true}
         />
       ),
@@ -193,7 +192,6 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
           column={column}
           title="Обработка"
           className={headerClassName}
-          tooltip="Статус обработки звонка (транскрипция, оценка)"
           visibility={true}
         />
       ),
@@ -225,7 +223,6 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
           column={column}
           title="Ценность"
           className={headerClassName}
-          tooltip={columnTooltips.score}
           visibility={true}
         />
       ),
@@ -243,7 +240,6 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
           column={column}
           title="Резюме"
           className={headerClassName}
-          tooltip={columnTooltips.summary}
           visibility={true}
         />
       ),
@@ -262,7 +258,6 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
           column={column}
           title="Действия"
           className={headerClassName}
-          tooltip={columnTooltips.record}
           visibility={true}
         />
       ),

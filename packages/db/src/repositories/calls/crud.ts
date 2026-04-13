@@ -380,8 +380,7 @@ export const callsCrud = {
       const allowedSources = ALLOWED_STATUS_TRANSITIONS[newStatus];
       const isValidTransition =
         !currentStatus || // Если статус null - разрешаем любой переход
-        (currentStatus && allowedSources.includes(currentStatus)) || // Если текущий статус в списке разрешенных
-        allowedSources.length === 0; // Если нет ограничений на вход (например для pending)
+        (currentStatus && allowedSources.includes(currentStatus)); // Если текущий статус в списке разрешенных
 
       if (!isValidTransition) {
         // Переход недопустим - возвращаем false без обновления

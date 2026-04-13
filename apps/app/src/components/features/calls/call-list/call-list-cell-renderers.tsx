@@ -1,10 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
-import {
-  PROCESSING_STATUS_CONFIG,
-  isValidProcessingStatus,
-} from "@calls/db/shared";
+import { isValidProcessingStatus, PROCESSING_STATUS_CONFIG } from "@calls/db/shared";
 import { Button, Rating, Tooltip, TooltipContent, TooltipTrigger } from "@calls/ui";
 import { Loader2 } from "lucide-react";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
@@ -229,12 +226,9 @@ export function renderProcessingStatusCell(call: CallWithDetails["call"]) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <button
-            type="button"
-            className="op-badge badge-gray-op focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
+          <span className="op-badge badge-gray-op" role="status" aria-label="Статус: не задан">
             —
-          </button>
+          </span>
         </TooltipTrigger>
       </Tooltip>
     );
@@ -250,12 +244,13 @@ export function renderProcessingStatusCell(call: CallWithDetails["call"]) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <button
-            type="button"
-            className="op-badge badge-gray-op focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          <span
+            className="op-badge badge-gray-op"
+            role="status"
+            aria-label={`Статус: неизвестно (${processingStatus})`}
           >
             Неизвестно ({processingStatus})
-          </button>
+          </span>
         </TooltipTrigger>
       </Tooltip>
     );
@@ -266,14 +261,14 @@ export function renderProcessingStatusCell(call: CallWithDetails["call"]) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button
-          type="button"
-          className={`op-badge ${className} flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
-          aria-haspopup="dialog"
+        <span
+          className={`op-badge ${className} flex items-center gap-1`}
+          role="status"
+          aria-label={`Статус: ${config.label}`}
         >
           {config.showSpinner && <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />}
           {config.label}
-        </button>
+        </span>
       </TooltipTrigger>
       {call.processingError && processingStatus === "failed" && (
         <TooltipContent side="top" className="max-w-xs">

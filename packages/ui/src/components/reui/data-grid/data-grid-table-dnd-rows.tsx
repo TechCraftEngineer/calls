@@ -11,7 +11,7 @@ import {
   useRef,
   useState,
 } from "react"
-import { useDataGrid } from "@/registry-reui/bases/radix/reui/data-grid/data-grid"
+import { useDataGrid } from "./data-grid"
 import {
   DataGridTableBase,
   DataGridTableBody,
@@ -27,7 +27,7 @@ import {
   DataGridTableHeadRowCellResize,
   DataGridTableRowSpacer,
   DataGridTableViewport,
-} from "@/registry-reui/bases/radix/reui/data-grid/data-grid-table"
+} from "./data-grid-table"
 import {
   closestCenter,
   DndContext,
@@ -74,6 +74,7 @@ function DataGridTableDndRowHandle({ className }: { className?: string }) {
           className
         )}
         disabled
+        aria-label="Перетащить строку"
       >
         <IconPlaceholder
           lucide="GripHorizontalIcon"
@@ -94,6 +95,7 @@ function DataGridTableDndRowHandle({ className }: { className?: string }) {
         "size-7 cursor-grab opacity-70 hover:bg-transparent hover:opacity-100 active:cursor-grabbing",
         className
       )}
+      aria-label="Перетащить строку"
       {...context.attributes}
       {...context.listeners}
     >
@@ -237,7 +239,7 @@ function DataGridTableDndRows<TData>({
           <DataGridTableHead>
             {table
               .getHeaderGroups()
-              .map((headerGroup: HeaderGroup<TData>, index) => {
+              .map((headerGroup: HeaderGroup<TData>, index: number) => {
                 return (
                   <DataGridTableHeadRow headerGroup={headerGroup} key={index}>
                     {headerGroup.headers.map((header, index) => {
@@ -281,7 +283,7 @@ function DataGridTableDndRows<TData>({
             pagination?.pageSize ? (
               Array.from({ length: pagination.pageSize }).map((_, rowIndex) => (
                 <DataGridTableBodyRowSkeleton key={rowIndex}>
-                  {table.getVisibleFlatColumns().map((column, colIndex) => {
+                  {table.getVisibleFlatColumns().map((column: any, colIndex: number) => {
                     return (
                       <DataGridTableBodyRowSkeletonCell
                         column={column}

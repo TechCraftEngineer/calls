@@ -26,7 +26,7 @@ function DataGridColumnVisibility<TData>({
       <DropdownMenuContent align="end" className="min-w-[150px]">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="font-medium">
-            Toggle Columns
+            Показать/скрыть столбцы
           </DropdownMenuLabel>
           {table
             .getAllColumns()

@@ -468,7 +468,7 @@ export class CallsService {
       startedAt?: Date | null;
       completedAt?: Date | null;
     },
-  ): Promise<void> {
+  ): Promise<boolean> {
     // Получаем информацию о звонке для логирования
     let workspaceId: string | null = null;
     try {
@@ -498,7 +498,7 @@ export class CallsService {
         processingCompletedAt: completedAtStr,
       });
 
-      // Если обновление не выполнено (конфликт статусов) - логируем и выходим
+      // Если обновление не выполнено (конфликт статусов) - логируем и возвращаем false
       if (!updated) {
         if (workspaceId) {
           try {
@@ -512,7 +512,7 @@ export class CallsService {
             // Игнорируем ошибки логирования
           }
         }
-        return;
+        return false;
       }
 
       // Логируем изменение статуса
@@ -526,6 +526,8 @@ export class CallsService {
           // Игнорируем ошибки логирования
         }
       }
+
+      return true;
     } catch (error) {
       if (error instanceof Error && workspaceId) {
         try {
