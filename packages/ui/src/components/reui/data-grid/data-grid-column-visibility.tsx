@@ -11,7 +11,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "../../dropdown-menu"
+} from "../.."
 
 function DataGridColumnVisibility<TData>({
   table,
@@ -26,7 +26,7 @@ function DataGridColumnVisibility<TData>({
       <DropdownMenuContent align="end" className="min-w-[150px]">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="font-medium">
-            Настройка колонок
+            Toggle Columns
           </DropdownMenuLabel>
           {table
             .getAllColumns()

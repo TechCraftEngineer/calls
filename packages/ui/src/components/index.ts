@@ -211,3 +211,6 @@ export type {
   DataGridColumnHeaderProps,
   DataGridPaginationProps,
 } from "./reui/data-grid";
+
+
+export { Spinner } from './spinner'

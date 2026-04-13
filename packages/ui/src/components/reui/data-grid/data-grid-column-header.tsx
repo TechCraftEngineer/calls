@@ -2,19 +2,13 @@
 
 import { HTMLAttributes, memo, ReactNode, useMemo } from "react"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../../tooltip"
-import {
   getColumnHeaderLabel,
   useDataGrid,
 } from "./data-grid"
 import { Column } from "@tanstack/react-table"
 
-import { cn } from "../../../lib/utils"
-import { Button } from "../../button"
+import { cn } from "../.."
+import { Button } from "../../"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -27,8 +21,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "../../dropdown-menu"
-import { IconPlaceholder } from "../../icon-placeholder"
+} from "../.."
+import { IconPlaceholder } from "../.."
 
 interface DataGridColumnHeaderProps<
   TData,
@@ -41,7 +35,6 @@ interface DataGridColumnHeaderProps<
   pinnable?: boolean
   filter?: ReactNode
   visibility?: boolean
-  tooltip?: string
 }
 
 function DataGridColumnHeaderInner<TData, TValue>({
@@ -51,7 +44,6 @@ function DataGridColumnHeaderInner<TData, TValue>({
   className,
   filter,
   visibility = false,
-  tooltip,
 }: DataGridColumnHeaderProps<TData, TValue>) {
   const { isLoading, table, props, recordCount } = useDataGrid()
   const resolvedTitle = title ?? getColumnHeaderLabel(column)
@@ -79,13 +71,12 @@ function DataGridColumnHeaderInner<TData, TValue>({
   }
 
   const headerLabelClassName = cn(
-    "text-secondary-foreground/80 inline-flex h-full items-center gap-1.5 font-normal [&_svg]:opacity-60 text-[0.8125rem] leading-[calc(1.125/0.8125)] [&_svg]:size-3.5",
-    tooltip && "cursor-help underline decoration-dotted underline-offset-2",
+    "text-secondary-foreground/80 inline-flex h-full items-center gap-1.5 font-normal [&_svg]:opacity-60 style-vega:text-[0.8125rem] style-vega:leading-[calc(1.125/0.8125)] style-vega:[&_svg]:size-3.5 style-maia:text-[0.8125rem] style-maia:leading-[calc(1.125/0.8125)] style-maia:[&_svg]:size-3.5 style-nova:text-[0.8125rem] style-nova:leading-[calc(1.125/0.8125)] style-nova:[&_svg]:size-3.5 style-lyra:text-xs style-lyra:[&_svg]:size-3 style-mira:text-xs/relaxed style-mira:[&_svg]:size-3",
     className
   )
 
   const headerButtonClassName = cn(
-    "text-secondary-foreground/80 hover:bg-secondary data-[state=open]:bg-secondary hover:text-foreground data-[state=open]:text-foreground -ms-2 px-2 font-normal h-6 rounded-lg",
+    "text-secondary-foreground/80 hover:bg-secondary data-[state=open]:bg-secondary hover:text-foreground data-[state=open]:text-foreground -ms-2 px-2 font-normal style-vega:h-7 style-vega:rounded-md style-maia:h-7 style-maia:rounded-4xl style-nova:h-6 style-nova:rounded-lg style-lyra:h-6 style-lyra:rounded-none style-mira:h-6 style-mira:rounded-md",
     className
   )
 
@@ -165,7 +156,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             remixicon="RiArrowUpLine"
             className="size-3.5!"
           />
-          <span className="grow">По возрастанию</span>
+          <span className="grow">Asc</span>
           {isSorted === "asc" && (
             <IconPlaceholder
               lucide="CheckIcon"
@@ -196,7 +187,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             remixicon="RiArrowDownLine"
             className="size-3.5!"
           />
-          <span className="grow">По убыванию</span>
+          <span className="grow">Desc</span>
           {isSorted === "desc" && (
             <IconPlaceholder
               lucide="CheckIcon"
@@ -231,7 +222,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             className="size-3.5!"
             aria-hidden="true"
           />
-          <span className="grow">Закрепить слева</span>
+          <span className="grow">Pin to left</span>
           {isPinned === "left" && (
             <IconPlaceholder
               lucide="CheckIcon"
@@ -256,7 +247,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             className="size-3.5!"
             aria-hidden="true"
           />
-          <span className="grow">Закрепить справа</span>
+          <span className="grow">Pin to right</span>
           {isPinned === "right" && (
             <IconPlaceholder
               lucide="CheckIcon"
@@ -284,7 +275,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             if (columnIndex > 0) {
               const newOrder = [...columnOrder]
               const [movedColumn] = newOrder.splice(columnIndex, 1)
-              if (movedColumn) newOrder.splice(columnIndex - 1, 0, movedColumn)
+              newOrder.splice(columnIndex - 1, 0, movedColumn)
               table.setColumnOrder(newOrder)
             }
           }}
@@ -299,7 +290,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             className="size-3.5!"
             aria-hidden="true"
           />
-          <span>Переместить влево</span>
+          <span>Move to Left</span>
         </DropdownMenuItem>,
         <DropdownMenuItem
           key="move-right"
@@ -307,7 +298,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             if (columnIndex < columnOrder.length - 1) {
               const newOrder = [...columnOrder]
               const [movedColumn] = newOrder.splice(columnIndex, 1)
-              if (movedColumn) newOrder.splice(columnIndex + 1, 0, movedColumn)
+              newOrder.splice(columnIndex + 1, 0, movedColumn)
               table.setColumnOrder(newOrder)
             }
           }}
@@ -322,7 +313,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
             className="size-3.5!"
             aria-hidden="true"
           />
-          <span>Переместить вправо</span>
+          <span>Move to Right</span>
         </DropdownMenuItem>
       )
       hasPreviousSection = true
@@ -344,7 +335,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
               remixicon="RiEqualizer2Line"
               className="size-3.5!"
             />
-            <span>Колонки</span>
+            <span>Columns</span>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             {table
@@ -384,7 +375,7 @@ function DataGridColumnHeaderInner<TData, TValue>({
     table,
     columnIndex,
     columnOrder,
-    columnVisibilityKey,
+    columnVisibilityKey, // Needed to update checkbox states when visibility changes
   ])
 
   if (hasControls) {
@@ -412,8 +403,8 @@ function DataGridColumnHeaderInner<TData, TValue>({
             variant="ghost"
             className="-me-1 size-7 rounded-md"
             onClick={() => column.pin(false)}
-            aria-label={`Открепить колонку «${resolvedTitle}»`}
-            title={`Открепить колонку «${resolvedTitle}»`}
+            aria-label={`Unpin ${resolvedTitle} column`}
+            title={`Unpin ${resolvedTitle} column`}
           >
             <IconPlaceholder
               lucide="PinOffIcon"
@@ -447,34 +438,11 @@ function DataGridColumnHeaderInner<TData, TValue>({
     )
   }
 
-  const headerContent = (
-    <>
+  return (
+    <div className={headerLabelClassName}>
       {icon && icon}
       {resolvedTitle}
-    </>
-  )
-
-  if (!tooltip) {
-    return (
-      <div className={headerLabelClassName}>
-        {headerContent}
-      </div>
-    )
-  }
-
-  return (
-    <TooltipProvider delayDuration={200}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className={headerLabelClassName}>
-            {headerContent}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="top" sideOffset={4}>
-          <p className="max-w-xs text-sm">{tooltip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    </div>
   )
 }
 

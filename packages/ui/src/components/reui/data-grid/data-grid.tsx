@@ -9,7 +9,7 @@ import {
   Table,
 } from "@tanstack/react-table"
 
-import { cn } from "../../../lib/utils"
+import { cn } from "../.."
 
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -70,7 +70,6 @@ export interface DataGridProps<TData extends object> {
   recordCount: number
   children?: ReactNode
   onRowClick?: (row: TData) => void
-  getRowClassName?: (row: TData) => string
   isLoading?: boolean
   loadingMode?: "skeleton" | "spinner"
   loadingMessage?: ReactNode | string
@@ -259,7 +258,7 @@ function DataGridContainer({
       className={cn(
         "w-full overflow-hidden",
         border &&
-          "border-border rounded-lg border",
+          "border-border style-vega:rounded-lg style-maia:rounded-2xl style-nova:rounded-lg style-lyra:rounded-none style-mira:rounded-lg border",
         className
       )}
     >
