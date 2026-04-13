@@ -10,6 +10,7 @@ import {
   type UniqueIdentifier,
   useSensor,
   useSensors,
+  DragOverlay,
 } from "@dnd-kit/core"
 import {
   restrictToHorizontalAxis,
@@ -22,7 +23,7 @@ import {
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import type { Header } from "@tanstack/react-table"
-import { type CSSProperties, type ReactNode, useMemo } from "react"
+import { useState, type CSSProperties, type ReactNode, useMemo } from "react"
 import { useDataGrid } from "./data-grid"
 import { cn } from "../../../lib/utils"
 
@@ -88,6 +89,8 @@ function DataGridTableDndContext<TData>({
 }: DataGridTableDndContextProps<TData>) {
   const { table } = useDataGrid()
 
+  const [activeId, setActiveId] = useState<string | null>(null)
+
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
@@ -148,8 +151,14 @@ function DataGridTableDndContext<TData>({
     })
   )
 
+  const handleDragStart = (event: DragEndEvent) => {
+    setActiveId(String(event.active.id))
+  }
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
+    setActiveId(null)
+
     if (!over) return
 
     const activeId = String(active.id)
@@ -176,11 +185,16 @@ function DataGridTableDndContext<TData>({
     [headers]
   )
 
+  const activeHeader = activeId
+    ? headers.find((h) => h.column.id === activeId)
+    : null
+
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
       modifiers={[restrictToHorizontalAxis, restrictToParentElement]}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       <SortableContext
@@ -189,6 +203,13 @@ function DataGridTableDndContext<TData>({
       >
         {children}
       </SortableContext>
+      <DragOverlay>
+        {activeHeader ? (
+          <div className="bg-muted/90 border-border shadow-lg flex h-full items-center border px-3 text-sm font-medium opacity-90">
+            {activeHeader.column.columnDef.header?.toString() || activeHeader.column.id}
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   )
 }
