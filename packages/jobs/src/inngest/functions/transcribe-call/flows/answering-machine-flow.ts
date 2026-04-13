@@ -2,7 +2,7 @@
  * Flow для обработки автоответчиков
  */
 
-import { callsService } from "@calls/db";
+import { callsService, PROCESSING_STATUS } from "@calls/db";
 import { createLogger } from "../../../../logger";
 import type { AnsweringMachineCheckResult } from "../steps/check-answering-machine";
 import type { SyncTranscriptionResult } from "../steps/sync-transcription";
@@ -75,6 +75,11 @@ export async function handleAnsweringMachineFlow(
       "llm/identify-speakers",
       "call.evaluate.requested",
     ],
+  });
+
+  // Устанавливаем финальный статус обработки
+  await callsService.updateCallProcessingStatus(callId, PROCESSING_STATUS.COMPLETED, {
+    completedAt: new Date(),
   });
 
   return {

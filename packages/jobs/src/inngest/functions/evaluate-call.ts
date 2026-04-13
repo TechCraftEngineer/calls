@@ -6,6 +6,7 @@
 
 import {
   callsService,
+  PROCESSING_STATUS,
   usersRepository,
   userWorkspaceSettingsRepository,
   workspaceSettingsRepository,
@@ -19,10 +20,43 @@ import {
 import { evaluateCallWithLlm, resolveEvaluationPrompt } from "../../evaluation";
 import { createLogger } from "../../logger";
 import { evaluateRequested, inngest } from "../client";
+import type { FailureEventArgs } from "inngest";
 
 const logger = createLogger("evaluate-call");
 
 const DEFAULT_TEMPLATE = "general";
+
+/**
+ * Handler для ошибок оценки звонка (onFailure)
+ */
+async function handleFailure({ event, error }: FailureEventArgs): Promise<void> {
+  try {
+    // Извлекаем callId из события
+    const rawEventData = event.data?.event?.data ?? event.data;
+    const callId = rawEventData?.callId;
+
+    if (!callId) {
+      logger.error("Не удалось извлечь callId из failure event", { event });
+      return;
+    }
+
+    // Устанавливаем статус failed
+    await callsService.updateCallProcessingStatus(callId, PROCESSING_STATUS.FAILED, {
+      error: error.message,
+      completedAt: new Date(),
+    });
+
+    logger.error("Оценка звонка завершилась с ошибкой после всех попыток", {
+      callId,
+      error: error.message,
+    });
+  } catch (dbError) {
+    logger.error("Не удалось записать статус ошибки оценки", {
+      error: dbError instanceof Error ? dbError.message : String(dbError),
+      originalError: error.message,
+    });
+  }
+}
 
 export const evaluateCallFn = inngest.createFunction(
   {
@@ -34,12 +68,18 @@ export const evaluateCallFn = inngest.createFunction(
       key: "event.data.callId",
     },
     triggers: [evaluateRequested],
+    onFailure: handleFailure,
   },
   async ({ event, step }) => {
     const { callId } = event.data;
     if (!callId) {
       throw new Error("callId обязателен");
     }
+
+    // Устанавливаем статус evaluating
+    await step.run("update-status-evaluating", async () => {
+      await callsService.updateCallProcessingStatus(callId, PROCESSING_STATUS.EVALUATING);
+    });
 
     const call = await step.run("get-call", async () => {
       const c = await callsService.getCall(callId);
@@ -60,6 +100,10 @@ export const evaluateCallFn = inngest.createFunction(
 
     if (!transcriptText) {
       logger.warn("Транскрипт пуст — пропускаем оценку", { callId });
+      // Устанавливаем финальный статус даже при пропуске оценки
+      await callsService.updateCallProcessingStatus(callId, PROCESSING_STATUS.COMPLETED, {
+        completedAt: new Date(),
+      });
       return { callId, skipped: true, reason: "empty_transcript" };
     }
 
@@ -153,6 +197,13 @@ export const evaluateCallFn = inngest.createFunction(
         notAnalyzableReason: evaluation.notAnalyzableReason,
         valueScore: evaluation.valueScore,
         managerScore: evaluation.managerScore,
+      });
+    });
+
+    // Устанавливаем статус completed
+    await step.run("update-status-completed", async () => {
+      await callsService.updateCallProcessingStatus(callId, PROCESSING_STATUS.COMPLETED, {
+        completedAt: new Date(),
       });
     });
 

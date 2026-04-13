@@ -2,7 +2,7 @@
  * Flow для обработки звонков без распознанной речи
  */
 
-import { callsService } from "@calls/db";
+import { callsService, PROCESSING_STATUS } from "@calls/db";
 import { createLogger } from "../../../../logger";
 import type { SyncTranscriptionResult } from "../steps/sync-transcription";
 
@@ -60,6 +60,11 @@ export async function handleNoSpeechFlow(
       "ASR не распознал речь в аудиофайле - возможно, файл поврежден, слишком тихий или не содержит речи",
     managerScore: null,
     managerFeedback: "Звонок не подлежит анализу (нет распознанной речи)",
+  });
+
+  // Устанавливаем финальный статус обработки
+  await callsService.updateCallProcessingStatus(callId, PROCESSING_STATUS.COMPLETED, {
+    completedAt: new Date(),
   });
 
   return {

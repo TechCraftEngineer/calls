@@ -12,6 +12,7 @@ import {
   renderDurationCell,
   renderManagerNameCell,
   renderNumberCell,
+  renderProcessingStatusCell,
   renderScoreCell,
   renderSentimentCell,
   renderStatusCell,
@@ -180,6 +181,24 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
       ),
       cell: ({ row }) => renderStatusCell(row.original.call),
       meta: { headerTitle: "Статус" },
+      enableSorting: false,
+    },
+    {
+      accessorKey: "call.processingStatus",
+      id: "processingStatus",
+      size: 140,
+      minSize: 120,
+      header: ({ column }) => (
+        <DataGridColumnHeader
+          column={column}
+          title="Обработка"
+          className={headerClassName}
+          tooltip="Статус обработки звонка (транскрипция, оценка)"
+          visibility={true}
+        />
+      ),
+      cell: ({ row }) => renderProcessingStatusCell(row.original.call),
+      meta: { headerTitle: "Обработка" },
       enableSorting: false,
     },
     {

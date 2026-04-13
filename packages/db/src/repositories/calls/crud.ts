@@ -7,6 +7,8 @@ import { db } from "../../client";
 import * as schema from "../../schema";
 import type { CreateCallData } from "../../types/calls.types";
 import { normalizeCallStatus } from "../../utils/call-status";
+import type { ProcessingStatus } from "../../utils/call-processing-status";
+import type { UpdateProcessingStatusInput } from "../../validation/call-schemas";
 import {
   createCallSchema,
   markTranscriptionFailedSchema,
@@ -14,6 +16,7 @@ import {
   updateEnhancedAudioSchema,
   updatePbxBindingSchema,
   updatePbxBindingWithCustomerSchema,
+  updateProcessingStatusSchema,
   updateRecordingSchema,
   updateWithRecordingSchema,
   validateCallId,
@@ -327,5 +330,37 @@ export const callsCrud = {
 
       await tx.update(schema.calls).set(patch).where(eq(schema.calls.id, callId));
     });
+  },
+
+  /**
+   * Обновление статуса обработки звонка
+   */
+  async updateProcessingStatus(
+    callId: string,
+    data: UpdateProcessingStatusInput & { processingStatus: ProcessingStatus },
+  ): Promise<void> {
+    // Валидация callId как UUID
+    validateCallId(callId);
+
+    // Валидация данных с помощью Zod
+    const validatedData = validateWithSchema(updateProcessingStatusSchema, data);
+
+    const patch: Partial<schema.NewCall> = {};
+    patch.processingStatus = validatedData.processingStatus;
+    if (validatedData.processingError !== undefined) {
+      patch.processingError = validatedData.processingError;
+    }
+    if (validatedData.processingStartedAt !== undefined) {
+      patch.processingStartedAt = validatedData.processingStartedAt
+        ? new Date(validatedData.processingStartedAt)
+        : null;
+    }
+    if (validatedData.processingCompletedAt !== undefined) {
+      patch.processingCompletedAt = validatedData.processingCompletedAt
+        ? new Date(validatedData.processingCompletedAt)
+        : null;
+    }
+
+    await db.update(schema.calls).set(patch).where(eq(schema.calls.id, callId));
   },
 };

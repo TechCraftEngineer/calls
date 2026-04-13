@@ -11,6 +11,7 @@
  */
 
 import type { AsrExecutionLog } from "@calls/asr";
+import { callsService, PROCESSING_STATUS } from "@calls/db";
 import type { ZodIssue } from "zod";
 import { evaluateRequested, inngest, transcribeRequested } from "../../../client";
 import {
@@ -59,6 +60,13 @@ export const transcribeCallFn = inngest.createFunction(
   },
   async ({ event, step }) => {
     const { callId } = event.data;
+
+    // === ШАГ 0: Установка статуса обработки ===
+    await step.run("db/calls:update-processing-status", () =>
+      callsService.updateCallProcessingStatus(callId, PROCESSING_STATUS.TRANSCRIBING, {
+        startedAt: new Date(),
+      }),
+    );
 
     // === ШАГ 1: Валидация входных данных ===
     await step.run("validate/input", () => validateInput(callId));
@@ -303,7 +311,12 @@ export const transcribeCallFn = inngest.createFunction(
       ),
     )) as IdentifyResult;
 
-    // === ШАГ 14: Сохранение результатов ===
+    // === ШАГ 14: Обновление статуса на transcribed ===
+    await step.run("db/calls:update-status-transcribed", () =>
+      callsService.updateCallProcessingStatus(callId, PROCESSING_STATUS.TRANSCRIBED),
+    );
+
+    // === ШАГ 15: Сохранение результатов ===
     await step.run("persist/transcript:upsert", () =>
       persistResults({
         call,
@@ -322,7 +335,7 @@ export const transcribeCallFn = inngest.createFunction(
       }),
     );
 
-    // === ШАГ 15: Отправка события на оценку ===
+    // === ШАГ 16: Отправка события на оценку ===
     await step.sendEvent("event/call.evaluate.requested", evaluateRequested.create({ callId }));
 
     return {

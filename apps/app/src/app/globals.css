@@ -367,6 +367,21 @@ textarea.text-input:focus {
   color: white;
 }
 
+.badge-gray-op {
+  background: #9CA3AF;
+  color: white;
+}
+
+.badge-blue-op {
+  background: #3B82F6;
+  color: white;
+}
+
+.badge-purple-op {
+  background: #8B5CF6;
+  color: white;
+}
+
 /* Records */
 .record-btn {
   width: 32px;
