@@ -77,6 +77,18 @@ export default function DirectoryPage() {
           queryKey: orpc.settings.listPbxEmployees.queryKey(),
         });
         await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
+
+        // Автоматически отмечаем шаг directory как выполненный после импорта
+        if (activeWorkspace) {
+          try {
+            await updateSetupProgressMutation.mutateAsync({
+              workspaceId: activeWorkspace.id,
+              completedStep: "directory",
+            });
+          } catch (error) {
+            console.error("Не удалось сохранить прогресс настройки:", error);
+          }
+        }
       },
       onError: () => {
         toast.error("Ошибка импорта");
@@ -244,26 +256,9 @@ export default function DirectoryPage() {
     // Сохраняем в базу данных что шаг завершен
     if (activeWorkspace) {
       try {
-        // Получаем актуальные данные из кеша или делаем запрос
-        const currentProgress = await queryClient.fetchQuery({
-          ...orpc.workspaces.getSetupProgress.queryOptions({
-            input: { workspaceId: activeWorkspace.id },
-          }),
-        });
-
-        const completed = new Set(currentProgress.completedSteps ?? []);
-        completed.add("directory");
-
         await updateSetupProgressMutation.mutateAsync({
           workspaceId: activeWorkspace.id,
-          completedSteps: [...completed] as (
-            | "directory"
-            | "provider"
-            | "evaluation"
-            | "api"
-            | "import"
-            | "company"
-          )[],
+          completedStep: "directory",
         });
       } catch (error) {
         console.error("Не удалось сохранить прогресс настройки:", error);
