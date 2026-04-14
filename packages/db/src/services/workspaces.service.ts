@@ -72,10 +72,21 @@ export class WorkspacesService {
   }
 
   async delete(id: string) {
-    // Get all members before deletion to invalidate their caches
-    const members = await this.workspacesRepository.getMembers(id);
+    // Get all members and delete workspace atomically in a transaction
+    const members = await db.transaction(async (tx) => {
+      // Get members first
+      const workspaceMembers = await tx
+        .select()
+        .from(this.workspacesRepository.workspaceMembersTable)
+        .where(eq(this.workspacesRepository.workspaceMembersTable.workspaceId, id));
 
-    const result = await this.workspacesRepository.delete(id);
+      // Delete workspace (cascade will handle members)
+      await tx
+        .delete(this.workspacesRepository.table)
+        .where(eq(this.workspacesRepository.table.id, id));
+
+      return workspaceMembers;
+    });
 
     // Invalidate cache for this workspace
     workspaceCache.invalidateWorkspace(id);
@@ -88,7 +99,7 @@ export class WorkspacesService {
       workspaceCache.delete(activeKey);
     }
 
-    return result;
+    return true;
   }
 
   async getMembers(workspaceId: string) {

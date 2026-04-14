@@ -1,6 +1,6 @@
 // Simple script to check TypeScript files for syntax errors
-const fs = require('fs');
-const path = require('path');
+import * as fs from 'fs';
+import * as path from 'path';
 
 const testDir = path.join(__dirname, 'tests');
 
@@ -50,4 +50,5 @@ if (errors.length === 0) {
 } else {
   console.log('Potential issues found:');
   console.log(errors.join('\n'));
+  process.exit(1);
 }

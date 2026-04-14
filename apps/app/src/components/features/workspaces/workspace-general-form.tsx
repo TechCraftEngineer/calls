@@ -2,6 +2,7 @@
 
 import { Button, Card, CardContent, CardHeader, Input, Textarea } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -32,12 +33,17 @@ export default function WorkspaceGeneralForm({
     register,
     handleSubmit,
     setError,
+    reset,
     formState: { errors },
   } = useForm<WorkspaceGeneralFormData>({
     resolver: zodResolver(workspaceGeneralSchema) as never,
     mode: "onBlur",
     defaultValues: { name, nameEn: nameEn ?? "", description: description ?? "" },
   });
+
+  useEffect(() => {
+    reset({ name, nameEn: nameEn ?? "", description: description ?? "" });
+  }, [name, nameEn, description, reset]);
 
   const onSubmit = async (data: WorkspaceGeneralFormData) => {
     try {
@@ -86,7 +92,7 @@ export default function WorkspaceGeneralForm({
 
           <div className="filter-item">
             <label className="filter-label" htmlFor="ws-name-en">
-              Название компании (English)
+              Название компании на английском
             </label>
             <Input
               id="ws-name-en"

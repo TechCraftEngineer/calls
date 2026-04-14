@@ -261,14 +261,15 @@ export function renderProcessingStatusCell(call: CallWithDetails["call"]) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span
+        <button
+          type="button"
           className={`op-badge ${className} flex items-center gap-1`}
           role="status"
           aria-label={`Статус: ${config.label}`}
         >
           {config.showSpinner && <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />}
           {config.label}
-        </span>
+        </button>
       </TooltipTrigger>
       {call.processingError && processingStatus === "failed" && (
         <TooltipContent side="top" className="max-w-xs">
