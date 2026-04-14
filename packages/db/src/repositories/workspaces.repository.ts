@@ -420,12 +420,47 @@ export const workspacesRepository = {
       if (!workspace[0]) return false;
 
       const existingMetadata = (workspace[0].metadata as Record<string, unknown>) ?? {};
-      console.log("[updateSetupProgress] Existing metadata:", JSON.stringify(existingMetadata));
 
       const metadata = { ...existingMetadata };
       metadata.setupCompletedSteps = completedSteps;
 
-      console.log("[updateSetupProgress] New metadata:", JSON.stringify(metadata));
+      const result = await tx
+        .update(schema.workspaces)
+        .set({
+          metadata,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.workspaces.id, workspaceId));
+
+      return (result.rowCount ?? 0) > 0;
+    });
+  },
+
+  async addSetupStep(workspaceId: string, step: string): Promise<boolean> {
+    return db.transaction(async (tx) => {
+      // Блокируем строку для чтения и обновления
+      const workspace = await tx
+        .select()
+        .from(schema.workspaces)
+        .where(eq(schema.workspaces.id, workspaceId))
+        .for("update")
+        .limit(1);
+
+      if (!workspace[0]) return false;
+
+      const existingMetadata = (workspace[0].metadata as Record<string, unknown>) ?? {};
+      const metadata = { ...existingMetadata };
+
+      const currentSteps = Array.isArray(metadata.setupCompletedSteps)
+        ? metadata.setupCompletedSteps
+        : [];
+
+      // Добавляем шаг только если его еще нет
+      if (!currentSteps.includes(step)) {
+        metadata.setupCompletedSteps = [...currentSteps, step];
+      } else {
+        metadata.setupCompletedSteps = currentSteps;
+      }
 
       const result = await tx
         .update(schema.workspaces)

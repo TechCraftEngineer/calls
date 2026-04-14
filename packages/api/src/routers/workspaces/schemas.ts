@@ -52,5 +52,5 @@ const stepNameSchema = z.enum(["provider", "api", "directory", "import", "compan
 
 export const updateSetupProgressSchema = z.object({
   workspaceId: workspaceIdSchema,
-  completedSteps: z.array(stepNameSchema),
+  completedStep: stepNameSchema,
 });

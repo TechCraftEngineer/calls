@@ -72,28 +72,12 @@ export function usePbxMutations(
       // Обновляем прогресс настройки - добавляем шаг "api"
       if (activeWorkspace) {
         try {
-          const currentProgress = await queryClient.fetchQuery({
-            ...orpc.workspaces.getSetupProgress.queryOptions({
-              input: { workspaceId: activeWorkspace.id },
-            }),
-          });
-
-          const completed = new Set(currentProgress.completedSteps ?? []);
-          completed.add("api");
-
           await queryClient
             .getMutationCache()
             .build(queryClient, orpc.workspaces.updateSetupProgress.mutationOptions())
             .execute({
               workspaceId: activeWorkspace.id,
-              completedSteps: [...completed] as (
-                | "directory"
-                | "provider"
-                | "evaluation"
-                | "api"
-                | "import"
-                | "company"
-              )[],
+              completedStep: "api",
             });
 
           // Инвалидируем кеш прогресса

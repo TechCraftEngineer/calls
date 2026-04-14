@@ -31,18 +31,27 @@ export function useSetupProgress() {
   const saveCompletedSteps = useCallback(
     (steps: Set<StepId>) => {
       console.log("[useSetupProgress] Saving steps:", Array.from(steps));
+
+      const previousSteps = completedSteps;
       setCompletedSteps(steps);
+
       if (activeWorkspace) {
         console.log("[useSetupProgress] Mutating to DB for workspace:", activeWorkspace.id);
-        updateSetupProgressMutationRef.current.mutate({
-          workspaceId: activeWorkspace.id,
-          completedSteps: [...steps],
-        });
+
+        // Находим новый шаг (который есть в steps, но нет в previousSteps)
+        const newStep = Array.from(steps).find((step) => !previousSteps.has(step));
+
+        if (newStep) {
+          updateSetupProgressMutationRef.current.mutate({
+            workspaceId: activeWorkspace.id,
+            completedStep: newStep,
+          });
+        }
       } else {
         console.log("[useSetupProgress] No active workspace, skipping save");
       }
     },
-    [activeWorkspace],
+    [activeWorkspace, completedSteps],
   );
 
   // Load completed steps from database

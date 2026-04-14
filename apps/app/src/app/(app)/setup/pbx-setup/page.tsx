@@ -58,26 +58,9 @@ export default function PbxSetupPage() {
     // Сохраняем прогресс перед переходом
     if (activeWorkspace && configSaved) {
       try {
-        // Получаем актуальные данные из кеша или делаем запрос
-        const currentProgress = await queryClient.fetchQuery({
-          ...orpc.workspaces.getSetupProgress.queryOptions({
-            input: { workspaceId: activeWorkspace.id },
-          }),
-        });
-
-        const completed = new Set(currentProgress.completedSteps ?? []);
-        completed.add("api");
-
         await updateSetupProgressMutation.mutateAsync({
           workspaceId: activeWorkspace.id,
-          completedSteps: [...completed] as (
-            | "directory"
-            | "provider"
-            | "evaluation"
-            | "api"
-            | "import"
-            | "company"
-          )[],
+          completedStep: "api",
         });
       } catch (error) {
         console.error("Не удалось сохранить прогресс настройки:", error);

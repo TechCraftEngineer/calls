@@ -5,7 +5,7 @@ import { updateSetupProgressSchema } from "./schemas";
 export const updateSetupProgress = protectedProcedure
   .input(updateSetupProgressSchema)
   .handler(async ({ input, context }) => {
-    const { workspaceId, completedSteps } = input;
+    const { workspaceId, completedStep } = input;
     const userId = context.authUserId;
 
     if (!userId) {
@@ -20,14 +20,16 @@ export const updateSetupProgress = protectedProcedure
         message: "Нет доступа к рабочему пространству",
       });
     }
-    const updated = await context.workspacesService.updateSetupProgress(
-      workspaceId,
-      completedSteps,
-    );
+
+    const updated = await context.workspacesService.addSetupStep(workspaceId, completedStep);
+
     if (!updated) {
       throw new ORPCError("NOT_FOUND", {
         message: "Рабочее пространство не найдено или не удалось обновить прогресс",
       });
     }
-    return { success: true, completedSteps };
+
+    const currentProgress = await context.workspacesService.getSetupProgress(workspaceId);
+
+    return { success: true, completedSteps: currentProgress };
   });
