@@ -29,7 +29,7 @@ export default function UserEditPage() {
   const [email, setEmail] = useState<string>("");
 
   const { data: session, isPending: sessionPending } = useSession();
-  const user = session?.user ?? null;
+  const _user = session?.user ?? null;
   const _userLoading = sessionPending;
 
   const { clearBlockChanges, setBlockState, initializeForm, hasBlockChanges, getBlockState } =

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { format, parse } from "date-fns";
+import { format, parse, startOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
 import { CalendarIcon, ChevronDownIcon } from "lucide-react";
 
@@ -20,7 +20,8 @@ const DISPLAY_FORMAT = "dd.MM.yyyy";
 function parseValue(value: string): Date | undefined {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
   const d = parse(value, DATE_FORMAT, new Date());
-  return Number.isNaN(d.getTime()) ? undefined : d;
+  if (Number.isNaN(d.getTime())) return undefined;
+  return startOfDay(d);
 }
 
 function formatValue(date: Date | undefined): string {

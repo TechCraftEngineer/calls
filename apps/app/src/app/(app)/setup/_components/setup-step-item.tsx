@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { SetupStep, StepId } from "./types";
 
 interface SetupStepItemProps {
@@ -18,8 +18,6 @@ export function SetupStepItem({
   onComplete,
   onOpenModal,
 }: SetupStepItemProps) {
-  const router = useRouter();
-
   return (
     <div className={`border-b border-border last:border-0 ${isDisabled ? "opacity-60" : ""}`}>
       <div className="flex items-center justify-between gap-8 p-4">
@@ -41,38 +39,31 @@ export function SetupStepItem({
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          {!isCompleted && !isDisabled && (
-            <>
-              {step.href ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onComplete(step.id);
-                    if (step.href) {
-                      router.push(step.href);
-                    }
-                  }}
-                  className="rounded-md bg-blue-100 px-3 py-1 text-sm text-blue-600 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:hover:bg-blue-900/75"
-                >
-                  {step.actionLabel}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => onOpenModal(step.id)}
-                  className="rounded-md bg-blue-100 px-3 py-1 text-sm text-blue-600 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:hover:bg-blue-900/75"
-                >
-                  {step.actionLabel}
-                </button>
-              )}
-            </>
-          )}
+          {!isCompleted &&
+            !isDisabled &&
+            (step.href ? (
+              <Link
+                href={`${step.href}?fromSetup=true`}
+                className="rounded-md bg-blue-100 px-3 py-1 text-sm text-blue-600 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:hover:bg-blue-900/75"
+              >
+                {step.actionLabel}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onOpenModal(step.id)}
+                className="rounded-md bg-blue-100 px-3 py-1 text-sm text-blue-600 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:hover:bg-blue-900/75"
+              >
+                {step.actionLabel}
+              </button>
+            ))}
 
           {/* Checkmark button */}
           {!isDisabled && (
             <button
               type="button"
               title={isCompleted ? "Completed" : "Mark Done"}
+              aria-label={isCompleted ? "Выполнено" : "Отметить как выполненное"}
               onClick={() => !isCompleted && onComplete(step.id)}
               className={`flex size-6 items-center justify-center rounded-full transition-colors ${
                 isCompleted

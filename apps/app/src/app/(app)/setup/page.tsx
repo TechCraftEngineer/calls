@@ -6,18 +6,16 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BarChart3, Bot, Building2, Download, Globe, Loader2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { SetupFinishCard } from "@/components/features/setup/setup-finish-card";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { useSession } from "@/lib/better-auth";
 import { setOnboardedCookie } from "@/lib/cookies";
 import { useORPC } from "@/orpc/react";
-import {
-  ApiModal,
-  CompanyModal,
-  ImportModal,
-  ProviderModal,
-  SetupFinishCard,
-  SetupStepsList,
-} from "./_components";
+import { ApiModal } from "./_components/api-modal";
+import { CompanyModal } from "./_components/company-modal";
+import { ImportModal } from "./_components/import-modal";
+import { ProviderModal } from "./_components/provider-modal";
+import { SetupStepsList } from "./_components/setup-steps-list";
 import type { SetupStep, StepId } from "./_components/types";
 import { useSetupProgress } from "./_hooks";
 

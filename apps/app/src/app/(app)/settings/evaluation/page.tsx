@@ -19,7 +19,7 @@ import {
   toast,
 } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TemplateFormModal } from "@/components/features/evaluation/template-form-modal";
 import { ViewTemplateModal } from "@/components/features/evaluation/view-template-modal";
@@ -30,6 +30,7 @@ import { useORPC } from "@/orpc/react";
 
 export default function EvaluationSettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const orpc = useORPC();
   const { activeWorkspace } = useWorkspace();
@@ -37,16 +38,8 @@ export default function EvaluationSettingsPage() {
   const workspaceId = activeWorkspace?.id ?? null;
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
-  // Check if we came from setup page
-  const [fromSetup, setFromSetup] = useState(false);
-
-  useEffect(() => {
-    // Check if referrer is setup page
-    if (typeof window !== "undefined") {
-      const referrer = document.referrer;
-      setFromSetup(referrer.includes("/setup"));
-    }
-  }, []);
+  // Check if we came from setup page via URL parameter
+  const fromSetup = searchParams.get("fromSetup") === "true";
 
   // Mutation для обновления прогресса setup
   const updateSetupProgressMutation = useMutation(
@@ -58,17 +51,6 @@ export default function EvaluationSettingsPage() {
       },
     }),
   );
-
-  // Автоматически отмечаем шаг evaluation при заходе на страницу
-  useEffect(() => {
-    if (activeWorkspace && fromSetup) {
-      updateSetupProgressMutation.mutate({
-        workspaceId: activeWorkspace.id,
-        completedStep: "evaluation",
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeWorkspace?.id, fromSetup]);
 
   const { data: evaluationSettings } = useQuery({
     ...orpc.settings.getEvaluationSettings.queryOptions(),
@@ -128,6 +110,16 @@ export default function EvaluationSettingsPage() {
           queryKey: orpc.settings.getEvaluationSettings.queryKey({}),
         });
         toast.success("Шаблон по умолчанию сохранён");
+        if (activeWorkspace && fromSetup) {
+          updateSetupProgressMutation.mutate(
+            { workspaceId: activeWorkspace.id, completedStep: "evaluation" },
+            {
+              onSettled: () => {
+                router.push(paths.setup.root);
+              },
+            },
+          );
+        }
       },
       onError: (err) => {
         toast.error(err instanceof Error ? err.message : "Не удалось сохранить настройки оценки");
@@ -160,13 +152,6 @@ export default function EvaluationSettingsPage() {
     updateEvaluationMutation.mutate({
       defaultTemplateSlug: defaultTemplate,
     });
-
-    // If came from setup, redirect back after a short delay
-    if (fromSetup) {
-      setTimeout(() => {
-        router.push(paths.setup.root);
-      }, 1000);
-    }
   };
 
   const getTemplateName = (slug: string) => {
