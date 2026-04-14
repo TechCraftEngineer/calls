@@ -6,8 +6,8 @@ import { and, desc, eq, isNull } from "drizzle-orm";
 import { db } from "../../client";
 import * as schema from "../../schema";
 import type { CreateCallData } from "../../types/calls.types";
-import { normalizeCallStatus } from "../../utils/call-status";
 import { PROCESSING_STATUS, type ProcessingStatus } from "../../utils/call-processing-status";
+import { normalizeCallStatus } from "../../utils/call-status";
 import type { UpdateProcessingStatusInput } from "../../validation/call-schemas";
 
 /**
@@ -23,7 +23,11 @@ const ALLOWED_STATUS_TRANSITIONS: Record<ProcessingStatus, ProcessingStatus[]> =
     PROCESSING_STATUS.PENDING,
     PROCESSING_STATUS.FAILED,
   ],
-  [PROCESSING_STATUS.COMPLETED]: [PROCESSING_STATUS.EVALUATING, PROCESSING_STATUS.TRANSCRIBED],
+  [PROCESSING_STATUS.COMPLETED]: [
+    PROCESSING_STATUS.EVALUATING,
+    PROCESSING_STATUS.TRANSCRIBED,
+    PROCESSING_STATUS.TRANSCRIBING, // Разрешаем для случаев автоответчика и отсутствия речи
+  ],
   [PROCESSING_STATUS.FAILED]: [
     PROCESSING_STATUS.PENDING,
     PROCESSING_STATUS.TRANSCRIBING,
@@ -31,6 +35,7 @@ const ALLOWED_STATUS_TRANSITIONS: Record<ProcessingStatus, ProcessingStatus[]> =
     PROCESSING_STATUS.EVALUATING,
   ],
 };
+
 import {
   createCallSchema,
   markTranscriptionFailedSchema,
