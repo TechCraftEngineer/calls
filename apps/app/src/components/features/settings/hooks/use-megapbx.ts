@@ -34,10 +34,10 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
 
   const invalidatePbx = useCallback(() => {
     queryClient.invalidateQueries({
-      queryKey: orpc.settings.getPbx.queryKey(),
+      queryKey: orpc.settings.getPbx.queryKey({}),
     });
     queryClient.invalidateQueries({
-      queryKey: orpc.settings.getIntegrations.queryKey(),
+      queryKey: orpc.settings.getIntegrations.queryKey({}),
     });
   }, [orpc, queryClient]);
 
@@ -68,10 +68,10 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
       onSuccess: (result) => {
         toast.success(result.message);
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+          queryKey: orpc.settings.listPbxEmployees.queryKey({}),
         });
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxNumbers.queryKey(),
+          queryKey: orpc.settings.listPbxNumbers.queryKey({}),
         });
       },
       onError: (error) => {
@@ -83,7 +83,7 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
     orpc.settings.syncPbxCalls.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.getPbx.queryKey(),
+          queryKey: orpc.settings.getPbx.queryKey({}),
         });
       },
     }),

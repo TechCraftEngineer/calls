@@ -23,7 +23,7 @@ export default function DirectoryPage() {
     orpc.workspaces.updateSetupProgress.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.getSetupProgress.queryKey(),
+          predicate: (query) => query.queryKey[0] === "workspaces.getSetupProgress",
         });
       },
     }),
@@ -54,9 +54,11 @@ export default function DirectoryPage() {
       onSuccess: async (result) => {
         toast.success(result.message);
         await queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+          queryKey: orpc.settings.listPbxEmployees.queryKey({}),
         });
-        await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
+        await queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxNumbers.queryKey({}),
+        });
       },
       onError: (error) => {
         toast.error(error.message || "Ошибка синхронизации");
@@ -74,9 +76,11 @@ export default function DirectoryPage() {
         setSelectedEmployees(new Set());
         setSelectedNumbers(new Set());
         await queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+          queryKey: orpc.settings.listPbxEmployees.queryKey({}),
         });
-        await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
+        await queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxNumbers.queryKey({}),
+        });
 
         // Автоматически отмечаем шаг directory как выполненный после импорта
         if (activeWorkspace) {

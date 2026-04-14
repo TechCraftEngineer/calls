@@ -83,7 +83,7 @@ const SETUP_STEPS: SetupStep[] = [
 
 export default function SetupPage() {
   const router = useRouter();
-  const { data: session, isPending: sessionPending } = useSession();
+  const { isPending: sessionPending } = useSession();
   const { activeWorkspace, loading: workspaceLoading } = useWorkspace();
   const orpc = useORPC();
   const queryClient = useQueryClient();
@@ -96,7 +96,7 @@ export default function SetupPage() {
       onSuccess: async () => {
         setOnboardedCookie(true);
         toast.success("Настройка завершена!");
-        await queryClient.invalidateQueries({ queryKey: orpc.workspaces.list.queryKey() });
+        await queryClient.invalidateQueries({ queryKey: orpc.workspaces.list.queryKey({}) });
         router.push(paths.root);
       },
       onError: () => {
@@ -105,7 +105,6 @@ export default function SetupPage() {
     }),
   );
 
-  const user = session?.user ?? null;
   const loading = sessionPending || workspaceLoading;
 
   // Auto-complete steps based on integrations

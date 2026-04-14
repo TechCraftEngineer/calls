@@ -1,10 +1,5 @@
-import type { Metadata } from "next";
+import type { ReactNode } from "react";
 
-export const metadata: Metadata = {
-  title: "Настройка",
-  description: "Первичная настройка системы. Подключение АТС, настройка интеграций.",
-};
-
-export default function SetupLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+export default function SetupLayout({ children }: { children: ReactNode }) {
+  return children;
 }

@@ -131,7 +131,7 @@ function CreateWorkspaceForm() {
         toast.success("Компания создана");
         setActiveWorkspaceCookie(workspace.id);
         await queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.list.queryKey(),
+          queryKey: orpc.workspaces.list.queryKey({}),
         });
         // Инвалидируем кеш setup progress для новой компании
         await queryClient.invalidateQueries({

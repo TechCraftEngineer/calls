@@ -16,7 +16,7 @@ export function useSetupProgress() {
       onSuccess: () => {
         // Инвалидируем все getSetupProgress queries
         queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.getSetupProgress.queryKey(),
+          predicate: (query) => query.queryKey[0] === "workspaces.getSetupProgress",
         });
       },
     }),

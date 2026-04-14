@@ -92,7 +92,7 @@ export function useReportSettingsMutations({
 
   const invalidateSchedule = () => {
     queryClient.invalidateQueries({
-      queryKey: orpc.settings.getReportScheduleSettings.queryKey(),
+      queryKey: orpc.settings.getReportScheduleSettings.queryKey({}),
     });
   };
 

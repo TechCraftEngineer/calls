@@ -61,11 +61,11 @@ export default function CreateWorkspaceModal({
 
         // Инвалидируем и обновляем список компаний
         await queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.list.queryKey(),
+          queryKey: orpc.workspaces.list.queryKey({}),
         });
 
         await queryClient.refetchQueries({
-          queryKey: orpc.workspaces.list.queryKey(),
+          queryKey: orpc.workspaces.list.queryKey({}),
         });
 
         // Инвалидируем кеш setup progress для новой компании

@@ -26,10 +26,10 @@ export function useFtpSettings({ state, setState }: UseFtpSettingsProps) {
     orpc.settings.updateFtp.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.getIntegrations.queryKey(),
+          queryKey: orpc.settings.getIntegrations.queryKey({}),
         });
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.checkFtpStatus.queryKey(),
+          queryKey: orpc.settings.checkFtpStatus.queryKey({}),
         });
       },
     }),

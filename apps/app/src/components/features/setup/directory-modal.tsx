@@ -46,9 +46,11 @@ export function DirectoryModal({ open, onOpenChange, onComplete }: ModalProps) {
       onSuccess: async () => {
         toast.success("Синхронизировано");
         await queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+          queryKey: orpc.settings.listPbxEmployees.queryKey({}),
         });
-        await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
+        await queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxNumbers.queryKey({}),
+        });
       },
       onError: () => {
         toast.error("Ошибка синхронизации");

@@ -23,7 +23,7 @@ export function useTelegramSettings({ state, setState }: UseTelegramSettingsProp
     orpc.settings.updateIntegrations.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.getIntegrations.queryKey(),
+          queryKey: orpc.settings.getIntegrations.queryKey({}),
         });
       },
     }),

@@ -56,7 +56,7 @@ export default function ReportSettingsPanel({ user }: { user: User }) {
     orpc.users.updateTelegramSettings.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.getReportScheduleSettings.queryKey(),
+          queryKey: orpc.settings.getReportScheduleSettings.queryKey({}),
         });
         toast.success("Расписание сохранено");
       },

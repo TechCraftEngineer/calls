@@ -53,7 +53,7 @@ export default function EvaluationSettingsPage() {
     orpc.workspaces.updateSetupProgress.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.getSetupProgress.queryKey(),
+          predicate: (query) => query.queryKey[0] === "workspaces.getSetupProgress",
         });
       },
     }),
@@ -111,7 +111,7 @@ export default function EvaluationSettingsPage() {
     orpc.settings.deleteEvaluationTemplate.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.getEvaluationTemplates.queryKey(),
+          queryKey: orpc.settings.getEvaluationTemplates.queryKey({}),
         });
         toast.success("Шаблон удалён");
       },
@@ -125,7 +125,7 @@ export default function EvaluationSettingsPage() {
     orpc.settings.updateEvaluationSettings.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.getEvaluationSettings.queryKey(),
+          queryKey: orpc.settings.getEvaluationSettings.queryKey({}),
         });
         toast.success("Шаблон по умолчанию сохранён");
       },

@@ -31,7 +31,7 @@ export function useAutoCompleteSteps(
 
   // Check if calls have been imported
   const { data: callsData } = useQuery({
-    ...orpc.calls.list.queryOptions({ page: 1, perPage: 1 }),
+    ...orpc.calls.list.queryOptions({ input: { page: 1, perPage: 1 } }),
     enabled: !loading && !!activeWorkspace,
   });
 
@@ -62,7 +62,7 @@ export function useAutoCompleteSteps(
     }
 
     // Step 4: Import - auto-complete if calls exist
-    if (callsData && callsData.totalItems > 0 && !completedSteps.has("import")) {
+    if (callsData && callsData.pagination.total > 0 && !completedSteps.has("import")) {
       newCompleted.add("import");
       hasChanges = true;
     }

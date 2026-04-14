@@ -66,7 +66,7 @@ export function usePbxMutations(
     onSuccess: async () => {
       // Инвалидируем кеш интеграций чтобы useAutoCompleteSteps получил обновлённые данные
       await queryClient.invalidateQueries({
-        queryKey: orpc.settings.getIntegrations.queryKey(),
+        queryKey: orpc.settings.getIntegrations.queryKey({}),
       });
 
       // Обновляем прогресс настройки - добавляем шаг "api"
@@ -82,7 +82,7 @@ export function usePbxMutations(
 
           // Инвалидируем кеш прогресса
           await queryClient.invalidateQueries({
-            queryKey: orpc.workspaces.getSetupProgress.queryKey(),
+            predicate: (query) => query.queryKey[0] === "workspaces.getSetupProgress",
           });
         } catch (error) {
           console.error("Не удалось обновить прогресс настройки:", error);
@@ -105,10 +105,10 @@ export function usePbxMutations(
       // Синхронизация завершена, обновляем данные
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+          queryKey: orpc.settings.listPbxEmployees.queryKey({}),
         }),
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxNumbers.queryKey(),
+          queryKey: orpc.settings.listPbxNumbers.queryKey({}),
         }),
       ]);
 
@@ -160,10 +160,10 @@ export function usePbxMutations(
 
         // Очищаем кэш справочников после успешного импорта
         await queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+          queryKey: orpc.settings.listPbxEmployees.queryKey({}),
         });
         await queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxNumbers.queryKey(),
+          queryKey: orpc.settings.listPbxNumbers.queryKey({}),
         });
 
         toast.success(

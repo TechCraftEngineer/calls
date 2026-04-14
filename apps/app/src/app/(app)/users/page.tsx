@@ -45,7 +45,7 @@ export default function UsersPage() {
   });
 
   const invalidateQueries = () => {
-    queryClient.invalidateQueries({ queryKey: orpc.users.list.queryKey() });
+    queryClient.invalidateQueries({ queryKey: orpc.users.list.queryKey({}) });
     if (workspaceId) {
       queryClient.invalidateQueries({
         queryKey: orpc.workspaces.listInvitations.queryKey({
