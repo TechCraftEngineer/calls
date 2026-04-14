@@ -37,6 +37,39 @@ export default function EvaluationSettingsPage() {
   const workspaceId = activeWorkspace?.id ?? null;
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
+  // Check if we came from setup page
+  const [fromSetup, setFromSetup] = useState(false);
+
+  useEffect(() => {
+    // Check if referrer is setup page
+    if (typeof window !== "undefined") {
+      const referrer = document.referrer;
+      setFromSetup(referrer.includes("/setup"));
+    }
+  }, []);
+
+  // Mutation для обновления прогресса setup
+  const updateSetupProgressMutation = useMutation(
+    orpc.workspaces.updateSetupProgress.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          predicate: (query) => query.queryKey[0] === "workspaces.getSetupProgress",
+        });
+      },
+    }),
+  );
+
+  // Автоматически отмечаем шаг evaluation при заходе на страницу
+  useEffect(() => {
+    if (activeWorkspace && fromSetup) {
+      updateSetupProgressMutation.mutate({
+        workspaceId: activeWorkspace.id,
+        completedStep: "evaluation",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeWorkspace?.id, fromSetup]);
+
   const { data: evaluationSettings } = useQuery({
     ...orpc.settings.getEvaluationSettings.queryOptions(),
     enabled: !!workspaceId && isWorkspaceAdmin,
@@ -78,7 +111,7 @@ export default function EvaluationSettingsPage() {
     orpc.settings.deleteEvaluationTemplate.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.getEvaluationTemplates.queryKey(),
+          queryKey: orpc.settings.getEvaluationTemplates.queryKey({}),
         });
         toast.success("Шаблон удалён");
       },
@@ -92,7 +125,7 @@ export default function EvaluationSettingsPage() {
     orpc.settings.updateEvaluationSettings.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.getEvaluationSettings.queryKey(),
+          queryKey: orpc.settings.getEvaluationSettings.queryKey({}),
         });
         toast.success("Шаблон по умолчанию сохранён");
       },
@@ -127,6 +160,13 @@ export default function EvaluationSettingsPage() {
     updateEvaluationMutation.mutate({
       defaultTemplateSlug: defaultTemplate,
     });
+
+    // If came from setup, redirect back after a short delay
+    if (fromSetup) {
+      setTimeout(() => {
+        router.push(paths.setup.root);
+      }, 1000);
+    }
   };
 
   const getTemplateName = (slug: string) => {
@@ -153,6 +193,14 @@ export default function EvaluationSettingsPage() {
           Настройка критериев оценки для каждого менеджера и по умолчанию
         </p>
       </header>
+
+      {fromSetup && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/50 dark:bg-blue-900/20">
+          <p className="text-sm text-blue-900 dark:text-blue-200">
+            После сохранения шаблона по умолчанию вы вернётесь к настройке
+          </p>
+        </div>
+      )}
 
       <Card>
         <CardContent className="p-6">

@@ -11,7 +11,7 @@ import {
   toast,
 } from "@calls/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { format, parseISO, subDays } from "date-fns";
+import { format, parseISO, startOfDay, subDays, subMonths } from "date-fns";
 import { ru } from "date-fns/locale";
 import { AlertCircle, Calendar, CheckCircle2, Download, Loader2, Phone } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -30,6 +30,8 @@ interface ImportResult {
 export function ImportModal({ open, onOpenChange, onComplete }: ModalProps<void>) {
   const orpc = useORPC();
 
+  // Минимальная дата - месяц назад от сегодня
+  const minDate = format(startOfDay(subMonths(new Date(), 1)), "yyyy-MM-dd");
   // Дата по умолчанию - 30 дней назад
   const defaultDate = format(subDays(new Date(), 30), "yyyy-MM-dd");
   const [importFromDate, setImportFromDate] = useState(defaultDate);
@@ -49,23 +51,15 @@ export function ImportModal({ open, onOpenChange, onComplete }: ModalProps<void>
   const importCallsMutation = useMutation(
     orpc.calls.importHistoricalCalls.mutationOptions({
       onSuccess: (data) => {
-        // Mark as queued/running - actual progress will come from polling
-        setStatus("importing");
-        setProgress(50);
+        setStatus("success");
+        setProgress(100);
         setResult({
           totalCalls: data.total ?? 0,
           importedCalls: data.imported ?? 0,
           skippedCalls: data.skipped ?? 0,
           errors: data.errors ?? 0,
         });
-
-        // TODO: Implement polling or real-time updates for actual import progress
-        // For now, simulate completion after a delay
-        setTimeout(() => {
-          setStatus("success");
-          setProgress(100);
-          toast.success("Импорт завершён успешно");
-        }, 2000);
+        toast.success("Импорт завершён успешно");
       },
       onError: (error) => {
         setStatus("error");
@@ -74,18 +68,7 @@ export function ImportModal({ open, onOpenChange, onComplete }: ModalProps<void>
     }),
   );
 
-  // Симуляция прогресса во время импорта
-  useEffect(() => {
-    if (status === "importing") {
-      const interval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 95) return prev;
-          return prev + Math.random() * 10;
-        });
-      }, 500);
-      return () => clearInterval(interval);
-    }
-  }, [status]);
+  // Удалена симуляция прогресса - теперь импорт синхронный
 
   const handleStartImport = async () => {
     if (!hasPbxConnection) {
@@ -163,7 +146,7 @@ export function ImportModal({ open, onOpenChange, onComplete }: ModalProps<void>
                   <span>С какой даты импортировать звонки?</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Будут загружены все звонки начиная с выбранной даты. Рекомендуем начать с
+                  Можно импортировать звонки только за последний месяц. Рекомендуем начать с
                   последних 30 дней.
                 </p>
                 <DatePicker
@@ -172,6 +155,7 @@ export function ImportModal({ open, onOpenChange, onComplete }: ModalProps<void>
                   placeholder="Выберите дату"
                   disabled={!hasPbxConnection}
                   className="w-full"
+                  minDate={minDate}
                 />
               </div>
 

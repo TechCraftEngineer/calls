@@ -8,7 +8,7 @@ import { useWorkspace } from "@/components/features/workspaces/workspace-provide
 import { useORPC } from "@/orpc/react";
 import { CircularProgress } from "./circular-progress";
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 export function SetupCard() {
   const { activeWorkspace } = useWorkspace();

@@ -15,7 +15,6 @@ export function DateRangeFilterExample() {
   const [endDate, setEndDate] = useState("2024-01-31");
 
   const handleChange = (newStartDate: string, newEndDate: string) => {
-    console.log("Выбран период:", { newStartDate, newEndDate });
     setStartDate(newStartDate);
     setEndDate(newEndDate);
   };

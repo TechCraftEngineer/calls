@@ -1,5 +1,6 @@
 "use client";
 
+import { paths } from "@calls/config";
 import {
   Button,
   Dialog,
@@ -20,6 +21,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useORPC } from "@/orpc/react";
@@ -42,6 +44,7 @@ export default function CreateWorkspaceModal({
   onSuccess,
 }: CreateWorkspaceModalProps) {
   const orpc = useORPC();
+  const router = useRouter();
 
   const form = useForm<CreateWorkspaceFormData>({
     resolver: zodResolver(createWorkspaceSchema),
@@ -56,13 +59,25 @@ export default function CreateWorkspaceModal({
         toast.success("Компания создана");
         form.reset();
 
-        // Refetch to ensure fresh data
+        // Инвалидируем и обновляем список компаний
+        await queryClient.invalidateQueries({
+          queryKey: orpc.workspaces.list.queryKey({}),
+        });
+
         await queryClient.refetchQueries({
-          queryKey: orpc.workspaces.list.queryKey(),
+          queryKey: orpc.workspaces.list.queryKey({}),
+        });
+
+        // Инвалидируем кеш setup progress для новой компании
+        await queryClient.invalidateQueries({
+          queryKey: ["workspaces", "getSetupProgress"],
         });
 
         await onSuccess(workspace.id);
         onOpenChange(false);
+
+        // Редирект на страницу настройки
+        router.push(paths.setup.root);
       },
       onError: (err) => {
         const msg = err instanceof Error ? err.message : "Не удалось создать компанию";

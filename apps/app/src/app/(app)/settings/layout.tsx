@@ -5,7 +5,6 @@ import { cn } from "@calls/ui";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import Header from "@/components/layout/header";
 import { useSession } from "@/lib/better-auth";
 
 const SETTINGS_NAV = [
@@ -107,61 +106,57 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   );
 
   return (
-    <>
-      <Header user={user} />
-
-      <main className="main-content">
-        <div className="flex gap-8">
-          {/* Settings sidebar nav — dub.co style */}
-          <aside className="hidden lg:block w-56 shrink-0">
-            <nav className="sticky top-24 flex flex-col gap-0.5">
-              <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Настройки
-              </p>
-              {navItems.map((item) => {
-                const isActive =
-                  pathname === item.href ||
-                  (item.href !== paths.settings.root && pathname.startsWith(item.href));
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
+    <main className="main-content">
+      <div className="flex gap-8">
+        {/* Settings sidebar nav — dub.co style */}
+        <aside className="hidden lg:block w-56 shrink-0">
+          <nav className="sticky top-24 flex flex-col gap-0.5">
+            <p className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Настройки
+            </p>
+            {navItems.map((item) => {
+              const isActive =
+                pathname === item.href ||
+                (item.href !== paths.settings.root && pathname.startsWith(item.href));
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-primary/10 text-foreground"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  <span
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-primary/10 text-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      "flex size-8 items-center justify-center rounded-md",
+                      isActive ? "bg-primary/20 text-foreground" : "bg-muted",
                     )}
                   >
+                    {item.icon}
+                  </span>
+                  <div className="flex flex-col min-w-0">
+                    <span>{item.label}</span>
                     <span
                       className={cn(
-                        "flex size-8 items-center justify-center rounded-md",
-                        isActive ? "bg-primary/20 text-foreground" : "bg-muted",
+                        "text-xs truncate",
+                        isActive ? "text-muted-foreground" : "text-muted-foreground/80",
                       )}
                     >
-                      {item.icon}
+                      {item.description}
                     </span>
-                    <div className="flex flex-col min-w-0">
-                      <span>{item.label}</span>
-                      <span
-                        className={cn(
-                          "text-xs truncate",
-                          isActive ? "text-muted-foreground" : "text-muted-foreground/80",
-                        )}
-                      >
-                        {item.description}
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </nav>
-          </aside>
+                  </div>
+                </Link>
+              );
+            })}
+          </nav>
+        </aside>
 
-          {/* Content */}
-          <div className="flex-1 min-w-0">{children}</div>
-        </div>
-      </main>
-    </>
+        {/* Content */}
+        <div className="flex-1 min-w-0">{children}</div>
+      </div>
+    </main>
   );
 }

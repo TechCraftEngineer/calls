@@ -32,7 +32,7 @@ export const importPbxDirectory = workspaceAdminProcedure
         await pbxService.upsertEmployees(
           context.workspaceId,
           selectedEmployees.map((e) => ({
-            externalId: e.id,
+            externalId: e.externalId,
             extension: e.extension ?? null,
             email: e.email ?? null,
             firstName: e.firstName ?? null,
@@ -48,7 +48,7 @@ export const importPbxDirectory = workspaceAdminProcedure
         await pbxService.upsertNumbers(
           context.workspaceId,
           selectedNumbers.map((n) => ({
-            externalId: n.id,
+            externalId: n.externalId,
             phoneNumber: n.phoneNumber,
             extension: n.extension ?? null,
             label: n.label ?? null,

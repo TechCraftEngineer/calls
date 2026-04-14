@@ -1,8 +1,5 @@
 "use client";
 
-import { LogOut, PanelLeft, PanelRight } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { paths } from "@calls/config";
 import {
   Sidebar,
@@ -19,8 +16,11 @@ import {
   SidebarRail,
   useSidebar,
 } from "@calls/ui";
+import { LogOut, PanelLeft, PanelRight } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import { adminNavItems, navItems, type NavItem } from "./nav-items";
+import { adminNavItems, type NavItem, navItems } from "./nav-items";
 import { SetupCard } from "./setup-card";
 import { SidebarLogo } from "./sidebar-logo";
 import { WorkspaceSwitcher } from "./workspace-switcher";
@@ -93,7 +93,7 @@ export function AppSidebar() {
             <SidebarMenuButton asChild tooltip="Выход">
               <Link href={paths.auth.signout}>
                 <LogOut />
-                <span>Выход</span>
+                Выход
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

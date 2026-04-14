@@ -28,7 +28,7 @@ export default function ApiStepPage() {
   const updatePbxAccessMutation = useMutation(
     orpc.settings.updatePbxAccess.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpc.settings.getIntegrations.queryKey() });
+        queryClient.invalidateQueries({ queryKey: orpc.settings.getIntegrations.queryKey({}) });
       },
     }),
   );

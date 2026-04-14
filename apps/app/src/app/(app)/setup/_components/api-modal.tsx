@@ -35,7 +35,7 @@ export function ApiModal({ open, onOpenChange, onComplete }: ModalProps<void>) {
   const updatePbxAccessMutation = useMutation(
     orpc.settings.updatePbxAccess.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: orpc.settings.getIntegrations.queryKey() });
+        queryClient.invalidateQueries({ queryKey: orpc.settings.getIntegrations.queryKey({}) });
       },
     }),
   );

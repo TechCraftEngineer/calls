@@ -52,10 +52,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     orpc.workspaces.setActive.mutationOptions({
       onMutate: async (variables) => {
         // Сохраняем текущее значение для rollback при ошибке
-        const previousData = queryClient.getQueryData(orpc.workspaces.list.queryKey());
+        const previousData = queryClient.getQueryData(orpc.workspaces.list.queryKey({}));
 
         // Оптимистично обновляем кэш
-        queryClient.setQueryData(orpc.workspaces.list.queryKey(), (old) => {
+        queryClient.setQueryData(orpc.workspaces.list.queryKey({}), (old) => {
           if (!old || typeof old !== "object") return old;
           return {
             ...old,
@@ -70,7 +70,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       onError: (_err, _variables, context) => {
         // Возвращаем предыдущее значение при ошибке
         if (context?.previousData) {
-          queryClient.setQueryData(orpc.workspaces.list.queryKey(), context.previousData);
+          queryClient.setQueryData(orpc.workspaces.list.queryKey({}), context.previousData);
         }
         toast.error("Не удалось переключить компанию. Повторите попытку.");
       },
@@ -111,17 +111,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
       // Всегда обновляем список перед переключением для гарантии актуальности
       await queryClient.invalidateQueries({
-        queryKey: orpc.workspaces.list.queryKey(),
+        queryKey: orpc.workspaces.list.queryKey({}),
       });
 
       // Ждём обновления данных
       await queryClient.refetchQueries({
-        queryKey: orpc.workspaces.list.queryKey(),
+        queryKey: orpc.workspaces.list.queryKey({}),
       });
 
       // Получаем свежие данные из кэша
       const freshData = queryClient.getQueryData(
-        orpc.workspaces.list.queryKey(),
+        orpc.workspaces.list.queryKey({}),
       ) as typeof workspacesData;
       const freshWorkspaces = (freshData?.workspaces ?? []) as Workspace[];
       const ws = freshWorkspaces.find((w: Workspace) => w.id === workspaceId);
@@ -138,7 +138,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const refreshWorkspaces = useCallback(async () => {
     await queryClient.refetchQueries({
-      queryKey: orpc.workspaces.list.queryKey(),
+      queryKey: orpc.workspaces.list.queryKey({}),
     });
   }, [queryClient, orpc.workspaces.list]);
 

@@ -46,6 +46,14 @@ export default function FtpSection({
   statusLoading,
 }: FtpSectionProps) {
   const { enabled, host, user, password, passwordSet } = settings;
+
+  // Минимальная дата - месяц назад
+  const minDate = (() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    return d.toISOString().slice(0, 10);
+  })();
+
   const defaultFromDate = (() => {
     const d = new Date();
     d.setDate(d.getDate() - 7);
@@ -150,9 +158,10 @@ export default function FtpSection({
               onChange={onSyncFromDateChange}
               placeholder="Выберите дату"
               className="h-9"
+              minDate={minDate}
             />
             <p className="text-xs text-muted-foreground">
-              Записи с этой даты по сегодня будут загружаться при синхронизации
+              Можно выгружать записи только за последний месяц
             </p>
           </div>
 

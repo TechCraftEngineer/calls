@@ -10,7 +10,6 @@ export type { DailyKpiRow } from "./kpi";
 export { formatReportSubject, type ReportType } from "./reports";
 export { generateWorkspaceSlug } from "./slug";
 export { buildCompanyContext } from "./utils/company-context";
-export { replaceSpeakersWithRoles } from "./utils/speaker-mapping";
 export {
   compareIds,
   isValidId,
@@ -19,6 +18,7 @@ export {
   safeId,
 } from "./utils/id-utils";
 export { pluralize } from "./utils/pluralize";
+export { replaceSpeakersWithRoles } from "./utils/speaker-mapping";
 export {
   companyContextSchema,
   isValidEmail,
@@ -29,7 +29,7 @@ export {
   uuidSchema,
   workspaceIdSchema,
 } from "./validation";
-export { isValidCalendarIsoDate } from "./validation/date";
+export { isNotFutureIsoDate, isValidCalendarIsoDate } from "./validation/date";
 export {
   validateFtpCredentials,
   validateFtpHost,

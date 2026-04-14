@@ -79,7 +79,7 @@ export default function WorkspaceSettingsPage() {
         try {
           // Сначала инвалидируем кэш, затем получаем свежие данные
           await queryClient.invalidateQueries({
-            queryKey: orpc.workspaces.list.queryKey(),
+            queryKey: orpc.workspaces.list.queryKey({}),
           });
           const remainingWorkspaces = await queryClient.fetchQuery(
             orpc.workspaces.list.queryOptions(),

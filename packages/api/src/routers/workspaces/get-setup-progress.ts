@@ -7,11 +7,13 @@ export const getSetupProgress = protectedProcedure
   .handler(async ({ input, context }) => {
     const { workspaceId } = input;
     const userId = context.authUserId;
+
     if (!userId) {
       throw new ORPCError("UNAUTHORIZED", {
-        message: "Пользователь не авторизован",
+        message: "Требуется авторизация",
       });
     }
+
     const member = await context.workspacesService.getMemberWithRole(workspaceId, userId);
     if (!member) {
       throw new ORPCError("FORBIDDEN", {

@@ -277,4 +277,11 @@ export class WorkspacesService {
     workspaceCache.invalidateWorkspace(workspaceId);
     return result;
   }
+
+  async addSetupStep(workspaceId: string, step: string): Promise<boolean> {
+    const result = await this.workspacesRepository.addSetupStep(workspaceId, step);
+    // Invalidate cache for this workspace
+    workspaceCache.invalidateWorkspace(workspaceId);
+    return result;
+  }
 }

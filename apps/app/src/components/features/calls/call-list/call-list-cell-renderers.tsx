@@ -296,11 +296,7 @@ export function renderScoreCell(evaluation: CallWithDetails["evaluation"]) {
     return <span style={{ color: "#ccc" }}>Не оценено</span>;
   }
 
-  // Аномальное значение score === 0 - логируем для диагностики
   if (score === 0) {
-    console.warn(
-      `[renderScoreCell] Обнаружено аномальное значение score=0 для evaluation id=${evaluation?.id ?? "unknown"}`,
-    );
     return (
       <Tooltip>
         <TooltipTrigger asChild>

@@ -3,6 +3,7 @@
 import { toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { useORPC } from "@/orpc/react";
 
 export interface UsePbxMutationsReturn {
@@ -27,10 +28,10 @@ export interface UsePbxMutationsReturn {
 export function usePbxMutations(
   validateConfig: () => boolean,
   focusFirstError: () => void,
-  resetPagination: () => void,
 ): UsePbxMutationsReturn {
   const orpc = useORPC();
   const queryClient = useQueryClient();
+  const { activeWorkspace } = useWorkspace();
 
   // Base mutations
   const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
@@ -62,7 +63,32 @@ export function usePbxMutations(
       }
       throw new Error("Проверка не пройдена");
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Инвалидируем кеш интеграций чтобы useAutoCompleteSteps получил обновлённые данные
+      await queryClient.invalidateQueries({
+        queryKey: orpc.settings.getIntegrations.queryKey({}),
+      });
+
+      // Обновляем прогресс настройки - добавляем шаг "api"
+      if (activeWorkspace) {
+        try {
+          await queryClient
+            .getMutationCache()
+            .build(queryClient, orpc.workspaces.updateSetupProgress.mutationOptions())
+            .execute({
+              workspaceId: activeWorkspace.id,
+              completedStep: "api",
+            });
+
+          // Инвалидируем кеш прогресса
+          await queryClient.invalidateQueries({
+            predicate: (query) => query.queryKey[0] === "workspaces.getSetupProgress",
+          });
+        } catch (error) {
+          console.error("Не удалось обновить прогресс настройки:", error);
+        }
+      }
+
       toast.success("API подключено");
     },
     onError: () => {
@@ -79,14 +105,13 @@ export function usePbxMutations(
       // Синхронизация завершена, обновляем данные
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+          queryKey: orpc.settings.listPbxEmployees.queryKey({}),
         }),
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxNumbers.queryKey(),
+          queryKey: orpc.settings.listPbxNumbers.queryKey({}),
         }),
       ]);
 
-      resetPagination();
       toast.success(result.message);
     },
     onError: (error) => {
@@ -135,10 +160,10 @@ export function usePbxMutations(
 
         // Очищаем кэш справочников после успешного импорта
         await queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+          queryKey: orpc.settings.listPbxEmployees.queryKey({}),
         });
         await queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxNumbers.queryKey(),
+          queryKey: orpc.settings.listPbxNumbers.queryKey({}),
         });
 
         toast.success(
@@ -159,6 +184,6 @@ export function usePbxMutations(
     handleTestAndSave,
     handleSync,
     handleImport,
-    resetPaginationOnSync: resetPagination,
+    resetPaginationOnSync: () => {},
   };
 }

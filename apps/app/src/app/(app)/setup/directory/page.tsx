@@ -23,20 +23,11 @@ export default function DirectoryPage() {
     orpc.workspaces.updateSetupProgress.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.list.queryKey(),
+          predicate: (query) => query.queryKey[0] === "workspaces.getSetupProgress",
         });
       },
     }),
   );
-
-  const { data: setupProgressData } = useQuery({
-    ...orpc.workspaces.getSetupProgress.queryOptions({
-      input: {
-        workspaceId: activeWorkspace?.id ?? "",
-      },
-    }),
-    enabled: !!activeWorkspace,
-  });
 
   // Selection state
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
@@ -63,9 +54,11 @@ export default function DirectoryPage() {
       onSuccess: async (result) => {
         toast.success(result.message);
         await queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+          queryKey: orpc.settings.listPbxEmployees.queryKey({}),
         });
-        await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
+        await queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxNumbers.queryKey({}),
+        });
       },
       onError: (error) => {
         toast.error(error.message || "Ошибка синхронизации");
@@ -83,9 +76,23 @@ export default function DirectoryPage() {
         setSelectedEmployees(new Set());
         setSelectedNumbers(new Set());
         await queryClient.invalidateQueries({
-          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+          queryKey: orpc.settings.listPbxEmployees.queryKey({}),
         });
-        await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
+        await queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxNumbers.queryKey({}),
+        });
+
+        // Автоматически отмечаем шаг directory как выполненный после импорта
+        if (activeWorkspace) {
+          try {
+            await updateSetupProgressMutation.mutateAsync({
+              workspaceId: activeWorkspace.id,
+              completedStep: "directory",
+            });
+          } catch (error) {
+            console.error("Не удалось сохранить прогресс настройки:", error);
+          }
+        }
       },
       onError: () => {
         toast.error("Ошибка импорта");
@@ -241,30 +248,25 @@ export default function DirectoryPage() {
     // Импортируем выбранные элементы, если они есть
     if (selectedEmployees.size > 0 || selectedNumbers.size > 0) {
       try {
-        const result = await importPbxDirectoryMutation.mutateAsync({
+        await importPbxDirectoryMutation.mutateAsync({
           employeeIds: Array.from(selectedEmployees),
           numberIds: Array.from(selectedNumbers),
         });
-        toast.success(
-          `Импортировано ${result.importedEmployees} сотрудников и ${result.importedNumbers} номеров`,
-        );
       } catch {
-        toast.error("Ошибка импорта");
         return;
       }
     }
 
     // Сохраняем в базу данных что шаг завершен
-    if (activeWorkspace && setupProgressData) {
+    if (activeWorkspace) {
       try {
-        const completed = new Set(setupProgressData.completedSteps ?? []);
-        completed.add("directory");
         await updateSetupProgressMutation.mutateAsync({
           workspaceId: activeWorkspace.id,
-          completedSteps: [...completed],
+          completedStep: "directory",
         });
       } catch (error) {
-        console.error("Failed to update setup progress:", error);
+        console.error("Не удалось сохранить прогресс настройки:", error);
+        toast.error("Не удалось сохранить прогресс. Попробуйте снова.");
       }
     }
 
@@ -361,8 +363,15 @@ export default function DirectoryPage() {
           <ArrowLeft className="mr-2 size-4" />
           Назад
         </Button>
-        <Button onClick={handleNext} disabled={isLoading || importPbxDirectoryMutation.isPending}>
-          {importPbxDirectoryMutation.isPending ? (
+        <Button
+          onClick={handleNext}
+          disabled={
+            isLoading ||
+            importPbxDirectoryMutation.isPending ||
+            updateSetupProgressMutation.isPending
+          }
+        >
+          {importPbxDirectoryMutation.isPending || updateSetupProgressMutation.isPending ? (
             <Loader2 className="mr-2 size-4 animate-spin" />
           ) : null}
           {selectedEmployees.size > 0 || selectedNumbers.size > 0

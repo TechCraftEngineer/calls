@@ -150,7 +150,7 @@ export function TemplateFormModal({
     orpc.settings.createEvaluationTemplate.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.getEvaluationTemplates.queryKey(),
+          queryKey: orpc.settings.getEvaluationTemplates.queryKey({}),
         });
         toast.success("Шаблон создан");
         onClose();
@@ -165,7 +165,7 @@ export function TemplateFormModal({
     orpc.settings.updateEvaluationTemplate.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.settings.getEvaluationTemplates.queryKey(),
+          queryKey: orpc.settings.getEvaluationTemplates.queryKey({}),
         });
         toast.success("Шаблон сохранён");
         onClose();

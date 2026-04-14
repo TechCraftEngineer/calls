@@ -10,7 +10,6 @@ import KpiTable from "@/components/features/calls/kpi-table";
 import MonthlyGridTable from "@/components/features/kpi/monthly-grid-table";
 import { ReportSettingsPanel } from "@/components/features/settings";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import Header from "@/components/layout/header";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 import { StatisticsFilters } from "../statistics-filters";
@@ -100,77 +99,64 @@ function StatisticsPageContent() {
   };
 
   return (
-    <>
-      <Header user={user} />
+    <main className="main-content">
+      <header className="page-header mb-8">
+        <h1 className="page-title">Статистика звонков</h1>
+        <p className="page-subtitle">Эффективность работы менеджеров</p>
+      </header>
 
-      <main className="main-content">
-        <header className="page-header mb-8">
-          <h1 className="page-title">Статистика звонков</h1>
-          <p className="page-subtitle">Эффективность работы менеджеров</p>
-        </header>
+      <Tabs value={activeTab} className="mb-6">
+        <TabsList className="flex gap-0 p-0 h-auto bg-transparent border-b-2 border-[#EEE] rounded-none w-auto">
+          <TabsTrigger value="statistics" asChild className={TAB_STYLE}>
+            <Link href={paths.statistics.root}>Сводная статистика</Link>
+          </TabsTrigger>
+          {workspaceRole !== "member" && (
+            <>
+              <TabsTrigger value="kpi" asChild className={TAB_STYLE}>
+                <Link href={paths.statistics.kpi}>Расчет KPI</Link>
+              </TabsTrigger>
+              <TabsTrigger value="grid" asChild className={TAB_STYLE}>
+                <Link href={paths.statistics.grid}>Календарь KPI</Link>
+              </TabsTrigger>
+            </>
+          )}
+          <TabsTrigger value="settings" asChild className={TAB_STYLE}>
+            <Link href={paths.statistics.settings}>Настройки отчетов</Link>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-        <Tabs value={activeTab} className="mb-6">
-          <TabsList className="flex gap-0 p-0 h-auto bg-transparent border-b-2 border-[#EEE] rounded-none w-auto">
-            <TabsTrigger value="statistics" asChild className={TAB_STYLE}>
-              <Link href={paths.statistics.root}>Сводная статистика</Link>
-            </TabsTrigger>
-            {workspaceRole !== "member" && (
-              <>
-                <TabsTrigger value="kpi" asChild className={TAB_STYLE}>
-                  <Link href={paths.statistics.kpi}>Расчет KPI</Link>
-                </TabsTrigger>
-                <TabsTrigger value="grid" asChild className={TAB_STYLE}>
-                  <Link href={paths.statistics.grid}>Календарь KPI</Link>
-                </TabsTrigger>
-              </>
-            )}
-            <TabsTrigger value="settings" asChild className={TAB_STYLE}>
-              <Link href={paths.statistics.settings}>Настройки отчетов</Link>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      {activeTab === "statistics" && (
+        <StatisticsFilters
+          dateFrom={filters.dateFrom}
+          dateTo={filters.dateTo}
+          onDateFromChange={(v) => setFilters((prev) => ({ ...prev, dateFrom: v }))}
+          onDateToChange={(v) => setFilters((prev) => ({ ...prev, dateTo: v }))}
+          onApply={loadStats}
+          onReset={handleResetFilters}
+        />
+      )}
 
-        {activeTab === "statistics" && (
-          <StatisticsFilters
-            dateFrom={filters.dateFrom}
-            dateTo={filters.dateTo}
-            onDateFromChange={(v) => setFilters((prev) => ({ ...prev, dateFrom: v }))}
-            onDateToChange={(v) => setFilters((prev) => ({ ...prev, dateTo: v }))}
-            onApply={loadStats}
-            onReset={handleResetFilters}
-          />
-        )}
+      {activeTab === "statistics" && <StatisticsTable stats={stats} loading={loading} />}
 
-        {activeTab === "statistics" && <StatisticsTable stats={stats} loading={loading} />}
+      {activeTab === "kpi" && <KpiTable />}
 
-        {activeTab === "kpi" && <KpiTable />}
+      {activeTab === "grid" && <MonthlyGridTable />}
 
-        {activeTab === "grid" && <MonthlyGridTable />}
-
-        {activeTab === "settings" && userLoading && <StatisticsSettingsSkeleton />}
-        {activeTab === "settings" && !userLoading && user && <ReportSettingsPanel user={user} />}
-        {activeTab === "settings" && !userLoading && !user && (
-          <div className="py-12 text-center text-[#666]">
-            Войдите в систему для настройки отчётов.
-          </div>
-        )}
-      </main>
-    </>
+      {activeTab === "settings" && userLoading && <StatisticsSettingsSkeleton />}
+      {activeTab === "settings" && !userLoading && user && <ReportSettingsPanel user={user} />}
+      {activeTab === "settings" && !userLoading && !user && (
+        <div className="py-12 text-center text-[#666]">
+          Войдите в систему для настройки отчётов.
+        </div>
+      )}
+    </main>
   );
 }
 
 export default function StatisticsPage() {
   return (
-    <Suspense
-      fallback={
-        <>
-          <Header user={null} />
-          <main className="main-content">
-            <StatisticsPageSkeleton />
-          </main>
-        </>
-      }
-    >
+    <Suspense fallback={<StatisticsPageSkeleton />}>
       <StatisticsPageContent />
     </Suspense>
   );

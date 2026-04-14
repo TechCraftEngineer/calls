@@ -14,8 +14,8 @@ import type {
   GetCallManagersParams,
   GetCallsParams,
 } from "../types/calls.types";
-import type { CallStatus } from "../utils/call-status";
 import type { ProcessingStatus } from "../utils/call-processing-status";
+import type { CallStatus } from "../utils/call-status";
 import { ValidationError } from "../validation/call-schemas";
 
 export class CallsService {
@@ -543,5 +543,15 @@ export class CallsService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Находит необработанные звонки с записями для постановки в очередь на транскрибацию
+   */
+  async findUnprocessedCallsWithRecordings(
+    workspaceId: string,
+    limit = 1000,
+  ): Promise<Array<{ id: string; recordingFileId: string }>> {
+    return this.callsRepository.findUnprocessedWithRecordings(workspaceId, limit);
   }
 }

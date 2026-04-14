@@ -293,10 +293,11 @@ export const transcribeCallFn = inngest.createFunction(
     });
 
     const normalizedText = validatedResult.normalizedText || "";
+    const rawText = validatedResult.rawText || "";
 
     // === ШАГ 12: Генерация summary ===
     const summaryResult = (await step.run("llm/summarize", () =>
-      summarize(normalizedText, workspace, managerNameFromPbx, callId),
+      summarize(rawText, workspace, managerNameFromPbx, callId),
     )) as SummarizeResult;
 
     // === ШАГ 13: Идентификация спикеров ===

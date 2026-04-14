@@ -20,6 +20,10 @@ type PbxSyncRequestedData = {
     payload: Record<string, unknown>;
   };
 };
+type ProcessImportedCallsData = {
+  workspaceId: string;
+  importedCount: number;
+};
 type GigaAmTranscriptionCompletedData = {
   task_id: string;
   status: "completed" | "failed";
@@ -44,6 +48,10 @@ export const evaluateRequested = eventType("call/evaluate.requested", {
 
 export const pbxSyncRequested = eventType("pbx/sync.requested", {
   schema: staticSchema<PbxSyncRequestedData>(),
+});
+
+export const processImportedCalls = eventType("calls/process-imported", {
+  schema: staticSchema<ProcessImportedCallsData>(),
 });
 
 export const gigaAmTranscriptionCompleted = eventType("giga-am/transcription.completed", {

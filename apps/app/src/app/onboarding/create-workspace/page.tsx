@@ -131,9 +131,13 @@ function CreateWorkspaceForm() {
         toast.success("Компания создана");
         setActiveWorkspaceCookie(workspace.id);
         await queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.list.queryKey(),
+          queryKey: orpc.workspaces.list.queryKey({}),
         });
-        router.push(paths.root);
+        // Инвалидируем кеш setup progress для новой компании
+        await queryClient.invalidateQueries({
+          queryKey: ["workspaces", "getSetupProgress"],
+        });
+        router.push(paths.setup.root);
       },
       onError: (err) => {
         const msg = err instanceof Error ? err.message : "Не удалось создать компанию";

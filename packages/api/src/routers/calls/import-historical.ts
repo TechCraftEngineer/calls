@@ -1,6 +1,7 @@
 import { pbxService } from "@calls/db";
-import { inngest, pbxSyncRequested } from "@calls/jobs";
-import { isValidCalendarIsoDate } from "@calls/shared";
+import { inngest, processImportedCalls } from "@calls/jobs";
+import { syncPbxCalls } from "@calls/jobs/pbx/sync";
+import { isNotFutureIsoDate, isValidCalendarIsoDate } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../orpc";
@@ -12,23 +13,9 @@ const importHistoricalCallsSchema = z.object({
     .refine((v) => isValidCalendarIsoDate(v), {
       message: "Некорректная дата. Используйте формат YYYY-MM-DD",
     })
-    .refine(
-      (v) => {
-        // Parse ISO date string and compare with today (date-only comparison)
-        const parts = v.split("-").map(Number);
-        if (parts.length !== 3 || parts.some((p) => Number.isNaN(p))) {
-          return false;
-        }
-        const [year, month, day] = parts as [number, number, number];
-        const inputDate = new Date(year, month - 1, day);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return inputDate <= today;
-      },
-      {
-        message: "Дата не может быть в будущем",
-      },
-    ),
+    .refine((v) => isNotFutureIsoDate(v), {
+      message: "Дата не может быть в будущем",
+    }),
 });
 
 export const importHistoricalCalls = workspaceAdminProcedure
@@ -47,21 +34,33 @@ export const importHistoricalCalls = workspaceAdminProcedure
       syncFromDate: input.fromDate,
     });
 
-    // Запускаем синхронизацию звонков
-    await inngest.send(
-      pbxSyncRequested.create({
-        workspaceId: context.workspaceId,
-        syncType: "calls",
-        syncRecordings: pbxConfig.syncRecordings ?? false,
-      }),
+    // Синхронно импортируем звонки
+    const syncResult = await syncPbxCalls(
+      context.workspaceId,
+      { ...pbxConfig, syncRecordings: true, syncFromDate: input.fromDate },
+      undefined,
     );
+
+    // Запускаем обработку импортированных звонков через Inngest
+    // Получаем список импортированных звонков для постановки в очередь на транскрибацию
+    if (syncResult.calls > 0) {
+      // Отправляем событие для запуска обработки звонков
+      // Inngest функция сама найдет необработанные звонки и поставит их в очередь
+      await inngest.send(
+        processImportedCalls.create({
+          workspaceId: context.workspaceId,
+          importedCount: syncResult.calls,
+        }),
+      );
+    }
 
     return {
       success: true,
-      message: "Импорт звонков запущен",
-      total: 0, // Будет заполнено после завершения
-      imported: 0,
-      skipped: 0,
-      errors: 0,
+      message: "Импорт звонков завершен",
+      total: syncResult.calls + syncResult.skipped,
+      imported: syncResult.calls,
+      skipped: syncResult.skipped,
+      errors: syncResult.errors?.length ?? 0,
+      transcriptionsQueued: syncResult.transcriptionsQueued ?? 0,
     };
   });

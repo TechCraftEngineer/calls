@@ -13,7 +13,6 @@ import {
   type CallsFiltersState,
   type ManagerOption,
 } from "@/components/features/calls/calls-filters";
-import Header from "@/components/layout/header";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSession } from "@/lib/better-auth";
@@ -32,7 +31,6 @@ export default function HomePage() {
   const orpc = useORPC();
   const queryClient = useQueryClient();
   const { data: session, isPending: sessionPending } = useSession();
-  const user = session?.user ?? null;
   const [pagination, setPagination] = useState<Pagination>({
     total: 0,
     page: 1,
@@ -189,57 +187,53 @@ export default function HomePage() {
   };
 
   return (
-    <>
-      <Header user={user} />
-
-      <main className="main-content">
-        <div className="dashboard-page">
-          <Card className="border-border/60 bg-card/90 shadow-sm">
-            <CardHeader className="px-6 pt-5 pb-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-semibold tracking-tight">Последние звонки</h2>
-                  <p className="text-sm text-muted-foreground">Фильтры применяются на сервере</p>
-                </div>
-                <Button variant="ghost" className="font-normal text-sm gap-2 h-9" disabled>
-                  <span className="text-base opacity-60">📄</span>
-                  Скачать XLS (скоро)
-                </Button>
+    <main className="main-content">
+      <div className="dashboard-page">
+        <Card className="border-border/60 bg-card/90 shadow-sm">
+          <CardHeader className="px-6 pt-5 pb-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight">Последние звонки</h2>
+                <p className="text-sm text-muted-foreground">Фильтры применяются на сервере</p>
               </div>
-            </CardHeader>
-            <CardContent className="px-6 pb-6">
-              <CallsFilters
-                filters={filters}
-                managerOptions={managerOptions}
-                updateFilters={updateFilters}
-                onReset={resetFilters}
-                onSubmit={() => setPagination((p) => ({ ...p, page: 1 }))}
-              />
-            </CardContent>
-          </Card>
-
-          <section className="mt-8 min-h-50 overflow-hidden rounded-lg border border-border/30 bg-card/40">
-            <CallListDataGrid
-              calls={calls}
-              pagination={pagination}
-              isLoading={loading}
-              onPaginationChange={handlePaginationChange}
-              onPlay={(callId, number) => setActiveAudio({ callId, number })}
-              onCallDeleted={() => invalidateCalls()}
-              onCallsDeleted={() => invalidateCalls()}
-              onRecommendationsGenerated={() => invalidateCalls()}
+              <Button variant="ghost" className="font-normal text-sm gap-2 h-9" disabled>
+                <span className="text-base opacity-60">📄</span>
+                Скачать XLS (скоро)
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="px-6 pb-6">
+            <CallsFilters
+              filters={filters}
+              managerOptions={managerOptions}
+              updateFilters={updateFilters}
+              onReset={resetFilters}
+              onSubmit={() => setPagination((p) => ({ ...p, page: 1 }))}
             />
-          </section>
-        </div>
+          </CardContent>
+        </Card>
 
-        {activeAudio && (
-          <AudioPlayerModal
-            callId={activeAudio.callId}
-            number={activeAudio.number}
-            onClose={() => setActiveAudio(null)}
+        <section className="mt-8 min-h-50 overflow-hidden rounded-lg border border-border/30 bg-card/40">
+          <CallListDataGrid
+            calls={calls}
+            pagination={pagination}
+            isLoading={loading}
+            onPaginationChange={handlePaginationChange}
+            onPlay={(callId, number) => setActiveAudio({ callId, number })}
+            onCallDeleted={() => invalidateCalls()}
+            onCallsDeleted={() => invalidateCalls()}
+            onRecommendationsGenerated={() => invalidateCalls()}
           />
-        )}
-      </main>
-    </>
+        </section>
+      </div>
+
+      {activeAudio && (
+        <AudioPlayerModal
+          callId={activeAudio.callId}
+          number={activeAudio.number}
+          onClose={() => setActiveAudio(null)}
+        />
+      )}
+    </main>
   );
 }

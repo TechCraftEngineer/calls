@@ -35,6 +35,8 @@ export interface DatePickerProps {
   id?: string;
   className?: string;
   disabled?: boolean;
+  minDate?: string;
+  maxDate?: string;
 }
 
 export function DatePicker({
@@ -44,9 +46,13 @@ export function DatePicker({
   id,
   className,
   disabled,
+  minDate,
+  maxDate,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
   const date = parseValue(value);
+  const minDateParsed = minDate ? parseValue(minDate) : undefined;
+  const maxDateParsed = maxDate ? parseValue(maxDate) : undefined;
 
   const handleSelect = React.useCallback(
     (d: Date | undefined) => {
@@ -87,6 +93,11 @@ export function DatePicker({
           selected={date}
           onSelect={handleSelect}
           defaultMonth={date}
+          disabled={(day) => {
+            if (minDateParsed && day < minDateParsed) return true;
+            if (maxDateParsed && day > maxDateParsed) return true;
+            return false;
+          }}
         />
       </PopoverContent>
     </Popover>

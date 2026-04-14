@@ -2,13 +2,19 @@
 
 import { paths } from "@calls/config";
 import { Button } from "@calls/ui";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
+import { useORPC } from "@/orpc/react";
 import { ApiConfigCard, usePbxSetup, WebhookConfigCard } from "./_components";
 
 export default function PbxSetupPage() {
   const router = useRouter();
+  const orpc = useORPC();
+  const queryClient = useQueryClient();
+  const { activeWorkspace } = useWorkspace();
 
   const {
     // Webhook
@@ -35,6 +41,33 @@ export default function PbxSetupPage() {
     handleCopy,
     handleTestAndSave,
   } = usePbxSetup();
+
+  const updateSetupProgressMutation = useMutation(
+    orpc.workspaces.updateSetupProgress.mutationOptions({
+      onSuccess: () => {
+        if (activeWorkspace) {
+          queryClient.invalidateQueries({
+            queryKey: orpc.workspaces.getSetupProgress.key(),
+          });
+        }
+      },
+    }),
+  );
+
+  const handleNext = async () => {
+    // Сохраняем прогресс перед переходом
+    if (activeWorkspace && configSaved) {
+      try {
+        await updateSetupProgressMutation.mutateAsync({
+          workspaceId: activeWorkspace.id,
+          completedStep: "api",
+        });
+      } catch (error) {
+        console.error("Не удалось сохранить прогресс настройки:", error);
+      }
+    }
+    router.push(paths.setup.directory);
+  };
 
   return (
     <>
@@ -82,11 +115,19 @@ export default function PbxSetupPage() {
           />
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => router.push(paths.setup.root)}>
+            <Button
+              variant="outline"
+              onClick={() => router.push(paths.setup.root)}
+              className="min-h-[44px] min-w-[44px]"
+            >
               <ArrowLeft className="mr-2 size-4" />
               Назад
             </Button>
-            <Button onClick={() => router.push(paths.setup.directory)} disabled={!configSaved}>
+            <Button
+              onClick={handleNext}
+              disabled={!configSaved || updateSetupProgressMutation.isPending}
+              className="min-h-[44px] min-w-[44px]"
+            >
               Далее
               <ArrowRight className="ml-2 size-4" />
             </Button>
