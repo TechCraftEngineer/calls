@@ -1,10 +1,9 @@
 "use client";
 
 import { toast } from "@calls/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { useORPC } from "@/orpc/react";
-import type { Employee, PhoneNumber } from "../types";
 
 export interface UsePbxMutationsReturn {
   testAndSaveMutationPending: boolean;
@@ -33,21 +32,6 @@ export function usePbxMutations(
   const orpc = useORPC();
   const queryClient = useQueryClient();
 
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
   // Base mutations
   const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
   const updatePbxAccessMutation = useMutation(orpc.settings.updatePbxAccess.mutationOptions());
@@ -56,10 +40,6 @@ export function usePbxMutations(
   const importPbxDirectoryMutation = useMutation(
     orpc.settings.importPbxDirectory.mutationOptions(),
   );
-
-  // Get queries for sync polling (used to track initial state)
-  useQuery(orpc.settings.listPbxEmployees.queryOptions({}));
-  useQuery(orpc.settings.listPbxNumbers.queryOptions({}));
 
   const testAndSaveMutation = useMutation({
     mutationFn: async (params: { baseUrl: string; apiKey: string; webhookSecret: string }) => {
@@ -95,129 +75,22 @@ export function usePbxMutations(
       const result = await syncPbxDirectoryMutation.mutateAsync({});
       return result;
     },
-    onSuccess: async () => {
-      toast.info("Синхронизация поставлена в очередь. Ожидание завершения...");
+    onSuccess: async (result) => {
+      // Синхронизация завершена, обновляем данные
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxNumbers.queryKey(),
+        }),
+      ]);
 
-      // Store initial counts to detect when sync completes
-      const initialEmployees =
-        queryClient.getQueryData<Employee[]>(orpc.settings.listPbxEmployees.queryKey()) ?? [];
-      const initialNumbers =
-        queryClient.getQueryData<PhoneNumber[]>(orpc.settings.listPbxNumbers.queryKey()) ?? [];
-      const initialEmployeeCount = initialEmployees.length;
-      const initialNumberCount = initialNumbers.length;
-
-      // Clear any existing polling
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-      }
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      // Poll for completion every 3 seconds
-      pollIntervalRef.current = setInterval(async () => {
-        try {
-          // Fetch latest data
-          const [employeesData, numbersData] = await Promise.all([
-            queryClient.fetchQuery(orpc.settings.listPbxEmployees.queryOptions()),
-            queryClient.fetchQuery(orpc.settings.listPbxNumbers.queryOptions()),
-          ]);
-
-          const employees = (employeesData ?? []) as Employee[];
-          const numbers = (numbersData ?? []) as PhoneNumber[];
-
-          // Check if data has changed (indicating sync completed)
-          const currentEmployeesHash = JSON.stringify(
-            employees
-              .map((e) => ({
-                id: e.id,
-                displayName: e.displayName,
-                extension: e.extension,
-                isActive: e.isActive,
-              }))
-              .sort((a, b) => a.id.localeCompare(b.id)),
-          );
-          const initialEmployeesHash = JSON.stringify(
-            initialEmployees
-              .map((e) => ({
-                id: e.id,
-                displayName: e.displayName,
-                extension: e.extension,
-                isActive: e.isActive,
-              }))
-              .sort((a, b) => a.id.localeCompare(b.id)),
-          );
-          const currentNumbersHash = JSON.stringify(
-            numbers
-              .map((n) => ({
-                id: n.id,
-                phoneNumber: n.phoneNumber,
-                extension: n.extension,
-                label: n.label,
-                lineType: n.lineType,
-                isActive: n.isActive,
-                employeeId: n.employee?.externalId ?? null,
-              }))
-              .sort((a, b) => a.id.localeCompare(b.id)),
-          );
-          const initialNumbersHash = JSON.stringify(
-            initialNumbers
-              .map((n) => ({
-                id: n.id,
-                phoneNumber: n.phoneNumber,
-                extension: n.extension,
-                label: n.label,
-                lineType: n.lineType,
-                isActive: n.isActive,
-                employeeId: n.employee?.externalId ?? null,
-              }))
-              .sort((a, b) => a.id.localeCompare(b.id)),
-          );
-          const hasChanges =
-            employees.length !== initialEmployeeCount ||
-            numbers.length !== initialNumberCount ||
-            currentEmployeesHash !== initialEmployeesHash ||
-            currentNumbersHash !== initialNumbersHash;
-
-          if (hasChanges) {
-            if (pollIntervalRef.current) {
-              clearInterval(pollIntervalRef.current);
-              pollIntervalRef.current = null;
-            }
-
-            // Invalidate queries to refresh the UI
-            await queryClient.invalidateQueries({
-              queryKey: orpc.settings.listPbxEmployees.queryKey(),
-            });
-            await queryClient.invalidateQueries({
-              queryKey: orpc.settings.listPbxNumbers.queryKey(),
-            });
-
-            resetPagination();
-
-            toast.success("Синхронизация выполнена");
-          }
-        } catch {
-          // Continue polling on error
-        }
-      }, 3000);
-
-      // Stop polling after 5 minutes (max wait time)
-      timeoutRef.current = setTimeout(
-        () => {
-          if (pollIntervalRef.current) {
-            clearInterval(pollIntervalRef.current);
-            pollIntervalRef.current = null;
-          }
-          toast.error(
-            "Синхронизация не завершилась в течение 5 минут. Пожалуйста, попробуйте снова.",
-          );
-        },
-        5 * 60 * 1000,
-      );
+      resetPagination();
+      toast.success(result.message);
     },
-    onError: () => {
-      toast.error("Ошибка синхронизации");
+    onError: (error) => {
+      toast.error(error.message || "Ошибка синхронизации");
     },
   });
 

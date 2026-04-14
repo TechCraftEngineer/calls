@@ -1,24 +1,26 @@
 import { pbxService } from "@calls/db";
-import { inngest, pbxSyncRequested } from "@calls/jobs";
+import { syncPbxDirectory } from "@calls/jobs";
 import { ORPCError } from "@orpc/server";
 import { workspaceAdminProcedure } from "../../../orpc";
 
 export const syncPbxDirectoryRoute = workspaceAdminProcedure.handler(async ({ context }) => {
-  if (!(await pbxService.getConfigWithSecrets(context.workspaceId))) {
+  const config = await pbxService.getConfigWithSecrets(context.workspaceId);
+
+  if (!config) {
     throw new ORPCError("NOT_FOUND", {
       message: "PBX интеграция не настроена",
     });
   }
 
-  await inngest.send(
-    pbxSyncRequested.create({
-      workspaceId: context.workspaceId,
-      syncType: "directory",
-    }),
-  );
+  // Синхронная синхронизация справочника
+  const stats = await syncPbxDirectory(context.workspaceId, config);
 
   return {
     success: true,
-    message: "Синхронизация сотрудников и номеров поставлена в очередь",
+    message: `Синхронизировано ${stats.employees} сотрудников и ${stats.numbers} номеров`,
+    stats: {
+      employees: stats.employees,
+      numbers: stats.numbers,
+    },
   };
 });

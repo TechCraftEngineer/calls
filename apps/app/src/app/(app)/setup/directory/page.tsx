@@ -60,15 +60,15 @@ export default function DirectoryPage() {
 
   const syncPbxDirectoryMutation = useMutation(
     orpc.settings.syncPbxDirectory.mutationOptions({
-      onSuccess: async () => {
-        toast.success("Синхронизировано");
+      onSuccess: async (result) => {
+        toast.success(result.message);
         await queryClient.invalidateQueries({
           queryKey: orpc.settings.listPbxEmployees.queryKey(),
         });
         await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
       },
-      onError: () => {
-        toast.error("Ошибка синхронизации");
+      onError: (error) => {
+        toast.error(error.message || "Ошибка синхронизации");
       },
     }),
   );
@@ -293,18 +293,6 @@ export default function DirectoryPage() {
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleSync}
-          disabled={syncPbxDirectoryMutation.isPending}
-        >
-          {syncPbxDirectoryMutation.isPending ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2 size-4" />
-          )}
-          Синхронизировать
-        </Button>
       </div>
 
       {isLoading ? (

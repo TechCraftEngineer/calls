@@ -194,7 +194,22 @@ export default function SetupPage() {
     newCompleted.add(stepId);
     saveCompletedSteps(newCompleted);
     setActiveModal(null);
-    toast.success("Шаг завершён");
+
+    // Автоматический переход к следующему шагу
+    const currentIndex = SETUP_STEPS.findIndex((s) => s.id === stepId);
+    const nextStep = SETUP_STEPS[currentIndex + 1];
+
+    if (nextStep) {
+      // Если у следующего шага есть href, переходим на страницу
+      if (nextStep.href) {
+        router.push(nextStep.href);
+      } else {
+        // Иначе открываем модальное окно следующего шага
+        setActiveModal(nextStep.id);
+      }
+    } else {
+      toast.success("Шаг завершён");
+    }
   };
 
   const handleSkipStep = (stepId: StepId) => {
