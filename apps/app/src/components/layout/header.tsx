@@ -11,6 +11,7 @@ import {
 } from "@calls/ui";
 import { LogOut, Settings } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import type { User } from "@/lib/auth";
 
@@ -39,9 +40,33 @@ interface HeaderProps {
 
 export default function Header({ user }: HeaderProps) {
   const { activeWorkspace, loading } = useWorkspace();
+  const [mounted, setMounted] = useState(false);
   const displayRole = getDisplayRole(activeWorkspace?.role, user?.role);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   if (!user) return null;
+
+  // Показываем скелетон до монтирования на клиенте
+  if (!mounted) {
+    return (
+      <header className="sticky top-0 z-900 flex h-16 items-center justify-between overflow-visible border-b border-gray-200 bg-white px-4 md:justify-end md:px-8">
+        <div className="min-w-0 pr-3 md:hidden">
+          <Skeleton className="h-5 w-32 max-w-full" />
+          <Skeleton className="mt-1 h-3 w-28 max-w-full" />
+        </div>
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <div className="mr-1 hidden min-w-0 text-right sm:block">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="mt-1 h-3 w-20" />
+          </div>
+          <Skeleton className="h-9 w-9 rounded-full" />
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-900 flex h-16 items-center justify-between overflow-visible border-b border-gray-200 bg-white px-4 md:justify-end md:px-8">

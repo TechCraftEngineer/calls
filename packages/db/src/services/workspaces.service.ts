@@ -2,6 +2,7 @@
  * Workspaces service - business logic for workspace operations
  */
 
+import { eq } from "drizzle-orm";
 import { db } from "../client";
 import { workspaceCache } from "../lib/workspace-cache";
 import type {

@@ -1,7 +1,5 @@
 "use client";
 
-import { AudioWaveform, ChevronUp, Plus } from "lucide-react";
-import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,13 +12,15 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@calls/ui";
-import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
+import { AudioWaveform, ChevronUp, Plus } from "lucide-react";
+import { useState } from "react";
 import CreateWorkspaceModal from "@/components/features/workspaces/create-workspace-modal";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { roleTranslations } from "./nav-items";
 
 export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
-  const { workspaces, activeWorkspace, setActiveWorkspace, refreshWorkspaces } = useWorkspace();
+  const { workspaces, activeWorkspace, setActiveWorkspace } = useWorkspace();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -95,16 +95,13 @@ export function WorkspaceSwitcher() {
         </DropdownMenu>
       </SidebarMenuItem>
 
-      {isCreateModalOpen && (
-        <CreateWorkspaceModal
-          onClose={() => setIsCreateModalOpen(false)}
-          onSuccess={async (workspaceId) => {
-            setIsCreateModalOpen(false);
-            await refreshWorkspaces();
-            await setActiveWorkspace(workspaceId);
-          }}
-        />
-      )}
+      <CreateWorkspaceModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onSuccess={async (workspaceId) => {
+          await setActiveWorkspace(workspaceId);
+        }}
+      />
     </SidebarMenu>
   );
 }
