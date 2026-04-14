@@ -1,7 +1,7 @@
 import { pbxService } from "@calls/db";
-import { inngest, pbxSyncRequested, processImportedCalls, transcribeRequested } from "@calls/jobs";
+import { inngest, processImportedCalls } from "@calls/jobs";
 import { syncPbxCalls } from "@calls/jobs/pbx/sync";
-import { isValidCalendarIsoDate } from "@calls/shared";
+import { isNotFutureIsoDate, isValidCalendarIsoDate } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../orpc";
@@ -13,23 +13,9 @@ const importHistoricalCallsSchema = z.object({
     .refine((v) => isValidCalendarIsoDate(v), {
       message: "Некорректная дата. Используйте формат YYYY-MM-DD",
     })
-    .refine(
-      (v) => {
-        // Parse ISO date string and compare with today (date-only comparison)
-        const parts = v.split("-").map(Number);
-        if (parts.length !== 3 || parts.some((p) => Number.isNaN(p))) {
-          return false;
-        }
-        const [year, month, day] = parts as [number, number, number];
-        const inputDate = new Date(year, month - 1, day);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return inputDate <= today;
-      },
-      {
-        message: "Дата не может быть в будущем",
-      },
-    ),
+    .refine((v) => isNotFutureIsoDate(v), {
+      message: "Дата не может быть в будущем",
+    }),
 });
 
 export const importHistoricalCalls = workspaceAdminProcedure
@@ -51,7 +37,7 @@ export const importHistoricalCalls = workspaceAdminProcedure
     // Синхронно импортируем звонки
     const syncResult = await syncPbxCalls(
       context.workspaceId,
-      { ...pbxConfig, syncRecordings: pbxConfig.syncRecordings ?? false },
+      { ...pbxConfig, syncRecordings: true, syncFromDate: input.fromDate },
       undefined,
     );
 

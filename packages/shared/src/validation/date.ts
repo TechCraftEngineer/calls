@@ -7,3 +7,11 @@ export function isValidCalendarIsoDate(value: string): boolean {
   const dt = new Date(Date.UTC(y, m - 1, d));
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 }
+
+/** Строка YYYY-MM-DD не позже сегодняшней даты (UTC). */
+export function isNotFutureIsoDate(value: string): boolean {
+  const today = new Date();
+  const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  const [y, m, d] = value.split("-").map(Number) as [number, number, number];
+  return Date.UTC(y, m - 1, d) <= todayUtc;
+}
