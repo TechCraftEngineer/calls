@@ -263,11 +263,13 @@ export function renderProcessingStatusCell(call: CallWithDetails["call"]) {
       <TooltipTrigger asChild>
         <button
           type="button"
-          className={`op-badge ${className} flex items-center gap-1`}
+          className={`op-badge ${className} inline-flex items-center gap-1.5 whitespace-nowrap`}
           aria-label={`Статус: ${config.label}`}
         >
-          {config.showSpinner && <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />}
-          {config.label}
+          {config.showSpinner && (
+            <Loader2 className="h-3 w-3 animate-spin shrink-0" aria-hidden="true" />
+          )}
+          <span>{config.label}</span>
         </button>
       </TooltipTrigger>
       {call.processingError && processingStatus === "failed" && (

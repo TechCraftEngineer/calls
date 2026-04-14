@@ -59,6 +59,7 @@ export const paths = {
   setup: {
     root: ROOTS.SETUP,
     pbxSetup: `${ROOTS.SETUP}/pbx-setup`,
+    directory: `${ROOTS.SETUP}/directory`,
   },
   calls: {
     root: ROOTS.CALLS,

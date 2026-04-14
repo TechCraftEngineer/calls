@@ -21,7 +21,7 @@ import Header from "@/components/layout/header";
 import { useSession } from "@/lib/better-auth";
 import { setOnboardedCookie } from "@/lib/cookies";
 import { useORPC } from "@/orpc/react";
-import { ApiModal, CompanyModal, DirectoryModal, ImportModal, ProviderModal } from "./_components";
+import { ApiModal, CompanyModal, ImportModal, ProviderModal } from "./_components";
 import type { SetupStep, StepId } from "./_components/types";
 
 const SETUP_STEPS: SetupStep[] = [
@@ -55,6 +55,7 @@ const SETUP_STEPS: SetupStep[] = [
     actionLabel: "Проверить",
     skipLabel: "Позже",
     editLabel: "Изменить",
+    href: paths.setup.directory,
   },
   {
     id: "import",
@@ -365,11 +366,6 @@ export default function SetupPage() {
             open={activeModal === "api"}
             onOpenChange={() => setActiveModal(null)}
             onComplete={(_data?: unknown) => handleCompleteStep("api")}
-          />
-          <DirectoryModal
-            open={activeModal === "directory"}
-            onOpenChange={() => setActiveModal(null)}
-            onComplete={(_data?: unknown) => handleCompleteStep("directory")}
           />
           <ImportModal
             open={activeModal === "import"}

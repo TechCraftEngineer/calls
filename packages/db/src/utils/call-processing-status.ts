@@ -40,7 +40,13 @@ export function normalizeProcessingStatus(
  */
 export function getNextProcessingStatus(
   current: ProcessingStatus | null,
-  event: "start_transcription" | "complete_transcription" | "fail_transcription" | "start_evaluation" | "complete_evaluation" | "fail_evaluation",
+  event:
+    | "start_transcription"
+    | "complete_transcription"
+    | "fail_transcription"
+    | "start_evaluation"
+    | "complete_evaluation"
+    | "fail_evaluation",
 ): ProcessingStatus {
   switch (event) {
     case "start_transcription":
@@ -70,9 +76,7 @@ export function isProcessing(status: ProcessingStatus | null | undefined): boole
 /**
  * Проверяет, завершена ли обработка (успешно или с ошибкой)
  */
-export function isProcessingFinished(
-  status: ProcessingStatus | null | undefined,
-): boolean {
+export function isProcessingFinished(status: ProcessingStatus | null | undefined): boolean {
   return status === PROCESSING_STATUS.COMPLETED || status === PROCESSING_STATUS.FAILED;
 }
 
