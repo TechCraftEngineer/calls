@@ -22,4 +22,3 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
 export default function Sidebar() {
   return null;
 }
-

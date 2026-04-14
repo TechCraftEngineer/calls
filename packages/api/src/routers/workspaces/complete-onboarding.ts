@@ -12,10 +12,7 @@ export const completeOnboarding = protectedProcedure
         message: "Пользователь не авторизован",
       });
     }
-    const member = await context.workspacesService.getMemberWithRole(
-      workspaceId,
-      userId,
-    );
+    const member = await context.workspacesService.getMemberWithRole(workspaceId, userId);
     if (!member || (member.role !== "owner" && member.role !== "admin")) {
       throw new ORPCError("FORBIDDEN", {
         message: "Недостаточно прав для изменения рабочего пространства",

@@ -104,6 +104,6 @@ export default function RecommendationsModal({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
