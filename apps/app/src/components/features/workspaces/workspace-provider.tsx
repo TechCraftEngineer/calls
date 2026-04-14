@@ -76,10 +76,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       },
       onSuccess: async () => {
         toast.success("Компания выбрана");
-        // Инвалидируем для консистентности других компонентов
-        queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.list.queryKey(),
-        });
+        // Инвалидируем все запросы при смене workspace
+        await queryClient.invalidateQueries();
       },
     }),
   );
