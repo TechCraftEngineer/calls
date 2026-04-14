@@ -46,7 +46,7 @@ export default defineConfig({
     actionTimeout: 5000, // было 10000
     navigationTimeout: 15000, // было 30000
     
-    // Отключаем анимации для ускорения
+    // Отключаем touch event emulation для ускорения
     hasTouch: false,
     
     // Ускоряем загрузку страниц
@@ -70,7 +70,8 @@ export default defineConfig({
             '--disable-background-timer-throttling',
             '--disable-backgrounding-occluded-windows',
             '--disable-renderer-backgrounding',
-            '--no-sandbox', // Только для локальной разработки
+            // --no-sandbox только для локальной разработки, не в CI
+            ...(!process.env.CI ? ['--no-sandbox'] : []),
           ],
         },
       },

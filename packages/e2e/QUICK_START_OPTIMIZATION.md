@@ -32,7 +32,7 @@ bun run test
 Откройте файлы компонентов и добавьте атрибуты:
 
 ```tsx
-// apps/app/src/components/features/workspaces/create-workspace-modal.tsx
+// Компонент модалки приглашения (найдите актуальный файл в вашей кодовой базе)
 <Dialog data-testid="invite-modal">
   <Button data-testid="invite-button">Пригласить</Button>
   <Input data-testid="email-input" type="email" />
@@ -190,7 +190,7 @@ await page.locator('[role="dialog"]').waitFor();
 
 ## Полезные ссылки
 
-- `PERFORMANCE_OPTIMIZATION.md` - детальное описание всех оптимизаций
-- `DATA_TESTID_CHECKLIST.md` - полный список data-testid для добавления
-- `playwright.config.ts` - оптимизированная конфигурация
-- `tests/helpers/invitation-helpers.optimized.ts` - оптимизированные helpers
+- [`PERFORMANCE_OPTIMIZATION.md`](./PERFORMANCE_OPTIMIZATION.md) - детальное описание всех оптимизаций
+- [`DATA_TESTID_CHECKLIST.md`](./DATA_TESTID_CHECKLIST.md) - полный список data-testid для добавления
+- [`playwright.config.ts`](./playwright.config.ts) - оптимизированная конфигурация
+- [`tests/helpers/invitation-helpers.optimized.ts`](./tests/helpers/invitation-helpers.optimized.ts) - оптимизированные helpers

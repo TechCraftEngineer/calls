@@ -76,8 +76,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       },
       onSuccess: async () => {
         toast.success("Компания выбрана");
-        // Ждём немного чтобы сервер точно успел обновить БД
-        await new Promise((resolve) => setTimeout(resolve, 100));
         // Инвалидируем для консистентности других компонентов
         queryClient.invalidateQueries({
           queryKey: orpc.workspaces.list.queryKey(),

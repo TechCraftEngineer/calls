@@ -77,7 +77,12 @@ export function WorkspaceSwitcher() {
                 </div>
                 <span className="flex-1 truncate">{ws.name}</span>
                 {ws.id === activeWorkspace.id && (
-                  <span className="text-xs text-muted-foreground">✓</span>
+                  <>
+                    <span className="text-xs text-muted-foreground" aria-hidden="true">
+                      ✓
+                    </span>
+                    <span className="sr-only">Выбрано</span>
+                  </>
                 )}
               </DropdownMenuItem>
             ))}

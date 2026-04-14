@@ -16,9 +16,9 @@ async function globalSetup(config: FullConfig) {
   try {
     // Делаем один запрос для прогрева сервера
     await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
-    console.log('✓ Server warmed up');
+    console.log('✓ Сервер прогрет');
   } catch (error) {
-    console.warn('Warning: Could not warm up server', error);
+    console.warn('Предупреждение: Не удалось прогреть сервер', error);
   } finally {
     await browser.close();
   }

@@ -65,7 +65,7 @@ export async function asyncTranscriptionWithCallback(
     };
   }>("asr/wait-for-completion", {
     event: "giga-am/transcription.completed",
-    timeout: "30m", // 30 минут максимальное ожидание
+    timeout: "60m", // 60 минут максимальное ожидание
     if: `async.data.task_id == "${taskId}"`,
   });
 
@@ -199,7 +199,7 @@ export async function asyncDiarizedTranscriptionWithCallback(
     };
   }>("asr/wait-for-diarized-completion", {
     event: "giga-am/transcription.completed",
-    timeout: "30m", // 30 минут максимальное ожидание
+    timeout: "60m", // 60 минут максимальное ожидание
     if: `async.data.task_id == "${taskId}"`,
   });
 

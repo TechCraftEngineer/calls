@@ -1,5 +1,6 @@
 "use client";
 
+import { paths } from "@calls/config";
 import { toast } from "@calls/ui";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
@@ -104,7 +105,7 @@ export function usePbxSetup() {
 
   const handleImport = useCallback(async () => {
     await baseHandleImport(selectedEmployees, selectedNumbers, () => {
-      router.push("/");
+      router.push(paths.setup.root);
     });
   }, [baseHandleImport, selectedEmployees, selectedNumbers, router]);
 
@@ -138,7 +139,8 @@ export function usePbxSetup() {
     selectedNumbers,
     handleToggleEmployee,
     handleToggleNumber,
-    handleSelectAllEmployees: () => handleSelectAllEmployees(paginatedEmployees, allEmployeesSelected),
+    handleSelectAllEmployees: () =>
+      handleSelectAllEmployees(paginatedEmployees, allEmployeesSelected),
     handleSelectAllNumbers: () => handleSelectAllNumbers(paginatedNumbers, allNumbersSelected),
     handleSelectAllFilteredEmployees: () => handleSelectAllFilteredEmployees(filteredEmployees),
     handleSelectAllFilteredNumbers: () => handleSelectAllFilteredNumbers(filteredNumbers),

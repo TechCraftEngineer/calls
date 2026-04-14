@@ -2,7 +2,7 @@
 
 import { paths } from "@calls/config";
 import { Button, Card, toast } from "@calls/ui";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
   Bot,
@@ -15,7 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import Header from "@/components/layout/header";
 import { useSession } from "@/lib/better-auth";
@@ -96,11 +96,7 @@ export default function SetupPage() {
   const [activeModal, setActiveModal] = useState<StepId | null>(null);
 
   // Track completed steps in local state
-  const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(() => {
-    if (typeof window === "undefined") return new Set();
-    const saved = sessionStorage.getItem("setup_completed_steps");
-    return new Set(saved ? (JSON.parse(saved) as StepId[]) : []);
-  });
+  const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(new Set());
 
   const completeOnboardingMutation = useMutation(
     orpc.workspaces.completeOnboarding.mutationOptions({
@@ -119,17 +115,50 @@ export default function SetupPage() {
   const user = session?.user ?? null;
   const loading = sessionPending || workspaceLoading;
 
+  const saveCompletedSteps = useCallback((steps: Set<StepId>) => {
+    setCompletedSteps(steps);
+    sessionStorage.setItem("setup_completed_steps", JSON.stringify([...steps]));
+  }, []);
+
+  // Check if API step is completed by checking if integrations are configured
+  const { data: integrations } = useQuery({
+    ...orpc.settings.getIntegrations.queryOptions(),
+    enabled: !loading && !!activeWorkspace,
+  });
+
+  // Load completed steps from sessionStorage on mount (client-only)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const saved = sessionStorage.getItem("setup_completed_steps");
+      if (saved) {
+        const parsed = JSON.parse(saved) as StepId[];
+        setCompletedSteps(new Set(parsed));
+      }
+    } catch {
+      // Ignore corrupt JSON
+    }
+  }, []);
+
+  // Auto-mark API step as completed if integrations are configured
+  useEffect(() => {
+    if (!integrations) return;
+
+    const hasPbxConfigured = integrations.megapbx?.enabled === true;
+
+    if (hasPbxConfigured && !completedSteps.has("api")) {
+      const newCompleted = new Set(completedSteps);
+      newCompleted.add("api");
+      saveCompletedSteps(newCompleted);
+    }
+  }, [integrations, completedSteps, saveCompletedSteps]);
+
   // Redirect if already onboarded
   useEffect(() => {
     if (!loading && activeWorkspace?.isOnboarded) {
       router.replace(paths.root);
     }
   }, [loading, activeWorkspace?.isOnboarded, router]);
-
-  const saveCompletedSteps = (steps: Set<StepId>) => {
-    setCompletedSteps(steps);
-    sessionStorage.setItem("setup_completed_steps", JSON.stringify([...steps]));
-  };
 
   const completedCount = completedSteps.size;
   const totalSteps = SETUP_STEPS.length;
@@ -243,8 +272,8 @@ export default function SetupPage() {
                   <div className="flex items-center justify-between gap-4 p-4">
                     <div className="flex max-w-lg min-w-0 flex-1 items-center">
                       {/* Icon */}
-                      <div className="mr-3 flex flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-b from-amber-100 to-amber-200 p-px shadow-sm">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-[7px] bg-gradient-to-b from-amber-50 to-amber-100 shadow-sm">
+                      <div className="mr-3 flex shrink-0 items-center justify-center rounded-lg bg-linear-to-b from-amber-100 to-amber-200 p-px shadow-sm">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-[7px] bg-linear-to-b from-amber-50 to-amber-100 shadow-sm">
                           <div className="text-amber-600">{step.icon}</div>
                         </div>
                       </div>
@@ -280,7 +309,7 @@ export default function SetupPage() {
                         <>
                           <Button
                             size="sm"
-                            className="bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:hover:bg-blue-900/75"
+                            className="bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:hover:bg-blue-900/75 min-h-[44px] min-w-[44px]"
                             onClick={() =>
                               step.href ? router.push(step.href) : setActiveModal(step.id)
                             }
@@ -293,7 +322,7 @@ export default function SetupPage() {
                               size="icon"
                               variant="ghost"
                               aria-label={step.skipLabel}
-                              className="size-8 rounded-full"
+                              className="size-11 rounded-full"
                               onClick={() => handleSkipStep(step.id)}
                               disabled={isDisabled}
                             >

@@ -3,7 +3,6 @@
 import { paths } from "@calls/config";
 import { Button, Card, CardContent, CardHeader } from "@calls/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import AudioPlayerModal from "@/components/features/calls/audio-player-modal";
@@ -14,14 +13,11 @@ import {
   type CallsFiltersState,
   type ManagerOption,
 } from "@/components/features/calls/calls-filters";
+import Header from "@/components/layout/header";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
-
-const Header = dynamic(() => import("@/components/layout/header"), {
-  ssr: false,
-});
 
 interface Pagination {
   total: number;

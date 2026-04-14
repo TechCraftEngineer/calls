@@ -42,11 +42,7 @@ export default function WorkspaceSettingsPage() {
       ? orpc.workspaces.get.queryOptions({
           input: { workspaceId },
         })
-      : {
-          queryKey: ["workspace-skip"] as const,
-          queryFn: () => Promise.resolve(null),
-          enabled: false,
-        },
+      : skipToken,
   );
 
   const invalidateWorkspaceQueries = () => {
