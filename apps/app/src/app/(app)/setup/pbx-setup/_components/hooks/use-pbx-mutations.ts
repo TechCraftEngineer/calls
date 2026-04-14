@@ -3,6 +3,7 @@
 import { toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { useORPC } from "@/orpc/react";
 
 export interface UsePbxMutationsReturn {
@@ -30,6 +31,7 @@ export function usePbxMutations(
 ): UsePbxMutationsReturn {
   const orpc = useORPC();
   const queryClient = useQueryClient();
+  const { activeWorkspace } = useWorkspace();
 
   // Base mutations
   const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
@@ -66,6 +68,43 @@ export function usePbxMutations(
       await queryClient.invalidateQueries({
         queryKey: orpc.settings.getIntegrations.queryKey(),
       });
+
+      // Обновляем прогресс настройки - добавляем шаг "api"
+      if (activeWorkspace) {
+        try {
+          const currentProgress = await queryClient.fetchQuery({
+            ...orpc.workspaces.getSetupProgress.queryOptions({
+              input: { workspaceId: activeWorkspace.id },
+            }),
+          });
+
+          const completed = new Set(currentProgress.completedSteps ?? []);
+          completed.add("api");
+
+          await queryClient
+            .getMutationCache()
+            .build(queryClient, orpc.workspaces.updateSetupProgress.mutationOptions())
+            .execute({
+              workspaceId: activeWorkspace.id,
+              completedSteps: [...completed] as (
+                | "directory"
+                | "provider"
+                | "evaluation"
+                | "api"
+                | "import"
+                | "company"
+              )[],
+            });
+
+          // Инвалидируем кеш прогресса
+          await queryClient.invalidateQueries({
+            queryKey: ["workspaces", "getSetupProgress"],
+          });
+        } catch (error) {
+          console.error("Не удалось обновить прогресс настройки:", error);
+        }
+      }
+
       toast.success("API подключено");
     },
     onError: () => {

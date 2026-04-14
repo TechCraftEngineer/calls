@@ -2,18 +2,12 @@
 
 import { paths } from "@calls/config";
 import { Button } from "@calls/ui";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import { useORPC } from "@/orpc/react";
 import { ApiConfigCard, usePbxSetup, WebhookConfigCard } from "./_components";
 
 export default function PbxSetupPage() {
   const router = useRouter();
-  const orpc = useORPC();
-  const queryClient = useQueryClient();
-  const { activeWorkspace } = useWorkspace();
 
   const {
     // Webhook
@@ -41,49 +35,7 @@ export default function PbxSetupPage() {
     handleTestAndSave,
   } = usePbxSetup();
 
-  const updateSetupProgressMutation = useMutation(
-    orpc.workspaces.updateSetupProgress.mutationOptions({
-      onSuccess: () => {
-        if (activeWorkspace) {
-          queryClient.invalidateQueries({
-            queryKey: orpc.workspaces.getSetupProgress.queryKey({
-              input: { workspaceId: activeWorkspace.id },
-            }),
-          });
-        }
-      },
-    }),
-  );
-
-  const handleNext = async () => {
-    // Сохраняем прогресс перед переходом
-    if (activeWorkspace && configSaved) {
-      try {
-        // Получаем актуальные данные из кеша или делаем запрос
-        const currentProgress = await queryClient.fetchQuery({
-          ...orpc.workspaces.getSetupProgress.queryOptions({
-            input: { workspaceId: activeWorkspace.id },
-          }),
-        });
-
-        const completed = new Set(currentProgress.completedSteps ?? []);
-        completed.add("api");
-
-        await updateSetupProgressMutation.mutateAsync({
-          workspaceId: activeWorkspace.id,
-          completedSteps: [...completed] as (
-            | "directory"
-            | "provider"
-            | "evaluation"
-            | "api"
-            | "import"
-            | "company"
-          )[],
-        });
-      } catch (error) {
-        console.error("Не удалось сохранить прогресс настройки:", error);
-      }
-    }
+  const handleNext = () => {
     router.push(paths.setup.directory);
   };
 
@@ -140,7 +92,7 @@ export default function PbxSetupPage() {
           </Button>
           <Button
             onClick={handleNext}
-            disabled={!configSaved || updateSetupProgressMutation.isPending}
+            disabled={!configSaved}
             className="min-h-[44px] min-w-[44px]"
           >
             Далее
