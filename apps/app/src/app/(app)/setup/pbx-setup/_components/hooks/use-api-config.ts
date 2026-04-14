@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useORPC } from "@/orpc/react";
+import { API_KEY_PLACEHOLDER } from "../constants";
 
 export interface UseApiConfigReturn {
   baseUrl: string;
@@ -43,7 +44,7 @@ export function useApiConfig(): UseApiConfigReturn {
     if (pbxSettings.apiKeySet && pbxSettings.baseUrl) {
       setConfigSaved(true);
       // Устанавливаем placeholder для apiKey чтобы показать что он сохранен
-      setApiKey("••••••••••••••••");
+      setApiKey(API_KEY_PLACEHOLDER);
     }
   }, [pbxSettings]);
 
@@ -65,7 +66,7 @@ export function useApiConfig(): UseApiConfigReturn {
     }
 
     // Проверяем что API ключ не пустой и не является placeholder
-    if (!trimmedApiKey || trimmedApiKey === "••••••••••••••••") {
+    if (!trimmedApiKey || trimmedApiKey === API_KEY_PLACEHOLDER) {
       setApiKeyError("Введите API Key");
       hasError = true;
     }

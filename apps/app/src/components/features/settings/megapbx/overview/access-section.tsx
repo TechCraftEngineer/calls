@@ -40,6 +40,13 @@ export function AccessSection({
   onSaveAccess,
   onTest,
 }: AccessSectionProps) {
+  // Минимальная дата - месяц назад
+  const minDate = (() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 1);
+    return d.toISOString().slice(0, 10);
+  })();
+
   const form = useForm<AccessFormData>({
     resolver: zodResolver(accessFormSchema) as never,
     defaultValues: {
@@ -132,10 +139,11 @@ export function AccessSection({
                       onChange={field.onChange}
                       placeholder="Выберите дату"
                       className="h-10"
+                      minDate={minDate}
                     />
                   </FormControl>
                   <p className="text-xs text-muted-foreground">
-                    Используется как стартовая дата для первой загрузки истории звонков.
+                    Можно импортировать звонки только за последний месяц.
                   </p>
                   <FormMessage />
                 </FormItem>

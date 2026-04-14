@@ -82,11 +82,19 @@ export default function PbxSetupPage() {
           />
 
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => router.push(paths.setup.root)}>
+            <Button
+              variant="outline"
+              onClick={() => router.push(paths.setup.root)}
+              className="min-h-[44px] min-w-[44px]"
+            >
               <ArrowLeft className="mr-2 size-4" />
               Назад
             </Button>
-            <Button onClick={() => router.push(paths.setup.directory)} disabled={!configSaved}>
+            <Button
+              onClick={() => router.push(paths.setup.directory)}
+              disabled={!configSaved}
+              className="min-h-[44px] min-w-[44px]"
+            >
               Далее
               <ArrowRight className="ml-2 size-4" />
             </Button>

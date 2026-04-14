@@ -408,20 +408,30 @@ export const workspacesRepository = {
   },
 
   async updateSetupProgress(workspaceId: string, completedSteps: string[]): Promise<boolean> {
-    const workspace = await this.getById(workspaceId);
-    if (!workspace) return false;
+    return db.transaction(async (tx) => {
+      // Блокируем строку для чтения и обновления
+      const workspace = await tx
+        .select()
+        .from(schema.workspaces)
+        .where(eq(schema.workspaces.id, workspaceId))
+        .for("update")
+        .limit(1);
 
-    const metadata = (workspace.metadata as Record<string, unknown>) ?? {};
-    metadata.setupCompletedSteps = completedSteps;
+      if (!workspace[0]) return false;
 
-    const result = await db
-      .update(schema.workspaces)
-      .set({
-        metadata,
-        updatedAt: new Date(),
-      })
-      .where(eq(schema.workspaces.id, workspaceId));
-    return (result.rowCount ?? 0) > 0;
+      const metadata = (workspace[0].metadata as Record<string, unknown>) ?? {};
+      metadata.setupCompletedSteps = completedSteps;
+
+      const result = await tx
+        .update(schema.workspaces)
+        .set({
+          metadata,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.workspaces.id, workspaceId));
+
+      return (result.rowCount ?? 0) > 0;
+    });
   },
 };
 

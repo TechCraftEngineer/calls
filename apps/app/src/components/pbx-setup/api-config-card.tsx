@@ -3,6 +3,7 @@
 import { Button, Card, Input, PasswordInput } from "@calls/ui";
 import { Check, Loader2, RefreshCw } from "lucide-react";
 import { useRef } from "react";
+import { API_KEY_PLACEHOLDER } from "@/app/(app)/setup/pbx-setup/_components/constants";
 
 interface ApiConfigCardProps {
   baseUrl: string;
@@ -95,7 +96,7 @@ export function ApiConfigCard({
               onClick={() => {
                 setConfigSaved(false);
                 // Очищаем placeholder API ключа при редактировании
-                if (apiKey === "••••••••••••••••") {
+                if (apiKey === API_KEY_PLACEHOLDER) {
                   setApiKey("");
                 }
               }}

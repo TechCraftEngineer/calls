@@ -11,7 +11,7 @@ import {
   toast,
 } from "@calls/ui";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { format, parseISO, subDays } from "date-fns";
+import { format, parseISO, startOfDay, subDays, subMonths } from "date-fns";
 import { ru } from "date-fns/locale";
 import { AlertCircle, Calendar, CheckCircle2, Download, Loader2, Phone } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -30,6 +30,8 @@ interface ImportResult {
 export function ImportModal({ open, onOpenChange, onComplete }: ModalProps<void>) {
   const orpc = useORPC();
 
+  // Минимальная дата - месяц назад от сегодня
+  const minDate = format(startOfDay(subMonths(new Date(), 1)), "yyyy-MM-dd");
   // Дата по умолчанию - 30 дней назад
   const defaultDate = format(subDays(new Date(), 30), "yyyy-MM-dd");
   const [importFromDate, setImportFromDate] = useState(defaultDate);
@@ -163,7 +165,7 @@ export function ImportModal({ open, onOpenChange, onComplete }: ModalProps<void>
                   <span>С какой даты импортировать звонки?</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Будут загружены все звонки начиная с выбранной даты. Рекомендуем начать с
+                  Можно импортировать звонки только за последний месяц. Рекомендуем начать с
                   последних 30 дней.
                 </p>
                 <DatePicker
@@ -172,6 +174,7 @@ export function ImportModal({ open, onOpenChange, onComplete }: ModalProps<void>
                   placeholder="Выберите дату"
                   disabled={!hasPbxConnection}
                   className="w-full"
+                  minDate={minDate}
                 />
               </div>
 

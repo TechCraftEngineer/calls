@@ -37,6 +37,17 @@ export default function EvaluationSettingsPage() {
   const workspaceId = activeWorkspace?.id ?? null;
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
+  // Check if we came from setup page
+  const [fromSetup, setFromSetup] = useState(false);
+
+  useEffect(() => {
+    // Check if referrer is setup page
+    if (typeof window !== "undefined") {
+      const referrer = document.referrer;
+      setFromSetup(referrer.includes("/setup"));
+    }
+  }, []);
+
   const { data: evaluationSettings } = useQuery({
     ...orpc.settings.getEvaluationSettings.queryOptions(),
     enabled: !!workspaceId && isWorkspaceAdmin,
@@ -127,6 +138,13 @@ export default function EvaluationSettingsPage() {
     updateEvaluationMutation.mutate({
       defaultTemplateSlug: defaultTemplate,
     });
+
+    // If came from setup, redirect back after a short delay
+    if (fromSetup) {
+      setTimeout(() => {
+        router.push(paths.setup.root);
+      }, 1000);
+    }
   };
 
   const getTemplateName = (slug: string) => {
@@ -153,6 +171,14 @@ export default function EvaluationSettingsPage() {
           Настройка критериев оценки для каждого менеджера и по умолчанию
         </p>
       </header>
+
+      {fromSetup && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/50 dark:bg-blue-900/20">
+          <p className="text-sm text-blue-900 dark:text-blue-200">
+            После сохранения шаблона по умолчанию вы вернётесь к настройке
+          </p>
+        </div>
+      )}
 
       <Card>
         <CardContent className="p-6">

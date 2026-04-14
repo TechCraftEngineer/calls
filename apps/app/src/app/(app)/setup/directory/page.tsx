@@ -31,9 +31,11 @@ export default function DirectoryPage() {
 
   const { data: setupProgressData } = useQuery({
     ...orpc.workspaces.getSetupProgress.queryOptions({
-      input: {
-        workspaceId: activeWorkspace?.id ?? "",
-      },
+      input: activeWorkspace
+        ? {
+            workspaceId: activeWorkspace.id,
+          }
+        : undefined,
     }),
     enabled: !!activeWorkspace,
   });
@@ -241,15 +243,11 @@ export default function DirectoryPage() {
     // Импортируем выбранные элементы, если они есть
     if (selectedEmployees.size > 0 || selectedNumbers.size > 0) {
       try {
-        const result = await importPbxDirectoryMutation.mutateAsync({
+        await importPbxDirectoryMutation.mutateAsync({
           employeeIds: Array.from(selectedEmployees),
           numberIds: Array.from(selectedNumbers),
         });
-        toast.success(
-          `Импортировано ${result.importedEmployees} сотрудников и ${result.importedNumbers} номеров`,
-        );
       } catch {
-        toast.error("Ошибка импорта");
         return;
       }
     }
@@ -264,7 +262,8 @@ export default function DirectoryPage() {
           completedSteps: [...completed],
         });
       } catch (error) {
-        console.error("Failed to update setup progress:", error);
+        console.error("Не удалось сохранить прогресс настройки:", error);
+        toast.error("Не удалось сохранить прогресс. Попробуйте снова.");
       }
     }
 
@@ -361,8 +360,15 @@ export default function DirectoryPage() {
           <ArrowLeft className="mr-2 size-4" />
           Назад
         </Button>
-        <Button onClick={handleNext} disabled={isLoading || importPbxDirectoryMutation.isPending}>
-          {importPbxDirectoryMutation.isPending ? (
+        <Button
+          onClick={handleNext}
+          disabled={
+            isLoading ||
+            importPbxDirectoryMutation.isPending ||
+            updateSetupProgressMutation.isPending
+          }
+        >
+          {importPbxDirectoryMutation.isPending || updateSetupProgressMutation.isPending ? (
             <Loader2 className="mr-2 size-4 animate-spin" />
           ) : null}
           {selectedEmployees.size > 0 || selectedNumbers.size > 0

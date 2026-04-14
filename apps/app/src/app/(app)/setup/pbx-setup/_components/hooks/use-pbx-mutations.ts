@@ -27,7 +27,6 @@ export interface UsePbxMutationsReturn {
 export function usePbxMutations(
   validateConfig: () => boolean,
   focusFirstError: () => void,
-  resetPagination: () => void,
 ): UsePbxMutationsReturn {
   const orpc = useORPC();
   const queryClient = useQueryClient();
@@ -86,7 +85,6 @@ export function usePbxMutations(
         }),
       ]);
 
-      resetPagination();
       toast.success(result.message);
     },
     onError: (error) => {
@@ -159,6 +157,6 @@ export function usePbxMutations(
     handleTestAndSave,
     handleSync,
     handleImport,
-    resetPaginationOnSync: resetPagination,
+    resetPaginationOnSync: () => {},
   };
 }

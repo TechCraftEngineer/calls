@@ -7,10 +7,6 @@ import { useORPC } from "@/orpc/react";
 import type { AccessFormData, SyncOptionsFormData, WebhookFormData } from "../megapbx/schemas";
 import type { MegaPbxSettings, PbxEmployeeItem, PbxNumberItem, SettingsState } from "../types";
 
-// После запуска синхронизации справочника MegaPBX он обновляется не мгновенно.
-// Делаем короткую паузу перед рефетчем списков, чтобы они успели появиться в БД.
-const DIRECTORY_SYNC_REFETCH_DELAY_MS = 5000;
-
 interface MegaPbxSettingsState {
   megaPbx: MegaPbxSettings;
   megaPbxSaving: boolean;
@@ -92,23 +88,6 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
       },
     }),
   );
-  const refetchPbxLists = useCallback(async () => {
-    const [employees, numbers] = await Promise.all([
-      queryClient.fetchQuery({
-        ...orpc.settings.listPbxEmployees.queryOptions(),
-        staleTime: 0,
-      }),
-      queryClient.fetchQuery({
-        ...orpc.settings.listPbxNumbers.queryOptions(),
-        staleTime: 0,
-      }),
-    ]);
-    setState((prev: SettingsState) => ({
-      ...prev,
-      megaPbxEmployees: employees as PbxEmployeeItem[],
-      megaPbxNumbers: numbers as PbxNumberItem[],
-    }));
-  }, [orpc, queryClient, setState]);
 
   const megaPbxPayload = () => ({
     excludePhoneNumbers: (state.megaPbx.excludePhoneNumbers ?? "")
@@ -338,16 +317,6 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
         await syncPbxDirectoryMutation.mutateAsync(undefined);
       } else {
         await syncPbxCallsMutation.mutateAsync(undefined);
-      }
-      const message =
-        type === "directory"
-          ? "Синхронизация справочника MegaPBX поставлена в очередь"
-          : "Синхронизация звонков и записей MegaPBX поставлена в очередь";
-      toast.success(message);
-      if (type === "directory") {
-        setTimeout(() => {
-          refetchPbxLists().catch(() => {});
-        }, DIRECTORY_SYNC_REFETCH_DELAY_MS);
       }
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Ошибка синхронизации MegaPBX";

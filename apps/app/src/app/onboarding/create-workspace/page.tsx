@@ -133,7 +133,7 @@ function CreateWorkspaceForm() {
         await queryClient.invalidateQueries({
           queryKey: orpc.workspaces.list.queryKey(),
         });
-        router.push(paths.root);
+        router.push(paths.setup.root);
       },
       onError: (err) => {
         const msg = err instanceof Error ? err.message : "Не удалось создать компанию";
