@@ -185,8 +185,8 @@ export function getCallListColumns(options: CallListColumnsOptions): ColumnDef<C
     {
       accessorKey: "call.processingStatus",
       id: "processingStatus",
-      size: 140,
-      minSize: 120,
+      size: 180,
+      minSize: 160,
       header: ({ column }) => (
         <DataGridColumnHeader
           column={column}

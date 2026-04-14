@@ -151,9 +151,11 @@ test.describe("Управление приглашениями (оптимизи
 
   // Группируем тесты ролей для параллельного выполнения
   test.describe.parallel("Роли в приглашениях", () => {
-    for (const role of ["admin", "member"]) {
+    const roles: Array<"admin" | "member"> = ["admin", "member"];
+    
+    for (const role of roles) {
       test(`создает приглашение с ролью ${role}`, async ({ page }) => {
-        const invitation = InvitationFactory.createEmailInvitation({ role: role as any });
+        const invitation = InvitationFactory.createEmailInvitation({ role });
         
         let capturedRole: string | null = null;
         await page.route("**/api/orpc/workspaces/createInvitation**", async (route) => {
@@ -179,6 +181,11 @@ test.describe("Управление приглашениями (оптимизи
         await helpers.openInviteModal();
         await helpers.fillInviteForm(`${role}@example.com`, role);
         await helpers.submitForm();
+        
+        // Wait for the network request to complete
+        await page.waitForResponse((response) => 
+          response.url().includes('/createInvitation') && response.status() === 200
+        );
 
         expect(capturedRole).toBe(role);
       });

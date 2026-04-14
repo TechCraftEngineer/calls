@@ -1,12 +1,11 @@
 "use client";
 
+import { paths } from "@calls/config";
 import { toast } from "@calls/ui";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { useApiConfig } from "./use-api-config";
-import { useDirectoryData } from "./use-directory-data";
 import { usePbxMutations } from "./use-pbx-mutations";
-import { useSelection } from "./use-selection";
 import { useWebhookConfig } from "./use-webhook-config";
 
 export type { UsePbxSetupReturn } from "./types";
@@ -35,51 +34,13 @@ export function usePbxSetup() {
     focusFirstError,
   } = useApiConfig();
 
-  // Selection state
-  const {
-    selectedEmployees,
-    selectedNumbers,
-    handleToggleEmployee,
-    handleToggleNumber,
-    handleSelectAllEmployees,
-    handleSelectAllNumbers,
-    handleSelectAllFilteredEmployees,
-    handleSelectAllFilteredNumbers,
-  } = useSelection();
-
-  // Directory data with filtering and pagination
-  const {
-    employees,
-    numbers,
-    hasData,
-    employeeSearch,
-    setEmployeeSearch,
-    numberSearch,
-    setNumberSearch,
-    employeePage,
-    setEmployeePage,
-    numberPage,
-    setNumberPage,
-    filteredEmployees,
-    filteredNumbers,
-    paginatedEmployees,
-    paginatedNumbers,
-    totalEmployeePages,
-    totalNumberPages,
-    allEmployeesSelected,
-    allNumbersSelected,
-    resetPagination,
-  } = useDirectoryData(selectedEmployees, selectedNumbers);
-
   // Mutations
   const {
     testAndSaveMutationPending,
     syncMutationPending,
-    importMutationPending,
     handleTestAndSave: baseHandleTestAndSave,
-    handleSync,
-    handleImport: baseHandleImport,
-  } = usePbxMutations(validateConfig, focusFirstError, resetPagination);
+    handleSync: baseHandleSync,
+  } = usePbxMutations(validateConfig, focusFirstError, () => {});
 
   // Handlers with dependencies
   const handleCopy = useCallback((text: string, label: string) => {
@@ -92,21 +53,14 @@ export function usePbxSetup() {
     setConfigSaved(true);
   }, [baseHandleTestAndSave, baseUrl, apiKey, webhookSecret, setConfigSaved]);
 
-  const handleClearEmployeeSearch = useCallback(() => {
-    setEmployeeSearch("");
-    setEmployeePage(0);
-  }, [setEmployeeSearch, setEmployeePage]);
-
-  const handleClearNumberSearch = useCallback(() => {
-    setNumberSearch("");
-    setNumberPage(0);
-  }, [setNumberSearch, setNumberPage]);
-
-  const handleImport = useCallback(async () => {
-    await baseHandleImport(selectedEmployees, selectedNumbers, () => {
-      router.push("/");
-    });
-  }, [baseHandleImport, selectedEmployees, selectedNumbers, router]);
+  const handleSync = useCallback(() => {
+    baseHandleSync();
+    // После синхронизации перенаправляем на страницу directory
+    // Небольшая задержка чтобы пользователь увидел сообщение о синхронизации
+    setTimeout(() => {
+      router.push(paths.setup.directory);
+    }, 1500);
+  }, [baseHandleSync, router]);
 
   return {
     // Webhook
@@ -128,50 +82,13 @@ export function usePbxSetup() {
     baseUrlInputRef,
     apiKeyInputRef,
 
-    // Data
-    employees,
-    numbers,
-    hasData,
-
-    // Selection
-    selectedEmployees,
-    selectedNumbers,
-    handleToggleEmployee,
-    handleToggleNumber,
-    handleSelectAllEmployees: () => handleSelectAllEmployees(paginatedEmployees, allEmployeesSelected),
-    handleSelectAllNumbers: () => handleSelectAllNumbers(paginatedNumbers, allNumbersSelected),
-    handleSelectAllFilteredEmployees: () => handleSelectAllFilteredEmployees(filteredEmployees),
-    handleSelectAllFilteredNumbers: () => handleSelectAllFilteredNumbers(filteredNumbers),
-
-    // Search & Pagination
-    employeeSearch,
-    setEmployeeSearch,
-    numberSearch,
-    setNumberSearch,
-    employeePage,
-    setEmployeePage,
-    numberPage,
-    setNumberPage,
-    filteredEmployees,
-    filteredNumbers,
-    paginatedEmployees,
-    paginatedNumbers,
-    totalEmployeePages,
-    totalNumberPages,
-    allEmployeesSelected,
-    allNumbersSelected,
-    handleClearEmployeeSearch,
-    handleClearNumberSearch,
-
     // Mutations status
     testAndSaveMutationPending,
     syncMutationPending,
-    importMutationPending,
 
     // Handlers
     handleCopy,
     handleTestAndSave,
     handleSync,
-    handleImport,
   };
 }

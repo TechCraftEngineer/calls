@@ -76,8 +76,8 @@ export function renderCallListCell({
 
   const isMissed = (call.duration ?? 0) === 0 && call.direction === "inbound";
 
-  const directionLabel = call.direction === "inbound" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ";
-  const directionClass = directionLabel === "ВХОДЯЩИЙ" ? "badge-yellow-op" : "badge-black-op";
+  const directionLabel = call.direction === "inbound" ? "Входящий" : "Исходящий";
+  const directionClass = call.direction === "inbound" ? "badge-yellow-op" : "badge-black-op";
 
   const renderLinkOrButton = (content: ReactNode, extraStyle?: object) =>
     isMobileDevice() ? (
@@ -140,7 +140,7 @@ export function renderCallListCell({
       return (
         <TableCell key={colKey}>
           <span className={`op-badge ${isMissed ? "badge-red-op" : "badge-green-op"}`}>
-            {isMissed ? "ПРОПУЩЕН" : "ПРИНЯТ"}
+            {isMissed ? "Пропущен" : "Принят"}
           </span>
         </TableCell>
       );

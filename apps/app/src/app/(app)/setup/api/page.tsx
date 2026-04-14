@@ -25,11 +25,13 @@ export default function ApiStepPage() {
   const [testMessage, setTestMessage] = useState<string>("");
 
   const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
-  const updatePbxAccessMutation = useMutation(orpc.settings.updatePbxAccess.mutationOptions({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: orpc.settings.getIntegrations.queryKey() });
-    },
-  }));
+  const updatePbxAccessMutation = useMutation(
+    orpc.settings.updatePbxAccess.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: orpc.settings.getIntegrations.queryKey() });
+      },
+    }),
+  );
 
   const form = useForm<ApiCredentialsFormData>({
     resolver: zodResolver(apiCredentialsSchema),
@@ -60,7 +62,7 @@ export default function ApiStepPage() {
       if (ok) {
         setTestMessage("Подключение к MegaPBX успешно");
         toast.success("Подключение успешно");
-        
+
         // Save the credentials
         await updatePbxAccessMutation.mutateAsync({
           enabled: true,
@@ -72,9 +74,10 @@ export default function ApiStepPage() {
         sessionStorage.setItem("setup_api_connected", "true");
         router.push("/setup/directory");
       } else {
-        const errorMsg = (result && typeof result === "object" && "error" in result) 
-          ? String(result.error) 
-          : "Проверка не пройдена";
+        const errorMsg =
+          result && typeof result === "object" && "error" in result
+            ? String(result.error)
+            : "Проверка не пройдена";
         setTestMessage(errorMsg);
         toast.error(errorMsg);
       }
@@ -112,9 +115,7 @@ export default function ApiStepPage() {
           {form.formState.errors.baseUrl && (
             <p className="mt-1 text-xs text-red-600">{form.formState.errors.baseUrl.message}</p>
           )}
-          <p className="mt-1 text-xs text-muted-foreground">
-            URL API из личного кабинета MegaPBX
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">URL API из личного кабинета MegaPBX</p>
         </div>
 
         <div>

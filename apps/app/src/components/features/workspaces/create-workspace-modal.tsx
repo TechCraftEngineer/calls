@@ -56,12 +56,7 @@ export default function CreateWorkspaceModal({
         toast.success("Компания создана");
         form.reset();
 
-        // Инвалидируем кэш списка компаний ПЕРЕД переключением
-        await queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.list.queryKey(),
-        });
-
-        // Ждём обновления данных
+        // Refetch to ensure fresh data
         await queryClient.refetchQueries({
           queryKey: orpc.workspaces.list.queryKey(),
         });
@@ -152,7 +147,7 @@ export default function CreateWorkspaceModal({
                 {createMutation.isPending && (
                   <Loader2 className="size-4 animate-spin" aria-hidden="true" />
                 )}
-                {createMutation.isPending ? "Создание…" : "Создать компанию"}
+                Создать компанию
               </Button>
             </DialogFooter>
           </form>

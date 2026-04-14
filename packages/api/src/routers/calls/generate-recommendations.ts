@@ -7,11 +7,7 @@ import {
   OPENROUTER_API_KEY,
 } from "@calls/config";
 import type { Call, callsService } from "@calls/db";
-import {
-  buildCompanyContext,
-  companyContextSchema,
-  replaceSpeakersWithRoles,
-} from "@calls/shared";
+import { buildCompanyContext, companyContextSchema, replaceSpeakersWithRoles } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 import { workspaceAdminProcedure } from "../../orpc";
@@ -68,7 +64,8 @@ export async function generateRecommendations(
     const evaluation = await calls.getEvaluation(callId);
 
     // Извлекаем маппинг спикеров из метаданных и заменяем SPEAKER_XX на роли
-    const speakerMapping = (transcript?.metadata?.mapping as Record<string, "operator" | "client">) ?? {};
+    const speakerMapping =
+      (transcript?.metadata?.mapping as Record<string, "operator" | "client">) ?? {};
     const rawTranscriptText = transcript?.text ?? transcript?.rawText ?? "";
     const transcriptText = replaceSpeakersWithRoles(rawTranscriptText, speakerMapping);
 
@@ -77,9 +74,8 @@ export async function generateRecommendations(
     }
 
     // Обрезаем текст если слишком длинный
-    const finalTranscriptText = transcriptText.length > 50000
-      ? `${transcriptText.substring(0, 50000)}...`
-      : transcriptText;
+    const finalTranscriptText =
+      transcriptText.length > 50000 ? `${transcriptText.substring(0, 50000)}...` : transcriptText;
 
     if (transcriptText.length > 50000) {
       logger.warn("Transcript too long, truncating", {

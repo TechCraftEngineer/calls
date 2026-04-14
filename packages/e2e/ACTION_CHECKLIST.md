@@ -26,7 +26,7 @@
 
 ### Компоненты приглашений
 
-- [ ] `apps/app/src/components/features/workspaces/create-workspace-modal.tsx`
+- [ ] Компонент модалки приглашения (найдите актуальный файл в кодовой базе)
   - [ ] `data-testid="invite-modal"` на Dialog
   - [ ] `data-testid="invite-button"` на кнопку открытия
   - [ ] `data-testid="email-tab"` на таб email

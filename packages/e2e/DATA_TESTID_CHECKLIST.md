@@ -155,10 +155,10 @@
 ## Приоритет применения
 
 ### Высокий приоритет (сделать в первую очередь)
-1. Кнопки действий (invite-button, submit-button, revoke-button)
-2. Поля ввода (email-input, password-input, name-input)
-3. Сообщения (success-message, error-message)
-4. Элементы списков (invitation-item)
+1. Кнопки действий (`invite-button`, `submit-button`, `revoke-button`)
+2. Поля ввода (`email-input`, `password-input`, `name-input`)
+3. Сообщения (`success-message`, `error-message`)
+4. Элементы списков (`invitation-item`)
 
 ### Средний приоритет
 1. Контейнеры (invite-modal, invitations-list)

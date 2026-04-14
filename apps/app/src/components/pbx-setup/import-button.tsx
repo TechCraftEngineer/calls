@@ -18,15 +18,10 @@ export function ImportButton({
 }: ImportButtonProps) {
   return (
     <div className="flex justify-center">
-      <Button
-        size="lg"
-        onClick={onImport}
-        disabled={disabled}
-        className="px-8"
-      >
+      <Button size="lg" onClick={onImport} disabled={disabled} className="px-8">
         <Check className="mr-2 size-4" />
-        Импортировать выбранное ({selectedEmployeesCount} сотрудников,{" "}
-        {selectedNumbersCount} номеров)
+        Импортировать выбранное ({selectedEmployeesCount} сотрудников, {selectedNumbersCount}{" "}
+        номеров)
       </Button>
     </div>
   );

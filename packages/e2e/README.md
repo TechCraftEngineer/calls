@@ -4,7 +4,7 @@
 
 ## ⚡ Оптимизация производительности
 
-**Тесты медленные?** См. `QUICK_START_OPTIMIZATION.md` для ускорения в 3-4 раза.
+**Тесты медленные?** См. [`QUICK_START_OPTIMIZATION.md`](./QUICK_START_OPTIMIZATION.md) для ускорения в 3-4 раза.
 
 **Краткая сводка:**
 - Применить `playwright.config.optimized.ts` → +30-40% скорости
@@ -14,13 +14,13 @@
 **Результат:** 3-5s → 1-2s на тест, 60-100s → 10-15s на 20 тестов
 
 **Документация:**
-- `РЕЗЮМЕ.md` - краткая сводка на русском 🇷🇺
-- `SUMMARY.md` - краткая сводка на английском 🇬🇧
-- `QUICK_START_OPTIMIZATION.md` - пошаговая инструкция (3 шага, 45 минут)
-- `ACTION_CHECKLIST.md` - детальный чеклист с галочками
-- `PERFORMANCE_OPTIMIZATION.md` - детальное описание всех оптимизаций
-- `BEFORE_AFTER_COMPARISON.md` - визуальное сравнение до/после
-- `DATA_TESTID_CHECKLIST.md` - список data-testid для компонентов
+- [`РЕЗЮМЕ.md`](./РЕЗЮМЕ.md) - краткая сводка на русском 🇷🇺
+- [`SUMMARY.md`](./SUMMARY.md) - краткая сводка на английском 🇬🇧
+- [`QUICK_START_OPTIMIZATION.md`](./QUICK_START_OPTIMIZATION.md) - пошаговая инструкция (3 шага, 45 минут)
+- [`ACTION_CHECKLIST.md`](./ACTION_CHECKLIST.md) - детальный чеклист с галочками
+- [`PERFORMANCE_OPTIMIZATION.md`](./PERFORMANCE_OPTIMIZATION.md) - детальное описание всех оптимизаций
+- [`BEFORE_AFTER_COMPARISON.md`](./BEFORE_AFTER_COMPARISON.md) - визуальное сравнение до/после
+- [`DATA_TESTID_CHECKLIST.md`](./DATA_TESTID_CHECKLIST.md) - список data-testid для компонентов
 
 ## Установка
 

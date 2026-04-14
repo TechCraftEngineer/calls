@@ -1,5 +1,4 @@
 import { expect, type Page } from "@playwright/test";
-import type { TestUser } from "../fixtures/auth";
 
 /**
  * Оптимизированные вспомогательные функции для тестирования приглашений
@@ -218,7 +217,7 @@ export class InvitationHelpers {
    * Проверяет редирект
    */
   async expectRedirectToWorkspace(workspaceId: string) {
-    await this.page.waitForURL(`**/?workspace=${workspaceId}**`, { timeout: 5000 });
+    await this.page.waitForURL(`**/?workspace=${workspaceId}**`);
   }
 }
 

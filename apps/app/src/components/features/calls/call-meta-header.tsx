@@ -16,18 +16,18 @@ export default function CallMetaHeader({ call }: Props) {
         <span className="call-main-number">{call.number}</span>
         <Badge
           variant="secondary"
-          className="bg-[#F5F5F7] text-[#888] border-0 font-bold text-[11px] uppercase tracking-wider px-3 py-1 rounded"
+          className="bg-[#F5F5F7] text-[#888] border-0 font-bold text-[11px] tracking-wider px-3 py-1 rounded"
         >
-          {call.direction === "inbound" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ"}
+          {call.direction === "inbound" ? "Входящий" : "Исходящий"}
         </Badge>
         <Badge
           variant={isCompleted ? "default" : "destructive"}
           className={cn(
-            "font-bold text-[11px] uppercase tracking-wider px-3 py-1 rounded",
+            "font-bold text-[11px] tracking-wider px-3 py-1 rounded",
             isCompleted && "status-success",
           )}
         >
-          {isCompleted ? "ЗАВЕРШЁН" : "ПРОПУЩЕН"}
+          {isCompleted ? "Завершён" : "Пропущен"}
         </Badge>
       </div>
       <div className="call-sub-meta">

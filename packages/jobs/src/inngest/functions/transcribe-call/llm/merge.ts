@@ -591,7 +591,12 @@ export async function applyLLMMerging(
   try {
     logger.info("Starting LLM merging of ASR results", { requestId });
 
-    const result = await mergeAsrResultsWithLLM(nonDiarizedResult, diarizedResult, requestId, companyContext);
+    const result = await mergeAsrResultsWithLLM(
+      nonDiarizedResult,
+      diarizedResult,
+      requestId,
+      companyContext,
+    );
 
     logger.info("LLM merging completed", {
       requestId,

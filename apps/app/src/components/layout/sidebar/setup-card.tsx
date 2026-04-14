@@ -3,12 +3,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@calls/ui";
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@calls/ui";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { CircularProgress } from "./circular-progress";
 

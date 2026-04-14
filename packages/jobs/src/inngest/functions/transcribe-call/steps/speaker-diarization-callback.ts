@@ -119,7 +119,7 @@ export async function speakerDiarizationWithCallback(
     };
   }>("speaker-embeddings/wait-for-completion", {
     event: "speaker-embeddings/diarization.completed",
-    timeout: "30m", // 10 минут максимальное ожидание
+    timeout: "60m", // 60 минут максимальное ожидание
     if: `async.data.task_id == "${taskId}"`,
   });
 

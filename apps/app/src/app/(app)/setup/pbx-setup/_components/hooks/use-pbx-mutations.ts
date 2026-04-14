@@ -248,6 +248,14 @@ export function usePbxMutations(
           numberIds: Array.from(selectedNumbers),
         });
 
+        // Очищаем кэш справочников после успешного импорта
+        await queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+        });
+        await queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxNumbers.queryKey(),
+        });
+
         toast.success(
           `Импортировано ${result.importedEmployees} сотрудников и ${result.importedNumbers} номеров`,
         );
@@ -256,7 +264,7 @@ export function usePbxMutations(
         toast.error("Ошибка при импорте. Попробуйте снова.");
       }
     },
-    [importPbxDirectoryMutation],
+    [importPbxDirectoryMutation, queryClient, orpc],
   );
 
   return {

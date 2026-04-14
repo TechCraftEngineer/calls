@@ -15,28 +15,28 @@ const getPbxWebhookSecretOutputSchema = z.object({
 export const getPbxWebhookSecret = workspaceAdminProcedure
   .output(getPbxWebhookSecretOutputSchema)
   .handler(async ({ context }) => {
-  const existingConfig = await pbxService.getConfigWithSecrets(context.workspaceId);
+    const existingConfig = await pbxService.getConfigWithSecrets(context.workspaceId);
 
-  // Return existing secret if available
-  if (existingConfig?.webhook?.secret) {
+    // Return existing secret if available
+    if (existingConfig?.webhook?.secret) {
+      return {
+        webhookSecret: existingConfig.webhook.secret,
+        isNew: false,
+      };
+    }
+
+    // Generate a new secret and persist it
+    const newSecret = generateSecureSecret(32);
+    const username = context.user?.email ?? "system";
+
+    await pbxService.updateWebhook(
+      context.workspaceId,
+      { webhookSecret: newSecret },
+      String(username),
+    );
+
     return {
-      webhookSecret: existingConfig.webhook.secret,
-      isNew: false,
+      webhookSecret: newSecret,
+      isNew: true,
     };
-  }
-
-  // Generate a new secret and persist it
-  const newSecret = generateSecureSecret(32);
-  const username = context.user?.email ?? "system";
-
-  await pbxService.updateWebhook(
-    context.workspaceId,
-    { webhookSecret: newSecret },
-    String(username),
-  );
-
-  return {
-    webhookSecret: newSecret,
-    isNew: true,
-  };
-});
+  });

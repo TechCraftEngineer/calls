@@ -9,6 +9,7 @@ export const DEFAULT_COLUMN_IDS = [
   "callTopic",
   "sentiment",
   "status",
+  "processingStatus",
   "duration",
   "score",
   "summary",
