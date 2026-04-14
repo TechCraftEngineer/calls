@@ -237,19 +237,23 @@ export default function DirectoryPage() {
     await syncPbxDirectoryMutation.mutateAsync({});
   };
 
-  const handleImport = async () => {
-    if (selectedEmployees.size === 0 && selectedNumbers.size === 0) {
-      toast.error("Выберите хотя бы одного сотрудника или номер для импорта");
-      return;
+  const handleNext = async () => {
+    // Импортируем выбранные элементы, если они есть
+    if (selectedEmployees.size > 0 || selectedNumbers.size > 0) {
+      try {
+        const result = await importPbxDirectoryMutation.mutateAsync({
+          employeeIds: Array.from(selectedEmployees),
+          numberIds: Array.from(selectedNumbers),
+        });
+        toast.success(
+          `Импортировано ${result.importedEmployees} сотрудников и ${result.importedNumbers} номеров`,
+        );
+      } catch {
+        toast.error("Ошибка импорта");
+        return;
+      }
     }
 
-    await importPbxDirectoryMutation.mutateAsync({
-      employeeIds: Array.from(selectedEmployees),
-      numberIds: Array.from(selectedNumbers),
-    });
-  };
-
-  const handleComplete = async () => {
     // Сохраняем в базу данных что шаг завершен
     if (activeWorkspace && setupProgressData) {
       try {
@@ -264,7 +268,6 @@ export default function DirectoryPage() {
       }
     }
 
-    toast.success("Справочник утвержден");
     router.push(paths.setup.root);
   };
 
@@ -278,7 +281,7 @@ export default function DirectoryPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push(paths.setup.root)}
+            onClick={() => router.push(paths.setup.pbxSetup)}
             aria-label="Назад"
           >
             <ArrowLeft className="size-5" />
@@ -286,7 +289,7 @@ export default function DirectoryPage() {
           <div>
             <h1 className="text-2xl font-semibold">Импорт справочника</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Синхронизируйте данные с PBX, выберите сотрудников и номера для импорта в систему
+              Синхронизируйте данные с PBX и отметьте сотрудников и номера для импорта
             </p>
           </div>
         </div>
@@ -365,25 +368,18 @@ export default function DirectoryPage() {
       )}
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={() => router.push(paths.setup.root)}>
-          Отмена
+      <div className="flex justify-between gap-3">
+        <Button variant="outline" onClick={() => router.push(paths.setup.pbxSetup)}>
+          <ArrowLeft className="mr-2 size-4" />
+          Назад
         </Button>
-        <Button
-          onClick={handleImport}
-          disabled={
-            isLoading ||
-            importPbxDirectoryMutation.isPending ||
-            (selectedEmployees.size === 0 && selectedNumbers.size === 0)
-          }
-        >
+        <Button onClick={handleNext} disabled={isLoading || importPbxDirectoryMutation.isPending}>
           {importPbxDirectoryMutation.isPending ? (
             <Loader2 className="mr-2 size-4 animate-spin" />
           ) : null}
-          Импортировать выбранное ({selectedEmployees.size + selectedNumbers.size})
-        </Button>
-        <Button onClick={handleComplete} disabled={isLoading}>
-          Завершить настройку
+          {selectedEmployees.size > 0 || selectedNumbers.size > 0
+            ? `Импортировать и продолжить (${selectedEmployees.size + selectedNumbers.size})`
+            : "Пропустить"}
         </Button>
       </div>
     </div>
