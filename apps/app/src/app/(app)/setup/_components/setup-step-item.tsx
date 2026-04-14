@@ -46,7 +46,12 @@ export function SetupStepItem({
               {step.href ? (
                 <button
                   type="button"
-                  onClick={() => router.push(step.href!)}
+                  onClick={() => {
+                    onComplete(step.id);
+                    if (step.href) {
+                      router.push(step.href);
+                    }
+                  }}
                   className="rounded-md bg-blue-100 px-3 py-1 text-sm text-blue-600 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-400 dark:hover:bg-blue-900/75"
                 >
                   {step.actionLabel}
