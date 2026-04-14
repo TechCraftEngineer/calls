@@ -1,5 +1,6 @@
 import { pbxService } from "@calls/db";
-import { inngest, pbxSyncRequested } from "@calls/jobs";
+import { inngest, pbxSyncRequested, transcribeRequested } from "@calls/jobs";
+import { syncPbxCalls } from "@calls/jobs/pbx/sync";
 import { isValidCalendarIsoDate } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
@@ -47,21 +48,34 @@ export const importHistoricalCalls = workspaceAdminProcedure
       syncFromDate: input.fromDate,
     });
 
-    // Запускаем синхронизацию звонков
-    await inngest.send(
-      pbxSyncRequested.create({
-        workspaceId: context.workspaceId,
-        syncType: "calls",
-        syncRecordings: pbxConfig.syncRecordings ?? false,
-      }),
+    // Синхронно импортируем звонки
+    const syncResult = await syncPbxCalls(
+      context.workspaceId,
+      { ...pbxConfig, syncRecordings: pbxConfig.syncRecordings ?? false },
+      undefined,
     );
+
+    // Запускаем обработку импортированных звонков через Inngest
+    // Получаем список импортированных звонков для постановки в очередь на транскрибацию
+    if (syncResult.calls > 0) {
+      // Отправляем событие для запуска обработки звонков
+      // Inngest функция сама найдет необработанные звонки и поставит их в очередь
+      await inngest.send({
+        name: "calls/process-imported",
+        data: {
+          workspaceId: context.workspaceId,
+          importedCount: syncResult.calls,
+        },
+      });
+    }
 
     return {
       success: true,
-      message: "Импорт звонков запущен",
-      total: 0, // Будет заполнено после завершения
-      imported: 0,
-      skipped: 0,
-      errors: 0,
+      message: "Импорт звонков завершен",
+      total: syncResult.calls + syncResult.skipped,
+      imported: syncResult.calls,
+      skipped: syncResult.skipped,
+      errors: syncResult.errors?.length ?? 0,
+      transcriptionsQueued: syncResult.transcriptionsQueued ?? 0,
     };
   });

@@ -29,6 +29,7 @@ export const callsRepository = {
   findWithTranscriptsAndEvaluations: callsQueries.findWithTranscriptsAndEvaluations,
   countCalls: callsQueries.countCalls,
   findDistinctManagers: callsQueries.findDistinctManagers,
+  findUnprocessedWithRecordings: callsQueries.findUnprocessedWithRecordings,
 
   // Statistics operations
   getMetrics: callsStats.getMetrics,

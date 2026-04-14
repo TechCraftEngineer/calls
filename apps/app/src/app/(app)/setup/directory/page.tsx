@@ -31,11 +31,9 @@ export default function DirectoryPage() {
 
   const { data: setupProgressData } = useQuery({
     ...orpc.workspaces.getSetupProgress.queryOptions({
-      input: activeWorkspace
-        ? {
-            workspaceId: activeWorkspace.id,
-          }
-        : undefined,
+      input: {
+        workspaceId: activeWorkspace?.id ?? "",
+      },
     }),
     enabled: !!activeWorkspace,
   });
@@ -259,7 +257,14 @@ export default function DirectoryPage() {
         completed.add("directory");
         await updateSetupProgressMutation.mutateAsync({
           workspaceId: activeWorkspace.id,
-          completedSteps: [...completed],
+          completedSteps: [...completed] as (
+            | "directory"
+            | "provider"
+            | "evaluation"
+            | "api"
+            | "import"
+            | "company"
+          )[],
         });
       } catch (error) {
         console.error("Не удалось сохранить прогресс настройки:", error);

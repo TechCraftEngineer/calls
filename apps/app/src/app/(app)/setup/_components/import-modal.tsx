@@ -51,23 +51,15 @@ export function ImportModal({ open, onOpenChange, onComplete }: ModalProps<void>
   const importCallsMutation = useMutation(
     orpc.calls.importHistoricalCalls.mutationOptions({
       onSuccess: (data) => {
-        // Mark as queued/running - actual progress will come from polling
-        setStatus("importing");
-        setProgress(50);
+        setStatus("success");
+        setProgress(100);
         setResult({
           totalCalls: data.total ?? 0,
           importedCalls: data.imported ?? 0,
           skippedCalls: data.skipped ?? 0,
           errors: data.errors ?? 0,
         });
-
-        // TODO: Implement polling or real-time updates for actual import progress
-        // For now, simulate completion after a delay
-        setTimeout(() => {
-          setStatus("success");
-          setProgress(100);
-          toast.success("Импорт завершён успешно");
-        }, 2000);
+        toast.success("Импорт завершён успешно");
       },
       onError: (error) => {
         setStatus("error");
@@ -76,18 +68,7 @@ export function ImportModal({ open, onOpenChange, onComplete }: ModalProps<void>
     }),
   );
 
-  // Симуляция прогресса во время импорта
-  useEffect(() => {
-    if (status === "importing") {
-      const interval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 95) return prev;
-          return prev + Math.random() * 10;
-        });
-      }, 500);
-      return () => clearInterval(interval);
-    }
-  }, [status]);
+  // Удалена симуляция прогресса - теперь импорт синхронный
 
   const handleStartImport = async () => {
     if (!hasPbxConnection) {

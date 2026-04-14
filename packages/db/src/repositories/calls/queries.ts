@@ -194,4 +194,32 @@ export const callsQueries = {
 
     return result.map((row) => row.name).filter((name): name is string => Boolean(name));
   },
+
+  /**
+   * Находит необработанные звонки с записями для постановки в очередь на транскрибацию
+   */
+  async findUnprocessedWithRecordings(
+    workspaceId: string,
+    limit = 1000,
+  ): Promise<Array<{ id: string; recordingFileId: string }>> {
+    const result = await db
+      .select({
+        id: schema.calls.id,
+        recordingFileId: schema.calls.fileId,
+      })
+      .from(schema.calls)
+      .where(
+        and(
+          eq(schema.calls.workspaceId, workspaceId),
+          isNotNull(schema.calls.fileId),
+          eq(schema.calls.processingStatus, "pending"),
+        ),
+      )
+      .limit(limit);
+
+    return result.map((row) => ({
+      id: row.id,
+      recordingFileId: row.recordingFileId!,
+    }));
+  },
 };

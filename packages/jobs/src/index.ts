@@ -10,6 +10,7 @@ export {
   gigaAmTranscriptionCompleted,
   inngest,
   pbxSyncRequested,
+  processImportedCalls,
   transcribeRequested,
 } from "./inngest/client";
 export { emailReportsFn } from "./inngest/functions/email-reports";

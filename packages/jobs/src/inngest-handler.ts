@@ -9,6 +9,7 @@ import { emailReportsFn } from "./inngest/functions/email-reports";
 import { evaluateCallFn } from "./inngest/functions/evaluate-call";
 import { megafonSyncFn } from "./inngest/functions/megafon-sync";
 import { pbxSyncFn, pbxSyncRequestedFn } from "./inngest/functions/pbx-sync";
+import { processImportedCallsFn } from "./inngest/functions/process-imported-calls";
 import { telegramReportsFn } from "./inngest/functions/telegram-reports";
 import { transcribeCallFn } from "./inngest/functions/transcribe-call";
 import { gigaAmCompletedFn } from "./inngest/functions/transcribe-call/gigaam/callback-handler";
@@ -20,6 +21,7 @@ export const inngestHandler = serve({
     megafonSyncFn,
     pbxSyncFn,
     pbxSyncRequestedFn,
+    processImportedCallsFn,
     transcribeCallFn,
     evaluateCallFn,
     telegramReportsFn,
