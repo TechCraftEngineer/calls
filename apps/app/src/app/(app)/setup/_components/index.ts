@@ -3,6 +3,7 @@ export type { ModalProps, StepConfig as SetupStep } from "@/components/features/
 export { ApiModal } from "./api-modal";
 export { CompanyModal } from "./company-modal";
 export { DirectoryModal } from "./directory-modal";
+export { ImportModal } from "./import-modal";
 export { PromptsModal } from "./prompts-modal";
 export { ProviderModal } from "./provider-modal";
 

@@ -264,7 +264,6 @@ export function renderProcessingStatusCell(call: CallWithDetails["call"]) {
         <button
           type="button"
           className={`op-badge ${className} flex items-center gap-1`}
-          role="status"
           aria-label={`Статус: ${config.label}`}
         >
           {config.showSpinner && <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />}

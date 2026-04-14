@@ -1,7 +1,6 @@
 "use client";
 
 import { paths } from "@calls/config";
-import type { workspaces } from "@calls/db/schema";
 import {
   Button,
   Card,
@@ -38,12 +37,16 @@ export default function WorkspaceSettingsPage() {
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const isOwner = activeWorkspace?.role === "owner";
 
-  const { data: workspace } = useQuery<typeof workspaces.$inferSelect>(
+  const { data: workspace } = useQuery(
     workspaceId
       ? orpc.workspaces.get.queryOptions({
           input: { workspaceId },
         })
-      : { queryKey: ["workspace-skip"], queryFn: () => null, enabled: false },
+      : {
+          queryKey: ["workspace-skip"] as const,
+          queryFn: () => Promise.resolve(null),
+          enabled: false,
+        },
   );
 
   const invalidateWorkspaceQueries = () => {
