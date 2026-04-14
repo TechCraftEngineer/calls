@@ -73,6 +73,26 @@ export default function DirectoryPage() {
     }),
   );
 
+  const importPbxDirectoryMutation = useMutation(
+    orpc.settings.importPbxDirectory.mutationOptions({
+      onSuccess: async (result) => {
+        toast.success(
+          `Импортировано ${result.importedEmployees} сотрудников и ${result.importedNumbers} номеров`,
+        );
+        // Очищаем выбор после успешного импорта
+        setSelectedEmployees(new Set());
+        setSelectedNumbers(new Set());
+        await queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+        });
+        await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
+      },
+      onError: () => {
+        toast.error("Ошибка импорта");
+      },
+    }),
+  );
+
   // Filter employees
   const filteredEmployees = useMemo(() => {
     if (!employeeSearch) return employees;
@@ -217,6 +237,18 @@ export default function DirectoryPage() {
     await syncPbxDirectoryMutation.mutateAsync({});
   };
 
+  const handleImport = async () => {
+    if (selectedEmployees.size === 0 && selectedNumbers.size === 0) {
+      toast.error("Выберите хотя бы одного сотрудника или номер для импорта");
+      return;
+    }
+
+    await importPbxDirectoryMutation.mutateAsync({
+      employeeIds: Array.from(selectedEmployees),
+      numberIds: Array.from(selectedNumbers),
+    });
+  };
+
   const handleComplete = async () => {
     // Сохраняем в базу данных что шаг завершен
     if (activeWorkspace && setupProgressData) {
@@ -252,9 +284,9 @@ export default function DirectoryPage() {
             <ArrowLeft className="size-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-semibold">Сотрудники и номера</h1>
+            <h1 className="text-2xl font-semibold">Импорт справочника</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Выберите сотрудников и номера для включения в справочник
+              Синхронизируйте данные с PBX, выберите сотрудников и номера для импорта в систему
             </p>
           </div>
         </div>
@@ -275,6 +307,22 @@ export default function DirectoryPage() {
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : employees.length === 0 && numbers.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-12 text-center">
+          <RefreshCw className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-semibold">Справочник пуст</h3>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Нажмите кнопку "Синхронизировать" чтобы загрузить данные из PBX
+          </p>
+          <Button onClick={handleSync} disabled={syncPbxDirectoryMutation.isPending}>
+            {syncPbxDirectoryMutation.isPending ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 size-4" />
+            )}
+            Синхронизировать
+          </Button>
         </div>
       ) : (
         <>
@@ -321,8 +369,21 @@ export default function DirectoryPage() {
         <Button variant="outline" onClick={() => router.push(paths.setup.root)}>
           Отмена
         </Button>
+        <Button
+          onClick={handleImport}
+          disabled={
+            isLoading ||
+            importPbxDirectoryMutation.isPending ||
+            (selectedEmployees.size === 0 && selectedNumbers.size === 0)
+          }
+        >
+          {importPbxDirectoryMutation.isPending ? (
+            <Loader2 className="mr-2 size-4 animate-spin" />
+          ) : null}
+          Импортировать выбранное ({selectedEmployees.size + selectedNumbers.size})
+        </Button>
         <Button onClick={handleComplete} disabled={isLoading}>
-          Утвердить справочник
+          Завершить настройку
         </Button>
       </div>
     </div>

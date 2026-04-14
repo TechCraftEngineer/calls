@@ -10,7 +10,12 @@ export interface UsePbxMutationsReturn {
   testAndSaveMutationPending: boolean;
   syncMutationPending: boolean;
   importMutationPending: boolean;
-  handleTestAndSave: (baseUrl: string, apiKey: string, webhookSecret: string) => void;
+  handleTestAndSave: (
+    baseUrl: string,
+    apiKey: string,
+    webhookSecret: string,
+    onSuccess?: () => void,
+  ) => void;
   handleSync: () => void;
   handleImport: (
     selectedEmployees: Set<string>,
@@ -217,12 +222,19 @@ export function usePbxMutations(
   });
 
   const handleTestAndSave = useCallback(
-    (baseUrl: string, apiKey: string, webhookSecret: string) => {
+    (baseUrl: string, apiKey: string, webhookSecret: string, onSuccess?: () => void) => {
       if (!validateConfig()) {
         focusFirstError();
         return;
       }
-      testAndSaveMutation.mutate({ baseUrl, apiKey, webhookSecret });
+      testAndSaveMutation.mutate(
+        { baseUrl, apiKey, webhookSecret },
+        {
+          onSuccess: () => {
+            onSuccess?.();
+          },
+        },
+      );
     },
     [testAndSaveMutation, validateConfig, focusFirstError],
   );

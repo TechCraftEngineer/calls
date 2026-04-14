@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useORPC } from "@/orpc/react";
 
 export interface UseApiConfigReturn {
   baseUrl: string;
@@ -20,6 +22,7 @@ export interface UseApiConfigReturn {
 }
 
 export function useApiConfig(): UseApiConfigReturn {
+  const orpc = useORPC();
   const [baseUrl, setBaseUrl] = useState("");
   const [apiKey, setApiKey] = useState("");
   const [baseUrlError, setBaseUrlError] = useState<string | null>(null);
@@ -27,6 +30,22 @@ export function useApiConfig(): UseApiConfigReturn {
   const [configSaved, setConfigSaved] = useState(false);
   const baseUrlInputRef = useRef<HTMLInputElement>(null);
   const apiKeyInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: pbxSettings } = useQuery(orpc.settings.getPbx.queryOptions());
+
+  // Загружаем сохраненные настройки при монтировании
+  useEffect(() => {
+    if (!pbxSettings) return;
+    if (pbxSettings.baseUrl) {
+      setBaseUrl(pbxSettings.baseUrl);
+    }
+    // Если apiKey был установлен ранее и baseUrl тоже есть, показываем что конфигурация сохранена
+    if (pbxSettings.apiKeySet && pbxSettings.baseUrl) {
+      setConfigSaved(true);
+      // Устанавливаем placeholder для apiKey чтобы показать что он сохранен
+      setApiKey("••••••••••••••••");
+    }
+  }, [pbxSettings]);
 
   const validateConfig = useCallback(() => {
     const trimmedBaseUrl = baseUrl.trim();
@@ -45,7 +64,8 @@ export function useApiConfig(): UseApiConfigReturn {
       hasError = true;
     }
 
-    if (!trimmedApiKey) {
+    // Проверяем что API ключ не пустой и не является placeholder
+    if (!trimmedApiKey || trimmedApiKey === "••••••••••••••••") {
       setApiKeyError("Введите API Key");
       hasError = true;
     }

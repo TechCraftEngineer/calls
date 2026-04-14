@@ -1,7 +1,7 @@
 "use client";
 
 import Header from "@/components/layout/header";
-import { ApiConfigCard, SyncCard, usePbxSetup, WebhookConfigCard } from "./_components";
+import { ApiConfigCard, usePbxSetup, WebhookConfigCard } from "./_components";
 
 export default function PbxSetupPage() {
   const {
@@ -24,12 +24,10 @@ export default function PbxSetupPage() {
 
     // Mutations
     testAndSaveMutationPending,
-    syncMutationPending,
 
     // Handlers
     handleCopy,
     handleTestAndSave,
-    handleSync,
   } = usePbxSetup();
 
   return (
@@ -66,10 +64,6 @@ export default function PbxSetupPage() {
             testAndSaveMutationPending={testAndSaveMutationPending}
             onTestAndSave={handleTestAndSave}
           />
-
-          {configSaved && (
-            <SyncCard syncMutationPending={syncMutationPending} onSync={handleSync} />
-          )}
         </div>
       </main>
     </>

@@ -90,7 +90,16 @@ export function ApiConfigCard({
           </Button>
 
           {configSaved && (
-            <Button variant="outline" onClick={() => setConfigSaved(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfigSaved(false);
+                // Очищаем placeholder API ключа при редактировании
+                if (apiKey === "••••••••••••••••") {
+                  setApiKey("");
+                }
+              }}
+            >
               Изменить
             </Button>
           )}
