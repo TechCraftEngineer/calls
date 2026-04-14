@@ -9,12 +9,14 @@ export function useSetupProgress() {
   const queryClient = useQueryClient();
   const { activeWorkspace, loading: workspaceLoading } = useWorkspace();
   const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(new Set());
+  const prevWorkspaceIdRef = useRef<string | null>(null);
 
   const updateSetupProgressMutation = useMutation(
     orpc.workspaces.updateSetupProgress.mutationOptions({
       onSuccess: () => {
+        // Инвалидируем все getSetupProgress queries без указания конкретного workspaceId
         queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.getSetupProgress.queryKey(),
+          queryKey: ["workspaces", "getSetupProgress"],
         });
       },
     }),
@@ -54,6 +56,22 @@ export function useSetupProgress() {
     staleTime: 0, // Всегда считать данные устаревшими
     refetchOnMount: true, // Всегда перезапрашивать при монтировании
   });
+
+  // Сбрасываем прогресс при смене компании
+  useEffect(() => {
+    if (!activeWorkspace) return;
+
+    const currentWorkspaceId = activeWorkspace.id;
+    const hasWorkspaceChanged =
+      prevWorkspaceIdRef.current !== null && prevWorkspaceIdRef.current !== currentWorkspaceId;
+
+    if (hasWorkspaceChanged) {
+      console.log("[useSetupProgress] Workspace changed, resetting progress");
+      setCompletedSteps(new Set());
+    }
+
+    prevWorkspaceIdRef.current = currentWorkspaceId;
+  }, [activeWorkspace]);
 
   useEffect(() => {
     // Don't overwrite local state while a save mutation is in flight

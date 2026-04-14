@@ -23,20 +23,11 @@ export default function DirectoryPage() {
     orpc.workspaces.updateSetupProgress.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.list.queryKey(),
+          queryKey: ["workspaces", "getSetupProgress"],
         });
       },
     }),
   );
-
-  const { data: setupProgressData } = useQuery({
-    ...orpc.workspaces.getSetupProgress.queryOptions({
-      input: {
-        workspaceId: activeWorkspace?.id ?? "",
-      },
-    }),
-    enabled: !!activeWorkspace,
-  });
 
   // Selection state
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
@@ -251,10 +242,18 @@ export default function DirectoryPage() {
     }
 
     // Сохраняем в базу данных что шаг завершен
-    if (activeWorkspace && setupProgressData) {
+    if (activeWorkspace) {
       try {
-        const completed = new Set(setupProgressData.completedSteps ?? []);
+        // Получаем актуальные данные из кеша или делаем запрос
+        const currentProgress = await queryClient.fetchQuery({
+          ...orpc.workspaces.getSetupProgress.queryOptions({
+            input: { workspaceId: activeWorkspace.id },
+          }),
+        });
+
+        const completed = new Set(currentProgress.completedSteps ?? []);
         completed.add("directory");
+
         await updateSetupProgressMutation.mutateAsync({
           workspaceId: activeWorkspace.id,
           completedSteps: [...completed] as (

@@ -11,7 +11,6 @@ import UsersTable from "@/components/features/users/users-table";
 import InviteUserModal from "@/components/features/workspaces/invite-user-modal";
 import PendingInvitations from "@/components/features/workspaces/pending-invitations";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import Header from "@/components/layout/header";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
 
@@ -162,91 +161,87 @@ export default function UsersPage() {
   const activeUsersCount = (users as WorkspaceMemberUser[]).filter((u) => u.id).length;
 
   return (
-    <>
-      <Header user={user} />
+    <main className="main-content">
+      <header className="page-header mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="page-title">Участники и пользователи</h1>
+          <p className="page-subtitle mt-2 text-sm text-[#999]">
+            {activeWorkspace?.name} · {activeUsersCount} участников
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="default"
+            size="touch"
+            onClick={() => setShowInviteModal(true)}
+            aria-label="Пригласить по email"
+            className="shadow-md hover:shadow-lg"
+          >
+            <span className="text-lg" aria-hidden="true">
+              +
+            </span>{" "}
+            Пригласить
+          </Button>
+        </div>
+      </header>
 
-      <main className="main-content">
-        <header className="page-header mb-6 flex justify-between items-start">
-          <div>
-            <h1 className="page-title">Участники и пользователи</h1>
-            <p className="page-subtitle mt-2 text-sm text-[#999]">
-              {activeWorkspace?.name} · {activeUsersCount} участников
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="default"
-              size="touch"
-              onClick={() => setShowInviteModal(true)}
-              aria-label="Пригласить по email"
-              className="shadow-md hover:shadow-lg"
-            >
-              <span className="text-lg" aria-hidden="true">
-                +
-              </span>{" "}
-              Пригласить
-            </Button>
-          </div>
-        </header>
+      <UsersTable
+        users={(users ?? []) as WorkspaceMemberUser[]}
+        currentUser={user}
+        currentUserRole={activeWorkspace?.role ?? null}
+        loading={loading}
+        onRemoveMember={handleRemoveMember}
+        onUpdateRole={handleUpdateRole}
+      />
 
-        <UsersTable
-          users={(users ?? []) as WorkspaceMemberUser[]}
-          currentUser={user}
-          currentUserRole={activeWorkspace?.role ?? null}
-          loading={loading}
-          onRemoveMember={handleRemoveMember}
-          onUpdateRole={handleUpdateRole}
-        />
-
-        {Array.isArray(invitations) && invitations.length > 0 && (
-          <PendingInvitations
-            invitations={
-              invitations as Array<{
-                id: string;
-                email: string | null;
-                role: string;
-                createdAt?: Date;
-                expiresAt?: Date;
-                pendingSettings?: unknown;
-                invitationType?: "email" | "link";
-              }>
-            }
-            onRevoke={(invitationId) => {
-              if (workspaceId) {
-                revokeInvitationMutation.mutate({
-                  workspaceId,
-                  invitationId,
-                });
-              }
-            }}
-            isRevoking={revokeInvitationMutation.isPending}
-          />
-        )}
-
-        {showInviteModal && (
-          <InviteUserModal
-            onClose={() => setShowInviteModal(false)}
-            onSubmit={handleInviteSubmit}
-            onCreateLink={handleCreateLinkInvitation}
-          />
-        )}
-
-        <ConfirmDialog
-          open={!!confirmRemove}
-          onClose={() => setConfirmRemove(null)}
-          onConfirm={() => {
-            if (confirmRemove && workspaceId) {
-              removeMemberMutation.mutate({
+      {Array.isArray(invitations) && invitations.length > 0 && (
+        <PendingInvitations
+          invitations={
+            invitations as Array<{
+              id: string;
+              email: string | null;
+              role: string;
+              createdAt?: Date;
+              expiresAt?: Date;
+              pendingSettings?: unknown;
+              invitationType?: "email" | "link";
+            }>
+          }
+          onRevoke={(invitationId) => {
+            if (workspaceId) {
+              revokeInvitationMutation.mutate({
                 workspaceId,
-                userId: confirmRemove.userId,
+                invitationId,
               });
-              setConfirmRemove(null);
             }
           }}
-          title="Исключить участника?"
-          message={`Исключить ${confirmRemove?.email} из компании?`}
+          isRevoking={revokeInvitationMutation.isPending}
         />
-      </main>
-    </>
+      )}
+
+      {showInviteModal && (
+        <InviteUserModal
+          onClose={() => setShowInviteModal(false)}
+          onSubmit={handleInviteSubmit}
+          onCreateLink={handleCreateLinkInvitation}
+        />
+      )}
+
+      <ConfirmDialog
+        open={!!confirmRemove}
+        onClose={() => setConfirmRemove(null)}
+        onConfirm={() => {
+          if (confirmRemove && workspaceId) {
+            removeMemberMutation.mutate({
+              workspaceId,
+              userId: confirmRemove.userId,
+            });
+            setConfirmRemove(null);
+          }
+        }}
+        title="Исключить участника?"
+        message={`Исключить ${confirmRemove?.email} из компании?`}
+      />
+    </main>
   );
 }

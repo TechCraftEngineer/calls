@@ -64,6 +64,11 @@ export default function CreateWorkspaceModal({
           queryKey: orpc.workspaces.list.queryKey(),
         });
 
+        // Инвалидируем кеш setup progress для новой компании
+        await queryClient.invalidateQueries({
+          queryKey: ["workspaces", "getSetupProgress"],
+        });
+
         await onSuccess(workspace.id);
         onOpenChange(false);
 

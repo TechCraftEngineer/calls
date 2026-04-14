@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo } from "react";
 import { DailyViewClient } from "@/components/features/kpi/daily-view-client";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import Header from "@/components/layout/header";
 import { useSession } from "@/lib/better-auth";
 
 interface PageProps {
@@ -73,33 +72,26 @@ export default function DailyViewPage({ params }: PageProps) {
   // Показываем loading state пока проверяем авторизацию
   if (userLoading || !user || !isWorkspaceAdmin) {
     return (
-      <>
-        <Header user={null} />
-        <main className="main-content">
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-          </div>
-        </main>
-      </>
+      <main className="main-content">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+        </div>
+      </main>
     );
   }
 
   return (
-    <>
-      <Header user={user} />
+    <main className="main-content">
+      <header className="page-header mb-8">
+        <h1 className="page-title">KPI по дням</h1>
+        <p className="page-subtitle">Детализированная статистика по дням</p>
+      </header>
 
-      <main className="main-content">
-        <header className="page-header mb-8">
-          <h1 className="page-title">KPI по дням</h1>
-          <p className="page-subtitle">Детализированная статистика по дням</p>
-        </header>
-
-        <DailyViewClient
-          employeeId={employeeId}
-          initialStartDate={startDate}
-          initialEndDate={endDate}
-        />
-      </main>
-    </>
+      <DailyViewClient
+        employeeId={employeeId}
+        initialStartDate={startDate}
+        initialEndDate={endDate}
+      />
+    </main>
   );
 }

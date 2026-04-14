@@ -11,8 +11,6 @@ import CallMetaHeader from "@/components/features/calls/call-meta-header";
 import CallSidebar from "@/components/features/calls/call-sidebar";
 import { TranscriptCard } from "@/components/features/calls/transcript-card";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import Header from "@/components/layout/header";
-import { useSession } from "@/lib/better-auth";
 import { restartCallAnalysis } from "@/lib/restart-analysis";
 import { useORPC } from "@/orpc/react";
 import type { CallDetail, EvaluationDetail, TranscriptDetail } from "@/types/calls";
@@ -37,8 +35,6 @@ export default function CallDetailPage() {
   const orpc = useORPC();
   const { activeWorkspace } = useWorkspace();
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
-  const { data: session } = useSession();
-  const user = session?.user ?? null;
   const [restarting, setRestarting] = useState(false);
 
   const rawCallId = Array.isArray(id) ? id[0] : (id ?? "");
@@ -190,48 +186,38 @@ export default function CallDetailPage() {
 
   if (loading)
     return (
-      <>
-        <Header user={user} />
-        <main className="main-content flex items-center justify-center min-h-[200px]">
-          <div className="text-[#666]">Загрузка…</div>
-        </main>
-      </>
+      <main className="main-content flex items-center justify-center min-h-[200px]">
+        <div className="text-[#666]">Загрузка…</div>
+      </main>
     );
 
   if (!call)
     return (
-      <>
-        <Header user={user} />
-        <main className="main-content flex items-center justify-center min-h-[200px]">
-          <div className="text-[#666]">Звонок не найден</div>
-        </main>
-      </>
+      <main className="main-content flex items-center justify-center min-h-[200px]">
+        <div className="text-[#666]">Звонок не найден</div>
+      </main>
     );
 
   return (
-    <>
-      <Header user={user} />
+    <main className="main-content">
+      <CallMetaHeader call={call} />
 
-      <main className="main-content">
-        <CallMetaHeader call={call} />
+      <div className="detail-grid">
+        <TranscriptCard call={call} transcript={transcript} />
 
-        <div className="detail-grid">
-          <TranscriptCard call={call} transcript={transcript} />
-
-          <CallSidebar
-            call={call}
-            transcript={transcript}
-            evaluation={evaluation}
-            restarting={restarting}
-            reevaluating={evaluateMutation.isPending}
-            onRestartAnalysis={handleRestartAnalysis}
-            onReevaluate={handleReevaluate}
-            onGenerateRecommendations={handleGenerateRecommendations}
-            isGeneratingRecommendations={generateRecommendationsMutation.isPending}
-            isWorkspaceAdmin={isWorkspaceAdmin}
-          />
-        </div>
-      </main>
-    </>
+        <CallSidebar
+          call={call}
+          transcript={transcript}
+          evaluation={evaluation}
+          restarting={restarting}
+          reevaluating={evaluateMutation.isPending}
+          onRestartAnalysis={handleRestartAnalysis}
+          onReevaluate={handleReevaluate}
+          onGenerateRecommendations={handleGenerateRecommendations}
+          isGeneratingRecommendations={generateRecommendationsMutation.isPending}
+          isWorkspaceAdmin={isWorkspaceAdmin}
+        />
+      </div>
+    </main>
   );
 }

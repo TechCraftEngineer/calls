@@ -7,7 +7,6 @@ import { BarChart3, Bot, Building2, Download, Globe, Loader2, Users } from "luci
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import Header from "@/components/layout/header";
 import { useSession } from "@/lib/better-auth";
 import { setOnboardedCookie } from "@/lib/cookies";
 import { useORPC } from "@/orpc/react";
@@ -156,107 +155,97 @@ export default function SetupPage() {
 
   if (loading) {
     return (
-      <>
-        <Header user={user} />
-        <main className="main-content flex items-center justify-center">
-          <div className="flex items-center gap-2 text-muted-foreground" role="status">
-            <Loader2 className="size-5 animate-spin" aria-hidden="true" />
-            <span>Загрузка...</span>
-          </div>
-        </main>
-      </>
+      <main className="main-content flex items-center justify-center">
+        <div className="flex items-center gap-2 text-muted-foreground" role="status">
+          <Loader2 className="size-5 animate-spin" aria-hidden="true" />
+          <span>Загрузка...</span>
+        </div>
+      </main>
     );
   }
 
   if (!activeWorkspace) {
     return (
-      <>
-        <Header user={user} />
-        <main className="main-content flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-xl font-semibold">Нет доступа</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              У вас нет активной компании. Сначала создайте компанию.
+      <main className="main-content flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-xl font-semibold">Нет доступа</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            У вас нет активной компании. Сначала создайте компанию.
+          </p>
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.push(paths.onboarding.createWorkspace)}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              Создать компанию
+            </button>
+            <p className="text-xs text-muted-foreground">
+              Нужна помощь?{" "}
+              <a href="/docs" className="underline hover:text-foreground">
+                Документация
+              </a>{" "}
+              или{" "}
+              <a href="/support" className="underline hover:text-foreground">
+                поддержка
+              </a>
             </p>
-            <div className="mt-6 flex flex-col items-center gap-3">
-              <button
-                type="button"
-                onClick={() => router.push(paths.onboarding.createWorkspace)}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                Создать компанию
-              </button>
-              <p className="text-xs text-muted-foreground">
-                Нужна помощь?{" "}
-                <a href="/docs" className="underline hover:text-foreground">
-                  Документация
-                </a>{" "}
-                или{" "}
-                <a href="/support" className="underline hover:text-foreground">
-                  поддержка
-                </a>
-              </p>
-            </div>
           </div>
-        </main>
-      </>
+        </div>
+      </main>
     );
   }
 
   return (
-    <>
-      <Header user={user} />
-
-      <main className="main-content">
-        <div className="mx-auto max-w-2xl space-y-6 py-8">
-          {/* Page title */}
-          <div className="space-y-2 text-center">
-            <h1 className="text-3xl font-bold tracking-tight">Добро пожаловать</h1>
-            <p className="text-muted-foreground">
-              Выполните эти шаги, чтобы начать работу с системой
-            </p>
-          </div>
-
-          <SetupStepsList
-            steps={SETUP_STEPS}
-            completedSteps={completedSteps}
-            completedCount={completedCount}
-            totalSteps={totalSteps}
-            progressPercent={progressPercent}
-            onCompleteStep={handleCompleteStep}
-            onOpenModal={setActiveModal}
-          />
-
-          {completedCount === totalSteps && (
-            <SetupFinishCard
-              onFinish={handleFinishSetup}
-              isLoading={completeOnboardingMutation.isPending}
-            />
-          )}
-
-          {/* Modals */}
-          <ProviderModal
-            open={activeModal === "provider"}
-            onOpenChange={() => setActiveModal(null)}
-            onComplete={() => handleCompleteStep("provider")}
-          />
-          <ApiModal
-            open={activeModal === "api"}
-            onOpenChange={() => setActiveModal(null)}
-            onComplete={() => handleCompleteStep("api")}
-          />
-          <ImportModal
-            open={activeModal === "import"}
-            onOpenChange={() => setActiveModal(null)}
-            onComplete={() => handleCompleteStep("import")}
-          />
-          <CompanyModal
-            open={activeModal === "company"}
-            onOpenChange={() => setActiveModal(null)}
-            onComplete={() => handleCompleteStep("company")}
-          />
+    <main className="main-content">
+      <div className="mx-auto max-w-2xl space-y-6 py-8">
+        {/* Page title */}
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-bold tracking-tight">Добро пожаловать</h1>
+          <p className="text-muted-foreground">
+            Выполните эти шаги, чтобы начать работу с системой
+          </p>
         </div>
-      </main>
-    </>
+
+        <SetupStepsList
+          steps={SETUP_STEPS}
+          completedSteps={completedSteps}
+          completedCount={completedCount}
+          totalSteps={totalSteps}
+          progressPercent={progressPercent}
+          onCompleteStep={handleCompleteStep}
+          onOpenModal={setActiveModal}
+        />
+
+        {completedCount === totalSteps && (
+          <SetupFinishCard
+            onFinish={handleFinishSetup}
+            isLoading={completeOnboardingMutation.isPending}
+          />
+        )}
+
+        {/* Modals */}
+        <ProviderModal
+          open={activeModal === "provider"}
+          onOpenChange={() => setActiveModal(null)}
+          onComplete={() => handleCompleteStep("provider")}
+        />
+        <ApiModal
+          open={activeModal === "api"}
+          onOpenChange={() => setActiveModal(null)}
+          onComplete={() => handleCompleteStep("api")}
+        />
+        <ImportModal
+          open={activeModal === "import"}
+          onOpenChange={() => setActiveModal(null)}
+          onComplete={() => handleCompleteStep("import")}
+        />
+        <CompanyModal
+          open={activeModal === "company"}
+          onOpenChange={() => setActiveModal(null)}
+          onComplete={() => handleCompleteStep("company")}
+        />
+      </div>
+    </main>
   );
 }

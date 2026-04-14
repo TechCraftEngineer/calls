@@ -15,7 +15,6 @@ import {
   TelegramBlock,
 } from "@/components/features/users/edit";
 import type { EditUserForm } from "@/components/features/users/types";
-import Header from "@/components/layout/header";
 import { useBlockStates } from "@/hooks/use-block-states";
 import { useSession } from "@/lib/better-auth";
 import { useORPC } from "@/orpc/react";
@@ -275,139 +274,129 @@ export default function UserEditPage() {
 
   if (userError) {
     return (
-      <>
-        <Header user={user} />
-        <main className="main-content">
-          <div className="p-6">
-            <p className="text-destructive">Ошибка загрузки пользователя</p>
-            <Button variant="link" size="sm" className="mt-4 text-foreground" asChild>
-              <Link href={paths.users.root}>← К списку пользователей</Link>
-            </Button>
-          </div>
-        </main>
-      </>
+      <main className="main-content">
+        <div className="p-6">
+          <p className="text-destructive">Ошибка загрузки пользователя</p>
+          <Button variant="link" size="sm" className="mt-4 text-foreground" asChild>
+            <Link href={paths.users.root}>← К списку пользователей</Link>
+          </Button>
+        </div>
+      </main>
     );
   }
 
   if (isPending || !form) {
     return (
-      <>
-        <Header user={user} />
-        <main className="main-content">
-          <div className="p-6">
-            <div className="animate-pulse h-8 bg-gray-200 rounded w-48 mb-4" />
-            <div className="animate-pulse h-4 bg-gray-100 rounded w-full max-w-md" />
-          </div>
-        </main>
-      </>
+      <main className="main-content">
+        <div className="p-6">
+          <div className="animate-pulse h-8 bg-gray-200 rounded w-48 mb-4" />
+          <div className="animate-pulse h-4 bg-gray-100 rounded w-full max-w-md" />
+        </div>
+      </main>
     );
   }
 
   return (
-    <>
-      <Header user={user} />
-
-      <main className="main-content">
-        <header className="page-header mb-6 flex justify-between items-start">
-          <div>
-            <h1 className="page-title">Редактирование пользователя</h1>
-            <p className="page-subtitle mt-1 text-sm text-[#999]">Email: {email}</p>
-          </div>
-          <Button variant="link" size="sm" className="text-foreground" asChild>
-            <Link href={paths.users.root}>← К списку пользователей</Link>
-          </Button>
-        </header>
-
-        <div className="max-w-4xl">
-          <BasicInfoBlock
-            form={form}
-            setForm={setForm}
-            hasChanges={hasBlockChanges("basic", form)}
-            isSaving={getBlockState("basic") === "saving"}
-            state={getBlockState("basic")}
-            onSave={handleSaveBasicInfo}
-            disabled={false}
-          />
-
-          <TelegramBlock
-            form={form}
-            setForm={setForm}
-            hasChanges={hasBlockChanges("telegram", form)}
-            isSaving={getBlockState("telegram") === "saving"}
-            state={getBlockState("telegram")}
-            onSave={handleSaveTelegramSettings}
-            disabled={false}
-            onDisconnect={handleDisconnectTelegram}
-            onConnect={handleConnectTelegram}
-            onCheckConnection={handleCheckTelegramConnection}
-            connectLoading={telegramAuthUrlMutation.isPending}
-            checkConnectionLoading={isFetching && !isPending}
-          />
-
-          <EmailBlock
-            form={form}
-            setForm={setForm}
-            hasChanges={hasBlockChanges("email", form)}
-            isSaving={getBlockState("email") === "saving"}
-            state={getBlockState("email")}
-            onSave={handleSaveEmailSettings}
-            disabled={false}
-          />
-
-          <CheckboxBlock
-            title="MAX Отчеты"
-            form={form}
-            setForm={setForm}
-            fields={["maxDailyReport", "maxManagerReport"]}
-            labels={[
-              "Получать свои ежедневные отчеты (MAX)",
-              "Получать отчеты по всем менеджерам (MAX)",
-            ]}
-            hasChanges={hasBlockChanges("max", form)}
-            isSaving={getBlockState("max") === "saving"}
-            state={getBlockState("max")}
-            onSave={handleSaveMaxSettings}
-            disabled={false}
-          />
-
-          <KpiBlock
-            form={form}
-            setForm={setForm}
-            hasChanges={hasBlockChanges("kpi", form)}
-            isSaving={getBlockState("kpi") === "saving"}
-            state={getBlockState("kpi")}
-            onSave={handleSaveKpiSettings}
-            disabled={false}
-          />
-
-          <CheckboxBlock
-            title="Исключить из отчётов"
-            form={form}
-            setForm={setForm}
-            fields={["filterExcludeAnsweringMachine", "filterMinDuration", "filterMinReplicas"]}
-            labels={[
-              "Исключить автоответчик",
-              "Минимальная длительность разговора (секунды)",
-              "Минимальное количество реплик",
-            ]}
-            hasChanges={hasBlockChanges("filters", form)}
-            isSaving={getBlockState("filters") === "saving"}
-            state={getBlockState("filters")}
-            onSave={handleSaveFilterSettings}
-            disabled={false}
-          />
-
-          <EvaluationBlock
-            form={form}
-            setForm={setForm}
-            hasChanges={hasBlockChanges("evaluation", form)}
-            isSaving={getBlockState("evaluation") === "saving"}
-            state={getBlockState("evaluation")}
-            onSave={handleSaveEvaluationSettings}
-            disabled={false}
-          />
+    <main className="main-content">
+      <header className="page-header mb-6 flex justify-between items-start">
+        <div>
+          <h1 className="page-title">Редактирование пользователя</h1>
+          <p className="page-subtitle mt-1 text-sm text-[#999]">Email: {email}</p>
         </div>
-      </main>
-    </>
+        <Button variant="link" size="sm" className="text-foreground" asChild>
+          <Link href={paths.users.root}>← К списку пользователей</Link>
+        </Button>
+      </header>
+
+      <div className="max-w-4xl">
+        <BasicInfoBlock
+          form={form}
+          setForm={setForm}
+          hasChanges={hasBlockChanges("basic", form)}
+          isSaving={getBlockState("basic") === "saving"}
+          state={getBlockState("basic")}
+          onSave={handleSaveBasicInfo}
+          disabled={false}
+        />
+
+        <TelegramBlock
+          form={form}
+          setForm={setForm}
+          hasChanges={hasBlockChanges("telegram", form)}
+          isSaving={getBlockState("telegram") === "saving"}
+          state={getBlockState("telegram")}
+          onSave={handleSaveTelegramSettings}
+          disabled={false}
+          onDisconnect={handleDisconnectTelegram}
+          onConnect={handleConnectTelegram}
+          onCheckConnection={handleCheckTelegramConnection}
+          connectLoading={telegramAuthUrlMutation.isPending}
+          checkConnectionLoading={isFetching && !isPending}
+        />
+
+        <EmailBlock
+          form={form}
+          setForm={setForm}
+          hasChanges={hasBlockChanges("email", form)}
+          isSaving={getBlockState("email") === "saving"}
+          state={getBlockState("email")}
+          onSave={handleSaveEmailSettings}
+          disabled={false}
+        />
+
+        <CheckboxBlock
+          title="MAX Отчеты"
+          form={form}
+          setForm={setForm}
+          fields={["maxDailyReport", "maxManagerReport"]}
+          labels={[
+            "Получать свои ежедневные отчеты (MAX)",
+            "Получать отчеты по всем менеджерам (MAX)",
+          ]}
+          hasChanges={hasBlockChanges("max", form)}
+          isSaving={getBlockState("max") === "saving"}
+          state={getBlockState("max")}
+          onSave={handleSaveMaxSettings}
+          disabled={false}
+        />
+
+        <KpiBlock
+          form={form}
+          setForm={setForm}
+          hasChanges={hasBlockChanges("kpi", form)}
+          isSaving={getBlockState("kpi") === "saving"}
+          state={getBlockState("kpi")}
+          onSave={handleSaveKpiSettings}
+          disabled={false}
+        />
+
+        <CheckboxBlock
+          title="Исключить из отчётов"
+          form={form}
+          setForm={setForm}
+          fields={["filterExcludeAnsweringMachine", "filterMinDuration", "filterMinReplicas"]}
+          labels={[
+            "Исключить автоответчик",
+            "Минимальная длительность разговора (секунды)",
+            "Минимальное количество реплик",
+          ]}
+          hasChanges={hasBlockChanges("filters", form)}
+          isSaving={getBlockState("filters") === "saving"}
+          state={getBlockState("filters")}
+          onSave={handleSaveFilterSettings}
+          disabled={false}
+        />
+
+        <EvaluationBlock
+          form={form}
+          setForm={setForm}
+          hasChanges={hasBlockChanges("evaluation", form)}
+          isSaving={getBlockState("evaluation") === "saving"}
+          state={getBlockState("evaluation")}
+          onSave={handleSaveEvaluationSettings}
+          disabled={false}
+        />
+      </div>
+    </main>
   );
 }
