@@ -15,7 +15,11 @@ const importHistoricalCallsSchema = z.object({
     .refine(
       (v) => {
         // Parse ISO date string and compare with today (date-only comparison)
-        const [year, month, day] = v.split("-").map(Number);
+        const parts = v.split("-").map(Number);
+        if (parts.length !== 3 || parts.some((p) => Number.isNaN(p))) {
+          return false;
+        }
+        const [year, month, day] = parts as [number, number, number];
         const inputDate = new Date(year, month - 1, day);
         const today = new Date();
         today.setHours(0, 0, 0, 0);

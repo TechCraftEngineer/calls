@@ -7,10 +7,12 @@ import {
   DataGridColumnVisibility,
   DataGridContainer,
   DataGridPagination,
-  DataGridTable,
+  DataGridTableDnd,
   IconPlaceholder,
   toast,
 } from "@calls/ui";
+import type { DragEndEvent } from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 import { useMutation } from "@tanstack/react-query";
 import {
   type ColumnDef,
@@ -264,6 +266,20 @@ export function CallListDataGrid({
     deleteManyMutation.mutate({ call_ids: selectedCallIds });
   }, [deleteManyMutation, selectedCallIds]);
 
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (active && over && active.id !== over.id) {
+        handleColumnOrderChange((columnOrder) => {
+          const oldIndex = columnOrder.indexOf(active.id as string);
+          const newIndex = columnOrder.indexOf(over.id as string);
+          return arrayMove(columnOrder, oldIndex, newIndex);
+        });
+      }
+    },
+    [handleColumnOrderChange],
+  );
+
   if (calls.length === 0 && !isLoading) {
     return (
       <>
@@ -344,7 +360,7 @@ export function CallListDataGrid({
             </div>
           </div>
           <DataGridContainer className="border-0 max-h-[70vh] overflow-auto">
-            <DataGridTable<(typeof calls)[0]> />
+            <DataGridTableDnd<(typeof calls)[0]> handleDragEnd={handleDragEnd} />
             <div className="px-4 py-3">
               <DataGridPagination
                 sizes={[...PAGINATION_CONSTANTS.PER_PAGE_OPTIONS]}

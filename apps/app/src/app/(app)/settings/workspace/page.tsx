@@ -37,13 +37,14 @@ export default function WorkspaceSettingsPage() {
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const isOwner = activeWorkspace?.role === "owner";
 
-  const { data: workspace } = useQuery(
-    workspaceId
-      ? orpc.workspaces.get.queryOptions({
-          input: { workspaceId },
-        })
-      : skipToken,
-  );
+  const { data: workspace } = useQuery({
+    ...orpc.workspaces.get.queryOptions({
+      input: { workspaceId: workspaceId ?? "" },
+    }),
+    enabled: !!workspaceId,
+  });
+
+  const workspaceData = workspace;
 
   const invalidateWorkspaceQueries = () => {
     if (!workspaceId) return;
@@ -164,11 +165,11 @@ export default function WorkspaceSettingsPage() {
         <p className="mt-1 text-sm text-muted-foreground">{activeWorkspace.name}</p>
       </header>
 
-      {workspace ? (
+      {workspaceData ? (
         <WorkspaceGeneralForm
-          name={workspace.name}
-          nameEn={workspace.nameEn}
-          description={workspace.description}
+          name={workspaceData.name}
+          nameEn={workspaceData.nameEn}
+          description={workspaceData.description}
           onSave={handleSaveGeneral}
           saving={updateMutation.isPending}
         />
