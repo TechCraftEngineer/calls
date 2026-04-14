@@ -59,7 +59,11 @@ export default function CreateWorkspaceModal({
         toast.success("Компания создана");
         form.reset();
 
-        // Refetch to ensure fresh data
+        // Инвалидируем и обновляем список компаний
+        await queryClient.invalidateQueries({
+          queryKey: orpc.workspaces.list.queryKey(),
+        });
+
         await queryClient.refetchQueries({
           queryKey: orpc.workspaces.list.queryKey(),
         });

@@ -20,7 +20,7 @@ import { roleTranslations } from "./nav-items";
 
 export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
-  const { workspaces, activeWorkspace, setActiveWorkspace } = useWorkspace();
+  const { workspaces, activeWorkspace, setActiveWorkspace, refreshWorkspaces } = useWorkspace();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -33,10 +33,20 @@ export function WorkspaceSwitcher() {
     await setActiveWorkspace(workspaceId);
   };
 
+  const handleDropdownOpenChange = async (open: boolean) => {
+    if (open) {
+      console.log("[WorkspaceSwitcher] Обновление списка компаний...");
+      // Обновляем список компаний при открытии dropdown
+      await refreshWorkspaces();
+      console.log("[WorkspaceSwitcher] Список обновлён. Компаний:", workspaces.length);
+    }
+    setDropdownOpen(open);
+  };
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+        <DropdownMenu open={dropdownOpen} onOpenChange={handleDropdownOpenChange}>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"

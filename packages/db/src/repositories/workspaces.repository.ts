@@ -419,8 +419,13 @@ export const workspacesRepository = {
 
       if (!workspace[0]) return false;
 
-      const metadata = (workspace[0].metadata as Record<string, unknown>) ?? {};
+      const existingMetadata = (workspace[0].metadata as Record<string, unknown>) ?? {};
+      console.log("[updateSetupProgress] Existing metadata:", JSON.stringify(existingMetadata));
+
+      const metadata = { ...existingMetadata };
       metadata.setupCompletedSteps = completedSteps;
+
+      console.log("[updateSetupProgress] New metadata:", JSON.stringify(metadata));
 
       const result = await tx
         .update(schema.workspaces)
