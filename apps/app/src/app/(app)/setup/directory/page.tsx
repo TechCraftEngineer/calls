@@ -1,34 +1,39 @@
 "use client";
 
 import { paths } from "@calls/config";
-
-import { Button, Card, DataGrid, DataGridContainer, DataGridTable, toast } from "@calls/ui";
+import { Button, toast } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
 import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import { getEmployeeColumns } from "@/components/features/settings/megapbx/employee-columns";
-import type { PbxEmployeeItem } from "@/components/features/settings/types/common";
-import { SearchInput } from "@/components/ui/search-input";
+import { useCallback, useMemo, useState } from "react";
+import { ITEMS_PER_PAGE } from "@/app/(app)/setup/pbx-setup/_components/constants";
+import type { Employee, PhoneNumber } from "@/app/(app)/setup/pbx-setup/_components/types";
+import { EmployeeList } from "@/components/pbx-setup/employee-list";
+import { NumberList } from "@/components/pbx-setup/number-list";
 import { useORPC } from "@/orpc/react";
 
 export default function DirectoryPage() {
   const router = useRouter();
   const orpc = useORPC();
   const queryClient = useQueryClient();
+
+  // Selection state
+  const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
+  const [selectedNumbers, setSelectedNumbers] = useState<Set<string>>(new Set());
+
+  // Search state
   const [employeeSearch, setEmployeeSearch] = useState("");
+  const [numberSearch, setNumberSearch] = useState("");
+
+  // Pagination state
+  const [employeePage, setEmployeePage] = useState(0);
+  const [numberPage, setNumberPage] = useState(0);
 
   const { data: employees = [], isLoading: empLoading } = useQuery({
     ...orpc.settings.listPbxEmployees.queryOptions(),
   });
 
-  const { data: _numbers = [], isLoading: _numLoading } = useQuery({
+  const { data: numbers = [], isLoading: numLoading } = useQuery({
     ...orpc.settings.listPbxNumbers.queryOptions(),
   });
 
@@ -47,6 +52,134 @@ export default function DirectoryPage() {
     }),
   );
 
+  // Filter employees
+  const filteredEmployees = useMemo(() => {
+    if (!employeeSearch) return employees;
+    const q = employeeSearch.toLowerCase();
+    return employees.filter((e: Employee) =>
+      [e.displayName, e.email, e.extension].some((v) => v?.toLowerCase().includes(q)),
+    );
+  }, [employees, employeeSearch]);
+
+  // Filter numbers
+  const filteredNumbers = useMemo(() => {
+    if (!numberSearch) return numbers;
+    const q = numberSearch.toLowerCase();
+    return numbers.filter((n: PhoneNumber) =>
+      [n.phoneNumber, n.label, n.employee?.displayName].some((v) => v?.toLowerCase().includes(q)),
+    );
+  }, [numbers, numberSearch]);
+
+  // Paginate employees
+  const paginatedEmployees = useMemo(() => {
+    const start = employeePage * ITEMS_PER_PAGE;
+    return filteredEmployees.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredEmployees, employeePage]);
+
+  // Paginate numbers
+  const paginatedNumbers = useMemo(() => {
+    const start = numberPage * ITEMS_PER_PAGE;
+    return filteredNumbers.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredNumbers, numberPage]);
+
+  const totalEmployeePages = Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE);
+  const totalNumberPages = Math.ceil(filteredNumbers.length / ITEMS_PER_PAGE);
+
+  // Check if all on current page are selected
+  const allEmployeesSelected = useMemo(
+    () =>
+      paginatedEmployees.length > 0 && paginatedEmployees.every((e) => selectedEmployees.has(e.id)),
+    [paginatedEmployees, selectedEmployees],
+  );
+
+  const allNumbersSelected = useMemo(
+    () => paginatedNumbers.length > 0 && paginatedNumbers.every((n) => selectedNumbers.has(n.id)),
+    [paginatedNumbers, selectedNumbers],
+  );
+
+  // Handlers
+  const handleToggleEmployee = useCallback((id: string) => {
+    setSelectedEmployees((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleToggleNumber = useCallback((id: string) => {
+    setSelectedNumbers((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSelectAllEmployees = useCallback(() => {
+    if (allEmployeesSelected) {
+      setSelectedEmployees((prev) => {
+        const next = new Set(prev);
+        paginatedEmployees.forEach((e) => next.delete(e.id));
+        return next;
+      });
+    } else {
+      setSelectedEmployees((prev) => {
+        const next = new Set(prev);
+        paginatedEmployees.forEach((e) => next.add(e.id));
+        return next;
+      });
+    }
+  }, [allEmployeesSelected, paginatedEmployees]);
+
+  const handleSelectAllNumbers = useCallback(() => {
+    if (allNumbersSelected) {
+      setSelectedNumbers((prev) => {
+        const next = new Set(prev);
+        paginatedNumbers.forEach((n) => next.delete(n.id));
+        return next;
+      });
+    } else {
+      setSelectedNumbers((prev) => {
+        const next = new Set(prev);
+        paginatedNumbers.forEach((n) => next.add(n.id));
+        return next;
+      });
+    }
+  }, [allNumbersSelected, paginatedNumbers]);
+
+  const handleSelectAllFilteredEmployees = useCallback(() => {
+    setSelectedEmployees((prev) => {
+      const next = new Set(prev);
+      filteredEmployees.forEach((e) => next.add(e.id));
+      return next;
+    });
+  }, [filteredEmployees]);
+
+  const handleSelectAllFilteredNumbers = useCallback(() => {
+    setSelectedNumbers((prev) => {
+      const next = new Set(prev);
+      filteredNumbers.forEach((n) => next.add(n.id));
+      return next;
+    });
+  }, [filteredNumbers]);
+
+  const handleClearEmployeeSearch = useCallback(() => {
+    setEmployeeSearch("");
+    setEmployeePage(0);
+  }, []);
+
+  const handleClearNumberSearch = useCallback(() => {
+    setNumberSearch("");
+    setNumberPage(0);
+  }, []);
+
   const handleSync = async () => {
     await syncPbxDirectoryMutation.mutateAsync({});
   };
@@ -62,23 +195,7 @@ export default function DirectoryPage() {
     router.push(paths.setup.root);
   };
 
-  const filteredEmployees = useMemo(() => {
-    if (!employeeSearch) return employees;
-    const q = employeeSearch.toLowerCase();
-    return employees.filter((e: PbxEmployeeItem) =>
-      [e.displayName, e.email, e.extension].some((v) => v?.toLowerCase().includes(q)),
-    );
-  }, [employees, employeeSearch]);
-
-  const employeeColumns = useMemo(() => getEmployeeColumns(), []);
-  const employeeTable = useReactTable({
-    data: filteredEmployees,
-    columns: employeeColumns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageIndex: 0, pageSize: 10 } },
-  });
+  const isLoading = empLoading || numLoading;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
@@ -96,7 +213,7 @@ export default function DirectoryPage() {
           <div>
             <h1 className="text-2xl font-semibold">Сотрудники и номера</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Синхронизируйте справочник и отметьте номера для исключения
+              Выберите сотрудников и номера для включения в справочник
             </p>
           </div>
         </div>
@@ -114,43 +231,58 @@ export default function DirectoryPage() {
         </Button>
       </div>
 
-      {/* Employees Card */}
-      <Card className="overflow-hidden">
-        <div className="border-b p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold">Сотрудники ({filteredEmployees.length})</h2>
-            <SearchInput
-              value={employeeSearch}
-              onChange={setEmployeeSearch}
-              placeholder="Поиск по имени, email или внутреннему..."
-              className="w-64"
-            />
-          </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
         </div>
+      ) : (
+        <>
+          {/* Employees List */}
+          <EmployeeList
+            employees={employees}
+            selectedEmployees={selectedEmployees}
+            filteredEmployees={filteredEmployees}
+            paginatedEmployees={paginatedEmployees}
+            employeeSearch={employeeSearch}
+            setEmployeeSearch={setEmployeeSearch}
+            setEmployeePage={setEmployeePage}
+            employeePage={employeePage}
+            totalEmployeePages={totalEmployeePages}
+            allEmployeesSelected={allEmployeesSelected}
+            onToggleEmployee={handleToggleEmployee}
+            onSelectAllEmployees={handleSelectAllEmployees}
+            onSelectAllFilteredEmployees={handleSelectAllFilteredEmployees}
+            onClearSearch={handleClearEmployeeSearch}
+          />
 
-        <div className="p-4">
-          <DataGrid
-            table={employeeTable}
-            recordCount={filteredEmployees.length}
-            isLoading={empLoading}
-            emptyMessage="Нет данных. Синхронизируйте справочник."
-            tableLayout={{ rowBorder: true, headerBorder: true, headerBackground: true }}
-          >
-            <DataGridContainer className="rounded-lg border">
-              <div className="overflow-x-auto">
-                <DataGridTable<PbxEmployeeItem> />
-              </div>
-            </DataGridContainer>
-          </DataGrid>
-        </div>
-      </Card>
+          {/* Numbers List */}
+          <NumberList
+            numbers={numbers}
+            selectedNumbers={selectedNumbers}
+            filteredNumbers={filteredNumbers}
+            paginatedNumbers={paginatedNumbers}
+            numberSearch={numberSearch}
+            setNumberSearch={setNumberSearch}
+            setNumberPage={setNumberPage}
+            numberPage={numberPage}
+            totalNumberPages={totalNumberPages}
+            allNumbersSelected={allNumbersSelected}
+            onToggleNumber={handleToggleNumber}
+            onSelectAllNumbers={handleSelectAllNumbers}
+            onSelectAllFilteredNumbers={handleSelectAllFilteredNumbers}
+            onClearSearch={handleClearNumberSearch}
+          />
+        </>
+      )}
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-3">
         <Button variant="outline" onClick={() => router.push(paths.setup.root)}>
           Отмена
         </Button>
-        <Button onClick={handleComplete}>Утвердить справочник</Button>
+        <Button onClick={handleComplete} disabled={isLoading}>
+          Утвердить справочник
+        </Button>
       </div>
     </div>
   );

@@ -18,7 +18,7 @@ export function SyncCard({ syncMutationPending, onSync }: SyncCardProps) {
             Загрузка данных
           </h2>
           <p className="text-sm text-muted-foreground">
-            Получите список сотрудников и номеров из АТС
+            Синхронизируйте справочник сотрудников и номеров из АТС
           </p>
         </div>
         <Button onClick={onSync} disabled={syncMutationPending}>
@@ -27,7 +27,7 @@ export function SyncCard({ syncMutationPending, onSync }: SyncCardProps) {
           ) : (
             <RefreshCw className="mr-2 size-4" />
           )}
-          Синхронизировать
+          Синхронизировать и продолжить
         </Button>
       </div>
     </Card>
