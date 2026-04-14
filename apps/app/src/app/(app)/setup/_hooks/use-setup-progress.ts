@@ -10,51 +10,42 @@ export function useSetupProgress() {
   const { activeWorkspace, loading: workspaceLoading } = useWorkspace();
   const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(new Set());
   const prevWorkspaceIdRef = useRef<string | null>(null);
+  const isInitialLoadRef = useRef(true);
 
   const updateSetupProgressMutation = useMutation(
     orpc.workspaces.updateSetupProgress.mutationOptions({
       onSuccess: () => {
-        // Инвалидируем все getSetupProgress queries
         queryClient.invalidateQueries({
           predicate: (query) => query.queryKey[0] === "workspaces.getSetupProgress",
         });
       },
+      onError: (error) => {
+        console.error("[useSetupProgress] Failed to update progress:", error);
+      },
     }),
   );
 
-  const updateSetupProgressMutationRef = useRef(updateSetupProgressMutation);
-
-  useEffect(() => {
-    updateSetupProgressMutationRef.current = updateSetupProgressMutation;
-  }, [updateSetupProgressMutation]);
-
   const saveCompletedSteps = useCallback(
     (steps: Set<StepId>) => {
-      console.log("[useSetupProgress] Saving steps:", Array.from(steps));
+      setCompletedSteps((prev) => {
+        const newSteps = Array.from(steps).filter((step) => !prev.has(step));
 
-      const previousSteps = completedSteps;
-      setCompletedSteps(steps);
-
-      if (activeWorkspace) {
-        console.log("[useSetupProgress] Mutating to DB for workspace:", activeWorkspace.id);
-
-        // Находим новый шаг (который есть в steps, но нет в previousSteps)
-        const newStep = Array.from(steps).find((step) => !previousSteps.has(step));
-
-        if (newStep) {
-          updateSetupProgressMutationRef.current.mutate({
+        // Отправляем только если есть новые шаги
+        if (activeWorkspace && newSteps.length > 0) {
+          // Отправляем только последний новый шаг (самый важный)
+          const lastNewStep = newSteps[newSteps.length - 1];
+          updateSetupProgressMutation.mutate({
             workspaceId: activeWorkspace.id,
-            completedStep: newStep,
+            completedStep: lastNewStep,
           });
         }
-      } else {
-        console.log("[useSetupProgress] No active workspace, skipping save");
-      }
+
+        return steps;
+      });
     },
-    [activeWorkspace, completedSteps],
+    [activeWorkspace, updateSetupProgressMutation],
   );
 
-  // Load completed steps from database
   const { data: setupProgressData } = useQuery({
     ...orpc.workspaces.getSetupProgress.queryOptions({
       input: {
@@ -62,11 +53,10 @@ export function useSetupProgress() {
       },
     }),
     enabled: !workspaceLoading && !!activeWorkspace,
-    staleTime: 0, // Всегда считать данные устаревшими
-    refetchOnMount: true, // Всегда перезапрашивать при монтировании
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
-  // Сбрасываем прогресс при смене компании
   useEffect(() => {
     if (!activeWorkspace) return;
 
@@ -75,48 +65,31 @@ export function useSetupProgress() {
       prevWorkspaceIdRef.current !== null && prevWorkspaceIdRef.current !== currentWorkspaceId;
 
     if (hasWorkspaceChanged) {
-      console.log("[useSetupProgress] Workspace changed, resetting progress");
       setCompletedSteps(new Set());
+      isInitialLoadRef.current = true;
     }
 
     prevWorkspaceIdRef.current = currentWorkspaceId;
   }, [activeWorkspace]);
 
   useEffect(() => {
-    // Don't overwrite local state while a save mutation is in flight
-    if (updateSetupProgressMutationRef.current.isPending) return;
+    if (updateSetupProgressMutation.isPending || !setupProgressData) return;
 
-    if (!setupProgressData) return;
+    const validSteps = Array.isArray(setupProgressData.completedSteps)
+      ? setupProgressData.completedSteps.filter(
+          (step): step is StepId => typeof step === "string" && step.length > 0,
+        )
+      : [];
 
-    console.log("[useSetupProgress] Loading from DB:", setupProgressData);
+    setCompletedSteps((prev) => {
+      if (isInitialLoadRef.current) {
+        isInitialLoadRef.current = false;
+        return new Set(validSteps);
+      }
 
-    if (setupProgressData.completedSteps && Array.isArray(setupProgressData.completedSteps)) {
-      const validSteps = setupProgressData.completedSteps.filter(
-        (step): step is StepId => typeof step === "string" && step.length > 0,
-      );
-
-      console.log("[useSetupProgress] Valid steps from DB:", validSteps);
-
-      // При первой загрузке (prev пустой) — просто устанавливаем данные из БД
-      // При последующих обновлениях — мержим с локальными изменениями
-      setCompletedSteps((prev) => {
-        console.log("[useSetupProgress] Current local state:", Array.from(prev));
-        // Если локальное состояние пустое — это первая загрузка, просто берём данные из БД
-        if (prev.size === 0) {
-          console.log("[useSetupProgress] First load, setting from DB");
-          return new Set(validSteps);
-        }
-        // Иначе мержим: приоритет у данных из БД, но сохраняем локальные добавления
-        const merged = new Set([...validSteps, ...prev]);
-        console.log("[useSetupProgress] Merging, result:", Array.from(merged));
-        return merged;
-      });
-    } else {
-      console.log("[useSetupProgress] No valid steps, resetting to empty");
-      // Если completedSteps не массив или пустой — устанавливаем пустой Set
-      setCompletedSteps(new Set());
-    }
-  }, [setupProgressData]);
+      return new Set([...validSteps, ...prev]);
+    });
+  }, [setupProgressData, updateSetupProgressMutation.isPending]);
 
   return {
     completedSteps,

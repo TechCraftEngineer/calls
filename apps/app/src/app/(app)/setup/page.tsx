@@ -5,7 +5,7 @@ import { toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { BarChart3, Bot, Building2, Download, Globe, Loader2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { useSession } from "@/lib/better-auth";
 import { setOnboardedCookie } from "@/lib/cookies";
@@ -19,7 +19,7 @@ import {
   SetupStepsList,
 } from "./_components";
 import type { SetupStep, StepId } from "./_components/types";
-import { useAutoCompleteSteps, useSetupProgress } from "./_hooks";
+import { useSetupProgress } from "./_hooks";
 
 const SETUP_STEPS: SetupStep[] = [
   {
@@ -99,7 +99,8 @@ export default function SetupPage() {
         await queryClient.invalidateQueries({ queryKey: orpc.workspaces.list.queryKey({}) });
         router.push(paths.root);
       },
-      onError: () => {
+      onError: (error) => {
+        console.error("Failed to complete onboarding:", error);
         toast.error("Не удалось завершить настройку");
       },
     }),
@@ -107,13 +108,6 @@ export default function SetupPage() {
 
   const loading = sessionPending || workspaceLoading;
 
-  // Auto-complete steps based on integrations
-  useAutoCompleteSteps(completedSteps, saveCompletedSteps);
-
-  // Auto-open next modal when returning from href-based steps
-  // useAutoOpenModal(SETUP_STEPS, completedSteps, activeModal, setActiveModal);
-
-  // Redirect if already onboarded
   useEffect(() => {
     if (!loading && activeWorkspace?.isOnboarded) {
       router.replace(paths.root);
@@ -122,40 +116,34 @@ export default function SetupPage() {
 
   const completedCount = completedSteps.size;
   const totalSteps = SETUP_STEPS.length;
-  const progressPercent = (completedCount / totalSteps) * 100;
+  const progressPercent = useMemo(() => (completedCount / totalSteps) * 100, [completedCount]);
 
-  const handleCompleteStep = (stepId: StepId) => {
-    const newCompleted = new Set(completedSteps);
-    newCompleted.add(stepId);
-    saveCompletedSteps(newCompleted);
-    setActiveModal(null);
-
-    // Автоматический переход к следующему шагу
-    const currentIndex = SETUP_STEPS.findIndex((s) => s.id === stepId);
-    const nextStep = SETUP_STEPS[currentIndex + 1];
-
-    if (nextStep) {
-      if (nextStep.href) {
-        router.push(nextStep.href);
-      } else {
-        setActiveModal(nextStep.id);
-      }
-    } else {
+  const handleCompleteStep = useCallback(
+    (stepId: StepId) => {
+      const newCompleted = new Set(completedSteps);
+      newCompleted.add(stepId);
+      saveCompletedSteps(newCompleted);
+      setActiveModal(null);
       toast.success("Шаг завершён");
-    }
-  };
+    },
+    [completedSteps, saveCompletedSteps],
+  );
 
-  const handleFinishSetup = async () => {
+  const handleFinishSetup = useCallback(() => {
     if (!activeWorkspace) return;
     completeOnboardingMutation.mutate({
       workspaceId: activeWorkspace.id,
     });
-  };
+  }, [activeWorkspace, completeOnboardingMutation]);
 
   if (loading) {
     return (
       <main className="main-content flex items-center justify-center">
-        <div className="flex items-center gap-2 text-muted-foreground" role="status">
+        <div
+          className="flex items-center gap-2 text-muted-foreground"
+          role="status"
+          aria-live="polite"
+        >
           <Loader2 className="size-5 animate-spin" aria-hidden="true" />
           <span>Загрузка...</span>
         </div>
@@ -198,12 +186,15 @@ export default function SetupPage() {
   return (
     <main className="main-content">
       <div className="mx-auto max-w-2xl space-y-6 py-8">
-        {/* Page title */}
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-bold tracking-tight">Добро пожаловать</h1>
           <p className="text-muted-foreground">
             Выполните эти шаги, чтобы начать работу с системой
           </p>
+        </div>
+
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          Выполнено {completedCount} из {totalSteps} шагов
         </div>
 
         <SetupStepsList
@@ -223,7 +214,6 @@ export default function SetupPage() {
           />
         )}
 
-        {/* Modals */}
         <ProviderModal
           open={activeModal === "provider"}
           onOpenChange={() => setActiveModal(null)}
