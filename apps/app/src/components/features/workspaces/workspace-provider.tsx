@@ -48,12 +48,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     enabled: shouldFetchWorkspaces,
   });
 
-  // Логирование для отладки
-  if (process.env.NODE_ENV === "development" && workspacesData) {
-    console.log("[WorkspaceProvider] Current user:", session?.user?.email);
-    console.log("[WorkspaceProvider] Raw workspaces data:", workspacesData);
-  }
-
   const setActiveMutation = useMutation(
     orpc.workspaces.setActive.mutationOptions({
       onMutate: async (variables) => {
@@ -90,16 +84,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const workspaces = (workspacesData?.workspaces ?? []) as Workspace[];
   const activeWorkspaceId = workspacesData?.activeWorkspaceId ?? null;
-
-  // Логирование для отладки
-  if (process.env.NODE_ENV === "development") {
-    console.log(
-      "[WorkspaceProvider] Workspaces:",
-      workspaces.length,
-      workspaces.map((w) => ({ id: w.id, name: w.name })),
-    );
-    console.log("[WorkspaceProvider] Active workspace ID:", activeWorkspaceId);
-  }
 
   const activeWorkspace = useMemo(() => {
     if (!activeWorkspaceId) return workspaces[0] ?? null;

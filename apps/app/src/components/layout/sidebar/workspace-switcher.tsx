@@ -35,10 +35,7 @@ export function WorkspaceSwitcher() {
 
   const handleDropdownOpenChange = async (open: boolean) => {
     if (open) {
-      console.log("[WorkspaceSwitcher] Обновление списка компаний...");
-      // Обновляем список компаний при открытии dropdown
       await refreshWorkspaces();
-      console.log("[WorkspaceSwitcher] Список обновлён. Компаний:", workspaces.length);
     }
     setDropdownOpen(open);
   };
