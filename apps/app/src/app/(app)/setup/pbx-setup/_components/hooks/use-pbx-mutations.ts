@@ -61,7 +61,11 @@ export function usePbxMutations(
       }
       throw new Error("Проверка не пройдена");
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Инвалидируем кеш интеграций чтобы useAutoCompleteSteps получил обновлённые данные
+      await queryClient.invalidateQueries({
+        queryKey: orpc.settings.getIntegrations.queryKey(),
+      });
       toast.success("API подключено");
     },
     onError: () => {

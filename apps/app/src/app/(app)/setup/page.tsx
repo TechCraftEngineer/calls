@@ -20,7 +20,7 @@ import {
   SetupStepsList,
 } from "./_components";
 import type { SetupStep, StepId } from "./_components/types";
-import { useAutoCompleteSteps, useAutoOpenModal, useSetupProgress } from "./_hooks";
+import { useAutoCompleteSteps, useSetupProgress } from "./_hooks";
 
 const SETUP_STEPS: SetupStep[] = [
   {
@@ -113,7 +113,7 @@ export default function SetupPage() {
   useAutoCompleteSteps(completedSteps, saveCompletedSteps);
 
   // Auto-open next modal when returning from href-based steps
-  useAutoOpenModal(SETUP_STEPS, completedSteps, activeModal, setActiveModal);
+  // useAutoOpenModal(SETUP_STEPS, completedSteps, activeModal, setActiveModal);
 
   // Redirect if already onboarded
   useEffect(() => {

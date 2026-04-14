@@ -28,12 +28,16 @@ export function useSetupProgress() {
 
   const saveCompletedSteps = useCallback(
     (steps: Set<StepId>) => {
+      console.log("[useSetupProgress] Saving steps:", Array.from(steps));
       setCompletedSteps(steps);
       if (activeWorkspace) {
+        console.log("[useSetupProgress] Mutating to DB for workspace:", activeWorkspace.id);
         updateSetupProgressMutationRef.current.mutate({
           workspaceId: activeWorkspace.id,
           completedSteps: [...steps],
         });
+      } else {
+        console.log("[useSetupProgress] No active workspace, skipping save");
       }
     },
     [activeWorkspace],
@@ -47,25 +51,45 @@ export function useSetupProgress() {
       },
     }),
     enabled: !workspaceLoading && !!activeWorkspace,
+    staleTime: 0, // Всегда считать данные устаревшими
+    refetchOnMount: true, // Всегда перезапрашивать при монтировании
   });
 
   useEffect(() => {
     // Don't overwrite local state while a save mutation is in flight
     if (updateSetupProgressMutationRef.current.isPending) return;
 
-    if (setupProgressData?.completedSteps && Array.isArray(setupProgressData.completedSteps)) {
+    if (!setupProgressData) return;
+
+    console.log("[useSetupProgress] Loading from DB:", setupProgressData);
+
+    if (setupProgressData.completedSteps && Array.isArray(setupProgressData.completedSteps)) {
       const validSteps = setupProgressData.completedSteps.filter(
         (step): step is StepId => typeof step === "string" && step.length > 0,
       );
+
+      console.log("[useSetupProgress] Valid steps from DB:", validSteps);
+
+      // При первой загрузке (prev пустой) — просто устанавливаем данные из БД
+      // При последующих обновлениях — мержим с локальными изменениями
       setCompletedSteps((prev) => {
-        // Merge: keep any locally-added steps that haven't been persisted yet
+        console.log("[useSetupProgress] Current local state:", Array.from(prev));
+        // Если локальное состояние пустое — это первая загрузка, просто берём данные из БД
+        if (prev.size === 0) {
+          console.log("[useSetupProgress] First load, setting from DB");
+          return new Set(validSteps);
+        }
+        // Иначе мержим: приоритет у данных из БД, но сохраняем локальные добавления
         const merged = new Set([...validSteps, ...prev]);
+        console.log("[useSetupProgress] Merging, result:", Array.from(merged));
         return merged;
       });
-    } else if (activeWorkspace) {
+    } else {
+      console.log("[useSetupProgress] No valid steps, resetting to empty");
+      // Если completedSteps не массив или пустой — устанавливаем пустой Set
       setCompletedSteps(new Set());
     }
-  }, [setupProgressData, activeWorkspace]);
+  }, [setupProgressData]);
 
   return {
     completedSteps,
