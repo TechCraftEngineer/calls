@@ -45,6 +45,9 @@ export class WorkspacesService {
       return id;
     });
 
+    // Инвалидируем кэш списка компаний пользователя
+    workspaceCache.invalidateUserWorkspaces(ownerUserId);
+
     // Сразу делаем новый workspace активным для создателя
     await this.setActiveWorkspace(ownerUserId, workspaceId);
 

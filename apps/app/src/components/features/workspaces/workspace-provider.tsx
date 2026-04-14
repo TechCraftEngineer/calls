@@ -113,36 +113,31 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       if (activeWorkspace?.id === workspaceId) return;
       if (setActiveMutation.isPending) return;
 
-      // Сначала пробуем найти в текущем списке
-      let ws = workspaces.find((w: Workspace) => w.id === workspaceId);
+      // Всегда обновляем список перед переключением для гарантии актуальности
+      await queryClient.invalidateQueries({
+        queryKey: orpc.workspaces.list.queryKey(),
+      });
 
-      // Если не найдена, обновляем список и ищем снова
+      // Ждём обновления данных
+      await queryClient.refetchQueries({
+        queryKey: orpc.workspaces.list.queryKey(),
+      });
+
+      // Получаем свежие данные из кэша
+      const freshData = queryClient.getQueryData(
+        orpc.workspaces.list.queryKey(),
+      ) as typeof workspacesData;
+      const freshWorkspaces = (freshData?.workspaces ?? []) as Workspace[];
+      const ws = freshWorkspaces.find((w: Workspace) => w.id === workspaceId);
+
       if (!ws) {
-        await queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.list.queryKey(),
-        });
-
-        // Ждём обновления данных
-        await queryClient.refetchQueries({
-          queryKey: orpc.workspaces.list.queryKey(),
-        });
-
-        // Получаем свежие данные из кэша
-        const freshData = queryClient.getQueryData(
-          orpc.workspaces.list.queryKey(),
-        ) as typeof workspacesData;
-        const freshWorkspaces = (freshData?.workspaces ?? []) as Workspace[];
-        ws = freshWorkspaces.find((w: Workspace) => w.id === workspaceId);
-
-        if (!ws) {
-          toast.error("Компания не найдена.");
-          return;
-        }
+        toast.error("Компания не найдена.");
+        return;
       }
 
       await setActiveMutation.mutateAsync({ workspaceId });
     },
-    [workspaces, activeWorkspace?.id, setActiveMutation, queryClient, orpc.workspaces.list],
+    [activeWorkspace?.id, setActiveMutation, queryClient, orpc.workspaces.list],
   );
 
   const refreshWorkspaces = useCallback(async () => {

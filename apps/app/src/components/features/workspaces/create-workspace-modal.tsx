@@ -18,7 +18,7 @@ import {
   toast,
 } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -48,11 +48,24 @@ export default function CreateWorkspaceModal({
     defaultValues: { name: "" },
   });
 
+  const queryClient = useQueryClient();
+
   const createMutation = useMutation(
     orpc.workspaces.create.mutationOptions({
       onSuccess: async (workspace) => {
         toast.success("Компания создана");
         form.reset();
+
+        // Инвалидируем кэш списка компаний ПЕРЕД переключением
+        await queryClient.invalidateQueries({
+          queryKey: orpc.workspaces.list.queryKey(),
+        });
+
+        // Ждём обновления данных
+        await queryClient.refetchQueries({
+          queryKey: orpc.workspaces.list.queryKey(),
+        });
+
         await onSuccess(workspace.id);
         onOpenChange(false);
       },
