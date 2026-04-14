@@ -65,8 +65,8 @@ export function createLinkOrButton(
 }
 
 export function renderDirectionCell(call: CallWithDetails["call"]) {
-  const directionLabel = call.direction === "inbound" ? "ВХОДЯЩИЙ" : "ИСХОДЯЩИЙ";
-  const directionClass = directionLabel === "ВХОДЯЩИЙ" ? "badge-yellow-op" : "badge-black-op";
+  const directionLabel = call.direction === "inbound" ? "Входящий" : "Исходящий";
+  const directionClass = call.direction === "inbound" ? "badge-yellow-op" : "badge-black-op";
   return <span className={`op-badge ${directionClass}`}>{directionLabel}</span>;
 }
 
@@ -202,16 +202,16 @@ export function renderStatusCell(call: CallWithDetails["call"]) {
     status ?? (duration === 0 && call.direction === "inbound" ? "missed" : "answered");
 
   const statusConfig: Record<string, { label: string; className: string }> = {
-    missed: { label: "ПРОПУЩЕН", className: "badge-red-op" },
-    answered: { label: "ПРИНЯТ", className: "badge-green-op" },
-    voicemail: { label: "ГОЛОС. ПОЧТА", className: "badge-yellow-op" },
-    failed: { label: "ОШИБКА", className: "badge-red-op" },
-    technical_error: { label: "ОШИБКА", className: "badge-red-op" },
+    missed: { label: "Пропущен", className: "badge-red-op" },
+    answered: { label: "Принят", className: "badge-green-op" },
+    voicemail: { label: "Голос. почта", className: "badge-yellow-op" },
+    failed: { label: "Ошибка", className: "badge-red-op" },
+    technical_error: { label: "Ошибка", className: "badge-red-op" },
   };
 
   // Для неизвестных статусов возвращаем явный unknown badge
   const config = statusConfig[computedStatus] ?? {
-    label: "НЕИЗВЕСТНО",
+    label: "Неизвестно",
     className: "badge-gray-op",
   };
 
