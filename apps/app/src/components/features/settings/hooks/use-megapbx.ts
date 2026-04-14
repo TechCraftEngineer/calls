@@ -69,13 +69,17 @@ export function useMegaPbxSettings({ state, setState }: UseMegaPbxSettingsProps)
   const testPbxMutation = useMutation(orpc.settings.testPbx.mutationOptions());
   const syncPbxDirectoryMutation = useMutation(
     orpc.settings.syncPbxDirectory.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (result) => {
+        toast.success(result.message);
         queryClient.invalidateQueries({
           queryKey: orpc.settings.listPbxEmployees.queryKey(),
         });
         queryClient.invalidateQueries({
           queryKey: orpc.settings.listPbxNumbers.queryKey(),
         });
+      },
+      onError: (error) => {
+        toast.error(error.message || "Ошибка синхронизации");
       },
     }),
   );

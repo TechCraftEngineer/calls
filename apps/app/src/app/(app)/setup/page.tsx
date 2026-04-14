@@ -113,13 +113,32 @@ export default function SetupPage() {
     }),
   );
 
+  const updateSetupProgressMutation = useMutation(
+    orpc.workspaces.updateSetupProgress.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.workspaces.list.queryKey(),
+        });
+      },
+    }),
+  );
+
   const user = session?.user ?? null;
   const loading = sessionPending || workspaceLoading;
 
-  const saveCompletedSteps = useCallback((steps: Set<StepId>) => {
-    setCompletedSteps(steps);
-    sessionStorage.setItem("setup_completed_steps", JSON.stringify([...steps]));
-  }, []);
+  const saveCompletedSteps = useCallback(
+    (steps: Set<StepId>) => {
+      setCompletedSteps(steps);
+      if (activeWorkspace) {
+        // Сохраняем в базу данных
+        updateSetupProgressMutation.mutate({
+          workspaceId: activeWorkspace.id,
+          completedSteps: [...steps],
+        });
+      }
+    },
+    [activeWorkspace, updateSetupProgressMutation],
+  );
 
   // Check if API step is completed by checking if integrations are configured
   const { data: integrations } = useQuery({
@@ -127,19 +146,24 @@ export default function SetupPage() {
     enabled: !loading && !!activeWorkspace,
   });
 
-  // Load completed steps from sessionStorage on mount (client-only)
+  // Load completed steps from database on mount
+  const { data: setupProgressData } = useQuery({
+    ...orpc.workspaces.getSetupProgress.queryOptions({
+      input: {
+        workspaceId: activeWorkspace?.id ?? "",
+      },
+    }),
+    enabled: !loading && !!activeWorkspace,
+  });
+
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const saved = sessionStorage.getItem("setup_completed_steps");
-      if (saved) {
-        const parsed = JSON.parse(saved) as StepId[];
-        setCompletedSteps(new Set(parsed));
-      }
-    } catch {
-      // Ignore corrupt JSON
+    if (setupProgressData?.completedSteps) {
+      setCompletedSteps(new Set(setupProgressData.completedSteps as StepId[]));
+    } else if (activeWorkspace) {
+      // Reset if switching workspace
+      setCompletedSteps(new Set());
     }
-  }, []);
+  }, [setupProgressData, activeWorkspace]);
 
   // Auto-mark API step as completed if integrations are configured
   useEffect(() => {
@@ -170,7 +194,22 @@ export default function SetupPage() {
     newCompleted.add(stepId);
     saveCompletedSteps(newCompleted);
     setActiveModal(null);
-    toast.success("Шаг завершён");
+
+    // Автоматический переход к следующему шагу
+    const currentIndex = SETUP_STEPS.findIndex((s) => s.id === stepId);
+    const nextStep = SETUP_STEPS[currentIndex + 1];
+
+    if (nextStep) {
+      // Если у следующего шага есть href, переходим на страницу
+      if (nextStep.href) {
+        router.push(nextStep.href);
+      } else {
+        // Иначе открываем модальное окно следующего шага
+        setActiveModal(nextStep.id);
+      }
+    } else {
+      toast.success("Шаг завершён");
+    }
   };
 
   const handleSkipStep = (stepId: StepId) => {

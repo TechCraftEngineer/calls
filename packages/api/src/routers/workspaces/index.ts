@@ -3,11 +3,13 @@ import { completeOnboarding } from "./complete-onboarding";
 import { create } from "./create";
 import { deleteWorkspace } from "./delete";
 import { get } from "./get";
+import { getSetupProgress } from "./get-setup-progress";
 import { invitationsRouter } from "./invitations";
 import { list } from "./list";
 import { membersRouter } from "./members";
 import { setActive } from "./set-active";
 import { update } from "./update";
+import { updateSetupProgress } from "./update-setup-progress";
 
 export const workspacesRouter = {
   list,
@@ -18,6 +20,8 @@ export const workspacesRouter = {
   setActive,
   checkUserPassword,
   completeOnboarding,
+  getSetupProgress,
+  updateSetupProgress,
 
   listMembers: membersRouter.listMembers,
   addMember: membersRouter.addMember,

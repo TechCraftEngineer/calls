@@ -399,6 +399,30 @@ export const workspacesRepository = {
       .where(eq(schema.workspaces.id, workspaceId));
     return (result.rowCount ?? 0) > 0;
   },
+
+  async getSetupProgress(workspaceId: string): Promise<string[]> {
+    const workspace = await this.getById(workspaceId);
+    if (!workspace?.metadata) return [];
+    const metadata = workspace.metadata as Record<string, unknown>;
+    return Array.isArray(metadata.setupCompletedSteps) ? metadata.setupCompletedSteps : [];
+  },
+
+  async updateSetupProgress(workspaceId: string, completedSteps: string[]): Promise<boolean> {
+    const workspace = await this.getById(workspaceId);
+    if (!workspace) return false;
+
+    const metadata = (workspace.metadata as Record<string, unknown>) ?? {};
+    metadata.setupCompletedSteps = completedSteps;
+
+    const result = await db
+      .update(schema.workspaces)
+      .set({
+        metadata,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.workspaces.id, workspaceId));
+    return (result.rowCount ?? 0) > 0;
+  },
 };
 
 export type WorkspacesRepository = typeof workspacesRepository;

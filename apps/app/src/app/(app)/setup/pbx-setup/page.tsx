@@ -1,9 +1,15 @@
 "use client";
 
+import { paths } from "@calls/config";
+import { Button } from "@calls/ui";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/layout/header";
-import { ApiConfigCard, SyncCard, usePbxSetup, WebhookConfigCard } from "./_components";
+import { ApiConfigCard, usePbxSetup, WebhookConfigCard } from "./_components";
 
 export default function PbxSetupPage() {
+  const router = useRouter();
+
   const {
     // Webhook
     webhookUrl,
@@ -24,12 +30,10 @@ export default function PbxSetupPage() {
 
     // Mutations
     testAndSaveMutationPending,
-    syncMutationPending,
 
     // Handlers
     handleCopy,
     handleTestAndSave,
-    handleSync,
   } = usePbxSetup();
 
   return (
@@ -38,11 +42,21 @@ export default function PbxSetupPage() {
 
       <main className="main-content">
         <div className="mx-auto max-w-4xl">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold">Подключение API телефонии</h1>
-            <p className="text-muted-foreground">
-              Настройте интеграцию с вашей телефонной системой
-            </p>
+          <div className="mb-6 flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push(paths.setup.root)}
+              aria-label="Назад к настройке"
+            >
+              <ArrowLeft className="size-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">Подключение API телефонии</h1>
+              <p className="text-muted-foreground">
+                Настройте интеграцию с вашей телефонной системой
+              </p>
+            </div>
           </div>
 
           <WebhookConfigCard
@@ -67,9 +81,16 @@ export default function PbxSetupPage() {
             onTestAndSave={handleTestAndSave}
           />
 
-          {configSaved && (
-            <SyncCard syncMutationPending={syncMutationPending} onSync={handleSync} />
-          )}
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={() => router.push(paths.setup.root)}>
+              <ArrowLeft className="mr-2 size-4" />
+              Назад
+            </Button>
+            <Button onClick={() => router.push(paths.setup.directory)} disabled={!configSaved}>
+              Далее
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
+          </div>
         </div>
       </main>
     </>

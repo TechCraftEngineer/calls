@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { ITEMS_PER_PAGE } from "@/app/(app)/setup/pbx-setup/_components/constants";
 import type { Employee, PhoneNumber } from "@/app/(app)/setup/pbx-setup/_components/types";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { EmployeeList } from "@/components/pbx-setup/employee-list";
 import { NumberList } from "@/components/pbx-setup/number-list";
 import { useORPC } from "@/orpc/react";
@@ -16,6 +17,26 @@ export default function DirectoryPage() {
   const router = useRouter();
   const orpc = useORPC();
   const queryClient = useQueryClient();
+  const { activeWorkspace } = useWorkspace();
+
+  const updateSetupProgressMutation = useMutation(
+    orpc.workspaces.updateSetupProgress.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.workspaces.list.queryKey(),
+        });
+      },
+    }),
+  );
+
+  const { data: setupProgressData } = useQuery({
+    ...orpc.workspaces.getSetupProgress.queryOptions({
+      input: {
+        workspaceId: activeWorkspace?.id ?? "",
+      },
+    }),
+    enabled: !!activeWorkspace,
+  });
 
   // Selection state
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
@@ -39,15 +60,35 @@ export default function DirectoryPage() {
 
   const syncPbxDirectoryMutation = useMutation(
     orpc.settings.syncPbxDirectory.mutationOptions({
-      onSuccess: async () => {
-        toast.success("Синхронизировано");
+      onSuccess: async (result) => {
+        toast.success(result.message);
+        await queryClient.invalidateQueries({
+          queryKey: orpc.settings.listPbxEmployees.queryKey(),
+        });
+        await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
+      },
+      onError: (error) => {
+        toast.error(error.message || "Ошибка синхронизации");
+      },
+    }),
+  );
+
+  const importPbxDirectoryMutation = useMutation(
+    orpc.settings.importPbxDirectory.mutationOptions({
+      onSuccess: async (result) => {
+        toast.success(
+          `Импортировано ${result.importedEmployees} сотрудников и ${result.importedNumbers} номеров`,
+        );
+        // Очищаем выбор после успешного импорта
+        setSelectedEmployees(new Set());
+        setSelectedNumbers(new Set());
         await queryClient.invalidateQueries({
           queryKey: orpc.settings.listPbxEmployees.queryKey(),
         });
         await queryClient.invalidateQueries({ queryKey: orpc.settings.listPbxNumbers.queryKey() });
       },
       onError: () => {
-        toast.error("Ошибка синхронизации");
+        toast.error("Ошибка импорта");
       },
     }),
   );
@@ -126,13 +167,17 @@ export default function DirectoryPage() {
     if (allEmployeesSelected) {
       setSelectedEmployees((prev) => {
         const next = new Set(prev);
-        paginatedEmployees.forEach((e) => next.delete(e.id));
+        paginatedEmployees.forEach((e) => {
+          next.delete(e.id);
+        });
         return next;
       });
     } else {
       setSelectedEmployees((prev) => {
         const next = new Set(prev);
-        paginatedEmployees.forEach((e) => next.add(e.id));
+        paginatedEmployees.forEach((e) => {
+          next.add(e.id);
+        });
         return next;
       });
     }
@@ -142,13 +187,17 @@ export default function DirectoryPage() {
     if (allNumbersSelected) {
       setSelectedNumbers((prev) => {
         const next = new Set(prev);
-        paginatedNumbers.forEach((n) => next.delete(n.id));
+        paginatedNumbers.forEach((n) => {
+          next.delete(n.id);
+        });
         return next;
       });
     } else {
       setSelectedNumbers((prev) => {
         const next = new Set(prev);
-        paginatedNumbers.forEach((n) => next.add(n.id));
+        paginatedNumbers.forEach((n) => {
+          next.add(n.id);
+        });
         return next;
       });
     }
@@ -157,7 +206,9 @@ export default function DirectoryPage() {
   const handleSelectAllFilteredEmployees = useCallback(() => {
     setSelectedEmployees((prev) => {
       const next = new Set(prev);
-      filteredEmployees.forEach((e) => next.add(e.id));
+      filteredEmployees.forEach((e) => {
+        next.add(e.id);
+      });
       return next;
     });
   }, [filteredEmployees]);
@@ -165,7 +216,9 @@ export default function DirectoryPage() {
   const handleSelectAllFilteredNumbers = useCallback(() => {
     setSelectedNumbers((prev) => {
       const next = new Set(prev);
-      filteredNumbers.forEach((n) => next.add(n.id));
+      filteredNumbers.forEach((n) => {
+        next.add(n.id);
+      });
       return next;
     });
   }, [filteredNumbers]);
@@ -184,14 +237,37 @@ export default function DirectoryPage() {
     await syncPbxDirectoryMutation.mutateAsync({});
   };
 
-  const handleComplete = () => {
-    // Сохраняем в sessionStorage что шаг завершен
-    const saved = sessionStorage.getItem("setup_completed_steps");
-    const completed = new Set(saved ? JSON.parse(saved) : []);
-    completed.add("directory");
-    sessionStorage.setItem("setup_completed_steps", JSON.stringify([...completed]));
+  const handleNext = async () => {
+    // Импортируем выбранные элементы, если они есть
+    if (selectedEmployees.size > 0 || selectedNumbers.size > 0) {
+      try {
+        const result = await importPbxDirectoryMutation.mutateAsync({
+          employeeIds: Array.from(selectedEmployees),
+          numberIds: Array.from(selectedNumbers),
+        });
+        toast.success(
+          `Импортировано ${result.importedEmployees} сотрудников и ${result.importedNumbers} номеров`,
+        );
+      } catch {
+        toast.error("Ошибка импорта");
+        return;
+      }
+    }
 
-    toast.success("Справочник утвержден");
+    // Сохраняем в базу данных что шаг завершен
+    if (activeWorkspace && setupProgressData) {
+      try {
+        const completed = new Set(setupProgressData.completedSteps ?? []);
+        completed.add("directory");
+        await updateSetupProgressMutation.mutateAsync({
+          workspaceId: activeWorkspace.id,
+          completedSteps: [...completed],
+        });
+      } catch (error) {
+        console.error("Failed to update setup progress:", error);
+      }
+    }
+
     router.push(paths.setup.root);
   };
 
@@ -205,35 +281,39 @@ export default function DirectoryPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push(paths.setup.root)}
+            onClick={() => router.push(paths.setup.pbxSetup)}
             aria-label="Назад"
           >
             <ArrowLeft className="size-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-semibold">Сотрудники и номера</h1>
+            <h1 className="text-2xl font-semibold">Импорт справочника</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Выберите сотрудников и номера для включения в справочник
+              Синхронизируйте данные с PBX и отметьте сотрудников и номера для импорта
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleSync}
-          disabled={syncPbxDirectoryMutation.isPending}
-        >
-          {syncPbxDirectoryMutation.isPending ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : (
-            <RefreshCw className="mr-2 size-4" />
-          )}
-          Синхронизировать
-        </Button>
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="size-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : employees.length === 0 && numbers.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-12 text-center">
+          <RefreshCw className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h3 className="mb-2 text-lg font-semibold">Справочник пуст</h3>
+          <p className="mb-4 text-sm text-muted-foreground">
+            Нажмите кнопку "Синхронизировать" чтобы загрузить данные из PBX
+          </p>
+          <Button onClick={handleSync} disabled={syncPbxDirectoryMutation.isPending}>
+            {syncPbxDirectoryMutation.isPending ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 size-4" />
+            )}
+            Синхронизировать
+          </Button>
         </div>
       ) : (
         <>
@@ -276,12 +356,18 @@ export default function DirectoryPage() {
       )}
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-3">
-        <Button variant="outline" onClick={() => router.push(paths.setup.root)}>
-          Отмена
+      <div className="flex justify-between gap-3">
+        <Button variant="outline" onClick={() => router.push(paths.setup.pbxSetup)}>
+          <ArrowLeft className="mr-2 size-4" />
+          Назад
         </Button>
-        <Button onClick={handleComplete} disabled={isLoading}>
-          Утвердить справочник
+        <Button onClick={handleNext} disabled={isLoading || importPbxDirectoryMutation.isPending}>
+          {importPbxDirectoryMutation.isPending ? (
+            <Loader2 className="mr-2 size-4 animate-spin" />
+          ) : null}
+          {selectedEmployees.size > 0 || selectedNumbers.size > 0
+            ? `Импортировать и продолжить (${selectedEmployees.size + selectedNumbers.size})`
+            : "Пропустить"}
         </Button>
       </div>
     </div>

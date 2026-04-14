@@ -35,12 +35,11 @@ export function usePbxSetup() {
   } = useApiConfig();
 
   // Mutations
-  const {
-    testAndSaveMutationPending,
-    syncMutationPending,
-    handleTestAndSave: baseHandleTestAndSave,
-    handleSync: baseHandleSync,
-  } = usePbxMutations(validateConfig, focusFirstError, () => {});
+  const { testAndSaveMutationPending, handleTestAndSave: baseHandleTestAndSave } = usePbxMutations(
+    validateConfig,
+    focusFirstError,
+    () => {},
+  );
 
   // Handlers with dependencies
   const handleCopy = useCallback((text: string, label: string) => {
@@ -49,18 +48,14 @@ export function usePbxSetup() {
   }, []);
 
   const handleTestAndSave = useCallback(() => {
-    baseHandleTestAndSave(baseUrl, apiKey, webhookSecret);
-    setConfigSaved(true);
-  }, [baseHandleTestAndSave, baseUrl, apiKey, webhookSecret, setConfigSaved]);
-
-  const handleSync = useCallback(() => {
-    baseHandleSync();
-    // После синхронизации перенаправляем на страницу directory
-    // Небольшая задержка чтобы пользователь увидел сообщение о синхронизации
-    setTimeout(() => {
-      router.push(paths.setup.directory);
-    }, 1500);
-  }, [baseHandleSync, router]);
+    baseHandleTestAndSave(baseUrl, apiKey, webhookSecret, () => {
+      setConfigSaved(true);
+      // Небольшая задержка чтобы пользователь увидел сообщение об успехе
+      setTimeout(() => {
+        router.push(paths.setup.directory);
+      }, 1000);
+    });
+  }, [baseHandleTestAndSave, baseUrl, apiKey, webhookSecret, setConfigSaved, router]);
 
   return {
     // Webhook
@@ -84,11 +79,9 @@ export function usePbxSetup() {
 
     // Mutations status
     testAndSaveMutationPending,
-    syncMutationPending,
 
     // Handlers
     handleCopy,
     handleTestAndSave,
-    handleSync,
   };
 }
