@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export type StepId = "provider" | "api" | "directory" | "company" | "evaluation";
+export type StepId = "provider" | "api" | "directory" | "import" | "company" | "evaluation";
 
 export interface SetupStep {
   id: StepId;

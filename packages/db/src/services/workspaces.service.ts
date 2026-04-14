@@ -2,6 +2,7 @@
  * Workspaces service - business logic for workspace operations
  */
 
+import { eq } from "drizzle-orm";
 import { db } from "../client";
 import { workspaceCache } from "../lib/workspace-cache";
 import type {
@@ -43,6 +44,9 @@ export class WorkspacesService {
 
       return id;
     });
+
+    // Инвалидируем кэш списка компаний пользователя
+    workspaceCache.invalidateUserWorkspaces(ownerUserId);
 
     // Сразу делаем новый workspace активным для создателя
     await this.setActiveWorkspace(ownerUserId, workspaceId);
