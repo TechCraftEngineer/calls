@@ -48,6 +48,28 @@ export default function EvaluationSettingsPage() {
     }
   }, []);
 
+  // Mutation для обновления прогресса setup
+  const updateSetupProgressMutation = useMutation(
+    orpc.workspaces.updateSetupProgress.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.workspaces.getSetupProgress.queryKey(),
+        });
+      },
+    }),
+  );
+
+  // Автоматически отмечаем шаг evaluation при заходе на страницу
+  useEffect(() => {
+    if (activeWorkspace && fromSetup) {
+      updateSetupProgressMutation.mutate({
+        workspaceId: activeWorkspace.id,
+        completedStep: "evaluation",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeWorkspace?.id, fromSetup]);
+
   const { data: evaluationSettings } = useQuery({
     ...orpc.settings.getEvaluationSettings.queryOptions(),
     enabled: !!workspaceId && isWorkspaceAdmin,

@@ -23,7 +23,7 @@ export default function DirectoryPage() {
     orpc.workspaces.updateSetupProgress.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
-          queryKey: ["workspaces", "getSetupProgress"],
+          queryKey: orpc.workspaces.getSetupProgress.queryKey(),
         });
       },
     }),

@@ -82,7 +82,7 @@ export function usePbxMutations(
 
           // Инвалидируем кеш прогресса
           await queryClient.invalidateQueries({
-            queryKey: ["workspaces", "getSetupProgress"],
+            queryKey: orpc.workspaces.getSetupProgress.queryKey(),
           });
         } catch (error) {
           console.error("Не удалось обновить прогресс настройки:", error);

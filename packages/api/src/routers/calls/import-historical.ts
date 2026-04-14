@@ -1,5 +1,5 @@
 import { pbxService } from "@calls/db";
-import { inngest, pbxSyncRequested, transcribeRequested } from "@calls/jobs";
+import { inngest, pbxSyncRequested, processImportedCalls, transcribeRequested } from "@calls/jobs";
 import { syncPbxCalls } from "@calls/jobs/pbx/sync";
 import { isValidCalendarIsoDate } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
@@ -60,13 +60,12 @@ export const importHistoricalCalls = workspaceAdminProcedure
     if (syncResult.calls > 0) {
       // Отправляем событие для запуска обработки звонков
       // Inngest функция сама найдет необработанные звонки и поставит их в очередь
-      await inngest.send({
-        name: "calls/process-imported",
-        data: {
+      await inngest.send(
+        processImportedCalls.create({
           workspaceId: context.workspaceId,
           importedCount: syncResult.calls,
-        },
-      });
+        }),
+      );
     }
 
     return {

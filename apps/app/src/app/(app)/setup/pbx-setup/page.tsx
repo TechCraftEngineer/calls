@@ -47,7 +47,7 @@ export default function PbxSetupPage() {
       onSuccess: () => {
         if (activeWorkspace) {
           queryClient.invalidateQueries({
-            queryKey: ["workspaces", "getSetupProgress"],
+            queryKey: orpc.workspaces.getSetupProgress.key(),
           });
         }
       },

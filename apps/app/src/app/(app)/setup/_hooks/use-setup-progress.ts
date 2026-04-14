@@ -14,9 +14,9 @@ export function useSetupProgress() {
   const updateSetupProgressMutation = useMutation(
     orpc.workspaces.updateSetupProgress.mutationOptions({
       onSuccess: () => {
-        // Инвалидируем все getSetupProgress queries без указания конкретного workspaceId
+        // Инвалидируем все getSetupProgress queries
         queryClient.invalidateQueries({
-          queryKey: ["workspaces", "getSetupProgress"],
+          queryKey: orpc.workspaces.getSetupProgress.queryKey(),
         });
       },
     }),
