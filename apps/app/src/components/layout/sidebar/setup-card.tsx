@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
-import { useEffect, useState } from "react";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@calls/ui";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
+import { useORPC } from "@/orpc/react";
 import { CircularProgress } from "./circular-progress";
 
 const TOTAL_STEPS = 5;
@@ -13,15 +14,18 @@ export function SetupCard() {
   const { activeWorkspace } = useWorkspace();
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const orpc = useORPC();
 
-  const [completedSteps, setCompletedSteps] = useState(0);
+  const { data: setupProgressData } = useQuery({
+    ...orpc.workspaces.getSetupProgress.queryOptions({
+      input: {
+        workspaceId: activeWorkspace?.id ?? "",
+      },
+    }),
+    enabled: !!activeWorkspace,
+  });
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = sessionStorage.getItem("setup_completed_steps");
-    const steps = saved ? (JSON.parse(saved) as string[]).length : 0;
-    setCompletedSteps(steps);
-  }, []);
+  const completedSteps = setupProgressData?.completedSteps?.length ?? 0;
 
   // Don't show setup card if onboarding is complete
   if (activeWorkspace?.isOnboarded) {

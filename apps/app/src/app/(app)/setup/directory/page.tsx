@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { ITEMS_PER_PAGE } from "@/app/(app)/setup/pbx-setup/_components/constants";
 import type { Employee, PhoneNumber } from "@/app/(app)/setup/pbx-setup/_components/types";
+import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { EmployeeList } from "@/components/pbx-setup/employee-list";
 import { NumberList } from "@/components/pbx-setup/number-list";
 import { useORPC } from "@/orpc/react";
@@ -16,6 +17,26 @@ export default function DirectoryPage() {
   const router = useRouter();
   const orpc = useORPC();
   const queryClient = useQueryClient();
+  const { activeWorkspace } = useWorkspace();
+
+  const updateSetupProgressMutation = useMutation(
+    orpc.workspaces.updateSetupProgress.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.workspaces.list.queryKey(),
+        });
+      },
+    }),
+  );
+
+  const { data: setupProgressData } = useQuery({
+    ...orpc.workspaces.getSetupProgress.queryOptions({
+      input: {
+        workspaceId: activeWorkspace?.id ?? "",
+      },
+    }),
+    enabled: !!activeWorkspace,
+  });
 
   // Selection state
   const [selectedEmployees, setSelectedEmployees] = useState<Set<string>>(new Set());
@@ -126,13 +147,17 @@ export default function DirectoryPage() {
     if (allEmployeesSelected) {
       setSelectedEmployees((prev) => {
         const next = new Set(prev);
-        paginatedEmployees.forEach((e) => next.delete(e.id));
+        paginatedEmployees.forEach((e) => {
+          next.delete(e.id);
+        });
         return next;
       });
     } else {
       setSelectedEmployees((prev) => {
         const next = new Set(prev);
-        paginatedEmployees.forEach((e) => next.add(e.id));
+        paginatedEmployees.forEach((e) => {
+          next.add(e.id);
+        });
         return next;
       });
     }
@@ -142,13 +167,17 @@ export default function DirectoryPage() {
     if (allNumbersSelected) {
       setSelectedNumbers((prev) => {
         const next = new Set(prev);
-        paginatedNumbers.forEach((n) => next.delete(n.id));
+        paginatedNumbers.forEach((n) => {
+          next.delete(n.id);
+        });
         return next;
       });
     } else {
       setSelectedNumbers((prev) => {
         const next = new Set(prev);
-        paginatedNumbers.forEach((n) => next.add(n.id));
+        paginatedNumbers.forEach((n) => {
+          next.add(n.id);
+        });
         return next;
       });
     }
@@ -157,7 +186,9 @@ export default function DirectoryPage() {
   const handleSelectAllFilteredEmployees = useCallback(() => {
     setSelectedEmployees((prev) => {
       const next = new Set(prev);
-      filteredEmployees.forEach((e) => next.add(e.id));
+      filteredEmployees.forEach((e) => {
+        next.add(e.id);
+      });
       return next;
     });
   }, [filteredEmployees]);
@@ -165,7 +196,9 @@ export default function DirectoryPage() {
   const handleSelectAllFilteredNumbers = useCallback(() => {
     setSelectedNumbers((prev) => {
       const next = new Set(prev);
-      filteredNumbers.forEach((n) => next.add(n.id));
+      filteredNumbers.forEach((n) => {
+        next.add(n.id);
+      });
       return next;
     });
   }, [filteredNumbers]);
@@ -184,12 +217,20 @@ export default function DirectoryPage() {
     await syncPbxDirectoryMutation.mutateAsync({});
   };
 
-  const handleComplete = () => {
-    // Сохраняем в sessionStorage что шаг завершен
-    const saved = sessionStorage.getItem("setup_completed_steps");
-    const completed = new Set(saved ? JSON.parse(saved) : []);
-    completed.add("directory");
-    sessionStorage.setItem("setup_completed_steps", JSON.stringify([...completed]));
+  const handleComplete = async () => {
+    // Сохраняем в базу данных что шаг завершен
+    if (activeWorkspace && setupProgressData) {
+      try {
+        const completed = new Set(setupProgressData.completedSteps ?? []);
+        completed.add("directory");
+        await updateSetupProgressMutation.mutateAsync({
+          workspaceId: activeWorkspace.id,
+          completedSteps: [...completed],
+        });
+      } catch (error) {
+        console.error("Failed to update setup progress:", error);
+      }
+    }
 
     toast.success("Справочник утвержден");
     router.push(paths.setup.root);

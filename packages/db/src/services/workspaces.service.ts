@@ -266,4 +266,15 @@ export class WorkspacesService {
     }
     return result;
   }
+
+  async getSetupProgress(workspaceId: string): Promise<string[]> {
+    return this.workspacesRepository.getSetupProgress(workspaceId);
+  }
+
+  async updateSetupProgress(workspaceId: string, completedSteps: string[]): Promise<boolean> {
+    const result = await this.workspacesRepository.updateSetupProgress(workspaceId, completedSteps);
+    // Invalidate cache for this workspace
+    workspaceCache.invalidateWorkspace(workspaceId);
+    return result;
+  }
 }

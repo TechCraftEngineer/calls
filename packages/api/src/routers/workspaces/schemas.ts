@@ -43,3 +43,12 @@ export const removeMemberSchema = z.object({
 export const completeOnboardingSchema = z.object({
   workspaceId: workspaceIdSchema,
 });
+
+export const getSetupProgressSchema = z.object({
+  workspaceId: workspaceIdSchema,
+});
+
+export const updateSetupProgressSchema = z.object({
+  workspaceId: workspaceIdSchema,
+  completedSteps: z.array(z.string()),
+});

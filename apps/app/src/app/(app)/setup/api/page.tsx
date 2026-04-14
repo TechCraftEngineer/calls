@@ -2,8 +2,8 @@
 
 import { Button, Input, PasswordInput, toast } from "@calls/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -70,8 +70,7 @@ export default function ApiStepPage() {
           apiKey: values.apiKey.trim(),
         });
 
-        // Store in session and go to next step
-        sessionStorage.setItem("setup_api_connected", "true");
+        // Navigate to next step
         router.push("/setup/directory");
       } else {
         const errorMsg =
