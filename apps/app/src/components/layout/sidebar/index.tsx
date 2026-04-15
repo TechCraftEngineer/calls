@@ -43,7 +43,6 @@ export function AppSidebar() {
   const { activeWorkspace } = useWorkspace();
   const { toggleSidebar, state } = useSidebar();
 
-  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const isMember = activeWorkspace?.role === "member";
 
   const isActive = (href: string) => {

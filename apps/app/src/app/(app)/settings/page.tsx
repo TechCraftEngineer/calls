@@ -38,7 +38,7 @@ export default function SettingsPage() {
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const isOwner = activeWorkspace?.role === "owner";
 
-  const { data: workspace } = useQuery<typeof workspaces.$inferSelect>({
+  const { data: workspace } = useQuery({
     ...orpc.workspaces.get.queryOptions({
       input: { workspaceId: workspaceId ?? "" },
     }),

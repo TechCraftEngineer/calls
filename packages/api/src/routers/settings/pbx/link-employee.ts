@@ -20,7 +20,7 @@ export const linkEmployee = workspaceAdminProcedure
       employeeExternalId: input.employeeExternalId,
       userId: input.userId,
       invitationId: input.invitationId,
-      linkedByUserId: context.authUserId,
+      linkedByUserId: context.authUserId ?? undefined,
     });
 
     return { success: true, message: "Привязка обновлена" };

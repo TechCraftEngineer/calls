@@ -1,4 +1,4 @@
-import { format, startOfDay, subDays } from "date-fns";
+import { startOfDay, subDays } from "date-fns";
 import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 
 const TZ = "Europe/Moscow";

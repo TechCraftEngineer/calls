@@ -1,5 +1,5 @@
 import type { MegaPbxIntegrationConfig } from "@calls/db";
-import { format, isValid, parseISO } from "date-fns";
+import { isValid, parseISO } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { z } from "zod";
 

@@ -219,7 +219,7 @@ export const callsQueries = {
 
     return result.map((row) => ({
       id: row.id,
-      recordingFileId: row.recordingFileId!,
+      recordingFileId: row.recordingFileId ?? "",
     }));
   },
 };
