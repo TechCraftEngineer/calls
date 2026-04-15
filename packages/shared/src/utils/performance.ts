@@ -1,4 +1,3 @@
-import { setTimeout } from "node:timers/promises";
 
 /** Измеряет время выполнения функции */
 export async function measureTime<T>(
@@ -20,5 +19,5 @@ export function measureTimeSync<T>(fn: () => T): { result: T; timeMs: number } {
 
 /** Простая функция sleep для задержек */
 export function sleep(ms: number): Promise<void> {
-  return setTimeout(ms);
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
