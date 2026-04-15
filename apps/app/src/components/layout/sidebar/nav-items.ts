@@ -21,6 +21,14 @@ export const navItems: NavItem[] = [
   },
 ];
 
+export const memberNavItems: NavItem[] = [
+  {
+    title: "Настройки отчетов",
+    href: paths.statistics.settings,
+    icon: Settings,
+  },
+];
+
 export const adminNavItems: NavItem[] = [
   {
     title: "Пользователи",

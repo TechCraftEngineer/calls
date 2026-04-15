@@ -19,5 +19,8 @@ export function measureTimeSync<T>(fn: () => T): { result: T; timeMs: number } {
 
 /** Простая функция sleep для задержек */
 export function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise<void>((resolve) => {
+    // @ts-expect-error - setTimeout доступен в runtime (Node.js и браузер)
+    setTimeout(resolve, ms);
+  });
 }

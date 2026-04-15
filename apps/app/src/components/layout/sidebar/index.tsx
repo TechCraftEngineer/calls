@@ -20,7 +20,7 @@ import { LogOut, PanelLeft, PanelRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import { adminNavItems, type NavItem, navItems } from "./nav-items";
+import { adminNavItems, memberNavItems, type NavItem, navItems } from "./nav-items";
 import { SetupCard } from "./setup-card";
 import { SidebarLogo } from "./sidebar-logo";
 import { WorkspaceSwitcher } from "./workspace-switcher";
@@ -53,10 +53,8 @@ export function AppSidebar() {
     return pathname.startsWith(href);
   };
 
-  // Фильтруем adminNavItems, исключая настройки для member
-  const filteredAdminNavItems = isWorkspaceAdmin
-    ? adminNavItems
-    : adminNavItems.filter((item) => item.href !== paths.settings.root);
+  // Для member показываем только настройки отчетов, для admin/owner - полные настройки
+  const roleSpecificNavItems = isMember ? memberNavItems : adminNavItems;
 
   return (
     <Sidebar collapsible="icon">
@@ -84,7 +82,7 @@ export function AppSidebar() {
               {navItems.map((item) => (
                 <NavLink key={item.href} item={item} isActive={isActive(item.href)} />
               ))}
-              {filteredAdminNavItems.map((item) => (
+              {roleSpecificNavItems.map((item) => (
                 <NavLink key={item.href} item={item} isActive={isActive(item.href)} />
               ))}
             </SidebarMenu>
