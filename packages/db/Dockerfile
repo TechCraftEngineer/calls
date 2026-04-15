@@ -24,5 +24,12 @@ ENV POSTGRES_URL=${POSTGRES_URL}
 
 COPY --from=builder /app .
 
+# Create non-root user
+RUN addgroup -g 1001 -S appuser && \
+    adduser -S -u 1001 -G appuser appuser && \
+    chown -R appuser:appuser /app
+
+USER appuser
+
 WORKDIR /app/packages/db
 CMD ["bunx", "drizzle-kit", "migrate"]

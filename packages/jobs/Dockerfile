@@ -33,6 +33,13 @@ EXPOSE 8000
 
 COPY --from=builder /app .
 
+# Create non-root user
+RUN addgroup -g 1001 -S jobs && \
+    adduser -S -u 1001 -G jobs jobs && \
+    chown -R jobs:jobs /app /app/records
+
+USER jobs
+
 WORKDIR /app/packages/jobs
 
 CMD ["bun", "run", "start"]

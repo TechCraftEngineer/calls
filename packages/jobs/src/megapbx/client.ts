@@ -184,7 +184,7 @@ export class MegaPbxClient {
     const date = parseISO(v);
     if (!isValid(date)) return null;
 
-    return format(date, "yyyyMMdd'T'HHmmss'Z'");
+    return formatInTimeZone(date, "Europe/Moscow", "yyyyMMdd'T'HHmmss'Z'");
   }
 
   private getRequestTimeoutMs(): number {

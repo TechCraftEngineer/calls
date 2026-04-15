@@ -293,23 +293,21 @@ test.describe("Управление приглашениями в рабочем
         email: "tocancel@example.com",
       });
 
-      await page.route("**/api/orpc/workspaces/listInvitations**", async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            result: {
-              data: [invitation],
-            },
-          }),
-        });
-      });
-
       await page.route("**/api/orpc/**", async (route) => {
         const request = route.request();
         const body = await request.postData();
         
-        if (body && body.includes("revokeInvitation")) {
+        if (body && body.includes("listInvitations")) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              result: {
+                data: [invitation],
+              },
+            }),
+          });
+        } else if (body && body.includes("revokeInvitation")) {
           await route.fulfill({
             status: 200,
             contentType: "application/json",

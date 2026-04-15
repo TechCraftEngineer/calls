@@ -54,7 +54,8 @@ export function AppSidebar() {
   };
 
   // Для member показываем только настройки отчетов, для admin/owner - полные настройки
-  const roleSpecificNavItems = isMember ? memberNavItems : adminNavItems;
+  // Если workspace не загружен, показываем пустой массив
+  const roleSpecificNavItems = !activeWorkspace ? [] : isMember ? memberNavItems : adminNavItems;
 
   return (
     <Sidebar collapsible="icon">

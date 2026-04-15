@@ -1,7 +1,6 @@
 "use client";
 
 import { paths } from "@calls/config";
-import type { workspaces } from "@calls/db/schema";
 import {
   Button,
   Card,
@@ -18,6 +17,7 @@ import {
   toast,
 } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import WorkspaceGeneralForm from "@/components/features/workspaces/workspace-general-form";
@@ -37,7 +37,6 @@ export default function SettingsPage() {
   const workspaceId = activeWorkspace?.id ?? null;
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const isOwner = activeWorkspace?.role === "owner";
-  const isMember = activeWorkspace?.role === "member";
 
   const { data: workspace } = useQuery<typeof workspaces.$inferSelect>({
     ...orpc.workspaces.get.queryOptions({
@@ -131,14 +130,20 @@ export default function SettingsPage() {
     );
   }
 
-  if (isMember || !isWorkspaceAdmin) {
+  if (!isWorkspaceAdmin) {
     return (
       <div className="flex items-center justify-center py-24">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2">Доступ запрещен</h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-4">
             У вас нет прав для изменения настроек компании
           </p>
+          <Link
+            href={paths.dashboard.root}
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            На главную
+          </Link>
         </div>
       </div>
     );

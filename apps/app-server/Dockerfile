@@ -29,4 +29,11 @@ EXPOSE 8000
 
 COPY --from=builder /app .
 
+# Create non-root user
+RUN addgroup -g 1001 -S appuser && \
+    adduser -S -u 1001 -G appuser appuser && \
+    chown -R appuser:appuser /app /app/data /app/logs /app/records
+
+USER appuser
+
 CMD ["bun", "./apps/app-server/dist/index.js"]

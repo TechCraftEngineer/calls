@@ -1,5 +1,5 @@
-import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { format, startOfDay, subDays } from "date-fns";
+import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 
 const TZ = "Europe/Moscow";
 
@@ -36,7 +36,7 @@ export function isWeekend(date: Date): boolean {
 }
 
 /** Маппинг дней недели на числа */
-export const WEEKDAY_MAP: Record<string, number> = {
+export const WEEKDAY_MAP = {
   sun: 0,
   mon: 1,
   tue: 2,
@@ -44,14 +44,15 @@ export const WEEKDAY_MAP: Record<string, number> = {
   thu: 4,
   fri: 5,
   sat: 6,
-} as const;
+} as const satisfies Record<string, number>;
 
 /** Возвращает диапазон дат для синхронизации (по умолчанию последние 7 дней) */
 export function getDefaultSyncDateRange(): { fromStr: string; todayStr: string } {
-  const today = startOfDay(new Date());
-  const fromDate = subDays(today, 7);
+  const today = nowInMoscow();
+  const todayStart = startOfDay(today);
+  const fromDate = subDays(todayStart, 7);
   return {
-    fromStr: format(fromDate, "yyyy-MM-dd"),
-    todayStr: format(today, "yyyy-MM-dd"),
+    fromStr: formatDateInMoscow(fromDate),
+    todayStr: formatDateInMoscow(todayStart),
   };
 }

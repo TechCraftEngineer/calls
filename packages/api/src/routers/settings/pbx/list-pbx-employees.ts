@@ -2,11 +2,15 @@ import { pbxService } from "@calls/db";
 import { workspaceAdminProcedure } from "../../../orpc";
 
 export const listPbxEmployees = workspaceAdminProcedure.handler(async ({ context }) => {
-  const employees = await pbxService.listEmployees(context.workspaceId);
-  const links = await pbxService.listEmployeeLinks(context.workspaceId);
+  const [employees, links] = await Promise.all([
+    pbxService.listEmployees(context.workspaceId),
+    pbxService.listEmployeeLinks(context.workspaceId),
+  ]);
+
+  const linkMap = new Map(links.map((l) => [l.targetExternalId, l]));
 
   return employees.map((employee) => {
-    const link = links.find((l) => l.targetExternalId === employee.externalId);
+    const link = linkMap.get(employee.externalId);
     return {
       ...employee,
       linkedUser: link?.user

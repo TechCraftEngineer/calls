@@ -170,10 +170,8 @@ test.describe("Управление приглашениями (оптимизи
           const body = await request.postData();
           
           if (body && body.includes("createInvitation")) {
-            const postData = route.request().postData();
-            if (postData) {
-              capturedRole = JSON.parse(postData).role;
-            }
+            const postData = JSON.parse(body);
+            capturedRole = postData.role;
             await route.fulfill({
               status: 200,
               contentType: "application/json",

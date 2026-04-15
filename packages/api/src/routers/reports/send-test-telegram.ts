@@ -7,8 +7,6 @@ import { subMonths, subWeeks } from "date-fns";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 
-const TZ = "Europe/Moscow";
-
 const reportTypeSchema = z.object({
   reportType: z.enum(["daily", "weekly", "monthly"]),
 });
