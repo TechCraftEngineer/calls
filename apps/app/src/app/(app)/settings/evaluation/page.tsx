@@ -38,7 +38,7 @@ export default function EvaluationSettingsPage() {
   const workspaceId = activeWorkspace?.id ?? null;
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
 
-  // Check if we came from setup page via URL parameter
+  // Проверяем, пришли ли мы со страницы настройки через параметр URL
   const fromSetup = searchParams.get("fromSetup") === "true";
 
   // Mutation для обновления прогресса setup
@@ -114,8 +114,13 @@ export default function EvaluationSettingsPage() {
           updateSetupProgressMutation.mutate(
             { workspaceId: activeWorkspace.id, completedStep: "evaluation" },
             {
-              onSettled: () => {
+              onSuccess: () => {
                 router.push(paths.setup.root);
+              },
+              onError: (err) => {
+                toast.error(
+                  err instanceof Error ? err.message : "Не удалось обновить прогресс настройки",
+                );
               },
             },
           );

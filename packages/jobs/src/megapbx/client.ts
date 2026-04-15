@@ -175,9 +175,9 @@ export class MegaPbxClient {
       const month = parts[1]!;
       const day = parts[2]!;
 
-      // Вычисляем полночь в Москве (UTC+3) в UTC
-      const midnightMoscowUtcMs = Date.UTC(year, month - 1, day, 0, 0, 0) - 3 * 60 * 60 * 1000;
-      const utcDate = new Date(midnightMoscowUtcMs);
+      // Вычисляем полночь в UTC для валидации
+      const utcMidnightMs = Date.UTC(year, month - 1, day, 0, 0, 0);
+      const utcDate = new Date(utcMidnightMs);
 
       // Валидируем входные данные (отклоняем невалидные даты типа 2026-02-31)
       if (
@@ -188,12 +188,16 @@ export class MegaPbxClient {
         throw new Error(`Некорректная дата: ${v}`);
       }
 
-      const y = utcDate.getUTCFullYear();
-      const m = String(utcDate.getUTCMonth() + 1).padStart(2, "0");
-      const d = String(utcDate.getUTCDate()).padStart(2, "0");
-      const hh = String(utcDate.getUTCHours()).padStart(2, "0");
-      const mm = String(utcDate.getUTCMinutes()).padStart(2, "0");
-      const ss = String(utcDate.getUTCSeconds()).padStart(2, "0");
+      // Вычисляем полночь в Москве (UTC+3) в UTC
+      const midnightMoscowUtcMs = utcMidnightMs - 3 * 60 * 60 * 1000;
+      const moscowUtcDate = new Date(midnightMoscowUtcMs);
+
+      const y = moscowUtcDate.getUTCFullYear();
+      const m = String(moscowUtcDate.getUTCMonth() + 1).padStart(2, "0");
+      const d = String(moscowUtcDate.getUTCDate()).padStart(2, "0");
+      const hh = String(moscowUtcDate.getUTCHours()).padStart(2, "0");
+      const mm = String(moscowUtcDate.getUTCMinutes()).padStart(2, "0");
+      const ss = String(moscowUtcDate.getUTCSeconds()).padStart(2, "0");
       return `${y}${m}${d}T${hh}${mm}${ss}Z`;
     }
 

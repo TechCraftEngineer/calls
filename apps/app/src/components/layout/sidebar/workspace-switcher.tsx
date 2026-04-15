@@ -11,6 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  toast,
   useSidebar,
 } from "@calls/ui";
 import { AudioWaveform, ChevronUp, Plus } from "lucide-react";
@@ -36,10 +37,15 @@ export function WorkspaceSwitcher() {
     await setActiveWorkspace(workspaceId);
   };
 
-  const handleDropdownOpenChange = (open: boolean) => {
+  const handleDropdownOpenChange = async (open: boolean) => {
     setDropdownOpen(open);
     if (open) {
-      void refreshWorkspaces();
+      try {
+        await refreshWorkspaces();
+      } catch (error) {
+        toast.error("Не удалось обновить список компаний");
+        console.error("Error refreshing workspaces:", error);
+      }
     }
   };
 
