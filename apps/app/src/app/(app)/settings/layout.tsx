@@ -100,6 +100,23 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const { data: session } = useSession();
   const _user = session?.user ?? null;
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+  const isMember = activeWorkspace?.role === "member";
+
+  // Для member не показываем навигацию настроек
+  if (isMember) {
+    return (
+      <main className="main-content">
+        <div className="flex items-center justify-center py-24">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Доступ запрещен</h2>
+            <p className="text-muted-foreground">
+              У вас нет прав для просмотра настроек компании
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   const navItems = SETTINGS_NAV.filter(
     (item) => !("adminOnly" in item && item.adminOnly) || isWorkspaceAdmin,

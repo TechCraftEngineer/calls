@@ -44,6 +44,7 @@ export function AppSidebar() {
   const { toggleSidebar, state } = useSidebar();
 
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+  const isMember = activeWorkspace?.role === "member";
 
   const isActive = (href: string) => {
     if (href === paths.dashboard.root) {
@@ -51,6 +52,11 @@ export function AppSidebar() {
     }
     return pathname.startsWith(href);
   };
+
+  // Фильтруем adminNavItems, исключая настройки для member
+  const filteredAdminNavItems = isWorkspaceAdmin
+    ? adminNavItems
+    : adminNavItems.filter((item) => item.href !== paths.settings.root);
 
   return (
     <Sidebar collapsible="icon">
@@ -78,10 +84,9 @@ export function AppSidebar() {
               {navItems.map((item) => (
                 <NavLink key={item.href} item={item} isActive={isActive(item.href)} />
               ))}
-              {isWorkspaceAdmin &&
-                adminNavItems.map((item) => (
-                  <NavLink key={item.href} item={item} isActive={isActive(item.href)} />
-                ))}
+              {filteredAdminNavItems.map((item) => (
+                <NavLink key={item.href} item={item} isActive={isActive(item.href)} />
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
