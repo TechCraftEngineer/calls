@@ -65,14 +65,14 @@ export function SetupStepItem({
               title={isCompleted ? "Выполнено" : "Отметить как выполненное"}
               aria-label={isCompleted ? "Выполнено" : "Отметить как выполненное"}
               onClick={() => !isCompleted && onComplete(step.id)}
-              className={`flex size-6 items-center justify-center rounded-full transition-colors ${
+              className={`flex size-6 items-center justify-center rounded-full transition-colors md:size-6 min-h-[32px] min-w-[32px] md:min-h-[24px] md:min-w-[24px] ${
                 isCompleted
                   ? "bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400"
                   : "bg-slate-100 text-slate-400 hover:bg-green-100 hover:text-green-600 dark:bg-slate-800 dark:text-slate-500 dark:hover:bg-green-900/50 dark:hover:text-green-400"
               }`}
               disabled={isCompleted}
             >
-              <Check className="size-3.5" />
+              <Check className="size-3.5 md:size-3.5" />
             </button>
           )}
         </div>

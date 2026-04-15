@@ -20,7 +20,7 @@ import {
 } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { TemplateFormModal } from "@/components/features/evaluation/template-form-modal";
 import { ViewTemplateModal } from "@/components/features/evaluation/view-template-modal";
 import type { WorkspaceMemberUser } from "@/components/features/users/types";
@@ -28,7 +28,7 @@ import { useWorkspace } from "@/components/features/workspaces/workspace-provide
 import { getCurrentUser } from "@/lib/auth";
 import { useORPC } from "@/orpc/react";
 
-export default function EvaluationSettingsPage() {
+function EvaluationSettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -412,5 +412,19 @@ export default function EvaluationSettingsPage() {
         initialName={templateModal.initialName}
       />
     </div>
+  );
+}
+
+export default function EvaluationSettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-24">
+          <div className="text-muted-foreground">Загрузка…</div>
+        </div>
+      }
+    >
+      <EvaluationSettingsContent />
+    </Suspense>
   );
 }
