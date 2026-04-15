@@ -146,7 +146,7 @@ export class InvitationHelpers {
           }),
         });
       } else {
-        await route.continue();
+        await route.fallback();
       }
     });
   }
@@ -176,7 +176,7 @@ export class InvitationHelpers {
       if (body && (body.includes("acceptInvitation") || body.includes("acceptInvitationForExistingUser"))) {
         await route.fulfill(response);
       } else {
-        await route.continue();
+        await route.fallback();
       }
     });
   }

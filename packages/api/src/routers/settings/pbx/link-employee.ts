@@ -4,12 +4,12 @@ import { workspaceAdminProcedure } from "../../../orpc";
 
 const linkEmployeeSchema = z
   .object({
-    employeeExternalId: z.string(),
+    employeeExternalId: z.string().trim().min(1, "Внешний ID сотрудника не может быть пустым"),
     userId: z.string().nullable(),
     invitationId: z.string().nullable(),
   })
   .refine((data) => (data.userId !== null) !== (data.invitationId !== null), {
-    message: "Provide exactly one of userId or invitationId",
+    message: "Укажите ровно одно из userId или invitationId",
   });
 
 export const linkEmployee = workspaceAdminProcedure

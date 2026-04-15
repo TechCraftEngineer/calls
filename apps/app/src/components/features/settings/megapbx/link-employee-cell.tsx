@@ -10,7 +10,7 @@ import {
   Separator,
   toast,
 } from "@calls/ui";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
@@ -30,9 +30,8 @@ export function LinkEmployeeCell({ employee }: LinkEmployeeCellProps) {
 
   const { data: members = [] } = useQuery({
     ...orpc.workspaces.listMembers.queryOptions({
-      input: { workspaceId: activeWorkspace?.id ?? "" },
+      input: activeWorkspace?.id ? { workspaceId: activeWorkspace.id } : skipToken,
     }),
-    enabled: !!activeWorkspace?.id,
   });
 
   const linkMutation = useMutation(

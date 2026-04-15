@@ -113,7 +113,7 @@ export const telegramReportsFn = inngest.createFunction(
           reportTypesToRun.push("daily");
         }
 
-        const weeklyDay = WEEKDAY_MAP[schedule.reportWeeklyDay as keyof typeof WEEKDAY_MAP] ?? 5;
+        const weeklyDay = WEEKDAY_MAP[schedule.reportWeeklyDay] ?? 5;
         const weeklyTime = parseTimeHHMM(schedule.reportWeeklyTime);
         const weeklySlot = Math.floor(weeklyTime.m / 15) * 15;
         if (currentDay === weeklyDay && currentHour === weeklyTime.h && slot === weeklySlot) {

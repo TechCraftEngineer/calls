@@ -206,7 +206,7 @@ export async function getWorkspaceIdsWithTelegramReportRecipients(): Promise<str
 
 export interface ReportScheduleSettings {
   reportDailyTime: string;
-  reportWeeklyDay: string;
+  reportWeeklyDay: "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
   reportWeeklyTime: string;
   reportMonthlyDay: string;
   reportMonthlyTime: string;

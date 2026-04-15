@@ -31,11 +31,11 @@ export default function SettingsIntegrationsPage() {
     // Ждём загрузки workspace перед проверкой прав
     if (workspaceLoading) return;
 
-    if (!isWorkspaceAdmin) {
+    if (activeWorkspace && !isWorkspaceAdmin) {
       router.replace(paths.forbidden);
       return;
     }
-  }, [isWorkspaceAdmin, workspaceLoading, router]);
+  }, [activeWorkspace, isWorkspaceAdmin, workspaceLoading, router]);
 
   useEffect(() => {
     if (!workspaceLoading && isWorkspaceAdmin) {
