@@ -1,5 +1,6 @@
 "use client";
 
+import { paths } from "@calls/config";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,7 @@ import {
   useSidebar,
 } from "@calls/ui";
 import { AudioWaveform, ChevronUp, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import CreateWorkspaceModal from "@/components/features/workspaces/create-workspace-modal";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
@@ -21,6 +23,7 @@ import { roleTranslations } from "./nav-items";
 export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
   const { workspaces, activeWorkspace, setActiveWorkspace, refreshWorkspaces } = useWorkspace();
+  const router = useRouter();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -33,11 +36,11 @@ export function WorkspaceSwitcher() {
     await setActiveWorkspace(workspaceId);
   };
 
-  const handleDropdownOpenChange = async (open: boolean) => {
-    if (open) {
-      await refreshWorkspaces();
-    }
+  const handleDropdownOpenChange = (open: boolean) => {
     setDropdownOpen(open);
+    if (open) {
+      void refreshWorkspaces();
+    }
   };
 
   return (
@@ -112,6 +115,7 @@ export function WorkspaceSwitcher() {
         onOpenChange={setIsCreateModalOpen}
         onSuccess={async (workspaceId) => {
           await setActiveWorkspace(workspaceId);
+          router.push(paths.setup.root);
         }}
       />
     </SidebarMenu>

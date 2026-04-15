@@ -16,7 +16,7 @@ export function useAutoOpenModal(
     // Find the first incomplete step
     const firstIncompleteIndex = steps.findIndex((step) => !completedSteps.has(step.id));
 
-    if (firstIncompleteIndex > 0) {
+    if (firstIncompleteIndex >= 0) {
       const firstIncompleteStep = steps[firstIncompleteIndex];
 
       // If the first incomplete step doesn't have href, open its modal

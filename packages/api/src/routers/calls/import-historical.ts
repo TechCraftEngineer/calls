@@ -1,6 +1,5 @@
 import { pbxService } from "@calls/db";
-import { inngest, processImportedCalls } from "@calls/jobs";
-import { syncPbxCalls } from "@calls/jobs/pbx/sync";
+import { inngest, pbxSyncRequested } from "@calls/jobs";
 import { isNotFutureIsoDate, isValidCalendarIsoDate } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
@@ -34,33 +33,23 @@ export const importHistoricalCalls = workspaceAdminProcedure
       syncFromDate: input.fromDate,
     });
 
-    // Синхронно импортируем звонки
-    const syncResult = await syncPbxCalls(
-      context.workspaceId,
-      { ...pbxConfig, syncRecordings: true, syncFromDate: input.fromDate },
-      undefined,
+    // Отправляем событие для асинхронной синхронизации звонков
+    // Обработка выполняется в pbxSyncRequestedFn (packages/jobs/src/inngest/functions/pbx-sync.ts)
+    await inngest.send(
+      pbxSyncRequested.create({
+        workspaceId: context.workspaceId,
+        syncType: "calls",
+        syncRecordings: true,
+      }),
     );
-
-    // Запускаем обработку импортированных звонков через Inngest
-    // Получаем список импортированных звонков для постановки в очередь на транскрибацию
-    if (syncResult.calls > 0) {
-      // Отправляем событие для запуска обработки звонков
-      // Inngest функция сама найдет необработанные звонки и поставит их в очередь
-      await inngest.send(
-        processImportedCalls.create({
-          workspaceId: context.workspaceId,
-          importedCount: syncResult.calls,
-        }),
-      );
-    }
 
     return {
       success: true,
-      message: "Импорт звонков завершен",
-      total: syncResult.calls + syncResult.skipped,
-      imported: syncResult.calls,
-      skipped: syncResult.skipped,
-      errors: syncResult.errors?.length ?? 0,
-      transcriptionsQueued: syncResult.transcriptionsQueued ?? 0,
+      message: "Импорт звонков поставлен в очередь",
+      total: 0,
+      imported: 0,
+      skipped: 0,
+      errors: 0,
+      transcriptionsQueued: 0,
     };
   });

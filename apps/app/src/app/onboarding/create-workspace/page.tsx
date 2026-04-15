@@ -135,7 +135,9 @@ function CreateWorkspaceForm() {
         });
         // Инвалидируем кеш setup progress для новой компании
         await queryClient.invalidateQueries({
-          queryKey: ["workspaces", "getSetupProgress"],
+          queryKey: orpc.workspaces.getSetupProgress.key({
+            input: { workspaceId: workspace.id },
+          }),
         });
         router.push(paths.setup.root);
       },

@@ -47,26 +47,24 @@ export default function PbxSetupPage() {
       onSuccess: () => {
         if (activeWorkspace) {
           queryClient.invalidateQueries({
-            queryKey: orpc.workspaces.getSetupProgress.key(),
+            queryKey: orpc.workspaces.getSetupProgress.key({
+              input: { workspaceId: activeWorkspace.id },
+            }),
           });
         }
+        router.push(paths.setup.directory);
       },
     }),
   );
 
-  const handleNext = async () => {
+  const handleNext = () => {
     // Сохраняем прогресс перед переходом
     if (activeWorkspace && configSaved) {
-      try {
-        await updateSetupProgressMutation.mutateAsync({
-          workspaceId: activeWorkspace.id,
-          completedStep: "api",
-        });
-      } catch (error) {
-        console.error("Не удалось сохранить прогресс настройки:", error);
-      }
+      updateSetupProgressMutation.mutate({
+        workspaceId: activeWorkspace.id,
+        completedStep: "api",
+      });
     }
-    router.push(paths.setup.directory);
   };
 
   return (

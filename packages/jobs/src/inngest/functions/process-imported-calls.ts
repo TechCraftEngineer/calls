@@ -1,4 +1,4 @@
-import { callsService, PROCESSING_STATUS } from "@calls/db";
+import { callsService } from "@calls/db";
 import { createLogger } from "../../logger";
 import { inngest, processImportedCalls, transcribeRequested } from "../client";
 
