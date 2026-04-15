@@ -31,6 +31,8 @@ export const settingsRouter = {
   listPbxEmployees: pbxRouter.listPbxEmployees,
   listPbxNumbers: pbxRouter.listPbxNumbers,
   importPbxDirectory: pbxRouter.importPbxDirectory,
+  linkEmployee: pbxRouter.linkEmployee,
+  unlinkEmployee: pbxRouter.unlinkEmployee,
   getEvaluationTemplates: evaluationRouter.getEvaluationTemplates,
   getEvaluationTemplate: evaluationRouter.getEvaluationTemplate,
   getEvaluationTemplateBySlug: evaluationRouter.getEvaluationTemplateBySlug,

@@ -17,6 +17,7 @@ interface EmployeesTabProps {
   employeesLoading: boolean;
   employeeSearch: string;
   onEmployeeSearchChange: (value: string) => void;
+  onEditLink?: (employee: PbxEmployeeItem) => void;
 }
 
 export function EmployeesTab({
@@ -24,6 +25,7 @@ export function EmployeesTab({
   employeesLoading,
   employeeSearch,
   onEmployeeSearchChange,
+  onEditLink,
 }: EmployeesTabProps) {
   const filteredEmployees = useMemo(() => {
     const query = employeeSearch.trim().toLowerCase();
@@ -36,7 +38,7 @@ export function EmployeesTab({
     );
   }, [employeeSearch, employees]);
 
-  const employeeColumns = useMemo(() => getEmployeeColumns(), []);
+  const employeeColumns = useMemo(() => getEmployeeColumns(onEditLink), [onEditLink]);
 
   const employeeTable = useReactTable({
     data: filteredEmployees,

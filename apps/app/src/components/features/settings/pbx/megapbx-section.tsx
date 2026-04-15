@@ -17,10 +17,11 @@ import { PbxProviderLogo } from "@/components/features/settings";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { STORAGE_KEYS } from "../megapbx/constants";
 import { EmployeesTab } from "../megapbx/employees-tab";
+import { LinkEmployeeDialog } from "../megapbx/link-employee-dialog";
 import { NumbersTab } from "../megapbx/numbers-tab";
 import { OverviewTab } from "../megapbx/overview-tab";
 import { SummaryTile } from "../megapbx/summary-tile";
-import type { PbxSectionProps } from "../types";
+import type { PbxEmployeeItem, PbxSectionProps } from "../types";
 
 function getWebhookBaseUrl(): string {
   if (typeof window !== "undefined") {
@@ -56,6 +57,8 @@ export default function MegaPbxSection({
   const [activeTab, setActiveTab] = useState("overview");
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [numberSearch, setNumberSearch] = useState("");
+  const [editingEmployee, setEditingEmployee] = useState<PbxEmployeeItem | null>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
 
   const webhookUrl =
     activeWorkspace?.id && getWebhookBaseUrl()
@@ -101,6 +104,11 @@ export default function MegaPbxSection({
     window.localStorage.setItem(STORAGE_KEYS.employeeSearch, employeeSearch);
     window.localStorage.setItem(STORAGE_KEYS.numberSearch, numberSearch);
   }, [activeTab, employeeSearch, numberSearch]);
+
+  const handleEditLink = (employee: PbxEmployeeItem) => {
+    setEditingEmployee(employee);
+    setLinkDialogOpen(true);
+  };
 
   return (
     <Card className="border-border/60">
@@ -203,6 +211,7 @@ export default function MegaPbxSection({
             employeesLoading={employeesLoading}
             employeeSearch={employeeSearch}
             onEmployeeSearchChange={setEmployeeSearch}
+            onEditLink={handleEditLink}
           />
         )}
 
@@ -218,6 +227,12 @@ export default function MegaPbxSection({
           />
         )}
       </CardContent>
+
+      <LinkEmployeeDialog
+        employee={editingEmployee}
+        open={linkDialogOpen}
+        onOpenChange={setLinkDialogOpen}
+      />
     </Card>
   );
 }
