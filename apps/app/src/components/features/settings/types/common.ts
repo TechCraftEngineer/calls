@@ -57,7 +57,11 @@ export interface PbxEmployeeItem {
   email: string | null;
   isActive: boolean;
   linkedUser?: { id: string; email: string; name: string } | null;
-  linkedInvitation?: { id: string; email: string; role: string } | null;
+  linkedInvitation?: {
+    id: string;
+    email: string | null;
+    role: "owner" | "admin" | "member";
+  } | null;
 }
 
 export interface PbxNumberItem {

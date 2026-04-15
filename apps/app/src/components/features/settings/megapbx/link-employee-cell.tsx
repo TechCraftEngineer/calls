@@ -28,11 +28,12 @@ export function LinkEmployeeCell({ employee }: LinkEmployeeCellProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const { data: members = [] } = useQuery(
-    orpc.workspaces.listMembers.queryOptions({
+  const { data: members = [] } = useQuery({
+    ...orpc.workspaces.listMembers.queryOptions({
       input: { workspaceId: activeWorkspace?.id ?? "" },
     }),
-  );
+    enabled: !!activeWorkspace?.id,
+  });
 
   const linkMutation = useMutation(
     orpc.settings.linkEmployee.mutationOptions({
@@ -70,8 +71,7 @@ export function LinkEmployeeCell({ employee }: LinkEmployeeCellProps) {
     if (!search) return members;
     const q = search.toLowerCase();
     return members.filter(
-      (m) =>
-        m.user.name?.toLowerCase().includes(q) || m.user.email.toLowerCase().includes(q),
+      (m) => m.user.name?.toLowerCase().includes(q) || m.user.email.toLowerCase().includes(q),
     );
   }, [members, search]);
 
@@ -113,7 +113,7 @@ export function LinkEmployeeCell({ employee }: LinkEmployeeCellProps) {
             {isPending ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="size-3 animate-spin" />
-                Обновление...
+                Обновление…
               </span>
             ) : (
               displayValue
@@ -132,7 +132,7 @@ export function LinkEmployeeCell({ employee }: LinkEmployeeCellProps) {
           />
         </div>
         <div className="max-h-[300px] overflow-y-auto">
-          {linkedUser && (
+          {(linkedUser || linkedInvitation) && (
             <>
               <button
                 type="button"
@@ -162,17 +162,11 @@ export function LinkEmployeeCell({ employee }: LinkEmployeeCellProps) {
                     disabled={isPending}
                     className="relative flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
                   >
-                    <Check
-                      className={`size-4 ${isSelected ? "opacity-100" : "opacity-0"}`}
-                    />
+                    <Check className={`size-4 ${isSelected ? "opacity-100" : "opacity-0"}`} />
                     <div className="flex flex-1 flex-col items-start gap-0.5">
-                      <span className="font-medium">
-                        {member.user.name || member.user.email}
-                      </span>
+                      <span className="font-medium">{member.user.name || member.user.email}</span>
                       {member.user.name && (
-                        <span className="text-xs text-muted-foreground">
-                          {member.user.email}
-                        </span>
+                        <span className="text-xs text-muted-foreground">{member.user.email}</span>
                       )}
                     </div>
                     {isSelected && (

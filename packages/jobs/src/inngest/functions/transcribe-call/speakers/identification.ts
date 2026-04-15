@@ -151,7 +151,7 @@ export async function identifySpeakers(
   const segments = extractSegmentsFromUtterances(utterances || []);
 
   // Передаем обрезанный текст для анализа, но полный текст для сохранения
-  let identificationResult;
+  let identificationResult: IdentifySpeakersWithEmbeddingsResult;
   try {
     identificationResult = await identifySpeakersWithEmbeddings(textForAnalysis, {
       direction: call.direction,

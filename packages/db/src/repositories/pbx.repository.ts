@@ -141,7 +141,10 @@ export const pbxRepository = {
       })
       .from(schema.workspacePbxLinks)
       .leftJoin(schema.user, eq(schema.workspacePbxLinks.userId, schema.user.id))
-      .leftJoin(schema.invitations, eq(schema.workspacePbxLinks.invitationId, schema.invitations.id))
+      .leftJoin(
+        schema.invitations,
+        eq(schema.workspacePbxLinks.invitationId, schema.invitations.id),
+      )
       .where(
         and(
           eq(schema.workspacePbxLinks.workspaceId, workspaceId),
@@ -358,35 +361,7 @@ export const pbxRepository = {
     invitationId: string | null;
     linkedByUserId?: string;
   }) {
-    const existing = await db
-      .select()
-      .from(schema.workspacePbxLinks)
-      .where(
-        and(
-          eq(schema.workspacePbxLinks.workspaceId, input.workspaceId),
-          eq(schema.workspacePbxLinks.provider, input.provider),
-          eq(schema.workspacePbxLinks.targetType, "employee"),
-          eq(schema.workspacePbxLinks.targetExternalId, input.employeeExternalId),
-        ),
-      )
-      .limit(1);
-
-    if (existing[0]) {
-      // Обновляем существующую привязку
-      const rows = await db
-        .update(schema.workspacePbxLinks)
-        .set({
-          userId: input.userId,
-          invitationId: input.invitationId,
-          linkedByUserId: input.linkedByUserId,
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.workspacePbxLinks.id, existing[0].id))
-        .returning();
-      return rows[0];
-    }
-
-    // Создаём новую привязку
+    const now = new Date();
     const rows = await db
       .insert(schema.workspacePbxLinks)
       .values({
@@ -398,16 +373,28 @@ export const pbxRepository = {
         invitationId: input.invitationId,
         linkSource: "manual",
         linkedByUserId: input.linkedByUserId,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [
+          schema.workspacePbxLinks.workspaceId,
+          schema.workspacePbxLinks.provider,
+          schema.workspacePbxLinks.targetType,
+          schema.workspacePbxLinks.targetExternalId,
+        ],
+        set: {
+          userId: input.userId,
+          invitationId: input.invitationId,
+          linkedByUserId: input.linkedByUserId,
+          updatedAt: now,
+        },
       })
       .returning();
     return rows[0];
   },
 
-  async deleteEmployeeLink(
-    workspaceId: string,
-    provider: string,
-    employeeExternalId: string,
-  ) {
+  async deleteEmployeeLink(workspaceId: string, provider: string, employeeExternalId: string) {
     await db
       .delete(schema.workspacePbxLinks)
       .where(

@@ -1,6 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { SettingsPageShell, useSettings } from "@/components/features/settings";
@@ -29,7 +30,7 @@ export default function SettingsIntegrationsPage() {
   useEffect(() => {
     // Ждём загрузки workspace перед проверкой прав
     if (workspaceLoading) return;
-    
+
     if (!isWorkspaceAdmin) {
       router.replace(paths.forbidden);
       return;
@@ -47,6 +48,25 @@ export default function SettingsIntegrationsPage() {
       <SettingsPageShell>
         <div className="flex items-center justify-center py-24">
           <div className="text-muted-foreground">Загрузка…</div>
+        </div>
+      </SettingsPageShell>
+    );
+  }
+
+  if (!activeWorkspace) {
+    return (
+      <SettingsPageShell>
+        <div className="flex items-center justify-center py-24">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Компания не найдена</h2>
+            <p className="text-muted-foreground mb-4">Выберите компанию или создайте новую</p>
+            <Link
+              href={paths.dashboard.root}
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              На главную
+            </Link>
+          </div>
         </div>
       </SettingsPageShell>
     );

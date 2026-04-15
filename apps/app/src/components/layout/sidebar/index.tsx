@@ -43,7 +43,6 @@ export function AppSidebar() {
   const { activeWorkspace } = useWorkspace();
   const { toggleSidebar, state } = useSidebar();
 
-  const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const isMember = activeWorkspace?.role === "member";
 
   const isActive = (href: string) => {
@@ -54,7 +53,8 @@ export function AppSidebar() {
   };
 
   // Для member показываем только настройки отчетов, для admin/owner - полные настройки
-  const roleSpecificNavItems = isMember ? memberNavItems : adminNavItems;
+  // Если workspace не загружен, показываем пустой массив
+  const roleSpecificNavItems = !activeWorkspace ? [] : isMember ? memberNavItems : adminNavItems;
 
   return (
     <Sidebar collapsible="icon">

@@ -81,7 +81,7 @@ export function PbxProviderLogo({
           alt=""
           width={28}
           height={28}
-          unoptimized
+          unoptimized={logoSrc.endsWith(".svg")}
           className={`object-contain ${muted ? "opacity-60" : ""}`}
         />
       ) : fallbackSvg ? (

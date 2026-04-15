@@ -1,5 +1,5 @@
 import type { MegaPbxIntegrationConfig } from "@calls/db";
-import { format, isValid, parseISO } from "date-fns";
+import { isValid, parseISO } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { z } from "zod";
 
@@ -184,7 +184,7 @@ export class MegaPbxClient {
     const date = parseISO(v);
     if (!isValid(date)) return null;
 
-    return format(date, "yyyyMMdd'T'HHmmss'Z'");
+    return formatInTimeZone(date, "Europe/Moscow", "yyyyMMdd'T'HHmmss'Z'");
   }
 
   private getRequestTimeoutMs(): number {
