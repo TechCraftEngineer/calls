@@ -49,12 +49,29 @@ export default function FtpSection({
 
   // Минимальная дата - месяц назад
   const minDate = (() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 1);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const currentDay = now.getDate();
+
+    // Вычисляем год и месяц предыдущего месяца
+    let prevYear = currentYear;
+    let prevMonth = currentMonth - 1;
+    if (prevMonth < 0) {
+      prevMonth = 11;
+      prevYear--;
+    }
+
+    // Находим последний день предыдущего месяца
+    const lastDayOfPrevMonth = new Date(prevYear, prevMonth + 1, 0).getDate();
+
+    // Используем минимум из текущего дня и последнего дня предыдущего месяца
+    const day = Math.min(currentDay, lastDayOfPrevMonth);
+
+    const year = prevYear;
+    const month = String(prevMonth + 1).padStart(2, "0");
+    const dayStr = String(day).padStart(2, "0");
+    return `${year}-${month}-${dayStr}`;
   })();
 
   const defaultFromDate = (() => {

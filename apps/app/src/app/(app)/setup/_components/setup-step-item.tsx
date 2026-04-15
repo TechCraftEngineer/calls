@@ -62,7 +62,7 @@ export function SetupStepItem({
           {!isDisabled && (
             <button
               type="button"
-              title={isCompleted ? "Completed" : "Mark Done"}
+              title={isCompleted ? "Выполнено" : "Отметить как выполненное"}
               aria-label={isCompleted ? "Выполнено" : "Отметить как выполненное"}
               onClick={() => !isCompleted && onComplete(step.id)}
               className={`flex size-6 items-center justify-center rounded-full transition-colors ${

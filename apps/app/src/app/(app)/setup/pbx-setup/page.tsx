@@ -1,7 +1,7 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { Button } from "@calls/ui";
+import { Button, toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -44,15 +44,22 @@ export default function PbxSetupPage() {
 
   const updateSetupProgressMutation = useMutation(
     orpc.workspaces.updateSetupProgress.mutationOptions({
-      onSuccess: () => {
-        if (activeWorkspace) {
-          queryClient.invalidateQueries({
-            queryKey: orpc.workspaces.getSetupProgress.key({
-              input: { workspaceId: activeWorkspace.id },
-            }),
-          });
-        }
+      onSuccess: (_data, variables) => {
+        queryClient.invalidateQueries({
+          queryKey: orpc.workspaces.getSetupProgress.key({
+            input: { workspaceId: variables.workspaceId },
+          }),
+        });
         router.push(paths.setup.directory);
+      },
+      onError: (_error, variables) => {
+        // Инвалидируем кеш для согласованности состояния
+        queryClient.invalidateQueries({
+          queryKey: orpc.workspaces.getSetupProgress.key({
+            input: { workspaceId: variables.workspaceId },
+          }),
+        });
+        toast.error("Не удалось сохранить прогресс настройки");
       },
     }),
   );

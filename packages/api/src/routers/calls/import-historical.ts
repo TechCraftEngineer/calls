@@ -46,10 +46,6 @@ export const importHistoricalCalls = workspaceAdminProcedure
     return {
       success: true,
       message: "Импорт звонков поставлен в очередь",
-      total: 0,
-      imported: 0,
-      skipped: 0,
-      errors: 0,
-      transcriptionsQueued: 0,
+      status: "queued",
     };
   });
