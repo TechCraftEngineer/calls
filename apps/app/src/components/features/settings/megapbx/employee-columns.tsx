@@ -1,14 +1,11 @@
 "use client";
 
-import { Badge, Button } from "@calls/ui";
+import { Badge } from "@calls/ui";
 import type { ColumnDef } from "@tanstack/react-table";
-import { Pencil } from "lucide-react";
 import type { PbxEmployeeItem } from "../types";
-import { LinkStatus } from "./link-status";
+import { LinkEmployeeCell } from "./link-employee-cell";
 
-export function getEmployeeColumns(
-  onEditLink?: (employee: PbxEmployeeItem) => void,
-): ColumnDef<PbxEmployeeItem>[] {
+export function getEmployeeColumns(): ColumnDef<PbxEmployeeItem>[] {
   return [
     {
       accessorKey: "displayName",
@@ -28,25 +25,7 @@ export function getEmployeeColumns(
     {
       id: "linkedUser",
       header: "Пользователь",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <LinkStatus
-            linkedUser={row.original.linkedUser}
-            linkedInvitation={row.original.linkedInvitation}
-          />
-          {onEditLink && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7"
-              onClick={() => onEditLink(row.original)}
-              aria-label="Изменить привязку"
-            >
-              <Pencil className="size-3.5" />
-            </Button>
-          )}
-        </div>
-      ),
+      cell: ({ row }) => <LinkEmployeeCell employee={row.original} />,
     },
     {
       id: "status",
