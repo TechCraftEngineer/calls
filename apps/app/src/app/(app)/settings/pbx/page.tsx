@@ -45,24 +45,27 @@ const PROVIDERS = [
 
 export default function SettingsPbxProvidersPage() {
   const router = useRouter();
-  const { activeWorkspace } = useWorkspace();
+  const { activeWorkspace, loading: workspaceLoading } = useWorkspace();
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const { state, loadSettings } = useSettings();
 
   useEffect(() => {
+    // Ждём загрузки workspace перед проверкой прав
+    if (workspaceLoading) return;
+    
     if (!isWorkspaceAdmin) {
       router.replace(paths.forbidden);
       return;
     }
-  }, [isWorkspaceAdmin, router]);
+  }, [isWorkspaceAdmin, workspaceLoading, router]);
 
   useEffect(() => {
-    if (isWorkspaceAdmin) {
+    if (!workspaceLoading && isWorkspaceAdmin) {
       loadSettings();
     }
-  }, [isWorkspaceAdmin, loadSettings]);
+  }, [isWorkspaceAdmin, workspaceLoading, loadSettings]);
 
-  if (!isWorkspaceAdmin) {
+  if (workspaceLoading || !isWorkspaceAdmin) {
     return (
       <SettingsPageShell>
         <div className="flex items-center justify-center py-24">

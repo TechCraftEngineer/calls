@@ -29,7 +29,7 @@ export default function WorkspaceSettingsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const orpc = useORPC();
-  const { activeWorkspace, refreshWorkspaces } = useWorkspace();
+  const { activeWorkspace, loading: workspaceLoading, refreshWorkspaces } = useWorkspace();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
@@ -119,12 +119,15 @@ export default function WorkspaceSettingsPage() {
   }, [router]);
 
   useEffect(() => {
+    // Ждём загрузки workspace перед проверкой прав
+    if (workspaceLoading) return;
+    
     if (activeWorkspace && !isWorkspaceAdmin) {
       router.push(paths.forbidden);
     }
-  }, [activeWorkspace, isWorkspaceAdmin, router]);
+  }, [activeWorkspace, isWorkspaceAdmin, workspaceLoading, router]);
 
-  if (!activeWorkspace) {
+  if (workspaceLoading || !activeWorkspace) {
     return (
       <div className="flex items-center justify-center py-24">
         <div className="text-muted-foreground">Загрузка…</div>
