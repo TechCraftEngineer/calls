@@ -46,20 +46,27 @@ test.describe("Управление приглашениями в рабочем
         email: "newmember@example.com",
       });
 
-      await page.route("**/api/orpc/workspaces/createInvitation**", async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            result: {
-              data: {
-                token: invitation.token,
-                inviteUrl: `http://localhost:3000/invite/${invitation.token}`,
-                expiresAt: invitation.expiresAt,
+      await page.route("**/api/orpc/**", async (route) => {
+        const request = route.request();
+        const body = await request.postData();
+        
+        if (body && body.includes("createInvitation")) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              result: {
+                data: {
+                  token: invitation.token,
+                  inviteUrl: `http://localhost:3000/invite/${invitation.token}`,
+                  expiresAt: invitation.expiresAt,
+                },
               },
-            },
-          }),
-        });
+            }),
+          });
+        } else {
+          await route.continue();
+        }
       });
 
       await page.goto("/users");
@@ -88,20 +95,27 @@ test.describe("Управление приглашениями в рабочем
 
       const invitation = InvitationFactory.createLinkInvitation();
 
-      await page.route("**/api/orpc/workspaces/createInvitation**", async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            result: {
-              data: {
-                token: invitation.token,
-                inviteUrl: `http://localhost:3000/invite/${invitation.token}`,
-                expiresAt: invitation.expiresAt,
+      await page.route("**/api/orpc/**", async (route) => {
+        const request = route.request();
+        const body = await request.postData();
+        
+        if (body && body.includes("createInvitation")) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              result: {
+                data: {
+                  token: invitation.token,
+                  inviteUrl: `http://localhost:3000/invite/${invitation.token}`,
+                  expiresAt: invitation.expiresAt,
+                },
               },
-            },
-          }),
-        });
+            }),
+          });
+        } else {
+          await route.continue();
+        }
       });
 
       await page.goto("/users");
@@ -133,14 +147,21 @@ test.describe("Управление приглашениями в рабочем
       const currentUser = InvitationFactory.createMockUser();
       await helpers.mockCurrentUser(currentUser);
 
-      await page.route("**/api/orpc/workspaces/createInvitation**", async (route) => {
-        await route.fulfill({
-          status: 400,
-          contentType: "application/json",
-          body: JSON.stringify({
-            error: { message: "Пользователь уже является участником рабочего пространства" },
-          }),
-        });
+      await page.route("**/api/orpc/**", async (route) => {
+        const request = route.request();
+        const body = await request.postData();
+        
+        if (body && body.includes("createInvitation")) {
+          await route.fulfill({
+            status: 400,
+            contentType: "application/json",
+            body: JSON.stringify({
+              error: { message: "Пользователь уже является участником рабочего пространства" },
+            }),
+          });
+        } else {
+          await route.continue();
+        }
       });
 
       await page.goto("/users");
@@ -186,16 +207,23 @@ test.describe("Управление приглашениями в рабочем
         InvitationFactory.createLinkInvitation(),
       ];
 
-      await page.route("**/api/orpc/workspaces/listInvitations**", async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            result: {
-              data: invitations,
-            },
-          }),
-        });
+      await page.route("**/api/orpc/**", async (route) => {
+        const request = route.request();
+        const body = await request.postData();
+        
+        if (body && body.includes("listInvitations")) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              result: {
+                data: invitations,
+              },
+            }),
+          });
+        } else {
+          await route.continue();
+        }
       });
 
       await page.goto("/users");
@@ -277,16 +305,23 @@ test.describe("Управление приглашениями в рабочем
         });
       });
 
-      await page.route("**/api/orpc/workspaces/revokeInvitation**", async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            result: {
-              data: { success: true },
-            },
-          }),
-        });
+      await page.route("**/api/orpc/**", async (route) => {
+        const request = route.request();
+        const body = await request.postData();
+        
+        if (body && body.includes("revokeInvitation")) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              result: {
+                data: { success: true },
+              },
+            }),
+          });
+        } else {
+          await route.continue();
+        }
       });
 
       await page.goto("/users");
@@ -311,14 +346,21 @@ test.describe("Управление приглашениями в рабочем
       const currentUser = InvitationFactory.createMockUser();
       await helpers.mockCurrentUser(currentUser);
 
-      await page.route("**/api/orpc/workspaces/revokeInvitation**", async (route) => {
-        await route.fulfill({
-          status: 404,
-          contentType: "application/json",
-          body: JSON.stringify({
-            error: { message: "Приглашение не найдено" },
-          }),
-        });
+      await page.route("**/api/orpc/**", async (route) => {
+        const request = route.request();
+        const body = await request.postData();
+        
+        if (body && body.includes("revokeInvitation")) {
+          await route.fulfill({
+            status: 404,
+            contentType: "application/json",
+            body: JSON.stringify({
+              error: { message: "Приглашение не найдено" },
+            }),
+          });
+        } else {
+          await route.continue();
+        }
       });
 
       await page.goto("/users");
@@ -373,14 +415,21 @@ test.describe("Управление приглашениями в рабочем
       const currentUser = InvitationFactory.createMockUser();
       await helpers.mockCurrentUser(currentUser);
 
-      await page.route("**/api/orpc/workspaces/createInvitation**", async (route) => {
-        await route.fulfill({
-          status: 403,
-          contentType: "application/json",
-          body: JSON.stringify({
-            error: { message: "Недостаточно прав" },
-          }),
-        });
+      await page.route("**/api/orpc/**", async (route) => {
+        const request = route.request();
+        const body = await request.postData();
+        
+        if (body && body.includes("createInvitation")) {
+          await route.fulfill({
+            status: 403,
+            contentType: "application/json",
+            body: JSON.stringify({
+              error: { message: "Недостаточно прав" },
+            }),
+          });
+        } else {
+          await route.continue();
+        }
       });
 
       await page.goto("/users");

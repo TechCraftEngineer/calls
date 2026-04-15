@@ -119,12 +119,19 @@ test.describe("Управление приглашениями (оптимизи
       const invitation = InvitationFactory.createEmailInvitation();
       await helpers.mockListInvitations([invitation]);
 
-      await page.route("**/api/orpc/workspaces/revokeInvitation**", async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ result: { data: { success: true } } }),
-        });
+      await page.route("**/api/orpc/**", async (route) => {
+        const request = route.request();
+        const body = await request.postData();
+        
+        if (body && body.includes("revokeInvitation")) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ result: { data: { success: true } } }),
+          });
+        } else {
+          await route.continue();
+        }
       });
 
       await helpers.gotoUsersPage();
@@ -158,24 +165,31 @@ test.describe("Управление приглашениями (оптимизи
         const invitation = InvitationFactory.createEmailInvitation({ role });
         
         let capturedRole: string | null = null;
-        await page.route("**/api/orpc/workspaces/createInvitation**", async (route) => {
-          const postData = route.request().postData();
-          if (postData) {
-            capturedRole = JSON.parse(postData).role;
-          }
-          await route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({
-              result: {
-                data: {
-                  token: invitation.token,
-                  inviteUrl: `http://localhost:3000/invite/${invitation.token}`,
-                  expiresAt: invitation.expiresAt,
+        await page.route("**/api/orpc/**", async (route) => {
+          const request = route.request();
+          const body = await request.postData();
+          
+          if (body && body.includes("createInvitation")) {
+            const postData = route.request().postData();
+            if (postData) {
+              capturedRole = JSON.parse(postData).role;
+            }
+            await route.fulfill({
+              status: 200,
+              contentType: "application/json",
+              body: JSON.stringify({
+                result: {
+                  data: {
+                    token: invitation.token,
+                    inviteUrl: `http://localhost:3000/invite/${invitation.token}`,
+                    expiresAt: invitation.expiresAt,
+                  },
                 },
-              },
-            }),
-          });
+              }),
+            });
+          } else {
+            await route.continue();
+          }
         });
 
         await helpers.openInviteModal();

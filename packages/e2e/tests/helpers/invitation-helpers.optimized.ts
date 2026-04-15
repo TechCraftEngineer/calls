@@ -77,12 +77,19 @@ export class InvitationHelpers {
    * Мокирует список приглашений
    */
   async mockListInvitations(invitations: InvitationData[]) {
-    await this.page.route("**/api/orpc/workspaces/listInvitations**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ result: { data: invitations } }),
-      });
+    await this.page.route("**/api/orpc/**", async (route) => {
+      const request = route.request();
+      const body = await request.postData();
+      
+      if (body && body.includes("listInvitations")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ result: { data: invitations } }),
+        });
+      } else {
+        await route.continue();
+      }
     });
   }
 
@@ -90,20 +97,27 @@ export class InvitationHelpers {
    * Мокирует создание приглашения
    */
   async mockCreateInvitation(invitation: InvitationData) {
-    await this.page.route("**/api/orpc/workspaces/createInvitation**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          result: {
-            data: {
-              token: invitation.token,
-              inviteUrl: `http://localhost:3000/invite/${invitation.token}`,
-              expiresAt: invitation.expiresAt,
+    await this.page.route("**/api/orpc/**", async (route) => {
+      const request = route.request();
+      const body = await request.postData();
+      
+      if (body && body.includes("createInvitation")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            result: {
+              data: {
+                token: invitation.token,
+                inviteUrl: `http://localhost:3000/invite/${invitation.token}`,
+                expiresAt: invitation.expiresAt,
+              },
             },
-          },
-        }),
-      });
+          }),
+        });
+      } else {
+        await route.continue();
+      }
     });
   }
 
@@ -111,12 +125,19 @@ export class InvitationHelpers {
    * Мокирует ошибку создания приглашения
    */
   async mockCreateInvitationError(message: string, status = 400) {
-    await this.page.route("**/api/orpc/workspaces/createInvitation**", async (route) => {
-      await route.fulfill({
-        status,
-        contentType: "application/json",
-        body: JSON.stringify({ error: { message } }),
-      });
+    await this.page.route("**/api/orpc/**", async (route) => {
+      const request = route.request();
+      const body = await request.postData();
+      
+      if (body && body.includes("createInvitation")) {
+        await route.fulfill({
+          status,
+          contentType: "application/json",
+          body: JSON.stringify({ error: { message } }),
+        });
+      } else {
+        await route.continue();
+      }
     });
   }
 
@@ -182,12 +203,19 @@ export class InvitationHelpers {
    * Мокирует получение приглашения
    */
   async mockGetInvitation(invitation: InvitationData) {
-    await this.page.route("**/api/workspaces.getInvitationByToken", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ result: { data: invitation } }),
-      });
+    await this.page.route("**/api/orpc/**", async (route) => {
+      const request = route.request();
+      const body = await request.postData();
+      
+      if (body && body.includes("getInvitationByToken")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ result: { data: invitation } }),
+        });
+      } else {
+        await route.continue();
+      }
     });
   }
 
@@ -203,14 +231,16 @@ export class InvitationHelpers {
       }),
     };
 
-    await Promise.all([
-      this.page.route("**/api/orpc/workspaces.acceptInvitation**", (route) =>
-        route.fulfill(response)
-      ),
-      this.page.route("**/api/orpc/workspaces.acceptInvitationForExistingUser**", (route) =>
-        route.fulfill(response)
-      ),
-    ]);
+    await this.page.route("**/api/orpc/**", async (route) => {
+      const request = route.request();
+      const body = await request.postData();
+      
+      if (body && (body.includes("acceptInvitation") || body.includes("acceptInvitationForExistingUser"))) {
+        await route.fulfill(response);
+      } else {
+        await route.continue();
+      }
+    });
   }
 
   /**

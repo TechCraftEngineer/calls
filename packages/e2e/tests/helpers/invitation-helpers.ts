@@ -33,16 +33,23 @@ export class InvitationHelpers {
    * Мокирует API получения приглашения
    */
   async mockGetInvitation(invitation: InvitationData) {
-    await this.page.route("**/api/workspaces.getInvitationByToken", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          result: {
-            data: invitation,
-          },
-        }),
-      });
+    await this.page.route("**/api/orpc/**", async (route) => {
+      const request = route.request();
+      const body = await request.postData();
+      
+      if (body && body.includes("getInvitationByToken")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            result: {
+              data: invitation,
+            },
+          }),
+        });
+      } else {
+        await route.continue();
+      }
     });
   }
 
@@ -67,19 +74,26 @@ export class InvitationHelpers {
    * Мокирует проверку наличия пароля у пользователя
    */
   async mockCheckUserPassword(hasPassword: boolean, exists: boolean = true) {
-    await this.page.route("**/api/workspaces.checkUserPassword", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          result: {
-            data: {
-              hasPassword,
-              exists,
+    await this.page.route("**/api/orpc/**", async (route) => {
+      const request = route.request();
+      const body = await request.postData();
+      
+      if (body && body.includes("checkUserPassword")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            result: {
+              data: {
+                hasPassword,
+                exists,
+              },
             },
-          },
-        }),
-      });
+          }),
+        });
+      } else {
+        await route.continue();
+      }
     });
   }
 
@@ -170,12 +184,15 @@ export class InvitationHelpers {
       }),
     };
 
-    await this.page.route("**/api/workspaces.acceptInvitation**", async (route) => {
-      await route.fulfill(response);
-    });
-
-    await this.page.route("**/api/workspaces.acceptInvitationForExistingUser**", async (route) => {
-      await route.fulfill(response);
+    await this.page.route("**/api/orpc/**", async (route) => {
+      const request = route.request();
+      const body = await request.postData();
+      
+      if (body && (body.includes("acceptInvitation") || body.includes("acceptInvitationForExistingUser"))) {
+        await route.fulfill(response);
+      } else {
+        await route.continue();
+      }
     });
   }
 
