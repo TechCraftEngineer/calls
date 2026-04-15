@@ -19,6 +19,7 @@ const logger = createLogger("speaker-identification");
 // ВАЖНО: Это ограничение только для АНАЛИЗА LLM, полный текст сохраняется в БД
 const IdentifySpeakersInputSchema = z.object({
   message: z.string().min(1).max(2000),
+  summary: z.string().max(2000).optional(),
   context: z.string().max(500).optional(),
   conversationHistory: z.array(z.string()).max(20).optional(),
 });
@@ -76,10 +77,24 @@ export async function identifySpeakers(
   }
 
   // Обрезаем текст ТОЛЬКО для анализа LLM, но НЕ для сохранения в БД
-  const textForAnalysis =
+  let textForAnalysis =
     fullNormalizedText.length > MAX_MESSAGE_LENGTH
       ? fullNormalizedText.substring(0, MAX_MESSAGE_LENGTH)
       : fullNormalizedText;
+
+  // Проверяем, что после обрезки остался реальный текст, а не только пробелы
+  if (textForAnalysis.trim().length === 0) {
+    // Ищем первый непустой фрагмент в оригинальном тексте
+    const firstNonWhitespaceIndex = fullNormalizedText.search(/\S/);
+    if (firstNonWhitespaceIndex >= 0) {
+      textForAnalysis = fullNormalizedText
+        .substring(firstNonWhitespaceIndex, firstNonWhitespaceIndex + MAX_MESSAGE_LENGTH)
+        .trim();
+    } else {
+      // Весь текст состоит из пробелов
+      textForAnalysis = fullNormalizedText;
+    }
+  }
 
   if (fullNormalizedText.length > MAX_MESSAGE_LENGTH) {
     logger.warn(
@@ -93,9 +108,17 @@ export async function identifySpeakers(
     );
   }
 
+  // Обрезаем summary если он передан
+  const summaryForAnalysis = summary
+    ? summary.length > MAX_MESSAGE_LENGTH
+      ? summary.substring(0, MAX_MESSAGE_LENGTH)
+      : summary
+    : undefined;
+
   // Zod валидация входных данных (проверяем обрезанный текст для анализа)
   const validationResult = IdentifySpeakersInputSchema.safeParse({
     message: textForAnalysis,
+    summary: summaryForAnalysis,
     context: fallbackManagerName || undefined,
     conversationHistory: undefined,
   });
@@ -128,14 +151,27 @@ export async function identifySpeakers(
   const segments = extractSegmentsFromUtterances(utterances || []);
 
   // Передаем обрезанный текст для анализа, но полный текст для сохранения
-  const identificationResult = await identifySpeakersWithEmbeddings(textForAnalysis, {
-    direction: call.direction,
-    managerName: managerNameFromPbx ?? fallbackManagerName,
-    workspaceId: call.workspaceId,
-    speakerTimeline,
-    segments: segments || [],
-    summary,
-  });
+  let identificationResult;
+  try {
+    identificationResult = await identifySpeakersWithEmbeddings(textForAnalysis, {
+      direction: call.direction,
+      managerName: managerNameFromPbx ?? fallbackManagerName,
+      workspaceId: call.workspaceId,
+      speakerTimeline,
+      segments: segments || [],
+      summary: summaryForAnalysis,
+    });
+  } catch (error) {
+    logger.error("Ошибка при идентификации спикеров", {
+      event: "speaker-identification.error",
+      workspaceId: call.workspaceId,
+      direction: call.direction,
+      managerName: managerNameFromPbx ?? fallbackManagerName,
+      inputLength: textForAnalysis.length,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
 
   // ВАЖНО: Возвращаем ПОЛНЫЙ оригинальный текст, а не обрезанный
   return {
