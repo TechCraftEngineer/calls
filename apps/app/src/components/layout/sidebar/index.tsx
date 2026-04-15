@@ -20,7 +20,7 @@ import { LogOut, PanelLeft, PanelRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
-import { adminNavItems, type NavItem, navItems } from "./nav-items";
+import { adminNavItems, memberNavItems, type NavItem, navItems } from "./nav-items";
 import { SetupCard } from "./setup-card";
 import { SidebarLogo } from "./sidebar-logo";
 import { WorkspaceSwitcher } from "./workspace-switcher";
@@ -44,6 +44,7 @@ export function AppSidebar() {
   const { toggleSidebar, state } = useSidebar();
 
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
+  const isMember = activeWorkspace?.role === "member";
 
   const isActive = (href: string) => {
     if (href === paths.dashboard.root) {
@@ -51,6 +52,9 @@ export function AppSidebar() {
     }
     return pathname.startsWith(href);
   };
+
+  // Для member показываем только настройки отчетов, для admin/owner - полные настройки
+  const roleSpecificNavItems = isMember ? memberNavItems : adminNavItems;
 
   return (
     <Sidebar collapsible="icon">
@@ -78,10 +82,9 @@ export function AppSidebar() {
               {navItems.map((item) => (
                 <NavLink key={item.href} item={item} isActive={isActive(item.href)} />
               ))}
-              {isWorkspaceAdmin &&
-                adminNavItems.map((item) => (
-                  <NavLink key={item.href} item={item} isActive={isActive(item.href)} />
-                ))}
+              {roleSpecificNavItems.map((item) => (
+                <NavLink key={item.href} item={item} isActive={isActive(item.href)} />
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

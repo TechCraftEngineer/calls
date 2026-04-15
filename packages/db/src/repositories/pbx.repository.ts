@@ -123,6 +123,34 @@ export const pbxRepository = {
       );
   },
 
+  async listEmployeeLinks(workspaceId: string, provider: string) {
+    return db
+      .select({
+        id: schema.workspacePbxLinks.id,
+        targetExternalId: schema.workspacePbxLinks.targetExternalId,
+        user: {
+          id: schema.user.id,
+          email: schema.user.email,
+          name: schema.user.name,
+        },
+        invitation: {
+          id: schema.invitations.id,
+          email: schema.invitations.email,
+          role: schema.invitations.role,
+        },
+      })
+      .from(schema.workspacePbxLinks)
+      .leftJoin(schema.user, eq(schema.workspacePbxLinks.userId, schema.user.id))
+      .leftJoin(schema.invitations, eq(schema.workspacePbxLinks.invitationId, schema.invitations.id))
+      .where(
+        and(
+          eq(schema.workspacePbxLinks.workspaceId, workspaceId),
+          eq(schema.workspacePbxLinks.provider, provider),
+          eq(schema.workspacePbxLinks.targetType, "employee"),
+        ),
+      );
+  },
+
   async updateEmployeeKpiSettings(input: {
     workspaceId: string;
     provider: string;
@@ -320,6 +348,76 @@ export const pbxRepository = {
       )
       .limit(1);
     return rows[0] ?? null;
+  },
+
+  async upsertEmployeeLink(input: {
+    workspaceId: string;
+    provider: string;
+    employeeExternalId: string;
+    userId: string | null;
+    invitationId: string | null;
+    linkedByUserId?: string;
+  }) {
+    const existing = await db
+      .select()
+      .from(schema.workspacePbxLinks)
+      .where(
+        and(
+          eq(schema.workspacePbxLinks.workspaceId, input.workspaceId),
+          eq(schema.workspacePbxLinks.provider, input.provider),
+          eq(schema.workspacePbxLinks.targetType, "employee"),
+          eq(schema.workspacePbxLinks.targetExternalId, input.employeeExternalId),
+        ),
+      )
+      .limit(1);
+
+    if (existing[0]) {
+      // Обновляем существующую привязку
+      const rows = await db
+        .update(schema.workspacePbxLinks)
+        .set({
+          userId: input.userId,
+          invitationId: input.invitationId,
+          linkedByUserId: input.linkedByUserId,
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.workspacePbxLinks.id, existing[0].id))
+        .returning();
+      return rows[0];
+    }
+
+    // Создаём новую привязку
+    const rows = await db
+      .insert(schema.workspacePbxLinks)
+      .values({
+        workspaceId: input.workspaceId,
+        provider: input.provider,
+        targetType: "employee",
+        targetExternalId: input.employeeExternalId,
+        userId: input.userId,
+        invitationId: input.invitationId,
+        linkSource: "manual",
+        linkedByUserId: input.linkedByUserId,
+      })
+      .returning();
+    return rows[0];
+  },
+
+  async deleteEmployeeLink(
+    workspaceId: string,
+    provider: string,
+    employeeExternalId: string,
+  ) {
+    await db
+      .delete(schema.workspacePbxLinks)
+      .where(
+        and(
+          eq(schema.workspacePbxLinks.workspaceId, workspaceId),
+          eq(schema.workspacePbxLinks.provider, provider),
+          eq(schema.workspacePbxLinks.targetType, "employee"),
+          eq(schema.workspacePbxLinks.targetExternalId, employeeExternalId),
+        ),
+      );
   },
 };
 

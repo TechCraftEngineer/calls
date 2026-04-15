@@ -33,7 +33,7 @@ function EvaluationSettingsContent() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const orpc = useORPC();
-  const { activeWorkspace } = useWorkspace();
+  const { activeWorkspace, loading: workspaceLoading } = useWorkspace();
 
   const workspaceId = activeWorkspace?.id ?? null;
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
@@ -140,7 +140,16 @@ function EvaluationSettingsContent() {
     });
   }, [router]);
 
-  if (!activeWorkspace) {
+  useEffect(() => {
+    // Ждём загрузки workspace перед проверкой прав
+    if (workspaceLoading) return;
+    
+    if (!isWorkspaceAdmin) {
+      router.push(paths.forbidden);
+    }
+  }, [isWorkspaceAdmin, workspaceLoading, router]);
+
+  if (workspaceLoading || !activeWorkspace) {
     return (
       <div className="flex items-center justify-center py-24">
         <div className="text-muted-foreground">Загрузка…</div>
@@ -149,7 +158,6 @@ function EvaluationSettingsContent() {
   }
 
   if (!isWorkspaceAdmin) {
-    router.push(paths.forbidden);
     return null;
   }
 

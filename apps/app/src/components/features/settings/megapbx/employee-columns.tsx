@@ -3,6 +3,7 @@
 import { Badge } from "@calls/ui";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { PbxEmployeeItem } from "../types";
+import { LinkEmployeeCell } from "./link-employee-cell";
 
 export function getEmployeeColumns(): ColumnDef<PbxEmployeeItem>[] {
   return [
@@ -20,6 +21,11 @@ export function getEmployeeColumns(): ColumnDef<PbxEmployeeItem>[] {
       accessorKey: "email",
       header: "Email",
       cell: ({ row }) => row.original.email ?? "—",
+    },
+    {
+      id: "linkedUser",
+      header: "Пользователь",
+      cell: ({ row }) => <LinkEmployeeCell employee={row.original} />,
     },
     {
       id: "status",

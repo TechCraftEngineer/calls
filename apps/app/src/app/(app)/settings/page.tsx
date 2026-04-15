@@ -37,6 +37,7 @@ export default function SettingsPage() {
   const workspaceId = activeWorkspace?.id ?? null;
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const isOwner = activeWorkspace?.role === "owner";
+  const isMember = activeWorkspace?.role === "member";
 
   const { data: workspace } = useQuery<typeof workspaces.$inferSelect>({
     ...orpc.workspaces.get.queryOptions({
@@ -130,9 +131,17 @@ export default function SettingsPage() {
     );
   }
 
-  if (!isWorkspaceAdmin) {
-    router.push(paths.forbidden);
-    return null;
+  if (isMember || !isWorkspaceAdmin) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Доступ запрещен</h2>
+          <p className="text-muted-foreground">
+            У вас нет прав для изменения настроек компании
+          </p>
+        </div>
+      </div>
+    );
   }
 
   const handleSaveGeneral = async (data: {

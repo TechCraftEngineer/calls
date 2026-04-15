@@ -17,7 +17,7 @@
     "with-env": "bun run --env-file ../../.env"
   },
   "dependencies": {
-    "@ai-sdk/openai": "3.0.52",
+    "@ai-sdk/openai": "3.0.53",
     "@calls/ai": "workspace:*",
     "@calls/asr": "workspace:*",
     "@calls/config": "workspace:*",
@@ -26,21 +26,21 @@
     "@calls/lib": "workspace:*",
     "@calls/shared": "workspace:*",
     "@calls/telegram-bot": "workspace:*",
-    "ai": "^6.0.156",
+    "ai": "^6.0.161",
     "basic-ftp": "^5.2.2",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
-    "hono": "4.12.12",
-    "inngest": "4.2.0",
+    "hono": "4.12.14",
+    "inngest": "4.2.2",
     "music-metadata": "^11.12.3",
     "p-limit": "^7.3.0",
     "ssh2-sftp-client": "12.1.1",
-    "undici": "^8.0.2",
+    "undici": "^8.1.0",
     "zod": "4.3.6"
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
-    "@types/bun": "^1.3.11",
+    "@types/bun": "^1.3.12",
     "typescript": "6.0.2"
   }
 }

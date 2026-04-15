@@ -1,12 +1,14 @@
 import { getPbx } from "./get-pbx";
 import { getPbxWebhookSecret } from "./get-pbx-webhook-secret";
 import { importPbxDirectory } from "./import-pbx-directory";
+import { linkEmployee } from "./link-employee";
 import { listPbxEmployees } from "./list-pbx-employees";
 import { listPbxNumbers } from "./list-pbx-numbers";
 import { syncPbxCallsRoute } from "./sync-pbx-calls";
 import { syncPbxDirectoryRoute } from "./sync-pbx-directory";
 import { syncPbxRecordingsRoute } from "./sync-pbx-recordings";
 import { testPbx } from "./test-pbx";
+import { unlinkEmployee } from "./unlink-employee";
 import { updatePbx } from "./update-pbx";
 import { updatePbxAccess } from "./update-pbx-access";
 import { updatePbxExcludedNumbers } from "./update-pbx-excluded-numbers";
@@ -28,4 +30,6 @@ export const pbxRouter = {
   syncPbxRecordings: syncPbxRecordingsRoute,
   listPbxEmployees,
   listPbxNumbers,
+  linkEmployee,
+  unlinkEmployee,
 };

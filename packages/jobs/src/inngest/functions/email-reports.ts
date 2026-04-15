@@ -14,56 +14,19 @@ import {
   workspacesService,
 } from "@calls/db";
 import { type ManagerStats, ReportEmail, sendEmail } from "@calls/emails";
-import { formatReportSubject } from "@calls/shared";
+import {
+  formatDateInMoscow,
+  formatReportSubject,
+  getLastDayOfMonth,
+  maskEmail,
+  nowInMoscow,
+  parseTimeHHMM,
+  WEEKDAY_MAP,
+} from "@calls/shared";
 import { subMonths } from "date-fns";
-import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { inngest } from "../client";
 
 const TZ = "Europe/Moscow";
-
-function formatDateInMoscow(date: Date): string {
-  return formatInTimeZone(date, TZ, "yyyy-MM-dd");
-}
-
-function maskEmail(email: string): string {
-  const [local, domain] = email.split("@");
-  if (!domain || !local) return "***";
-  const safeLocal =
-    local.length <= 2 ? (local[0] ?? "*") : `${local[0] ?? "*"}***${local.at(-1) ?? "*"}`;
-  const [domName, domTld] = domain.split(".");
-  if (!domName) return "***";
-  const safeDomName =
-    domName.length <= 2 ? (domName[0] ?? "*") : `${domName[0] ?? "*"}***${domName.at(-1) ?? "*"}`;
-  return `${safeLocal}@${safeDomName}.${domTld ?? "***"}`;
-}
-
-function nowInMoscow(): Date {
-  return toZonedTime(new Date(), TZ);
-}
-
-function parseTimeHHMM(s: string): { h: number; m: number } {
-  const m = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/.exec(s?.trim() ?? "");
-  if (!m) return { h: 18, m: 0 };
-  return {
-    h: parseInt(m[1] ?? "18", 10),
-    m: parseInt(m[2] ?? "0", 10),
-  };
-}
-
-const WEEKDAY_MAP: Record<string, number> = {
-  sun: 0,
-  mon: 1,
-  tue: 2,
-  wed: 3,
-  thu: 4,
-  fri: 5,
-  sat: 6,
-};
-
-function getLastDayOfMonth(d: Date): number {
-  const next = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-  return next.getDate();
-}
 
 export const emailReportsFn = inngest.createFunction(
   {

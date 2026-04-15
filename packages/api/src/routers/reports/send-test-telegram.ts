@@ -1,21 +1,13 @@
 import { callsService, settingsService, usersService, workspacesService } from "@calls/db";
 import { formatTelegramReportHtml } from "@calls/jobs";
+import { formatDateInMoscow, nowInMoscow } from "@calls/shared";
 import { sendMessage } from "@calls/telegram-bot";
 import { ORPCError } from "@orpc/server";
 import { subMonths, subWeeks } from "date-fns";
-import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { z } from "zod";
 import { workspaceProcedure } from "../../orpc";
 
 const TZ = "Europe/Moscow";
-
-function nowInMoscow(): Date {
-  return toZonedTime(new Date(), TZ);
-}
-
-function formatDateInMoscow(date: Date): string {
-  return formatInTimeZone(date, TZ, "yyyy-MM-dd");
-}
 
 const reportTypeSchema = z.object({
   reportType: z.enum(["daily", "weekly", "monthly"]),

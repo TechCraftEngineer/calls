@@ -338,6 +338,10 @@ export class PbxService {
     return this.pbxRepository.listEmployees(workspaceId, MEGAPBX_PROVIDER);
   }
 
+  listEmployeeLinks(workspaceId: string) {
+    return this.pbxRepository.listEmployeeLinks(workspaceId, MEGAPBX_PROVIDER);
+  }
+
   listNumbers(workspaceId: string) {
     return this.pbxRepository.listNumbers(workspaceId, MEGAPBX_PROVIDER);
   }
@@ -361,6 +365,31 @@ export class PbxService {
       kpiTargetBonus: input.kpiTargetBonus,
       kpiTargetTalkTimeMinutes: input.kpiTargetTalkTimeMinutes,
     });
+  }
+
+  async linkEmployeeToUser(input: {
+    workspaceId: string;
+    employeeExternalId: string;
+    userId: string | null;
+    invitationId: string | null;
+    linkedByUserId?: string;
+  }) {
+    return this.pbxRepository.upsertEmployeeLink({
+      workspaceId: input.workspaceId,
+      provider: MEGAPBX_PROVIDER,
+      employeeExternalId: input.employeeExternalId,
+      userId: input.userId,
+      invitationId: input.invitationId,
+      linkedByUserId: input.linkedByUserId,
+    });
+  }
+
+  async unlinkEmployee(workspaceId: string, employeeExternalId: string) {
+    return this.pbxRepository.deleteEmployeeLink(
+      workspaceId,
+      MEGAPBX_PROVIDER,
+      employeeExternalId,
+    );
   }
 
   async recordWebhookEvent(input: {

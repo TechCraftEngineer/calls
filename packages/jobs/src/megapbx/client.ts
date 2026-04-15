@@ -1,5 +1,6 @@
 import type { MegaPbxIntegrationConfig } from "@calls/db";
-import { format, isValid, parseISO, subHours } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { z } from "zod";
 
 /** CRM API v1: https://api.megapbx.ru/#/docs/crmapi/v1/ */
@@ -164,37 +165,26 @@ export class MegaPbxClient {
     const v = value.trim();
     if (!v) return null;
 
+    // Уже в нужном формате
     if (/^\d{8}T\d{6}Z$/.test(v)) {
       return v;
     }
 
     // YYYY-MM-DD -> начало дня в московском времени (UTC+3)
     if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
-      // Парсим дату как московское время (UTC+3)
-      const moscowDate = new Date(`${v}T00:00:00+03:00`);
-      if (!isValid(moscowDate)) {
+      const date = parseISO(v);
+      if (!isValid(date)) {
         throw new Error(`Некорректная дата: ${v}`);
       }
-      // Форматируем используя UTC компоненты
-      const y = moscowDate.getUTCFullYear();
-      const m = String(moscowDate.getUTCMonth() + 1).padStart(2, "0");
-      const d = String(moscowDate.getUTCDate()).padStart(2, "0");
-      const hh = String(moscowDate.getUTCHours()).padStart(2, "0");
-      const mm = String(moscowDate.getUTCMinutes()).padStart(2, "0");
-      const ss = String(moscowDate.getUTCSeconds()).padStart(2, "0");
-      return `${y}${m}${d}T${hh}${mm}${ss}Z`;
+      // Конвертируем в московское время и форматируем в UTC
+      return formatInTimeZone(date, "Europe/Moscow", "yyyyMMdd'T'HHmmss'Z'");
     }
 
-    const date = new Date(v);
-    if (Number.isNaN(date.getTime())) return null;
+    // Произвольная дата
+    const date = parseISO(v);
+    if (!isValid(date)) return null;
 
-    const y = date.getUTCFullYear();
-    const m = String(date.getUTCMonth() + 1).padStart(2, "0");
-    const d = String(date.getUTCDate()).padStart(2, "0");
-    const hh = String(date.getUTCHours()).padStart(2, "0");
-    const mm = String(date.getUTCMinutes()).padStart(2, "0");
-    const ss = String(date.getUTCSeconds()).padStart(2, "0");
-    return `${y}${m}${d}T${hh}${mm}${ss}Z`;
+    return format(date, "yyyyMMdd'T'HHmmss'Z'");
   }
 
   private getRequestTimeoutMs(): number {

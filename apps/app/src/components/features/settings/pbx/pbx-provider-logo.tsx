@@ -6,7 +6,7 @@ import Image from "next/image";
 
 const LOGO_PATHS: Record<string, string> = {
   megafon: "/pbx-logos/megafon.png",
-  mango: "/pbx-logos/mango.ico",
+  mango: "/pbx-logos/mango.svg",
   mts: "/pbx-logos/mts.svg",
   beeline: "/pbx-logos/beeline.svg",
 };
@@ -81,6 +81,7 @@ export function PbxProviderLogo({
           alt=""
           width={28}
           height={28}
+          unoptimized
           className={`object-contain ${muted ? "opacity-60" : ""}`}
         />
       ) : fallbackSvg ? (

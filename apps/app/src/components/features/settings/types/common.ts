@@ -56,6 +56,8 @@ export interface PbxEmployeeItem {
   extension: string | null;
   email: string | null;
   isActive: boolean;
+  linkedUser?: { id: string; email: string; name: string } | null;
+  linkedInvitation?: { id: string; email: string; role: string } | null;
 }
 
 export interface PbxNumberItem {
