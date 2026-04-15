@@ -38,7 +38,7 @@
     "@turbo/gen": "^2.9.6",
     "@types/fluent-ffmpeg": "^2.1.28",
     "to-ico": "^1.1.5",
-    "tsdown": "^0.21.7",
+    "tsdown": "^0.21.8",
     "turbo": "^2.9.6",
     "typescript": "6.0.2"
   },

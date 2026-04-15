@@ -11,12 +11,23 @@ export { formatReportSubject, type ReportType } from "./reports";
 export { generateWorkspaceSlug } from "./slug";
 export { buildCompanyContext } from "./utils/company-context";
 export {
+  formatDateInMoscow,
+  getDefaultSyncDateRange,
+  getLastDayOfMonth,
+  isWeekend,
+  nowInMoscow,
+  parseTimeHHMM,
+  WEEKDAY_MAP,
+} from "./utils/date-utils";
+export { formatOptional, maskEmail } from "./utils/format";
+export {
   compareIds,
   isValidId,
   normalizeId,
   type SafeId,
   safeId,
 } from "./utils/id-utils";
+export { measureTime, measureTimeSync, sleep } from "./utils/performance";
 export { pluralize } from "./utils/pluralize";
 export { replaceSpeakersWithRoles } from "./utils/speaker-mapping";
 export {

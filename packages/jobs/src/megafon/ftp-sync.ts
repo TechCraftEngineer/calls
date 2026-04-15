@@ -6,8 +6,9 @@
 import { Writable } from "node:stream";
 import { getAudioDurationFromBuffer } from "@calls/asr/audio/get-audio-duration";
 import { callsService, filesService } from "@calls/db";
-import { validateFtpCredentials } from "@calls/shared";
+import { getDefaultSyncDateRange, validateFtpCredentials } from "@calls/shared";
 import { Client } from "basic-ftp";
+import { format } from "date-fns";
 import pLimit from "p-limit";
 import { createLogger } from "../logger";
 import { parseMegafonFilename } from "./parse-filename";
@@ -357,15 +358,10 @@ export async function syncFtp(
       if (dateStr) {
         dateDirs = dateDirs.filter((d) => d === dateStr);
       } else if (syncFromDate) {
-        const todayStr = new Date().toISOString().slice(0, 10);
+        const todayStr = format(new Date(), "yyyy-MM-dd");
         dateDirs = dateDirs.filter((d) => d >= syncFromDate && d <= todayStr).sort();
       } else {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const fromDate = new Date(today);
-        fromDate.setDate(fromDate.getDate() - 7);
-        const fromStr = fromDate.toISOString().slice(0, 10);
-        const todayStr = today.toISOString().slice(0, 10);
+        const { fromStr, todayStr } = getDefaultSyncDateRange();
         dateDirs = dateDirs.filter((d) => d >= fromStr && d <= todayStr).sort();
       }
 

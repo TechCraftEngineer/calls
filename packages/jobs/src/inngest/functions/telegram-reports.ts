@@ -12,20 +12,22 @@ import {
   workspaceSettingsRepository,
   workspacesService,
 } from "@calls/db";
+import {
+  formatDateInMoscow,
+  getLastDayOfMonth,
+  isWeekend,
+  nowInMoscow,
+  parseTimeHHMM,
+  sleep,
+  WEEKDAY_MAP,
+} from "@calls/shared";
 import { sendMessage } from "@calls/telegram-bot";
 import { subMonths } from "date-fns";
-import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { formatTelegramReportHtml, splitTelegramHtmlMessage } from "../../reports";
 import { inngest } from "../client";
 
 const TZ = "Europe/Moscow";
 const SEND_RETRY_DELAYS_MS = [500, 1000, 2000] as const;
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
 
 async function sendChunkWithRetry(token: string, chatId: string, text: string): Promise<boolean> {
   for (let attempt = 0; attempt < SEND_RETRY_DELAYS_MS.length; attempt++) {
@@ -47,43 +49,6 @@ async function sendChunkWithRetry(token: string, chatId: string, text: string): 
   }
 
   return false;
-}
-
-function formatDateInMoscow(date: Date): string {
-  return formatInTimeZone(date, TZ, "yyyy-MM-dd");
-}
-
-function nowInMoscow(): Date {
-  return toZonedTime(new Date(), TZ);
-}
-
-function isWeekend(d: Date): boolean {
-  const day = d.getDay();
-  return day === 0 || day === 6;
-}
-
-function parseTimeHHMM(s: string): { h: number; m: number } {
-  const m = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/.exec(s?.trim() ?? "");
-  if (!m) return { h: 18, m: 0 };
-  return {
-    h: parseInt(m[1] ?? "18", 10),
-    m: parseInt(m[2] ?? "0", 10),
-  };
-}
-
-const WEEKDAY_MAP: Record<string, number> = {
-  sun: 0,
-  mon: 1,
-  tue: 2,
-  wed: 3,
-  thu: 4,
-  fri: 5,
-  sat: 6,
-};
-
-function getLastDayOfMonth(d: Date): number {
-  const next = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-  return next.getDate();
 }
 
 export const telegramReportsFn = inngest.createFunction(
