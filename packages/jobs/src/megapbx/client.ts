@@ -1,4 +1,5 @@
 import type { MegaPbxIntegrationConfig } from "@calls/db";
+import { format, isValid, parseISO, subHours } from "date-fns";
 import { z } from "zod";
 
 /** CRM API v1: https://api.megapbx.ru/#/docs/crmapi/v1/ */
@@ -169,36 +170,13 @@ export class MegaPbxClient {
 
     // YYYY-MM-DD -> начало дня в московском времени (UTC+3)
     if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
-      // Парсим дату как московскую дату
-      const parts = v.split("-").map(Number);
-      const year = parts[0]!;
-      const month = parts[1]!;
-      const day = parts[2]!;
-
-      // Вычисляем полночь в UTC для валидации
-      const utcMidnightMs = Date.UTC(year, month - 1, day, 0, 0, 0);
-      const utcDate = new Date(utcMidnightMs);
-
-      // Валидируем входные данные (отклоняем невалидные даты типа 2026-02-31)
-      if (
-        utcDate.getUTCFullYear() !== year ||
-        utcDate.getUTCMonth() !== month - 1 ||
-        utcDate.getUTCDate() !== day
-      ) {
+      const date = parseISO(v);
+      if (!isValid(date)) {
         throw new Error(`Некорректная дата: ${v}`);
       }
-
-      // Вычисляем полночь в Москве (UTC+3) в UTC
-      const midnightMoscowUtcMs = utcMidnightMs - 3 * 60 * 60 * 1000;
-      const moscowUtcDate = new Date(midnightMoscowUtcMs);
-
-      const y = moscowUtcDate.getUTCFullYear();
-      const m = String(moscowUtcDate.getUTCMonth() + 1).padStart(2, "0");
-      const d = String(moscowUtcDate.getUTCDate()).padStart(2, "0");
-      const hh = String(moscowUtcDate.getUTCHours()).padStart(2, "0");
-      const mm = String(moscowUtcDate.getUTCMinutes()).padStart(2, "0");
-      const ss = String(moscowUtcDate.getUTCSeconds()).padStart(2, "0");
-      return `${y}${m}${d}T${hh}${mm}${ss}Z`;
+      // Полночь в Москве (UTC+3) = 21:00 UTC предыдущего дня
+      const utcDate = subHours(date, 3);
+      return format(utcDate, "yyyyMMdd'T'HHmmss'Z'");
     }
 
     const date = new Date(v);
