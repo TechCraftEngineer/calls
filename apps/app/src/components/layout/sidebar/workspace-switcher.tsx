@@ -44,7 +44,7 @@ export function WorkspaceSwitcher() {
         await refreshWorkspaces();
       } catch (error) {
         toast.error("Не удалось обновить список компаний");
-        console.error("Error refreshing workspaces:", error);
+        console.error("Ошибка обновления рабочих пространств:", error);
       }
     }
   };

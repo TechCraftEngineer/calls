@@ -53,13 +53,15 @@ export function ImportModal({ open, onOpenChange, onComplete }: ModalProps<void>
       onSuccess: (data) => {
         setStatus("success");
         setProgress(100);
+        // API возвращает { success, message, status: "queued" }
+        // Импорт асинхронный, поэтому показываем успешную постановку в очередь
         setResult({
-          totalCalls: data.total ?? 0,
-          importedCalls: data.imported ?? 0,
-          skippedCalls: data.skipped ?? 0,
-          errors: data.errors ?? 0,
+          totalCalls: 0,
+          importedCalls: 0,
+          skippedCalls: 0,
+          errors: 0,
         });
-        toast.success("Импорт завершён успешно");
+        toast.success(data.message || "Импорт поставлен в очередь");
       },
       onError: (error) => {
         setStatus("error");
@@ -229,39 +231,18 @@ export function ImportModal({ open, onOpenChange, onComplete }: ModalProps<void>
                   </div>
                 </div>
                 <div className="space-y-2 text-center">
-                  <p className="font-medium">Импорт завершён успешно!</p>
+                  <p className="font-medium">Импорт поставлен в очередь!</p>
                   <p className="text-sm text-muted-foreground">
                     Звонки с {format(parseISO(importFromDate), "d MMMM yyyy", { locale: ru })}{" "}
-                    загружены
+                    будут загружены в фоновом режиме. Это может занять несколько минут.
                   </p>
                 </div>
 
-                {/* Статистика */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-lg border bg-muted/30 p-3 text-center">
-                    <p className="text-2xl font-semibold text-foreground">{result.importedCalls}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Импортировано</p>
-                  </div>
-                  <div className="rounded-lg border bg-muted/30 p-3 text-center">
-                    <p className="text-2xl font-semibold text-foreground">{result.totalCalls}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Всего звонков</p>
-                  </div>
-                  {result.skippedCalls > 0 && (
-                    <div className="rounded-lg border bg-muted/30 p-3 text-center">
-                      <p className="text-2xl font-semibold text-muted-foreground">
-                        {result.skippedCalls}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">Пропущено</p>
-                    </div>
-                  )}
-                  {result.errors > 0 && (
-                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-center dark:border-red-900/50 dark:bg-red-900/20">
-                      <p className="text-2xl font-semibold text-red-600 dark:text-red-400">
-                        {result.errors}
-                      </p>
-                      <p className="mt-1 text-xs text-red-600 dark:text-red-400">Ошибок</p>
-                    </div>
-                  )}
+                <div className="rounded-lg border bg-blue-50 p-4 dark:bg-blue-900/20">
+                  <p className="text-sm text-blue-900 dark:text-blue-100">
+                    💡 Вы можете продолжить настройку. Звонки появятся в системе автоматически после
+                    завершения импорта.
+                  </p>
                 </div>
 
                 <Button onClick={handleComplete} className="w-full">

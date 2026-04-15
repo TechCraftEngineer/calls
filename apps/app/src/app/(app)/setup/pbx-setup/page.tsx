@@ -46,8 +46,8 @@ export default function PbxSetupPage() {
     orpc.workspaces.updateSetupProgress.mutationOptions({
       onSuccess: (_data, variables) => {
         queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.getSetupProgress.key({
-            input: { workspaceId: variables.workspaceId },
+          queryKey: orpc.workspaces.getSetupProgress.queryKey({
+            workspaceId: variables.workspaceId,
           }),
         });
         router.push(paths.setup.directory);
@@ -55,8 +55,8 @@ export default function PbxSetupPage() {
       onError: (_error, variables) => {
         // Инвалидируем кеш для согласованности состояния
         queryClient.invalidateQueries({
-          queryKey: orpc.workspaces.getSetupProgress.key({
-            input: { workspaceId: variables.workspaceId },
+          queryKey: orpc.workspaces.getSetupProgress.queryKey({
+            workspaceId: variables.workspaceId,
           }),
         });
         toast.error("Не удалось сохранить прогресс настройки");

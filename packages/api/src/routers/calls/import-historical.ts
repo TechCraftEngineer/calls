@@ -47,5 +47,9 @@ export const importHistoricalCalls = workspaceAdminProcedure
       success: true,
       message: "Импорт звонков поставлен в очередь",
       status: "queued",
+      total: 0,
+      imported: 0,
+      skipped: 0,
+      errors: [],
     };
   });

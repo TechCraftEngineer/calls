@@ -170,13 +170,19 @@ export class MegaPbxClient {
 
     // YYYY-MM-DD -> начало дня в московском времени (UTC+3)
     if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
-      const date = parseISO(v);
-      if (!isValid(date)) {
+      // Парсим дату как московское время (UTC+3)
+      const moscowDate = new Date(`${v}T00:00:00+03:00`);
+      if (!isValid(moscowDate)) {
         throw new Error(`Некорректная дата: ${v}`);
       }
-      // Полночь в Москве (UTC+3) = 21:00 UTC предыдущего дня
-      const utcDate = subHours(date, 3);
-      return format(utcDate, "yyyyMMdd'T'HHmmss'Z'");
+      // Форматируем используя UTC компоненты
+      const y = moscowDate.getUTCFullYear();
+      const m = String(moscowDate.getUTCMonth() + 1).padStart(2, "0");
+      const d = String(moscowDate.getUTCDate()).padStart(2, "0");
+      const hh = String(moscowDate.getUTCHours()).padStart(2, "0");
+      const mm = String(moscowDate.getUTCMinutes()).padStart(2, "0");
+      const ss = String(moscowDate.getUTCSeconds()).padStart(2, "0");
+      return `${y}${m}${d}T${hh}${mm}${ss}Z`;
     }
 
     const date = new Date(v);
