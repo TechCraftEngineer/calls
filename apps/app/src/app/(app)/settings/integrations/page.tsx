@@ -31,7 +31,8 @@ export default function SettingsIntegrationsPage() {
     // Ждём загрузки workspace перед проверкой прав
     if (workspaceLoading) return;
 
-    if (activeWorkspace && !isWorkspaceAdmin) {
+    // Redirect if no workspace or not admin
+    if (activeWorkspace === null || (activeWorkspace && !isWorkspaceAdmin)) {
       router.replace(paths.forbidden);
       return;
     }

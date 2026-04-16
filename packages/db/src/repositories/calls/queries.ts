@@ -218,8 +218,8 @@ export const callsQueries = {
       .limit(limit);
 
     return result.map((row) => {
-      if (!row.recordingFileId) {
-        throw new Error(`Call ${row.id} has null recordingFileId despite isNotNull filter`);
+      if (row.recordingFileId == null) {
+        throw new Error(`Звонок ${row.id} имеет recordingFileId равный null/undefined`);
       }
       return {
         id: row.id,
