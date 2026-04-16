@@ -234,9 +234,16 @@ export async function getReportScheduleSettings(
     return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(s) ? s.trim() : "18:00";
   };
 
+  const validWeekDays = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+  type WeekDay = (typeof validWeekDays)[number];
+  const normalizedWeekDay = (weeklyDay ?? "fri").toLowerCase();
+  const reportWeeklyDay: WeekDay = validWeekDays.includes(normalizedWeekDay as WeekDay)
+    ? (normalizedWeekDay as WeekDay)
+    : "fri";
+
   return {
     reportDailyTime: normTime(dailyTime) || "18:00",
-    reportWeeklyDay: (weeklyDay ?? "fri").toLowerCase(),
+    reportWeeklyDay,
     reportWeeklyTime: normTime(weeklyTime) || "18:10",
     reportMonthlyDay: monthlyDay ?? "last",
     reportMonthlyTime: normTime(monthlyTime) || "18:20",
