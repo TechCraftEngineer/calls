@@ -3,7 +3,16 @@
 import { paths } from "@calls/config";
 import { toast } from "@calls/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BarChart3, Bot, Building2, Download, Globe, Loader2, Users } from "lucide-react";
+import {
+  BarChart3,
+  Bot,
+  Building2,
+  Download,
+  Globe,
+  Loader2,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { SetupFinishCard } from "@/components/features/setup/setup-finish-card";
@@ -76,6 +85,16 @@ const SETUP_STEPS: SetupStep[] = [
     actionLabel: "Настроить",
     editLabel: "Изменить",
     href: "/settings/evaluation",
+  },
+  {
+    id: "kpi",
+    title: "Настройте KPI",
+    description: "Настройте ключевые показатели эффективности для отслеживания результатов",
+    icon: <TrendingUp className="size-[18px]" />,
+    timeEstimate: "3 минуты",
+    actionLabel: "Настроить",
+    editLabel: "Изменить",
+    href: paths.statistics.kpi,
   },
 ];
 

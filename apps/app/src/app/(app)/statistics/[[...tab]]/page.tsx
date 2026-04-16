@@ -1,10 +1,10 @@
 "use client";
 
 import { paths } from "@calls/config";
-import { Tabs, TabsList, TabsTrigger } from "@calls/ui";
-import { skipToken, useQuery } from "@tanstack/react-query";
+import { Button, Tabs, TabsList, TabsTrigger, toast } from "@calls/ui";
+import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import KpiTable from "@/components/features/calls/kpi-table";
 import MonthlyGridTable from "@/components/features/kpi/monthly-grid-table";
@@ -32,6 +32,8 @@ function getActiveTab(pathname: string): "statistics" | "kpi" | "grid" | "settin
 function StatisticsPageContent() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const orpc = useORPC();
   const activeTab = getActiveTab(pathname);
 
@@ -40,6 +42,20 @@ function StatisticsPageContent() {
   const userLoading = sessionPending;
   const { activeWorkspace } = useWorkspace();
   const workspaceRole = activeWorkspace?.role ?? "member";
+
+  // Проверяем, пришли ли мы со страницы настройки через параметр URL
+  const fromSetup = searchParams.get("fromSetup") === "true";
+
+  // Mutation для обновления прогресса setup
+  const updateSetupProgressMutation = useMutation(
+    orpc.workspaces.updateSetupProgress.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          predicate: (query) => query.queryKey[0] === "workspaces.getSetupProgress",
+        });
+      },
+    }),
+  );
 
   const [filters, setFilters] = useState({
     dateFrom: "",
@@ -98,12 +114,47 @@ function StatisticsPageContent() {
     setFilters((prev) => ({ ...prev, dateFrom: "", dateTo: "" }));
   };
 
+  const handleCompleteKpiSetup = () => {
+    if (!activeWorkspace) return;
+    updateSetupProgressMutation.mutate(
+      { workspaceId: activeWorkspace.id, completedStep: "kpi" },
+      {
+        onSuccess: () => {
+          toast.success("Шаг завершён");
+          router.push(paths.setup.root);
+        },
+        onError: (err) => {
+          toast.error(
+            err instanceof Error ? err.message : "Не удалось обновить прогресс настройки",
+          );
+        },
+      },
+    );
+  };
+
   return (
     <main className="main-content">
       <header className="page-header mb-8">
         <h1 className="page-title">Статистика звонков</h1>
         <p className="page-subtitle">Эффективность работы менеджеров</p>
       </header>
+
+      {fromSetup && activeTab === "kpi" && (
+        <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/50 dark:bg-blue-900/20">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-blue-900 dark:text-blue-200">
+              Ознакомьтесь с настройками KPI. После завершения вы вернётесь к настройке.
+            </p>
+            <Button
+              onClick={handleCompleteKpiSetup}
+              disabled={updateSetupProgressMutation.isPending}
+              size="sm"
+            >
+              {updateSetupProgressMutation.isPending ? "Сохранение…" : "Завершить шаг"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Tabs value={activeTab} className="mb-6">
         <TabsList className="flex gap-0 p-0 h-auto bg-transparent border-b-2 border-[#EEE] rounded-none w-auto">
