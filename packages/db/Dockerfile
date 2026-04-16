@@ -22,12 +22,11 @@ FROM base AS runner
 ARG POSTGRES_URL
 ENV POSTGRES_URL=${POSTGRES_URL}
 
-COPY --from=builder /app .
-
-# Create non-root user
+# Create non-root user early
 RUN addgroup -g 1001 -S appuser && \
-    adduser -S -u 1001 -G appuser appuser && \
-    chown -R appuser:appuser /app
+    adduser -S -u 1001 -G appuser appuser
+
+COPY --from=builder --chown=appuser:appuser /app .
 
 USER appuser
 

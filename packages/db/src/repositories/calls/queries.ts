@@ -217,9 +217,14 @@ export const callsQueries = {
       )
       .limit(limit);
 
-    return result.map((row) => ({
-      id: row.id,
-      recordingFileId: row.recordingFileId ?? "",
-    }));
+    return result.map((row) => {
+      if (!row.recordingFileId) {
+        throw new Error(`Call ${row.id} has null recordingFileId despite isNotNull filter`);
+      }
+      return {
+        id: row.id,
+        recordingFileId: row.recordingFileId,
+      };
+    });
   },
 };

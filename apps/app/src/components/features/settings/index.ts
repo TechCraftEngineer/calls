@@ -1,4 +1,7 @@
 // Account
+
+// Access Denied
+export { AccessDeniedState } from "./access-denied-state";
 export { BackupSection, DeleteAccountDialog } from "./account";
 // Constants
 export { INTEGRATION_KEYS } from "./constants";

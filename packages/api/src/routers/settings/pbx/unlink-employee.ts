@@ -3,7 +3,7 @@ import { z } from "zod";
 import { workspaceAdminProcedure } from "../../../orpc";
 
 const unlinkEmployeeSchema = z.object({
-  employeeExternalId: z.string().trim().min(1, "Employee external ID cannot be empty"),
+  employeeExternalId: z.string().trim().min(1, "Внешний ID сотрудника не может быть пустым"),
 });
 
 export const unlinkEmployee = workspaceAdminProcedure

@@ -22,7 +22,7 @@ export function maskEmail(email: string): string {
 
   const parts = domain.split(".");
   const domName = parts[0];
-  const domTld = parts.length > 1 ? parts.slice(1).join(".") : "***";
+  const domTld = parts.length > 1 ? parts[1] : "***";
 
   if (!domName) return "***";
 
