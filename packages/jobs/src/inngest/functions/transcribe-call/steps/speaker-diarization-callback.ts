@@ -173,6 +173,16 @@ export async function speakerDiarizationWithCallback(
       clusterCount: eventData.result.clusterCount,
     });
 
+    // Объединяем последовательные сегменты одного спикера, если они есть
+    let finalSegments = eventData.result.segments;
+    if (finalSegments && finalSegments.length > 0) {
+      const { mergeConsecutiveSpeakerSegments } = await import("./merge-consecutive-segments");
+      finalSegments = mergeConsecutiveSpeakerSegments(
+        finalSegments.map((s) => ({ ...s, text: "" })),
+        callId,
+      );
+    }
+
     return {
       success: true,
       mapping: eventData.result.mapping,
@@ -180,7 +190,7 @@ export async function speakerDiarizationWithCallback(
       clusterCount: eventData.result.clusterCount,
       taskId,
       processingTimeMs: eventData.processingTimeMs || 0,
-      segments: eventData.result.segments,
+      segments: finalSegments,
     };
   });
 }

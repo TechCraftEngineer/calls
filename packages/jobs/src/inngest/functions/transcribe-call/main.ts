@@ -12,7 +12,7 @@
 
 import type { AsrExecutionLog } from "@calls/asr";
 import { callsService, PROCESSING_STATUS } from "@calls/db";
-import type { ZodIssue } from "zod";
+import type { z } from "zod";
 import { evaluateRequested, inngest, transcribeRequested } from "../../../client";
 import {
   type AsyncTranscriptionResult,
@@ -284,7 +284,7 @@ export const transcribeCallFn = inngest.createFunction(
       const validationResult = TranscriptionResultSchema.safeParse(resultForValidation);
       if (!validationResult.success) {
         const errorDetails = validationResult.error.issues
-          .map((issue: ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
+          .map((issue: z.core.$ZodIssue) => `${issue.path.join(".")}: ${issue.message}`)
           .join(", ");
         throw new Error(`Transcription result validation failed: ${errorDetails}`);
       }

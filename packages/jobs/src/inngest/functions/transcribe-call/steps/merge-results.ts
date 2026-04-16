@@ -5,8 +5,8 @@
 import { buildCompanyContext } from "@calls/shared";
 import { createLogger } from "../../../../logger";
 import { applyLLMMerging } from "../llm/merge";
-import type { SyncTranscriptionResult } from "./sync-transcription";
 import type { Workspace } from "../schemas";
+import type { SyncTranscriptionResult } from "./sync-transcription";
 
 const logger = createLogger("transcribe-call:merge-results");
 
@@ -90,8 +90,12 @@ export async function mergeResults(
 
   const llmMergeTimeMs = Date.now() - llmMergeStartTime;
 
+  // Объединяем последовательные сегменты одного спикера в финальном результате
+  const { mergeConsecutiveSpeakerSegments } = await import("./merge-consecutive-segments");
+  const finalSegments = mergeConsecutiveSpeakerSegments(mergeResult.segments, callId);
+
   return {
-    segments: mergeResult.segments,
+    segments: finalSegments,
     mergedTranscript: mergeResult.mergedTranscript,
     applied: mergeResult.applied,
     qualityScore: mergeResult.quality?.score ?? null,

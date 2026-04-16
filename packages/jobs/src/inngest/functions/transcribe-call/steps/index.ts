@@ -14,6 +14,8 @@ export { fetchWorkspace } from "./fetch-workspace";
 export { handleFailure } from "./handle-failure";
 export type { IdentifyResult } from "./identify-speakers";
 export { identifySpeakers } from "./identify-speakers";
+export type { Segment } from "./merge-consecutive-segments";
+export { mergeConsecutiveSpeakerSegments } from "./merge-consecutive-segments";
 export type { DiarizeResult, MergeResult } from "./merge-results";
 export { mergeResults } from "./merge-results";
 export { persistResults } from "./persist-results";
