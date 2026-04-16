@@ -264,7 +264,7 @@ ${analysisText}
 Определи роль каждого спикера и верни JSON по схеме.`,
       output: Output.object({ schema }),
       temperature: 0.2,
-      maxRetries: 3,
+      maxRetries: 2,
       abortSignal: AbortSignal.timeout(LLM_CONFIG.SPEAKER_IDENTIFICATION_TIMEOUT_MS),
       functionId: "asr-identify-speakers-embeddings",
       timeout: LLM_CONFIG.SPEAKER_IDENTIFICATION_TIMEOUT_MS,
