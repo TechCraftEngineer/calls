@@ -85,6 +85,14 @@ function getRawAIModelId(profile: AiModelProfile = "default"): string {
   }
 }
 
+function getFallbackModels(): string[] {
+  if (!env.AI_FALLBACK_MODELS?.trim()) return [];
+
+  return env.AI_FALLBACK_MODELS.split(",")
+    .map((m) => m.trim())
+    .filter(Boolean);
+}
+
 export function hasAiProviderConfigured(): boolean {
   const hasAnyProviderKey = Boolean(
     env.OPENAI_API_KEY || env.OPENROUTER_API_KEY || env.DEEPSEEK_API_KEY,
@@ -149,6 +157,7 @@ function buildModelCandidates(options: GetAIModelOptions = {}): ModelCandidate[]
   const explicitModel = options.model?.trim();
   const profileModel = getRawAIModelId(options.profile);
   const defaultModel = getRawAIModelId("default");
+  const fallbackModels = getFallbackModels();
 
   const candidates: ModelCandidate[] = [];
   const seen = new Set<string>();
@@ -166,13 +175,25 @@ function buildModelCandidates(options: GetAIModelOptions = {}): ModelCandidate[]
     });
   };
 
+  // 1. Сначала пробуем основную модель на всех провайдерах
   for (const provider of providers) {
     pushCandidate(provider, explicitModel);
     if (!explicitModel) {
       pushCandidate(provider, profileModel);
-      if (profileModel !== defaultModel) {
-        pushCandidate(provider, defaultModel);
-      }
+    }
+  }
+
+  // 2. Затем пробуем fallback модели на всех провайдерах
+  for (const fallbackModel of fallbackModels) {
+    for (const provider of providers) {
+      pushCandidate(provider, fallbackModel);
+    }
+  }
+
+  // 3. В конце пробуем дефолтную модель, если она отличается
+  if (!explicitModel && profileModel !== defaultModel) {
+    for (const provider of providers) {
+      pushCandidate(provider, defaultModel);
     }
   }
 
