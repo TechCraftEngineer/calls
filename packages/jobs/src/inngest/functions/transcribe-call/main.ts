@@ -145,6 +145,18 @@ export const transcribeCallFn = inngest.createFunction(
           }))
         : fullTranscription.segments || [];
 
+      // Проверяем, что есть сегменты для диаризации
+      if (!segmentsForDiarization || segmentsForDiarization.length === 0) {
+        logger.warn("Нет сегментов для диаризированной транскрипции, используем fallback", {
+          callId,
+          hasSpeakerSegments: !!speakerDiarizationResult.segments,
+          hasFullTranscriptionSegments: !!(
+            fullTranscription.segments && fullTranscription.segments.length > 0
+          ),
+        });
+        throw new Error("Нет сегментов для диаризации");
+      }
+
       diarizeResult = await asyncDiarizedTranscriptionWithCallback(
         pipelineAudio,
         callId,

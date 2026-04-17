@@ -20,9 +20,14 @@ export interface Segment {
  *
  * @param segments - Массив сегментов для объединения
  * @param callId - ID звонка для логирования
+ * @param skipEmptyText - Пропускать ли сегменты с пустым текстом (по умолчанию true)
  * @returns Массив объединённых сегментов
  */
-export function mergeConsecutiveSpeakerSegments(segments: Segment[], callId?: string): Segment[] {
+export function mergeConsecutiveSpeakerSegments(
+  segments: Segment[],
+  callId?: string,
+  skipEmptyText = true,
+): Segment[] {
   if (segments.length === 0) {
     return [];
   }
@@ -34,8 +39,8 @@ export function mergeConsecutiveSpeakerSegments(segments: Segment[], callId?: st
   let currentSegment: Segment | null = null;
 
   for (const segment of sortedSegments) {
-    // Пропускаем пустые сегменты
-    if (!segment.text || segment.text.trim().length === 0) {
+    // Пропускаем пустые сегменты только если skipEmptyText = true
+    if (skipEmptyText && (!segment.text || segment.text.trim().length === 0)) {
       continue;
     }
 
@@ -57,7 +62,13 @@ export function mergeConsecutiveSpeakerSegments(segments: Segment[], callId?: st
     } else {
       // Тот же спикер - объединяем
       currentSegment.end = segment.end;
-      currentSegment.text = `${currentSegment.text} ${segment.text}`;
+
+      // Объединяем текст только если он не пустой
+      if (segment.text && segment.text.trim().length > 0) {
+        currentSegment.text = currentSegment.text
+          ? `${currentSegment.text} ${segment.text}`
+          : segment.text;
+      }
 
       // Усредняем confidence, если он есть
       if (currentSegment.confidence !== undefined && segment.confidence !== undefined) {
