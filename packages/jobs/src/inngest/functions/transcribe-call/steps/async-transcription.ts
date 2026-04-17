@@ -107,7 +107,7 @@ export async function asyncTranscriptionWithCallback(
 
       throw new Error(
         `Таймаут ожидания события завершения транскрипции (taskId: ${taskId}). ` +
-          `Событие giga-am/transcription.completed не получено в течение 30 минут и прямой запрос также не вернул результата.`,
+          `Событие giga-am/transcription.completed не получено в течение 60 минут и прямой запрос также не вернул результата.`,
       );
     }
 
@@ -209,7 +209,7 @@ export async function asyncDiarizedTranscriptionWithCallback(
       // Таймаут waitForEvent - выбрасываем ошибку (polling не используем)
       throw new Error(
         `Таймаут ожидания события завершения диаризации (taskId: ${taskId}). ` +
-          `Событие giga-am/transcription.completed не получено в течение 30 минут.`,
+          `Событие giga-am/transcription.completed не получено в течение 60 минут.`,
       );
     }
 
