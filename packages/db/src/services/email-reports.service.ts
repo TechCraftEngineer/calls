@@ -80,12 +80,14 @@ export async function getEmailReportRecipients(
     const ns = (m.notificationSettings ?? {}) as NotificationSettings;
     const rs = (m.reportSettings ?? {}) as ReportSettings;
     const em = ns?.email ?? {};
+    const tg = ns?.telegram ?? {};
 
     const dailyEnabled = em.dailyReport ?? false;
     const weeklyEnabled = em.weeklyReport ?? false;
     const monthlyEnabled = em.monthlyReport ?? false;
     const managerEnabled = em.managerReport ?? false;
-    const skipWeekends = em.skipWeekends ?? false;
+    // skipWeekends is a shared preference stored in telegram settings
+    const skipWeekends = tg.skipWeekends ?? false;
 
     const isAdmin = m.role === "owner" || m.role === "admin";
 
