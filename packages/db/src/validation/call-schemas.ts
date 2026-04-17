@@ -189,7 +189,7 @@ export type UpdateProcessingStatusInput = z.infer<typeof updateProcessingStatusS
 export class ValidationError extends Error {
   constructor(
     message: string,
-    public readonly issues: z.ZodIssue[],
+    public readonly issues: z.core.$ZodIssue[],
   ) {
     super(message);
     this.name = "ValidationError";

@@ -11,6 +11,11 @@ function parseIsoDate(value: string): Date | null {
   const day = parseInt(parts[2] ?? "0", 10);
   const date = new Date(Date.UTC(year, month - 1, day));
 
+  // Correct years 0-99 which Date.UTC treats as 1900+year
+  if (year >= 0 && year <= 99) {
+    date.setUTCFullYear(year);
+  }
+
   if (!isValid(date)) return null;
   if (date.getUTCFullYear() !== year) return null;
   if (date.getUTCMonth() !== month - 1) return null;

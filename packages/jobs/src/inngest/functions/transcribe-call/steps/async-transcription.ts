@@ -236,15 +236,22 @@ export async function asyncDiarizedTranscriptionWithCallback(
       segmentsCount: eventData.result.segments?.length ?? 0,
     });
 
+    // Преобразуем сегменты в нужный формат
+    const rawSegments = (eventData.result.segments || []).map((s) => ({
+      speaker: s.speaker ?? "UNKNOWN",
+      start: s.start,
+      end: s.end,
+      text: s.text,
+      confidence: s.confidence,
+    }));
+
+    // Объединяем последовательные сегменты одного спикера
+    const { mergeConsecutiveSpeakerSegments } = await import("./merge-consecutive-segments");
+    const mergedSegments = mergeConsecutiveSpeakerSegments(rawSegments, callId);
+
     return {
       transcript: eventData.result.final_transcript,
-      segments: (eventData.result.segments || []).map((s) => ({
-        speaker: s.speaker ?? "UNKNOWN",
-        start: s.start,
-        end: s.end,
-        text: s.text,
-        confidence: s.confidence,
-      })),
+      segments: mergedSegments,
       processingTimeMs: 0, // Неизвестно при callback-модели
       taskId,
       diarizationSuccess: true,

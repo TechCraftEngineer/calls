@@ -45,7 +45,7 @@ export async function checkAnsweringMachine(
     return {
       isAnsweringMachine: false,
       confidence: "low",
-      reasoning: `Ошибка валидации transcript: ${validationResult.error.issues.map((issue: z.ZodIssue) => issue.message).join(", ")}`,
+      reasoning: `Ошибка валидации transcript: ${validationResult.error.issues.map((issue: z.core.$ZodIssue) => issue.message).join(", ")}`,
       llmTimeMs: 0,
     };
   }

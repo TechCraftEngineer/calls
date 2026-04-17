@@ -62,7 +62,7 @@ const summarizeInputSchema = z
 
     if (totalRequestChars > hardMaxChars) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: z.core.ZodIssueCode.custom,
         path: ["options"],
         message: `Combined request length (${totalRequestChars}) exceeds hardMaxChars (${hardMaxChars})`,
       });
@@ -71,7 +71,7 @@ const summarizeInputSchema = z
 
     if (totalRequestChars > maxChars) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: z.core.ZodIssueCode.custom,
         path: ["options"],
         message: `Combined request length (${totalRequestChars}) exceeds maxChars (${maxChars})`,
       });

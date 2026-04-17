@@ -59,7 +59,8 @@ export const registerTelegramWebhookRoutes = (app: Hono) => {
     });
 
     try {
-      return await handler(c);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return await handler(c as any);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       backendLogger.error("Telegram webhook handler failed", {
@@ -103,7 +104,8 @@ export const registerTelegramWebhookRoutes = (app: Hono) => {
     });
 
     try {
-      return await handler(c);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return await handler(c as any);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       backendLogger.error("Default Telegram webhook handler failed", {

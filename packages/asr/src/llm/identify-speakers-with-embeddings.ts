@@ -387,7 +387,7 @@ ${analysisText}
           prompt: `Транскрипт:\n${analysisText.slice(0, 5000)}\n\nОпредели роли спикеров.`,
           output: Output.object({ schema }),
           temperature: 0.1,
-          maxRetries: 2,
+          maxRetries: 0,
           abortSignal: AbortSignal.timeout(LLM_CONFIG.SPEAKER_IDENTIFICATION_TIMEOUT_MS),
           timeout: LLM_CONFIG.SPEAKER_IDENTIFICATION_TIMEOUT_MS,
           functionId: "asr-identify-speakers-simple",

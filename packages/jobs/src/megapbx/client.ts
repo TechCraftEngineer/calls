@@ -257,6 +257,8 @@ export class MegaPbxClient {
       const bodyText = await response.text();
       const urlForLog = url.toString().replace(/([?&]apiKey=)[^&]*/gi, "$1***");
       let detail = "";
+      let errorMessage = "";
+
       try {
         const parsed = JSON.parse(bodyText) as Record<string, unknown>;
         const msg =
@@ -280,9 +282,16 @@ export class MegaPbxClient {
             : ` — ${preview}`;
         }
       }
-      throw new Error(
-        `Ошибка MegaPBX API ${response.status}: ${response.statusText}${detail} | URL: ${urlForLog} | endpoint: ${path}`,
-      );
+
+      // Специальная обработка ошибки "Domain disabled"
+      if (response.status === 401 && detail.toLowerCase().includes("domain disabled")) {
+        errorMessage =
+          "Домен MegaPBX отключен. Обратитесь к администратору для активации домена в личном кабинете MegaPBX.";
+      } else {
+        errorMessage = `Ошибка MegaPBX API ${response.status}: ${response.statusText}${detail} | URL: ${urlForLog} | endpoint: ${path}`;
+      }
+
+      throw new Error(errorMessage);
     }
 
     const contentType = response.headers.get("content-type") ?? "";

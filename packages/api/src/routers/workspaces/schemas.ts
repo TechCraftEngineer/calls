@@ -48,7 +48,15 @@ export const getSetupProgressSchema = z.object({
   workspaceId: workspaceIdSchema,
 });
 
-const stepNameSchema = z.enum(["provider", "api", "directory", "import", "company", "evaluation"]);
+const stepNameSchema = z.enum([
+  "provider",
+  "api",
+  "directory",
+  "import",
+  "company",
+  "evaluation",
+  "kpi",
+]);
 
 export const updateSetupProgressSchema = z.object({
   workspaceId: workspaceIdSchema,
