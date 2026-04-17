@@ -94,7 +94,7 @@ const SETUP_STEPS: SetupStep[] = [
     timeEstimate: "3 минуты",
     actionLabel: "Настроить",
     editLabel: "Изменить",
-    href: paths.statistics.kpiFromSetup(),
+    href: paths.statistics.kpiFromSetup,
   },
 ];
 

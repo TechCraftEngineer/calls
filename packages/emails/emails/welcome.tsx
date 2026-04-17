@@ -13,7 +13,7 @@ import {
   Section,
   Tailwind,
   Text,
-} from "@react-email/components";
+} from "react-email";
 
 interface WelcomeEmailProps {
   /** Имя для приветствия (или email, если имя недоступно) */

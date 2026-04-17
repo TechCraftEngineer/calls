@@ -44,7 +44,17 @@ export default function SettingsIntegrationsPage() {
     }
   }, [isWorkspaceAdmin, workspaceLoading, loadSettings]);
 
-  if (workspaceLoading || !isWorkspaceAdmin) {
+  if (workspaceLoading) {
+    return (
+      <SettingsPageShell>
+        <div className="flex items-center justify-center py-24">
+          <div className="text-muted-foreground">Загрузка…</div>
+        </div>
+      </SettingsPageShell>
+    );
+  }
+
+  if (activeWorkspace !== null && !isWorkspaceAdmin) {
     return (
       <SettingsPageShell>
         <div className="flex items-center justify-center py-24">

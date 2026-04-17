@@ -33,7 +33,7 @@ export const paths = {
   statistics: {
     root: ROOTS.STATISTICS,
     kpi: `${ROOTS.STATISTICS}/kpi`,
-    kpiFromSetup: () => `${ROOTS.STATISTICS}/kpi?fromSetup=true`,
+    kpiFromSetup: `${ROOTS.STATISTICS}/kpi?fromSetup=true`,
     grid: `${ROOTS.STATISTICS}/grid`,
     settings: `${ROOTS.STATISTICS}/settings`,
   },

@@ -32,7 +32,6 @@
     "@calls/config": "workspace:*",
     "@calls/tsconfig": "workspace:*",
     "@radix-ui/colors": "3.0.0",
-    "@react-email/components": "1.0.12",
     "@tailwindcss/typography": "0.5.19",
     "nodemailer": "^8.0.5",
     "react": "19.2.5",

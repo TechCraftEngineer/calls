@@ -182,10 +182,10 @@ describe("mergeConsecutiveSpeakerSegments", () => {
     const result = mergeConsecutiveSpeakerSegments(segments);
 
     expect(result).toHaveLength(1);
-    expect(result[0].confidence).toBeUndefined();
+    expect(result[0].confidence).toBe(0.9);
   });
 
-  it("должен правильно усреднять confidence для трёх и более сегментов", () => {
+  it("должен последовательно попарно усреднять confidence для трёх и более сегментов", () => {
     const segments: Segment[] = [
       { speaker: "SPEAKER_00", start: 0, end: 2, text: "Раз", confidence: 0.9 },
       { speaker: "SPEAKER_00", start: 2, end: 4, text: "два", confidence: 0.8 },

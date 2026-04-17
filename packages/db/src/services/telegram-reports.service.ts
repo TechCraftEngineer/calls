@@ -19,6 +19,7 @@ export interface TelegramReportRecipient {
   reportType: ReportType;
   /** managerReport = сводка по всем менеджерам (для админов) */
   isManagerReport: boolean;
+  /** User-level skipWeekends setting */
   skipWeekends: boolean;
   /** Настройки отчёта (только для isManagerReport) */
   reportSettings?: ReportSettingsForRecipient;
@@ -237,9 +238,9 @@ export async function getReportScheduleSettings(
       settingsRepository.findByKeyWithDefault("report_skip_weekends", workspaceId, "false"),
     ]);
 
-  const normTime = (v: string | null) => {
+  const normTime = (v: string | null, fallback: string) => {
     const s = (v ?? "").trim();
-    return TIME_RE.test(s) ? s : "18:00";
+    return TIME_RE.test(s) ? s : fallback;
   };
 
   const normWeeklyDay = (v: string | null): WeeklyDay => {
@@ -261,11 +262,11 @@ export async function getReportScheduleSettings(
   };
 
   return {
-    reportDailyTime: normTime(dailyTime),
+    reportDailyTime: normTime(dailyTime, "18:00"),
     reportWeeklyDay: normWeeklyDay(weeklyDay),
-    reportWeeklyTime: normTime(weeklyTime),
+    reportWeeklyTime: normTime(weeklyTime, "18:10"),
     reportMonthlyDay: normMonthlyDay(monthlyDay),
-    reportMonthlyTime: normTime(monthlyTime),
+    reportMonthlyTime: normTime(monthlyTime, "18:20"),
     reportSkipWeekends: normBoolean(skipWeekends),
   };
 }
