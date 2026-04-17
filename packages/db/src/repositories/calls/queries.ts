@@ -217,14 +217,21 @@ export const callsQueries = {
       )
       .limit(limit);
 
-    return result.map((row) => {
-      if (row.recordingFileId == null) {
-        throw new Error(`Звонок ${row.id} имеет recordingFileId равный null/undefined`);
+    // Filter out invalid entries and log warnings
+    const validResults: Array<{ id: string; recordingFileId: string }> = [];
+    for (const row of result) {
+      if (row.recordingFileId == null || row.recordingFileId.trim() === "") {
+        console.warn(
+          `[findUnprocessedWithRecordings] Звонок ${row.id} имеет пустой recordingFileId, пропускаем`,
+        );
+        continue;
       }
-      return {
+      validResults.push({
         id: row.id,
         recordingFileId: row.recordingFileId,
-      };
-    });
+      });
+    }
+
+    return validResults;
   },
 };

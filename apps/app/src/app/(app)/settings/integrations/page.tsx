@@ -31,8 +31,8 @@ export default function SettingsIntegrationsPage() {
     // Ждём загрузки workspace перед проверкой прав
     if (workspaceLoading) return;
 
-    // Redirect if no workspace or not admin
-    if (activeWorkspace === null || (activeWorkspace && !isWorkspaceAdmin)) {
+    // Redirect only if workspace is loaded and user is not admin
+    if (activeWorkspace !== null && !isWorkspaceAdmin) {
       router.replace(paths.forbidden);
       return;
     }
@@ -44,7 +44,17 @@ export default function SettingsIntegrationsPage() {
     }
   }, [isWorkspaceAdmin, workspaceLoading, loadSettings]);
 
-  if (workspaceLoading || !isWorkspaceAdmin) {
+  if (workspaceLoading) {
+    return (
+      <SettingsPageShell>
+        <div className="flex items-center justify-center py-24">
+          <div className="text-muted-foreground">Загрузка…</div>
+        </div>
+      </SettingsPageShell>
+    );
+  }
+
+  if (activeWorkspace !== null && !isWorkspaceAdmin) {
     return (
       <SettingsPageShell>
         <div className="flex items-center justify-center py-24">

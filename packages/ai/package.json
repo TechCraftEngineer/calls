@@ -31,13 +31,13 @@
     "@langfuse/tracing": "^5.1.0",
     "@openrouter/ai-sdk-provider": "^2.8.0",
     "@opentelemetry/sdk-trace-node": "^2.6.1",
-    "ai": "^6.0.164",
+    "ai": "^6.0.168",
     "langfuse": "^3.38.20",
     "zod": "4.3.6"
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
-    "tsdown": "^0.21.8",
-    "typescript": "6.0.2"
+    "tsdown": "^0.21.9",
+    "typescript": "6.0.3"
   }
 }

@@ -15,6 +15,8 @@ export interface EmailReportRecipient {
   reportType: ReportType;
   /** managerReport = сводка по всем менеджерам (для админов) */
   isManagerReport: boolean;
+  /** User-level skipWeekends setting */
+  skipWeekends: boolean;
   reportSettings: {
     managedUserIds: string[];
   };
@@ -83,6 +85,7 @@ export async function getEmailReportRecipients(
     const weeklyEnabled = em.weeklyReport ?? false;
     const monthlyEnabled = em.monthlyReport ?? false;
     const managerEnabled = em.managerReport ?? false;
+    const skipWeekends = em.skipWeekends ?? false;
 
     const isAdmin = m.role === "owner" || m.role === "admin";
 
@@ -95,6 +98,7 @@ export async function getEmailReportRecipients(
           email,
           reportType: "daily",
           isManagerReport: false,
+          skipWeekends,
           reportSettings: buildReportSettings(rs),
           internalNumbers,
         });
@@ -105,6 +109,7 @@ export async function getEmailReportRecipients(
           email,
           reportType: "daily",
           isManagerReport: true,
+          skipWeekends,
           reportSettings: buildReportSettings(rs),
           internalNumbers,
         });
@@ -116,6 +121,7 @@ export async function getEmailReportRecipients(
           email,
           reportType: "weekly",
           isManagerReport: false,
+          skipWeekends,
           reportSettings: buildReportSettings(rs),
           internalNumbers,
         });
@@ -126,6 +132,7 @@ export async function getEmailReportRecipients(
           email,
           reportType: "weekly",
           isManagerReport: true,
+          skipWeekends,
           reportSettings: buildReportSettings(rs),
           internalNumbers,
         });
@@ -137,6 +144,7 @@ export async function getEmailReportRecipients(
           email,
           reportType: "monthly",
           isManagerReport: false,
+          skipWeekends,
           reportSettings: buildReportSettings(rs),
           internalNumbers,
         });
@@ -147,6 +155,7 @@ export async function getEmailReportRecipients(
           email,
           reportType: "monthly",
           isManagerReport: true,
+          skipWeekends,
           reportSettings: buildReportSettings(rs),
           internalNumbers,
         });

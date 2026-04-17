@@ -20,13 +20,13 @@
     "@calls/telegram-bot": "workspace:*",
     "@calls/validators": "workspace:*",
     "@orpc/server": "^1.13.14",
-    "better-auth": "1.6.4",
+    "better-auth": "1.6.5",
     "grammy": "1.42.0",
     "hono": "4.12.14"
   },
   "devDependencies": {
     "@calls/tsconfig": "workspace:*",
     "nodemon": "^3.1.14",
-    "typescript": "6.0.2"
+    "typescript": "6.0.3"
   }
 }

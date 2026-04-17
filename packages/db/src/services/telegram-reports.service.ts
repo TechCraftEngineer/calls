@@ -19,6 +19,7 @@ export interface TelegramReportRecipient {
   reportType: ReportType;
   /** managerReport = сводка по всем менеджерам (для админов) */
   isManagerReport: boolean;
+  /** User-level skipWeekends setting */
   skipWeekends: boolean;
   /** Настройки отчёта (только для isManagerReport) */
   reportSettings?: ReportSettingsForRecipient;
@@ -212,7 +213,11 @@ export interface ReportScheduleSettings {
   reportWeeklyTime: string;
   reportMonthlyDay: string;
   reportMonthlyTime: string;
+  reportSkipWeekends: boolean;
 }
+
+const TIME_RE = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+const WEEKDAY_SET = new Set<WeeklyDay>(["sun", "mon", "tue", "wed", "thu", "fri", "sat"]);
 
 /**
  * Получить настройки времени отчётов для воркспейса.
@@ -223,31 +228,45 @@ export async function getReportScheduleSettings(
   },
   workspaceId: string,
 ): Promise<ReportScheduleSettings> {
-  const [dailyTime, weeklyDay, weeklyTime, monthlyDay, monthlyTime] = await Promise.all([
-    settingsRepository.findByKeyWithDefault("report_daily_time", workspaceId, "18:00"),
-    settingsRepository.findByKeyWithDefault("report_weekly_day", workspaceId, "fri"),
-    settingsRepository.findByKeyWithDefault("report_weekly_time", workspaceId, "18:10"),
-    settingsRepository.findByKeyWithDefault("report_monthly_day", workspaceId, "last"),
-    settingsRepository.findByKeyWithDefault("report_monthly_time", workspaceId, "18:20"),
-  ]);
+  const [dailyTime, weeklyDay, weeklyTime, monthlyDay, monthlyTime, skipWeekends] =
+    await Promise.all([
+      settingsRepository.findByKeyWithDefault("report_daily_time", workspaceId, "18:00"),
+      settingsRepository.findByKeyWithDefault("report_weekly_day", workspaceId, "fri"),
+      settingsRepository.findByKeyWithDefault("report_weekly_time", workspaceId, "18:10"),
+      settingsRepository.findByKeyWithDefault("report_monthly_day", workspaceId, "last"),
+      settingsRepository.findByKeyWithDefault("report_monthly_time", workspaceId, "18:20"),
+      settingsRepository.findByKeyWithDefault("report_skip_weekends", workspaceId, "false"),
+    ]);
 
-  const normTime = (v: string | null) => {
-    const s = v ?? "";
-    return /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(s) ? s.trim() : "18:00";
+  const normTime = (v: string | null, fallback: string) => {
+    const s = (v ?? "").trim();
+    return TIME_RE.test(s) ? s : fallback;
   };
 
-  const validWeekDays = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
-  type WeekDay = (typeof validWeekDays)[number];
-  const normalizedWeekDay = (weeklyDay ?? "fri").toLowerCase();
-  const reportWeeklyDay: WeekDay = validWeekDays.includes(normalizedWeekDay as WeekDay)
-    ? (normalizedWeekDay as WeekDay)
-    : "fri";
+  const normWeeklyDay = (v: string | null): WeeklyDay => {
+    const s = (v ?? "").trim().toLowerCase() as WeeklyDay;
+    return WEEKDAY_SET.has(s) ? s : "fri";
+  };
+
+  const normMonthlyDay = (v: string | null) => {
+    const s = (v ?? "").trim().toLowerCase();
+    if (s === "last") return "last";
+    const n = Number.parseInt(s, 10);
+    if (!Number.isFinite(n) || n < 1 || n > 31) return "last";
+    return String(n);
+  };
+
+  const normBoolean = (v: string | null) => {
+    const s = (v ?? "").trim().toLowerCase();
+    return s === "true" || s === "1";
+  };
 
   return {
-    reportDailyTime: normTime(dailyTime) || "18:00",
-    reportWeeklyDay,
-    reportWeeklyTime: normTime(weeklyTime) || "18:10",
-    reportMonthlyDay: monthlyDay ?? "last",
-    reportMonthlyTime: normTime(monthlyTime) || "18:20",
+    reportDailyTime: normTime(dailyTime, "18:00"),
+    reportWeeklyDay: normWeeklyDay(weeklyDay),
+    reportWeeklyTime: normTime(weeklyTime, "18:10"),
+    reportMonthlyDay: normMonthlyDay(monthlyDay),
+    reportMonthlyTime: normTime(monthlyTime, "18:20"),
+    reportSkipWeekends: normBoolean(skipWeekends),
   };
 }

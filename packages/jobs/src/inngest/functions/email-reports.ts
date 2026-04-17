@@ -18,6 +18,7 @@ import {
   formatDateInMoscow,
   formatReportSubject,
   getLastDayOfMonth,
+  isWeekend,
   maskEmail,
   nowInMoscow,
   parseTimeHHMM,
@@ -48,6 +49,7 @@ export const emailReportsFn = inngest.createFunction(
     }
 
     const now = nowInMoscow();
+    const weekend = isWeekend(now);
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
     const currentDay = now.getDay();
@@ -132,6 +134,10 @@ export const emailReportsFn = inngest.createFunction(
           const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
 
           for (const r of recipients) {
+            // Skip if user-level or workspace-level skipWeekends is enabled and it's a weekend
+            const shouldSkipWeekend = r.skipWeekends || schedule.reportSkipWeekends;
+            if (shouldSkipWeekend && weekend) continue;
+
             const stats = (await callsService.getEvaluationsStats({
               workspaceId,
               dateFrom: dateFromDb,

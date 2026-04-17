@@ -49,10 +49,12 @@ function StatisticsPageContent() {
   // Mutation для обновления прогресса setup
   const updateSetupProgressMutation = useMutation(
     orpc.workspaces.updateSetupProgress.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
-          predicate: (query) => query.queryKey[0] === "workspaces.getSetupProgress",
-        });
+      onSuccess: (_data, variables) => {
+        queryClient.invalidateQueries(
+          orpc.workspaces.getSetupProgress.queryFilter({
+            input: { workspaceId: variables.workspaceId },
+          }),
+        );
       },
     }),
   );
@@ -124,9 +126,30 @@ function StatisticsPageContent() {
           router.push(paths.setup.root);
         },
         onError: (err) => {
-          toast.error(
-            err instanceof Error ? err.message : "Не удалось обновить прогресс настройки",
-          );
+          // Prefer user-friendly err.message (server throws in Russian)
+          let errorMessage: string;
+          if (err instanceof Error && err.message) {
+            errorMessage = err.message;
+          } else if (
+            err &&
+            typeof err === "object" &&
+            "data" in err &&
+            err.data &&
+            typeof err.data === "object" &&
+            "code" in err.data
+          ) {
+            const code = String((err.data as { code?: string }).code);
+            // Map known codes to localized messages
+            errorMessage =
+              code === "FORBIDDEN"
+                ? "Недостаточно прав для выполнения операции"
+                : code === "NOT_FOUND"
+                  ? "Рабочее пространство не найдено"
+                  : `Ошибка: ${code}`;
+          } else {
+            errorMessage = "Не удалось обновить прогресс настройки";
+          }
+          toast.error(errorMessage);
         },
       },
     );

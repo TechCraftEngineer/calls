@@ -1,5 +1,5 @@
 import { gray, indigo, tomato } from "@radix-ui/colors";
-import type { TailwindConfig } from "@react-email/components";
+import type { TailwindConfig } from "react-email";
 
 /**
  * This config is used for the emails, hence why it's almost the same as the normal tailwind config, just more verbose.

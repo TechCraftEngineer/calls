@@ -6,6 +6,7 @@
 import { createLogger } from "../../../../logger";
 import { downloadAudioFile } from "../audio/download";
 import { shouldUseSpeakerEmbeddings, startSpeakerDiarization } from "../speakers/diarization";
+import { mergeConsecutiveSpeakerSegments } from "./merge-consecutive-segments";
 import type { PreprocessResult } from "./preprocess-audio";
 import type { StepRunner } from "./step-runner";
 
@@ -176,7 +177,6 @@ export async function speakerDiarizationWithCallback(
     // Объединяем последовательные сегменты одного спикера, если они есть
     let finalSegments = eventData.result.segments;
     if (finalSegments && finalSegments.length > 0) {
-      const { mergeConsecutiveSpeakerSegments } = await import("./merge-consecutive-segments");
       finalSegments = mergeConsecutiveSpeakerSegments(
         finalSegments.map((s) => ({ ...s, text: "" })),
         callId,

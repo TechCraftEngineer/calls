@@ -3,7 +3,7 @@ import { env } from "@calls/config";
 import { settingsService, usersService } from "@calls/db";
 import { workspaceIdSchema } from "@calls/shared";
 import { createWebhookHandler } from "@calls/telegram-bot";
-import type { Hono } from "hono";
+import type { Context, Hono } from "hono";
 import { z } from "zod";
 import { webhookRateLimit } from "../lib/webhook-rate-limit";
 
@@ -59,8 +59,7 @@ export const registerTelegramWebhookRoutes = (app: Hono) => {
     });
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return await handler(c as any);
+      return await handler(c);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       backendLogger.error("Telegram webhook handler failed", {
@@ -104,8 +103,7 @@ export const registerTelegramWebhookRoutes = (app: Hono) => {
     });
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return await handler(c as any);
+      return await handler(c);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       backendLogger.error("Default Telegram webhook handler failed", {

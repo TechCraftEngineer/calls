@@ -61,8 +61,8 @@ const summarizeInputSchema = z
       data.text.length + summaryLength + companyContextLength + managerNameLength;
 
     if (totalRequestChars > hardMaxChars) {
-      ctx.addIssue({
-        code: z.core.ZodIssueCode.custom,
+      ctx.issues.push({
+        code: "custom",
         path: ["options"],
         message: `Combined request length (${totalRequestChars}) exceeds hardMaxChars (${hardMaxChars})`,
       });
@@ -70,8 +70,8 @@ const summarizeInputSchema = z
     }
 
     if (totalRequestChars > maxChars) {
-      ctx.addIssue({
-        code: z.core.ZodIssueCode.custom,
+      ctx.issues.push({
+        code: "custom",
         path: ["options"],
         message: `Combined request length (${totalRequestChars}) exceeds maxChars (${maxChars})`,
       });
@@ -191,8 +191,25 @@ export async function summarizeWithLlm(
       callTopic: result.topic,
     };
   } catch (error) {
+    // Detect timeout/abort errors
+    const isTimeout =
+      error instanceof Error &&
+      (error.name === "AbortError" ||
+        error.name === "TimeoutError" ||
+        error.message?.toLowerCase().includes("timeout") ||
+        error.message?.toLowerCase().includes("aborted"));
+
+    if (isTimeout) {
+      logger.error("LLM саммаризация превысила таймаут", {
+        timeout: LLM_CONFIG.SUMMARIZE_TIMEOUT_MS,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new Error("Превышено время ожидания ответа от LLM");
+    }
+
     logger.error("Ошибка при генерации саммари", {
       error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
     });
     return { ...DEFAULT_FALLBACK };
   }

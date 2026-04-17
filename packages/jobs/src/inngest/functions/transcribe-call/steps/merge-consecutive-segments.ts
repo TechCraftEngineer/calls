@@ -23,7 +23,7 @@ export interface Segment {
  * @returns Массив объединённых сегментов
  */
 export function mergeConsecutiveSpeakerSegments(segments: Segment[], callId?: string): Segment[] {
-  if (!segments || segments.length === 0) {
+  if (segments.length === 0) {
     return [];
   }
 

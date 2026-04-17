@@ -11,7 +11,7 @@ import {
   pixelBasedPreset,
   Tailwind,
   Text,
-} from "@react-email/components";
+} from "react-email";
 
 interface OtpSignInEmailProps {
   otp?: string;
