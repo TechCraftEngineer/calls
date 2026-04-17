@@ -136,7 +136,7 @@ export const transcribeCallFn = inngest.createFunction(
     try {
       // Используем сегменты из speaker-embeddings диаризации, если они есть
       // Иначе используем сегменты из обычной транскрипции
-      const segmentsForDiarization = speakerDiarizationResult.segments
+      const rawSpeakerSegments = speakerDiarizationResult.segments
         ? speakerDiarizationResult.segments.map((s) => ({
             speaker: s.speaker,
             start: s.start,
@@ -144,6 +144,18 @@ export const transcribeCallFn = inngest.createFunction(
             text: "", // Текст не нужен для giga-am диаризации
           }))
         : fullTranscription.segments || [];
+
+      // Объединяем последовательные сегменты одного спикера ДО отправки в GigaAM.
+      // skipEmptyText=false — т.к. text пустой намеренно, пропускать нельзя.
+      // Это увеличивает акустический контекст каждого фрагмента → выше качество ASR.
+      const { mergeConsecutiveSpeakerSegments } = await import(
+        "./steps/merge-consecutive-segments"
+      );
+      const segmentsForDiarization = mergeConsecutiveSpeakerSegments(
+        rawSpeakerSegments,
+        callId,
+        false, // skipEmptyText=false: объединяем даже пустые сегменты
+      );
 
       // Проверяем, что есть сегменты для диаризации
       if (!segmentsForDiarization || segmentsForDiarization.length === 0) {
