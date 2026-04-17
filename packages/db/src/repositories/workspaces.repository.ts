@@ -376,7 +376,7 @@ export const workspacesRepository = {
     return result[0]?.activeWorkspaceId ?? null;
   },
 
-  async setActiveWorkspace(userId: string, workspaceId: string): Promise<void> {
+  async setActiveWorkspace(userId: string, workspaceId: string | null): Promise<void> {
     await db
       .insert(schema.userPreferences)
       .values({ userId, activeWorkspaceId: workspaceId })
