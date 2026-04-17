@@ -6,7 +6,6 @@
 import { createLogger } from "../../../../logger";
 import { downloadAudioFile } from "../audio/download";
 import { shouldUseSpeakerEmbeddings, startSpeakerDiarization } from "../speakers/diarization";
-import { mergeConsecutiveSpeakerSegments } from "./merge-consecutive-segments";
 import type { PreprocessResult } from "./preprocess-audio";
 import type { StepRunner } from "./step-runner";
 
@@ -174,14 +173,10 @@ export async function speakerDiarizationWithCallback(
       clusterCount: eventData.result.clusterCount,
     });
 
-    // Объединяем последовательные сегменты одного спикера, если они есть
-    let finalSegments = eventData.result.segments;
-    if (finalSegments && finalSegments.length > 0) {
-      finalSegments = mergeConsecutiveSpeakerSegments(
-        finalSegments.map((s) => ({ ...s, text: "" })),
-        callId,
-      );
-    }
+    // Сегменты из speaker embeddings передаются в GigaAM без объединения,
+    // чтобы сохранить детализацию для точной транскрипции.
+    // Объединение произойдет позже, после получения текста от GigaAM.
+    const finalSegments = eventData.result.segments;
 
     return {
       success: true,

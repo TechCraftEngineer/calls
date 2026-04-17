@@ -198,4 +198,50 @@ describe("mergeConsecutiveSpeakerSegments", () => {
     // Текущая реализация: (0.9 + 0.8) / 2 = 0.85, затем (0.85 + 0.7) / 2 = 0.775
     expect(result[0].confidence).toBeCloseTo(0.775, 3);
   });
+
+  it("должен объединять сегменты с пустым текстом когда skipEmptyText = false", () => {
+    const segments: Segment[] = [
+      { speaker: "SPEAKER_00", start: 0, end: 2, text: "" },
+      { speaker: "SPEAKER_00", start: 2, end: 4, text: "" },
+      { speaker: "SPEAKER_01", start: 4, end: 6, text: "" },
+      { speaker: "SPEAKER_01", start: 6, end: 8, text: "" },
+    ];
+
+    const result = mergeConsecutiveSpeakerSegments(segments, undefined, false);
+
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({
+      speaker: "SPEAKER_00",
+      start: 0,
+      end: 4,
+      text: "",
+      confidence: undefined,
+    });
+    expect(result[1]).toEqual({
+      speaker: "SPEAKER_01",
+      start: 4,
+      end: 8,
+      text: "",
+      confidence: undefined,
+    });
+  });
+
+  it("должен объединять сегменты с пустым и непустым текстом когда skipEmptyText = false", () => {
+    const segments: Segment[] = [
+      { speaker: "SPEAKER_00", start: 0, end: 2, text: "" },
+      { speaker: "SPEAKER_00", start: 2, end: 4, text: "Привет" },
+      { speaker: "SPEAKER_00", start: 4, end: 6, text: "" },
+    ];
+
+    const result = mergeConsecutiveSpeakerSegments(segments, undefined, false);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      speaker: "SPEAKER_00",
+      start: 0,
+      end: 6,
+      text: "Привет",
+      confidence: undefined,
+    });
+  });
 });
