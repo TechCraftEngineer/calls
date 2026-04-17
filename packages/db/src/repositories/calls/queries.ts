@@ -218,8 +218,10 @@ export const callsQueries = {
       .limit(limit);
 
     return result.map((row) => {
-      if (row.recordingFileId == null) {
-        throw new Error(`Звонок ${row.id} имеет recordingFileId равный null/undefined`);
+      if (row.recordingFileId == null || row.recordingFileId.trim() === "") {
+        throw new Error(
+          `Звонок ${row.id} имеет recordingFileId равный null/undefined или пустой строке`,
+        );
       }
       return {
         id: row.id,

@@ -142,4 +142,60 @@ describe("mergeConsecutiveSpeakerSegments", () => {
       confidence: undefined,
     });
   });
+
+  it("должен возвращать пустой массив для сегментов с пустым текстом", () => {
+    const segments: Segment[] = [
+      { speaker: "SPEAKER_00", start: 0, end: 2, text: "" },
+      { speaker: "SPEAKER_00", start: 2, end: 4, text: "" },
+      { speaker: "SPEAKER_01", start: 4, end: 6, text: "" },
+    ];
+
+    const result = mergeConsecutiveSpeakerSegments(segments);
+    expect(result).toEqual([]);
+  });
+
+  it("должен пропускать сегменты с текстом только из пробелов", () => {
+    const segments: Segment[] = [
+      { speaker: "SPEAKER_00", start: 0, end: 2, text: "Привет" },
+      { speaker: "SPEAKER_00", start: 2, end: 4, text: "   " },
+      { speaker: "SPEAKER_00", start: 4, end: 6, text: "как дела?" },
+    ];
+
+    const result = mergeConsecutiveSpeakerSegments(segments);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      speaker: "SPEAKER_00",
+      start: 0,
+      end: 6,
+      text: "Привет как дела?",
+      confidence: undefined,
+    });
+  });
+
+  it("должен сохранять confidence первого сегмента если у второго нет confidence", () => {
+    const segments: Segment[] = [
+      { speaker: "SPEAKER_00", start: 0, end: 2, text: "Привет", confidence: 0.9 },
+      { speaker: "SPEAKER_00", start: 2, end: 4, text: "как дела?" },
+    ];
+
+    const result = mergeConsecutiveSpeakerSegments(segments);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].confidence).toBeUndefined();
+  });
+
+  it("должен правильно усреднять confidence для трёх и более сегментов", () => {
+    const segments: Segment[] = [
+      { speaker: "SPEAKER_00", start: 0, end: 2, text: "Раз", confidence: 0.9 },
+      { speaker: "SPEAKER_00", start: 2, end: 4, text: "два", confidence: 0.8 },
+      { speaker: "SPEAKER_00", start: 4, end: 6, text: "три", confidence: 0.7 },
+    ];
+
+    const result = mergeConsecutiveSpeakerSegments(segments);
+
+    expect(result).toHaveLength(1);
+    // Текущая реализация: (0.9 + 0.8) / 2 = 0.85, затем (0.85 + 0.7) / 2 = 0.775
+    expect(result[0].confidence).toBeCloseTo(0.775, 3);
+  });
 });

@@ -50,9 +50,7 @@ function StatisticsPageContent() {
   const updateSetupProgressMutation = useMutation(
     orpc.workspaces.updateSetupProgress.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries({
-          predicate: (query) => query.queryKey[0] === "workspaces.getSetupProgress",
-        });
+        queryClient.invalidateQueries(orpc.workspaces.getSetupProgress.queryFilter());
       },
     }),
   );
@@ -124,9 +122,18 @@ function StatisticsPageContent() {
           router.push(paths.setup.root);
         },
         onError: (err) => {
-          toast.error(
-            err instanceof Error ? err.message : "Не удалось обновить прогресс настройки",
-          );
+          const errorMessage =
+            err &&
+            typeof err === "object" &&
+            "data" in err &&
+            err.data &&
+            typeof err.data === "object" &&
+            "code" in err.data
+              ? `Ошибка: ${String((err.data as { code?: string }).code)}`
+              : err instanceof Error
+                ? err.message
+                : "Не удалось обновить прогресс настройки";
+          toast.error(errorMessage);
         },
       },
     );

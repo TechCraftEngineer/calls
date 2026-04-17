@@ -16,12 +16,11 @@
   "dependencies": {
     "@calls/config": "workspace:*",
     "@calls/db": "workspace:*",
-    "better-auth": "1.6.4",
+    "better-auth": "1.6.5",
     "zod": "4.3.6"
   },
   "devDependencies": {
-    "@better-auth/cli": "1.4.21",
     "@calls/tsconfig": "workspace:*",
-    "typescript": "6.0.2"
+    "typescript": "6.0.3"
   }
 }
