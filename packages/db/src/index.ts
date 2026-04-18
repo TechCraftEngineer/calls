@@ -6,12 +6,6 @@
 // Database client
 export { db } from "./client";
 export { db as dbEdge } from "./client.ws";
-// Workspace utilities
-export {
-  createWorkspaceErrorResponse,
-  createWorkspaceNullResponse,
-  handleWorkspaceError,
-} from "./lib/workspace-utils";
 export { parseDateToUTC } from "./repositories/calls/date-utils";
 export type {
   DailyKpiStat,

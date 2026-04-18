@@ -73,37 +73,6 @@ export const updateUserSchema = z.object({
 
 export type UpdateUserData = z.infer<typeof updateUserSchema>;
 
-// Схема для настроек отчетов
-export const reportSettingsSchema = z.object({
-  email: z.string().email("Введите корректный email").optional(),
-  email_daily_report: z.boolean(),
-  email_weekly_report: z.boolean(),
-  email_monthly_report: z.boolean(),
-  telegramChatId: z.string().optional(),
-  telegram_daily_report: z.boolean(),
-  telegram_weekly_report: z.boolean(),
-  telegram_monthly_report: z.boolean(),
-  telegram_skip_weekends: z.boolean(),
-  report_include_call_summaries: z.boolean(),
-  report_detailed: z.boolean(),
-  report_include_avg_value: z.boolean(),
-  report_include_avg_rating: z.boolean(),
-  filter_exclude_answering_machine: z.boolean(),
-  filter_min_duration: z.number().min(0),
-  filter_min_replicas: z.number().min(0),
-  kpi_base_salary: z.number().min(0),
-  kpi_target_bonus: z.number().min(0),
-  kpi_target_talk_time_minutes: z.number().min(0),
-  report_daily_time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
-  report_weekly_day: z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]),
-  report_weekly_time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
-  report_monthly_day: z.enum(["1", "15", "last"]),
-  report_monthly_time: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Формат времени HH:MM"),
-  report_managed_user_ids: z.array(z.number()),
-});
-
-export type ReportSettingsData = z.infer<typeof reportSettingsSchema>;
-
 // Схема для принятия приглашения (создание аккаунта по ссылке)
 export const inviteAcceptSchema = z.object({
   name: z.string().optional(),

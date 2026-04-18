@@ -33,7 +33,7 @@ export async function asyncTranscriptionWithCallback(
   step: StepRunner,
 ): Promise<AsyncTranscriptionResult> {
   // Шаг 1: Запускаем асинхронную транскрибацию
-  const startResult = (await step.run("asr/async-start", async () => {
+  const startResult = await step.run("asr/async-start", async () => {
     const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
 
     logger.info("Запуск асинхронной полной транскрибации", {
@@ -49,17 +49,10 @@ export async function asyncTranscriptionWithCallback(
     });
 
     return result;
-  })) as { taskId: string };
+  });
   const { taskId } = startResult;
 
-  // Шаг 2: Ожидаем событие завершения от GigaAM сервиса
-  const completedEvent = await step.waitForEvent("asr/wait-for-completion", {
-    event: "giga-am/transcription.completed",
-    timeout: "60m", // 60 минут максимальное ожидание
-    if: `async.data.task_id == "${taskId}"`,
-  });
-
-  // Type guard для события
+  // Type definition для события завершения транскрипции
   type CompletedEvent = {
     data: {
       task_id: string;
@@ -77,6 +70,13 @@ export async function asyncTranscriptionWithCallback(
       error?: string;
     };
   };
+
+  // Шаг 2: Ожидаем событие завершения от GigaAM сервиса
+  const completedEvent = await step.waitForEvent<CompletedEvent>("asr/wait-for-completion", {
+    event: "giga-am/transcription.completed",
+    timeout: "60m", // 60 минут максимальное ожидание
+    if: `async.data.task_id == "${taskId}"`,
+  });
 
   // Шаг 3: Обрабатываем результат
   return (await step.run("asr/process-result", async () => {
@@ -120,7 +120,7 @@ export async function asyncTranscriptionWithCallback(
       );
     }
 
-    const eventData = (completedEvent as CompletedEvent | null)?.data;
+    const eventData = completedEvent.data;
     if (!eventData) {
       throw new Error("Событие завершения не содержит данных");
     }
@@ -146,10 +146,11 @@ export async function asyncTranscriptionWithCallback(
       segments: eventData.result.segments || [],
       // Используем processing_time из события GigaAM вместо Date.now() - startTime
       // для корректного измерения времени обработки при replay Inngest
-      processingTimeMs: eventData.result.processing_time ?? 0,
+      // GigaAM возвращает processing_time в секундах, конвертируем в миллисекунды
+      processingTimeMs: (eventData.result.processing_time ?? 0) * 1000,
       taskId,
-    } as AsyncTranscriptionResult;
-  })) as AsyncTranscriptionResult;
+    };
+  }));
 }
 
 /**
@@ -187,17 +188,10 @@ export async function asyncDiarizedTranscriptionWithCallback(
     });
 
     return result;
-  })) as { taskId: string };
+  }));
   const { taskId } = startResult;
 
-  // Шаг 2: Ожидаем событие завершения от GigaAM сервиса
-  const completedEvent = await step.waitForEvent("asr/wait-for-diarized-completion", {
-    event: "giga-am/transcription.completed",
-    timeout: "60m", // 60 минут максимальное ожидание
-    if: `async.data.task_id == "${taskId}"`,
-  });
-
-  // Type guard для события диаризации
+  // Type definition для события завершения диаризированной транскрипции
   type DiarizedCompletedEvent = {
     data: {
       task_id: string;
@@ -218,6 +212,13 @@ export async function asyncDiarizedTranscriptionWithCallback(
       error?: string;
     };
   };
+
+  // Шаг 2: Ожидаем событие завершения от GigaAM сервиса
+  const completedEvent = await step.waitForEvent<DiarizedCompletedEvent>("asr/wait-for-diarized-completion", {
+    event: "giga-am/transcription.completed",
+    timeout: "60m", // 60 минут максимальное ожидание
+    if: `async.data.task_id == "${taskId}"`,
+  });
 
   // Шаг 3: Обрабатываем результат
   return (await step.run("asr/process-diarized-result", async () => {
@@ -263,7 +264,7 @@ export async function asyncDiarizedTranscriptionWithCallback(
       );
     }
 
-    const eventData = (completedEvent as DiarizedCompletedEvent | null)?.data;
+    const eventData = completedEvent.data;
     if (!eventData) {
       throw new Error("Событие завершения не содержит данных");
     }
@@ -308,10 +309,11 @@ export async function asyncDiarizedTranscriptionWithCallback(
       segments: mergedSegments,
       // Используем processing_time из события GigaAM вместо Date.now() - startTime
       // для корректного измерения времени обработки при replay Inngest
-      processingTimeMs: eventData.result.processing_time ?? 0,
+      // GigaAM возвращает processing_time в секундах, конвертируем в миллисекунды
+      processingTimeMs: (eventData.result.processing_time ?? 0) * 1000,
       taskId,
       diarizationSuccess: true,
       diarizationFailed: false,
     };
-  })) as AsyncTranscriptionResult;
+  }));
 }

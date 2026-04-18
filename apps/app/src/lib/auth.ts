@@ -13,12 +13,6 @@ import {
 export type Session = typeof authClient.$Infer.Session;
 export type User = (typeof authClient.$Infer.Session)["user"];
 
-export interface LoginResponse {
-  success: boolean;
-  message: string;
-  user?: User;
-}
-
 export const login = betterAuthLogin;
 export const logout = betterAuthLogout;
 export const getCurrentUser = betterAuthGetCurrentUser;

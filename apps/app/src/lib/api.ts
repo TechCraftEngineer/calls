@@ -37,14 +37,4 @@ export async function restPost<T = unknown>(path: string, body?: unknown): Promi
   return res.json();
 }
 
-/** REST GET JSON */
-export async function restGet<T = unknown>(path: string): Promise<T> {
-  const res = await restFetch(path, { method: "GET" });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error((err as { detail?: string })?.detail ?? res.statusText);
-  }
-  return res.json();
-}
-
 export default api;

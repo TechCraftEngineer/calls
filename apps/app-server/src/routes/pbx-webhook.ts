@@ -164,7 +164,18 @@ const handlePbxWebhook = async (c: Context) => {
     asNonEmptyString(payload.id) ??
     asNonEmptyString(payload.uid) ??
     null;
-  const eventId = rawEventId && /^[a-zA-Z0-9_-]{1,256}$/.test(rawEventId) ? rawEventId : null;
+
+  // Если rawEventId присутствует но не проходит валидацию - отклоняем запрос
+  if (rawEventId !== null && !/^[a-zA-Z0-9_-]{1,256}$/.test(rawEventId)) {
+    return c.json(
+      {
+        error: "Некорректный формат eventId. Допустимы только буквы, цифры, дефисы и подчеркивания (1-256 символов).",
+      },
+      400,
+    );
+  }
+
+  const eventId = rawEventId;
 
   await pbxService.recordWebhookEvent({
     workspaceId,
