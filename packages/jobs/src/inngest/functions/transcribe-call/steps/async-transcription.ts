@@ -33,7 +33,7 @@ export async function asyncTranscriptionWithCallback(
   step: StepRunner,
 ): Promise<AsyncTranscriptionResult> {
   // Шаг 1: Запускаем асинхронную транскрибацию
-  const { taskId } = (await step.run("asr/async-start", async () => {
+  const { taskId, startTime } = (await step.run("asr/async-start", async () => {
     const { buffer, filename } = await downloadAudioFileCached(pipelineAudio.preprocessedFileId);
 
     logger.info("Запуск асинхронной полной транскрибации", {
@@ -48,11 +48,11 @@ export async function asyncTranscriptionWithCallback(
       taskId: result.taskId,
     });
 
-    return result;
-  })) as { taskId: string };
+    // Захватываем startTime внутри step для корректности при replay
+    return { ...result, startTime: Date.now() };
+  })) as { taskId: string; startTime: number };
 
   // Шаг 2: Ожидаем событие завершения от GigaAM сервиса
-  const startTime = Date.now();
   const completedEvent = (await step.waitForEvent("asr/wait-for-completion", {
     event: "giga-am/transcription.completed",
     timeout: "60m", // 60 минут максимальное ожидание
@@ -154,7 +154,7 @@ export async function asyncDiarizedTranscriptionWithCallback(
   step: StepRunner,
 ): Promise<AsyncTranscriptionResult> {
   // Шаг 1: Запускаем асинхронную диаризированную транскрибацию
-  const { taskId } = (await step.run("asr/async-diarized-start", async () => {
+  const { taskId, startTime } = (await step.run("asr/async-diarized-start", async () => {
     const { buffer, filename } = await downloadAudioFileCached(pipelineAudio.preprocessedFileId);
 
     logger.info("Запуск асинхронной диаризированной транскрибации", {
@@ -175,11 +175,11 @@ export async function asyncDiarizedTranscriptionWithCallback(
       taskId: result.taskId,
     });
 
-    return result;
-  })) as { taskId: string };
+    // Захватываем startTime внутри step для корректности при replay
+    return { ...result, startTime: Date.now() };
+  })) as { taskId: string; startTime: number };
 
   // Шаг 2: Ожидаем событие завершения от GigaAM сервиса
-  const startTime = Date.now();
   const completedEvent = (await step.waitForEvent("asr/wait-for-diarized-completion", {
     event: "giga-am/transcription.completed",
     timeout: "60m", // 60 минут максимальное ожидание
@@ -229,7 +229,7 @@ export async function asyncDiarizedTranscriptionWithCallback(
           return {
             transcript: directResult.transcript,
             segments: directResult.segments ?? [],
-            processingTimeMs: Date.now() - startTime,
+            processingTimeMs: directResult.processingTimeMs ?? 0,
             taskId,
             diarizationSuccess: true,
             diarizationFailed: false,

@@ -2,7 +2,6 @@
  * Workspaces service - business logic for workspace operations
  */
 
-import { createLogger } from "@calls/api";
 import { eq } from "drizzle-orm";
 import { db } from "../client";
 import { workspaceCache } from "../lib/workspace-cache";
@@ -12,6 +11,7 @@ import type {
   WorkspaceMemberRole,
   WorkspacesRepository,
 } from "../repositories/workspaces.repository";
+import { createLogger } from "../utils/logger";
 
 const logger = createLogger("WorkspacesService");
 
@@ -171,31 +171,27 @@ export class WorkspacesService {
   }
 
   async removeMember(workspaceId: string, userId: string) {
-    // Проверяем, является ли удаляемый workspace активным для пользователя
-    const activeWorkspaceId = await this.getActiveWorkspaceId(userId);
-
     // Выполняем удаление и очистку активного workspace атомарно в транзакции
     const result = await db.transaction(async (tx) => {
       const removeResult = await this.workspacesRepository.removeMember(workspaceId, userId, tx);
 
-      // Если удаленный workspace был активным, очищаем activeWorkspaceId
+      // Читаем активный workspace внутри транзакции и очищаем если совпадает
+      const activeWorkspaceId = await this.workspacesRepository.getActiveWorkspaceId(userId, tx);
       if (activeWorkspaceId === workspaceId) {
         await this.workspacesRepository.setActiveWorkspace(userId, null, tx);
       }
 
-      return removeResult;
+      return { removeResult, wasActive: activeWorkspaceId === workspaceId };
     });
 
     // Инвалидируем кэш после успешного коммита
     workspaceCache.invalidateUserWorkspaces(userId);
 
-    if (activeWorkspaceId === workspaceId) {
-      logger.info(
-        `Очищен активный workspace для пользователя ${userId} после удаления из workspace ${workspaceId}`,
-      );
+    if (result.wasActive) {
+      logger.info("Очищен активный workspace для пользователя после удаления из workspace");
     }
 
-    return result;
+    return result.removeResult;
   }
 
   async removePendingMemberById(memberId: string, workspaceId: string): Promise<boolean> {

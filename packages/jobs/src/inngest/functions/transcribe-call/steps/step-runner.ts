@@ -1,13 +1,13 @@
 /**
  * Интерфейс для Inngest step с методами run и waitForEvent
- * Использует unknown для совместимости с внутренними типами Inngest
+ * Типизированные методы для сохранения статической типизации
  */
 export interface StepRunner {
-  run<T>(id: string, fn: () => Promise<T>): Promise<unknown>;
+  run<T>(id: string, fn: () => Promise<T>): Promise<T>;
   waitForEvent<T>(
     id: string,
     options: { event: string; timeout: string; if: string },
-  ): Promise<unknown>;
+  ): Promise<T | null>;
 }
 
 /**

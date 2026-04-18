@@ -157,9 +157,6 @@ const handlePbxWebhook = async (c: Context) => {
   const eventSubtype = asNonEmptyString(parsedPayload.data.type) ?? "unknown";
   const eventType = `${command}:${eventSubtype}`;
   const eventId =
-    asNonEmptyString(payload.callid) ??
-    asNonEmptyString(payload.callId) ??
-    asNonEmptyString(payload.call_id) ??
     asNonEmptyString(payload.eventId) ??
     asNonEmptyString(payload.id) ??
     asNonEmptyString(payload.uid) ??

@@ -13,7 +13,7 @@ import {
 } from "@calls/ui";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -21,7 +21,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import { useORPC } from "@/orpc/react";
@@ -58,12 +58,14 @@ export function CallListDataGrid({
 }: CallListDataGridProps) {
   const orpc = useORPC();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { activeWorkspace } = useWorkspace();
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [recommendationsCallId, setRecommendationsCallId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
+  const transcribeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Используем хук для управления выборкой строк
   const { rowSelection, setRowSelection, selectedCalls, selectedCallIds, clearSelection } =
@@ -90,10 +92,14 @@ export function CallListDataGrid({
     orpc.calls.transcribe.mutationOptions({
       onSuccess: () => {
         toast.success("Транскрипция запущена");
-        // Даем Inngest время обновить статус в БД перед refetch
-        setTimeout(() => {
+        // Инвалидируем активные запросы для обновления статуса
+        queryClient.invalidateQueries({
+          refetchType: "active",
+        });
+        // Вызываем onTranscribed после короткой задержки для UI обновления
+        transcribeTimeoutRef.current = setTimeout(() => {
           onTranscribed?.();
-        }, 1000);
+        }, 500);
       },
       onError: () => toast.error("Не удалось запустить транскрипцию"),
     }),
@@ -230,6 +236,15 @@ export function CallListDataGrid({
     if (pagination.page < 1 || pagination.perPage < 1) return;
     clearSelection();
   }, [pagination.page, pagination.perPage, clearSelection]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (transcribeTimeoutRef.current) {
+        clearTimeout(transcribeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const table = useReactTable({
     data: calls,

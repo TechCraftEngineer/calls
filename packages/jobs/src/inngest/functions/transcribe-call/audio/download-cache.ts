@@ -14,6 +14,7 @@ const downloadCache = new Map<string, Promise<AudioFileResult>>();
  * Получает файл из кэша или загружает его.
  * Все запросы к одному fileId получают один и тот же промис,
  * гарантируя единичную загрузку файла.
+ * Кэш сохраняется для lifetime pipeline и должен быть очищен явно.
  */
 export async function getOrDownloadAudio(
   fileId: string,
@@ -24,14 +25,21 @@ export async function getOrDownloadAudio(
     return cached;
   }
 
-  const downloadPromise = downloadFn(fileId).finally(() => {
-    // Очищаем кэш после завершения (успех или ошибка)
-    // чтобы не держать буферы в памяти бесконечно
-    downloadCache.delete(fileId);
-  });
+  // Создаем promise через Promise.resolve().then() для захвата синхронных ошибок
+  const downloadPromise = Promise.resolve().then(() => downloadFn(fileId));
 
+  // Сразу сохраняем в кэш до того, как promise начнет выполняться
   downloadCache.set(fileId, downloadPromise);
+
   return downloadPromise;
+}
+
+/**
+ * Удаляет конкретный файл из кэша загрузок.
+ * Используйте для явной очистки после завершения pipeline.
+ */
+export function removeDownloadFromCache(fileId: string): void {
+  downloadCache.delete(fileId);
 }
 
 /**
