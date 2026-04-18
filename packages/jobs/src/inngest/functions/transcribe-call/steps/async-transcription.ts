@@ -4,8 +4,13 @@
  */
 
 import { createLogger } from "../../../../logger";
-import { downloadAudioFile } from "../audio/download";
-import { getAsyncResult, startAsyncTranscription } from "../gigaam/client";
+import { downloadAudioFileCached } from "../audio/download";
+import {
+  getAsyncResult,
+  startAsyncDiarizedTranscription,
+  startAsyncTranscription,
+} from "../gigaam/client";
+import { mergeConsecutiveSpeakerSegments } from "./merge-consecutive-segments";
 import type { PreprocessResult } from "./preprocess-audio";
 import type { StepRunner } from "./step-runner";
 import type { SyncTranscriptionResult } from "./sync-transcription";
@@ -25,12 +30,11 @@ export interface AsyncTranscriptionResult extends SyncTranscriptionResult {
 export async function asyncTranscriptionWithCallback(
   pipelineAudio: PreprocessResult,
   callId: string,
-  step: unknown,
+  step: StepRunner,
 ): Promise<AsyncTranscriptionResult> {
-  const typedStep = step as StepRunner;
   // Шаг 1: Запускаем асинхронную транскрибацию
-  const { taskId } = await typedStep.run("asr/async-start", async () => {
-    const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
+  const { taskId } = await step.run("asr/async-start", async () => {
+    const { buffer, filename } = await downloadAudioFileCached(pipelineAudio.preprocessedFileId);
 
     logger.info("Запуск асинхронной полной транскрибации", {
       callId,
@@ -48,7 +52,8 @@ export async function asyncTranscriptionWithCallback(
   });
 
   // Шаг 2: Ожидаем событие завершения от GigaAM сервиса
-  const completedEvent = await typedStep.waitForEvent<{
+  const startTime = Date.now();
+  const completedEvent = await step.waitForEvent<{
     data: {
       task_id: string;
       status: "completed" | "failed";
@@ -70,7 +75,7 @@ export async function asyncTranscriptionWithCallback(
   });
 
   // Шаг 3: Обрабатываем результат
-  return await typedStep.run("asr/process-result", async () => {
+  return await step.run("asr/process-result", async () => {
     if (!completedEvent) {
       // Таймаут waitForEvent - пробуем получить результат напрямую
       logger.warn(
@@ -132,7 +137,7 @@ export async function asyncTranscriptionWithCallback(
     return {
       transcript: eventData.result.final_transcript,
       segments: eventData.result.segments || [],
-      processingTimeMs: 0, // Неизвестно при callback-модели
+      processingTimeMs: Date.now() - startTime,
       taskId,
     };
   });
@@ -146,15 +151,11 @@ export async function asyncDiarizedTranscriptionWithCallback(
   pipelineAudio: PreprocessResult,
   callId: string,
   segments: Array<{ speaker: string; start: number; end: number; text: string }>,
-  step: unknown,
+  step: StepRunner,
 ): Promise<AsyncTranscriptionResult> {
-  const typedStep = step as StepRunner;
-
   // Шаг 1: Запускаем асинхронную диаризированную транскрибацию
-  const { taskId } = await typedStep.run("asr/async-diarized-start", async () => {
-    const { downloadAudioFile } = await import("../audio/download");
-    const { startAsyncDiarizedTranscription } = await import("../gigaam/client");
-    const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
+  const { taskId } = await step.run("asr/async-diarized-start", async () => {
+    const { buffer, filename } = await downloadAudioFileCached(pipelineAudio.preprocessedFileId);
 
     logger.info("Запуск асинхронной диаризированной транскрибации", {
       callId,
@@ -178,7 +179,8 @@ export async function asyncDiarizedTranscriptionWithCallback(
   });
 
   // Шаг 2: Ожидаем событие завершения от GigaAM сервиса
-  const completedEvent = await typedStep.waitForEvent<{
+  const startTime = Date.now();
+  const completedEvent = await step.waitForEvent<{
     data: {
       task_id: string;
       status: "completed" | "failed";
@@ -204,12 +206,46 @@ export async function asyncDiarizedTranscriptionWithCallback(
   });
 
   // Шаг 3: Обрабатываем результат
-  return await typedStep.run("asr/process-diarized-result", async () => {
+  return await step.run("asr/process-diarized-result", async () => {
     if (!completedEvent) {
-      // Таймаут waitForEvent - выбрасываем ошибку (polling не используем)
+      // Таймаут waitForEvent - пробуем получить результат напрямую (как в asyncTranscriptionWithCallback)
+      logger.warn(
+        "Таймаут ожидания события завершения диаризации, пробуем получить результат напрямую",
+        {
+          callId,
+          taskId,
+        },
+      );
+
+      try {
+        const directResult = await getAsyncResult(taskId);
+        if (directResult.transcript) {
+          logger.info("Диаризированная транскрипция получена напрямую после таймаута события", {
+            callId,
+            taskId,
+            transcriptLength: directResult.transcript.length,
+          });
+
+          return {
+            transcript: directResult.transcript,
+            segments: directResult.segments ?? [],
+            processingTimeMs: Date.now() - startTime,
+            taskId,
+            diarizationSuccess: true,
+            diarizationFailed: false,
+          };
+        }
+      } catch (fetchError) {
+        logger.error("Не удалось получить диаризированную транскрипцию напрямую", {
+          callId,
+          taskId,
+          error: fetchError,
+        });
+      }
+
       throw new Error(
         `Таймаут ожидания события завершения диаризации (taskId: ${taskId}). ` +
-          `Событие giga-am/transcription.completed не получено в течение 60 минут.`,
+          `Событие giga-am/transcription.completed не получено в течение 60 минут и прямой запрос также не вернул результата.`,
       );
     }
 
@@ -246,13 +282,12 @@ export async function asyncDiarizedTranscriptionWithCallback(
     }));
 
     // Объединяем последовательные сегменты одного спикера
-    const { mergeConsecutiveSpeakerSegments } = await import("./merge-consecutive-segments");
     const mergedSegments = mergeConsecutiveSpeakerSegments(rawSegments, callId);
 
     return {
       transcript: eventData.result.final_transcript,
       segments: mergedSegments,
-      processingTimeMs: 0, // Неизвестно при callback-модели
+      processingTimeMs: Date.now() - startTime,
       taskId,
       diarizationSuccess: true,
       diarizationFailed: false,

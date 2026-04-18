@@ -52,7 +52,7 @@ export const transcribeCallFn = inngest.createFunction(
     name: "Транскрибация: Async Full + LLM AM Check + Async Diarization",
     retries: 2,
     concurrency: {
-      limit: 3,
+      limit: 1,
       key: "event.data.callId",
     },
     triggers: [transcribeRequested],

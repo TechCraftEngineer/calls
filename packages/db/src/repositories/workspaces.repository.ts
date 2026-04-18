@@ -239,8 +239,9 @@ export const workspacesRepository = {
     return (result.rowCount ?? 0) > 0;
   },
 
-  async removeMember(workspaceId: string, userId: string): Promise<boolean> {
-    const result = await db
+  async removeMember(workspaceId: string, userId: string, tx?: Transaction): Promise<boolean> {
+    const client = tx ?? db;
+    const result = await client
       .delete(schema.workspaceMembers)
       .where(
         and(
@@ -376,8 +377,13 @@ export const workspacesRepository = {
     return result[0]?.activeWorkspaceId ?? null;
   },
 
-  async setActiveWorkspace(userId: string, workspaceId: string | null): Promise<void> {
-    await db
+  async setActiveWorkspace(
+    userId: string,
+    workspaceId: string | null,
+    tx?: Transaction,
+  ): Promise<void> {
+    const client = tx ?? db;
+    await client
       .insert(schema.userPreferences)
       .values({ userId, activeWorkspaceId: workspaceId })
       .onConflictDoUpdate({

@@ -7,22 +7,17 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 import { useSession } from "@/lib/better-auth";
 import {
   clearActiveWorkspaceCookie,
+  getActiveWorkspaceCookie,
   setActiveWorkspaceCookie,
   setOnboardedCookie,
 } from "@/lib/cookies";
-import { useORPC } from "@/orpc/react";
+import { type orpc as orpcType, useORPC } from "@/orpc/react";
 
 // Re-export для обратной совместимости
 export { clearActiveWorkspaceCookie };
 
-interface Workspace {
-  id: string;
-  name: string;
-  nameEn: string | null;
-  description: string | null;
-  role: string;
-  isOnboarded: boolean;
-}
+// Тип элемента workspaces из ответа API (inferred from orpc.workspaces.list)
+type Workspace = Awaited<ReturnType<typeof orpcType.workspaces.list.queryFn>>["workspaces"][number];
 
 interface WorkspaceContextType {
   workspaces: Workspace[];
@@ -83,8 +78,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   );
 
   const workspaces = useMemo(() => {
-    const list = (workspacesData?.workspaces ?? []) as Workspace[];
-    // Сортируем по дате создания (memberSince) для стабильного порядка
+    const list = workspacesData?.workspaces ?? [];
+    // Сортируем по роли (owner -> admin -> member), затем по имени для стабильности
     const sorted = [...list].sort((a, b) => {
       // Сначала owner, потом admin, потом member
       const roleOrder = { owner: 0, admin: 1, member: 2 };
@@ -95,43 +90,29 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       return a.name.localeCompare(b.name);
     });
 
-    console.log(
-      "[WorkspaceProvider] Workspaces sorted:",
-      sorted.map((w) => ({ id: w.id, name: w.name, role: w.role })),
-    );
     return sorted;
   }, [workspacesData?.workspaces]);
 
   const activeWorkspaceId = workspacesData?.activeWorkspaceId ?? null;
 
   const activeWorkspace = useMemo(() => {
-    console.log("[WorkspaceProvider] Computing activeWorkspace:", {
-      activeWorkspaceIdFromDB: activeWorkspaceId,
-      availableWorkspaces: workspaces.map((w) => ({ id: w.id, name: w.name })),
-    });
-
     if (!activeWorkspaceId) {
-      console.log("[WorkspaceProvider] No activeWorkspaceId from DB, using first workspace");
       return workspaces[0] ?? null;
     }
 
-    const found = workspaces.find((w: Workspace) => w.id === activeWorkspaceId);
-
-    // Если workspace из БД не найден в списке доступных, очищаем cookie и берём первый
-    if (!found && activeWorkspaceId && workspaces.length > 0) {
-      console.warn(
-        `[WorkspaceProvider] Workspace ${activeWorkspaceId} not found in available workspaces, falling back to first workspace`,
-      );
-      clearActiveWorkspaceCookie();
-      return workspaces[0];
-    }
-
-    console.log(
-      "[WorkspaceProvider] Selected workspace:",
-      found ? { id: found.id, name: found.name } : "null",
-    );
+    const found = workspaces.find((w) => w.id === activeWorkspaceId);
     return found ?? workspaces[0] ?? null;
   }, [workspaces, activeWorkspaceId]);
+
+  // Отдельный эффект для очистки cookie, если активный workspace не найден в списке
+  useEffect(() => {
+    if (activeWorkspaceId && workspaces.length > 0) {
+      const found = workspaces.find((w) => w.id === activeWorkspaceId);
+      if (!found) {
+        clearActiveWorkspaceCookie();
+      }
+    }
+  }, [activeWorkspaceId, workspaces]);
 
   const loading = sessionPending || (shouldFetchWorkspaces && workspacesPending);
 
@@ -143,9 +124,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     if (isOnboardingCreateWorkspace) return;
     if (activeWorkspace) {
       // Проверяем, что cookie соответствует текущему workspace
-      const cookieValue = document.cookie.match(/\bactive_workspace_id=([^;]+)/)?.[1];
+      const cookieValue = getActiveWorkspaceCookie();
       if (cookieValue !== activeWorkspace.id) {
-        console.log(`Syncing workspace cookie: ${cookieValue} -> ${activeWorkspace.id}`);
         setActiveWorkspaceCookie(activeWorkspace.id);
       }
       setOnboardedCookie(activeWorkspace.isOnboarded);
@@ -171,8 +151,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       const freshData = queryClient.getQueryData(
         orpc.workspaces.list.queryKey({}),
       ) as typeof workspacesData;
-      const freshWorkspaces = (freshData?.workspaces ?? []) as Workspace[];
-      const ws = freshWorkspaces.find((w: Workspace) => w.id === workspaceId);
+      const freshWorkspaces = freshData?.workspaces ?? [];
+      const ws = freshWorkspaces.find((w) => w.id === workspaceId);
 
       if (!ws) {
         toast.error("Компания не найдена.");

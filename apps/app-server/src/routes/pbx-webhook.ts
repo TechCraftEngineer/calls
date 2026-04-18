@@ -203,8 +203,8 @@ const handlePbxWebhook = async (c: Context) => {
   }
 
   try {
-    await inngest.send(
-      pbxSyncRequested.create({
+    await inngest.send({
+      ...pbxSyncRequested.create({
         workspaceId,
         syncType: "calls",
         // В очередь кладем признак загрузки записей, чтобы фоновой синхронизации
@@ -216,7 +216,9 @@ const handlePbxWebhook = async (c: Context) => {
           payload,
         },
       }),
-    );
+      // Идемпотентность: предотвращаем дублирование при повторной отправке webhook
+      id: eventId ? `pbx-sync-${workspaceId}-${eventId}` : undefined,
+    });
   } catch (error) {
     await pbxService.recordWebhookEvent({
       workspaceId,

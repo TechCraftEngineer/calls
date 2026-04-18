@@ -42,6 +42,7 @@ export interface CallListDataGridProps extends CallListProps {
   };
   isLoading?: boolean;
   onPaginationChange: (page: number, perPage: number) => void;
+  onTranscribed?: () => void;
 }
 
 export function CallListDataGrid({
@@ -50,6 +51,7 @@ export function CallListDataGrid({
   onCallDeleted,
   onCallsDeleted,
   onRecommendationsGenerated,
+  onTranscribed,
   pagination,
   isLoading = false,
   onPaginationChange,
@@ -86,7 +88,13 @@ export function CallListDataGrid({
 
   const transcribeMutation = useMutation(
     orpc.calls.transcribe.mutationOptions({
-      onSuccess: () => toast.success("Транскрипция запущена"),
+      onSuccess: () => {
+        toast.success("Транскрипция запущена");
+        // Даем Inngest время обновить статус в БД перед refetch
+        setTimeout(() => {
+          onTranscribed?.();
+        }, 1000);
+      },
       onError: () => toast.error("Не удалось запустить транскрипцию"),
     }),
   );
