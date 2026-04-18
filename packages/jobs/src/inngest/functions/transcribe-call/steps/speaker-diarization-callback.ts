@@ -4,7 +4,7 @@
  */
 
 import { createLogger } from "../../../../logger";
-import { downloadAudioFileCached } from "../audio/download";
+import { downloadAudioFile } from "../audio/download";
 import { shouldUseSpeakerEmbeddings, startSpeakerDiarization } from "../speakers/diarization";
 import type { PreprocessResult } from "./preprocess-audio";
 import type { StepRunner } from "./step-runner";
@@ -54,8 +54,8 @@ export async function speakerDiarizationWithCallback(
   }
 
   // Шаг 1: Запускаем асинхронную диаризацию
-  const { taskId, success, error } = (await step.run("speaker-embeddings/async-start", async () => {
-    const { buffer, filename } = await downloadAudioFileCached(pipelineAudio.preprocessedFileId);
+  const startResult = (await step.run("speaker-embeddings/async-start", async () => {
+    const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
 
     // Определяем примерное количество спикеров на основе сегментов
     const minSpeakers = 2;
@@ -86,7 +86,8 @@ export async function speakerDiarizationWithCallback(
     });
 
     return { success: true, taskId: result.taskId };
-  })) as { taskId: string; success: boolean; error?: string };
+  })) as { taskId?: string; success: boolean; error?: string };
+  const { taskId, success, error } = startResult;
 
   if (!success || !taskId) {
     return {
@@ -97,11 +98,14 @@ export async function speakerDiarizationWithCallback(
   }
 
   // Шаг 2: Ожидаем событие завершения от Speaker Embeddings сервиса
-  const completedEvent = (await step.waitForEvent("speaker-embeddings/wait-for-completion", {
+  const completedEvent = await step.waitForEvent("speaker-embeddings/wait-for-completion", {
     event: "speaker-embeddings/diarization.completed",
     timeout: "60m", // 60 минут максимальное ожидание
     if: `async.data.task_id == "${taskId}"`,
-  })) as {
+  });
+
+  // Type guard для события
+  type SpeakerEmbeddingCompletedEvent = {
     data: {
       task_id: string;
       status: "completed" | "failed";
@@ -117,7 +121,7 @@ export async function speakerDiarizationWithCallback(
       error?: string;
       processingTimeMs?: number;
     };
-  } | null;
+  };
 
   // Шаг 3: Обрабатываем результат
   return (await step.run("speaker-embeddings/process-result", async () => {
@@ -131,7 +135,10 @@ export async function speakerDiarizationWithCallback(
       };
     }
 
-    const eventData = completedEvent.data;
+    const eventData = (completedEvent as SpeakerEmbeddingCompletedEvent | null)?.data;
+    if (!eventData) {
+      throw new Error("Событие завершения не содержит данных");
+    }
 
     if (eventData.status === "failed") {
       logger.error("Диаризация завершилась с ошибкой", {

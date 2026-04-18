@@ -21,7 +21,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import { useORPC } from "@/orpc/react";
@@ -65,7 +65,6 @@ export function CallListDataGrid({
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [recommendationsCallId, setRecommendationsCallId] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<string[]>([]);
-  const transcribeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Используем хук для управления выборкой строк
   const { rowSelection, setRowSelection, selectedCalls, selectedCallIds, clearSelection } =
@@ -96,10 +95,9 @@ export function CallListDataGrid({
         queryClient.invalidateQueries({
           refetchType: "active",
         });
-        // Вызываем onTranscribed после короткой задержки для UI обновления
-        transcribeTimeoutRef.current = setTimeout(() => {
-          onTranscribed?.();
-        }, 500);
+        // Вызываем onTranscribed сразу после инвалидации запросов
+        // React Query автоматически обновит данные, нет необходимости в задержке
+        onTranscribed?.();
       },
       onError: () => toast.error("Не удалось запустить транскрипцию"),
     }),
@@ -236,15 +234,6 @@ export function CallListDataGrid({
     if (pagination.page < 1 || pagination.perPage < 1) return;
     clearSelection();
   }, [pagination.page, pagination.perPage, clearSelection]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (transcribeTimeoutRef.current) {
-        clearTimeout(transcribeTimeoutRef.current);
-      }
-    };
-  }, []);
 
   const table = useReactTable({
     data: calls,

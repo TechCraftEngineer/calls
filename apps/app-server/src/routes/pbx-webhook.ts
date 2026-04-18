@@ -156,11 +156,15 @@ const handlePbxWebhook = async (c: Context) => {
 
   const eventSubtype = asNonEmptyString(parsedPayload.data.type) ?? "unknown";
   const eventType = `${command}:${eventSubtype}`;
-  const eventId =
+
+  // Валидация eventId: разрешаем только алфавитно-цифровые символы, дефисы и подчеркивания
+  // Ограничиваем длину до 256 символов для предотвращения DoS
+  const rawEventId =
     asNonEmptyString(payload.eventId) ??
     asNonEmptyString(payload.id) ??
     asNonEmptyString(payload.uid) ??
     null;
+  const eventId = rawEventId && /^[a-zA-Z0-9_-]{1,256}$/.test(rawEventId) ? rawEventId : null;
 
   await pbxService.recordWebhookEvent({
     workspaceId,
@@ -214,6 +218,8 @@ const handlePbxWebhook = async (c: Context) => {
         },
       }),
       // Идемпотентность: предотвращаем дублирование при повторной отправке webhook
+      // Ключ включает workspaceId, что предотвращает collision-атаки между разными workspace
+      // Даже если злоумышленник подберет eventId другого workspace, полный ключ будет уникальным
       id: eventId ? `pbx-sync-${workspaceId}-${eventId}` : undefined,
     });
   } catch (error) {

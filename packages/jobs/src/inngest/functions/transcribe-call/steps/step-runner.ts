@@ -3,7 +3,7 @@
  * Типизированные методы для сохранения статической типизации
  */
 export interface StepRunner {
-  run<T>(id: string, fn: () => Promise<T>): Promise<T>;
+  run<T>(id: string, fn: () => Promise<T>): Promise<unknown>;
   waitForEvent<T>(
     id: string,
     options: { event: string; timeout: string; if: string },
