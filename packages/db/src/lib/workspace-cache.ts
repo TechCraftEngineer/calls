@@ -83,6 +83,15 @@ class WorkspaceCache {
     this.cache.delete(activeKey);
     this.cache.delete(userWorkspacesKey);
   }
+
+  /**
+   * Инвалидирует кэш активного workspace для пользователя.
+   * Хелпер для единообразной инвалидации.
+   */
+  invalidateActiveWorkspace(userId: string): void {
+    const activeKey = this.createActiveWorkspaceKey(userId);
+    this.delete(activeKey);
+  }
 }
 
 export const workspaceCache = new WorkspaceCache();

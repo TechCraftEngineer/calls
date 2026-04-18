@@ -48,10 +48,24 @@ import { TranscriptionResultSchema } from "../../functions/transcribe-call/schem
 const logger = createLogger("transcribe-call");
 
 /**
- * Type guard для Inngest step - преобразует Inngest step в типизированный StepRunner
- * Централизует приведение типов для безопасности и читаемости
+ * Type guard для Inngest step - преобразует Inngest step в типизированный StepRunner.
+ * Выполняет runtime проверку обязательных методов.
  */
 function ensureStepRunner(step: unknown): StepRunner {
+  if (step === null || typeof step !== "object") {
+    throw new Error("Invalid step: expected object, got " + typeof step);
+  }
+
+  const s = step as Record<string, unknown>;
+
+  // Проверяем наличие и тип методов run и waitForEvent
+  if (typeof s.run !== "function") {
+    throw new Error("Invalid step: missing or invalid 'run' method");
+  }
+  if (typeof s.waitForEvent !== "function") {
+    throw new Error("Invalid step: missing or invalid 'waitForEvent' method");
+  }
+
   return step as StepRunner;
 }
 
@@ -217,7 +231,9 @@ export const transcribeCallFn = inngest.createFunction(
 
       mergedResult = {
         segments: fullTranscription.segments || [],
+        mergedTranscript: fullTranscription.transcript || "",
         applied: false,
+        qualityScore: null,
         llmMergeTimeMs: 0,
       };
     } else {

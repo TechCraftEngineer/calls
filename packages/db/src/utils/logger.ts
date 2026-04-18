@@ -30,13 +30,18 @@ const SENSITIVE_KEYS = new Set([
   "webhook_secret",
 ]);
 
+// Precompute lowercase sensitive keys set for exact matching
+const LOWER_SENSITIVE_SET = new Set(Array.from(SENSITIVE_KEYS).map((sk) => sk.toLowerCase()));
+
 // Placeholder для замены чувствительных значений
 const REDACTED = "[REDACTED]";
+const CIRCULAR_PLACEHOLDER = "[Circular]";
 
 /**
- * Санитизирует данные для логирования, удаляя чувствительную информацию
+ * Санитизирует данные для логирования, удаляя чувствительную информацию.
+ * Защищает от циклических ссылок через WeakSet.
  */
-function sanitizeForLogging(data: unknown): unknown {
+function sanitizeForLoggingInternal(data: unknown, visited: WeakSet<object>): unknown {
   if (data === null || data === undefined) {
     return data;
   }
@@ -46,31 +51,77 @@ function sanitizeForLogging(data: unknown): unknown {
     return data;
   }
 
-  // Обработка массивов
-  if (Array.isArray(data)) {
-    return data.map((item) => sanitizeForLogging(item));
+  // Защита от циклических ссылок
+  if (visited.has(data)) {
+    return CIRCULAR_PLACEHOLDER;
   }
 
-  // Обработка объектов
+  // Обработка специальных типов
+  if (data instanceof Date) {
+    return data.toISOString();
+  }
+
+  if (data instanceof Error) {
+    return {
+      name: data.name,
+      message: data.message,
+      stack: data.stack,
+      cause: data.cause ? sanitizeForLoggingInternal(data.cause, visited) : undefined,
+    };
+  }
+
+  if (data instanceof Map) {
+    visited.add(data);
+    const sanitizedMap: Record<string, unknown> = {};
+    for (const [key, value] of data.entries()) {
+      sanitizedMap[String(key)] = sanitizeForLoggingInternal(value, visited);
+    }
+    return sanitizedMap;
+  }
+
+  if (data instanceof Set) {
+    visited.add(data);
+    return Array.from(data).map((item) => sanitizeForLoggingInternal(item, visited));
+  }
+
+  if (Buffer.isBuffer(data)) {
+    return `[Buffer ${data.length} bytes]`;
+  }
+
+  // Обработка массивов
+  if (Array.isArray(data)) {
+    visited.add(data);
+    const result = data.map((item) => sanitizeForLoggingInternal(item, visited));
+    return result;
+  }
+
+  // Обработка обычных объектов
+  visited.add(data);
   const sanitized: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
-    // Проверяем ключ на чувствительность (case-insensitive)
+    // Проверяем ключ на чувствительность (case-insensitive exact match)
     const lowerKey = key.toLowerCase();
-    const isSensitive = Array.from(SENSITIVE_KEYS).some((sk) =>
-      lowerKey.includes(sk.toLowerCase()),
-    );
+    const isSensitive = LOWER_SENSITIVE_SET.has(lowerKey);
 
     if (isSensitive) {
       sanitized[key] = REDACTED;
     } else if (typeof value === "object" && value !== null) {
       // Рекурсивная обработка вложенных объектов
-      sanitized[key] = sanitizeForLogging(value);
+      sanitized[key] = sanitizeForLoggingInternal(value, visited);
     } else {
       sanitized[key] = value;
     }
   }
 
   return sanitized;
+}
+
+/**
+ * Санитизирует данные для логирования, удаляя чувствительную информацию.
+ * Публичный API - инициализирует WeakSet для отслеживания циклов.
+ */
+function sanitizeForLogging(data: unknown): unknown {
+  return sanitizeForLoggingInternal(data, new WeakSet());
 }
 
 export function createLogger(moduleName: string) {

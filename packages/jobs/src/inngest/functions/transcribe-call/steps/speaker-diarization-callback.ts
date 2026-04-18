@@ -11,6 +11,15 @@ import type { StepRunner } from "./step-runner";
 
 const logger = createLogger("transcribe-call:speaker-diarization-callback");
 
+/**
+ * Экранирует строку для использования в CEL (Common Expression Language) выражении.
+ * CEL строковые литералы используют одинарные кавычки.
+ * Необходимо экранировать: \ -> \\\\ и ' -> \\'
+ */
+function escapeForCel(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
 export interface SpeakerDiarizationCallbackResult {
   success: boolean;
   mapping?: Record<string, string>;
@@ -98,9 +107,11 @@ export async function speakerDiarizationWithCallback(
   }
 
   // Type definition для события завершения диаризации
+  // Синхронизировано с SpeakerEmbeddingsCallbackData из embeddings-handler.ts
   type SpeakerEmbeddingCompletedEvent = {
     data: {
       task_id: string;
+      call_id: string;
       status: "completed" | "failed";
       result?: {
         success?: boolean;
@@ -110,9 +121,9 @@ export async function speakerDiarizationWithCallback(
         reason?: string;
         error?: string;
         segments?: Array<{ start: number; end: number; speaker: string }>;
+        processingTimeMs?: number; // processingTimeMs внутри result если есть
       };
       error?: string;
-      processingTimeMs?: number;
     };
   };
 
@@ -120,7 +131,7 @@ export async function speakerDiarizationWithCallback(
   const completedEvent = await step.waitForEvent<SpeakerEmbeddingCompletedEvent>("speaker-embeddings/wait-for-completion", {
     event: "speaker-embeddings/diarization.completed",
     timeout: "60m", // 60 минут максимальное ожидание
-    if: `async.data.task_id == "${taskId}"`,
+    if: `async.data.task_id == '${escapeForCel(taskId)}'`,
   });
 
   // Шаг 3: Обрабатываем результат
@@ -150,7 +161,7 @@ export async function speakerDiarizationWithCallback(
         success: false,
         error: eventData.error || "Diarization failed",
         taskId,
-        processingTimeMs: eventData.processingTimeMs || 0,
+        processingTimeMs: eventData.result?.processingTimeMs || 0,
       };
     }
 
@@ -164,7 +175,7 @@ export async function speakerDiarizationWithCallback(
         success: false,
         error: eventData.result?.reason || "Диаризация вернула неуспешный результат",
         taskId,
-        processingTimeMs: eventData.processingTimeMs || 0,
+        processingTimeMs: eventData.result?.processingTimeMs || 0,
       };
     }
 
@@ -187,7 +198,7 @@ export async function speakerDiarizationWithCallback(
       usedEmbeddings: eventData.result.usedEmbeddings,
       clusterCount: eventData.result.clusterCount,
       taskId,
-      processingTimeMs: eventData.processingTimeMs || 0,
+      processingTimeMs: eventData.result?.processingTimeMs || 0,
       segments: finalSegments,
     };
   }));

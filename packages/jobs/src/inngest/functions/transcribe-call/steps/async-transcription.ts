@@ -17,6 +17,40 @@ import type { SyncTranscriptionResult } from "./sync-transcription";
 
 const logger = createLogger("transcribe-call:async-transcription");
 
+/**
+ * Экранирует строку для использования в CEL (Common Expression Language) выражении.
+ * CEL строковые литералы используют одинарные кавычки.
+ * Необходимо экранировать: \ -> \\\\ и ' -> \\'
+ */
+function escapeForCel(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+/**
+ * Нормализует сегменты для обеспечения обязательных полей (speaker, start, end).
+ * Гарантирует что результат соответствует SyncTranscriptionResult.segments.
+ */
+function normalizeSegments(
+  segments: Array<{
+    text: string;
+    speaker?: string;
+    start?: number;
+    end?: number;
+    confidence?: number;
+  }> | undefined,
+): Array<{ speaker: string; start: number; end: number; text: string }> {
+  if (!segments || segments.length === 0) {
+    return [];
+  }
+
+  return segments.map((s, index) => ({
+    speaker: s.speaker || "UNKNOWN",
+    start: s.start ?? index, // fallback на индекс если нет времени
+    end: s.end ?? (s.start ?? index) + 1, // fallback если нет времени окончания
+    text: s.text,
+  }));
+}
+
 export interface AsyncTranscriptionResult extends SyncTranscriptionResult {
   taskId: string;
   diarizationSuccess?: boolean;
@@ -53,6 +87,7 @@ export async function asyncTranscriptionWithCallback(
   const { taskId } = startResult;
 
   // Type definition для события завершения транскрипции
+  // Поля speaker/start/end опциональны для non-diarized результатов (как в NonDiarizedTranscriptionResultSchema)
   type CompletedEvent = {
     data: {
       task_id: string;
@@ -60,10 +95,11 @@ export async function asyncTranscriptionWithCallback(
       result?: {
         final_transcript?: string;
         segments?: Array<{
-          speaker: string;
-          start: number;
-          end: number;
           text: string;
+          speaker?: string;
+          start?: number;
+          end?: number;
+          confidence?: number;
         }>;
         processing_time?: number;
       };
@@ -75,7 +111,7 @@ export async function asyncTranscriptionWithCallback(
   const completedEvent = await step.waitForEvent<CompletedEvent>("asr/wait-for-completion", {
     event: "giga-am/transcription.completed",
     timeout: "60m", // 60 минут максимальное ожидание
-    if: `async.data.task_id == "${taskId}"`,
+    if: `async.data.task_id == '${escapeForCel(taskId)}'`,
   });
 
   // Шаг 3: Обрабатываем результат
@@ -101,7 +137,7 @@ export async function asyncTranscriptionWithCallback(
 
           return {
             transcript: directResult.transcript,
-            segments: directResult.segments ?? [],
+            segments: normalizeSegments(directResult.segments),
             processingTimeMs: directResult.processingTimeMs ?? 0,
             taskId,
           };
@@ -143,7 +179,7 @@ export async function asyncTranscriptionWithCallback(
 
     return {
       transcript: eventData.result.final_transcript,
-      segments: eventData.result.segments || [],
+      segments: normalizeSegments(eventData.result.segments),
       // Используем processing_time из события GigaAM вместо Date.now() - startTime
       // для корректного измерения времени обработки при replay Inngest
       // GigaAM возвращает processing_time в секундах, конвертируем в миллисекунды
@@ -217,7 +253,7 @@ export async function asyncDiarizedTranscriptionWithCallback(
   const completedEvent = await step.waitForEvent<DiarizedCompletedEvent>("asr/wait-for-diarized-completion", {
     event: "giga-am/transcription.completed",
     timeout: "60m", // 60 минут максимальное ожидание
-    if: `async.data.task_id == "${taskId}"`,
+    if: `async.data.task_id == '${escapeForCel(taskId)}'`,
   });
 
   // Шаг 3: Обрабатываем результат
@@ -243,7 +279,7 @@ export async function asyncDiarizedTranscriptionWithCallback(
 
           return {
             transcript: directResult.transcript,
-            segments: directResult.segments ?? [],
+            segments: normalizeSegments(directResult.segments),
             processingTimeMs: directResult.processingTimeMs ?? 0,
             taskId,
             diarizationSuccess: true,
@@ -290,19 +326,11 @@ export async function asyncDiarizedTranscriptionWithCallback(
       segmentsCount: eventData.result.segments?.length ?? 0,
     });
 
-    // Преобразуем сегменты в нужный формат
-    const rawSegments = (eventData.result.segments || []).map(
-      (s: { speaker: string; start: number; end: number; text: string; confidence: number }) => ({
-        speaker: s.speaker ?? "UNKNOWN",
-        start: s.start,
-        end: s.end,
-        text: s.text,
-        confidence: s.confidence,
-      }),
-    );
+    // Нормализуем сегменты с обеспечением обязательных полей для mergeConsecutiveSpeakerSegments
+    const normalizedSegments = normalizeSegments(eventData.result.segments);
 
     // Объединяем последовательные сегменты одного спикера
-    const mergedSegments = mergeConsecutiveSpeakerSegments(rawSegments, callId);
+    const mergedSegments = mergeConsecutiveSpeakerSegments(normalizedSegments, callId);
 
     return {
       transcript: eventData.result.final_transcript,
