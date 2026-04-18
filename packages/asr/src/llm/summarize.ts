@@ -61,7 +61,7 @@ const summarizeInputSchema = z
       data.text.length + summaryLength + companyContextLength + managerNameLength;
 
     if (totalRequestChars > hardMaxChars) {
-      ctx.issues.push({
+      ctx.addIssue({
         code: "custom",
         path: ["options"],
         message: `Combined request length (${totalRequestChars}) exceeds hardMaxChars (${hardMaxChars})`,
@@ -70,7 +70,7 @@ const summarizeInputSchema = z
     }
 
     if (totalRequestChars > maxChars) {
-      ctx.issues.push({
+      ctx.addIssue({
         code: "custom",
         path: ["options"],
         message: `Combined request length (${totalRequestChars}) exceeds maxChars (${maxChars})`,

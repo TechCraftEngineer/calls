@@ -11,13 +11,21 @@ import {
   setActiveWorkspaceCookie,
   setOnboardedCookie,
 } from "@/lib/cookies";
-import { type orpc as orpcType, useORPC } from "@/orpc/react";
+import { useORPC } from "@/orpc/react";
 
 // Re-export для обратной совместимости
 export { clearActiveWorkspaceCookie };
 
-// Тип элемента workspaces из ответа API (inferred from orpc.workspaces.list)
-type Workspace = Awaited<ReturnType<typeof orpcType.workspaces.list.queryFn>>["workspaces"][number];
+// Тип элемента workspaces из ответа API
+type Workspace = {
+  id: string;
+  name: string;
+  nameEn: string | null;
+  description: string | null;
+  isOnboarded: boolean;
+  role: "admin" | "owner" | "member";
+  memberSince: Date;
+};
 
 interface WorkspaceContextType {
   workspaces: Workspace[];

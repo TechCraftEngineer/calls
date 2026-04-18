@@ -54,7 +54,7 @@ export async function speakerDiarizationWithCallback(
   }
 
   // Шаг 1: Запускаем асинхронную диаризацию
-  const { taskId, success, error } = await step.run("speaker-embeddings/async-start", async () => {
+  const { taskId, success, error } = (await step.run("speaker-embeddings/async-start", async () => {
     const { buffer, filename } = await downloadAudioFileCached(pipelineAudio.preprocessedFileId);
 
     // Определяем примерное количество спикеров на основе сегментов
@@ -86,7 +86,7 @@ export async function speakerDiarizationWithCallback(
     });
 
     return { success: true, taskId: result.taskId };
-  });
+  })) as { taskId: string; success: boolean; error?: string };
 
   if (!success || !taskId) {
     return {
@@ -97,7 +97,11 @@ export async function speakerDiarizationWithCallback(
   }
 
   // Шаг 2: Ожидаем событие завершения от Speaker Embeddings сервиса
-  const completedEvent = await step.waitForEvent<{
+  const completedEvent = (await step.waitForEvent("speaker-embeddings/wait-for-completion", {
+    event: "speaker-embeddings/diarization.completed",
+    timeout: "60m", // 60 минут максимальное ожидание
+    if: `async.data.task_id == "${taskId}"`,
+  })) as {
     data: {
       task_id: string;
       status: "completed" | "failed";
@@ -113,14 +117,10 @@ export async function speakerDiarizationWithCallback(
       error?: string;
       processingTimeMs?: number;
     };
-  }>("speaker-embeddings/wait-for-completion", {
-    event: "speaker-embeddings/diarization.completed",
-    timeout: "60m", // 60 минут максимальное ожидание
-    if: `async.data.task_id == "${taskId}"`,
-  });
+  } | null;
 
   // Шаг 3: Обрабатываем результат
-  return await step.run("speaker-embeddings/process-result", async () => {
+  return (await step.run("speaker-embeddings/process-result", async () => {
     if (!completedEvent) {
       logger.warn("Таймаут ожидания события диаризации", { callId, taskId });
       return {
@@ -183,5 +183,5 @@ export async function speakerDiarizationWithCallback(
       processingTimeMs: eventData.processingTimeMs || 0,
       segments: finalSegments,
     };
-  });
+  })) as SpeakerDiarizationCallbackResult;
 }
