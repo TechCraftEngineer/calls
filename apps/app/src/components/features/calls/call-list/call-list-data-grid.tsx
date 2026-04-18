@@ -13,7 +13,7 @@ import {
 } from "@calls/ui";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -58,6 +58,7 @@ export function CallListDataGrid({
 }: CallListDataGridProps) {
   const orpc = useORPC();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { activeWorkspace } = useWorkspace();
   const isWorkspaceAdmin = activeWorkspace?.role === "admin" || activeWorkspace?.role === "owner";
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
@@ -90,10 +91,13 @@ export function CallListDataGrid({
     orpc.calls.transcribe.mutationOptions({
       onSuccess: () => {
         toast.success("Транскрипция запущена");
-        // Даем Inngest время обновить статус в БД перед refetch
-        setTimeout(() => {
-          onTranscribed?.();
-        }, 1000);
+        // Инвалидируем активные запросы для обновления статуса
+        queryClient.invalidateQueries({
+          refetchType: "active",
+        });
+        // Вызываем onTranscribed сразу после инвалидации запросов
+        // React Query автоматически обновит данные, нет необходимости в задержке
+        onTranscribed?.();
       },
       onError: () => toast.error("Не удалось запустить транскрипцию"),
     }),

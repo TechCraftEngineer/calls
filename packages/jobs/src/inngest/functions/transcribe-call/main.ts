@@ -35,6 +35,7 @@ import {
   summarize,
   validateInput,
 } from "../../../inngest/functions/transcribe-call/steps";
+import type { StepRunner } from "../../../inngest/functions/transcribe-call/steps/step-runner";
 import type { GigaAmSegment } from "../../../inngest/functions/transcribe-call/types";
 import { createLogger } from "../../../logger";
 import {
@@ -51,6 +52,9 @@ export const transcribeCallFn = inngest.createFunction(
     id: "transcribe-call",
     name: "Транскрибация: Async Full + LLM AM Check + Async Diarization",
     retries: 2,
+    // limit: 1 с ключом callId означает сериализацию обработки одного конкретного звонка.
+    // Разные callId обрабатываются параллельно, поэтому общая пропускная способность не страдает.
+    // Снижение с 3 до 1 предотвращает race conditions при ретраях и упрощает отладку.
     concurrency: {
       limit: 1,
       key: "event.data.callId",
@@ -92,7 +96,7 @@ export const transcribeCallFn = inngest.createFunction(
     const fullTranscription = (await asyncTranscriptionWithCallback(
       pipelineAudio,
       callId,
-      step,
+      step as StepRunner,
     )) as AsyncTranscriptionResult;
 
     // Сохраняем для использования в fallback
@@ -120,7 +124,7 @@ export const transcribeCallFn = inngest.createFunction(
       pipelineAudio,
       callId,
       fullTranscription.segments || [],
-      step,
+      step as StepRunner,
     );
 
     logger.info("Результат диаризации Speaker Embeddings", {
@@ -173,7 +177,7 @@ export const transcribeCallFn = inngest.createFunction(
         pipelineAudio,
         callId,
         segmentsForDiarization,
-        step,
+        step as StepRunner,
       );
     } catch (diarizationError) {
       logger.error(

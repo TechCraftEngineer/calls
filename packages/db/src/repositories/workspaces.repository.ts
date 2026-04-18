@@ -368,8 +368,9 @@ export const workspacesRepository = {
       .orderBy(schema.user.name);
   },
 
-  async getActiveWorkspaceId(userId: string): Promise<string | null> {
-    const result = await db
+  async getActiveWorkspaceId(userId: string, tx?: Transaction): Promise<string | null> {
+    const client = tx ?? db;
+    const result = await client
       .select({ activeWorkspaceId: schema.userPreferences.activeWorkspaceId })
       .from(schema.userPreferences)
       .where(eq(schema.userPreferences.userId, userId))

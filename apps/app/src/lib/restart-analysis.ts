@@ -18,7 +18,14 @@ export async function restartCallAnalysis(params: {
     throw new Error("Не удалось выполнить транскрипцию");
   }
 
-  // Даем Inngest время обновить статус в БД перед refetch
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  await loadData();
+  // Используем экспоненциальный backoff вместо фиксированной задержки
+  // для более надежного ожидания обновления статуса
+  const maxAttempts = 5;
+  const baseDelay = 300; // 300ms начальная задержка
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const delay = baseDelay * 2 ** attempt; // 300ms, 600ms, 1200ms, 2400ms, 4800ms
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    await loadData();
+  }
 }

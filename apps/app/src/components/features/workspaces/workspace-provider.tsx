@@ -88,11 +88,14 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const workspaces = useMemo(() => {
     const list = workspacesData?.workspaces ?? [];
     // Сортируем по роли (owner -> admin -> member), затем по имени для стабильности
+    const roleOrder: Record<"owner" | "admin" | "member", number> = {
+      owner: 0,
+      admin: 1,
+      member: 2,
+    };
     const sorted = [...list].sort((a, b) => {
-      // Сначала owner, потом admin, потом member
-      const roleOrder = { owner: 0, admin: 1, member: 2 };
-      const roleA = roleOrder[a.role as keyof typeof roleOrder] ?? 3;
-      const roleB = roleOrder[b.role as keyof typeof roleOrder] ?? 3;
+      const roleA = roleOrder[a.role];
+      const roleB = roleOrder[b.role];
       if (roleA !== roleB) return roleA - roleB;
       // Затем по имени для стабильности
       return a.name.localeCompare(b.name);
@@ -103,24 +106,27 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   const activeWorkspaceId = workspacesData?.activeWorkspaceId ?? null;
 
-  const activeWorkspace = useMemo(() => {
+  const { activeWorkspace, foundWorkspace } = useMemo(() => {
     if (!activeWorkspaceId) {
-      return workspaces[0] ?? null;
+      return {
+        activeWorkspace: workspaces[0] ?? null,
+        foundWorkspace: workspaces[0] ?? null,
+      };
     }
 
     const found = workspaces.find((w) => w.id === activeWorkspaceId);
-    return found ?? workspaces[0] ?? null;
+    return {
+      activeWorkspace: found ?? workspaces[0] ?? null,
+      foundWorkspace: found,
+    };
   }, [workspaces, activeWorkspaceId]);
 
   // Отдельный эффект для очистки cookie, если активный workspace не найден в списке
   useEffect(() => {
-    if (activeWorkspaceId && workspaces.length > 0) {
-      const found = workspaces.find((w) => w.id === activeWorkspaceId);
-      if (!found) {
-        clearActiveWorkspaceCookie();
-      }
+    if (activeWorkspaceId && workspaces.length > 0 && !foundWorkspace) {
+      clearActiveWorkspaceCookie();
     }
-  }, [activeWorkspaceId, workspaces]);
+  }, [activeWorkspaceId, workspaces.length, foundWorkspace]);
 
   const loading = sessionPending || (shouldFetchWorkspaces && workspacesPending);
 

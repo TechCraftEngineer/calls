@@ -8,7 +8,6 @@ import type { z } from "zod";
 import { createLogger } from "../../../../logger";
 import { FileSchema } from "../schemas";
 import type { AudioBufferLegacyResult, AudioFileResult } from "../types";
-import { getOrDownloadAudio } from "./download-cache";
 
 const logger = createLogger("audio-download");
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
@@ -128,13 +127,4 @@ export async function downloadAudioBuffer(fileId: string): Promise<AudioBufferLe
     buffer: base64Buffer,
     filename,
   };
-}
-
-/**
- * Загружает аудио файл с кэшированием.
- * Если файл уже загружается, возвращает существующий промис.
- * Это предотвращает тройное скачивание в pipeline транскрибации.
- */
-export async function downloadAudioFileCached(fileId: string): Promise<AudioFileResult> {
-  return getOrDownloadAudio(fileId, downloadAudioFile);
 }

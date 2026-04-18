@@ -5,6 +5,7 @@
 import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { z } from "zod";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -20,9 +21,26 @@ export function getRecordsDir(): string {
 }
 
 // Webhook rate limiting configuration
-export const webhookRateLimitConfig = {
-  // Window in milliseconds (default: 1 minute)
+const webhookRateLimitSchema = z.object({
+  windowMs: z.number().int().positive().finite().default(60000),
+  maxRequests: z.number().int().positive().finite().default(30),
+});
+
+const parsedWebhookRateLimit = webhookRateLimitSchema.safeParse({
   windowMs: Number.parseInt(process.env.WEBHOOK_RATE_LIMIT_WINDOW_MS ?? "60000", 10),
-  // Max requests per window (default: 30)
   maxRequests: Number.parseInt(process.env.WEBHOOK_RATE_LIMIT_MAX_REQUESTS ?? "30", 10),
-};
+});
+
+if (!parsedWebhookRateLimit.success) {
+  console.error(
+    "Invalid WEBHOOK_RATE_LIMIT environment variables. Using safe defaults.",
+    parsedWebhookRateLimit.error.format(),
+  );
+}
+
+export const webhookRateLimitConfig = parsedWebhookRateLimit.success
+  ? parsedWebhookRateLimit.data
+  : {
+      windowMs: 60000,
+      maxRequests: 30,
+    };
