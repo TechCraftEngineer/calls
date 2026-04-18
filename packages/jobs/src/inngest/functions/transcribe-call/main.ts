@@ -47,6 +47,14 @@ import { TranscriptionResultSchema } from "../../functions/transcribe-call/schem
 
 const logger = createLogger("transcribe-call");
 
+/**
+ * Type guard для Inngest step - преобразует Inngest step в типизированный StepRunner
+ * Централизует приведение типов для безопасности и читаемости
+ */
+function ensureStepRunner(step: unknown): StepRunner {
+  return step as StepRunner;
+}
+
 export const transcribeCallFn = inngest.createFunction(
   {
     id: "transcribe-call",
@@ -77,7 +85,7 @@ export const transcribeCallFn = inngest.createFunction(
     await step.run("validate/input", () => validateInput(callId));
 
     // === ШАГ 2: Получение данных звонка ===
-    const call = (await step.run("db/calls:get", () => fetchCall(callId))) as Call;
+    const call = await step.run("db/calls:get", () => fetchCall(callId));
 
     // === ШАГ 3: Получение и валидация workspace ===
     const workspace = await step.run("db/workspaces:get", () =>
@@ -93,11 +101,11 @@ export const transcribeCallFn = inngest.createFunction(
     );
 
     // === ШАГ 6: Асинхронная полная транскрибация (callback модель) ===
-    const fullTranscription = (await asyncTranscriptionWithCallback(
+    const fullTranscription = await asyncTranscriptionWithCallback(
       pipelineAudio,
       callId,
-      step as StepRunner,
-    )) as AsyncTranscriptionResult;
+      ensureStepRunner(step),
+    );
 
     // Сохраняем для использования в fallback
     const fullTranscript = fullTranscription.transcript;
@@ -124,7 +132,7 @@ export const transcribeCallFn = inngest.createFunction(
       pipelineAudio,
       callId,
       fullTranscription.segments || [],
-      step as StepRunner,
+      ensureStepRunner(step),
     );
 
     logger.info("Результат диаризации Speaker Embeddings", {
@@ -177,7 +185,7 @@ export const transcribeCallFn = inngest.createFunction(
         pipelineAudio,
         callId,
         segmentsForDiarization,
-        step as StepRunner,
+        ensureStepRunner(step),
       );
     } catch (diarizationError) {
       logger.error(
@@ -211,11 +219,11 @@ export const transcribeCallFn = inngest.createFunction(
         segments: fullTranscription.segments || [],
         applied: false,
         llmMergeTimeMs: 0,
-      } as MergeResult;
+      };
     } else {
-      mergedResult = (await step.run("llm/merge-asr", () =>
+      mergedResult = await step.run("llm/merge-asr", () =>
         mergeResults(fullTranscription, diarizeResult as DiarizeResult, callId, workspace),
-      )) as MergeResult;
+      );
     }
 
     // Вычисляем общее время обработки с дефолтными значениями
@@ -324,12 +332,12 @@ export const transcribeCallFn = inngest.createFunction(
     const rawText = validatedResult.rawText || "";
 
     // === ШАГ 12: Генерация summary ===
-    const summaryResult = (await step.run("llm/summarize", () =>
+    const summaryResult = await step.run("llm/summarize", () =>
       summarize(rawText, workspace, managerNameFromPbx, callId),
-    )) as SummarizeResult;
+    );
 
     // === ШАГ 13: Идентификация спикеров ===
-    const identifyResult = (await step.run("llm/identify-speakers", () =>
+    const identifyResult = await step.run("llm/identify-speakers", () =>
       identifySpeakers(
         call,
         normalizedText,
@@ -337,7 +345,7 @@ export const transcribeCallFn = inngest.createFunction(
         managerNameFromPbx,
         summaryResult.summary || undefined,
       ),
-    )) as IdentifyResult;
+    );
 
     // === ШАГ 14: Обновление статуса на transcribed ===
     await step.run("db/calls:update-status-transcribed", () =>

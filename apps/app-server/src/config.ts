@@ -22,13 +22,13 @@ export function getRecordsDir(): string {
 
 // Webhook rate limiting configuration
 const webhookRateLimitSchema = z.object({
-  windowMs: z.number().int().positive().finite().default(60000),
-  maxRequests: z.number().int().positive().finite().default(30),
+  windowMs: z.coerce.number().int().positive().finite().default(60000),
+  maxRequests: z.coerce.number().int().positive().finite().default(30),
 });
 
 const parsedWebhookRateLimit = webhookRateLimitSchema.safeParse({
-  windowMs: Number.parseInt(process.env.WEBHOOK_RATE_LIMIT_WINDOW_MS ?? "60000", 10),
-  maxRequests: Number.parseInt(process.env.WEBHOOK_RATE_LIMIT_MAX_REQUESTS ?? "30", 10),
+  windowMs: process.env.WEBHOOK_RATE_LIMIT_WINDOW_MS,
+  maxRequests: process.env.WEBHOOK_RATE_LIMIT_MAX_REQUESTS,
 });
 
 if (!parsedWebhookRateLimit.success) {

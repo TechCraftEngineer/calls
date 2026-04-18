@@ -188,7 +188,13 @@ export class WorkspacesService {
     workspaceCache.invalidateUserWorkspaces(userId);
 
     if (result.wasActive) {
-      logger.info("Очищен активный workspace для пользователя после удаления из workspace");
+      // Инвалидируем кэш активного workspace чтобы getActiveWorkspaceId не возвращал stale значение
+      const activeKey = workspaceCache.createActiveWorkspaceKey(userId);
+      workspaceCache.delete(activeKey);
+      logger.info("Очищен активный workspace для пользователя после удаления из workspace", {
+        userId,
+        workspaceId,
+      });
     }
 
     return result.removeResult;

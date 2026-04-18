@@ -86,7 +86,7 @@ export async function speakerDiarizationWithCallback(
     });
 
     return { success: true, taskId: result.taskId };
-  })) as { taskId?: string; success: boolean; error?: string };
+  }));
   const { taskId, success, error } = startResult;
 
   if (!success || !taskId) {
@@ -97,14 +97,7 @@ export async function speakerDiarizationWithCallback(
     };
   }
 
-  // Шаг 2: Ожидаем событие завершения от Speaker Embeddings сервиса
-  const completedEvent = await step.waitForEvent("speaker-embeddings/wait-for-completion", {
-    event: "speaker-embeddings/diarization.completed",
-    timeout: "60m", // 60 минут максимальное ожидание
-    if: `async.data.task_id == "${taskId}"`,
-  });
-
-  // Type guard для события
+  // Type definition для события завершения диаризации
   type SpeakerEmbeddingCompletedEvent = {
     data: {
       task_id: string;
@@ -123,6 +116,13 @@ export async function speakerDiarizationWithCallback(
     };
   };
 
+  // Шаг 2: Ожидаем событие завершения от Speaker Embeddings сервиса
+  const completedEvent = await step.waitForEvent<SpeakerEmbeddingCompletedEvent>("speaker-embeddings/wait-for-completion", {
+    event: "speaker-embeddings/diarization.completed",
+    timeout: "60m", // 60 минут максимальное ожидание
+    if: `async.data.task_id == "${taskId}"`,
+  });
+
   // Шаг 3: Обрабатываем результат
   return (await step.run("speaker-embeddings/process-result", async () => {
     if (!completedEvent) {
@@ -135,7 +135,7 @@ export async function speakerDiarizationWithCallback(
       };
     }
 
-    const eventData = (completedEvent as SpeakerEmbeddingCompletedEvent | null)?.data;
+    const eventData = completedEvent.data;
     if (!eventData) {
       throw new Error("Событие завершения не содержит данных");
     }
@@ -190,5 +190,5 @@ export async function speakerDiarizationWithCallback(
       processingTimeMs: eventData.processingTimeMs || 0,
       segments: finalSegments,
     };
-  })) as SpeakerDiarizationCallbackResult;
+  }));
 }
