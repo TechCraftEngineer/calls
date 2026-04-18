@@ -80,7 +80,7 @@ describe("mergeConsecutiveSpeakerSegments", () => {
     const result = mergeConsecutiveSpeakerSegments(segments);
 
     expect(result).toHaveLength(1);
-    expect(result[0].confidence).toBeCloseTo(0.85, 2);
+    expect(result[0]?.confidence).toBeCloseTo(0.85, 2);
   });
 
   it("должен обрабатывать пустой массив", () => {
@@ -182,7 +182,7 @@ describe("mergeConsecutiveSpeakerSegments", () => {
     const result = mergeConsecutiveSpeakerSegments(segments);
 
     expect(result).toHaveLength(1);
-    expect(result[0].confidence).toBe(0.9);
+    expect(result[0]?.confidence).toBe(0.9);
   });
 
   it("должен последовательно попарно усреднять confidence для трёх и более сегментов", () => {
@@ -196,7 +196,7 @@ describe("mergeConsecutiveSpeakerSegments", () => {
 
     expect(result).toHaveLength(1);
     // Текущая реализация: (0.9 + 0.8) / 2 = 0.85, затем (0.85 + 0.7) / 2 = 0.775
-    expect(result[0].confidence).toBeCloseTo(0.775, 3);
+    expect(result[0]?.confidence).toBeCloseTo(0.775, 3);
   });
 
   it("должен объединять сегменты с пустым текстом когда skipEmptyText = false", () => {

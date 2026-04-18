@@ -18,5 +18,7 @@ export async function restartCallAnalysis(params: {
     throw new Error("Не удалось выполнить транскрипцию");
   }
 
+  // Даем Inngest время обновить статус в БД перед refetch
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   await loadData();
 }

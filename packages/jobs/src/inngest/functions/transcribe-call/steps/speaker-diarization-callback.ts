@@ -4,7 +4,7 @@
  */
 
 import { createLogger } from "../../../../logger";
-import { downloadAudioFile } from "../audio/download";
+import { downloadAudioFileCached } from "../audio/download";
 import { shouldUseSpeakerEmbeddings, startSpeakerDiarization } from "../speakers/diarization";
 import type { PreprocessResult } from "./preprocess-audio";
 import type { StepRunner } from "./step-runner";
@@ -32,9 +32,8 @@ export async function speakerDiarizationWithCallback(
   pipelineAudio: PreprocessResult,
   callId: string,
   fullTranscriptionSegments: Array<{ speaker: string; start: number; end: number; text: string }>,
-  step: unknown,
+  step: StepRunner,
 ): Promise<SpeakerDiarizationCallbackResult> {
-  const typedStep = step as StepRunner;
   // Проверяем, стоит ли использовать speaker embeddings
   const durationSeconds = pipelineAudio.durationSeconds ?? 0;
   const shouldUse = shouldUseSpeakerEmbeddings(durationSeconds, fullTranscriptionSegments.length);
@@ -55,42 +54,39 @@ export async function speakerDiarizationWithCallback(
   }
 
   // Шаг 1: Запускаем асинхронную диаризацию
-  const { taskId, success, error } = await typedStep.run(
-    "speaker-embeddings/async-start",
-    async () => {
-      const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
+  const { taskId, success, error } = (await step.run("speaker-embeddings/async-start", async () => {
+    const { buffer, filename } = await downloadAudioFileCached(pipelineAudio.preprocessedFileId);
 
-      // Определяем примерное количество спикеров на основе сегментов
-      const minSpeakers = 2;
-      const calculatedMax = Math.min(4, Math.ceil(fullTranscriptionSegments.length / 3));
-      const maxSpeakers = Math.max(minSpeakers, calculatedMax);
+    // Определяем примерное количество спикеров на основе сегментов
+    const minSpeakers = 2;
+    const calculatedMax = Math.min(4, Math.ceil(fullTranscriptionSegments.length / 3));
+    const maxSpeakers = Math.max(minSpeakers, calculatedMax);
 
-      logger.info("Запуск асинхронной диаризации через Speaker Embeddings", {
-        callId,
-        durationSeconds,
-        segmentCount: fullTranscriptionSegments.length,
-        minSpeakers,
-        maxSpeakers,
-      });
+    logger.info("Запуск асинхронной диаризации через Speaker Embeddings", {
+      callId,
+      durationSeconds,
+      segmentCount: fullTranscriptionSegments.length,
+      minSpeakers,
+      maxSpeakers,
+    });
 
-      const result = await startSpeakerDiarization(callId, buffer, filename, {
-        minSpeakers,
-        maxSpeakers,
-      });
+    const result = await startSpeakerDiarization(callId, buffer, filename, {
+      minSpeakers,
+      maxSpeakers,
+    });
 
-      if (!result.success || !result.taskId) {
-        logger.error("Не удалось запустить диаризацию", { callId, error: result.error });
-        return { success: false, error: result.error || "Failed to start diarization" };
-      }
+    if (!result.success || !result.taskId) {
+      logger.error("Не удалось запустить диаризацию", { callId, error: result.error });
+      return { success: false, error: result.error || "Failed to start diarization" };
+    }
 
-      logger.info("Диаризация через Speaker Embeddings запущена", {
-        callId,
-        taskId: result.taskId,
-      });
+    logger.info("Диаризация через Speaker Embeddings запущена", {
+      callId,
+      taskId: result.taskId,
+    });
 
-      return { success: true, taskId: result.taskId };
-    },
-  );
+    return { success: true, taskId: result.taskId };
+  })) as { taskId: string; success: boolean; error?: string };
 
   if (!success || !taskId) {
     return {
@@ -101,7 +97,11 @@ export async function speakerDiarizationWithCallback(
   }
 
   // Шаг 2: Ожидаем событие завершения от Speaker Embeddings сервиса
-  const completedEvent = await typedStep.waitForEvent<{
+  const completedEvent = (await step.waitForEvent("speaker-embeddings/wait-for-completion", {
+    event: "speaker-embeddings/diarization.completed",
+    timeout: "60m", // 60 минут максимальное ожидание
+    if: `async.data.task_id == "${taskId}"`,
+  })) as {
     data: {
       task_id: string;
       status: "completed" | "failed";
@@ -117,14 +117,10 @@ export async function speakerDiarizationWithCallback(
       error?: string;
       processingTimeMs?: number;
     };
-  }>("speaker-embeddings/wait-for-completion", {
-    event: "speaker-embeddings/diarization.completed",
-    timeout: "60m", // 60 минут максимальное ожидание
-    if: `async.data.task_id == "${taskId}"`,
-  });
+  } | null;
 
   // Шаг 3: Обрабатываем результат
-  return await typedStep.run("speaker-embeddings/process-result", async () => {
+  return (await step.run("speaker-embeddings/process-result", async () => {
     if (!completedEvent) {
       logger.warn("Таймаут ожидания события диаризации", { callId, taskId });
       return {
@@ -187,5 +183,5 @@ export async function speakerDiarizationWithCallback(
       processingTimeMs: eventData.processingTimeMs || 0,
       segments: finalSegments,
     };
-  });
+  })) as SpeakerDiarizationCallbackResult;
 }

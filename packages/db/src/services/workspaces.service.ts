@@ -2,6 +2,7 @@
  * Workspaces service - business logic for workspace operations
  */
 
+import { createLogger } from "@calls/api";
 import { eq } from "drizzle-orm";
 import { db } from "../client";
 import { workspaceCache } from "../lib/workspace-cache";
@@ -11,6 +12,8 @@ import type {
   WorkspaceMemberRole,
   WorkspacesRepository,
 } from "../repositories/workspaces.repository";
+
+const logger = createLogger("WorkspacesService");
 
 // Re-export for convenience
 export type { CreateWorkspaceData, WorkspaceMemberRole };
@@ -171,18 +174,27 @@ export class WorkspacesService {
     // Проверяем, является ли удаляемый workspace активным для пользователя
     const activeWorkspaceId = await this.getActiveWorkspaceId(userId);
 
-    const result = await this.workspacesRepository.removeMember(workspaceId, userId);
+    // Выполняем удаление и очистку активного workspace атомарно в транзакции
+    const result = await db.transaction(async (tx) => {
+      const removeResult = await this.workspacesRepository.removeMember(workspaceId, userId, tx);
 
-    // Если удаленный workspace был активным, очищаем activeWorkspaceId
+      // Если удаленный workspace был активным, очищаем activeWorkspaceId
+      if (activeWorkspaceId === workspaceId) {
+        await this.workspacesRepository.setActiveWorkspace(userId, null, tx);
+      }
+
+      return removeResult;
+    });
+
+    // Инвалидируем кэш после успешного коммита
+    workspaceCache.invalidateUserWorkspaces(userId);
+
     if (activeWorkspaceId === workspaceId) {
-      await this.workspacesRepository.setActiveWorkspace(userId, null);
-      console.log(
-        `[WorkspacesService] Cleared active workspace for user ${userId} after removal from workspace ${workspaceId}`,
+      logger.info(
+        `Очищен активный workspace для пользователя ${userId} после удаления из workspace ${workspaceId}`,
       );
     }
 
-    // Invalidate user workspaces cache when member is removed
-    workspaceCache.invalidateUserWorkspaces(userId);
     return result;
   }
 

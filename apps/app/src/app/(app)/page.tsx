@@ -223,6 +223,7 @@ export default function HomePage() {
             onCallDeleted={() => invalidateCalls()}
             onCallsDeleted={() => invalidateCalls()}
             onRecommendationsGenerated={() => invalidateCalls()}
+            onTranscribed={() => invalidateCalls()}
           />
         </section>
       </div>

@@ -18,3 +18,11 @@ export function getRecordsDir(): string {
   const projectRoot = resolve(__dirname, "../../..");
   return resolve(projectRoot, "records");
 }
+
+// Webhook rate limiting configuration
+export const webhookRateLimitConfig = {
+  // Window in milliseconds (default: 1 minute)
+  windowMs: Number.parseInt(process.env.WEBHOOK_RATE_LIMIT_WINDOW_MS ?? "60000", 10),
+  // Max requests per window (default: 30)
+  maxRequests: Number.parseInt(process.env.WEBHOOK_RATE_LIMIT_MAX_REQUESTS ?? "30", 10),
+};

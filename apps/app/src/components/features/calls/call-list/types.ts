@@ -44,6 +44,7 @@ export interface CallListProps {
   onCallDeleted?: (callId: string) => void;
   onCallsDeleted?: (callIds: string[]) => void;
   onRecommendationsGenerated?: (callId: string, recommendations: string[]) => void;
+  onTranscribed?: () => void;
 }
 
 export interface ColumnConfig {

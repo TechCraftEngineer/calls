@@ -50,11 +50,11 @@ function StatisticsPageContent() {
   const updateSetupProgressMutation = useMutation(
     orpc.workspaces.updateSetupProgress.mutationOptions({
       onSuccess: (_data, variables) => {
-        queryClient.invalidateQueries(
-          orpc.workspaces.getSetupProgress.queryFilter({
+        queryClient.invalidateQueries({
+          queryKey: orpc.workspaces.getSetupProgress.queryKey({
             input: { workspaceId: variables.workspaceId },
           }),
-        );
+        });
       },
     }),
   );
