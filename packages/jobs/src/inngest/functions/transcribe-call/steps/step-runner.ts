@@ -1,9 +1,10 @@
 /**
  * Интерфейс для Inngest step с методами run и waitForEvent
- * Типизированные методы для сохранения статической типизации
+ * Типизированные методы для сохранения статической типизации.
+ * fn может быть синхронной или асинхронной функцией.
  */
 export interface StepRunner {
-  run<T>(id: string, fn: () => Promise<T>): Promise<T>;
+  run<T>(id: string, fn: () => T | Promise<T>): Promise<T>;
   waitForEvent<T>(
     id: string,
     options: { event: string; timeout: string; if: string },

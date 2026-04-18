@@ -15,6 +15,9 @@ const WebhookParamsSchema = z.object({
   workspaceId: workspaceIdSchema,
 });
 
+// Разрешенные символы для eventId: алфавитно-цифровые, дефисы и подчеркивания, длина 1-256
+const EVENT_ID_REGEX = /^[a-zA-Z0-9_-]{1,256}$/;
+
 // Zod схема для валидации payload вебхука
 const webhookPayloadSchema = z
   .object({
@@ -22,6 +25,9 @@ const webhookPayloadSchema = z
     crm_token: z.string().optional(),
     type: z.string().optional(),
     phone: z.string().optional(),
+    eventId: z.string().regex(EVENT_ID_REGEX, "Некорректный формат eventId").optional(),
+    id: z.string().regex(EVENT_ID_REGEX, "Некорректный формат id").optional(),
+    uid: z.string().regex(EVENT_ID_REGEX, "Некорректный формат uid").optional(),
   })
   .loose();
 
@@ -157,25 +163,8 @@ const handlePbxWebhook = async (c: Context) => {
   const eventSubtype = asNonEmptyString(parsedPayload.data.type) ?? "unknown";
   const eventType = `${command}:${eventSubtype}`;
 
-  // Валидация eventId: разрешаем только алфавитно-цифровые символы, дефисы и подчеркивания
-  // Ограничиваем длину до 256 символов для предотвращения DoS
-  const rawEventId =
-    asNonEmptyString(payload.eventId) ??
-    asNonEmptyString(payload.id) ??
-    asNonEmptyString(payload.uid) ??
-    null;
-
-  // Если rawEventId присутствует но не проходит валидацию - отклоняем запрос
-  if (rawEventId !== null && !/^[a-zA-Z0-9_-]{1,256}$/.test(rawEventId)) {
-    return c.json(
-      {
-        error: "Некорректный формат eventId. Допустимы только буквы, цифры, дефисы и подчеркивания (1-256 символов).",
-      },
-      400,
-    );
-  }
-
-  const eventId = rawEventId;
+  // Получаем eventId из валидированного payload (Zod уже проверил формат)
+  const eventId = parsedPayload.data.eventId ?? parsedPayload.data.id ?? parsedPayload.data.uid ?? null;
 
   await pbxService.recordWebhookEvent({
     workspaceId,
