@@ -2,16 +2,34 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Next.js",
+      "name": "Next.js App",
       "type": "node-terminal",
       "request": "launch",
       "command": "bun dev",
-      "cwd": "${workspaceFolder}/apps/nextjs",
+      "cwd": "${workspaceFolder}/apps/app",
       "skipFiles": ["<node_internals>/**"],
       "sourceMaps": true,
       "sourceMapPathOverrides": {
-        "/turbopack/[project]/*": "${webRoot}/*" //https://github.com/vercel/next.js/issues/62008
+        "/turbopack/[project]/*": "${webRoot}/*"
       }
+    },
+    {
+      "name": "App Server",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "bun dev",
+      "cwd": "${workspaceFolder}/apps/app-server",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true
+    },
+    {
+      "name": "All Apps (Turbo)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "bun dev",
+      "cwd": "${workspaceFolder}",
+      "skipFiles": ["<node_internals>/**"],
+      "sourceMaps": true
     }
   ]
 }

@@ -168,7 +168,19 @@ export class WorkspacesService {
   }
 
   async removeMember(workspaceId: string, userId: string) {
+    // Проверяем, является ли удаляемый workspace активным для пользователя
+    const activeWorkspaceId = await this.getActiveWorkspaceId(userId);
+
     const result = await this.workspacesRepository.removeMember(workspaceId, userId);
+
+    // Если удаленный workspace был активным, очищаем activeWorkspaceId
+    if (activeWorkspaceId === workspaceId) {
+      await this.workspacesRepository.setActiveWorkspace(userId, null);
+      console.log(
+        `[WorkspacesService] Cleared active workspace for user ${userId} after removal from workspace ${workspaceId}`,
+      );
+    }
+
     // Invalidate user workspaces cache when member is removed
     workspaceCache.invalidateUserWorkspaces(userId);
     return result;
@@ -241,11 +253,13 @@ export class WorkspacesService {
     return result;
   }
 
-  async setActiveWorkspace(userId: string, workspaceId: string): Promise<void> {
-    // Validate workspace exists and user has access
-    const memberRole = await this.ensureUserInWorkspace(workspaceId, userId);
-    if (!memberRole) {
-      throw new Error("User does not have access to this workspace");
+  async setActiveWorkspace(userId: string, workspaceId: string | null): Promise<void> {
+    if (workspaceId !== null) {
+      // Validate workspace exists and user has access
+      const memberRole = await this.ensureUserInWorkspace(workspaceId, userId);
+      if (!memberRole) {
+        throw new Error("User does not have access to this workspace");
+      }
     }
 
     await this.workspacesRepository.setActiveWorkspace(userId, workspaceId);

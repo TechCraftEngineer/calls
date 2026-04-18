@@ -82,12 +82,55 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }),
   );
 
-  const workspaces = (workspacesData?.workspaces ?? []) as Workspace[];
+  const workspaces = useMemo(() => {
+    const list = (workspacesData?.workspaces ?? []) as Workspace[];
+    // Сортируем по дате создания (memberSince) для стабильного порядка
+    const sorted = [...list].sort((a, b) => {
+      // Сначала owner, потом admin, потом member
+      const roleOrder = { owner: 0, admin: 1, member: 2 };
+      const roleA = roleOrder[a.role as keyof typeof roleOrder] ?? 3;
+      const roleB = roleOrder[b.role as keyof typeof roleOrder] ?? 3;
+      if (roleA !== roleB) return roleA - roleB;
+      // Затем по имени для стабильности
+      return a.name.localeCompare(b.name);
+    });
+
+    console.log(
+      "[WorkspaceProvider] Workspaces sorted:",
+      sorted.map((w) => ({ id: w.id, name: w.name, role: w.role })),
+    );
+    return sorted;
+  }, [workspacesData?.workspaces]);
+
   const activeWorkspaceId = workspacesData?.activeWorkspaceId ?? null;
 
   const activeWorkspace = useMemo(() => {
-    if (!activeWorkspaceId) return workspaces[0] ?? null;
-    return workspaces.find((w: Workspace) => w.id === activeWorkspaceId) ?? workspaces[0] ?? null;
+    console.log("[WorkspaceProvider] Computing activeWorkspace:", {
+      activeWorkspaceIdFromDB: activeWorkspaceId,
+      availableWorkspaces: workspaces.map((w) => ({ id: w.id, name: w.name })),
+    });
+
+    if (!activeWorkspaceId) {
+      console.log("[WorkspaceProvider] No activeWorkspaceId from DB, using first workspace");
+      return workspaces[0] ?? null;
+    }
+
+    const found = workspaces.find((w: Workspace) => w.id === activeWorkspaceId);
+
+    // Если workspace из БД не найден в списке доступных, очищаем cookie и берём первый
+    if (!found && activeWorkspaceId && workspaces.length > 0) {
+      console.warn(
+        `[WorkspaceProvider] Workspace ${activeWorkspaceId} not found in available workspaces, falling back to first workspace`,
+      );
+      clearActiveWorkspaceCookie();
+      return workspaces[0];
+    }
+
+    console.log(
+      "[WorkspaceProvider] Selected workspace:",
+      found ? { id: found.id, name: found.name } : "null",
+    );
+    return found ?? workspaces[0] ?? null;
   }, [workspaces, activeWorkspaceId]);
 
   const loading = sessionPending || (shouldFetchWorkspaces && workspacesPending);
@@ -99,7 +142,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     // Не устанавливаем cookie на странице создания workspace, т.к. страница сама управляет этим
     if (isOnboardingCreateWorkspace) return;
     if (activeWorkspace) {
-      setActiveWorkspaceCookie(activeWorkspace.id);
+      // Проверяем, что cookie соответствует текущему workspace
+      const cookieValue = document.cookie.match(/\bactive_workspace_id=([^;]+)/)?.[1];
+      if (cookieValue !== activeWorkspace.id) {
+        console.log(`Syncing workspace cookie: ${cookieValue} -> ${activeWorkspace.id}`);
+        setActiveWorkspaceCookie(activeWorkspace.id);
+      }
       setOnboardedCookie(activeWorkspace.isOnboarded);
     }
   }, [activeWorkspace, isOnboardingCreateWorkspace]);
