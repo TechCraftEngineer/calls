@@ -101,8 +101,6 @@ export class WorkspacesService {
     // Invalidate user workspaces cache for all members
     for (const member of members) {
       workspaceCache.invalidateUserWorkspaces(member.userId);
-      // Also invalidate active workspace cache
-      workspaceCache.invalidateActiveWorkspace(member.userId);
     }
 
     return true;

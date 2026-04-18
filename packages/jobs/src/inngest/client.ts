@@ -33,6 +33,7 @@ type GigaAmTranscriptionCompletedData = {
 
 type SpeakerEmbeddingsDiarizationCompletedData = {
   task_id: string;
+  call_id: string;
   status: "completed" | "failed";
   result?: Record<string, unknown>;
   error?: string;

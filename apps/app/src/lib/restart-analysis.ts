@@ -12,6 +12,11 @@ export async function restartCallAnalysis(params: {
 }): Promise<void> {
   const { callId, transcribe, loadData, signal } = params;
 
+  // Проверяем отмену перед началом работы
+  if (signal?.aborted) {
+    throw new Error("Опрос отменён по AbortSignal");
+  }
+
   try {
     await transcribe({ call_id: String(callId) });
   } catch (transcribeError) {
@@ -19,7 +24,7 @@ export async function restartCallAnalysis(params: {
     throw new Error("Не удалось выполнить транскрипцию");
   }
 
-  // Polling с ожиданием завершения через Promise
+  // Опрос с ожиданием завершения через Promise
   const maxAttempts = 5;
   const baseDelay = 300; // 300ms начальная задержка
 
@@ -28,26 +33,33 @@ export async function restartCallAnalysis(params: {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     // Проверяем отмену
     if (signal?.aborted) {
-      throw new Error("Polling отменен по AbortSignal");
+      throw new Error("Опрос отменён по AbortSignal");
     }
 
     const delay = baseDelay * 2 ** attempt; // 300ms, 600ms, 1200ms, 2400ms, 4800ms
-    await new Promise((resolve, reject) => {
-      const timeoutId = setTimeout(resolve, delay);
-      signal?.addEventListener("abort", () => {
+    await new Promise<void>((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        signal?.removeEventListener("abort", onAbort);
+        resolve();
+      }, delay);
+
+      const onAbort = () => {
         clearTimeout(timeoutId);
-        reject(new Error("Polling отменен по AbortSignal"));
-      }, { once: true });
+        signal?.removeEventListener("abort", onAbort);
+        reject(new Error("Опрос отменён по AbortSignal"));
+      };
+
+      signal?.addEventListener("abort", onAbort);
     });
 
     // Повторная проверка после задержки
     if (signal?.aborted) {
-      throw new Error("Polling отменен по AbortSignal");
+      throw new Error("Опрос отменён по AbortSignal");
     }
 
     try {
       await loadData();
-      // Успешно загрузили данные - завершаем polling
+      // Успешно загрузили данные - завершаем опрос
       return;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
@@ -56,5 +68,5 @@ export async function restartCallAnalysis(params: {
   }
 
   // Все попытки исчерпаны - пробрасываем последнюю ошибку
-  throw lastError || new Error(`Polling завершился неудачно после ${maxAttempts} попыток`);
+  throw lastError || new Error(`Опрос завершился неудачно после ${maxAttempts} попыток`);
 }
