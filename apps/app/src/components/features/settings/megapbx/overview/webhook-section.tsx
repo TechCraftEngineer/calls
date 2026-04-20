@@ -2,6 +2,11 @@
 
 import {
   Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   Form,
   FormControl,
   FormField,
@@ -21,10 +26,7 @@ import { Check, Copy, KeyRound, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { type WebhookFormData, webhookFormSchema } from "../schemas";
-import { SectionBlock } from "../section-block";
 import { generateWebhookSecret } from "../utils";
-
-const ICON_BUTTON_CLASS = "shrink-0 transition-transform duration-150 active:scale-90";
 
 interface WebhookSectionProps {
   webhookUrl: string;
@@ -41,9 +43,7 @@ export function WebhookSection({
   saving,
   onSaveWebhook,
 }: WebhookSectionProps) {
-  const { isCopied: copiedUrl, copyToClipboard: copyUrl } = useCopyToClipboard({
-    timeout: 2000,
-  });
+  const { isCopied: copiedUrl, copyToClipboard: copyUrl } = useCopyToClipboard({ timeout: 2000 });
   const { isCopied: copiedSecret, copyToClipboard: copySecret } = useCopyToClipboard({
     timeout: 2000,
   });
@@ -96,20 +96,20 @@ export function WebhookSection({
   };
 
   return (
-    <SectionBlock
-      title="Webhook для АТС"
-      description="Укажите наш URL и секрет в админке АТС — АТС будет отправлять события на наш сервер."
-    >
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="contents">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <FormLabel htmlFor="megapbx-webhook-url" className="text-xs text-muted-foreground">
-                URL вебхука (наш адрес)
-              </FormLabel>
+    <Card>
+      <CardHeader>
+        <CardTitle>Webhook для АТС</CardTitle>
+        <CardDescription>
+          Укажите наш URL и секрет в админке АТС для получения событий
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormItem className="space-y-2">
+              <FormLabel>URL вебхука (наш адрес)</FormLabel>
               <div className="flex gap-2">
                 <Input
-                  id="megapbx-webhook-url"
                   value={webhookUrl}
                   readOnly
                   className="font-mono text-sm"
@@ -121,7 +121,6 @@ export function WebhookSection({
                       type="button"
                       variant="outline"
                       size="icon"
-                      className={ICON_BUTTON_CLASS}
                       onClick={copyWebhookUrl}
                       disabled={!webhookUrl}
                       aria-label={copiedUrl ? "Скопировано" : "Скопировать URL"}
@@ -136,41 +135,33 @@ export function WebhookSection({
                   <TooltipContent>{copiedUrl ? "Скопировано" : "Скопировать URL"}</TooltipContent>
                 </Tooltip>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Вставьте этот URL в админке АТС в поле «URL вебхука» или «Webhook URL».
-              </p>
-            </div>
+              <p className="text-xs text-muted-foreground">Вставьте этот URL в админке АТС</p>
+            </FormItem>
+
             <FormField
               control={form.control}
               name="webhookSecret"
               render={({ field }) => (
                 <FormItem className="space-y-2">
-                  <FormLabel className="text-xs text-muted-foreground">
-                    Секрет вебхука (наш секрет)
-                  </FormLabel>
+                  <FormLabel>Секрет вебхука (наш секрет)</FormLabel>
                   <div className="flex gap-2">
-                    <div className="min-w-0 flex-1">
-                      <FormControl>
-                        <PasswordInput
-                          {...field}
-                          value={field.value ?? ""}
-                          onChange={field.onChange}
-                          placeholder={
-                            webhookSecretPasswordSet
-                              ? "•••••••• (оставьте пустым, чтобы не менять)…"
-                              : "Например: a1b2c3d4e5f6…"
-                          }
-                          className="w-full font-mono text-sm"
-                        />
-                      </FormControl>
-                    </div>
+                    <FormControl>
+                      <PasswordInput
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        placeholder={
+                          webhookSecretPasswordSet ? "•••••••• (не менять)" : "a1b2c3d4e5f6…"
+                        }
+                        className="font-mono text-sm"
+                      />
+                    </FormControl>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           type="button"
                           variant="outline"
                           size="icon"
-                          className={ICON_BUTTON_CLASS}
                           onClick={handleGenerateSecret}
                           aria-label={generated ? "Сгенерировано" : "Сгенерировать секрет"}
                         >
@@ -191,7 +182,6 @@ export function WebhookSection({
                           type="button"
                           variant="outline"
                           size="icon"
-                          className={ICON_BUTTON_CLASS}
                           onClick={copyWebhookSecret}
                           disabled={!webhookSecretValue && !webhookSecret}
                           aria-label={copiedSecret ? "Скопировано" : "Скопировать секрет"}
@@ -209,21 +199,20 @@ export function WebhookSection({
                     </Tooltip>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Задайте секрет здесь, сохраните, затем укажите тот же секрет в админке АТС.
+                    Сохраните секрет и укажите его в админке АТС
                   </p>
                   <FormMessage />
-                  <div className="pt-2">
-                    <Button type="submit" disabled={saving} aria-busy={saving} aria-live="polite">
-                      {saving ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
-                      Сохранить
-                    </Button>
-                  </div>
                 </FormItem>
               )}
             />
-          </div>
-        </form>
-      </Form>
-    </SectionBlock>
+
+            <Button type="submit" size="sm" disabled={saving}>
+              {saving ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+              Сохранить
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 }

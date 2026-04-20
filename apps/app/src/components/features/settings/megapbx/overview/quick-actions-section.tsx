@@ -1,8 +1,7 @@
 "use client";
 
-import { Button, Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@calls/ui";
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@calls/ui";
 import { QUICK_ACTIONS } from "../constants";
-import { SectionBlock } from "../section-block";
 
 type SyncingKey = "directory" | "calls";
 
@@ -23,40 +22,44 @@ export function QuickActionsSection({
   };
 
   return (
-    <SectionBlock
-      title="Быстрые действия"
-      description="Сохраните настройки, затем при необходимости вручную запустите синхронизацию."
-    >
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {QUICK_ACTIONS.map(([key, title, description, Icon]) => (
-          <Card
-            key={key}
-            className="gap-4 py-4 transition-colors hover:border-border hover:bg-muted/30"
-          >
-            <CardHeader className="flex flex-col gap-2 px-4 pb-0">
-              <div className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-lg">
-                <Icon className="size-4 text-muted-foreground" />
+    <Card>
+      <CardHeader>
+        <CardTitle>Быстрые действия</CardTitle>
+        <CardDescription>Запустите синхронизацию вручную при необходимости</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {QUICK_ACTIONS.map(([key, title, description, Icon]) => (
+            <div
+              key={key}
+              className="flex flex-col gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                  <Icon className="size-5 text-muted-foreground" />
+                </div>
+                <div className="flex-1 space-y-1">
+                  <div className="font-semibold">{title}</div>
+                  <div className="text-sm text-muted-foreground">{description}</div>
+                </div>
               </div>
-              <CardTitle className="text-base">{title}</CardTitle>
-              <CardDescription className="text-sm">{description}</CardDescription>
-            </CardHeader>
-            <CardFooter className="px-4 pt-0">
               <Button
                 type="button"
                 variant="outline"
+                size="sm"
                 onClick={handlers[key]}
                 disabled={syncing !== null}
-                className="w-full transition-transform duration-150 active:scale-[0.98]"
+                className="w-full"
                 aria-label={
                   syncing === key ? `Синхронизация ${title}…` : `Синхронизировать ${title}`
                 }
               >
                 {syncing === key ? "Синк…" : "Запустить"}
               </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-    </SectionBlock>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

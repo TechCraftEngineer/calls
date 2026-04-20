@@ -43,7 +43,7 @@ export function OverviewTab({
   onSyncCalls,
 }: OverviewTabProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <AccessSection
         baseUrl={baseUrl}
         apiKeyPasswordSet={megaPbx.apiKeySet}
