@@ -2,6 +2,7 @@ import { Badge, Button } from "@calls/ui";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Check, Loader2, Phone, Settings2, TrendingUp } from "lucide-react";
 import { formatCurrency, formatMinutes } from "./kpi-table-formatters";
+import { KpiTableHeader } from "./kpi-table-header";
 import type { KpiRow } from "./kpi-table-types";
 
 export const createKpiTableColumns = (
@@ -12,7 +13,7 @@ export const createKpiTableColumns = (
   {
     id: "employee",
     accessorKey: "name",
-    size: 340,
+    size: 300,
     minSize: 300,
     header: "Сотрудник",
     cell: ({ row }) => (
@@ -32,7 +33,9 @@ export const createKpiTableColumns = (
   {
     id: "baseSalary",
     accessorFn: (row) => row.baseSalary,
-    header: "Оклад, ₽",
+    header: () => (
+      <KpiTableHeader label="Оклад" tooltip="Фиксированная часть зарплаты сотрудника за месяц" />
+    ),
     cell: ({ row }) => (
       <div className="font-medium tabular-nums">{formatCurrency(row.getValue("baseSalary"))}</div>
     ),
@@ -40,7 +43,12 @@ export const createKpiTableColumns = (
   {
     id: "targetBonus",
     accessorFn: (row) => row.targetBonus,
-    header: "Бонус, ₽",
+    header: () => (
+      <KpiTableHeader
+        label="Макс. бонус"
+        tooltip="Максимальный бонус при 100% выполнении плана по времени разговоров"
+      />
+    ),
     cell: ({ row }) => (
       <div className="font-medium tabular-nums text-emerald-600">
         {formatCurrency(row.getValue("targetBonus"))}
@@ -50,7 +58,12 @@ export const createKpiTableColumns = (
   {
     id: "targetTalkTimeMinutes",
     accessorFn: (row) => row.targetTalkTimeMinutes,
-    header: "Цель, мин/мес",
+    header: () => (
+      <KpiTableHeader
+        label="План"
+        tooltip="Целевое время разговоров в минутах за месяц для получения полного бонуса"
+      />
+    ),
     cell: ({ row }) => (
       <div className="tabular-nums text-muted-foreground">
         {row.getValue("targetTalkTimeMinutes")}
@@ -60,7 +73,12 @@ export const createKpiTableColumns = (
   {
     id: "totalTalkTimeMinutes",
     accessorFn: (row) => row.actualTalkTimeMinutes,
-    header: "Факт, мин",
+    header: () => (
+      <KpiTableHeader
+        label="Факт"
+        tooltip="Фактическое время разговоров в минутах за выбранный период"
+      />
+    ),
     cell: ({ row }) => {
       const targetMinutes = row.original.targetTalkTimeMinutes;
       const actualMinutes = row.original.actualTalkTimeMinutes || 0;
@@ -97,7 +115,12 @@ export const createKpiTableColumns = (
       const actual = row.actualTalkTimeMinutes || 0;
       return target > 0 ? actual / target : 0;
     },
-    header: "Выполнение, %",
+    header: () => (
+      <KpiTableHeader
+        label="Выполнение"
+        tooltip="Процент выполнения плана. 100% и выше — полный бонус, ниже — пропорционально"
+      />
+    ),
     cell: ({ row }) => {
       const target = row.original.targetTalkTimeMinutes;
       const actual = row.original.actualTalkTimeMinutes || 0;
@@ -144,7 +167,12 @@ export const createKpiTableColumns = (
   {
     id: "calculatedBonus",
     accessorFn: (row) => row.calculatedBonus,
-    header: "Бонус за период, ₽",
+    header: () => (
+      <KpiTableHeader
+        label="Начислено"
+        tooltip="Рассчитанный бонус за выбранный период на основе процента выполнения плана"
+      />
+    ),
     cell: ({ row }) => {
       const value = row.original.calculatedBonus;
       const formatted = formatCurrency(value);
@@ -158,7 +186,12 @@ export const createKpiTableColumns = (
   {
     id: "calculatedTotal",
     accessorFn: (row) => row.totalCalculatedSalary,
-    header: "Итого, ₽",
+    header: () => (
+      <KpiTableHeader
+        label="Итого к выплате"
+        tooltip="Общая сумма к выплате: оклад + начисленный бонус за период"
+      />
+    ),
     cell: ({ row }) => (
       <div className="font-bold tabular-nums text-blue-600">
         {formatCurrency(row.original.totalCalculatedSalary)}

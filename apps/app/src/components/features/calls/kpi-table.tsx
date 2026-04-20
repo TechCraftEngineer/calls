@@ -24,10 +24,15 @@ import {
   PopoverContent,
   PopoverTrigger,
   Skeleton,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
   toast,
 } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  type Column,
   type ColumnDef,
   getCoreRowModel,
   getPaginationRowModel,
@@ -43,6 +48,7 @@ import {
   ChevronRight,
   Download,
   Eye,
+  HelpCircle,
   Loader2,
   Phone,
   Settings2,
@@ -98,6 +104,40 @@ const kpiDraftSchema = z.object({
 });
 
 const pad2 = (value: number) => value.toString().padStart(2, "0");
+
+// Компонент для заголовков колонок с тултипами
+function KpiColumnHeader({
+  column,
+  title,
+  tooltip,
+  className,
+}: {
+  column: Column<KpiRow, unknown>;
+  title: string;
+  tooltip?: string;
+  className?: string;
+}) {
+  if (!tooltip) {
+    return <DataGridColumnHeader column={column} title={title} className={className} />;
+  }
+
+  return (
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="inline-flex items-center gap-1.5 cursor-help">
+            <DataGridColumnHeader column={column} title={title} className={className} />
+            <HelpCircle className="size-3.5 text-muted-foreground" aria-hidden />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs">
+          <p className="text-sm">{tooltip}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 const toMonthValue = (date: Date) => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
 const getCurrentMonthValue = () => toMonthValue(new Date());
 const getMonthRange = (monthValue: string) => {
@@ -520,46 +560,66 @@ export default function KpiTable() {
         id: "baseSalary",
         accessorFn: (row) => row.baseSalary,
         header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Оклад, ₽" className="min-w-28" />
+          <KpiColumnHeader
+            column={column}
+            title="Оклад"
+            tooltip="Фиксированная часть зарплаты сотрудника за месяц"
+            className="min-w-28"
+          />
         ),
         cell: ({ row }) => (
           <div className="font-medium tabular-nums">
             {formatRub(row.original.baseSalary)}&nbsp;₽
           </div>
         ),
-        meta: { headerTitle: "Оклад, ₽" },
+        meta: { headerTitle: "Оклад" },
       },
       {
         id: "targetBonus",
         accessorFn: (row) => row.targetBonus,
         header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Бонус, ₽" className="min-w-28" />
+          <KpiColumnHeader
+            column={column}
+            title="Макс. бонус"
+            tooltip="Максимальный бонус при 100% выполнении плана по времени разговоров"
+            className="min-w-28"
+          />
         ),
         cell: ({ row }) => (
           <div className="font-medium tabular-nums text-emerald-600">
             {formatRub(row.original.targetBonus)}&nbsp;₽
           </div>
         ),
-        meta: { headerTitle: "Бонус, ₽" },
+        meta: { headerTitle: "Макс. бонус" },
       },
       {
         id: "targetTalkTimeMonthly",
         accessorFn: (row) => row.targetTalkTimeMinutes,
         header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Цель, мин/мес" className="min-w-30" />
+          <KpiColumnHeader
+            column={column}
+            title="План"
+            tooltip="Целевое время разговоров в минутах за месяц для получения полного бонуса"
+            className="min-w-30"
+          />
         ),
         cell: ({ row }) => (
           <div className="tabular-nums text-muted-foreground">
             {row.original.targetTalkTimeMinutes}
           </div>
         ),
-        meta: { headerTitle: "Цель, мин/мес" },
+        meta: { headerTitle: "План" },
       },
       {
         id: "actualTalkTimeMinutes",
         accessorFn: (row) => row.actualTalkTimeMinutes,
         header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Факт, мин" className="min-w-28" />
+          <KpiColumnHeader
+            column={column}
+            title="Факт"
+            tooltip="Фактическое время разговоров в минутах за выбранный период"
+            className="min-w-28"
+          />
         ),
         cell: ({ row }) => {
           const isOnTarget =
@@ -587,13 +647,18 @@ export default function KpiTable() {
             </div>
           );
         },
-        meta: { headerTitle: "Факт, мин" },
+        meta: { headerTitle: "Факт" },
       },
       {
         id: "kpiCompletion",
         accessorFn: (row) => row.kpiCompletionPercentage,
         header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Выполнение, %" className="min-w-36" />
+          <KpiColumnHeader
+            column={column}
+            title="Выполнение"
+            tooltip="Процент выполнения плана. 100% и выше — полный бонус, ниже — пропорционально"
+            className="min-w-36"
+          />
         ),
         cell: ({ row }) => {
           const percentage = row.original.kpiCompletionPercentage;
@@ -634,33 +699,43 @@ export default function KpiTable() {
             </div>
           );
         },
-        meta: { headerTitle: "Выполнение, %" },
+        meta: { headerTitle: "Выполнение" },
       },
       {
         id: "calculatedBonus",
         accessorFn: (row) => row.calculatedBonus,
         header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Бонус за период, ₽" className="min-w-40" />
+          <KpiColumnHeader
+            column={column}
+            title="Начислено"
+            tooltip="Рассчитанный бонус за выбранный период на основе процента выполнения плана"
+            className="min-w-40"
+          />
         ),
         cell: ({ row }) => (
           <div className="font-semibold tabular-nums text-emerald-600">
             +{formatRub(row.original.calculatedBonus)}&nbsp;₽
           </div>
         ),
-        meta: { headerTitle: "Бонус за период, ₽" },
+        meta: { headerTitle: "Начислено" },
       },
       {
         id: "totalCalculatedSalary",
         accessorFn: (row) => row.totalCalculatedSalary,
         header: ({ column }) => (
-          <DataGridColumnHeader column={column} title="Итого, ₽" className="min-w-28" />
+          <KpiColumnHeader
+            column={column}
+            title="Итого к выплате"
+            tooltip="Общая сумма к выплате: оклад + начисленный бонус за период"
+            className="min-w-28"
+          />
         ),
         cell: ({ row }) => (
           <div className="font-bold tabular-nums text-blue-600">
             {formatRub(row.original.totalCalculatedSalary)}&nbsp;₽
           </div>
         ),
-        meta: { headerTitle: "Итого, ₽" },
+        meta: { headerTitle: "Итого к выплате" },
       },
       {
         id: "dailyView",
