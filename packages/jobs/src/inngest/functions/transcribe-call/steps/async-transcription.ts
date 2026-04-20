@@ -66,6 +66,15 @@ export async function asyncTranscriptionWithCallback(
   callId: string,
   step: StepRunner,
 ): Promise<AsyncTranscriptionResult> {
+  // Защита от undefined step (проблема с бандлингом)
+  if (!step || typeof step.run !== "function") {
+    throw new Error(
+      `Invalid step parameter in asyncTranscriptionWithCallback: ${typeof step}. ` +
+        `step.run is ${typeof step?.run}. ` +
+        `This may indicate a bundling issue or incorrect function call.`
+    );
+  }
+
   // Шаг 1: Запускаем асинхронную транскрибацию
   const startResult = await step.run("asr/async-start", async () => {
     const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
@@ -199,6 +208,15 @@ export async function asyncDiarizedTranscriptionWithCallback(
   segments: Array<{ speaker: string; start: number; end: number; text: string }>,
   step: StepRunner,
 ): Promise<AsyncTranscriptionResult> {
+  // Защита от undefined step (проблема с бандлингом)
+  if (!step || typeof step.run !== "function") {
+    throw new Error(
+      `Invalid step parameter in asyncDiarizedTranscriptionWithCallback: ${typeof step}. ` +
+        `step.run is ${typeof step?.run}. ` +
+        `This may indicate a bundling issue or incorrect function call.`
+    );
+  }
+
   // Шаг 1: Запускаем асинхронную диаризированную транскрибацию
   const startResult = (await step.run("asr/async-diarized-start", async () => {
     const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);

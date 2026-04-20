@@ -3,6 +3,7 @@ import { Bot, webhookCallback } from "grammy";
 import type { Context } from "hono";
 
 export type GetTokenFn = () => Promise<string | null>;
+export type WebhookHandler<C = Context> = (c: C) => Promise<Response>;
 
 // Кэш для экземпляров ботов по токену
 const botCache = new Map<string, Bot>();
@@ -19,7 +20,7 @@ function isValidConnectToken(payload: string): boolean {
  * Handles /start with token to link user's Telegram chat_id.
  * Token is fetched lazily on each request (from prompts/settings).
  */
-export function createWebhookHandler(getToken: GetTokenFn) {
+export function createWebhookHandler(getToken: GetTokenFn): WebhookHandler {
   return async (c: Context) => {
     const token = await getToken();
     if (!token?.trim()) {

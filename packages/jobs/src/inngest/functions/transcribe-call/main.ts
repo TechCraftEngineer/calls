@@ -15,7 +15,6 @@ import { callsService, PROCESSING_STATUS } from "@calls/db";
 import type { z } from "zod";
 import { evaluateRequested, inngest, transcribeRequested } from "../../../client";
 import {
-  type AsyncTranscriptionResult,
   asyncDiarizedTranscriptionWithCallback,
   asyncTranscriptionWithCallback,
   checkAnsweringMachine,
@@ -23,14 +22,12 @@ import {
   fetchCall,
   fetchWorkspace,
   handleFailure,
-  type IdentifyResult,
   identifySpeakers,
   type MergeResult,
   mergeResults,
   persistResults,
   preprocessAudio,
   resolveManager,
-  type SummarizeResult,
   speakerDiarizationWithCallback,
   summarize,
   validateInput,
@@ -42,7 +39,6 @@ import {
   handleAnsweringMachineFlow,
   handleNoSpeechFlow,
 } from "../../functions/transcribe-call/flows";
-import type { Call } from "../../functions/transcribe-call/schemas";
 import { TranscriptionResultSchema } from "../../functions/transcribe-call/schemas";
 
 const logger = createLogger("transcribe-call");

@@ -43,6 +43,15 @@ export async function speakerDiarizationWithCallback(
   fullTranscriptionSegments: Array<{ speaker: string; start: number; end: number; text: string }>,
   step: StepRunner,
 ): Promise<SpeakerDiarizationCallbackResult> {
+  // Защита от undefined step (проблема с бандлингом)
+  if (!step || typeof step.run !== "function") {
+    throw new Error(
+      `Invalid step parameter in speakerDiarizationWithCallback: ${typeof step}. ` +
+        `step.run is ${typeof step?.run}. ` +
+        `This may indicate a bundling issue or incorrect function call.`
+    );
+  }
+
   // Проверяем, стоит ли использовать speaker embeddings
   const durationSeconds = pipelineAudio.durationSeconds ?? 0;
   const shouldUse = shouldUseSpeakerEmbeddings(durationSeconds, fullTranscriptionSegments.length);
