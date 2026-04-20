@@ -43,14 +43,9 @@ export default function SettingsPbxMegafonPage({ params }: PageProps) {
   } = useSettings();
 
   const [resolvedParams, setResolvedParams] = useState<{ tab?: string[] } | null>(null);
-  const [employeeSearch, setEmployeeSearch] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return window.localStorage.getItem(STORAGE_KEYS.employeeSearch) || "";
-  });
-  const [numberSearch, setNumberSearch] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return window.localStorage.getItem(STORAGE_KEYS.numberSearch) || "";
-  });
+  const [employeeSearch, setEmployeeSearch] = useState("");
+  const [numberSearch, setNumberSearch] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
 
   // Вычисляем значения до условных возвратов
   const isEnabled = state.megaPbx.enabled;
@@ -92,11 +87,28 @@ export default function SettingsPbxMegafonPage({ params }: PageProps) {
     });
   }, [params]);
 
+  // Initialize from localStorage after mount to avoid hydration mismatch
   useEffect(() => {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(STORAGE_KEYS.employeeSearch, employeeSearch);
-    window.localStorage.setItem(STORAGE_KEYS.numberSearch, numberSearch);
-  }, [employeeSearch, numberSearch]);
+    const storedEmployeeSearch = window.localStorage.getItem(STORAGE_KEYS.employeeSearch) || "";
+    const storedNumberSearch = window.localStorage.getItem(STORAGE_KEYS.numberSearch) || "";
+    setEmployeeSearch(storedEmployeeSearch);
+    setNumberSearch(storedNumberSearch);
+    setIsMounted(true);
+  }, []);
+
+  // Save to localStorage only after initial mount and when values actually change
+  useEffect(() => {
+    if (typeof window === "undefined" || !isMounted) return;
+    const storedEmployeeSearch = window.localStorage.getItem(STORAGE_KEYS.employeeSearch) || "";
+    const storedNumberSearch = window.localStorage.getItem(STORAGE_KEYS.numberSearch) || "";
+    if (employeeSearch !== storedEmployeeSearch) {
+      window.localStorage.setItem(STORAGE_KEYS.employeeSearch, employeeSearch);
+    }
+    if (numberSearch !== storedNumberSearch) {
+      window.localStorage.setItem(STORAGE_KEYS.numberSearch, numberSearch);
+    }
+  }, [employeeSearch, numberSearch, isMounted]);
 
   useEffect(() => {
     if (workspaceLoading) return;
