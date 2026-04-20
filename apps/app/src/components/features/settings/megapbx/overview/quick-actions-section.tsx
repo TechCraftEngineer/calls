@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@calls/ui";
+import { Loader2 } from "lucide-react";
 import { QUICK_ACTIONS } from "../constants";
 
 type SyncingKey = "directory" | "calls";
@@ -36,7 +37,7 @@ export function QuickActionsSection({
             >
               <div className="flex items-start gap-3">
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                  <Icon className="size-5 text-muted-foreground" />
+                  <Icon className="size-5 text-muted-foreground" aria-hidden="true" />
                 </div>
                 <div className="flex-1 space-y-1">
                   <div className="font-semibold">{title}</div>
@@ -54,7 +55,8 @@ export function QuickActionsSection({
                   syncing === key ? `Синхронизация ${title}…` : `Синхронизировать ${title}`
                 }
               >
-                {syncing === key ? "Синк…" : "Запустить"}
+                {syncing === key && <Loader2 className="size-4 animate-spin mr-2" aria-hidden />}
+                Запустить
               </Button>
             </div>
           ))}

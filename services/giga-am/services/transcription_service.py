@@ -55,6 +55,9 @@ class TranscriptionService:
             self._initialize_model()
         except Exception as e:
             logger.error(f"Ошибка при фоновой загрузке модели: {e}")
+            # Намеренное защитное присвоение: _initialize_model уже устанавливает
+            # self._model_error перед повторным выбросом исключения, но это присвоение
+            # страхует от исключений, возникших вне _initialize_model в данном блоке.
             self._model_error = e
         finally:
             self._initialization_event.set()
@@ -82,9 +85,10 @@ class TranscriptionService:
             )
             
             for attempt in range(max_retries + 1):
-                remaining_timeout = max(1, settings.model_loading_timeout - int(time.time() - wait_start))
+                # Даем каждой попытке полный таймаут для ожидания
+                attempt_timeout = settings.model_loading_timeout
                 
-                if self._initialization_event.wait(timeout=remaining_timeout):
+                if self._initialization_event.wait(timeout=attempt_timeout):
                     # Загрузка завершена - пересчитываем elapsed после wait
                     elapsed = time.time() - wait_start
                     
@@ -107,7 +111,7 @@ class TranscriptionService:
                 if attempt < max_retries:
                     logger.warning(
                         f"Таймаут ожидания загрузки модели ({elapsed:.1f} сек), "
-                        f"повторная попытка {attempt + 1}/{max_retries}..."
+                        f"повторная попытка {attempt + 1}/{max_retries} (каждая попытка получает полный таймаут {settings.model_loading_timeout} сек)..."
                     )
                 else:
                     raise GigaTimeoutError(

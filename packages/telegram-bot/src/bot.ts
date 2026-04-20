@@ -31,7 +31,7 @@ export function createWebhookHandler(getToken: GetTokenFn): WebhookHandler {
     const token = await getToken();
     if (!token?.trim()) {
       console.warn("[telegram-webhook] Bot token not configured");
-      return c.json({ error: "Telegram bot not configured" }, 503);
+      return c.json({ error: "Telegram бот не настроен" }, 503);
     }
 
     // Используем кэшированный экземпляр бота или создаем новый
@@ -83,7 +83,7 @@ export function createWebhookHandler(getToken: GetTokenFn): WebhookHandler {
         console.log("[telegram-webhook] Created new bot instance for token");
       } catch (error) {
         console.error("[telegram-webhook] Failed to create bot instance:", error);
-        return c.json({ error: "Invalid bot token" }, 400);
+        return c.json({ error: "Некорректный токен бота" }, 400);
       }
     }
 
@@ -92,7 +92,7 @@ export function createWebhookHandler(getToken: GetTokenFn): WebhookHandler {
       return await handler(c);
     } catch (error) {
       console.error("[telegram-webhook] Webhook handler error:", error);
-      return c.json({ error: "Webhook processing failed" }, 500);
+      return c.json({ error: "Обработка webhook не удалась" }, 500);
     }
   };
 }

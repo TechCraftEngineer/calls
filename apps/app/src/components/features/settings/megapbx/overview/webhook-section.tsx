@@ -7,6 +7,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldTitle,
   Form,
   FormControl,
   FormField,
@@ -15,6 +19,7 @@ import {
   FormMessage,
   Input,
   PasswordInput,
+  Switch,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -22,7 +27,7 @@ import {
 } from "@calls/ui";
 import { useCopyToClipboard } from "@calls/ui/hooks";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Copy, KeyRound, Loader2 } from "lucide-react";
+import { Check, Copy, KeyRound, Loader2, Webhook } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { type WebhookFormData, webhookFormSchema } from "../schemas";
@@ -32,16 +37,22 @@ interface WebhookSectionProps {
   webhookUrl: string;
   webhookSecret: string;
   webhookSecretPasswordSet: boolean;
+  webhooksEnabled: boolean;
   saving: boolean;
+  savingWebhooksEnabled: boolean;
   onSaveWebhook: (data: WebhookFormData) => Promise<void>;
+  onToggleWebhooksEnabled: (enabled: boolean) => Promise<void>;
 }
 
 export function WebhookSection({
   webhookUrl,
   webhookSecret,
   webhookSecretPasswordSet,
+  webhooksEnabled,
   saving,
+  savingWebhooksEnabled,
   onSaveWebhook,
+  onToggleWebhooksEnabled,
 }: WebhookSectionProps) {
   const { isCopied: copiedUrl, copyToClipboard: copyUrl } = useCopyToClipboard({ timeout: 2000 });
   const { isCopied: copiedSecret, copyToClipboard: copySecret } = useCopyToClipboard({
@@ -104,12 +115,40 @@ export function WebhookSection({
         </CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="mb-4">
+          <Field orientation="horizontal">
+            <FieldContent>
+              <FieldTitle className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center justify-center rounded-md border bg-background p-1.5 shadow-sm">
+                  <Webhook aria-hidden className="size-3.5" />
+                </div>
+                <div className="flex flex-col items-start gap-0.5">
+                  <span className="text-xs font-semibold">Вебхуки</span>
+                  <FieldDescription className="mt-0 text-[11px] text-muted-foreground">
+                    Быстрый запуск синхронизации по событию
+                  </FieldDescription>
+                </div>
+              </FieldTitle>
+            </FieldContent>
+            <Switch
+              id="megapbx_webhooks_enabled"
+              size="sm"
+              checked={webhooksEnabled}
+              disabled={savingWebhooksEnabled}
+              aria-label="Включить вебхуки"
+              onCheckedChange={(checked) => {
+                void onToggleWebhooksEnabled(checked);
+              }}
+            />
+          </Field>
+        </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormItem className="space-y-2">
-              <FormLabel>URL вебхука (наш адрес)</FormLabel>
+              <FormLabel htmlFor="webhook-url">URL вебхука (наш адрес)</FormLabel>
               <div className="flex gap-2">
                 <Input
+                  id="webhook-url"
                   value={webhookUrl}
                   readOnly
                   className="font-mono text-sm"
