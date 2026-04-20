@@ -24,10 +24,6 @@ import {
   PopoverContent,
   PopoverTrigger,
   Skeleton,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
   toast,
 } from "@calls/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -48,7 +44,6 @@ import {
   ChevronRight,
   Download,
   Eye,
-  HelpCircle,
   Loader2,
   Phone,
   Settings2,
@@ -60,6 +55,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { KpiTableSkeleton } from "@/app/(app)/statistics/statistics-skeletons";
 import { useORPC } from "@/orpc/react";
+import { KpiTableHeader } from "./kpi-table-header";
 
 interface KpiRow {
   employeeExternalId: string;
@@ -105,7 +101,7 @@ const kpiDraftSchema = z.object({
 
 const pad2 = (value: number) => value.toString().padStart(2, "0");
 
-// Компонент для заголовков колонок с тултипами
+// Компонент для заголовков колонок с тултипами - использует KpiTableHeader для единообразия
 function KpiColumnHeader({
   column,
   title,
@@ -117,24 +113,10 @@ function KpiColumnHeader({
   tooltip?: string;
   className?: string;
 }) {
-  if (!tooltip) {
-    return <DataGridColumnHeader column={column} title={title} className={className} />;
-  }
-
   return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="inline-flex items-center gap-1.5 cursor-help">
-            <DataGridColumnHeader column={column} title={title} className={className} />
-            <HelpCircle className="size-3.5 text-muted-foreground" aria-hidden />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-xs">
-          <p className="text-sm">{tooltip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <KpiTableHeader tooltip={tooltip}>
+      <DataGridColumnHeader column={column} title={title} className={className} />
+    </KpiTableHeader>
   );
 }
 
@@ -727,7 +709,7 @@ export default function KpiTable() {
             column={column}
             title="Итого к выплате"
             tooltip="Общая сумма к выплате: оклад + начисленный бонус за период"
-            className="min-w-28"
+            className="min-w-40"
           />
         ),
         cell: ({ row }) => (

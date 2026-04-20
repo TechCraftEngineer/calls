@@ -1,5 +1,17 @@
 import { eventType, Inngest, staticSchema } from "inngest";
 
+// Branded тип для CallId - непустая строка с брендом для типобезопасности
+declare const __brand: unique symbol;
+export type CallId = string & { readonly [__brand]: "CallId" };
+
+// Helper для создания CallId из непустой строки
+export function makeCallId(value: string): CallId {
+  if (!value || value.trim().length === 0) {
+    throw new Error("CallId не может быть пустой строкой");
+  }
+  return value as CallId;
+}
+
 export const inngest = new Inngest({
   id: "calls-sync-and-transcribe",
   name: "QBS Звонки",
@@ -33,7 +45,7 @@ type GigaAmTranscriptionCompletedData = {
 
 type SpeakerEmbeddingsDiarizationCompletedData = {
   task_id: string;
-  call_id: string;
+  call_id: CallId;
   status: "completed" | "failed";
   result?: Record<string, unknown>;
   error?: string;

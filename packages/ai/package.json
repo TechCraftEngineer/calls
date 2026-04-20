@@ -30,7 +30,7 @@
     "@langfuse/otel": "^5.1.0",
     "@langfuse/tracing": "^5.1.0",
     "@openrouter/ai-sdk-provider": "^2.8.0",
-    "@opentelemetry/sdk-trace-node": "^2.6.1",
+    "@opentelemetry/sdk-trace-node": "^2.7.0",
     "ai": "^6.0.168",
     "langfuse": "^3.38.20",
     "zod": "4.3.6"

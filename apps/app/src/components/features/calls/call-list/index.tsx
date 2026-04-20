@@ -3,7 +3,7 @@
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@calls/ui";
 import { useRouter } from "next/navigation";
 import CallDetailModal from "../call-detail-modal";
-import RecommendationsModal from "../shared/recommendations-modal";
+import { RecommendationsModal } from "../shared";
 import { getRowBackground, renderCallListCell } from "./call-list-cells";
 import { CallListColumnToggle } from "./call-list-column-toggle";
 import { CallListEmpty } from "./call-list-empty";

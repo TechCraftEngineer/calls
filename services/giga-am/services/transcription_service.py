@@ -2,6 +2,7 @@ import logging
 import os
 import threading
 import asyncio
+import time
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Any, Optional
@@ -57,8 +58,8 @@ class TranscriptionService:
             self._initialization_event.set()
             self._model_loading = False
     
-    def _ensure_model_loaded(self):
-        """Гарантирует, что модель загружена"""
+    def _ensure_model_loaded(self, max_retries: int = 1):
+        """Гарантирует, что модель загружена с retry при таймауте"""
         # Если модель уже загружена, возвращаемся сразу
         if self._model_initialized and self.model is not None:
             return
@@ -70,22 +71,43 @@ class TranscriptionService:
                 model_name=self.model_name
             )
         
-        # Если модель сейчас загружается, ждем завершения
+        # Если модель сейчас загружается, ждем завершения с retry
         if self._model_loading:
-            logger.info("Модель загружается в другом потоке, ждем завершения...")
-            if not self._initialization_event.wait(timeout=settings.model_loading_timeout):  # Используем настройку из config
-                raise GigaTimeoutError(
-                    "Превышено время ожидания загрузки модели",
-                    timeout_seconds=settings.model_loading_timeout,
-                    operation="model_loading"
-                )
+            wait_start = time.time()
+            logger.info(
+                "Модель загружается в другом потоке, ждем завершения... "
+                f"(таймаут: {settings.model_loading_timeout} сек, попыток: {max_retries + 1})"
+            )
             
-            # Проверяем результат загрузки
-            if self._model_error:
-                raise ModelLoadError(
-                    f"Ошибка загрузки модели: {self._model_error}",
-                    model_name=self.model_name
-                )
+            for attempt in range(max_retries + 1):
+                elapsed = time.time() - wait_start
+                remaining_timeout = max(1, settings.model_loading_timeout - int(elapsed))
+                
+                if self._initialization_event.wait(timeout=remaining_timeout):
+                    # Загрузка завершена
+                    if self._model_error:
+                        raise ModelLoadError(
+                            f"Ошибка загрузки модели: {self._model_error}",
+                            model_name=self.model_name
+                        )
+                    logger.info(f"Модель загружена за {elapsed:.1f} секунд")
+                    return
+                
+                # Таймаут - логируем и пробуем снова если есть попытки
+                if attempt < max_retries:
+                    logger.warning(
+                        f"Таймаут ожидания загрузки модели ({elapsed:.1f} сек), "
+                        f"повторная попытка {attempt + 1}/{max_retries}..."
+                    )
+                else:
+                    raise GigaTimeoutError(
+                        f"Превышено время ожидания загрузки модели ({elapsed:.1f} сек). "
+                        f"Возможно, модель скачивается с HuggingFace или сервер перегружен. "
+                        f"Попробуйте повторить запрос позже.",
+                        timeout_seconds=settings.model_loading_timeout,
+                        operation="model_loading",
+                        elapsed_seconds=int(elapsed)
+                    )
             return
         
         # Если дошли сюда, значит нужно загрузить модель синхронно
@@ -94,9 +116,18 @@ class TranscriptionService:
             if self._model_initialized or self._model_loading:
                 return
             
+            load_start = time.time()
             self._model_loading = True
             try:
+                logger.info(f"Начинаем загрузку модели {self.model_name}...")
                 self._initialize_model()
+                load_time = time.time() - load_start
+                logger.info(f"Модель {self.model_name} загружена за {load_time:.1f} секунд")
+            except Exception as e:
+                load_time = time.time() - load_start
+                logger.error(f"Ошибка загрузки модели после {load_time:.1f} секунд: {e}")
+                self._model_error = e
+                raise
             finally:
                 self._model_loading = False
                 self._initialization_event.set()

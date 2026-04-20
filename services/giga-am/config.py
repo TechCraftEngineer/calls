@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     
     # Concurrency settings
     model_workers: int = Field(default=2, ge=1)
-    model_loading_timeout: int = Field(default=600, ge=1)  # seconds
+    model_loading_timeout: int = Field(default=1800, ge=1)  # 30 минут для первичной загрузки модели
     
     # Preloading settings
     preload_pyannote_model: bool = Field(

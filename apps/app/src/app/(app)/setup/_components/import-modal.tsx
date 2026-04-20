@@ -233,8 +233,8 @@ export function ImportModal({ open, onOpenChange, onComplete }: ModalProps<void>
                 <div className="space-y-2 text-center">
                   <p className="font-medium">Импорт поставлен в очередь!</p>
                   <p className="text-sm text-muted-foreground">
-                    Звонки с {format(parseISO(importFromDate), "d MMMM yyyy", { locale: ru })}{" "}
-                    будут загружены в фоновом режиме. Это может занять несколько минут.
+                    Звонки с {format(parseISO(importFromDate), "d MMMM yyyy", { locale: ru })} будут
+                    загружены в фоновом режиме. Это может занять несколько минут.
                   </p>
                 </div>
 

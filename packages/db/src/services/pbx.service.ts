@@ -385,11 +385,7 @@ export class PbxService {
   }
 
   async unlinkEmployee(workspaceId: string, employeeExternalId: string) {
-    return this.pbxRepository.deleteEmployeeLink(
-      workspaceId,
-      MEGAPBX_PROVIDER,
-      employeeExternalId,
-    );
+    return this.pbxRepository.deleteEmployeeLink(workspaceId, MEGAPBX_PROVIDER, employeeExternalId);
   }
 
   async recordWebhookEvent(input: {

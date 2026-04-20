@@ -14,7 +14,7 @@ interface AudioPlayerModalProps {
   onClose: () => void;
 }
 
-export default function AudioPlayerModal({ callId, number, onClose }: AudioPlayerModalProps) {
+export function AudioPlayerModal({ callId, number, onClose }: AudioPlayerModalProps) {
   const orpc = useORPC();
   const { data, isPending, isError, error } = useQuery(
     orpc.calls.getPlaybackUrl.queryOptions({ input: { call_id: callId } }),

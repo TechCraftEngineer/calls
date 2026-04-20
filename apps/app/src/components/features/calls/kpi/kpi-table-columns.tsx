@@ -186,6 +186,7 @@ export const createKpiTableColumns = (
   {
     id: "calculatedTotal",
     accessorFn: (row) => row.totalCalculatedSalary,
+    minSize: 160,
     header: () => (
       <KpiTableHeader
         label="Итого к выплате"
