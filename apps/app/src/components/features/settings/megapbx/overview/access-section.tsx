@@ -2,6 +2,11 @@
 
 import {
   Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   DatePicker,
   Form,
   FormControl,
@@ -17,7 +22,6 @@ import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { type AccessFormData, accessFormSchema } from "../schemas";
-import { SectionBlock } from "../section-block";
 
 interface AccessSectionProps {
   baseUrl: string;
@@ -40,7 +44,6 @@ export function AccessSection({
   onSaveAccess,
   onTest,
 }: AccessSectionProps) {
-  // Минимальная дата - месяц назад (локальная, безопасная для границ месяца)
   const minDate = (() => {
     const now = new Date();
     const lastDayOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
@@ -77,128 +80,123 @@ export function AccessSection({
   };
 
   return (
-    <SectionBlock
-      title="Доступ к API"
-      description="Укажите base URL (например https://vats919602.megapbx.ru/crmapi/v1) и API key из личного кабинета MegaPBX."
-    >
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="contents">
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="baseUrl"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel className="text-xs text-muted-foreground">Base URL</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="https://vats919602.megapbx.ru/crmapi/v1"
-                      type="url"
-                      inputMode="url"
-                      autoComplete="url"
-                      className="h-10"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="apiKey"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel className="text-xs text-muted-foreground">API key</FormLabel>
-                  <FormControl>
-                    <PasswordInput
-                      {...field}
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      inputMode="text"
-                      autoComplete="off"
-                      placeholder={
-                        apiKeyPasswordSet
-                          ? "•••••••• (оставьте пустым, чтобы не менять)"
-                          : "Ключ авторизации"
-                      }
-                      className="h-10"
-                    />
-                  </FormControl>
-                  <p className="text-xs text-muted-foreground">
-                    Ключ хранится в зашифрованном виде.
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="syncFromDate"
-              render={({ field }) => (
-                <FormItem className="space-y-2">
-                  <FormLabel className="text-xs text-muted-foreground">
-                    Импорт звонков с даты
-                  </FormLabel>
-                  <FormControl>
-                    <DatePicker
-                      id="megapbx-sync-from-date"
-                      value={field.value ?? ""}
-                      onChange={field.onChange}
-                      placeholder="Выберите дату"
-                      className="h-10"
-                      minDate={minDate}
-                    />
-                  </FormControl>
-                  <p className="text-xs text-muted-foreground">
-                    Можно импортировать звонки только за последний месяц.
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                void (async () => {
-                  const validated = await form.trigger(["baseUrl", "apiKey"]);
-                  if (!validated) return;
-                  const parsed = accessFormSchema.safeParse(form.getValues());
-                  if (!parsed.success) return;
-                  const normalizedBaseUrl = parsed.data.baseUrl?.trim() ?? "";
-                  const normalizedApiKey =
-                    parsed.data.apiKey?.trim() === "" ? undefined : parsed.data.apiKey?.trim();
-                  await onTest(normalizedBaseUrl, normalizedApiKey);
-                })();
-              }}
-              disabled={testing || !form.watch("baseUrl")?.trim()}
-            >
-              {testing ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
-              Проверить API
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
-              Сохранить
-            </Button>
-          </div>
-        </form>
-      </Form>
-      {testMessage ? (
-        <div
-          className={`mt-4 rounded-lg border p-3 text-sm ${
-            testMessage.includes("успешно")
-              ? "border-green-200 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-400"
-              : "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400"
-          }`}
-          role="status"
-          aria-live="polite"
-        >
-          {testMessage}
-        </div>
-      ) : null}
-    </SectionBlock>
+    <Card>
+      <CardHeader>
+        <CardTitle>Доступ к API</CardTitle>
+        <CardDescription>Укажите base URL и API key из личного кабинета MegaPBX</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="baseUrl"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Base URL</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="https://vats919602.megapbx.ru/crmapi/v1"
+                        type="url"
+                        inputMode="url"
+                        autoComplete="url"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="apiKey"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>API key</FormLabel>
+                    <FormControl>
+                      <PasswordInput
+                        {...field}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        inputMode="text"
+                        autoComplete="off"
+                        placeholder={
+                          apiKeyPasswordSet ? "•••••••• (не менять)" : "Ключ авторизации"
+                        }
+                      />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">
+                      Ключ хранится в зашифрованном виде
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="syncFromDate"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Импорт звонков с даты</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        id="megapbx-sync-from-date"
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        placeholder="Выберите дату"
+                        minDate={minDate}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">Импорт за последний месяц</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  void (async () => {
+                    const validated = await form.trigger(["baseUrl", "apiKey"]);
+                    if (!validated) return;
+                    const parsed = accessFormSchema.safeParse(form.getValues());
+                    if (!parsed.success) return;
+                    const normalizedBaseUrl = parsed.data.baseUrl?.trim() ?? "";
+                    const normalizedApiKey =
+                      parsed.data.apiKey?.trim() === "" ? undefined : parsed.data.apiKey?.trim();
+                    await onTest(normalizedBaseUrl, normalizedApiKey);
+                  })();
+                }}
+                disabled={testing || !form.watch("baseUrl")?.trim()}
+              >
+                {testing ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+                Проверить API
+              </Button>
+              <Button type="submit" size="sm" disabled={saving}>
+                {saving ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+                Сохранить
+              </Button>
+            </div>
+            {testMessage ? (
+              <div
+                className={`rounded-md border px-3 py-2 text-sm ${
+                  testMessage.includes("успешно")
+                    ? "border-green-200 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/30 dark:text-green-400"
+                    : "border-red-200 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400"
+                }`}
+                role="status"
+                aria-live="polite"
+              >
+                {testMessage}
+              </div>
+            ) : null}
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 }

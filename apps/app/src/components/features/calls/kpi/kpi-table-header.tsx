@@ -17,12 +17,18 @@ export function KpiTableHeader({ label, tooltip, children }: KpiTableHeaderProps
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="inline-flex items-center gap-1.5 cursor-help">
-          {content}
-          <HelpCircle className="size-3.5 text-muted-foreground" aria-hidden="true" />
-        </div>
-      </TooltipTrigger>
+      <div className="inline-flex items-center gap-1.5">
+        {content}
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex size-6 items-center justify-center rounded hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring touch-action-manipulation"
+            aria-label="Показать информацию о KPI"
+          >
+            <HelpCircle className="size-3.5 text-muted-foreground" />
+          </button>
+        </TooltipTrigger>
+      </div>
       <TooltipContent side="top" className="max-w-xs">
         <p className="text-sm">{tooltip}</p>
       </TooltipContent>

@@ -12,12 +12,12 @@ export function SectionBlock({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="overflow-hidden border-border/60 py-0">
-      <CardHeader className="border-b border-border/60 bg-muted/30 px-6 py-4">
-        <CardTitle className="text-base">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+    <Card className="overflow-hidden">
+      <CardHeader className="border-b bg-muted/30 px-5 py-3.5">
+        <CardTitle className="text-sm font-semibold">{title}</CardTitle>
+        <CardDescription className="text-xs">{description}</CardDescription>
       </CardHeader>
-      <CardContent className="p-6">{children}</CardContent>
+      <CardContent className="p-5">{children}</CardContent>
     </Card>
   );
 }

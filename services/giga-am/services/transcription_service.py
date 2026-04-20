@@ -55,6 +55,8 @@ class TranscriptionService:
             self._initialize_model()
         except Exception as e:
             logger.error(f"Ошибка при фоновой загрузке модели: {e}")
+            self._model_error = e
+        finally:
             self._initialization_event.set()
             self._model_loading = False
     
@@ -80,20 +82,28 @@ class TranscriptionService:
             )
             
             for attempt in range(max_retries + 1):
-                elapsed = time.time() - wait_start
-                remaining_timeout = max(1, settings.model_loading_timeout - int(elapsed))
+                remaining_timeout = max(1, settings.model_loading_timeout - int(time.time() - wait_start))
                 
                 if self._initialization_event.wait(timeout=remaining_timeout):
-                    # Загрузка завершена
+                    # Загрузка завершена - пересчитываем elapsed после wait
+                    elapsed = time.time() - wait_start
+                    
+                    # Проверяем состояние после завершения
                     if self._model_error:
                         raise ModelLoadError(
                             f"Ошибка загрузки модели: {self._model_error}",
                             model_name=self.model_name
                         )
+                    if not self._model_initialized or self.model is None:
+                        raise ModelLoadError(
+                            "Модель не инициализирована после завершения загрузки",
+                            model_name=self.model_name
+                        )
                     logger.info(f"Модель загружена за {elapsed:.1f} секунд")
                     return
                 
-                # Таймаут - логируем и пробуем снова если есть попытки
+                # Таймаут - пересчитываем elapsed и логируем
+                elapsed = time.time() - wait_start
                 if attempt < max_retries:
                     logger.warning(
                         f"Таймаут ожидания загрузки модели ({elapsed:.1f} сек), "

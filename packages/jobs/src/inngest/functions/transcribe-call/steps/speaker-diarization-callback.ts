@@ -44,11 +44,12 @@ export async function speakerDiarizationWithCallback(
   step: StepRunner,
 ): Promise<SpeakerDiarizationCallbackResult> {
   // Защита от undefined step (проблема с бандлингом)
-  if (!step || typeof step.run !== "function") {
+  if (!step || typeof step.run !== "function" || typeof step.waitForEvent !== "function") {
+    const stepObj = step as Record<string, unknown> | null;
     throw new Error(
-      `Invalid step parameter in speakerDiarizationWithCallback: ${typeof step}. ` +
-        `step.run is ${typeof step?.run}. ` +
-        `This may indicate a bundling issue or incorrect function call.`,
+      `Неверный параметр step в speakerDiarizationWithCallback: ${typeof step}. ` +
+        `step.run = ${typeof step?.run}, step.waitForEvent = ${typeof stepObj?.waitForEvent}. ` +
+        `Возможно проблема с бандлингом или неверным вызовом.`,
     );
   }
 

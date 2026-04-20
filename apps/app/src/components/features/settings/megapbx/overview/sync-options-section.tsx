@@ -1,6 +1,11 @@
 "use client";
 
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
   Field,
   FieldContent,
   FieldDescription,
@@ -17,7 +22,6 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { SYNC_OPTIONS } from "../constants";
 import { type SyncOptionsFormData, syncOptionsFormSchema } from "../schemas";
-import { SectionBlock } from "../section-block";
 
 interface SyncOptionsSectionProps {
   megaPbx: {
@@ -48,8 +52,6 @@ export function SyncOptionsSection({
 
   const form = useForm<SyncOptionsFormData>({
     resolver: zodResolver(syncOptionsFormSchema) as never,
-    // Записи всегда синхронизируются вместе со звонками.
-    // Оставляем поле в payload для совместимости API.
     defaultValues: {
       syncCalls: syncCallsDefault,
       syncEmployees: megaPbx.syncEmployees,
@@ -79,13 +81,14 @@ export function SyncOptionsSection({
   ]);
 
   return (
-    <SectionBlock
-      title="Что синхронизировать"
-      description="Включите только те данные, которые реально нужны в компании."
-    >
-      <Form {...form}>
-        <div className="contents">
-          <FieldGroup className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+    <Card>
+      <CardHeader>
+        <CardTitle>Что синхронизировать</CardTitle>
+        <CardDescription>Включите только те данные, которые реально нужны</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <FieldGroup className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {SYNC_OPTIONS.map(([key, label, hint, Icon]) => {
               const fieldName = KEY_TO_FIELD[key];
               if (!fieldName) return null;
@@ -99,12 +102,12 @@ export function SyncOptionsSection({
                       <Field orientation="horizontal">
                         <FieldContent>
                           <FieldTitle className="flex items-center gap-2">
-                            <div className="bg-background border-border flex shrink-0 items-center justify-center rounded-md border p-1.5 shadow-xs shadow-black/5">
-                              <Icon aria-hidden className="size-4" />
+                            <div className="flex shrink-0 items-center justify-center rounded-md border bg-background p-1.5 shadow-sm">
+                              <Icon aria-hidden className="size-3.5" />
                             </div>
                             <div className="flex flex-col items-start gap-0.5">
-                              <span className="text-sm font-semibold">{label}</span>
-                              <FieldDescription className="text-muted-foreground mt-0 text-xs">
+                              <span className="text-xs font-semibold">{label}</span>
+                              <FieldDescription className="mt-0 text-[11px] text-muted-foreground">
                                 {hint}
                               </FieldDescription>
                             </div>
@@ -149,8 +152,8 @@ export function SyncOptionsSection({
               );
             })}
           </FieldGroup>
-        </div>
-      </Form>
-    </SectionBlock>
+        </Form>
+      </CardContent>
+    </Card>
   );
 }

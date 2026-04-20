@@ -101,7 +101,7 @@ const kpiDraftSchema = z.object({
 
 const pad2 = (value: number) => value.toString().padStart(2, "0");
 
-// Компонент для заголовков колонок с тултипами - использует KpiTableHeader для единообразия
+// Компонент для заголовков колонок с подсказками - использует KpiTableHeader для единообразия
 function KpiColumnHeader({
   column,
   title,
