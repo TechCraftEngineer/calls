@@ -98,7 +98,7 @@ export function AccessSection({
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder="https://vats919602.megapbx.ru/crmapi/v1"
+                        placeholder="https://example.megapbx.ru/crmapi/…"
                         type="url"
                         inputMode="url"
                         autoComplete="url"
@@ -121,9 +121,7 @@ export function AccessSection({
                         onChange={field.onChange}
                         inputMode="text"
                         autoComplete="off"
-                        placeholder={
-                          apiKeyPasswordSet ? "•••••••• (не менять)" : "Ключ авторизации"
-                        }
+                        placeholder={apiKeyPasswordSet ? "•••••••• (не менять)" : "sk-012345…"}
                       />
                     </FormControl>
                     <p className="text-xs text-muted-foreground">
@@ -144,7 +142,7 @@ export function AccessSection({
                         id="megapbx-sync-from-date"
                         value={field.value ?? ""}
                         onChange={field.onChange}
-                        placeholder="Выберите дату"
+                        placeholder="2024-01-15…"
                         minDate={minDate}
                       />
                     </FormControl>

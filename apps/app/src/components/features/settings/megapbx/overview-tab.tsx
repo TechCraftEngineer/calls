@@ -1,7 +1,7 @@
 "use client";
 
 import type { MegaPbxSettings } from "../types";
-import { AccessSection, QuickActionsSection, SyncOptionsSection, WebhookSection } from "./overview";
+import { AccessSection, QuickActionsSection, WebhookSection } from "./overview";
 import type { AccessFormData, SyncOptionsFormData, WebhookFormData } from "./schemas";
 
 export interface OverviewTabProps {
@@ -42,6 +42,16 @@ export function OverviewTab({
   onSyncDirectory,
   onSyncCalls,
 }: OverviewTabProps) {
+  const handleToggleWebhooksEnabled = async (enabled: boolean) => {
+    await onSaveSyncOptions({
+      syncEmployees: megaPbx.syncEmployees,
+      syncNumbers: megaPbx.syncNumbers,
+      syncCalls: megaPbx.syncCalls,
+      syncRecordings: megaPbx.syncRecordings,
+      webhooksEnabled: enabled,
+    });
+  };
+
   return (
     <div className="space-y-8">
       <AccessSection
@@ -55,18 +65,15 @@ export function OverviewTab({
         onSaveAccess={onSaveAccess}
       />
 
-      <SyncOptionsSection
-        megaPbx={megaPbx}
-        saving={savingSyncOptions}
-        onSaveSyncOptions={onSaveSyncOptions}
-      />
-
       <WebhookSection
         webhookSecret={megaPbx.webhookSecret}
         webhookSecretPasswordSet={megaPbx.webhookSecretSet}
         webhookUrl={webhookUrl}
+        webhooksEnabled={megaPbx.webhooksEnabled}
         saving={savingWebhook}
+        savingWebhooksEnabled={savingSyncOptions}
         onSaveWebhook={onSaveWebhook}
+        onToggleWebhooksEnabled={handleToggleWebhooksEnabled}
       />
 
       <QuickActionsSection

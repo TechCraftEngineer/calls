@@ -45,7 +45,7 @@ export async function speakerDiarizationWithCallback(
 ): Promise<SpeakerDiarizationCallbackResult> {
   // Защита от undefined step (проблема с бандлингом)
   if (!step || typeof step.run !== "function" || typeof step.waitForEvent !== "function") {
-    const stepObj = step as Record<string, unknown> | null;
+    const stepObj = step as Partial<StepRunner> | null;
     throw new Error(
       `Неверный параметр step в speakerDiarizationWithCallback: ${typeof step}. ` +
         `step.run = ${typeof step?.run}, step.waitForEvent = ${typeof stepObj?.waitForEvent}. ` +

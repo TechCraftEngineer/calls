@@ -4,7 +4,7 @@ import { paths } from "@calls/config";
 import { Badge, Button, Checkbox, Tabs, TabsList, TabsTrigger } from "@calls/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PbxProviderLogo, SettingsPageShell, useSettings } from "@/components/features/settings";
 import { STORAGE_KEYS } from "@/components/features/settings/megapbx/constants";
 import { EmployeesTab } from "@/components/features/settings/megapbx/employees-tab";
@@ -42,9 +42,15 @@ export default function SettingsPbxMegafonPage({ params }: PageProps) {
     setMegaPbxEnabled,
   } = useSettings();
 
-  const [resolvedParams, setResolvedParams] = React.useState<{ tab?: string[] } | null>(null);
-  const [employeeSearch, setEmployeeSearch] = useState("");
-  const [numberSearch, setNumberSearch] = useState("");
+  const [resolvedParams, setResolvedParams] = useState<{ tab?: string[] } | null>(null);
+  const [employeeSearch, setEmployeeSearch] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem(STORAGE_KEYS.employeeSearch) || "";
+  });
+  const [numberSearch, setNumberSearch] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem(STORAGE_KEYS.numberSearch) || "";
+  });
 
   // Вычисляем значения до условных возвратов
   const isEnabled = state.megaPbx.enabled;
@@ -56,10 +62,11 @@ export default function SettingsPbxMegafonPage({ params }: PageProps) {
   const saving =
     state.megaPbxAccessSaving || state.megaPbxSyncOptionsSaving || state.megaPbxWebhookSaving;
 
-  const webhookUrl =
-    activeWorkspace?.id && getWebhookBaseUrl()
-      ? `${getWebhookBaseUrl()}/api/megapbx-webhook/${activeWorkspace.id}`
-      : "";
+  const webhookUrl = useMemo(() => {
+    if (!activeWorkspace?.id) return "";
+    const base = getWebhookBaseUrl();
+    return base ? `${base}/api/megapbx-webhook/${activeWorkspace.id}` : "";
+  }, [activeWorkspace?.id]);
 
   const excludedPhoneNumbers = useMemo(() => {
     const raw = state.megaPbx.excludePhoneNumbers;
@@ -78,17 +85,12 @@ export default function SettingsPbxMegafonPage({ params }: PageProps) {
     }
   };
 
-  React.useEffect(() => {
-    params.then(setResolvedParams);
-  }, [params]);
-
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const savedEmployeeSearch = window.localStorage.getItem(STORAGE_KEYS.employeeSearch);
-    const savedNumberSearch = window.localStorage.getItem(STORAGE_KEYS.numberSearch);
-    if (savedEmployeeSearch) setEmployeeSearch(savedEmployeeSearch);
-    if (savedNumberSearch) setNumberSearch(savedNumberSearch);
-  }, []);
+    params.then(setResolvedParams).catch((err) => {
+      console.error("Failed to resolve params:", err);
+      setResolvedParams(null);
+    });
+  }, [params]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -110,17 +112,7 @@ export default function SettingsPbxMegafonPage({ params }: PageProps) {
     }
   }, [isWorkspaceAdmin, workspaceLoading, loadSettings]);
 
-  if (workspaceLoading || !isWorkspaceAdmin || !resolvedParams) {
-    return (
-      <SettingsPageShell>
-        <div className="flex items-center justify-center py-24">
-          <div className="text-muted-foreground">Загрузка…</div>
-        </div>
-      </SettingsPageShell>
-    );
-  }
-
-  if (state.loading) {
+  if (workspaceLoading || !isWorkspaceAdmin || !resolvedParams || state.loading) {
     return (
       <SettingsPageShell>
         <div className="flex items-center justify-center py-24">
