@@ -15,6 +15,12 @@ function isValidConnectToken(payload: string): boolean {
   return /^[a-zA-Z0-9_-]{16,64}$/.test(payload);
 }
 
+// Маскирует токен для безопасного логирования
+function maskToken(token: string): string {
+  if (token.length <= 8) return "***";
+  return `${token.slice(0, 4)}...${token.slice(-4)}`;
+}
+
 /**
  * Creates a Hono-compatible webhook handler for the Telegram bot.
  * Handles /start with token to link user's Telegram chat_id.
@@ -33,6 +39,46 @@ export function createWebhookHandler(getToken: GetTokenFn): WebhookHandler {
     if (!bot) {
       try {
         bot = new Bot(token);
+
+        // Регистрируем обработчик /start только один раз при создании бота
+        bot.command("start", async (ctx) => {
+          try {
+            const payload = ctx.match?.trim();
+
+            // Валидация payload
+            if (!payload) {
+              await ctx.reply("Отправьте ссылку из настроек приложения для подключения.");
+              return;
+            }
+
+            if (!isValidConnectToken(payload)) {
+              console.warn(`[telegram-webhook] Invalid token format: ${maskToken(payload)}`);
+              await ctx.reply("Неверный формат ссылки. Используйте ссылку из настроек приложения.");
+              return;
+            }
+
+            const user = await usersService.getUserByTelegramConnectToken(payload);
+            if (!user) {
+              console.warn(`[telegram-webhook] User not found for token: ${maskToken(payload)}`);
+              await ctx.reply("Ссылка недействительна или устарела.");
+              return;
+            }
+
+            const saved = await usersService.saveTelegramChatId(user.id, String(ctx.chat.id));
+
+            if (saved) {
+              console.log(`[telegram-webhook] Successfully connected Telegram for user ${user.id}`);
+              await ctx.reply("Telegram успешно подключён.");
+            } else {
+              console.error(`[telegram-webhook] Failed to save chat ID for user ${user.id}`);
+              await ctx.reply("Ошибка при сохранении. Попробуйте позже.");
+            }
+          } catch (error) {
+            console.error("[telegram-webhook] Error in /start command:", error);
+            await ctx.reply("Произошла ошибка. Попробуйте позже.");
+          }
+        });
+
         botCache.set(token, bot);
         console.log("[telegram-webhook] Created new bot instance for token");
       } catch (error) {
@@ -40,44 +86,6 @@ export function createWebhookHandler(getToken: GetTokenFn): WebhookHandler {
         return c.json({ error: "Invalid bot token" }, 400);
       }
     }
-
-    bot.command("start", async (ctx) => {
-      try {
-        const payload = ctx.match?.trim();
-
-        // Валидация payload
-        if (!payload) {
-          await ctx.reply("Отправьте ссылку из настроек приложения для подключения.");
-          return;
-        }
-
-        if (!isValidConnectToken(payload)) {
-          console.warn(`[telegram-webhook] Invalid token format: ${payload}`);
-          await ctx.reply("Неверный формат ссылки. Используйте ссылку из настроек приложения.");
-          return;
-        }
-
-        const user = await usersService.getUserByTelegramConnectToken(payload);
-        if (!user) {
-          console.warn(`[telegram-webhook] User not found for token: ${payload}`);
-          await ctx.reply("Ссылка недействительна или устарела.");
-          return;
-        }
-
-        const saved = await usersService.saveTelegramChatId(user.id, String(ctx.chat.id));
-
-        if (saved) {
-          console.log(`[telegram-webhook] Successfully connected Telegram for user ${user.id}`);
-          await ctx.reply("Telegram успешно подключён.");
-        } else {
-          console.error(`[telegram-webhook] Failed to save chat ID for user ${user.id}`);
-          await ctx.reply("Ошибка при сохранении. Попробуйте позже.");
-        }
-      } catch (error) {
-        console.error("[telegram-webhook] Error in /start command:", error);
-        await ctx.reply("Произошла ошибка. Попробуйте позже.");
-      }
-    });
 
     try {
       const handler = webhookCallback(bot, "hono");
