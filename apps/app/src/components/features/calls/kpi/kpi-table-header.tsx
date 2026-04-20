@@ -1,29 +1,31 @@
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@calls/ui";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@calls/ui";
 import { HelpCircle } from "lucide-react";
+import type React from "react";
 
 interface KpiTableHeaderProps {
-  label: string;
+  label?: string;
   tooltip?: string;
+  children?: React.ReactNode;
 }
 
-export function KpiTableHeader({ label, tooltip }: KpiTableHeaderProps) {
+export function KpiTableHeader({ label, tooltip, children }: KpiTableHeaderProps) {
+  const content = children ?? <span>{label}</span>;
+
   if (!tooltip) {
-    return <span>{label}</span>;
+    return content;
   }
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="inline-flex items-center gap-1.5 cursor-help">
-            <span>{label}</span>
-            <HelpCircle className="size-3.5 text-muted-foreground" aria-hidden />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-xs">
-          <p className="text-sm">{tooltip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="inline-flex items-center gap-1.5 cursor-help">
+          {content}
+          <HelpCircle className="size-3.5 text-muted-foreground" aria-hidden="true" />
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-xs">
+        <p className="text-sm">{tooltip}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 }

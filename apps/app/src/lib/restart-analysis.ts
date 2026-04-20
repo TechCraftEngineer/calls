@@ -14,7 +14,7 @@ export async function restartCallAnalysis(params: {
 
   // Проверяем отмену перед началом работы
   if (signal?.aborted) {
-    throw new Error("Опрос отменён по AbortSignal");
+    throw new Error("Перезапуск анализа отменён");
   }
 
   try {
@@ -33,7 +33,7 @@ export async function restartCallAnalysis(params: {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     // Проверяем отмену
     if (signal?.aborted) {
-      throw new Error("Опрос отменён по AbortSignal");
+      throw new Error("Перезапуск анализа отменён");
     }
 
     const delay = baseDelay * 2 ** attempt; // 300ms, 600ms, 1200ms, 2400ms, 4800ms
@@ -46,7 +46,7 @@ export async function restartCallAnalysis(params: {
       const onAbort = () => {
         clearTimeout(timeoutId);
         signal?.removeEventListener("abort", onAbort);
-        reject(new Error("Опрос отменён по AbortSignal"));
+        reject(new Error("Перезапуск анализа отменён"));
       };
 
       signal?.addEventListener("abort", onAbort);
@@ -54,7 +54,7 @@ export async function restartCallAnalysis(params: {
 
     // Повторная проверка после задержки
     if (signal?.aborted) {
-      throw new Error("Опрос отменён по AbortSignal");
+      throw new Error("Перезапуск анализа отменён");
     }
 
     try {

@@ -76,18 +76,23 @@ function sanitizeForLoggingInternal(data: unknown, visited: WeakSet<object>): un
 
   if (data instanceof Map) {
     visited.add(data);
-    const sanitizedMap: Record<string, unknown> = {};
+    // Сохраняем Map как массив пар для предотвращения коллизий ключей при String(key)
+    // Каждая пара: { key: string, value: unknown, keyType: string }
+    const sanitizedEntries: Array<{ key: string; value: unknown; keyType: string }> = [];
     for (const [key, value] of data.entries()) {
       const keyStr = String(key);
       const keyLower = keyStr.toLowerCase();
-      if (LOWER_SENSITIVE_SET.has(keyLower)) {
-        sanitizedMap[keyStr] = REDACTED;
-      } else {
-        sanitizedMap[keyStr] = sanitizeForLoggingInternal(value, visited);
-      }
+      const sanitizedValue = LOWER_SENSITIVE_SET.has(keyLower)
+        ? REDACTED
+        : sanitizeForLoggingInternal(value, visited);
+      sanitizedEntries.push({
+        key: keyStr,
+        value: sanitizedValue,
+        keyType: typeof key,
+      });
     }
     visited.delete(data);
-    return sanitizedMap;
+    return sanitizedEntries;
   }
 
   if (data instanceof Set) {
@@ -119,11 +124,10 @@ function sanitizeForLoggingInternal(data: unknown, visited: WeakSet<object>): un
 
     if (isSensitive) {
       sanitized[key] = REDACTED;
-    } else if (typeof value === "object" && value !== null) {
-      // Рекурсивная обработка вложенных объектов
-      sanitized[key] = sanitizeForLoggingInternal(value, visited);
     } else {
-      sanitized[key] = value;
+      // Унифицированная обработка - всегда делегируем sanitizeForLoggingInternal
+      // Он корректно обработает примитивы, объекты, массивы и специальные типы
+      sanitized[key] = sanitizeForLoggingInternal(value, visited);
     }
   }
   visited.delete(data);

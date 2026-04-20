@@ -1,4 +1,4 @@
-export { CallMetaHeader } from "./call-meta-header";
-export { CallSidebar } from "./call-sidebar";
-export { Metrics } from "./metrics";
-export { RecommendationsModal } from "./recommendations-modal";
+export { default as CallMetaHeader } from "./call-meta-header";
+export { default as CallSidebar } from "./call-sidebar";
+export { default as Metrics } from "./metrics";
+export { default as RecommendationsModal } from "./recommendations-modal";

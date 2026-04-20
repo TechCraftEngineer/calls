@@ -26,16 +26,19 @@ const webhookPayloadSchema = z
     type: z.string().optional(),
     phone: z.string().optional(),
     eventId: z
-      .union([z.string().regex(EVENT_ID_REGEX, "Некорректный формат eventId"), z.null()])
-      .optional()
+      .string()
+      .regex(EVENT_ID_REGEX, "Некорректный формат eventId")
+      .nullish()
       .transform((v) => v ?? undefined),
     id: z
-      .union([z.string().regex(EVENT_ID_REGEX, "Некорректный формат id"), z.null()])
-      .optional()
+      .string()
+      .regex(EVENT_ID_REGEX, "Некорректный формат id")
+      .nullish()
       .transform((v) => v ?? undefined),
     uid: z
-      .union([z.string().regex(EVENT_ID_REGEX, "Некорректный формат uid"), z.null()])
-      .optional()
+      .string()
+      .regex(EVENT_ID_REGEX, "Некорректный формат uid")
+      .nullish()
       .transform((v) => v ?? undefined),
   })
   .loose();

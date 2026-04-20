@@ -52,7 +52,10 @@ const logger = createLogger("transcribe-call");
  * Выполняет runtime проверку обязательных методов.
  */
 function ensureStepRunner(step: unknown): asserts step is StepRunner {
-  if (step === null || typeof step !== "object") {
+  if (step === null) {
+    throw new Error("Неверный шаг: ожидается объект, получен null");
+  }
+  if (typeof step !== "object") {
     throw new Error(`Неверный шаг: ожидается объект, получен ${typeof step}`);
   }
 
@@ -113,11 +116,8 @@ export const transcribeCallFn = inngest.createFunction(
     );
 
     // === ШАГ 6: Асинхронная полная транскрибация (callback модель) ===
-    const fullTranscription = await asyncTranscriptionWithCallback(
-      pipelineAudio,
-      callId,
-      ensureStepRunner(step),
-    );
+    ensureStepRunner(step);
+    const fullTranscription = await asyncTranscriptionWithCallback(pipelineAudio, callId, step);
 
     // Сохраняем для использования в fallback
     const fullTranscript = fullTranscription.transcript;
@@ -140,11 +140,12 @@ export const transcribeCallFn = inngest.createFunction(
     }
 
     // === ШАГ 8: Диаризация через Speaker Embeddings (асинхронная) ===
+    ensureStepRunner(step);
     const speakerDiarizationResult = await speakerDiarizationWithCallback(
       pipelineAudio,
       callId,
       fullTranscription.segments || [],
-      ensureStepRunner(step),
+      step,
     );
 
     logger.info("Результат диаризации Speaker Embeddings", {
@@ -193,11 +194,12 @@ export const transcribeCallFn = inngest.createFunction(
         throw new Error("Нет сегментов для диаризации");
       }
 
+      ensureStepRunner(step);
       diarizeResult = await asyncDiarizedTranscriptionWithCallback(
         pipelineAudio,
         callId,
         segmentsForDiarization,
-        ensureStepRunner(step),
+        step,
       );
     } catch (diarizationError) {
       logger.error(
