@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, Card, CardContent, CardHeader, CardTitle, Separator } from "@calls/ui";
-import { CallWaveformPlayer } from "./call-waveform-player";
+import { CallWaveformPlayer } from "../audio-players/call-waveform-player";
 
 interface EvaluationDetail {
   id: string;

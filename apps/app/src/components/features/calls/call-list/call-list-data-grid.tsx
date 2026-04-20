@@ -26,7 +26,7 @@ import { useWorkspace } from "@/components/features/workspaces/workspace-provide
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import { useORPC } from "@/orpc/react";
 import CallDetailModal from "../call-detail-modal";
-import RecommendationsModal from "../recommendations-modal";
+import RecommendationsModal from "../shared/recommendations-modal";
 import { BulkDeleteConfirmModal } from "./bulk-delete-confirm-modal";
 import { getCallListColumns } from "./call-list-columns";
 import { CallListEmpty } from "./call-list-empty";

@@ -5,14 +5,14 @@ import { Button, Card, CardContent, CardHeader } from "@calls/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import AudioPlayerModal from "@/components/features/calls/audio-player-modal";
+import AudioPlayerModal from "@/components/features/calls/audio-players/audio-player-modal";
 import { CallListDataGrid } from "@/components/features/calls/call-list/call-list-data-grid";
 import type { CallWithDetails } from "@/components/features/calls/call-list/types";
 import {
   CallsFilters,
   type CallsFiltersState,
   type ManagerOption,
-} from "@/components/features/calls/calls-filters";
+} from "@/components/features/calls/filters/calls-filters";
 import { PAGINATION_CONSTANTS } from "@/constants/pagination";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useSession } from "@/lib/better-auth";
