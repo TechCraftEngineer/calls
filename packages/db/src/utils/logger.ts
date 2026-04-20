@@ -6,6 +6,7 @@
 const SENSITIVE_KEYS = new Set([
   "password",
   "passwordHash",
+  "password_hash",
   "token",
   "secret",
   "apiKey",
@@ -62,26 +63,38 @@ function sanitizeForLoggingInternal(data: unknown, visited: WeakSet<object>): un
   }
 
   if (data instanceof Error) {
-    return {
+    visited.add(data);
+    const result = {
       name: data.name,
       message: data.message,
       stack: data.stack,
       cause: data.cause ? sanitizeForLoggingInternal(data.cause, visited) : undefined,
     };
+    visited.delete(data);
+    return result;
   }
 
   if (data instanceof Map) {
     visited.add(data);
     const sanitizedMap: Record<string, unknown> = {};
     for (const [key, value] of data.entries()) {
-      sanitizedMap[String(key)] = sanitizeForLoggingInternal(value, visited);
+      const keyStr = String(key);
+      const keyLower = keyStr.toLowerCase();
+      if (LOWER_SENSITIVE_SET.has(keyLower)) {
+        sanitizedMap[keyStr] = REDACTED;
+      } else {
+        sanitizedMap[keyStr] = sanitizeForLoggingInternal(value, visited);
+      }
     }
+    visited.delete(data);
     return sanitizedMap;
   }
 
   if (data instanceof Set) {
     visited.add(data);
-    return Array.from(data).map((item) => sanitizeForLoggingInternal(item, visited));
+    const result = Array.from(data).map((item) => sanitizeForLoggingInternal(item, visited));
+    visited.delete(data);
+    return result;
   }
 
   if (Buffer.isBuffer(data)) {
@@ -92,6 +105,7 @@ function sanitizeForLoggingInternal(data: unknown, visited: WeakSet<object>): un
   if (Array.isArray(data)) {
     visited.add(data);
     const result = data.map((item) => sanitizeForLoggingInternal(item, visited));
+    visited.delete(data);
     return result;
   }
 
@@ -112,6 +126,7 @@ function sanitizeForLoggingInternal(data: unknown, visited: WeakSet<object>): un
       sanitized[key] = value;
     }
   }
+  visited.delete(data);
 
   return sanitized;
 }

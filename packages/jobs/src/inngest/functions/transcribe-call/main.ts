@@ -51,22 +51,20 @@ const logger = createLogger("transcribe-call");
  * Type guard для Inngest step - преобразует Inngest step в типизированный StepRunner.
  * Выполняет runtime проверку обязательных методов.
  */
-function ensureStepRunner(step: unknown): StepRunner {
+function ensureStepRunner(step: unknown): asserts step is StepRunner {
   if (step === null || typeof step !== "object") {
-    throw new Error("Invalid step: expected object, got " + typeof step);
+    throw new Error(`Неверный шаг: ожидается объект, получен ${typeof step}`);
   }
 
   const s = step as Record<string, unknown>;
 
   // Проверяем наличие и тип методов run и waitForEvent
   if (typeof s.run !== "function") {
-    throw new Error("Invalid step: missing or invalid 'run' method");
+    throw new Error("Неверный шаг: отсутствует или некорректен метод 'run'");
   }
   if (typeof s.waitForEvent !== "function") {
-    throw new Error("Invalid step: missing or invalid 'waitForEvent' method");
+    throw new Error("Неверный шаг: отсутствует или некорректен метод 'waitForEvent'");
   }
-
-  return step as StepRunner;
 }
 
 export const transcribeCallFn = inngest.createFunction(

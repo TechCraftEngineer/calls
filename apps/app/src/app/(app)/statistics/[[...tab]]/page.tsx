@@ -6,7 +6,7 @@ import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/reac
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import KpiTable from "@/components/features/calls/kpi-table";
+import KpiTable from "@/components/features/calls/kpi/kpi-table";
 import MonthlyGridTable from "@/components/features/kpi/monthly-grid-table";
 import { ReportSettingsPanel } from "@/components/features/settings";
 import { useWorkspace } from "@/components/features/workspaces/workspace-provider";

@@ -25,9 +25,18 @@ const webhookPayloadSchema = z
     crm_token: z.string().optional(),
     type: z.string().optional(),
     phone: z.string().optional(),
-    eventId: z.string().regex(EVENT_ID_REGEX, "Некорректный формат eventId").optional(),
-    id: z.string().regex(EVENT_ID_REGEX, "Некорректный формат id").optional(),
-    uid: z.string().regex(EVENT_ID_REGEX, "Некорректный формат uid").optional(),
+    eventId: z
+      .union([z.string().regex(EVENT_ID_REGEX, "Некорректный формат eventId"), z.null()])
+      .optional()
+      .transform((v) => v ?? undefined),
+    id: z
+      .union([z.string().regex(EVENT_ID_REGEX, "Некорректный формат id"), z.null()])
+      .optional()
+      .transform((v) => v ?? undefined),
+    uid: z
+      .union([z.string().regex(EVENT_ID_REGEX, "Некорректный формат uid"), z.null()])
+      .optional()
+      .transform((v) => v ?? undefined),
   })
   .loose();
 
@@ -164,7 +173,8 @@ const handlePbxWebhook = async (c: Context) => {
   const eventType = `${command}:${eventSubtype}`;
 
   // Получаем eventId из валидированного payload (Zod уже проверил формат)
-  const eventId = parsedPayload.data.eventId ?? parsedPayload.data.id ?? parsedPayload.data.uid ?? null;
+  const eventId =
+    parsedPayload.data.eventId ?? parsedPayload.data.id ?? parsedPayload.data.uid ?? null;
 
   await pbxService.recordWebhookEvent({
     workspaceId,

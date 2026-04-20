@@ -16,7 +16,7 @@ import {
 } from "@calls/ui";
 import { Download, MessageSquare } from "lucide-react";
 import sanitizeHtml from "sanitize-html";
-import { AudioComparisonWaveformPlayer } from "../audio-comparison-waveform-player";
+import { AudioComparisonWaveformPlayer } from "../audio-players/audio-comparison-waveform-player";
 import type { TranscriptDetail } from "./types";
 
 interface Message {

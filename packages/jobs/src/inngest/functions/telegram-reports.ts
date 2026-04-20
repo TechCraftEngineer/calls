@@ -173,7 +173,7 @@ export const telegramReportsFn = inngest.createFunction(
           const excludePhoneNumbers = ftpSettings.excludePhoneNumbers ?? [];
 
           for (const r of recipients) {
-            // Skip if user-level or workspace-level skipWeekends is enabled and it's a weekend
+            // Пропускаем если на уровне пользователя или workspace включён skipWeekends и сейчас выходной
             const shouldSkipWeekend = r.skipWeekends || schedule.reportSkipWeekends;
             if (shouldSkipWeekend && weekend) continue;
 
