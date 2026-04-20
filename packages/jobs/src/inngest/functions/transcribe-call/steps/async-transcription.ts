@@ -31,13 +31,15 @@ function escapeForCel(value: string): string {
  * Гарантирует что результат соответствует SyncTranscriptionResult.segments.
  */
 function normalizeSegments(
-  segments: Array<{
-    text: string;
-    speaker?: string;
-    start?: number;
-    end?: number;
-    confidence?: number;
-  }> | undefined,
+  segments:
+    | Array<{
+        text: string;
+        speaker?: string;
+        start?: number;
+        end?: number;
+        confidence?: number;
+      }>
+    | undefined,
 ): Array<{ speaker: string; start: number; end: number; text: string }> {
   if (!segments || segments.length === 0) {
     return [];
@@ -71,7 +73,7 @@ export async function asyncTranscriptionWithCallback(
     throw new Error(
       `Invalid step parameter in asyncTranscriptionWithCallback: ${typeof step}. ` +
         `step.run is ${typeof step?.run}. ` +
-        `This may indicate a bundling issue or incorrect function call.`
+        `This may indicate a bundling issue or incorrect function call.`,
     );
   }
 
@@ -124,7 +126,7 @@ export async function asyncTranscriptionWithCallback(
   });
 
   // Шаг 3: Обрабатываем результат
-  return (await step.run("asr/process-result", async () => {
+  return await step.run("asr/process-result", async () => {
     if (!completedEvent) {
       // Таймаут waitForEvent - пробуем получить результат напрямую
       logger.warn(
@@ -195,7 +197,7 @@ export async function asyncTranscriptionWithCallback(
       processingTimeMs: (eventData.result.processing_time ?? 0) * 1000,
       taskId,
     };
-  }));
+  });
 }
 
 /**
@@ -213,12 +215,12 @@ export async function asyncDiarizedTranscriptionWithCallback(
     throw new Error(
       `Invalid step parameter in asyncDiarizedTranscriptionWithCallback: ${typeof step}. ` +
         `step.run is ${typeof step?.run}. ` +
-        `This may indicate a bundling issue or incorrect function call.`
+        `This may indicate a bundling issue or incorrect function call.`,
     );
   }
 
   // Шаг 1: Запускаем асинхронную диаризированную транскрибацию
-  const startResult = (await step.run("asr/async-diarized-start", async () => {
+  const startResult = await step.run("asr/async-diarized-start", async () => {
     const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
 
     logger.info("Запуск асинхронной диаризированной транскрибации", {
@@ -242,7 +244,7 @@ export async function asyncDiarizedTranscriptionWithCallback(
     });
 
     return result;
-  }));
+  });
   const { taskId } = startResult;
 
   // Type definition для события завершения диаризированной транскрипции
@@ -268,14 +270,17 @@ export async function asyncDiarizedTranscriptionWithCallback(
   };
 
   // Шаг 2: Ожидаем событие завершения от GigaAM сервиса
-  const completedEvent = await step.waitForEvent<DiarizedCompletedEvent>("asr/wait-for-diarized-completion", {
-    event: "giga-am/transcription.completed",
-    timeout: "60m", // 60 минут максимальное ожидание
-    if: `async.data.task_id == '${escapeForCel(taskId)}'`,
-  });
+  const completedEvent = await step.waitForEvent<DiarizedCompletedEvent>(
+    "asr/wait-for-diarized-completion",
+    {
+      event: "giga-am/transcription.completed",
+      timeout: "60m", // 60 минут максимальное ожидание
+      if: `async.data.task_id == '${escapeForCel(taskId)}'`,
+    },
+  );
 
   // Шаг 3: Обрабатываем результат
-  return (await step.run("asr/process-diarized-result", async () => {
+  return await step.run("asr/process-diarized-result", async () => {
     if (!completedEvent) {
       // Таймаут waitForEvent - пробуем получить результат напрямую (как в asyncTranscriptionWithCallback)
       logger.warn(
@@ -361,5 +366,5 @@ export async function asyncDiarizedTranscriptionWithCallback(
       diarizationSuccess: true,
       diarizationFailed: false,
     };
-  }));
+  });
 }

@@ -29,7 +29,7 @@ interface TranscriptPanelProps {
   onDownload: () => void;
 }
 
-export default function TranscriptPanel({
+export function TranscriptPanel({
   messages,
   hasRawText,
   showRaw,

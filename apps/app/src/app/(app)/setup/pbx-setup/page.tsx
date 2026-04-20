@@ -47,9 +47,9 @@ export default function PbxSetupPage() {
       onSuccess: (_data, variables) => {
         queryClient.invalidateQueries({
           queryKey: orpc.workspaces.getSetupProgress.queryKey({
-            input:{
-             workspaceId: variables.workspaceId,
-            }
+            input: {
+              workspaceId: variables.workspaceId,
+            },
           }),
         });
         router.push(paths.setup.directory);
@@ -59,8 +59,8 @@ export default function PbxSetupPage() {
         queryClient.invalidateQueries({
           queryKey: orpc.workspaces.getSetupProgress.queryKey({
             input: {
-            workspaceId: variables.workspaceId,
-            }
+              workspaceId: variables.workspaceId,
+            },
           }),
         });
         toast.error("Не удалось сохранить прогресс настройки");

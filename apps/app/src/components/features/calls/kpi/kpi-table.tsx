@@ -709,7 +709,7 @@ export default function KpiTable() {
             column={column}
             title="Итого к выплате"
             tooltip="Общая сумма к выплате: оклад + начисленный бонус за период"
-            className="min-w-28"
+            className="min-w-40"
           />
         ),
         cell: ({ row }) => (

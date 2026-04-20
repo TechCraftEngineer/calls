@@ -48,7 +48,7 @@ export async function speakerDiarizationWithCallback(
     throw new Error(
       `Invalid step parameter in speakerDiarizationWithCallback: ${typeof step}. ` +
         `step.run is ${typeof step?.run}. ` +
-        `This may indicate a bundling issue or incorrect function call.`
+        `This may indicate a bundling issue or incorrect function call.`,
     );
   }
 
@@ -72,7 +72,7 @@ export async function speakerDiarizationWithCallback(
   }
 
   // Шаг 1: Запускаем асинхронную диаризацию
-  const startResult = (await step.run("speaker-embeddings/async-start", async () => {
+  const startResult = await step.run("speaker-embeddings/async-start", async () => {
     const { buffer, filename } = await downloadAudioFile(pipelineAudio.preprocessedFileId);
 
     // Определяем примерное количество спикеров на основе сегментов
@@ -104,7 +104,7 @@ export async function speakerDiarizationWithCallback(
     });
 
     return { success: true, taskId: result.taskId };
-  }));
+  });
   const { taskId, success, error } = startResult;
 
   if (!success || !taskId) {
@@ -137,14 +137,17 @@ export async function speakerDiarizationWithCallback(
   };
 
   // Шаг 2: Ожидаем событие завершения от Speaker Embeddings сервиса
-  const completedEvent = await step.waitForEvent<SpeakerEmbeddingCompletedEvent>("speaker-embeddings/wait-for-completion", {
-    event: "speaker-embeddings/diarization.completed",
-    timeout: "60m", // 60 минут максимальное ожидание
-    if: `async.data.task_id == '${escapeForCel(taskId)}'`,
-  });
+  const completedEvent = await step.waitForEvent<SpeakerEmbeddingCompletedEvent>(
+    "speaker-embeddings/wait-for-completion",
+    {
+      event: "speaker-embeddings/diarization.completed",
+      timeout: "60m", // 60 минут максимальное ожидание
+      if: `async.data.task_id == '${escapeForCel(taskId)}'`,
+    },
+  );
 
   // Шаг 3: Обрабатываем результат
-  return (await step.run("speaker-embeddings/process-result", async () => {
+  return await step.run("speaker-embeddings/process-result", async () => {
     if (!completedEvent) {
       logger.warn("Таймаут ожидания события диаризации", { callId, taskId });
       return {
@@ -210,5 +213,5 @@ export async function speakerDiarizationWithCallback(
       processingTimeMs: eventData.result?.processingTimeMs || 0,
       segments: finalSegments,
     };
-  }));
+  });
 }

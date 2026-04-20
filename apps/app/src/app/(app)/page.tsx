@@ -5,7 +5,7 @@ import { Button, Card, CardContent, CardHeader } from "@calls/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import AudioPlayerModal from "@/components/features/calls/audio-players/audio-player-modal";
+import { AudioPlayerModal } from "@/components/features/calls/audio-players/audio-player-modal";
 import { CallListDataGrid } from "@/components/features/calls/call-list/call-list-data-grid";
 import type { CallWithDetails } from "@/components/features/calls/call-list/types";
 import {

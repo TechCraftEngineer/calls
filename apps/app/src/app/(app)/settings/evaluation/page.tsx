@@ -143,7 +143,7 @@ function EvaluationSettingsContent() {
   useEffect(() => {
     // Ждём загрузки workspace перед проверкой прав
     if (workspaceLoading) return;
-    
+
     if (!isWorkspaceAdmin) {
       router.push(paths.forbidden);
     }

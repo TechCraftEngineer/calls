@@ -52,7 +52,7 @@ export default function SettingsPbxProvidersPage() {
   useEffect(() => {
     // Ждём загрузки workspace перед проверкой прав
     if (workspaceLoading) return;
-    
+
     if (!isWorkspaceAdmin) {
       router.replace(paths.forbidden);
       return;
