@@ -122,5 +122,5 @@ export CLUSTERING_CONFIDENCE_THRESHOLD=0.6
 ### Переменные окружения
 
 - `TRANSCRIPTION_TIMEOUT` - Таймаут распознавания в секундах (по умолчанию 900 = 15 минут)
-- `MODEL_LOADING_TIMEOUT` - Таймаут загрузки модели в секундах (по умолчанию 600 = 10 минут)
+- `MODEL_LOADING_TIMEOUT` - Таймаут загрузки модели в секундах (по умолчанию 1800 = 30 минут)
 - `HF_TOKEN` - Токен для доступа к pyannote/segmentation-3.0
