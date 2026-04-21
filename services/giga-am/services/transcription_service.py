@@ -89,7 +89,16 @@ class TranscriptionService:
                 elapsed = time.time() - wait_start
                 attempt_timeout = max(0, settings.model_loading_timeout - elapsed)
                 if attempt_timeout <= 0:
-                    break  # Бюджет времени исчерпан
+                    # Бюджет времени исчерпан - бросаем GigaTimeoutError
+                    total_elapsed = time.time() - wait_start
+                    raise GigaTimeoutError(
+                        f"Превышено время ожидания загрузки модели ({total_elapsed:.1f} сек). "
+                        f"Возможно, модель скачивается с HuggingFace или сервер перегружен. "
+                        f"Попробуйте повторить запрос позже.",
+                        timeout_seconds=settings.model_loading_timeout,
+                        operation="model_loading",
+                        elapsed_seconds=int(total_elapsed)
+                    )
                 
                 if self._initialization_event.wait(timeout=attempt_timeout):
                     # Загрузка завершена - пересчитываем elapsed после wait
@@ -127,7 +136,15 @@ class TranscriptionService:
                         operation="model_loading",
                         elapsed_seconds=int(total_elapsed)
                     )
-            return
+            # Если вышли из цикла без возврата/исключения - это тоже таймаут
+            total_elapsed = time.time() - wait_start
+            raise GigaTimeoutError(
+                f"Превышено время ожидания загрузки модели ({total_elapsed:.1f} сек). "
+                f"Возможно, модель скачивается с HuggingFace или сервер перегружен. ",
+                timeout_seconds=settings.model_loading_timeout,
+                operation="model_loading",
+                elapsed_seconds=int(total_elapsed)
+            )
         
         # Если дошли сюда, значит нужно загрузить модель синхронно
         with self._loading_lock:

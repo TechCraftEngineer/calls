@@ -17,8 +17,8 @@ const DEFAULT_SYSTEM_PROMPT = `Определи роль каждого спик
 ВЫВОД (строго JSON):
 {
   "speakers": [
-    {"speakerId": "Спикер 1", "role": "operator|client", "name": "Имя или пусто"},
-    {"speakerId": "Спикер 2", "role": "operator|client", "name": ""}
+    {"speakerId": "Спикер 1", "role": "operator", "name": "Имя или пусто"},
+    {"speakerId": "Спикер 2", "role": "client", "name": ""}
   ],
   "operatorName": "Имя оператора или пусто",
   "customerName": "Имя клиента или пусто"
@@ -39,8 +39,8 @@ const DEFAULT_SYSTEM_PROMPT = `Определи роль каждого спик
 - Извлекай ТОЛЬКО явно названные имена из реплик
 - Формат: имя или "Имя Фамилия"
 - НЕ транслитерируй, НЕ переводи
-- "Вы Илья?" → customerName: "Илья"
-- "Меня зовут Мария" → operatorName: "Мария"
+- "Вы Илья?" → customerName: "Илья" (клиент, если оператор спрашивает)
+- "Меня зовут Мария" → operatorName: "Мария" (если говорит оператор), customerName: "Мария" (если говорит клиент)
 
 ПРАВИЛА:
 - Каждый speakerId в speakers должен иметь ровно одну роль
@@ -48,7 +48,7 @@ const DEFAULT_SYSTEM_PROMPT = `Определи роль каждого спик
 - Имя только при явном упоминании, иначе ""`;
 
 const FALLBACK_SYSTEM_PROMPT = `Определи роли спикеров в коротком разговоре.
-Верни JSON: {"speakers": [{"speakerId": "...", "role": "operator|client", "name": ""}], "operatorName": "", "customerName": ""}
+Верни JSON: {"speakers": [{"speakerId": "...", "role": "operator", "name": ""}, {"speakerId": "...", "role": "client", "name": ""}], "operatorName": "", "customerName": ""}
 Правило: кто первым представляет компанию или задаёт вопросы — operator, кто отвечает на вопросы — client.`;
 
 const speakerSchema = z.object({

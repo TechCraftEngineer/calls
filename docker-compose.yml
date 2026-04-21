@@ -71,7 +71,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      POSTGRES_URL: postgres://postgres:password@postgres:5432/acme
+      POSTGRES_URL: postgres://postgres:postgres@postgres:5432/acme
     command: ["bun", "run", "db:migrate"]
 
   # New backend server (TypeScript + Hono + oRPC)
@@ -89,7 +89,7 @@ services:
       minio:
         condition: service_started
     environment:
-      POSTGRES_URL: postgres://postgres:password@postgres:5432/acme
+      POSTGRES_URL: postgres://postgres:postgres@postgres:5432/acme
       BACKEND_PORT: 8000
       CORS_ORIGINS: http://localhost:3000
       DEPLOYMENT_ENV: docker
@@ -120,7 +120,7 @@ services:
       audio-enhancer:
         condition: service_started
     environment:
-      POSTGRES_URL: postgres://postgres:password@postgres:5432/acme
+      POSTGRES_URL: postgres://postgres:postgres@postgres:5432/acme
       JOBS_PORT: 8000
       DEPLOYMENT_ENV: docker
       AWS_S3_ENDPOINT: http://minio:9002

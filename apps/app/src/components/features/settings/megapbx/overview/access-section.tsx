@@ -142,7 +142,7 @@ export function AccessSection({
                         id="megapbx-sync-from-date"
                         value={field.value ?? ""}
                         onChange={field.onChange}
-                        placeholder="ГГГГ-ММ-ДД"
+                        placeholder="2023-12-31…"
                         minDate={minDate}
                       />
                     </FormControl>

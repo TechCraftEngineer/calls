@@ -270,15 +270,19 @@ async function processChunk(
     },
   });
 
-  // Преобразуем результат в AsrSegment[]
+  // Преобразуем результат в AsrSegment[], используя канонические значения из оригинальных сегментов
   type MergedSegment = z.infer<typeof MergedOutputSchema>["segments"][number];
-  const segments: AsrSegment[] = output.segments.map((seg: MergedSegment) => ({
-    start: seg.start,
-    end: seg.end,
-    speaker: seg.speaker,
-    text: seg.text,
-    confidence: seg.confidence,
-  }));
+  const segments: AsrSegment[] = output.segments.map((seg: MergedSegment, index: number) => {
+    // Используем оригинальные timestamp и speaker из chunk.segments по индексу
+    const originalSeg = chunk.segments[index];
+    return {
+      start: originalSeg?.start ?? seg.start,
+      end: originalSeg?.end ?? seg.end,
+      speaker: originalSeg?.speaker ?? seg.speaker,
+      text: seg.text, // Текст берем из LLM (исправленный)
+      confidence: seg.confidence ?? originalSeg?.confidence,
+    };
+  });
 
   const chunkDurationMs = Date.now() - chunkStartTime;
   logger.info(`Chunk ${chunkIndex + 1}/${totalChunks} completed`, {
@@ -515,15 +519,19 @@ export async function mergeAsrResultsWithLLM(
     },
   });
 
-  // Преобразуем результат в AsrSegment[]
+  // Преобразуем результат в AsrSegment[], используя канонические значения из оригинальных сегментов
   type MergedSegment = z.infer<typeof MergedOutputSchema>["segments"][number];
-  const segments: AsrSegment[] = output.segments.map((seg: MergedSegment) => ({
-    start: seg.start,
-    end: seg.end,
-    speaker: seg.speaker,
-    text: seg.text,
-    confidence: seg.confidence,
-  }));
+  const segments: AsrSegment[] = output.segments.map((seg: MergedSegment, index: number) => {
+    // Используем оригинальные timestamp и speaker из diarized.segments по индексу
+    const originalSeg = diarized.segments[index];
+    return {
+      start: originalSeg?.start ?? seg.start,
+      end: originalSeg?.end ?? seg.end,
+      speaker: originalSeg?.speaker ?? seg.speaker,
+      text: seg.text, // Текст берем из LLM (исправленный)
+      confidence: seg.confidence ?? originalSeg?.confidence,
+    };
+  });
 
   const mergeDurationMs = Date.now() - mergeStartTime;
   logger.info("ASR merge completed", {

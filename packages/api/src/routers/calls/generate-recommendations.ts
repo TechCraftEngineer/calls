@@ -7,6 +7,7 @@ import {
   OPENROUTER_API_KEY,
 } from "@calls/config";
 import type { Call, callsService } from "@calls/db";
+import { filesService } from "@calls/db";
 import { buildCompanyContext, companyContextSchema, replaceSpeakersWithRoles } from "@calls/shared";
 import { ORPCError } from "@orpc/server";
 import { z } from "zod";
@@ -62,7 +63,7 @@ function parseRecommendationsJson(text: string): string[] {
         (x): x is string => typeof x === "string" && x.trim().length > 0,
       );
       if (validRecommendations.length > 0) {
-        return validRecommendations.map((rec) => rec.trim());
+        return validRecommendations.slice(0, 5).map((rec) => rec.trim());
       }
     }
   } catch (error) {
@@ -131,7 +132,14 @@ export async function generateRecommendations(
     if (evaluation?.managerFeedback)
       contextParts.push(`Обратная связь: ${evaluation.managerFeedback}`);
 
-    const userMessage = `Транскрипт звонка:
+    // Получаем длительность из файла, если есть fileId
+    let durationMinutes = 0;
+    if (call.fileId) {
+      const file = await filesService.getFileById(call.fileId);
+      durationMinutes = Math.round((file?.durationSeconds ?? 0) / 60);
+    }
+
+    const userMessage = `Транскрипт звонка${durationMinutes > 0 ? ` (длительность: ${durationMinutes} мин)` : ""}:
 ---
 ${finalTranscriptText}
 ---
