@@ -85,8 +85,11 @@ class TranscriptionService:
             )
             
             for attempt in range(max_retries + 1):
-                # Даем каждой попытке полный таймаут для ожидания
-                attempt_timeout = settings.model_loading_timeout
+                # Вычисляем оставшийся бюджет времени для текущей попытки
+                elapsed = time.time() - wait_start
+                attempt_timeout = max(0, settings.model_loading_timeout - elapsed)
+                if attempt_timeout <= 0:
+                    break  # Бюджет времени исчерпан
                 
                 if self._initialization_event.wait(timeout=attempt_timeout):
                     # Загрузка завершена - пересчитываем elapsed после wait
@@ -109,18 +112,20 @@ class TranscriptionService:
                 # Таймаут - пересчитываем elapsed и логируем
                 elapsed = time.time() - wait_start
                 if attempt < max_retries:
+                    remaining = max(0, settings.model_loading_timeout - elapsed)
                     logger.warning(
                         f"Таймаут ожидания загрузки модели ({elapsed:.1f} сек), "
-                        f"повторная попытка {attempt + 1}/{max_retries} (каждая попытка получает полный таймаут {settings.model_loading_timeout} сек)..."
+                        f"повторная попытка {attempt + 1}/{max_retries} (оставшийся бюджет: {remaining:.1f} сек)..."
                     )
                 else:
+                    total_elapsed = time.time() - wait_start
                     raise GigaTimeoutError(
-                        f"Превышено время ожидания загрузки модели ({elapsed:.1f} сек). "
+                        f"Превышено время ожидания загрузки модели ({total_elapsed:.1f} сек). "
                         f"Возможно, модель скачивается с HuggingFace или сервер перегружен. "
                         f"Попробуйте повторить запрос позже.",
                         timeout_seconds=settings.model_loading_timeout,
                         operation="model_loading",
-                        elapsed_seconds=int(elapsed)
+                        elapsed_seconds=int(total_elapsed)
                     )
             return
         

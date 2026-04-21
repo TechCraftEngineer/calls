@@ -70,10 +70,9 @@ export async function asyncTranscriptionWithCallback(
 ): Promise<AsyncTranscriptionResult> {
   // Защита от undefined step (проблема с бандлингом)
   if (!step || typeof step.run !== "function" || typeof step.waitForEvent !== "function") {
-    const stepObj = step as StepRunner | null;
     throw new Error(
       `Неверный параметр step в asyncTranscriptionWithCallback: ${typeof step}. ` +
-        `step.run = ${typeof step?.run}, step.waitForEvent = ${typeof stepObj?.waitForEvent}. ` +
+        `step.run = ${typeof step?.run}, step.waitForEvent = ${typeof step?.waitForEvent}. ` +
         `Возможно проблема с бандлингом или неверным вызовом.`,
     );
   }
@@ -213,10 +212,9 @@ export async function asyncDiarizedTranscriptionWithCallback(
 ): Promise<AsyncTranscriptionResult> {
   // Защита от undefined step (проблема с бандлингом)
   if (!step || typeof step.run !== "function" || typeof step.waitForEvent !== "function") {
-    const stepObj = step as StepRunner | null;
     throw new Error(
       `Неверный параметр step в asyncDiarizedTranscriptionWithCallback: ${typeof step}. ` +
-        `step.run = ${typeof step?.run}, step.waitForEvent = ${typeof stepObj?.waitForEvent}. ` +
+        `step.run = ${typeof step?.run}, step.waitForEvent = ${typeof step?.waitForEvent}. ` +
         `Возможно проблема с бандлингом или неверным вызовом.`,
     );
   }

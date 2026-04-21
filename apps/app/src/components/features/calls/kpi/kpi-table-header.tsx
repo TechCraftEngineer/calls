@@ -22,7 +22,7 @@ export function KpiTableHeader({ label, tooltip, children }: KpiTableHeaderProps
         <TooltipTrigger asChild>
           <button
             type="button"
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring touch-action-manipulation"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring touch-manipulation"
             aria-label="Показать информацию о KPI"
           >
             <HelpCircle className="size-3.5 text-muted-foreground" aria-hidden="true" />

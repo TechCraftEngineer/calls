@@ -131,7 +131,7 @@ export function WebhookSection({
               </FieldTitle>
             </FieldContent>
             <Switch
-              id="megapbx_webhooks_enabled"
+              id="megapbx-webhooks-enabled"
               size="sm"
               checked={webhooksEnabled}
               disabled={savingWebhooksEnabled}
