@@ -51,7 +51,7 @@ export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>;
 
 // Схема для создания пользователя
 export const createUserSchema = z.object({
-  email: z.string().email("Введите корректный email"),
+  email: z.email("Введите корректный email"),
   password: passwordValidation,
   givenName: z.string().min(1, "Имя обязательно"),
   familyName: z.string().optional(),
@@ -67,7 +67,7 @@ export const updateUserSchema = z.object({
   familyName: z.string().optional(),
   internalExtensions: z.string().optional(),
   mobilePhones: z.string().optional(),
-  email: z.string().email("Введите корректный email").optional(),
+  email: z.email("Введите корректный email").optional(),
   is_active: z.boolean().optional(),
 });
 
@@ -76,7 +76,7 @@ export type UpdateUserData = z.infer<typeof updateUserSchema>;
 // Схема для принятия приглашения (создание аккаунта по ссылке)
 export const inviteAcceptSchema = z.object({
   name: z.string().optional(),
-  email: z.string().email("Введите корректный email").optional(),
+  email: z.email("Введите корректный email").optional(),
   password: passwordValidation,
 });
 
@@ -92,7 +92,7 @@ export type InviteAcceptData = z.infer<typeof inviteAcceptSchema>;
 // Схема валидации формы редактирования пользователя (подмножество полей)
 export const editUserFormSchema = z.object({
   givenName: z.string().min(1, "Укажите имя."),
-  email: z.union([z.string().email("Укажите корректный email адрес."), z.literal("")]).optional(),
+  email: z.union([z.email("Укажите корректный email адрес."), z.literal("")]).optional(),
   filterMinDuration: z
     .number()
     .min(0, "Минимальная длительность звонка не может быть отрицательной."),

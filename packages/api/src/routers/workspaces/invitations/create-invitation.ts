@@ -7,7 +7,7 @@ import { workspaceAdminProcedure } from "../../../orpc";
 import { workspaceIdInputSchema } from "../schemas";
 
 const createInvitationSchema = workspaceIdInputSchema.extend({
-  email: z.string().email("Некорректный email"),
+  email: z.email("Некорректный email"),
   role: z.enum(["admin", "member"]).default("member"),
 });
 

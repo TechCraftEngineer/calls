@@ -2,7 +2,7 @@ import { EVALUATION_TEMPLATE_SLUGS } from "@calls/shared";
 import { z } from "zod";
 
 export const userCreateSchema = z.object({
-  email: z.string().email("Введите корректный email"),
+  email: z.email("Введите корректный email"),
   password: z.string().min(1, "Пароль обязателен"),
   givenName: z.string().min(1, "Имя обязательно"),
   familyName: z.string().optional().default(""),
@@ -15,7 +15,7 @@ export const userUpdateSchema = z.object({
   familyName: z.string().optional().nullable(),
   internalExtensions: z.string().optional().nullable(),
   mobilePhones: z.string().optional().nullable(),
-  email: z.string().optional().nullable(),
+  email: z.email("Некорректный email").optional().nullable(),
   filterExcludeAnsweringMachine: z.boolean().optional(),
   filterMinDuration: z.number().optional(),
   filterMinReplicas: z.number().optional(),
@@ -46,7 +46,7 @@ export const updateBasicInfoSchema = z.object({
 });
 
 export const updateEmailSettingsSchema = z.object({
-  email: z.string().email("Некорректный email").optional().nullable(),
+  email: z.email("Некорректный email").optional().nullable(),
   emailDailyReport: z.boolean().optional(),
   emailWeeklyReport: z.boolean().optional(),
   emailMonthlyReport: z.boolean().optional(),

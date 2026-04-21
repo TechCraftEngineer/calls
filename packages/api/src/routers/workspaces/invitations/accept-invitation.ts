@@ -16,7 +16,7 @@ const inputSchema = z.object({
   token: z.string().min(1, "Токен приглашения обязателен"),
   password: z.string().min(8, "Пароль должен быть не менее 8 символов"),
   name: z.string().optional(),
-  email: z.string().email("Некорректный email").optional(),
+  email: z.email("Некорректный email").optional(),
 });
 
 type AuthWithContext = {

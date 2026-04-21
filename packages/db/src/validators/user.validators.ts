@@ -4,7 +4,7 @@
 
 import { z } from "zod";
 
-const emailSchema = z.string().email("Некорректный формат email").max(255);
+const emailSchema = z.email("Некорректный формат email").max(255);
 
 export interface CreateUserData {
   email: string;
