@@ -1,8 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 import { config } from "dotenv";
+import { resolve } from "path";
 
-// Загружаем переменные окружения
-config({ path: ".env.local" });
+// Загружаем переменные окружения из директории конфигурации
+config({ path: resolve(__dirname, ".env.local") });
 
 /**
  * Конфигурация Playwright для тестирования аутентификации
