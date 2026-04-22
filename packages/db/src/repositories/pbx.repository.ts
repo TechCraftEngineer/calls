@@ -406,6 +406,119 @@ export const pbxRepository = {
         ),
       );
   },
+
+  async getEmployeeReportSettings(employeeId: string) {
+    const rows = await db
+      .select()
+      .from(schema.workspacePbxEmployeeReportSettings)
+      .where(eq(schema.workspacePbxEmployeeReportSettings.employeeId, employeeId))
+      .limit(1);
+    return rows[0] ?? null;
+  },
+
+  async upsertEmployeeReportSettings(input: {
+    employeeId: string;
+    workspaceId: string;
+    email: string | null;
+    dailyReport: boolean;
+    weeklyReport: boolean;
+    monthlyReport: boolean;
+    skipWeekends: boolean;
+  }) {
+    // Verify that the employee belongs to the specified workspace
+    const employee = await db
+      .select({ workspaceId: schema.workspacePbxEmployees.workspaceId })
+      .from(schema.workspacePbxEmployees)
+      .where(eq(schema.workspacePbxEmployees.id, input.employeeId))
+      .limit(1);
+
+    if (!employee[0]) {
+      throw new Error("Employee not found");
+    }
+
+    if (employee[0].workspaceId !== input.workspaceId) {
+      throw new Error("Employee does not belong to the specified workspace");
+    }
+
+    const now = new Date();
+    const rows = await db
+      .insert(schema.workspacePbxEmployeeReportSettings)
+      .values({
+        employeeId: input.employeeId,
+        workspaceId: input.workspaceId,
+        email: input.email,
+        dailyReport: input.dailyReport,
+        weeklyReport: input.weeklyReport,
+        monthlyReport: input.monthlyReport,
+        skipWeekends: input.skipWeekends,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: schema.workspacePbxEmployeeReportSettings.employeeId,
+        set: {
+          email: input.email,
+          dailyReport: input.dailyReport,
+          weeklyReport: input.weeklyReport,
+          monthlyReport: input.monthlyReport,
+          skipWeekends: input.skipWeekends,
+          updatedAt: now,
+        },
+      })
+      .returning();
+    return rows[0];
+  },
+
+  async listEmployeeReportSettingsWithEmployees(workspaceId: string, provider: string) {
+    return db
+      .select({
+        employee: schema.workspacePbxEmployees,
+        settings: schema.workspacePbxEmployeeReportSettings,
+      })
+      .from(schema.workspacePbxEmployees)
+      .leftJoin(
+        schema.workspacePbxEmployeeReportSettings,
+        eq(schema.workspacePbxEmployees.id, schema.workspacePbxEmployeeReportSettings.employeeId),
+      )
+      .where(
+        and(
+          eq(schema.workspacePbxEmployees.workspaceId, workspaceId),
+          eq(schema.workspacePbxEmployees.provider, provider),
+        ),
+      );
+  },
+
+  async listEmployeesWithActiveReports(
+    workspaceId: string,
+    provider: string,
+    reportType: "daily" | "weekly" | "monthly",
+  ) {
+    const reportField =
+      reportType === "daily"
+        ? schema.workspacePbxEmployeeReportSettings.dailyReport
+        : reportType === "weekly"
+          ? schema.workspacePbxEmployeeReportSettings.weeklyReport
+          : schema.workspacePbxEmployeeReportSettings.monthlyReport;
+
+    return db
+      .select({
+        employee: schema.workspacePbxEmployees,
+        settings: schema.workspacePbxEmployeeReportSettings,
+      })
+      .from(schema.workspacePbxEmployees)
+      .innerJoin(
+        schema.workspacePbxEmployeeReportSettings,
+        eq(schema.workspacePbxEmployees.id, schema.workspacePbxEmployeeReportSettings.employeeId),
+      )
+      .where(
+        and(
+          eq(schema.workspacePbxEmployees.workspaceId, workspaceId),
+          eq(schema.workspacePbxEmployees.provider, provider),
+          eq(schema.workspacePbxEmployees.isActive, true),
+          eq(reportField, true),
+        ),
+      );
+  },
 };
 
 export type PbxRepository = typeof pbxRepository;

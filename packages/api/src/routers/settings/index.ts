@@ -33,6 +33,8 @@ export const settingsRouter = {
   importPbxDirectory: pbxRouter.importPbxDirectory,
   linkEmployee: pbxRouter.linkEmployee,
   unlinkEmployee: pbxRouter.unlinkEmployee,
+  getEmployeeReportSettings: pbxRouter.getEmployeeReportSettings,
+  updateEmployeeReportSettings: pbxRouter.updateEmployeeReportSettings,
   getEvaluationTemplates: evaluationRouter.getEvaluationTemplates,
   getEvaluationTemplate: evaluationRouter.getEvaluationTemplate,
   getEvaluationTemplateBySlug: evaluationRouter.getEvaluationTemplateBySlug,

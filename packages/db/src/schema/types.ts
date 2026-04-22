@@ -8,6 +8,7 @@ import type { userPreferences } from "./user/preferences";
 import type {
   workspaceIntegrations,
   workspaceMembers,
+  workspacePbxEmployeeReportSettings,
   workspacePbxEmployees,
   workspacePbxLinks,
   workspacePbxNumbers,
@@ -39,6 +40,10 @@ export type Workspace = typeof workspaces.$inferSelect;
 export type NewWorkspace = typeof workspaces.$inferInsert;
 export type WorkspaceMember = typeof workspaceMembers.$inferSelect;
 export type NewWorkspaceMember = typeof workspaceMembers.$inferInsert;
+export type WorkspacePbxEmployeeReportSettings =
+  typeof workspacePbxEmployeeReportSettings.$inferSelect;
+export type NewWorkspacePbxEmployeeReportSettings =
+  typeof workspacePbxEmployeeReportSettings.$inferInsert;
 export type WorkspacePbxEmployee = typeof workspacePbxEmployees.$inferSelect;
 export type NewWorkspacePbxEmployee = typeof workspacePbxEmployees.$inferInsert;
 export type WorkspacePbxNumber = typeof workspacePbxNumbers.$inferSelect;

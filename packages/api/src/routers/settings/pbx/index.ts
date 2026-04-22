@@ -1,3 +1,4 @@
+import { getEmployeeReportSettings } from "./get-employee-report-settings";
 import { getPbx } from "./get-pbx";
 import { getPbxWebhookSecret } from "./get-pbx-webhook-secret";
 import { importPbxDirectory } from "./import-pbx-directory";
@@ -9,6 +10,7 @@ import { syncPbxDirectoryRoute } from "./sync-pbx-directory";
 import { syncPbxRecordingsRoute } from "./sync-pbx-recordings";
 import { testPbx } from "./test-pbx";
 import { unlinkEmployee } from "./unlink-employee";
+import { updateEmployeeReportSettings } from "./update-employee-report-settings";
 import { updatePbx } from "./update-pbx";
 import { updatePbxAccess } from "./update-pbx-access";
 import { updatePbxExcludedNumbers } from "./update-pbx-excluded-numbers";
@@ -32,4 +34,6 @@ export const pbxRouter = {
   listPbxNumbers,
   linkEmployee,
   unlinkEmployee,
+  getEmployeeReportSettings,
+  updateEmployeeReportSettings,
 };

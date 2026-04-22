@@ -63,6 +63,7 @@ export type {
   NewWorkspaceMegaPbxWebhookEvent,
   NewWorkspaceMember,
   NewWorkspacePbxEmployee,
+  NewWorkspacePbxEmployeeReportSettings,
   NewWorkspacePbxLink,
   NewWorkspacePbxNumber,
   NewWorkspacePbxSyncState,
@@ -142,6 +143,7 @@ export {
 export type { EmailReportRecipient } from "./services/email-reports.service";
 export {
   getEmailReportRecipients,
+  getPbxEmployeeEmailReportRecipients,
   getWorkspaceIdsWithEmailReportRecipients,
 } from "./services/email-reports.service";
 export type {

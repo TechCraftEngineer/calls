@@ -21,6 +21,11 @@ export interface EmailReportRecipient {
     managedUserIds: string[];
   };
   internalNumbers?: string[] | null;
+  /**
+   * Если получатель — PBX сотрудник, а не пользователь воркспейса.
+   * В этом случае userId = employeeId.
+   */
+  isPbxEmployee?: boolean;
 }
 
 function buildReportSettings(rs: ReportSettings) {
@@ -169,6 +174,65 @@ export async function getEmailReportRecipients(
 }
 
 /**
+ * Возвращает PBX сотрудников для email-отчётов указанного типа.
+ * Для PBX сотрудников отчёты всегда персональные (isManagerReport = false).
+ */
+export async function getPbxEmployeeEmailReportRecipients(
+  workspaceId: string,
+  reportType: ReportType,
+): Promise<EmailReportRecipient[]> {
+  const reportField =
+    reportType === "daily"
+      ? schema.workspacePbxEmployeeReportSettings.dailyReport
+      : reportType === "weekly"
+        ? schema.workspacePbxEmployeeReportSettings.weeklyReport
+        : schema.workspacePbxEmployeeReportSettings.monthlyReport;
+
+  const rows = await db
+    .select({
+      employeeId: schema.workspacePbxEmployees.id,
+      email: schema.workspacePbxEmployeeReportSettings.email,
+      skipWeekends: schema.workspacePbxEmployeeReportSettings.skipWeekends,
+      extension: schema.workspacePbxEmployees.extension,
+    })
+    .from(schema.workspacePbxEmployees)
+    .innerJoin(
+      schema.workspacePbxEmployeeReportSettings,
+      eq(schema.workspacePbxEmployees.id, schema.workspacePbxEmployeeReportSettings.employeeId),
+    )
+    .where(
+      and(
+        eq(schema.workspacePbxEmployees.workspaceId, workspaceId),
+        eq(schema.workspacePbxEmployees.isActive, true),
+        eq(reportField, true),
+        sql`${schema.workspacePbxEmployeeReportSettings.email} IS NOT NULL AND trim(${schema.workspacePbxEmployeeReportSettings.email}) != ''`,
+      ),
+    );
+
+  const recipients: EmailReportRecipient[] = [];
+
+  for (const row of rows) {
+    const email = row.email?.trim();
+    if (!email) continue;
+
+    const internalNumbers = row.extension ? [row.extension] : null;
+
+    recipients.push({
+      userId: row.employeeId,
+      email,
+      reportType,
+      isManagerReport: false,
+      skipWeekends: row.skipWeekends ?? false,
+      reportSettings: { managedUserIds: [] },
+      internalNumbers,
+      isPbxEmployee: true,
+    });
+  }
+
+  return recipients;
+}
+
+/**
  * Возвращает ID воркспейсов, в которых есть хотя бы один получатель email-отчётов.
  *
  * innerJoin на schema.userWorkspaceSettings намерен: нужны только участники
@@ -176,7 +240,8 @@ export async function getEmailReportRecipients(
  * без настроек исключаются, в отличие от getEmailReportRecipients, где используется leftJoin.
  */
 export async function getWorkspaceIdsWithEmailReportRecipients(): Promise<string[]> {
-  const rows = await db
+  // Workspaces with regular users having email reports
+  const userRows = await db
     .selectDistinct({
       workspaceId: schema.workspaceMembers.workspaceId,
     })
@@ -206,5 +271,30 @@ export async function getWorkspaceIdsWithEmailReportRecipients(): Promise<string
       ),
     );
 
-  return rows.map((r) => r.workspaceId).filter((id): id is string => Boolean(id));
+  // Workspaces with PBX employees having email reports
+  const pbxRows = await db
+    .selectDistinct({
+      workspaceId: schema.workspacePbxEmployeeReportSettings.workspaceId,
+    })
+    .from(schema.workspacePbxEmployeeReportSettings)
+    .where(
+      and(
+        sql`${schema.workspacePbxEmployeeReportSettings.email} IS NOT NULL AND trim(${schema.workspacePbxEmployeeReportSettings.email}) != ''`,
+        sql`(
+          ${schema.workspacePbxEmployeeReportSettings.dailyReport} = true OR
+          ${schema.workspacePbxEmployeeReportSettings.weeklyReport} = true OR
+          ${schema.workspacePbxEmployeeReportSettings.monthlyReport} = true
+        )`,
+      ),
+    );
+
+  const workspaceIds = new Set<string>();
+  for (const row of userRows) {
+    if (row.workspaceId) workspaceIds.add(row.workspaceId);
+  }
+  for (const row of pbxRows) {
+    if (row.workspaceId) workspaceIds.add(row.workspaceId);
+  }
+
+  return Array.from(workspaceIds);
 }
