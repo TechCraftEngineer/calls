@@ -1,6 +1,6 @@
 "use client";
 
-import { getDateOneMonthAgo } from "@calls/shared/utils/date-utils";
+import { getDateOneMonthAgo } from "@calls/shared";
 import {
   Button,
   Card,

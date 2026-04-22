@@ -12,6 +12,7 @@ export { generateWorkspaceSlug } from "./slug";
 export { buildCompanyContext } from "./utils/company-context";
 export {
   formatDateInMoscow,
+  getDateOneMonthAgo,
   getDefaultSyncDateRange,
   getLastDayOfMonth,
   isWeekend,

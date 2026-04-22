@@ -43,6 +43,13 @@
       "when": 1776087827129,
       "tag": "0005_naive_brother_voodoo",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1776887178581,
+      "tag": "0006_majestic_mandrill",
+      "breakpoints": true
     }
   ]
 }
