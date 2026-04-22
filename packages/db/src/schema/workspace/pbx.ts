@@ -204,6 +204,39 @@ export const workspacePbxWebhookEvents = pgTable(
   ],
 );
 
+export const workspacePbxEmployeeReportSettings = pgTable(
+  "workspace_pbx_employee_report_settings",
+  {
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    employeeId: uuid("employee_id")
+      .notNull()
+      .references(() => workspacePbxEmployees.id, { onDelete: "cascade" }),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    email: text("email"),
+    dailyReport: boolean("daily_report").notNull().default(false),
+    weeklyReport: boolean("weekly_report").notNull().default(false),
+    monthlyReport: boolean("monthly_report").notNull().default(false),
+    skipWeekends: boolean("skip_weekends").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("workspace_pbx_employee_report_settings_employee_idx").on(table.employeeId),
+    index("workspace_pbx_employee_report_settings_workspace_idx").on(table.workspaceId),
+    unique("workspace_pbx_employee_report_settings_employee_unique").on(table.employeeId),
+  ],
+);
+
+export type WorkspacePbxEmployeeReportSettings =
+  typeof workspacePbxEmployeeReportSettings.$inferSelect;
+export type NewWorkspacePbxEmployeeReportSettings =
+  typeof workspacePbxEmployeeReportSettings.$inferInsert;
+
 export type WorkspacePbxEmployee = typeof workspacePbxEmployees.$inferSelect;
 export type NewWorkspacePbxEmployee = typeof workspacePbxEmployees.$inferInsert;
 export type WorkspacePbxNumber = typeof workspacePbxNumbers.$inferSelect;

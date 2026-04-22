@@ -5,7 +5,7 @@ import { workspaceAdminProcedure } from "../../../orpc";
 import { workspaceIdInputSchema } from "../schemas";
 
 const revokeSchema = workspaceIdInputSchema.extend({
-  invitationId: z.string().uuid(),
+  invitationId: z.uuid(),
 });
 
 export const revokeInvitation = workspaceAdminProcedure

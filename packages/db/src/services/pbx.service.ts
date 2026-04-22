@@ -446,6 +446,43 @@ export class PbxService {
       })),
     );
   }
+
+  // Employee report settings methods
+  async getEmployeeReportSettings(employeeId: string) {
+    return this.pbxRepository.getEmployeeReportSettings(employeeId);
+  }
+
+  async updateEmployeeReportSettings(input: {
+    employeeId: string;
+    workspaceId: string;
+    email: string | null;
+    dailyReport: boolean;
+    weeklyReport: boolean;
+    monthlyReport: boolean;
+    skipWeekends: boolean;
+  }) {
+    return this.pbxRepository.upsertEmployeeReportSettings({
+      ...input,
+    });
+  }
+
+  async listEmployeeReportSettingsWithEmployees(workspaceId: string) {
+    return this.pbxRepository.listEmployeeReportSettingsWithEmployees(
+      workspaceId,
+      MEGAPBX_PROVIDER,
+    );
+  }
+
+  async listEmployeesWithActiveReports(
+    workspaceId: string,
+    reportType: "daily" | "weekly" | "monthly",
+  ) {
+    return this.pbxRepository.listEmployeesWithActiveReports(
+      workspaceId,
+      MEGAPBX_PROVIDER,
+      reportType,
+    );
+  }
 }
 
 export type MegaPbxService = PbxService;

@@ -51,6 +51,7 @@ export interface FtpConnectionStatus {
 }
 
 export interface PbxEmployeeItem {
+  id: string;
   externalId: string;
   displayName: string;
   extension: string | null;

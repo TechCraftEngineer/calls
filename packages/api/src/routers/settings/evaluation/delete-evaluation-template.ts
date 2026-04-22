@@ -4,7 +4,7 @@ import { z } from "zod";
 import { workspaceAdminProcedure } from "../../../orpc";
 
 export const deleteEvaluationTemplate = workspaceAdminProcedure
-  .input(z.object({ id: z.string().uuid() }))
+  .input(z.object({ id: z.uuid() }))
   .handler(async ({ context, input }) => {
     // First, get the template to find its slug
     const template = await evaluationTemplatesRepository.findById(input.id, context.workspaceId);

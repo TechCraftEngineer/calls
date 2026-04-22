@@ -128,17 +128,27 @@ export async function evaluateCallWithLlm(
     });
 
     const isQualityAnalyzable = result.is_quality_analyzable !== false;
-    const valueScore =
-      typeof result.value_score === "number"
-        ? Math.min(5, Math.max(1, Math.round(result.value_score)))
-        : null;
-    const managerScore =
-      typeof result.manager_score === "number"
-        ? Math.min(5, Math.max(1, Math.round(result.manager_score)))
-        : null;
     const notAnalyzableReason = isQualityAnalyzable
       ? null
       : result.not_analyzable_reason?.trim() || "autoanswerer";
+
+    // Логируем причину, если звонок не подлежит анализу качества
+    if (!isQualityAnalyzable) {
+      logger.info("Звонок не анализируется по качеству", {
+        reason: notAnalyzableReason,
+      });
+    }
+
+    const valueScore = isQualityAnalyzable
+      ? typeof result.value_score === "number"
+        ? Math.min(5, Math.max(1, Math.round(result.value_score)))
+        : null
+      : null;
+    const managerScore = isQualityAnalyzable
+      ? typeof result.manager_score === "number"
+        ? Math.min(5, Math.max(1, Math.round(result.manager_score)))
+        : null
+      : null;
 
     logger.info("LLM оценка завершена", {
       isQualityAnalyzable,

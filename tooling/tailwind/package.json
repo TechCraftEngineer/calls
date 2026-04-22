@@ -14,12 +14,12 @@
     "check": "biome check ."
   },
   "dependencies": {
-    "@tailwindcss/postcss": "4.2.2",
+    "@tailwindcss/postcss": "4.2.3",
     "postcss": "^8.5.10",
-    "tailwindcss": "4.2.2"
+    "tailwindcss": "4.2.3"
   },
   "devDependencies": {
-    "@calls/tsconfig": "*",
+    "@calls/tsconfig": "workspace:*",
     "@types/node": "25.6.0",
     "typescript": "6.0.3"
   }

@@ -31,7 +31,7 @@ function isAuthWithInternalContext(auth: unknown): auth is AuthWithInternalConte
 }
 
 const inputSchema = z.object({
-  email: z.string().email("Некорректный email"),
+  email: z.email("Некорректный email"),
 });
 
 export const checkUserPassword = publicProcedure

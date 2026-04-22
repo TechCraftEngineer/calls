@@ -70,3 +70,24 @@ export const testPbxInputSchema = z.object({
   apiKey: z.string().trim().optional(),
   idempotencyKey: z.string().trim().optional(),
 });
+
+/** Схема для обновления настроек email-отчётов сотрудника АТС */
+export const pbxEmployeeReportSettingsSchema = z
+  .object({
+    employeeId: z.string().uuid("Некорректный ID сотрудника"),
+    email: z.string().trim().email("Некорректный email").nullable().optional(),
+    dailyReport: z.boolean().default(false),
+    weeklyReport: z.boolean().default(false),
+    monthlyReport: z.boolean().default(false),
+    skipWeekends: z.boolean().default(false),
+  })
+  .refine(
+    (data) => {
+      const hasAnyReport = data.dailyReport || data.weeklyReport || data.monthlyReport;
+      return !hasAnyReport || (data.email && data.email.trim().length > 0);
+    },
+    {
+      message: "Email обязателен при включённых отчётах",
+      path: ["email"],
+    },
+  );

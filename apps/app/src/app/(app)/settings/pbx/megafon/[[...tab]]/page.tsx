@@ -87,26 +87,36 @@ export default function SettingsPbxMegafonPage({ params }: PageProps) {
     });
   }, [params]);
 
-  // Initialize from localStorage after mount to avoid hydration mismatch
+  // Инициализация из localStorage после монтирования для избежания несоответствия hydration
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const storedEmployeeSearch = window.localStorage.getItem(STORAGE_KEYS.employeeSearch) || "";
-    const storedNumberSearch = window.localStorage.getItem(STORAGE_KEYS.numberSearch) || "";
+    let storedEmployeeSearch = "";
+    let storedNumberSearch = "";
+    try {
+      storedEmployeeSearch = window.localStorage.getItem(STORAGE_KEYS.employeeSearch) || "";
+      storedNumberSearch = window.localStorage.getItem(STORAGE_KEYS.numberSearch) || "";
+    } catch {
+      // Игнорируем ошибки доступа к localStorage (SecurityError/QuotaExceededError)
+    }
     setEmployeeSearch(storedEmployeeSearch);
     setNumberSearch(storedNumberSearch);
     setIsMounted(true);
   }, []);
 
-  // Save to localStorage only after initial mount and when values actually change
+  // Сохранение в localStorage только после начального монтирования и при реальном изменении значений
   useEffect(() => {
     if (typeof window === "undefined" || !isMounted) return;
-    const storedEmployeeSearch = window.localStorage.getItem(STORAGE_KEYS.employeeSearch) || "";
-    const storedNumberSearch = window.localStorage.getItem(STORAGE_KEYS.numberSearch) || "";
-    if (employeeSearch !== storedEmployeeSearch) {
-      window.localStorage.setItem(STORAGE_KEYS.employeeSearch, employeeSearch);
-    }
-    if (numberSearch !== storedNumberSearch) {
-      window.localStorage.setItem(STORAGE_KEYS.numberSearch, numberSearch);
+    try {
+      const storedEmployeeSearch = window.localStorage.getItem(STORAGE_KEYS.employeeSearch) || "";
+      const storedNumberSearch = window.localStorage.getItem(STORAGE_KEYS.numberSearch) || "";
+      if (employeeSearch !== storedEmployeeSearch) {
+        window.localStorage.setItem(STORAGE_KEYS.employeeSearch, employeeSearch);
+      }
+      if (numberSearch !== storedNumberSearch) {
+        window.localStorage.setItem(STORAGE_KEYS.numberSearch, numberSearch);
+      }
+    } catch {
+      // Игнорируем ошибки записи в localStorage (SecurityError/QuotaExceededError)
     }
   }, [employeeSearch, numberSearch, isMounted]);
 

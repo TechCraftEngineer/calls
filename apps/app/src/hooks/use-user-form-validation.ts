@@ -9,7 +9,7 @@ export interface FormValidationError {
   message: string;
 }
 
-const optionalEmailSchema = z.union([z.string().email(), z.literal("")]).optional();
+const optionalEmailSchema = z.union([z.email(), z.literal("")]).optional();
 const reportFiltersValidationSchema = editUserFormSchema.pick({
   givenName: true,
   email: true,

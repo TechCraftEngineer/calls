@@ -33,7 +33,7 @@ export class InvitationsService {
 
       // Валидация email настроек (Zod)
       if (settings.email && typeof settings.email === "string") {
-        if (z.string().email().safeParse(settings.email).success) {
+        if (z.email().safeParse(settings.email).success) {
           validated.email = settings.email;
         }
       }

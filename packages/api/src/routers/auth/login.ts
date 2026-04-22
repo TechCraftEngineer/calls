@@ -3,7 +3,7 @@ import { publicProcedure } from "../../orpc";
 import { extractUserFields } from "../../user-profile";
 
 const loginSchema = z.object({
-  email: z.string().email("Введите корректный email"),
+  email: z.email("Введите корректный email"),
   password: z.string().min(1, "Пароль обязателен"),
 });
 

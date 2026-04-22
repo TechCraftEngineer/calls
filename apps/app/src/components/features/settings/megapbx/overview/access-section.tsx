@@ -1,5 +1,6 @@
 "use client";
 
+import { getDateOneMonthAgo } from "@calls/shared/utils/date-utils";
 import {
   Button,
   Card,
@@ -44,22 +45,10 @@ export function AccessSection({
   onSaveAccess,
   onTest,
 }: AccessSectionProps) {
-  const minDate = (() => {
-    const now = new Date();
-    const lastDayOfPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
-    const d = new Date(
-      now.getFullYear(),
-      now.getMonth() - 1,
-      Math.min(now.getDate(), lastDayOfPrevMonth),
-    );
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  })();
+  const minDate = getDateOneMonthAgo();
 
   const form = useForm<AccessFormData>({
-    resolver: zodResolver(accessFormSchema) as never,
+    resolver: zodResolver(accessFormSchema),
     defaultValues: {
       baseUrl,
       apiKey: "",
@@ -142,7 +131,7 @@ export function AccessSection({
                         id="megapbx-sync-from-date"
                         value={field.value ?? ""}
                         onChange={field.onChange}
-                        placeholder="ГГГГ-ММ-ДД"
+                        placeholder="2023-12-31…"
                         minDate={minDate}
                       />
                     </FormControl>

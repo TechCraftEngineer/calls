@@ -54,7 +54,7 @@ export const userIdSchema = z.string().refine((id) => isValidUserId(id), {
   message: "Неверный формат user_id. Ожидается 32 символа",
 });
 
-const emailSchema = z.string().email();
+const emailSchema = z.email();
 
 /**
  * Проверяет, является ли строка валидным email (через Zod)

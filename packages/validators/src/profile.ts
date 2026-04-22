@@ -8,7 +8,7 @@ export const profileFormSchema = z.object({
     .min(2, "Логин должен содержать минимум 2 символа")
     .max(30, "Логин не должен превышать 30 символов")
     .regex(USERNAME_REGEX, "Логин может содержать только буквы, цифры, подчёркивания и дефисы"),
-  email: z.string().email("Введите корректный email"),
+  email: z.email("Введите корректный email"),
   bio: z.string().max(160).optional(),
 });
 

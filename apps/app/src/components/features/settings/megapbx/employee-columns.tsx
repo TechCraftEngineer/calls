@@ -3,6 +3,7 @@
 import { Badge } from "@calls/ui";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { PbxEmployeeItem } from "../types";
+import { EmployeeReportSettingsCell } from "./employee-report-settings-cell";
 import { LinkEmployeeCell } from "./link-employee-cell";
 
 export function getEmployeeColumns(): ColumnDef<PbxEmployeeItem>[] {
@@ -35,6 +36,11 @@ export function getEmployeeColumns(): ColumnDef<PbxEmployeeItem>[] {
           {row.original.isActive ? "Активен" : "Неактивен"}
         </Badge>
       ),
+    },
+    {
+      id: "emailReports",
+      header: "Отчёты",
+      cell: ({ row }) => <EmployeeReportSettingsCell employee={row.original} />,
     },
   ];
 }
