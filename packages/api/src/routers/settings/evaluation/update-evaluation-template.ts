@@ -4,7 +4,7 @@ import { z } from "zod";
 import { workspaceAdminProcedure } from "../../../orpc";
 
 const updateSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   name: z.string().min(1).max(200, "Название слишком длинное").optional(),
   description: z.string().max(500, "Описание слишком длинное").optional().nullable(),
   systemPrompt: z

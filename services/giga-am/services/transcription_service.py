@@ -63,19 +63,30 @@ class TranscriptionService:
             self._initialization_event.set()
             self._model_loading = False
     
+    def _raise_model_loading_timeout(self, elapsed_seconds: float, extra_context: str = ""):
+        """Вспомогательный метод для унифицированного поднятия GigaTimeoutError при загрузке модели"""
+        raise GigaTimeoutError(
+            f"Превышено время ожидания загрузки модели ({elapsed_seconds:.1f} сек). "
+            f"Возможно, модель скачивается с HuggingFace или сервер перегружен. "
+            f"Попробуйте повторить запрос позже.{extra_context}",
+            timeout_seconds=settings.model_loading_timeout,
+            operation="model_loading",
+            elapsed_seconds=int(elapsed_seconds)
+        )
+
     def _ensure_model_loaded(self, max_retries: int = 1):
         """Гарантирует, что модель загружена с retry при таймауте"""
         # Если модель уже загружена, возвращаемся сразу
         if self._model_initialized and self.model is not None:
             return
-        
+
         # Если есть ошибка загрузки, бросаем исключение
         if self._model_error:
             raise ModelLoadError(
                 f"Ошибка загрузки модели: {self._model_error}",
                 model_name=self.model_name
             )
-        
+
         # Если модель сейчас загружается, ждем завершения с retry
         if self._model_loading:
             wait_start = time.time()
@@ -83,7 +94,7 @@ class TranscriptionService:
                 "Модель загружается в другом потоке, ждем завершения... "
                 f"(таймаут: {settings.model_loading_timeout} сек, попыток: {max_retries + 1})"
             )
-            
+
             for attempt in range(max_retries + 1):
                 # Вычисляем оставшийся бюджет времени для текущей попытки
                 elapsed = time.time() - wait_start
@@ -91,14 +102,7 @@ class TranscriptionService:
                 if attempt_timeout <= 0:
                     # Бюджет времени исчерпан - бросаем GigaTimeoutError
                     total_elapsed = time.time() - wait_start
-                    raise GigaTimeoutError(
-                        f"Превышено время ожидания загрузки модели ({total_elapsed:.1f} сек). "
-                        f"Возможно, модель скачивается с HuggingFace или сервер перегружен. "
-                        f"Попробуйте повторить запрос позже.",
-                        timeout_seconds=settings.model_loading_timeout,
-                        operation="model_loading",
-                        elapsed_seconds=int(total_elapsed)
-                    )
+                    self._raise_model_loading_timeout(total_elapsed)
                 
                 if self._initialization_event.wait(timeout=attempt_timeout):
                     # Загрузка завершена - пересчитываем elapsed после wait
@@ -128,23 +132,10 @@ class TranscriptionService:
                     )
                 else:
                     total_elapsed = time.time() - wait_start
-                    raise GigaTimeoutError(
-                        f"Превышено время ожидания загрузки модели ({total_elapsed:.1f} сек). "
-                        f"Возможно, модель скачивается с HuggingFace или сервер перегружен. "
-                        f"Попробуйте повторить запрос позже.",
-                        timeout_seconds=settings.model_loading_timeout,
-                        operation="model_loading",
-                        elapsed_seconds=int(total_elapsed)
-                    )
+                    self._raise_model_loading_timeout(total_elapsed)
             # Если вышли из цикла без возврата/исключения - это тоже таймаут
             total_elapsed = time.time() - wait_start
-            raise GigaTimeoutError(
-                f"Превышено время ожидания загрузки модели ({total_elapsed:.1f} сек). "
-                f"Возможно, модель скачивается с HuggingFace или сервер перегружен. ",
-                timeout_seconds=settings.model_loading_timeout,
-                operation="model_loading",
-                elapsed_seconds=int(total_elapsed)
-            )
+            self._raise_model_loading_timeout(total_elapsed)
         
         # Если дошли сюда, значит нужно загрузить модель синхронно
         with self._loading_lock:

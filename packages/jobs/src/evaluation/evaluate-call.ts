@@ -127,14 +127,14 @@ export async function evaluateCallWithLlm(
       functionId: "evaluation-evaluate-call",
     });
 
-    let isQualityAnalyzable = result.is_quality_analyzable !== false;
-    let notAnalyzableReason = isQualityAnalyzable
+    const isQualityAnalyzable = result.is_quality_analyzable !== false;
+    const notAnalyzableReason = isQualityAnalyzable
       ? null
       : result.not_analyzable_reason?.trim() || "autoanswerer";
 
-    // Если звонок не подлежит анализу качества, обнуляем все числовые оценки
+    // Логируем причину, если звонок не подлежит анализу качества
     if (!isQualityAnalyzable) {
-      logger.info("Звонок не анализируется по качеству, обнуляем оценки", {
+      logger.info("Звонок не анализируется по качеству", {
         reason: notAnalyzableReason,
       });
     }

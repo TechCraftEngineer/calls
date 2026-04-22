@@ -19,7 +19,7 @@
     "tailwindcss": "4.2.3"
   },
   "devDependencies": {
-    "@calls/tsconfig": "*",
+    "@calls/tsconfig": "workspace:*",
     "@types/node": "25.6.0",
     "typescript": "6.0.3"
   }

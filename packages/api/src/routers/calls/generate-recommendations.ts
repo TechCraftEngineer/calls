@@ -135,8 +135,16 @@ export async function generateRecommendations(
     // Получаем длительность из файла, если есть fileId
     let durationMinutes = 0;
     if (call.fileId) {
-      const file = await filesService.getFileById(call.fileId);
-      durationMinutes = Math.round((file?.durationSeconds ?? 0) / 60);
+      try {
+        const file = await filesService.getFileById(call.fileId);
+        durationMinutes = Math.max(1, Math.round((file?.durationSeconds ?? 0) / 60));
+      } catch (error) {
+        logger.warn("Failed to fetch file for duration, using default", {
+          callId,
+          fileId: call.fileId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
 
     const userMessage = `Транскрипт звонка${durationMinutes > 0 ? ` (длительность: ${durationMinutes} мин)` : ""}:

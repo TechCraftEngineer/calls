@@ -272,8 +272,22 @@ async function processChunk(
 
   // Преобразуем результат в AsrSegment[], используя канонические значения из оригинальных сегментов
   type MergedSegment = z.infer<typeof MergedOutputSchema>["segments"][number];
+
+  // Проверяем совпадение длин массивов
+  if (output.segments.length !== chunk.segments.length) {
+    logger.warn(
+      `LLM returned different segment count: ${output.segments.length} vs ${chunk.segments.length}`,
+      {
+        requestId,
+        chunkIndex: chunkIndex + 1,
+        totalChunks,
+      },
+    );
+  }
+
   const segments: AsrSegment[] = output.segments.map((seg: MergedSegment, index: number) => {
     // Используем оригинальные timestamp и speaker из chunk.segments по индексу
+    // Если индекс выходит за пределы, используем значения из LLM
     const originalSeg = chunk.segments[index];
     return {
       start: originalSeg?.start ?? seg.start,
@@ -521,8 +535,20 @@ export async function mergeAsrResultsWithLLM(
 
   // Преобразуем результат в AsrSegment[], используя канонические значения из оригинальных сегментов
   type MergedSegment = z.infer<typeof MergedOutputSchema>["segments"][number];
+
+  // Проверяем совпадение длин массивов
+  if (output.segments.length !== diarized.segments.length) {
+    logger.warn(
+      `LLM returned different segment count: ${output.segments.length} vs ${diarized.segments.length}`,
+      {
+        requestId,
+      },
+    );
+  }
+
   const segments: AsrSegment[] = output.segments.map((seg: MergedSegment, index: number) => {
     // Используем оригинальные timestamp и speaker из diarized.segments по индексу
+    // Если индекс выходит за пределы, используем значения из LLM
     const originalSeg = diarized.segments[index];
     return {
       start: originalSeg?.start ?? seg.start,
